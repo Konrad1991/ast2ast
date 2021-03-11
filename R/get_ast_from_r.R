@@ -79,9 +79,20 @@ lapply(out, function(x) {
 r <- ast_tree(args[[1]])
 r
 
-
-
+d <- c(out[[2]])
+val <- list()
+type <- list()
+d <- lapply(d, function(x) {
+  index <- parent.frame()$i[]
+  val[[index]] <- x
+  type[[index]] <- typeof(x)
+  return(c(val, type))
+})
+d[[1]]
+d[[2]]
+d[[3]]
 # 1. fct that converts code into exprs
 # 2. fct that converts exprs into tokens. Defining for each token the type.
 # 3. fct that analyse each exprs and returns if it is an call, ... Not clear how this works
-# 4. fct that translate code
+# 4. fct that gets ast from expr
+# 5. fct that converts ast
