@@ -54,3 +54,20 @@ types <- lapply(values, function(x) {
   y <- unlist(y)
   return(y)
 })
+
+# Next the symbol has to be interpreted
+
+# 1. '<-' is assignment
+
+
+assignement <- '<-'
+interpretation <- lapply(values, function(x) {
+  y <- x
+  y <- lapply(y, function(a) {
+      if(a == assignement) {
+        return("assignment")
+      } else {
+        return("rest")
+      }
+  })
+})
