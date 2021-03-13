@@ -26,7 +26,7 @@ getast <- function(...) {
   return(args)
 }
 
-args <- getast(f(1,2,3,4), x <- 5, y, z <- 2L, df <- data.frame(a = 1:3))
+args <- getast(y <- 1 + 2)
 
 out <- lapply(args, function(x) {
   ast_tree(x)
@@ -61,6 +61,7 @@ types <- lapply(values, function(x) {
 
 
 assignement <- '<-'
+plus <- '+'
 interpretation <- lapply(values, function(x) {
   y <- x
   index1 <- parent.frame()$i[]
@@ -72,7 +73,10 @@ interpretation <- lapply(values, function(x) {
       if(type == "symbol") {
         if(a == assignement) {
           return("assignment")
-        } else {
+        } else if(a == plus) {
+          return("plus")  
+        }
+        else {
           return("rest")
         }
       } else {
@@ -80,3 +84,5 @@ interpretation <- lapply(values, function(x) {
       }
   })
 })
+
+# Bit unclear how to seperate several function calls see example y <- 1 + 2. Here two function calls: <- and + are called
