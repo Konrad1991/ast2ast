@@ -63,11 +63,20 @@ types <- lapply(values, function(x) {
 assignement <- '<-'
 interpretation <- lapply(values, function(x) {
   y <- x
+  index1 <- parent.frame()$i[]
   y <- lapply(y, function(a) {
-      if(a == assignement) {
-        return("assignment")
+      index2 <- parent.frame()$i[]
+      type <- types[[index1]]
+      type <- type[[index2]]
+      
+      if(type == "symbol") {
+        if(a == assignement) {
+          return("assignment")
+        } else {
+          return("rest")
+        }
       } else {
-        return("rest")
+        return(type)
       }
   })
 })
