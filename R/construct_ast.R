@@ -108,9 +108,9 @@ find_plus_rec <- function(x) {
 }
 find_plus <- function(x) find_plus_rec(enexpr(x))
 
-find_assign("x")
+find_plus("x")
 #> character(0)
-find_assign(x)
+find_plus(x)
 #> character(0)
 
 
@@ -121,14 +121,14 @@ flat_map_chr <- function(.x, .f, ...) {
 flat_map_chr(letters[1:3], ~ rep(., sample(3, 1)))
 #> [1] "a" "b" "b" "b" "c" "c" "c"
 
-find_assign_rec <- function(x) {
+find_plus_rec <- function(x) {
   switch_expr(x,
               # Base cases
               constant = ,
               symbol = character(),
               
               # Recursive cases
-              pairlist = flat_map_chr(as.list(x), find_assign_rec),
+              pairlist = flat_map_chr(as.list(x), find_plus_rec),
               call = {
                 if (is_call(x, "+")) {
                   #as_string(x[[2]])
@@ -142,7 +142,7 @@ find_assign_rec <- function(x) {
                   right <- as_string(x[[3]])
                   c(left, right)
                 } else {
-                  flat_map_chr(as.list(x), find_assign_rec)
+                  flat_map_chr(as.list(x), find_plus_rec)
                 }
               }
   )
@@ -152,8 +152,18 @@ a <- find_assign(a + b)
 a
 
 find_assign({
-  a <- b + d
+  a <- b + d -3 - 5
   {
     b <- c + 3
   }
 })
+
+# Construct function which returns ast --> each function has to be found!
+# Furthermore, the order of each function call has to be determined for each expression
+
+# checks needed for entire program (all expressions)?
+
+# scope: one fct. User has to define type of each argument. (... is not possible)
+# scope: datatypes allowed: double, logical, character, integer as scalar, vector or matrix. 
+# scope: later type data.frame and list
+# scope: later function definition within function
