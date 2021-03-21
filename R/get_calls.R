@@ -51,7 +51,10 @@ getast <- function(...) {
   return(args)
 }
 
-args <- getast(y <- 1 + 2)
+
+
+args <- getast(y <- 1 + x)
+args
 
 num <- 0
 temp <- lapply(args, function(x) {
@@ -65,13 +68,60 @@ out <- lapply(args, function(x) {
   y <- get_calls(x)
   return(y)
 })
-temp[[1]]
-temp[[2]]
-temp[[3]]
-temp[[4]]
 
-temp[[1]]
-temp[[2]]
-temp[[3]][[2]] <- temp[[1]]
-temp[[3]][[3]] <- temp[[2]]
-temp[[3]]
+# temp[[1]]
+# temp[[2]]
+# temp[[3]]
+# temp[[4]]
+# 
+# temp[[1]]
+# temp[[2]]
+# temp[[3]][[2]] <- temp[[1]]
+# temp[[3]][[3]] <- temp[[2]]
+# temp[[3]]
+
+
+# next each element of fct has to be inspected.
+
+values <- lapply(temp, unlist)
+types <- lapply(values, function(x) {
+  y <- lapply(x, typeof)
+  y <- unlist(y)
+  return(y)
+})
+types
+
+bo <- list(assignement = '<-', assignment = '=', plus = '+', minus = '-', time = '*', divide = '/')
+
+checker <- function(element) {
+  return(match(element, bo))  
+}
+
+test <- lapply(temp, function(x) {
+  y <- x
+  ret <- lapply(y, function(z) {
+    a <- NULL
+    if(is_symbol(z)) {
+      a <- as_string(z) 
+    } else if(is_double(z)) {
+      a <- as.character(z)
+    }
+    if(is_empty(a)) {
+      a <- NULL
+    } else {
+      tester <- checker(a)
+      
+      if(!is.null(tester) && !is.na(tester)) {
+      a <- names(bo)[[match(a, bo)]]
+      } else {
+      a <- z
+      }
+    }
+    return(a)
+  })
+  return(ret)
+})
+
+test[[1]]
+test[[2]]
+
