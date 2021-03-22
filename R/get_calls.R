@@ -53,7 +53,7 @@ getast <- function(...) {
 
 
 
-args <- getast(y <- 1 + x)
+args <- getast(y <- 1 + x + z*z)
 args
 
 num <- 0
@@ -124,4 +124,21 @@ test <- lapply(temp, function(x) {
 
 test[[1]]
 test[[2]]
+test[[3]]
+test[[4]]
+
+find_vars <- lapply(test, function(x) {
+  y <- lapply(x, typeof)
+  y <- unlist(y)
+  z <- lapply(y, function(a) {
+    index <- parent.frame()$i[]   
+    ret <- list()
+    if(a == "symbol") {
+    ret[[index]] <- c(x[[index]], "it_is_a_variable")
+    }
+    return(ret)
+  })
+  return(z)
+})
+find_vars
 
