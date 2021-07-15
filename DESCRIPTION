@@ -1,10 +1,12 @@
 Package: AstToAst
 Type: Package
-Title: Translates subset of R into Rcpp
+Title: Translates tiny subset of R into Rcpp
 Version: 1.0
 Date: 2021-03-10
 Author: Krämer Konrad
 Maintainer: Krämer Konrad <konrad_kraemer@yahoo.de>
-Description: MTranslates subset of R into Rcpp
+Description: Translates tiny subset of R into Rcpp
 License: GPL 2
+Imports: Rcpp (>= 1.0.4), rlang, purrr
+LinkingTo: Rcpp, rlang, purrr
 Encoding: UTF-8
