@@ -30,6 +30,24 @@ storage_variables <- function(code_lines) {
   return(stors)
 }
 
+# ================================================================================
+# is storage_variable a new variable
+# ================================================================================
+new_ <- function(var_list, code_lines) {
+  lhs_vars <- storage_variables(code_lines)
+  
+  ret <- vector(mode = "character", length = length(lhs_vars))
+  
+  for(i in seq_along(lhs_vars)) {
+    if(is.null(var_list[[lhs_vars[i] ]])) {
+      ret[i] <- "new"
+    } else {
+      ret[i] <- "old"
+    }
+  }
+
+  return(ret)
+}
 
 # ================================================================================
 # variables at rhs

@@ -23,6 +23,11 @@ The first step is to separate the different code lines from each other. From eac
 
 Each variable consists of a class which contains a matrix, a vector and a scalar. Moreover, the class contains a int defining the type (**int type**) (0 = matrix, 1 = vector, 2 = scalar). If a switch-case is detected a new line before the line containing the switch is inserted. In this line the data stored in the old type is deleted and the int defining the type is set to the new value. In order to work properly the **=** operand has to be overloaded and during each assignment the **type** has to be checked.
 
+* Identify assignment lines
+* Update the list containing types and variable names after each line
+* if variable is until now not defined add to variable list
+* deduce type
+
 # Translating R AST to C++
 
 Afterwards the R AST is translated to C++. First, all variables are defined. Next, the content of the input variables is stored in extra variables due to the fact that R does not know the class type. \
@@ -30,7 +35,7 @@ Afterwards the R AST is translated to C++. First, all variables are defined. Nex
 Now the code has to be changed in order to enable compilation. The following changes have to be done:
 
 * Change indices to indices - 1
-* 
+
 
 
 
