@@ -1,3 +1,6 @@
+#ifndef UTIL
+#define UTIL
+
 #include <cmath>
 
 int compare(int size, int index) {
@@ -10,3 +13,5 @@ int compare(int size, int index) {
   }
   return ret;
 }
+
+#endif
