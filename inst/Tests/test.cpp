@@ -1,18 +1,16 @@
-#include "/home/konrad/Documents/0Uni/programming/ast2ast/inst/include/all.hpp"
+#include "all.hpp"
 
 int main() {
-VEC<double> a(4, 5.0);
-VEC<double> b(4, 5.0);
-VEC<double> c(12, 1.);
+  vec a(range(1., 8.));
 
-for(int i = 0; i < a.size(); i++) {
-  std::cout << a[i] << std::endl;
-} std::cout << std::endl;
-
-for(int i = 0; i < a.size(); i++) {
-  std::cout << a[i] << std::endl;
-}
-
+  print(a);
+  print();
+  print(subset(a, 0, 4));
+  print();
+  print(subset(a, 1, 5));
+  print();
+  a.subset(2, 6) = subset(a, 0,4) + subset(a, 1, 5);
+  print(a);
 
 
 }

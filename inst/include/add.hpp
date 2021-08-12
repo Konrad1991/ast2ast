@@ -8,16 +8,17 @@ template<typename T, typename L, typename R>
 class VVPLUS {
 
 private:
-  const L& l;
-  const R& r;
+  const L& l; //const L& l;
+  const R& r; //const R& r;
   std::vector<int> indices1;
   std::vector<int> indices2;
 
 public:
+
   VVPLUS(const L &a, const R &b ) :
      l(a), r(b) {
        if(l.size() > r.size()) {
-         assert( (l.size() % r.size()) == 0);
+         ass((l.size() % r.size()) == 0, "Vector is not multiple of other vector");
          indices1.resize(l.size());
          indices2.resize(l.size());
          for(int i = 0; i < indices2.size(); i++) {
@@ -27,7 +28,7 @@ public:
            indices2[i] =  i - times*r.size();
          }
        } else if(r.size() > l.size()) {
-         assert( (r.size() % l.size()) == 0);
+         ass((l.size() % r.size()) == 0, "Vector is not multiple of other vector");
          indices1.resize(r.size());
          indices2.resize(r.size());
          for(int i = 0; i < indices2.size(); i++) {
