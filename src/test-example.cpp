@@ -97,3 +97,20 @@ context("vector - vector") {
     }
   }
 }
+
+
+
+context("vector subset") {
+  vec a(range(1., 6.));
+  vec b(range(0., 5.));
+  vec result(8, 0.);
+  result.subset(0, 2) = subset(a, 0, 2) + subset(b, 2, 4);
+  std::vector<double> v{3, 5, 7};
+  vec correct(v);
+
+  test_that("Vector subset") {
+    for(int i = 0; i < correct.size(); i++) {
+        expect_true(result[i] == correct[i]);
+    }
+  }
+}

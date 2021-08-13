@@ -6,16 +6,21 @@
 template< typename T, typename R = std::vector<T> >
 class VEC {
 
-private:
-  R d; // data
 public:
+  R d;
   bool subsetted;
   std::vector<int> indices;
   VEC(const int n) : d(n), subsetted(0) {}
   VEC(const int n, const double value) : d(n, value), subsetted(0) {}
   VEC(const R& other_vec) : d(other_vec), subsetted(0) {}
+  VEC() :d(1) {}
 
   T& operator=(const T &other_vec) {
+
+    while(other_vec.size() >= d.size()) {
+      d.push_back(0);
+    }
+
     if(subsetted == false) {
       for(int i = 0; i < d.size(); i++) {
         d[i] = other_vec[i];
@@ -32,6 +37,11 @@ public:
 
   template<typename T2, typename R2>
   VEC& operator=(const VEC<T2, R2> &other_vec) {
+
+    while(other_vec.size() > d.size()) {
+      d.push_back(0);
+    }
+
     if(subsetted == false) {
       for(int i = 0; i < d.size(); i++) {
         d[i] = other_vec[i];
@@ -96,7 +106,7 @@ VEC& subset(std::vector<int> inp) {
 
 VEC& subset(int start, int end) {
   subsetted = true;
-  indices.resize(end - start);
+  indices.resize(end - start + 1);
   for(int i = 0; i < indices.size(); i++) {
     indices[i] = start + i;
   }
@@ -124,7 +134,7 @@ bool is_subsetted() const {
 };
 
 VEC<double> subset(VEC<double>& inp, int start, int end) {
-  std::vector<double> temp(end - start);
+  std::vector<double> temp(end - start + 1);
   for(int i = 0; i < temp.size(); i++) {
     temp[i] = inp(i + start);
   }
@@ -132,7 +142,7 @@ VEC<double> subset(VEC<double>& inp, int start, int end) {
   return t;
 }
 
-void print(VEC<double>& inp) { // const
+void print(const VEC<double>& inp) { // const
   if(inp.subsetted == true) {
     for(int i = 0; i < inp.indices.size(); i++) {
       std::cout << inp[inp.indices[i]] << std::endl;
