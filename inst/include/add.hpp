@@ -1,8 +1,29 @@
+/*
+R package ast2ast
+Copyright (C) 2021 Konrad Krämer
+
+This file is part of R package ast2ast
+
+
+ast2ast is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with pso
+If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
+*/
+
 #ifndef ADD
 #define ADD
 
 #include "vec.hpp"
-
+#include "matrix.hpp"
 
 template<typename T, typename L, typename R>
 class VVPLUS {
@@ -60,6 +81,22 @@ public:
 
 template<typename T, typename L, typename R>
 VEC< T, VVPLUS< T, L, R > > operator+(const VEC<T, L>& a, const VEC<T, R>& b) {
+    return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.data(), b.data() ) );
+}
+
+
+template<typename T, typename L, typename R>
+VEC< T, VVPLUS< T, L, R > > operator+(const VEC<T, L>& a, const MAT<T, R>& b) {
+    return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.data(), b.data() ) );
+}
+
+template<typename T, typename L, typename R>
+VEC< T, VVPLUS< T, L, R > > operator+(const MAT<T, L>& a, const VEC<T, R>& b) {
+    return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.data(), b.data() ) );
+}
+
+template<typename T, typename L, typename R>
+VEC< T, VVPLUS< T, L, R > > operator+(const MAT<T, L>& a, const MAT<T, R>& b) {
     return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.data(), b.data() ) );
 }
 
