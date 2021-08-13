@@ -44,10 +44,13 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP run_testthat_tests(SEXP);
+
 static const R_CallMethodDef CallEntries[] = {
     {"_AstToAst_is_assign", (DL_FUNC) &_AstToAst_is_assign, 1},
     {"_AstToAst_stor_var", (DL_FUNC) &_AstToAst_stor_var, 1},
     {"_AstToAst_find_var_at_rhs", (DL_FUNC) &_AstToAst_find_var_at_rhs, 1},
+    {"run_testthat_tests", (DL_FUNC) &run_testthat_tests, 1},
     {NULL, NULL, 0}
 };
 

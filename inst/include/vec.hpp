@@ -1,9 +1,5 @@
-#ifndef VECTOR
-#define VECTOR
-
-#include <iostream>
-#include <vector>
-#include <cassert>
+#ifndef VEC_H
+#define VEC_H
 
 #include "util.hpp"
 
@@ -136,7 +132,7 @@ VEC<double> subset(VEC<double>& inp, int start, int end) {
   return t;
 }
 
-void print(const VEC<double>& inp) {
+void print(VEC<double>& inp) { // const
   if(inp.subsetted == true) {
     for(int i = 0; i < inp.indices.size(); i++) {
       std::cout << inp[inp.indices[i]] << std::endl;

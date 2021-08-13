@@ -5,13 +5,3 @@
  */
 #define TESTTHAT_TEST_RUNNER
 #include <testthat.h>
-
-int twoPlusTwo2() {
-  return 2 + 2;
-}
-
-context("Arithmetic") {
-  test_that("Two plus two is four") {
-    expect_true(twoPlusTwo2() == 4);
-  }
-}

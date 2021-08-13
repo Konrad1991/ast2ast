@@ -1,3 +1,6 @@
+#ifndef ALL
+#define ALL
+
 #include "vec.hpp"
 #include "add.hpp"
 #include "mul.hpp"
@@ -7,3 +10,5 @@
 //#include "matrix.hpp"
 
 #define vec VEC<double>
+
+#endif

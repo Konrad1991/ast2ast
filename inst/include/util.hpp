@@ -1,9 +1,13 @@
 #ifndef UTIL
 #define UTIL
 
-#include <cmath>
+#include <Rcpp.h>
 
 #include "vec.hpp"
+#include "header.hpp"
+#include <iostream>
+#include <vector>
+
 
 void ass(bool inp, std::string message) {
   if(inp == false) {
@@ -12,7 +16,7 @@ void ass(bool inp, std::string message) {
 }
 
 std::vector<double> range(int start, int end) {
-  std::vector<double> ret(end - start);
+  std::vector<double> ret(end - start + 1);
   for(int i = 0; i < ret.size(); i++) {
     ret[i] = start + static_cast<double>(i);
   }

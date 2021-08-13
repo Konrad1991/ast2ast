@@ -1,35 +1,99 @@
-/*
- * This file uses the Catch unit testing library, alongside
- * testthat's simple bindings, to test a C++ function.
- *
- * For your own packages, ensure that your test files are
- * placed within the `src/` folder, and that you include
- * `LinkingTo: testthat` within your DESCRIPTION file.
- */
-
-// All test files should include the <testthat.h>
-// header file.
 #include <testthat.h>
 
-// Normally this would be a function from your package's
-// compiled library -- you might instead just include a header
-// file providing the definition, and let R CMD INSTALL
-// handle building and linking.
-int twoPlusTwo() {
-  return 2 + 2;
+
+#include "all.hpp"
+
+
+vec add_vec_sca() {
+  vec a(range(1., 5.));
+  a = a + 10.;
+  return a;
 }
 
-// Initialize a unit test context. This is similar to how you
-// might begin an R test file with 'context()', expect the
-// associated context should be wrapped in braced.
-context("Sample unit tests") {
 
-  // The format for specifying tests is similar to that of
-  // testthat's R functions. Use 'test_that()' to define a
-  // unit test, and use 'expect_true()' and 'expect_false()'
-  // to test the desired conditions.
-  test_that("two plus two equals four") {
-    expect_true(twoPlusTwo() == 4);
+context("Vector Scalar basic calculations") {
+  vec result(range(11., 15.));
+
+  test_that("Vector + scalar") {
+    for(int i = 0; i < result.size(); i++) {
+        expect_true(add_vec_sca()[i] == result[i]);
+    }
   }
+}
 
+
+vec add_vec_vec() {
+  vec a(range(1., 5.));
+  a = a + a;
+  return a;
+}
+context("Vector Vector basic calculations") {
+  std::vector<double> res{2., 4., 6., 8., 10.};
+  vec result(res);
+
+  test_that("Vector + vector") {
+    for(int i = 0; i < result.size(); i++) {
+        expect_true(add_vec_vec()[i] == result[i]);
+    }
+  }
+}
+
+
+context("larger vector + shorter vector basic calculations") {
+  vec larger(range(1., 6.));
+  vec shorter(range(1., 3.));
+  vec result(5);
+  result = larger + shorter;
+  std::vector<double> correct_result{2, 4, 6, 5, 7, 9};
+
+  test_that("Vector + vector") {
+    for(int i = 0; i < result.size(); i++) {
+        expect_true(result[i] == correct_result[i]);
+    }
+  }
+}
+
+
+
+
+context("shorter vector + larger vector basic calculations") {
+  vec larger(range(1., 6.));
+  vec shorter(range(1., 3.));
+  vec result(6);
+  result = shorter + larger;
+  std::vector<double> correct_result{2, 4, 6, 5, 7, 9};
+
+  test_that("Vector + vector") {
+    for(int i = 0; i < result.size(); i++) {
+        expect_true(result[i] == correct_result[i]);
+    }
+  }
+}
+
+
+context("incompatible vectors") {
+  vec a(range(1., 6.));
+  vec b(range(1., 5.));
+  test_that("incompatible vectors") {
+        expect_error(a + b);
+        expect_error(a -b);
+        expect_error(a/b);
+        expect_error(a*b);
+  }
+}
+
+
+
+context("vector - vector") {
+  vec a(range(1., 6.));
+  vec b(range(0., 5.));
+  vec result(6);
+  result = a - b;
+  vec correct(6, 1.);
+
+  test_that("Vector - vector") {
+    for(int i = 0; i < result.size(); i++) {
+        expect_true(result[i] == correct[i]);
+    }
+  }
 }
