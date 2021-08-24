@@ -92,7 +92,7 @@ variables_at_rhs <- function(code_lines) {
 # function to determine if an element exists in list
 # ================================================================================
 element_exists <- function(elem, l) {
-  for(i in l) {
+  for(i in names(l) ) {
     if(elem == i) {
       return(TRUE)
     }
@@ -128,8 +128,6 @@ type_of_lhs <- function(code_lines, start_variables_types) {
         }
       }
     
-    print(start_variables_types)
-    print(vars_at_lhs[[i]])
     # check if var at lhs is already known
     if(element_exists(vars_at_lhs[[i]], start_variables_types) == TRUE) {
 
