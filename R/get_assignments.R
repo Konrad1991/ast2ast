@@ -87,58 +87,75 @@ variables_at_rhs <- function(code_lines) {
 }
 
 
-# ================================================================================
-# types variables at rhs
-# ================================================================================
-deduce_type <- function(var_types) {
-  mats <- sum(var_types == "mat_num", na.rm = TRUE)
-  vecs <- sum(var_types == "vec_num", na.rm = TRUE)
-  
-  if(mats > 0) {
-    return("mat_num")
-  } else if( (mats == 0) && (vecs > 0)) {
-    return("vec_num")
-  } else {
-    return("num")
-  }
-}
 
-get_type_from_list <- function(var_names, var_list) {
-  res <- vector(mode = "character", length = length(var_names))
-  
-  for(i in seq_along(var_names)) {
-    if(var_names[i] != "NA") {
-      res[i] <- var_list[[var_names[i] ]]
-    } else {
-      res[i] <- "NA"
+# ================================================================================
+# function to determine if an element exists in list
+# ================================================================================
+element_exists <- function(elem, l) {
+  for(i in l) {
+    if(elem == i) {
+      return(TRUE)
     }
-  }  
-  
-  return(res)
+  }
+  return(FALSE)
 }
 
-
-
-types <- function(var_list, code_lines) {
-  relevant_lines <- get_assignments(code_lines)
+# ================================================================================
+# function to determine type of lhs
+# ================================================================================
+type_of_lhs <- function(code_lines, start_variables_types) {
   vars_rhs <- variables_at_rhs(code_lines)
   
-  res <- vector(mode = "character", length = length(code_lines))
+  assign_lines <- get_assignments(code_lines)
+  vars_at_rhs <- variables_at_rhs(code_lines)
+  vars_at_lhs <- storage_variables(code_lines)
   
-  counter <- 1
-  for(i in relevant_lines) {
+  types <- rep("num", length(assign_lines[assign_lines == TRUE]) ) 
+
+  # loop over assign lines
+  for(i in seq_along(assign_lines)) {
     
-    if(i == TRUE) {
-      temp <- vars_rhs[[counter]]
-      temp <- get_type_from_list(temp, var_list)
-      res[counter] <- deduce_type(temp)
-      counter <- counter + 1
-    } else {
-      res[counter] <- "NA"
-      counter <- counter + 1
+    # determine type due to vars at rhs
+    if( (assign_lines[i] == TRUE) ) {
+      indices <- match(vars_at_rhs[[i]], names(start_variables_types))
+      indices <- indices[!is.na(indices)]
+      for(j in indices) {
+        if(start_variables_types[[j]] == "num_mat") {
+          types[i] <- "num_mat"
+          break
+        } else if( (start_variables_types[[j]] == "num_vec") ) {
+          types[i] <- "num_vec"
+        }
+      }
+    
+    print(start_variables_types)
+    print(vars_at_lhs[[i]])
+    # check if var at lhs is already known
+    if(element_exists(vars_at_lhs[[i]], start_variables_types) == TRUE) {
+
+      # var at lhs is already known but changes type
+      if(start_variables_types[[vars_at_lhs[[i]] ]] != types[i]) {
+        start_variables_types[[vars_at_lhs[[i]] ]] = types[i]
+        
+        new_type = 0 # num
+        if(types[i] == "num_vec") {
+          new_type = 1
+        } else if(types[i] == "num_mat") {
+          new_type = 2
+        }
+        
+        # change the code!
+        code_lines[i:(length(code_lines) + 1)] <- c(
+          paste("switch_type(", start_variables_types[[vars_at_lhs[[i]] ]], ", ", new_type, ")", sep = ""), 
+          code_lines[i:(length(code_lines))])
+      }
+    } else { # found a new variable and added it to the list
+      start_variables_types <- append(start_variables_types, types[i]) 
+      names(start_variables_types)[length(start_variables_types)] <- vars_at_lhs[[i]]
     }
-    
+      
+    }
   }
   
-  return(res)
+  return(code_lines)
 }

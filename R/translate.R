@@ -14,7 +14,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 # 
-# You should have received a copy of the GNU General Public License along with pso
+# You should have received a copy of the GNU General Public License along with ast2ast
 # If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 # ================================================================================
@@ -22,5 +22,6 @@
 # ================================================================================
 translate <- function(code, types_input_variables) {
   var_list <- types_input_variables
+  
   return(var_list)
 }
