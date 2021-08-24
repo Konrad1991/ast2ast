@@ -43,6 +43,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// replace_assign
+std::string replace_assign(std::string code);
+RcppExport SEXP _AstToAst_replace_assign(SEXP codeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type code(codeSEXP);
+    rcpp_result_gen = Rcpp::wrap(replace_assign(code));
+    return rcpp_result_gen;
+END_RCPP
+}
+// is_fct
+bool is_fct(std::string code);
+RcppExport SEXP _AstToAst_is_fct(SEXP codeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type code(codeSEXP);
+    rcpp_result_gen = Rcpp::wrap(is_fct(code));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 RcppExport SEXP run_testthat_tests(SEXP);
 
@@ -50,6 +72,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_AstToAst_is_assign", (DL_FUNC) &_AstToAst_is_assign, 1},
     {"_AstToAst_stor_var", (DL_FUNC) &_AstToAst_stor_var, 1},
     {"_AstToAst_find_var_at_rhs", (DL_FUNC) &_AstToAst_find_var_at_rhs, 1},
+    {"_AstToAst_replace_assign", (DL_FUNC) &_AstToAst_replace_assign, 1},
+    {"_AstToAst_is_fct", (DL_FUNC) &_AstToAst_is_fct, 1},
     {"run_testthat_tests", (DL_FUNC) &run_testthat_tests, 1},
     {NULL, NULL, 0}
 };

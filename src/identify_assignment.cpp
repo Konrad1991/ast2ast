@@ -44,3 +44,23 @@ std::vector<std::string> find_var_at_rhs(std::vector<std::string> code) {
 
   return res;
 }
+
+// [[Rcpp::export]]
+std::string replace_assign(std::string code) {
+  
+  if(code == "`<-`") {
+    code = "=";
+  }
+  return code;
+}
+
+
+// [[Rcpp::export]]
+bool is_fct(std::string code) {
+  
+  if(code == "`<-`" || code == "`+`" 
+    || code == "`-`" || code == "`*`" || code == "`/`") {
+    return true;
+  }
+  return false;
+}

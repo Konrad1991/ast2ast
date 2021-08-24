@@ -157,3 +157,48 @@ type_of_lhs <- function(code_lines, start_variables_types) {
   
   return(code_lines)
 }
+
+
+
+# ================================================================================
+# function to replace R functions with C++ equivalents
+# ================================================================================
+r_to_cpp_fcts <- function(code_lines) {
+  
+  for(i in seq_along(code_lines) ) {
+    code_lines[[i]][1] <- replace_assign(as.character(code_lines[[i]][1]))
+  }
+  
+  return(code_lines)
+}
+
+
+
+# ================================================================================
+# function to unfold AST
+# ================================================================================
+unfold <- function(code_lines) {
+  unfold_inner <- function(code, index) {
+    if(index > (length(code)) ) {
+      return(code)
+    }
+
+    # does not work! --> Next to do
+    if(is_fct(unlist(quote(code[index]) ) ) ){
+      swap <- code[index]
+      code[index] <- code[index + 1]
+      code[index + 1] <- swap
+      index <- index + 2
+    } else {
+      index <- index + 1
+    }
+      
+    unfold_inner(code, index)
+  }
+  
+  for(i in seq_along(code_lines)) {
+    code_lines[[i]] <- unfold_inner(code_lines[[i]], i)
+  }
+  
+  return(code_lines)
+}
