@@ -177,28 +177,16 @@ r_to_cpp_fcts <- function(code_lines) {
 # ================================================================================
 # function to unfold AST
 # ================================================================================
-unfold <- function(code_lines) {
-  unfold_inner <- function(code, index) {
-    if(index > (length(code)) ) {
-      return(code)
-    }
-
-    # does not work! --> Next to do
-    if(is_fct(unlist(quote(code[index]) ) ) ){
-      swap <- code[index]
-      code[index] <- code[index + 1]
-      code[index + 1] <- swap
-      index <- index + 2
-    } else {
-      index <- index + 1
-    }
-      
-    unfold_inner(code, index)
-  }
+unfold <- function(code_line, index) {
   
-  for(i in seq_along(code_lines)) {
-    code_lines[[i]] <- unfold_inner(code_lines[[i]], i)
-  }
+  if(length(code_line[[index]]) == 3) {
+    return(code_line[[index]])
+  } 
+  print(":::::::::::::::::::::::::::")
+  print(code_line[[index]])
+  print(":::::::::::::::::::::::::::")
+  index <- index + 1
+  unfold(code_line, index)
   
-  return(code_lines)
 }
+
