@@ -187,6 +187,30 @@ unfold <- function(code_line, index) {
   print(":::::::::::::::::::::::::::")
   index <- index + 1
   unfold(code_line, index)
-  
 }
 
+
+# approach is emberassing
+unfold_outer <- function(code_line) {
+  
+  ret <- list()
+  
+  # for(i in seq_along(code_line)) {
+  #   if(length(code_line[[i]]) == 3) {
+  #     ret[[i]] <- unfold(code_line[[i]], 1)  
+  #   }
+  # }
+  run <- TRUE
+  while(run == TRUE) {
+    for(i in seq_along(code_line)) {
+      if(length(code_line[[i]]) == 3) {
+        ret[[i]] <- unfold(code_line[[i]], 1)  
+        run <- TRUE
+      } 
+    }
+    
+    run <- FALSE
+  }
+  
+  return(ret)
+}
