@@ -166,7 +166,7 @@ type_of_lhs <- function(code_lines, start_variables_types) {
 r_to_cpp_fcts <- function(code_lines) {
   
   for(i in seq_along(code_lines) ) {
-    code_lines[[i]][1] <- replace_assign(as.character(code_lines[[i]][1]))
+    code_lines[[i]][1] <- replace_fcts(as.character(code_lines[[i]][1]))
   }
   
   return(code_lines)
@@ -177,40 +177,33 @@ r_to_cpp_fcts <- function(code_lines) {
 # ================================================================================
 # function to unfold AST
 # ================================================================================
-unfold <- function(code_line, index) {
+unfold <- function(code, index) {
   
-  if(length(code_line[[index]]) == 3) {
-    return(code_line[[index]])
-  } 
-  print(":::::::::::::::::::::::::::")
-  print(code_line[[index]])
-  print(":::::::::::::::::::::::::::")
-  index <- index + 1
-  unfold(code_line, index)
-}
-
-
-# approach is emberassing
-unfold_outer <- function(code_line) {
+  temp <- code[[index]]
   
-  ret <- list()
-  
-  # for(i in seq_along(code_line)) {
-  #   if(length(code_line[[i]]) == 3) {
-  #     ret[[i]] <- unfold(code_line[[i]], 1)  
-  #   }
-  # }
-  run <- TRUE
-  while(run == TRUE) {
-    for(i in seq_along(code_line)) {
-      if(length(code_line[[i]]) == 3) {
-        ret[[i]] <- unfold(code_line[[i]], 1)  
-        run <- TRUE
-      } 
-    }
-    
-    run <- FALSE
+  if(length(temp) == 1) {
+    return(temp)
   }
   
-  return(ret)
+  
+  for(i in 1:length(temp)) {
+    if(length(temp[[i]]) == 3) {
+      temp <- temp[[i]]
+      break
+    } 
+  }
+  
+  return(temp)
 }
+
+counter <- 1
+while(counter <= length(one)) {
+  temp <- unfold(one, counter)
+  print(one[[counter]])
+  print("_____________________")  
+  print(temp)
+  print("_____________________")  
+  counter <- counter + 1
+}
+temp
+

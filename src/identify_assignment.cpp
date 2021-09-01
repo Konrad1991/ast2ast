@@ -46,19 +46,29 @@ std::vector<std::string> find_var_at_rhs(std::vector<std::string> code) {
 }
 
 // [[Rcpp::export]]
-std::string replace_assign(std::string code) {
-  
+std::string replace_fcts(std::string code) {
+
   if(code == "`<-`") {
     code = "=";
+  } else if(code == "`+`") {
+    code = "+";
+  } else if(code == "`-`") {
+    code = "-";
+  } else if(code == "`*`") {
+    code = "*";
+  } else if(code == "`/`") {
+    code = "/";
   }
   return code;
 }
 
 
+
+
 // [[Rcpp::export]]
 bool is_fct(std::string code) {
-  
-  if(code == "`<-`" || code == "`+`" 
+
+  if(code == "`<-`" || code == "`+`"
     || code == "`-`" || code == "`*`" || code == "`/`") {
     return true;
   }

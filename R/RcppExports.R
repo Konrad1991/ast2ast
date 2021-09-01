@@ -13,8 +13,8 @@ find_var_at_rhs <- function(code) {
     .Call(`_AstToAst_find_var_at_rhs`, code)
 }
 
-replace_assign <- function(code) {
-    .Call(`_AstToAst_replace_assign`, code)
+replace_fcts <- function(code) {
+    .Call(`_AstToAst_replace_fcts`, code)
 }
 
 is_fct <- function(code) {
