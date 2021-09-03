@@ -207,3 +207,31 @@ while(counter <= length(one)) {
 }
 temp
 
+
+ast2code <- function(code, index) {
+  
+  if(index == length(code)) {
+    return()
+  }
+  
+  for(i in seq_along(code)) {
+    
+    if(is.list(code[[i]])) {
+      ast2code(code[[i]], 1)
+    } else {
+      
+      if(code[[i]] == "=" && i == 1) {
+        #print(paste(code[[i + 1]], code[[i]], sep = " "))
+      } else if(code[[i]] == "+" && i == 1) {
+        #print(paste(code[[i + 1]], code[[i]], code[[i + 2]], sep = " "))
+      } else {
+        #print(code[[i]])  
+      }
+      
+      print(code[[i]])
+    }
+    index <- i
+  }
+  
+}
+
