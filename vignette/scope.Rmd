@@ -16,3 +16,11 @@ The user passes R code which defines the body of the function to be translated. 
 * Translate AST to C++ Code
 
 In C++ an expression template library is used which has scalars, vectors and matrices which behave as much as possible as the corresponding R objects. 
+
+\newpage
+
+![What happens in R](./Rstuff.jpg)
+
+\newpage
+
+![What happens in C++](./cppstuff.jpg)
