@@ -159,6 +159,18 @@ type_of_lhs <- function(code_lines, start_variables_types) {
 }
 
 
+# ================================================================================
+# function to unfold AST
+# ================================================================================
+get_calls <- function(code) {
+  out <- purrr::map_if(code, is.list, get_calls)
+  out <- as.call(out)
+  return(out)
+}
+
+
+
+
 
 # ================================================================================
 # function to replace R functions with C++ equivalents
@@ -171,67 +183,3 @@ r_to_cpp_fcts <- function(code_lines) {
   
   return(code_lines)
 }
-
-
-
-# ================================================================================
-# function to unfold AST
-# ================================================================================
-unfold <- function(code, index) {
-  
-  temp <- code[[index]]
-  
-  if(length(temp) == 1) {
-    return(temp)
-  }
-  
-  
-  for(i in 1:length(temp)) {
-    if(length(temp[[i]]) == 3) {
-      temp <- temp[[i]]
-      break
-    } 
-  }
-  
-  return(temp)
-}
-
-counter <- 1
-while(counter <= length(one)) {
-  temp <- unfold(one, counter)
-  print(one[[counter]])
-  print("_____________________")  
-  print(temp)
-  print("_____________________")  
-  counter <- counter + 1
-}
-temp
-
-
-ast2code <- function(code, index) {
-  
-  if(index == length(code)) {
-    return()
-  }
-  
-  for(i in seq_along(code)) {
-    
-    if(is.list(code[[i]])) {
-      ast2code(code[[i]], 1)
-    } else {
-      
-      if(code[[i]] == "=" && i == 1) {
-        #print(paste(code[[i + 1]], code[[i]], sep = " "))
-      } else if(code[[i]] == "+" && i == 1) {
-        #print(paste(code[[i + 1]], code[[i]], code[[i + 2]], sep = " "))
-      } else {
-        #print(code[[i]])  
-      }
-      
-      print(code[[i]])
-    }
-    index <- i
-  }
-  
-}
-
