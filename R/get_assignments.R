@@ -14,7 +14,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 # 
-# You should have received a copy of the GNU General Public License along with pso
+# You should have received a copy of the GNU General Public License along with ast2ast
 # If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 # ================================================================================
@@ -142,9 +142,12 @@ type_of_lhs <- function(code_lines, start_variables_types) {
           new_type = 2
         }
         
+        index_var <- match(vars_at_lhs[[i]], names(start_variables_types))
+        
         # change the code!
         code_lines[i:(length(code_lines) + 1)] <- c(
-          paste("switch_type(", start_variables_types[[vars_at_lhs[[i]] ]], ", ", new_type, ")", sep = ""), 
+          #paste("switch_type(", start_variables_types[[vars_at_lhs[[i]] ]], ", ", new_type, ")", sep = ""), 
+          paste("switch_type(", names(start_variables_types)[index_var], ", ", new_type, ")", sep = ""), 
           code_lines[i:(length(code_lines))])
       }
     } else { # found a new variable and added it to the list
@@ -157,19 +160,6 @@ type_of_lhs <- function(code_lines, start_variables_types) {
   
   return(code_lines)
 }
-
-
-# ================================================================================
-# function to unfold AST
-# ================================================================================
-get_calls <- function(code) {
-  out <- purrr::map_if(code, is.list, get_calls)
-  out <- as.call(out)
-  return(out)
-}
-
-
-
 
 
 # ================================================================================
