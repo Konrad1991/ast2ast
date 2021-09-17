@@ -7,6 +7,6 @@ Author: Krämer Konrad
 Maintainer: Krämer Konrad <konrad_kraemer@yahoo.de>
 Description: Translates tiny subset of R into Rcpp
 License: GPL 2
-Imports: Rcpp (>= 1.0.4), rlang, purrr, testthat
-LinkingTo: Rcpp, rlang, purrr, testthat
+Imports: Rcpp (>= 1.0.4), rlang, purrr, testthat, rrapply
+LinkingTo: Rcpp, rlang, purrr, testthat, rrapply
 Encoding: UTF-8
