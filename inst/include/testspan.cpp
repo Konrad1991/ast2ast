@@ -49,6 +49,11 @@ class SPAN2 {
     return *(sp + i);
   }
 
+  SPAN2 operator=(double inp) {
+    *sp = inp;
+    return *this;
+  }
+
 };
 
 
@@ -72,8 +77,12 @@ int main() {
   double*& ref = p;
   std::cout << *(s2.sp + 0) << std::endl;
 
-  std::cout << ref[0]<< " " << p[0] << " " << s2[0] << std::endl;
+  s2 = 70;
+  s2.sp[1] =34567;
+  std::cout << ref[0]<< " " << p[0] << " " << s2[0] + s2[1] << std::endl;
 
+  v.data[3] = 345;
+  std::cout << v[3] << std::endl;
 
   delete[] p;
 }
