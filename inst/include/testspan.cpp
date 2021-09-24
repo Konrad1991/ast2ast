@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <vector>
 
 
 class SPAN {
@@ -31,4 +32,13 @@ int main() {
   std::cout << sp[3] << " " << p[3] << std::endl;
 
   delete[] p;
+
+
+
+  std::vector<double> v = {1., 2., 3.};
+
+  SPAN s(v.data(), 2);
+
+  s[0] = 10;
+  std::cout << v[0] << std::endl;
 }
