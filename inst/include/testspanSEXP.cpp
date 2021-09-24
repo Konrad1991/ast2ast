@@ -57,8 +57,7 @@ void test2(SEXP a)
     s[i] = static_cast<double>(i) + 20.;
   }
   
-}
-
+} // modify SEXP by pointer/SPAN 
 
 /*** R
 test(c(1,2,3))
