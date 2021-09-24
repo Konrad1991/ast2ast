@@ -22,7 +22,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #define SPAN_H
 
 #include "util.hpp"
-
+#include "vec.hpp"
 
 /*
 span module
@@ -37,10 +37,12 @@ public:
   R d;
   bool subsetted;
   std::vector<int> indices;
-  SPAN(const int n) : d(n), subsetted(0) {}
-  SPAN(const int n, const double value) : d(n, value), subsetted(0) {}
-  SPAN(const R& other_SPAN) : d(other_SPAN), subsetted(0) {}
-  SPAN() :d(1) {}
+  int size;
+  SPAN(VEC v) {
+    d = v.d.data();
+    subsetted = false;
+    size = v.d.size();
+  }
   // ================================================================
 
 
