@@ -45,6 +45,39 @@ replace_colon <- function(code_lines) {
 }
 
 
+# ================================================================================
+# function to replace <- with =
+# ================================================================================
+replace_arrow <- function(code_lines) {
+  for(i in seq_along(code_lines)) {
+    code <- get_calls(code_lines[[i]])
+    temp <- replacer(code, "<-", "=") 
+    code_lines[[i]] <- extractast(temp)
+  }
+  
+  return(code_lines)
+}
+
+
+# ================================================================================
+# function to replace <, <=, >, >=, ==, != with s, se, l, le, e, ne
+# ================================================================================
+replace_comparison <- function(code_lines) {
+  for(i in seq_along(code_lines)) {
+    code <- get_calls(code_lines[[i]])
+    temp <- replacer(code, "<", "s")
+    temp <- replacer(temp, "<=", "se")
+    temp <- replacer(temp, ">", "l")
+    temp <- replacer(temp, ">=", "le")
+    temp <- replacer(temp, "==", "e")
+    temp <- replacer(temp, "!=", "ne")
+    code_lines[[i]] <- extractast(temp)
+  }
+  
+  return(code_lines)
+}
+
+
 
 # ================================================================================
 # function to replace for loop pattern i in begin:end --> don't know how to implement.... 

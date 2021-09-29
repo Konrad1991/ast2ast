@@ -70,5 +70,10 @@ all_vars <- function(code_lines, start_variables_types) {
     }
   }
   
-  return(names(start_variables_types))
+  temp <- names(start_variables_types)
+  result <- list()
+  for(i in seq_along(temp)) {
+    result[[i]] <- paste("Master", temp[i], ";" sep = " ")
+  }
+  return(result)
 }

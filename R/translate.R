@@ -43,6 +43,8 @@ translate <- function(code, types_input_variables) {
   # replace R functions
   code <- replace_bracket(code)
   code <- replace_colon(code)
+  code <- replace_arrow(code)
+  code <- replace_comparison(code)
   
   # convert to calls
   for(i in seq_along(code)) {
