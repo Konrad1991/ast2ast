@@ -162,14 +162,3 @@ type_of_lhs <- function(code_lines, start_variables_types) {
 }
 
 
-# ================================================================================
-# function to replace R functions with C++ equivalents
-# ================================================================================
-r_to_cpp_fcts <- function(code_lines) {
-  
-  for(i in seq_along(code_lines) ) {
-    code_lines[[i]][1] <- replace_fcts(as.character(code_lines[[i]][1]))
-  }
-  
-  return(code_lines)
-}
