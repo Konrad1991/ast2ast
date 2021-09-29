@@ -55,6 +55,5 @@ replace_for <- function(code_lines) {
     temp <- replacer(code, "in", ":") 
     code_lines[[i]] <- extractast(temp)
   }
-  
   return(code_lines)
 }
