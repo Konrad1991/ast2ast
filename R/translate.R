@@ -49,6 +49,9 @@ translate <- function(code, types_input_variables) {
   # convert to calls
   for(i in seq_along(code)) {
     code[[i]] <- get_calls(code[[i]])
+    code[[i]] <- deparse(code[[i]])
+    code[[i]] <- paste(code[[i]], ";")
+    code[[i]] <- extractast(code[[i]])
   }
   
   result <- list(allvar, code)
