@@ -122,7 +122,6 @@ adding_type <- function(code_lines, variables_types) {
         if(length(new) > 0) {
           code <- get_calls(code_lines[[i]])
           temp <- replacer(code, names[[j]], new) 
-          print(temp)
           code_lines[[i]] <- extractast(temp)
         }
       }
