@@ -21,7 +21,34 @@
 # function called by user
 # ================================================================================
 translate <- function(code, types_input_variables) {
-  var_list <- types_input_variables
   
-  return(var_list)
+  # seperate expressions and get AST
+  code <- sep_expressions(code)
+  code <- extractast(code)
+  
+  # identify storage variables and variables at rhs
+  vars <- storage_variables(test)
+  vars_rhs <- variables_at_rhs(test)
+  
+  # type determination
+  code <- type_of_lhs(code, input_variables)
+  
+  # identify all variables
+  allvar <- all_vars(code, input_variables)
+
+  # simple language object transformation
+  types <- types_of_each_line(code, input_variables)
+  code <- adding_type(new_code, types)
+
+  # replace R functions
+  code <- replace_bracket(code)
+  code <- replace_colon(code)
+  
+  # convert to calls
+  for(i in seq_along(code)) {
+    code[[i]] <- get_calls(code[[i]])
+  }
+
+  result <- list(allvar, code)
+  return(result)
 }

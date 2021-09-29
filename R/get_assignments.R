@@ -145,10 +145,10 @@ type_of_lhs <- function(code_lines, start_variables_types) {
         index_var <- match(vars_at_lhs[[i]], names(start_variables_types))
         
         # change the code!
-        code_lines[i:(length(code_lines) + 1)] <- c(
+      #  code_lines[i:(length(code_lines) + 1)] <- c(
           #paste("switch_type(", start_variables_types[[vars_at_lhs[[i]] ]], ", ", new_type, ")", sep = ""), 
-          paste("switch_type(", names(start_variables_types)[index_var], ", ", new_type, ")", sep = ""), 
-          code_lines[i:(length(code_lines))])
+      #    paste("switch_type(", names(start_variables_types)[index_var], ", ", new_type, ")", sep = ""), 
+      #    code_lines[i:(length(code_lines))])
       }
     } else { # found a new variable and added it to the list
       start_variables_types <- append(start_variables_types, types[i]) 
