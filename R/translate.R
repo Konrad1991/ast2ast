@@ -50,7 +50,7 @@ translate <- function(code, types_input_variables) {
   for(i in seq_along(code)) {
     code[[i]] <- get_calls(code[[i]])
   }
-
+  
   result <- list(allvar, code)
   return(result)
 }
