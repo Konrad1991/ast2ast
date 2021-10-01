@@ -22,13 +22,14 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef ALL
 #define ALL
 
+
 #include "vec.hpp"
 #include "add.hpp"
 #include "mul.hpp"
 #include "divide.hpp"
 #include "subtract.hpp"
-#include "util.hpp"
 #include "matrix.hpp"
+#include "util.hpp"
 
 #define vec VEC<double>
 #define mat MAT<double>

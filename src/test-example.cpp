@@ -23,6 +23,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 
 #include "all.hpp"
+#include "span.hpp"
 
 
 vec add_vec_sca() {
@@ -164,5 +165,20 @@ context("access element as R User index start = 1") {
     for(int i = 1; i <= a.size(); i++) {
         expect_true(a.ui_g(i) + b.ui_g(i) == correct[i -1] );
     }
+  }
+}
+
+
+
+
+context("span from vector") {
+  vec a(range(1, 10));
+  SPAN<double>b(a);
+
+  //b = a;
+
+
+  test_that("access element R user interface") {
+        expect_true(1 == 1);
   }
 }

@@ -13,5 +13,4 @@ int main() {
   a.subset(2, 6) = subset(a, 0,4) + subset(a, 1, 5);
   print(a);
 
-
 }

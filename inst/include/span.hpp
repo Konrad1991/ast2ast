@@ -18,11 +18,26 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with ast2ast
 If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 */
+
 #ifndef SPAN_H
 #define SPAN_H
 
 #include "util.hpp"
 #include "vec.hpp"
+
+
+void realloc(double* p, int size1, int size2) {
+  if(size1 == size2) {
+    return;
+  }
+
+  int min = (size1 > size2) ? size2 : size1;
+  double* temp = new double[size2];
+
+  std::copy(p, p + min, temp);
+  p = temp;
+  delete[] temp;
+}
 
 /*
 span module
@@ -37,11 +52,16 @@ public:
   R d;
   bool subsetted;
   std::vector<int> indices;
-  int size;
-  SPAN(VEC v) {
+  int sz;
+
+  SPAN(const R& other_vec) : sz(other_vec.size()), subsetted(0) {
+    d = other_vec.pointer();
+  }
+
+  SPAN(VEC<double> v) {
     d = v.d.data();
     subsetted = false;
-    size = v.d.size();
+    sz = v.d.size();
   }
   // ================================================================
 
@@ -50,8 +70,8 @@ public:
   // ================================================================
   T& operator=(const T &other_SPAN) {
 
-    while(other_SPAN.size() >= d.size()) {
-      d.push_back(0);
+    if(other_SPAN.size() >= sz) {
+      realloc(d, sz, other_SPAN.size());
     }
 
     if(subsetted == false) {
@@ -71,17 +91,40 @@ public:
   template<typename T2, typename R2>
   SPAN& operator=(const SPAN<T2, R2> &other_SPAN) {
 
-    while(other_SPAN.size() > d.size()) {
-      d.push_back(0);
+    if(other_SPAN.size() >= sz) {
+      realloc(d, sz, other_SPAN.size());
     }
 
     if(subsetted == false) {
-      for(int i = 0; i < d.size(); i++) {
+      for(int i = 0; i < sz; i++) {
         d[i] = other_SPAN[i];
       }
     } else {
       for(int i = 0; i < indices.size(); i++) {
         d[indices[i]] = other_SPAN[i];
+      }
+    }
+
+    subsetted = false;
+
+    return *this;
+  }
+
+
+  template<typename T2, typename R2>
+  SPAN& operator=(const VEC<T2, R2> &other_VEC) {
+
+    if(other_VEC.size() >= sz) {
+      //realloc(d, sz, other_VEC.size());
+    }
+
+    if(subsetted == false) {
+      for(int i = 0; i < sz; i++) {
+        d[i] = other_VEC[i];
+      }
+    } else {
+      for(int i = 0; i < indices.size(); i++) {
+        d[indices[i]] = other_VEC[i];
       }
     }
 
@@ -95,7 +138,7 @@ public:
   // getter methods
   // ================================================================
   int size() const {
-   return d.size();
+   return sz;
  }
 
  T operator[](int i) const {
@@ -124,7 +167,7 @@ public:
  }
 
  int ui_length() {
-   return d.size();
+   return sz;
  }
 
  const R& data() const {
@@ -137,128 +180,6 @@ public:
 // ================================================================
 
 
-// subsetting
-// ================================================================
- void data_sub(std::SPANtor<double>& temp) const{
-    temp.resize(indices.size());
-    for(int i = 0; i < temp.size(); i++) {
-      temp[indices[i]] = d[indices[i]];
-    }
-}
-
-
-SPAN& subset(std::SPANtor<int> inp) {
-   subsetted = true;
-   indices.resize(inp.size());
-   for(int i = 0; i < inp.size(); i++) {
-     indices[i] = inp[i];
-   }
-   return *this;
-}
-
-SPAN& subset(int start, int end) {
-  subsetted = true;
-  indices.resize(end - start + 1);
-  for(int i = 0; i < indices.size(); i++) {
-    indices[i] = start + i;
-  }
-  return *this;
-}
-
-// called by R User --> index start at 1 --> correct?
-SPAN& ui_subset(std::SPANtor<int> inp) {
-   subsetted = true;
-   indices.resize(inp.size());
-   for(int i = 0; i < inp.size(); i++) {
-     indices[i] = inp[i] - 1;
-   }
-   return *this;
-}
-
-// called by R User --> index start at 1
-SPAN& ui_subset(int start, int end) {
-  subsetted = true;
-  indices.resize((end -1) - (start -1) + 1);
-  for(int i = 0; i < indices.size(); i++) {
-    indices[i] = start + i -1;
-  }
-  return *this;
-}
-
-bool is_subsetted() const {
-  return subsetted;
-}
-
-// ================================================================
-
-// plotting
-// ================================================================
-friend std::ostream& operator<<(std::ostream& os, const SPAN& v) {
-  if(v.subsetted == true) {
-    for(int i = 0; i < v.indices.size(); i++) {
-      os << v[v.indices[i]] << std::endl;
-    }
-  } else {
-    for(int i = 0; i < v.size(); i++) {
-      os << v[i] << std::endl;
-    }
-  }
-      return os;
 };
-// ================================================================
-
-};
-
-// subsetting at RHS
-// ================================================================
-SPAN<double> subset(SPAN<double>& inp, int start, int end) {
-  std::SPANtor<double> temp(end - start + 1);
-  for(int i = 0; i < temp.size(); i++) {
-    temp[i] = inp(i + start);
-  }
-  SPAN<double> t(temp);
-  return t;
-}
-
-SPAN<double> ui_subset(SPAN<double>& inp, int start, int end) {
-  std::SPANtor<double> temp( (end -1) - (start -1) + 1);
-  for(int i = 0; i < temp.size(); i++) {
-    temp[i] = inp(i + start) - 1;
-  }
-  SPAN<double> t(temp);
-  return t;
-}
-// ================================================================
-
-// print fct
-// ================================================================
-void print(const SPAN<double>& inp) { // const
-  if(inp.subsetted == true) {
-    for(int i = 0; i < inp.indices.size(); i++) {
-      std::cout << inp[inp.indices[i]] << std::endl;
-    }
-  } else {
-    for(int i = 0; i < inp.size(); i++) {
-      std::cout << inp[i] << std::endl;
-    }
-  }
-}
-
-
-void print(const SPAN<double>& inp, std::string&& message) {
-
-  std::cout << message << std::endl;
-
-  if(inp.subsetted == true) {
-    for(int i = 0; i < inp.indices.size(); i++) {
-      std::cout << inp[inp.indices[i]] << std::endl;
-    }
-  } else {
-    for(int i = 0; i < inp.size(); i++) {
-      std::cout << inp[i] << std::endl;
-    }
-  }
-}
-// ================================================================
 
 #endif
