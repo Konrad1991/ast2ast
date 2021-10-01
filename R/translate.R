@@ -27,8 +27,8 @@ translate <- function(code, types_input_variables) {
   code <- extractast(code)
   
   # identify storage variables and variables at rhs
-  vars <- storage_variables(test)
-  vars_rhs <- variables_at_rhs(test)
+  vars <- storage_variables(code)
+  vars_rhs <- variables_at_rhs(code)
   
   # type determination
   code <- type_of_lhs(code, input_variables)
@@ -38,7 +38,7 @@ translate <- function(code, types_input_variables) {
 
   # simple language object transformation
   types <- types_of_each_line(code, input_variables)
-  code <- adding_type(new_code, types)
+  code <- adding_type(code, types)
 
   # replace R functions
   code <- replace_bracket(code)
@@ -49,9 +49,9 @@ translate <- function(code, types_input_variables) {
   # convert to calls
   for(i in seq_along(code)) {
     code[[i]] <- get_calls(code[[i]])
-    code[[i]] <- deparse(code[[i]])
-    code[[i]] <- paste(code[[i]], ";")
-    code[[i]] <- extractast(code[[i]])
+    #code[[i]] <- deparse(code[[i]])
+    #code[[i]] <- paste(code[[i]], ";")
+    #code[[i]] <- extractast(code[[i]])
   }
   
   result <- list(allvar, code)
