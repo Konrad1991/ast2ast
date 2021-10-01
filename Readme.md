@@ -9,14 +9,14 @@ The aim is to translate a tiny subset of R to Rcpp. The idea is that the user de
 
 ## Current project status (R)
 
-[x] get Abstract syntax tree (ast)
-[x] deduce type based on variables at right hand site (rhs)
-[x] declare variables
-[ ] Initialice variables
-[x] replace R functions with C++ equivalents 
-[ ] replace R for loop with C++ for loop
-[ ] define function signature
-[ ] put everything together 
+- [x] get Abstract syntax tree (ast)
+- [x] deduce type based on variables at right hand site (rhs)
+- [x] declare variables
+- [ ] Initialice variables
+- [x] replace R functions with C++ equivalents 
+- [ ] replace R for loop with C++ for loop
+- [ ] define function signature
+- [ ] put everything together 
 
 ```R
 library(AstToAst)
@@ -75,11 +75,11 @@ res
 
 ## Current project status C++
 
-[x] Vector Class
-[x] Matrix Class
-[ ] Span Class
-[ ] Functions (print, range, subset, etc.)
-[ ] Masterclass
+- [x] Vector Class
+- [x] Matrix Class
+- [ ] Span Class
+- [ ] Functions (print, range, subset, etc.)
+- [ ] Masterclass
 
 
 ## Contribution
