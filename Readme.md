@@ -6,17 +6,7 @@ The aim is to translate a tiny subset of R to Rcpp. The idea is that the user de
 
 **Project is in pre-alpha.**
 
-
-## Current project status (R)
-
-- [x] get Abstract syntax tree (ast)
-- [x] deduce type based on variables at right hand site (rhs)
-- [x] declare variables
-- [x] Initialice variables
-- [x] replace R functions with C++ equivalents 
-- [ ] replace R for loop with C++ for loop
-- [x] define function signature
-- [x] put everything together 
+## Small example 
 
 ```R
 library(AstToAst)
@@ -50,10 +40,23 @@ Master x (SEXP_to_VEC( xSEXP  ), "num" );
 Master z (SEXP_to_VEC( zSEXP  ), "num_mat" );
 y.num_vec = y.num_vec + 1 ;
 print(y.num_vec) ;
-z.num_mat = z.num_mat + z.num_mat ;
+z.num_mat = z.num_mat + z.num_mat ; // (does not work correctly for matrix)
 print(z.num_mat) ;
 }
 ```
+
+## Current project status (R)
+
+- [x] get Abstract syntax tree (ast)
+- [x] deduce type based on variables at right hand site (rhs)
+- [x] declare variables
+- [x] Initialice variables
+- [x] replace R functions with C++ equivalents 
+- [ ] replace R for loop with C++ for loop
+- [x] define function signature
+- [ ] return fct
+- [ ] error checks (e.g. are only allowed functions used etc.)
+- [x] put everything together 
 
 ## Current project status C++
 
