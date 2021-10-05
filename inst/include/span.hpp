@@ -23,27 +23,36 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #define SPAN_H
 
 #include "util.hpp"
-#include "vec.hpp"
 
+template< typename T>
+class SPAN {
 
-void realloc(double* p, int size1, int size2) {
-  if(size1 == size2) {
-    return;
+  T* sp;
+  int sz;
+
+  public:
+  SPAN(T* p, int size_) : sz(size_), sp(p) {}
+
+  T& operator[](int i) {
+    return sp[i];
   }
 
-  int min = (size1 > size2) ? size2 : size1;
-  double* temp = new double[size2];
+  int size() {
+    return sz;
+  }
 
-  std::copy(p, p + min, temp);
-  p = temp;
-  delete[] temp;
-}
+};
+
+
+
+
+
 
 /*
-span module
+Vector module
 */
-template< typename T, typename R = T* >
-class SPAN {
+template< typename T, typename R = SPAN<T> >
+class VECSPAN {
 
 public:
 
@@ -52,35 +61,29 @@ public:
   R d;
   bool subsetted;
   std::vector<int> indices;
-  int sz;
 
-  SPAN(const R& other_vec) : sz(other_vec.size()), subsetted(0) {
-    d = other_vec.pointer();
-  }
-
-  SPAN(VEC<double> v) {
-    d = v.d.data();
-    subsetted = false;
-    sz = v.d.size();
-  }
+  VECSPAN(const int n) : d(n), subsetted(0) {}
+  VECSPAN(const int n, const double value) : d(n, value), subsetted(0) {}
+  VECSPAN(const R& other_vec) : d(other_vec), subsetted(0) {}
+  VECSPAN() :d(1) {}
   // ================================================================
 
 
   // Operator=
   // ================================================================
-  T& operator=(const T &other_SPAN) {
+  T& operator=(const T &other_vec) {
 
-    if(other_SPAN.size() >= sz) {
-      realloc(d, sz, other_SPAN.size());
+    while(other_vec.size() >= d.size()) {
+      d.push_back(0);
     }
 
     if(subsetted == false) {
       for(int i = 0; i < d.size(); i++) {
-        d[i] = other_SPAN[i];
+        d[i] = other_vec[i];
       }
     } else {
       for(int i = 0; i < indices.size(); i++) {
-        d[indices[i]] = other_SPAN[indices[i]];
+        d[indices[i]] = other_vec[indices[i]];
       }
     }
 
@@ -89,42 +92,19 @@ public:
   }
 
   template<typename T2, typename R2>
-  SPAN& operator=(const SPAN<T2, R2> &other_SPAN) {
+  VECSPAN& operator=(const VEC<T2, R2> &other_vec) {
 
-    if(other_SPAN.size() >= sz) {
-      realloc(d, sz, other_SPAN.size());
+    while(other_vec.size() > d.size()) {
+      d.push_back(0);
     }
 
     if(subsetted == false) {
-      for(int i = 0; i < sz; i++) {
-        d[i] = other_SPAN[i];
+      for(int i = 0; i < d.size(); i++) {
+        d[i] = other_vec[i];
       }
     } else {
       for(int i = 0; i < indices.size(); i++) {
-        d[indices[i]] = other_SPAN[i];
-      }
-    }
-
-    subsetted = false;
-
-    return *this;
-  }
-
-
-  template<typename T2, typename R2>
-  SPAN& operator=(const VEC<T2, R2> &other_VEC) {
-
-    if(other_VEC.size() >= sz) {
-      //realloc(d, sz, other_VEC.size());
-    }
-
-    if(subsetted == false) {
-      for(int i = 0; i < sz; i++) {
-        d[i] = other_VEC[i];
-      }
-    } else {
-      for(int i = 0; i < indices.size(); i++) {
-        d[indices[i]] = other_VEC[i];
+        d[indices[i]] = other_vec[i];
       }
     }
 
@@ -138,7 +118,7 @@ public:
   // getter methods
   // ================================================================
   int size() const {
-   return sz;
+   return d.size();
  }
 
  T operator[](int i) const {
@@ -167,7 +147,7 @@ public:
  }
 
  int ui_length() {
-   return sz;
+   return d.size();
  }
 
  const R& data() const {
@@ -177,9 +157,84 @@ public:
  R& data() {
    return d;
  }
+
+ T* pointer() {
+   return d.data();
+ }
 // ================================================================
 
 
+// subsetting
+// ================================================================
+ void data_sub(std::vector<double>& temp) const{
+    temp.resize(indices.size());
+    for(int i = 0; i < temp.size(); i++) {
+      temp[indices[i]] = d[indices[i]];
+    }
+}
+
+
+VECSPAN& subset(std::vector<int> inp) {
+   subsetted = true;
+   indices.resize(inp.size());
+   for(int i = 0; i < inp.size(); i++) {
+     indices[i] = inp[i];
+   }
+   return *this;
+}
+
+VECSPAN& subset(int start, int end) {
+  subsetted = true;
+  indices.resize(end - start + 1);
+  for(int i = 0; i < indices.size(); i++) {
+    indices[i] = start + i;
+  }
+  return *this;
+}
+
+// called by R User --> index start at 1 --> correct?
+VECSPAN& ui_subset(std::vector<int> inp) {
+   subsetted = true;
+   indices.resize(inp.size());
+   for(int i = 0; i < inp.size(); i++) {
+     indices[i] = inp[i] - 1;
+   }
+   return *this;
+}
+
+// called by R User --> index start at 1
+VECSPAN& ui_subset(int start, int end) {
+  subsetted = true;
+  indices.resize((end -1) - (start -1) + 1);
+  for(int i = 0; i < indices.size(); i++) {
+    indices[i] = start + i -1;
+  }
+  return *this;
+}
+
+bool is_subsetted() const {
+  return subsetted;
+}
+
+// ================================================================
+
+// plotting
+// ================================================================
+friend std::ostream& operator<<(std::ostream& os, const VEC& v) {
+  if(v.subsetted == true) {
+    for(int i = 0; i < v.indices.size(); i++) {
+      os << v[v.indices[i]] << std::endl;
+    }
+  } else {
+    for(int i = 0; i < v.size(); i++) {
+      os << v[i] << std::endl;
+    }
+  }
+      return os;
 };
+// ================================================================
+
+};
+
 
 #endif

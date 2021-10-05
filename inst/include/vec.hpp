@@ -23,7 +23,6 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 #include "util.hpp"
 
-
 /*
 Vector module
 */
@@ -37,6 +36,7 @@ public:
   R d;
   bool subsetted;
   std::vector<int> indices;
+
   VEC(const int n) : d(n), subsetted(0) {}
   VEC(const int n, const double value) : d(n, value), subsetted(0) {}
   VEC(const R& other_vec) : d(other_vec), subsetted(0) {}

@@ -77,10 +77,9 @@ res
 
 - [x] Vector Class
 - [x] Matrix Class
-- [ ] Span Class
+- [ ] subset fct implementation
 - [ ] Functions (print, range, subset, etc.)
 - [ ] Masterclass
-- [ ] change datatype from std::vector to raw pointer (in Vector, Matrix and Span Class) (better communication with R)
 
 
 ## Contribution
