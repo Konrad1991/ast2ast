@@ -41,6 +41,15 @@ public:
   VEC(const int n, const double value) : d(n, value), subsetted(0) {}
   VEC(const R& other_vec) : d(other_vec), subsetted(0) {}
   VEC() :d(1) {}
+
+  void vecinit(std::vector<T>& input) {
+    d.resize(input.size());
+    for(int i = 0; i < d.size(); i++) {
+      d[i] = input[i];
+    }
+    subsetted = false;
+  }
+
   // ================================================================
 
 
@@ -234,7 +243,7 @@ VEC<double> ui_subset(VEC<double>& inp, int start, int end) {
 
 // print fct
 // ================================================================
-void print(const VEC<double>& inp) { // const
+void print(VEC<double>& inp) { // const
   if(inp.subsetted == true) {
     for(int i = 0; i < inp.indices.size(); i++) {
       std::cout << inp[inp.indices[i]] << std::endl;
@@ -247,7 +256,7 @@ void print(const VEC<double>& inp) { // const
 }
 
 
-void print(const VEC<double>& inp, std::string&& message) {
+void print(VEC<double>& inp, std::string&& message) {
 
   std::cout << message << std::endl;
 

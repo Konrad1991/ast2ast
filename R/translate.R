@@ -49,11 +49,54 @@ translate <- function(code, types_input_variables) {
   # convert to calls
   for(i in seq_along(code)) {
     code[[i]] <- get_calls(code[[i]])
-    #code[[i]] <- deparse(code[[i]])
-    #code[[i]] <- paste(code[[i]], ";")
-    #code[[i]] <- extractast(code[[i]])
+    code[[i]] <- deparse(code[[i]])
+    code[[i]] <- paste(code[[i]], ";")
+    code[[i]] <- extractast(code[[i]])
   }
+
+  signature <- paste("void fct(")
+  for(i in names(types_input_variables) ) {
+    index <- match(i, names(types_input_variables))
+    temp_i <- paste(i, "SEXP", sep = "")
+    if(index < length(names(types_input_variables))) {
+      signature <- c(signature, paste("SEXP", temp_i, ",") )  
+    } else {
+      signature <- c(signature, paste("SEXP", temp_i) )
+    }
+  }
+  signature <- c(signature, ")")
   
-  result <- list(allvar, code)
-  return(result)
+  result <- c()
+  for(i in seq_along(code) ) {
+    result[[i]] <- as.character(code[[i]])
+  }
+  result <- unlist(result)
+  
+  dependencies <- c(
+  "#include <Rcpp.h>", 
+  "#include <tidyCpp>",
+  "// [[Rcpp::depends(tidyCpp)]]",
+  "// [[Rcpp::depends(AstToAst)]]",
+  "#include \"all.hpp\" ",
+  "// [[Rcpp::export]]")
+  
+  file <- file("result.cpp")
+  for(i in dependencies) {
+    write(i, file = "result.cpp", append = TRUE)
+  }
+  for(i in signature) {
+    write(i, file = "result.cpp", append = TRUE)
+  }
+  write("{", file = "result.cpp", append = TRUE)
+  for(i in allvar) {
+    write(i, file = "result.cpp", append = TRUE)
+  }
+  for(i in result) {
+    write(i, file = "result.cpp", append = TRUE)
+  }
+  write("}", file = "result.cpp", append = TRUE)
+  
+  close(file)
+  
+  return()
 }

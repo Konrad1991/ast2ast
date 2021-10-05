@@ -44,6 +44,16 @@ public:
   MAT(const int rows, const int cols, const double value) : d(rows*cols, value), subsetted(0), nrows(rows), ncols(cols) {}
   MAT(const R& other_MAT) : d(other_MAT), subsetted(0) {}
   MAT() :d(1) {}
+
+
+  void matinit(std::vector<T>& input) {
+    d.resize(input.size());
+    for(int i = 0; i < d.size(); i++) {
+      d[i] = input[i];
+    }
+    subsetted = false;
+  }
+
   // ================================================================
 
 

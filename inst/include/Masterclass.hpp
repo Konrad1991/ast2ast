@@ -15,25 +15,33 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with pso
+You should have received a copy of the GNU General Public License along with ast2ast
 If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 */
+#ifndef MASTER_H
+#define MASTER_H
 
-#ifndef ALL
-#define ALL
+#include "all.hpp"
 
 
-#include "vec.hpp"
-#include "add.hpp"
-#include "mul.hpp"
-#include "divide.hpp"
-#include "subtract.hpp"
-#include "matrix.hpp"
-#include "util.hpp"
-#include "sexp_to_a2a.hpp"
-#include "Masterclass.hpp"
+class Master {
 
-#define vec VEC<double>
-#define mat MAT<double>
+public:
+  VEC<double> num_vec;
+  MAT<double> num_mat;
+  double num;
+
+  // hack
+  Master(std::vector<double> v, std::string type) : num_mat(), num_vec() {
+    if(type == "num_mat") {
+      num_mat.matinit(v);
+    } else if(type == "num_vec") {
+      num_vec.vecinit(v);
+    } else {
+      num = v[0];
+    }
+  }
+
+};
 
 #endif

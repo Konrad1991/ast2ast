@@ -22,6 +22,9 @@
 # function to find all variables
 # ================================================================================
 all_vars <- function(code_lines, start_variables_types) {
+  
+  original_list <- start_variables_types
+  
   vars_rhs <- variables_at_rhs(code_lines)
   
   assign_lines <- get_assignments(code_lines)
@@ -77,7 +80,20 @@ all_vars <- function(code_lines, start_variables_types) {
   
   result <- list()
   for(i in seq_along(temp)) {
-    result[[i]] <- paste("Master", temp[i], ";", sep = " ")
+    indices <- match(temp[i], names(original_list))
+    if(!is.na(indices)) {
+      temp_i <- paste(names(original_list)[i], "SEXP", sep = "")
+      if(original_list[i] == "num_mat") {
+        result[[i]] <- paste("Master", temp[i], "(SEXP_to_VEC(", temp_i, " ), \"num_mat\" );", sep = " ")  
+      } else if(original_list[i] == "num_vec") {
+        result[[i]] <- paste("Master", temp[i], "(SEXP_to_VEC(", temp_i, " ), \"num_vec\" );", sep = " ")  
+      } else {
+        result[[i]] <- paste("Master", temp[i], "(SEXP_to_VEC(", temp_i, " ), \"num\" );", sep = " ")  
+      }
+      
+    }  else {
+      result[[i]] <- paste("Master", temp[i], ";", sep = " ")  
+    }
   }
   return(result)
 }
