@@ -95,5 +95,6 @@ all_vars <- function(code_lines, start_variables_types) {
       result[[i]] <- paste("Master", temp[i], ";", sep = " ")  
     }
   }
+  
   return(result)
 }

@@ -20,17 +20,19 @@ The aim is to translate a tiny subset of R to Rcpp. The idea is that the user de
 
 ```R
 library(AstToAst)
-library(rlang)
 
-input_variables <- list(y = "num_vec") 
+input_variables <- list(y = "num_vec", x = "num", z = "num_mat")
 code <- "y <- y + 1
-         print(y)"
+         print(y)
+         z <- z + z
+         print(z)"
 
-res <- translate(code, list(y = "num_vec", x = "num", z = "num_mat"))
+translate(code, input_variables)
 # creates a file ("result.cpp")
 ```
 
 ```Cpp
+// code in result.cpp
 #include <Rcpp.h>
 #include <tidyCpp>
 // [[Rcpp::depends(tidyCpp)]]
@@ -44,8 +46,12 @@ SEXP zSEXP
 )
 {
 Master y (SEXP_to_VEC( ySEXP  ), "num_vec" );
+Master x (SEXP_to_VEC( xSEXP  ), "num" );
+Master z (SEXP_to_VEC( zSEXP  ), "num_mat" );
 y.num_vec = y.num_vec + 1 ;
 print(y.num_vec) ;
+z.num_mat = z.num_mat + z.num_mat ;
+print(z.num_mat) ;
 }
 ```
 
