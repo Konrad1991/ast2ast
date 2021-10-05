@@ -64,6 +64,7 @@ print(z.num_mat) ;
 - [x] Matrix Class
 - [ ] subset fct implementation
 - [ ] Functions (print, range, subset, etc.)
+- [ ] adding missing features (e.g. matrix + scalar etc.)
 - [x] Masterclass
 
 
