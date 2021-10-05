@@ -27,6 +27,9 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 // [[Rcpp::depends(tidyCpp)]]
 
+// for matrix:
+// https://stat.ethz.ch/pipermail/r-help/2010-January/225472.html
+
 
 std::vector<double> SEXP_to_VEC(SEXP inp) {
     R::Protect pv(R::coerceVectorNumeric(inp));
