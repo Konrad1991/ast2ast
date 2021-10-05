@@ -70,7 +70,11 @@ all_vars <- function(code_lines, start_variables_types) {
     }
   }
   
+  # remove subsets with a hack
   temp <- names(start_variables_types)
+  true <- grepl("[" , temp, fixed = TRUE)
+  temp <- temp[!true]
+  
   result <- list()
   for(i in seq_along(temp)) {
     result[[i]] <- paste("Master", temp[i], ";", sep = " ")
