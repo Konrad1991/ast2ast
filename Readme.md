@@ -63,9 +63,18 @@ print(z.num_mat) ;
 - [x] Vector Class
 - [x] Matrix Class
 - [ ] subset fct implementation
-- [ ] Functions (print, range, subset, etc.)
+- [ ] Functions (print, range, subset, l, le etc.)
 - [ ] adding missing features (e.g. matrix + scalar etc.)
+- [ ] declaration of matrix (dimension has to be transferred)
 - [x] Masterclass
+
+- [ ] Assure that it behaves like R (or at least very similar)
+
+## Later
+
+- [ ] give the possibility to activate side effects (data stored as pointer need extra vector and matrix module)
+- [ ] add math functions (sin, cos, tan, etc.)
+
 
 
 ## Contribution
