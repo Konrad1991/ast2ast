@@ -1,4 +1,4 @@
 library(testthat)
-library(AstToAst)
+library(ast2ast)
 
-test_check("AstToAst")
+test_check("ast2ast")

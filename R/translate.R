@@ -31,13 +31,13 @@ translate <- function(code, types_input_variables) {
   vars_rhs <- variables_at_rhs(code)
   
   # type determination
-  code <- type_of_lhs(code, input_variables)
+  code <- type_of_lhs(code, types_input_variables)
   
   # identify all variables
-  allvar <- all_vars(code, input_variables)
+  allvar <- all_vars(code, types_input_variables)
 
   # simple language object transformation
-  types <- types_of_each_line(code, input_variables)
+  types <- types_of_each_line(code, types_input_variables)
   code <- adding_type(code, types)
 
   # replace R functions
@@ -76,7 +76,7 @@ translate <- function(code, types_input_variables) {
   "#include <Rcpp.h>", 
   "#include <tidyCpp>",
   "// [[Rcpp::depends(tidyCpp)]]",
-  "// [[Rcpp::depends(AstToAst)]]",
+  "// [[Rcpp::depends(ast2ast)]]",
   "#include \"all.hpp\" ",
   "// [[Rcpp::export]]")
   

@@ -12,7 +12,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // is_assign
 bool is_assign(std::vector<std::string> code);
-RcppExport SEXP _AstToAst_is_assign(SEXP codeSEXP) {
+RcppExport SEXP _ast2ast_is_assign(SEXP codeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -23,7 +23,7 @@ END_RCPP
 }
 // stor_var
 std::string stor_var(std::vector<std::string> code);
-RcppExport SEXP _AstToAst_stor_var(SEXP codeSEXP) {
+RcppExport SEXP _ast2ast_stor_var(SEXP codeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -34,7 +34,7 @@ END_RCPP
 }
 // find_var_at_rhs
 std::vector<std::string> find_var_at_rhs(std::vector<std::string> code);
-RcppExport SEXP _AstToAst_find_var_at_rhs(SEXP codeSEXP) {
+RcppExport SEXP _ast2ast_find_var_at_rhs(SEXP codeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -45,7 +45,7 @@ END_RCPP
 }
 // replace_fcts
 std::string replace_fcts(std::string code);
-RcppExport SEXP _AstToAst_replace_fcts(SEXP codeSEXP) {
+RcppExport SEXP _ast2ast_replace_fcts(SEXP codeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -56,7 +56,7 @@ END_RCPP
 }
 // is_fct
 bool is_fct(std::string code);
-RcppExport SEXP _AstToAst_is_fct(SEXP codeSEXP) {
+RcppExport SEXP _ast2ast_is_fct(SEXP codeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -69,16 +69,16 @@ END_RCPP
 RcppExport SEXP run_testthat_tests(SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_AstToAst_is_assign", (DL_FUNC) &_AstToAst_is_assign, 1},
-    {"_AstToAst_stor_var", (DL_FUNC) &_AstToAst_stor_var, 1},
-    {"_AstToAst_find_var_at_rhs", (DL_FUNC) &_AstToAst_find_var_at_rhs, 1},
-    {"_AstToAst_replace_fcts", (DL_FUNC) &_AstToAst_replace_fcts, 1},
-    {"_AstToAst_is_fct", (DL_FUNC) &_AstToAst_is_fct, 1},
+    {"_ast2ast_is_assign", (DL_FUNC) &_ast2ast_is_assign, 1},
+    {"_ast2ast_stor_var", (DL_FUNC) &_ast2ast_stor_var, 1},
+    {"_ast2ast_find_var_at_rhs", (DL_FUNC) &_ast2ast_find_var_at_rhs, 1},
+    {"_ast2ast_replace_fcts", (DL_FUNC) &_ast2ast_replace_fcts, 1},
+    {"_ast2ast_is_fct", (DL_FUNC) &_ast2ast_is_fct, 1},
     {"run_testthat_tests", (DL_FUNC) &run_testthat_tests, 1},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_AstToAst(DllInfo *dll) {
+RcppExport void R_init_ast2ast(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

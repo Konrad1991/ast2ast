@@ -1,6 +1,6 @@
-# R package AstToAst
+# R package ast2ast
 
-## Scope of AstToAst
+## Scope of ast2ast
 
 The aim is to translate a tiny subset of R to Rcpp. The idea is that the user defines a function in R which is translated to an Rcpp function. It is required that the user defines the types of the arguments passed to the function. Thus, the final function **translate** gets two arguments the code itself which defines the body of the function and a named list containing the types. Allowed types are numeric (**num**), a numeric vector (**num_vec**) and a numeric matrix (**num_mat**). This functions can be used e.g. for optimization problems, as ode-function and other application where a function call has to be fast. 
 
@@ -9,7 +9,7 @@ The aim is to translate a tiny subset of R to Rcpp. The idea is that the user de
 ## Small example 
 
 ```R
-library(AstToAst)
+library(ast2ast)
 
 input_variables <- list(y = "num_vec", x = "num", z = "num_mat")
 code <- "y <- y + 1
@@ -26,7 +26,7 @@ translate(code, input_variables)
 #include <Rcpp.h>
 #include <tidyCpp>
 // [[Rcpp::depends(tidyCpp)]]
-// [[Rcpp::depends(AstToAst)]]
+// [[Rcpp::depends(ast2ast)]]
 #include "all.hpp" 
 // [[Rcpp::export]]
 void fct(

@@ -2,22 +2,22 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 is_assign <- function(code) {
-    .Call(`_AstToAst_is_assign`, code)
+    .Call(`_ast2ast_is_assign`, code)
 }
 
 stor_var <- function(code) {
-    .Call(`_AstToAst_stor_var`, code)
+    .Call(`_ast2ast_stor_var`, code)
 }
 
 find_var_at_rhs <- function(code) {
-    .Call(`_AstToAst_find_var_at_rhs`, code)
+    .Call(`_ast2ast_find_var_at_rhs`, code)
 }
 
 replace_fcts <- function(code) {
-    .Call(`_AstToAst_replace_fcts`, code)
+    .Call(`_ast2ast_replace_fcts`, code)
 }
 
 is_fct <- function(code) {
-    .Call(`_AstToAst_is_fct`, code)
+    .Call(`_ast2ast_is_fct`, code)
 }
 

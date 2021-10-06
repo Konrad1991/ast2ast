@@ -5,8 +5,8 @@
 #install.packages("ast2ast", repos = NULL, type = "source")
 
 
-#detach("package:AstToAst", unload = TRUE)
-# library(AstToAst)
+#detach("package:ast2ast", unload = TRUE)
+# library(ast2ast)
 # 
 # input_variables <- list(y = "vec_num", x = "num") # y = vec_num und x = scalar num
 # code <- "y <- y + x

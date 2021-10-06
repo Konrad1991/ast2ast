@@ -7,7 +7,7 @@ test_that("seperation of code works", {
   output <- list()
   output[[1]] <- rlang::expr(y <- 1)
   output[[2]] <- rlang::expr(x <- y + 1)
-  expect_equal(AstToAst::sep_expressions(code), output)
+  expect_equal(ast2ast::sep_expressions(code), output)
 })
 
 
@@ -20,7 +20,7 @@ test_that("AST assignment fct", {
   output[[3]] <- 1
   wrapper <- list()
   wrapper[[1]] <- output
-  seperated_code <- AstToAst::sep_expressions(code)
-  expect_equal(AstToAst::extractast(seperated_code), wrapper)
+  seperated_code <- ast2ast::sep_expressions(code)
+  expect_equal(ast2ast::extractast(seperated_code), wrapper)
 })
 
