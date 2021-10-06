@@ -19,6 +19,13 @@ code <- "y <- y + 1
 
 translate(code, input_variables)
 # creates a file ("result.cpp")
+
+# compile result.cpp
+Rcpp::sourceCpp("result.cpp")
+
+# call transpated and compiled function
+m <- matrix(2,2,2)
+fct(c(1, 2, 3),1,m)
 ```
 
 ```Cpp
