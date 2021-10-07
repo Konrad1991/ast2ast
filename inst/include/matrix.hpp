@@ -45,6 +45,7 @@ public:
   MAT(const R& other_MAT) : d(other_MAT), subsetted(0) {}
   MAT() {}
   MAT(SUBSET<T>&& inp) : d(inp.sub), subsetted(0) {}
+
   MAT(VEC<T>& inp) {
     if(inp.size() > (ncols*nrows)) {
         Rcpp::stop("not compatible sizes detected");

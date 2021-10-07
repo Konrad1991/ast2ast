@@ -41,7 +41,7 @@ public:
   VEC(const int n, const double value) : d(n, value), subsetted(0) {}
   VEC(const R& other_vec) : d(other_vec), subsetted(0) {}
   VEC() {}
-  VEC(std::vector<double>&& inp) : d(inp) {}
+  VEC(std::vector<double>& inp) : d(inp) {}
   VEC(SUBSET<T>& inp) : d(inp.sub), subsetted(0) {}
   //VEC(std::vector<double> inp) : d(inp) {}
   //VEC(const std::vector<double>& inp) : d(inp) {}

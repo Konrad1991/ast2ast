@@ -25,20 +25,15 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "all.hpp"
 
 
-
-vec add_vec_sca() {
-  vec a = range(1., 5.);
-  a = a + 10.;
-  return a;
-}
-
-
 context("Vector Scalar basic calculations") {
-  vec result = range(11., 15.);
+  vec a = range(1, 3);
+  a = a + 3.;
+
+  std::vector<double> result{4., 5., 6};
 
   test_that("Vector + scalar") {
     for(int i = 0; i < result.size(); i++) {
-        expect_true(add_vec_sca()[i] == result[i]);
+        expect_true(result[i] == a[i]);
     }
   }
 }
@@ -204,7 +199,7 @@ context("vector subset") {
   vec a = range(1., 6.);
   vec b = range(0., 5.);
   vec result(8, 0.);
-  //subset(result, 1, 3, "self") = subset(a, 0, 2) + subset(b, 2, 4);
+  subset(result, 1, 3, "self") = subset(a, 0, 2) + subset(b, 2, 4);
   std::vector<double> v{3, 5, 7};
   vec correct(v);
 
@@ -213,4 +208,27 @@ context("vector subset") {
         expect_true(result[i] == correct[i]);
     }
   }
+}
+
+
+
+
+
+
+context("vector subset2") {
+  vec a = range(1., 6.);
+  vec b = range(0., 5.);
+  vec result;
+
+  result = subset(a, 1, 2) + subset(b, 2, 3)/1.;
+
+  std::vector<double> v{4, 6};
+  vec correct(v);
+
+  test_that("Vector subset2") {
+    for(int i = 0; i < correct.size(); i++) {
+        expect_true(result[i] == correct[i]);
+    }
+  }
+
 }
