@@ -44,6 +44,17 @@ public:
   MAT(const int rows, const int cols, const double value) : d(rows*cols, value), subsetted(0), nrows(rows), ncols(cols) {}
   MAT(const R& other_MAT) : d(other_MAT), subsetted(0) {}
   MAT() {}
+  MAT(SUBSET<T>&& inp) : d(inp.sub), subsetted(0) {}
+  MAT(VEC<T>& inp) {
+    if(inp.size() > (ncols*nrows)) {
+        Rcpp::stop("not compatible sizes detected");
+    }
+
+    for(int i = 0; i < inp.size(); i++) {
+      d[i] = inp[i];
+    }
+
+  }
 
 
   void matinit(SEXP2MAT input) {
@@ -74,6 +85,28 @@ public:
     } else {
       for(int i = 0; i < indices.size(); i++) {
         d[indices[i]] = other_MAT[indices[i]];
+      }
+    }
+
+    subsetted = false;
+    return *this;
+  }
+
+
+  MAT& operator=(const SUBSET<T> other_mat) {
+
+    while(other_mat.sub.size() >= d.size()) {
+      d.push_back(0);
+    }
+
+    if(subsetted == false) {
+      for(int i = 0; i < d.size(); i++) {
+        d[i] = other_mat.sub[i];
+      }
+    } else {
+
+      for(int i = 0; i < indices.size(); i++) {
+        d[indices[i]] = other_mat.sub[indices[i]];
       }
     }
 
@@ -239,14 +272,33 @@ friend std::ostream& operator<<(std::ostream& os, const MAT& v) {
 
 // subsetting at RHS
 // ================================================================
-MAT<double> subset(MAT<double>& inp, int start_row, int end_row, int start_col, int end_col) {
-  std::vector<double> temp( (end_row - start_row + 1)*(end_col - start_col + 1) );
-  for(int i = 0; i < temp.size(); i++) {
-    temp[i] = inp(i + start_row + start_col);
+SUBSET<double> subset(MAT<double>& inp, int start_row, int end_row, int start_col, int end_col) {
+  SUBSET<double> t;
+  t.sub.resize((end_row - start_row + 1)*(end_col - start_col + 1));
+
+  for(int i = 0; i < t.sub.size(); i++) {
+    t.sub[i] = inp(i + start_row + start_col);
   }
-  MAT<double> t(temp);
+  t.nrows = end_row - start_row;
+  t.ncols = end_col - start_col;
+
   return t;
 }
+
+
+// subsetting at LHS
+// ================================================================
+MAT<double>& subset(MAT<double>& inp, int start_row, int end_row, int start_col, int end_col, std::string self) {
+
+  inp.subsetted = true;
+  inp.indices.resize((end_row - start_row + 1)*(end_col - start_col + 1) );
+  for(int i = 0; i < inp.indices.size(); i++) {
+    inp.indices[i] = start_row + start_col + i;
+  }
+  return inp;
+}
+
+
 
 VEC<double> get_row(MAT<double>& inp, int row) {
   VEC<double> t(inp.ncols);

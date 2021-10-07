@@ -159,6 +159,11 @@ VEC< T, VSDIV< T, L, R > > operator/(const MAT<T, L>& a, const R& b) {
     return VEC<T, VSDIV<T, L, R> > (VSDIV<T, L, R>(a.data(), b ) );
 }
 
+template<typename T, typename L, typename R>
+VEC< T, VSDIV< T, L, R > > operator/(const SUBSET<T, L>& a, const R& b) {
+    return VEC<T, VSDIV<T, L, R> > (VSDIV<T, L, R>(a.sub, b ) );
+}
+
 
 
 template<typename T, typename L, typename R>
@@ -193,6 +198,12 @@ VEC< T, SVDIV< T, L, R > > operator/(const L& a, const VEC<T, R>& b) {
 template<typename T, typename L, typename R>
 VEC< T, SVDIV< T, L, R > > operator/(const L& a, const MAT<T, R>& b) {
     return VEC<T, SVDIV<T, L, R> > (SVPLUS<T, L, R>(a, b.data() ) );
+}
+
+// new
+template<typename T, typename L, typename R>
+VEC< T, SVDIV< T, L, R > > operator/(const L& a, const SUBSET<T, R>& b) {
+    return VEC<T, SVDIV<T, L, R> > (SVPLUS<T, L, R>(a, b.sub ) );
 }
 
 #endif
