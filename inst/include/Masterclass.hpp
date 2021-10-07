@@ -33,13 +33,15 @@ public:
 
   // hack
   Master(std::vector<double> v, std::string type) : num_mat(), num_vec() {
-    if(type == "num_mat") {
-      num_mat.matinit(v);
-    } else if(type == "num_vec") {
+    if(type == "num_vec") {
       num_vec.vecinit(v);
     } else {
       num = v[0];
     }
+  }
+
+  Master(SEXP2MAT input) : num_mat() {
+    num_mat.matinit(input);
   }
 
 };

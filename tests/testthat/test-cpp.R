@@ -1,1 +1,1 @@
-#run_cpp_tests("ast2ast")
+run_cpp_tests("ast2ast")

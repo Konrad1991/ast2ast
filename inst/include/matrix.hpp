@@ -43,15 +43,17 @@ public:
   MAT(const int rows, const int cols) : d(rows*cols), subsetted(0), nrows(rows), ncols(cols) {}
   MAT(const int rows, const int cols, const double value) : d(rows*cols, value), subsetted(0), nrows(rows), ncols(cols) {}
   MAT(const R& other_MAT) : d(other_MAT), subsetted(0) {}
-  MAT() :d(1) {}
+  MAT() {}
 
 
-  void matinit(std::vector<T>& input) {
-    d.resize(input.size());
+  void matinit(SEXP2MAT input) {
+    d.resize(input.v.size());
     for(int i = 0; i < d.size(); i++) {
-      d[i] = input[i];
+      d[i] = input.v[i];
     }
     subsetted = false;
+    ncols = input.ncols;
+    nrows = input.nrows;
   }
 
   // ================================================================

@@ -23,7 +23,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 
 #include "all.hpp"
-#include "span.hpp"
+
 
 
 vec add_vec_sca() {
@@ -122,6 +122,84 @@ context("vector - vector") {
 
 
 
+context("matrix + scalar") {
+  mat m(2, 2, 3.0);
+
+  m = m + 3.;
+
+  vec correct(4, 6.0);
+
+  test_that("matrix + scalar") {
+    for(int i = 0; i < m.size(); i++) {
+        expect_true(m[i] == correct[i]);
+    }
+  }
+}
+
+
+
+context("scalar - matrix") {
+  mat m(2, 2, 3.0);
+
+  m = m - 3.;
+
+  vec correct(4, 0.0);
+
+  test_that("scalar - matrix") {
+    for(int i = 0; i < m.size(); i++) {
+        expect_true(m[i] == correct[i]);
+    }
+  }
+}
+
+
+context("scalar - vector") {
+  vec v(3, 4.0);
+
+  v = v - 3.;
+
+  vec correct(4, 1.0);
+
+  test_that("scalar - vector") {
+    for(int i = 0; i < v.size(); i++) {
+        expect_true(v[i] == correct[i]);
+    }
+  }
+}
+
+
+
+context("vector + matrix") {
+  vec v(9,  2.0);
+  mat m1(3, 3, 2.);
+  mat m2(3, 3, 2.);
+
+  m1 = m1 + v;
+  v = m2 + v;
+  test_that("scalar - vector") {
+    for(int i = 0; i < m1.size(); i++) {
+        expect_true(m1[i] == v[i]);
+    }
+  }
+}
+
+
+
+context("long calculation with matrix, vector and scalar") {
+  vec v(9,  9.0);
+  mat m(3, 3, 2.);
+  mat res(3, 3, 0.); // matrix has to be initialized!!!
+
+  res = m*3. + v/3. - (v/m)*2.;
+
+  test_that("long calculation with matrix, vector and scalar") {
+    for(int i = 0; i < res.size(); i++) {
+        expect_true(res[i] == 0.);
+    }
+  }
+}
+
+
 context("vector subset") {
   vec a(range(1., 6.));
   vec b(range(0., 5.));
@@ -171,14 +249,24 @@ context("access element as R User index start = 1") {
 
 
 
-context("span from vector") {
-  vec a(range(1, 10));
-  SPAN<double>b(a);
-
-  //b = a;
 
 
-  test_that("access element R user interface") {
-        expect_true(1 == 1);
+
+
+
+context("subset as R user") {
+  vec a(4, 3.);
+  vec b(4, 5.);
+
+  subset(a, 1, 2, "self") = subset(b, 1, 2);
+
+  for(int i = 0; i < a.size(); i++) {
+    std::cout << a[i] << " " << b[i] << std::endl;
+  }
+
+  test_that("subset as R user") {
+    for(int i = 1; i <= 2; i++) {
+        expect_true(a[i] == b[i]);
+    }
   }
 }

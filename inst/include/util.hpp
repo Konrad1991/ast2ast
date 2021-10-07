@@ -51,4 +51,11 @@ void print() {
   std::cout << std::endl;
 }
 
+
+struct SEXP2MAT {
+  std::vector<double> v;
+  int ncols;
+  int nrows;
+};
+
 #endif

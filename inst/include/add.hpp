@@ -127,6 +127,13 @@ VEC< T, VSPLUS< T, L, R > > operator+(const VEC<T, L>& a, const R& b) {
 }
 
 
+// new
+template<typename T, typename L, typename R>
+VEC< T, VSPLUS< T, L, R > > operator+(const MAT<T, L>& a, const R& b) {
+    return VEC<T, VSPLUS<T, L, R> > (VSPLUS<T, L, R>(a.data(), b ) );
+}
+
+
 
 template<typename T, typename L, typename R>
 class SVPLUS {
@@ -152,6 +159,13 @@ public:
 
 template<typename T, typename L, typename R>
 VEC< T, SVPLUS< T, L, R > > operator+(const L& a, const VEC<T, R>& b) {
+    return VEC<T, SVPLUS<T, L, R> > (SVPLUS<T, L, R>(a, b.data() ) );
+}
+
+
+// new
+template<typename T, typename L, typename R>
+VEC< T, SVPLUS< T, L, R > > operator+(const L& a, const MAT<T, R>& b) {
     return VEC<T, SVPLUS<T, L, R> > (SVPLUS<T, L, R>(a, b.data() ) );
 }
 

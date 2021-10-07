@@ -37,10 +37,10 @@ public:
   bool subsetted;
   std::vector<int> indices;
 
-  VEC(const int n) : d(n), subsetted(0) {}
-  VEC(const int n, const double value) : d(n, value), subsetted(0) {}
-  VEC(const R& other_vec) : d(other_vec), subsetted(0) {}
-  VEC() :d(1) {}
+  VEC(const int n) : d(n), subsetted(0) {std::cout << "test3" << std::endl;}
+  VEC(const int n, const double value) : d(n, value), subsetted(0) {std::cout << "test4" << std::endl;}
+  //VEC(const R& other_vec) : d(other_vec), subsetted(0) {std::cout << "test5" << std::endl;}
+  VEC() {}
 
   void vecinit(std::vector<T>& input) {
     d.resize(input.size());
@@ -56,7 +56,7 @@ public:
   // Operator=
   // ================================================================
   T& operator=(const T &other_vec) {
-
+    std::cout << "test1" << std::endl;
     while(other_vec.size() >= d.size()) {
       d.push_back(0);
     }
@@ -66,6 +66,7 @@ public:
         d[i] = other_vec[i];
       }
     } else {
+
       for(int i = 0; i < indices.size(); i++) {
         d[indices[i]] = other_vec[indices[i]];
       }
@@ -77,6 +78,7 @@ public:
 
   template<typename T2, typename R2>
   VEC& operator=(const VEC<T2, R2> &other_vec) {
+    std::cout << "test2" << std::endl;
 
     while(other_vec.size() > d.size()) {
       d.push_back(0);
@@ -220,25 +222,47 @@ friend std::ostream& operator<<(std::ostream& os, const VEC& v) {
 
 };
 
+
+
+
 // subsetting at RHS
 // ================================================================
+
 VEC<double> subset(VEC<double>& inp, int start, int end) {
-  std::vector<double> temp(end - start + 1);
-  for(int i = 0; i < temp.size(); i++) {
-    temp[i] = inp(i + start);
+
+  VEC<double> t(end - start + 1);
+
+  for(int i = 0; i < t.size(); i++) {
+    t[i] = inp(i + start);
   }
-  VEC<double> t(temp);
   return t;
 }
 
+
 VEC<double> ui_subset(VEC<double>& inp, int start, int end) {
-  std::vector<double> temp( (end -1) - (start -1) + 1);
-  for(int i = 0; i < temp.size(); i++) {
-    temp[i] = inp(i + start) - 1;
+  VEC<double> t(end - start + 1);
+
+  for(int i = 0; i < t.size(); i++) {
+    t[i] = inp(i + start);
   }
-  VEC<double> t(temp);
   return t;
 }
+
+
+// subsetting at LHS
+// ================================================================
+
+VEC<double>& subset(VEC<double>& inp, int start, int end, std::string self) {
+
+  inp.subsetted = true;
+  inp.indices.resize((end -1) - (start -1) + 1);
+  for(int i = 0; i < inp.indices.size(); i++) {
+    inp.indices[i] = start + i -1;
+  }
+  return inp;
+}
+
+
 // ================================================================
 
 // print fct
