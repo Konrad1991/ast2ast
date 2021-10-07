@@ -36,4 +36,12 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #define vec VEC<double>
 #define mat MAT<double>
 
+VEC<double> c(int start, int end) {
+  VEC<double> ret(end - start + 1);
+  for(int i = 0; i < ret.size(); i++) {
+    ret[i] = start + static_cast<double>(i);
+  }
+  return ret;
+}
+
 #endif

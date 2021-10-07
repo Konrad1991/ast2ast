@@ -249,22 +249,18 @@ MAT<double> subset(MAT<double>& inp, int start_row, int end_row, int start_col, 
 }
 
 VEC<double> get_row(MAT<double>& inp, int row) {
-  std::vector<double> temp(inp.ncols);
-  for(int i = 0; i < temp.size(); i++) {
-    temp[i] = inp(i + i*inp.ncols + 1);
+  VEC<double> t(inp.ncols);
+  for(int i = 0; i < t.size(); i++) {
+    t[i] = inp(i + i*inp.ncols + 1);
   }
-  VEC<double> t(temp);
-
   return t;
 }
 
 VEC<double> get_col(MAT<double>& inp, int col) {
-  std::vector<double> temp(inp.nrows);
-  for(int i = 0; i < temp.size(); i++) {
-    temp[i] = inp(i + i*inp.nrows + 1);
+  VEC<double> t(inp.nrows);
+  for(int i = 0; i < t.size(); i++) {
+    t[i] = inp(i + i*inp.nrows + 1);
   }
-  VEC<double> t(temp);
-
   return t;
 }
 
