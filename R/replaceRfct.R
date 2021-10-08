@@ -21,9 +21,10 @@
 # function to replace [ with subset
 # ================================================================================
 replace_bracket <- function(code_lines) {
+  assign_lines <- get_assignments(code_lines)
   for(i in seq_along(code_lines)) {
     code <- get_calls(code_lines[[i]])
-    temp <- replacer(code, "[", "subset") 
+    temp <- replacer(code, "[", "subset")   
     code_lines[[i]] <- extractast(temp)
   }
   
