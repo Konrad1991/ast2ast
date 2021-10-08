@@ -2,7 +2,7 @@
 
 ## Overview
 
-The aim is to translate a tiny subset of R to Rcpp. The user passes R code and the types of the arguments for the function. Possible types are numeric (**num**), a numeric vector (**num_vec**) and a numeric matrix (**num_mat**).
+The aim is to translate a tiny subset of R to Rcpp. The user passes R code and the types of the arguments for the function. Possible types are numeric (*num*), a numeric vector (*num_vec*) and a numeric matrix (*num_mat*).
 
 ## Motivation
 
