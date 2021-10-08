@@ -342,12 +342,17 @@ void print(const MAT<double>& inp) { // const
       }
     }
   } else {
-    for(int i = 0; i < inp.size(); i++) {
-      std::cout << inp[i] << "\t";
-      if( (i % inp.ncols) == inp.nrows) {
-        std::cout << std::endl;
+
+    for(int i = 0; i < inp.nrows; i++) {
+      for(int j = 0; j < inp.ncols; j++) {
+        std::cout << inp.d[i*inp.nrows + j] << "\t";
       }
+        std::cout << std::endl;
     }
+
+
+
+
   }
 }
 
