@@ -40,7 +40,7 @@ public:
     }
   }
 
-  Master(SEXP2MAT input) : num_mat() {
+  Master(SEXP2MAT input, std::string type) : num_mat() {
     num_mat.matinit(input);
   }
 
