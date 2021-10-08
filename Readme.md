@@ -58,7 +58,7 @@ Master x (SEXP_to_VEC( xSEXP  ), "num" );
 Master z (SEXP_to_VEC( zSEXP  ), "num_mat" );
 y.num_vec = y.num_vec + 1 ;
 print(y.num_vec) ;
-z.num_mat = z.num_mat + z.num_mat ; // (does not work correctly for matrix)
+z.num_mat = z.num_mat + z.num_mat ; 
 print(z.num_mat) ;
 }
 ```
