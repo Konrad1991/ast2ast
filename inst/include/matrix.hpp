@@ -300,6 +300,17 @@ MAT<double>& subset(MAT<double>& inp, int start_row, int end_row, int start_col,
 }
 
 
+MAT<double>& subset_self(MAT<double>& inp, int start_row, int end_row, int start_col, int end_col) {
+
+  inp.subsetted = true;
+  inp.indices.resize((end_row - start_row + 1)*(end_col - start_col + 1) );
+  for(int i = 0; i < inp.indices.size(); i++) {
+    inp.indices[i] = start_row + start_col + i;
+  }
+  return inp;
+}
+
+
 
 VEC<double> get_row(MAT<double>& inp, int row) {
   VEC<double> t(inp.ncols);

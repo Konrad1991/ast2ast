@@ -1,234 +1,35 @@
 /*
-R package ast2ast
-Copyright (C) 2021 Konrad Krämer
+ * This file uses the Catch unit testing library, alongside
+ * testthat's simple bindings, to test a C++ function.
+ *
+ * For your own packages, ensure that your test files are
+ * placed within the `src/` folder, and that you include
+ * `LinkingTo: testthat` within your DESCRIPTION file.
+ */
 
-This file is part of R package ast2ast
-
-
-ast2ast is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along with pso
-If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
-*/
-
+// All test files should include the <testthat.h>
+// header file.
 #include <testthat.h>
 
-
-#include "all.hpp"
-
-
-context("Vector Scalar basic calculations") {
-  vec a = range(1, 3);
-  a = a + 3.;
-
-  std::vector<double> result{4., 5., 6};
-
-  test_that("Vector + scalar") {
-    for(int i = 0; i < result.size(); i++) {
-        expect_true(result[i] == a[i]);
-    }
-  }
+// Normally this would be a function from your package's
+// compiled library -- you might instead just include a header
+// file providing the definition, and let R CMD INSTALL
+// handle building and linking.
+int twoPlusTwo() {
+  return 2 + 2;
 }
 
+// Initialize a unit test context. This is similar to how you
+// might begin an R test file with 'context()', expect the
+// associated context should be wrapped in braced.
+context("Sample unit tests") {
 
-vec add_vec_vec() {
-  vec a = range(1., 5.);
-  a = a + a;
-  return a;
-}
-context("Vector Vector basic calculations") {
-  std::vector<double> res{2., 4., 6., 8., 10.};
-  vec result = res;
-
-  test_that("Vector + vector") {
-    for(int i = 0; i < result.size(); i++) {
-        expect_true(add_vec_vec()[i] == result[i]);
-    }
-  }
-}
-
-
-context("larger vector + shorter vector basic calculations") {
-  vec larger = range(1., 6.);
-  vec shorter = range(1., 3.);
-  vec result(5);
-  result = larger + shorter;
-  std::vector<double> correct_result{2, 4, 6, 5, 7, 9};
-
-  test_that("Vector + vector") {
-    for(int i = 0; i < result.size(); i++) {
-        expect_true(result[i] == correct_result[i]);
-    }
-  }
-}
-
-
-
-
-context("shorter vector + larger vector basic calculations") {
-  vec larger = range(1., 6.);
-  vec shorter = range(1., 3.);
-  vec result(6);
-  result = shorter + larger;
-  std::vector<double> correct_result{2, 4, 6, 5, 7, 9};
-
-  test_that("Vector + vector") {
-    for(int i = 0; i < result.size(); i++) {
-        expect_true(result[i] == correct_result[i]);
-    }
-  }
-}
-
-
-context("incompatible vectors") {
-  vec a = range(1., 6.);
-  vec b = range(1., 5.);
-  test_that("incompatible vectors") {
-        expect_error(a + b);
-        expect_error(a -b);
-        expect_error(a/b);
-        expect_error(a*b);
-  }
-}
-
-
-
-context("vector - vector") {
-  vec a = range(1., 6.);
-  vec b =range(0., 5.);
-  vec result(6);
-  result = a - b;
-  vec correct(6, 1.);
-
-  test_that("Vector - vector") {
-    for(int i = 0; i < result.size(); i++) {
-        expect_true(result[i] == correct[i]);
-    }
-  }
-}
-
-
-
-context("matrix + scalar") {
-  mat m(2, 2, 3.0);
-
-  m = m + 3.;
-
-  vec correct(4, 6.0);
-
-  test_that("matrix + scalar") {
-    for(int i = 0; i < m.size(); i++) {
-        expect_true(m[i] == correct[i]);
-    }
-  }
-}
-
-
-
-context("scalar - matrix") {
-  mat m(2, 2, 3.0);
-
-  m = m - 3.;
-
-  vec correct(4, 0.0);
-
-  test_that("scalar - matrix") {
-    for(int i = 0; i < m.size(); i++) {
-        expect_true(m[i] == correct[i]);
-    }
-  }
-}
-
-
-context("scalar - vector") {
-  vec v(3, 4.0);
-
-  v = v - 3.;
-
-  vec correct(4, 1.0);
-
-  test_that("scalar - vector") {
-    for(int i = 0; i < v.size(); i++) {
-        expect_true(v[i] == correct[i]);
-    }
-  }
-}
-
-
-
-context("vector + matrix") {
-  vec v(9,  2.0);
-  mat m1(3, 3, 2.);
-  mat m2(3, 3, 2.);
-
-  m1 = m1 + v;
-  v = m2 + v;
-  test_that("scalar - vector") {
-    for(int i = 0; i < m1.size(); i++) {
-        expect_true(m1[i] == v[i]);
-    }
-  }
-}
-
-
-
-context("long calculation with matrix, vector and scalar") {
-  vec v(9,  9.0);
-  mat m(3, 3, 2.);
-  mat res(3, 3, 0.); // matrix has to be initialized!!!
-
-  res = m*3. + v/3. - (v/m)*2.;
-
-  test_that("long calculation with matrix, vector and scalar") {
-    for(int i = 0; i < res.size(); i++) {
-        expect_true(res[i] == 0.);
-    }
-  }
-}
-
-
-context("vector subset") {
-  vec a = range(1., 6.);
-  vec b = range(0., 5.);
-  vec result(8, 0.);
-  subset(result, 1, 3, "self") = subset(a, 0, 2) + subset(b, 2, 4);
-  std::vector<double> v{3, 5, 7};
-  vec correct(v);
-
-  test_that("Vector subset") {
-    for(int i = 0; i < correct.size(); i++) {
-        expect_true(result[i] == correct[i]);
-    }
-  }
-}
-
-
-
-
-
-
-context("vector subset2") {
-  vec a = range(1., 6.);
-  vec b = range(0., 5.);
-  vec result;
-
-  result = subset(a, 1, 2) + subset(b, 2, 3)/1.;
-
-  std::vector<double> v{4, 6};
-  vec correct(v);
-
-  test_that("Vector subset2") {
-    for(int i = 0; i < correct.size(); i++) {
-        expect_true(result[i] == correct[i]);
-    }
+  // The format for specifying tests is similar to that of
+  // testthat's R functions. Use 'test_that()' to define a
+  // unit test, and use 'expect_true()' and 'expect_false()'
+  // to test the desired conditions.
+  test_that("two plus two equals four") {
+    expect_true(twoPlusTwo() == 4);
   }
 
 }

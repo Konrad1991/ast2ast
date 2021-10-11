@@ -40,8 +40,8 @@ public:
   VEC(const int n) : d(n), subsetted(0) {}
   VEC(const int n, const double value) : d(n, value), subsetted(0) {}
   VEC(const R& other_vec) : d(other_vec), subsetted(0) {}
-  VEC() {}
-  VEC(std::vector<double>& inp) : d(inp) {}
+  VEC() : subsetted(0) {}
+  VEC(std::vector<double>& inp) : d(inp), subsetted(0) {}
   VEC(SUBSET<T>& inp) : d(inp.sub), subsetted(0) {}
   //VEC(std::vector<double> inp) : d(inp) {}
   //VEC(const std::vector<double>& inp) : d(inp) {}
@@ -83,14 +83,17 @@ public:
 
   VEC& operator=(const SUBSET<T> other_vec) {
 
-    while(other_vec.sub.size() >= d.size()) {
+    while(other_vec.sub.size() > d.size()) { // >=
       d.push_back(0);
     }
+
+    std::cout << "test" << " "  << d.size() << " " << this -> subsetted << " " << true << std::endl;
 
     if(subsetted == false) {
       for(int i = 0; i < d.size(); i++) {
         d[i] = other_vec.sub[i];
       }
+      std::cout << "test" << " "  << d.size() << std::endl;
     } else {
 
       for(int i = 0; i < indices.size(); i++) {
@@ -254,7 +257,19 @@ friend std::ostream& operator<<(std::ostream& os, const VEC& v) {
 // subsetting at RHS
 // ================================================================
 SUBSET<double> subset(VEC<double>& inp, int start, int end) {
+  /*
   SUBSET<double> t;
+  t.sub.resize(end - start + 1);
+
+  for(int i = 0; i < t.sub.size(); i++) {
+    t.sub[i] = inp(i + start);
+  }
+  return t;
+
+  */
+  SUBSET<double> t;
+  start--;
+  end--;
   t.sub.resize(end - start + 1);
 
   for(int i = 0; i < t.sub.size(); i++) {
@@ -279,6 +294,17 @@ SUBSET<double> ui_subset(VEC<double>& inp, int start, int end) {
 // ================================================================
 
 VEC<double>& subset(VEC<double>& inp, int start, int end, std::string self) {
+
+  inp.subsetted = true;
+  inp.indices.resize((end -1) - (start -1) + 1);
+  for(int i = 0; i < inp.indices.size(); i++) {
+    inp.indices[i] = start + i -1;
+  }
+  return inp;
+}
+
+
+VEC<double>& subset_self(VEC<double>& inp, int start, int end) {
 
   inp.subsetted = true;
   inp.indices.resize((end -1) - (start -1) + 1);
