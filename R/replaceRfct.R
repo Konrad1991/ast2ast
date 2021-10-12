@@ -32,6 +32,26 @@ replace_bracket <- function(code_lines) {
 }
 
 
+
+# ================================================================================
+# function to replace subset with subset_self
+# ================================================================================
+replace_bracket2 <- function(code_lines) {
+  assign_lines <- get_assignments(code_lines)
+  for(i in seq_along(code_lines)) {
+    if(code_lines[[i]][[1]] == as.name("<-") &&
+       (code_lines[[i]][[2]] == "subset")) {
+      
+      code <- get_calls(code_lines[[i]][[2]])
+      temp <- replacer(code, "subset", "subset_self")   
+      code_lines[[i]][[2]] <- extractast(temp)
+    }
+  }
+  
+  return(code_lines)
+}
+
+
 # ================================================================================
 # function to replace : with range
 # ================================================================================

@@ -42,6 +42,7 @@ translate <- function(code, types_input_variables) {
 
   # replace R functions
   code <- replace_bracket(code)
+  code <- replace_bracket2(code)
   code <- replace_colon(code)
   code <- replace_arrow(code)
   code <- replace_comparison(code)

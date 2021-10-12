@@ -154,11 +154,36 @@ type_of_lhs <- function(code_lines, start_variables_types) {
       start_variables_types <- append(start_variables_types, types[i]) 
       names(start_variables_types)[length(start_variables_types)] <- vars_at_lhs[[i]]
     }
-      
+     
     }
   }
   
   return(code_lines)
 }
 
+
+
+
+# ================================================================================
+# function to replace [ with subset_self
+# ================================================================================
+subset_self_replacement <- function(code_lines) {
+  assign_lines <- get_assignments(code_lines)
+  # loop over assign lines
+  for(i in seq_along(assign_lines)) {
+    
+    # determine type due to vars at rhs
+    if( (assign_lines[i] == TRUE) ) {
+      temp <- code_lines[[i]]
+      for(j in seq_along(temp)) {
+        print(is.call(temp[[j]]))
+        if(is.call(temp[[j]])) {
+          print("test")
+        }
+      }
+    }
+  }
+  
+  return(code_lines)
+}
 
