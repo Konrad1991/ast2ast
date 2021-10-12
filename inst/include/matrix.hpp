@@ -289,6 +289,15 @@ SUBSET<double> subset(MAT<double>& inp, int start_row, int end_row, int start_co
 }
 
 
+
+
+
+
+double subset(MAT<double>& inp, int row, int col) {
+  return inp(row + col);
+}
+
+
 // subsetting at LHS
 // ================================================================
 MAT<double>& subset(MAT<double>& inp, int start_row, int end_row, int start_col, int end_col, std::string self) {
@@ -311,6 +320,19 @@ MAT<double>& subset_self(MAT<double>& inp, int start_row, int end_row, int start
   }
   return inp;
 }
+
+
+MAT<double>& subset_self(MAT<double>& inp, int row, int col) {
+
+  inp.subsetted = true;
+  inp.indices.resize((row + 1)*(col + 1) );
+  for(int i = 0; i < inp.indices.size(); i++) {
+    inp.indices[i] = row + col + i;
+  }
+  return inp;
+}
+
+
 
 
 

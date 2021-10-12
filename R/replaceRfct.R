@@ -39,7 +39,7 @@ replace_bracket <- function(code_lines) {
 replace_bracket2 <- function(code_lines) {
   assign_lines <- get_assignments(code_lines)
   for(i in seq_along(code_lines)) {
-    if(code_lines[[i]][[1]] == as.name("<-") &&
+    if( code_lines[[i]][[1]] == as.name("=") &&
        (code_lines[[i]][[2]] == "subset")) {
       
       code <- get_calls(code_lines[[i]][[2]])

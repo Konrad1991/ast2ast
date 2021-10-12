@@ -75,4 +75,16 @@ struct SUBSET {
   }
 };
 
+
+
+void print(std::string inp) {
+  Rcpp::Rcout << inp << std::endl;
+}
+
+
+void print(double inp){
+  Rcpp::Rcout << inp << std::endl;
+}
+
+
 #endif
