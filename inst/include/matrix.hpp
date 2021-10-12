@@ -43,8 +43,9 @@ public:
   MAT(const int rows, const int cols) : d(rows*cols), subsetted(0), nrows(rows), ncols(cols) {}
   MAT(const int rows, const int cols, const double value) : d(rows*cols, value), subsetted(0), nrows(rows), ncols(cols) {}
   MAT(const R& other_MAT) : d(other_MAT), subsetted(0) {}
-  MAT() {}
+  MAT() : subsetted(0), nrows(0), ncols(0) {}
   MAT(SUBSET<T>&& inp) : d(inp.sub), subsetted(0) {}
+
 
   MAT(VEC<T>& inp) {
     if(inp.size() > (ncols*nrows)) {

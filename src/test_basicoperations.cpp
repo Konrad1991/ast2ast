@@ -118,4 +118,18 @@ context("Basic operations plus") {
   }
 
 
+  mat m1(2, 2, 3.);
+  mat m2(2, 2, 4.);
+
+  mat m3;
+  m3 = m1 + m2;
+  std::vector<double> result7(4, 7.);
+
+  test_that("Matrix + matrix") {
+    for(int i = 0; i < result7.size(); i++) {
+        expect_true(result7[i] == m[i]);
+    }
+  }
+
+
 }
