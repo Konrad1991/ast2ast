@@ -118,7 +118,8 @@ public:
 
   template<typename T2, typename R2>
   MAT& operator=(const VEC<T2, R2> &other_MAT) { // other mat stored as VEC
-
+    ncols = other_MAT.ncols;
+    nrows = other_MAT.nrows;
     while(other_MAT.size() > d.size()) {
       d.push_back(0);
     }

@@ -117,19 +117,31 @@ context("Basic operations plus") {
     }
   }
 
+  n = range(1, 4);
+  n = n + subset(o, 1, 4);
+  std::vector<double> result6_1{2., 4., 6., 8.};
+  test_that("Vector + subset") {
+    for(int i = 0; i < result6_1.size(); i++) {
+        expect_true(result6_1[i] == n[i]);
+    }
+  }
+
+
 
   mat m1(2, 2, 3.);
   mat m2(2, 2, 4.);
 
   mat m3;
   m3 = m1 + m2;
-  std::vector<double> result7(4, 7.);
+  std::vector<double> result7{7., 7., 7., 7.};
 
   test_that("Matrix + matrix") {
     for(int i = 0; i < result7.size(); i++) {
-        expect_true(result7[i] == m[i]);
+        expect_true(result7[i] == m3[i]);
     }
   }
+
+
 
 
 }

@@ -37,9 +37,14 @@ public:
   bool subsetted;
   std::vector<int> indices;
 
+  // for Matrix
+  int ncols;
+  int nrows;
+
   VEC(const int n) : d(n), subsetted(0) {}
   VEC(const int n, const double value) : d(n, value), subsetted(0) {}
   VEC(const R& other_vec) : d(other_vec), subsetted(0) {}
+  VEC(const R& mat, int nrows_, int ncols_) : d(mat), subsetted(0), ncols(ncols_), nrows(nrows_) {}
   VEC() : subsetted(0) {}
   VEC(std::vector<double>& inp) : d(inp), subsetted(0) {}
   VEC(SUBSET<T>& inp) : d(inp.sub), subsetted(0) {}

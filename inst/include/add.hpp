@@ -94,20 +94,23 @@ VEC< T, VVPLUS< T, L, R > > operator+(const MAT<T, L>& a, const VEC<T, R>& b) {
     return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.data(), b.data() ) );
 }
 
-template<typename T, typename L, typename R>
-VEC< T, VVPLUS< T, L, R > > operator+(const MAT<T, L>& a, const MAT<T, R>& b) {
-    return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.data(), b.data() ) );
-}
-
-
 
 /*
 template<typename T, typename L, typename R>
 VEC< T, VVPLUS< T, L, R > > operator+(const MAT<T, L>& a, const MAT<T, R>& b) {
-    return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.data(), b.data(), a.nrows, a.ncols, b.nrows, b.ncols) );
+    return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.data(), b.data() ) );
+}
+*/
+
+
+
+template<typename T, typename L, typename R>
+VEC< T, VVPLUS< T, L, R > > operator+(const MAT<T, L>& a, const MAT<T, R>& b) {
+    return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.data(), b.data()), a.nrows, a.ncols) ; // a and b have to be compatible
 }
 // and add constructor in VVPLUS class --> thus the dimension information is passed
-*/
+// add it to vector?!
+
 
 
 // new
