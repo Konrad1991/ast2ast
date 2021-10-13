@@ -1,0 +1,85 @@
+---
+title: "ToDO ast2ast"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Dokumentation
+
+* delete function statt -1 oder so
+* Unterschiede in vec, mat zu vector, matrix ausführlich erklären
+* translate function
+
+# R
+
+* Möglichkeit vector oder matrix neu in Body zu implementieren
+* Typswitch failes wenn vec v = num --> hier muss dann in num speichern
+* num als Vektor speichern
+
+
+
+
+# C++
+
+* subsetting check index
+* subsetting check for matrix
+* subsetting mit Vektor als Argument
+* Concatenating
+* check out of index
+* subset_self = num funktioniert nicht. SUBSET muss evtl. class werden und braucht constructor
+* Initialisierung vs. operator= sauberer
+* int double problematik
+* übertragung dimension von mat in vektor bei +,-,* und /
+
+
+
+# Kombinationen
+
+Diese Kombinationen müssen für:
+
+* +,-,*,/
+* concatenate
+* range
+* print
+* subset
+* etc.
+
+gegeben sein
+
+n + k - 1 über k
+n = gesamtzahl --> n = 4
+k anzahl pro gruppe --> k = 2
+5 über 2
+
+n über k --> fakultät(n) / (fakultät(k)*fakultät(n-k))
+factorial(5) / (factorial(2)*factorial(5-2)) #10
+dabei wird aber nicht berücksichtigt, dass mat double ungleich double mat ist
+Es sind also 20 insgesamt.
+Aber da double double, mat mat, vec vec und sub sub egal sind von der Reihenfolge sind es 16!
+
+* vec vec
+* double vec
+* vec double
+* vec mat
+* mat vec
+* vec sub
+* sub vec
+
+* mat mat
+* double mat
+* mat double
+* mat sub
+* sub mat
+
+* sub sub
+* double sub
+* sub double
+
+es fehlt eins aber welches?
+
+
+
+
