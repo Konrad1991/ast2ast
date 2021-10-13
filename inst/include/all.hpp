@@ -22,7 +22,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef ALL
 #define ALL
 
-
+// [[Rcpp::plugins(cpp17)]]                                        
 #include "vec.hpp"
 #include "add.hpp"
 #include "mul.hpp"
@@ -33,6 +33,8 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "sexp_to_a2a.hpp"
 #include "Masterclass.hpp"
 #include "subset.hpp"
+#include "print.hpp"
+#include "concatenate.hpp"
 
 
 #define vec VEC<double>
@@ -45,5 +47,9 @@ VEC<double> c(int start, int end) {
   }
   return ret;
 }
+
+
+
+
 
 #endif

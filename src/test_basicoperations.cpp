@@ -145,3 +145,182 @@ context("Basic operations plus") {
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+context("Concatenation") {
+
+  vec v1 = range(1, 3);
+  vec v2 = range(4, 6);
+  vec v3 = concatenate(v1, v2);
+  std::vector<double> result1{1.,2.,3., 4., 5., 6.};
+
+  test_that("vec vec") {
+    for(int i = 0; i < result1.size(); i++) {
+        expect_true(result1[i] == v3[i]);
+    }
+  }
+
+  vec v4 = concatenate(v1, 4.0);
+  std::vector<double> result2{1.,2.,3., 4.};
+
+  test_that("vec double") {
+    for(int i = 0; i < result2.size(); i++) {
+        expect_true(result2[i] == v4[i]);
+    }
+  }
+
+  vec v5 = concatenate(4.0, v1);
+  std::vector<double> result3{4.0 ,1.,2.,3.};
+
+  test_that("double vec") {
+    for(int i = 0; i < result3.size(); i++) {
+        expect_true(result3[i] == v5[i]);
+    }
+  }
+
+  mat m1(2, 2, 500.);
+  vec v6 = concatenate(v1, m1);
+  std::vector<double> result4{1.,2.,3., 500., 500., 500., 500.};
+
+  test_that("vec mat") {
+    for(int i = 0; i < result4.size(); i++) {
+        expect_true(result4[i] == v6[i]);
+    }
+  }
+
+  mat m2(2, 2, 500.);
+  vec v7 = concatenate(m2, v1);
+  std::vector<double> result5{500., 500., 500., 500.,1.,2.,3.};
+
+  test_that("mat vec") {
+    for(int i = 0; i < result5.size(); i++) {
+        expect_true(result5[i] == v7[i]);
+    }
+  }
+
+
+
+  vec v8 = range(1, 10);
+  vec v9 = concatenate(v1, subset(v8, 1, 2));
+  std::vector<double> result6{1.,2.,3., 1., 2.};
+
+  test_that("vec sub") {
+    for(int i = 0; i < result6.size(); i++) {
+        expect_true(result6[i] == v9[i]);
+    }
+  }
+
+
+  v9 = concatenate(subset(v8, 1, 2), v1);
+  std::vector<double> result7{1., 2., 1.,2.,3.};
+
+  test_that("vec sub") {
+    for(int i = 0; i < result7.size(); i++) {
+        expect_true(result7[i] == v9[i]);
+    }
+  }
+
+  vec v10 = concatenate(m1, m2);
+  std::vector<double> result8{500., 500., 500., 500., 500., 500., 500., 500.};
+
+  test_that("mat mat") {
+    for(int i = 0; i < result8.size(); i++) {
+        expect_true(result8[i] == v10[i]);
+    }
+  }
+
+
+  vec v11 = concatenate(m1, 200.);
+  std::vector<double> result9{500., 500., 500., 500.,200.};
+
+  test_that("mat double") {
+    for(int i = 0; i < result9.size(); i++) {
+        expect_true(result9[i] == v11[i]);
+    }
+  }
+
+
+  vec v12 = concatenate(200., m1);
+  std::vector<double> result10{200., 500., 500., 500., 500.};
+
+  test_that("double mat") {
+    for(int i = 0; i < result10.size(); i++) {
+        expect_true(result10[i] == v12[i]);
+    }
+  }
+
+
+
+  vec v13 = concatenate(m1, subset(v8, 1, 2));
+  std::vector<double> result11{ 500., 500., 500., 500., 1., 2.};
+
+  test_that("mat subset") {
+    for(int i = 0; i < result11.size(); i++) {
+        expect_true(result11[i] == v13[i]);
+    }
+  }
+
+
+  vec v14 = concatenate(subset(v8, 1, 2), m1);
+  std::vector<double> result12{1., 2., 500., 500., 500., 500.};
+
+  test_that("subset mat") {
+    for(int i = 0; i < result12.size(); i++) {
+        expect_true(result12[i] == v14[i]);
+    }
+  }
+
+
+
+  vec v15 = concatenate(subset(v8, 1, 2), subset(v1, 1, 2));
+  std::vector<double> result13{1., 2., 1., 2.};
+
+  test_that("subset subset") {
+    for(int i = 0; i < result13.size(); i++) {
+        expect_true(result13[i] == v15[i]);
+    }
+  }
+
+
+
+  vec v16 = concatenate(100., subset(v8, 1, 2));
+  std::vector<double> result14{100., 1., 2.};
+
+  test_that("double subset") {
+    for(int i = 0; i < result14.size(); i++) {
+        expect_true(result14[i] == v16[i]);
+    }
+  }
+
+
+  vec v17 = concatenate(subset(v8, 1, 2), 100.);
+  std::vector<double> result15{1., 2., 100.};
+
+  test_that("subset double") {
+    for(int i = 0; i < result15.size(); i++) {
+        expect_true(result15[i] == v17[i]);
+    }
+  }
+
+
+
+
+
+
+
+
+}
