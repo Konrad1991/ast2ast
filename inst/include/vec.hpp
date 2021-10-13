@@ -220,39 +220,4 @@ friend std::ostream& operator<<(std::ostream& os, const VEC& v) {
 };
 
 
-// Vector
-// print fct
-// ================================================================
-void print(VEC<double>& inp) { // const
-  if(inp.subsetted == true) {
-    for(int i = 0; i < inp.indices.size(); i++) {
-      std::cout << inp[inp.indices[i]] << std::endl;
-    }
-  } else {
-    for(int i = 0; i < inp.size(); i++) {
-      std::cout << inp[i] << std::endl;
-    }
-  }
-}
-
-
-void print(VEC<double>& inp, std::string&& message) {
-
-  std::cout << message << std::endl;
-
-  if(inp.subsetted == true) {
-    for(int i = 0; i < inp.indices.size(); i++) {
-      std::cout << inp[inp.indices[i]] << std::endl;
-    }
-  } else {
-    for(int i = 0; i < inp.size(); i++) {
-      std::cout << inp[i] << std::endl;
-    }
-  }
-}
-// ================================================================
-
-
-
-
 #endif
