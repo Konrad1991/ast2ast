@@ -76,7 +76,6 @@ struct SUBSET {
 };
 
 
-
 void print(std::string inp) {
   Rcpp::Rcout << inp << std::endl;
 }
@@ -85,6 +84,5 @@ void print(std::string inp) {
 void print(double inp){
   Rcpp::Rcout << inp << std::endl;
 }
-
 
 #endif

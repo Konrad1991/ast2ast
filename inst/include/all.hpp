@@ -32,6 +32,8 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "util.hpp"
 #include "sexp_to_a2a.hpp"
 #include "Masterclass.hpp"
+#include "subset.hpp"
+
 
 #define vec VEC<double>
 #define mat MAT<double>

@@ -53,7 +53,6 @@ public:
       for(int i = 0; i < d.size(); i++) {
         d[i] = inp;
       }
-      std::cout << "test" << " "  << d.size() << std::endl;
     } else {
 
       for(int i = 0; i < indices.size(); i++) {
@@ -196,55 +195,6 @@ public:
  }
 // ================================================================
 
-
-// subsetting
-// ================================================================
- void data_sub(std::vector<double>& temp) const{
-    temp.resize(indices.size());
-    for(int i = 0; i < temp.size(); i++) {
-      temp[indices[i]] = d[indices[i]];
-    }
-}
-
-
-VEC& subset(std::vector<int> inp) {
-   subsetted = true;
-   indices.resize(inp.size());
-   for(int i = 0; i < inp.size(); i++) {
-     indices[i] = inp[i];
-   }
-   return *this;
-}
-
-VEC& subset(int start, int end) {
-  subsetted = true;
-  indices.resize(end - start + 1);
-  for(int i = 0; i < indices.size(); i++) {
-    indices[i] = start + i;
-  }
-  return *this;
-}
-
-// called by R User --> index start at 1 --> correct?
-VEC& ui_subset(std::vector<int> inp) {
-   subsetted = true;
-   indices.resize(inp.size());
-   for(int i = 0; i < inp.size(); i++) {
-     indices[i] = inp[i] - 1;
-   }
-   return *this;
-}
-
-// called by R User --> index start at 1
-VEC& ui_subset(int start, int end) {
-  subsetted = true;
-  indices.resize((end -1) - (start -1) + 1);
-  for(int i = 0; i < indices.size(); i++) {
-    indices[i] = start + i -1;
-  }
-  return *this;
-}
-
 bool is_subsetted() const {
   return subsetted;
 }
@@ -270,130 +220,7 @@ friend std::ostream& operator<<(std::ostream& os, const VEC& v) {
 };
 
 
-
-
-// subsetting at RHS
-// ================================================================
-SUBSET<double> subset(VEC<double>& inp, int start, int end) {
-  /*
-  SUBSET<double> t;
-  t.sub.resize(end - start + 1);
-
-  for(int i = 0; i < t.sub.size(); i++) {
-    t.sub[i] = inp(i + start);
-  }
-  return t;
-
-  */
-  SUBSET<double> t;
-  start--;
-  end--;
-  t.sub.resize(end - start + 1);
-
-  for(int i = 0; i < t.sub.size(); i++) {
-    t.sub[i] = inp(i + start);
-  }
-  return t;
-}
-
-
-SUBSET<double> subset(VEC<double>& inp, std::vector<int>& ip) {
-
-  SUBSET<double> t;
-  int start = ip[0] - 1;
-  int end = ip.back() - 1;
-  t.sub.resize(end - start + 1);
-
-  for(int i = 0; i < t.sub.size(); i++) {
-    t.sub[i] = inp(i + start);
-  }
-  return t;
-}
-
-
-SUBSET<double> subset(VEC<double>& inp, int pos) {
-
-  SUBSET<double> t;
-  int start = pos -1;
-  int end = pos - 1;
-  t.sub.resize(end - start + 1);
-
-  for(int i = 0; i < t.sub.size(); i++) {
-    t.sub[i] = inp(i + start);
-  }
-  return t;
-}
-
-
-
-
-SUBSET<double> ui_subset(VEC<double>& inp, int start, int end) {
-  SUBSET<double> t;
-  t.sub.resize(end - start + 1);
-
-  for(int i = 0; i < t.sub.size(); i++) {
-    t.sub[i] = inp(i + start);
-  }
-  return t;
-}
-
-
-// subsetting at LHS
-// ================================================================
-
-VEC<double>& subset(VEC<double>& inp, int start, int end, std::string self) {
-
-  inp.subsetted = true;
-  inp.indices.resize((end -1) - (start -1) + 1);
-  for(int i = 0; i < inp.indices.size(); i++) {
-    inp.indices[i] = start + i -1;
-  }
-  return inp;
-}
-
-
-VEC<double>& subset_self(VEC<double>& inp, int start, int end) {
-
-  inp.subsetted = true;
-  inp.indices.resize((end -1) - (start -1) + 1);
-  for(int i = 0; i < inp.indices.size(); i++) {
-    inp.indices[i] = start + i -1;
-  }
-  return inp;
-}
-
-
-VEC<double>& subset_self(VEC<double>& inp, std::vector<double>& ip) {
-
-  int start = ip[0] - 1;
-  int end = ip.back() - 1;
-
-  inp.subsetted = true;
-  inp.indices.resize((end -1) - (start -1) + 1);
-  for(int i = 0; i < inp.indices.size(); i++) {
-    inp.indices[i] = start + i -1;
-  }
-  return inp;
-}
-
-
-
-VEC<double>& subset_self(VEC<double>& inp, int pos) {
-
-  int start = pos - 1;
-  int end = start;
-
-  inp.subsetted = true;
-  inp.indices.resize((end -1) - (start -1) + 1);
-  for(int i = 0; i < inp.indices.size(); i++) {
-    inp.indices[i] = start + i -1;
-  }
-  return inp;
-}
-
-
-// ================================================================
-
+// Vector
 // print fct
 // ================================================================
 void print(VEC<double>& inp) { // const
@@ -424,5 +251,8 @@ void print(VEC<double>& inp, std::string&& message) {
   }
 }
 // ================================================================
+
+
+
 
 #endif

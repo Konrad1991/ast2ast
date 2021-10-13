@@ -202,46 +202,6 @@ public:
  }
 // ================================================================
 
-
-// subsetting
-// ================================================================
-MAT& subset(std::vector<int> rows, std::vector<int> cols) {
-   subsetted = true;
-   indices.resize(rows.size() + cols.size());
-   for(int i = 0; i < indices.size(); i++) {
-     indices[i] = ncols*(cols[i]) + (rows[i]) - (cols[i]);
-   }
-   return *this;
-}
-
-MAT& subset(int start_row, int end_row, int start_col, int end_col) {
-  subsetted = true;
-  indices.resize( (end_row - start_row + 1)*(end_col - start_col + 1) );
-  for(int i = 0; i < indices.size(); i++) {
-    indices[i] = start_row + start_col + i;
-  }
-  return *this;
-}
-
-// called by R User --> index start at 1
-MAT& ui_subset(std::vector<int> rows, std::vector<int> cols) {
-   subsetted = true;
-   indices.resize(rows.size() + cols.size());
-   for(int i = 0; i < indices.size(); i++) {
-     indices[i] = ncols*(cols[i]) + (rows[i]) - (cols[i]) - 1;
-   }
-   return *this;
-}
-
-MAT& ui_subset(int start_row, int end_row, int start_col, int end_col) {
-  subsetted = true;
-  indices.resize( (end_row -1 - start_row -1 + 1)*(end_col -1 - start_col -1 + 1) );
-  for(int i = 0; i < indices.size(); i++) {
-    indices[i] = start_row + start_col + i -1;
-  }
-  return *this;
-}
-
 bool is_subsetted() const {
   return subsetted;
 }
@@ -273,99 +233,11 @@ friend std::ostream& operator<<(std::ostream& os, const MAT& v) {
 
 };
 
-// subsetting at RHS
-// ================================================================
-SUBSET<double> subset(MAT<double>& inp, int start_row, int end_row, int start_col, int end_col) {
-  SUBSET<double> t;
-  t.sub.resize((end_row - start_row + 1)*(end_col - start_col + 1));
-
-  for(int i = 0; i < t.sub.size(); i++) {
-    t.sub[i] = inp(i + start_row + start_col);
-  }
-  t.nrows = end_row - start_row;
-  t.ncols = end_col - start_col;
-
-  return t;
-}
 
 
 
 
-
-
-double subset(MAT<double>& inp, int row, int col) {
-  return inp(row + col);
-}
-
-
-// subsetting at LHS
-// ================================================================
-MAT<double>& subset(MAT<double>& inp, int start_row, int end_row, int start_col, int end_col, std::string self) {
-
-  inp.subsetted = true;
-  inp.indices.resize((end_row - start_row + 1)*(end_col - start_col + 1) );
-  for(int i = 0; i < inp.indices.size(); i++) {
-    inp.indices[i] = start_row + start_col + i;
-  }
-  return inp;
-}
-
-
-MAT<double>& subset_self(MAT<double>& inp, int start_row, int end_row, int start_col, int end_col) {
-
-  inp.subsetted = true;
-  inp.indices.resize((end_row - start_row + 1)*(end_col - start_col + 1) );
-  for(int i = 0; i < inp.indices.size(); i++) {
-    inp.indices[i] = start_row + start_col + i;
-  }
-  return inp;
-}
-
-
-MAT<double>& subset_self(MAT<double>& inp, int row, int col) {
-
-  inp.subsetted = true;
-  inp.indices.resize((row + 1)*(col + 1) );
-  for(int i = 0; i < inp.indices.size(); i++) {
-    inp.indices[i] = row + col + i;
-  }
-  return inp;
-}
-
-
-
-
-
-VEC<double> get_row(MAT<double>& inp, int row) {
-  VEC<double> t(inp.ncols);
-  for(int i = 0; i < t.size(); i++) {
-    t[i] = inp(i + i*inp.ncols + 1);
-  }
-  return t;
-}
-
-VEC<double> get_col(MAT<double>& inp, int col) {
-  VEC<double> t(inp.nrows);
-  for(int i = 0; i < t.size(); i++) {
-    t[i] = inp(i + i*inp.nrows + 1);
-  }
-  return t;
-}
-
-// R user
-MAT<double> ui_subset(MAT<double>& inp, int start_row, int end_row, int start_col, int end_col) {
-  std::vector<double> temp((end_row -1 - start_row -1 + 1)*(end_col -1 - start_col -1 + 1));
-  for(int i = 0; i < temp.size(); i++) {
-    temp[i] = inp(i + start_row + start_col) -1;
-  }
-  MAT<double> t(temp);
-  return t;
-}
-
-
-
-// ================================================================
-
+// Matrix
 // print fct
 // ================================================================
 void print(const MAT<double>& inp) { // const
@@ -413,5 +285,7 @@ void print(const MAT<double>& inp, std::string&& message) {
   }
 }
 // ================================================================
+
+
 
 #endif
