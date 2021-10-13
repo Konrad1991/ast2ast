@@ -45,13 +45,6 @@ std::vector<double> range(int start, int end) {
   return ret;
 }
 
-
-// print empty line
-void print() {
-  std::cout << std::endl;
-}
-
-
 struct SEXP2MAT {
   std::vector<double> v;
   int ncols;
@@ -65,6 +58,7 @@ struct SUBSET {
   // for matrix
   int ncols;
   int nrows;
+  bool matrix;
 
   R& data() {
     return sub.data();
@@ -74,15 +68,5 @@ struct SUBSET {
     return sub.size();
   }
 };
-
-
-void print(std::string inp) {
-  Rcpp::Rcout << inp << std::endl;
-}
-
-
-void print(double inp){
-  Rcpp::Rcout << inp << std::endl;
-}
 
 #endif

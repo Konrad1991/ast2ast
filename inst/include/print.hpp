@@ -25,34 +25,35 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 #include "matrix.hpp"
 
+// print empty line
+void print() {
+  std::cout << std::endl;
+}
+
+void print(std::string inp) {
+  Rcpp::Rcout << inp << std::endl;
+}
+
+
+void print(double inp){
+  Rcpp::Rcout << inp << std::endl;
+}
+
+
 // Vector
 // print fct
 // ================================================================
 void print(VEC<double>& inp) { // const
-  if(inp.subsetted == true) {
-    for(int i = 0; i < inp.indices.size(); i++) {
-      std::cout << inp[inp.indices[i]] << std::endl;
-    }
-  } else {
     for(int i = 0; i < inp.size(); i++) {
       std::cout << inp[i] << std::endl;
     }
-  }
 }
 
-
 void print(VEC<double>& inp, std::string&& message) {
-
   std::cout << message << std::endl;
 
-  if(inp.subsetted == true) {
-    for(int i = 0; i < inp.indices.size(); i++) {
-      std::cout << inp[inp.indices[i]] << std::endl;
-    }
-  } else {
-    for(int i = 0; i < inp.size(); i++) {
-      std::cout << inp[i] << std::endl;
-    }
+  for(int i = 0; i < inp.size(); i++) {
+    std::cout << inp[i] << std::endl;
   }
 }
 // ================================================================
@@ -62,53 +63,65 @@ void print(VEC<double>& inp, std::string&& message) {
 // print fct
 // ================================================================
 void print(const MAT<double>& inp) { // const
-  if(inp.subsetted == true) {
-    for(int i = 0; i < inp.indices.size(); i++) {
-      std::cout << inp[inp.indices[i]] << "\t";
-      if( (i % inp.ncols) == inp.nrows) {
-        std::cout << std::endl;
-      }
-    }
-  } else {
-
     for(int i = 0; i < inp.nrows; i++) {
       for(int j = 0; j < inp.ncols; j++) {
         std::cout << inp.d[i*inp.nrows + j] << "\t";
       }
         std::cout << std::endl;
     }
-
-
-
-
-  }
 }
 
 
 void print(const MAT<double>& inp, std::string&& message) {
 
   std::cout << message << std::endl;
-
-  if(inp.subsetted == true) {
-    for(int i = 0; i < inp.indices.size(); i++) {
-      std::cout << inp[inp.indices[i]] << "\t";
-      if(i % inp.ncols == inp.nrows) {
-        std::cout << std::endl;
-      }
+  for(int i = 0; i < inp.nrows; i++) {
+    for(int j = 0; j < inp.ncols; j++) {
+      std::cout << inp.d[i*inp.nrows + j] << "\t";
     }
-  } else {
-    for(int i = 0; i < inp.size(); i++) {
-      std::cout << inp[i] << "\t";
-      if(i % inp.ncols == inp.nrows) {
-        std::cout << std::endl;
-      }
-    }
+      std::cout << std::endl;
   }
+
 }
 // ================================================================
 
 
 
+
+// subset
+// print fct
+// ================================================================
+void print(const SUBSET<double>&inp) {
+  if(inp.matrix == false) {
+    for(int i = 0; i < inp.sub.size(); i++) {
+      std::cout << inp.sub[i] << std::endl;
+    }
+  } else {
+    for(int i = 0; i < inp.nrows; i++) {
+      for(int j = 0; j < inp.ncols; j++) {
+        std::cout << inp.sub[i*inp.nrows + j] << "\t";
+      }
+        std::cout << std::endl;
+    }
+  }
+}
+
+
+void print(const SUBSET<double>&inp, std::string message) {
+  std::cout << message << std::endl;
+  if(inp.matrix == false) {
+    for(int i = 0; i < inp.sub.size(); i++) {
+      std::cout << inp.sub[i] << std::endl;
+    }
+  } else {
+    for(int i = 0; i < inp.nrows; i++) {
+        for(int j = 0; j < inp.ncols; j++) {
+          std::cout << inp.sub[i*inp.nrows + j] << "\t";
+      }
+        std::cout << std::endl;
+    }
+  }
+}
 
 
 #endif
