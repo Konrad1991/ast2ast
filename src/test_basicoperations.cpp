@@ -318,9 +318,13 @@ context("Concatenation") {
 
 
 
+  vec v18 = concatenate(101., 100.);
+  std::vector<double> result16{101., 100.};
 
-
-
-
+  test_that("subset double") {
+    for(int i = 0; i < result16.size(); i++) {
+        expect_true(result16[i] == v18[i]);
+    }
+  }
 
 }

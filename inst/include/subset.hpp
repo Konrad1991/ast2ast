@@ -42,13 +42,13 @@ SUBSET<double> subset(VEC<double>& inp, int start, int end) {
   t.sub.resize(end - start + 1);
 
   for(int i = 0; i < t.sub.size(); i++) {
-    t.sub[i] = inp(i + start);
+    t.sub[i] = inp[i + start];
   }
   return t;
 }
 
 /*
-desired positions
+desired positions 1
 */
 SUBSET<double> subset(VEC<double>& inp, std::vector<int>& ip) {
 
@@ -59,11 +59,63 @@ SUBSET<double> subset(VEC<double>& inp, std::vector<int>& ip) {
   t.sub.resize(end - start + 1);
 
   for(int i = 0; i < t.sub.size(); i++) {
-    t.sub[i] = inp(i + start);
+    t.sub[i] = inp[i + start];
   }
   return t;
 }
 
+/*
+desired positions 2
+*/
+SUBSET<double> subset(VEC<double>& inp, VEC<double>& ip) {
+
+  SUBSET<double> t;
+  t.matrix = false;
+  int start = ip[0] - 1;
+  int end = ip.d.back() - 1;
+  t.sub.resize(end - start + 1);
+
+  for(int i = 0; i < t.sub.size(); i++) {
+    t.sub[i] = inp[i + start];
+  }
+  return t;
+}
+
+/*
+desired positions 3
+*/
+SUBSET<double> subset(VEC<double>& inp, std::vector<double>& ip) {
+
+  SUBSET<double> t;
+  t.matrix = false;
+  int start = ip[0] - 1;
+  int end = ip.back() - 1;
+  t.sub.resize(end - start + 1);
+
+  for(int i = 0; i < t.sub.size(); i++) {
+    t.sub[i] = inp[i + start];
+  }
+  return t;
+}
+
+/*
+desired positions 4
+*/
+SUBSET<double> subset(VEC<double>& inp, SUBSET<double>& ip) {
+
+  SUBSET<double> t;
+  t.matrix = false;
+  int start = ip.sub[0] - 1;
+  int end = ip.sub.back() - 1;
+  t.sub.resize(end - start + 1);
+
+  for(int i = 0; i < t.sub.size(); i++) {
+    t.sub[i] = inp[i + start];
+  }
+  return t;
+}
+
+// matrix subsetting is trash
 
 /*
 one position
@@ -105,11 +157,47 @@ VEC<double>& subset_self(VEC<double>& inp, std::vector<double>& ip) {
 }
 
 /*
+desired positions
+*/
+VEC<double>& subset_self(VEC<double>& inp, VEC<double>& ip) {
+
+  int start = ip[0] - 1;
+  int end = ip.d.back() - 1;
+
+  inp.subsetted = true;
+  inp.indices.resize((end -1) - (start -1) + 1);
+  for(int i = 0; i < inp.indices.size(); i++) {
+    inp.indices[i] = start + i -1;
+  }
+  return inp;
+}
+
+/*
+desired positions
+*/
+VEC<double>& subset_self(VEC<double>& inp, SUBSET<double>& ip) {
+
+  int start = ip.sub[0] - 1;
+  int end = ip.sub.back() - 1;
+
+  inp.subsetted = true;
+  inp.indices.resize((end -1) - (start -1) + 1);
+  for(int i = 0; i < inp.indices.size(); i++) {
+    inp.indices[i] = start + i -1;
+  }
+  return inp;
+}
+
+
+/*
 one position
 */
-double& subset_self(VEC<double>& inp, int pos) {
+VEC<double>& subset_self(VEC<double>& inp, int pos) {
   pos--;
-  return inp[pos];
+  inp.subsetted = true;
+  inp.indices.resize(1);
+  inp.indices[0] = pos;
+  return inp;
 }
 
 
@@ -231,6 +319,7 @@ double subset(SUBSET<double>& inp, int pos) {
 
 // subsetting at LHS --> ??????
 // ================================================================
-// dont know how to implement
+// is not needed i think
+
 
 #endif
