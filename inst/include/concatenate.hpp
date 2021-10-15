@@ -24,7 +24,6 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 #include "matrix.hpp"
 
-
 template<typename T>
 void appending(VEC<T>& v1, const VEC<T>& v2) {
   for(auto& i : v2.d) {
@@ -78,12 +77,12 @@ void appending(MAT<T>& v1, const MAT<T>& v2) {
 }
 
 template<typename T>
-void appending(const T s, const MAT<T>& v1) {
+void appending(const T s, MAT<T>& v1) {
     v1.d.push_back(s);
 }
 
 template<typename T>
-void appending(const MAT<T>& v1, const T s) {
+void appending(MAT<T>& v1, const T s) {
     v1.d.push_back(s);
 }
 
@@ -168,12 +167,12 @@ void auxillary(MAT<T>& v1, const MAT<T>& v2) {
 }
 
 template<typename T, typename... A>
-void auxillary(const T s, const MAT<T>& v1) {
+void auxillary(T s, const MAT<T>& v1) {
   appending(s, v1);
 }
 
 template<typename T, typename... A>
-void auxillary(const MAT<T>& v1, const T s) {
+void auxillary(MAT<T>& v1, const T s) {
   appending(s, v1);
 }
 
@@ -218,13 +217,13 @@ void auxillary(VEC<T>& v1, const VEC<T>&v2, const A&... vr) {
 }
 
 template<typename T, typename... A>
-void auxillary(const T s, const VEC<T>&v1, const A&... vr) {
+void auxillary(const T s, VEC<T>&v1, const A&... vr) {
   appending(s, v1);
   auxillary(v1, vr...);
 }
 
 template<typename T, typename... A>
-void auxillary(const VEC<T>&v1, const T s, const A&... vr) {
+void auxillary(VEC<T>&v1, const T s, const A&... vr) {
   appending(v1, s);
   auxillary(v1, vr...);
 }

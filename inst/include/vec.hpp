@@ -48,6 +48,7 @@ public:
   VEC() : subsetted(0) {}
   VEC(std::vector<double>& inp) : d(inp), subsetted(0) {}
   VEC(SUBSET<T>& inp) : d(inp.sub), subsetted(0) {}
+  VEC(SUBSET<T>&& inp) : d(inp.sub), subsetted(0) {}
   VEC(const double inp) {
     if(subsetted == false) {
       for(int i = 0; i < d.size(); i++) {

@@ -328,3 +328,29 @@ context("Concatenation") {
   }
 
 }
+
+
+
+
+context("Subsetting") {
+
+  vec v1 = concatenate(1., 2., 3., 4., 5., 6.);
+  vec v2 = range(1, 3);
+  vec v3 = subset(v1, v2);
+  std::vector<double> result1{1., 2., 3.};
+
+  test_that("vec with vec") {
+    for(int i = 0; i < result1.size(); i++) {
+        expect_true(result1[i] == v1[i]);
+    }
+  }
+
+  v3 = subset(v1, subset(v2, 1));
+  std::vector<double> result2{1.};
+  test_that("vec with subset & double") {
+        expect_true(result2[0] == v3[1]);
+        expect_true(result2[0] == subset(v2, 1));
+  }
+
+
+}

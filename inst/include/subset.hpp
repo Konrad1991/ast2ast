@@ -67,6 +67,23 @@ SUBSET<double> subset(VEC<double>& inp, std::vector<int>& ip) {
 /*
 desired positions 2
 */
+SUBSET<double> subset(VEC<double>& inp, VEC<double>&& ip) {
+
+  SUBSET<double> t;
+  t.matrix = false;
+  int start = ip[0] - 1;
+  int end = ip.d.back() - 1;
+  t.sub.resize(end - start + 1);
+
+  for(int i = 0; i < t.sub.size(); i++) {
+    t.sub[i] = inp[i + start];
+  }
+  return t;
+}
+
+/*
+desired positions 2
+*/
 SUBSET<double> subset(VEC<double>& inp, VEC<double>& ip) {
 
   SUBSET<double> t;
@@ -102,6 +119,23 @@ SUBSET<double> subset(VEC<double>& inp, std::vector<double>& ip) {
 desired positions 4
 */
 SUBSET<double> subset(VEC<double>& inp, SUBSET<double>& ip) {
+
+  SUBSET<double> t;
+  t.matrix = false;
+  int start = ip.sub[0] - 1;
+  int end = ip.sub.back() - 1;
+  t.sub.resize(end - start + 1);
+
+  for(int i = 0; i < t.sub.size(); i++) {
+    t.sub[i] = inp[i + start];
+  }
+  return t;
+}
+
+/*
+desired positions 4
+*/
+SUBSET<double> subset(VEC<double>& inp, SUBSET<double>&& ip) {
 
   SUBSET<double> t;
   t.matrix = false;
