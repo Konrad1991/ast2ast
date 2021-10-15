@@ -345,11 +345,20 @@ context("Subsetting") {
     }
   }
 
-  v3 = subset(v1, subset(v2, 1));
+  v3 = subset(v1, subset(v1, v2));
   std::vector<double> result2{1.};
   test_that("vec with subset & double") {
-        expect_true(result2[0] == v3[1]);
+        expect_true(1. == v3[0]);
         expect_true(result2[0] == subset(v2, 1));
+  }
+
+
+  subset_self(v1, v2) = concatenate(500., 600.);
+  std::vector<double> result3{500., 600., 3., 4., 5., 6};
+  test_that("subset self vector") {
+    for(int i = 0; i < result3.size(); i++) {
+        expect_true(result3[i] == v1[i]);
+    }
   }
 
 

@@ -49,18 +49,9 @@ public:
   VEC(std::vector<double>& inp) : d(inp), subsetted(0) {}
   VEC(SUBSET<T>& inp) : d(inp.sub), subsetted(0) {}
   VEC(SUBSET<T>&& inp) : d(inp.sub), subsetted(0) {}
-  VEC(const double inp) {
-    if(subsetted == false) {
-      for(int i = 0; i < d.size(); i++) {
-        d[i] = inp;
-      }
-    } else {
 
-      for(int i = 0; i < indices.size(); i++) {
-        d[indices[i]] = inp;
-      }
-    }
-  }
+
+  VEC(const T&& inp) : d(inp), subsetted(0) {}
   //VEC(std::vector<double> inp) : d(inp) {}
   //VEC(const std::vector<double>& inp) : d(inp) {}
 
@@ -78,6 +69,7 @@ public:
 
   // Operator=
   // ================================================================
+  /*
   T& operator=(const T &other_vec) {
 
     while(other_vec.size() >= d.size()) {
@@ -98,6 +90,7 @@ public:
     subsetted = false;
     return *this;
   }
+  */
 
   VEC& operator=(const SUBSET<T> other_vec) {
 
@@ -105,13 +98,10 @@ public:
       d.push_back(0);
     }
 
-    std::cout << "test" << " "  << d.size() << " " << this -> subsetted << " " << true << std::endl;
-
     if(subsetted == false) {
       for(int i = 0; i < d.size(); i++) {
         d[i] = other_vec.sub[i];
       }
-      std::cout << "test" << " "  << d.size() << std::endl;
     } else {
 
       for(int i = 0; i < indices.size(); i++) {
