@@ -44,6 +44,8 @@ public:
     num_mat.matinit(input);
   }
 
+  Master() {}
+
 };
 
 #endif
