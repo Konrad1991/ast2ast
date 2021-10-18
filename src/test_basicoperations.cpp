@@ -353,10 +353,12 @@ context("Subsetting") {
   }
 
 
-  subset_self(v1, v2) = concatenate(500., 600.);
+  vec helpvec = concatenate(1., 2.);
+  subset_self(v1, helpvec) = concatenate(500., 600.);
   std::vector<double> result3{500., 600., 3., 4., 5., 6};
   test_that("subset self vector") {
     for(int i = 0; i < result3.size(); i++) {
+      std::cout << result3[i] << " " << v1[i] << std::endl;
         expect_true(result3[i] == v1[i]);
     }
   }
@@ -394,6 +396,7 @@ context("Assignment") {
   test_that("subvec vec") {
     for(int i = 0; i < v1.size(); i++) {
         expect_true(v1[i] == concatenate(3., 4., 3.)[i]);
+        
     }
   }
 
