@@ -363,3 +363,38 @@ context("Subsetting") {
 
 
 }
+
+
+
+
+
+
+context("Assignment") {
+
+
+  vec v1 = range(1, 10);
+  v1 = 3.;
+  test_that("vec double") {
+    for(int i = 0; i < v1.size(); i++) {
+        expect_true(v1[i] == 3.);
+    }
+  }
+
+  v1 = concatenate(1., 2., 3.);
+
+  test_that("vec vec") {
+    for(int i = 0; i < v1.size(); i++) {
+        expect_true(v1[i] == concatenate(1., 2., 3.)[i]);
+    }
+  }
+
+
+
+  subset_self(v1, 1, 2) = concatenate(3., 4.);
+  test_that("subvec vec") {
+    for(int i = 0; i < v1.size(); i++) {
+        expect_true(v1[i] == concatenate(3., 4., 3.)[i]);
+    }
+  }
+
+}

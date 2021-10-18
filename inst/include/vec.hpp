@@ -49,9 +49,6 @@ public:
   VEC(std::vector<double>& inp) : d(inp), subsetted(0) {}
   VEC(SUBSET<T>& inp) : d(inp.sub), subsetted(0) {}
   VEC(SUBSET<T>&& inp) : d(inp.sub), subsetted(0) {}
-
-
-  VEC(const T&& inp) : d(inp), subsetted(0) {}
   //VEC(std::vector<double> inp) : d(inp) {}
   //VEC(const std::vector<double>& inp) : d(inp) {}
 
@@ -65,32 +62,14 @@ public:
   }
 
   // ================================================================
-
-
-  // Operator=
-  // ================================================================
-  /*
-  T& operator=(const T &other_vec) {
-
-    while(other_vec.size() >= d.size()) {
-      d.push_back(0);
-    }
-
-    if(subsetted == false) {
-      for(int i = 0; i < d.size(); i++) {
-        d[i] = other_vec[i];
-      }
-    } else {
-
-      for(int i = 0; i < indices.size(); i++) {
-        d[indices[i]] = other_vec[indices[i]];
-      }
-    }
-
+  VEC& operator=(const T &dob) {
+      d.resize(1);
+      d[0] = dob;
     subsetted = false;
     return *this;
   }
-  */
+
+
 
   VEC& operator=(const SUBSET<T> other_vec) {
 

@@ -46,19 +46,6 @@ public:
   MAT() : subsetted(0), nrows(0), ncols(0) {}
   MAT(SUBSET<T>&& inp) : d(inp.sub), subsetted(0) {}
 
-
-  MAT(VEC<T>& inp) {
-    if(inp.size() > (ncols*nrows)) {
-        Rcpp::stop("not compatible sizes detected");
-    }
-
-    for(int i = 0; i < inp.size(); i++) {
-      d[i] = inp[i];
-    }
-
-  }
-
-
   void matinit(SEXP2MAT input) {
     d.resize(input.v.size());
     for(int i = 0; i < d.size(); i++) {
@@ -74,26 +61,12 @@ public:
 
   // Operator=
   // ================================================================
-  T& operator=(const T &other_MAT) {
-
-    while(other_MAT.size() >= d.size()) {
-      d.push_back(0);
-    }
-
-    if(subsetted == false) {
-      for(int i = 0; i < d.size(); i++) {
-        d[i] = other_MAT[i];
-      }
-    } else {
-      for(int i = 0; i < indices.size(); i++) {
-        d[indices[i]] = other_MAT[indices[i]];
-      }
-    }
-
+  MAT& operator=(const T &dob) {
+      d.resize(1);
+      d[0] = dob;
     subsetted = false;
     return *this;
   }
-
 
   MAT& operator=(const SUBSET<T> other_mat) {
 
