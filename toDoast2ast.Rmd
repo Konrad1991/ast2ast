@@ -19,6 +19,7 @@ knitr::opts_chunk$set(echo = TRUE)
 * Typswitch failes wenn vec v = num --> hier muss dann in num speichern
 * num als Vektor speichern
 * subset_self + 0 hinzufügen
+* possibility new_var = c(1,2,3) + old_var
 
 
 
