@@ -93,6 +93,20 @@ types_of_each_line <- function(code_lines, start_variables_types) {
           
         }
       } else { # found a new variable and added it to the list
+        
+        if(is.na(types[i])) {
+          type_rhs <-unlist(code_lines[[i]][3])[[1]]
+          if(type_rhs == "vec") {
+            types[i] <- "num_vec" 
+          } else if(type_rhs == "mat") {
+            types[i] <- "num_mat" 
+          } else if(is.numeric(type_rhs)) {
+            types[i] <- "num" 
+          } else {
+            stop("Type deduction failed")
+          }
+        }
+        
         start_variables_types <- append(start_variables_types, types[i]) 
         names(start_variables_types)[length(start_variables_types)] <- vars_at_lhs[[i]]
       }

@@ -127,7 +127,7 @@ type_of_lhs <- function(code_lines, start_variables_types) {
           types[i] <- "num_vec"
         }
       }
-    
+      
     # check if var at lhs is already known
     if(element_exists(vars_at_lhs[[i]], start_variables_types) == TRUE) {
 
@@ -151,8 +151,23 @@ type_of_lhs <- function(code_lines, start_variables_types) {
       #    code_lines[i:(length(code_lines))])
       }
     } else { # found a new variable and added it to the list
+      
+      if(is.na(types[i])) {
+        type_rhs <-unlist(code_lines[[i]][3])[[1]]
+        if(type_rhs == "vec") {
+          types[i] <- "num_vec" 
+        } else if(type_rhs == "mat") {
+          types[i] <- "num_mat" 
+        } else if(is.numeric(type_rhs)) {
+          types[i] <- "num" 
+        } else {
+          stop("Type deduction failed")
+        }
+      }
+      
       start_variables_types <- append(start_variables_types, types[i]) 
       names(start_variables_types)[length(start_variables_types)] <- vars_at_lhs[[i]]
+
     }
      
     }
