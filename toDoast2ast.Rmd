@@ -93,6 +93,35 @@ argumente für subset function:
 * Subset Subset fehlt
 
 
+# Assignment
+
+* double <- double
+* double <- vec
+* double <- mat
+* double <- subset
+
+* vec <- double
+* vec <- vec
+* vec <- mat
+* vec <- subset_vec
+* vec <- subset_mat
+* subvec <- double
+* subvec <- vec
+* subvec <- mat
+* subvec <- subset_vec
+* subvec <- subset_mat
+
+* mat <- double
+* mat <- vec
+* mat <- mat
+* mat <- subset_vec
+* mat <- subset_mat
+* submat <- double
+* submat <- vec
+* submat <- mat
+* submat <- subset_vec
+* submat <- subset_mat
+
 
 
 
