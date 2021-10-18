@@ -80,7 +80,7 @@ replace_colon <- function(code_lines) {
 # ================================================================================
 # function to replace c with concatenate
 # ================================================================================
-replace_colon <- function(code_lines) {
+replace_c <- function(code_lines) {
   for(i in seq_along(code_lines)) {
     code <- get_calls(code_lines[[i]])
     temp <- replacer(code, "c", "concatenate") 

@@ -177,7 +177,7 @@ VEC<double>& subset_self(VEC<double>& inp, int start, int end) {
 /*
 desired positions
 */
-VEC<double>& subset_self(VEC<double>& inp, std::vector<double>& ip) {
+VEC<double>& subset_self(VEC<double>& inp, std::vector<double>&& ip) {
 
   int start = ip[0] - 1;
   int end = ip.back() - 1;
@@ -189,6 +189,8 @@ VEC<double>& subset_self(VEC<double>& inp, std::vector<double>& ip) {
   }
   return inp;
 }
+
+
 
 /*
 desired positions
