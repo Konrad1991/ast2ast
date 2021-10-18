@@ -45,6 +45,15 @@ replace_bracket2 <- function(code_lines) {
       code <- get_calls(code_lines[[i]][[2]])
       temp <- replacer(code, "subset", "subset_self")   
       code_lines[[i]][[2]] <- extractast(temp)
+      
+      if(length(code_lines[[i]]) > 3) {
+        temp <- list()
+        temp[[1]] <- as.name("+")
+        temp[[2]] <- code_lines[[i]][[3]]
+        temp[[3]] <- 2.225074e-308
+        code_lines[[i]][[3]] <- extractast(temp)        
+      }
+
     }
   }
   
