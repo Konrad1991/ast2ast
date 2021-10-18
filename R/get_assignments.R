@@ -154,7 +154,7 @@ type_of_lhs <- function(code_lines, start_variables_types) {
       
       if(is.na(types[i])) {
         type_rhs <-unlist(code_lines[[i]][3])[[1]]
-        if(type_rhs == "vec") {
+        if(type_rhs == "vec" | type_rhs == "c") {
           types[i] <- "num_vec" 
         } else if(type_rhs == "mat") {
           types[i] <- "num_mat" 
