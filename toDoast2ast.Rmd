@@ -82,17 +82,6 @@ Aber da double double, mat mat, vec vec und sub sub egal sind von der Reihenfolg
 es fehlt eins aber welches?
 
 
-
-# Subset
-
-argumente für subset function:
-* concatenate --> VEC
-* VEC
-* MAT
-* double oder double double für VEC o. MAT
-* Subset Subset fehlt
-
-
 # Assignment
 
 * double <- double
