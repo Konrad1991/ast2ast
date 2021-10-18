@@ -46,6 +46,7 @@ replace_bracket2 <- function(code_lines) {
       temp <- replacer(code, "subset", "subset_self")   
       code_lines[[i]][[2]] <- extractast(temp)
       
+      # hack in order to enabla subset_self = vector
       if(length(code_lines[[i]]) > 3) {
         temp <- list()
         temp[[1]] <- as.name("+")

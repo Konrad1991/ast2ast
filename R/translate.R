@@ -51,9 +51,12 @@ translate <- function(code, types_input_variables) {
   for(i in seq_along(code)) {
     code[[i]] <- get_calls(code[[i]])
     code[[i]] <- deparse(code[[i]])
-    code[[i]] <- paste(code[[i]], ";")
+    l <- length(code[[i]])
+    code[[i]][[l]] <- paste(code[[i]][[l]], ";")
     code[[i]] <- extractast(code[[i]])
   }
+  
+  
 
   signature <- paste("void fct(")
   for(i in names(types_input_variables) ) {
