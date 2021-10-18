@@ -18,6 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 * Möglichkeit vector oder matrix neu in Body zu implementieren
 * Typswitch failes wenn vec v = num --> hier muss dann in num speichern
 * num als Vektor speichern
+* subset_self + 0 hinzufügen
 
 
 
@@ -30,7 +31,7 @@ knitr::opts_chunk$set(echo = TRUE)
 * Concatenating
 * check out of index
 * subset_self = num funktioniert nicht. SUBSET muss evtl. class werden und braucht constructor
-* Initialisierung vs. operator= sauberer
+* Initialisierung vs. operator= sauberer --> geht nicht
 * int double problematik
 * übertragung dimension von mat in vektor bei +,-,* und /
 

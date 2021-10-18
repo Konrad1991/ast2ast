@@ -29,6 +29,8 @@ Vector module
 template< typename T, typename R = std::vector<T> >
 class VEC {
 
+private:
+
 public:
 
   // Constructors
@@ -46,12 +48,8 @@ public:
   VEC(const R& other_vec) : d(other_vec), subsetted(0) {}
   VEC(const R& mat, int nrows_, int ncols_) : d(mat), subsetted(0), ncols(ncols_), nrows(nrows_) {}
   VEC() : subsetted(0) {}
-  VEC(std::vector<double>& inp) : d(inp), subsetted(0) {}
-  VEC(SUBSET<T>& inp) : d(inp.sub), subsetted(0) {}
+  //VEC(SUBSET<T>& inp) : d(inp.sub), subsetted(0) {}
   VEC(SUBSET<T>&& inp) : d(inp.sub), subsetted(0) {}
-  //VEC(std::vector<double> inp) : d(inp) {}
-  //VEC(const std::vector<double>& inp) : d(inp) {}
-
 
   void vecinit(std::vector<T>& input) {
     d.resize(input.size());
@@ -68,8 +66,6 @@ public:
     subsetted = false;
     return *this;
   }
-
-
 
   VEC& operator=(const SUBSET<T> other_vec) {
 
@@ -95,7 +91,6 @@ public:
   template<typename T2, typename R2>
   VEC& operator=(const VEC<T2, R2> &other_vec) {
 
-
     while(other_vec.size() > d.size()) {
       d.push_back(0);
     }
@@ -114,8 +109,6 @@ public:
 
     return *this;
   }
-  // ================================================================
-
 
   // getter methods
   // ================================================================
