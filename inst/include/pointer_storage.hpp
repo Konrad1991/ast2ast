@@ -86,18 +86,22 @@ public:
     return p;
   }
 
+  // 1 indexed array
   T operator[](int pos) {
-    if(pos < 0) {
-      Rcpp::stop("Error: out of boundaries --> negative value not allowed");
+    pos--;
+    if(pos < 1) {
+      Rcpp::stop("Error: out of boundaries --> value below 1");
     } else if(pos >= sz) {
       Rcpp::stop("Error: out of boundaries --> value beyond size of vector");
     }
     return p[pos];
   }
 
+  // 1 indexed array
   T operator()(int pos) {
-    if(pos < 0) {
-      Rcpp::stop("Error: out of boundaries --> negative value not allowed");
+    pos--;
+    if(pos < 1) {
+      Rcpp::stop("Error: out of boundaries --> value below 1");
     } else if(pos >= sz) {
       Rcpp::stop("Error: out of boundaries --> value beyond size of vector");
     }
@@ -132,7 +136,7 @@ public:
     if(sz == capacity) {
       realloc(sz*2);
     } else if(sz < capacity) {
-      p[sz] = input; // start counting at 0!!!
+      p[sz] = input; //p starts counting at 0!!!
     }
   }
 
