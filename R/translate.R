@@ -102,6 +102,8 @@ translate <- function(code, types_input_variables) {
   write("}", file = "result.cpp", append = TRUE)
   
   close(file)
+  # better use cppFunction
+  # removes usage of file
   
   return()
 }
