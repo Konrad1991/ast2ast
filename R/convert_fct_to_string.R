@@ -35,3 +35,21 @@ c2s <- function(fct) {
 #   a <- a + 1
 #   print(a)}
 #   )
+
+
+# ================================================================================
+# function to get arguments of function and turn it in vector
+# ================================================================================
+a2v <- function(fct) {
+  a <- as.list(args(fct))
+  a <- a[1:length(a) -1]
+  a <- names(a)
+  return(a)
+}
+
+# Example
+# a2v(test <- function(a, b, c, d) {
+#   print("a")
+#   a <- a + 1
+#   print(a)
+# })
