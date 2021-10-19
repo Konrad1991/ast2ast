@@ -106,7 +106,9 @@ public:
 
   void resize(int new_size) {
     delete [] p;
-    p = new T[new_size];
+    p = new T[new_size*2];
+    sz = new_size;
+    capacity = new_size*2;
   }
 
   void realloc(int new_size) {
