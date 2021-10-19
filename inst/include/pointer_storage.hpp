@@ -20,6 +20,21 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 */
 
 /*
+class iterator
+*/
+template<typename T>
+class It {
+public:
+ T* p;
+ T& operator*() { return *p; }
+
+ bool operator != (const Iterator& rhs) {
+   return p != rhs.p;
+ }
+ void operator ++() { ++p; }
+};
+
+/*
 class which is only a copy of a pointer or used as vector storing data via pointer
 */
 template<typename T>
@@ -139,5 +154,15 @@ public:
       p[sz] = input; //p starts counting at 0!!!
     }
   }
+
+  //https://www.nextptr.com/tutorial/ta1208652092/how-cplusplus-rangebased-for-loop-works
+  auto begin() const {
+    return It<T>{p};
+  }
+
+  auto end() const {
+    return It<T>{p + size};
+  }
+
 
 }
