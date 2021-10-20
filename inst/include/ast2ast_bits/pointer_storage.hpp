@@ -115,9 +115,9 @@ public:
   T operator[](int pos) {
     pos--;
     if(pos < 1) {
-      //Rcpp::stop("Error: out of boundaries --> value below 1");
+      Rcpp::stop("Error: out of boundaries --> value below 1");
     } else if(pos >= sz) {
-      //Rcpp::stop("Error: out of boundaries --> value beyond size of vector");
+      Rcpp::stop("Error: out of boundaries --> value beyond size of vector");
     }
     return p[pos];
   }
@@ -126,9 +126,9 @@ public:
   T operator()(int pos) {
     pos--;
     if(pos < 1) {
-      //Rcpp::stop("Error: out of boundaries --> value below 1");
+      Rcpp::stop("Error: out of boundaries --> value below 1");
     } else if(pos >= sz) {
-      //Rcpp::stop("Error: out of boundaries --> value beyond size of vector");
+      Rcpp::stop("Error: out of boundaries --> value beyond size of vector");
     }
     return p[pos];
   }
@@ -166,7 +166,6 @@ public:
     }
   }
 
-  //https://www.nextptr.com/tutorial/ta1208652092/how-cplusplus-rangebased-for-loop-works
   auto begin() const {
     return It<T>{p};
   }
@@ -180,7 +179,7 @@ public:
 
 
 
-
+/*
 int main() {
 
   STORE<double> s(10, 4.);
@@ -200,3 +199,4 @@ int main() {
   std::cout << "s[11] = " << s[11] << std::endl;
 
 }
+*/
