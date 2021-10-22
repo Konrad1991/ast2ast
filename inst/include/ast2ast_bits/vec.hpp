@@ -21,6 +21,8 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef VEC_H
 #define VEC_H
 
+// [[Rcpp::depends(tidyCpp)]]
+#include <tidyCpp>
 #include "pointer_storage.hpp"
 
 /*
@@ -44,6 +46,25 @@ public:
   int ncols;
   int nrows;
 
+  // SEXP constructor
+  VEC(SEXP inp, bool copy, std::string type) {
+    subsetted = false;
+    double* ptr;
+
+    if(type == "vec" | type == "num") {
+      const int length = R::length(inp);
+      ptr = REAL(inp);
+      d(length, ptr, copy);
+      ismatrix = false;
+    } else if(type == "mat") {
+      SEXP dim = R::getAttrib(inp, R_DimSymbol ) ;
+      int ncols = INTEGER(dim)[1];
+      int nrows = INTEGER(dim)[0];
+      double* ptr = REAL(inp);
+      d(ncols*nrows, ptr, copy);
+      ismatrix = true;
+    }
+  }
 
   // Constructors for vector
   VEC(const int n) : d(n), subsetted(0), ismatrix(0) {}
@@ -51,7 +72,6 @@ public:
   VEC(const R& other_vec) : d(other_vec), subsetted(0), ismatrix(0) {}
   VEC(const R& mat, int nrows_, int ncols_) : d(mat), subsetted(0), ncols(ncols_), nrows(nrows_), ismatrix(0) {}
   VEC() : subsetted(0), d(0), nrows(0), ncols(0), ismatrix(0) {}
-
 
   // Constructors for matrix
   VEC(const int rows, const int cols) : d(rows*cols), subsetted(0), nrows(rows), ncols(cols), ismatrix(1) {}

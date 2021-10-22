@@ -26,6 +26,7 @@ void testfct() {
 void testfct2() {
 
   vec a(10, 10.);
+  
   vec b(5, 2.5);
 
   vec c;
