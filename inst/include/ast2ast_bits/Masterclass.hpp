@@ -15,27 +15,35 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with pso
+You should have received a copy of the GNU General Public License along with ast2ast
 If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 */
+#ifndef MASTER_H
+#define MASTER_H
 
-#ifndef A2A_H
-#define A2A_H
+#include "vec.hpp"
 
-#include "ast2ast_bits/header.hpp"
-#include "ast2ast_bits/util.hpp"
-#include "ast2ast_bits/pointer_storage.hpp"
-#include "ast2ast_bits/vec.hpp"
-#include "ast2ast_bits/add.hpp"
-#include "ast2ast_bits/subtract.hpp"
-#include "ast2ast_bits/mul.hpp"
-#include "ast2ast_bits/divide.hpp"
-#include "ast2ast_bits/print.hpp"
-#include "ast2ast_bits/subset.hpp"
-#include "ast2ast_bits/concatenate.hpp"
-#include "ast2ast_bits/Masterclass.hpp"
 
-#define vec VEC<double>
-#define mat VEC<double>
+class Master {
+
+public:
+  VEC<double> num_vec;
+  VEC<double> num_mat;
+  VEC<double> num;
+
+  // hack
+  Master(SEXP inp, bool copy, std::string type) {
+    if(type == "num") {
+      num.init(inp, copy, type);
+    } else if(type == "num_vec") {
+      num_vec.init(inp, copy, type);
+    } else if(type == "num_mat") {
+      num_mat.init(inp, copy, type);
+    }
+  }
+
+  Master() {}
+
+};
 
 #endif

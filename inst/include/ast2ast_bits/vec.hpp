@@ -25,6 +25,16 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include <tidyCpp>
 #include "pointer_storage.hpp"
 
+
+int getlength(SEXP inp) {
+  return R::length(inp);
+}
+
+SEXP getattributes(SEXP inp) {
+  SEXP dim = R::getAttrib(inp, R_DimSymbol );
+  return dim;
+}
+
 /*
 Vector & matrix module
 */
@@ -46,24 +56,26 @@ public:
   int ncols;
   int nrows;
 
-  // SEXP constructor
-  VEC(SEXP inp, bool copy, std::string type) {
+  // SEXP initialisation
+  VEC& init(SEXP inp, bool copy, std::string type) {
     subsetted = false;
     double* ptr;
 
-    if(type == "vec" | type == "num") {
-      const int length = R::length(inp);
+    if(type == "num_vec" | type == "num") {
+      const int length = getlength(inp);
       ptr = REAL(inp);
-      d(length, ptr, copy);
+      d.init(length, ptr, copy);
       ismatrix = false;
-    } else if(type == "mat") {
-      SEXP dim = R::getAttrib(inp, R_DimSymbol ) ;
+    } else if(type == "num_mat") {
+      SEXP dim = getattributes(inp) ;
       int ncols = INTEGER(dim)[1];
       int nrows = INTEGER(dim)[0];
       double* ptr = REAL(inp);
-      d(ncols*nrows, ptr, copy);
+      d.init(ncols*nrows, ptr, copy);
       ismatrix = true;
     }
+
+    return *this;
   }
 
   // Constructors for vector

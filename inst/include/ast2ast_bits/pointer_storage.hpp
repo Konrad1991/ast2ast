@@ -136,6 +136,32 @@ public:
     }
   }
 
+  STORE& init(const int n, T* pinp, bool copy) {
+
+        if(allocated == true) {
+          delete [] p;
+          p = nullptr;
+        }
+
+        if(copy == false) {
+          sz = n;
+          capacity = sz;
+          p = pinp;
+          todelete = false;
+          allocated = true; //?
+        } else if(copy == true) {
+          sz = n;
+          capacity = sz;
+          p = new T[n];
+          for(int i = 0; i < sz; i++) {
+            p[i] = pinp[i];
+          }
+          todelete = true;
+          allocated = true;
+        }
+    return *this;
+  }
+
   // Destructors
   ~STORE() {
     if(todelete == true) {

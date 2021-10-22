@@ -26,15 +26,15 @@ c2s <- function(fct) {
   for(i in 2:length(d)) {
     code[[i-1]] <- toString(d[i])
   }
-  return(code)
+  return(noquote(code))
 }
 
 
 # Example
 # c2s(test <- function(a) {print("a")
 #   a <- a + 1
-#   print(a)}
-#   )
+#   print(a)})
+
 
 
 # ================================================================================

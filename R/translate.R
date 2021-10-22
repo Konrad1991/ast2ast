@@ -20,7 +20,7 @@
 # ================================================================================
 # function called by user
 # ================================================================================
-translate <- function(code, types_input_variables) {
+translate <- function(fct, types_input_variables) {
   
   # seperate expressions and get AST
   code <- sep_expressions(code)
@@ -79,10 +79,11 @@ translate <- function(code, types_input_variables) {
   
   dependencies <- c(
   "#include <Rcpp.h>", 
+  "// [[Rcpp::plugins(cpp17)]] ",
   "#include <tidyCpp>",
   "// [[Rcpp::depends(tidyCpp)]]",
   "// [[Rcpp::depends(ast2ast)]]",
-  "#include \"all.hpp\" ",
+  "#include \"ast2ast.hpp\" ",
   "// [[Rcpp::export]]")
   
   file <- file("result.cpp")

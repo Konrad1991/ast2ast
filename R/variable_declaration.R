@@ -100,11 +100,11 @@ all_vars <- function(code_lines, start_variables_types) {
     if(!is.na(indices)) {
       temp_i <- paste(names(original_list)[i], "SEXP", sep = "")
       if(original_list[i] == "num_mat") {
-        result[[i]] <- paste("Master", temp[i], "(SEXP_to_MAT(", temp_i, " ), \"num_mat\" );", sep = " ")  
+        result[[i]] <- paste("Master", temp[i], "(", temp_i, ", false,", "\"num_mat\" );", sep = " ")  
       } else if(original_list[i] == "num_vec") {
-        result[[i]] <- paste("Master", temp[i], "(SEXP_to_VEC(", temp_i, " ), \"num_vec\" );", sep = " ")  
+        result[[i]] <- paste("Master", temp[i],"(", temp_i, ", false, ", "\"num_vec\" );", sep = " ")  
       } else {
-        result[[i]] <- paste("Master", temp[i], "(SEXP_to_NUM(", temp_i, " ), \"num\" );", sep = " ")  
+        result[[i]] <- paste("Master",temp[i],"(", temp_i, ", false, ", "\"num\" );", sep = " ")  
       }
       
     }  else {
