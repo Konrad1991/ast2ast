@@ -18,11 +18,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with ast2ast
 If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 */
+#ifndef STORAGE_H
+#define STORAGE_H
 
-#include <iostream>
-#include <iterator>
-#include <memory>
-#include <vector>
+
+#include "util.hpp"
 
 /*
 class iterator
@@ -50,26 +50,57 @@ public:
   int sz; // size
   int capacity;
   bool todelete;
+  bool allocated = false;
 
   // Constructors
+  STORE() {
+
+    if(allocated == true) {
+      delete [] p;
+      p = nullptr;
+    }
+    sz = 1;
+    capacity = sz;
+    p = new T[1];
+    todelete = true;
+    allocated = true;
+  }
+
   STORE(const int n) {
+
+    if(allocated == true) {
+      delete [] p;
+      p = nullptr;
+    }
     sz = n;
     capacity = sz;
     p = new T[n];
     todelete = true;
+    allocated = true;
   }
 
   STORE(const int n, const double value) {
+
+    if(allocated == true) {
+      delete [] p;
+      p = nullptr;
+    }
     sz = n;
     capacity = sz;
     p = new T[n];
     for(int i = 0; i < sz; i++) {
-      p[i] = value;
+      *(p + i) = value;
     }
     todelete = true;
+    allocated = true;
   }
 
   STORE(std::vector<double> inp) {
+
+    if(allocated == true) {
+      delete [] p;
+      p = nullptr;
+    }
     sz = inp.size();
     capacity = sz;
     p = new T[sz];
@@ -77,14 +108,22 @@ public:
       p[i] = inp[i];
     }
     todelete = true;
+    allocated = true;
   }
 
   STORE(const int n, T* pinp, bool copy) {
+
+    if(allocated == true) {
+      delete [] p;
+      p = nullptr;
+    }
+
     if(copy == false) {
       sz = n;
       capacity = sz;
       p = pinp;
       todelete = false;
+      allocated = true; //?
     } else if(copy == true) {
       sz = n;
       capacity = sz;
@@ -93,6 +132,7 @@ public:
         p[i] = pinp[i];
       }
       todelete = true;
+      allocated = true;
     }
   }
 
@@ -100,32 +140,62 @@ public:
   ~STORE() {
     if(todelete == true) {
         delete [] p;
+        p = nullptr;
     }
   }
 
-  int size() {
+  int size() const {
     return sz;
   }
 
-  T* data() {
+  T* data() const {
     return p;
   }
 
-  // 1 indexed array
-  T operator[](int pos) {
-    pos--;
-    if(pos < 1) {
-      Rcpp::stop("Error: out of boundaries --> value below 1");
-    } else if(pos >= sz) {
-      Rcpp::stop("Error: out of boundaries --> value beyond size of vector");
+  T& operator=(const T& other_T) {
+    realloc(1);
+    p[0] = other_T;
+
+    return *this;
+  }
+
+  STORE& operator=(const STORE& other_store) {
+
+    if(this == &other_store) {
+      return *this;
     }
-    return p[pos];
+
+    if(other_store.size() > sz) {
+      int diff = other_store.size() - sz;
+      this -> realloc(sz + diff);
+    }
+    for(int i = 0; i < sz; i++) {
+      p[i] = other_store[i];
+    }
+    return *this;
+  }
+
+  STORE& test(const STORE& other_store) {
+
+    if(this == &other_store) {
+      return *this;
+    }
+
+    if(other_store.size() > sz) {
+      int diff = other_store.size() - sz;
+      this -> realloc(sz + diff);
+    }
+
+    for(int i = 0; i < sz; i++) {
+      p[i] = other_store[i];
+    }
+
+    return *this;
   }
 
   // 1 indexed array
-  T operator()(int pos) {
-    pos--;
-    if(pos < 1) {
+  T& operator[](int pos) const {
+    if(pos < 0) {
       Rcpp::stop("Error: out of boundaries --> value below 1");
     } else if(pos >= sz) {
       Rcpp::stop("Error: out of boundaries --> value beyond size of vector");
@@ -134,7 +204,10 @@ public:
   }
 
   void resize(int new_size) {
-    delete [] p;
+    if(allocated == true) {
+      delete [] p;
+      p = nullptr;
+    }
     p = new T[new_size*2];
     sz = new_size;
     capacity = new_size*2;
@@ -150,11 +223,13 @@ public:
 
     delete [] p;
     p = new T[new_size];
+    sz = new_size;
     for(int i = 0; i < sz; i++) {
       p[i] = temp[i];
     }
 
-    sz = new_size;
+    delete [] temp;
+    temp = nullptr;
   }
 
   void push_back(T input) {
@@ -174,29 +249,12 @@ public:
     return It<T>{p + sz};
   }
 
+  T& back() {
+    return p[sz];
+  }
+
 
 };
 
 
-
-/*
-int main() {
-
-  STORE<double> s(10, 4.);
-
-  double counter = 0.0;
-  for(auto& i: s) {
-    i = counter;
-    counter++;
-  }
-
-  for(auto i: s) {
-    std::cout << i << std::endl;
-  }
-
-  std::cout << "s[1] = " << s[1] << std::endl;
-  s.push_back(100.);
-  std::cout << "s[11] = " << s[11] << std::endl;
-
-}
-*/
+#endif

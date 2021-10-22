@@ -10,6 +10,15 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// testfct
+void testfct();
+RcppExport SEXP _ast2ast_testfct() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    testfct();
+    return R_NilValue;
+END_RCPP
+}
 // is_assign
 bool is_assign(std::vector<std::string> code);
 RcppExport SEXP _ast2ast_is_assign(SEXP codeSEXP) {
@@ -69,6 +78,7 @@ END_RCPP
 RcppExport SEXP run_testthat_tests(SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_ast2ast_testfct", (DL_FUNC) &_ast2ast_testfct, 0},
     {"_ast2ast_is_assign", (DL_FUNC) &_ast2ast_is_assign, 1},
     {"_ast2ast_stor_var", (DL_FUNC) &_ast2ast_stor_var, 1},
     {"_ast2ast_find_var_at_rhs", (DL_FUNC) &_ast2ast_find_var_at_rhs, 1},
