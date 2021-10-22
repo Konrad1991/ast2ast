@@ -5,6 +5,10 @@ testfct <- function() {
     invisible(.Call(`_ast2ast_testfct`))
 }
 
+testfct2 <- function() {
+    invisible(.Call(`_ast2ast_testfct2`))
+}
+
 is_assign <- function(code) {
     .Call(`_ast2ast_is_assign`, code)
 }

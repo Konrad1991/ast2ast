@@ -46,16 +46,16 @@ public:
 
 
   // Constructors for vector
-  VEC(const int n) : d(n), subsetted(0) {}
-  VEC(const int n, const double value) : d(n, value), subsetted(0) {}
-  VEC(const R& other_vec) : d(other_vec), subsetted(0) {}
-  VEC(const R& mat, int nrows_, int ncols_) : d(mat), subsetted(0), ncols(ncols_), nrows(nrows_) {}
-  VEC() : subsetted(0), d(0), nrows(0), ncols(0) {}
+  VEC(const int n) : d(n), subsetted(0), ismatrix(0) {}
+  VEC(const int n, const double value) : d(n, value), subsetted(0), ismatrix(0) {}
+  VEC(const R& other_vec) : d(other_vec), subsetted(0), ismatrix(0) {}
+  VEC(const R& mat, int nrows_, int ncols_) : d(mat), subsetted(0), ncols(ncols_), nrows(nrows_), ismatrix(0) {}
+  VEC() : subsetted(0), d(0), nrows(0), ncols(0), ismatrix(0) {}
 
 
   // Constructors for matrix
-  VEC(const int rows, const int cols) : d(rows*cols), subsetted(0), nrows(rows), ncols(cols) {}
-  VEC(const int rows, const int cols, const double value) : d(rows*cols, value), subsetted(0), nrows(rows), ncols(cols) {}
+  VEC(const int rows, const int cols) : d(rows*cols), subsetted(0), nrows(rows), ncols(cols), ismatrix(1) {}
+  VEC(const int rows, const int cols, const double value) : d(rows*cols, value), subsetted(0), nrows(rows), ncols(cols), ismatrix(1) {}
 
 
   // vector & matrix operator=
