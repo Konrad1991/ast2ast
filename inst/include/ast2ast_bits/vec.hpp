@@ -50,14 +50,12 @@ public:
   VEC(const int n, const double value) : d(n, value), subsetted(0) {}
   VEC(const R& other_vec) : d(other_vec), subsetted(0) {}
   VEC(const R& mat, int nrows_, int ncols_) : d(mat), subsetted(0), ncols(ncols_), nrows(nrows_) {}
-  VEC() : subsetted(0), d(0) {}
+  VEC() : subsetted(0), d(0), nrows(0), ncols(0) {}
 
 
   // Constructors for matrix
   VEC(const int rows, const int cols) : d(rows*cols), subsetted(0), nrows(rows), ncols(cols) {}
   VEC(const int rows, const int cols, const double value) : d(rows*cols, value), subsetted(0), nrows(rows), ncols(cols) {}
-  VEC(const R& other_MAT) : d(other_MAT), subsetted(0) {}
-  VEC() : subsetted(0), nrows(0), ncols(0) {}
 
 
   // vector & matrix operator=
@@ -171,23 +169,6 @@ void realloc(int new_size) {
  int nrow() const {
    return nrows;
  }
-
- T operator[](int r, int c) const {
-   return d[r*nrows + c];
- }
-
- T& operator[](int r, int c) {
-   return d[r*nrows + c];
- }
-
- T operator()(int r, int c) const {
-   return d[r*nrows + c];
- }
-
- T& operator()(int r, int c) {
-   return d[r*nrows + c];
- }
-
 
 }; // end class VEC
 

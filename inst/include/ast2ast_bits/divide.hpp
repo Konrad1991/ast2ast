@@ -84,51 +84,6 @@ VEC< T, VVDIV< T, L, R > > operator/(const VEC<T, L>& a, const VEC<T, R>& b) {
 }
 
 template<typename T, typename L, typename R>
-VEC< T, VVDIV< T, L, R > > operator/(const MAT<T, L>& a, const VEC<T, R>& b) {
-    return VEC<T, VVDIV<T, L, R> > (VVDIV<T, L, R>(a.data(), b.data() ) );
-}
-
-template<typename T, typename L, typename R>
-VEC< T, VVDIV< T, L, R > > operator/(const VEC<T, L>& a, const MAT<T, R>& b) {
-    return VEC<T, VVDIV<T, L, R> > (VVDIV<T, L, R>(a.data(), b.data() ) );
-}
-
-template<typename T, typename L, typename R>
-VEC< T, VVDIV< T, L, R > > operator/(const MAT<T, L>& a, const MAT<T, R>& b) {
-    return VEC<T, VVDIV<T, L, R> > (VVDIV<T, L, R>(a.data(), b.data() ) );
-}
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, VVDIV< T, L, R > > operator/(const SUBSET<T, L>& a, const SUBSET<T, R>& b) {
-    return VEC<T, VVDIV<T, L, R> > (VVDIV<T, L, R>(a.sub, b.sub ) );
-}
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, VVDIV< T, L, R > > operator/(const SUBSET<T, L>& a, const MAT<T, R>& b) {
-    return VEC<T, VVDIV<T, L, R> > (VVDIV<T, L, R>(a.sub, b.data() ) );
-}
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, VVDIV< T, L, R > > operator/(const MAT<T, L>& a, const SUBSET<T, R>& b) {
-    return VEC<T, VVDIV<T, L, R> > (VVDIV<T, L, R>(a.data(), b.sub ) );
-}
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, VVDIV< T, L, R > > operator/(const SUBSET<T, L>& a, const VEC<T, R>& b) {
-    return VEC<T, VVDIV<T, L, R> > (VVDIV<T, L, R>(a.sub, b.data() ) );
-}
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, VVDIV< T, L, R > > operator/(const VEC<T, L>& a, const SUBSET<T, R>& b) {
-    return VEC<T, VVDIV<T, L, R> > (VVDIV<T, L, R>(a.data(), b.sub ) );
-}
-
-template<typename T, typename L, typename R>
 class VSDIV {
 
 private:
@@ -155,55 +110,13 @@ VEC< T, VSDIV< T, L, R > > operator/(const VEC<T, L>& a, const R& b) {
 }
 
 template<typename T, typename L, typename R>
-VEC< T, VSDIV< T, L, R > > operator/(const MAT<T, L>& a, const R& b) {
-    return VEC<T, VSDIV<T, L, R> > (VSDIV<T, L, R>(a.data(), b ) );
-}
-
-template<typename T, typename L, typename R>
-VEC< T, VSDIV< T, L, R > > operator/(const SUBSET<T, L>& a, const R& b) {
-    return VEC<T, VSDIV<T, L, R> > (VSDIV<T, L, R>(a.sub, b ) );
+VEC< T, VSDIV< T, L, R > > operator/(const L& a, const VEC<T, R>&  b) {
+    return VEC<T, VSDIV<T, L, R> > (VSDIV<T, L, R>(a, b.data() ) );
 }
 
 
 
-template<typename T, typename L, typename R>
-class SVDIV {
-
-private:
-  const L& l;
-  const R& r;
-
-public:
-  SVDIV(const L &a, const R &b ) :
-     l(a), r(b) {}
-
-   T operator[](const int i) const {
-     return l / r[i];
-   }
-
-   int size() const {
-     return r.size();
-   }
-
-};
 
 
-template<typename T, typename L, typename R>
-VEC< T, SVDIV< T, L, R > > operator/(const L& a, const VEC<T, R>& b) {
-    return VEC<T, SVDIV<T, L, R> > (SVDIV<T, L, R>(a, b.data() ) );
-}
-
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, SVDIV< T, L, R > > operator/(const L& a, const MAT<T, R>& b) {
-    return VEC<T, SVDIV<T, L, R> > (SVPLUS<T, L, R>(a, b.data() ) );
-}
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, SVDIV< T, L, R > > operator/(const L& a, const SUBSET<T, R>& b) {
-    return VEC<T, SVDIV<T, L, R> > (SVPLUS<T, L, R>(a, b.sub ) );
-}
 
 #endif

@@ -83,50 +83,6 @@ VEC< T, VVTIMES< T, L, R > > operator*(const VEC<T, L>& a, const VEC<T, R>& b) {
     return VEC<T, VVTIMES<T, L, R> > (VVTIMES<T, L, R>(a.data(), b.data() ) );
 }
 
-template<typename T, typename L, typename R>
-VEC< T, VVTIMES< T, L, R > > operator*(const MAT<T, L>& a, const VEC<T, R>& b) {
-    return VEC<T, VVTIMES<T, L, R> > (VVTIMES<T, L, R>(a.data(), b.data() ) );
-}
-
-template<typename T, typename L, typename R>
-VEC< T, VVTIMES< T, L, R > > operator*(const VEC<T, L>& a, const MAT<T, R>& b) {
-    return VEC<T, VVTIMES<T, L, R> > (VVTIMES<T, L, R>(a.data(), b.data() ) );
-}
-
-template<typename T, typename L, typename R>
-VEC< T, VVTIMES< T, L, R > > operator*(const MAT<T, L>& a, const MAT<T, R>& b) {
-    return VEC<T, VVTIMES<T, L, R> > (VVTIMES<T, L, R>(a.data(), b.data() ) );
-}
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, VVTIMES< T, L, R > > operator*(const SUBSET<T, L>& a, const SUBSET<T, R>& b) {
-    return VEC<T, VVTIMES<T, L, R> > (VVTIMES<T, L, R>(a.sub, b.sub ) );
-}
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, VVTIMES< T, L, R > > operator*(const SUBSET<T, L>& a, const MAT<T, R>& b) {
-    return VEC<T, VVTIMES<T, L, R> > (VVTIMES<T, L, R>(a.sub, b.data() ) );
-}
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, VVTIMES< T, L, R > > operator*(const MAT<T, L>& a, const SUBSET<T, R>& b) {
-    return VEC<T, VVTIMES<T, L, R> > (VVTIMES<T, L, R>(a.data(), b.sub ) );
-}
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, VVTIMES< T, L, R > > operator*(const SUBSET<T, L>& a, const VEC<T, R>& b) {
-    return VEC<T, VVTIMES<T, L, R> > (VVTIMES<T, L, R>(a.sub, b.data() ) );
-}
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, VVTIMES< T, L, R > > operator*(const VEC<T, L>& a, const SUBSET<T, R>& b) {
-    return VEC<T, VVTIMES<T, L, R> > (VVTIMES<T, L, R>(a.data(), b.sub ) );
-}
 
 template<typename T, typename L, typename R>
 class VSTIMES {
@@ -155,55 +111,11 @@ VEC< T, VSTIMES< T, L, R > > operator*(const VEC<T, L>& a, const R& b) {
 }
 
 template<typename T, typename L, typename R>
-VEC< T, VSTIMES< T, L, R > > operator*(const MAT<T, L>& a, const R& b) {
-    return VEC<T, VSTIMES<T, L, R> > (VSTIMES<T, L, R>(a.data(), b ) );
-}
-
-template<typename T, typename L, typename R>
-VEC< T, VSTIMES< T, L, R > > operator*(const SUBSET<T, L>& a, const R& b) {
-    return VEC<T, VSTIMES<T, L, R> > (VSTIMES<T, L, R>(a.sub, b ) );
+VEC< T, VSTIMES< T, L, R > > operator*(const L& a, const VEC<T, R>&  b) {
+    return VEC<T, VSTIMES<T, L, R> > (VSTIMES<T, L, R>(a, b.data() ) );
 }
 
 
-
-template<typename T, typename L, typename R>
-class SVTIMES {
-
-private:
-  const L& l;
-  const R& r;
-
-public:
-  SVTIMES(const L &a, const R &b ) :
-     l(a), r(b) {}
-
-   T operator[](const int i) const {
-     return l * r[i];
-   }
-
-   int size() const {
-     return r.size();
-   }
-
-};
-
-
-template<typename T, typename L, typename R>
-VEC< T, SVTIMES< T, L, R > > operator*(const L& a, const VEC<T, R>& b) {
-    return VEC<T, SVTIMES<T, L, R> > (SVTIMES<T, L, R>(a, b.data() ) );
-}
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, SVTIMES< T, L, R > > operator*(const L& a, const MAT<T, R>& b) {
-    return VEC<T, SVTIMES<T, L, R> > (SVPLUS<T, L, R>(a, b.data() ) );
-}
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, SVTIMES< T, L, R > > operator*(const L& a, const SUBSET<T, R>& b) {
-    return VEC<T, SVTIMES<T, L, R> > (SVPLUS<T, L, R>(a, b.sub ) );
-}
 
 
 #endif

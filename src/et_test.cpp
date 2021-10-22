@@ -17,12 +17,12 @@ void testfct() {
 
   print(a);
 
-  std::cout << a.size() << " " << a.subsetted << " " << a.d.sz << std::endl;
   subset_self(a, 1, 8) = range(1, 8);
-  std::cout << a.size() << " " << a.subsetted << " " << a.d.sz << std::endl;
   print(a);
   subset_self(a, 1) = 1.3;
   print(a);
-  
+
+
+
 
 }

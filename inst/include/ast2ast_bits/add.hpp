@@ -83,69 +83,6 @@ VEC< T, VVPLUS< T, L, R > > operator+(const VEC<T, L>& a, const VEC<T, R>& b) {
     return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.data(), b.data() ) );
 }
 
-template<typename T, typename L, typename R>
-VEC< T, VVPLUS< T, L, R > > operator+(const VEC<T, L>& a, const MAT<T, R>& b) {
-    return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.data(), b.data() ) );
-}
-
-template<typename T, typename L, typename R>
-VEC< T, VVPLUS< T, L, R > > operator+(const MAT<T, L>& a, const VEC<T, R>& b) {
-    return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.data(), b.data() ) );
-}
-
-
-/*
-template<typename T, typename L, typename R>
-VEC< T, VVPLUS< T, L, R > > operator+(const MAT<T, L>& a, const MAT<T, R>& b) {
-    return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.data(), b.data() ) );
-}
-*/
-
-
-
-template<typename T, typename L, typename R>
-VEC< T, VVPLUS< T, L, R > > operator+(const MAT<T, L>& a, const MAT<T, R>& b) {
-    return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.data(), b.data()), a.nrows, a.ncols) ; // a and b have to be compatible
-}
-// and add constructor in VVPLUS class --> thus the dimension information is passed
-// add it to vector?!
-
-
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, VVPLUS< T, L, R > > operator+(const SUBSET<T, L>& a, const SUBSET<T, R>& b) {
-    return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.sub, b.sub) );
-}
-
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, VVPLUS< T, L, R > > operator+(const SUBSET<T, L>& a, const MAT<T, R>& b) {
-    return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.sub, b.data() ) );
-}
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, VVPLUS< T, L, R > > operator+(const MAT<T, L>& a, const SUBSET<T, R>& b) {
-    return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.data(), b.sub) );
-}
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, VVPLUS< T, L, R > > operator+(const SUBSET<T, L>& a, const VEC<T, R>& b) {
-    return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.sub, b.data() ) );
-}
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, VVPLUS< T, L, R > > operator+(const VEC<T, L>& a, const SUBSET<T, R>& b) {
-    return VEC<T, VVPLUS<T, L, R> > (VVPLUS<T, L, R>(a.data(), b.sub ) );
-}
-
-
-
-
 
 template<typename T, typename L, typename R>
 class VSPLUS {
@@ -173,59 +110,11 @@ VEC< T, VSPLUS< T, L, R > > operator+(const VEC<T, L>& a, const R& b) {
     return VEC<T, VSPLUS<T, L, R> > (VSPLUS<T, L, R>(a.data(), b ) );
 }
 
-
-// new
 template<typename T, typename L, typename R>
-VEC< T, VSPLUS< T, L, R > > operator+(const MAT<T, L>& a, const R& b) {
-    return VEC<T, VSPLUS<T, L, R> > (VSPLUS<T, L, R>(a.data(), b ) );
+VEC< T, VSPLUS< T, L, R > > operator+(const L& a, const VEC<T, R>&  b) {
+    return VEC<T, VSPLUS<T, L, R> > (VSPLUS<T, L, R>(a, b.data() ) );
 }
 
-template<typename T, typename L, typename R>
-VEC< T, VSPLUS< T, L, R > > operator+(const SUBSET<T, L>& a, const R& b) {
-    return VEC<T, VSPLUS<T, L, R> > (VSPLUS<T, L, R>(a.sub, b ) );
-}
-
-
-
-template<typename T, typename L, typename R>
-class SVPLUS {
-
-private:
-  const L& l;
-  const R& r;
-
-public:
-  SVPLUS(const L &a, const R &b ) :
-     l(a), r(b) {}
-
-   T operator[](const int i) const {
-     return l + r[i];
-   }
-
-   int size() const {
-     return r.size();
-   }
-
-};
-
-
-template<typename T, typename L, typename R>
-VEC< T, SVPLUS< T, L, R > > operator+(const L& a, const VEC<T, R>& b) {
-    return VEC<T, SVPLUS<T, L, R> > (SVPLUS<T, L, R>(a, b.data() ) );
-}
-
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, SVPLUS< T, L, R > > operator+(const L& a, const MAT<T, R>& b) {
-    return VEC<T, SVPLUS<T, L, R> > (SVPLUS<T, L, R>(a, b.data() ) );
-}
-
-// new
-template<typename T, typename L, typename R>
-VEC< T, SVPLUS< T, L, R > > operator+(const L& a, const SUBSET<T, R>& b) {
-    return VEC<T, SVPLUS<T, L, R> > (SVPLUS<T, L, R>(a, b.sub ) );
-}
 
 
 #endif
