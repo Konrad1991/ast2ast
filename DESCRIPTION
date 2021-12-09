@@ -7,6 +7,6 @@ Author: Krämer Konrad [aut, cre]
 Maintainer: Krämer Konrad <konrad_kraemer@yahoo.de>
 Description: A tiny subset of R is translated to C++. 
 License: GPL 2
-Imports: Rcpp (>= 1.0.4), rlang, purrr, testthat, rrapply, tidyCpp
-LinkingTo: Rcpp, rlang, purrr, testthat, rrapply, tidyCpp
+Imports: Rcpp (>= 1.0.4), purrr, testthat, R6
+LinkingTo: Rcpp, purrr, testthat, R6
 Encoding: UTF-8
