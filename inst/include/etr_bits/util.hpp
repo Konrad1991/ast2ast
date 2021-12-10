@@ -30,7 +30,7 @@ namespace etr {
 void ass(bool inp, std::string message) {
   if(inp == false) {
     std::cerr << message << std::endl;
-    exit(0);
+    Rcpp::stop("Error");
   }
 }
 

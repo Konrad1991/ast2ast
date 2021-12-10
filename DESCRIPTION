@@ -9,4 +9,7 @@ Description: A tiny subset of R is translated to C++.
 License: GPL 2
 Imports: Rcpp (>= 1.0.4), purrr, testthat, R6
 LinkingTo: Rcpp, purrr, testthat, R6
+VignetteBuilder: knitr
+Suggests: knitr, rmarkdown
 Encoding: UTF-8
+RoxygenNote: 7.1.1

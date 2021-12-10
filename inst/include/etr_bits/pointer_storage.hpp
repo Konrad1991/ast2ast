@@ -239,10 +239,10 @@ public:
   T& operator[](int pos) const {
     if(pos < 0) {
       std::cerr << "Error: out of boundaries --> value below 1" << std::endl;
-      exit(0);
+      Rcpp::stop("Error");
     } else if(pos >= sz) {
       std::cerr << "Error: out of boundaries --> value beyond size of vector" << std::endl;
-      exit(0);
+      Rcpp::stop("Error");
     }
     return p[pos];
   }

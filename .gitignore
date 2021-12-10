@@ -6,3 +6,5 @@ $ cat .git/info/exclude
 *.Rhistory
 *.Rbuildignore
 
+doc
+Meta

@@ -24,7 +24,7 @@ LC <- R6::R6Class("LC",
        PF = c("=", "<-", "[", "for", "c", ":", "sin", "asin", "sinh", "cos", "acos", "cosh",
         "tan", "atan", "tanh", "log", "^", "+", "-",
          "*", "/", "if", "else if", "else", "{", "(",
-        "==", "!=", ">", ">=", "<", "<=", "print", "return"), # permitted functions
+        "==", "!=", ">", ">=", "<", "<=", "print", "return", "vector", "matrix", "length", "dim"), # permitted functions
 
        vars = list(), # variables
 
@@ -32,7 +32,7 @@ LC <- R6::R6Class("LC",
        code = NULL,
        generic_fct = c("+", "-",
         "*", "/", "if", "else if", "else", "{", "(",
-       "==", "!=", ">", ">=", "<", "<=", "print", "for", "return"),
+       "==", "!=", ">", ">=", "<", "<=", "print", "for", "return", "vector", "matrix","length", "dim"),
 
        math = c("sin", "asin", "sinh", "cos", "acos", "cosh",
         "tan", "atan", "tanh", "log", "^"),
@@ -157,6 +157,26 @@ LC <- R6::R6Class("LC",
 ) # end class
 
 
+
+
+
+#' Translates a R function into a Rcpp function
+#'
+#' @param f The function which should be translated from R to C++.
+#' @param y The desired type which should be used for input and output. Default is SEXP.
+#' @return The already compiled Rcpp function.
+#' @details Allowed function which can be used:
+#' @details "=", "<-", "[", "for", "c", ":", "sin", "asin", "sinh", "cos", "acos", "cosh",
+#' @details "tan", "atan", "tanh", "log", "^", "+", "-",
+#' @details "*", "/", "if", "else if", "else", "{", "(",
+#' @details "==", "!=", ">", ">=", "<", "<=", "print", "return",
+#' @details "vector", "matrix", "length", "dim"
+#' @details Be aware that the R code is translated to ETR. An expression template library which tries to mimic R.
+#' @details However, it does not behave exactly like R! Please check your compiled function before using it in a serious project.
+#' @details If you want to see how ETR differs from R in detail check the vignette
+#' @examples
+#' f <- function() { print("Hello World!")}
+#' f_compiled <- translate(f)
 translate = function(f, desired_type = "SEXP") {
 
   # extract infos from fct f
@@ -175,8 +195,26 @@ translate = function(f, desired_type = "SEXP") {
     lc[[i]]$ast2call()
     temp <- lc[[i]]$code
     temp <- deparse(temp)
+
+    looping <- function(fl) {
+      fl <- as.character(fl)
+      sz <- nchar(fl)
+      fl_ <- gsub('for_', '', fl)
+      sz_ <- nchar(fl_)
+
+      if(fl != fl_) {
+        fl <- gsub('.{2}$', '', fl) # remove {(
+        fl <- paste(fl, '{', collapse = '')
+      }
+
+      fl <- gsub('`', '', fl)
+
+      return(fl)
+    }
+
     for(j in seq_along(temp)) {
-        temp <- paste(temp[[j]], ";")
+        temp[[j]] <- looping(temp[[j]])
+        temp[[j]] <- paste(temp[[j]], ";")
     }
     code[[i]] <- temp
     vars[[i]] <- lc[[i]]$get_vars()

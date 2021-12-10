@@ -63,7 +63,7 @@ public:
         columns_ = (_l_ncol > _r_ncol) ? _l_ncol : _r_ncol;
         rows_ = (_l_nrow > _r_nrow) ? _l_nrow : _r_nrow;
       } else {
-        exit(0);
+        Rcpp::stop("Error");
       }
     }
 
