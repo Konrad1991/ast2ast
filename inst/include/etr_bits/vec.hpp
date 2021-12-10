@@ -25,18 +25,18 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-int getlength(SEXP inp) {
-  return Rf_length(inp);
-}
+  int getlength(SEXP inp) {
+    return Rf_length(inp);
+  }
 
-SEXP getattributes(SEXP inp) {
-  SEXP dim = Rf_getAttrib(inp, R_DimSymbol );
-  return dim;
-}
+  SEXP getattributes(SEXP inp) {
+    SEXP dim = Rf_getAttrib(inp, R_DimSymbol );
+    return dim;
+  }
 
-bool is_matrix(SEXP inp) {
-    return Rf_isMatrix(inp) ? true : false;
-}
+  bool is_matrix(SEXP inp) {
+      return Rf_isMatrix(inp) ? true : false;
+  }
 
 /*
 Vector & matrix module
@@ -68,24 +68,23 @@ public:
   template<typename T2>
   VEC(T2 n) = delete;
 
+  VEC(const bool value) : d(1, value),subsetted(0), ismatrix(0) {}
 
   VEC(SEXP inp) : d(1), subsetted(0), ismatrix(0) {
 
-    const int length = getlength(inp);
-    double* ptr = REAL(inp);
+  const int length = getlength(inp);
+  double* ptr = REAL(inp);
 
-    d.init(length, ptr);
+  d.init(length, ptr);
 
-    if(is_matrix(inp)) {
-      SEXP dim = getattributes(inp);
-      int ncols = INTEGER(dim)[1];
-      int nrows = INTEGER(dim)[0];
-      ismatrix = true;
-    }
-
+  if(is_matrix(inp)) {
+    SEXP dim = getattributes(inp);
+    int ncols = INTEGER(dim)[1];
+    int nrows = INTEGER(dim)[0];
+    ismatrix = true;
   }
 
-  VEC(const bool value) : d(1, value),subsetted(0), ismatrix(0) {}
+}
 
   VEC(const double value) : d(1, value),subsetted(0), ismatrix(0) {}
   VEC(const long unsigned int n) : d(n), subsetted(0), ismatrix(0) {d.fill(static_cast<double>(n));} // fill is a hack that sexp s = 1 works;

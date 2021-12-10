@@ -163,7 +163,7 @@ LC <- R6::R6Class("LC",
 #' Translates a R function into a Rcpp function
 #'
 #' @param f The function which should be translated from R to C++.
-#' @param y The desired type which should be used for input and output. Default is SEXP.
+#' @param desired_type The desired type which should be used for input and output. Default is SEXP.
 #' @return The already compiled Rcpp function.
 #' @details Allowed function which can be used:
 #' @details "=", "<-", "[", "for", "c", ":", "sin", "asin", "sinh", "cos", "acos", "cosh",

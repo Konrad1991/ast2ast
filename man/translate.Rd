@@ -9,7 +9,7 @@ translate(f, desired_type = "SEXP")
 \arguments{
 \item{f}{The function which should be translated from R to C++.}
 
-\item{y}{The desired type which should be used for input and output. Default is SEXP.}
+\item{desired_type}{The desired type which should be used for input and output. Default is SEXP.}
 }
 \value{
 The already compiled Rcpp function.

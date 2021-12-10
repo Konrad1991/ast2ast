@@ -137,7 +137,7 @@ subset <- R6::R6Class("subset",
         self$arguments <- lapply(self$arguments, function(x) {
           temp <- as.character(x)
 
-          if(temp == '') { # fix bug
+          if(temp == '' && length(temp) == 1L) {
             return(as.symbol('nullptr'))
           } else {
             return(x)

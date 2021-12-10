@@ -6,10 +6,10 @@ Date: 2021-10-01
 Author: Krämer Konrad [aut, cre]
 Maintainer: Krämer Konrad <konrad_kraemer@yahoo.de>
 Description: A tiny subset of R is translated to C++. 
-License: GPL 2
+License: GPL-2
 Imports: Rcpp (>= 1.0.4), purrr, testthat, R6
 LinkingTo: Rcpp, purrr, testthat, R6
 VignetteBuilder: knitr
-Suggests: knitr, rmarkdown
+Suggests: knitr, rmarkdown, tinytest
 Encoding: UTF-8
 RoxygenNote: 7.1.1
