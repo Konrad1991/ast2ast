@@ -157,7 +157,50 @@ void print(VEC<bool>& inp) { // const
 
 }
 
+
+
+template<typename T2, typename R2>
+void print(const VEC<T2, R2> &inp) {
+
+  if(inp.ismatrix == false) {
+
+    if(inp.subsetted == false) {
+      for(int i = 0; i < inp.size(); i++) {
+        Rcpp::Rcout << inp[i] << std::endl;
+      }
+    } else {
+      for(int i = 0; i < inp.size(); i++) {
+        Rcpp::Rcout << inp[inp.indices[i]] << std::endl;
+      }
+    }
+
+  } else if(inp.ismatrix == true) {
+
+    if(inp.subsetted == false) {
+      for(int i = 0; i < inp.nrows; i++) {
+        for(int j = 0; j < inp.ncols; j++) {
+          Rcpp::Rcout << inp.d[j*inp.nrows + i] << "\t";
+        }
+        Rcpp::Rcout << std::endl;
+      }
+    } else {
+
+      ass(inp.indices.size() >= 1, "insufficient size of subset");
+      for(int i = 0; i < inp.ncols_sub; i++) {
+        for(int j = 0; j < inp.nrows_sub; j++) {
+            Rcpp::Rcout << inp[inp.indices[i*inp.nrows_sub + j]] << "\t";
+        }
+        Rcpp::Rcout << std::endl;
+    }
+
+  }
+
+  }
+
+
 }
 
+
+}
 
 #endif

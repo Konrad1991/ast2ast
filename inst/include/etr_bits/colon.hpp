@@ -65,6 +65,7 @@ VEC<double> colon(double start, int end) {
   return ret;
 }
 
+/*
 VEC<double> colon(int start, VEC<double> end) {
 
   int size = static_cast<int>(floor(end[0] - static_cast<double>(start) +1));
@@ -115,7 +116,7 @@ VEC<double> colon(VEC<double> start, VEC<double> end) {
   }
   return ret;
 }
-
+*/
 
 int length(double inp) {
   return 1;

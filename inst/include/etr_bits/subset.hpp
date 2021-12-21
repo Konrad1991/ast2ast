@@ -30,6 +30,7 @@ VEC<double> subset(VEC<double>& inp) {
   return ret;
 }
 
+/*
 VEC<double> subset(VEC<double>& inp, int pos) {
   VEC<double> ret(1);
   pos--;
@@ -44,6 +45,20 @@ VEC<double> subset(VEC<double>& inp, double pos_) {
   ret[0] = inp[pos];
   return ret;
 }
+*/
+
+
+double subset(VEC<double>& inp, int pos) {
+  pos--;
+  return inp[pos];
+}
+
+double subset(VEC<double>& inp, double pos_) {
+  int pos = d2i(pos_);
+  pos--;
+  return inp[pos];
+}
+
 
 VEC<double> subset(VEC<double>& inp, bool p) {
 

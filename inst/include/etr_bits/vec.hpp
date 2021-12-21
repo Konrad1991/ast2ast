@@ -35,7 +35,8 @@ namespace etr {
   }
 
   bool is_matrix(SEXP inp) {
-      return Rf_isMatrix(inp) ? true : false;
+    bool ret = Rf_isMatrix(inp) ? true : false;
+    return ret;
   }
 
 /*
@@ -83,6 +84,8 @@ public:
     int nrows = INTEGER(dim)[0];
     ismatrix = true;
   }
+  subsetted = false;
+  ismatrix = false;
 
 }
 
@@ -139,7 +142,12 @@ public:
   VEC(const int n, T* ptr, int cob) : d(n, ptr, cob), subsetted(0), ismatrix(0) {} //cob = copy, owning, borrow
   VEC(const int r, const int c, T* ptr, int cob) : d(r*c, ptr, cob), subsetted(0), ismatrix(1), nrows(r), ncols(c) {} //cob = copy, owning, borrow
 
+
   explicit operator bool() const{return d[0];}
+
+  operator int() const{
+    return static_cast<int>( d[0] );
+  }
 
   operator SEXP() const{
 
@@ -153,7 +161,9 @@ public:
          UNPROTECT(1);
          return V;
      } else if(this -> im() == true) {
-       SEXP M = Rf_allocMatrix(REALSXP, nrows, ncols);
+       //SEXP M = PROTECT(Rf_allocVector(REALSXP, d.size()) );// PROTECT(Rf_allocMatrix(REALSXP, nrows, ncols));
+
+        SEXP M = PROTECT(Rf_allocMatrix(REALSXP, nrows, ncols));
 
        for(int i = 0; i < d.size(); i++) {
          REAL(M)[i] =  d[i];
@@ -200,25 +210,31 @@ public:
     }
     */
 
-    if(subsetted == false) {
+    if(this -> subsetted == false) {
       if(d.size() != other_vec.size()) {
-          //d.realloc(other_vec.size());  // better resize?
           d.resize(other_vec.size());
       }
 
       this -> ismatrix = false;
+
       for(int i = 0; i < d.size(); i++) {
         d[i] = other_vec[i];
       }
+
       if(other_vec.im() == true) {
         this -> ismatrix = true;
         this -> ncols = other_vec.nc();
         this -> nrows = other_vec.nr();
       }
     } else {
+
+      ass(indices.size() <= other_vec.size(), "number of items to replace is not a multiple of replacement length");
+
       for(int i = 0; i < indices.size(); i++) {
         d[indices[i]] = other_vec[i];
       }
+
+
     }
 
     subsetted = false;
@@ -239,7 +255,7 @@ public:
       for(int i = 0; i < d.size(); i++) {
             this -> d[i] = other_vec[i];
       }
-      if(other_vec.d.im() == true) {
+      if(other_vec.im() == true) {
         ismatrix = true;
         ncols = other_vec.d.nc();
         nrows = other_vec.d.nr();
@@ -266,6 +282,13 @@ public:
  }
 
  T& operator[](int i) {
+   return d[i];
+ }
+
+
+// fast access for R user
+ T& operator()(int i) {
+   i--;
    return d[i];
  }
 

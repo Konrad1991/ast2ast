@@ -186,18 +186,44 @@ subset <- R6::R6Class("subset",
 )
 
 
-
-forloop <- R6::R6Class("forloop",
+loop <- R6::R6Class("loop",
     inherit = PC,
-    #index_variable = NULL,
+
+    public = list(
+      index_variable = NULL,
+
+      change_code = function() {
+        self$index_variable = self$arguments[[1]]
+        self$arguments[[1]] = as.name(paste0('auto&',self$arguments[[1]], ':'))
+      },
+
+      convert = function(var) {
+        self$replace_TF()
+        self$oaf(var)
+        self$change_code()
+
+        ret <- list()
+        ret[[1]] <- self$name_fct
+        ret <- c(ret, self$arguments)
+        return(ret)
+      },
+
+
+      return_index_vars = function() {
+        return(as.name(paste0('auto&',self$index_variable, ':') ) )
+      }
+
+    )
+)
+
+
+coca <- R6::R6Class("coca",
+    inherit = PC,
 
     public = list(
 
       change_code = function() {
-        # hack that for loop is actually a lambda fct called recursevly
-        temp <- self$arguments[[2]]
-        self$name_fct = as.name(paste0(as.name("for_("), deparse(temp), ",", paste0("[&](auto&", self$arguments[[1]], ")" ), collapse = NULL ) )
-        self$arguments <- self$arguments[3:length(self$arguments)]
+        self$name_fct = as.name("coca")
       },
 
       convert = function(var) {
@@ -214,15 +240,13 @@ forloop <- R6::R6Class("forloop",
     )
 )
 
-
-
-coca <- R6::R6Class("coca",
+printer <- R6::R6Class("printer",
     inherit = PC,
 
     public = list(
 
       change_code = function() {
-        self$name_fct = as.name("coca")
+        self$name_fct = as.name("etr::print")
       },
 
       convert = function(var) {

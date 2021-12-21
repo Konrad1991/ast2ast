@@ -171,7 +171,7 @@ public:
   }
 
 
-  STORE& init(const int n, T* pinp) {
+  void init(const int n, T* pinp) {
 
         if(allocated == true) {
           ass(p != nullptr, "try to delete nullptr");
@@ -181,14 +181,15 @@ public:
 
         sz = n;
         capacity = sz;
+
         p = new T[n];
         for(int i = 0; i < sz; i++) {
           p[i] = pinp[i];
         }
+
         todelete = true;
         allocated = true;
 
-    return *this;
   }
 
 
@@ -254,9 +255,9 @@ public:
       delete [] p;
       p = nullptr;
     }
-    p = new T[new_size*2];
+    p = new T[new_size*2]; //*2
     sz = new_size;
-    capacity = new_size*2;
+    capacity = new_size*2; //*2
   }
 
   void realloc(int new_size) {
