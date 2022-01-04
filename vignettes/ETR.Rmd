@@ -1,9 +1,9 @@
 ---
-title: "ast2ast"
+title: "Expression template R (ETR)"
 author: "Konrad Krämer"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{ast2ast}
+  %\VignetteIndexEntry{Expression template R (ETR)}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage{UTF-8}
 ---

@@ -1,0 +1,57 @@
+---
+title: "Examples"
+author: "Konrad Krämer"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Examples}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Example Nr.1
+
+
+
+### R code is translated
+
+```{r}
+add_two <- function(a) {
+  return(a + 2)
+}  
+pointer_to_f_cpp <- ast2ast::translate(add_two)
+```
+
+### Defining C++ Code which uses the translated R Code
+
+```{Rcpp}
+// [[Rcpp::depends(ast2ast)]]
+
+#include <Rcpp.h>
+#include "etr.hpp"
+
+// [[Rcpp::plugins("cpp17")]]
+
+typedef sexp (*fp)(sexp a);
+
+// [[Rcpp::export]]
+void call_fct(Rcpp::XPtr<fp> inp) {
+  fp f = *inp;
+  sexp a = coca(1, 2, 3);
+  print(a);
+  a = f(a);
+  print("a is now:");
+  print(a);
+}
+```
+
+### Calling the final function
+
+```{r}
+#Rcpp::sourceCpp("cpp_code.cpp") # if not run in Rmarkdown
+call_fct(pointer_to_f_cpp)
+```
+

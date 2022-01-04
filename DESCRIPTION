@@ -1,14 +1,14 @@
 Package: ast2ast
 Type: Package
-Title: Translates R to C++
+Title: Translates a R function into an external pointer to a C++ function. 
 Version: 1.0
 Date: 2021-10-01
 Author: Krämer Konrad [aut, cre]
 Maintainer: Krämer Konrad <konrad_kraemer@yahoo.de>
-Description: A tiny subset of R is translated to C++. 
+Description: Translates a R function into a C++ function. An external pointer to the C++ function is returned to the user.
 License: GPL-2
-Imports: Rcpp (>= 1.0.4), purrr, testthat, R6
-LinkingTo: Rcpp, purrr, testthat, R6
+Imports: Rcpp (>= 1.0.4), purrr, testthat, R6, RcppXPtrUtils
+LinkingTo: Rcpp, purrr, testthat, R6, RcppXPtrUtils
 VignetteBuilder: knitr
 Suggests: knitr, rmarkdown, tinytest
 Encoding: UTF-8

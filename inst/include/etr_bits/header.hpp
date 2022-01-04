@@ -22,6 +22,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef HEADER_H
 #define HEADER_H
 
+#include <Rcpp.h>
 #include <iostream>
 #include <iterator>
 #include <memory>

@@ -170,7 +170,6 @@ public:
     }
   }
 
-
   void init(const int n, T* pinp) {
 
         if(allocated == true) {

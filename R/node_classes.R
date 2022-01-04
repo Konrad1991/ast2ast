@@ -240,6 +240,29 @@ coca <- R6::R6Class("coca",
     )
 )
 
+fastaccess <- R6::R6Class("fastaccess",
+    inherit = PC,
+
+    public = list(
+
+      change_code = function() {
+        self$name_fct = as.name("at")
+      },
+
+      convert = function(var) {
+        self$replace_TF()
+        self$oaf(var)
+        self$change_code()
+
+        ret <- list()
+        ret[[1]] <- self$name_fct
+        ret <- c(ret, self$arguments)
+        return(ret)
+      }
+
+    )
+)
+
 printer <- R6::R6Class("printer",
     inherit = PC,
 

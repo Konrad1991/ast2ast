@@ -140,7 +140,9 @@ public:
 
   // constructor for pointer
   VEC(const int n, T* ptr, int cob) : d(n, ptr, cob), subsetted(0), ismatrix(0) {} //cob = copy, owning, borrow
+  //VEC(const int n, const T* ptr, int cob) : d(n, ptr, cob), subsetted(0), ismatrix(0) {} //cob = copy, owning, borrow
   VEC(const int r, const int c, T* ptr, int cob) : d(r*c, ptr, cob), subsetted(0), ismatrix(1), nrows(r), ncols(c) {} //cob = copy, owning, borrow
+  //VEC(const int r, const int c, const T* ptr, int cob) : d(r*c, ptr, cob), subsetted(0), ismatrix(1), nrows(r), ncols(c) {} //cob = copy, owning, borrow
 
 
   explicit operator bool() const{return d[0];}
@@ -285,13 +287,6 @@ public:
    return d[i];
  }
 
-
-// fast access for R user
- T& operator()(int i) {
-   i--;
-   return d[i];
- }
-
  const R& data() const {
    return d;
  }
@@ -360,6 +355,16 @@ int nr() const {
 int d2i(double inp) {
   return static_cast<int>(inp);
 }
+
+ double& at(const VEC<double>& inp, int i) {
+   i--;
+   return inp.d[i];
+ }
+
+ double& at(const VEC<double>&& inp, int i) {
+   i--;
+   return inp.d[i];
+ }
 
 
 }

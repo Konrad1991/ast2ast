@@ -48,7 +48,6 @@ LC <- R6::R6Class("LC",
        extractast = function(sexp) {
 
           if(!is.call(sexp)) {
-            # print(sexp)
             return(sexp)
           }
 
@@ -74,9 +73,16 @@ LC <- R6::R6Class("LC",
               self$found_return = TRUE
             }
 
-          } else if(as.name("[") == fct) {
+          } else if(as.name("subset") == fct) {
 
             p <- subset$new(sexp, self$check_assign_subset)
+            sexp <- p$convert(self$PF)
+            self$vars <- c(self$vars, p$get_var_names())
+            self$check_assign_subset = FALSE
+
+          } else if(as.name("[") == fct) {
+
+            p <- fastaccess$new(sexp)
             sexp <- p$convert(self$PF)
             self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
@@ -118,7 +124,7 @@ LC <- R6::R6Class("LC",
             self$check_assign_subset = FALSE
 
           } else {
-            cat("Error: Sorry not all  functions are suported", "\n")
+            cat("Error: Sorry not all  functions are supported", "\n")
             cat("Function: ", fct, " not supported")
             stop()
           }

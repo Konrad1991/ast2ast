@@ -134,10 +134,13 @@ MA <- R6::R6Class("MA",
           return(ret_type)
         },
 
-        signature = function(desired_type) {
+        signature = function(desired_type, reference) {
               # arguments passed to f & define signature
               arguments_string <- sapply(self$args, function(x) {
                 y <- paste(x, "SEXP", sep = "")
+                if(reference == TRUE) {
+                  desired_type = paste(desired_type, '&')
+                }
                 temp <- paste(desired_type, y, ',', collapse = '')
 
                 if (parent.frame()$i[] == length(self$args) )  {
@@ -174,13 +177,13 @@ MA <- R6::R6Class("MA",
           return(args_dec)
         },
 
-        build = function(verbose = FALSE) {
+        build = function(verbose = FALSE, reference = FALSE) {
           self$getast()
           self$ast2call()
           self$call2char()
 
           fct = c(
-            self$signature(self$desired_type),
+            self$signature(self$desired_type, reference),
             self$args_declaration(),
             self$vars_declaration(self$desired_type),
             self$char,
@@ -196,29 +199,55 @@ MA <- R6::R6Class("MA",
 
 )
 
-
-#' 'translate' translates a R function into a Rcpp function
-#'
+#' Translates a R function into a C++ function and returns an external pointer (XPtr) to this function.
 #' @param f The function which should be translated from R to C++.
-#' @param desired_type The desired type which should be used for input and output. Default is SEXP.
-#' @return The already compiled Rcpp function.
-#' @details Allowed function which can be used:
-#' @details "=", "<-", "[", "for", "c", ":", "sin", "asin", "sinh", "cos", "acos", "cosh",
-#' @details "tan", "atan", "tanh", "log", "^", "+", "-",
-#' @details "*", "/", "if", "else if", "else", "{", "(",
-#' @details "==", "!=", ">", ">=", "<", "<=", "print", "return",
-#' @details "vector", "matrix", "length", "dim"
+#' @param verbose If set to true the output of RcppXPtrUtils::cppXPtr is printed.
+#' @param reference If set to true the arguments are passed by reference.
+#' @return The external pointer of the generated C++ function
+#' @details The following functions are supported:
+#' @details For assignment: = and <- can be used.
+#' @details In order to allocate memory the functions: vector and matrix can be used.
+#' Following forms are possible: vector(size_of_elements), vector(value, size_of_elements)
+#' matrix(nrows, ncols), matrix(value, nrows, ncols). The latter fills the matrix or the vector with the specified 'value'.
+#' @details In order to get information about a vector or a matrix the functions length and dim work the same way as in R.
+#' @details Basic operations can be conducted on scalars, vectors and matrices +, -, *, /
+#' @details For indices squared brackets  '[]' are used as in R.
+#' @details Mathematical functions: sin, asin, sinh, cos, acos, cosh, tan, atan, tanh, log, ^ and exp
+#' @details For loops can be written as used in R 'for(index in whatever){}'.
+#' @details To concatenate objects use the 'c' function as usually in R.
+#' @details if,else if, else are used in the same way as in R
+#' @details For comparison the functions ==, !=, >, <, >= and <= can be used for scalars, vectors and matrices.
+#' @details The print function accepts either a scalar, vector, matrix, string, bool or nothing (empty line).
+#' @details In order to return an object use the 'return' function (The last object is not returned automatically as in R).
 #' @details Be aware that the R code is translated to ETR. An expression template library which tries to mimic R.
 #' @details However, it does not behave exactly like R! Please check your compiled function before using it in a serious project.
-#' @details If you want to see how ETR differs from R in detail check the vignette
+#' @details If you want to see how ETR differs from R in detail check the vignette: 'Expression template R (ETR)'
 #' @examples
+#' @examples #Further examples can be found in vignette: 'Examples'
+#' @examples #Hello World
 #' f <- function() { print("Hello World!")}
-#' f_compiled <- translate(f)
-translate <- function(f, desired_type = 'SEXP', verbose = FALSE) {
+#' pointer_to_f_cpp <- ast2ast::translate(f)
+#' Rcpp::sourceCpp(code = "
+#' #include <Rcpp.h>
+#' typedef void (*fp)();
+#'
+#' // [[Rcpp::export]]
+#' void call_fct(Rcpp::XPtr<fp> inp) {
+#'   fp f = *inp;
+#'   f();
+#' }
+#' ")
+#' call_fct(pointer_to_f_cpp)
+
+
+translate <- function(f, verbose = FALSE, reference = FALSE) {
+
+    desired_type = 'sexp'
 
     a = MA$new(f, desired_type)
-    fct <- a$build(verbose)
-    fct_ret = Rcpp::cppFunction(code = fct, plugins = c("cpp17"), depends = c("ast2ast"), includes = "#include <etr.hpp>", verbose =  verbose)
+    fct <- a$build(verbose, reference = reference)
+    #fct_ret = Rcpp::cppFunction(code = fct, plugins = c("cpp17"), depends = c("ast2ast"), includes = "#include <etr.hpp>", verbose =  verbose)
+    fct_ret = RcppXPtrUtils::cppXPtr(code = fct, plugins = c("cpp17"), depends = c("ast2ast"), includes = "#include <etr.hpp>", verbose =  verbose)
 
     return(fct_ret)
 }
