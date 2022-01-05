@@ -151,6 +151,44 @@ public:
     return static_cast<int>( d[0] );
   }
 
+  operator Rcpp::NumericVector() const {
+    Rcpp::NumericVector ret(this -> size());
+    for(int i = 0; i < ret.size(); i++) {
+      ret[i] = d[i];
+    }
+
+    return ret;
+  }
+
+  operator Rcpp::NumericMatrix() const {
+    ass(this -> im() == true, "Object cannot be converted to NumericMatrix");
+    Rcpp::NumericMatrix ret(this -> nr(), this -> nc());
+    for(int i = 0; i < ret.size(); i++) {
+      ret[i] = d[i];
+    }
+
+    return ret;
+  }
+
+  operator arma::vec() const {
+    arma::vec ret(this -> size());
+    for(int i = 0; i < ret.size(); i++) {
+      ret[i] = d[i];
+    }
+
+    return ret;
+  }
+
+  operator arma::mat() const {
+    ass(this -> im() == true, "Object cannot be converted to NumericMatrix");
+    arma::mat ret(this -> nr(), this -> nc());
+    for(int i = 0; i < ret.size(); i++) {
+      ret[i] = d[i];
+    }
+
+    return ret;
+  }
+
   operator SEXP() const{
 
      if(this -> im() == false) {

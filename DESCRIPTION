@@ -1,13 +1,13 @@
 Package: ast2ast
 Type: Package
-Title: Translates a R function into an external pointer to a C++ function. 
+Title: Translates a R Function into an External Pointer to a C++ Function 
 Version: 0.1
 Date: 2022-01-04
 Author: Krämer Konrad [aut, cre]
 Maintainer: Krämer Konrad <konrad_kraemer@yahoo.de>
 Description: Translates a R function into a C++ function. An external pointer to the C++ function is returned to the user.
 License: GPL-2
-Imports: Rcpp (>= 1.0.4), RcppArmadillo, purrr, R6, RcppXPtrUtils
+Imports: Rcpp (>= 1.0.4), purrr, R6, RcppXPtrUtils
 LinkingTo: Rcpp, RcppArmadillo, RcppXPtrUtils
 VignetteBuilder: knitr
 Suggests: knitr, rmarkdown, tinytest, microbenchmark, r2sundials

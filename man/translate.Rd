@@ -32,7 +32,7 @@ In order to get information about a vector or a matrix the functions length and 
 
 Basic operations can be conducted on scalars, vectors and matrices +, -, *, /
 
-For indices squared brackets  '[]' are used as in R.
+For indices squared brackets  '[]' or the function sub are used as in R. [] can only be used for one element. Whereas sub can be used as the []-function in R itself.
 
 Mathematical functions: sin, asin, sinh, cos, acos, cosh, tan, atan, tanh, log, ^ and exp
 

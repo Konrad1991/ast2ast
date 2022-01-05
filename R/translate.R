@@ -198,7 +198,7 @@ MA <- R6::R6Class("MA",
 #' matrix(nrows, ncols), matrix(value, nrows, ncols). The latter fills the matrix or the vector with the specified 'value'.
 #' @details In order to get information about a vector or a matrix the functions length and dim work the same way as in R.
 #' @details Basic operations can be conducted on scalars, vectors and matrices +, -, *, /
-#' @details For indices squared brackets  '[]' are used as in R.
+#' @details For indices squared brackets  '[]' or the function sub are used as in R. [] can only be used for one element. Whereas sub can be used as the []-function in R itself.
 #' @details Mathematical functions: sin, asin, sinh, cos, acos, cosh, tan, atan, tanh, log, ^ and exp
 #' @details For loops can be written as used in R 'for(index in whatever){}'.
 #' @details To concatenate objects use the 'c' function as usually in R.
@@ -212,6 +212,7 @@ MA <- R6::R6Class("MA",
 #' @examples
 #' @examples #Further examples can be found in vignette: 'Examples'
 #' @examples #Hello World
+#' \dontrun{
 #' f <- function() { print("Hello World!")}
 #' pointer_to_f_cpp <- ast2ast::translate(f)
 #' Rcpp::sourceCpp(code = "
@@ -225,7 +226,7 @@ MA <- R6::R6Class("MA",
 #' }
 #' ")
 #' call_fct(pointer_to_f_cpp)
-
+#' }
 
 translate <- function(f, verbose = FALSE, reference = FALSE) {
 

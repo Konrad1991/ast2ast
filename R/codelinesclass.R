@@ -28,7 +28,7 @@ LC <- R6::R6Class("LC",
        PF = c("=", "<-", "[", "for", "c", ":", "sin", "asin", "sinh", "cos", "acos", "cosh",
         "tan", "atan", "tanh", "log", "^", "+", "-",
          "*", "/", "if", "else if", "else", "{", "(",
-        "==", "!=", ">", ">=", "<", "<=", "print", "return", "vector", "matrix", "length", "dim", "cmr"), # permitted functions
+        "==", "!=", ">", ">=", "<", "<=", "print", "return", "vector", "matrix", "length", "dim", "cmr", "sub"), # permitted functions
 
        vars = list(), # variables
        index_vars = list(),
@@ -73,7 +73,7 @@ LC <- R6::R6Class("LC",
               self$found_return = TRUE
             }
 
-          } else if(as.name("subset") == fct) {
+          } else if(as.name("sub") == fct) {
 
             p <- subset$new(sexp, self$check_assign_subset)
             sexp <- p$convert(self$PF)
@@ -82,7 +82,8 @@ LC <- R6::R6Class("LC",
 
           } else if(as.name("[") == fct) {
 
-            p <- fastaccess$new(sexp)
+            #p <- fastaccess$new(sexp)
+            p <- subset$new(sexp, self$check_assign_subset)
             sexp <- p$convert(self$PF)
             self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE

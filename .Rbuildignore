@@ -4,6 +4,8 @@
 ^autom4te.cache
 ^config.log
 ^config.status
+^License
+^CodeofConduct.md
 ^\.travis\.yml$
 ^\.github$
 ^doc$
