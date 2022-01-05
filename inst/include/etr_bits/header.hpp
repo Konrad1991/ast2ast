@@ -2,7 +2,7 @@
 R package etr
 Copyright (C) 2021 Konrad Krämer
 
-This file is part of R package etr
+This file is part of R package ast2ast
 
 
 etr is free software; you can redistribute it and/or
@@ -15,19 +15,19 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with etr
+You should have received a copy of the GNU General Public License along with ast2ast
 If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 */
 
 #ifndef HEADER_H
 #define HEADER_H
 
-#include <Rcpp.h>
+#include "RcppArmadillo.h"
+
 #include <iostream>
 #include <iterator>
 #include <memory>
 #include <vector>
 #include <math.h>
-
 
 #endif

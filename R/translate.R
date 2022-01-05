@@ -136,8 +136,9 @@ MA <- R6::R6Class("MA",
 
         signature = function(desired_type, reference) {
               # arguments passed to f & define signature
+
               arguments_string <- sapply(self$args, function(x) {
-                y <- paste(x, "SEXP", sep = "")
+                y <- paste0(x)
                 if(reference == TRUE) {
                   desired_type = paste(desired_type, '&')
                 }
@@ -152,19 +153,6 @@ MA <- R6::R6Class("MA",
               arguments_string <- paste(arguments_string, collapse = " ")
 
               sig <- paste(self$return_type(), self$name, '(', arguments_string, ')', '{', collapse = " ")
-        },
-
-
-        args_declaration = function() {
-          args_dec <- sapply(self$args, function(x) {
-            inp <- paste(x, "SEXP", sep = "")
-
-            temp <- paste("sexp", x, '=', inp, ';', collapse = '')
-            return(temp)
-          })
-          args_dec <- paste(args_dec, collapse = " ")
-
-          return(args_dec)
         },
 
         vars_declaration = function(desired_type) {
@@ -184,7 +172,6 @@ MA <- R6::R6Class("MA",
 
           fct = c(
             self$signature(self$desired_type, reference),
-            self$args_declaration(),
             self$vars_declaration(self$desired_type),
             self$char,
             '}'
@@ -247,7 +234,7 @@ translate <- function(f, verbose = FALSE, reference = FALSE) {
     a = MA$new(f, desired_type)
     fct <- a$build(verbose, reference = reference)
     #fct_ret = Rcpp::cppFunction(code = fct, plugins = c("cpp17"), depends = c("ast2ast"), includes = "#include <etr.hpp>", verbose =  verbose)
-    fct_ret = RcppXPtrUtils::cppXPtr(code = fct, plugins = c("cpp17"), depends = c("ast2ast"), includes = "#include <etr.hpp>", verbose =  verbose)
+    fct_ret = RcppXPtrUtils::cppXPtr(code = fct, plugins = c("cpp17"), depends = c("ast2ast", "RcppArmadillo"), includes = "#include <etr.hpp>", verbose =  verbose)
 
     return(fct_ret)
 }

@@ -40,32 +40,8 @@ private:
 
 public:
 
-  VVTIMES(const L &a, const R &b, bool l_ismatrix, bool r_ismatrix,
-        int l_rows, int l_cols, int r_rows, int r_cols) : l(a), r(b) {
-
-    bool _l_ismatrix = l_ismatrix;
-    bool _r_ismatrix = r_ismatrix;
-    int _l_nrow = l_rows;
-    int _r_nrow = r_rows;
-    int _l_ncol = l_cols;
-    int _r_ncol = r_cols;
-
-    if( ((_l_ismatrix == true) || (_r_ismatrix == true )) ||
-        ((_l_ismatrix == true) && (_r_ismatrix == true )) ) {
-        ismatrix = true;
-      if( (_l_ismatrix == true) && (_r_ismatrix == false) ){
-        columns_ = _l_ncol;
-        rows_ = _l_nrow;
-      } else if ((_l_ismatrix == false) && (_r_ismatrix == true)) {
-        columns_ = _r_ncol;
-        rows_ = _r_nrow;
-      } else if((_l_ismatrix == true) && (_r_ismatrix == true)) {
-        columns_ = (_l_ncol > _r_ncol) ? _l_ncol : _r_ncol;
-        rows_ = (_l_nrow > _r_nrow) ? _l_nrow : _r_nrow;
-      } else {
-        Rcpp::stop("Error");
-      }
-    }
+  VVTIMES(const L &a, const R &b, bool ismatrix_, int rows, int cols) : l(a), r(b),
+         ismatrix(ismatrix_), rows_(rows), columns_(cols) {
 
        if(l.size() > r.size()) {
          //ass((l.size() % r.size()) == 0, "Vector is not multiple of other vector");
@@ -122,9 +98,35 @@ public:
 
 template<typename T, typename L, typename R>
 VEC< T, VVTIMES< T, L, R > > operator*(const VEC<T, L>& a, const VEC<T, R>& b) {
-    return VEC<T, VVTIMES<T, L, R> > (VVTIMES<T, L, R>(a.data(), b.data(),
-                                     a.im(), b.im(),
-                                     a.nrow(), a.ncol(), b.nrow(), b.ncol() ) );
+
+  bool ismatrix_ = false;
+  int nrows_ = 0;
+  int ncols_ = 0;
+  if( (a.im() == true) || (b.im() == true) || (a.im() == true && b.im() == true) ) {
+    ismatrix_ = true;
+
+    if( (a.im() == true) && (b.im() == true) ) {
+      nrows_ = (a.nr() > b.nr()) ? a.nr() : b.nr();
+      ncols_ = (a.nc() > b.nc()) ? a.nc() : b.nc();
+    } else if( (a.im() == false) && (b.im() == true) ) {
+      nrows_ = b.nr();
+      ncols_ = b.nc();
+    } else if( (a.im() == true) && (b.im() == false) ) {
+      nrows_ = a.nr();
+      ncols_ = a.nc();
+    } else {
+      Rcpp::stop("Error");
+    }
+
+  }
+
+  VEC<T, VVTIMES<T, L, R> > ret(VVTIMES<T, L, R>(a.data(), b.data(), ismatrix_, nrows_, ncols_));
+
+  ret.ismatrix = ismatrix_;
+  ret.ncols = ncols_;
+  ret.nrows = nrows_;
+
+  return ret;
 }
 
 
@@ -167,7 +169,23 @@ public:
 
 template<typename T, typename L, typename R>
 VEC< T, VSTIMES< T, L, R > > operator*(const VEC<T, L>& a, const R& b) {
-    return VEC<T, VSTIMES<T, L, R> > (VSTIMES<T, L, R>(a.data(), b, a.im(), a.nr(), a.nc() ) );
+  bool ismatrix_ = false;
+  int nrows_ = 0;
+  int ncols_ = 0;
+
+  if(a.im() == true) {
+    ismatrix_ = true;
+    nrows_ = a.nr();
+    ncols_ = a.nc();
+  }
+
+  VEC<T, VSTIMES<T, L, R> > ret (VSTIMES<T, L, R>(a.data(), b, a.im(), a.nr(), a.nc() ) );
+
+  ret.ismatrix = ismatrix_;
+  ret.ncols = ncols_;
+  ret.nrows = nrows_;
+
+  return ret;
 }
 
 
@@ -212,7 +230,23 @@ public:
 
 template<typename T, typename L, typename R>
 VEC< T, SVTIMES< T, L, R > > operator*(const R& a, const VEC<T, L>&  b) {
-    return VEC<T, SVTIMES<T, L, R> > (SVTIMES<T, L, R>(a, b.data(), b.im(), b.nr(), b.nc() ) );
+  bool ismatrix_ = false;
+  int nrows_ = 0;
+  int ncols_ = 0;
+
+  if(b.im() == true) {
+    ismatrix_ = true;
+    nrows_ = b.nr();
+    ncols_ = b.nc();
+  }
+
+  VEC<T, SVTIMES<T, L, R> > ret (SVTIMES<T, L, R>(a, b.data(), b.im(), b.nr(), b.nc() ) );
+
+  ret.ismatrix = ismatrix_;
+  ret.ncols = ncols_;
+  ret.nrows = nrows_;
+
+  return ret;
 }
 
 }

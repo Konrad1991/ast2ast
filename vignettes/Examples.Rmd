@@ -1,0 +1,240 @@
+---
+title: "Examples"
+author: "Konrad Krämer"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Examples}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## How to use *ast2ast*
+
+### R code is translated
+
+```{r}
+add_two <- function(a) {
+  return(a + 2)
+}  
+pointer_to_f_cpp <- ast2ast::translate(add_two)
+```
+
+### Defining C++ Code which uses the translated R Code
+
+```{Rcpp}
+// [[Rcpp::depends(ast2ast)]]
+// [[Rcpp::depends(RcppArmadillo)]]
+#include "etr.hpp"
+
+// [[Rcpp::plugins("cpp17")]]
+
+typedef sexp (*fp)(sexp a);
+
+// [[Rcpp::export]]
+void call_fct(Rcpp::XPtr<fp> inp) {
+  fp f = *inp;
+  sexp a = coca(1, 2, 3);
+  print(a);
+  a = f(a);
+  print("a is now:");
+  print(a);
+}
+```
+
+### Calling the final function
+
+```{r}
+#Rcpp::sourceCpp("cpp_code.cpp") # if not run in Rmarkdown
+call_fct(pointer_to_f_cpp)
+```
+
+
+
+
+
+
+
+## Introduction to additional functions
+
+### R code is translated
+
+```{r}
+add_two <- function(a, b) {
+  d <- matrix(3, 3, 4)
+  c <- a + b - d/2 + sin(3.14159)
+  return(c)
+}  
+pointer_to_f_cpp <- ast2ast::translate(add_two)
+```
+
+### Defining C++ Code which uses the translated R Code
+
+```{Rcpp}
+// [[Rcpp::depends(ast2ast)]]
+// [[Rcpp::depends(RcppArmadillo)]]
+#include "etr.hpp"
+
+// [[Rcpp::plugins("cpp17")]]
+
+typedef sexp (*fp)(sexp a, sexp b);
+
+// [[Rcpp::export]]
+void call_fct(Rcpp::XPtr<fp> inp) {
+  fp f = *inp;
+  sexp a = matrix(3.14, 3, 4);
+  sexp b = matrix(5, 3, 4);
+  
+  print(a);
+  print(b);
+  
+  sexp c = f(a, b);
+  print();
+  print(c);
+}
+```
+
+### Calling the final function
+
+```{r}
+#Rcpp::sourceCpp("cpp_code.cpp") # if not run in Rmarkdown
+call_fct(pointer_to_f_cpp)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Using *ast2ast* in combination with *r2sundials*
+
+### R code is translated
+
+```{r}
+ode <- function(y, ydot) {
+  nu <- 2
+  a <- 1
+  ydot <- -nu*(y - a)
+} 
+
+pointer_to_ode <- ast2ast::translate(ode, reference = TRUE, verbose = FALSE)
+```
+
+### Defining C++ Code which uses the translated R Code
+
+```{Rcpp}
+
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::depends(rmumps)]]
+// [[Rcpp::depends(r2sundials)]]
+// [[Rcpp::depends(ast2ast)]]
+#include "etr.hpp"
+#include "RcppArmadillo.h"
+
+#include "r2sundials.h"
+
+using namespace arma;
+
+// [[Rcpp::plugins("cpp17")]]
+
+typedef int (*fp)(double t, const vec &y, vec &ydot, RObject &param, NumericVector &psens);
+
+typedef void (*user_fct)(sexp& y_, sexp& ydot_);
+user_fct Fct;
+
+int rhs_exp(double t, const vec &y, vec &ydot, RObject &param, NumericVector &psens) {
+  NumericVector p(param);
+  double nu = 2;
+  double a = 1;
+  ydot[0] = -nu*(y[0]-a);
+  return(CV_SUCCESS);
+}
+
+
+int rhs_exp_wrapper(double t,const vec &y, vec &ydot, RObject &param, NumericVector &psens) {
+  NumericVector p(param);
+  const int size = y.size(); 
+  sexp ydot_(size, ydot.memptr(), 2);
+  // bad --> but otherwise r2sundials cannot be used
+  double* ptr = const_cast<double*>(y.memptr());
+  sexp y_(size, ptr, 2);
+  // user code starts
+  Fct(y_, ydot_);
+  // user code ends
+  
+  return(CV_SUCCESS);
+}
+
+
+
+// [[Rcpp::export]]
+Rcpp::NumericVector test_ode() {
+
+  Rcpp::XPtr<fp> ptr = Rcpp::XPtr<fp>(new fp(&rhs_exp));
+
+  Rcpp::Environment pkg = Rcpp::Environment::namespace_env("r2sundials");
+  Rcpp::Function f = pkg["r2cvodes"];
+
+
+  NumericVector ti{0, 1, 2, 3};
+  NumericVector y0{0};
+
+  Rcpp::NumericVector output = f(y0, ti, ptr, ti);
+
+  return output;
+}
+
+
+
+
+// [[Rcpp::export]]
+Rcpp::NumericVector test_ode_etr(Rcpp::XPtr<user_fct> inp) {
+  Fct = *inp;  
+  Rcpp::XPtr<fp> ptr = Rcpp::XPtr<fp>(new fp(&rhs_exp_wrapper));
+  
+  Rcpp::Environment pkg = Rcpp::Environment::namespace_env("r2sundials");
+  Rcpp::Function f = pkg["r2cvodes"];
+
+
+  NumericVector ti{0, 1, 2, 3};
+  NumericVector y0{0};
+
+  Rcpp::NumericVector output = f(y0, ti, ptr, ti);
+
+  return output;
+}
+ 
+```
+
+### Calling the final function
+
+```{r}
+# R version
+ti <- c(0, 1, 2, 3) 
+p <- c(nu = 2, a = 1)
+y0 <- 0
+frhs <- function(t, y, p, psens) -p["nu"]*(y-p["a"]) 
+library(r2sundials)
+
+res_pointer <- test_ode()
+res_ast2ast <- test_ode_etr(pointer_to_ode)
+res_R <- r2cvodes(y0, ti, frhs, param=p)
+
+print("Do we get the same results?")
+if(diff(range(res_pointer - res_ast2ast)  < 1.e-14) == 0) print("yes")
+if(diff(range(res_R - res_ast2ast)  < 1.e-14) == 0) print("yes")
+
+# Benchmark
+microbenchmark::microbenchmark(test_ode(), test_ode_etr(pointer_to_ode), r2cvodes(y0, ti, frhs, param=p))
+```
+
