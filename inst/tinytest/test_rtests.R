@@ -1506,7 +1506,7 @@ f <- function(a) {
 }
 fetr <- translate(f)
 ret <- test(fetr)
-expect_equal(ret, sinh(c(0, pi/6, pi/2, pi)) ) #81
+expect_equal(ret, sinh(c(0, pi/6, pi/2, pi)) ) #83
 
 
 f <- function(a) {
@@ -1517,7 +1517,7 @@ f <- function(a) {
 }
 fetr <- translate(f)
 ret <- test(fetr)
-expect_equal(ret, cos(c(0, pi/6, pi/2, pi)) ) #81
+expect_equal(ret, cos(c(0, pi/6, pi/2, pi)) ) #84
 
 
 f <- function(a) {
@@ -1528,7 +1528,7 @@ f <- function(a) {
 }
 fetr <- translate(f)
 ret <- test(fetr)
-expect_equal(ret, acos(c(0, pi/6, pi/2, pi)) ) #81
+expect_equal(ret, acos(c(0, pi/6, pi/2, pi)) ) #85
 
 
 
@@ -1540,7 +1540,7 @@ f <- function(a) {
 }
 fetr <- translate(f)
 ret <- test(fetr)
-expect_equal(ret, cosh(c(0, pi/6, pi/2, pi)) ) #81
+expect_equal(ret, cosh(c(0, pi/6, pi/2, pi)) ) #86
 
 
 
@@ -1553,7 +1553,7 @@ f <- function(a) {
 }
 fetr <- translate(f)
 ret <- test(fetr)
-expect_equal(ret, tan(c(0, pi/6, pi/2, pi)) ) #81
+expect_equal(ret, tan(c(0, pi/6, pi/2, pi)) ) #87
 
 
 f <- function(a) {
@@ -1564,7 +1564,7 @@ f <- function(a) {
 }
 fetr <- translate(f)
 ret <- test(fetr)
-expect_equal(ret, atan(c(0, pi/6, pi/2, pi)) ) #81
+expect_equal(ret, atan(c(0, pi/6, pi/2, pi)) ) #88
 
 
 
@@ -1576,4 +1576,100 @@ f <- function(a) {
 }
 fetr <- translate(f)
 ret <- test(fetr)
-expect_equal(ret, tanh(c(0, pi/6, pi/2, pi)) ) #81
+expect_equal(ret, tanh(c(0, pi/6, pi/2, pi)) ) #89
+
+
+
+
+
+
+
+
+
+
+# test sexp to arma and Rcpp and vice versa
+# ==============================================================================
+Rcpp::sourceCpp(code = '
+
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::depends(ast2ast)]]
+#include "etr.hpp"
+
+// [[Rcpp::plugins(cpp17)]]
+
+// [[Rcpp::export]]
+arma::vec test() {
+  sexp a = coca(1, 2, 3, 4);
+  arma::vec v = a;
+  return v;
+}
+
+')
+
+ret <- test()
+expect_equal(ret, c(1, 2, 3, 4) ) #90
+
+
+
+
+Rcpp::sourceCpp(code = '
+
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::depends(ast2ast)]]
+#include "etr.hpp"
+
+// [[Rcpp::plugins(cpp17)]]
+
+// [[Rcpp::export]]
+arma::mat test() {
+  sexp a = matrix(colon(1, 16), 4, 4);
+  arma::mat v = a;
+  return v;
+}
+
+')
+
+ret <- test()
+expect_equal(ret, matrix(1:16, 4, 4) ) #91
+
+
+
+
+Rcpp::sourceCpp(code = '
+
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::depends(ast2ast)]]
+#include "etr.hpp"
+
+// [[Rcpp::plugins(cpp17)]]
+
+// [[Rcpp::export]]
+Rcpp::NumericMatrix test() {
+  sexp a = matrix(colon(1, 16), 4, 4);
+  Rcpp::NumericMatrix v = a;
+  return v;
+}
+
+')
+
+ret <- test()
+expect_equal(ret, matrix(1:16, 4, 4) ) #92
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ==============================================================================

@@ -11,7 +11,7 @@ before_install:
 addons:
   apt_packages:
     - gfortran
-    - g++-8
+    - gcc-8
 
 after_success:
   - Rscript -e 'covr::codecov()'

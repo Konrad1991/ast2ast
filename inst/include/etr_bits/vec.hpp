@@ -190,8 +190,8 @@ public:
 
     d.resize(other_vec.size());
     this -> ismatrix = true;
-    this -> ncols = 0;
-    this -> nrows = 0;
+    this -> ncols = other_vec.ncol();
+    this -> nrows = other_vec.nrow();
     subsetted = false;
 
     for(int i = 0; i < other_vec.size(); i++) {
@@ -203,11 +203,26 @@ public:
 
   operator arma::vec() const {
     arma::vec ret(this -> size());
-    for(int i = 0; i < ret.size(); i++) {
+    for(int i = 0; i < this -> size(); i++) {
       ret[i] = d[i];
     }
 
     return ret;
+  }
+
+  VEC& operator=(arma::vec& other_vec) {
+
+    d.resize(other_vec.size());
+    this -> ismatrix = false;
+    this -> ncols = 0;
+    this -> nrows = 0;
+    subsetted = false;
+
+    for(int i = 0; i < other_vec.size(); i++) {
+      d[i] = other_vec[i];
+    }
+
+    return *this;
   }
 
   operator arma::mat() const {
@@ -219,6 +234,23 @@ public:
 
     return ret;
   }
+
+  VEC& operator=(arma::mat& other_vec) {
+
+    d.resize(other_vec.size());
+    this -> ismatrix = true;
+    this -> ncols = other_vec.n_cols;
+    this -> nrows = other_vec.n_rows;
+    subsetted = false;
+
+    for(int i = 0; i < other_vec.size(); i++) {
+      d[i] = other_vec[i];
+    }
+
+    return *this;
+  }
+
+
 
   operator SEXP() const{
 
