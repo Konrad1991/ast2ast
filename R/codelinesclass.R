@@ -47,6 +47,8 @@ LC <- R6::R6Class("LC",
 
        extractast = function(sexp) {
 
+         self$check_assign_subset = FALSE # in order to call subset when only at rhs is subsetting
+
           if(!is.call(sexp)) {
 
             # check whether its integer
