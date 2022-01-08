@@ -1112,7 +1112,7 @@ expect_equal(ret, FALSE) #65
 
 f <- function(a) {
   a <- c(1, 2, 3)
-  b <- c(0, 1, 2)
+  b <- c(1, 1, 2)
   c <- a - b
   return(a != c)
 }
@@ -1284,15 +1284,14 @@ expect_equal(ret, c(100, 100, 200, 200) ) #71
 
 
 f <- function(a) {
-
   sub(a, a >= 2) = -1
-  sub(a, a > 2) = -2
+  sub(a, a > -2) = -2
 
   return(a)
 }
 fetr <- translate(f)
 ret <- test(fetr)
-expect_equal(ret, c(-1, -1, -2, -2) ) #72
+expect_equal(ret, c(-2, -2, -2, -2) ) #72
 
 
 f <- function(a) {
@@ -1389,7 +1388,8 @@ NumericMatrix test(XPtr<fp> fetr) {
 f <- function(a) {
   b <- c(6, 8)
   sub(a, c(1, 2), c(3, 4)) = b + b
-  return(sub(a, c(1, 2), c(3, 4) ) )
+  c <- sub(a, c(1, 2), c(3, 4) )
+  return(c)
 }
 fetr <- translate(f)
 ret <- test(fetr)
@@ -1402,10 +1402,9 @@ f <- function(a) {
 
   sub(a, a <= 3) <- 5
 
-  return(sub(a, a == 5))
+  b <- sub(a, a == 5)
+  return(b)
 }
 fetr <- translate(f)
 ret <- test(fetr)
-
-print(ret)
-#expect_equal(ret, matrix(c(2, 3, 3, 4) ,2, 2) )#78
+expect_equal(ret, matrix(c(2, 3, 3, 4) ,2, 2) )#78
