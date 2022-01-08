@@ -1316,7 +1316,7 @@ expect_equal(ret, c(100, 400, 3, 4) ) #74
 
 f <- function(a) {
   b <- c(100, 200, 300, 400)
-  sub(a, NULL) <- 1
+  sub(a, '') <- 1
   return(a)
 }
 fetr <- translate(f)
@@ -1408,3 +1408,172 @@ f <- function(a) {
 fetr <- translate(f)
 ret <- test(fetr)
 expect_equal(ret, matrix(c(2, 3, 3, 4) ,2, 2) )#78
+
+
+f <- function(a) {
+  b <- c(6, 8)
+  sub(a, c(1, 2), c(3, 4)) = b + b
+
+  sub(a, a <= 3, '') <- 5
+  b <- sub(a, a <= 5, '')
+  return(b)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+
+print(ret)
+expect_equal(ret, matrix(5 ,4, 4) )#79
+
+
+f <- function(a) {
+  a[1, 1] <- 7
+  sub(a, a == 7) <- 6
+  b <- sub(a, a >= 6, '')
+  return(b)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+
+print(ret)
+expect_equal(ret, matrix(6 , 1, 1) )#80
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# vectors
+Rcpp::sourceCpp(code = '
+
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::depends(ast2ast)]]
+#include "etr.hpp"
+typedef sexp (*fp) (sexp);
+
+// [[Rcpp::plugins(cpp17)]]
+
+using namespace Rcpp;
+
+// [[Rcpp::export]]
+NumericVector test(XPtr<fp> fetr) {
+  fp Fct = *fetr;
+
+  sexp a = coca(1, 2, 3, 4);
+  sexp b = Fct(a);
+
+  NumericVector ret = b;
+  return ret;
+}
+
+')
+
+f <- function(a) {
+  pi = 3.141593
+  a <- c(0, pi/6, pi/2, pi)
+  b <- sin(a)
+  return(b)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, sin(c(0, pi/6, pi/2, pi)) ) #81
+
+
+f <- function(a) {
+  pi = 3.141593
+  a <- c(0, pi/6, pi/2, pi)
+  b <- asin(a)
+  return(b)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, asin(c(0, pi/6, pi/2, pi)) ) #82
+
+
+f <- function(a) {
+  pi = 3.141593
+  a <- c(0, pi/6, pi/2, pi)
+  b <- sinh(a)
+  return(b)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, sinh(c(0, pi/6, pi/2, pi)) ) #81
+
+
+f <- function(a) {
+  pi = 3.141593
+  a <- c(0, pi/6, pi/2, pi)
+  b <- cos(a)
+  return(b)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, cos(c(0, pi/6, pi/2, pi)) ) #81
+
+
+f <- function(a) {
+  pi = 3.141593
+  a <- c(0, pi/6, pi/2, pi)
+  b <- acos(a)
+  return(b)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, acos(c(0, pi/6, pi/2, pi)) ) #81
+
+
+
+f <- function(a) {
+  pi = 3.141593
+  a <- c(0, pi/6, pi/2, pi)
+  b <- cosh(a)
+  return(b)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, cosh(c(0, pi/6, pi/2, pi)) ) #81
+
+
+
+
+f <- function(a) {
+  pi = 3.141593
+  a <- c(0, pi/6, pi/2, pi)
+  b <- tan(a)
+  return(b)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, tan(c(0, pi/6, pi/2, pi)) ) #81
+
+
+f <- function(a) {
+  pi = 3.141593
+  a <- c(0, pi/6, pi/2, pi)
+  b <- atan(a)
+  return(b)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, atan(c(0, pi/6, pi/2, pi)) ) #81
+
+
+
+f <- function(a) {
+  pi = 3.141593
+  a <- c(0, pi/6, pi/2, pi)
+  b <- tanh(a)
+  return(b)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, tanh(c(0, pi/6, pi/2, pi)) ) #81

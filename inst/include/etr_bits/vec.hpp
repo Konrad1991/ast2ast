@@ -161,6 +161,21 @@ public:
     return ret;
   }
 
+  VEC& operator=(Rcpp::NumericVector& other_vec) {
+
+    d.resize(other_vec.size());
+    this -> ismatrix = false;
+    this -> ncols = 0;
+    this -> nrows = 0;
+    subsetted = false;
+
+    for(int i = 0; i < other_vec.size(); i++) {
+      d[i] = other_vec[i];
+    }
+
+    return *this;
+  }
+
   operator Rcpp::NumericMatrix() const {
     ass(this -> im() == true, "Object cannot be converted to NumericMatrix");
     Rcpp::NumericMatrix ret(this -> nr(), this -> nc());
@@ -169,6 +184,21 @@ public:
     }
 
     return ret;
+  }
+
+  VEC& operator=(Rcpp::NumericMatrix& other_vec) {
+
+    d.resize(other_vec.size());
+    this -> ismatrix = true;
+    this -> ncols = 0;
+    this -> nrows = 0;
+    subsetted = false;
+
+    for(int i = 0; i < other_vec.size(); i++) {
+      d[i] = other_vec[i];
+    }
+
+    return *this;
   }
 
   operator arma::vec() const {
