@@ -13,6 +13,7 @@ addons:
       - sourceline: 'ppa:ubuntu-toolchain-r/test'
     packages:
       - g++-7
+      - gfortran
 
 after_success:
   - Rscript -e 'covr::codecov()'

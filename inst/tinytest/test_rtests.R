@@ -1314,6 +1314,16 @@ fetr <- translate(f)
 ret <- test(fetr)
 expect_equal(ret, c(100, 400, 3, 4) ) #74
 
+
+f <- function(a) {
+  b <- c(100, 200, 300, 400)
+  sub(a, NULL) <- 1
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, rep(1, 4) ) #75
+
 # matrices
 Rcpp::sourceCpp(code = '
 
@@ -1349,7 +1359,7 @@ f <- function(a) {
 }
 fetr <- translate(f)
 ret <- test(fetr)
-expect_equal(ret, matrix(c(2, 3, 3, 4) ,2, 2) )#75
+expect_equal(ret, matrix(c(2, 3, 3, 4) ,2, 2) )#76
 
 # matrices
 Rcpp::sourceCpp(code = '
@@ -1379,21 +1389,23 @@ NumericMatrix test(XPtr<fp> fetr) {
 f <- function(a) {
   b <- c(6, 8)
   sub(a, c(1, 2), c(3, 4)) = b + b
-  return(a)
+  return(sub(a, c(1, 2), c(3, 4) ) )
 }
 fetr <- translate(f)
 ret <- test(fetr)
-expect_equal(ret, matrix(c(2, 3, 3, 4) ,2, 2) )#76
+expect_equal(ret, matrix(c(12, 16, 12, 16) ,2, 2) )#77
 
 
 f <- function(a) {
-  for(i in 1:dim(a)[1]){
-    for(j in 1:dim(a)[2]) {
-      a[i, j] = i + j
-    }
-  }
-  return(a)
+  b <- c(6, 8)
+  sub(a, c(1, 2), c(3, 4)) = b + b
+
+  sub(a, a <= 3) <- 5
+
+  return(sub(a, a == 5))
 }
 fetr <- translate(f)
 ret <- test(fetr)
-expect_equal(ret, matrix(c(2, 3, 3, 4) ,2, 2) )#77
+
+print(ret)
+#expect_equal(ret, matrix(c(2, 3, 3, 4) ,2, 2) )#78
