@@ -255,7 +255,7 @@ public:
         delete [] p;
         p = nullptr;
       }
-      
+
       p = new T[static_cast<int>(new_size*1.15)]; //*2
       sz = new_size;
       capacity = static_cast<int>(new_size*1.15); //*2

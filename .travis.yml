@@ -2,3 +2,17 @@
 
 language: R
 cache: packages
+
+before_install:
+  - mkdir -p ~/.R
+  - echo 'CXX17 = g++-7 -std=gnu++17 -fPIC' > ~/.R/Makevars
+
+addons:
+  apt:
+    sources:
+      - sourceline: 'ppa:ubuntu-toolchain-r/test'
+    packages:
+      - g++-7
+
+after_success:
+  - Rscript -e 'covr::codecov()'

@@ -1014,9 +1014,6 @@ ret <- test(fetr)
 expect_equal(ret, TRUE) #61
 
 
-
-print("blabla")
-
 # <
 Rcpp::sourceCpp(code = '
 
@@ -1209,7 +1206,7 @@ NumericMatrix test(XPtr<fp> fetr) {
 ')
 
 f <- function(a) {
-  a <- exp(a, 3)
+  a <- a^3
   return(a)
 }
 fetr <- translate(f)
@@ -1343,9 +1340,60 @@ NumericMatrix test(XPtr<fp> fetr) {
 ')
 
 f <- function(a) {
-  a <- exp(a, 3)
+  for(i in 1:dim(a)[1]){
+    for(j in 1:dim(a)[2]) {
+      a[i, j] = i + j
+    }
+  }
   return(a)
 }
 fetr <- translate(f)
 ret <- test(fetr)
-expect_equal(ret, matrix(27, 2, 2))#69
+expect_equal(ret, matrix(c(2, 3, 3, 4) ,2, 2) )#75
+
+# matrices
+Rcpp::sourceCpp(code = '
+
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::depends(ast2ast)]]
+#include "etr.hpp"
+typedef sexp (*fp) (sexp);
+
+// [[Rcpp::plugins(cpp17)]]
+
+using namespace Rcpp;
+
+// [[Rcpp::export]]
+NumericMatrix test(XPtr<fp> fetr) {
+  fp Fct = *fetr;
+
+  sexp a = matrix(3, 4, 4);
+  sexp b = Fct(a);
+
+  NumericMatrix ret = b;
+  return ret;
+}
+
+')
+
+f <- function(a) {
+  b <- c(6, 8)
+  sub(a, c(1, 2), c(3, 4)) = b + b
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, matrix(c(2, 3, 3, 4) ,2, 2) )#76
+
+
+f <- function(a) {
+  for(i in 1:dim(a)[1]){
+    for(j in 1:dim(a)[2]) {
+      a[i, j] = i + j
+    }
+  }
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, matrix(c(2, 3, 3, 4) ,2, 2) )#77
