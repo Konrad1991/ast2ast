@@ -57,6 +57,7 @@ If you want to see how ETR differs from R in detail check the vignette: 'Express
 \examples{
 #Further examples can be found in vignette: 'Examples'
 #Hello World
+\dontrun{
 f <- function() { print("Hello World!")}
 pointer_to_f_cpp <- ast2ast::translate(f)
 Rcpp::sourceCpp(code = "
@@ -70,4 +71,5 @@ void call_fct(Rcpp::XPtr<fp> inp) {
 }
 ")
 call_fct(pointer_to_f_cpp)
+}
 }

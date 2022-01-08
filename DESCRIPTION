@@ -5,6 +5,8 @@ Version: 0.1
 Date: 2022-01-04
 Author: Krämer Konrad [aut, cre]
 Maintainer: Krämer Konrad <konrad_kraemer@yahoo.de>
+BugReports: https://github.com/Konrad1991/ast2ast
+URL: https://github.com/Konrad1991/ast2ast
 Description: Translates a R function into a C++ function. An external pointer to the C++ function is returned to the user.
 License: GPL-2
 Imports: Rcpp (>= 1.0.4), purrr, R6, RcppXPtrUtils
@@ -12,4 +14,4 @@ LinkingTo: Rcpp, RcppArmadillo, RcppXPtrUtils
 VignetteBuilder: knitr
 Suggests: knitr, rmarkdown, tinytest, microbenchmark, r2sundials
 Encoding: UTF-8
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2

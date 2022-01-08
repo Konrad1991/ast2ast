@@ -230,6 +230,8 @@ MA <- R6::R6Class("MA",
 
 translate <- function(f, verbose = FALSE, reference = FALSE) {
 
+    stopifnot(is.function(f))
+
     desired_type = 'sexp'
 
     a = MA$new(f, desired_type)

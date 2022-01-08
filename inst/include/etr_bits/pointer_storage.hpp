@@ -249,14 +249,20 @@ public:
 
   void resize(int new_size) {
     ass(cob < 2, "try to delete borrowed pointer");
-    if(allocated == true) {
-      ass(p != nullptr, "try to delete nullptr");
-      delete [] p;
-      p = nullptr;
+    if(new_size > sz) {
+      if(allocated == true) {
+        ass(p != nullptr, "try to delete nullptr");
+        delete [] p;
+        p = nullptr;
+      }
+      
+      p = new T[static_cast<int>(new_size*1.15)]; //*2
+      sz = new_size;
+      capacity = static_cast<int>(new_size*1.15); //*2
+    } else {
+      sz = new_size;
     }
-    p = new T[new_size*2]; //*2
-    sz = new_size;
-    capacity = new_size*2; //*2
+
   }
 
   void realloc(int new_size) {

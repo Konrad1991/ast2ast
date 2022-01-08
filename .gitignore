@@ -8,3 +8,5 @@ $ cat .git/info/exclude
 
 doc
 Meta
+/doc/
+/Meta/
