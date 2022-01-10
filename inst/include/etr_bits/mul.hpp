@@ -32,8 +32,6 @@ class VVTIMES {
 private:
   const L& l; //const L& l;
   const R& r; //const R& r;
-  std::vector<int> indices1;
-  std::vector<int> indices2;
   int columns_;
   int rows_;
   bool ismatrix;
@@ -41,40 +39,10 @@ private:
 public:
 
   VVTIMES(const L &a, const R &b, bool ismatrix_, int rows, int cols) : l(a), r(b),
-         ismatrix(ismatrix_), rows_(rows), columns_(cols) {
-
-       if(l.size() > r.size()) {
-         //ass((l.size() % r.size()) == 0, "Vector is not multiple of other vector");
-         indices1.resize(l.size());
-         indices2.resize(l.size());
-         for(int i = 0; i < indices2.size(); i++) {
-           indices1[i] = i;
-
-           int times = floor(i/r.size());
-           indices2[i] =  i - times*r.size();
-         }
-       } else if(r.size() > l.size()) {
-         //ass((l.size() % r.size()) == 0, "Vector is not multiple of other vector");
-         indices1.resize(r.size());
-         indices2.resize(r.size());
-         for(int i = 0; i < indices2.size(); i++) {
-           indices2[i] = i;
-
-           int times = floor(i/l.size());
-           indices1[i] =  i - times*l.size();
-         }
-     } else if(r.size() == l.size()) {
-       indices1.resize(l.size());
-       indices2.resize(r.size());
-       for(int i = 0; i < indices2.size(); i++) {
-         indices1[i] = i;
-         indices2[i] = i;
-       }
-     }
-   }
+         ismatrix(ismatrix_), rows_(rows), columns_(cols) {}
 
    T operator[](const int i) const {
-     return l[indices1[i]] * r[indices2[i]];
+     return l[i % l.size()] * r[i % r.size()];
    }
 
    int size() const {
@@ -145,7 +113,7 @@ public:
      l(a), r(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) {}
 
    T operator[](const int i) const {
-     return l[i] * r;
+     return l[i % l.size()] * r;
    }
 
    int size() const {
@@ -205,7 +173,7 @@ public:
      r(a), l(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) { }
 
    T operator[](const int i) const {
-     return l[i] * r;
+     return l[i % l.size()] * r;
    }
 
    int size() const {

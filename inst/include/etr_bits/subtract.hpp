@@ -26,6 +26,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
+/*
 template<typename T, typename L, typename R>
 class VVMINUS {
 
@@ -95,6 +96,47 @@ public:
    }
 
 };
+*/
+
+
+template<typename T, typename L, typename R>
+class VVMINUS {
+
+private:
+  const L& l; //const L& l;
+  const R& r; //const R& r;
+  int columns_;
+  int rows_;
+  bool ismatrix;
+
+public:
+
+  VVMINUS(const L &a, const R &b, bool ismatrix_, int rows, int cols) : l(a), r(b),
+         ismatrix(ismatrix_), rows_(rows), columns_(cols) {}
+
+   T operator[](const int i) const {
+     return l[i % l.size()] - r[i % r.size()];
+   }
+
+   int size() const {
+     int sz = (l.size() > r.size()) ? l.size() : r.size();
+     return   sz;      //l.size(); // correct?
+   }
+
+   bool im() const {
+     return ismatrix;
+   }
+
+   int nc() const {
+     return columns_;
+   }
+
+   int nr() const {
+     return rows_;
+   }
+
+};
+
 
 template<typename T, typename L, typename R>
 VEC< T, VVMINUS< T, L, R > > operator-(const VEC<T, L>& a, const VEC<T, R>& b) {
@@ -145,7 +187,7 @@ public:
      l(a), r(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) {}
 
    T operator[](const int i) const {
-     return l[i] - r;
+     return l[i % l.size()] - r;
    }
 
    int size() const {
@@ -205,7 +247,7 @@ public:
      r(a), l(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) { }
 
    T operator[](const int i) const {
-     return r - l[i];
+     return r - l[i % l.size()];
    }
 
    int size() const {

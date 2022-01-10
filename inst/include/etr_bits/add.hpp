@@ -193,7 +193,7 @@ public:
      l(a), r(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) { }
 
    T operator[](const int i) const {
-     return l[i] + r;
+     return l[i % l.size()] + r;
    }
 
    int size() const {
@@ -255,7 +255,7 @@ public:
      r(a), l(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) { }
 
    T operator[](const int i) const {
-     return l[i] + r;
+     return l[i % l.size()] + r;
    }
 
    int size() const {

@@ -2,11 +2,3 @@
 
 language: R
 cache: packages
-
-before_install:
-  - mkdir -p ~/.R
-  - echo 'CXX17 = -std=gnu++17 -fPIC' > ~/.R/Makevars
-
-
-after_success:
-  - Rscript -e 'covr::codecov()'

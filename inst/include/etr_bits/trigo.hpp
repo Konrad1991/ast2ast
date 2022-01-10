@@ -49,7 +49,7 @@ public:
   }
 
    T operator[](const int i) const {
-     return sin(r[i]);
+     return sin(r[i % r.size()]);
    }
 
    int size() const {
