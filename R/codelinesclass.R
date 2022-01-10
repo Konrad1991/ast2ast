@@ -47,9 +47,11 @@ LC <- R6::R6Class("LC",
 
        extractast = function(sexp) {
 
-         self$check_assign_subset = FALSE # in order to call subset when only at rhs is subsetting
-
           if(!is.call(sexp)) {
+
+            if(as.name("=") != sexp) {
+                self$check_assign_subset = FALSE
+            }
 
             # check whether its integer
             check_var = FALSE
@@ -115,8 +117,7 @@ LC <- R6::R6Class("LC",
             sexp <- p$convert(self$PF)
             self$vars <- c(self$vars, p$get_var_names())
 
-          } else if(deparse(fct) %in% self$generic_fct){
-
+          } else if( (deparse(fct) %in% self$generic_fct) ){
             self$check_assign_subset = FALSE
             p <- generic$new(sexp)
             sexp <- p$convert(self$PF)

@@ -303,11 +303,11 @@ public:
     }
   }
 
-  auto begin() const {
+  It<T> begin() const {
     return It<T>{p};
   }
 
-  auto end() const {
+  It<T> end() const {
     return It<T>{p + sz};
   }
 

@@ -26,6 +26,8 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
+
+/*
 template<typename T, typename L, typename R>
 class VVPLUS {
 
@@ -95,6 +97,49 @@ public:
    }
 
 };
+*/
+
+
+
+
+template<typename T, typename L, typename R>
+class VVPLUS {
+
+private:
+  const L& l;
+  const R& r;
+  int columns_;
+  int rows_;
+  bool ismatrix;
+
+public:
+
+  VVPLUS(const L &a, const R &b, bool ismatrix_, int rows, int cols) : l(a), r(b),
+         ismatrix(ismatrix_), rows_(rows), columns_(cols) {}
+
+   T operator[](const int i) const {
+     return l[i % l.size()] + r[i % r.size()];
+   }
+
+   int size() const {
+     int sz = (l.size() > r.size()) ? l.size() : r.size();
+     return   sz;      //l.size(); // correct?
+   }
+
+   bool im() const {
+     return this -> ismatrix;
+   }
+
+   int nc() const {
+     return columns_;
+   }
+
+   int nr() const {
+     return rows_;
+   }
+
+};
+
 
 
 template<typename T, typename L, typename R>
@@ -129,6 +174,8 @@ VEC< T, VVPLUS< T, L, R > > operator+(const VEC<T, L>& a, const VEC<T, R>& b) {
 
   return ret;
 }
+
+
 
 
 template<typename T, typename L, typename R>

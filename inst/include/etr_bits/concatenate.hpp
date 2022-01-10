@@ -56,8 +56,6 @@ VEC<double> combine(VEC<double>& a, VEC<double>& b) {
   return ret;
 }
 
-
-
 VEC<double> combine(VEC<double>& a, double b) {
   VEC<double> ret(a.size() + 1);
   //a.ismatrix = false;
@@ -71,7 +69,6 @@ VEC<double> combine(VEC<double>& a, double b) {
   ret.ismatrix = false;
   return ret;
 }
-
 
 VEC<double> combine(double a, VEC<double>& b) {
   VEC<double> ret(b.size() + 1);
@@ -88,9 +85,22 @@ VEC<double> combine(double a, VEC<double>& b) {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 template <typename ... Ts>
-VEC<double> coca (Ts && ... multi_inputs)
-{
+VEC<double> coca (Ts && ... multi_inputs) {
     VEC<double> ret;
     ret.ismatrix = false;
     int i = 0;
@@ -113,8 +123,7 @@ VEC<double> coca (Ts && ... multi_inputs)
 
 
 template <typename ... Ts>
-VEC<double> coca (Ts & ... multi_inputs)
-{
+VEC<double> coca (Ts & ... multi_inputs) {
     VEC<double> ret;
     ret.ismatrix = false;
     int i = 0;

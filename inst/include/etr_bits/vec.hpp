@@ -322,8 +322,18 @@ public:
       ass(indices.size() <= other_vec.size(), "number of items to replace is not a multiple of replacement length");
 
       for(int i = 0; i < indices.size(); i++) {
-        d[indices[i]] = other_vec[i];
+
+        /*
+        if(i >= other_vec.size()) {
+          d[i] = other_vec[i % other_vec.size()];
+        } else {
+          d[i] = other_vec[i];
+        }
+        */
+
+        d[i] = other_vec[i];
       }
+
 
     }
 
@@ -353,9 +363,18 @@ public:
         nrows = other_vec.d.nr();
       }
     } else {
+
       temp.resize(indices.size());
       for(int i = 0; i < temp.size(); i++) {
+
+          /*
+          if(i >= other_vec.size()) {
+            temp[i] = other_vec[i % other_vec.size()];
+          } else {
             temp[i] = other_vec[i];
+          }
+          */
+          temp[i] = other_vec[i];
       }
       for(int i = 0; i < indices.size(); i++) {
           this -> d[indices[i]] = std::move(temp[i]);
@@ -425,11 +444,11 @@ int nr() const {
   return nrows;
 }
 
- auto begin() const {
+ It<T> begin() const {
    return It<T>{d.p};
  }
 
- auto end() const {
+ It<T> end() const {
    return It<T>{d.p + this -> size()};
  }
 
