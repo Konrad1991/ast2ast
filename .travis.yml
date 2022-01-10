@@ -5,12 +5,8 @@ cache: packages
 
 before_install:
   - mkdir -p ~/.R
-  - echo 'CXX17 = g++-8 -std=gnu++17 -fPIC' > ~/.R/Makevars
+  - echo 'CXX17 = -std=gnu++17 -fPIC' > ~/.R/Makevars
 
-
-addons:
-  apt_packages:
-    - g++-8
 
 after_success:
   - Rscript -e 'covr::codecov()'
