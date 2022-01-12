@@ -28,7 +28,7 @@ LC <- R6::R6Class("LC",
        PF = c("=", "<-", "[", "for", "c", ":", "sin", "asin", "sinh", "cos", "acos", "cosh",
         "tan", "atan", "tanh", "log", "^", "+", "-",
          "*", "/", "if", "else if", "else", "{", "(",
-        "==", "!=", ">", ">=", "<", "<=", "print", "return", "vector", "matrix", "length", "dim", "cmr", "sub", "exp"), # permitted functions
+        "==", "!=", ">", ">=", "<", "<=", "print", "return", "vector", "matrix", "length", "dim", "cmr", "sub", "exp", "i2d"), # permitted functions
 
        vars = list(), # variables
        index_vars = list(),
@@ -51,56 +51,6 @@ LC <- R6::R6Class("LC",
 
             if(as.name("=") != sexp) {
                 self$check_assign_subset = FALSE
-            }
-
-            # check whether its integer
-            check_var = FALSE
-            check_number = FALSE
-            check_double = FALSE
-
-            number = sexp
-            number1 = as.character(number)
-            size1 = nchar(number)
-
-            number2 = gsub("[A-z]", "", number1)
-            size2 = nchar(number2)
-
-            if( (size2 != size1) || is.symbol(sexp)) { # letters detected
-                check_var = TRUE
-            }
-
-            if(check_var == FALSE) {
-              number2 = gsub("[0-9]", "", number1)
-              number2 = gsub(".", "", number2)
-              number2 = gsub("e", "", number2)
-              number2 = gsub(as.name("+"), "", number2)
-              number2 = gsub("-", "", number2)
-              size2 = nchar(number2)
-
-              if(size2 == 0) { # numbers detected
-                check_number = TRUE
-              }
-
-                if(check_number == TRUE) {
-                  number2 = gsub("[0-9]", "", number1)
-                  number2 = gsub("e", "", number2)
-                  number2 = gsub(as.name("+"), "", number2)
-                  number2 = gsub("-", "", number2)
-
-                  size2 = nchar(number2)
-
-                  if(size2 == 1) { # double detected # dot detected
-                    if(number2 == '.') {
-                      check_double = TRUE
-                    }
-
-                  }
-                }
-
-            }
-
-            if(check_number == TRUE && check_double == FALSE) { # integer found
-              sexp = str2lang(paste0('i2d(', sexp, ")") )
             }
 
             return(sexp)
@@ -136,8 +86,8 @@ LC <- R6::R6Class("LC",
 
           } else if(as.name("[") == fct) {
 
-            p <- fastaccess$new(sexp)
-            #p <- subset$new(sexp, self$check_assign_subset)
+            #p <- fastaccess$new(sexp)
+            p <- subset$new(sexp, self$check_assign_subset)
             sexp <- p$convert(self$PF)
             self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
@@ -178,6 +128,8 @@ LC <- R6::R6Class("LC",
             self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
 
+          } else if(as.name("i2d") == fct) {
+            # prevent stack overflow
           } else {
             cat("Error: Sorry not all  functions are supported", "\n")
             cat("Function: ", fct, " not supported")

@@ -24,43 +24,58 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-VEC<double> subset(VEC<double>& inp) {
-  VEC<double> ret;
-  ret = inp;
-  return ret;
-}
 
 /*
-VEC<double> subset(VEC<double>& inp, int pos) {
-  VEC<double> ret(1);
-  pos--;
-  ret[0] = inp[pos];
-  return ret;
-}
-
-VEC<double> subset(VEC<double>& inp, double pos_) {
-  int pos = d2i(pos_);
-  VEC<double> ret(1);
+template <class F, class = typename std::enable_if<std::is_arithmetic<F>::value>::type>
+VEC<double> subset(const VEC<double>& inp, F pos) {
+  VEC<double> ret(1); // what happens when F is double???
   pos--;
   ret[0] = inp[pos];
   return ret;
 }
 */
 
+VEC<double> subset(VEC<double>& inp) {
+  VEC<double> ret;
+  ret = inp;
+  return ret;
+}
 
-double subset(VEC<double>& inp, int pos) {
+
+template<typename T, typename std::enable_if<std::is_same< int, T>::value, int>::type = 0>
+VEC<double> subset(const VEC<double>& inp, T pos) { // int pos
+  VEC<double> ret(1);
+  pos--;
+  ret[0] = inp[pos];
+  return ret;
+}
+
+template<typename T, typename std::enable_if<std::is_same<double, T>::value, int>::type = 0>
+VEC<double> subset(const VEC<double>& inp, T pos_) { // double
+  int pos = d2i(pos_);
+  VEC<double> ret(1);
+  pos--;
+  ret[0] = inp[pos];
+  return ret;
+}
+
+
+/*
+double& subset(VEC<double>& inp, int pos) {
   pos--;
   return inp[pos];
 }
 
-double subset(VEC<double>& inp, double pos_) {
+double& subset(VEC<double>& inp, double pos_) {
   int pos = d2i(pos_);
   pos--;
   return inp[pos];
 }
+*/
 
 
-VEC<double> subset(VEC<double>& inp, bool p) {
+template<typename T, typename std::enable_if<std::is_same<bool, T>::value, int>::type = 0>
+VEC<double> subset(VEC<double>& inp, T p) { // bool
 
   VEC<double> ret;
   if(p == false) {
@@ -87,6 +102,7 @@ VEC<double> subset(VEC<double>& inp, VEC<double>& pos) {
 
   return ret;
 }
+
 
 VEC<double> subset(VEC<double>& inp, VEC<bool>& pos) {
 
@@ -118,6 +134,7 @@ VEC<double> subset(VEC<double>& inp, VEC<bool>& pos) {
 
   return ret;
 }
+
 
 VEC<double> subset(VEC<double>& inp, int r, int c) {
 
@@ -1147,10 +1164,9 @@ VEC<double> subset(VEC<double>& inp, VEC<bool>& rows, VEC<bool>& cols) {
 
 
 
-
-
 // rvalue functions
-VEC<double> subset(VEC<double>& inp, VEC<double>&& pos) {
+template<typename T, typename std::enable_if<std::is_same< VEC<double>, T>::value, int>::type = 0>
+VEC<double> subset(VEC<double>& inp, T pos) { // VEC<double>&&
 
   VEC<double> ret(pos.size());
 
@@ -1161,7 +1177,8 @@ VEC<double> subset(VEC<double>& inp, VEC<double>&& pos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<bool>&& pos) {
+template<typename T, typename std::enable_if<std::is_same< VEC<bool>, T>::value, int>::type = 0>
+VEC<double> subset(VEC<double>& inp, T pos) { //VEC<bool>&& pos
 
   int counter = 0;
   for(int i = 0; i < pos.size(); i++) {
@@ -1191,6 +1208,8 @@ VEC<double> subset(VEC<double>& inp, VEC<bool>&& pos) {
 
   return ret;
 }
+
+
 
 VEC<double> subset(VEC<double>& inp, int row, VEC<double>&& pos) {
 
@@ -2267,6 +2286,8 @@ VEC<double> subset(VEC<double>& inp, VEC<bool>&& rows, VEC<bool>& cols) {
 
   return ret;
 }
+
+
 
 }
 

@@ -50,7 +50,7 @@ public:
    }
 
    T operator[](const int i) const {
-     return pow(r[i], exponent);
+     return pow(r[i% r.size()], exponent);
    }
 
    int size() const {
@@ -154,7 +154,7 @@ public:
   }
 
    T operator[](const int i) const {
-     return log(r[i]);
+     return log(r[i% r.size()]);
    }
 
    int size() const {

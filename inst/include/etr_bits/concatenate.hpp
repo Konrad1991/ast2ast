@@ -87,18 +87,6 @@ VEC<double> combine(double a, VEC<double>& b) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 template <typename ... Ts>
 VEC<double> coca (Ts && ... multi_inputs) {
     VEC<double> ret;

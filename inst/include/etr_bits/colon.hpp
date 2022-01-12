@@ -65,7 +65,7 @@ VEC<double> colon(double start, int end) {
   return ret;
 }
 
-/*
+
 VEC<double> colon(int start, VEC<double> end) {
 
   int size = static_cast<int>(floor(end[0] - static_cast<double>(start) +1));
@@ -116,7 +116,7 @@ VEC<double> colon(VEC<double> start, VEC<double> end) {
   }
   return ret;
 }
-*/
+
 
 int length(double inp) {
   return 1;
@@ -136,7 +136,7 @@ int length(VEC<T>& inp) {
 }
 
 template<typename T>
-VEC<double> dim(VEC<T>& inp) {
+VEC<double> dim(const VEC<T>& inp) {
   if(inp.im() == false) {
     std::cerr << "dim can only be called with matrix" << std::endl;
     Rcpp::stop("Error");

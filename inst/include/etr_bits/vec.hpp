@@ -101,6 +101,7 @@ public:
 
   //VEC(const R& mat, int nrows_, int ncols_) : d(mat), subsetted(0), ncols(ncols_), nrows(nrows_), ismatrix(0) {}
   VEC() : subsetted(0), d(0), nrows(0), ncols(0), ismatrix(0), temp(1) {}
+
   VEC(const std::vector<T> inp) : subsetted(0), d(inp), nrows(0), ncols(0), ismatrix(0), temp(1) {}
 
   // Constructors for matrix
@@ -145,12 +146,21 @@ public:
   VEC(const int r, const int c, T* ptr, int cob) : d(r*c, ptr, cob), subsetted(0), ismatrix(1), nrows(r), ncols(c), temp(1) {} //cob = copy, owning, borrow
   //VEC(const int r, const int c, const T* ptr, int cob) : d(r*c, ptr, cob), subsetted(0), ismatrix(1), nrows(r), ncols(c) {} //cob = copy, owning, borrow
 
+  operator bool() const{ 
+    return d[0];}
 
-  explicit operator bool() const{return d[0];}
-
+  /*
   operator int() const{
     return static_cast<int>( d[0] );
   }
+  */
+
+  /*
+  operator double() const{
+    ass(this -> size() == 1, "Try tp convert object to double which is non scalar");
+    return d[0];
+  }
+  */
 
   operator Rcpp::NumericVector() const {
     Rcpp::NumericVector ret(this -> size());
@@ -226,7 +236,7 @@ public:
   }
 
   operator arma::mat() const {
-    ass(this -> im() == true, "Object cannot be converted to NumericMatrix");
+    ass(this -> im() == true, "Object cannot be converted to arma::mat");
     arma::mat ret(this -> nr(), this -> nc());
     for(int i = 0; i < ret.size(); i++) {
       ret[i] = d[i];
@@ -322,16 +332,7 @@ public:
       ass(indices.size() <= other_vec.size(), "number of items to replace is not a multiple of replacement length");
 
       for(int i = 0; i < indices.size(); i++) {
-
-        /*
-        if(i >= other_vec.size()) {
-          d[i] = other_vec[i % other_vec.size()];
-        } else {
-          d[i] = other_vec[i];
-        }
-        */
-
-        d[i] = other_vec[i];
+        d[indices[i]] = other_vec[i];
       }
 
 
@@ -366,14 +367,6 @@ public:
 
       temp.resize(indices.size());
       for(int i = 0; i < temp.size(); i++) {
-
-          /*
-          if(i >= other_vec.size()) {
-            temp[i] = other_vec[i % other_vec.size()];
-          } else {
-            temp[i] = other_vec[i];
-          }
-          */
           temp[i] = other_vec[i];
       }
       for(int i = 0; i < indices.size(); i++) {
@@ -444,11 +437,11 @@ int nr() const {
   return nrows;
 }
 
- It<T> begin() const {
+ auto begin() const {
    return It<T>{d.p};
  }
 
- It<T> end() const {
+ auto end() const {
    return It<T>{d.p + this -> size()};
  }
 

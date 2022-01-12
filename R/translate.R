@@ -116,7 +116,17 @@ MA <- R6::R6Class("MA",
             }
           }
 
+          temp1 = temp1[!is.na(temp1)]
+
+          # remove true and false
+          for(i in seq_along(temp1)) {
+              if(temp1[[i]] == as.name("true") || temp1[[i]] == as.name("false")) {
+                temp1[[i]] = NA
+              }
+          }
+
           ret = temp1[!is.na(temp1)]
+
 
           return(ret)
         },

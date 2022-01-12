@@ -126,7 +126,7 @@ public:
   }
 
    T operator[](const int i) const {
-     return sinh(r[i]);
+     return sinh(r[i % r.size()]);
    }
 
    int size() const {
@@ -202,7 +202,7 @@ public:
   }
 
    T operator[](const int i) const {
-     return asin(r[i]);
+     return asin(r[i % r.size()]);
    }
 
    int size() const {
@@ -281,7 +281,7 @@ public:
   }
 
    T operator[](const int i) const {
-     return cos(r[i]);
+     return cos(r[i% r.size()]);
    }
 
    int size() const {
@@ -361,7 +361,7 @@ public:
   }
 
    T operator[](const int i) const {
-     return acos(r[i]);
+     return acos(r[i% r.size()]);
    }
 
    int size() const {
@@ -440,7 +440,7 @@ public:
   }
 
    T operator[](const int i) const {
-     return cosh(r[i]);
+     return cosh(r[i% r.size()]);
    }
 
    int size() const {
@@ -521,7 +521,7 @@ public:
   }
 
    T operator[](const int i) const {
-     return tan(r[i]);
+     return tan(r[i% r.size()]);
    }
 
    int size() const {
@@ -600,7 +600,7 @@ public:
   }
 
    T operator[](const int i) const {
-     return atan(r[i]);
+     return atan(r[i% r.size()]);
    }
 
    int size() const {
@@ -678,7 +678,7 @@ public:
   }
 
    T operator[](const int i) const {
-     return tanh(r[i]);
+     return tanh(r[i% r.size()]);
    }
 
    int size() const {
