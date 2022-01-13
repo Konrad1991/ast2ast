@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Konrad Krämer" />
+
+
+<title>Examples</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Examples</h1>
+<h4 class="author">Konrad Krämer</h4>
+
+
+
+<div id="how-to-use-ast2ast" class="section level2">
+<h2>How to use <em>ast2ast</em></h2>
+<div id="r-code-is-translated" class="section level3">
+<h3>R code is translated</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>add_two &lt;-<span class="st"> </span><span class="cf">function</span>(a) {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>  <span class="kw">return</span>(a <span class="op">+</span><span class="st"> </span><span class="dv">2</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>}  </span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>pointer_to_f_cpp &lt;-<span class="st"> </span>ast2ast<span class="op">::</span><span class="kw">translate</span>(add_two)</span></code></pre></div>
+</div>
+<div id="defining-c-code-which-uses-the-translated-r-code" class="section level3">
+<h3>Defining C++ Code which uses the translated R Code</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="co">// [[Rcpp::depends(ast2ast)]]</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="co">// [[Rcpp::depends(RcppArmadillo)]]</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="pp">#include </span><span class="im">&quot;etr.hpp&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="co">// [[Rcpp::plugins(&quot;cpp17&quot;)]]</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a><span class="kw">typedef</span> sexp (*fp)(sexp a);</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a><span class="dt">void</span> call_fct(Rcpp::XPtr&lt;fp&gt; inp) {</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>  fp f = *inp;</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>  sexp a = coca(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>);</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>  print(a);</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a>  a = f(a);</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a>  print(<span class="st">&quot;a is now:&quot;</span>);</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a>  print(a);</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a>}</span></code></pre></div>
+</div>
+<div id="calling-the-final-function" class="section level3">
+<h3>Calling the final function</h3>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="co">#Rcpp::sourceCpp(&quot;cpp_code.cpp&quot;) # if not run in Rmarkdown</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="kw">call_fct</span>(pointer_to_f_cpp)</span></code></pre></div>
+<pre><code>## 1
+## 2
+## 3
+## a is now:
+## 3
+## 4
+## 5</code></pre>
+</div>
+</div>
+<div id="using-ast2ast-in-combination-with-r2sundials" class="section level2">
+<h2>Using <em>ast2ast</em> in combination with <em>r2sundials</em></h2>
+<div id="r2sundials-code" class="section level3">
+<h3><em>r2sundials</em> code</h3>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">setwd</span>(<span class="st">&quot;/home/konrad/Documents/0Uni/programming&quot;</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="co">#install.packages(&quot;ast2ast&quot;, type = &quot;source&quot;, repos = NULL)</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a><span class="kw">library</span>(Rcpp)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a><span class="kw">library</span>(ast2ast)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a><span class="kw">library</span>(r2sundials)</span></code></pre></div>
+<pre><code>## Loading required package: rmumps</code></pre>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="kw">library</span>(RcppXPtrUtils)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="kw">library</span>(microbenchmark)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a><span class="co"># R version</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>ti &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">5</span>, <span class="dt">length.out=</span><span class="dv">101</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a>p &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">a =</span> <span class="dv">2</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a>p &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dt">nu =</span> <span class="dv">2</span>, <span class="dt">a =</span> <span class="dv">1</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true"></a>y0 &lt;-<span class="st"> </span><span class="dv">0</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true"></a>frhs &lt;-<span class="st"> </span><span class="cf">function</span>(t, y, p, psens) <span class="op">-</span>p[<span class="st">&quot;nu&quot;</span>]<span class="op">*</span>(y<span class="op">-</span>p[<span class="st">&quot;a&quot;</span>])</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true"></a>res_exp &lt;-<span class="st"> </span>r2sundials<span class="op">::</span><span class="kw">r2cvodes</span>(y0, ti, frhs, <span class="dt">param =</span> p)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true"></a><span class="kw">attributes</span>(res_exp) &lt;-<span class="st"> </span><span class="ot">NULL</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true"></a><span class="co">#stopifnot(diff(range(1-exp(-p$a*ti) - res_exp)) &lt; 1.e-6)</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true"></a></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true"></a></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true"></a><span class="co"># External pointer</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true"></a>ptr_exp &lt;-<span class="st"> </span><span class="kw">cppXPtr</span>(<span class="dt">code =</span> <span class="st">&#39;</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true"></a><span class="st">int rhs_exp(double t, const vec &amp;y, vec &amp;ydot, RObject &amp;param, NumericVector &amp;psens) {</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true"></a><span class="st">  double a = 1;</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true"></a><span class="st">  double nu = 2;</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true"></a><span class="st">  ydot[0] = -nu*(y[0] - a);</span></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true"></a><span class="st">  return(CV_SUCCESS);</span></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true"></a><span class="st">}</span></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true"></a><span class="st">&#39;</span>, <span class="dt">depends=</span><span class="kw">c</span>(<span class="st">&quot;RcppArmadillo&quot;</span>,<span class="st">&quot;r2sundials&quot;</span>,<span class="st">&quot;rmumps&quot;</span>),</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true"></a> <span class="dt">includes=</span><span class="st">&quot;using namespace arma;</span><span class="ch">\n</span><span class="st">#include &lt;r2sundials.h&gt;&quot;</span>, <span class="dt">cacheDir=</span><span class="st">&quot;lib&quot;</span>, <span class="dt">verbose=</span><span class="ot">FALSE</span>)</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true"></a>pv &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dt">a =</span> <span class="dv">1</span>)</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true"></a>res_exp2 &lt;-<span class="st"> </span>r2sundials<span class="op">::</span><span class="kw">r2cvodes</span>(y0, ti, ptr_exp, <span class="dt">param =</span> pv)</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true"></a><span class="kw">attributes</span>(res_exp2) &lt;-<span class="st"> </span><span class="ot">NULL</span></span></code></pre></div>
+</div>
+<div id="wrapper-code-in-order-to-call-translated-r-function-maybe-written-by-package-authors" class="section level3">
+<h3>Wrapper code in order to call translated R function (maybe written by package authors)</h3>
+<div class="sourceCode" id="cb8"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="co">// [[Rcpp::depends(RcppArmadillo)]]</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a><span class="co">// [[Rcpp::depends(rmumps)]]</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a><span class="co">// [[Rcpp::depends(r2sundials)]]</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a><span class="co">// [[Rcpp::depends(ast2ast)]]</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a><span class="co">// [[Rcpp::plugins(&quot;cpp17&quot;)]]</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a><span class="pp">#include </span><span class="im">&quot;etr.hpp&quot;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a><span class="pp">#include </span><span class="im">&quot;RcppArmadillo.h&quot;</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a><span class="pp">#include </span><span class="im">&quot;r2sundials.h&quot;</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a><span class="kw">using</span> <span class="kw">namespace</span> arma;</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true"></a></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true"></a><span class="kw">typedef</span> <span class="dt">int</span> (*fp)(<span class="dt">double</span> t, <span class="at">const</span> vec &amp;y, vec &amp;ydot, RObject &amp;param, NumericVector &amp;psens);</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true"></a></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true"></a><span class="kw">typedef</span> <span class="dt">void</span> (*user_fct)(sexp&amp; <span class="va">y_</span>, sexp&amp; <span class="va">ydot_</span>);</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true"></a>user_fct Fct;</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true"></a></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true"></a><span class="dt">int</span> rhs_exp_wrapper(<span class="dt">double</span> t, <span class="at">const</span> vec &amp;y, vec &amp;ydot, RObject &amp;param, NumericVector &amp;psens) {</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true"></a>  NumericVector p(param);</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true"></a>  <span class="at">const</span> <span class="dt">int</span> size = y.size();</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true"></a>  sexp <span class="va">ydot_</span>(size, ydot.memptr(), <span class="dv">2</span>);</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true"></a>  <span class="dt">double</span>* ptr = <span class="kw">const_cast</span>&lt;<span class="dt">double</span>*&gt;(y.memptr());</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true"></a>  sexp <span class="va">y_</span>(size, ptr, <span class="dv">2</span>);</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true"></a>  Fct(<span class="va">y_</span>, <span class="va">ydot_</span>);</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true"></a>  <span class="cf">return</span>(CV_SUCCESS);</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true"></a>}</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true"></a></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true"></a></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true"></a></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true"></a>Rcpp::NumericVector solve_ode(Rcpp::XPtr&lt;user_fct&gt; inp, NumericVector time, NumericVector y) {</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true"></a>  Fct = *inp;</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true"></a>  Rcpp::XPtr&lt;fp&gt; ptr = Rcpp::XPtr&lt;fp&gt;(<span class="kw">new</span> fp(&amp;rhs_exp_wrapper));</span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true"></a></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true"></a>  Rcpp::Environment pkg = Rcpp::Environment::namespace_env(<span class="st">&quot;r2sundials&quot;</span>);</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true"></a>  Rcpp::Function solve = pkg[<span class="st">&quot;r2cvodes&quot;</span>];</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true"></a></span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true"></a>  Rcpp::NumericVector output = solve(y, time, ptr, time);</span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true"></a></span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true"></a>  <span class="cf">return</span> output;</span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true"></a>}</span></code></pre></div>
+</div>
+<div id="applying-ast2ast" class="section level3">
+<h3>Applying <em>ast2ast</em></h3>
+<p>The speed of pure C++ is not reached. However, the <em>ast2ast</em> function is substantially fastern then the R code.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="co"># ast2ast version</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>ti &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">5</span>, <span class="dt">length.out=</span><span class="dv">101</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>p &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">a =</span> <span class="dv">2</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>p &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dt">nu =</span> <span class="dv">2</span>, <span class="dt">a =</span> <span class="dv">1</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>y0 &lt;-<span class="st"> </span><span class="dv">0</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a>ode &lt;-<span class="st"> </span><span class="cf">function</span>(y, ydot) {</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a>  nu &lt;-<span class="st"> </span><span class="dv">2</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a>  a &lt;-<span class="st"> </span><span class="dv">1</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a>  ydot &lt;-<span class="st"> </span><span class="op">-</span>nu<span class="op">*</span>(y <span class="op">-</span><span class="st"> </span>a)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true"></a>}</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true"></a></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true"></a>ode &lt;-<span class="st"> </span><span class="cf">function</span>(y, ydot) {</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true"></a>  nu &lt;-<span class="st"> </span><span class="dv">2</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true"></a>  a &lt;-<span class="st"> </span><span class="dv">1</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true"></a>  ydot[<span class="dv">1</span>] &lt;-<span class="st"> </span><span class="op">-</span>nu<span class="op">*</span>(y[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>a)</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true"></a>}</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true"></a></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true"></a>pointer_to_ode &lt;-<span class="st"> </span>ast2ast<span class="op">::</span><span class="kw">translate</span>(ode, <span class="dt">reference =</span> <span class="ot">TRUE</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true"></a>res_exp3 &lt;-<span class="st"> </span><span class="kw">solve_ode</span>(pointer_to_ode, ti, y0)</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true"></a><span class="kw">attributes</span>(res_exp3) &lt;-<span class="st"> </span><span class="ot">NULL</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true"></a></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true"></a><span class="kw">head</span>(res_exp)</span></code></pre></div>
+<pre><code>## [1] 0.00000000 0.09516259 0.18126923 0.25918179 0.32968002 0.39346945</code></pre>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="kw">head</span>(res_exp2)</span></code></pre></div>
+<pre><code>## [1] 0.00000000 0.09516259 0.18126923 0.25918179 0.32968002 0.39346945</code></pre>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="kw">head</span>(res_exp3)</span></code></pre></div>
+<pre><code>## [1] 0.00000000 0.04877060 0.09516259 0.13929201 0.18126923 0.22119921</code></pre>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="kw">microbenchmark</span>(<span class="kw">r2cvodes</span>(y0, ti, frhs, <span class="dt">param =</span> p), <span class="kw">r2cvodes</span>(y0, ti, ptr_exp, <span class="dt">param =</span> pv), <span class="kw">solve_ode</span>(pointer_to_ode, ti, y0))</span></code></pre></div>
+<pre><code>## Unit: microseconds
+##                                   expr      min        lq      mean   median
+##      r2cvodes(y0, ti, frhs, param = p) 3318.930 3509.5855 3786.7474 3588.042
+##  r2cvodes(y0, ti, ptr_exp, param = pv)  245.574  253.6300  271.1380  261.631
+##      solve_ode(pointer_to_ode, ti, y0)  389.811  400.4395  445.1474  418.005
+##        uq      max neval
+##  3769.539 5880.206   100
+##   277.425  434.729   100
+##   436.579 1939.989   100</code></pre>
+</div>
+</div>
+<div id="using-ast2ast-in-combination-with-paropt" class="section level2">
+<h2>Using <em>ast2ast</em> in combination with <em>paropt</em></h2>
+<div class="sourceCode" id="cb17"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true"></a><span class="co">// [[Rcpp::depends(RcppArmadillo)]]</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true"></a><span class="co">// [[Rcpp::depends(ast2ast)]]</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true"></a><span class="co">// [[Rcpp::plugins(&quot;cpp17&quot;)]]</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true"></a><span class="co">// [[Rcpp::depends(paropt)]]</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true"></a><span class="pp">#include </span><span class="im">&quot;etr.hpp&quot;</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true"></a><span class="pp">#include </span><span class="im">&quot;RcppArmadillo.h&quot;</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true"></a><span class="kw">using</span> <span class="kw">namespace</span> Rcpp;</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true"></a></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true"></a><span class="kw">typedef</span> <span class="dt">int</span> (*OS)(<span class="dt">double</span> &amp;t, <span class="bu">std::</span>vector&lt;<span class="dt">double</span>&gt; &amp;params, <span class="bu">std::</span>vector&lt;<span class="dt">double</span>&gt; &amp;states);</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true"></a></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true"></a><span class="dt">int</span> ode_system(<span class="dt">double</span> &amp;t, <span class="bu">std::</span>vector&lt;<span class="dt">double</span>&gt; &amp;params, <span class="bu">std::</span>vector&lt;<span class="dt">double</span>&gt; &amp; states) {</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true"></a>  <span class="dt">double</span> a = params[<span class="dv">0</span>];</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true"></a>  <span class="dt">double</span> b = params[<span class="dv">1</span>];</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true"></a>  <span class="dt">double</span> c = params[<span class="dv">2</span>];</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true"></a>  <span class="dt">double</span> d = params[<span class="dv">3</span>];</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true"></a></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true"></a>  <span class="dt">double</span> n1 = states[<span class="dv">0</span>];</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true"></a>  <span class="dt">double</span> n2 = states[<span class="dv">1</span>];</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true"></a></span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true"></a>  states[<span class="dv">0</span>] = n1*c*n2 - n1*d;</span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true"></a>  states[<span class="dv">1</span>] = n2*a - n2*b*n1;</span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true"></a></span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true"></a>  <span class="cf">return</span> <span class="dv">0</span>;</span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true"></a>}</span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true"></a></span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb17-28"><a href="#cb17-28" aria-hidden="true"></a>Rcpp::XPtr&lt;OS&gt; test_optimization() {</span>
+<span id="cb17-29"><a href="#cb17-29" aria-hidden="true"></a>  Rcpp::XPtr&lt;OS&gt; xpfun = Rcpp::XPtr&lt;OS&gt;(<span class="kw">new</span> OS(&amp;ode_system));</span>
+<span id="cb17-30"><a href="#cb17-30" aria-hidden="true"></a>  <span class="cf">return</span> xpfun;</span>
+<span id="cb17-31"><a href="#cb17-31" aria-hidden="true"></a>}</span>
+<span id="cb17-32"><a href="#cb17-32" aria-hidden="true"></a></span>
+<span id="cb17-33"><a href="#cb17-33" aria-hidden="true"></a></span>
+<span id="cb17-34"><a href="#cb17-34" aria-hidden="true"></a><span class="kw">typedef</span> <span class="dt">int</span> (*paropt_fct)(<span class="dt">double</span> &amp;t, <span class="bu">std::</span>vector&lt;<span class="dt">double</span>&gt; &amp;params, <span class="bu">std::</span>vector&lt;<span class="dt">double</span>&gt; &amp; states);</span>
+<span id="cb17-35"><a href="#cb17-35" aria-hidden="true"></a></span>
+<span id="cb17-36"><a href="#cb17-36" aria-hidden="true"></a><span class="kw">typedef</span> <span class="dt">void</span> (*user_fct2)(sexp&amp; p, sexp&amp; y);</span>
+<span id="cb17-37"><a href="#cb17-37" aria-hidden="true"></a></span>
+<span id="cb17-38"><a href="#cb17-38" aria-hidden="true"></a>user_fct2 Fct_paropt;</span>
+<span id="cb17-39"><a href="#cb17-39" aria-hidden="true"></a></span>
+<span id="cb17-40"><a href="#cb17-40" aria-hidden="true"></a><span class="dt">int</span> ode_system_wrapper(<span class="dt">double</span> &amp;t, <span class="bu">std::</span>vector&lt;<span class="dt">double</span>&gt; &amp;params, <span class="bu">std::</span>vector&lt;<span class="dt">double</span>&gt; &amp; states) {</span>
+<span id="cb17-41"><a href="#cb17-41" aria-hidden="true"></a>  sexp p(params.size(), params.data(), <span class="dv">2</span>);</span>
+<span id="cb17-42"><a href="#cb17-42" aria-hidden="true"></a>  sexp s(states.size(), states.data(), <span class="dv">2</span>);</span>
+<span id="cb17-43"><a href="#cb17-43" aria-hidden="true"></a>  Fct_paropt(p, s);</span>
+<span id="cb17-44"><a href="#cb17-44" aria-hidden="true"></a></span>
+<span id="cb17-45"><a href="#cb17-45" aria-hidden="true"></a>  <span class="cf">return</span> <span class="dv">0</span>;</span>
+<span id="cb17-46"><a href="#cb17-46" aria-hidden="true"></a>}</span>
+<span id="cb17-47"><a href="#cb17-47" aria-hidden="true"></a></span>
+<span id="cb17-48"><a href="#cb17-48" aria-hidden="true"></a></span>
+<span id="cb17-49"><a href="#cb17-49" aria-hidden="true"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb17-50"><a href="#cb17-50" aria-hidden="true"></a>Rcpp::List optimize_paropt(Rcpp::XPtr&lt;user_fct2&gt; inp,</span>
+<span id="cb17-51"><a href="#cb17-51" aria-hidden="true"></a>                                    NumericVector time, Rcpp::DataFrame lb, Rcpp::DataFrame ub, Rcpp::DataFrame states) {</span>
+<span id="cb17-52"><a href="#cb17-52" aria-hidden="true"></a>  Fct_paropt = *inp;</span>
+<span id="cb17-53"><a href="#cb17-53" aria-hidden="true"></a>  Rcpp::XPtr&lt;paropt_fct&gt; ptr = Rcpp::XPtr&lt;paropt_fct&gt;(<span class="kw">new</span> paropt_fct(&amp;ode_system_wrapper));</span>
+<span id="cb17-54"><a href="#cb17-54" aria-hidden="true"></a></span>
+<span id="cb17-55"><a href="#cb17-55" aria-hidden="true"></a>  Rcpp::Environment pkg = Rcpp::Environment::namespace_env(<span class="st">&quot;paropt&quot;</span>);</span>
+<span id="cb17-56"><a href="#cb17-56" aria-hidden="true"></a>  Rcpp::Function optim = pkg[<span class="st">&quot;optimizer_pointer&quot;</span>];</span>
+<span id="cb17-57"><a href="#cb17-57" aria-hidden="true"></a></span>
+<span id="cb17-58"><a href="#cb17-58" aria-hidden="true"></a>  Rcpp::NumericVector abs_tols{<span class="fl">1e-8</span>, <span class="fl">1e-8</span>};</span>
+<span id="cb17-59"><a href="#cb17-59" aria-hidden="true"></a></span>
+<span id="cb17-60"><a href="#cb17-60" aria-hidden="true"></a>  Rcpp::List output = optim(time, ptr, <span class="fl">1e-6</span>, abs_tols, lb, ub, states,</span>
+<span id="cb17-61"><a href="#cb17-61" aria-hidden="true"></a>                                    <span class="dv">40</span>, <span class="dv">1000</span>, <span class="fl">0.0001</span>, <span class="st">&quot;bdf&quot;</span>);</span>
+<span id="cb17-62"><a href="#cb17-62" aria-hidden="true"></a></span>
+<span id="cb17-63"><a href="#cb17-63" aria-hidden="true"></a>  <span class="cf">return</span> output;</span>
+<span id="cb17-64"><a href="#cb17-64" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a><span class="co">#states</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true"></a>path &lt;-<span class="st"> </span><span class="kw">system.file</span>(<span class="st">&quot;examples&quot;</span>, <span class="dt">package =</span> <span class="st">&quot;paropt&quot;</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true"></a>states &lt;-<span class="st"> </span><span class="kw">read.table</span>(<span class="kw">paste</span>(path,<span class="st">&quot;/states_LV.txt&quot;</span>, <span class="dt">sep =</span> <span class="st">&quot;&quot;</span>), <span class="dt">header =</span> T)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true"></a></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true"></a><span class="co"># parameter</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true"></a>lb &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">time =</span> <span class="dv">0</span>, <span class="dt">a =</span> <span class="fl">0.8</span>, <span class="dt">b =</span> <span class="fl">0.3</span>, <span class="dt">c =</span> <span class="fl">0.09</span>, <span class="dt">d =</span> <span class="fl">0.09</span>)</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true"></a>ub &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">time =</span> <span class="dv">0</span>, <span class="dt">a =</span> <span class="fl">1.3</span>, <span class="dt">b =</span> <span class="fl">0.7</span>, <span class="dt">c =</span> <span class="fl">0.4</span>, <span class="dt">d =</span> <span class="fl">0.7</span>)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true"></a></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true"></a><span class="co"># Optimizing</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true"></a><span class="kw">library</span>(paropt)</span></code></pre></div>
+<pre><code>## SUNDIALS - Copyright (c) 2002-2015, Lawrence Livermore National Laboratory.
+## Produced at the Lawrence Livermore National Laboratory.
+## See - https://computation.llnl.gov/projects/sundials
+## PSO: See - https://github.com/kthohr/optim</code></pre>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true"></a>start_time &lt;-<span class="st"> </span><span class="kw">Sys.time</span>()</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true"></a>df &lt;-<span class="st"> </span><span class="kw">optimizer_pointer</span>(<span class="dt">integration_times =</span> states<span class="op">$</span>time, <span class="dt">ode_sys =</span> <span class="kw">test_optimization</span>(),</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true"></a>                        <span class="dt">relative_tolerance =</span> <span class="fl">1e-6</span>, <span class="dt">absolute_tolerances =</span> <span class="kw">c</span>(<span class="fl">1e-8</span>, <span class="fl">1e-8</span>),</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true"></a>                       <span class="dt">lower =</span> lb, <span class="dt">upper =</span> ub, <span class="dt">states =</span> states,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true"></a>                       <span class="dt">npop =</span> <span class="dv">40</span>, <span class="dt">ngen =</span> <span class="dv">1000</span>, <span class="dt">error =</span> <span class="fl">0.0001</span>, <span class="dt">solvertype =</span> <span class="st">&quot;bdf&quot;</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true"></a>end_time &lt;-<span class="st"> </span><span class="kw">Sys.time</span>()</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true"></a>end_time <span class="op">-</span><span class="st"> </span>start_time</span></code></pre></div>
+<pre><code>## Time difference of 25.07171 secs</code></pre>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true"></a><span class="co">#df</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true"></a></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true"></a><span class="co"># ast2ast</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true"></a>ode &lt;-<span class="st"> </span><span class="cf">function</span>(params, states) {</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true"></a>  a =<span class="st"> </span>params[<span class="dv">1</span>]</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true"></a>  b =<span class="st"> </span>params[<span class="dv">2</span>]</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true"></a>  c =<span class="st"> </span>params[<span class="dv">3</span>]</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true"></a>  d =<span class="st"> </span>params[<span class="dv">4</span>]</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true"></a></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true"></a>  n1 =<span class="st"> </span>states[<span class="dv">1</span>];</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true"></a>  n2 =<span class="st"> </span>states[<span class="dv">2</span>];</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true"></a></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true"></a>  states[<span class="dv">1</span>] =<span class="st"> </span>n1<span class="op">*</span>c<span class="op">*</span>n2 <span class="op">-</span><span class="st"> </span>n1<span class="op">*</span>d;</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true"></a>  states[<span class="dv">2</span>] =<span class="st"> </span>n2<span class="op">*</span>a <span class="op">-</span><span class="st"> </span>n2<span class="op">*</span>b<span class="op">*</span>n1;</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true"></a>}</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true"></a></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true"></a>pointer_to_ode &lt;-<span class="st"> </span>ast2ast<span class="op">::</span><span class="kw">translate</span>(ode, <span class="dt">reference =</span> <span class="ot">TRUE</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true"></a>start_time &lt;-<span class="st"> </span><span class="kw">Sys.time</span>()</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true"></a>df2 &lt;-<span class="st"> </span><span class="kw">optimize_paropt</span>(pointer_to_ode, states<span class="op">$</span>time, lb, ub, states)</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true"></a>end_time &lt;-<span class="st"> </span><span class="kw">Sys.time</span>()</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true"></a>end_time <span class="op">-</span><span class="st"> </span>start_time</span></code></pre></div>
+<pre><code>## Time difference of 2.291305 mins</code></pre>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true"></a><span class="co"># ast2ast with at</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true"></a>ode &lt;-<span class="st"> </span><span class="cf">function</span>(params, states) {</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true"></a>  a =<span class="st"> </span><span class="kw">at</span>(params, <span class="dv">1</span>)</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true"></a>  b =<span class="st"> </span><span class="kw">at</span>(params, <span class="dv">2</span>)</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true"></a>  c =<span class="st"> </span><span class="kw">at</span>(params, <span class="dv">3</span>)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true"></a>  d =<span class="st"> </span><span class="kw">at</span>(params, <span class="dv">4</span>)</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true"></a></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true"></a>  n1 =<span class="st"> </span><span class="kw">at</span>(states, <span class="dv">1</span>)</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true"></a>  n2 =<span class="st"> </span><span class="kw">at</span>(states, <span class="dv">2</span>)</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true"></a></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true"></a>  states[<span class="dv">1</span>] =<span class="st"> </span>n1<span class="op">*</span>c<span class="op">*</span>n2 <span class="op">-</span><span class="st"> </span>n1<span class="op">*</span>d;</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true"></a>  states[<span class="dv">2</span>] =<span class="st"> </span>n2<span class="op">*</span>a <span class="op">-</span><span class="st"> </span>n2<span class="op">*</span>b<span class="op">*</span>n1;</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true"></a>}</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true"></a></span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true"></a>pointer_to_ode &lt;-<span class="st"> </span>ast2ast<span class="op">::</span><span class="kw">translate</span>(ode, <span class="dt">reference =</span> <span class="ot">TRUE</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true"></a>start_time &lt;-<span class="st"> </span><span class="kw">Sys.time</span>()</span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true"></a>df3 &lt;-<span class="st"> </span><span class="kw">optimize_paropt</span>(pointer_to_ode, states<span class="op">$</span>time, lb, ub, states)</span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true"></a>end_time &lt;-<span class="st"> </span><span class="kw">Sys.time</span>()</span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true"></a>end_time <span class="op">-</span><span class="st"> </span>start_time</span></code></pre></div>
+<pre><code>## Time difference of 1.854565 mins</code></pre>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true"></a><span class="co"># ast2ast with only at</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true"></a>ode &lt;-<span class="st"> </span><span class="cf">function</span>(params, states) {</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true"></a>  a =<span class="st"> </span><span class="kw">at</span>(params, <span class="dv">1</span>)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true"></a>  b =<span class="st"> </span><span class="kw">at</span>(params, <span class="dv">2</span>)</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true"></a>  c =<span class="st"> </span><span class="kw">at</span>(params, <span class="dv">3</span>)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true"></a>  d =<span class="st"> </span><span class="kw">at</span>(params, <span class="dv">4</span>)</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true"></a></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true"></a>  n1 =<span class="st"> </span><span class="kw">at</span>(states, <span class="dv">1</span>)</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true"></a>  n2 =<span class="st"> </span><span class="kw">at</span>(states, <span class="dv">2</span>)</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true"></a></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true"></a>  <span class="kw">at</span>(states, <span class="dv">1</span>) =<span class="st"> </span><span class="kw">at</span>(n1, <span class="dv">1</span>)<span class="op">*</span><span class="kw">at</span>(c, <span class="dv">1</span>)<span class="op">*</span><span class="kw">at</span>(n2, <span class="dv">1</span>) <span class="op">-</span><span class="st"> </span><span class="kw">at</span>(n1, <span class="dv">1</span>)<span class="op">*</span><span class="kw">at</span>(d, <span class="dv">1</span>);</span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true"></a>  <span class="kw">at</span>(states, <span class="dv">2</span>)=<span class="st"> </span><span class="kw">at</span>(n2, <span class="dv">1</span>)<span class="op">*</span><span class="kw">at</span>(a, <span class="dv">1</span>) <span class="op">-</span><span class="st"> </span><span class="kw">at</span>(n2, <span class="dv">1</span>)<span class="op">*</span><span class="kw">at</span>(b, <span class="dv">1</span>)<span class="op">*</span><span class="kw">at</span>(n1, <span class="dv">1</span>);</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true"></a>}</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true"></a></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true"></a>pointer_to_ode &lt;-<span class="st"> </span>ast2ast<span class="op">::</span><span class="kw">translate</span>(ode, <span class="dt">reference =</span> <span class="ot">TRUE</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true"></a>start_time &lt;-<span class="st"> </span><span class="kw">Sys.time</span>()</span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true"></a>df3 &lt;-<span class="st"> </span><span class="kw">optimize_paropt</span>(pointer_to_ode, states<span class="op">$</span>time, lb, ub, states)</span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true"></a>end_time &lt;-<span class="st"> </span><span class="kw">Sys.time</span>()</span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true"></a>end_time <span class="op">-</span><span class="st"> </span>start_time</span></code></pre></div>
+<pre><code>## Time difference of 1.433505 mins</code></pre>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true"></a>df[[<span class="dv">8</span>]]</span></code></pre></div>
+<pre><code>##      [,1]    [,2]      [,3]       [,4]      [,5]
+## [1,]    0 1.12283 0.4065349 0.09460643 0.3925324</code></pre>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true"></a>df2[[<span class="dv">8</span>]]</span></code></pre></div>
+<pre><code>##      [,1]    [,2]      [,3]       [,4]      [,5]
+## [1,]    0 1.12283 0.4065349 0.09460643 0.3925324</code></pre>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true"></a>df3[[<span class="dv">8</span>]]</span></code></pre></div>
+<pre><code>##      [,1]    [,2]      [,3]       [,4]      [,5]
+## [1,]    0 1.12283 0.4065349 0.09460643 0.3925324</code></pre>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -28,7 +28,7 @@ LC <- R6::R6Class("LC",
        PF = c("=", "<-", "[", "for", "c", ":", "sin", "asin", "sinh", "cos", "acos", "cosh",
         "tan", "atan", "tanh", "log", "^", "+", "-",
          "*", "/", "if", "else if", "else", "{", "(",
-        "==", "!=", ">", ">=", "<", "<=", "print", "return", "vector", "matrix", "length", "dim", "cmr", "sub", "exp", "i2d"), # permitted functions
+        "==", "!=", ">", ">=", "<", "<=", "print", "return", "vector", "matrix", "length", "dim", "cmr", "sub", "exp", "i2d", "at"), # permitted functions
 
        vars = list(), # variables
        index_vars = list(),
@@ -37,7 +37,7 @@ LC <- R6::R6Class("LC",
        code = NULL,
        generic_fct = c("+", "-",
         "*", "/", "if", "else if", "else", "{", "(",
-       "==", "!=", ">", ">=", "<", "<=", "return", "vector", "matrix","length", "dim", "cmr", "exp"),
+       "==", "!=", ">", ">=", "<", "<=", "return", "vector", "matrix","length", "dim", "cmr", "exp", "at"),
 
        math = c("sin", "asin", "sinh", "cos", "acos", "cosh",
         "tan", "atan", "tanh", "log", "^"),

@@ -288,7 +288,6 @@ end_time - start_time
 #df
 
 # ast2ast
-
 ode <- function(params, states) {
   a = params[1]
   b = params[2]
@@ -310,9 +309,63 @@ end_time <- Sys.time()
 end_time - start_time
 
 
+
+
+
+
+
+
+# ast2ast with at
+ode <- function(params, states) {
+  a = at(params, 1)
+  b = at(params, 2)
+  c = at(params, 3)
+  d = at(params, 4)
+
+  n1 = at(states, 1)
+  n2 = at(states, 2)
+
+  states[1] = n1*c*n2 - n1*d;
+  states[2] = n2*a - n2*b*n1;
+}
+
+pointer_to_ode <- ast2ast::translate(ode, reference = TRUE, verbose = FALSE)
+set.seed(1)
+start_time <- Sys.time()
+df3 <- optimize_paropt(pointer_to_ode, states$time, lb, ub, states)
+end_time <- Sys.time()
+end_time - start_time
+
+
+
+
+
+
+# ast2ast with only at
+ode <- function(params, states) {
+  a = at(params, 1)
+  b = at(params, 2)
+  c = at(params, 3)
+  d = at(params, 4)
+
+  n1 = at(states, 1)
+  n2 = at(states, 2)
+
+  at(states, 1) = at(n1, 1)*at(c, 1)*at(n2, 1) - at(n1, 1)*at(d, 1);
+  at(states, 2)= at(n2, 1)*at(a, 1) - at(n2, 1)*at(b, 1)*at(n1, 1);
+}
+
+pointer_to_ode <- ast2ast::translate(ode, reference = TRUE, verbose = FALSE)
+set.seed(1)
+start_time <- Sys.time()
+df3 <- optimize_paropt(pointer_to_ode, states$time, lb, ub, states)
+end_time <- Sys.time()
+end_time - start_time
+
+
 df[[8]]
 df2[[8]]
-
+df3[[8]]
 ```
 
 
