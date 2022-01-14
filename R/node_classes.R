@@ -36,10 +36,15 @@ PC <- R6::R6Class("PC",
         replace_TF = function() {
 
           for(i in seq_along(self$arguments)) {
-            if(isTRUE(self$arguments[[i]]) || (self$arguments[[i]] == as.name("T")) ) {
+
+            if(!is.null(self$arguments[[i]] ) ) {
+
+            if(isTRUE(self$arguments[[i]]) || (self$arguments[[i]] == as.name("T"))  ) {
               self$arguments[[i]] <- as.name("true")
             } else if(isFALSE(self$arguments[[i]]) || (self$arguments[[i]] == as.name("F")) ) {
               self$arguments[[i]] <- as.name("false")
+            }
+
             }
           }
 
@@ -286,6 +291,16 @@ printer <- R6::R6Class("printer",
     inherit = PC,
 
     public = list(
+
+      initialize = function(node) {
+        if(length(node) == 1L) {
+          self$name_fct = node
+          self$arguments = NULL
+        } else {
+          self$name_fct = node[[1]]
+          self$arguments = node[2:length(node)]
+        }
+      },
 
       change_code = function() {
         self$name_fct = as.name("etr::print")

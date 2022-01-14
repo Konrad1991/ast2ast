@@ -49,9 +49,9 @@ LC <- R6::R6Class("LC",
 
           if(!is.call(sexp)) {
 
-            if(as.name("=") != sexp) {
+              if(as.name("=") != sexp) {
                 self$check_assign_subset = FALSE
-            }
+              }
 
             return(sexp)
           }

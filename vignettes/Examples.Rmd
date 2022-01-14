@@ -362,7 +362,7 @@ df3 <- optimize_paropt(pointer_to_ode, states$time, lb, ub, states)
 end_time <- Sys.time()
 end_time - start_time
 
-
+  
 df[[8]]
 df2[[8]]
 df3[[8]]

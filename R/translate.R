@@ -196,31 +196,75 @@ MA <- R6::R6Class("MA",
 
 )
 
+
 #' Translates a R function into a C++ function and returns an external pointer (XPtr) to this function.
 #' @param f The function which should be translated from R to C++.
 #' @param verbose If set to true the output of RcppXPtrUtils::cppXPtr is printed.
 #' @param reference If set to true the arguments are passed by reference.
 #' @return The external pointer of the generated C++ function
-#' @details The following functions are supported:
-#' @details For assignment: = and <- can be used.
-#' @details In order to allocate memory the functions: vector and matrix can be used.
-#' Following forms are possible: vector(size_of_elements), vector(value, size_of_elements)
-#' matrix(nrows, ncols), matrix(value, nrows, ncols). The latter fills the matrix or the vector with the specified 'value'.
-#' @details In order to get information about a vector or a matrix the functions length and dim work the same way as in R.
-#' @details Basic operations can be conducted on scalars, vectors and matrices +, -, *, /
-#' @details For indices squared brackets  '[]' or the function sub are used as in R. [] can only be used for one element. Whereas sub can be used as the []-function in R itself.
-#' @details Mathematical functions: sin, asin, sinh, cos, acos, cosh, tan, atan, tanh, log, ^ and exp
-#' @details For loops can be written as used in R 'for(index in whatever){}'.
-#' @details To concatenate objects use the 'c' function as usually in R.
-#' @details if,else if, else are used in the same way as in R
-#' @details For comparison the functions ==, !=, >, <, >= and <= can be used for scalars, vectors and matrices.
-#' @details The print function accepts either a scalar, vector, matrix, string, bool or nothing (empty line).
-#' @details In order to return an object use the 'return' function (The last object is not returned automatically as in R).
-#' @details Be aware that the R code is translated to ETR. An expression template library which tries to mimic R.
-#' @details However, it does not behave exactly like R! Please check your compiled function before using it in a serious project.
-#' @details If you want to see how ETR differs from R in detail check the vignette: 'Expression template R (ETR)'
+#' @details \strong{The following types are supported: }
+#'  \enumerate{
+#'    \item numeric vectors
+#'    \item numeric matrices
+#'  }
+#'  Variables can be either numeric vectors or matrices.
+#'  Notably, it is possible that the variable change the type within the function.
+#' @details \strong{The following functions are supported:}
+#'  \enumerate{
+#'    \item assignment: = and <-
+#'    \item allocation: vector and matrix
+#'    \item information about objects: length and dim
+#'    \item Basic operations: +, -, *, /
+#'    \item Indices: [] and at
+#'    \item mathematical functions: sin, asin, sinh, cos, acos, cosh, tan, atan, tanh, log, ^ and exp
+#'    \item concatenate objects: c
+#     \item control flow: for, if, else if, else
+#'    \item comparison: ==, !=, >, <, >= and <=
+#'    \item printing: print
+#'    \item returning objects: return
+#'    \item catmull-rome spline: cmr
+#'    \item to get a range of numbers the ':' function can be used
+#'  }
+#' @details  \strong{Some details about the implemented functions}
+#' @details  \itemize{
+#'    \item allocation of memory works: Following forms are possible: vector(size_of_elements), vector(value, size_of_elements)
+#'              matrix(nrows, ncols), matrix(value, nrows, ncols). The latter fills the matrix or the vector with the specified 'value'.
+#'    \item For indices squared brackets  '[]' can be used as common in R. Beyond that the function 'at' exists
+#'              which accepts as first argument a variable and as the second argument you pass the desired index.
+#'              The caveat of using 'at' is that only one entry can be accessed. Whereas '[]' can return more then one element.
+#'              \strong{Moreover, '[]' does check whether the index is within the boundaries of the vector.}
+#'              \strong{The 'at'function does not check whether the index is within the boundaries of the vector.}
+#'              \strong{The 'at'function returns a reference to the vector entry.
+#'                Therefore variable[index] can behave differently then at(variable, index).
+#'                The function has to be use carefully when 'at' is used.
+#'                Especially if '[]' and 'at' are mixed the function behaviour is difficult to predict.
+#'                Please test it before using in a serious project.}
+#'    \item For loops can be written as used in R
+#'            \itemize{
+#'                \item Nr.1 \cr
+#'                      for(index in variable)\{ \cr
+#'                        # do whatever \cr
+#'                      \} \cr
+#'                \item Nr.2 \cr
+#'                      for(index in 1:length(variable)\{ \cr
+#'                        # do whatever \cr
+#'                      \} \cr
+#'    }
+#'    \item Be aware that it is not possible to assign the result of a comparison to a variable.
+#'    \item The print function accepts either a scalar, vector, matrix, string, bool or nothing (empty line).
+#'    \item In order to return an object use the 'return' function (The last object is not returned automatically as in R).
+#'    \item In order to interpolate values the 'cmr' function can be used. The function needs three arguments.
+#'          \enumerate{
+#'            \item the first argument is the point of the independent variable (x) for which the dependent variable should be calculated (y). This has to be a vector of length one.
+#'            \item the second argument is a vector defining the points of the independent variable (x). This has to be a vector of at least length four.
+#'            \item the third argument is a vector defining the points of the dependent variable (y). This has to be a vector of at least length four.
+#'        }
+#'  }
+#' \strong{Be aware that the R code is translated to ETR. An expression template library which tries to mimic R.
+#' However, it does not behave exactly like R! Please check your compiled function before using it in a serious project.
+#' If you want to see how ast2ast differs from R in detail check the vignette: 'Detailed Documentation'.}
 #' @examples
-#' @examples #Further examples can be found in vignette: 'Examples'
+#' @examples #Further examples can be found in the vignettes: 'Examples' and 'Detailed Documentation'
 #' @examples #Hello World
 #' \dontrun{
 #' f <- function() { print("Hello World!")}
