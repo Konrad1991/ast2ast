@@ -27,6 +27,10 @@ Translates a R function into a C++ function and returns an external pointer (XPt
  }
  Variables can be either numeric vectors or matrices.
  Notably, it is possible that the variable change the type within the function.
+ \strong{It is possible to declare a variable of a scalar numeric data type.
+         This is done by adding '_db' to the end of the variable. Each time '_db is found'
+         the variable is declared as a scalar numeric data type. In this case the
+         object cannot change its type!}
 
 \strong{The following functions are supported:}
  \enumerate{

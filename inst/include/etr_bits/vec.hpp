@@ -356,8 +356,8 @@ public:
       if(d.size() != other_vec.size()) { // .d?
         d.resize(other_vec.size()); // .d ?
       }
-      //this -> d = std::move(temp);
-      d.moveit(temp);
+      this -> d = std::move(temp);
+      //d.moveit(temp); // currently not working but why?????
 
       if(other_vec.d.im() == true) {
         ismatrix = true;

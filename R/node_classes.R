@@ -100,7 +100,7 @@ generic <- R6::R6Class("generic",
     public = list(
 
       change_code = function() {
-        self$replace_int()
+        self$replace_int() # check TRUE FALSE?
       },
 
       convert = function(var) {

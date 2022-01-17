@@ -32,6 +32,7 @@ MA <- R6::R6Class("MA",
         code = list(),
         char = list(),
         var_all = c(),
+        var_types = c(),
         var_index = c(),
         return_TF = c(),
 
@@ -70,7 +71,7 @@ MA <- R6::R6Class("MA",
           }
         },
 
-        call2char = function() {
+        call2char = function() { # some errors {}
           for(i in seq_along(self$code)) {
             self$char[[i]] = deparse(self$code[[i]], width.cutoff = 500)
             self$char[[i]] = gsub("\\bin\\b", "", self$char[[i]])
@@ -127,6 +128,21 @@ MA <- R6::R6Class("MA",
 
           ret = temp1[!is.na(temp1)]
 
+          self$var_types = vector("list", length = length(ret))
+          self$var_types = lapply(self$var_types, function(x) {
+            return("sexp")
+          })
+
+          # check for doubles
+          for(i in seq_along(ret)) {
+            nm = as.character(ret[[i]])
+            nmsz1 = nchar(nm)
+            nmsz2 = nchar( gsub("_db", "", nm) ) # from the end only!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+            if(nmsz1 != nmsz2) {
+                self$var_types[[i]] = "double"
+            }
+          }
 
           return(ret)
         },
@@ -166,8 +182,9 @@ MA <- R6::R6Class("MA",
         },
 
         vars_declaration = function(desired_type) {
-          args_dec <- sapply(self$get_vars(), function(x) {
-            temp <- paste("sexp", x, ';', collapse = '')
+          variables = self$get_vars()
+          args_dec <- sapply(seq_along(variables), function(x) {
+            temp <- paste(self$var_types[[x]], variables[[x]], ';', collapse = '')
             return(temp)
           })
           args_dec <- paste(args_dec, collapse = " ")
@@ -209,6 +226,10 @@ MA <- R6::R6Class("MA",
 #'  }
 #'  Variables can be either numeric vectors or matrices.
 #'  Notably, it is possible that the variable change the type within the function.
+#'  \strong{It is possible to declare a variable of a scalar numeric data type.
+#'          This is done by adding '_db' to the end of the variable. Each time '_db is found'
+#'          the variable is declared as a scalar numeric data type. In this case the
+#'          object cannot change its type!}
 #' @details \strong{The following functions are supported:}
 #'  \enumerate{
 #'    \item assignment: = and <-
@@ -281,7 +302,6 @@ MA <- R6::R6Class("MA",
 #' ")
 #' call_fct(pointer_to_f_cpp)
 #' }
-
 translate <- function(f, verbose = FALSE, reference = FALSE) {
 
     stopifnot(is.function(f))

@@ -125,7 +125,6 @@ int rhs_exp_wrapper(double t, const vec &y, vec &ydot, RObject &param, NumericVe
 }
 
 
-
 // [[Rcpp::export]]
 Rcpp::NumericVector solve_ode(Rcpp::XPtr<user_fct> inp, NumericVector time, NumericVector y) {
   Fct = *inp;
@@ -153,15 +152,9 @@ p <- c(nu = 2, a = 1)
 y0 <- 0
 
 ode <- function(y, ydot) {
-  nu <- 2
-  a <- 1
-  ydot <- -nu*(y - a)
-}
-
-ode <- function(y, ydot) {
-  nu <- 2
-  a <- 1
-  ydot[1] <- -nu*(y[1] - a)
+  nu_db <- 2
+  a_db <- 1
+  at(ydot, 1) <- -nu_db*(at(y,1) - a_db)
 }
 
 pointer_to_ode <- ast2ast::translate(ode, reference = TRUE, verbose = FALSE)
@@ -309,12 +302,6 @@ end_time <- Sys.time()
 end_time - start_time
 
 
-
-
-
-
-
-
 # ast2ast with at
 ode <- function(params, states) {
   a = at(params, 1)
@@ -341,24 +328,24 @@ end_time - start_time
 
 
 
-# ast2ast with only at
+# ast2ast with at and _db
 ode <- function(params, states) {
-  a = at(params, 1)
-  b = at(params, 2)
-  c = at(params, 3)
-  d = at(params, 4)
+  a_db = at(params, 1)
+  b_db = at(params, 2)
+  c_db = at(params, 3)
+  d_db = at(params, 4)
 
-  n1 = at(states, 1)
-  n2 = at(states, 2)
+  n1_db = at(states, 1)
+  n2_db = at(states, 2)
 
-  at(states, 1) = at(n1, 1)*at(c, 1)*at(n2, 1) - at(n1, 1)*at(d, 1);
-  at(states, 2)= at(n2, 1)*at(a, 1) - at(n2, 1)*at(b, 1)*at(n1, 1);
+  at(states, 1) = n1_db*c_db*n2_db - n1_db*d_db;
+  at(states, 2) = n2_db*a_db - n2_db*b_db*n1_db;
 }
 
 pointer_to_ode <- ast2ast::translate(ode, reference = TRUE, verbose = FALSE)
 set.seed(1)
 start_time <- Sys.time()
-df3 <- optimize_paropt(pointer_to_ode, states$time, lb, ub, states)
+df4 <- optimize_paropt(pointer_to_ode, states$time, lb, ub, states)
 end_time <- Sys.time()
 end_time - start_time
 
@@ -366,6 +353,7 @@ end_time - start_time
 df[[8]]
 df2[[8]]
 df3[[8]]
+df4[[8]]
 ```
 
 

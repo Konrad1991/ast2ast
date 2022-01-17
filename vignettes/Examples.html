@@ -484,38 +484,34 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>p &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dt">nu =</span> <span class="dv">2</span>, <span class="dt">a =</span> <span class="dv">1</span>)</span>
 <span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>y0 &lt;-<span class="st"> </span><span class="dv">0</span></span>
 <span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a>ode &lt;-<span class="st"> </span><span class="cf">function</span>(y, ydot) {</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a>  nu &lt;-<span class="st"> </span><span class="dv">2</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a>  a &lt;-<span class="st"> </span><span class="dv">1</span></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a>  ydot &lt;-<span class="st"> </span><span class="op">-</span>nu<span class="op">*</span>(y <span class="op">-</span><span class="st"> </span>a)</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true"></a>}</span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true"></a></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true"></a>ode &lt;-<span class="st"> </span><span class="cf">function</span>(y, ydot) {</span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true"></a>  nu &lt;-<span class="st"> </span><span class="dv">2</span></span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true"></a>  a &lt;-<span class="st"> </span><span class="dv">1</span></span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true"></a>  ydot[<span class="dv">1</span>] &lt;-<span class="st"> </span><span class="op">-</span>nu<span class="op">*</span>(y[<span class="dv">1</span>] <span class="op">-</span><span class="st"> </span>a)</span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true"></a>}</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a>ode &lt;-<span class="st"> </span><span class="cf">function</span>(y, ydot) {</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a>  nu_db &lt;-<span class="st"> </span><span class="dv">2</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true"></a>  a_db &lt;-<span class="st"> </span><span class="dv">1</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true"></a>  <span class="kw">at</span>(ydot, <span class="dv">1</span>) &lt;-<span class="st"> </span><span class="op">-</span>nu_db<span class="op">*</span>(<span class="kw">at</span>(y,<span class="dv">1</span>) <span class="op">-</span><span class="st"> </span>a_db)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true"></a>}</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true"></a>pointer_to_ode &lt;-<span class="st"> </span>ast2ast<span class="op">::</span><span class="kw">translate</span>(ode, <span class="dt">reference =</span> <span class="ot">TRUE</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true"></a>res_exp3 &lt;-<span class="st"> </span><span class="kw">solve_ode</span>(pointer_to_ode, ti, y0)</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true"></a><span class="kw">attributes</span>(res_exp3) &lt;-<span class="st"> </span><span class="ot">NULL</span></span>
 <span id="cb9-18"><a href="#cb9-18" aria-hidden="true"></a></span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true"></a>pointer_to_ode &lt;-<span class="st"> </span>ast2ast<span class="op">::</span><span class="kw">translate</span>(ode, <span class="dt">reference =</span> <span class="ot">TRUE</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true"></a>res_exp3 &lt;-<span class="st"> </span><span class="kw">solve_ode</span>(pointer_to_ode, ti, y0)</span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true"></a><span class="kw">attributes</span>(res_exp3) &lt;-<span class="st"> </span><span class="ot">NULL</span></span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true"></a></span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true"></a><span class="kw">head</span>(res_exp)</span></code></pre></div>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true"></a><span class="kw">head</span>(res_exp)</span></code></pre></div>
 <pre><code>## [1] 0.00000000 0.09516259 0.18126923 0.25918179 0.32968002 0.39346945</code></pre>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="kw">head</span>(res_exp2)</span></code></pre></div>
 <pre><code>## [1] 0.00000000 0.09516259 0.18126923 0.25918179 0.32968002 0.39346945</code></pre>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="kw">head</span>(res_exp3)</span></code></pre></div>
-<pre><code>## [1] 0.00000000 0.04877060 0.09516259 0.13929201 0.18126923 0.22119921</code></pre>
+<pre><code>## [1] 0.00000000 0.09516259 0.18126923 0.25918179 0.32968002 0.39346945</code></pre>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="kw">microbenchmark</span>(<span class="kw">r2cvodes</span>(y0, ti, frhs, <span class="dt">param =</span> p), <span class="kw">r2cvodes</span>(y0, ti, ptr_exp, <span class="dt">param =</span> pv), <span class="kw">solve_ode</span>(pointer_to_ode, ti, y0))</span></code></pre></div>
 <pre><code>## Unit: microseconds
-##                                   expr      min        lq      mean   median
-##      r2cvodes(y0, ti, frhs, param = p) 3318.930 3509.5855 3786.7474 3588.042
-##  r2cvodes(y0, ti, ptr_exp, param = pv)  245.574  253.6300  271.1380  261.631
-##      solve_ode(pointer_to_ode, ti, y0)  389.811  400.4395  445.1474  418.005
+##                                   expr      min        lq     mean    median
+##      r2cvodes(y0, ti, frhs, param = p) 3460.616 3634.2845 3963.193 3749.4110
+##  r2cvodes(y0, ti, ptr_exp, param = pv)  244.634  255.9520  275.321  263.5385
+##      solve_ode(pointer_to_ode, ti, y0)  325.119  342.4405  380.508  362.6150
 ##        uq      max neval
-##  3769.539 5880.206   100
-##   277.425  434.729   100
-##   436.579 1939.989   100</code></pre>
+##  4105.814 5984.797   100
+##   284.216  381.137   100
+##   378.978 1671.280   100</code></pre>
 </div>
 </div>
 <div id="using-ast2ast-in-combination-with-paropt" class="section level2">
@@ -606,7 +602,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb20-6"><a href="#cb20-6" aria-hidden="true"></a>                       <span class="dt">npop =</span> <span class="dv">40</span>, <span class="dt">ngen =</span> <span class="dv">1000</span>, <span class="dt">error =</span> <span class="fl">0.0001</span>, <span class="dt">solvertype =</span> <span class="st">&quot;bdf&quot;</span>)</span>
 <span id="cb20-7"><a href="#cb20-7" aria-hidden="true"></a>end_time &lt;-<span class="st"> </span><span class="kw">Sys.time</span>()</span>
 <span id="cb20-8"><a href="#cb20-8" aria-hidden="true"></a>end_time <span class="op">-</span><span class="st"> </span>start_time</span></code></pre></div>
-<pre><code>## Time difference of 25.07171 secs</code></pre>
+<pre><code>## Time difference of 25.68433 secs</code></pre>
 <div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true"></a><span class="co">#df</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true"></a></span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true"></a><span class="co"># ast2ast</span></span>
@@ -629,7 +625,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb22-20"><a href="#cb22-20" aria-hidden="true"></a>df2 &lt;-<span class="st"> </span><span class="kw">optimize_paropt</span>(pointer_to_ode, states<span class="op">$</span>time, lb, ub, states)</span>
 <span id="cb22-21"><a href="#cb22-21" aria-hidden="true"></a>end_time &lt;-<span class="st"> </span><span class="kw">Sys.time</span>()</span>
 <span id="cb22-22"><a href="#cb22-22" aria-hidden="true"></a>end_time <span class="op">-</span><span class="st"> </span>start_time</span></code></pre></div>
-<pre><code>## Time difference of 2.291305 mins</code></pre>
+<pre><code>## Time difference of 2.540603 mins</code></pre>
 <div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true"></a><span class="co"># ast2ast with at</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true"></a>ode &lt;-<span class="st"> </span><span class="cf">function</span>(params, states) {</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true"></a>  a =<span class="st"> </span><span class="kw">at</span>(params, <span class="dv">1</span>)</span>
@@ -650,28 +646,28 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb24-18"><a href="#cb24-18" aria-hidden="true"></a>df3 &lt;-<span class="st"> </span><span class="kw">optimize_paropt</span>(pointer_to_ode, states<span class="op">$</span>time, lb, ub, states)</span>
 <span id="cb24-19"><a href="#cb24-19" aria-hidden="true"></a>end_time &lt;-<span class="st"> </span><span class="kw">Sys.time</span>()</span>
 <span id="cb24-20"><a href="#cb24-20" aria-hidden="true"></a>end_time <span class="op">-</span><span class="st"> </span>start_time</span></code></pre></div>
-<pre><code>## Time difference of 1.854565 mins</code></pre>
-<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true"></a><span class="co"># ast2ast with only at</span></span>
+<pre><code>## Time difference of 1.995089 mins</code></pre>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true"></a><span class="co"># ast2ast with at and _db</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true"></a>ode &lt;-<span class="st"> </span><span class="cf">function</span>(params, states) {</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true"></a>  a =<span class="st"> </span><span class="kw">at</span>(params, <span class="dv">1</span>)</span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true"></a>  b =<span class="st"> </span><span class="kw">at</span>(params, <span class="dv">2</span>)</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true"></a>  c =<span class="st"> </span><span class="kw">at</span>(params, <span class="dv">3</span>)</span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true"></a>  d =<span class="st"> </span><span class="kw">at</span>(params, <span class="dv">4</span>)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true"></a>  a_db =<span class="st"> </span><span class="kw">at</span>(params, <span class="dv">1</span>)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true"></a>  b_db =<span class="st"> </span><span class="kw">at</span>(params, <span class="dv">2</span>)</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true"></a>  c_db =<span class="st"> </span><span class="kw">at</span>(params, <span class="dv">3</span>)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true"></a>  d_db =<span class="st"> </span><span class="kw">at</span>(params, <span class="dv">4</span>)</span>
 <span id="cb26-7"><a href="#cb26-7" aria-hidden="true"></a></span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true"></a>  n1 =<span class="st"> </span><span class="kw">at</span>(states, <span class="dv">1</span>)</span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true"></a>  n2 =<span class="st"> </span><span class="kw">at</span>(states, <span class="dv">2</span>)</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true"></a>  n1_db =<span class="st"> </span><span class="kw">at</span>(states, <span class="dv">1</span>)</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true"></a>  n2_db =<span class="st"> </span><span class="kw">at</span>(states, <span class="dv">2</span>)</span>
 <span id="cb26-10"><a href="#cb26-10" aria-hidden="true"></a></span>
-<span id="cb26-11"><a href="#cb26-11" aria-hidden="true"></a>  <span class="kw">at</span>(states, <span class="dv">1</span>) =<span class="st"> </span><span class="kw">at</span>(n1, <span class="dv">1</span>)<span class="op">*</span><span class="kw">at</span>(c, <span class="dv">1</span>)<span class="op">*</span><span class="kw">at</span>(n2, <span class="dv">1</span>) <span class="op">-</span><span class="st"> </span><span class="kw">at</span>(n1, <span class="dv">1</span>)<span class="op">*</span><span class="kw">at</span>(d, <span class="dv">1</span>);</span>
-<span id="cb26-12"><a href="#cb26-12" aria-hidden="true"></a>  <span class="kw">at</span>(states, <span class="dv">2</span>)=<span class="st"> </span><span class="kw">at</span>(n2, <span class="dv">1</span>)<span class="op">*</span><span class="kw">at</span>(a, <span class="dv">1</span>) <span class="op">-</span><span class="st"> </span><span class="kw">at</span>(n2, <span class="dv">1</span>)<span class="op">*</span><span class="kw">at</span>(b, <span class="dv">1</span>)<span class="op">*</span><span class="kw">at</span>(n1, <span class="dv">1</span>);</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true"></a>  <span class="kw">at</span>(states, <span class="dv">1</span>) =<span class="st"> </span>n1_db<span class="op">*</span>c_db<span class="op">*</span>n2_db <span class="op">-</span><span class="st"> </span>n1_db<span class="op">*</span>d_db;</span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true"></a>  <span class="kw">at</span>(states, <span class="dv">2</span>) =<span class="st"> </span>n2_db<span class="op">*</span>a_db <span class="op">-</span><span class="st"> </span>n2_db<span class="op">*</span>b_db<span class="op">*</span>n1_db;</span>
 <span id="cb26-13"><a href="#cb26-13" aria-hidden="true"></a>}</span>
 <span id="cb26-14"><a href="#cb26-14" aria-hidden="true"></a></span>
 <span id="cb26-15"><a href="#cb26-15" aria-hidden="true"></a>pointer_to_ode &lt;-<span class="st"> </span>ast2ast<span class="op">::</span><span class="kw">translate</span>(ode, <span class="dt">reference =</span> <span class="ot">TRUE</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
 <span id="cb26-16"><a href="#cb26-16" aria-hidden="true"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
 <span id="cb26-17"><a href="#cb26-17" aria-hidden="true"></a>start_time &lt;-<span class="st"> </span><span class="kw">Sys.time</span>()</span>
-<span id="cb26-18"><a href="#cb26-18" aria-hidden="true"></a>df3 &lt;-<span class="st"> </span><span class="kw">optimize_paropt</span>(pointer_to_ode, states<span class="op">$</span>time, lb, ub, states)</span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true"></a>df4 &lt;-<span class="st"> </span><span class="kw">optimize_paropt</span>(pointer_to_ode, states<span class="op">$</span>time, lb, ub, states)</span>
 <span id="cb26-19"><a href="#cb26-19" aria-hidden="true"></a>end_time &lt;-<span class="st"> </span><span class="kw">Sys.time</span>()</span>
 <span id="cb26-20"><a href="#cb26-20" aria-hidden="true"></a>end_time <span class="op">-</span><span class="st"> </span>start_time</span></code></pre></div>
-<pre><code>## Time difference of 1.433505 mins</code></pre>
+<pre><code>## Time difference of 32.53851 secs</code></pre>
 <div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true"></a>df[[<span class="dv">8</span>]]</span></code></pre></div>
 <pre><code>##      [,1]    [,2]      [,3]       [,4]      [,5]
 ## [1,]    0 1.12283 0.4065349 0.09460643 0.3925324</code></pre>
@@ -679,6 +675,9 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <pre><code>##      [,1]    [,2]      [,3]       [,4]      [,5]
 ## [1,]    0 1.12283 0.4065349 0.09460643 0.3925324</code></pre>
 <div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true"></a>df3[[<span class="dv">8</span>]]</span></code></pre></div>
+<pre><code>##      [,1]    [,2]      [,3]       [,4]      [,5]
+## [1,]    0 1.12283 0.4065349 0.09460643 0.3925324</code></pre>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true"></a>df4[[<span class="dv">8</span>]]</span></code></pre></div>
 <pre><code>##      [,1]    [,2]      [,3]       [,4]      [,5]
 ## [1,]    0 1.12283 0.4065349 0.09460643 0.3925324</code></pre>
 </div>
