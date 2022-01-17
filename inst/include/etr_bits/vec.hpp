@@ -356,7 +356,8 @@ public:
       if(d.size() != other_vec.size()) { // .d?
         d.resize(other_vec.size()); // .d ?
       }
-      this -> d = std::move(temp);
+      //this -> d = std::move(temp);
+      d.moveit(temp);
 
       if(other_vec.d.im() == true) {
         ismatrix = true;
@@ -370,7 +371,7 @@ public:
           temp[i] = other_vec[i];
       }
       for(int i = 0; i < indices.size(); i++) {
-          this -> d[indices[i]] = std::move(temp[i]);
+          this -> d[indices[i]] = temp[i];
       }
     }
 

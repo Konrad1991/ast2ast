@@ -203,6 +203,30 @@ public:
     }
   }
 
+  // move it
+  void moveit(STORE<T>& other) {
+    if( todelete == true ) {
+      if(p != nullptr) {
+        ass(p != nullptr, "try to delete nullptr");
+        delete [] p;
+        p = nullptr;
+      }
+    }
+
+    p = other.p;
+    sz = other.sz;
+    capacity = other.capacity;
+
+    if( other.todelete == true ) {
+      if(other.p != nullptr) {
+        ass(other.p != nullptr, "try to delete nullptr");
+        delete [] other.p;
+        other.p = nullptr;
+      }
+    }
+
+  }
+
   int size() const {
     return sz;
   }
