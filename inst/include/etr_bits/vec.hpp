@@ -70,9 +70,9 @@ public:
   template<typename T2>
   VEC(T2 n) = delete;
 
-  VEC(const bool value) : d(1, value),subsetted(0), ismatrix(0), temp(1) {}
+  VEC(const bool value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
 
-  VEC(SEXP inp) : d(1), subsetted(0), ismatrix(0), temp(1) {
+  VEC(SEXP inp) : subsetted(0), ismatrix(0), d(1), temp(1) {
 
   const int length = getlength(inp);
   double* ptr = REAL(inp);
@@ -90,24 +90,24 @@ public:
 
 }
 
-  VEC(const double value) : d(1, value),subsetted(0), ismatrix(0), temp(1) {}
-  VEC(const long unsigned int n) : d(n), subsetted(0), ismatrix(0), temp(1) {d.fill(static_cast<double>(n));} // fill is a hack that sexp s = 1 works;
+  VEC(const double value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
+  VEC(const long unsigned int n) : subsetted(0), ismatrix(0), d(n), temp(1) {d.fill(static_cast<double>(n));} // fill is a hack that sexp s = 1 works;
 
   // Constructors for vector
-  VEC(const int n) : d(n), subsetted(0), ismatrix(0), temp(1) {d.fill(static_cast<double>(n));} // fill is a hack that sexp s = 1 works;
-  VEC(const int n, const double value) : d(n, value), subsetted(0), ismatrix(0), temp(1) {}
-  VEC(const R& other_vec) : d(other_vec), subsetted(0), ismatrix(0), temp(1) {}
+  VEC(const int n) : subsetted(0), ismatrix(0),d(n), temp(1) {d.fill(static_cast<double>(n));} // fill is a hack that sexp s = 1 works;
+  VEC(const int n, const double value) : subsetted(0), ismatrix(0), d(n, value), temp(1) {}
+  VEC(const R& other_vec) : subsetted(0), ismatrix(0), d(other_vec),  temp(1) {}
   //VEC(const R&& other_vec) : d(other_vec), subsetted(0), ismatrix(0) {} // not correct?
 
   //VEC(const R& mat, int nrows_, int ncols_) : d(mat), subsetted(0), ncols(ncols_), nrows(nrows_), ismatrix(0) {}
   VEC() : subsetted(0), d(0), nrows(0), ncols(0), ismatrix(0), temp(1) {}
 
-  VEC(const std::vector<T> inp) : subsetted(0), d(inp), nrows(0), ncols(0), ismatrix(0), temp(1) {}
+  VEC(const std::vector<T> inp) : subsetted(0),  ismatrix(0), nrows(0), ncols(0), d(inp), temp(1) {}
 
   // Constructors for matrix
-  VEC(const int rows, const int cols) : d(rows*cols), subsetted(0), nrows(rows), ncols(cols), ismatrix(1), temp(1) {}
-  VEC(const int rows, const int cols, const double value) : d(rows*cols, value), subsetted(0), nrows(rows), ncols(cols), ismatrix(1), temp(1) {}
-  VEC(const int rows, const int cols, int value) : d(rows*cols, value), subsetted(0), nrows(rows), ncols(cols), ismatrix(1), temp(1) {}
+  VEC(const int rows, const int cols) : subsetted(0), ismatrix(1), nrows(rows), ncols(cols), d(rows*cols), temp(1) {}
+  VEC(const int rows, const int cols, const double value) : subsetted(0), ismatrix(1), nrows(rows), ncols(cols), d(rows*cols, value), temp(1) {}
+  VEC(const int rows, const int cols, int value) : subsetted(0), ismatrix(1), nrows(rows), ncols(cols), d(rows*cols, value), temp(1) {}
 
   // constructor for calculations
   template<typename T2, typename R2>
@@ -141,9 +141,9 @@ public:
   }
 
   // constructor for pointer
-  VEC(const int n, T* ptr, int cob) : d(n, ptr, cob), subsetted(0), ismatrix(0), temp(1) {} //cob = copy, owning, borrow
+  VEC(const int n, T* ptr, int cob) : subsetted(0), ismatrix(0), d(n, ptr, cob), temp(1) {} //cob = copy, owning, borrow
   //VEC(const int n, const T* ptr, int cob) : d(n, ptr, cob), subsetted(0), ismatrix(0) {} //cob = copy, owning, borrow
-  VEC(const int r, const int c, T* ptr, int cob) : d(r*c, ptr, cob), subsetted(0), ismatrix(1), nrows(r), ncols(c), temp(1) {} //cob = copy, owning, borrow
+  VEC(const int r, const int c, T* ptr, int cob) : subsetted(0), ismatrix(1), nrows(r), ncols(c), d(r*c, ptr, cob), temp(1) {} //cob = copy, owning, borrow
   //VEC(const int r, const int c, const T* ptr, int cob) : d(r*c, ptr, cob), subsetted(0), ismatrix(1), nrows(r), ncols(c) {} //cob = copy, owning, borrow
 
   operator bool() const{

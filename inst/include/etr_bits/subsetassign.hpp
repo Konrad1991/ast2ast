@@ -35,7 +35,8 @@ VEC<double>& subassign(VEC<double>& inp) {
   return inp;
 }
 
-VEC<double>& subassign(VEC<double>& inp, int pos) {
+template<typename T, typename std::enable_if<std::is_same< int, T>::value, int>::type = 0>
+VEC<double>& subassign(VEC<double>& inp, T pos) {
   pos--;
   inp.rsi(1);
   inp.subsetted = true;
@@ -43,7 +44,8 @@ VEC<double>& subassign(VEC<double>& inp, int pos) {
   return inp;
 }
 
-VEC<double>& subassign(VEC<double>& inp, double pos_) {
+template<typename T, typename std::enable_if<std::is_same<double, T>::value, int>::type = 0>
+VEC<double>& subassign(VEC<double>& inp, T pos_) {
   int pos = d2i(pos_);
   inp.rsi(1);
   inp.subsetted = true;
@@ -52,8 +54,8 @@ VEC<double>& subassign(VEC<double>& inp, double pos_) {
   return inp;
 }
 
-VEC<double>& subassign(VEC<double>& inp, bool p) {
-
+template<typename T, typename std::enable_if<std::is_same<bool, T>::value, int>::type = 0>
+VEC<double>& subassign(VEC<double>& inp, T p) {
   if(p == false) {
     inp.rsi(0);
     inp.subsetted = true;
@@ -1165,8 +1167,8 @@ VEC<double>& subassign(VEC<double>& inp, VEC<bool>& rows, VEC<bool>& cols) {
 }
 
 // functions for r values
-VEC<double>& subassign(VEC<double>& inp, VEC<double>&& pos) {
-
+template<typename T, typename std::enable_if<std::is_same< VEC<double>, T>::value, int>::type = 0>
+VEC<double>& subassign(VEC<double>& inp, T pos) {
   inp.rsi(pos.size());
   inp.subsetted = true;
 
@@ -1177,7 +1179,8 @@ VEC<double>& subassign(VEC<double>& inp, VEC<double>&& pos) {
   return inp;
 }
 
-VEC<double>& subassign(VEC<double>& inp, VEC<bool>&& pos) {
+template<typename T, typename std::enable_if<std::is_same< VEC<bool>, T>::value, int>::type = 0>
+VEC<double>& subassign(VEC<double>& inp, T pos) {
 
   int counter = 0;
   for(int i = 0; i < pos.size(); i++) {
@@ -1209,7 +1212,8 @@ VEC<double>& subassign(VEC<double>& inp, VEC<bool>&& pos) {
   return inp;
 }
 
-VEC<double>& subassign(VEC<double>& inp, int row, VEC<double>&& pos) {
+template<typename T, typename std::enable_if<std::is_same< VEC<double>, T>::value, int>::type = 0>
+VEC<double>& subassign(VEC<double>& inp, int row, T pos) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -1229,7 +1233,8 @@ VEC<double>& subassign(VEC<double>& inp, int row, VEC<double>&& pos) {
   return inp;
 }
 
-VEC<double>& subassign(VEC<double>& inp, int row, VEC<bool>&& pos) {
+template<typename T, typename std::enable_if<std::is_same< VEC<bool>, T>::value, int>::type = 0>
+VEC<double>& subassign(VEC<double>& inp, int row, T pos) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;

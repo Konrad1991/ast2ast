@@ -1,7 +1,7 @@
 ---
 title: "Detailed Documentation"
 author: "Konrad Krämer"
-output: pdf_document # rmarkdown::html_vignette 
+output:  pdf_document # rmarkdown::html_vignette 
 #classoption:
 #- twocolumn
 vignette: >
@@ -77,16 +77,11 @@ void call_fct(XPtr<fp> fetr) { // example 3
 }
 ```
 
-
-
-
 - [Documentation](#documentation)
   * [Objects](#objects)
   * [Variable declaration](#variable-declaration)
   * [Basic arithmetics](#basic-arithmetics)
   * [Subsetting](#subsetting)
-    + [Base R subsetting](#base-r-subsetting)
-    + [The at function](#the-at-function)
   * [Helper functions](#helper-functions)
   * [Comparison functions](#comparison-functions)
   * [Control flow](#Control flow)
@@ -131,7 +126,7 @@ Supported functions:
 
 ### Objects
 
-There exists two containers which can be used in *ast2ast* functions. Both containers can only hold the *numeric* type of R (is equivalent to double). The first container are vectors and the second one are matrices. 
+There exists two containers which can be used in *ast2ast* functions. Both containers can only hold the *numeric* type of R (is equivalent to double). The first container are vectors and the second one are matrices. **It is possible to declare a variable of a scalar numeric data type. This is done by adding *_db* (e.g. varname_db) to the end of the variable. Each time *_db* is found the variable is declared as a scalar numeric data type. In this case the object cannot change its type!**
 
 **Nice features:**
 
@@ -168,6 +163,7 @@ If you want to assign a vector you can use either the *c* or *vector* function. 
 ```{r}
 f <- function() {
   a <- 1
+  a_db <- 3.14
   b = 2
   c <- c(1, 2, 3)
   d = vector(2)
@@ -179,6 +175,7 @@ f <- function() {
   
   print("a")
   print(a)
+  print(a_db)
   print()
   print("b")
   print(b)
@@ -292,57 +289,177 @@ call_fct(fetr)
 ```
 
 
-
-
 ### Subsetting
 
-* [] slower then at
+If you want to subset a vector or a matrix object you can use either *[]* or the *at* function. The *[]* is slower then *at* but more powerful (**Example 4**).
 
-#### Base R subsetting
+The following objects can be passed to *[]* when using a vector or matrix:
 
-* var[]
-* var[logical]
+* nothing
+* numeric scalar
+* logical
+* vector
+* matrix
+* result of comparison
 
-* var[scalar]
-* var[vector]
-* var[v1 + v2]
-* var[v1 - v2]
-* var[v1 / v2]
-* var[v1 * v2]
-* var[v1 == v2]
-* var[v1 != v2]
-* var[v1 <= v2]
-* var[v1 >= v2]
-* var[v1 > v2]
-* var[v1 < v2]
+* **caveat:**
 
-* var[scalar, scalar]
-* var[vector, vector]
-* var[v1 + v2, v1 + v2]
-* var[v1 - v2, v1 - v2]
-* var[v1 / v2, v1 / v2]
-* var[v1 * v2, v1 * v2]
-* var[v1 == v2, v1 == v2]
-* var[v1 != v2, v1 != v2]
-* var[v1 <= v2, v1 <= v2]
-* var[v1 >= v2, v1 >= v2]
-* var[v1 > v2, v1 > v2]
-* var[v1 < v2, v1 < v2]
+* **it is not possible to pass the results of calculations!**
+
+In case of a matrix it is possible to pass one of the above objects to access specific rows or columns respectively ([rows, cols]). In contrast to *at* only a scalar can be passed. Thus, only a single element is accessed by this function! However, this function works faster. The result of *at* cannot be subsetted further. 
+
+**Example 4**
+```{r}
+f <- function() {
+
+print("pass nothing")
+a <- 1:8
+print(a)
+a[] <- 100
+print(a)
+print()
+
+print("pass logical")
+a <- 1:8
+print(a)
+a[TRUE] <- 100
+print(a)
+print()
+
+print("pass scalar")
+a <- 1:8
+print(a)
+a[1] <- 100
+print(a)
+print()
 
 
-#### The at function
+print("pass vector")
+a <- 1:8
+b <- 2:5
+print(a)
+a[b] <- 100
+print(a)
+print()
 
-* at(var, scalar)
-* at(var, scalar1, scalar2)
-* no boundaries checked!
+print("pass result of ==")
+a <- 1:8
+a[a < 5] <- 100
+print(a)
+print()
+
+
+print("pass result of !=")
+a <- 1:8
+b <- c(1, 2, 3, 0, 0, 0, 0, 8)
+a[a != b] <- 100
+print(a)
+print()
+
+
+print("pass result of <=")
+a <- 1:8
+b <- c(1, 2, 3, 0, 0, 0, 0, 8)
+a[a <= b] <- 100
+print(a)
+print()
+
+
+print("pass result of >=")
+a <- 1:8
+b <- c(1, 2, 3, 0, 0, 0, 0, 9)
+a[a >= b] <- 100
+print(a)
+print()
+
+
+print("pass result of >")
+a <- 1:8
+b <- c(0, 2, 3, 0, 0, 0, 0, 9)
+a[a > b] <- 100
+print(a)
+print()
+
+
+print("pass result of <")
+a <- 1:8
+b <- c(0, 2, 3, 0, 0, 0, 0, 9)
+a[a < b] <- 100
+print(a)
+print()
+
+
+print("pass scalar, scalar")
+a <- matrix(3, 4, 4)
+a[1, 1] <- 100
+print(a)
+print()
+
+
+print("pass vector, vector")
+a <- matrix(3, 4, 4)
+b <- c(1, 3)
+c <- c(2, 4)
+a[b, c] <- 100
+print(a)
+print()
+
+
+print("pass ==, >=")
+a <- matrix(1:16, 4, 4)
+b <- 1:4
+c <- c(1, 8, 3, 8)
+a[b == c, b >= c] <- 100
+print(a)
+print()
+
+
+print("at")
+a <- 1:16
+at(a, 2) <- 100
+print(a)
+print()
+
+
+print("at")
+a <- matrix(1:16, 4, 4)
+at(a, 1, 4) <- 100
+print(a)
+print()
+}
+
+library(ast2ast)
+fetr <- translate(f)
+call_fct(fetr)
+```
 
 ### Helper functions
 
-* length
-* dim
-* :
+There exists three helper function. The *length* function returns the number of elements of a vector or matrix. The *dim* function returns the number of rows and columns of a matrix. The *:* function can be used to create a range of numbers. See **Example 5** in order to see how the functions work. 
+
+**Example 5**
+```{r}
+f <- function() {
+  a <- 1:4
+  print(a)
+  a <- 1.1:5.2
+  print(a)
+  
+  a <- 1:16
+  print(length(a))
+  
+  b <- matrix(1:4, 2, 2)
+  print(dim(b))
+}
+
+library(ast2ast)
+fetr <- translate(f)
+call_fct(fetr)
+```
 
 ### Comparison functions
+
+As usual in R it is possible to compare two objects. 
 
 * \=\=
 * <=
@@ -405,7 +522,287 @@ call_fct(fetr)
 
 ### Examples
 
+## How to use *ast2ast*
+
+### R code is translated
+
+```{r}
+add_two <- function(a) {
+  return(a + 2)
+}  
+pointer_to_f_cpp <- ast2ast::translate(add_two)
+```
+
+### Defining C++ Code which uses the translated R Code
+
+```{Rcpp}
+// [[Rcpp::depends(ast2ast)]]
+// [[Rcpp::depends(RcppArmadillo)]]
+#include "etr.hpp"
+
+// [[Rcpp::plugins("cpp17")]]
+
+typedef sexp (*fp)(sexp a);
+
+// [[Rcpp::export]]
+void call_fct(Rcpp::XPtr<fp> inp) {
+  fp f = *inp;
+  sexp a = coca(1, 2, 3);
+  print(a);
+  a = f(a);
+  print("a is now:");
+  print(a);
+}
+```
+
+### Calling the final function
+
+```{r}
+#Rcpp::sourceCpp("cpp_code.cpp") # if not run in Rmarkdown
+call_fct(pointer_to_f_cpp)
+```
+
 #### r2sundials
 
+### *r2sundials* code
+
+```{r}
+setwd("/home/konrad/Documents/0Uni/programming")
+#install.packages("ast2ast", type = "source", repos = NULL)
+
+library(Rcpp)
+library(ast2ast)
+library(r2sundials)
+library(RcppXPtrUtils)
+library(microbenchmark)
+
+
+# R version
+ti <- seq(0, 5, length.out=101)
+p <- list(a = 2)
+p <- c(nu = 2, a = 1)
+y0 <- 0
+frhs <- function(t, y, p, psens) -p["nu"]*(y-p["a"])
+
+res_exp <- r2sundials::r2cvodes(y0, ti, frhs, param = p)
+attributes(res_exp) <- NULL
+#stopifnot(diff(range(1-exp(-p$a*ti) - res_exp)) < 1.e-6)
+
+
+# External pointer
+ptr_exp <- cppXPtr(code = '
+int rhs_exp(double t, const vec &y, vec &ydot, RObject &param, NumericVector &psens) {
+  double a = 1;
+  double nu = 2;
+  ydot[0] = -nu*(y[0] - a);
+  return(CV_SUCCESS);
+}
+', depends=c("RcppArmadillo","r2sundials","rmumps"),
+ includes="using namespace arma;\n#include <r2sundials.h>", cacheDir="lib", verbose=FALSE)
+pv <- c(a = 1)
+res_exp2 <- r2sundials::r2cvodes(y0, ti, ptr_exp, param = pv)
+attributes(res_exp2) <- NULL
+```
+
+### Wrapper code in order to call translated R function (maybe written by package authors)
+
+```{Rcpp}
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::depends(rmumps)]]
+// [[Rcpp::depends(r2sundials)]]
+// [[Rcpp::depends(ast2ast)]]
+// [[Rcpp::plugins("cpp17")]]
+#include "etr.hpp"
+#include "RcppArmadillo.h"
+#include "r2sundials.h"
+using namespace arma;
+
+typedef int (*fp)(double t, const vec &y, vec &ydot, RObject &param, NumericVector &psens);
+
+typedef void (*user_fct)(sexp& y_, sexp& ydot_);
+user_fct Fct;
+
+int rhs_exp_wrapper(double t, const vec &y, vec &ydot, RObject &param, NumericVector &psens) {
+  NumericVector p(param);
+  const int size = y.size();
+  sexp ydot_(size, ydot.memptr(), 2);
+  double* ptr = const_cast<double*>(y.memptr());
+  sexp y_(size, ptr, 2);
+  Fct(y_, ydot_);
+  return(CV_SUCCESS);
+}
+
+
+// [[Rcpp::export]]
+Rcpp::NumericVector solve_ode(Rcpp::XPtr<user_fct> inp, NumericVector time, NumericVector y) {
+  Fct = *inp;
+  Rcpp::XPtr<fp> ptr = Rcpp::XPtr<fp>(new fp(&rhs_exp_wrapper));
+
+  Rcpp::Environment pkg = Rcpp::Environment::namespace_env("r2sundials");
+  Rcpp::Function solve = pkg["r2cvodes"];
+
+  Rcpp::NumericVector output = solve(y, time, ptr, time);
+
+  return output;
+}
+```
+
+
+### Applying *ast2ast*
+
+The speed of pure C++ is not reached. However, the *ast2ast* function is substantially fastern then the R code. 
+
+```{r}
+# ast2ast version
+ti <- seq(0, 5, length.out=101)
+p <- list(a = 2)
+p <- c(nu = 2, a = 1)
+y0 <- 0
+
+ode <- function(y, ydot) {
+  nu_db <- 2
+  a_db <- 1
+  at(ydot, 1) <- -nu_db*(at(y,1) - a_db)
+}
+
+pointer_to_ode <- ast2ast::translate(ode, reference = TRUE, verbose = FALSE)
+res_exp3 <- solve_ode(pointer_to_ode, ti, y0)
+attributes(res_exp3) <- NULL
+
+head(res_exp)
+head(res_exp2)
+head(res_exp3)
+
+microbenchmark(r2cvodes(y0, ti, frhs, param = p), r2cvodes(y0, ti, ptr_exp, param = pv), solve_ode(pointer_to_ode, ti, y0))
+```
+
+
 #### paropt
+
+
+```{Rcpp}
+
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::depends(ast2ast)]]
+// [[Rcpp::plugins("cpp17")]]
+// [[Rcpp::depends(paropt)]]
+#include "etr.hpp"
+#include "RcppArmadillo.h"
+using namespace Rcpp;
+
+typedef int (*OS)(double &t, std::vector<double> &params, std::vector<double> &states);
+
+int ode_system(double &t, std::vector<double> &params, std::vector<double> & states) {
+  double a = params[0];
+  double b = params[1];
+  double c = params[2];
+  double d = params[3];
+
+  double n1 = states[0];
+  double n2 = states[1];
+
+  states[0] = n1*c*n2 - n1*d;
+  states[1] = n2*a - n2*b*n1;
+
+  return 0;
+}
+
+// [[Rcpp::export]]
+Rcpp::XPtr<OS> test_optimization() {
+  Rcpp::XPtr<OS> xpfun = Rcpp::XPtr<OS>(new OS(&ode_system));
+  return xpfun;
+}
+
+
+typedef int (*paropt_fct)(double &t, std::vector<double> &params, std::vector<double> & states);
+
+typedef void (*user_fct2)(sexp& p, sexp& y);
+
+user_fct2 Fct_paropt;
+
+int ode_system_wrapper(double &t, std::vector<double> &params, std::vector<double> & states) {
+  sexp p(params.size(), params.data(), 2);
+  sexp s(states.size(), states.data(), 2);
+  Fct_paropt(p, s);
+
+  return 0;
+}
+
+
+// [[Rcpp::export]]
+Rcpp::List optimize_paropt(Rcpp::XPtr<user_fct2> inp,
+                                    NumericVector time, Rcpp::DataFrame lb, Rcpp::DataFrame ub, Rcpp::DataFrame states) {
+  Fct_paropt = *inp;
+  Rcpp::XPtr<paropt_fct> ptr = Rcpp::XPtr<paropt_fct>(new paropt_fct(&ode_system_wrapper));
+
+  Rcpp::Environment pkg = Rcpp::Environment::namespace_env("paropt");
+  Rcpp::Function optim = pkg["optimizer_pointer"];
+
+  Rcpp::NumericVector abs_tols{1e-8, 1e-8};
+
+  Rcpp::List output = optim(time, ptr, 1e-6, abs_tols, lb, ub, states,
+                                    40, 1000, 0.0001, "bdf");
+
+  return output;
+}
+```
+
+
+```{r}
+#states
+path <- system.file("examples", package = "paropt")
+states <- read.table(paste(path,"/states_LV.txt", sep = ""), header = T)
+
+# parameter
+lb <- data.frame(time = 0, a = 0.8, b = 0.3, c = 0.09, d = 0.09)
+ub <- data.frame(time = 0, a = 1.3, b = 0.7, c = 0.4, d = 0.7)
+
+# Optimizing
+library(paropt)
+set.seed(1)
+start_time <- Sys.time()
+df_cpp <- optimizer_pointer(integration_times = states$time, ode_sys = test_optimization(),
+                        relative_tolerance = 1e-6, absolute_tolerances = c(1e-8, 1e-8),
+                       lower = lb, upper = ub, states = states,
+                       npop = 40, ngen = 1000, error = 0.0001, solvertype = "bdf")
+end_time <- Sys.time()
+cpp_time <- end_time - start_time
+
+
+
+# ast2ast with at and _db
+ode <- function(params, states) {
+  a_db = at(params, 1)
+  b_db = at(params, 2)
+  c_db = at(params, 3)
+  d_db = at(params, 4)
+
+  n1_db = at(states, 1)
+  n2_db = at(states, 2)
+
+  at(states, 1) = n1_db*c_db*n2_db - n1_db*d_db;
+  at(states, 2) = n2_db*a_db - n2_db*b_db*n1_db;
+}
+
+pointer_to_ode <- ast2ast::translate(ode, reference = TRUE, verbose = FALSE)
+set.seed(1)
+start_time <- Sys.time()
+df_ast2ast <- optimize_paropt(pointer_to_ode, states$time, lb, ub, states)
+end_time <- Sys.time()
+a2a_time <- end_time - start_time
+
+message("time of the pure C++ code")
+knitr::kable(cpp_time)
+message("parameter results of the pure C++ code")
+knitr::kable(df_cpp[[8]])
+message("time of the ast2ast code")
+knitr::kable(a2a_time)
+message("parameter results of the ast2ast code")
+knitr::kable(df_ast2ast[[8]]) 
+```
+
+
+
+
+
 

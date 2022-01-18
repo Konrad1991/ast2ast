@@ -136,11 +136,12 @@ MA <- R6::R6Class("MA",
           # check for doubles
           for(i in seq_along(ret)) {
             nm = as.character(ret[[i]])
-            nmsz1 = nchar(nm)
-            nmsz2 = nchar( gsub("_db", "", nm) ) # from the end only!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-            if(nmsz1 != nmsz2) {
-                self$var_types[[i]] = "double"
+            nm = unlist( strsplit(nm, "") )
+            if(length(nm) >= 4) {
+              if( (nm[[length(nm)]] == "b") && (nm[[length(nm) - 1]] == "d")
+                  && (nm[[length(nm) - 2]] == "_") ) {
+                  self$var_types[[i]] = "double"
+              }
             }
           }
 
@@ -215,6 +216,7 @@ MA <- R6::R6Class("MA",
 
 
 #' Translates a R function into a C++ function and returns an external pointer (XPtr) to this function.
+#' Further information can be found in the vignette: 'Detailed Documentation'.
 #' @param f The function which should be translated from R to C++.
 #' @param verbose If set to true the output of RcppXPtrUtils::cppXPtr is printed.
 #' @param reference If set to true the arguments are passed by reference.
@@ -227,7 +229,7 @@ MA <- R6::R6Class("MA",
 #'  Variables can be either numeric vectors or matrices.
 #'  Notably, it is possible that the variable change the type within the function.
 #'  \strong{It is possible to declare a variable of a scalar numeric data type.
-#'          This is done by adding '_db' to the end of the variable. Each time '_db is found'
+#'          This is done by adding '_db' to the end of the variable. Each time '_db' is found
 #'          the variable is declared as a scalar numeric data type. In this case the
 #'          object cannot change its type!}
 #' @details \strong{The following functions are supported:}
@@ -250,11 +252,9 @@ MA <- R6::R6Class("MA",
 #' @details  \itemize{
 #'    \item allocation of memory works: Following forms are possible: vector(size_of_elements), vector(value, size_of_elements)
 #'              matrix(nrows, ncols), matrix(value, nrows, ncols). The latter fills the matrix or the vector with the specified 'value'.
-#'    \item For indices squared brackets  '[]' can be used as common in R. Beyond that the function 'at' exists
+#'    \item For indices squared brackets '[]' can be used as common in R. \string{Despite the results of calculations cannot be used!} Beyond that the function 'at' exists
 #'              which accepts as first argument a variable and as the second argument you pass the desired index.
 #'              The caveat of using 'at' is that only one entry can be accessed. Whereas '[]' can return more then one element.
-#'              \strong{Moreover, '[]' does check whether the index is within the boundaries of the vector.}
-#'              \strong{The 'at'function does not check whether the index is within the boundaries of the vector.}
 #'              \strong{The 'at'function returns a reference to the vector entry.
 #'                Therefore variable[index] can behave differently then at(variable, index).
 #'                The function has to be use carefully when 'at' is used.
@@ -284,8 +284,7 @@ MA <- R6::R6Class("MA",
 #' \strong{Be aware that the R code is translated to ETR. An expression template library which tries to mimic R.
 #' However, it does not behave exactly like R! Please check your compiled function before using it in a serious project.
 #' If you want to see how ast2ast differs from R in detail check the vignette: 'Detailed Documentation'.}
-#' @examples
-#' @examples #Further examples can be found in the vignettes: 'Examples' and 'Detailed Documentation'
+#' @examples #Further examples can be found in the vignette: 'Detailed Documentation'.
 #' @examples #Hello World
 #' \dontrun{
 #' f <- function() { print("Hello World!")}

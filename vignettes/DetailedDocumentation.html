@@ -354,14 +354,9 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <li><a href="#documentation">Documentation</a>
 <ul>
 <li><a href="#objects">Objects</a></li>
-<li><a href="#how-the-examples-work">How the examples work</a></li>
 <li><a href="#variable-declaration">Variable declaration</a></li>
 <li><a href="#basic-arithmetics">Basic arithmetics</a></li>
-<li><a href="#subsetting">Subsetting</a>
-<ul>
-<li><a href="#base-r-subsetting">Base R subsetting</a></li>
-<li><a href="#the-at-function">The at function</a></li>
-</ul></li>
+<li><a href="#subsetting">Subsetting</a></li>
 <li><a href="#helper-functions">Helper functions</a></li>
 <li><a href="#comparison-functions">Comparison functions</a></li>
 <li><a href="#Control%20flow">Control flow</a></li>
@@ -379,22 +374,12 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <style>
 body {
 text-align: justify}
-.col2 {
-  columns: 2 200px;         
-  -webkit-columns: 2 200px; 
-  -moz-columns: 2 200px;  
-}
-.col3 {
-  columns: 3 100px;
-  -webkit-columns: 3 100px;
-  -moz-columns: 3 100px;
-}
 </style>
 <div id="documentation" class="section level2">
 <h2>Documentation</h2>
 <p>The package <em>ast2ast</em> translates a R function into a C++ function and returns an external pointer (XPtr) to this function. The scope of <em>ast2ast</em> is to generate functions which can be used during solving ode-systems (derivative function or jacobian function) or during optimization. More generally the translated function can be used in fields where it is necessary to evaluate a function very often. Especially if the function is evaluated by C++ the generated external pointer is very sufficient.<br />
 First of all the supported objects and functions listed below are explained in detail. Here the arguments which have to be passed to the functions are described and it is explained what the function returns. Furthermore, for each function a small example is given showing how to use it. Moreover, it is explained how the function differ from R equivalents. If other differences were detected please report it.<br />
-The last section of the documentation describes how the external pointers produces by <em>ast2ast</em> can be used in packages. This information is intended for package authors who want to use <em>ast2ast</em> in order to enable a simple user interface as it not necessary anymore for the user to write C++.</p>
+The last section of the documentation describes how the external pointers produces by <em>ast2ast</em> can be used in packages. This information is intended for package authors who want to use <em>ast2ast</em> in order to enable a simple user interface as it not necessary anymore for the user to write C++. This paragraph explains how the examples in this vignette are executed. First of all a Rcpp function is created, which executes the output of the function <em>translate</em>. If you want to know how this functions work in detail you can go to <a href="#information-for-package-authors">Information for Package authors</a>. In the examples only the R code is shown in order to show how to write the code. Sometimes the result of the executed code is also presented.</p>
 <p>Supported objects:</p>
 <ul>
 <li>vectors (containing numbers)</li>
@@ -414,118 +399,572 @@ The last section of the documentation describes how the external pointers produc
 <li>printing: print</li>
 <li>returning objects: return</li>
 </ul>
-<div id="how-the-examples-work" class="section level3">
-<h3>How the examples work</h3>
-<p>This section explains how the examples in this vignette are executed. First of all a Rcpp function which executes the output of the function <em>translate</em>. If you want to know how this functions work in detail you can go to Information for Package authors</p>
-</div>
 <div id="objects" class="section level3">
 <h3>Objects</h3>
-<p>There exists two containers which can be used in <em>ast2ast</em> functions. Both containers can only hold the <em>numeric</em> type of R (is equivalent to double). The first container are vectors and the second one are matrices.</p>
+<p>There exists two containers which can be used in <em>ast2ast</em> functions. Both containers can only hold the <em>numeric</em> type of R (is equivalent to double). The first container are vectors and the second one are matrices. **It is possible to declare a variable of a scalar numeric data type. This is done by adding *_db* (e.g. varname_db) to the end of the variable. Each time *_db* is found the variable is declared as a scalar numeric data type. In this case the object cannot change its type!**</p>
 <p><strong>Nice features:</strong></p>
 <ul>
 <li>The variables can change the type within a function. This is normally not possible when using C++.</li>
 <li>The index of vectors and matrices starts at 1 as in R.</li>
 <li>The index has to be in the boundaries of the vector or matrix. Even though this is different from the behaviour in R it is a nice feature. If you access a element outside the boundaries of a vector in R <em>NA</em> is returned. This is in 99% of the cases not what the user wants.</li>
 <li>The memory of the matrices is columnwise arranged as in R.</li>
-<li>In R arguments passed to a function are always copied. In <em>ast2ast</em> functions it is possible to pass only the memory address of a object (called a reference). To do this you have to set the <em>reference</em> parameter of the <em>translate</em> function to <em>TRUE</em>. If you pass a function by reference you can modify the object without returning it (see example …).</li>
+<li>In R arguments passed to a function are always copied. In <em>ast2ast</em> functions it is possible to pass only the memory address of a object (called a reference). To do this you have to set the <em>reference</em> parameter of the <em>translate</em> function to <em>TRUE</em>. If you pass a function by reference you can modify the object without returning it (see Example 1). In the Rcpp function the variable x is printed before and after the call of the function <em>fetr</em>. Notably, if no <em>return</em> is used in the R code translated by <em>ast2ast</em> nothing is returnd (in R the last object is returned in this case). You see that x is 10 before the call of the function and it is 1 after the call of the function. But the function does not return anything. Thus, the object <em>x</em> is modified in the function without copying it.</li>
 </ul>
+<p><strong>Example 1</strong></p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>f &lt;-<span class="st"> </span><span class="cf">function</span>(variable) {</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>  variable &lt;-<span class="st"> </span><span class="dv">1</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>}</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="co">#fetr &lt;- translate(f)</span></span></code></pre></div>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="kw">library</span>(ast2ast)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>fetr &lt;-<span class="st"> </span><span class="kw">translate</span>(f)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>x &lt;-<span class="st"> </span><span class="dv">10</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>output &lt;-<span class="st"> </span><span class="kw">byref</span>(fetr, x)</span></code></pre></div>
+<pre><code>## x before call of function:
+## 10
+## x after call of function:
+## 1</code></pre>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>output</span></code></pre></div>
+<pre><code>## NULL</code></pre>
 <p><strong>Caveats:</strong></p>
 <ul>
 <li>Sometimes large overhead of the containers
 <ul>
 <li>Variables which are scalars are represented as vectors of length 1. This is also how R handels scalar variables. As in C++ scalar variables are not defined as vectors the speed of the translated R function can be substantially lower compared to a native C++ function.</li>
 </ul></li>
-<li></li>
-<li>reference vs copy</li>
 </ul>
 </div>
 <div id="variable-declaration" class="section level3">
 <h3>Variable declaration</h3>
-<ul>
-<li>a = 1</li>
-<li>a = c(1, 2, 3)</li>
-<li>b = c(a, 2)</li>
-<li>c = vector(2)</li>
-<li>c = vector(3.14, 4)</li>
-<li>d = vector(c, 4)</li>
-<li>e = matrix(2, 2)</li>
-<li>e = matrix(3.14, 2, 2)</li>
-<li>e = matrix(c, 2, 2)</li>
-<li>difference to R
-<ul>
-<li>no length = argument</li>
-<li>vector(value, size) is the equivalent to rep(value, number)</li>
-<li>only numeric type possible</li>
-</ul></li>
-</ul>
+<p>In <strong>Example 2</strong> the various ways of declaring variables are presented. To assign a value to a variable you can use <em>&lt;-</em> or <em>=</em>. As already mentioned only numeric values are possible. If you want to assign a vector you can use either the <em>c</em> or <em>vector</em> function. The <em>c</em> function works in the same way as R and can handle any combinations of scalars, vectors or matrices. The function <em>vector</em> differs in two ways from the R equivalent. First of all you cannot use terms such as <em>vector(length = size)</em> as this is not possible in C++. In contrast you just write <em>vector(size)</em>. The R function <em>rep</em> is not available in <em>ast2ast</em> but it is possible to write <em>vector(value, size)</em> which in R would be written as <em>rep(value, size)</em>. A third way to use the <em>vector</em> function is to pass another vector and the size to it <em>vector(other_vector, size)</em>. The <em>matrix</em> function works in the same way as the <em>vector</em> function with the difference that instead of the size two arguments were needed the number of rows and the number of columns.</p>
+<p><strong>Example 2</strong></p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>f &lt;-<span class="st"> </span><span class="cf">function</span>() {</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>  a &lt;-<span class="st"> </span><span class="dv">1</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>  a_db &lt;-<span class="st"> </span><span class="fl">3.14</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>  b =<span class="st"> </span><span class="dv">2</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>  c &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>  d =<span class="st"> </span><span class="kw">vector</span>(<span class="dv">2</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>  e &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="fl">3.14</span>, <span class="dv">4</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a>  f &lt;-<span class="st"> </span><span class="kw">vector</span>(c, <span class="dv">3</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a>  g &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">2</span>, <span class="dv">2</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>  h &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">6</span>, <span class="dv">2</span>, <span class="dv">2</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>  i &lt;-<span class="st"> </span><span class="kw">matrix</span>(e, <span class="dv">2</span>, <span class="dv">2</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a>  </span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true"></a>  <span class="kw">print</span>(<span class="st">&quot;a&quot;</span>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true"></a>  <span class="kw">print</span>(a)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true"></a>  <span class="kw">print</span>(a_db)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true"></a>  <span class="kw">print</span>()</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true"></a>  <span class="kw">print</span>(<span class="st">&quot;b&quot;</span>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true"></a>  <span class="kw">print</span>(b)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true"></a>  <span class="kw">print</span>()</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true"></a>  <span class="kw">print</span>(<span class="st">&quot;c&quot;</span>)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true"></a>  <span class="kw">print</span>(c)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true"></a>  <span class="kw">print</span>()</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true"></a>  <span class="kw">print</span>(<span class="st">&quot;d&quot;</span>)</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true"></a>  <span class="kw">print</span>(d)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true"></a>  <span class="kw">print</span>()</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true"></a>  <span class="kw">print</span>(<span class="st">&quot;e&quot;</span>)</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true"></a>  <span class="kw">print</span>(e)</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true"></a>  <span class="kw">print</span>()</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true"></a>  <span class="kw">print</span>(<span class="st">&quot;f&quot;</span>)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true"></a>  <span class="kw">print</span>(f)</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true"></a>  <span class="kw">print</span>()</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true"></a>  <span class="kw">print</span>(<span class="st">&quot;g&quot;</span>)</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true"></a>  <span class="kw">print</span>(g)</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true"></a>  <span class="kw">print</span>()</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true"></a>  <span class="kw">print</span>(<span class="st">&quot;h&quot;</span>)</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true"></a>  <span class="kw">print</span>(h)</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true"></a>  <span class="kw">print</span>()</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true"></a>  <span class="kw">print</span>(<span class="st">&quot;i&quot;</span>)</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true"></a>  <span class="kw">print</span>(i)</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true"></a>  <span class="kw">print</span>()</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true"></a>}</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true"></a><span class="kw">library</span>(ast2ast)</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true"></a>fetr &lt;-<span class="st"> </span><span class="kw">translate</span>(f)</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true"></a><span class="kw">vardec</span>(fetr)</span></code></pre></div>
+<pre><code>## a
+## 1
+## 3.14
+## 
+## b
+## 2
+## 
+## c
+## 1
+## 2
+## 3
+## 
+## d
+## 2
+## 2
+## 
+## e
+## 3.14
+## 3.14
+## 3.14
+## 3.14
+## 
+## f
+## 1
+## 1
+## 1
+## 
+## g
+## 4.65949e-310 1.27246e+232    
+## 0    2.05586 
+## 
+## h
+## 6    6   
+## 6    6   
+## 
+## i
+## 3.14 3.14    
+## 3.14 3.14    </code></pre>
 </div>
 <div id="basic-arithmetics" class="section level3">
 <h3>Basic arithmetics</h3>
-<ul>
-<li>+</li>
-<li>-</li>
-<li>/</li>
-<li>*</li>
-<li>scalar, scalar</li>
-<li>vector, scalar</li>
-<li>scalar, vector</li>
-<li>vector, vector</li>
-<li>scalar, matrix</li>
-<li>matrix, scalar</li>
-<li>matrix, vector</li>
-<li>vector, matrix</li>
-<li>matrix, matrix</li>
-<li>matrix/scalar1 + vector*scalar2</li>
-</ul>
+<p>As usual in R it is possible to use basic arithmetic operations on scalars, vectors and matrices (<strong>Example 3</strong>).</p>
+<p><strong>Example 3</strong></p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a>f &lt;-<span class="st"> </span><span class="cf">function</span>() {</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">2</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="dv">3</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;scalar operations&quot;</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a><span class="kw">print</span>(a <span class="op">+</span><span class="st"> </span>b)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a><span class="kw">print</span>(a <span class="op">-</span><span class="st"> </span>b)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a><span class="kw">print</span>(a <span class="op">/</span><span class="st"> </span>b)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true"></a><span class="kw">print</span>(a <span class="op">*</span><span class="st"> </span>b)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true"></a></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true"></a></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;vector &amp; scalar operations&quot;</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="dv">4</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true"></a><span class="kw">print</span>(a <span class="op">+</span><span class="st"> </span>b)</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true"></a><span class="kw">print</span>(b <span class="op">-</span><span class="st"> </span>a)</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true"></a></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true"></a></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;vector &amp; vector operations (same length)&quot;</span>)</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">6</span><span class="op">:</span><span class="dv">8</span></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">3</span></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true"></a><span class="kw">print</span>(a <span class="op">/</span><span class="st"> </span>b)</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">6</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">3</span></span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true"></a><span class="kw">print</span>(a <span class="op">/</span><span class="st"> </span>b)</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;vector &amp; vector operations (different length)&quot;</span>)</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;longer object length is a multiple of shorter object length&quot;</span>)</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">6</span></span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">3</span></span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true"></a><span class="kw">print</span>(a <span class="op">/</span><span class="st"> </span>b)</span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;longer object length is not a multiple of shorter object length&quot;</span>)</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">5</span></span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">3</span></span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true"></a><span class="kw">print</span>(a <span class="op">/</span><span class="st"> </span>b) <span class="co"># different to R no warning</span></span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true"></a></span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true"></a></span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;matrix &amp; scalar operations&quot;</span>)</span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">3</span></span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">2</span>)</span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true"></a><span class="kw">print</span>(a<span class="op">*</span>b)</span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true"></a><span class="kw">print</span>(b <span class="op">+</span><span class="st"> </span><span class="dv">4</span>)</span>
+<span id="cb7-45"><a href="#cb7-45" aria-hidden="true"></a></span>
+<span id="cb7-46"><a href="#cb7-46" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb7-47"><a href="#cb7-47" aria-hidden="true"></a></span>
+<span id="cb7-48"><a href="#cb7-48" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;matrix &amp; vector operations&quot;</span>)</span>
+<span id="cb7-49"><a href="#cb7-49" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">5</span><span class="op">:</span><span class="dv">6</span></span>
+<span id="cb7-50"><a href="#cb7-50" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">2</span>)</span>
+<span id="cb7-51"><a href="#cb7-51" aria-hidden="true"></a><span class="kw">print</span>(b <span class="op">-</span><span class="st"> </span>a)</span>
+<span id="cb7-52"><a href="#cb7-52" aria-hidden="true"></a><span class="kw">print</span>(a <span class="op">/</span><span class="st"> </span>b)</span>
+<span id="cb7-53"><a href="#cb7-53" aria-hidden="true"></a></span>
+<span id="cb7-54"><a href="#cb7-54" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb7-55"><a href="#cb7-55" aria-hidden="true"></a></span>
+<span id="cb7-56"><a href="#cb7-56" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;matrix &amp; matrix operations&quot;</span>)</span>
+<span id="cb7-57"><a href="#cb7-57" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">2</span>)</span>
+<span id="cb7-58"><a href="#cb7-58" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">4</span>, <span class="dv">2</span>, <span class="dv">1</span>) <span class="co"># difference to R!</span></span>
+<span id="cb7-59"><a href="#cb7-59" aria-hidden="true"></a><span class="kw">print</span>(a <span class="op">+</span><span class="st"> </span>b)</span>
+<span id="cb7-60"><a href="#cb7-60" aria-hidden="true"></a></span>
+<span id="cb7-61"><a href="#cb7-61" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb7-62"><a href="#cb7-62" aria-hidden="true"></a></span>
+<span id="cb7-63"><a href="#cb7-63" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;mixed operations&quot;</span>)</span>
+<span id="cb7-64"><a href="#cb7-64" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">1</span></span>
+<span id="cb7-65"><a href="#cb7-65" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="dv">2</span><span class="op">:</span><span class="dv">5</span></span>
+<span id="cb7-66"><a href="#cb7-66" aria-hidden="true"></a>c &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">50</span>, <span class="dv">2</span>, <span class="dv">2</span>)</span>
+<span id="cb7-67"><a href="#cb7-67" aria-hidden="true"></a>d &lt;-<span class="st"> </span>a <span class="op">+</span><span class="st"> </span>b <span class="op">-</span><span class="st"> </span>c<span class="op">/</span><span class="dv">2</span></span>
+<span id="cb7-68"><a href="#cb7-68" aria-hidden="true"></a><span class="kw">print</span>(d)</span>
+<span id="cb7-69"><a href="#cb7-69" aria-hidden="true"></a>}</span>
+<span id="cb7-70"><a href="#cb7-70" aria-hidden="true"></a></span>
+<span id="cb7-71"><a href="#cb7-71" aria-hidden="true"></a><span class="kw">library</span>(ast2ast)</span>
+<span id="cb7-72"><a href="#cb7-72" aria-hidden="true"></a>fetr &lt;-<span class="st"> </span><span class="kw">translate</span>(f)</span>
+<span id="cb7-73"><a href="#cb7-73" aria-hidden="true"></a><span class="kw">call_fct</span>(fetr)</span></code></pre></div>
+<pre><code>## scalar operations
+## 5
+## -1
+## 0.666667
+## 6
+## 
+## vector &amp; scalar operations
+## 5
+## 6
+## 7
+## 3
+## 2
+## 1
+## 
+## vector &amp; vector operations (same length)
+## 6
+## 3.5
+## 2.66667
+## 1
+## 1
+## 1
+## 4
+## 2.5
+## 2
+## vector &amp; vector operations (different length)
+## longer object length is a multiple of shorter object length
+## 1
+## 1
+## 1
+## 4
+## 2.5
+## 2
+## longer object length is not a multiple of shorter object length
+## 1
+## 1
+## 1
+## 4
+## 2.5
+## 
+## matrix &amp; scalar operations
+## 9    9   
+## 9    9   
+## 7    7   
+## 7    7   
+## 
+## matrix &amp; vector operations
+## -2   -2  
+## -3   -3  
+## 1.66667  1.66667 
+## 2    2   
+## 
+## matrix &amp; matrix operations
+## 7    7   
+## 7    7   
+## 
+## mixed operations
+## -22  -20 
+## -21  -19 </code></pre>
 </div>
 <div id="subsetting" class="section level3">
 <h3>Subsetting</h3>
+<p>If you want to subset a vector or a matrix object you can use either <em>[]</em> or the <em>at</em> function. The <em>[]</em> is slower then <em>at</em> but more powerful (<strong>Example 4</strong>).</p>
+<p>The following objects can be passed to <em>[]</em> when using a vector or matrix:</p>
 <ul>
-<li>[] slower then at</li>
+<li><p>nothing</p></li>
+<li><p>numeric scalar</p></li>
+<li><p>logical</p></li>
+<li><p>vector</p></li>
+<li><p>matrix</p></li>
+<li><p>result of comparison</p></li>
+<li><p><strong>caveat:</strong></p></li>
+<li><p><strong>it is not possible to pass the results of calculations!</strong></p></li>
 </ul>
-<div id="base-r-subsetting" class="section level4">
-<h4>Base R subsetting</h4>
-<ul>
-<li><p>var[]</p></li>
-<li><p>var[logical]</p></li>
-<li><p>var[scalar]</p></li>
-<li><p>var[vector]</p></li>
-<li><p>var[v1 + v2]</p></li>
-<li><p>var[v1 - v2]</p></li>
-<li><p>var[v1 / v2]</p></li>
-<li><p>var[v1 * v2]</p></li>
-<li><p>var[v1 == v2]</p></li>
-<li><p>var[v1 != v2]</p></li>
-<li><p>var[v1 &lt;= v2]</p></li>
-<li><p>var[v1 &gt;= v2]</p></li>
-<li><p>var[v1 &gt; v2]</p></li>
-<li><p>var[v1 &lt; v2]</p></li>
-<li><p>var[scalar, scalar]</p></li>
-<li><p>var[vector, vector]</p></li>
-<li><p>var[v1 + v2, v1 + v2]</p></li>
-<li><p>var[v1 - v2, v1 - v2]</p></li>
-<li><p>var[v1 / v2, v1 / v2]</p></li>
-<li><p>var[v1 * v2, v1 * v2]</p></li>
-<li><p>var[v1 == v2, v1 == v2]</p></li>
-<li><p>var[v1 != v2, v1 != v2]</p></li>
-<li><p>var[v1 &lt;= v2, v1 &lt;= v2]</p></li>
-<li><p>var[v1 &gt;= v2, v1 &gt;= v2]</p></li>
-<li><p>var[v1 &gt; v2, v1 &gt; v2]</p></li>
-<li><p>var[v1 &lt; v2, v1 &lt; v2]</p></li>
-</ul>
-</div>
-<div id="the-at-function" class="section level4">
-<h4>The at function</h4>
-<ul>
-<li>at(var, scalar)</li>
-<li>at(var, scalar1, scalar2)</li>
-<li>no boundaries checked!</li>
-</ul>
-</div>
+<p>In case of a matrix it is possible to pass one of the above objects to access specific rows or columns respectively ([rows, cols]). In contrast to <em>at</em> only a scalar can be passed. Thus, only a single element is accessed by this function! However, this function works faster. The result of <em>at</em> cannot be subsetted further.</p>
+<p><strong>Example 4</strong></p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a>f &lt;-<span class="st"> </span><span class="cf">function</span>() {</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;pass nothing&quot;</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">8</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a>a[] &lt;-<span class="st"> </span><span class="dv">100</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;pass logical&quot;</span>)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">8</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true"></a>a[<span class="ot">TRUE</span>] &lt;-<span class="st"> </span><span class="dv">100</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true"></a></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;pass scalar&quot;</span>)</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">8</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true"></a>a[<span class="dv">1</span>] &lt;-<span class="st"> </span><span class="dv">100</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true"></a></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true"></a></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;pass vector&quot;</span>)</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">8</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="dv">2</span><span class="op">:</span><span class="dv">5</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true"></a>a[b] &lt;-<span class="st"> </span><span class="dv">100</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true"></a></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;pass result of ==&quot;</span>)</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">8</span></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true"></a>a[a <span class="op">&lt;</span><span class="st"> </span><span class="dv">5</span>] &lt;-<span class="st"> </span><span class="dv">100</span></span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true"></a></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true"></a></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;pass result of !=&quot;</span>)</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">8</span></span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">8</span>)</span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true"></a>a[a <span class="op">!=</span><span class="st"> </span>b] &lt;-<span class="st"> </span><span class="dv">100</span></span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true"></a></span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true"></a></span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;pass result of &lt;=&quot;</span>)</span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">8</span></span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">8</span>)</span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true"></a>a[a <span class="op">&lt;=</span><span class="st"> </span>b] &lt;-<span class="st"> </span><span class="dv">100</span></span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true"></a></span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true"></a></span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;pass result of &gt;=&quot;</span>)</span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">8</span></span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">9</span>)</span>
+<span id="cb9-59"><a href="#cb9-59" aria-hidden="true"></a>a[a <span class="op">&gt;=</span><span class="st"> </span>b] &lt;-<span class="st"> </span><span class="dv">100</span></span>
+<span id="cb9-60"><a href="#cb9-60" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-61"><a href="#cb9-61" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb9-62"><a href="#cb9-62" aria-hidden="true"></a></span>
+<span id="cb9-63"><a href="#cb9-63" aria-hidden="true"></a></span>
+<span id="cb9-64"><a href="#cb9-64" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;pass result of &gt;&quot;</span>)</span>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">8</span></span>
+<span id="cb9-66"><a href="#cb9-66" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">9</span>)</span>
+<span id="cb9-67"><a href="#cb9-67" aria-hidden="true"></a>a[a <span class="op">&gt;</span><span class="st"> </span>b] &lt;-<span class="st"> </span><span class="dv">100</span></span>
+<span id="cb9-68"><a href="#cb9-68" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-69"><a href="#cb9-69" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb9-70"><a href="#cb9-70" aria-hidden="true"></a></span>
+<span id="cb9-71"><a href="#cb9-71" aria-hidden="true"></a></span>
+<span id="cb9-72"><a href="#cb9-72" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;pass result of &lt;&quot;</span>)</span>
+<span id="cb9-73"><a href="#cb9-73" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">8</span></span>
+<span id="cb9-74"><a href="#cb9-74" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">9</span>)</span>
+<span id="cb9-75"><a href="#cb9-75" aria-hidden="true"></a>a[a <span class="op">&lt;</span><span class="st"> </span>b] &lt;-<span class="st"> </span><span class="dv">100</span></span>
+<span id="cb9-76"><a href="#cb9-76" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-77"><a href="#cb9-77" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb9-78"><a href="#cb9-78" aria-hidden="true"></a></span>
+<span id="cb9-79"><a href="#cb9-79" aria-hidden="true"></a></span>
+<span id="cb9-80"><a href="#cb9-80" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;pass scalar, scalar&quot;</span>)</span>
+<span id="cb9-81"><a href="#cb9-81" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">4</span>)</span>
+<span id="cb9-82"><a href="#cb9-82" aria-hidden="true"></a>a[<span class="dv">1</span>, <span class="dv">1</span>] &lt;-<span class="st"> </span><span class="dv">100</span></span>
+<span id="cb9-83"><a href="#cb9-83" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-84"><a href="#cb9-84" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb9-85"><a href="#cb9-85" aria-hidden="true"></a></span>
+<span id="cb9-86"><a href="#cb9-86" aria-hidden="true"></a></span>
+<span id="cb9-87"><a href="#cb9-87" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;pass vector, vector&quot;</span>)</span>
+<span id="cb9-88"><a href="#cb9-88" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">4</span>)</span>
+<span id="cb9-89"><a href="#cb9-89" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">3</span>)</span>
+<span id="cb9-90"><a href="#cb9-90" aria-hidden="true"></a>c &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">2</span>, <span class="dv">4</span>)</span>
+<span id="cb9-91"><a href="#cb9-91" aria-hidden="true"></a>a[b, c] &lt;-<span class="st"> </span><span class="dv">100</span></span>
+<span id="cb9-92"><a href="#cb9-92" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-93"><a href="#cb9-93" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb9-94"><a href="#cb9-94" aria-hidden="true"></a></span>
+<span id="cb9-95"><a href="#cb9-95" aria-hidden="true"></a></span>
+<span id="cb9-96"><a href="#cb9-96" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;pass ==, &gt;=&quot;</span>)</span>
+<span id="cb9-97"><a href="#cb9-97" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">16</span>, <span class="dv">4</span>, <span class="dv">4</span>)</span>
+<span id="cb9-98"><a href="#cb9-98" aria-hidden="true"></a>b &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">4</span></span>
+<span id="cb9-99"><a href="#cb9-99" aria-hidden="true"></a>c &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">8</span>, <span class="dv">3</span>, <span class="dv">8</span>)</span>
+<span id="cb9-100"><a href="#cb9-100" aria-hidden="true"></a>a[b <span class="op">==</span><span class="st"> </span>c, b <span class="op">&gt;=</span><span class="st"> </span>c] &lt;-<span class="st"> </span><span class="dv">100</span></span>
+<span id="cb9-101"><a href="#cb9-101" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-102"><a href="#cb9-102" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb9-103"><a href="#cb9-103" aria-hidden="true"></a></span>
+<span id="cb9-104"><a href="#cb9-104" aria-hidden="true"></a></span>
+<span id="cb9-105"><a href="#cb9-105" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;at&quot;</span>)</span>
+<span id="cb9-106"><a href="#cb9-106" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">16</span></span>
+<span id="cb9-107"><a href="#cb9-107" aria-hidden="true"></a><span class="kw">at</span>(a, <span class="dv">2</span>) &lt;-<span class="st"> </span><span class="dv">100</span></span>
+<span id="cb9-108"><a href="#cb9-108" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-109"><a href="#cb9-109" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb9-110"><a href="#cb9-110" aria-hidden="true"></a></span>
+<span id="cb9-111"><a href="#cb9-111" aria-hidden="true"></a></span>
+<span id="cb9-112"><a href="#cb9-112" aria-hidden="true"></a><span class="kw">print</span>(<span class="st">&quot;at&quot;</span>)</span>
+<span id="cb9-113"><a href="#cb9-113" aria-hidden="true"></a>a &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">16</span>, <span class="dv">4</span>, <span class="dv">4</span>)</span>
+<span id="cb9-114"><a href="#cb9-114" aria-hidden="true"></a><span class="kw">at</span>(a, <span class="dv">1</span>, <span class="dv">4</span>) &lt;-<span class="st"> </span><span class="dv">100</span></span>
+<span id="cb9-115"><a href="#cb9-115" aria-hidden="true"></a><span class="kw">print</span>(a)</span>
+<span id="cb9-116"><a href="#cb9-116" aria-hidden="true"></a><span class="kw">print</span>()</span>
+<span id="cb9-117"><a href="#cb9-117" aria-hidden="true"></a>}</span>
+<span id="cb9-118"><a href="#cb9-118" aria-hidden="true"></a></span>
+<span id="cb9-119"><a href="#cb9-119" aria-hidden="true"></a><span class="kw">library</span>(ast2ast)</span>
+<span id="cb9-120"><a href="#cb9-120" aria-hidden="true"></a>fetr &lt;-<span class="st"> </span><span class="kw">translate</span>(f)</span>
+<span id="cb9-121"><a href="#cb9-121" aria-hidden="true"></a><span class="kw">call_fct</span>(fetr)</span></code></pre></div>
+<pre><code>## pass nothing
+## 1
+## 2
+## 3
+## 4
+## 5
+## 6
+## 7
+## 8
+## 100
+## 100
+## 100
+## 100
+## 100
+## 100
+## 100
+## 100
+## 
+## pass logical
+## 1
+## 2
+## 3
+## 4
+## 5
+## 6
+## 7
+## 8
+## 100
+## 100
+## 100
+## 100
+## 100
+## 100
+## 100
+## 100
+## 
+## pass scalar
+## 1
+## 2
+## 3
+## 4
+## 5
+## 6
+## 7
+## 8
+## 100
+## 2
+## 3
+## 4
+## 5
+## 6
+## 7
+## 8
+## 
+## pass vector
+## 1
+## 2
+## 3
+## 4
+## 5
+## 6
+## 7
+## 8
+## 1
+## 100
+## 100
+## 100
+## 100
+## 6
+## 7
+## 8
+## 
+## pass result of ==
+## 100
+## 100
+## 100
+## 100
+## 5
+## 6
+## 7
+## 8
+## 
+## pass result of !=
+## 1
+## 2
+## 3
+## 100
+## 100
+## 100
+## 100
+## 8
+## 
+## pass result of &lt;=
+## 100
+## 100
+## 100
+## 4
+## 5
+## 6
+## 7
+## 100
+## 
+## pass result of &gt;=
+## 100
+## 100
+## 100
+## 100
+## 100
+## 100
+## 100
+## 8
+## 
+## pass result of &gt;
+## 100
+## 2
+## 3
+## 100
+## 100
+## 100
+## 100
+## 8
+## 
+## pass result of &lt;
+## 1
+## 2
+## 3
+## 4
+## 5
+## 6
+## 7
+## 100
+## 
+## pass scalar, scalar
+## 100  3   3   3   
+## 3    3   3   3   
+## 3    3   3   3   
+## 3    3   3   3   
+## 
+## pass vector, vector
+## 3    100 3   100 
+## 3    3   3   3   
+## 3    100 3   100 
+## 3    3   3   3   
+## 
+## pass ==, &gt;=
+## 100  5   100 13  
+## 2    6   10  14  
+## 100  7   100 15  
+## 4    8   12  16  
+## 
+## at
+## 1
+## 100
+## 3
+## 4
+## 5
+## 6
+## 7
+## 8
+## 9
+## 10
+## 11
+## 12
+## 13
+## 14
+## 15
+## 16
+## 
+## at
+## 1    5   9   100 
+## 2    6   10  14  
+## 3    7   11  15  
+## 4    8   12  16  </code></pre>
 </div>
 <div id="helper-functions" class="section level3">
 <h3>Helper functions</h3>
@@ -534,6 +973,22 @@ The last section of the documentation describes how the external pointers produc
 <li>dim</li>
 <li>:</li>
 </ul>
+<p>There exists three helper function. The <em>length</em> function returns the number of elements of a vector or matrix. The <em>dim</em> function returns the number of rows and columns of a matrix. The <em>:</em> function can be used to create a range of numbers. See <strong>Example 5</strong> in order to see how the functions work.</p>
+<p><strong>Example 5</strong></p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a>f &lt;-<span class="st"> </span><span class="cf">function</span>() {</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>  a &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">16</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>  <span class="kw">print</span>(<span class="kw">length</span>(a))</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a>  </span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a>  b &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>, <span class="dv">2</span>, <span class="dv">2</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a>  <span class="kw">print</span>(<span class="kw">dim</span>(b))</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true"></a>}</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true"></a><span class="kw">library</span>(ast2ast)</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true"></a>fetr &lt;-<span class="st"> </span><span class="kw">translate</span>(f)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true"></a><span class="kw">call_fct</span>(fetr)</span></code></pre></div>
+<pre><code>## 16
+## 2
+## 2</code></pre>
 </div>
 <div id="comparison-functions" class="section level3">
 <h3>Comparison functions</h3>
@@ -550,7 +1005,7 @@ The last section of the documentation describes how the external pointers produc
 <h3>Control flow</h3>
 <ul>
 <li>for loop</li>
-<li>if, else if, else</li>
+<li>if, else if, else, &amp;&amp;, ||</li>
 </ul>
 </div>
 <div id="printing" class="section level3">
@@ -612,6 +1067,15 @@ The last section of the documentation describes how the external pointers produc
 <li>modify arma::mat</li>
 <li>modify std::vector<double></li>
 </ul>
+</div>
+<div id="examples" class="section level3">
+<h3>Examples</h3>
+<div id="r2sundials" class="section level4">
+<h4>r2sundials</h4>
+</div>
+<div id="paropt" class="section level4">
+<h4>paropt</h4>
+</div>
 </div>
 </div>
 
