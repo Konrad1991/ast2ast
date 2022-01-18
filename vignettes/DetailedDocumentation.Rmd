@@ -1,13 +1,13 @@
 ---
 title: "Detailed Documentation"
 author: "Konrad Krämer"
-output:  pdf_document # rmarkdown::html_vignette 
+output:  pdf_document # rmarkdown::html_vignette
 #classoption:
 #- twocolumn
-#vignette: >
-#  %\VignetteIndexEntry{Detailed Documentation}
-#  %\VignetteEngine{knitr::rmarkdown}
-#  \usepackage{UTF-8}
+vignette: >
+  %\VignetteIndexEntry{Detailed Documentation}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
@@ -126,7 +126,7 @@ Supported functions:
 
 ### Objects
 
-There exists two containers which can be used in *ast2ast* functions. Both containers can only hold the *numeric* type of R (is equivalent to double). The first container are vectors and the second one are matrices. **It is possible to declare a variable of a scalar numeric data type. This is done by adding *_db* (e.g. varname_db) to the end of the variable. Each time *_db* is found the variable is declared as a scalar numeric data type. In this case the object cannot change its type!**
+There exists two containers which can be used in *ast2ast* functions. Both containers can only hold the *numeric* type of R (is equivalent to double). The first container are vectors and the second one are matrices. **It is possible to declare a variable of a scalar numeric data type. This is done by adding '_db' (e.g. varname_db) to the end of the variable. Each time '_db' is found the variable is declared as a scalar numeric data type. In this case the object cannot change its type!**
 
 **Nice features:**
 
@@ -699,7 +699,9 @@ head(res_exp)
 head(res_exp2)
 head(res_exp3)
 
-microbenchmark(r2cvodes(y0, ti, frhs, param = p), r2cvodes(y0, ti, ptr_exp, param = pv), solve_ode(pointer_to_ode, ti, y0))
+out <- microbenchmark(r2cvodes(y0, ti, frhs, param = p), r2cvodes(y0, ti, ptr_exp, param = pv), solve_ode(pointer_to_ode, ti, y0))
+
+boxplot(out, names = c("R", "C++", "a2a"))
 ```
 
 
