@@ -4,10 +4,10 @@ author: "Konrad Krämer"
 output:  pdf_document # rmarkdown::html_vignette 
 #classoption:
 #- twocolumn
-vignette: >
-  %\VignetteIndexEntry{Detailed Documentation}
-  %\VignetteEngine{knitr::rmarkdown}
-  \usepackage{UTF-8}
+#vignette: >
+#  %\VignetteIndexEntry{Detailed Documentation}
+#  %\VignetteEngine{knitr::rmarkdown}
+#  \usepackage{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
@@ -459,7 +459,7 @@ call_fct(fetr)
 
 ### Comparison functions
 
-As usual in R it is possible to compare two objects. 
+As usual in R it is possible to compare two objects using one of the following options:
 
 * \=\=
 * <=
@@ -470,10 +470,19 @@ As usual in R it is possible to compare two objects.
 
 ### Control flow
 
-* for loop
-* if, else if, else, &&, ||
+It is possible to write for loops and if, else if, else branches as usual in R ( &&, || are not implemented yet):
+
+for(index in variable){ \
+    # do whatever \
+} \
+for(index in 1:length(variable){ \
+    # do whatever \
+} \
+
 
 ### Printing
+
+Using the function print as common in R:
 
 * print() is a difference to R
 * print("string")
@@ -484,13 +493,30 @@ As usual in R it is possible to compare two objects.
 
 ### Math functions
 
-* sin, asin, sinh, cos, acos, cosh, tan, atan, tanh, log, ^ and exp
+Following mathematical functions are available:
+
+* sin
+* asin
+* sinh
+* cos
+* acos
+* cosh
+* tan
+* atan
+* tanh
+* log
+* ^ and exp
 
 ### Interpolation
 
-* cmr
+In order to interpolate values the 'cmr' function can be used. The function needs three arguments:
 
-## Information for Package authors
+* the first argument is the point of the independent variable (x) for which the dependent variable should be calculated (y). This has to be a vector of length one.
+* the second argument is a vector defining the points of the independent variable (x). This has to be a vector of at least length four.
+* the third argument is a vector defining the points of the dependent variable (y). This has to be a vector of at least length four.
+
+
+## Information for Package authors (not written yet)
 
 * the sexp object
 * VEC<T> class
