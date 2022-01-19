@@ -701,7 +701,7 @@ head(res_exp3)
 
 out <- microbenchmark(r2cvodes(y0, ti, frhs, param = p), r2cvodes(y0, ti, ptr_exp, param = pv), solve_ode(pointer_to_ode, ti, y0))
 
-boxplot(out, names = c("R", "C++", "a2a"))
+boxplot(out, names = c("R", "C++", "ast2ast"))
 ```
 
 
