@@ -4,7 +4,7 @@
 
 Translates a R function into a C++ function. An external pointer to the C++ function is returned to the user. To install the package use *devtools::install_github("Konrad1991/ast2ast", build_vignettes = TRUE)*. The motivation to write the package was that it is often cumbersome using R functions in applications which have to call this function very often (> 100 calls) (e.g. ODE solving, Optimization). One possiblity is to write the function in a faster programming language e.g. C. However, learning languages such as C is difficult and time consuming. Therefore *ast2ast* is a decent alternative as the function can be written in R.    
 
-![Benchmark](https://github.com/Konrad1991/ast2ast/blob/main/benchmark.png)
+![Benchmark](https://github.com/Konrad1991/ast2ast/blob/master/benchmark.png)
 
 ## Documentation
 
