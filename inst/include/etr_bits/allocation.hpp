@@ -27,48 +27,48 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-VEC<double> vector(int length) {
-  VEC<double> ret(length);
-  return ret;
-}
+  VEC<double> vector(int length) {
+    VEC<double> ret(length);
+    return ret;
+  }
 
-VEC<double> vector(double inp, int length) {
-  VEC<double> ret(length, inp);
-  return ret;
-}
+  VEC<double> vector(double inp, int length) {
+    VEC<double> ret(length, inp);
+    return ret;
+  }
 
-// copy of vector
-VEC<double> vector(VEC<double> inp) {
-  VEC<double> ret;
-  ret = inp;
-  return ret;
-}
+  // copy of vector
+  VEC<double> vector(VEC<double> inp) {
+    VEC<double> ret;
+    ret = inp;
+    return ret;
+  }
 
-VEC<double> matrix(int nrows_, int ncols_) {
-  VEC<double> ret(nrows_, ncols_);
-  ret.ismatrix = true;
-  ret.nrows = nrows_;
-  ret.ncols = ncols_;
-  return ret;
-}
+  VEC<double> matrix(int nrows_, int ncols_) {
+    VEC<double> ret(nrows_, ncols_);
+    ret.ismatrix = true;
+    ret.nrows = nrows_;
+    ret.ncols = ncols_;
+    return ret;
+  }
 
 
-VEC<double> matrix(double inp, int nrows_, int ncols_) {
-  VEC<double> ret(nrows_, ncols_, inp);
-  ret.ismatrix = true;
-  ret.nrows = nrows_;
-  ret.ncols = ncols_;
-  return ret;
-}
+  VEC<double> matrix(double inp, int nrows_, int ncols_) {
+    VEC<double> ret(nrows_, ncols_, inp);
+    ret.ismatrix = true;
+    ret.nrows = nrows_;
+    ret.ncols = ncols_;
+    return ret;
+  }
 
-VEC<double> matrix(VEC<double> inp, int nrows_, int ncols_) {
-  VEC<double> ret(nrows_, ncols_);
-  ret = inp;
-  ret.ismatrix = true;
-  ret.nrows = nrows_;
-  ret.ncols = ncols_;
-  return ret;
-}
+  VEC<double> matrix(VEC<double> inp, int nrows_, int ncols_) {
+    VEC<double> ret(nrows_, ncols_);
+    ret = inp;
+    ret.ismatrix = true;
+    ret.nrows = nrows_;
+    ret.ncols = ncols_;
+    return ret;
+  }
 
 }
 

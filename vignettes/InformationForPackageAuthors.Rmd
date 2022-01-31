@@ -1,0 +1,605 @@
+---
+title: "Information for package authors"
+author: "Konrad Krämer"
+output: pdf_document
+classoption:
+- twocolumn
+# rmarkdown::html_vignette
+
+vignette: >
+  %\VignetteIndexEntry{Information for package authors}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+- [Information for Package authors](#information-for-package-authors)
+- [How to use ast2ast](#how-to-use-ast2ast)
+- [Rcpp Interface](#rcpp-interface)
+- [RcppArmadillo Interface](#rcpparmadillo-interface)
+- [Pointer Interface](#pointer-interface)
+- [Examples](#examples)
+  * [r2sundials](#r2sundials)
+  * [paropt](#paropt)
+
+
+
+## Information for Package authors
+
+This section of the documentation describes how the external pointers produced by *ast2ast* can be used in packages. This information is intended for package authors who want to use *ast2ast* to enable a simple user interface as it is not necessary anymore for the user to write C++. The R code is translated to a modified version of an expression template library called *ETR* (https://github.com/Konrad1991/ETR) which tries to mimic R. \
+
+The core class object is named VEC<T> and can be initialized with any type. Furthermore, is a typedef defined for VEC<double> called *sexp* alluding to the fact that all R objects are *SEXP* objects at C level. This class contains another class called STORE<T> which manages memory. To do this a raw pointer of the form *T\** is used. Thus, all objects are located at the heap. Beyond that, it is important that no static methods are implemented or that memory is associated with functions or global variables. Therefore, the VEC<T> objects can be used in parallel. However, the user has to take care that only one thread edits an object at a time. VEC<double> a.k.a. *sexp* can be converted to Rcpp::NumericVectors, Rcpp::NumericMatrices, arma::vec and arma::mat. Moreover, it is also possible to copy the data from Rcpp::NumericVectors, Rcpp::NumericMatrices, arma::vec or arma::mat to a *sexp* variable. Currently, the constructors for doing this are not implemented, only the *operator=* is implemented. Thus, the variable of type *sexp* has to be defined before the information of the Rcpp or RcppArmadillo variables are passed. It is possible to construct a *sexp* object by using a *double\** pointer and a size information (= int). The information about the Rcpp-, RcppArmadillo- and pointer-interface is explained in depth in the sections below. 
+
+After translating the R function each variable is of type *sexp* except if the user uses the *\_db* extension. In this case, the variable is of type *double*. All arguments passed to a function are of type *sexp* or *sexp&*. It is not possible to transfer one variable as *sexp* and another one as *sexp&*. The function returns either *void* or a *sexp* object. 
+
+
+## How to use ast2ast
+
+In this paragraph, a basic example demonstrates how to write the R code, translate it and call it from C++. Particular emphasis is placed on the C++ code. First of all, the R function is defined which accepts one argument called *a*, adds two to *a* and stores it into *b*. The variable *b* is returned at the end of the function. The R function called *f* is translated to an external pointer to the *C++* function.
+```{r, eval = TRUE}
+f <- function(a) {
+  b <- a + 2
+  return(b)
+}  
+library(ast2ast)
+f_cpp <- translate(f)
+```
+
+The C++ function depends on RcppArmadillo and ast2ast therefore the required macros and headers were included. Moreover, *ETR* requires std=c++17 therefore the corresponding plugin is added. The function *getXPtr* is defined by the function *RcppXPtrUtils::cppXPtr*. In the last 5 lines, the translated code is depicted. The function *f* returns a *sexp* and gets one argument of type *sexp* called *a*. The body of the function looks almost identical to the R function. Except that the variable *b* is defined in the first line of the body with the type *sexp*. The function *i2d* converts an integer to a double variable. This is necessary since C++ would identify the *2* as an integer which is not what the user wants in this case. 
+```{Rcpp, eval = FALSE}
+// [[Rcpp::depends(ast2ast, RcppArmadillo)]]
+#include <RcppArmadillo.h>
+#include <Rcpp.h>
+// [[Rcpp::plugins(cpp17)]]
+using namespace Rcpp;
+
+#include <etr.hpp>
+// [[Rcpp::export]]
+SEXP getXPtr();
+
+sexp f(sexp a) {
+  sexp b;
+  b = a + i2d(2);
+  return(b);
+}
+```
+
+Afterwards, the translated R function has to be used in C++ code. This would be your package code for example. First, the macros were defined for *RcppArmadillo* and *ast2ast*. Subsequently, the necessary header files were included. As already mentioned *ast2ast* requires std=c++17 thus the required plugin is included. To use the function, it is necessary to dereference the pointer. The result of the dereferenced pointer has to be stored in a function pointer. Later the function pointer can be used to call the translated function. Therefore, a function pointer called *fp* is defined. It is critical that the signature of the function pointer matches the one of the translated function. Perhaps it would be a good idea to check the R function before it is translated. After defining the function pointer, a function is defined which is called later by the user (called *call_package*). This function accepts the external pointer. Within the function body, a variable *f* is defined of type *fp* and *inp* is assigned to it. Next, a *sexp* object called *a* is defined which stores a vector of length 3 containing 1, 2 and 3. The function *coca* is equivalent to the *c* function R. Afterwards *a* is printed. Followed by the call of the function *f* and storing the result in *a*. The variable *a* is printed again to show that the values are changed according to the code defined in the R function.       
+```{Rcpp, eval = TRUE}
+// [[Rcpp::depends(RcppArmadillo, ast2ast)]]
+#include "etr.hpp"
+// [[Rcpp::plugins("cpp17")]]
+
+
+typedef sexp (*fp)(sexp a);
+
+
+// [[Rcpp::export]]
+void call_package(Rcpp::XPtr<fp> inp) {
+  fp f = *inp;
+  sexp a = coca(1, 2, 3);
+  print(a);
+  a = f(a);
+  print("a is now:");
+  print(a);
+}
+```
+
+The user can call now the package code and pass the R function to it. Thus, the user only has to install the compiler or Rtools depending on the operating system. But it is not necessary to write the function in Rcpp. 
+```{r, eval = TRUE}
+call_package(f_cpp)
+```
+
+## Rcpp Interface
+
+In the last section, the usage of *ast2ast* was described. However, only *sexp* variables were defined. Which are most likely not used in your package. Therefore interfaces to common libraries are defined. First of all, *ast2ast* can communicate with Rcpp which alleviates working with the library substantially. The code below shows that it is possible to pass a *sexp* object to a variable of type *NumericVector* or *NumericMatrix* and *vice versa*. Here, the data is always copied.   
+```{Rcpp, eval = TRUE}
+// [[Rcpp::depends(ast2ast, RcppArmadillo)]]
+#include <RcppArmadillo.h>
+#include <Rcpp.h>
+// [[Rcpp::plugins(cpp17)]]
+using namespace Rcpp;
+#include <etr.hpp>
+
+// [[Rcpp::export]]
+void fct() {
+  // NumericVector to sexp
+  NumericVector a{1, 2};
+  sexp a_; // sexp a_ = a; Error!
+  a_ = a;
+  print(a_);
+  
+  // sexp to NumericVector
+  sexp b_ = coca(3, 4);
+  NumericVector b = b_;
+  Rcpp::Rcout << b << std::endl;
+  
+  // NumericMatrix to sexp
+  NumericMatrix c(3, 3);
+  sexp c_; // sexp c_ = c; Error!
+  c_ = c;
+  print(c_);
+  
+  // sexp to NumericMatrix
+  sexp d_ = matrix(colon(1, 16), 4, 4);
+  NumericMatrix d = d_;
+  Rcpp::Rcout << d << std::endl;
+}
+```
+
+```{r, eval = TRUE}
+trash <- fct()
+```
+
+## RcppArmadillo Interface
+
+Besides Rcpp types, *sexp* objects can transfer data to *RcppArmadillo* objects and it is also possible to copy the data from *RcppArmadillo* types to *sexp* objects using the operator *=*. The code below shows that it is possible to pass a *sexp* object to a variable of type *vec* or *mat* and *vice versa*. Here the data is always copied.  
+```{Rcpp, eval = TRUE}
+// [[Rcpp::depends(ast2ast, RcppArmadillo)]]
+#include <RcppArmadillo.h>
+#include <Rcpp.h>
+// [[Rcpp::plugins(cpp17)]]
+using namespace arma;
+#include <etr.hpp>
+
+// [[Rcpp::export]]
+void fct() {
+  // vec to sexp
+  arma::vec a(4, fill::value(30.0));
+  sexp a_; // sexp a_ = a; Error!
+  a_ = a;
+  print(a_);
+  
+  // sexp to vec
+  sexp b_ = coca(3, 4);
+  vec b = b_;
+  b.print();
+  
+  // mat to sexp
+  mat c(3, 3, fill::value(31.0));
+  sexp c_; // sexp c_ = c; Error!
+  c_ = c;
+  print(c_);
+  
+  // sexp to mat
+  sexp d_ = matrix(colon(1, 16), 4, 4);
+  mat d = d_;
+  d.print();
+}
+```
+
+```{r, eval = TRUE}
+trash <- fct()
+```
+
+## Pointer Interface
+
+You can pass the information of data stored on heap to a *sexp* object. The constructor for type vector accepts 3 arguments:
+
+* *int* defining the size of the data.
+* a pointer (*T\**) to the data
+* *int* called cob (copy, ownership, borrow).
+
+The constructor for the type matrix accepts 4 arguments:
+
+* *int* defining number of rows
+* *int* defining number of cols
+* a pointer (*T\**) to the data
+* *int* called cob (copy, ownership, borrow).
+
+If cob is 0 then the data is copied. Else if cob is 1 then the pointer itself is copied. Meaning that the ownership is transferred to the *sexp* object and the user should not call delete [] on the pointer. Be aware that only one *sexp* variable can take ownership of one vector otherwise the memory is double freed. Else if cob is 2 the ownership of the pointer is only borrowed. Meaning that the *sexp* object cannot be resized. The user is responsible for freeing the memory! The code below shows how the pointer interface works in general. Showing how *sexp* objects can be created by passing the information of pointers (*double\**) which hold data on the heap. Currently, only constructors are written which can use the pointer interface. 
+```{Rcpp, eval = TRUE}
+// [[Rcpp::depends(ast2ast, RcppArmadillo)]]
+#include <RcppArmadillo.h>
+#include <Rcpp.h>
+// [[Rcpp::plugins(cpp17)]]
+using namespace arma;
+#include <etr.hpp>
+
+// [[Rcpp::export]]
+void fct() {
+    int size = 3;
+    
+    // copy
+    double* ptr1;
+    ptr1 = new double[size];
+    int cob = 0;
+    sexp a(size, ptr1, cob); 
+    delete [] ptr1;
+    a = vector(3.14, 5);
+    print(a);
+    
+    print();
+    
+    // take ownership
+    double* ptr2;
+    ptr2 = new double[size];
+    cob = 1;
+    sexp b(size, ptr2, cob); 
+    b = vector(5, 3);
+    print(b);
+    
+    print();
+    
+    // borrow ownership
+    double* ptr3;
+    ptr3 = new double[size];
+    cob = 2;
+    sexp c(size, ptr3, cob); 
+    //error calls resize
+    //c = vector(5, size + 1); 
+    c = vector(4, size);
+    print(c);
+    
+    print();
+    sexp d(size, ptr3, cob);
+    d = d + 10;
+    print(d);
+    print();
+    
+    delete[] ptr3;
+}
+
+```
+```{r, eval = TRUE}
+trash <- fct()
+```
+
+The pointer interface is particularly useful if the user function has to change the data of a vector or matrix of type *NumericVector*, *vec*, *NumericMatrix* or *mat*. Assuming that the user passes a function that accepts its arguments by reference it is easy to modify any variable which has a type that can return a pointer to its data. In the code below it is shown how *sexp* objects are constructed using the pointer interface. Thereby changing the content of variables which has an Rcpp type, a RcppArmadillo type, or is of type std::vector<double>.
+```{Rcpp, eval = TRUE}
+// [[Rcpp::depends(ast2ast, RcppArmadillo)]]
+#include <RcppArmadillo.h>
+#include <Rcpp.h>
+// [[Rcpp::plugins(cpp17)]]
+using namespace Rcpp;
+using namespace arma;
+#include <etr.hpp>
+
+typedef void (*fp)(sexp& a);
+
+// [[Rcpp::export]]
+void call_package(Rcpp::XPtr<fp> inp) {
+  fp f = *inp;
+  
+  // NumericVector
+  NumericVector a_rcpp{1, 2, 3};
+  sexp a(a_rcpp.size(), a_rcpp.begin(), 2);
+  f(a);
+  Rcpp::Rcout << a_rcpp << std::endl;
+  
+  //arma::vec
+  vec a_arma(2, fill::value(30));
+  sexp b(2, a_arma.memptr(), 2);
+  f(b);
+  a_arma.print();
+  
+  // NumericMatrix
+  NumericMatrix c_rcpp(2, 2);
+  sexp c(2, 2, c_rcpp.begin(), 2);
+  f(c);
+  Rcpp::Rcout << c_rcpp << std::endl;
+  
+  //arma::mat
+  mat d_arma(3, 2, fill::value(30));
+  sexp d(3, 2, d_arma.memptr(), 2);
+  f(d);
+  d_arma.print();
+}
+
+```
+```{r, eval = TRUE}
+f <- function(a) {
+  a <- a + 2
+}
+
+library(ast2ast)
+fa2a <- translate(f, reference = TRUE)
+trash <- call_package(fa2a)
+```
+
+## Examples
+
+In this section two examples are shown to illustrate how *ast2ast* could be used in R packages. First, it is shown how ODE-systems can be solved very efficiently. In order to do this the R package *r2sundials* is used. The second examples point out how *ast2ast* can be used together with the R package *paropt* to optimize parameters of ODE-systems. Both examples only construct wrapper functions that are used by the package code. Probably it would be more efficient when the package code itself would take care of the transfer of data between *Rcpp/RcppArmadillo* and *ast2ast*. 
+
+### r2sundials
+
+In this example it is shown how ODE-systems can be solved by using *r2sundials* and *ast2ast*. The code below shows how *r2sundials* is used normally. Either using an R function or an external pointer to a C++ function. 
+```{r, eval = TRUE}
+library(Rcpp)
+library(ast2ast)
+library(r2sundials)
+library(RcppXPtrUtils)
+library(microbenchmark)
+
+# R version
+ti <- seq(0, 5, length.out=101)
+p <- list(a = 2)
+p <- c(nu = 2, a = 1)
+y0 <- 0
+frhs <- function(t, y, p, psens) {
+  -p["nu"]*(y-p["a"])
+} 
+
+res_exp <- r2cvodes(y0, ti,
+                    frhs, param = p)
+attributes(res_exp) <- NULL
+
+# External pointer
+ptr_exp <- cppXPtr(code = '
+int rhs_exp(double t, const vec &y,
+            vec &ydot,
+            RObject &param,
+            NumericVector &psens) {
+            
+  double a = 1;
+  double nu = 2;
+  ydot[0] = -nu*(y[0] - a);
+  return(CV_SUCCESS);
+}
+',
+depends=c("RcppArmadillo",
+          "r2sundials","rmumps"),
+includes="using namespace arma;\n
+          #include <r2sundials.h>",
+cacheDir="lib", verbose=FALSE)
+
+pv <- c(a = 1)
+res_exp2 <- r2cvodes(y0, ti,
+                     ptr_exp, param = pv)
+attributes(res_exp2) <- NULL
+```
+
+In the code below is the wrapper function defined which is later called by *r2sundials*. This function is called *rhs_exp_wrapper* and has the correct function signature. Furthermore, a global function pointer named *Fct* is defined of type *void (\**user_fct) (sexp& y_, sexp& ydot_)*. Within *rhs_exp_wrapper* the data of the vectors *y* and *ydot* are used to construct two *sexp* objects which are passed to *Fct*. Thus, the vector *ydot* is modified by the function passed from the user. Furthermore, another function called *solve_ode* is defined. Which calls the code from *r2sundials*, solves the ODE-system, and returns the output to R. In R the user defines the R function *ode*. Next, the function is translated and passed to *solve_ode*. Comparing the results shows that all three approaches (R, C++, *ast2ast*) generate the same result. Afterwards a benchmark is conducted showing that R is substantially slower than C++ and that the translated function is almost as fast as C++. Mentionable, it is possible to increase the speed of the *ast2ast* version by using the *at* function and the *_db* extension.  
+```{Rcpp, eval = TRUE}
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::depends(rmumps)]]
+// [[Rcpp::depends(r2sundials)]]
+// [[Rcpp::depends(ast2ast)]]
+// [[Rcpp::plugins("cpp17")]]
+#include "etr.hpp"
+#include "RcppArmadillo.h"
+#include "r2sundials.h"
+using namespace arma;
+using namespace Rcpp;
+
+typedef int (*fp)(double t, const vec &y,
+             vec &ydot, RObject &param,
+             NumericVector &psens);
+
+typedef void (*user_fct)(sexp& y_,
+              sexp& ydot_);
+user_fct Fct;
+
+int rhs_exp_wrapper(double t, const vec &y,
+                    vec &ydot, RObject &param,
+                    NumericVector &psens) {
+  NumericVector p(param);
+  const int size = y.size();
+  sexp ydot_(size, ydot.memptr(), 2);
+  
+  double* ptr = const_cast<double*>(
+                y.memptr());
+  sexp y_(size, ptr, 2);
+  Fct(y_, ydot_);
+  return(CV_SUCCESS);
+}
+
+
+// [[Rcpp::export]]
+NumericVector solve_ode(XPtr<user_fct> inp,
+                        NumericVector time,
+                        NumericVector y) {
+Fct = *inp;
+XPtr<fp> ptr = XPtr<fp>(new fp(
+            &rhs_exp_wrapper));
+
+Environment pkg = 
+  Environment::namespace_env("r2sundials");
+Function solve = pkg["r2cvodes"];
+NumericVector output = solve(y, time,
+                             ptr, time);
+
+return output;
+}
+```
+```{r, eval = TRUE}
+# ast2ast version
+ti <- seq(0, 5, length.out=101)
+y0 <- 0
+
+library(ast2ast)
+ode <- function(y, ydot) {
+  nu <- 2
+  a <- 1
+  ydot[1] <- -nu*(y[1] - a)
+}
+pointer_to_ode <- translate(ode,
+                          reference = TRUE)
+res_exp3 <- solve_ode(pointer_to_ode,
+                      ti, y0)
+attributes(res_exp3) <- NULL
+
+stopifnot(identical(res_exp,
+                res_exp2,
+                res_exp3))
+out <- microbenchmark(
+  r2cvodes(y0, ti,
+          frhs, param = p),
+  r2cvodes(y0, ti,
+          ptr_exp, param = pv),
+  solve_ode(pointer_to_ode,
+          ti, y0))
+
+boxplot(out, names=c("R", "C++", "ast2ast"))
+```
+
+\newpage
+\newpage
+
+### paropt
+
+In the second example, it is shown how *ast2ast* is used together with *paropt*. Again the code below consists of an Rcpp part and a part written in R. Within Rcpp the C++ code is defined which describes the Lotka-Volterra model (*ode_system*). For details check the documentation of *paropt*. Subsequently, a function is defined that returns an external pointer to the ODE-system (*test_optimization*). As already described in the last example a wrapper function is created which calls the actual ODE-system (*ode_system_wrapper*). Furthermore, a function is defined which calls the code from the package *paropt* called *optimize_paropt* and conducts the optimization. Within R the ODE-system is defined, translated and used for optimization. Both versions the pure C++ function and the translated R code yield the same result. The C++ function is almost as fast as the translated R code. Interesting is the fact that *paropt* calls the ODE-solver in parallel. This example demonstrates that the translated function can be called in parallel. Which is not possible with R functions. Admittedly, the printing is conducted by Rcpp. Therefore it is unknown how printing behaves in parallel.   
+```{Rcpp, eval = TRUE}
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::depends(ast2ast)]]
+// [[Rcpp::plugins("cpp17")]]
+// [[Rcpp::depends(paropt)]]
+#include "etr.hpp"
+#include "RcppArmadillo.h"
+using namespace Rcpp;
+
+// paropt version
+typedef int (*OS)(double &t,
+             std::vector<double> &params,
+             std::vector<double> &states);
+
+int ode_system(double &t,
+               std::vector<double> &params,
+               std::vector<double> & states) {
+  
+  double a = params[0];
+  double b = params[1];
+  double c = params[2];
+  double d = params[3];
+
+  double n1 = states[0];
+  double n2 = states[1];
+
+  states[0] = n1*c*n2 - n1*d;
+  states[1] = n2*a - n2*b*n1;
+
+  return 0;
+}
+
+// [[Rcpp::export]]
+XPtr<OS> test_optimization() {
+  XPtr<OS> xpfun = XPtr<OS>(new OS(
+                     &ode_system));
+  return xpfun;
+}
+
+// ast2ast version
+typedef int (*paropt_fct)(double &t,
+             std::vector<double> &params,
+             std::vector<double> & states);
+
+typedef void (*user_fct2)(sexp& p,
+                          sexp& y);
+
+user_fct2 Fct_paropt;
+
+int ode_system_wrapper(
+    double &t,
+    std::vector<double> &params,
+    std::vector<double> & states) {
+  
+  sexp p(params.size(), params.data(), 2);
+  sexp s(states.size(), states.data(), 2);
+  Fct_paropt(p, s);
+  return 0;
+}
+
+
+// [[Rcpp::export]]
+List optimize_paropt(XPtr<user_fct2> inp,
+                     NumericVector time,
+                     DataFrame lb, 
+                     DataFrame ub, 
+                     DataFrame states) {
+  Fct_paropt = *inp;
+  XPtr<paropt_fct> ptr = XPtr<paropt_fct>(
+    new paropt_fct(&ode_system_wrapper));
+
+  Environment pkg = 
+    Environment::namespace_env("paropt");
+  Function optim = 
+    pkg["optimizer_pointer"];
+
+  NumericVector abs_tols{1e-8, 1e-8};
+
+  List output = optim(time, ptr, 1e-6,
+                      abs_tols, lb, ub,
+                      states, 40,
+                      1000, 0.0001,
+                      "bdf");
+
+  return output;
+}
+```
+```{r, eval = TRUE}
+#states
+path <- system.file("examples",
+                    package = "paropt")
+states <- read.table(paste(
+                      path,
+                      "/states_LV.txt",
+                      sep = ""),
+                     header = T)
+
+# parameter
+lb <- data.frame(time = 0, 
+                 a = 0.8,
+                 b = 0.3,
+                 c = 0.09,
+                 d = 0.09)
+ub <- data.frame(time = 0,
+                 a = 1.3,
+                 b = 0.7,
+                 c = 0.4,
+                 d = 0.7)
+
+suppressMessages(library(paropt))
+set.seed(1)
+start_time <- Sys.time()
+df_cpp <- optimizer_pointer(
+  integration_times = states$time,
+  ode_sys = test_optimization(),
+  relative_tolerance = 1e-6,
+  absolute_tolerances = c(1e-8, 1e-8),
+  lower = lb, upper = ub, states = states,
+  npop = 40, ngen = 1000, error = 0.0001,
+  solvertype = "bdf")
+end_time <- Sys.time()
+cpp_time <- end_time - start_time
+
+# ast2ast with at and _db
+ode <- function(params, states) {
+  a_db = at(params, 1)
+  b_db = at(params, 2)
+  c_db = at(params, 3)
+  d_db = at(params, 4)
+  n1_db = at(states, 1)
+  n2_db = at(states, 2)
+  at(states, 1) = n1_db*c_db*n2_db -
+    n1_db*d_db;
+  at(states, 2) = n2_db*a_db - 
+    n2_db*b_db*n1_db;
+}
+
+pointer_to_ode <- ast2ast::translate(
+                        ode,
+                        reference = TRUE)
+set.seed(1)
+start_time <- Sys.time()
+df_ast2ast <- optimize_paropt(pointer_to_ode,
+                              states$time,
+                              lb, ub, states)
+end_time <- Sys.time()
+a2a_time <- end_time - start_time
+
+stopifnot(identical(df_cpp[[8]],
+                    df_ast2ast[[8]]) )
+
+times <- data.frame(cpp = cpp_time,
+                    ast2ast = a2a_time)
+kableExtra::kbl(times)
+```
+
+
+
+
+
+

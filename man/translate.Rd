@@ -2,7 +2,8 @@
 % Please edit documentation in R/translate.R
 \name{translate}
 \alias{translate}
-\title{Translates a R function into a C++ function and returns an external pointer (XPtr) to this function.}
+\title{Translates a R function into a C++ function and returns an external pointer (XPtr) to this function.
+Further information can be found in the vignette: 'Detailed Documentation'.}
 \usage{
 translate(f, verbose = FALSE, reference = FALSE)
 }
@@ -18,6 +19,7 @@ The external pointer of the generated C++ function
 }
 \description{
 Translates a R function into a C++ function and returns an external pointer (XPtr) to this function.
+Further information can be found in the vignette: 'Detailed Documentation'.
 }
 \details{
 \strong{The following types are supported: }
@@ -28,7 +30,7 @@ Translates a R function into a C++ function and returns an external pointer (XPt
  Variables can be either numeric vectors or matrices.
  Notably, it is possible that the variable change the type within the function.
  \strong{It is possible to declare a variable of a scalar numeric data type.
-         This is done by adding '_db' to the end of the variable. Each time '_db is found'
+         This is done by adding '_db' to the end of the variable. Each time '_db' is found
          the variable is declared as a scalar numeric data type. In this case the
          object cannot change its type!}
 
@@ -51,13 +53,11 @@ Translates a R function into a C++ function and returns an external pointer (XPt
 \strong{Some details about the implemented functions}
 
 \itemize{
-   \item allocation of memory works: Following forms are possible: vector(size_of_elements), vector(value, size_of_elements)
-             matrix(nrows, ncols), matrix(value, nrows, ncols). The latter fills the matrix or the vector with the specified 'value'.
-   \item For indices squared brackets  '[]' can be used as common in R. Beyond that the function 'at' exists
+   \item allocation of memory works: Following forms are possible: vector(size_of_elements), vector(value, size_of_elements), vector(other_vec, size_of_other_vec),
+             matrix(nrows, ncols), matrix(value, nrows, ncols) and matrix(vector, nrows, ncols). The latter fills the matrix or the vector with the specified 'value'.
+   \item For indices squared brackets '[]' can be used as common in R. \strong{Despite the results of calculations cannot be used!} Beyond that the function 'at' exists
              which accepts as first argument a variable and as the second argument you pass the desired index.
              The caveat of using 'at' is that only one entry can be accessed. Whereas '[]' can return more then one element.
-             \strong{Moreover, '[]' does check whether the index is within the boundaries of the vector.}
-             \strong{The 'at'function does not check whether the index is within the boundaries of the vector.}
              \strong{The 'at'function returns a reference to the vector entry.
                Therefore variable[index] can behave differently then at(variable, index).
                The function has to be use carefully when 'at' is used.
@@ -89,7 +89,7 @@ However, it does not behave exactly like R! Please check your compiled function 
 If you want to see how ast2ast differs from R in detail check the vignette: 'Detailed Documentation'.}
 }
 \examples{
-#Further examples can be found in the vignettes: 'Examples' and 'Detailed Documentation'
+#Further examples can be found in the vignette: 'Detailed Documentation'.
 #Hello World
 \dontrun{
 f <- function() { print("Hello World!")}

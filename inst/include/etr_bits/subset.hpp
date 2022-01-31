@@ -24,34 +24,19 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-
-/*
-template <class F, class = typename std::enable_if<std::is_arithmetic<F>::value>::type>
-VEC<double> subset(const VEC<double>& inp, F pos) {
-  VEC<double> ret(1); // what happens when F is double???
-  pos--;
-  ret[0] = inp[pos];
-  return ret;
-}
-*/
-
-VEC<double> subset(VEC<double>& inp) {
+VEC<double> subset(VEC<double>& inp) { // done
   VEC<double> ret;
   ret = inp;
   return ret;
 }
 
-
-template<typename T, typename std::enable_if<std::is_same< int, T>::value, int>::type = 0>
-VEC<double> subset(const VEC<double>& inp, T pos) { // int pos
+VEC<double> subset(VEC<double>& inp, int pos) { // done
   VEC<double> ret(1);
   pos--;
   ret[0] = inp[pos];
   return ret;
 }
-
-template<typename T, typename std::enable_if<std::is_same<double, T>::value, int>::type = 0>
-VEC<double> subset(const VEC<double>& inp, T pos_) { // double
+VEC<double> subset(VEC<double>& inp, double pos_) { // done
   int pos = d2i(pos_);
   VEC<double> ret(1);
   pos--;
@@ -59,23 +44,7 @@ VEC<double> subset(const VEC<double>& inp, T pos_) { // double
   return ret;
 }
 
-
-/*
-double& subset(VEC<double>& inp, int pos) {
-  pos--;
-  return inp[pos];
-}
-
-double& subset(VEC<double>& inp, double pos_) {
-  int pos = d2i(pos_);
-  pos--;
-  return inp[pos];
-}
-*/
-
-
-template<typename T, typename std::enable_if<std::is_same<bool, T>::value, int>::type = 0>
-VEC<double> subset(VEC<double>& inp, T p) { // bool
+VEC<double> subset(VEC<double>& inp, bool p) { // done
 
   VEC<double> ret;
   if(p == false) {
@@ -85,14 +54,14 @@ VEC<double> subset(VEC<double>& inp, T p) { // bool
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, void* p) {
+VEC<double> subset(VEC<double>& inp, long* p) { // done
 
   VEC<double> ret;
   ret = inp;
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<double>& pos) {
+VEC<double> subset(VEC<double>& inp, VEC<double>& pos) { // done
 
   VEC<double> ret(pos.size());
 
@@ -104,39 +73,7 @@ VEC<double> subset(VEC<double>& inp, VEC<double>& pos) {
 }
 
 
-VEC<double> subset(VEC<double>& inp, VEC<bool>& pos) {
-
-  int counter = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if(pos[i] == true) {
-      counter++;
-    }
-  }
-
-  VEC<int> positions(counter);
-  counter = 0;
-  int counter2 = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if( ( (i % inp.size()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(pos[i] == true) {
-      positions[counter] = i -counter2*inp.size();
-      counter++;
-    }
-  }
-
-  VEC<double> ret(positions.size());
-
-  for(int i = 0; i < ret.size(); i++) {
-    ret[i] = inp[positions[i]];
-  }
-
-  return ret;
-}
-
-
-VEC<double> subset(VEC<double>& inp, int r, int c) {
+VEC<double> subset(VEC<double>& inp, int r, int c) { // done
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -153,7 +90,7 @@ VEC<double> subset(VEC<double>& inp, int r, int c) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, int r, double c_) {
+VEC<double> subset(VEC<double>& inp, int r, double c_) { // done
 
   int c = d2i(c_);
 
@@ -172,7 +109,7 @@ VEC<double> subset(VEC<double>& inp, int r, double c_) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, int row, bool c) {
+VEC<double> subset(VEC<double>& inp, int row, bool c) { // done
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -196,7 +133,7 @@ VEC<double> subset(VEC<double>& inp, int row, bool c) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, int row, void* nptr) {
+VEC<double> subset(VEC<double>& inp, int row, long* nptr) { // done
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -215,7 +152,7 @@ VEC<double> subset(VEC<double>& inp, int row, void* nptr) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, int row, VEC<double>& pos) {
+VEC<double> subset(VEC<double>& inp, int row, VEC<double>& pos) { // done
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -233,45 +170,7 @@ VEC<double> subset(VEC<double>& inp, int row, VEC<double>& pos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, int row, VEC<bool>& pos) {
-
-  if(inp.ismatrix == false) {
-    std::cerr << "incorrect number of dimensions" << std::endl;
-    Rcpp::stop("Error");
-  }
-
-  int counter = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if(pos[i] == true) {
-      counter++;
-    }
-  }
-
-  VEC<int> positions(counter);
-  counter = 0;
-  int counter2 = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if( ( (i % inp.nc()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(pos[i] == true) {
-      positions[counter] = i -counter2*inp.nc();
-      counter++;
-    }
-  }
-
-  VEC<double> ret(positions.size());
-  int pst = 0;
-  row--;
-  for(int j = 0; j < positions.size(); j++) {
-    pst = (d2i(positions[j]))*inp.nr() + row;
-    ret[j] = inp[pst];
-  }
-
-  return ret;
-}
-
-VEC<double> subset(VEC<double>& inp, double r_, int c) {
+VEC<double> subset(VEC<double>& inp, double r_, int c) { // done
 
   int r = d2i(r_);
 
@@ -315,7 +214,7 @@ VEC<double> subset(VEC<double>& inp, bool r, int col) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, void* ptr, int col) {
+VEC<double> subset(VEC<double>& inp, long* ptr, int col) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -347,44 +246,6 @@ VEC<double> subset(VEC<double>& inp, VEC<double>& pos, int col) {
 
   for(int j = 0; j < pos.size(); j++) {
     pst =  col*inp.nr() + (d2i(pos[j]) - 1);
-    ret[j] = inp[pst];
-  }
-
-  return ret;
-}
-
-VEC<double> subset(VEC<double>& inp, VEC<bool>& pos, int col) {
-
-  if(inp.ismatrix == false) {
-    std::cerr << "incorrect number of dimensions" << std::endl;
-    Rcpp::stop("Error");
-  }
-
-  int counter = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if(pos[i] == true) {
-      counter++;
-    }
-  }
-
-  VEC<int> positions(counter);
-  counter = 0;
-  int counter2 = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if( ( (i % inp.nr()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(pos[i] == true) {
-      positions[counter] = i -counter2*inp.nr();
-      counter++;
-    }
-  }
-
-  VEC<double> ret(positions.size());
-  int pst = 0;
-  col--;
-  for(int j = 0; j < positions.size(); j++) {
-    pst = col*inp.nr() + positions[j];
     ret[j] = inp[pst];
   }
 
@@ -436,7 +297,7 @@ VEC<double> subset(VEC<double>& inp, double row_, bool c) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, double row_, void* nptr) {
+VEC<double> subset(VEC<double>& inp, double row_, long* nptr) {
   int row = d2i(row_);
 
   if(inp.ismatrix == false) {
@@ -475,46 +336,6 @@ VEC<double> subset(VEC<double>& inp, double row_, VEC<double>& pos) {
   return ret;
 }
 
-
-VEC<double> subset(VEC<double>& inp, double row_, VEC<bool>& pos) {
-  int row = d2i(row_);
-
-  if(inp.ismatrix == false) {
-    std::cerr << "incorrect number of dimensions" << std::endl;
-    Rcpp::stop("Error");
-  }
-
-  int counter = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if(pos[i] == true) {
-      counter++;
-    }
-  }
-
-  VEC<int> positions(counter);
-  counter = 0;
-  int counter2 = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if( ( (i % inp.nc()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(pos[i] == true) {
-      positions[counter] = i -counter2*inp.nc();
-      counter++;
-    }
-  }
-
-  VEC<double> ret(positions.size());
-  int pst = 0;
-  row--;
-  for(int j = 0; j < positions.size(); j++) {
-    pst = (d2i(positions[j]))*inp.nr() + row;
-    ret[j] = inp[pst];
-  }
-
-  return ret;
-}
-
 VEC<double> subset(VEC<double>& inp, bool r, double col_) {
   int col = d2i(col_);
 
@@ -540,7 +361,7 @@ VEC<double> subset(VEC<double>& inp, bool r, double col_) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, void* ptr, double col_) {
+VEC<double> subset(VEC<double>& inp, long* ptr, double col_) {
   int col = d2i(col_);
 
   if(inp.ismatrix == false) {
@@ -580,44 +401,6 @@ VEC<double> subset(VEC<double>& inp, VEC<double>& pos, double col_) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<bool>& pos, double col_) {
-  int col = d2i(col_);
-
-  if(inp.ismatrix == false) {
-    std::cerr << "incorrect number of dimensions" << std::endl;
-    Rcpp::stop("Error");
-  }
-
-  int counter = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if(pos[i] == true) {
-      counter++;
-    }
-  }
-
-  VEC<int> positions(counter);
-  counter = 0;
-  int counter2 = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if( ( (i % inp.nr()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(pos[i] == true) {
-      positions[counter] = i -counter2*inp.nr();
-      counter++;
-    }
-  }
-
-  VEC<double> ret(positions.size());
-  int pst = 0;
-  col--;
-  for(int j = 0; j < positions.size(); j++) {
-    pst = col*inp.nr() + positions[j];
-    ret[j] = inp[pst];
-  }
-
-  return ret;
-}
 
 VEC<double> subset(VEC<double>& inp, bool r, bool c) {
 
@@ -635,7 +418,7 @@ VEC<double> subset(VEC<double>& inp, bool r, bool c) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, bool r, void* c) {
+VEC<double> subset(VEC<double>& inp, bool r, long* c) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -681,57 +464,7 @@ VEC<double> subset(VEC<double>& inp, bool r, VEC<double>& pos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, bool r, VEC<bool>& pos) {
-
-  if(inp.ismatrix == false) {
-    std::cerr << "incorrect number of dimensions" << std::endl;
-    Rcpp::stop("Error");
-  }
-
-  if(r == false) {
-    VEC<double> empty;
-    return empty;
-  }
-
-  int counter = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if(pos[i] == true) {
-      counter++;
-    }
-  }
-
-  VEC<int> positions(counter);
-  counter = 0;
-  int counter2 = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if( ( (i % inp.nc()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(pos[i] == true) {
-      positions[counter] = i -counter2*inp.nc();
-      counter++;
-    }
-  }
-
-  VEC<double> ret(inp.nr() * positions.size());
-  ret.ismatrix = true;
-  ret.ncols = positions.size();
-  ret.nrows = inp.nr();
-
-  int pst = 0;
-  counter = 0;
-  for(int j = 0; j < positions.size(); j++) {
-    for(int i = 0; i < inp.nr(); i++) {
-      pst = (positions[j])*inp.nr() + i;
-      ret[counter] = inp[pst];
-      counter++;
-    }
-  }
-
-  return ret;
-}
-
-VEC<double> subset(VEC<double>& inp, void* r, bool c) {
+VEC<double> subset(VEC<double>& inp, long* r, bool c) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -777,57 +510,7 @@ VEC<double> subset(VEC<double>& inp, VEC<double>& pos, bool c) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<bool>& pos, bool c) {
-
-  if(inp.ismatrix == false) {
-    std::cerr << "incorrect number of dimensions" << std::endl;
-    Rcpp::stop("Error");
-  }
-
-  if(c == false) {
-    VEC<double> empty;
-    return empty;
-  }
-
-  int counter = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if(pos[i] == true) {
-      counter++;
-    }
-  }
-
-  VEC<int> positions(counter);
-  counter = 0;
-  int counter2 = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if( ( (i % inp.nr()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(pos[i] == true) {
-      positions[counter] = i -counter2*inp.nr();
-      counter++;
-    }
-  }
-
-  VEC<double> ret(positions.size() * inp.nc());
-  ret.ismatrix = true;
-  ret.ncols = inp.nc();
-  ret.nrows = positions.size();
-
-  int pst = 0;
-  counter = 0;
-  for(int i = 0; i < inp.nc(); i++) {
-    for(int j = 0; j < positions.size(); j++) {
-      pst =  i*inp.nr() + positions[j];
-      ret[counter] = inp[pst];
-      counter++;
-    }
- }
-
-  return ret;
-}
-
-VEC<double> subset(VEC<double>& inp, void* r, void* c) {
+VEC<double> subset(VEC<double>& inp, long* r, long* c) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -840,7 +523,7 @@ VEC<double> subset(VEC<double>& inp, void* r, void* c) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, void* r, VEC<double>& pos) {
+VEC<double> subset(VEC<double>& inp, long* r, VEC<double>& pos) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -865,52 +548,8 @@ VEC<double> subset(VEC<double>& inp, void* r, VEC<double>& pos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, void* r, VEC<bool>& pos) {
 
-  if(inp.ismatrix == false) {
-    std::cerr << "incorrect number of dimensions" << std::endl;
-    Rcpp::stop("Error");
-  }
-
-  int counter = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if(pos[i] == true) {
-      counter++;
-    }
-  }
-
-  VEC<int> positions(counter);
-  counter = 0;
-  int counter2 = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if( ( (i % inp.nc()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(pos[i] == true) {
-      positions[counter] = i -counter2*inp.nc();
-      counter++;
-    }
-  }
-
-  VEC<double> ret(inp.nr() * positions.size());
-  ret.ismatrix = true;
-  ret.ncols = positions.size();
-  ret.nrows = inp.nr();
-
-  int pst = 0;
-  counter = 0;
-  for(int j = 0; j < positions.size(); j++) {
-    for(int i = 0; i < inp.nr(); i++) {
-      pst = (positions[j])*inp.nr() + i;
-      ret[counter] = inp[pst];
-      counter++;
-    }
-  }
-
-  return ret;
-}
-
-VEC<double> subset(VEC<double>& inp, VEC<double>& pos, void* c) {
+VEC<double> subset(VEC<double>& inp, VEC<double>& pos, long* c) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -927,51 +566,6 @@ VEC<double> subset(VEC<double>& inp, VEC<double>& pos, void* c) {
   for(int i = 0; i < inp.nc(); i++) {
     for(int j = 0; j < pos.size(); j++) {
       pst =  i*inp.nr() + (d2i(pos[j]) - 1);
-      ret[counter] = inp[pst];
-      counter++;
-    }
- }
-
-  return ret;
-}
-
-VEC<double> subset(VEC<double>& inp, VEC<bool>& pos, void* c) {
-
-  if(inp.ismatrix == false) {
-    std::cerr << "incorrect number of dimensions" << std::endl;
-    Rcpp::stop("Error");
-  }
-
-  int counter = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if(pos[i] == true) {
-      counter++;
-    }
-  }
-
-  VEC<int> positions(counter);
-  counter = 0;
-  int counter2 = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if( ( (i % inp.nr()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(pos[i] == true) {
-      positions[counter] = i -counter2*inp.nr();
-      counter++;
-    }
-  }
-
-  VEC<double> ret(positions.size() * inp.nc());
-  ret.ismatrix = true;
-  ret.ncols = inp.nc();
-  ret.nrows = positions.size();
-
-  int pst = 0;
-  counter = 0;
-  for(int i = 0; i < inp.nc(); i++) {
-    for(int j = 0; j < positions.size(); j++) {
-      pst =  i*inp.nr() + positions[j];
       ret[counter] = inp[pst];
       counter++;
     }
@@ -1005,168 +599,10 @@ VEC<double> subset(VEC<double>& inp, VEC<double>& rpos, VEC<double>& cpos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<double>& rows, VEC<bool>& pos) {
-
-  if(inp.ismatrix == false) {
-    std::cerr << "incorrect number of dimensions" << std::endl;
-    Rcpp::stop("Error");
-  }
-
-  int counter = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if(pos[i] == true) {
-      counter++;
-    }
-  }
-
-  VEC<int> positions(counter);
-  counter = 0;
-  int counter2 = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if( ( (i % inp.nc()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(pos[i] == true) {
-      positions[counter] = i -counter2*inp.nc();
-      counter++;
-    }
-  }
-
-  VEC<double> ret(rows.size() * positions.size());
-  ret.ismatrix = true;
-  ret.ncols = positions.size();
-  ret.nrows = rows.size();
-
-  int pst = 0;
-  counter = 0;
-
-  for(int j = 0; j < positions.size(); j++) {
-    for(int i = 0; i < rows.size(); i++) {
-      pst = (positions[j])*inp.nr() + d2i(rows[i]) - 1;
-      ret[counter] = inp[pst];
-      counter++;
-    }
-  }
-
-  return ret;
-}
-
-VEC<double> subset(VEC<double>& inp, VEC<bool>& pos, VEC<double>& cols) {
-
-  if(inp.ismatrix == false) {
-    std::cerr << "incorrect number of dimensions" << std::endl;
-    Rcpp::stop("Error");
-  }
-
-  int counter = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if(pos[i] == true) {
-      counter++;
-    }
-  }
-
-  VEC<int> positions(counter);
-  counter = 0;
-  int counter2 = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if( ( (i % inp.nr()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(pos[i] == true) {
-      positions[counter] = i -counter2*inp.nr();
-      counter++;
-    }
-  }
-
-  VEC<double> ret(positions.size() * cols.size());
-  ret.ismatrix = true;
-  ret.ncols = cols.size();
-  ret.nrows = positions.size();
-
-  int pst = 0;
-  counter = 0;
-
-  for(int j = 0; j < cols.size(); j++) {
-    for(int i = 0; i < positions.size(); i++) {
-      pst = (d2i(cols[j]) - 1)*inp.nr() + positions[i];
-      ret[counter] = inp[pst];
-      counter++;
-    }
-  }
-
-  return ret;
-}
-
-VEC<double> subset(VEC<double>& inp, VEC<bool>& rows, VEC<bool>& cols) {
-
-  if(inp.ismatrix == false) {
-    std::cerr << "incorrect number of dimensions" << std::endl;
-    Rcpp::stop("Error");
-  }
-
-  int counter = 0;
-  for(int i = 0; i < rows.size(); i++) {
-    if(rows[i] == true) {
-      counter++;
-    }
-  }
-  VEC<int> positions_rows(counter);
-  counter = 0;
-  int counter2 = 0;
-  for(int i = 0; i < rows.size(); i++) {
-    if( ( (i % inp.nr()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(rows[i] == true) {
-      positions_rows[counter] = i -counter2*inp.nr();
-      counter++;
-    }
-  }
-
-  counter = 0;
-  for(int i = 0; i < cols.size(); i++) {
-    if(cols[i] == true) {
-      counter++;
-    }
-  }
-  VEC<int> positions_cols(counter);
-  counter = 0;
-  counter2 = 0;
-  for(int i = 0; i < cols.size(); i++) {
-    if( ( (i % inp.nc()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(cols[i] == true) {
-      positions_cols[counter] = i -counter2*inp.nc();
-      counter++;
-    }
-  }
-
-
-  VEC<double> ret(positions_rows.size() * positions_cols.size());
-  ret.ismatrix = true;
-  ret.ncols = positions_cols.size();
-  ret.nrows = positions_rows.size();
-
-  int pst = 0;
-  counter = 0;
-
-  for(int j = 0; j < positions_cols.size(); j++) {
-    for(int i = 0; i < positions_rows.size(); i++) {
-      pst = positions_cols[j]*inp.nr() + positions_rows[i];
-      ret[counter] = inp[pst];
-      counter++;
-    }
-  }
-
-  return ret;
-}
-
-
 
 // rvalue functions
-template<typename T, typename std::enable_if<std::is_same< VEC<double>, T>::value, int>::type = 0>
-VEC<double> subset(VEC<double>& inp, T pos) { // VEC<double>&&
+template<typename T2, typename R2>
+VEC<double> subset(VEC<double>& inp,const VEC<T2, R2>& pos) { //
 
   VEC<double> ret(pos.size());
 
@@ -1177,8 +613,8 @@ VEC<double> subset(VEC<double>& inp, T pos) { // VEC<double>&&
   return ret;
 }
 
-template<typename T, typename std::enable_if<std::is_same< VEC<bool>, T>::value, int>::type = 0>
-VEC<double> subset(VEC<double>& inp, T pos) { //VEC<bool>&& pos
+
+VEC<double> subset(VEC<double>& inp, VEC<bool> pos) { //
 
   int counter = 0;
   for(int i = 0; i < pos.size(); i++) {
@@ -1210,8 +646,8 @@ VEC<double> subset(VEC<double>& inp, T pos) { //VEC<bool>&& pos
 }
 
 
-
-VEC<double> subset(VEC<double>& inp, int row, VEC<double>&& pos) {
+template<typename T2, typename R2>
+VEC<double> subset(VEC<double>& inp, int row,const VEC<T2, R2>& pos) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -1229,7 +665,8 @@ VEC<double> subset(VEC<double>& inp, int row, VEC<double>&& pos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, int row, VEC<bool>&& pos) {
+
+VEC<double> subset(VEC<double>& inp, int row, VEC<bool> pos) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -1267,7 +704,9 @@ VEC<double> subset(VEC<double>& inp, int row, VEC<bool>&& pos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<double>&& pos, int col) {
+
+template<typename T2, typename R2>
+VEC<double> subset(VEC<double>& inp,const VEC<T2, R2>& pos, int col) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -1286,7 +725,8 @@ VEC<double> subset(VEC<double>& inp, VEC<double>&& pos, int col) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<bool>&& pos, int col) {
+
+VEC<double> subset(VEC<double>& inp, VEC<bool> pos, int col) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -1324,7 +764,9 @@ VEC<double> subset(VEC<double>& inp, VEC<bool>&& pos, int col) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, double row_, VEC<double>&& pos) {
+
+template<typename T2, typename R2>
+VEC<double> subset(VEC<double>& inp, double row_,const VEC<T2, R2>& pos) {
   int row = d2i(row_);
 
   if(inp.ismatrix == false) {
@@ -1343,7 +785,8 @@ VEC<double> subset(VEC<double>& inp, double row_, VEC<double>&& pos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, double row_, VEC<bool>&& pos) {
+
+VEC<double> subset(VEC<double>& inp, double row_, VEC<bool> pos) {
   int row = d2i(row_);
 
   if(inp.ismatrix == false) {
@@ -1382,7 +825,8 @@ VEC<double> subset(VEC<double>& inp, double row_, VEC<bool>&& pos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<double>&& pos, double col_) {
+template<typename T2, typename R2>
+VEC<double> subset(VEC<double>& inp,const VEC<T2, R2>& pos, double col_) {
   int col = d2i(col_);
 
   if(inp.ismatrix == false) {
@@ -1402,7 +846,8 @@ VEC<double> subset(VEC<double>& inp, VEC<double>&& pos, double col_) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<bool>&& pos, double col_) {
+
+VEC<double> subset(VEC<double>& inp, VEC<bool> pos, double col_) {
   int col = d2i(col_);
 
   if(inp.ismatrix == false) {
@@ -1441,7 +886,8 @@ VEC<double> subset(VEC<double>& inp, VEC<bool>&& pos, double col_) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, bool r, VEC<double>&& pos) {
+template<typename T2, typename R2>
+VEC<double> subset(VEC<double>& inp, bool r,const VEC<T2, R2>& pos) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -1471,7 +917,8 @@ VEC<double> subset(VEC<double>& inp, bool r, VEC<double>&& pos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, bool r, VEC<bool>&& pos) {
+
+VEC<double> subset(VEC<double>& inp, bool r, VEC<bool> pos) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -1521,7 +968,8 @@ VEC<double> subset(VEC<double>& inp, bool r, VEC<bool>&& pos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<double>&& pos, bool c) {
+template<typename T2, typename R2>
+VEC<double> subset(VEC<double>& inp,const VEC<T2, R2>& pos, bool c) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -1551,7 +999,8 @@ VEC<double> subset(VEC<double>& inp, VEC<double>&& pos, bool c) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<bool>&& pos, bool c) {
+
+VEC<double> subset(VEC<double>& inp, VEC<bool> pos, bool c) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -1601,7 +1050,8 @@ VEC<double> subset(VEC<double>& inp, VEC<bool>&& pos, bool c) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, void* r, VEC<double>&& pos) {
+template<typename T2, typename R2>
+VEC<double> subset(VEC<double>& inp, long* r,const VEC<T2, R2>& pos) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -1626,7 +1076,8 @@ VEC<double> subset(VEC<double>& inp, void* r, VEC<double>&& pos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, void* r, VEC<bool>&& pos) {
+
+VEC<double> subset(VEC<double>& inp, long* r, VEC<bool> pos) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -1671,7 +1122,8 @@ VEC<double> subset(VEC<double>& inp, void* r, VEC<bool>&& pos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<double>&& pos, void* c) {
+template<typename T2, typename R2>
+VEC<double> subset(VEC<double>& inp,const VEC<T2, R2>& pos, long* c) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -1696,7 +1148,8 @@ VEC<double> subset(VEC<double>& inp, VEC<double>&& pos, void* c) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<bool>&& pos, void* c) {
+
+VEC<double> subset(VEC<double>& inp, VEC<bool> pos, long* c) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -1741,7 +1194,9 @@ VEC<double> subset(VEC<double>& inp, VEC<bool>&& pos, void* c) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<double>&& rpos, VEC<double>&& cpos) {
+
+template<typename T2, typename R2, typename T3, typename R3>
+VEC<double> subset(VEC<double>& inp,const VEC<T2, R2>& rpos,const VEC<T3, R3>& cpos) {
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
     Rcpp::stop("Error");
@@ -1766,7 +1221,8 @@ VEC<double> subset(VEC<double>& inp, VEC<double>&& rpos, VEC<double>&& cpos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<double>& rpos, VEC<double>&& cpos) {
+template<typename T2, typename R2>
+VEC<double> subset(VEC<double>& inp, VEC<double>& rpos,const VEC<T2, R2>& cpos) {
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
     Rcpp::stop("Error");
@@ -1791,7 +1247,8 @@ VEC<double> subset(VEC<double>& inp, VEC<double>& rpos, VEC<double>&& cpos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<double>&& rpos, VEC<double>& cpos) {
+template<typename T2, typename R2>
+VEC<double> subset(VEC<double>& inp,const VEC<T2, R2>& rpos, VEC<double>& cpos) {
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
     Rcpp::stop("Error");
@@ -1816,7 +1273,8 @@ VEC<double> subset(VEC<double>& inp, VEC<double>&& rpos, VEC<double>& cpos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<double>&& rows, VEC<bool>&& pos) {
+template<typename T2, typename R2>
+VEC<double> subset(VEC<double>& inp,const VEC<T2, R2>& rows, VEC<bool> pos) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -1862,7 +1320,8 @@ VEC<double> subset(VEC<double>& inp, VEC<double>&& rows, VEC<bool>&& pos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<double>& rows, VEC<bool>&& pos) {
+
+VEC<double> subset(VEC<double>& inp, VEC<double>& rows, VEC<bool> pos) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -1908,53 +1367,8 @@ VEC<double> subset(VEC<double>& inp, VEC<double>& rows, VEC<bool>&& pos) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<double>&& rows, VEC<bool>& pos) {
-
-  if(inp.ismatrix == false) {
-    std::cerr << "incorrect number of dimensions" << std::endl;
-    Rcpp::stop("Error");
-  }
-
-  int counter = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if(pos[i] == true) {
-      counter++;
-    }
-  }
-
-  VEC<int> positions(counter);
-  counter = 0;
-  int counter2 = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if( ( (i % inp.nc()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(pos[i] == true) {
-      positions[counter] = i -counter2*inp.nc();
-      counter++;
-    }
-  }
-
-  VEC<double> ret(rows.size() * positions.size());
-  ret.ismatrix = true;
-  ret.ncols = positions.size();
-  ret.nrows = rows.size();
-
-  int pst = 0;
-  counter = 0;
-
-  for(int j = 0; j < positions.size(); j++) {
-    for(int i = 0; i < rows.size(); i++) {
-      pst = (positions[j])*inp.nr() + d2i(rows[i]) - 1;
-      ret[counter] = inp[pst];
-      counter++;
-    }
-  }
-
-  return ret;
-}
-
-VEC<double> subset(VEC<double>& inp, VEC<bool>&& pos, VEC<double>&& cols) {
+template<typename T2, typename R2>
+VEC<double> subset(VEC<double>& inp, VEC<bool> pos,const VEC<T2, R2>& cols) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -2000,7 +1414,7 @@ VEC<double> subset(VEC<double>& inp, VEC<bool>&& pos, VEC<double>&& cols) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<bool>& pos, VEC<double>&& cols) {
+VEC<double> subset(VEC<double>& inp, VEC<bool> pos, VEC<double>& cols) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -2046,53 +1460,9 @@ VEC<double> subset(VEC<double>& inp, VEC<bool>& pos, VEC<double>&& cols) {
   return ret;
 }
 
-VEC<double> subset(VEC<double>& inp, VEC<bool>&& pos, VEC<double>& cols) {
 
-  if(inp.ismatrix == false) {
-    std::cerr << "incorrect number of dimensions" << std::endl;
-    Rcpp::stop("Error");
-  }
 
-  int counter = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if(pos[i] == true) {
-      counter++;
-    }
-  }
-
-  VEC<int> positions(counter);
-  counter = 0;
-  int counter2 = 0;
-  for(int i = 0; i < pos.size(); i++) {
-    if( ( (i % inp.nr()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(pos[i] == true) {
-      positions[counter] = i -counter2*inp.nr();
-      counter++;
-    }
-  }
-
-  VEC<double> ret(positions.size() * cols.size());
-  ret.ismatrix = true;
-  ret.ncols = cols.size();
-  ret.nrows = positions.size();
-
-  int pst = 0;
-  counter = 0;
-
-  for(int j = 0; j < cols.size(); j++) {
-    for(int i = 0; i < positions.size(); i++) {
-      pst = (d2i(cols[j]) - 1)*inp.nr() + positions[i];
-      ret[counter] = inp[pst];
-      counter++;
-    }
-  }
-
-  return ret;
-}
-
-VEC<double> subset(VEC<double>& inp, VEC<bool>&& rows, VEC<bool>&& cols) {
+VEC<double> subset(VEC<double>& inp, VEC<bool> rows, VEC<bool> cols) {
 
   if(inp.ismatrix == false) {
     std::cerr << "incorrect number of dimensions" << std::endl;
@@ -2156,138 +1526,6 @@ VEC<double> subset(VEC<double>& inp, VEC<bool>&& rows, VEC<bool>&& cols) {
 
   return ret;
 }
-
-VEC<double> subset(VEC<double>& inp, VEC<bool>& rows, VEC<bool>&& cols) {
-
-  if(inp.ismatrix == false) {
-    std::cerr << "incorrect number of dimensions" << std::endl;
-    Rcpp::stop("Error");
-  }
-
-  int counter = 0;
-  for(int i = 0; i < rows.size(); i++) {
-    if(rows[i] == true) {
-      counter++;
-    }
-  }
-  VEC<int> positions_rows(counter);
-  counter = 0;
-  int counter2 = 0;
-  for(int i = 0; i < rows.size(); i++) {
-    if( ( (i % inp.nr()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(rows[i] == true) {
-      positions_rows[counter] = i -counter2*inp.nr();
-      counter++;
-    }
-  }
-
-  counter = 0;
-  for(int i = 0; i < cols.size(); i++) {
-    if(cols[i] == true) {
-      counter++;
-    }
-  }
-  VEC<int> positions_cols(counter);
-  counter = 0;
-  counter2 = 0;
-  for(int i = 0; i < cols.size(); i++) {
-    if( ( (i % inp.nc()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(cols[i] == true) {
-      positions_cols[counter] = i -counter2*inp.nc();
-      counter++;
-    }
-  }
-
-
-  VEC<double> ret(positions_rows.size() * positions_cols.size());
-  ret.ismatrix = true;
-  ret.ncols = positions_cols.size();
-  ret.nrows = positions_rows.size();
-
-  int pst = 0;
-  counter = 0;
-
-  for(int j = 0; j < positions_cols.size(); j++) {
-    for(int i = 0; i < positions_rows.size(); i++) {
-      pst = positions_cols[j]*inp.nr() + positions_rows[i];
-      ret[counter] = inp[pst];
-      counter++;
-    }
-  }
-
-  return ret;
-}
-
-VEC<double> subset(VEC<double>& inp, VEC<bool>&& rows, VEC<bool>& cols) {
-
-  if(inp.ismatrix == false) {
-    std::cerr << "incorrect number of dimensions" << std::endl;
-    Rcpp::stop("Error");
-  }
-
-  int counter = 0;
-  for(int i = 0; i < rows.size(); i++) {
-    if(rows[i] == true) {
-      counter++;
-    }
-  }
-  VEC<int> positions_rows(counter);
-  counter = 0;
-  int counter2 = 0;
-  for(int i = 0; i < rows.size(); i++) {
-    if( ( (i % inp.nr()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(rows[i] == true) {
-      positions_rows[counter] = i -counter2*inp.nr();
-      counter++;
-    }
-  }
-
-  counter = 0;
-  for(int i = 0; i < cols.size(); i++) {
-    if(cols[i] == true) {
-      counter++;
-    }
-  }
-  VEC<int> positions_cols(counter);
-  counter = 0;
-  counter2 = 0;
-  for(int i = 0; i < cols.size(); i++) {
-    if( ( (i % inp.nc()) == 0) && i != 0) {
-      counter2++;
-    }
-    if(cols[i] == true) {
-      positions_cols[counter] = i -counter2*inp.nc();
-      counter++;
-    }
-  }
-
-
-  VEC<double> ret(positions_rows.size() * positions_cols.size());
-  ret.ismatrix = true;
-  ret.ncols = positions_cols.size();
-  ret.nrows = positions_rows.size();
-
-  int pst = 0;
-  counter = 0;
-
-  for(int j = 0; j < positions_cols.size(); j++) {
-    for(int i = 0; i < positions_rows.size(); i++) {
-      pst = positions_cols[j]*inp.nr() + positions_rows[i];
-      ret[counter] = inp[pst];
-      counter++;
-    }
-  }
-
-  return ret;
-}
-
-
 
 }
 

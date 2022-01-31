@@ -1,9 +1,12 @@
 ---
 title: "Detailed Documentation"
 author: "Konrad Krämer"
-output:  pdf_document # rmarkdown::html_vignette
-#classoption:
-#- twocolumn
+output: pdf_document
+# pdf_document
+classoption:
+  - twocolumn
+# rmarkdown::html_vignette
+
 vignette: >
   %\VignetteIndexEntry{Detailed Documentation}
   %\VignetteEngine{knitr::rmarkdown}
@@ -11,11 +14,11 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 ```
 
 
-```{Rcpp, echo = FALSE, cache = TRUE}
+```{Rcpp, echo = FALSE, cache = TRUE, eval = TRUE}
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::depends(ast2ast)]]
 #include "etr.hpp"
@@ -60,7 +63,7 @@ void vardec(XPtr<fp> fetr) { // example 2
 ```
 
 
-```{Rcpp, echo = FALSE, cache = TRUE}
+```{Rcpp, echo = FALSE, cache = TRUE, eval = TRUE}
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::depends(ast2ast)]]
 #include "etr.hpp"
@@ -88,10 +91,6 @@ void call_fct(XPtr<fp> fetr) { // example 3
   * [Printing](#printing)
   * [Math functions](#math-functions)
   * [Interpolation](#interpolation)
-- [Information for Package authors](#information-for-package-authors)
-  * [Rcpp Interface](#rcpp-interface)
-  * [RcppArmadillo Interface](#rcpparmadillo-interface)
-  * [Pointer Interface](#pointer-interface)
 
 <style>
 body {
@@ -100,10 +99,9 @@ text-align: justify}
 
 ## Documentation
 
-The package *ast2ast* translates a R function into a C++ function and returns an external pointer (XPtr) to this function. The scope of *ast2ast* is to generate functions which can be used during solving ode-systems (derivative function or jacobian function) or during optimization. More generally the translated function can be used in fields where it is necessary to evaluate a function very often. Especially if the function is evaluated by C++ the generated external pointer is very sufficient. \
-First of all the supported objects and functions listed below are explained in detail. Here the arguments which have to be passed to the functions are described and it is explained what the function returns. Furthermore, for each function a small example is given showing how to use it. Moreover, it is explained how the function differ from R equivalents. If other differences were detected please report it. \
-The last section of the documentation describes how the external pointers produces by *ast2ast* can be used in packages. This information is intended for package authors who want to use *ast2ast* in order to enable a simple user interface as it not necessary anymore for the user to write C++.
-This paragraph explains how the examples in this vignette are executed. First of all a Rcpp function is created, which executes the output of the function *translate*. If you want to know how this functions work in detail you can go to [Information for Package authors][Information for Package authors]. In the examples only the R code is shown in order to show how to write the code. Sometimes the result of the executed code is also presented. 
+The package *ast2ast* translates an R function into a C++ function and returns an external pointer (XPtr) to this function. The scope of *ast2ast* is to generate functions that can be used during solving ode-systems (derivative function or jacobian function) or during optimization. More generally, the translated function can be used in fields where it is necessary to evaluate a function very often. Especially when the function is evaluated by C++ the generated external pointer is very sufficient. \
+First of all, the supported objects and functions listed below are explained in detail. Here, the arguments which have to be passed to the functions are described and it is explained what the function returns. Furthermore, for each function, a small example is given showing how to use it. Moreover, it is explained how the function differs from R equivalents. If another differences are detected please report them. \
+This paragraph explains how the examples in this vignette are executed. First of all, an Rcpp function is created, which executes the output of the function *translate*. If you want to know how these functions work in detail you can go to the vignette *Information for Package authors*. In the examples, only the R code is shown to show how to write the code. 
 
 Supported objects:
 
@@ -126,18 +124,104 @@ Supported functions:
 
 ### Objects
 
-There exists two containers which can be used in *ast2ast* functions. Both containers can only hold the *numeric* type of R (is equivalent to double). The first container are vectors and the second one are matrices. **It is possible to declare a variable of a scalar numeric data type. This is done by adding '_db' (e.g. varname_db) to the end of the variable. Each time '_db' is found the variable is declared as a scalar numeric data type. In this case the object cannot change its type!**
+There exist two containers that can be used in *ast2ast* functions. Both containers can only hold the *numeric* type of R (which is equivalent to double). The first container is a vector and the second one is a matrix. **It is possible to declare a variable of a scalar numeric data type. This is done by adding *\_db* (e.g. varname\_db) to the end of the variable. Each time *\_db* is found the variable is declared as a scalar numeric data type. In this case, the object cannot change its type!** \
+It is pivotal to follow the rules of variable naming in C++. For instance, it is not allowed to use '*.*' in variable names. Moreover, the following functions are implemented in C++ and thus it is not possible to use these names:
 
-**Nice features:**
+```{r, echo = FALSE, eval = TRUE}
+fct <- c(
+"getlength"
+,"getattributes"
+,"is_matrix"
+,"VEC"
+,"at"
+,"d2i"
+,"i2d"
+,"ass"
+,"VVSIN"
+,"sinus"
+,"VVsinh"
+,"sinush"
+,"VVasin"
+,"asinus"
+,"VVCOS"
+,"cosinus"
+,"VVacos"
+,"acosinus"
+,"VVCOSH"
+,"cosinush"
+,"VVtan"
+,"tangens"
+,"VVatan"
+,"atangens"
+,"VVtanh"
+,"tangensh"
+,"VVMINUS"
+,"VSMINUS"
+,"SVMINUS"
+,"VVPLUS"
+,"VSPLUS"
+,"SVPLUS"
+,"VVTIMES"
+,"VSTIMES"
+,"SVTIMES"
+,"VVDIV"
+,"VSDIV"
+,"SVDIV"
+,"subassign"
+,"subset"
+,"It"
+,"STORE"
+,"for_"
+,"li"
+,"cmr"
+,"VVEXP"
+,"VVlog"
+,"ln"
+,"exp"
+,"combine"
+,"coca"
+,"cd"
+,"colon"
+,"length"
+,"dim"
+,"vector"
+,"matrix")
 
-* The variables can change the type within a function. This is normally not possible when using C++. 
+c1 <- fct[1:8]
+c2 <- fct[9:16]
+c3 <- fct[17:24]
+c4 <- fct[25:32]
+c5 <- fct[33:40]
+c6 <- fct[41:48]
+c7 <- fct[49:56]
+c8 <- c(fct[57:58], rep(NA, 6) )
+
+d1 <- data.frame(c1, c2, c3, c4)
+d2 <- data.frame(c5, c6, c7, c8)
+
+row.names(d1) <- NULL
+row.names(d2) <- NULL
+names(d1) <- NULL
+names(d2) <- NULL
+
+kableExtra::kbl(d1, longtable = FALSE)
+kableExtra::kbl(d2, longtable = FALSE)
+```
+
+
+
+**Features of *ast2ast* **
+
+* The variables can change the type within a function. This is usually not possible when using C++. 
 * The index of vectors and matrices starts at 1 as in R.
-* The index has to be in the boundaries of the vector or matrix. Even though this is different from the behaviour in R it is a nice feature. If you access a element outside the boundaries of a vector in R *NA* is returned. This is in 99% of the cases not what the user wants. 
-* The memory of the matrices is columnwise arranged as in R. 
-* In R arguments passed to a function are always copied. In *ast2ast* functions it is possible to pass only the memory address of a object (called a reference). To do this you have to set the *reference* parameter of the *translate* function to *TRUE*. If you pass a function by reference you can modify the object without returning it (see Example 1). In the Rcpp function the variable x is printed before and after the call of the function *fetr*. Notably, if no *return* is used in the R code translated by *ast2ast* nothing is returnd (in R the last object is returned in this case). You see that x is 10 before the call of the function and it is 1 after the call of the function. But the function does not return anything. Thus, the object *x* is modified in the function without copying it. 
+* The index has to be in the boundaries of the vector or matrix. Even though this is different from the behavior in R it is a nice feature. If you access an element outside the boundaries of a vector in R *NA* is returned. 
+* The memory of the matrices is arranged column-wise as in R. 
+* In R arguments passed to a function are always copied. In *ast2ast* functions, it is possible to pass only the memory address of an object (called a reference). To do this, you have to set the *reference* parameter of the *translate* function to *TRUE*. If you pass a function by reference you can modify the object without returning it (see **Example 1**). In the Rcpp function, the variable x is printed before and after the call of the function *fetr*. Notably, if no *return* is used in the R code translated by *ast2ast* nothing is returned (in R the last object is returned in this case). You see that x is 10 before the call of the function and it is 1 after the call of the function. But the function does not return anything. Thus, the object *x* is modified in the function without copying it. 
+
+![Benchmark](benchmark.png)
 
 **Example 1**
-```{r by reference}
+```{r by reference, eval = TRUE}
 f <- function(variable) {
   variable <- 1
 }
@@ -151,13 +235,13 @@ output
 **Caveats:**
 
 * Sometimes large overhead of the containers
-  * Variables which are scalars are represented as vectors of length 1. This is also how R handels scalar variables. As in C++ scalar variables are not defined as vectors the speed of the translated R function  can be substantially lower compared to a native C++ function. 
+  * Variables which are scalars are represented as vectors of length 1. This is also how R handles scalar variables. As in C++ scalar variables are not defined as vectors the speed of the translated R function  can be substantially lower compared to a native C++ function. 
 
 
 ### Variable declaration
 
 In **Example 2** the various ways of declaring variables are presented. To assign a value to a variable you can use *<-* or *=*. As already mentioned only numeric values are possible. 
-If you want to assign a vector you can use either the *c* or *vector* function. The *c* function works in the same way as R and can handle any combinations of scalars, vectors or matrices. The function *vector* differs in two ways from the R equivalent. First of all you cannot use terms such as *vector(length = size)* as this is not possible in C++. In contrast you just write *vector(size)*. The R function *rep* is not available in *ast2ast* but it is possible to write *vector(value, size)* which in R would be written as *rep(value, size)*. A third way to use the *vector* function is to pass another vector and the size to it *vector(other_vector, size)*. The *matrix* function works in the same way as the *vector* function with the difference that instead of the size two arguments were needed the number of rows and the number of columns.
+If you want to assign a vector you can use either the *c* or *vector* function. The *c* function works in the same way as R and can handle any combinations of scalars, vectors or matrices. The function *vector* differs in two ways from the R equivalent. First of all, you cannot use terms such as *vector(length = size)* as this is not possible in C++. In contrast, you just write *vector(size)*. The R function *rep* is not available in *ast2ast* but it is possible to write *vector(value, size)* which in R would be written as *rep(value, size)*. A third way to use the *vector* function is to pass another vector and the size e.g. *vector(other_vector, size)*. The *matrix* function works in the same way as the *vector* function. However, instead of the size, two arguments are needed the number of rows and the number of columns.
 
 **Example 2**
 ```{r}
@@ -233,19 +317,19 @@ print(b - a)
 
 print()
 
-print("vector & vector operations (same length)")
+print("2 vectors (same length)")
 a <- 6:8
 b <- 1:3
 print(a / b)
 a <- 1:6
 b <- 1:3
 print(a / b)
-print("vector & vector operations (different length)")
-print("longer object length is a multiple of shorter object length")
+print("2 vectors (different length)")
+print("multiple of each other")
 a <- 1:6
 b <- 1:3
 print(a / b)
-print("longer object length is not a multiple of shorter object length")
+print("not a multiple of each other")
 a <- 1:5
 b <- 1:3
 print(a / b) # different to R no warning
@@ -291,7 +375,7 @@ call_fct(fetr)
 
 ### Subsetting
 
-If you want to subset a vector or a matrix object you can use either *[]* or the *at* function. The *[]* is slower then *at* but more powerful (**Example 4**).
+If you want to subset a vector or a matrix object you can use either *[]* or the *at* function. The *[]* is slower than *at* but more powerful (**Example 4**).
 
 The following objects can be passed to *[]* when using a vector or matrix:
 
@@ -302,11 +386,11 @@ The following objects can be passed to *[]* when using a vector or matrix:
 * matrix
 * result of comparison
 
-* **caveat:**
+* **caveat: it is not possible to pass the results of calculations!**
 
-* **it is not possible to pass the results of calculations!**
+In case of a matrix, it is possible to pass one of the above objects to access specific rows or columns respectively ([rows, cols]). \
 
-In case of a matrix it is possible to pass one of the above objects to access specific rows or columns respectively ([rows, cols]). In contrast to *at* only a scalar can be passed. Thus, only a single element is accessed by this function! However, this function works faster. The result of *at* cannot be subsetted further. 
+In contrast to *[]*, the *at* function accepts only a scalar or two scalars for vectors or matrices, respectively. Thus, only a single element is accessed by this function! However, this function works faster. The result of *at* cannot be subsetted further. The *at* function returns the numeric type which is used when a variable is declared with the extension *\_db*. 
 
 **Example 4**
 ```{r}
@@ -435,7 +519,7 @@ call_fct(fetr)
 
 ### Helper functions
 
-There exists three helper function. The *length* function returns the number of elements of a vector or matrix. The *dim* function returns the number of rows and columns of a matrix. The *:* function can be used to create a range of numbers. See **Example 5** in order to see how the functions work. 
+There exist three helper function. The *length* function returns the number of elements of a vector or matrix. The *dim* function returns the number of rows and columns of a matrix. The *:* function can be used to create a range of numbers. For example 1:3 creates a vector with the elements 1, 2 and 3 or 1.1:5.3 returns a vector with the elements 1.1, 2.1, 3.1, 4.1 and 5.1. See **Example 5** in order to see how the functions can be applied. 
 
 **Example 5**
 ```{r}
@@ -459,7 +543,7 @@ call_fct(fetr)
 
 ### Comparison functions
 
-As usual in R it is possible to compare two objects using one of the following options:
+As usual in R it is possible to compare two objects using one of the following options (**Example 6**):
 
 * \=\=
 * <=
@@ -468,9 +552,28 @@ As usual in R it is possible to compare two objects using one of the following o
 * \<
 * \>
 
+**Example 6**
+```{r}
+f <- function() {
+  a <- 1:4
+  b <- c(1, 2, 3, 5)
+  c <- 9
+  print(a == b)
+  print(a <= b)
+  print(a >= b)
+  print(a != b)
+  print(a < c)
+  print(a > c)
+}
+
+library(ast2ast)
+fetr <- translate(f)
+call_fct(fetr)
+```
+
 ### Control flow
 
-It is possible to write for loops and if, else if, else branches as usual in R ( &&, || are not implemented yet):
+It is possible to write for-loops and 'if', 'else if', and 'else' branches as in native R (**Example 7**).
 
 for(index in variable){ \
     # do whatever \
@@ -479,12 +582,37 @@ for(index in 1:length(variable){ \
     # do whatever \
 } \
 
+**Example 7**
+```{r}
+f <- function() {
+  a <- 1:4
+  for(i in a) {
+    print(i)
+  }
+  
+  for(i in 1:length(a)) {
+    a[i] <- i + i 
+  }
+  
+  for(i in 1:length(a)) {
+    if(i < 4 && i > 1) {
+      print(i)
+    }
+  }
+
+}
+
+library(ast2ast)
+fetr <- translate(f)
+call_fct(fetr)
+```
+
 
 ### Printing
 
-Using the function print as common in R:
+Using the function print as common in R (see **Examples 2, 3, 4, 5, 6**):
 
-* print() is a difference to R
+* print() is different to R
 * print("string")
 * print(logical)
 * print(scalar)
@@ -493,7 +621,7 @@ Using the function print as common in R:
 
 ### Math functions
 
-Following mathematical functions are available:
+Following mathematical functions are available (see **Example 8**):
 
 * sin
 * asin
@@ -507,330 +635,47 @@ Following mathematical functions are available:
 * log
 * ^ and exp
 
+**Example 8**
+```{r}
+f <- function() {
+  a <- 1:4
+  print(sin(a))
+  print(cos(a))
+  print(a^2)
+  print(exp(a, 3))
+}
+
+library(ast2ast)
+fetr <- translate(f)
+call_fct(fetr)
+```
+
+
 ### Interpolation
 
-In order to interpolate values the 'cmr' function can be used. The function needs three arguments:
+To interpolate values, the 'cmr' function can be used. The function needs three arguments (see **Example 9**):
 
 * the first argument is the point of the independent variable (x) for which the dependent variable should be calculated (y). This has to be a vector of length one.
 * the second argument is a vector defining the points of the independent variable (x). This has to be a vector of at least length four.
 * the third argument is a vector defining the points of the dependent variable (y). This has to be a vector of at least length four.
 
-
-## Information for Package authors (not written yet)
-
-* the sexp object
-* VEC<T> class
-
-### Rcpp Interface
-
-* NumericVector = sexp
-* sexp = NumericVector
-* NumericMatrix = sexp_mat
-* sexp_mat = NumericMatrix
-
-### RcppArmadillo Interface
-
-* vec = sexp
-* sexp = vec
-* mat = sexp_mat
-* sexp_mat = mat
-
-
-### Pointer Interface
-
-* sexp(size, pointer, integer) --> integer = 0, 1 or 2 = copy, take ownership, borrow
-* sexp(rows, cols, pointer, integer) --> integer = 0, 1 or 2 = copy, take ownership, borrow
-* modify NumericVector
-* modify NumericMatrix
-* modify arma::vec
-* modify arma::mat
-* modify std::vector<double>
-
-### Examples
-
-## How to use *ast2ast*
-
-### R code is translated
-
+**Example 9**
 ```{r}
-add_two <- function(a) {
-  return(a + 2)
-}  
-pointer_to_f_cpp <- ast2ast::translate(add_two)
-```
-
-### Defining C++ Code which uses the translated R Code
-
-```{Rcpp}
-// [[Rcpp::depends(ast2ast)]]
-// [[Rcpp::depends(RcppArmadillo)]]
-#include "etr.hpp"
-
-// [[Rcpp::plugins("cpp17")]]
-
-typedef sexp (*fp)(sexp a);
-
-// [[Rcpp::export]]
-void call_fct(Rcpp::XPtr<fp> inp) {
-  fp f = *inp;
-  sexp a = coca(1, 2, 3);
-  print(a);
-  a = f(a);
-  print("a is now:");
-  print(a);
+f <- function() {
+  dep <- c(0, 1, 0.5, 2.5, 3.5, 4.5, 4)
+  indep <- 1:7
+  
+  evalpoints <- c(0.5, 1, 1.5, 2, 2.5,
+                  3, 3.5, 4, 4.5, 5,
+                  5.5, 6, 6.5)
+  for(i in evalpoints) {
+    print(cmr(i, indep, dep))
+  }
 }
-```
 
-### Calling the final function
-
-```{r}
-#Rcpp::sourceCpp("cpp_code.cpp") # if not run in Rmarkdown
-call_fct(pointer_to_f_cpp)
-```
-
-#### r2sundials
-
-### *r2sundials* code
-
-```{r}
-setwd("/home/konrad/Documents/0Uni/programming")
-#install.packages("ast2ast", type = "source", repos = NULL)
-
-library(Rcpp)
 library(ast2ast)
-library(r2sundials)
-library(RcppXPtrUtils)
-library(microbenchmark)
-
-
-# R version
-ti <- seq(0, 5, length.out=101)
-p <- list(a = 2)
-p <- c(nu = 2, a = 1)
-y0 <- 0
-frhs <- function(t, y, p, psens) -p["nu"]*(y-p["a"])
-
-res_exp <- r2sundials::r2cvodes(y0, ti, frhs, param = p)
-attributes(res_exp) <- NULL
-#stopifnot(diff(range(1-exp(-p$a*ti) - res_exp)) < 1.e-6)
-
-
-# External pointer
-ptr_exp <- cppXPtr(code = '
-int rhs_exp(double t, const vec &y, vec &ydot, RObject &param, NumericVector &psens) {
-  double a = 1;
-  double nu = 2;
-  ydot[0] = -nu*(y[0] - a);
-  return(CV_SUCCESS);
-}
-', depends=c("RcppArmadillo","r2sundials","rmumps"),
- includes="using namespace arma;\n#include <r2sundials.h>", cacheDir="lib", verbose=FALSE)
-pv <- c(a = 1)
-res_exp2 <- r2sundials::r2cvodes(y0, ti, ptr_exp, param = pv)
-attributes(res_exp2) <- NULL
+fetr <- translate(f)
+call_fct(fetr)
 ```
-
-### Wrapper code in order to call translated R function (maybe written by package authors)
-
-```{Rcpp}
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::depends(rmumps)]]
-// [[Rcpp::depends(r2sundials)]]
-// [[Rcpp::depends(ast2ast)]]
-// [[Rcpp::plugins("cpp17")]]
-#include "etr.hpp"
-#include "RcppArmadillo.h"
-#include "r2sundials.h"
-using namespace arma;
-
-typedef int (*fp)(double t, const vec &y, vec &ydot, RObject &param, NumericVector &psens);
-
-typedef void (*user_fct)(sexp& y_, sexp& ydot_);
-user_fct Fct;
-
-int rhs_exp_wrapper(double t, const vec &y, vec &ydot, RObject &param, NumericVector &psens) {
-  NumericVector p(param);
-  const int size = y.size();
-  sexp ydot_(size, ydot.memptr(), 2);
-  double* ptr = const_cast<double*>(y.memptr());
-  sexp y_(size, ptr, 2);
-  Fct(y_, ydot_);
-  return(CV_SUCCESS);
-}
-
-
-// [[Rcpp::export]]
-Rcpp::NumericVector solve_ode(Rcpp::XPtr<user_fct> inp, NumericVector time, NumericVector y) {
-  Fct = *inp;
-  Rcpp::XPtr<fp> ptr = Rcpp::XPtr<fp>(new fp(&rhs_exp_wrapper));
-
-  Rcpp::Environment pkg = Rcpp::Environment::namespace_env("r2sundials");
-  Rcpp::Function solve = pkg["r2cvodes"];
-
-  Rcpp::NumericVector output = solve(y, time, ptr, time);
-
-  return output;
-}
-```
-
-
-### Applying *ast2ast*
-
-The speed of pure C++ is not reached. However, the *ast2ast* function is substantially fastern then the R code. 
-
-```{r}
-# ast2ast version
-ti <- seq(0, 5, length.out=101)
-p <- list(a = 2)
-p <- c(nu = 2, a = 1)
-y0 <- 0
-
-ode <- function(y, ydot) {
-  nu_db <- 2
-  a_db <- 1
-  at(ydot, 1) <- -nu_db*(at(y,1) - a_db)
-}
-
-pointer_to_ode <- ast2ast::translate(ode, reference = TRUE, verbose = FALSE)
-res_exp3 <- solve_ode(pointer_to_ode, ti, y0)
-attributes(res_exp3) <- NULL
-
-head(res_exp)
-head(res_exp2)
-head(res_exp3)
-
-out <- microbenchmark(r2cvodes(y0, ti, frhs, param = p), r2cvodes(y0, ti, ptr_exp, param = pv), solve_ode(pointer_to_ode, ti, y0))
-
-boxplot(out, names = c("R", "C++", "ast2ast"))
-```
-
-
-#### paropt
-
-
-```{Rcpp}
-
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::depends(ast2ast)]]
-// [[Rcpp::plugins("cpp17")]]
-// [[Rcpp::depends(paropt)]]
-#include "etr.hpp"
-#include "RcppArmadillo.h"
-using namespace Rcpp;
-
-typedef int (*OS)(double &t, std::vector<double> &params, std::vector<double> &states);
-
-int ode_system(double &t, std::vector<double> &params, std::vector<double> & states) {
-  double a = params[0];
-  double b = params[1];
-  double c = params[2];
-  double d = params[3];
-
-  double n1 = states[0];
-  double n2 = states[1];
-
-  states[0] = n1*c*n2 - n1*d;
-  states[1] = n2*a - n2*b*n1;
-
-  return 0;
-}
-
-// [[Rcpp::export]]
-Rcpp::XPtr<OS> test_optimization() {
-  Rcpp::XPtr<OS> xpfun = Rcpp::XPtr<OS>(new OS(&ode_system));
-  return xpfun;
-}
-
-
-typedef int (*paropt_fct)(double &t, std::vector<double> &params, std::vector<double> & states);
-
-typedef void (*user_fct2)(sexp& p, sexp& y);
-
-user_fct2 Fct_paropt;
-
-int ode_system_wrapper(double &t, std::vector<double> &params, std::vector<double> & states) {
-  sexp p(params.size(), params.data(), 2);
-  sexp s(states.size(), states.data(), 2);
-  Fct_paropt(p, s);
-
-  return 0;
-}
-
-
-// [[Rcpp::export]]
-Rcpp::List optimize_paropt(Rcpp::XPtr<user_fct2> inp,
-                                    NumericVector time, Rcpp::DataFrame lb, Rcpp::DataFrame ub, Rcpp::DataFrame states) {
-  Fct_paropt = *inp;
-  Rcpp::XPtr<paropt_fct> ptr = Rcpp::XPtr<paropt_fct>(new paropt_fct(&ode_system_wrapper));
-
-  Rcpp::Environment pkg = Rcpp::Environment::namespace_env("paropt");
-  Rcpp::Function optim = pkg["optimizer_pointer"];
-
-  Rcpp::NumericVector abs_tols{1e-8, 1e-8};
-
-  Rcpp::List output = optim(time, ptr, 1e-6, abs_tols, lb, ub, states,
-                                    40, 1000, 0.0001, "bdf");
-
-  return output;
-}
-```
-
-
-```{r}
-#states
-path <- system.file("examples", package = "paropt")
-states <- read.table(paste(path,"/states_LV.txt", sep = ""), header = T)
-
-# parameter
-lb <- data.frame(time = 0, a = 0.8, b = 0.3, c = 0.09, d = 0.09)
-ub <- data.frame(time = 0, a = 1.3, b = 0.7, c = 0.4, d = 0.7)
-
-# Optimizing
-library(paropt)
-set.seed(1)
-start_time <- Sys.time()
-df_cpp <- optimizer_pointer(integration_times = states$time, ode_sys = test_optimization(),
-                        relative_tolerance = 1e-6, absolute_tolerances = c(1e-8, 1e-8),
-                       lower = lb, upper = ub, states = states,
-                       npop = 40, ngen = 1000, error = 0.0001, solvertype = "bdf")
-end_time <- Sys.time()
-cpp_time <- end_time - start_time
-
-
-
-# ast2ast with at and _db
-ode <- function(params, states) {
-  a_db = at(params, 1)
-  b_db = at(params, 2)
-  c_db = at(params, 3)
-  d_db = at(params, 4)
-
-  n1_db = at(states, 1)
-  n2_db = at(states, 2)
-
-  at(states, 1) = n1_db*c_db*n2_db - n1_db*d_db;
-  at(states, 2) = n2_db*a_db - n2_db*b_db*n1_db;
-}
-
-pointer_to_ode <- ast2ast::translate(ode, reference = TRUE, verbose = FALSE)
-set.seed(1)
-start_time <- Sys.time()
-df_ast2ast <- optimize_paropt(pointer_to_ode, states$time, lb, ub, states)
-end_time <- Sys.time()
-a2a_time <- end_time - start_time
-
-message("time of the pure C++ code")
-knitr::kable(cpp_time)
-message("parameter results of the pure C++ code")
-knitr::kable(df_cpp[[8]])
-message("time of the ast2ast code")
-knitr::kable(a2a_time)
-message("parameter results of the ast2ast code")
-knitr::kable(df_ast2ast[[8]]) 
-```
-
-
-
-
 
 

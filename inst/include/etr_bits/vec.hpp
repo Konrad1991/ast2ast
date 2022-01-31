@@ -146,8 +146,7 @@ public:
   VEC(const int r, const int c, T* ptr, int cob) : subsetted(0), ismatrix(1), nrows(r), ncols(c), d(r*c, ptr, cob), temp(1) {} //cob = copy, owning, borrow
   //VEC(const int r, const int c, const T* ptr, int cob) : d(r*c, ptr, cob), subsetted(0), ismatrix(1), nrows(r), ncols(c) {} //cob = copy, owning, borrow
 
-  operator bool() const{
-    return d[0];}
+  operator bool() const{return d[0];}
 
   /*
   operator int() const{
@@ -395,7 +394,7 @@ public:
  }
 
  const R& data() const {
-   return d;
+   return d; // d.p
  }
 
  R& data() {

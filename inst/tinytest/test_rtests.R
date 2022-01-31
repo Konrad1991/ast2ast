@@ -1280,29 +1280,8 @@ ret <- test(fetr)
 expect_equal(ret, matrix(28, 2, 2))#69.1
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # subsetting
 # ==============================================================================
-# vectors
 Rcpp::sourceCpp(code = '
 
 // [[Rcpp::depends(RcppArmadillo)]]
@@ -1337,57 +1316,570 @@ fetr <- translate(f)
 ret <- test(fetr)
 expect_equal(ret, rep(100, 4) ) #70
 
-
-
 f <- function(a) {
-  sub(a, 1:2) = 100
-  sub(a, 3:4) = 200
+  a[] <- 0
   return(a)
 }
 fetr <- translate(f)
 ret <- test(fetr)
-expect_equal(ret, c(100, 100, 200, 200) ) #71
-
+expect_equal(ret, rep(0, 4) ) #70.0
 
 f <- function(a) {
-  sub(a, a >= 2) = -1
-  sub(a, a > -2) = -2
-
+  a[1] <- 0
   return(a)
 }
 fetr <- translate(f)
 ret <- test(fetr)
-expect_equal(ret, c(-2, -2, -2, -2) ) #72
-
+expect_equal(ret, c(0, 2, 3, 4) ) #70.1
 
 f <- function(a) {
-  b <- c(100, 200)
-  sub(a, 3:4) <- b
+  a[2.3] <- 0
   return(a)
 }
 fetr <- translate(f)
 ret <- test(fetr)
-expect_equal(ret, c(1, 2, 100, 200) ) #73
-
+expect_equal(ret, c(1, 0, 3, 4) ) #70.2
 
 f <- function(a) {
-  b <- c(100, 200, 300, 400)
-  a[1:2] <- b[c(1, 4)]
+  a[TRUE] <- 0
   return(a)
 }
 fetr <- translate(f)
 ret <- test(fetr)
-expect_equal(ret, c(100, 400, 3, 4) ) #74
-
+expect_equal(ret, rep(0, 4) ) #70.3
 
 f <- function(a) {
-  b <- c(100, 200, 300, 400)
-  sub(a, '') <- 1
+  b <- c(1, 2, 3, 4, 1)
+  a[b] <- 1:5
   return(a)
 }
 fetr <- translate(f)
 ret <- test(fetr)
-expect_equal(ret, rep(1, 4) ) #75
+expect_equal(ret, c(5, 2, 3, 4) ) #70.4
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  a[4, 4] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(1:15, 20) ) #70.5
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  a[4, 4.5] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(1:15, 20) ) #70.6
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  a[4, TRUE] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(1:3, 20, 5:7, 20, 9:11, 20, 13:15, 20) ) #70.7
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  a[4, ] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(1:3, 20, 5:7, 20, 9:11, 20, 13:15, 20) ) #70.8
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  a[4, c(1, 4)] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(1:3, 20, 5:15, 20) ) #70.9
+
+f <- function(a) {
+  a <- matrix(1:4, 2, 2)
+  a[1.3, 1] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(20, 2, 3, 4) ) #70.10
+
+
+f <- function(a) {
+  a <- matrix(1:4, 2, 2)
+  a[T, 1] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(20, 20, 3, 4) ) #70.11
+
+f <- function(a) {
+  a <- matrix(1:4, 2, 2)
+  a[, 1] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(20, 20, 3, 4) ) #70.12
+
+f <- function(a) {
+  a <- matrix(1:6, 3, 2)
+  b <- c(1, 3)
+  a[b, 1] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(20, 2, 20, 4, 5, 6) ) #70.13
+
+f <- function(a) {
+  a <- matrix(1:6, 3, 2)
+  a[1.5, 1.1] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(20, 2, 3, 4, 5, 6) ) #70.14
+
+f <- function(a) {
+  a <- matrix(1:6, 3, 2)
+  a[1.5, T] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(20, 2, 3, 20, 5, 6) ) #70.14
+
+f <- function(a) {
+  a <- matrix(1:6, 3, 2)
+  a[1.5, ] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(20, 2, 3, 20, 5, 6) ) #70.15
+
+f <- function(a) {
+  a <- matrix(1:9, 3, 3)
+  b <- c(1, 3)
+  a[1.5, b] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(20, 2, 3, 4, 5, 6, 20, 8, 9) ) #70.16
+
+f <- function(a) {
+  a <- matrix(1:9, 3, 3)
+  a[T, 1.5] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(20, 20, 20, 4:9) ) #70.17
+
+f <- function(a) {
+  a <- matrix(1:9, 3, 3)
+  a[, 1.5] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(20, 20, 20, 4:9) ) #70.18
+
+f <- function(a) {
+  a <- matrix(1:9, 3, 3)
+  b <- c(1, 2)
+  a[b , 1.5] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(20, 20, 3:9) ) #70.19
+
+
+f <- function(a) {
+  a <- matrix(1:9, 3, 3)
+  a[TRUE , T] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, rep(20, 9) ) #70.20
+
+f <- function(a) {
+  a <- matrix(1:9, 3, 3)
+  a[TRUE , ] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, rep(20, 9) ) #70.21
+
+f <- function(a) {
+  a <- matrix(1:9, 3, 3)
+  b <- c(2, 3)
+  a[TRUE , b] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(1, 2, 3,20, 20, 20, 20, 20, 20) ) #70.22
+
+f <- function(a) {
+  a <- matrix(1:9, 3, 3)
+  a[ , TRUE] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, rep(20, 9) ) #70.23
+
+f <- function(a) {
+  a <- matrix(1:9, 3, 3)
+  b <- c(1, 2)
+  a[b , TRUE] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(20, 20, 3, 20, 20, 6, 20, 20, 9) ) #70.24
+
+f <- function(a) {
+  a <- matrix(1:9, 3, 3)
+  a[ , ] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, rep(20, 9) ) #70.25
+
+f <- function(a) {
+  a <- matrix(1:9, 3, 3)
+  b <- c(1, 2)
+  a[ , b] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(20, 20, 20, 20, 20, 20, 7, 8, 9) ) #70.26
+
+f <- function(a) {
+  a <- matrix(1:9, 3, 3)
+  b <- c(1, 3)
+  a[b , ] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(20, 2, 20, 20, 5, 20, 20, 8, 20) ) #70.27
+
+f <- function(a) {
+  a <- matrix(1:9, 3, 3)
+  b <- c(1, 3)
+  c <- c(1, 2)
+  a[b , c] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(20, 2, 20, 20, 5, 20, 7, 8, 9) ) #70.28
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  c <- c(1, 2)
+  a[c + c] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(1, 20, 3, 20, 5:16) ) #70.29
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  a[a < 5] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(20, 20, 20, 20, 5:16) ) #70.30
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  c <- c(1, 2)
+  a[1, c+ c] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(1, 2, 3, 4,  20, 6, 7, 8, 9, 10, 11, 12, 20, 14, 15, 16) ) #70.31
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2, 3, 4)
+  a[1, b >= 3] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(1:8, 20, 10:12, 20, 14:16) ) #70.32
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2)
+  a[b+ b, 1] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret, c(1, 20, 3, 20, 5:16)  ) #70.33
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2, 3, 4)
+  a[b > 3, 4] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1:15, 20) ) #70.34
+
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2)
+  a[3.5, b+ b] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1, 2, 3, 4, 5, 6, 20, 8, 9, 10, 11, 12, 13, 14, 20, 16 ) ) #70.35
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2, 3, 4)
+  a[3.5, b <= 1] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1, 2, 20,4:16) ) #70.36
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2)
+  a[b+ b, 1.5] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1, 20, 3, 20, 5:16 ) )#70.37
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2, 3, 4)
+  a[b >= 1, 1.5] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(20, 20, 20, 20, 5:16) )#70.38
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2)
+  a[TRUE, b + b] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1:4, rep(20, 4), 9:12, rep(20, 4)) )#70.39
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2, 3, 4)
+  a[TRUE, b >= 3] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1:8, rep(20, 8)) )#70.40
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2)
+  a[b + b, TRUE] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1, 20, 3, 20, 5, 20, 7, 20, 9, 20, 11, 20, 13, 20, 15, 20) )#70.41
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2, 3, 4)
+  a[b == 1, TRUE] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(20, 2:4, 20, 6:8, 20, 10:12, 20, 14:16) )#70.42
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2)
+  a[, b + b] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1:4, rep(20, 4), 9:12, rep(20, 4)) )#70.43
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2, 3, 4)
+  a[, b >= 3] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1:8, rep(20, 8)) )#70.44
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2)
+  a[b + b, ] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1, 20, 3, 20, 5, 20, 7, 20, 9, 20, 11, 20, 13, 20, 15, 20) )#70.45
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2, 3, 4)
+  a[b == 1, ] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(20, 2:4, 20, 6:8, 20, 10:12, 20, 14:16) )#70.46
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2)
+  a[b + b, b + b] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1:5, 20, 7, 20, 9:13, 20, 15, 20) )#70.47
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2)
+  c <- c(2, 4)
+  a[b + b, c] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1:5, 20, 7, 20, 9:13, 20, 15, 20) )#70.48
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2)
+  c <- c(2, 4)
+  a[c, b + b] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1:5, 20, 7, 20, 9:13, 20, 15, 20) )#70.49
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1, 2)
+  c <- c(1, 2, 3, 2)
+  a[b + b, c == 2] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1:5, 20, 7, 20, 9:13, 20, 15, 20) )#70.50
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(2,4)
+  c <- c(1, 2, 3, 2)
+  a[b, c == 2] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1:5, 20, 7, 20, 9:13, 20, 15, 20) )#70.51
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(1,2)
+  c <- c(1, 2, 3, 2)
+  a[c == 2, b+b] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1:5, 20, 7, 20, 9:13, 20, 15, 20) )#70.52
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(2,4)
+  c <- c(1, 2, 3, 2)
+  a[c == 2, b] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1:5, 20, 7, 20, 9:13, 20, 15, 20) )#70.53
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  c <- c(1, 2, 3, 2)
+  a[c == 2, c == 2] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1:5, 20, 7, 20, 9:13, 20, 15, 20) )#70.54
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(2, 4)
+  c <- c(1, 2, 3, 2)
+  a[b, c == 2] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1:5, 20, 7, 20, 9:13, 20, 15, 20) )#70.55
+
+f <- function(a) {
+  a <- matrix(1:16, 4, 4)
+  b <- c(2, 4)
+  c <- c(1, 2, 3, 2)
+  a[c==2, b] <- 20
+  return(a)
+}
+fetr <- translate(f)
+ret <- test(fetr)
+expect_equal(ret,  c(1:5, 20, 7, 20, 9:13, 20, 15, 20) )#70.56
 
 # matrices
 Rcpp::sourceCpp(code = '
@@ -1427,79 +1919,6 @@ ret <- test(fetr)
 expect_equal(ret, matrix(c(2, 3, 3, 4) ,2, 2) )#76
 
 
-# matrices
-Rcpp::sourceCpp(code = '
-
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::depends(ast2ast)]]
-#include "etr.hpp"
-typedef sexp (*fp) (sexp);
-
-// [[Rcpp::plugins(cpp17)]]
-
-using namespace Rcpp;
-
-// [[Rcpp::export]]
-NumericMatrix test(XPtr<fp> fetr) {
-  fp Fct = *fetr;
-
-  sexp a = matrix(3, 4, 4);
-  sexp b = Fct(a);
-
-  NumericMatrix ret = b;
-  return ret;
-}
-
-')
-
-
-f <- function(a) {
-  b <- c(6, 8)
-  sub(a, c(1, 2), c(3, 4)) = b + b
-  c <- sub(a, c(1, 2), c(3, 4) )
-  return(c)
-}
-fetr <- translate(f, verbose = FALSE)
-ret <- test(fetr)
-expect_equal(ret, matrix(c(12, 16, 12, 16) ,2, 2) )#77
-
-
-f <- function(a) {
-  b <- c(6, 8)
-  sub(a, c(1, 2), c(3, 4)) = b + b
-
-  sub(a, a <= 3) <- 5
-  b <- sub(a, 1:2, 2:3)
-  return(b)
-}
-fetr <- translate(f)
-ret <- test(fetr)
-expect_equal(ret, matrix(c(5, 5, 12, 16) ,2, 2) )#78
-
-
-f <- function(a) {
-  b <- c(6, 8)
-  sub(a, c(1, 2), c(3, 4)) = b + b
-
-  sub(a, 1:2, '') <- 5
-  b <- sub(a, c(1, 3), '')
-  return(b)
-}
-fetr <- translate(f)
-ret <- test(fetr)
-expect_equal(ret, matrix(c(5,3) ,2, 4) )#79
-
-
-f <- function(a) {
-  sub(a, 1:2, 1:2) <- 7
-  sub(a, a == 7) <- 6
-  b <- sub(a, a >= 6) + matrix(3, 2, 2)
-  return(b)
-}
-fetr <- translate(f)
-ret <- test(fetr)
-
-expect_equal(ret, matrix(9 , 2, 2) )#80
 
 
 
