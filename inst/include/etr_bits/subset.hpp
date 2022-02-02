@@ -36,6 +36,24 @@ VEC<double> subset(VEC<double>& inp, int pos) { // done
   ret[0] = inp[pos];
   return ret;
 }
+
+/*
+missing implementation of every subset function with rvalue!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+it is also missing for the input defining the subsetted positions e.g.
+subset(inp, colon(1, 10)) here returns colon a VEC<double> as rvalue
+therefore the following functions are needed:
+VEC<double> subset(VEC<double>& inp, VEC<double>&& pos)
+VEC<double> subset(VEC<double>&& inp, VEC<double>&& pos)
+VEC<double> subset(VEC<double>& inp, VEC<double>& pos)
+// these are many functions
+*/
+VEC<double> subset(VEC<double>&& inp, int pos) {
+  VEC<double> ret(1);
+  pos--;
+  ret[0] = inp[pos];
+  return ret;
+}
+
 VEC<double> subset(VEC<double>& inp, double pos_) { // done
   int pos = d2i(pos_);
   VEC<double> ret(1);

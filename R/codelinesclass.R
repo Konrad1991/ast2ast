@@ -77,13 +77,6 @@ LC <- R6::R6Class("LC",
               self$found_return = TRUE
             }
 
-          } else if(as.name("sub") == fct) {
-
-            p <- subset$new(sexp, self$check_assign_subset)
-            sexp <- p$convert(self$PF)
-            self$vars <- c(self$vars, p$get_var_names())
-            self$check_assign_subset = FALSE
-
           } else if(as.name("[") == fct) {
 
             #p <- fastaccess$new(sexp)
