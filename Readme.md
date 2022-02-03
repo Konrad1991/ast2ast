@@ -10,6 +10,8 @@ As an example solving a simple ODE-System. The translated code is considerable f
 
 ## Documentation
 
+*translate(f, verbose = FALSE, reference = FALSE)*
+
 *f* The function which should be translated from R to C++.
 *verbose* If set to true the output of RcppXPtrUtils::cppXPtr is printed.
 *reference* If set to true the arguments are passed by reference.
