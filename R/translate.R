@@ -304,13 +304,33 @@ MA <- R6::R6Class("MA",
 translate <- function(f, verbose = FALSE, reference = FALSE) {
 
     stopifnot(is.function(f))
+    stopifnot(is.logical(verbose))
+    stopifnot(is.logical(reference))
 
     desired_type = 'sexp'
 
     a = MA$new(f, desired_type)
     fct <- a$build(verbose, reference = reference)
-    #fct_ret = Rcpp::cppFunction(code = fct, plugins = c("cpp17"), depends = c("ast2ast"), includes = "#include <etr.hpp>", verbose =  verbose)
-    fct_ret = RcppXPtrUtils::cppXPtr(code = fct, plugins = c("cpp17"), depends = c("ast2ast", "RcppArmadillo"), includes = "#include <etr.hpp>", verbose =  verbose)
+
+    #fct_ret = Rcpp::cppFunction(code = fct,
+    #                            plugins = c("cpp17"),
+    #                            depends = c("ast2ast"),
+    #                            includes = "#include <etr.hpp>",
+    #                            verbose =  verbose)
+
+    fct_ret = NULL
+
+    tryCatch(
+      expr = {
+        fct_ret = RcppXPtrUtils::cppXPtr(code = fct, plugins = c("cpp17"),
+                                         depends = c("ast2ast", "RcppArmadillo"),
+                                         includes = "#include <etr.hpp>",
+                                         verbose =  verbose)
+      },
+      error = function(e) {
+        print("Sorry compilation failed!")
+      }
+    )
 
     return(fct_ret)
 }

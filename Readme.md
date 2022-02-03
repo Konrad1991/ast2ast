@@ -6,7 +6,7 @@ Translates a R function into a C++ function. An external pointer to the C++ func
 
 As an example solving a simple ODE-System. The translated code is considerable faster then R code and almost as fast as C++. Code for the example can be found in the vignettes.
 
-![Benchmark](https://github.com/Konrad1991/ast2ast/blob/master/benchmark.png)
+![Benchmark](https://github.com/Konrad1991/ast2ast/blob/master/vignettes/benchmark.png)
 
 ## Documentation
 

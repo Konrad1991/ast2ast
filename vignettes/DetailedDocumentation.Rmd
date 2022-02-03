@@ -1,10 +1,10 @@
 ---
 title: "Detailed Documentation"
 author: "Konrad Krämer"
-output: pdf_document
+output: rmarkdown::html_vignette
 # pdf_document
-classoption:
-  - twocolumn
+#classoption:
+#  - twocolumn
 # rmarkdown::html_vignette
 
 vignette: >
@@ -16,6 +16,17 @@ vignette: >
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 ```
+
+```{css echo=FALSE}
+/* Define a margin before h2 element */
+h2  {
+  margin-top: 6em;
+}
+
+/* Define a margin after every first p elements */
+p:first-of-type {
+  margin-bottom: 3em;
+}
 
 
 ```{Rcpp, echo = FALSE, cache = TRUE, eval = TRUE}

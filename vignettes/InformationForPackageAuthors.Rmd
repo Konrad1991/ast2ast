@@ -1,9 +1,9 @@
 ---
 title: "Information for package authors"
 author: "Konrad Krämer"
-output: pdf_document
-classoption:
-- twocolumn
+output: rmarkdown::html_vignette
+#classoption:
+#- twocolumn
 # rmarkdown::html_vignette
 
 vignette: >
@@ -15,6 +15,24 @@ vignette: >
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 ```
+
+
+<style>
+body {
+text-align: justify}
+</style>
+
+```{css echo=FALSE}
+/* Define a margin before h2 element */
+h2  {
+  margin-top: 6em;
+}
+
+/* Define a margin after every first p elements */
+p:first-of-type {
+  margin-bottom: 3em;
+}
+``` 
 
 - [Information for Package authors](#information-for-package-authors)
 - [How to use ast2ast](#how-to-use-ast2ast)
@@ -433,6 +451,7 @@ out <- microbenchmark(
   solve_ode(pointer_to_ode,
           ti, y0))
 
+par(cex.axis=.5) 
 boxplot(out, names=c("R", "C++", "ast2ast"))
 ```
 

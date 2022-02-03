@@ -1,9 +1,15 @@
 
 library(ast2ast)
 
+f <- function() {
+  a_db <- 1
+  a_db[1] = 2
+}
+ret <- translate(f)
+expect_equal(ret, NULL) #0
+
 f <- 1
 expect_error(translate(f)) #1
-
 
 Rcpp::sourceCpp(code = '
 
