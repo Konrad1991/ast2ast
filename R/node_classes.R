@@ -158,8 +158,7 @@ subset <- R6::R6Class("subset",
         self$replace_TF()
         self$arguments <- lapply(self$arguments, function(x) {
           temp <- as.character(x)
-
-          if(temp == '' && length(temp) == 1L) {
+          if( (temp == '') && (length(temp) == 1L) ) { # temp == '' && length(temp) == 1L 
             return(as.symbol('nullptr'))
           } else {
             return(x)

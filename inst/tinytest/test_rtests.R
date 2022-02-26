@@ -1628,7 +1628,7 @@ fetr <- translate(f)
 ret <- test(fetr)
 expect_equal(ret, c(1, 2, 3, 4,  20, 6, 7, 8, 9, 10, 11, 12, 20, 14, 15, 16) ) #70.31
 
-f <- function(a) {
+f <- function(a) { ########################
   a <- matrix(1:16, 4, 4)
   b <- c(1, 2, 3, 4)
   a[1, b >= 3] <- 20
@@ -1648,7 +1648,7 @@ fetr <- translate(f)
 ret <- test(fetr)
 expect_equal(ret, c(1, 20, 3, 20, 5:16)  ) #70.33
 
-f <- function(a) {
+f <- function(a) { ########################
   a <- matrix(1:16, 4, 4)
   b <- c(1, 2, 3, 4)
   a[b > 3, 4] <- 20

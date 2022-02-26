@@ -9,9 +9,8 @@ BugReports: https://github.com/Konrad1991/ast2ast
 URL: https://github.com/Konrad1991/ast2ast
 Description: Translates a R function into a C++ function. An external pointer to the C++ function is returned to the user.
 License: GPL-2
-Imports: Rcpp (>= 1.0.4), purrr, R6, RcppXPtrUtils
-LinkingTo: Rcpp, RcppArmadillo, RcppXPtrUtils
+Imports: Rcpp (>= 1.0.4), purrr, RcppArmadillo, R6, RcppXPtrUtils
 VignetteBuilder: knitr
-Suggests: knitr, rmarkdown, tinytest, microbenchmark, r2sundials
+Suggests: knitr, kableExtra, rmarkdown, tinytest, microbenchmark, r2sundials, paropt
 Encoding: UTF-8
 RoxygenNote: 7.1.2
