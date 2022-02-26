@@ -205,19 +205,17 @@ public:
 
   // move it
   void moveit(STORE<T>& other) {
-    ass(p != nullptr, "try to delete nullptr");
-    delete [] p;
-    p = nullptr;
+    T* temporary = other.p;
+    int temp_size = other.sz;
+    int temp_capacity = other.capacity;
 
-    p = other.p;
-    sz = other.sz;
-    capacity = other.capacity;
-    todelete = true;
+    other.p = this -> p;
+    other.sz = this -> sz;
+    other.capacity = this -> capacity;
 
-    ass(other.p != nullptr, "try to delete nullptr");
-    other.p = nullptr;
-    other.todelete = false;
-
+    this -> p = temporary;
+    this -> sz = temp_size;
+    this -> capacity = temp_capacity;
   }
 
   int size() const {
