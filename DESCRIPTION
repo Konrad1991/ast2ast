@@ -1,8 +1,8 @@
 Package: ast2ast
 Type: Package
-Title: Translates a R Function into an External Pointer to a C++ Function 
+Title: Translates a R Function into an External Pointer to a C++ Function
 Version: 0.1
-Date: 2022-01-04
+Date: 2022-02-28
 Author: Krämer Konrad [aut, cre]
 Maintainer: Krämer Konrad <konrad_kraemer@yahoo.de>
 BugReports: https://github.com/Konrad1991/ast2ast
