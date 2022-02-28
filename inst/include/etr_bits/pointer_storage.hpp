@@ -204,7 +204,7 @@ public:
   }
 
   // move it
-  void moveit(STORE<T>& other) {
+  STORE& moveit(STORE<T>& other) {
     T* temporary = other.p;
     int temp_size = other.sz;
     int temp_capacity = other.capacity;
@@ -216,6 +216,8 @@ public:
     this -> p = temporary;
     this -> sz = temp_size;
     this -> capacity = temp_capacity;
+
+    return *this;
   }
 
   int size() const {
