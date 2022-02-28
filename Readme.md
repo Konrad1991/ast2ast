@@ -21,7 +21,7 @@ Returns an external pointer of the generated C++ function
 
 * numeric vectors
 * numeric matrices
-  
+
 Variables can be either numeric vectors or matrices.
 Notably, it is possible that the variable change the type within the function.
 **It is possible to declare a variable of a scalar numeric data type.
@@ -52,12 +52,12 @@ object cannot change its type!**
 * allocation of memory works: Following forms are possible: vector(size_of_elements), vector(value, size_of_elements) matrix(nrows, ncols), matrix(value, nrows, ncols). The latter fills the matrix or the vector with the specified 'value'.
 * For indices squared brackets '[]' can be used as common in R. \string{Despite the results of calculations cannot be used!} Beyond that the function 'at' exists which accepts as first argument a variable and as the second argument you pass the desired index. The caveat of using 'at' is that only one entry can be accessed. Whereas '[]' can return more then one element. **The 'at'function returns a reference to the vector entry. Therefore variable[index] can behave differently then at(variable, index). The function has to be use carefully when 'at' is used. Especially if '[]' and 'at' are mixed the function behaviour is difficult to predict. Please test it before using in a serious project.**
 * For loops can be written as used in R
-        for(index in variable)\{ 
-            # do whatever 
-        \} 
-        for(index in 1:length(variable)\{ 
-            # do whatever 
-        \} 
+        for(index in variable)\{
+            # do whatever
+        \}
+        for(index in 1:length(variable)\{
+            # do whatever
+        \}
 * Be aware that it is not possible to assign the result of a comparison to a variable.
 * The print function accepts either a scalar, vector, matrix, string, bool or nothing (empty line).
 * In order to return an object use the 'return' function (The last object is not returned automatically as in R).
@@ -89,8 +89,8 @@ void call_fct(Rcpp::XPtr<fp> inp) {
 call_fct(pointer_to_f_cpp)
 ```
 
-For more examples check the vignette *Examples*.
+For more examples check the vignette *DetailedDocumentation*.
 
 ## Contribution
 
-Contribution would be warmly appreciated (See Code of Conduct). 
+Contribution would be warmly appreciated (See Code of Conduct).
