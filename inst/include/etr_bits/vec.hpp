@@ -355,8 +355,14 @@ public:
       if(d.size() != other_vec.size()) { // .d?
         d.resize(other_vec.size()); // .d ?
       }
-      this -> d = std::move(temp);
-      //d.moveit(temp); // currently not working but why?????
+      //this -> d = std::move(temp);
+
+      if(d.todelete == true) {
+          d.moveit(temp); // currently not working but why?????
+      } else {
+          this -> d = temp; // copy necessary in case only ownership is borrowed!
+      }
+
 
       if(other_vec.d.im() == true) {
         ismatrix = true;

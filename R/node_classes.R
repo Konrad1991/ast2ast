@@ -71,6 +71,14 @@ PC <- R6::R6Class("PC",
         },
 
         get_var_names = function() {
+          forbidden_fcts <- c("getlength" ,"getattributes" ,"is_matrix", "VEC",
+          "at", "d2i","i2d" ,"ass" ,"VVSIN","sinus" ,"VVsinh" ,"sinush" ,"VVasin",
+          "asinus" ,"VVCOS" ,"cosinus" ,"VVacos" ,"acosinus" ,"VVCOSH" ,"cosinush",
+          "VVtan" ,"tangens" ,"VVatan" ,"atangens" ,"VVtanh" ,"tangensh" ,"VVMINUS",
+          "VSMINUS" ,"SVMINUS" ,"VVPLUS" ,"VSPLUS" ,"SVPLUS" ,"VVTIMES" ,"VSTIMES",
+          "SVTIMES" ,"VVDIV" ,"VSDIV","SVDIV","subassign","subset","It","STORE",
+          "for_","li","cmr","VVEXP","VVlog","ln","exp","combine","coca","cd","colon",
+          "length","dim","vector","matrix")
           ret <- list()
           counter <- 1
           arg <- self$arguments
@@ -79,6 +87,13 @@ PC <- R6::R6Class("PC",
 
             if(!is.call(temp) && (length(temp) == 1L && is.name(temp)) ) {
               ret[[counter]] <- temp
+
+              if(deparse(temp) %in% forbidden_fcts) {
+                cat("Sorry you are not allowed to use: ",
+                    temp, "as a variable.", "\n")
+                stop()
+              }
+
               counter <- counter + 1
             }
           }

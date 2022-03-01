@@ -1,40 +1,15 @@
 
 library(ast2ast)
 
-# subsetting
-# ==============================================================================
-Rcpp::sourceCpp(code = '
-
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::depends(ast2ast)]]
-#include "etr.hpp"
-typedef sexp (*fp) (sexp);
-
-// [[Rcpp::plugins(cpp17)]]
-
-using namespace Rcpp;
-
-// [[Rcpp::export]]
-NumericVector test(XPtr<fp> fetr) {
-  fp Fct = *fetr;
-
-  sexp a = coca(1, 2, 3, 4);
-  sexp b = Fct(a);
-
-  NumericVector ret = b;
-  return ret;
-}
-
-')
-
+library(ast2ast)
+library(tinytest)
 f <- function(a) {
   a <- matrix(1:16, 4, 4)
   a[4, c(1, 4)] <- 20
+  at <- 1
   return(a)
 }
-fetr <- translate(f)
-ret <- test(fetr)
-expect_equal(ret, c(1:3, 20, 5:15, 20) ) #70.9
+expect_error(translate(f))
 
 
 
