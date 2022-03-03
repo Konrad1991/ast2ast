@@ -70,6 +70,16 @@ namespace etr {
     return ret;
   }
 
+  template<typename T2, typename R2>
+  VEC<double> matrix(const VEC<T2, R2>& inp, int nrows_, int ncols_) {
+    VEC<double> ret(nrows_, ncols_);
+    ret = inp;
+    ret.ismatrix = true;
+    ret.nrows = nrows_;
+    ret.ncols = ncols_;
+    return ret;
+  }
+
 }
 
 #endif

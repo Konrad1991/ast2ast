@@ -118,6 +118,62 @@ VEC<double> colon(VEC<double> start, VEC<double> end) {
 }
 
 
+template<typename T2, typename R2>
+VEC<double> colon(int start, const VEC<T2, R2>& end) {
+
+  int size = static_cast<int>(floor(end[0] - static_cast<double>(start) +1));
+  VEC<double> ret(size);
+  for(int i = 0; i < ret.size(); i++) {
+    ret[i] = start + static_cast<double>(i);
+  }
+  return ret;
+}
+
+template<typename T2, typename R2>
+VEC<double> colon(double start, const VEC<T2, R2>& end) {
+
+  int size = static_cast<int>(floor(end[0] - (start) +1));
+  VEC<double> ret(size);
+  for(int i = 0; i < ret.size(); i++) {
+    ret[i] = start + static_cast<double>(i);
+  }
+  return ret;
+}
+
+template<typename T2, typename R2>
+VEC<double> colon(const VEC<T2, R2>& start, int end) {
+
+  int size = static_cast<int>(floor(static_cast<double>(end) - (start[0]) +1));
+  VEC<double> ret(size);
+  for(int i = 0; i < ret.size(); i++) {
+    ret[i] = start[0] + static_cast<double>(i);
+  }
+  return ret;
+}
+
+template<typename T2, typename R2>
+VEC<double> colon(const VEC<T2, R2>& start, double end) {
+
+  int size = static_cast<int>(floor(end - (start[0]) +1));
+  VEC<double> ret(size);
+  for(int i = 0; i < ret.size(); i++) {
+    ret[i] = start[0] + static_cast<double>(i);
+  }
+  return ret;
+}
+
+template<typename T2, typename R2, typename T3, typename R3>
+VEC<double> colon(const VEC<T2, R2>& start, const VEC<T3, R3>& end) {
+
+  int size = static_cast<int>(floor(end[0] - start[0] +1));
+  VEC<double> ret(size);
+  for(int i = 0; i < ret.size(); i++) {
+    ret[i] = start[0] + static_cast<double>(i);
+  }
+  return ret;
+}
+
+
 int length(double inp) {
   return 1;
 }
