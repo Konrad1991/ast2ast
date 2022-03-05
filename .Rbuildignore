@@ -8,5 +8,8 @@
 ^CodeofConduct.md
 ^\.travis\.yml$
 ^\.github$
+^\.git$
+^.cran-comments.md
 ^doc$
 ^Meta$
+^.Rhistory

@@ -1,14 +1,20 @@
 ## Test environments
-* local Linux Mint, R 4.1.0
-* win-builder (devel and release)
-* MacOS BigSur 11.3.1, R 4.0.2
+
+* local Linux PopOS, R 4.0.4
+* rhub: macos-highsierra-release, macos-highsierra-release-cran,
+      macos-m1-bigsur-release, windows-x86_64-devel,
+      windows-x86_64-oldrel, windows-x86_64-patched,
+      windows-x86_64-release, debian-clang-devel,
+      debian-gcc-devel
+
 
 ## R CMD check results
-There were no ERRORs or NOTEs.
 
-1 Warning:
+There were no ERRORs or Warnings.
 
-Insufficient package version (submitted: 0.2, existing: 0.2)
+1 Note:
+
+* New submission
 
 ## Downstream dependencies
 
