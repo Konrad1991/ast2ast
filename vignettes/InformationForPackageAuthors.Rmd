@@ -451,7 +451,6 @@ out <- microbenchmark(
   solve_ode(pointer_to_ode,
           ti, y0))
 
-par(cex.axis=.5) 
 boxplot(out, names=c("R", "C++", "ast2ast"))
 ```
 
