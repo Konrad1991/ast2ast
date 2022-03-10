@@ -1,3 +1,9 @@
+## Resubmission
+This is a resubmission. In this version I have:
+
+* Changed description text. Not starting anymore with package name, title or similar.
+* Removed 'par()' in the vignette InformationForPackageAuthors (user's options are not changed anymore)
+
 ## Test environments
 
 * local Linux PopOS, R 4.0.4
