@@ -300,9 +300,6 @@ MA <- R6::R6Class("MA",
 #' ")
 #' call_fct(pointer_to_f_cpp)
 #' }
-#' @importFrom R6 R6Class
-#' @importFrom RcppArmadillo
-#' @importFrom purrr map_if
 translate <- function(f, verbose = FALSE, reference = FALSE) {
 
     stopifnot(is.function(f))
