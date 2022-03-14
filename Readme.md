@@ -1,7 +1,7 @@
 <!-- badges: start -->
 [![](http://cranlogs.r-pkg.org/badges/last-month/ast2ast?color=green)](https://cran.r-project.org/package=ast2ast)
 [![](https://www.r-pkg.org/badges/version/ast2ast?color=green)](https://cran.r-project.org/package=ast2ast)
-[![License: ast2ast](https://img.shields.io/badge/license-ast2ast-blue.svg)](https://cran.r-project.org/web/licenses/ast2ast)
+[![License: GPL2](https://img.shields.io/badge/license-GPL2-blue.svg)](https://cran.r-project.org/web/licenses/GPL2)
 <!-- badges: end -->
 
 
