@@ -1,3 +1,8 @@
+<!-- badges: start -->
+[![](http://cranlogs.r-pkg.org/badges/last-month/ast2ast?color=green)](https://cran.r-project.org/package=ast2ast)
+<!-- badges: end -->
+
+
 # R package ast2ast
 
 ## Overview
