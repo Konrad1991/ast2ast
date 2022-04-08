@@ -101,3 +101,9 @@ For more examples check the vignette *DetailedDocumentation*.
 ## Contribution
 
 Contribution would be warmly appreciated (See Code of Conduct).
+
+## To Do
+
+- [] results of calculations as arguments for interpolation functions
+- [] add documentation for linear interpolation
+- [] add square root

@@ -100,7 +100,7 @@ public:
   //VEC(const R&& other_vec) : d(other_vec), subsetted(0), ismatrix(0) {} // not correct?
 
   //VEC(const R& mat, int nrows_, int ncols_) : d(mat), subsetted(0), ncols(ncols_), nrows(nrows_), ismatrix(0) {}
-  VEC() : subsetted(0), d(0), nrows(0), ncols(0), ismatrix(0), temp(1) {}
+  VEC() : subsetted(0), d(), nrows(0), ncols(0), ismatrix(0), temp() {} // maybe better initialize with 0
 
   VEC(const std::vector<T> inp) : subsetted(0),  ismatrix(0), nrows(0), ncols(0), d(inp), temp(1) {}
 
