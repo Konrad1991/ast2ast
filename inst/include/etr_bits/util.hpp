@@ -30,9 +30,24 @@ namespace etr {
 void ass(bool inp, std::string message) {
   if(inp == false) {
     std::cerr << message << std::endl;
-    Rcpp::stop("Error");
+
+    #ifdef R
+      Rcpp::stop("Error");
+    #else
+      exit (EXIT_FAILURE);
+    #endif
   }
 }
+
+#ifdef R
+#else
+  namespace Rcpp {
+    void stop(std::string inp) {
+      std::cerr << inp << std::endl;
+      exit (EXIT_FAILURE);
+    }
+  }
+#endif
 
 /*
 // create range from start to end

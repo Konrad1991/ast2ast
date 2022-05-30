@@ -161,7 +161,11 @@ VEC< T, VVPLUS< T, L, R > > operator+(const VEC<T, L>& a, const VEC<T, R>& b) {
       nrows_ = a.nr();
       ncols_ = a.nc();
     } else {
-      Rcpp::stop("Error");
+      #ifdef R
+        Rcpp::stop("Error");
+      #else
+        exit (EXIT_FAILURE);
+      #endif  
     }
 
   }

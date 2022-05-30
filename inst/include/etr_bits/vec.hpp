@@ -72,7 +72,6 @@ public:
 
   VEC(const bool value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
 
-  VEC(SEXP inp) : subsetted(0), ismatrix(0), d(1), temp(1) {
 
   const int length = getlength(inp);
   double* ptr = REAL(inp);
@@ -88,7 +87,6 @@ public:
   subsetted = false;
   ismatrix = false;
 
-}
 
   VEC(const double value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
   VEC(const long unsigned int n) : subsetted(0), ismatrix(0), d(n), temp(1) {d.fill(static_cast<double>(n));} // fill is a hack that sexp s = 1 works;

@@ -22,8 +22,15 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef HEADER_H
 #define HEADER_H
 
-// [[Rcpp::depends(RcppArmadillo)]]
-#include "RcppArmadillo.h"
+//#define R
+
+#ifdef R
+  // [[Rcpp::depends(RcppArmadillo)]]
+  #include "RcppArmadillo.h"
+#endif
+
+
+
 
 #include <iostream>
 #include <iterator>

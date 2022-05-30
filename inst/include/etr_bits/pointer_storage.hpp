@@ -256,10 +256,19 @@ public:
   T& operator[](int pos) const {
     if(pos < 0) {
       std::cerr << "Error: out of boundaries --> value below 1" << std::endl;
-      Rcpp::stop("Error");
+
+      #ifdef R
+        Rcpp::stop("Error");
+      #else
+        std::terminate();
+      #endif
     } else if(pos >= sz) {
       std::cerr << "Error: out of boundaries --> value beyond size of vector" << std::endl;
-      Rcpp::stop("Error");
+      #ifdef R
+        Rcpp::stop("Error");
+      #else
+        std::terminate();
+      #endif
     }
     return p[pos];
   }

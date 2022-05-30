@@ -27,31 +27,56 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
+
 // print empty line
 void print() {
-  Rcpp::Rcout << std::endl;
+  #ifdef R
+      Rcpp::Rcout << std::endl;
+  #else
+      std::cout << std::endl;
+  #endif
 }
 
 void print(std::string inp) {
-  Rcpp::Rcout << inp << std::endl;
+  #ifdef R
+      Rcpp::Rcout << inp << std::endl;
+  #else
+      std::cout << inp << std::endl;
+  #endif
 }
 
 void print(const char* inp) {
-  Rcpp::Rcout << inp << std::endl;
+  #ifdef R
+      Rcpp::Rcout << inp << std::endl;
+  #else
+      std::cout << inp << std::endl;
+  #endif
 }
 
 
 
 void print(double inp){
-  Rcpp::Rcout << inp << std::endl;
+  #ifdef R
+      Rcpp::Rcout << inp << std::endl;
+  #else
+      std::cout << inp << std::endl;
+  #endif
 }
 
 void print(int inp){
-  Rcpp::Rcout << inp << std::endl;
+  #ifdef R
+      Rcpp::Rcout << inp << std::endl;
+  #else
+      std::cout << inp << std::endl;
+  #endif
 }
 
 void print(bool inp) {
-  Rcpp::Rcout << inp << std::endl;
+  #ifdef R
+      Rcpp::Rcout << inp << std::endl;
+  #else
+      std::cout << inp << std::endl;
+  #endif
 }
 
 
@@ -64,11 +89,19 @@ void print(VEC<double>& inp) { // const
 
       if(inp.subsetted == false) {
         for(int i = 0; i < inp.size(); i++) {
-          Rcpp::Rcout << inp[i] << std::endl;
+          #ifdef R
+              Rcpp::Rcout << inp[i] << std::endl;
+          #else
+              std::cout << inp[i] << std::endl;
+          #endif
         }
       } else {
         for(int i = 0; i < inp.size(); i++) {
-          Rcpp::Rcout << inp[inp.indices[i]] << std::endl;
+          #ifdef R
+              Rcpp::Rcout << inp[inp.indices[i]] << std::endl;
+          #else
+              std::cout << inp[inp.indices[i]] << std::endl;
+          #endif
         }
       }
 
@@ -77,18 +110,35 @@ void print(VEC<double>& inp) { // const
       if(inp.subsetted == false) {
         for(int i = 0; i < inp.nrows; i++) {
           for(int j = 0; j < inp.ncols; j++) {
-            Rcpp::Rcout << inp.d[j*inp.nrows + i] << "\t";
+            #ifdef R
+                Rcpp::Rcout << inp.d[j*inp.nrows + i] << "\t";
+            #else
+                std::cout << inp.d[j*inp.nrows + i] << "\t";
+            #endif
           }
+          #ifdef R
           Rcpp::Rcout << std::endl;
+          #else
+          std::cout << std::endl;
+          #endif
         }
       } else {
 
         ass(inp.indices.size() >= 1, "insufficient size of subset");
         for(int i = 0; i < inp.ncols_sub; i++) {
           for(int j = 0; j < inp.nrows_sub; j++) {
-              Rcpp::Rcout << inp[inp.indices[i*inp.nrows_sub + j]] << "\t";
+            #ifdef R
+            Rcpp::Rcout << inp[inp.indices[i*inp.nrows_sub + j]] << "\t";
+            #else
+            std::cout << inp[inp.indices[i*inp.nrows_sub + j]] << "\t";
+            #endif
           }
+
+          #ifdef R
           Rcpp::Rcout << std::endl;
+          #else
+          std::cout << std::endl;
+          #endif
       }
 
     }
@@ -103,11 +153,19 @@ void print(VEC<double>&& inp) { // const
 
       if(inp.subsetted == false) {
         for(int i = 0; i < inp.size(); i++) {
+          #ifdef R
           Rcpp::Rcout << inp[i] << std::endl;
+          #else
+          std::cout << inp[i] << std::endl;
+          #endif
         }
       } else {
         for(int i = 0; i < inp.size(); i++) {
+          #ifdef R
           Rcpp::Rcout << inp[inp.indices[i]] << std::endl;
+          #else
+          std::cout << inp[inp.indices[i]] << std::endl;
+          #endif
         }
       }
 
@@ -116,18 +174,34 @@ void print(VEC<double>&& inp) { // const
       if(inp.subsetted == false) {
         for(int i = 0; i < inp.nrows; i++) {
           for(int j = 0; j < inp.ncols; j++) {
+            #ifdef R
             Rcpp::Rcout << inp.d[j*inp.nrows + i] << "\t";
+            #else
+            std::cout << inp.d[j*inp.nrows + i] << "\t";
+            #endif
           }
+          #ifdef R
           Rcpp::Rcout << std::endl;
+          #else
+          std::cout << std::endl;
+          #endif
         }
       } else {
 
         ass(inp.indices.size() >= 1, "insufficient size of subset");
         for(int i = 0; i < inp.ncols_sub; i++) {
           for(int j = 0; j < inp.nrows_sub; j++) {
-              Rcpp::Rcout << inp[inp.indices[i*inp.nrows_sub + j]] << "\t";
+            #ifdef R
+            Rcpp::Rcout << inp[inp.indices[i*inp.nrows_sub + j]] << "\t";
+            #else
+            std::cout << inp[inp.indices[i*inp.nrows_sub + j]] << "\t";
+            #endif
           }
+          #ifdef R
           Rcpp::Rcout << std::endl;
+          #else
+          std::cout << std::endl;
+          #endif
       }
 
     }
@@ -147,7 +221,11 @@ void print(VEC<bool>& inp) { // const
         Rcpp::stop("Error");
       }
         for(int i = 0; i < inp.size(); i++) {
+          #ifdef R
           Rcpp::Rcout << inp[i] << std::endl;
+          #else
+          std::cout << inp[i] << std::endl;
+          #endif
         }
 
     } else {
@@ -166,11 +244,19 @@ void print(const VEC<T2, R2> &inp) {
 
     if(inp.subsetted == false) {
       for(int i = 0; i < inp.size(); i++) {
+        #ifdef R
         Rcpp::Rcout << inp[i] << std::endl;
+        #else
+        std::cout << inp[i] << std::endl;
+        #endif
       }
     } else {
       for(int i = 0; i < inp.size(); i++) {
+        #ifdef R
         Rcpp::Rcout << inp[inp.indices[i]] << std::endl;
+        #else
+        std::cout << inp[inp.indices[i]] << std::endl;
+        #endif
       }
     }
 
@@ -179,18 +265,34 @@ void print(const VEC<T2, R2> &inp) {
     if(inp.subsetted == false) {
       for(int i = 0; i < inp.nrows; i++) {
         for(int j = 0; j < inp.ncols; j++) {
+          #ifdef R
           Rcpp::Rcout << inp.d[j*inp.nrows + i] << "\t";
+          #else
+          std::cout << inp.d[j*inp.nrows + i] << "\t";
+          #endif
         }
+        #ifdef R
         Rcpp::Rcout << std::endl;
+        #else
+        std::cout << std::endl;
+        #endif
       }
     } else {
 
       ass(inp.indices.size() >= 1, "insufficient size of subset");
       for(int i = 0; i < inp.ncols_sub; i++) {
         for(int j = 0; j < inp.nrows_sub; j++) {
-            Rcpp::Rcout << inp[inp.indices[i*inp.nrows_sub + j]] << "\t";
+          #ifdef R
+          Rcpp::Rcout << inp[inp.indices[i*inp.nrows_sub + j]] << "\t";
+          #else
+          std::cout << inp[inp.indices[i*inp.nrows_sub + j]] << "\t";
+          #endif
         }
+        #ifdef R
         Rcpp::Rcout << std::endl;
+        #else
+        std::cout << std::endl;
+        #endif
     }
 
   }
