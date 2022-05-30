@@ -25,6 +25,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
+  #ifdef R
   int getlength(SEXP inp) {
     return Rf_length(inp);
   }
@@ -38,6 +39,7 @@ namespace etr {
     bool ret = Rf_isMatrix(inp) ? true : false;
     return ret;
   }
+  #endif
 
 /*
 Vector & matrix module
@@ -72,6 +74,9 @@ public:
 
   VEC(const bool value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
 
+  #ifdef R
+    VEC(SEXP inp) : subsetted(0), ismatrix(0), d(1), temp(1) {
+
 
   const int length = getlength(inp);
   double* ptr = REAL(inp);
@@ -87,6 +92,8 @@ public:
   subsetted = false;
   ismatrix = false;
 
+  }
+  #endif
 
   VEC(const double value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
   VEC(const long unsigned int n) : subsetted(0), ismatrix(0), d(n), temp(1) {d.fill(static_cast<double>(n));} // fill is a hack that sexp s = 1 works;
@@ -159,6 +166,7 @@ public:
   }
   */
 
+  #ifdef R
   operator Rcpp::NumericVector() const {
     Rcpp::NumericVector ret(this -> size());
     for(int i = 0; i < ret.size(); i++) {
@@ -288,6 +296,7 @@ public:
 
      return trash;
   }
+  #endif
 
   // vector & matrix operator=
   // ================================================================
