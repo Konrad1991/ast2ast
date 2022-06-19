@@ -25,22 +25,6 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-  #ifdef R
-  int getlength(SEXP inp) {
-    return Rf_length(inp);
-  }
-
-  SEXP getattributes(SEXP inp) {
-    SEXP dim = Rf_getAttrib(inp, R_DimSymbol );
-    return dim;
-  }
-
-  bool is_matrix(SEXP inp) {
-    bool ret = Rf_isMatrix(inp) ? true : false;
-    return ret;
-  }
-  #endif
-
 /*
 Vector & matrix module
 */
@@ -74,23 +58,17 @@ public:
 
   VEC(const bool value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
 
-  #ifdef R
-    VEC(SEXP inp) : subsetted(0), ismatrix(0), d(1), temp(1) {
+  #ifdef RLANG
 
-
-  const int length = getlength(inp);
-  double* ptr = REAL(inp);
-
-  d.init(length, ptr);
-
-  if(is_matrix(inp)) {
-    SEXP dim = getattributes(inp);
-    int ncols = INTEGER(dim)[1];
-    int nrows = INTEGER(dim)[0];
-    ismatrix = true;
-  }
-  subsetted = false;
-  ismatrix = false;
+  VEC(SEXP inp) : subsetted(0), ismatrix(0), d(inp), temp(1) {
+    subsetted = false;
+    ismatrix = false;
+    ass(Rf_isReal(inp), "no numeric input");
+    if(Rf_isMatrix(inp) == true) {
+      ismatrix = true;
+      ncols = Rf_ncols(inp);
+      nrows = Rf_nrows(inp);
+    }
 
   }
   #endif
@@ -166,7 +144,41 @@ public:
   }
   */
 
-  #ifdef R
+  #ifdef RLANG
+
+  operator SEXP() const {
+    SEXP ret = R_NilValue;
+
+    if(this -> ismatrix) {
+       ret = PROTECT(Rf_allocMatrix(REALSXP, this -> nrows, this -> ncols ) );
+    } else {
+       ret = PROTECT(Rf_allocVector(REALSXP, this -> d.size() ) );
+    }
+
+    for(int i = 0; i < d.size(); i++) {
+      REAL(ret)[i] = d[i];
+    }
+
+    UNPROTECT(1);
+
+    return ret;
+  }
+
+  VEC& operator=(SEXP inp) {
+    subsetted = false;
+    ismatrix = false;
+    ass(Rf_isReal(inp), "no numeric input");
+    if(Rf_isMatrix(inp) == true) {
+      ismatrix = true;
+      ncols = Rf_ncols(inp);
+      nrows = Rf_nrows(inp);
+    }
+
+    d.init_sexp(inp);
+
+    return *this;
+  }
+
   operator Rcpp::NumericVector() const {
     Rcpp::NumericVector ret(this -> size());
     for(int i = 0; i < ret.size(); i++) {
@@ -265,37 +277,6 @@ public:
     return *this;
   }
 
-
-
-  operator SEXP() const{
-
-     if(this -> im() == false) {
-         SEXP V = PROTECT(Rf_allocVector(REALSXP, d.size()) );
-
-         for(int i = 0; i < d.size(); i++) {
-           REAL(V)[i] =  d[i];
-         }
-
-         UNPROTECT(1);
-         return V;
-     } else if(this -> im() == true) {
-       //SEXP M = PROTECT(Rf_allocVector(REALSXP, d.size()) );// PROTECT(Rf_allocMatrix(REALSXP, nrows, ncols));
-
-        SEXP M = PROTECT(Rf_allocMatrix(REALSXP, nrows, ncols));
-
-       for(int i = 0; i < d.size(); i++) {
-         REAL(M)[i] =  d[i];
-       }
-       UNPROTECT(1);
-       return M;
-     } else {
-       Rcpp::stop("something went wrong");
-     }
-
-     SEXP trash = PROTECT(Rf_allocVector(REALSXP, 0) );
-
-     return trash;
-  }
   #endif
 
   // vector & matrix operator=
@@ -359,15 +340,15 @@ public:
       for(int i = 0; i < temp.size(); i++) {
             temp[i] = other_vec[i];
       }
+
       if(d.size() != other_vec.size()) { // .d?
         d.resize(other_vec.size()); // .d ?
       }
-      //this -> d = std::move(temp);
 
       if(d.todelete == true) {
-          d.moveit(temp); // currently not working but why?????
+        d.moveit(temp); // currently not working but why?????
       } else {
-          this -> d = temp; // copy necessary in case only ownership is borrowed!
+        this -> d = temp; // copy necessary in case only ownership is borrowed!
       }
 
 
@@ -376,8 +357,9 @@ public:
         ncols = other_vec.d.nc();
         nrows = other_vec.d.nr();
       }
-    } else {
 
+
+    } else {
       temp.resize(indices.size());
       for(int i = 0; i < temp.size(); i++) {
           temp[i] = other_vec[i];

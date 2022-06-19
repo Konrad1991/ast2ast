@@ -31,7 +31,7 @@ void ass(bool inp, std::string message) {
   if(inp == false) {
     std::cerr << message << std::endl;
 
-    #ifdef R
+    #ifdef RLANG
       Rcpp::stop("Error");
     #else
       exit (EXIT_FAILURE);
@@ -39,7 +39,7 @@ void ass(bool inp, std::string message) {
   }
 }
 
-#ifdef R
+#ifdef RLANG
 #else
   namespace Rcpp {
     void stop(std::string inp) {

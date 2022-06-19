@@ -195,7 +195,7 @@ template<typename T>
 VEC<double> dim(const VEC<T>& inp) {
   if(inp.im() == false) {
     std::cerr << "dim can only be called with matrix" << std::endl;
-    #ifdef R
+    #ifdef RLANG
       Rcpp::stop("Error");
     #else
       exit (EXIT_FAILURE);
@@ -213,7 +213,7 @@ VEC<double> dim(const VEC<T>& inp) {
 
 void dim(bool inp) {
     std::cerr << "dim can only be called with matrix" << std::endl;
-    #ifdef R
+    #ifdef RLANG
       Rcpp::stop("Error");
     #else
       exit (EXIT_FAILURE);
@@ -222,7 +222,7 @@ void dim(bool inp) {
 
 void dim(int inp) {
     std::cerr << "dim can only be called with matrix" << std::endl;
-    #ifdef R
+    #ifdef RLANG
       Rcpp::stop("Error");
     #else
       exit (EXIT_FAILURE);
@@ -231,7 +231,7 @@ void dim(int inp) {
 
 void dim(double inp) {
     std::cerr << "dim can only be called with matrix" << std::endl;
-    #ifdef R
+    #ifdef RLANG
       Rcpp::stop("Error");
     #else
       exit (EXIT_FAILURE);

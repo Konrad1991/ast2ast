@@ -83,7 +83,7 @@ VEC< T, VVTIMES< T, L, R > > operator*(const VEC<T, L>& a, const VEC<T, R>& b) {
       nrows_ = a.nr();
       ncols_ = a.nc();
     } else {
-      #ifdef R
+      #ifdef RLANG
         Rcpp::stop("Error");
       #else
         exit (EXIT_FAILURE);

@@ -92,14 +92,14 @@ public:
     if(pos_ < 0) {
       std::cerr << "Error: out of boundaries --> value below 1" << std::endl;
 
-      #ifdef R
+      #ifdef RLANG
         Rcpp::stop("Error");
       #else
         std::terminate();
       #endif
     } else if(pos_ >= sz) {
       std::cerr << "Error: out of boundaries --> value beyond size of vector" << std::endl;
-      #ifdef R
+      #ifdef RLANG
         Rcpp::stop("Error");
       #else
         std::terminate();

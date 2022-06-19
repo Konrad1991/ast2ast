@@ -205,6 +205,13 @@ MA <- R6::R6Class("MA",
           )
 
           fct <- paste( unlist(fct), collapse='')
+        },
+
+        build_sexp = function() {
+          # same as build
+          # adding line to cast SEXP to sexp
+          # in case something is returned cast from sexp to SEXP
+          # if nothing is returned return R_NilValue
         }
 
 
@@ -311,13 +318,26 @@ translate <- function(f, verbose = FALSE, reference = FALSE) {
     a = MA$new(f, desired_type)
     fct <- a$build(verbose, reference = reference)
 
-    #fct_ret = Rcpp::cppFunction(code = fct,
-    #                            plugins = c("cpp17"),
-    #                            depends = c("ast2ast"),
-    #                            includes = "#include <etr.hpp>",
-    #                            verbose =  verbose)
-
     fct_ret = NULL
+
+    # ===========================================================================
+    # in case r fct is required
+    # ===========================================================================
+    # desired_type has to be SEXP
+    # and reference has to be FALSE!!!
+    # create package in tempdir
+    # define in the Makevars file -D RFCT
+      #PKG_CPPFLAGS= -DRFCT
+      #PKG_CXXFLAGS= -DRFCT
+    # get path of package
+    # Rcpp::compileAttributes(path)
+    # paste code into cpp file into src
+    # define R code which calls the defined cpp fct
+    # install.packages("/home/konrad/Documents/GitHub/ast2ast_supplement/testing",
+                 # repos = NULL, type = 'source',
+                 # lib = tempdir())
+    # library(testing, lib.loc = tempdir())
+    # return packagename::rfct
 
     tryCatch(
       expr = {
