@@ -28,8 +28,11 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 namespace etr {
 
   VEC<double> vector(int length) {
-    VEC<double> ret(length);
-    return ret;
+      VEC<double> ret(length); // + 1?
+      for(int i = 0; i < ret.size(); i++) {
+        ret[i] = 0.0;
+      }
+      return ret;
   }
 
   VEC<double> vector(double inp, int length) {
@@ -37,10 +40,12 @@ namespace etr {
     return ret;
   }
 
-  // copy of vector
+  // not copy of vector!
   VEC<double> vector(VEC<double> inp) {
-    VEC<double> ret;
-    ret = inp;
+
+    ass(inp.size() == 1, "invalid length argument");
+
+    VEC<double> ret(static_cast<int>(inp.d[0])); // +1 ?
     return ret;
   }
 

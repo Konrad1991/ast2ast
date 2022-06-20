@@ -7,9 +7,19 @@
 
 # R package ast2ast
 
+## News
+
+Added an experimental way to retreive an R function instead of an external pointer. This approach is currently experimental. Set the argument *R_fct* to *TRUE* in case you want to test it. Beyond, that it is possible to retrieve the shared library by setting *SHLIB* to *TRUE*. 
+
+```R
+f <- function() { print("Hello World!")}
+ast2ast::translate(f, R_fct = TRUE)
+f()
+```
+
 ## Overview
 
-Translates a R function into a C++ function. An external pointer to the C++ function is returned to the user. To install the package use *devtools::install_github("Konrad1991/ast2ast", build_vignettes = TRUE)*. The motivation to write the package was that it is often cumbersome using R functions in applications which have to call this function very often (> 100 calls) (e.g. ODE solving, Optimization). One possiblity is to write the function in a faster programming language e.g. C. However, learning languages such as C is difficult and time consuming. Therefore *ast2ast* is a decent alternative as the function can be written in R.    
+Translates an R function into a C++ function. An external pointer to the C++ function is returned to the user. To install the package use *devtools::install_github("Konrad1991/ast2ast", build_vignettes = TRUE)*. The motivation to write the package was that it is often cumbersome using R functions in applications which have to call this function very often (> 100 calls) (e.g. ODE solving, Optimization). One possiblity is to write the function in a faster programming language e.g. C. However, learning languages such as C is difficult and time consuming. Therefore *ast2ast* is a decent alternative as the function can be written in R.    
 
 As an example solving a simple ODE-System. The translated code is considerable faster then R code and almost as fast as C++. Code for the example can be found in the vignettes.
 

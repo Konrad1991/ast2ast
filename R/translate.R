@@ -24,6 +24,7 @@ MA <- R6::R6Class("MA",
 
         name = NULL,
         args = NULL,
+        args_2_fct = NULL,
         body = NULL,
         desired_type = NULL,
         temp = list(),
@@ -110,6 +111,7 @@ MA <- R6::R6Class("MA",
           for(i in seq_along(temp1)) {
             for(j in seq_along(self$args)) {
               if(temp1[[i]] == self$args[[j]]) {
+                self$args_2_fct = c(self$args_2_fct, temp1[[i]])
                 temp1[[i]] = NA
                 break
               }
@@ -181,6 +183,32 @@ MA <- R6::R6Class("MA",
               sig <- paste(self$return_type(), self$name, '(', arguments_string, ')', '{', collapse = " ")
         },
 
+        signature_SEXP = function(desired_type, reference, extern = FALSE) {
+              # arguments passed to f & define signature
+
+              arguments_string <- sapply(self$args, function(x) {
+                y <- paste0(x)
+                temp <- paste(desired_type, paste0(y, 'SEXP'), ',', collapse = '')
+
+                if (parent.frame()$i[] == length(self$args) )  {
+                  temp <- paste(desired_type, paste0(y, 'SEXP'), collapse = '')
+                }
+
+                return(temp)
+              })
+              arguments_string <- paste(arguments_string, collapse = " ")
+
+              sig = NULL
+              if(extern == FALSE) {
+                sig <- paste(self$return_type(), self$name, '(', arguments_string, ')', '{', collapse = " ")
+              } else {
+                sig <- paste('extern "C" {', self$return_type(), self$name, '(', arguments_string, ');}', collapse = " ")
+              }
+              
+
+              return(sig)
+        },
+
         vars_declaration = function(desired_type) {
           variables = self$get_vars()
           args_dec <- sapply(seq_along(variables), function(x) {
@@ -188,6 +216,24 @@ MA <- R6::R6Class("MA",
             return(temp)
           })
           args_dec <- paste(args_dec, collapse = " ")
+
+          return(args_dec)
+        },
+
+        vars_declaration_SEXP = function(desired_type) {
+          variables = self$get_vars()
+          args_dec <- sapply(seq_along(variables), function(x) {
+            temp <- paste(self$var_types[[x]], variables[[x]], ';', collapse = '')
+            return(temp)
+          })
+          args_dec <- paste(args_dec, collapse = " ")
+
+          fct_args = self$args_2_fct
+          fct_args_dec <- sapply(seq_along(fct_args), function(x) {
+            temp <- paste('sexp', fct_args[[x]], '=', paste0(self$args[[x]], 'SEXP'), ';', collapse = '')
+            return(temp)
+          })
+          args_dec <- paste(args_dec, fct_args_dec, collapse = " ")
 
           return(args_dec)
         },
@@ -207,11 +253,25 @@ MA <- R6::R6Class("MA",
           fct <- paste( unlist(fct), collapse='')
         },
 
-        build_sexp = function() {
-          # same as build
-          # adding line to cast SEXP to sexp
-          # in case something is returned cast from sexp to SEXP
-          # if nothing is returned return R_NilValue
+        build_SEXP = function(verbose = FALSE, reference = FALSE) {
+          self$getast()
+          self$ast2call()
+          self$call2char()
+
+          fct = c(
+            "// [[Rcpp::depends(ast2ast)]] \n",
+            "// [[Rcpp::depends(RcppArmadillo)]] \n",
+            "// [[Rcpp::depends(ast2ast)]] \n",
+            "// [[Rcpp::plugins(cpp17)]] \n",
+            self$signature_SEXP(self$desired_type, reference, extern = TRUE), "\n",
+            "// [[Rcpp::export]]", "\n",
+            self$signature_SEXP(self$desired_type, reference, extern = FALSE), "\n",
+            self$vars_declaration_SEXP(self$desired_type), "\n",
+            self$char, "\n",
+            '}'
+          )
+
+          fct <- paste( unlist(fct), collapse='')
         }
 
 
@@ -221,12 +281,15 @@ MA <- R6::R6Class("MA",
 )
 
 
-#' Translates a R function into a C++ function and returns an external pointer (XPtr) to this function.
+#' Translates a R function into a C++ function. The result can be an external pointer (XPtr) or an R function.
+#' 
 #' Further information can be found in the vignette: 'Detailed Documentation'.
 #' @param f The function which should be translated from R to C++.
-#' @param verbose If set to TRUE the output of RcppXPtrUtils::cppXPtr is printed.
-#' @param reference If set to true the arguments are passed by reference.
-#' @return The external pointer of the generated C++ function
+#' @param verbose If set to TRUE the output of RcppXPtrUtils::cppXPtr or Rcpp::cppFunction is printed.
+#' @param reference If set to TRUE the arguments are passed by reference.
+#' @param R_fct If set to TRUE an R function instead of an external pointer is created within the global environment called 'f'.
+#' @param SHLIB If set to TRUE the shared library which is created when an R function is requested is loaded into the current R session.
+#' @return The external pointer of the generated C++ function or an R function called 'f' is created. In addition the output of Rcpp::cppFunction is returned if R_fct is set to TRUE.
 #' @details \strong{The following types are supported: }
 #'  \enumerate{
 #'    \item numeric vectors
@@ -279,7 +342,7 @@ MA <- R6::R6Class("MA",
 #'    }
 #'    \item Be aware that it is not possible to assign the result of a comparison to a variable.
 #'    \item The print function accepts either a scalar, vector, matrix, string, bool or nothing (empty line).
-#'    \item In order to return an object use the 'return' function (The last object is not returned automatically as in R).
+#'    \item In o rder to return an object use the 'return' function (The last object is not returned automatically as in R).
 #'    \item In order to interpolate values the 'cmr' function can be used. The function needs three arguments.
 #'          \enumerate{
 #'            \item the first argument is the point of the independent variable (x) for which the dependent variable should be calculated (y). This has to be a vector of length one.
@@ -293,6 +356,12 @@ MA <- R6::R6Class("MA",
 #' @examples #Further examples can be found in the vignette: 'Detailed Documentation'.
 #' @examples #Hello World
 #' \dontrun{
+#' # Translating to R_fct
+#' f <- function() { print("Hello World!")}
+#' ast2ast::translate(f, R_fct = TRUE)
+#' f()
+#' 
+#' # Translating to external pointer
 #' f <- function() { print("Hello World!")}
 #' pointer_to_f_cpp <- ast2ast::translate(f)
 #' Rcpp::sourceCpp(code = "
@@ -307,49 +376,85 @@ MA <- R6::R6Class("MA",
 #' ")
 #' call_fct(pointer_to_f_cpp)
 #' }
-translate <- function(f, verbose = FALSE, reference = FALSE) {
+translate <- function(f, verbose = FALSE, reference = FALSE, R_fct = FALSE, SHLIB = FALSE) {
+
+    if(missing(f)) stop("function f is required")
 
     stopifnot(is.function(f))
     stopifnot(is.logical(verbose))
     stopifnot(is.logical(reference))
+    stopifnot(is.logical(R_fct))
+    stopifnot(is.logical(SHLIB))
 
-    desired_type = 'sexp'
+    if(R_fct == TRUE) {
+      stopifnot(reference == FALSE)
+    } else {
+      if(SHLIB == TRUE) {
+        warning("SHLIB set to TRUE when R_fct is also TRUE. Argument will be ignored")
+      }
+    }
 
-    a = MA$new(f, desired_type)
-    fct <- a$build(verbose, reference = reference)
 
+    if(R_fct == FALSE) {
+      desired_type = 'sexp'
+    } else {
+      desired_type = 'SEXP'
+    }
+
+    a = NULL
+    fct = NULL
     fct_ret = NULL
 
-    # ===========================================================================
-    # in case r fct is required
-    # ===========================================================================
-    # desired_type has to be SEXP
-    # and reference has to be FALSE!!!
-    # create package in tempdir
-    # define in the Makevars file -D RFCT
-      #PKG_CPPFLAGS= -DRFCT
-      #PKG_CXXFLAGS= -DRFCT
-    # get path of package
-    # Rcpp::compileAttributes(path)
-    # paste code into cpp file into src
-    # define R code which calls the defined cpp fct
-    # install.packages("/home/konrad/Documents/GitHub/ast2ast_supplement/testing",
-                 # repos = NULL, type = 'source',
-                 # lib = tempdir())
-    # library(testing, lib.loc = tempdir())
-    # return packagename::rfct
+    if(R_fct == FALSE) {
+      a = MA$new(f, desired_type)
+      fct <- a$build(verbose, reference = reference)
 
-    tryCatch(
-      expr = {
-        fct_ret = RcppXPtrUtils::cppXPtr(code = fct, plugins = c("cpp17"),
-                                         depends = c("ast2ast", "RcppArmadillo"),
-                                         includes = "#include <etr.hpp>",
-                                         verbose =  verbose)
-      },
-      error = function(e) {
-        print("Sorry compilation failed!")
+      tryCatch(
+        expr = {
+          fct_ret = RcppXPtrUtils::cppXPtr(code = fct, plugins = c("cpp17"),
+                                           depends = c("ast2ast", "RcppArmadillo"),
+                                           includes = "#include <etr.hpp>",
+                                           verbose =  verbose)
+        },
+        error = function(e) {
+          print("Sorry compilation failed!")
+        }
+      )
+    } else {
+      a = MA$new(f, desired_type)
+      fct <- a$build_SEXP(verbose, reference = reference)
+
+      fct <- paste(
+        '#include "etr.hpp"', "\n",
+        fct
+      )
+
+      file <- tempfile(fileext = ".cpp")
+      write(fct, file)
+      path <- tempfile()
+
+      dir.create(path)
+      Sys.setenv("PKG_CXXFLAGS" = "-DRFCT")
+      tryCatch(
+        expr = {
+                fct_ret = Rcpp::sourceCpp(file,
+                                          cacheDir = path,
+                                           verbose = verbose)
+        },
+        error = function(e) {
+            print("Sorry compilation failed!")
+        }
+      )
+      
+      # always same name sourceCpp_2.so???
+      if(SHLIB == TRUE) {
+        trash <- dyn.load(paste0(list.dirs(path)[3], "/sourceCpp_2.so") )
       }
-    )
+      
+
+      Sys.unsetenv("PKG_CXXFLAGS")
+    }
+
 
     return(fct_ret)
 }
