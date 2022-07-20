@@ -310,7 +310,7 @@ MA <- R6::R6Class("MA",
 #'    \item Indices: [] and at
 #'    \item mathematical functions: sin, asin, sinh, cos, acos, cosh, tan, atan, tanh, log, ^ and exp
 #'    \item concatenate objects: c
-#     \item control flow: for, if, else if, else
+#'    \item control flow: for, if, else if, else
 #'    \item comparison: ==, !=, >, <, >= and <=
 #'    \item printing: print
 #'    \item returning objects: return
@@ -319,9 +319,9 @@ MA <- R6::R6Class("MA",
 #'  }
 #' @details  \strong{Some details about the implemented functions}
 #' @details  \itemize{
-#'    \item allocation of memory works: Following forms are possible: vector(size_of_elements), vector(value, size_of_elements), vector(other_vec, size_of_other_vec),
+#'    \item allocation of memory works: Following forms are possible: vector(size_of_elements), vector(value, size_of_elements), 
 #'              matrix(nrows, ncols), matrix(value, nrows, ncols) and matrix(vector, nrows, ncols). The latter fills the matrix or the vector with the specified 'value'.
-#'    \item For indices squared brackets '[]' can be used as common in R. \strong{Despite the results of calculations cannot be used!} Beyond that the function 'at' exists
+#'    \item For indices squared brackets '[]' can be used as common in R. Beyond that the function 'at' exists
 #'              which accepts as first argument a variable and as the second argument you pass the desired index.
 #'              The caveat of using 'at' is that only one entry can be accessed. The function '[]' can return more then one element.
 #'              \strong{The 'at'function returns a reference to the vector entry.
@@ -342,7 +342,7 @@ MA <- R6::R6Class("MA",
 #'    }
 #'    \item Be aware that it is not possible to assign the result of a comparison to a variable.
 #'    \item The print function accepts either a scalar, vector, matrix, string, bool or nothing (empty line).
-#'    \item In o rder to return an object use the 'return' function (The last object is not returned automatically as in R).
+#'    \item In order to return an object use the 'return' function (The last object is not returned automatically as in R).
 #'    \item In order to interpolate values the 'cmr' function can be used. The function needs three arguments.
 #'          \enumerate{
 #'            \item the first argument is the point of the independent variable (x) for which the dependent variable should be calculated (y). This has to be a vector of length one.

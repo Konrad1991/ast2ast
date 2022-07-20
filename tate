@@ -1,0 +1,110 @@
+[1mNAME(B[m
+      GitNow — Speed up your Git workflow. 🐠
+
+[1mVERSION(B[m
+      2.10.0
+
+[1mDESCRIPTION(B[m
+      GitNow contains a rich command set that provides high-level operations on the top of Git(1).
+      A Fish Shell(2) alternative inspired by git-friendly(3).
+
+      (1) https://git-scm.com/
+      (2) https://fishshell.com/
+      (3) https://github.com/jamiew/git-friendly
+
+[1mCOMMANDS(B[m
+      [1mstate(B[m
+        Show the working tree status in a compact way.
+
+      [1mstage(B[m
+        Stage files in the current working directory.
+
+      [1munstage(B[m
+        Unstage files in the current working directory.
+
+      [1mshow(B[m
+        Show commit detail objects.
+
+      [1muntracked(B[m
+        Check for untracked files and directories that could be removed.
+
+      [1mcommit(B[m
+        Commit changes to the current repository.
+
+      [1mcommit-all(B[m
+        Add and commit all changes to the current repository.
+
+      [1mpull(B[m
+        Pull changes from remote server but auto-stashing uncommitted changes.
+
+      [1mpush(B[m
+        Push commit changes to the current remote repository.
+
+      [1mupstream(B[m
+        Commit all changes and push them to the current remote server.
+
+      [1mmove(B[m
+        Switch from current branch to another but stashing uncommitted changes.
+
+      [1mmerge(B[m
+        Merge given branch into the active one
+
+      [1mtag(B[m
+        List and create release tag versions following Semver 2.0.
+
+      [1massume(B[m
+        Ignore changes in certain files temporarily.
+
+      [1mfeature(B[m
+        Create a new Gitflow feature branch from the current branch.
+
+      [1mhotfix(B[m
+        Create a new Gitflow hotfix branch from the current branch.
+
+      [1mbugfix(B[m
+        Create a new Gitflow bugfix branch from the current branch.
+
+      [1mrelease(B[m
+        Create a new Gitflow release branch from the current branch.
+
+      [1mlogs(B[m
+        Show logs in a fancy way.
+
+      [1mgithub(B[m
+        Clone a GitHub repository over SSH.
+
+      [1mbitbucket(B[m
+        Clone a Bitbucket Cloud repository over SSH.
+
+[1mKEYBINDINGS(B[m
+      state           Alt + S
+      stage           Alt + E
+      unstage         Ctrl + E
+      show            Alt + M
+      commit-all      Alt + C
+      pull            Alt + D
+      push            Alt + P
+      upstream        Alt + U
+      feature(1)      Alt + F
+      hotfix(1)       Alt + H
+      logs            Alt + L
+
+      (1) This command key binding will creates a new branch taking as name some text of the clipboard.
+
+[1mCONFIGURATION(B[m
+      For a custom configuration (for example keybindings) place a [1m~/.gitnow(B[m file (1) in your home directory.
+
+      (1) An example file it can be found on [1mhttps://github.com/joseluisq/gitnow/tree/master/.gitnow(B[m
+
+[1mFURTHER DOCUMENTATION(B[m
+      For more details and examples check out [1mhttps://github.com/joseluisq/gitnow/blob/master/README.md(B[m
+
+[1mCONTRIBUTIONS(B[m
+      Send bug reports or pull requests to [1mhttps://github.com/joseluisq/gitnow(B[m
+
+[1mLICENSE(B[m
+      GitNow licensed under the MIT License [1mhttps://github.com/joseluisq/gitnow/blob/master/LICENSE.md(B[m
+
+[1mAUTHOR(B[m
+      (c) 2016-present Jose Quintana [1mhttps://git.io/joseluisq(B[m
+
