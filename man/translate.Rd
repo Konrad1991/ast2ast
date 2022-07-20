@@ -4,21 +4,19 @@
 \alias{translate}
 \title{Translates a R function into a C++ function. The result can be an external pointer (XPtr) or an R function.}
 \usage{
-translate(f, verbose = FALSE, reference = FALSE, R_fct = FALSE, SHLIB = FALSE)
+translate(f, verbose = FALSE, reference = FALSE, R_fct = FALSE)
 }
 \arguments{
 \item{f}{The function which should be translated from R to C++.}
 
 \item{verbose}{If set to TRUE the output of RcppXPtrUtils::cppXPtr or Rcpp::cppFunction is printed.}
 
-\item{reference}{If set to TRUE the arguments are passed by reference.}
+\item{reference}{If set to TRUE the arguments are passed by reference (not possible if output should be an R function)..}
 
-\item{R_fct}{If set to TRUE an R function instead of an external pointer is created within the global environment called 'f'.}
-
-\item{SHLIB}{If set to TRUE the shared library which is created when an R function is requested is loaded into the current R session.}
+\item{R_fct}{If set to TRUE an R function instead of an external pointer is created. This is usefull for testing the translated function directly in R. \strong{However, the performance of the R function is currently suboptimal}.}
 }
 \value{
-The external pointer of the generated C++ function or an R function called 'f' is created. In addition the output of Rcpp::cppFunction is returned if R_fct is set to TRUE.
+The external pointer of the generated C++ function or an R function is created.
 }
 \description{
 Further information can be found in the vignette: 'Detailed Documentation'.
@@ -45,6 +43,7 @@ Further information can be found in the vignette: 'Detailed Documentation'.
    \item Indices: [] and at
    \item mathematical functions: sin, asin, sinh, cos, acos, cosh, tan, atan, tanh, log, ^ and exp
    \item concatenate objects: c
+   \item control flow: for, if, else if, else
    \item comparison: ==, !=, >, <, >= and <=
    \item printing: print
    \item returning objects: return
@@ -55,9 +54,9 @@ Further information can be found in the vignette: 'Detailed Documentation'.
 \strong{Some details about the implemented functions}
 
 \itemize{
-   \item allocation of memory works: Following forms are possible: vector(size_of_elements), vector(value, size_of_elements), vector(other_vec, size_of_other_vec),
+   \item allocation of memory works: Following forms are possible: vector(size_of_elements), vector(value, size_of_elements), 
              matrix(nrows, ncols), matrix(value, nrows, ncols) and matrix(vector, nrows, ncols). The latter fills the matrix or the vector with the specified 'value'.
-   \item For indices squared brackets '[]' can be used as common in R. \strong{Despite the results of calculations cannot be used!} Beyond that the function 'at' exists
+   \item For indices squared brackets '[]' can be used as common in R. Beyond that the function 'at' exists
              which accepts as first argument a variable and as the second argument you pass the desired index.
              The caveat of using 'at' is that only one entry can be accessed. The function '[]' can return more then one element.
              \strong{The 'at'function returns a reference to the vector entry.
@@ -78,7 +77,7 @@ Further information can be found in the vignette: 'Detailed Documentation'.
    }
    \item Be aware that it is not possible to assign the result of a comparison to a variable.
    \item The print function accepts either a scalar, vector, matrix, string, bool or nothing (empty line).
-   \item In o rder to return an object use the 'return' function (The last object is not returned automatically as in R).
+   \item In order to return an object use the 'return' function (The last object is not returned automatically as in R).
    \item In order to interpolate values the 'cmr' function can be used. The function needs three arguments.
          \enumerate{
            \item the first argument is the point of the independent variable (x) for which the dependent variable should be calculated (y). This has to be a vector of length one.

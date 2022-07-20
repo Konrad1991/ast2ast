@@ -264,7 +264,6 @@ MA <- R6::R6Class("MA",
             "// [[Rcpp::depends(ast2ast)]] \n",
             "// [[Rcpp::plugins(cpp17)]] \n",
             self$signature_SEXP(self$desired_type, reference, extern = TRUE), "\n",
-            "// [[Rcpp::export]]", "\n",
             self$signature_SEXP(self$desired_type, reference, extern = FALSE), "\n",
             self$vars_declaration_SEXP(self$desired_type), "\n",
             self$char, "\n",
@@ -286,10 +285,9 @@ MA <- R6::R6Class("MA",
 #' Further information can be found in the vignette: 'Detailed Documentation'.
 #' @param f The function which should be translated from R to C++.
 #' @param verbose If set to TRUE the output of RcppXPtrUtils::cppXPtr or Rcpp::cppFunction is printed.
-#' @param reference If set to TRUE the arguments are passed by reference.
-#' @param R_fct If set to TRUE an R function instead of an external pointer is created within the global environment called 'f'.
-#' @param SHLIB If set to TRUE the shared library which is created when an R function is requested is loaded into the current R session.
-#' @return The external pointer of the generated C++ function or an R function called 'f' is created. In addition the output of Rcpp::cppFunction is returned if R_fct is set to TRUE.
+#' @param reference If set to TRUE the arguments are passed by reference (not possible if output should be an R function)..
+#' @param R_fct If set to TRUE an R function instead of an external pointer is created. This is usefull for testing the translated function directly in R. \strong{However, the performance of the R function is currently suboptimal}.
+#' @return The external pointer of the generated C++ function or an R function is created. 
 #' @details \strong{The following types are supported: }
 #'  \enumerate{
 #'    \item numeric vectors
@@ -376,7 +374,7 @@ MA <- R6::R6Class("MA",
 #' ")
 #' call_fct(pointer_to_f_cpp)
 #' }
-translate <- function(f, verbose = FALSE, reference = FALSE, R_fct = FALSE, SHLIB = FALSE) {
+translate <- function(f, verbose = FALSE, reference = FALSE, R_fct = FALSE) {
 
     if(missing(f)) stop("function f is required")
 
@@ -384,16 +382,10 @@ translate <- function(f, verbose = FALSE, reference = FALSE, R_fct = FALSE, SHLI
     stopifnot(is.logical(verbose))
     stopifnot(is.logical(reference))
     stopifnot(is.logical(R_fct))
-    stopifnot(is.logical(SHLIB))
 
     if(R_fct == TRUE) {
       stopifnot(reference == FALSE)
-    } else {
-      if(SHLIB == TRUE) {
-        warning("SHLIB set to TRUE when R_fct is also TRUE. Argument will be ignored")
-      }
     }
-
 
     if(R_fct == FALSE) {
       desired_type = 'sexp'
@@ -435,6 +427,8 @@ translate <- function(f, verbose = FALSE, reference = FALSE, R_fct = FALSE, SHLI
 
       dir.create(path)
       Sys.setenv("PKG_CXXFLAGS" = "-DRFCT")
+      
+      options(warn=-1)
       tryCatch(
         expr = {
                 fct_ret = Rcpp::sourceCpp(file,
@@ -445,13 +439,29 @@ translate <- function(f, verbose = FALSE, reference = FALSE, R_fct = FALSE, SHLI
             print("Sorry compilation failed!")
         }
       )
+      options(warn=0)
       
-      # always same name sourceCpp_2.so???
-      if(SHLIB == TRUE) {
-        trash <- dyn.load(paste0(list.dirs(path)[3], "/sourceCpp_2.so") )
+      if(verbose) {
+        print(fct)
       }
       
-
+      # always same name sourceCpp_2.so???
+      dyn <- dyn.load(paste0(list.dirs(path)[3], "/sourceCpp_2.so") )
+      dyn.load(dyn[[2]], local = FALSE)
+      name_f <- as.character(substitute(f))
+      args_f <- methods::formalArgs(f)
+      check <- length(args_f)
+      args_f <- paste(args_f, collapse = ",")
+      
+      # to do --> check that input is numeric
+      if(check > 0) {
+        fct_ <- paste(name_f, "<- function(", args_f, ") { .Call(", "\"f\"", ",", args_f, ")}")  
+      } else {
+        fct_ <- paste(name_f, "<- function(", args_f, ") { .Call(", "\"f\"", ")}")
+      }
+      
+      fct_ret <- eval(parse(text = fct_))
+      
       Sys.unsetenv("PKG_CXXFLAGS")
     }
 

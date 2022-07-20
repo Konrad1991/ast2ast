@@ -11,6 +11,6 @@ fct <- function(n) {
 }
 
 # this tests passes in Rstudio but fails if called when running tests of ast2ast
-fcpp <- translate(fct, verbose = FALSE, reference = FALSE, R_fct = TRUE, SHLIB = TRUE)
+fcpp <- translate(fct, verbose = FALSE, reference = FALSE, R_fct = TRUE)
 
 expect_equal(f(1000), seq(2, 2000, 2) )
