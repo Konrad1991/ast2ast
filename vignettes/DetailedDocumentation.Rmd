@@ -643,6 +643,7 @@ Following mathematical functions are available (see **Example 8**):
 * tan
 * atan
 * tanh
+* sqrt
 * log
 * ^ and exp
 

@@ -306,7 +306,7 @@ MA <- R6::R6Class("MA",
 #'    \item information about objects: length and dim
 #'    \item Basic operations: +, -, *, /
 #'    \item Indices: [] and at
-#'    \item mathematical functions: sin, asin, sinh, cos, acos, cosh, tan, atan, tanh, log, ^ and exp
+#'    \item mathematical functions: sin, asin, sinh, cos, acos, cosh, tan, atan, tanh, sqrt, log, ^ and exp
 #'    \item concatenate objects: c
 #'    \item control flow: for, if, else if, else
 #'    \item comparison: ==, !=, >, <, >= and <=

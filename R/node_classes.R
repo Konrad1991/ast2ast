@@ -77,7 +77,7 @@ PC <- R6::R6Class("PC",
           "VVtan" ,"tangens" ,"VVatan" ,"atangens" ,"VVtanh" ,"tangensh" ,"VVMINUS",
           "VSMINUS" ,"SVMINUS" ,"VVPLUS" ,"VSPLUS" ,"SVPLUS" ,"VVTIMES" ,"VSTIMES",
           "SVTIMES" ,"VVDIV" ,"VSDIV","SVDIV","subassign","subset","It","STORE",
-          "for_","li","cmr","VVEXP","VVlog","ln","exp","combine","coca","cd","colon",
+          "for_","li","cmr","VVEXP","VVlog", "sqrt", "ln","exp","combine","coca","cd","colon",
           "length","dim","vector","matrix")
           ret <- list()
           counter <- 1
@@ -393,6 +393,8 @@ math <- R6::R6Class("math",
             self$name_fct = as.name("exp")
         } else if(self$name_fct == "log") {
             self$name_fct = as.name("ln")
+        } else if(self$name_fct == "sqrt") {
+          self$name_fct = as.name("sqroot")
         }
 
       },

@@ -215,6 +215,86 @@ double ln(int base) {
 
 
 
+
+template<typename T, typename L>
+class VVsqrt {
+
+private:
+  const L& r; //const L& l;
+  bool ismatrix;
+  int nrow_;
+  int ncol_;
+
+public:
+
+  VVsqrt(const L &a, bool r_ismatrix, int r_rows, int r_cols) : r(a) {
+
+    if( r_ismatrix == true) {
+      ismatrix = r_ismatrix;
+      nrow_ = r_rows;
+      ncol_ = r_cols;
+    }
+
+  }
+
+   T operator[](const int i) const {
+     return sqrt(r[i% r.size()]);
+   }
+
+   int size() const {
+     return r.size();
+   }
+
+   bool im() const {
+     return ismatrix;
+   }
+
+   int nc() const {
+     return ncol_;
+   }
+
+   int nr() const {
+     return nrow_;
+   }
+
+};
+
+
+template<typename T, typename L>
+VEC< T, VVsqrt< T, L> > sqroot(const VEC<T, L>& a) {
+
+    bool ismatrix_ = false;
+    int nrows_ = 0;
+    int ncols_ = 0;
+
+    if(a.im() == true) {
+      ismatrix_ = true;
+      nrows_ = a.nr();
+      ncols_ = a.nc();
+    }
+
+    VEC<T, VVsqrt<T, L> > ret(VVsqrt<T, L>(a.data(), a.im(), a.nrow(), a.ncol()) );
+
+    ret.ismatrix = ismatrix_;
+    ret.ncols = ncols_;
+    ret.nrows = nrows_;
+
+    return ret;
+}
+
+
+double sqroot(double inp) {
+  return sqrt(inp);
+}
+
+double sqroot(int inp) {
+  return sqrt(static_cast<long double>(inp));
+}
+
+
+
+
+
 }
 
 
