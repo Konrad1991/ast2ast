@@ -9,7 +9,7 @@
 
 ## News
 
-Added an experimental way to retreive an R function instead of an external pointer. This approach is currently experimental. Set the argument *R_fct* to *TRUE* in case you want to test it. Beyond, that it is possible to retrieve the shared library by setting *SHLIB* to *TRUE*. 
+Added an experimental way to retreive an R function instead of an external pointer. This approach is useful for direct testing within R. Set the argument *R_fct* to *TRUE* in case you want to use it. 
 
 ```R
 f <- function() { print("Hello World!")}
