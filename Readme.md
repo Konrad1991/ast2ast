@@ -54,7 +54,7 @@ object cannot change its type!**
 * information about objects: length and dim
 * Basic operations: +, -, *, /
 * Indices: [] and at
-* mathematical functions: sin, asin, sinh, cos, acos, cosh, tan, atan, tanh, log, ^ and exp
+* mathematical functions: sin, asin, sinh, cos, acos, cosh, tan, atan, tanh, sqrt, log, ^ and exp
 * concatenate objects: c
 * control flow: for, if, else if, else
 * comparison: ==, !=, >, <, >= and <=
