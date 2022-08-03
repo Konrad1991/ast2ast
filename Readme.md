@@ -9,13 +9,13 @@
 
 ## News
 
-<p align="center">
+<p align="justify">
 I gave a talk at the *useR! 2022* conference about *ast2ast*. The record can be watched using the following link: https://m.youtube.com/watch?v=5NDPOLunQTA&list=PL77T87Q0eoJjvKVFHuJZ5_BGVbPPpB8LL&index=8,
 </p>
 
 ## Overview
 
-<p align="center">
+<p align="justify">
 Translates an R function into a C++ function. An external pointer to the C++ function or an R function is returned to the user. To install the Github version of the package use *devtools::install_github("Konrad1991/ast2ast", build_vignettes = TRUE)*. THe package is also on CRAN and can be installed via *install.packages("ast2ast")*. \
 
 The motivation to write the package was that it is often cumbersome using R functions in applications which have to call the R function very often (> 100 calls) (e.g. ODE solving, Optimization). One possiblity is to write the function in a faster programming language e.g. C. However, learning languages such as C is difficult and time consuming. Therefore *ast2ast* is a decent alternative as the function can be written in R.    
@@ -30,7 +30,7 @@ As an example solving a simple ODE-System. The translated code is considerable f
 
 ## Documentation
 
-<p align="center">
+<p align="justify">
 *translate(f, verbose = FALSE, reference = FALSE, R_fct = FALSE)*
 
 - *f* The function which should be translated from R to C++.
@@ -56,7 +56,7 @@ object cannot change its type!**
 
 ### The following functions are supported:
 
-<p align="center">
+<p align="justify">
 * assignment: = and <-
 * allocation: vector and matrix
 * information about objects: length and dim
@@ -74,7 +74,7 @@ object cannot change its type!**
 
 #### Some details about the implemented functions
 
-<p align="center">
+<p align="justify">
 * allocation of memory works: Following forms are possible: vector(size_of_elements), vector(value, size_of_elements) matrix(nrows, ncols), matrix(value, nrows, ncols). The latter fills the matrix or the vector with the specified 'value'.
 * For indices squared brackets '[]' can be used as common in R. \string{Despite the results of calculations cannot be used!} Beyond that the function 'at' exists which accepts as first argument a variable and as the second argument you pass the desired index. The caveat of using 'at' is that only one entry can be accessed. Whereas '[]' can return more then one element. **The 'at'function returns a reference to the vector entry. Therefore variable[index] can behave differently then at(variable, index). The function has to be use carefully when 'at' is used. Especially if '[]' and 'at' are mixed the function behaviour is difficult to predict. Please test it before using in a serious project.**
 * For loops can be written as used in R
@@ -123,7 +123,7 @@ call_fct(pointer_to_f_cpp)
 
 ## Contribution
 
-<p align="center">
+<p align="justify">
 Contribution would be warmly appreciated (See Code of Conduct).
 </p>
 
