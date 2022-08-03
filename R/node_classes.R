@@ -395,6 +395,12 @@ math <- R6::R6Class("math",
             self$name_fct = as.name("ln")
         } else if(self$name_fct == "sqrt") {
           self$name_fct = as.name("sqroot")
+        } else if(self$name_fct == "rnorm") {
+          self$name_fct = as.name("norm_rand_etr")
+        } else if(self$name_fct == "rexp") {
+          self$name_fct = as.name("exp_rand_etr")
+        } else if(self$name_fct == "runif") {
+          self$name_fct = as.name("unif_rand_etr")
         }
 
       },

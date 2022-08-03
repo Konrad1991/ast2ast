@@ -9,17 +9,14 @@
 
 ## News
 
-Added an experimental way to retreive an R function instead of an external pointer. This approach is useful for direct testing within R. Set the argument *R_fct* to *TRUE* in case you want to use it. 
+I gave a talk at the *useR! 2022* conference about *ast2ast*. The record can be watched using the following link: https://m.youtube.com/watch?v=5NDPOLunQTA&list=PL77T87Q0eoJjvKVFHuJZ5_BGVbPPpB8LL&index=8,
 
-```R
-f <- function() { print("Hello World!")}
-ast2ast::translate(f, R_fct = TRUE)
-f()
-```
 
 ## Overview
 
-Translates an R function into a C++ function. An external pointer to the C++ function is returned to the user. To install the package use *devtools::install_github("Konrad1991/ast2ast", build_vignettes = TRUE)*. The motivation to write the package was that it is often cumbersome using R functions in applications which have to call this function very often (> 100 calls) (e.g. ODE solving, Optimization). One possiblity is to write the function in a faster programming language e.g. C. However, learning languages such as C is difficult and time consuming. Therefore *ast2ast* is a decent alternative as the function can be written in R.    
+Translates an R function into a C++ function. An external pointer to the C++ function or an R function is returned to the user. To install the Github version of the package use *devtools::install_github("Konrad1991/ast2ast", build_vignettes = TRUE)*. THe package is also on CRAN and can be installed via *install.packages("ast2ast")*. \
+
+The motivation to write the package was that it is often cumbersome using R functions in applications which have to call the R function very often (> 100 calls) (e.g. ODE solving, Optimization). One possiblity is to write the function in a faster programming language e.g. C. However, learning languages such as C is difficult and time consuming. Therefore *ast2ast* is a decent alternative as the function can be written in R.    
 
 As an example solving a simple ODE-System. The translated code is considerable faster then R code and almost as fast as C++. Code for the example can be found in the vignettes.
 
@@ -27,12 +24,15 @@ As an example solving a simple ODE-System. The translated code is considerable f
 
 ## Documentation
 
-*translate(f, verbose = FALSE, reference = FALSE)*
+*translate(f, verbose = FALSE, reference = FALSE, R_fct = FALSE)*
 
-*f* The function which should be translated from R to C++.
-*verbose* If set to true the output of RcppXPtrUtils::cppXPtr is printed.
-*reference* If set to true the arguments are passed by reference.
-Returns an external pointer of the generated C++ function
+- *f* The function which should be translated from R to C++.
+- *verbose* If set to TRUE the output of RcppXPtrUtils::cppXPtr is printed.
+- *reference* If set to TRUE the arguments are passed by reference. Default value is FALSE.
+- *R_fct* If set to TRUE an R function instead of an external pointer is returned. Default value is FALSE.
+
+The function *translate* returns an external pointer of the generated C++ function or an R function. **As a side note the R function interface is only for testing and is currently not very efficient.**
+
 
 ### The following types are supported:
 
@@ -87,11 +87,18 @@ However, it does not behave exactly like R! Please check your compiled function 
 If you want to see how ast2ast differs from R in detail check the vignette: 'Detailed Documentation'.
 
 
+
+
+
 ```R
+# Translating to R_fct
 f <- function() { print("Hello World!")}
+ast2ast::translate(f, R_fct = TRUE)
+f()
 
+# Translating to external pointer
+f <- function() { print("Hello World!")}
 pointer_to_f_cpp <- ast2ast::translate(f)
-
 Rcpp::sourceCpp(code = "
 #include <Rcpp.h>
 typedef void (*fp)();
@@ -102,11 +109,8 @@ void call_fct(Rcpp::XPtr<fp> inp) {
   f();
 }
 ")
-
 call_fct(pointer_to_f_cpp)
 ```
-
-For more examples check the vignette *DetailedDocumentation*.
 
 ## Contribution
 

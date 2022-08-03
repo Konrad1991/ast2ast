@@ -28,7 +28,8 @@ LC <- R6::R6Class("LC",
        PF = c("=", "<-", "[", "for", "c", ":", "sin", "asin", "sinh", "cos", "acos", "cosh",
         "tan", "atan", "tanh", "log", "sqrt", "^", "+", "-",
          "*", "/", "if", "else if", "else", "{", "(",
-        "==", "!=", ">", ">=", "<", "<=", "print", "return", "vector", "matrix", "length", "dim", "cmr", "sub", "exp", "i2d", "at", "&&", "||"), # permitted functions
+        "==", "!=", ">", ">=", "<", "<=", "print", "return", "vector", "matrix", "length", "dim", "cmr", "sub", "exp", "i2d", "at", "&&", "||",
+       "rnorm", "runif", "rexp"), # permitted functions
 
        vars = list(), # variables
        index_vars = list(),
@@ -40,7 +41,8 @@ LC <- R6::R6Class("LC",
        "==", "!=", ">", ">=", "<", "<=", "return", "vector", "matrix","length", "dim", "cmr", "exp", "at", "&&", "||"),
 
        math = c("sin", "asin", "sinh", "cos", "acos", "cosh",
-        "tan", "atan", "tanh", "log", "^", "sqrt"), # %% function is missing
+        "tan", "atan", "tanh", "log", "^", "sqrt",
+        "rnorm", "runif", "rexp"), # %% function is missing
 
        check_assign_subset = NULL,
        found_return = FALSE,
