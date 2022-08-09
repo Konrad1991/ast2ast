@@ -29,7 +29,12 @@ LC <- R6::R6Class("LC",
         "tan", "atan", "tanh", "log", "sqrt", "^", "+", "-",
          "*", "/", "if", "else if", "else", "{", "(",
         "==", "!=", ">", ">=", "<", "<=", "print", "return", "vector", "matrix", "length", "dim", "cmr", "sub", "exp", "i2d", "at", "&&", "||",
-       "rnorm", "runif", "rexp"), # permitted functions
+       "dunif", "punif", "qunif", "runif",
+       "dnorm", "pnorm", "qnorm", "rnorm",
+       "dlnorm", "plnorm", "qlnorm", "rlnorm",
+       "dgamma", "pgamma", "qgamma", "rgamma",
+       "dbeta", "pbeta", "beta", "rbeta",
+       "dnbeta", "pnbeta", "qnbeta", "rnbeta"), # permitted functions
 
        vars = list(), # variables
        index_vars = list(),
@@ -42,7 +47,12 @@ LC <- R6::R6Class("LC",
 
        math = c("sin", "asin", "sinh", "cos", "acos", "cosh",
         "tan", "atan", "tanh", "log", "^", "sqrt",
-        "rnorm", "runif", "rexp"), # %% function is missing
+        "dunif", "punif", "qunif", "runif",
+       "dnorm", "pnorm", "qnorm", "rnorm",
+       "dlnorm", "plnorm", "qlnorm", "rlnorm",
+       "dgamma", "pgamma", "qgamma", "rgamma",
+       "dbeta", "pbeta", "beta", "rbeta",
+       "dnbeta", "pnbeta", "qnbeta", "rnbeta"), # %% function is missing
 
        check_assign_subset = NULL,
        found_return = FALSE,

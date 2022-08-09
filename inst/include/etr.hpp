@@ -42,7 +42,11 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "etr_bits/interpolation.hpp"
 #include "etr_bits/comparison.hpp"
 #include "etr_bits/looping.hpp"
-#include "etr_bits/distri.hpp"
+#include "etr_bits/uniform.hpp"
+#include "etr_bits/normal.hpp"
+#include "etr_bits/lnorm.hpp"
+#include "etr_bits/GAMMA.hpp"
+#include "etr_bits/beta.hpp"
 
 //#define vec VEC<double>
 //#define mat VEC<double>

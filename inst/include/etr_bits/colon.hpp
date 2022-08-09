@@ -1,3 +1,4 @@
+
 /*
 R package etr
 Copyright (C) 2021 Konrad Krämer
@@ -188,6 +189,11 @@ int length(bool inp) {
 
 template<typename T>
 int length(VEC<T>& inp) {
+  return inp.size();
+}
+
+template<typename T2, typename R2> 
+int length(const VEC<T2, R2>& inp) {
   return inp.size();
 }
 

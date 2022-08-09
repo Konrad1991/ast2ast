@@ -395,13 +395,55 @@ math <- R6::R6Class("math",
             self$name_fct = as.name("ln")
         } else if(self$name_fct == "sqrt") {
           self$name_fct = as.name("sqroot")
-        } else if(self$name_fct == "rnorm") {
-          self$name_fct = as.name("norm_rand_etr")
-        } else if(self$name_fct == "rexp") {
-          self$name_fct = as.name("exp_rand_etr")
         } else if(self$name_fct == "runif") {
-          self$name_fct = as.name("unif_rand_etr")
-        }
+          self$name_fct = as.name("runif_etr")
+        } else if(self$name_fct == "dunif") {
+          self$name_fct = as.name("dunif_etr")
+        } else if(self$name_fct == "punif") {
+          self$name_fct = as.name("punif_etr")
+        } else if(self$name_fct == "qunif") {
+          self$name_fct = as.name("qunif_etr")
+        } else if(self$name_fct == "rnorm") {
+          self$name_fct = as.name("rnorm_etr")
+        } else if(self$name_fct == "dnorm") {
+          self$name_fct = as.name("dnorm_etr")
+        } else if(self$name_fct == "pnorm") {
+          self$name_fct = as.name("pnorm_etr")
+        } else if(self$name_fct == "qnorm") {
+          self$name_fct = as.name("qnorm_etr")
+        } else if(self$name_fct == "rlnorm") {
+          self$name_fct = as.name("rlnorm_etr")
+        } else if(self$name_fct == "dlnorm") {
+          self$name_fct = as.name("dlnorm_etr")
+        } else if(self$name_fct == "plnorm") {
+          self$name_fct = as.name("plnorm_etr")
+        } else if(self$name_fct == "qlnorm") {
+          self$name_fct = as.name("qlnorm_etr")
+        } else if(self$name_fct == "rgamma") {
+          self$name_fct = as.name("rgamma_etr")
+        } else if(self$name_fct == "dgamma") {
+          self$name_fct = as.name("dgamma_etr")
+        } else if(self$name_fct == "pgamma") {
+          self$name_fct = as.name("pgamma_etr")
+        } else if(self$name_fct == "qgamma") {
+          self$name_fct = as.name("qgamma_etr")
+        } else if(self$name_fct == "rbeta") {
+          self$name_fct = as.name("rbeta_etr")
+        } else if(self$name_fct == "dbeta") {
+          self$name_fct = as.name("dbeta_etr")
+        } else if(self$name_fct == "pbeta") {
+          self$name_fct = as.name("pbeta_etr")
+        } else if(self$name_fct == "qbeta") {
+          self$name_fct = as.name("qbeta_etr")
+        } else if(self$name_fct == "rnbeta") {
+          self$name_fct = as.name("rnbeta_etr")
+        } else if(self$name_fct == "dnbeta") {
+          self$name_fct = as.name("dnbeta_etr")
+        } else if(self$name_fct == "pnbeta") {
+          self$name_fct = as.name("pnbeta_etr")
+        } else if(self$name_fct == "qnbeta") {
+          self$name_fct = as.name("qnbeta_etr")
+        } 
 
       },
 

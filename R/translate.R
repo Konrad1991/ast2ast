@@ -261,9 +261,9 @@ MA <- R6::R6Class("MA",
           fct = c(
             "// [[Rcpp::depends(ast2ast)]] \n",
             "// [[Rcpp::depends(RcppArmadillo)]] \n",
-            "// [[Rcpp::depends(ast2ast)]] \n",
             "// [[Rcpp::plugins(cpp17)]] \n",
             self$signature_SEXP(self$desired_type, reference, extern = TRUE), "\n",
+            #"// [[Rcpp::export]] \n", # careful!!!
             self$signature_SEXP(self$desired_type, reference, extern = FALSE), "\n",
             self$vars_declaration_SEXP(self$desired_type), "\n",
             self$char, "\n",
@@ -423,16 +423,18 @@ translate <- function(f, verbose = FALSE, reference = FALSE, R_fct = FALSE) {
 
       file <- tempfile(fileext = ".cpp")
       write(fct, file)
-      path <- tempfile()
-
+      path <- tempfile() #gsub(gsub(".*/","",file), "", file) #tempfile()
       dir.create(path)
-      Sys.setenv("PKG_CXXFLAGS" = "-DRFCT")
-      
+
+      Sys.setenv("PKG_CXXFLAGS" = "-DRFCT -O3")
+
+      #Rcpp::sourceCpp(code = fct, verbose = verbose) # !!!!
+
       options(warn=-1)
       tryCatch(
         expr = {
                 fct_ret = Rcpp::sourceCpp(file,
-                                          cacheDir = path,
+                                           cacheDir = path,
                                            verbose = verbose)
         },
         error = function(e) {

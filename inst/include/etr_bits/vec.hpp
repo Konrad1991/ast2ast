@@ -174,7 +174,8 @@ public:
       nrows = Rf_nrows(inp);
     }
 
-    d.init_sexp(inp);
+    //d.init_sexp(inp);
+    d = inp; // calls constructor for SEXP
 
     return *this;
   }
