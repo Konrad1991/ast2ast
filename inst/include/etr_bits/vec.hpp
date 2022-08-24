@@ -59,11 +59,13 @@ public:
   VEC(const bool value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
 
   #ifdef RLANG
-
+  
+  VEC(Rboolean value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
+  
   VEC(SEXP inp) : subsetted(0), ismatrix(0), d(inp), temp(1) {
     subsetted = false;
     ismatrix = false;
-    ass(Rf_isReal(inp), "no numeric input");
+    //ass(Rf_isReal(inp), "no numeric input"); // double checked
     if(Rf_isMatrix(inp) == true) {
       ismatrix = true;
       ncols = Rf_ncols(inp);
@@ -74,7 +76,10 @@ public:
   #endif
 
   VEC(const double value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
+ 
   VEC(const long unsigned int n) : subsetted(0), ismatrix(0), d(n), temp(1) {d.fill(static_cast<double>(n));} // fill is a hack that sexp s = 1 works;
+  //VEC(const long unsigned int n) : subsetted(0), ismatrix(0), d(1, static_cast<double>(n)), temp(1) {} // run all tests whether this is possible instead of line 80
+
 
   // Constructors for vector
   VEC(const int n) : subsetted(0), ismatrix(0),d(n), temp(1) {d.fill(static_cast<double>(n));} // fill is a hack that sexp s = 1 works;

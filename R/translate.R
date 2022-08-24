@@ -42,6 +42,7 @@ MA <- R6::R6Class("MA",
           self$body = body(fct)
           self$body = self$body[2:length(self$body)]
           self$desired_type = desired_type
+          self$args_2_fct = methods::formalArgs(fct) #as.list(args(fct))
         },
 
         getast = function() {
@@ -111,7 +112,6 @@ MA <- R6::R6Class("MA",
           for(i in seq_along(temp1)) {
             for(j in seq_along(self$args)) {
               if(temp1[[i]] == self$args[[j]]) {
-                self$args_2_fct = c(self$args_2_fct, temp1[[i]])
                 temp1[[i]] = NA
                 break
               }
@@ -222,6 +222,7 @@ MA <- R6::R6Class("MA",
 
         vars_declaration_SEXP = function(desired_type) {
           variables = self$get_vars()
+        
           args_dec <- sapply(seq_along(variables), function(x) {
             temp <- paste(self$var_types[[x]], variables[[x]], ';', collapse = '')
             return(temp)
@@ -229,12 +230,13 @@ MA <- R6::R6Class("MA",
           args_dec <- paste(args_dec, collapse = " ")
 
           fct_args = self$args_2_fct
+          
           fct_args_dec <- sapply(seq_along(fct_args), function(x) {
             temp <- paste('sexp', fct_args[[x]], '=', paste0(self$args[[x]], 'SEXP'), ';', collapse = '')
             return(temp)
           })
-          args_dec <- paste(args_dec, fct_args_dec, collapse = " ")
 
+          args_dec <- c(args_dec, fct_args_dec)
           return(args_dec)
         },
 

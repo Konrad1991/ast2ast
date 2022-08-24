@@ -20,216 +20,216 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 */
 
 
-#ifndef NORMAL
-#define NORMAL
+#ifndef GAMMA
+#define GAMMA
 
-#include "vec.hpp"
+#include "../vec.hpp"
 
 namespace etr {
 
-// normorm distribution
+// gammaorm distribution
 
-// rnorm
+// rgamma
 // ===============================================================================
 // first argument int
-VEC<double> rnorm_etr(int x , double min = 0.0, double max = 1.0) {
+VEC<double> rgamma_etr(int x , double min = 0.0, double max = 1.0) {
       VEC<double> ret(x);
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min, max);
+        ret[i] = R::rgamma(min, max);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> rnorm_etr(int x, VEC<double>& min, double max = 1.0) {
+VEC<double> rgamma_etr(int x, VEC<double>& min, double max = 1.0) {
       VEC<double> ret(x);
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max);
+        ret[i] = R::rgamma(min[i % min.size()], max);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> rnorm_etr(int x , double min, VEC<double>& max) {
+VEC<double> rgamma_etr(int x , double min, VEC<double>& max) {
       VEC<double> ret(x);
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min, max[i % max.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> rnorm_etr(int x , double min, const VEC<T2, R2>& max) {
-      VEC<double> ret(x);
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::rnorm(min, max[i % max.size()]);
+        ret[i] = R::rgamma(min, max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> rnorm_etr(int x, const VEC<T2, R2>& min, double max = 1.0) {
+VEC<double> rgamma_etr(int x , double min, const VEC<T2, R2>& max) {
       VEC<double> ret(x);
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max);
+        ret[i] = R::rgamma(min, max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> rnorm_etr(int x, VEC<double>& min, VEC<double>& max) {
+template<typename T2, typename R2>
+VEC<double> rgamma_etr(int x, const VEC<T2, R2>& min, double max = 1.0) {
       VEC<double> ret(x);
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max[i % max.size()]);
+        ret[i] = R::rgamma(min[i % min.size()], max);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> rgamma_etr(int x, VEC<double>& min, VEC<double>& max) {
+      VEC<double> ret(x);
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::rgamma(min[i % min.size()], max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> rnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max) {
+VEC<double> rgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max) {
       VEC<double> ret(x);
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max[i % max.size()]);
+        ret[i] = R::rgamma(min[i % min.size()], max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> rnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max) {
+VEC<double> rgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max) {
       VEC<double> ret(x);
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max[i % max.size()]);
+        ret[i] = R::rgamma(min[i % min.size()], max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> rnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max) {
+VEC<double> rgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max) {
       VEC<double> ret(x);
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max[i % max.size()]);
+        ret[i] = R::rgamma(min[i % min.size()], max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 
-// rnorm
+// rgamma
 // ===============================================================================
 // first argument double
-VEC<double> rnorm_etr(double x , double min = 0.0, double max = 1.0) {
+VEC<double> rgamma_etr(double x , double min = 0.0, double max = 1.0) {
       VEC<double> ret(d2i(x));
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min, max);
+        ret[i] = R::rgamma(min, max);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> rnorm_etr(double x, VEC<double>& min, double max = 1.0) {
+VEC<double> rgamma_etr(double x, VEC<double>& min, double max = 1.0) {
       VEC<double> ret(d2i(x));
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max);
+        ret[i] = R::rgamma(min[i % min.size()], max);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> rnorm_etr(double x , double min, VEC<double>& max) {
+VEC<double> rgamma_etr(double x , double min, VEC<double>& max) {
       VEC<double> ret(d2i(x));
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min, max[i % max.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> rnorm_etr(double x , double min, const VEC<T2, R2>& max) {
-      VEC<double> ret(d2i(x));
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::rnorm(min, max[i % max.size()]);
+        ret[i] = R::rgamma(min, max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> rnorm_etr(double x, const VEC<T2, R2>& min, double max = 1.0) {
+VEC<double> rgamma_etr(double x , double min, const VEC<T2, R2>& max) {
       VEC<double> ret(d2i(x));
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max);
+        ret[i] = R::rgamma(min, max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> rnorm_etr(double x, VEC<double>& min, VEC<double>& max) {
+template<typename T2, typename R2>
+VEC<double> rgamma_etr(double x, const VEC<T2, R2>& min, double max = 1.0) {
       VEC<double> ret(d2i(x));
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max[i % max.size()]);
+        ret[i] = R::rgamma(min[i % min.size()], max);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> rgamma_etr(double x, VEC<double>& min, VEC<double>& max) {
+      VEC<double> ret(d2i(x));
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::rgamma(min[i % min.size()], max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> rnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max) {
+VEC<double> rgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max) {
       VEC<double> ret(d2i(x));
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max[i % max.size()]);
+        ret[i] = R::rgamma(min[i % min.size()], max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> rnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max) {
+VEC<double> rgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max) {
       VEC<double> ret(d2i(x));
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max[i % max.size()]);
+        ret[i] = R::rgamma(min[i % min.size()], max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> rnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max) {
+VEC<double> rgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max) {
       VEC<double> ret(d2i(x));
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max[i % max.size()]);
+        ret[i] = R::rgamma(min[i % min.size()], max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-// rnorm
+// rgamma
 // ===============================================================================
 // first argument VEC<double>
-VEC<double> rnorm_etr(VEC<double>& x , double min = 0.0, double max = 1.0) {
+VEC<double> rgamma_etr(VEC<double>& x , double min = 0.0, double max = 1.0) {
             VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -239,13 +239,13 @@ VEC<double> rnorm_etr(VEC<double>& x , double min = 0.0, double max = 1.0) {
       
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min, max);
+        ret[i] = R::rgamma(min, max);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> rnorm_etr(VEC<double>& x, VEC<double>& min, double max = 1.0) {
+VEC<double> rgamma_etr(VEC<double>& x, VEC<double>& min, double max = 1.0) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -254,13 +254,13 @@ VEC<double> rnorm_etr(VEC<double>& x, VEC<double>& min, double max = 1.0) {
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max);
+        ret[i] = R::rgamma(min[i % min.size()], max);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> rnorm_etr(VEC<double>& x , double min, VEC<double>& max) {
+VEC<double> rgamma_etr(VEC<double>& x , double min, VEC<double>& max) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -269,30 +269,14 @@ VEC<double> rnorm_etr(VEC<double>& x , double min, VEC<double>& max) {
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min, max[i % max.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> rnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max) {
-                  VEC<double> ret;
-      if(length(x) > 1) {
-            ret = vector(length(x));
-      } else if(length(x) == 1){
-            ret = vector(at(x, 1));
-      }
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::rnorm(min, max[i % max.size()]);
+        ret[i] = R::rgamma(min, max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> rnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max = 1.0) {
+VEC<double> rgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -301,13 +285,14 @@ VEC<double> rnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max = 1.0) 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max);
+        ret[i] = R::rgamma(min, max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> rnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max) {
+template<typename T2, typename R2>
+VEC<double> rgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max = 1.0) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -316,14 +301,29 @@ VEC<double> rnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max) {
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max[i % max.size()]);
+        ret[i] = R::rgamma(min[i % min.size()], max);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> rgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max) {
+                  VEC<double> ret;
+      if(length(x) > 1) {
+            ret = vector(length(x));
+      } else if(length(x) == 1){
+            ret = vector(at(x, 1));
+      }
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::rgamma(min[i % min.size()], max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> rnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max) {
+VEC<double> rgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -332,14 +332,14 @@ VEC<double> rnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max) 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max[i % max.size()]);
+        ret[i] = R::rgamma(min[i % min.size()], max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> rnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max) {
+VEC<double> rgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -348,14 +348,14 @@ VEC<double> rnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max) 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max[i % max.size()]);
+        ret[i] = R::rgamma(min[i % min.size()], max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> rnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max) {
+VEC<double> rgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -364,18 +364,18 @@ VEC<double> rnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max[i % max.size()]);
+        ret[i] = R::rgamma(min[i % min.size()], max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-// rnorm
+// rgamma
 // ===============================================================================
 // first argument const VEC<T2, R2>&
 
 template<typename T2, typename R2>
-VEC<double> rnorm_etr(const VEC<T2, R2>& x , double min = 0.0, double max = 1.0) {
+VEC<double> rgamma_etr(const VEC<T2, R2>& x , double min = 0.0, double max = 1.0) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -384,7 +384,7 @@ VEC<double> rnorm_etr(const VEC<T2, R2>& x , double min = 0.0, double max = 1.0)
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min, max);
+        ret[i] = R::rgamma(min, max);
         PutRNGstate();
       }
       return ret;
@@ -393,7 +393,7 @@ VEC<double> rnorm_etr(const VEC<T2, R2>& x , double min = 0.0, double max = 1.0)
 
 
 template<typename T2, typename R2>
-VEC<double> rnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max = 1.0) {
+VEC<double> rgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max = 1.0) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -402,14 +402,14 @@ VEC<double> rnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max = 1.0) 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max);
+        ret[i] = R::rgamma(min[i % min.size()], max);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> rnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max) {
+VEC<double> rgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -418,14 +418,14 @@ VEC<double> rnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max) {
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min, max[i % max.size()]);
+        ret[i] = R::rgamma(min, max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> rnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max) {
+VEC<double> rgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -434,14 +434,14 @@ VEC<double> rnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max)
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min, max[i % max.size()]);
+        ret[i] = R::rgamma(min, max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> rnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max = 1.0) {
+VEC<double> rgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max = 1.0) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -450,14 +450,14 @@ VEC<double> rnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max =
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max);
+        ret[i] = R::rgamma(min[i % min.size()], max);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> rnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max) {
+VEC<double> rgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -466,14 +466,14 @@ VEC<double> rnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max) 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max[i % max.size()]);
+        ret[i] = R::rgamma(min[i % min.size()], max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> rnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max) {
+VEC<double> rgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -482,14 +482,14 @@ VEC<double> rnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max[i % max.size()]);
+        ret[i] = R::rgamma(min[i % min.size()], max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> rnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max) {
+VEC<double> rgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -498,14 +498,14 @@ VEC<double> rnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max[i % max.size()]);
+        ret[i] = R::rgamma(min[i % min.size()], max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3>
-VEC<double> rnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max) {
+VEC<double> rgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -514,7 +514,7 @@ VEC<double> rnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::rnorm(min[i % min.size()], max[i % max.size()]);
+        ret[i] = R::rgamma(min[i % min.size()], max[i % max.size()]);
         PutRNGstate();
       }
       return ret;
@@ -534,294 +534,294 @@ VEC<double> rnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
 
 
 
-// dnorm
+// dgamma
 // ===============================================================================
 // first argument int
-VEC<double> dnorm_etr(int x , double min = 0.0, double max = 1.0, bool log = false) {
+VEC<double> dgamma_etr(int x , double min = 0.0, double max = 1.0, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min, max, log);
+        ret[i] = R::dgamma(i2d(x), min, max, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(int x, VEC<double>& min, double max = 1.0, bool log = false) {
+VEC<double> dgamma_etr(int x, VEC<double>& min, double max = 1.0, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max, log);
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(int x , double min, VEC<double>& max, bool log = false) {
+VEC<double> dgamma_etr(int x , double min, VEC<double>& max, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min, max[i % max.size()], log);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> dnorm_etr(int x , double min, const VEC<T2, R2>& max, bool log = false) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min, max[i % max.size()], log);
+        ret[i] = R::dgamma(i2d(x), min, max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(int x, const VEC<T2, R2>& min, double max = 1.0, bool log = false) {
+VEC<double> dgamma_etr(int x , double min, const VEC<T2, R2>& max, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max, log);
+        ret[i] = R::dgamma(i2d(x), min, max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(int x, VEC<double>& min, VEC<double>& max, bool log = false) {
+template<typename T2, typename R2>
+VEC<double> dgamma_etr(int x, const VEC<T2, R2>& min, double max = 1.0, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max[i % max.size()], log);
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max, log);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> dgamma_etr(int x, VEC<double>& min, VEC<double>& max, bool log = false) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, bool log = false) {
+VEC<double> dgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max[i % max.size()], log);
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, bool log = false) {
+VEC<double> dgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max[i % max.size()], log);
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> dnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool log = false) {
+VEC<double> dgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max[i % max.size()], log);
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 // new
-VEC<double> dnorm_etr(int x , double min, double max, VEC<double>& log) {
+VEC<double> dgamma_etr(int x , double min, double max, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min, max, log[i % log.size()]);
+        ret[i] = R::dgamma(i2d(x), min, max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(int x, VEC<double>& min, double max, VEC<double>& log) {
+VEC<double> dgamma_etr(int x, VEC<double>& min, double max, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max, log[i % log.size()]);
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(int x , double min, VEC<double>& max, VEC<double>& log) {
+VEC<double> dgamma_etr(int x , double min, VEC<double>& max, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min, max[i % max.size()], log[i % log.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> dnorm_etr(int x , double min, const VEC<T2, R2>& max, VEC<double>& log) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min, max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(i2d(x), min, max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(int x, const VEC<T2, R2>& min, double max, VEC<double>& log) {
+VEC<double> dgamma_etr(int x , double min, const VEC<T2, R2>& max, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max, log[i % log.size()]);
+        ret[i] = R::dgamma(i2d(x), min, max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(int x, VEC<double>& min, VEC<double>& max, VEC<double>& log) {
+template<typename T2, typename R2>
+VEC<double> dgamma_etr(int x, const VEC<T2, R2>& min, double max, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max, log[i % log.size()]);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> dgamma_etr(int x, VEC<double>& min, VEC<double>& max, VEC<double>& log) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& log) {
+VEC<double> dgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& log) {
+VEC<double> dgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> dnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& log) {
+VEC<double> dgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> dnorm_etr(int x , double min, double max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(int x , double min, double max, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min, max, log[i % log.size()]);
+        ret[i] = R::dgamma(i2d(x), min, max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> dnorm_etr(int x, VEC<double>& min, double max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(int x, VEC<double>& min, double max, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max, log[i % log.size()]);
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> dnorm_etr(int x , double min, VEC<double>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(int x , double min, VEC<double>& max, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min, max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(i2d(x), min, max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(int x , double min, const VEC<T2, R2>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(int x , double min, const VEC<T2, R2>& max, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min, max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(i2d(x), min, max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(int x, const VEC<T2, R2>& min, double max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(int x, const VEC<T2, R2>& min, double max, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max, log[i % log.size()]);
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> dnorm_etr(int x, VEC<double>& min, VEC<double>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(int x, VEC<double>& min, VEC<double>& max, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z>
-VEC<double> dnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(i2d(x), min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(i2d(x), min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
@@ -829,304 +829,304 @@ VEC<double> dnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, con
 
 
 
-// dnorm
+// dgamma
 // ===============================================================================
 // first argument double
-VEC<double> dnorm_etr(double x , double min = 0.0, double max = 1.0, bool log = false) {
+VEC<double> dgamma_etr(double x , double min = 0.0, double max = 1.0, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min, max, log);
+        ret[i] = R::dgamma(x, min, max, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(double x, VEC<double>& min, double max = 1.0, bool log = false) {
+VEC<double> dgamma_etr(double x, VEC<double>& min, double max = 1.0, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max, log);
+        ret[i] = R::dgamma(x, min[i % min.size()], max, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(double x , double min, VEC<double>& max, bool log = false) {
+VEC<double> dgamma_etr(double x , double min, VEC<double>& max, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min, max[i % max.size()], log);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> dnorm_etr(double x , double min, const VEC<T2, R2>& max, bool log = false) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::dnorm(x, min, max[i % max.size()], log);
+        ret[i] = R::dgamma(x, min, max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(double x, const VEC<T2, R2>& min, double max = 1.0, bool log = false) {
+VEC<double> dgamma_etr(double x , double min, const VEC<T2, R2>& max, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max, log);
+        ret[i] = R::dgamma(x, min, max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(double x, VEC<double>& min, VEC<double>& max, bool log = false) {
+template<typename T2, typename R2>
+VEC<double> dgamma_etr(double x, const VEC<T2, R2>& min, double max = 1.0, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max[i % max.size()], log);
+        ret[i] = R::dgamma(x, min[i % min.size()], max, log);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> dgamma_etr(double x, VEC<double>& min, VEC<double>& max, bool log = false) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::dgamma(x, min[i % min.size()], max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, bool log = false) {
+VEC<double> dgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max[i % max.size()], log);
+        ret[i] = R::dgamma(x, min[i % min.size()], max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, bool log = false) {
+VEC<double> dgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max[i % max.size()], log);
+        ret[i] = R::dgamma(x, min[i % min.size()], max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> dnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool log = false) {
+VEC<double> dgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max[i % max.size()], log);
+        ret[i] = R::dgamma(x, min[i % min.size()], max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 // new
-VEC<double> dnorm_etr(double x , double min, double max, VEC<double> log) {
+VEC<double> dgamma_etr(double x , double min, double max, VEC<double> log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min, max, log[i % log.size()]);
+        ret[i] = R::dgamma(x, min, max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(double x, VEC<double>& min, double max, VEC<double> log) {
+VEC<double> dgamma_etr(double x, VEC<double>& min, double max, VEC<double> log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max, log[i % log.size()]);
+        ret[i] = R::dgamma(x, min[i % min.size()], max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(double x , double min, VEC<double>& max, VEC<double> log) {
+VEC<double> dgamma_etr(double x , double min, VEC<double>& max, VEC<double> log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min, max[i % max.size()], log[i % log.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> dnorm_etr(double x , double min, const VEC<T2, R2>& max, VEC<double> log) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::dnorm(x, min, max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x, min, max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(double x, const VEC<T2, R2>& min, double max, VEC<double> log) {
+VEC<double> dgamma_etr(double x , double min, const VEC<T2, R2>& max, VEC<double> log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max, log[i % log.size()]);
+        ret[i] = R::dgamma(x, min, max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(double x, VEC<double>& min, VEC<double>& max, VEC<double> log) {
+template<typename T2, typename R2>
+VEC<double> dgamma_etr(double x, const VEC<T2, R2>& min, double max, VEC<double> log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x, min[i % min.size()], max, log[i % log.size()]);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> dgamma_etr(double x, VEC<double>& min, VEC<double>& max, VEC<double> log) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::dgamma(x, min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double> log) {
+VEC<double> dgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double> log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x, min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double> log) {
+VEC<double> dgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double> log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x, min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> dnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double> log) {
+VEC<double> dgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double> log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x, min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> dnorm_etr(double x , double min, double max, const VEC<U, Z> log) {
+VEC<double> dgamma_etr(double x , double min, double max, const VEC<U, Z> log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min, max, log[i % log.size()]);
+        ret[i] = R::dgamma(x, min, max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> dnorm_etr(double x, VEC<double>& min, double max, const VEC<U, Z> log) {
+VEC<double> dgamma_etr(double x, VEC<double>& min, double max, const VEC<U, Z> log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max, log[i % log.size()]);
+        ret[i] = R::dgamma(x, min[i % min.size()], max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> dnorm_etr(double x , double min, VEC<double>& max, const VEC<U, Z> log) {
+VEC<double> dgamma_etr(double x , double min, VEC<double>& max, const VEC<U, Z> log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min, max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x, min, max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(double x , double min, const VEC<T2, R2>& max, const VEC<U, Z> log) {
+VEC<double> dgamma_etr(double x , double min, const VEC<T2, R2>& max, const VEC<U, Z> log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min, max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x, min, max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(double x, const VEC<T2, R2>& min, double max, const VEC<U, Z> log) {
+VEC<double> dgamma_etr(double x, const VEC<T2, R2>& min, double max, const VEC<U, Z> log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max, log[i % log.size()]);
+        ret[i] = R::dgamma(x, min[i % min.size()], max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> dnorm_etr(double x, VEC<double>& min, VEC<double>& max, const VEC<U, Z> log) {
+VEC<double> dgamma_etr(double x, VEC<double>& min, VEC<double>& max, const VEC<U, Z> log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x, min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<U, Z> log) {
+VEC<double> dgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<U, Z> log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x, min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<U, Z> log) {
+VEC<double> dgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<U, Z> log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x, min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z>
-VEC<double> dnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<U, Z> log) {
+VEC<double> dgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<U, Z> log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x, min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x, min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 
-// dnorm
+// dgamma
 // ===============================================================================
 // first argument VEC<double>
-VEC<double> dnorm_etr(VEC<double>& x , double min = 0.0, double max = 1.0, bool log = false) {
+VEC<double> dgamma_etr(VEC<double>& x , double min = 0.0, double max = 1.0, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1136,13 +1136,13 @@ VEC<double> dnorm_etr(VEC<double>& x , double min = 0.0, double max = 1.0, bool 
 
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()],min, max, log);
+        ret[i] = R::dgamma(x[i % x.size()],min, max, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, double max = 1.0, bool log = false) {
+VEC<double> dgamma_etr(VEC<double>& x, VEC<double>& min, double max = 1.0, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1151,13 +1151,13 @@ VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, double max = 1.0, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max, log);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(VEC<double>& x , double min, VEC<double>& max, bool log = false) {
+VEC<double> dgamma_etr(VEC<double>& x , double min, VEC<double>& max, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1166,14 +1166,14 @@ VEC<double> dnorm_etr(VEC<double>& x , double min, VEC<double>& max, bool log = 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min, max[i % max.size()], log);
+        ret[i] = R::dgamma(x[i % x.size()], min, max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, bool log = false) {
+VEC<double> dgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1181,19 +1181,19 @@ VEC<double> dnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, bool 
             ret = x;
       }       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()],min, max, log);
+        ret[i] = R::dgamma(x[i % x.size()],min, max, log);
         PutRNGstate();
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min, max[i % max.size()], log);
+        ret[i] = R::dgamma(x[i % x.size()], min, max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max = 1.0, bool log = false) {
+VEC<double> dgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max = 1.0, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1201,18 +1201,18 @@ VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max = 1.0, 
             ret = x;
       }       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()],min, max, log);
+        ret[i] = R::dgamma(x[i % x.size()],min, max, log);
         PutRNGstate();
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max, log);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool log = false) {
+VEC<double> dgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1221,14 +1221,14 @@ VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, bool log = false) {
+VEC<double> dgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1237,14 +1237,14 @@ VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, bool log = false) {
+VEC<double> dgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1253,14 +1253,14 @@ VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool log = false) {
+VEC<double> dgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1269,14 +1269,14 @@ VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 //new
-VEC<double> dnorm_etr(VEC<double>& x , double min, double max, VEC<double> log) {
+VEC<double> dgamma_etr(VEC<double>& x , double min, double max, VEC<double> log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1285,13 +1285,13 @@ VEC<double> dnorm_etr(VEC<double>& x , double min, double max, VEC<double> log) 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()],min, max, log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()],min, max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double> log) {
+VEC<double> dgamma_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double> log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1300,13 +1300,13 @@ VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double> 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max, log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double> log) {
+VEC<double> dgamma_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double> log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1315,30 +1315,14 @@ VEC<double> dnorm_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min, max[i % max.size()], log[i % log.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> dnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, VEC<double> log) {
-                  VEC<double> ret;
-      if(length(x) > 1) {
-            ret = vector(length(x));
-      } else if(length(x) == 1){
-            ret = x;
-      }
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min, max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min, max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<double> log) {
+VEC<double> dgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, VEC<double> log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1347,13 +1331,14 @@ VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max, log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min, max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<double> log) {
+template<typename T2, typename R2>
+VEC<double> dgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<double> log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1362,14 +1347,29 @@ VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max, log[i % log.size()]);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> dgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<double> log) {
+                  VEC<double> ret;
+      if(length(x) > 1) {
+            ret = vector(length(x));
+      } else if(length(x) == 1){
+            ret = x;
+      }
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double> log) {
+VEC<double> dgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double> log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1378,14 +1378,14 @@ VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double> log) {
+VEC<double> dgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double> log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1394,14 +1394,14 @@ VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double> log) {
+VEC<double> dgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double> log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1410,14 +1410,14 @@ VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> dnorm_etr(VEC<double>& x , double min, double max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(VEC<double>& x , double min, double max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1426,14 +1426,14 @@ VEC<double> dnorm_etr(VEC<double>& x , double min, double max, const VEC<U, Z>& 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()],min, max, log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()],min, max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1442,14 +1442,14 @@ VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<U,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max, log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> dnorm_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1458,14 +1458,14 @@ VEC<double> dnorm_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<U
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min, max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min, max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1474,14 +1474,14 @@ VEC<double> dnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min, max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min, max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1490,14 +1490,14 @@ VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max, log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1506,14 +1506,14 @@ VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1522,14 +1522,14 @@ VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1538,14 +1538,14 @@ VEC<double> dnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z  >
-VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1554,19 +1554,19 @@ VEC<double> dnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 
-// dnorm
+// dgamma
 // ===============================================================================
 // first argument const VEC<T2, R2>&
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(const VEC<T2, R2>& x , double min = 0.0, double max = 1.0, bool log = false) {
+VEC<double> dgamma_etr(const VEC<T2, R2>& x , double min = 0.0, double max = 1.0, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1575,14 +1575,14 @@ VEC<double> dnorm_etr(const VEC<T2, R2>& x , double min = 0.0, double max = 1.0,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min, max, log);
+        ret[i] = R::dgamma(x[i % x.size()], min, max, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max = 1.0, bool log = false) {
+VEC<double> dgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max = 1.0, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1591,14 +1591,14 @@ VEC<double> dnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max = 1.0, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max, log);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool log = false) {
+VEC<double> dgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1607,14 +1607,14 @@ VEC<double> dnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min, max[i % max.size()], log);
+        ret[i] = R::dgamma(x[i % x.size()], min, max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> dnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, bool log = false) {
+VEC<double> dgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1623,14 +1623,14 @@ VEC<double> dnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min, max[i % max.size()], log);
+        ret[i] = R::dgamma(x[i % x.size()], min, max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> dnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max = 1.0, bool log = false) {
+VEC<double> dgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max = 1.0, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1639,14 +1639,14 @@ VEC<double> dnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max =
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max, log);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, bool log = false) {
+VEC<double> dgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1655,14 +1655,14 @@ VEC<double> dnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> dnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, bool log = false) {
+VEC<double> dgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1671,14 +1671,14 @@ VEC<double> dnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> dnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, bool log = false) {
+VEC<double> dgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1687,14 +1687,14 @@ VEC<double> dnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3>
-VEC<double> dnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool log = false) {
+VEC<double> dgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1703,7 +1703,7 @@ VEC<double> dnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log);
         PutRNGstate();
       }
       return ret;
@@ -1711,7 +1711,7 @@ VEC<double> dnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
 
 // new
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(const VEC<T2, R2>& x , double min, double max, VEC<double> log) {
+VEC<double> dgamma_etr(const VEC<T2, R2>& x , double min, double max, VEC<double> log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1720,14 +1720,14 @@ VEC<double> dnorm_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min, max, log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min, max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<double> log) {
+VEC<double> dgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<double> log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1736,14 +1736,14 @@ VEC<double> dnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max, log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<double> log) {
+VEC<double> dgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<double> log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1752,14 +1752,14 @@ VEC<double> dnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<d
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min, max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min, max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> dnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, VEC<double> log) {
+VEC<double> dgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, VEC<double> log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1768,14 +1768,14 @@ VEC<double> dnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min, max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min, max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> dnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, VEC<double> log) {
+VEC<double> dgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, VEC<double> log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1784,14 +1784,14 @@ VEC<double> dnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max, log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> dnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, VEC<double> log) {
+VEC<double> dgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, VEC<double> log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1800,14 +1800,14 @@ VEC<double> dnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> dnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double> log) {
+VEC<double> dgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double> log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1816,14 +1816,14 @@ VEC<double> dnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> dnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double> log) {
+VEC<double> dgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double> log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1832,14 +1832,14 @@ VEC<double> dnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3>
-VEC<double> dnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double> log) {
+VEC<double> dgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double> log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1848,14 +1848,14 @@ VEC<double> dnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(const VEC<T2, R2>& x , double min, double max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(const VEC<T2, R2>& x , double min, double max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1864,14 +1864,14 @@ VEC<double> dnorm_etr(const VEC<T2, R2>& x , double min, double max, const VEC<U
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min, max, log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min, max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1880,14 +1880,14 @@ VEC<double> dnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max, log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1896,14 +1896,14 @@ VEC<double> dnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min, max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min, max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1912,14 +1912,14 @@ VEC<double> dnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min, max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min, max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1928,14 +1928,14 @@ VEC<double> dnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max, log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1944,14 +1944,14 @@ VEC<double> dnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1960,14 +1960,14 @@ VEC<double> dnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> dnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1976,14 +1976,14 @@ VEC<double> dnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3, typename U, typename Z>
-VEC<double> dnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<U, Z>& log) {
+VEC<double> dgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -1992,7 +1992,7 @@ VEC<double> dnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::dnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
+        ret[i] = R::dgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
@@ -2020,294 +2020,294 @@ VEC<double> dnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
 
 
 
-// pnorm
+// pgamma
 // ===============================================================================
 // first argument int
-VEC<double> pnorm_etr(int x , double min = 0.0, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(int x , double min = 0.0, double max = 1.0, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max,lower, log);
+        ret[i] = R::pgamma(i2d(x), min, max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(int x, VEC<double>& min, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, double max = 1.0, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower, log);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(int x , double min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(int x , double min, VEC<double>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower, log);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> pnorm_etr(int x , double min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(int x , double min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower, log);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(int x, VEC<double>& min, VEC<double>& max, bool lower = true, bool log = false) {
+template<typename T2, typename R2>
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, double max = 1.0, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower, log);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> pgamma_etr(int x, VEC<double>& min, VEC<double>& max, bool lower = true, bool log = false) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 // new
-VEC<double> pnorm_etr(int x , double min, double max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x , double min, double max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(int x, VEC<double>& min, double max,bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, double max,bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(int x , double min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x , double min, VEC<double>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower, log[i % log.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> pnorm_etr(int x , double min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, double max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x , double min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(int x, VEC<double>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+template<typename T2, typename R2>
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, double max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower, log[i % log.size()]);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> pgamma_etr(int x, VEC<double>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(int x , double min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x , double min, double max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(int x, VEC<double>& min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, double max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(int x , double min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x , double min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(int x , double min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x , double min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, double max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(int x, VEC<double>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
@@ -2315,304 +2315,304 @@ VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, boo
 
 
 
-// pnorm
+// pgamma
 // ===============================================================================
 // first argument double
-VEC<double> pnorm_etr(double x , double min = 0.0, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(double x , double min = 0.0, double max = 1.0, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max,lower, log);
+        ret[i] = R::pgamma(x, min, max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(double x, VEC<double>& min, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, double max = 1.0, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower, log);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(double x , double min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(double x , double min, VEC<double>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower, log);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> pnorm_etr(double x , double min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(double x , double min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower, log);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(double x, VEC<double>& min, VEC<double>& max, bool lower = true, bool log = false) {
+template<typename T2, typename R2>
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, double max = 1.0, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower, log);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> pgamma_etr(double x, VEC<double>& min, VEC<double>& max, bool lower = true, bool log = false) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 // new
-VEC<double> pnorm_etr(double x , double min, double max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x , double min, double max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(double x, VEC<double>& min, double max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, double max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(double x , double min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x , double min, VEC<double>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower, log[i % log.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> pnorm_etr(double x , double min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, double max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x , double min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(double x, VEC<double>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+template<typename T2, typename R2>
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, double max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower, log[i % log.size()]);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> pgamma_etr(double x, VEC<double>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(double x , double min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x , double min, double max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(double x, VEC<double>& min, double max,  bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, double max,  bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(double x , double min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x , double min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(double x , double min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x , double min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, double max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(double x, VEC<double>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 
-// pnorm
+// pgamma
 // ===============================================================================
 // first argument VEC<double>
-VEC<double> pnorm_etr(VEC<double>& x , double min = 0.0, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(VEC<double>& x , double min = 0.0, double max = 1.0, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2621,13 +2621,13 @@ VEC<double> pnorm_etr(VEC<double>& x , double min = 0.0, double max = 1.0, bool 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()],min, max,lower, log);
+        ret[i] = R::pgamma(x[i % x.size()],min, max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, double max = 1.0, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2636,13 +2636,13 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max = 1.0, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower, log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, VEC<double>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2651,30 +2651,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, bool lower 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower, log);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> pnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
-                  VEC<double> ret;
-      if(length(x) > 1) {
-            ret = vector(length(x));
-      } else if(length(x) == 1){
-            ret = x;
-      }
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2683,13 +2667,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max = 1.0, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower, log);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool lower = true, bool log = false) {
+template<typename T2, typename R2>
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max = 1.0, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2698,14 +2683,29 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower, log);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool lower = true, bool log = false) {
+                  VEC<double> ret;
+      if(length(x) > 1) {
+            ret = vector(length(x));
+      } else if(length(x) == 1){
+            ret = x;
+      }
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2714,14 +2714,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2730,14 +2730,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2746,14 +2746,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 //new
-VEC<double> pnorm_etr(VEC<double>& x , double min, double max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, double max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2762,13 +2762,13 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, double max, bool lower, VEC<d
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()],min, max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()],min, max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, double max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2777,13 +2777,13 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max, bool lower, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, VEC<double>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2792,30 +2792,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, bool lower,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> pnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
-                  VEC<double> ret;
-      if(length(x) > 1) {
-            ret = vector(length(x));
-      } else if(length(x) == 1){
-            ret = x;
-      }
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2824,13 +2808,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+template<typename T2, typename R2>
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2839,14 +2824,29 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+                  VEC<double> ret;
+      if(length(x) > 1) {
+            ret = vector(length(x));
+      } else if(length(x) == 1){
+            ret = x;
+      }
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2855,14 +2855,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2871,14 +2871,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2887,14 +2887,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(VEC<double>& x , double min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, double max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2903,14 +2903,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, double max, bool lower, const
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()],min, max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()],min, max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, double max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2919,14 +2919,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max, bool lower, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2935,14 +2935,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, bool lower,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2951,14 +2951,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, bool 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2967,14 +2967,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2983,14 +2983,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -2999,14 +2999,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3015,14 +3015,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z  >
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3031,19 +3031,19 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 
-// pnorm
+// pgamma
 // ===============================================================================
 // first argument const VEC<T2, R2>&
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min = 0.0, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min = 0.0, double max = 1.0, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3052,14 +3052,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min = 0.0, double max = 1.0,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max,lower, log);
+        ret[i] = R::pgamma(x[i % x.size()], min, max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max = 1.0, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3068,14 +3068,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max = 1.0, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower, log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3084,14 +3084,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3100,14 +3100,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max = 1.0, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3116,14 +3116,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max =
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower, log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3132,14 +3132,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3148,14 +3148,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3164,14 +3164,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3>
-VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower = true, bool log = false) {
+VEC<double> pgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3180,7 +3180,7 @@ VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
@@ -3188,7 +3188,7 @@ VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
 
 // new
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, double max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min, double max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3197,14 +3197,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, double max, bool lower,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3213,14 +3213,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3229,14 +3229,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3245,14 +3245,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3261,14 +3261,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3277,14 +3277,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3293,14 +3293,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3309,14 +3309,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3>
-VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3325,14 +3325,14 @@ VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min, double max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3341,14 +3341,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, double max, bool lower,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3357,14 +3357,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3373,14 +3373,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3389,14 +3389,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3405,14 +3405,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3421,14 +3421,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3437,14 +3437,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3453,14 +3453,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -3469,7 +3469,7 @@ VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
@@ -3484,294 +3484,294 @@ VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
 
 
 // lower as VEC<double>
-// pnorm
+// pgamma
 // ===============================================================================
 // first argument int
-VEC<double> pnorm_etr(int x , double min, double max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(int x , double min, double max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(i2d(x), min, max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(int x, VEC<double>& min, double max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, double max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(int x , double min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(int x , double min, VEC<double>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> pnorm_etr(int x , double min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, double max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(int x , double min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(int x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+template<typename T2, typename R2>
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, double max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> pgamma_etr(int x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 // new
-VEC<double> pnorm_etr(int x , double min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x , double min, double max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(int x, VEC<double>& min, double max,VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, double max,VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(int x , double min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x , double min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> pnorm_etr(int x , double min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x , double min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(int x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+template<typename T2, typename R2>
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, double max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> pgamma_etr(int x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(int x , double min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x , double min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(int x, VEC<double>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(int x , double min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x , double min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(int x , double min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x , double min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(int x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
@@ -3779,304 +3779,304 @@ VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC
 
 
 
-// pnorm
+// pgamma
 // ===============================================================================
 // first argument double
-VEC<double> pnorm_etr(double x , double min, double max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(double x , double min, double max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x, min, max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(double x, VEC<double>& min, double max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, double max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(double x , double min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(double x , double min, VEC<double>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower[i % lower.size()], log);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> pnorm_etr(double x , double min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, double max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(double x , double min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(double x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+template<typename T2, typename R2>
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, double max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower[i % lower.size()], log);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> pgamma_etr(double x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 // new
-VEC<double> pnorm_etr(double x , double min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x , double min, double max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(double x, VEC<double>& min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, double max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(double x , double min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x , double min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> pnorm_etr(double x , double min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x , double min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(double x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+template<typename T2, typename R2>
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, double max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> pgamma_etr(double x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(double x , double min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x , double min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(double x, VEC<double>& min, double max,  VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, double max,  VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(double x , double min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x , double min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(double x , double min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x , double min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(double x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 
-// pnorm
+// pgamma
 // ===============================================================================
 // first argument VEC<double>
-VEC<double> pnorm_etr(VEC<double>& x , double min, double max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, double max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4085,13 +4085,13 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, double max, VEC<double>& lowe
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()],min, max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()],min, max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4100,13 +4100,13 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4115,30 +4115,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> pnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
-                  VEC<double> ret;
-      if(length(x) > 1) {
-            ret = vector(length(x));
-      } else if(length(x) == 1){
-            ret = x;
-      }
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4147,13 +4131,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+template<typename T2, typename R2>
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4162,14 +4147,29 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+                  VEC<double> ret;
+      if(length(x) > 1) {
+            ret = vector(length(x));
+      } else if(length(x) == 1){
+            ret = x;
+      }
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4178,14 +4178,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4194,14 +4194,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4210,14 +4210,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 //new
-VEC<double> pnorm_etr(VEC<double>& x , double min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, double max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4226,13 +4226,13 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, double max, VEC<double>& lowe
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()],min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()],min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4241,13 +4241,13 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4256,30 +4256,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> pnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
-                  VEC<double> ret;
-      if(length(x) > 1) {
-            ret = vector(length(x));
-      } else if(length(x) == 1){
-            ret = x;
-      }
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4288,13 +4272,29 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+template<typename T2, typename R2>
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, VEC<double>& log) {
+                  VEC<double> ret;
+      if(length(x) > 1) {
+            ret = vector(length(x));
+      } else if(length(x) == 1){
+            ret = x;
+      }
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4303,14 +4303,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4319,14 +4319,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4335,14 +4335,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4351,14 +4351,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(VEC<double>& x , double min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4367,14 +4367,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, double max, VEC<double>& lowe
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()],min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()],min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4383,14 +4383,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4399,14 +4399,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4415,14 +4415,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, VEC<d
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4431,14 +4431,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4447,14 +4447,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4463,14 +4463,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4479,14 +4479,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z  >
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4495,19 +4495,19 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 
-// pnorm
+// pgamma
 // ===============================================================================
 // first argument const VEC<T2, R2>&
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4516,14 +4516,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min, max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4532,14 +4532,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4548,14 +4548,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<d
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4564,14 +4564,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4580,14 +4580,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4596,14 +4596,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4612,14 +4612,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4628,14 +4628,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3>
-VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4644,7 +4644,7 @@ VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
@@ -4652,7 +4652,7 @@ VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
 
 // new
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4661,14 +4661,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4677,14 +4677,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4693,14 +4693,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<d
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4709,14 +4709,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4725,14 +4725,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4741,14 +4741,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4757,14 +4757,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4773,14 +4773,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3>
-VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4789,14 +4789,14 @@ VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4805,14 +4805,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4821,14 +4821,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4837,14 +4837,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<d
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4853,14 +4853,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4869,14 +4869,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4885,14 +4885,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4901,14 +4901,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4917,14 +4917,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3, typename U, typename Z>
-VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -4933,7 +4933,7 @@ VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
@@ -4943,103 +4943,103 @@ VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
 
 
 // lower as const VEC<A,B>&
-// pnorm
+// pgamma
 // ===============================================================================
 // first argument int
 template<typename A, typename B>
-VEC<double> pnorm_etr(int x , double min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(int x , double min, double max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(i2d(x), min, max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(int x, VEC<double>& min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, double max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(int x , double min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(int x , double min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(int x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(int x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(int x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename A, typename B>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
@@ -5047,198 +5047,198 @@ VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, con
 
 // new
 template<typename A, typename B>
-VEC<double> pnorm_etr(int x , double min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x , double min, double max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(int x, VEC<double>& min, double max,const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, double max,const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(int x , double min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x , double min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(int x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(int x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename A, typename B>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(int x , double min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x , double min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(int x, VEC<double>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(int x , double min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x , double min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(int x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(int x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
@@ -5246,103 +5246,103 @@ VEC<double> pnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, con
 
 
 
-// pnorm
+// pgamma
 // ===============================================================================
 // first argument double
 template<typename A, typename B>
-VEC<double> pnorm_etr(double x , double min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(double x , double min, double max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x, min, max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(double x, VEC<double>& min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, double max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(double x , double min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(double x , double min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(double x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(double x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(double x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename A, typename B>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
@@ -5350,209 +5350,209 @@ VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, 
 
 // new
 template<typename A, typename B>
-VEC<double> pnorm_etr(double x , double min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x , double min, double max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(double x, VEC<double>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(double x , double min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x , double min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(double x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(double x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename A, typename B>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(double x , double min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x , double min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(double x, VEC<double>& min, double max,  const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, double max,  const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(double x , double min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x , double min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(double x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(double x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 
-// pnorm
+// pgamma
 // ===============================================================================
 // first argument VEC<double>
 template<typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x , double min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, double max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5561,14 +5561,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, double max, const VEC<A, B>& 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()],min, max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()],min, max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5577,14 +5577,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5593,14 +5593,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5609,14 +5609,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5625,14 +5625,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5641,14 +5641,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5657,14 +5657,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5673,14 +5673,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5689,7 +5689,7 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
@@ -5697,7 +5697,7 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
 
 //new
 template<typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x , double min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, double max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5706,14 +5706,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, double max, const VEC<A, B>& 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()],min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()],min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5722,14 +5722,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5738,14 +5738,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5754,14 +5754,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5770,14 +5770,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5786,14 +5786,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5802,14 +5802,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5818,14 +5818,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5834,14 +5834,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x , double min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5850,14 +5850,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, double max, const VEC<A, B>& 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()],min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()],min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5866,14 +5866,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5882,14 +5882,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5898,14 +5898,14 @@ VEC<double> pnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5914,14 +5914,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5930,14 +5930,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5946,14 +5946,14 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5962,14 +5962,14 @@ VEC<double> pnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z  , typename A, typename B>
-VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5978,19 +5978,19 @@ VEC<double> pnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 
-// pnorm
+// pgamma
 // ===============================================================================
 // first argument const VEC<T2, R2>&
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -5999,14 +5999,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min, max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6015,14 +6015,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6031,14 +6031,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z  , typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6047,14 +6047,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z  , typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6063,14 +6063,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6079,14 +6079,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z  , typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6095,14 +6095,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z  , typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6111,14 +6111,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> pgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6127,7 +6127,7 @@ VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
@@ -6135,7 +6135,7 @@ VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
 
 // new
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6144,14 +6144,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6160,14 +6160,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6176,14 +6176,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z  , typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6192,14 +6192,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z  , typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6208,14 +6208,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6224,14 +6224,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z  , typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6240,14 +6240,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z  , typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6256,14 +6256,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> pgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6272,14 +6272,14 @@ VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6288,14 +6288,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6304,14 +6304,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6320,14 +6320,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6336,14 +6336,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6352,14 +6352,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6368,14 +6368,14 @@ VEC<double> pnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6384,14 +6384,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6400,14 +6400,14 @@ VEC<double> pnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3, typename U, typename Z, typename A, typename B>
-VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> pgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -6416,7 +6416,7 @@ VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::pnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::pgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
@@ -6457,294 +6457,294 @@ VEC<double> pnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
 
 
 
-// qnorm
+// qgamma
 // ===============================================================================
 // first argument int
-VEC<double> qnorm_etr(int x , double min = 0.0, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(int x , double min = 0.0, double max = 1.0, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max,lower, log);
+        ret[i] = R::qgamma(i2d(x), min, max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(int x, VEC<double>& min, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, double max = 1.0, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower, log);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(int x , double min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(int x , double min, VEC<double>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower, log);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> qnorm_etr(int x , double min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(int x , double min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower, log);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(int x, VEC<double>& min, VEC<double>& max, bool lower = true, bool log = false) {
+template<typename T2, typename R2>
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, double max = 1.0, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower, log);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> qgamma_etr(int x, VEC<double>& min, VEC<double>& max, bool lower = true, bool log = false) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 // new
-VEC<double> qnorm_etr(int x , double min, double max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x , double min, double max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(int x, VEC<double>& min, double max,bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, double max,bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(int x , double min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x , double min, VEC<double>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower, log[i % log.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> qnorm_etr(int x , double min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, double max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x , double min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(int x, VEC<double>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+template<typename T2, typename R2>
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, double max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower, log[i % log.size()]);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> qgamma_etr(int x, VEC<double>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(int x , double min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x , double min, double max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(int x, VEC<double>& min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, double max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(int x , double min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x , double min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(int x , double min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x , double min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, double max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(int x, VEC<double>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
@@ -6752,304 +6752,304 @@ VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, boo
 
 
 
-// qnorm
+// qgamma
 // ===============================================================================
 // first argument double
-VEC<double> qnorm_etr(double x , double min = 0.0, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(double x , double min = 0.0, double max = 1.0, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max,lower, log);
+        ret[i] = R::qgamma(x, min, max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(double x, VEC<double>& min, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, double max = 1.0, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower, log);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(double x , double min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(double x , double min, VEC<double>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower, log);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> qnorm_etr(double x , double min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(double x , double min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower, log);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(double x, VEC<double>& min, VEC<double>& max, bool lower = true, bool log = false) {
+template<typename T2, typename R2>
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, double max = 1.0, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower, log);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> qgamma_etr(double x, VEC<double>& min, VEC<double>& max, bool lower = true, bool log = false) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower = true, bool log = false) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 // new
-VEC<double> qnorm_etr(double x , double min, double max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x , double min, double max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(double x, VEC<double>& min, double max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, double max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(double x , double min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x , double min, VEC<double>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower, log[i % log.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> qnorm_etr(double x , double min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, double max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x , double min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(double x, VEC<double>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+template<typename T2, typename R2>
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, double max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower, log[i % log.size()]);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> qgamma_etr(double x, VEC<double>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(double x , double min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x , double min, double max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(double x, VEC<double>& min, double max,  bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, double max,  bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(double x , double min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x , double min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(double x , double min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x , double min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, double max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(double x, VEC<double>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 
-// qnorm
+// qgamma
 // ===============================================================================
 // first argument VEC<double>
-VEC<double> qnorm_etr(VEC<double>& x , double min = 0.0, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(VEC<double>& x , double min = 0.0, double max = 1.0, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7058,13 +7058,13 @@ VEC<double> qnorm_etr(VEC<double>& x , double min = 0.0, double max = 1.0, bool 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()],min, max,lower, log);
+        ret[i] = R::qgamma(x[i % x.size()],min, max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, double max = 1.0, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7073,13 +7073,13 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max = 1.0, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower, log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, VEC<double>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7088,30 +7088,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, bool lower 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower, log);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> qnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
-                  VEC<double> ret;
-      if(length(x) > 1) {
-            ret = vector(length(x));
-      } else if(length(x) == 1){
-            ret = x;
-      }
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7120,13 +7104,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max = 1.0, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower, log);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool lower = true, bool log = false) {
+template<typename T2, typename R2>
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max = 1.0, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7135,14 +7120,29 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower, log);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool lower = true, bool log = false) {
+                  VEC<double> ret;
+      if(length(x) > 1) {
+            ret = vector(length(x));
+      } else if(length(x) == 1){
+            ret = x;
+      }
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7151,14 +7151,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7167,14 +7167,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7183,14 +7183,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 //new
-VEC<double> qnorm_etr(VEC<double>& x , double min, double max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, double max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7199,13 +7199,13 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, double max, bool lower, VEC<d
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()],min, max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()],min, max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, double max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7214,13 +7214,13 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max, bool lower, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, VEC<double>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7229,30 +7229,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, bool lower,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> qnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
-                  VEC<double> ret;
-      if(length(x) > 1) {
-            ret = vector(length(x));
-      } else if(length(x) == 1){
-            ret = x;
-      }
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7261,13 +7245,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+template<typename T2, typename R2>
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7276,14 +7261,29 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+                  VEC<double> ret;
+      if(length(x) > 1) {
+            ret = vector(length(x));
+      } else if(length(x) == 1){
+            ret = x;
+      }
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7292,14 +7292,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7308,14 +7308,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7324,14 +7324,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(VEC<double>& x , double min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, double max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7340,14 +7340,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, double max, bool lower, const
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()],min, max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()],min, max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, double max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7356,14 +7356,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max, bool lower, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7372,14 +7372,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, bool lower,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7388,14 +7388,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, bool 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7404,14 +7404,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7420,14 +7420,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7436,14 +7436,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7452,14 +7452,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z  >
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7468,19 +7468,19 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 
-// qnorm
+// qgamma
 // ===============================================================================
 // first argument const VEC<T2, R2>&
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min = 0.0, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min = 0.0, double max = 1.0, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7489,14 +7489,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min = 0.0, double max = 1.0,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max,lower, log);
+        ret[i] = R::qgamma(x[i % x.size()], min, max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max = 1.0, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7505,14 +7505,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max = 1.0, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower, log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7521,14 +7521,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7537,14 +7537,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max = 1.0, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max = 1.0, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7553,14 +7553,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max =
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower, log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7569,14 +7569,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7585,14 +7585,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7601,14 +7601,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3>
-VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower = true, bool log = false) {
+VEC<double> qgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower = true, bool log = false) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7617,7 +7617,7 @@ VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log);
         PutRNGstate();
       }
       return ret;
@@ -7625,7 +7625,7 @@ VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
 
 // new
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, double max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min, double max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7634,14 +7634,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, double max, bool lower,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7650,14 +7650,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7666,14 +7666,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7682,14 +7682,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7698,14 +7698,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7714,14 +7714,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7730,14 +7730,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7746,14 +7746,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3>
-VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7762,14 +7762,14 @@ VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min, double max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7778,14 +7778,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, double max, bool lower,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7794,14 +7794,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, bool l
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7810,14 +7810,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, bool 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7826,14 +7826,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7842,14 +7842,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7858,14 +7858,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7874,14 +7874,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7890,14 +7890,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, bool lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -7906,7 +7906,7 @@ VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower, log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
@@ -7921,294 +7921,294 @@ VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
 
 
 // lower as VEC<double>
-// qnorm
+// qgamma
 // ===============================================================================
 // first argument int
-VEC<double> qnorm_etr(int x , double min, double max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(int x , double min, double max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(i2d(x), min, max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(int x, VEC<double>& min, double max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, double max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(int x , double min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(int x , double min, VEC<double>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> qnorm_etr(int x , double min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, double max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(int x , double min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(int x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+template<typename T2, typename R2>
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, double max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> qgamma_etr(int x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 // new
-VEC<double> qnorm_etr(int x , double min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x , double min, double max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(int x, VEC<double>& min, double max,VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, double max,VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(int x , double min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x , double min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> qnorm_etr(int x , double min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x , double min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(int x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+template<typename T2, typename R2>
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, double max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> qgamma_etr(int x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(int x , double min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x , double min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(int x, VEC<double>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(int x , double min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x , double min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(int x , double min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x , double min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(int x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
@@ -8216,304 +8216,304 @@ VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC
 
 
 
-// qnorm
+// qgamma
 // ===============================================================================
 // first argument double
-VEC<double> qnorm_etr(double x , double min, double max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(double x , double min, double max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x, min, max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(double x, VEC<double>& min, double max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, double max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(double x , double min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(double x , double min, VEC<double>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower[i % lower.size()], log);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> qnorm_etr(double x , double min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, double max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(double x , double min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(double x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+template<typename T2, typename R2>
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, double max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower[i % lower.size()], log);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> qgamma_etr(double x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 // new
-VEC<double> qnorm_etr(double x , double min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x , double min, double max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(double x, VEC<double>& min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, double max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(double x , double min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x , double min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> qnorm_etr(double x , double min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
-      VEC<double> ret; ret = x;
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x , double min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(double x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+template<typename T2, typename R2>
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, double max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> qgamma_etr(double x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+      VEC<double> ret; ret = x;
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(double x , double min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x , double min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(double x, VEC<double>& min, double max,  VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, double max,  VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(double x , double min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x , double min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(double x , double min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x , double min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(double x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 
-// qnorm
+// qgamma
 // ===============================================================================
 // first argument VEC<double>
-VEC<double> qnorm_etr(VEC<double>& x , double min, double max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, double max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8522,13 +8522,13 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, double max, VEC<double>& lowe
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()],min, max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()],min, max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8537,13 +8537,13 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8552,30 +8552,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> qnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
-                  VEC<double> ret;
-      if(length(x) > 1) {
-            ret = vector(length(x));
-      } else if(length(x) == 1){
-            ret = x;
-      }
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8584,13 +8568,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+template<typename T2, typename R2>
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8599,14 +8584,29 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+                  VEC<double> ret;
+      if(length(x) > 1) {
+            ret = vector(length(x));
+      } else if(length(x) == 1){
+            ret = x;
+      }
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8615,14 +8615,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8631,14 +8631,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8647,14 +8647,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 //new
-VEC<double> qnorm_etr(VEC<double>& x , double min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, double max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8663,13 +8663,13 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, double max, VEC<double>& lowe
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()],min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()],min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8678,13 +8678,13 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8693,30 +8693,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
-        PutRNGstate();
-      }
-      return ret;
-}
-
-template<typename T2, typename R2>
-VEC<double> qnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
-                  VEC<double> ret;
-      if(length(x) > 1) {
-            ret = vector(length(x));
-      } else if(length(x) == 1){
-            ret = x;
-      }
-      for(int i = 0; i < ret.size(); i++) {
-        GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8725,13 +8709,29 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+template<typename T2, typename R2>
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, VEC<double>& log) {
+                  VEC<double> ret;
+      if(length(x) > 1) {
+            ret = vector(length(x));
+      } else if(length(x) == 1){
+            ret = x;
+      }
+      for(int i = 0; i < ret.size(); i++) {
+        GetRNGstate();
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        PutRNGstate();
+      }
+      return ret;
+}
+
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8740,14 +8740,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8756,14 +8756,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8772,14 +8772,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8788,14 +8788,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(VEC<double>& x , double min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8804,14 +8804,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, double max, VEC<double>& lowe
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()],min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()],min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8820,14 +8820,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8836,14 +8836,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, VEC<double>
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8852,14 +8852,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, VEC<d
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8868,14 +8868,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8884,14 +8884,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8900,14 +8900,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8916,14 +8916,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z  >
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8932,19 +8932,19 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 
-// qnorm
+// qgamma
 // ===============================================================================
 // first argument const VEC<T2, R2>&
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8953,14 +8953,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min, max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8969,14 +8969,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -8985,14 +8985,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<d
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9001,14 +9001,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9017,14 +9017,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9033,14 +9033,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9049,14 +9049,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9065,14 +9065,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3>
-VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9081,7 +9081,7 @@ VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
@@ -9089,7 +9089,7 @@ VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
 
 // new
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9098,14 +9098,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9114,14 +9114,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9130,14 +9130,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<d
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9146,14 +9146,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9162,14 +9162,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9178,14 +9178,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9194,14 +9194,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9210,14 +9210,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3>
-VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9226,14 +9226,14 @@ VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9242,14 +9242,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, double max, VEC<double>
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9258,14 +9258,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, VEC<do
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9274,14 +9274,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, VEC<d
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9290,14 +9290,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, VEC<double>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9306,14 +9306,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9322,14 +9322,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9338,14 +9338,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9354,14 +9354,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3, typename U, typename Z>
-VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, VEC<double>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9370,7 +9370,7 @@ VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
@@ -9380,103 +9380,103 @@ VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
 
 
 // lower as const VEC<A,B>&
-// qnorm
+// qgamma
 // ===============================================================================
 // first argument int
 template<typename A, typename B>
-VEC<double> qnorm_etr(int x , double min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(int x , double min, double max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(i2d(x), min, max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(int x, VEC<double>& min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, double max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(int x , double min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(int x , double min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(int x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(int x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(int x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename A, typename B>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
@@ -9484,198 +9484,198 @@ VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, con
 
 // new
 template<typename A, typename B>
-VEC<double> qnorm_etr(int x , double min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x , double min, double max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(int x, VEC<double>& min, double max,const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, double max,const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(int x , double min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x , double min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(int x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(int x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename A, typename B>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(int x , double min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x , double min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(int x, VEC<double>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(int x , double min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x , double min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(int x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(int x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(i2d(x), min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
@@ -9683,103 +9683,103 @@ VEC<double> qnorm_etr(int x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, con
 
 
 
-// qnorm
+// qgamma
 // ===============================================================================
 // first argument double
 template<typename A, typename B>
-VEC<double> qnorm_etr(double x , double min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(double x , double min, double max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x, min, max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(double x, VEC<double>& min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, double max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(double x , double min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(double x , double min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(double x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(double x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(double x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename A, typename B>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, bool log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
@@ -9787,209 +9787,209 @@ VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, 
 
 // new
 template<typename A, typename B>
-VEC<double> qnorm_etr(double x , double min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x , double min, double max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(double x, VEC<double>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(double x , double min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x , double min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(double x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(double x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename A, typename B>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, VEC<double>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(double x , double min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x , double min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(double x, VEC<double>& min, double max,  const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, double max,  const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(double x , double min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x , double min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(double x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(double x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(double x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
       VEC<double> ret; ret = x;
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x, min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 
-// qnorm
+// qgamma
 // ===============================================================================
 // first argument VEC<double>
 template<typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x , double min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, double max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -9998,14 +9998,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, double max, const VEC<A, B>& 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()],min, max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()],min, max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10014,14 +10014,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10030,14 +10030,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10046,14 +10046,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10062,14 +10062,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10078,14 +10078,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10094,14 +10094,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10110,14 +10110,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10126,7 +10126,7 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
@@ -10134,7 +10134,7 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
 
 //new
 template<typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x , double min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, double max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10143,14 +10143,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, double max, const VEC<A, B>& 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()],min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()],min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10159,14 +10159,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10175,14 +10175,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10191,14 +10191,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10207,14 +10207,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10223,14 +10223,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10239,14 +10239,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10255,14 +10255,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10271,14 +10271,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x , double min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10287,14 +10287,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, double max, const VEC<A, B>& 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()],min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()],min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10303,14 +10303,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, double max, const VEC<A,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10319,14 +10319,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, VEC<double>& max, const VEC<A
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10335,14 +10335,14 @@ VEC<double> qnorm_etr(VEC<double>& x , double min, const VEC<T2, R2>& max, const
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10351,14 +10351,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, double max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10367,14 +10367,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, VEC<double>& max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10383,14 +10383,14 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10399,14 +10399,14 @@ VEC<double> qnorm_etr(VEC<double>& x, VEC<double>& min, const VEC<T2, R2>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename T3, typename R3, typename U, typename Z  , typename A, typename B>
-VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10415,19 +10415,19 @@ VEC<double> qnorm_etr(VEC<double>& x, const VEC<T2, R2>& min, const VEC<T3, R3>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 
-// qnorm
+// qgamma
 // ===============================================================================
 // first argument const VEC<T2, R2>&
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10436,14 +10436,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min, max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10452,14 +10452,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10468,14 +10468,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z  , typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10484,14 +10484,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z  , typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10500,14 +10500,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10516,14 +10516,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z  , typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10532,14 +10532,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z  , typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10548,14 +10548,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, bool log) {
+VEC<double> qgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, bool log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10564,7 +10564,7 @@ VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log);
         PutRNGstate();
       }
       return ret;
@@ -10572,7 +10572,7 @@ VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
 
 // new
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10581,14 +10581,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10597,14 +10597,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10613,14 +10613,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z  , typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10629,14 +10629,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z  , typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, VEC<double>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10645,14 +10645,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10661,14 +10661,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z  , typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10677,14 +10677,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z  , typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10693,14 +10693,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, VEC<double>& log) {
+VEC<double> qgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, VEC<double>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10709,14 +10709,14 @@ VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10725,14 +10725,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, double max, const VEC<A
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10741,14 +10741,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, double max, const 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10757,14 +10757,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x , double min, VEC<double>& max, const
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10773,14 +10773,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x , double min, const VEC<T2, R2>& max,
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min, max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10789,14 +10789,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, double max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max,lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10805,14 +10805,14 @@ VEC<double> qnorm_etr(const VEC<T2, R2>& x, VEC<double>& min, VEC<double>& max, 
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 } 
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10821,14 +10821,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, const VEC<T2, R2>& min, VEC<double>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T3, typename R3, typename T2, typename R2, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                    VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10837,14 +10837,14 @@ VEC<double> qnorm_etr(const VEC<T3, R3>& x, VEC<double>& min, const VEC<T2, R2>&
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;
 }
 
 template<typename T4, typename R4, typename T2, typename R2, typename T3, typename R3, typename U, typename Z, typename A, typename B>
-VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
+VEC<double> qgamma_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3, R3>& max, const VEC<A, B>& lower, const VEC<U, Z>& log) {
                   VEC<double> ret;
       if(length(x) > 1) {
             ret = vector(length(x));
@@ -10853,7 +10853,7 @@ VEC<double> qnorm_etr(const VEC<T4, R4>& x, const VEC<T2, R2>& min, const VEC<T3
       }
       for(int i = 0; i < ret.size(); i++) {
         GetRNGstate();
-        ret[i] = R::qnorm(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
+        ret[i] = R::qgamma(x[i % x.size()], min[i % min.size()], max[i % max.size()],lower[i % lower.size()], log[i % log.size()]);
         PutRNGstate();
       }
       return ret;

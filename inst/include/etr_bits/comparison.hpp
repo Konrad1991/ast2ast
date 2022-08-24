@@ -32,6 +32,7 @@ bool cd(double a, double b) {
 }
 
 VEC<bool> operator==(VEC<double>& a, double b) {
+  
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = cd(a[i], b);
