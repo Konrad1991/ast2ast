@@ -39,7 +39,7 @@ VEC<double> dunif_etr(const VEC<double>& x, const VEC<double>& min_ = 0.0, const
                 max = sizes[i];
             }
         }
-        VEC<double> res(max);
+        VEC<double> res(max, 0.0);
         for(int i = 0; i < res.size(); i++) {
             res[i] = R::dunif(x[i % x.size()], min_[i % min_.size()], max_[i % max_.size()], lg[i % lg.size()]);
         }

@@ -39,6 +39,7 @@ void ass(bool inp, std::string message) {
   }
 }
 
+/*
 #ifdef RLANG
 #else
   namespace Rcpp {
@@ -48,6 +49,7 @@ void ass(bool inp, std::string message) {
     }
   }
 #endif
+*/
 
 /*
 // create range from start to end

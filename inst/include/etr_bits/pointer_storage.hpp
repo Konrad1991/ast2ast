@@ -372,8 +372,6 @@ public:
 
   // Constructors
   STORE(SEXP inp) {
-    ass(Rf_isReal(inp), "no numeric input");
-
     if(allocated == true) {
       ass(p != nullptr, "try to delete nullptr");
       delete [] p;
@@ -495,8 +493,7 @@ public:
   }
 
   void init_sexp(SEXP inp) {
-    ass(Rf_isReal(inp), "no numeric input");
-
+    
     if(allocated == true) {
       ass(p != nullptr, "try to delete nullptr");
       delete [] p;
@@ -510,6 +507,7 @@ public:
 
     todelete = false;
     allocated = true;
+    
   }
 
   // Destructors

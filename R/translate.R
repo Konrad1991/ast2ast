@@ -36,8 +36,8 @@ MA <- R6::R6Class("MA",
         var_index = c(),
         return_TF = c(),
 
-        initialize = function(fct, desired_type) {
-          self$name = as.character(substitute(fct))
+        initialize = function(fct, desired_type, name_f) {
+          self$name = name_f #as.character(substitute(fct))
           self$args = methods::formalArgs(fct)
           self$body = body(fct)
           self$body = self$body[2:length(self$body)]
@@ -73,12 +73,20 @@ MA <- R6::R6Class("MA",
         },
 
         call2char = function() { # some errors {}
+
+          j = 1
           for(i in seq_along(self$code)) {
-            self$char[[i]] = deparse(self$code[[i]], width.cutoff = 500)
-            self$char[[i]] = gsub("\\bin\\b", "", self$char[[i]])
-            self$char[[i]] = gsub("`", "", self$char[[i]])
-            self$char[[i]] = paste0(self$char[[i]], ';')
+              temp = deparse(self$code[[i]], width.cutoff = 500)
+              temp = gsub("\\bin\\b", "", temp)
+              temp = gsub("`", "", temp)
+              temp = paste0(temp, ';')
+              self$char[[j]] = temp
+              j = j + 1
+              self$char[[j]] = "\n"
+              j = j + 1
           }
+
+
         },
 
         get_vars = function() {
@@ -202,7 +210,7 @@ MA <- R6::R6Class("MA",
               if(extern == FALSE) {
                 sig <- paste(self$return_type(), self$name, '(', arguments_string, ')', '{', collapse = " ")
               } else {
-                sig <- paste('extern "C" {', self$return_type(), self$name, '(', arguments_string, ');}', collapse = " ")
+                sig <- paste('extern "C" {' , self$return_type(), self$name, '(', arguments_string, ');}', collapse = " ")
               }
               
 
@@ -265,7 +273,6 @@ MA <- R6::R6Class("MA",
             "// [[Rcpp::depends(RcppArmadillo)]] \n",
             "// [[Rcpp::plugins(cpp17)]] \n",
             self$signature_SEXP(self$desired_type, reference, extern = TRUE), "\n",
-            #"// [[Rcpp::export]] \n", # careful!!!
             self$signature_SEXP(self$desired_type, reference, extern = FALSE), "\n",
             self$vars_declaration_SEXP(self$desired_type), "\n",
             self$char, "\n",
@@ -398,9 +405,10 @@ translate <- function(f, verbose = FALSE, reference = FALSE, R_fct = FALSE) {
     a = NULL
     fct = NULL
     fct_ret = NULL
+    name_f <- as.character(substitute(f))
 
     if(R_fct == FALSE) {
-      a = MA$new(f, desired_type)
+      a = MA$new(f, desired_type, name_f)
       fct <- a$build(verbose, reference = reference)
 
       tryCatch(
@@ -415,58 +423,61 @@ translate <- function(f, verbose = FALSE, reference = FALSE, R_fct = FALSE) {
         }
       )
     } else {
-      a = MA$new(f, desired_type)
+      a = MA$new(f, desired_type, name_f)
       fct <- a$build_SEXP(verbose, reference = reference)
 
       fct <- paste(
         '#include "etr.hpp"', "\n",
         fct
       )
-
-      file <- tempfile(fileext = ".cpp")
-      write(fct, file)
-      path <- tempfile() #gsub(gsub(".*/","",file), "", file) #tempfile()
-      dir.create(path)
-
+      
+      res <- NULL
       Sys.setenv("PKG_CXXFLAGS" = "-DRFCT -O3")
-
-      #Rcpp::sourceCpp(code = fct, verbose = verbose) # !!!!
-
-      options(warn=-1)
+      options(warn = -1)
       tryCatch(
         expr = {
-                fct_ret = Rcpp::sourceCpp(file,
-                                           cacheDir = path,
-                                           verbose = verbose)
+          res <- Rcpp::sourceCpp(code = fct, verbose = verbose) 
         },
         error = function(e) {
-            print("Sorry compilation failed!")
+          print("Sorry compilation failed!")
         }
       )
-      options(warn=0)
-      
+
       if(verbose) {
-        print(fct)
+        cat(fct)
       }
-      
-      # always same name sourceCpp_2.so???
-      dyn <- dyn.load(paste0(list.dirs(path)[3], "/sourceCpp_2.so") )
-      dyn.load(dyn[[2]], local = FALSE)
-      name_f <- as.character(substitute(f))
+
       args_f <- methods::formalArgs(f)
       check <- length(args_f)
       args_f <- paste(args_f, collapse = ",")
       
-      # to do --> check that input is numeric
-      if(check > 0) {
-        fct_ <- paste(name_f, "<- function(", args_f, ") { .Call(", "\"f\"", ",", args_f, ")}")  
-      } else {
-        fct_ <- paste(name_f, "<- function(", args_f, ") { .Call(", "\"f\"", ")}")
+      res <- res$buildDirectory
+      file <- list.files(res, pattern = "\\.so$")
+      if(length(file) == 1) { # linux & mac
+         stopifnot("find more then one shared object. Something went wrong. Sorry!"=length(file) == 1)
+         dyn.load(paste0(res, "/", file), local = FALSE, now = TRUE)
+         if(check > 0) {
+            fct_ <- paste(name_f, "<- function(", args_f, ") { .Call(", quote(name_f), ",", args_f, ")}")  
+         } else {
+            fct_ <- paste(name_f, "<- function(", args_f, ") { .Call(", quote(name_f), ")}")
+         }
+         fct_ret <- eval(parse(text = fct_))
+         return(fct_ret)
       }
-      
-      fct_ret <- eval(parse(text = fct_))
-      
-      Sys.unsetenv("PKG_CXXFLAGS")
+
+      file <- list.files(res, pattern = "\\.dll$")
+      if(length(file) == 1) { # windows
+         stopifnot("find more then one shared object. Something went wrong. Sorry!"=length(file) == 1)
+         dyn.load(paste0(res, "/", file))
+         if(check > 0) {
+            fct_ <- paste(name_f, "<- function(", args_f, ") { .Call(", quote(name_f), ",", args_f, ")}")  
+         } else {
+            fct_ <- paste(name_f, "<- function(", args_f, ") { .Call(", quote(name_f), ")}")
+         }
+         fct_ret <- eval(parse(text = fct_))
+         return(fct_ret)
+      }
+
     }
 
 
