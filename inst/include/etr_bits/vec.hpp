@@ -178,6 +178,7 @@ public:
   VEC& operator=(SEXP inp) {
     subsetted = false;
     ismatrix = false;
+
     ass(Rf_isReal(inp), "no numeric input");
     if(Rf_isMatrix(inp) == true) {
       ismatrix = true;
@@ -185,9 +186,8 @@ public:
       nrows = Rf_nrows(inp);
     }
 
-    //d.init_sexp(inp);
-    d = inp; // calls constructor for SEXP
-
+    d.init_sexp(inp);
+ 
     return *this;
   }
 

@@ -236,11 +236,11 @@ MA <- R6::R6Class("MA",
             return(temp)
           })
           args_dec <- paste(args_dec, collapse = " ")
-
-          fct_args = self$args_2_fct
           
+          fct_args = self$args_2_fct
           fct_args_dec <- sapply(seq_along(fct_args), function(x) {
-            temp <- paste('sexp', fct_args[[x]], '=', paste0(self$args[[x]], 'SEXP'), ';', collapse = '')
+            temp <- paste('sexp', fct_args[[x]], ';')
+            temp <- c(temp, fct_args[[x]], '=', paste0(self$args[[x]], 'SEXP', ';', collapse = ''))
             return(temp)
           })
 
@@ -452,7 +452,7 @@ translate <- function(f, verbose = FALSE, reference = FALSE, R_fct = FALSE) {
       args_f <- paste(args_f, collapse = ",")
       
       res <- res$buildDirectory
-      file <- list.files(res, pattern = "\\.so$")
+      file <- list.files(res, pattern = "\\.so$") # is it necessary to check also sl?
       if(length(file) == 1) { # linux & mac
          stopifnot("find more then one shared object. Something went wrong. Sorry!"=length(file) == 1)
          dyn.load(paste0(res, "/", file), local = FALSE, now = TRUE)
@@ -476,6 +476,10 @@ translate <- function(f, verbose = FALSE, reference = FALSE, R_fct = FALSE) {
          }
          fct_ret <- eval(parse(text = fct_))
          return(fct_ret)
+      } 
+
+      if(length(file) == 0) {
+        stop("find no shared object. Something went wrong. Sorry!")
       }
 
     }

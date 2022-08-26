@@ -29,13 +29,7 @@ namespace etr {
 // error function --> stop program & show message
 void ass(bool inp, std::string message) {
   if(inp == false) {
-    std::cerr << message << std::endl;
-
-    #ifdef RLANG
-      Rcpp::stop("Error");
-    #else
-      exit (EXIT_FAILURE);
-    #endif
+      Rf_error(message.c_str());
   }
 }
 
