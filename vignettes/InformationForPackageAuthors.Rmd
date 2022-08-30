@@ -39,9 +39,7 @@ p:first-of-type {
 - [Rcpp Interface](#rcpp-interface)
 - [RcppArmadillo Interface](#rcpparmadillo-interface)
 - [Pointer Interface](#pointer-interface)
-- [Examples](#examples)
-  * [r2sundials](#r2sundials)
-  * [paropt](#paropt)
+- [Example r2sundials](#example-r2sundials)
 
 
 
@@ -126,8 +124,7 @@ using namespace Rcpp;
 void fct() {
   // NumericVector to sexp
   NumericVector a{1, 2};
-  sexp a_; // sexp a_ = a; Error!
-  a_ = a;
+  sexp a_ = a;
   print(a_);
   
   // sexp to NumericVector
@@ -137,8 +134,7 @@ void fct() {
   
   // NumericMatrix to sexp
   NumericMatrix c(3, 3);
-  sexp c_; // sexp c_ = c; Error!
-  c_ = c;
+  sexp c_ = c;
   print(c_);
   
   // sexp to NumericMatrix
@@ -167,8 +163,7 @@ using namespace arma;
 void fct() {
   // vec to sexp
   arma::vec a(4, fill::value(30.0));
-  sexp a_; // sexp a_ = a; Error!
-  a_ = a;
+  sexp a_ = a;
   print(a_);
   
   // sexp to vec
@@ -178,8 +173,7 @@ void fct() {
   
   // mat to sexp
   mat c(3, 3, fill::value(31.0));
-  sexp c_; // sexp c_ = c; Error!
-  c_ = c;
+  sexp c_ = c;
   print(c_);
   
   // sexp to mat
@@ -318,11 +312,9 @@ fa2a <- translate(f, reference = TRUE)
 trash <- call_package(fa2a)
 ```
 
-## Examples
+## Example r2sundials
 
-In this section two examples are shown to illustrate how *ast2ast* could be used in R packages. First, it is shown how ODE-systems can be solved very efficiently. In order to do this the R package *r2sundials* is used. The second examples point out how *ast2ast* can be used together with the R package *paropt* to optimize parameters of ODE-systems. Both examples only construct wrapper functions that are used by the package code. Probably it would be more efficient when the package code itself would take care of the transfer of data between *Rcpp/RcppArmadillo* and *ast2ast*. 
-
-### r2sundials
+In this section an example is shown to illustrate how *ast2ast* could be used in other R packages. to solve ODE-systems very efficiently. In order to do this the R package *r2sundials* is used. First a wrapper function is created which is then used by *r2sundials*. Probably it would be more efficient when the package code itself would take care of the transfer of data between *Rcpp/RcppArmadillo* and *ast2ast*. 
 
 In this example it is shown how ODE-systems can be solved by using *r2sundials* and *ast2ast*. The code below shows how *r2sundials* is used normally. Either using an R function or an external pointer to a C++ function. 
 ```{r, eval = TRUE}
@@ -453,171 +445,4 @@ out <- microbenchmark(
 
 boxplot(out, names=c("R", "C++", "ast2ast"))
 ```
-
-\newpage
-\newpage
-
-### paropt
-
-In the second example, it is shown how *ast2ast* is used together with *paropt*. Again the code below consists of an Rcpp part and a part written in R. Within Rcpp the C++ code is defined which describes the Lotka-Volterra model (*ode_system*). For details check the documentation of *paropt*. Subsequently, a function is defined that returns an external pointer to the ODE-system (*test_optimization*). As already described in the last example a wrapper function is created which calls the actual ODE-system (*ode_system_wrapper*). Furthermore, a function is defined which calls the code from the package *paropt* called *optimize_paropt* and conducts the optimization. Within R the ODE-system is defined, translated and used for optimization. Both versions the pure C++ function and the translated R code yield the same result. The C++ function is almost as fast as the translated R code. Interesting is the fact that *paropt* calls the ODE-solver in parallel. This example demonstrates that the translated function can be called in parallel. Which is not possible with R functions. Admittedly, the printing is conducted by Rcpp. Therefore it is unknown how printing behaves in parallel.   
-```{Rcpp, eval = TRUE}
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::depends(ast2ast)]]
-// [[Rcpp::plugins("cpp17")]]
-// [[Rcpp::depends(paropt)]]
-#include "etr.hpp"
-#include "RcppArmadillo.h"
-using namespace Rcpp;
-
-// paropt version
-typedef int (*OS)(double &t,
-             std::vector<double> &params,
-             std::vector<double> &states);
-
-int ode_system(double &t,
-               std::vector<double> &params,
-               std::vector<double> & states) {
-  
-  double a = params[0];
-  double b = params[1];
-  double c = params[2];
-  double d = params[3];
-
-  double n1 = states[0];
-  double n2 = states[1];
-
-  states[0] = n1*c*n2 - n1*d;
-  states[1] = n2*a - n2*b*n1;
-
-  return 0;
-}
-
-// [[Rcpp::export]]
-XPtr<OS> test_optimization() {
-  XPtr<OS> xpfun = XPtr<OS>(new OS(
-                     &ode_system));
-  return xpfun;
-}
-
-// ast2ast version
-typedef int (*paropt_fct)(double &t,
-             std::vector<double> &params,
-             std::vector<double> & states);
-
-typedef void (*user_fct2)(sexp& p,
-                          sexp& y);
-
-user_fct2 Fct_paropt;
-
-int ode_system_wrapper(
-    double &t,
-    std::vector<double> &params,
-    std::vector<double> & states) {
-  
-  sexp p(params.size(), params.data(), 2);
-  sexp s(states.size(), states.data(), 2);
-  Fct_paropt(p, s);
-  return 0;
-}
-
-
-// [[Rcpp::export]]
-List optimize_paropt(XPtr<user_fct2> inp,
-                     NumericVector time,
-                     DataFrame lb, 
-                     DataFrame ub, 
-                     DataFrame states) {
-  Fct_paropt = *inp;
-  XPtr<paropt_fct> ptr = XPtr<paropt_fct>(
-    new paropt_fct(&ode_system_wrapper));
-
-  Environment pkg = 
-    Environment::namespace_env("paropt");
-  Function optim = 
-    pkg["optimizer_pointer"];
-
-  NumericVector abs_tols{1e-8, 1e-8};
-
-  List output = optim(time, ptr, 1e-6,
-                      abs_tols, lb, ub,
-                      states, 40,
-                      1000, 0.0001,
-                      "bdf");
-
-  return output;
-}
-```
-```{r, eval = TRUE}
-#states
-path <- system.file("examples",
-                    package = "paropt")
-states <- read.table(paste(
-                      path,
-                      "/states_LV.txt",
-                      sep = ""),
-                     header = T)
-
-# parameter
-lb <- data.frame(time = 0, 
-                 a = 0.8,
-                 b = 0.3,
-                 c = 0.09,
-                 d = 0.09)
-ub <- data.frame(time = 0,
-                 a = 1.3,
-                 b = 0.7,
-                 c = 0.4,
-                 d = 0.7)
-
-suppressMessages(library(paropt))
-set.seed(1)
-start_time <- Sys.time()
-df_cpp <- optimizer_pointer(
-  integration_times = states$time,
-  ode_sys = test_optimization(),
-  relative_tolerance = 1e-6,
-  absolute_tolerances = c(1e-8, 1e-8),
-  lower = lb, upper = ub, states = states,
-  npop = 40, ngen = 1000, error = 0.0001,
-  solvertype = "bdf")
-end_time <- Sys.time()
-cpp_time <- end_time - start_time
-
-# ast2ast with at and _db
-ode <- function(params, states) {
-  a_db = at(params, 1)
-  b_db = at(params, 2)
-  c_db = at(params, 3)
-  d_db = at(params, 4)
-  n1_db = at(states, 1)
-  n2_db = at(states, 2)
-  at(states, 1) = n1_db*c_db*n2_db -
-    n1_db*d_db;
-  at(states, 2) = n2_db*a_db - 
-    n2_db*b_db*n1_db;
-}
-
-pointer_to_ode <- ast2ast::translate(
-                        ode,
-                        reference = TRUE)
-set.seed(1)
-start_time <- Sys.time()
-df_ast2ast <- optimize_paropt(pointer_to_ode,
-                              states$time,
-                              lb, ub, states)
-end_time <- Sys.time()
-a2a_time <- end_time - start_time
-
-stopifnot(identical(df_cpp[[8]],
-                    df_ast2ast[[8]]) )
-
-times <- data.frame(cpp = cpp_time,
-                    ast2ast = a2a_time)
-kableExtra::kbl(times)
-```
-
-
-
-
-
 

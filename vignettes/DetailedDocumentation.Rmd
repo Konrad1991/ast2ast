@@ -215,8 +215,8 @@ row.names(d2) <- NULL
 names(d1) <- NULL
 names(d2) <- NULL
 
-kableExtra::kbl(d1, longtable = FALSE)
-kableExtra::kbl(d2, longtable = FALSE)
+knitr::kable(d1)
+knitr::kable(d2)
 ```
 
 

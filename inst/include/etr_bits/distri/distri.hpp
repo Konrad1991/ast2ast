@@ -47,12 +47,12 @@ VEC<double> dunif_etr(const VEC<double>& x, const VEC<double>& min_ = 0.0, const
     }
     
 
-    return VEC<double>(R_NaN);
+    return VEC<double>(R_NaN);                                                                           
 }
+                   
 
 
-
-
+                  
 
 
 }

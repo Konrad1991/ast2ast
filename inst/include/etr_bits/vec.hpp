@@ -38,7 +38,6 @@ public:
   // Constructors
   // ================================================================
   bool subsetted;
-  //bool fill;
   std::vector<int> indices;
 
   // for Matrix
@@ -57,11 +56,7 @@ public:
   VEC(T2 n) = delete;
 
   VEC(const bool value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
-
-  #ifdef RLANG
-  
   VEC(Rboolean value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
-  
   VEC(SEXP inp) : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
 
     if(Rf_isReal(inp)) {
@@ -74,35 +69,70 @@ public:
       nrows = Rf_nrows(inp);
       }
     } else {
-      //Rcpp::stop("no numeric input"); // this crashes R if input is character! Why?
+      Rf_error("no numeric input"); 
     }
-    
-    
+      
   }
-  #endif
+  VEC(Rcpp::NumericVector other_vec) : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
+    d.resize(other_vec.size());
+    this -> ismatrix = false;
+    this -> ncols = 0;
+    this -> nrows = 0;
+    subsetted = false;
+
+    for(int i = 0; i < other_vec.size(); i++) {
+      d[i] = other_vec[i];
+    }
+  }
+  VEC(Rcpp::NumericMatrix other_vec) : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
+    d.resize(other_vec.size());
+    this -> ismatrix = true;
+    this -> ncols = other_vec.ncol();
+    this -> nrows = other_vec.nrow();
+    subsetted = false;
+
+    for(int i = 0; i < other_vec.size(); i++) {
+      d[i] = other_vec[i];
+    }
+
+  }
+  VEC(arma::vec& other_vec) : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
+    d.resize(other_vec.size());
+    this -> ismatrix = false;
+    this -> ncols = 0;
+    this -> nrows = 0;
+    subsetted = false;
+
+    for(int i = 0; i < other_vec.size(); i++) {
+      d[i] = other_vec[i];
+    }
+
+  }
+  VEC(arma::mat& other_vec) : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
+    d.resize(other_vec.size());
+    this -> ismatrix = true;
+    this -> ncols = other_vec.n_cols;
+    this -> nrows = other_vec.n_rows;
+    subsetted = false;
+
+    for(int i = 0; i < other_vec.size(); i++) {
+      d[i] = other_vec[i];
+    }
+
+  }
 
   VEC(const double value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
- 
-  //VEC(const long unsigned int n) : subsetted(0), ismatrix(0), d(n), temp(1) {d.fill(static_cast<double>(n));} // fill is a hack that sexp s = 1 works;
   VEC(const long unsigned int n) : subsetted(0), ismatrix(0), d(1, static_cast<double>(n)), temp(1) {} // run all tests whether this is possible instead of line 80
-
-
   // Constructors for vector
   VEC(const int n) : subsetted(0), ismatrix(0),d(n), temp(1) {d.fill(static_cast<double>(n));} // fill is a hack that sexp s = 1 works;
   VEC(const int n, const double value) : subsetted(0), ismatrix(0), d(n, value), temp(1) {}
   VEC(const R& other_vec) : subsetted(0), ismatrix(0), d(other_vec),  temp(1) {}
-  //VEC(const R&& other_vec) : d(other_vec), subsetted(0), ismatrix(0) {} // not correct?
-
-  //VEC(const R& mat, int nrows_, int ncols_) : d(mat), subsetted(0), ncols(ncols_), nrows(nrows_), ismatrix(0) {}
   VEC() : subsetted(0), d(), nrows(0), ncols(0), ismatrix(0), temp() {} // maybe better initialize with 0
-
   VEC(const std::vector<T> inp) : subsetted(0),  ismatrix(0), nrows(0), ncols(0), d(inp), temp(1) {}
-
   // Constructors for matrix
   VEC(const int rows, const int cols) : subsetted(0), ismatrix(1), nrows(rows), ncols(cols), d(rows*cols), temp(1) {}
   VEC(const int rows, const int cols, const double value) : subsetted(0), ismatrix(1), nrows(rows), ncols(cols), d(rows*cols, value), temp(1) {}
   VEC(const int rows, const int cols, int value) : subsetted(0), ismatrix(1), nrows(rows), ncols(cols), d(rows*cols, value), temp(1) {}
-
   // constructor for calculations
   template<typename T2, typename R2>
   VEC(const VEC<T2, R2> &other_vec) :d(1), temp(1) {
@@ -122,7 +152,6 @@ public:
       subsetted = false;
 
   }
-
   // constructor for COMPARISON
   VEC(const VEC<bool>& other_vec) : d(1), temp(1) {
     d.resize(other_vec.size());
@@ -133,29 +162,11 @@ public:
     }
 
   }
-
   // constructor for pointer
   VEC(const int n, T* ptr, int cob) : subsetted(0), ismatrix(0), d(n, ptr, cob), temp(1) {} //cob = copy, owning, borrow
-  //VEC(const int n, const T* ptr, int cob) : d(n, ptr, cob), subsetted(0), ismatrix(0) {} //cob = copy, owning, borrow
   VEC(const int r, const int c, T* ptr, int cob) : subsetted(0), ismatrix(1), nrows(r), ncols(c), d(r*c, ptr, cob), temp(1) {} //cob = copy, owning, borrow
-  //VEC(const int r, const int c, const T* ptr, int cob) : d(r*c, ptr, cob), subsetted(0), ismatrix(1), nrows(r), ncols(c) {} //cob = copy, owning, borrow
 
   operator bool() const{return d[0];}
-
-  /*
-  operator int() const{
-    return static_cast<int>( d[0] );
-  }
-  */
-
-  /*
-  operator double() const{
-    ass(this -> size() == 1, "Try tp convert object to double which is non scalar");
-    return d[0];
-  }
-  */
-
-  #ifdef RLANG
 
   operator SEXP() const {
     SEXP ret = R_NilValue;
@@ -288,8 +299,6 @@ public:
 
     return *this;
   }
-
-  #endif
 
   // vector & matrix operator=
   // ================================================================

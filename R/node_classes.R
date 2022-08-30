@@ -65,6 +65,23 @@ PC <- R6::R6Class("PC",
             }
         },
 
+
+        replace_NA = function() {
+          for(i in seq_along(self$arguments)) {
+              if( (is.atomic(self$arguments[[i]])) && (is.na(self$arguments[[i]])) ) {
+                self$arguments[[i]] = str2lang("NA_REAL")
+              }
+          }
+        },
+
+        replace_INF = function() {
+          for(i in seq_along(self$arguments)) {
+              if( (is.atomic(self$arguments[[i]])) && (is.infinite(self$arguments[[i]])) ) {
+                  self$arguments[[i]] = str2lang("R_PosInf") # check for R_NegInf how?
+              }
+          }
+        },
+
         oaf = function(var) { # only allowed functions
           check = deparse(self$name_fct) %in% var
           return(check)
@@ -98,6 +115,10 @@ PC <- R6::R6Class("PC",
             }
           }
 
+          na_inf <- c("NA_REAL", "R_PosInf", "R_NegInf")
+          indices <- ret %in% na_inf
+          ret <- ret[indices == FALSE]
+
           return(ret)
         }
 
@@ -119,6 +140,8 @@ generic <- R6::R6Class("generic",
       },
 
       convert = function(var) {
+        self$replace_INF()
+        self$replace_NA()
         self$replace_TF()
         self$oaf(var)
         self$change_code()
@@ -143,6 +166,8 @@ assign <- R6::R6Class("assign",
       },
 
       convert = function(var) {
+        self$replace_INF()
+        self$replace_NA()
         self$replace_TF()
         self$oaf(var)
         self$change_code()
@@ -170,6 +195,8 @@ subset <- R6::R6Class("subset",
       },
 
       change_code = function() {
+        self$replace_INF()
+        self$replace_NA()
         self$replace_TF()
         self$arguments <- lapply(self$arguments, function(x) {
           temp <- as.character(x)
@@ -212,6 +239,8 @@ subset <- R6::R6Class("subset",
       },
 
       convert = function(var) {
+        self$replace_INF()
+        self$replace_NA()
         self$replace_TF()
         self$oaf(var)
         self$change_code()
@@ -238,6 +267,8 @@ loop <- R6::R6Class("loop",
       },
 
       convert = function(var) {
+        self$replace_INF()
+        self$replace_NA()
         self$replace_int()
         self$replace_TF()
         self$oaf(var)
@@ -269,6 +300,8 @@ coca <- R6::R6Class("coca",
 
       convert = function(var) {
         self$replace_int()
+        self$replace_INF()
+        self$replace_NA()
         self$replace_TF()
         self$oaf(var)
         self$change_code()
@@ -292,6 +325,8 @@ fastaccess <- R6::R6Class("fastaccess",
       },
 
       convert = function(var) {
+        self$replace_INF()
+        self$replace_NA()
         self$replace_TF()
         self$oaf(var)
         self$change_code()
@@ -350,6 +385,8 @@ range <- R6::R6Class("range",
       },
 
       convert = function(var) {
+        self$replace_INF()
+        self$replace_NA()
         self$replace_TF()
         self$oaf(var)
         self$change_code()
@@ -448,6 +485,8 @@ math <- R6::R6Class("math",
       },
 
       convert = function(var) {
+        self$replace_INF()
+        self$replace_NA()
         self$replace_TF()
         self$oaf(var)
         self$change_code()

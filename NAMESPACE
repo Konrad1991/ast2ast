@@ -3,4 +3,5 @@ export("translate")
 importFrom(R6, R6Class)
 importFrom(purrr, map_if)
 importFrom(RcppArmadillo, armadillo_version)
+importFrom(methods, formalArgs)
 

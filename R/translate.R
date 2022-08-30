@@ -390,7 +390,7 @@ translate <- function(f, verbose = FALSE, reference = FALSE, R_fct = FALSE) {
     stopifnot(is.function(f))
     stopifnot(is.logical(verbose))
     stopifnot(is.logical(reference))
-    stopifnot(is.logical(R_fct))
+    stopifnot(is.logical(R_fct)) # change to character !!!!!!!!!
 
     if(R_fct == TRUE) {
       stopifnot(reference == FALSE)
@@ -432,7 +432,7 @@ translate <- function(f, verbose = FALSE, reference = FALSE, R_fct = FALSE) {
       )
       
       res <- NULL
-      Sys.setenv("PKG_CXXFLAGS" = "-DRFCT -O3")
+      Sys.setenv("PKG_CXXFLAGS" = "-DRFCT -O3") # remove warnings -Wall -Wpedantic!!!!!!!!!!
       options(warn = -1)
       tryCatch(
         expr = {
@@ -452,8 +452,16 @@ translate <- function(f, verbose = FALSE, reference = FALSE, R_fct = FALSE) {
       args_f <- paste(args_f, collapse = ",")
       
       res <- res$buildDirectory
-      file <- list.files(res, pattern = "\\.so$") # is it necessary to check also sl?
-      if(length(file) == 1) { # linux & mac
+
+      file <- NULL
+      if( (Sys.info()['sysname'] == "Linux") || (Sys.info()['sysname'] == 'macOS') ) {
+        file <- list.files(res, pattern = "\\.so$") # is it necessary to check also sl?
+      } else if(Sys.info()['sysname'] == "Windows") {
+        file <- list.files(res, pattern = "\\.dll$")
+      } else {
+        stop("unsupported operating system found")
+      }
+      if(length(file) == 1) { 
          stopifnot("find more then one shared object. Something went wrong. Sorry!"=length(file) == 1)
          dyn.load(paste0(res, "/", file), local = FALSE, now = TRUE)
          if(check > 0) {
@@ -464,19 +472,6 @@ translate <- function(f, verbose = FALSE, reference = FALSE, R_fct = FALSE) {
          fct_ret <- eval(parse(text = fct_))
          return(fct_ret)
       }
-
-      file <- list.files(res, pattern = "\\.dll$")
-      if(length(file) == 1) { # windows
-         stopifnot("find more then one shared object. Something went wrong. Sorry!"=length(file) == 1)
-         dyn.load(paste0(res, "/", file))
-         if(check > 0) {
-            fct_ <- paste(name_f, "<- function(", args_f, ") { .Call(", quote(name_f), ",", args_f, ")}")  
-         } else {
-            fct_ <- paste(name_f, "<- function(", args_f, ") { .Call(", quote(name_f), ")}")
-         }
-         fct_ret <- eval(parse(text = fct_))
-         return(fct_ret)
-      } 
 
       if(length(file) == 0) {
         stop("find no shared object. Something went wrong. Sorry!")

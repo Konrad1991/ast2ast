@@ -262,20 +262,9 @@ public:
   // 1 indexed array
   T& operator[](int pos) const {
     if(pos < 0) {
-      std::cerr << "Error: out of boundaries --> value below 1" << std::endl;
-
-      #ifdef RLANG
-        Rcpp::stop("Error");
-      #else
-        std::terminate();
-      #endif
+      Rf_error("Error: out of boundaries --> value below 1");
     } else if(pos >= sz) {
-      std::cerr << "Error: out of boundaries --> value beyond size of vector" << std::endl;
-      #ifdef RLANG
-        Rcpp::stop("Error");
-      #else
-        std::terminate();
-      #endif
+      Rf_error("Error: out of boundaries --> value beyond size of vector");
     }
     return p[pos];
   }
@@ -574,20 +563,9 @@ public:
   // 1 indexed array
   T& operator[](int pos) const {
     if(pos < 0) {
-      std::cerr << "Error: out of boundaries --> value below 1" << std::endl;
-
-      #ifdef RLANG
-        Rcpp::stop("Error");
-      #else
-        std::terminate();
-      #endif
+      Rf_error("Error: out of boundaries --> value below 1");
     } else if(pos >= sz) {
-      std::cerr << "Error: out of boundaries --> value beyond size of vector" << std::endl;
-      #ifdef RLANG
-        Rcpp::stop("Error");
-      #else
-        std::terminate();
-      #endif
+      Rf_error("Error: out of boundaries --> value beyond size of vector");
     }
     return p[pos];
   }
