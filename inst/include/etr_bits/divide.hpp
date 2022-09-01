@@ -32,9 +32,9 @@ class VVDIV {
 private:
   const L& l; //const L& l;
   const R& r; //const R& r;
-  int columns_;
-  int rows_;
   bool ismatrix;
+  int rows_;
+  int columns_;
 
 public:
 
@@ -165,8 +165,8 @@ template<typename T, typename L, typename R>
 class SVDIV {
 
 private:
-  const L& l;
   const R& r;
+  const L& l;
   const bool ismatrix;
   const int nrows;
   const int ncols;

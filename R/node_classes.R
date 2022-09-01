@@ -58,6 +58,9 @@ PC <- R6::R6Class("PC",
                 number2 = gsub(as.name("+"), "", number2)
                 number2 = gsub("-", "", number2)
                 size2 = nchar(number2)
+                if(is.na(size2)) {
+                  return()
+                }
                   if(size2 == 0) { # int found
                     self$arguments[[i]] = str2lang(paste0('i2d(', self$arguments[[i]], ')') )
                   }
@@ -120,7 +123,60 @@ PC <- R6::R6Class("PC",
           ret <- ret[indices == FALSE]
 
           return(ret)
-        }
+        },
+
+        change_args = function(name_of_fct, user_args) {
+        
+            # get name of list
+            named <- function(x) {
+              if(!is.null(names(x))) {
+                return(names(x) != '')
+              }
+              return(FALSE)
+            } 
+            # find named args
+            named_args = named(user_args)
+            equal_names = names(user_args[named_args])    
+            # find args required for function
+            args_fct = methods::formalArgs(name_of_fct)
+            # check that user only use defined arg names
+            check = all(equal_names %in% args_fct)
+            if(check == FALSE) {
+              def_logis <- equal_names %in% args_fct
+              lapply(seq_along(def_logis), function(x) {
+                if(def_logis[[x]] == FALSE) {
+                  message(paste("Argument", equal_names[[x]], "is not defined for function", name_of_fct))
+                  stop("Error")
+                }
+              })
+            }
+
+            # combine named and unnamed args in correct order
+            # is named --> use this value
+            # if not named take the first, second etc. not named element
+            not_equal_names = user_args[!named(user_args)]
+            counter_not_equal = 1
+            counter = 1
+            res = list()
+            for(i in seq_along(args_fct)) {
+              temp <- args_fct[[i]]
+              if(temp %in% equal_names) {
+                res[[counter]] = user_args[[temp]]
+                counter = counter + 1
+              } else {
+                if(counter_not_equal <= length(not_equal_names)) {
+                  res[[counter]] = not_equal_names[[counter_not_equal]]
+                  counter_not_equal = counter_not_equal + 1
+                  counter = counter + 1
+                } else  {
+                  res[[counter]] = formals(name_of_fct)[[temp]]
+                  counter = counter + 1
+                }
+              }
+            }
+
+            return(res)
+      }
 
 
 
@@ -315,6 +371,59 @@ coca <- R6::R6Class("coca",
     )
 )
 
+
+is_na <- R6::R6Class("is_na",
+    inherit = PC,
+
+    public = list(
+
+      change_code = function() {
+        self$name_fct = as.name("is_na")
+      },
+
+      convert = function(var) {
+        self$replace_int()
+        self$replace_INF()
+        self$replace_NA()
+        self$replace_TF()
+        self$oaf(var)
+        self$change_code()
+
+        ret <- list()
+        ret[[1]] <- self$name_fct
+        ret <- c(ret, self$arguments)
+        return(ret)
+      }
+
+    )
+)
+
+is_infinite <- R6::R6Class("is_infinite",
+    inherit = PC,
+
+    public = list(
+
+      change_code = function() {
+        self$name_fct = as.name("is_infinite")
+      },
+
+      convert = function(var) {
+        self$replace_int()
+        self$replace_INF()
+        self$replace_NA()
+        self$replace_TF()
+        self$oaf(var)
+        self$change_code()
+
+        ret <- list()
+        ret[[1]] <- self$name_fct
+        ret <- c(ret, self$arguments)
+        return(ret)
+      }
+
+    )
+)
+
 fastaccess <- R6::R6Class("fastaccess",
     inherit = PC,
 
@@ -433,12 +542,16 @@ math <- R6::R6Class("math",
         } else if(self$name_fct == "sqrt") {
           self$name_fct = as.name("sqroot")
         } else if(self$name_fct == "runif") {
+          self$arguments = self$change_args("runif", self$arguments)
           self$name_fct = as.name("runif_etr")
         } else if(self$name_fct == "dunif") {
+          self$arguments = self$change_args("dunif", self$arguments)
           self$name_fct = as.name("dunif_etr")
         } else if(self$name_fct == "punif") {
+          self$arguments = self$change_args("punif", self$arguments)
           self$name_fct = as.name("punif_etr")
         } else if(self$name_fct == "qunif") {
+          self$arguments = self$change_args("qunif", self$arguments)
           self$name_fct = as.name("qunif_etr")
         } else if(self$name_fct == "rnorm") {
           self$name_fct = as.name("rnorm_etr")

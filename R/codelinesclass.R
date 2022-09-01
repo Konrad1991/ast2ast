@@ -34,7 +34,8 @@ LC <- R6::R6Class("LC",
        "dlnorm", "plnorm", "qlnorm", "rlnorm",
        "dgamma", "pgamma", "qgamma", "rgamma",
        "dbeta", "pbeta", "beta", "rbeta",
-       "dnbeta", "pnbeta", "qnbeta", "rnbeta"), # permitted functions
+       "dnbeta", "pnbeta", "qnbeta", "rnbeta",
+       "is.na", "is.infinite"), # permitted functions
 
        vars = list(), # variables
        index_vars = list(),
@@ -129,6 +130,20 @@ LC <- R6::R6Class("LC",
           } else if(as.name('print') == fct) {
 
             p <- printer$new(sexp)
+            sexp <- p$convert(self$PF)
+            self$vars <- c(self$vars, p$get_var_names())
+            self$check_assign_subset = FALSE
+
+          } else if(as.name("is.na") == fct) {
+            
+            p <- is_na$new(sexp)
+            sexp <- p$convert(self$PF)
+            self$vars <- c(self$vars, p$get_var_names())
+            self$check_assign_subset = FALSE
+
+          } else if(as.name("is.infinite") == fct) {
+            
+            p <- is_infinite$new(sexp)
             sexp <- p$convert(self$PF)
             self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE

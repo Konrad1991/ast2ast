@@ -42,6 +42,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "etr_bits/interpolation.hpp"
 #include "etr_bits/comparison.hpp"
 #include "etr_bits/looping.hpp"
+#include "etr_bits/checks_na_inf.hpp"
 
 // distributions
 /*

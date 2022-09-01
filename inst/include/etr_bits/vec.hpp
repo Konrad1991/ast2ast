@@ -55,6 +55,72 @@ public:
   template<typename T2>
   VEC(T2 n) = delete;
 
+  VEC(const double value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {} // d(1, value) or d(1) {d[0] = value} --> all tests run positive
+  VEC(const long unsigned int n) : subsetted(0), ismatrix(0), d(1, static_cast<double>(n)), temp(1) {} // run all tests whether this is possible 
+  // Constructors for vector
+  VEC(const int n) : subsetted(0), ismatrix(0),d(n), temp(1) {d.fill(static_cast<double>(n));} // fill is a hack that sexp s = 1 works;
+  VEC(const int n, const double value) : subsetted(0), ismatrix(0), d(n, value), temp(1) {}
+  VEC(const R& other_vec) : subsetted(0), ismatrix(0), d(other_vec),  temp(1) {}
+  VEC() : subsetted(0), ismatrix(0), ncols(0), nrows(0), d(), temp() {} // maybe better initialize with 0
+  VEC(const std::vector<T> inp) : subsetted(0),  ismatrix(0), nrows(0), ncols(0), d(inp), temp(1) {}
+  // Constructors for matrix
+  VEC(const int rows, const int cols) : subsetted(0), ismatrix(1), ncols(cols), nrows(rows), d(rows*cols), temp(1) {}
+  VEC(const int rows, const int cols, const double value) : subsetted(0), ismatrix(1), ncols(cols), nrows(rows), d(rows*cols, value), temp(1) {}
+  VEC(const int rows, const int cols, int value) : subsetted(0), ismatrix(1), nrows(rows), ncols(cols), d(rows*cols, value), temp(1) {}
+  // constructor for calculations
+  template<typename T2, typename R2>
+  VEC(const VEC<T2, R2> &other_vec) :d(1), temp(1) {
+
+      this -> d.resize(other_vec.size());
+      this -> ismatrix = false;
+      for(int i = 0; i < d.size(); i++) {
+            this -> d[i] = other_vec[i];
+      }
+
+      if(other_vec.d.im() == true) {
+        this -> ismatrix = true;
+        this -> ncols = other_vec.d.nc();
+        this -> nrows = other_vec.d.nr();
+      }
+
+      subsetted = false;
+
+  }
+  // constructor for COMPARISON
+  VEC(const VEC<bool>& other_vec) : d(1), temp(1) {
+    d.resize(other_vec.size());
+    ismatrix = false;
+    subsetted = false;
+    for(int i = 0; i < d.size(); i++) {
+      d[i] = other_vec[i];
+    }
+
+  }
+  // constructor for pointer
+  VEC(const int n, T* ptr, int cob) : subsetted(0), ismatrix(0), d(n, ptr, cob), temp(1) {} //cob = copy, owning, borrow
+  VEC(const int r, const int c, T* ptr, int cob) : subsetted(0), ismatrix(1), nrows(r), ncols(c), d(r*c, ptr, cob), temp(1) {} //cob = copy, owning, borrow
+
+  operator bool() const{return d[0];}
+
+  operator SEXP() const {
+    SEXP ret = R_NilValue;
+
+    if(this -> ismatrix) {
+       ret = PROTECT(Rf_allocMatrix(REALSXP, this -> nrows, this -> ncols ) );
+    } else {
+       ret = PROTECT(Rf_allocVector(REALSXP, this -> d.size() ) );
+    }
+
+    for(int i = 0; i < d.size(); i++) {
+      REAL(ret)[i] = d[i];
+    }
+
+    UNPROTECT(1);
+
+    return ret;
+  }
+
+  // constructor for Rcpp RcppArmadillo and SEXP
   VEC(const bool value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
   VEC(Rboolean value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
   VEC(SEXP inp) : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
@@ -119,71 +185,6 @@ public:
       d[i] = other_vec[i];
     }
 
-  }
-
-  VEC(const double value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
-  VEC(const long unsigned int n) : subsetted(0), ismatrix(0), d(1, static_cast<double>(n)), temp(1) {} // run all tests whether this is possible instead of line 80
-  // Constructors for vector
-  VEC(const int n) : subsetted(0), ismatrix(0),d(n), temp(1) {d.fill(static_cast<double>(n));} // fill is a hack that sexp s = 1 works;
-  VEC(const int n, const double value) : subsetted(0), ismatrix(0), d(n, value), temp(1) {}
-  VEC(const R& other_vec) : subsetted(0), ismatrix(0), d(other_vec),  temp(1) {}
-  VEC() : subsetted(0), d(), nrows(0), ncols(0), ismatrix(0), temp() {} // maybe better initialize with 0
-  VEC(const std::vector<T> inp) : subsetted(0),  ismatrix(0), nrows(0), ncols(0), d(inp), temp(1) {}
-  // Constructors for matrix
-  VEC(const int rows, const int cols) : subsetted(0), ismatrix(1), nrows(rows), ncols(cols), d(rows*cols), temp(1) {}
-  VEC(const int rows, const int cols, const double value) : subsetted(0), ismatrix(1), nrows(rows), ncols(cols), d(rows*cols, value), temp(1) {}
-  VEC(const int rows, const int cols, int value) : subsetted(0), ismatrix(1), nrows(rows), ncols(cols), d(rows*cols, value), temp(1) {}
-  // constructor for calculations
-  template<typename T2, typename R2>
-  VEC(const VEC<T2, R2> &other_vec) :d(1), temp(1) {
-
-      this -> d.resize(other_vec.size());
-      this -> ismatrix = false;
-      for(int i = 0; i < d.size(); i++) {
-            this -> d[i] = other_vec[i];
-      }
-
-      if(other_vec.d.im() == true) {
-        this -> ismatrix = true;
-        this -> ncols = other_vec.d.nc();
-        this -> nrows = other_vec.d.nr();
-      }
-
-      subsetted = false;
-
-  }
-  // constructor for COMPARISON
-  VEC(const VEC<bool>& other_vec) : d(1), temp(1) {
-    d.resize(other_vec.size());
-    ismatrix = false;
-    subsetted = false;
-    for(int i = 0; i < d.size(); i++) {
-      d[i] = other_vec[i];
-    }
-
-  }
-  // constructor for pointer
-  VEC(const int n, T* ptr, int cob) : subsetted(0), ismatrix(0), d(n, ptr, cob), temp(1) {} //cob = copy, owning, borrow
-  VEC(const int r, const int c, T* ptr, int cob) : subsetted(0), ismatrix(1), nrows(r), ncols(c), d(r*c, ptr, cob), temp(1) {} //cob = copy, owning, borrow
-
-  operator bool() const{return d[0];}
-
-  operator SEXP() const {
-    SEXP ret = R_NilValue;
-
-    if(this -> ismatrix) {
-       ret = PROTECT(Rf_allocMatrix(REALSXP, this -> nrows, this -> ncols ) );
-    } else {
-       ret = PROTECT(Rf_allocVector(REALSXP, this -> d.size() ) );
-    }
-
-    for(int i = 0; i < d.size(); i++) {
-      REAL(ret)[i] = d[i];
-    }
-
-    UNPROTECT(1);
-
-    return ret;
   }
 
   VEC& operator=(SEXP inp) {
@@ -308,7 +309,7 @@ public:
       ismatrix = false;
       d[0] = dob;
     } else {
-      for(int i = 0; i < indices.size(); i++) {
+      for(std::size_t i = 0; i < indices.size(); i++) {
         d[indices[i]] = dob;
       }
     }
@@ -337,9 +338,9 @@ public:
       }
     } else {
 
-      ass(indices.size() <= other_vec.size(), "number of items to replace is not a multiple of replacement length");
+      ass(static_cast<int>(indices.size()) <= other_vec.size(), "number of items to replace is not a multiple of replacement length");
 
-      for(int i = 0; i < indices.size(); i++) {
+      for(std::size_t i = 0; i < indices.size(); i++) {
         d[indices[i]] = other_vec[i];
       }
 
@@ -385,7 +386,7 @@ public:
       for(int i = 0; i < temp.size(); i++) {
           temp[i] = other_vec[i];
       }
-      for(int i = 0; i < indices.size(); i++) {
+      for(std::size_t i = 0; i < indices.size(); i++) {
           this -> d[indices[i]] = temp[i];
       }
     }

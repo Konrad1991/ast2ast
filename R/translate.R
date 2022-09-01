@@ -208,9 +208,9 @@ MA <- R6::R6Class("MA",
 
               sig = NULL
               if(extern == FALSE) {
-                sig <- paste(self$return_type(), self$name, '(', arguments_string, ')', '{', collapse = " ")
+                sig <- paste("SEXP", self$name, '(', arguments_string, ')', '{', collapse = " ")
               } else {
-                sig <- paste('extern "C" {' , self$return_type(), self$name, '(', arguments_string, ');}', collapse = " ")
+                sig <- paste('extern "C" {' , "SEXP", self$name, '(', arguments_string, ');}', collapse = " ")
               }
               
 
@@ -268,7 +268,21 @@ MA <- R6::R6Class("MA",
           self$ast2call()
           self$call2char()
 
-          fct = c(
+          fct = NULL
+          if(self$return_type() == "void") {
+            fct = c(
+            "// [[Rcpp::depends(ast2ast)]] \n",
+            "// [[Rcpp::depends(RcppArmadillo)]] \n",
+            "// [[Rcpp::plugins(cpp17)]] \n",
+            self$signature_SEXP(self$desired_type, reference, extern = TRUE), "\n",
+            self$signature_SEXP(self$desired_type, reference, extern = FALSE), "\n",
+            self$vars_declaration_SEXP(self$desired_type), "\n",
+            self$char, "\n",
+            "return R_NilValue;",
+            '}'
+          )
+          } else {
+            fct = c(
             "// [[Rcpp::depends(ast2ast)]] \n",
             "// [[Rcpp::depends(RcppArmadillo)]] \n",
             "// [[Rcpp::plugins(cpp17)]] \n",
@@ -278,6 +292,7 @@ MA <- R6::R6Class("MA",
             self$char, "\n",
             '}'
           )
+          }
 
           fct <- paste( unlist(fct), collapse='')
         }
@@ -432,7 +447,7 @@ translate <- function(f, verbose = FALSE, reference = FALSE, R_fct = FALSE) {
       )
       
       res <- NULL
-      Sys.setenv("PKG_CXXFLAGS" = "-DRFCT -O3") # remove warnings -Wall -Wpedantic!!!!!!!!!!
+      Sys.setenv("PKG_CXXFLAGS" = "-DRFCT") # remove warnings -Wall -Wpedantic!!!!!!!!!!
       options(warn = -1)
       tryCatch(
         expr = {
@@ -443,7 +458,10 @@ translate <- function(f, verbose = FALSE, reference = FALSE, R_fct = FALSE) {
         }
       )
 
-      if(verbose) {
+      Sys.unsetenv("PKG_CXXFLAGS") # is this correct?
+      options(warn = 0)
+
+      if(verbose == TRUE) {
         cat(fct)
       }
 

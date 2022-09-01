@@ -108,10 +108,10 @@ class VVPLUS {
 private:
   const L& l;
   const R& r;
-  int columns_;
-  int rows_;
   bool ismatrix;
-
+  int rows_;
+  int columns_;
+  
 public:
 
   VVPLUS(const L &a, const R &b, bool ismatrix_, int rows, int cols) : l(a), r(b),
@@ -248,8 +248,8 @@ template<typename T, typename L, typename R>
 class SVPLUS {
 
 private:
-  const L& l;
   const R& r;
+  const L& l;
   const bool ismatrix;
   const int nrows;
   const int ncols;

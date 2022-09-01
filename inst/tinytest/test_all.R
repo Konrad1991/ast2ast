@@ -1305,12 +1305,32 @@ testall <- function(a, type_test) {
       a <- c(0, 0.2, 0.4, 0.99)
       b <- sin(a) + asin(a) + sinh(a) + cos(a) + acos(a) + cosh(a) + tan(a) + atan(a) + tanh(a)
       return(b)
-    } else if(type_test == 22) { # NA, Inf, -Inf
+    } else if(type_test == 22.1) { # NA, Inf, -Inf
       a <- 1:3
       a[1] <- NA
       a[2] <- Inf
       a[3] <- -Inf
       return(a)
+    } else if(type_test == 22.2) {
+      a <- 1:3
+      a[1] <- NA
+      a[2] <- Inf
+      a[3] <- -Inf
+      b <- is.na(a)
+      return(b)
+    } else if(type_test == 22.3) {
+      a <- 1:3
+      a[1] <- NA
+      a[2] <- Inf
+      a[3] <- -Inf
+      b <- is.infinite(a)
+      return(b)
+    } else if(type_test == 22.4) {
+      a <- 1:3
+      b <- is.infinite(a + 1)
+      c <- is.na(a + 2)
+      d <- b + c
+      return(d)
     }
     
      
@@ -1323,7 +1343,10 @@ testall <- function(a, type_test) {
 test <- translate(testall, R_fct = TRUE)
 
 # Na, Inf, -Inf
-expect_equal(test(0, 22), c(NA, Inf, -Inf))
+expect_equal(test(0, 22.1), c(NA, Inf, -Inf) )
+expect_equal(test(0, 22.2), c(1, 0, 0) )
+expect_equal(test(0, 22.3), c(0, 1, 1) )
+expect_equal(test(0, 22.4), c(0, 0, 0) )
 # dim
 expect_equal(test(matrix(c(1, 2, 3, 4), 2, 2), 20.1), matrix(c(2, 3, 3, 4), 2, 2))
 # trigonometry

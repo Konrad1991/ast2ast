@@ -27,21 +27,85 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-VEC<double> dunif_etr(const VEC<double>& x, const VEC<double>& min_ = 0.0, const VEC<double>& max_ = 1.0, const VEC<double>& lg = false) {
+VEC<double> dunif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lg) {
 
     if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) && (lg.size() == 1) ) {
+        GetRNGstate();
         return R::dunif(x[0], min_[0], max_[0], lg[0]);
+        PutRNGstate();
     } else {
         std::vector<int> sizes{min_.size(), max_.size(), lg.size()};
         int max = x.size();
-        for(int i = 1; i < 4; i++) {
+        for(int i = 1; i < sizes.size(); i++) {
+            if(sizes[i] > max) {
+                max = sizes[i];
+            }
+        }
+        VEC<double> res(max, 0.0);
+        Rcpp::Rcout << "test" << std::endl;
+        for(int i = 0; i < res.size(); i++) {
+            GetRNGstate();
+            res[i] = R::dunif(x[i % x.size()], min_[i % min_.size()], max_[i % max_.size()], lg[i % lg.size()]);
+            PutRNGstate();
+        }
+        return res;
+    }  
+
+    return VEC<double>(R_NaN);                                                                           
+}
+                   
+
+VEC<double> runif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_) {
+
+    if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) ) {
+        VEC<double> res(x[0], 0.0);
+        int size = static_cast<int>(x[0]);
+        for(int i = 0; i < size; i++) {
+            GetRNGstate();
+            res[i] = R::runif(min_[i % min_.size()], max_[i % max_.size()]);
+            PutRNGstate();
+        }
+        return res;
+    }else {
+        std::vector<int> sizes{min_.size(), max_.size()};
+        int max = x.size();
+        for(int i = 1; i < sizes.size(); i++) {
             if(sizes[i] > max) {
                 max = sizes[i];
             }
         }
         VEC<double> res(max, 0.0);
         for(int i = 0; i < res.size(); i++) {
-            res[i] = R::dunif(x[i % x.size()], min_[i % min_.size()], max_[i % max_.size()], lg[i % lg.size()]);
+            GetRNGstate();
+            res[i] = R::runif(min_[i % min_.size()], max_[i % max_.size()]);
+            PutRNGstate();
+        }
+        return res;
+    }
+
+    return VEC<double>(R_NaN);                                                                           
+}
+
+
+VEC<double> punif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lower, const VEC<double>& lg) {
+
+    if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) && (lg.size() == 1) ) {
+        GetRNGstate();
+        return R::punif(x[0], min_[0], max_[0], lower[0], lg[0]);
+        PutRNGstate();
+    } else {
+        std::vector<int> sizes{min_.size(), max_.size(), lower.size(), lg.size()};
+        int max = x.size();
+        for(int i = 1; i < sizes.size(); i++) {
+            if(sizes[i] > max) {
+                max = sizes[i];
+            }
+        }
+        VEC<double> res(max, 0.0);
+        for(int i = 0; i < res.size(); i++) {
+            GetRNGstate();
+            res[i] = R::punif(x[i % x.size()], min_[i % min_.size()], max_[i % max_.size()], lower[i % lower.size()], lg[i % lg.size()]);
+            PutRNGstate();
         }
         return res;
     }
@@ -49,9 +113,34 @@ VEC<double> dunif_etr(const VEC<double>& x, const VEC<double>& min_ = 0.0, const
 
     return VEC<double>(R_NaN);                                                                           
 }
-                   
 
 
+VEC<double> qunif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lower, const VEC<double>& lg) {
+
+    if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) && (lg.size() == 1) ) {
+        GetRNGstate();
+        return R::qunif(x[0], min_[0], max_[0], lower[0], lg[0]);
+        PutRNGstate();
+    } else {
+        std::vector<int> sizes{min_.size(), max_.size(), lower.size(), lg.size()};
+        int max = x.size();
+        for(int i = 1; i < sizes.size(); i++) {
+            if(sizes[i] > max) {
+                max = sizes[i];
+            }
+        }
+        VEC<double> res(max, 0.0);
+        for(int i = 0; i < res.size(); i++) {
+            GetRNGstate();
+            res[i] = R::qunif(x[i % x.size()], min_[i % min_.size()], max_[i % max_.size()], lower[i % lower.size()], lg[i % lg.size()]);
+            PutRNGstate();
+        }
+        return res;
+    }
+    
+
+    return VEC<double>(R_NaN);                                                                           
+}
                   
 
 

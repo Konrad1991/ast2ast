@@ -290,7 +290,6 @@ public:
   void realloc(int new_size) {
     ass(cob < 2, "try to delete borrowed pointer");
     T* temp;
-    int temp_size;
     temp = new T[sz];
     for(int i = 0; i < sz; i++) {
       temp[i] = p[i];
@@ -356,8 +355,7 @@ public:
   int capacity;
   bool todelete;
   bool allocated = false;
-
-
+  int cob = 0;
 
   // Constructors
   STORE(SEXP inp) {
@@ -423,7 +421,36 @@ public:
   }
 
   STORE(const int n, T* pinp, int cob_) {
-    ass(false, "do not call!");
+    //ass(false, "do not call!");
+    if(allocated == true) {
+      ass(p != nullptr, "try to delete nullptr");
+      delete [] p;
+      p = nullptr;
+    }
+
+    if(cob_ == 0) { // copy
+      sz = n;
+      capacity = sz;
+      p = new T[n];
+      for(int i = 0; i < sz; i++) {
+        p[i] = pinp[i];
+      }
+      todelete = true;
+      allocated = true;
+    } else if(cob_ == 1) { // owning pointer
+      sz = n;
+      capacity = sz;
+      p = pinp;
+      todelete = true;
+      allocated = true; //?
+    } else if(cob_ == 2) { // borrow pointer
+      sz = n;
+      capacity = sz;
+      p = pinp;
+      todelete = false;
+      allocated = true;
+      cob = 2;
+    }
   }
 
   STORE(const int n, const double value) {
@@ -595,7 +622,6 @@ public:
 
   void realloc(int new_size) {
     T* temp;
-    int temp_size;
     temp = new T[sz];
     for(int i = 0; i < sz; i++) {
       temp[i] = p[i];
