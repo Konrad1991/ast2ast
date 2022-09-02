@@ -139,6 +139,18 @@ PC <- R6::R6Class("PC",
             equal_names = names(user_args[named_args])    
             # find args required for function
             args_fct = methods::formalArgs(name_of_fct)
+            
+            # there exists exceptions
+            if(name_of_fct == "rgamma") {
+              args_fct = args_fct[c(1, 2, 3)] # scale depends on rate
+            } else if(name_of_fct == "dgamma") {
+              args_fct = args_fct[c(1,2,3,5)] # scale depends on rate
+            } else if(name_of_fct == "pgamma") {
+              args_fct = args_fct[c(1,2,3,5, 6)] # scale depends on rate
+            } else if(name_of_fct == "qgamma") {
+              args_fct = args_fct[c(1,2,3,5, 6)] # scale depends on rate
+            }
+            
             # check that user only use defined arg names
             check = all(equal_names %in% args_fct)
             if(check == FALSE) {
@@ -169,7 +181,18 @@ PC <- R6::R6Class("PC",
                   counter_not_equal = counter_not_equal + 1
                   counter = counter + 1
                 } else  {
-                  res[[counter]] = formals(name_of_fct)[[temp]]
+                  arg = formals(name_of_fct)[[temp]]
+                  if(is.atomic(arg) ) {
+                    number2 = gsub("[0-9]", "", arg)
+                    number2 = gsub("e", "", number2)
+                    number2 = gsub(as.name("+"), "", number2)
+                    number2 = gsub("-", "", number2)
+                    size2 = nchar(number2)
+                    if(size2 == 0) { # int found
+                      arg = str2lang(paste0('i2d(', arg, ')') )
+                    }
+                  }
+                  res[[counter]] = arg
                   counter = counter + 1
                 }
               }
@@ -553,29 +576,44 @@ math <- R6::R6Class("math",
         } else if(self$name_fct == "qunif") {
           self$arguments = self$change_args("qunif", self$arguments)
           self$name_fct = as.name("qunif_etr")
-        } else if(self$name_fct == "rnorm") {
+        } 
+        else if(self$name_fct == "rnorm") {
+          self$arguments = self$change_args("rnorm", self$arguments)
           self$name_fct = as.name("rnorm_etr")
         } else if(self$name_fct == "dnorm") {
+          self$arguments = self$change_args("dnorm", self$arguments)
           self$name_fct = as.name("dnorm_etr")
         } else if(self$name_fct == "pnorm") {
+          self$arguments = self$change_args("pnorm", self$arguments)
           self$name_fct = as.name("pnorm_etr")
         } else if(self$name_fct == "qnorm") {
+          self$arguments = self$change_args("qnorm", self$arguments)
           self$name_fct = as.name("qnorm_etr")
-        } else if(self$name_fct == "rlnorm") {
+        } 
+        else if(self$name_fct == "rlnorm") {
+          self$arguments = self$change_args("rlnorm", self$arguments)
           self$name_fct = as.name("rlnorm_etr")
         } else if(self$name_fct == "dlnorm") {
+          self$arguments = self$change_args("dlnorm", self$arguments)
           self$name_fct = as.name("dlnorm_etr")
         } else if(self$name_fct == "plnorm") {
+          self$arguments = self$change_args("plnorm", self$arguments)
           self$name_fct = as.name("plnorm_etr")
         } else if(self$name_fct == "qlnorm") {
+          self$arguments = self$change_args("qlnorm", self$arguments)
           self$name_fct = as.name("qlnorm_etr")
-        } else if(self$name_fct == "rgamma") {
+        } 
+        else if(self$name_fct == "rgamma") {
+          self$arguments = self$change_args("rgamma", self$arguments)
           self$name_fct = as.name("rgamma_etr")
         } else if(self$name_fct == "dgamma") {
+          self$arguments = self$change_args("dgamma", self$arguments)
           self$name_fct = as.name("dgamma_etr")
         } else if(self$name_fct == "pgamma") {
+          self$arguments = self$change_args("pgamma", self$arguments)
           self$name_fct = as.name("pgamma_etr")
         } else if(self$name_fct == "qgamma") {
+          self$arguments = self$change_args("qgamma", self$arguments)
           self$name_fct = as.name("qgamma_etr")
         } else if(self$name_fct == "rbeta") {
           self$name_fct = as.name("rbeta_etr")

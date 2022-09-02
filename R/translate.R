@@ -80,6 +80,18 @@ MA <- R6::R6Class("MA",
               temp = gsub("\\bin\\b", "", temp)
               temp = gsub("`", "", temp)
               temp = paste0(temp, ';')
+              
+              # loop over temp
+              temp2 = character(length(temp)*2)
+              counter = 1
+              for(i in seq_along(temp)) {
+                temp2[counter] = temp[i]
+                counter = counter + 1
+                temp2[counter] = "\n"
+                counter = counter + 1
+              }
+              temp = temp2
+              
               self$char[[j]] = temp
               j = j + 1
               self$char[[j]] = "\n"
