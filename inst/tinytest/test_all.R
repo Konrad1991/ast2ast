@@ -1331,7 +1331,84 @@ testall <- function(a, type_test) {
       c <- is.na(a + 2)
       d <- b + c
       return(d)
-    }
+    } else if(type_test == 23.1) { # random values uniform
+      x <- runif(10)
+      return(x)
+    } else if(type_test == 23.2) {
+      return(dunif(10))
+    } else if(type_test == 23.3) {
+      return(punif(10))
+    } else if(type_test == 23.4) {
+      return(qunif(10))
+    } else if(type_test == 23.5) { 
+      return(runif(c(1,2,3)))
+    } else if(type_test == 23.6) {
+      return(dunif(c(1,2,3)))
+    } else if(type_test == 23.7) {
+      return(punif(c(1,2,3)))
+    } else if(type_test == 23.8) {
+      return(qunif(c(1,2,3)))
+    } else if(type_test == 23.9) {
+      return(runif(10, min = -1, max = 2))
+    } else if(type_test == 24.1) { # random values normal
+      x <- rnorm(10)
+      return(x)
+    } else if(type_test == 24.2) {
+      return(dnorm(10))
+    } else if(type_test == 24.3) {
+      return(pnorm(10))
+    } else if(type_test == 24.4) {
+      return(qnorm(10))
+    } else if(type_test == 24.5) { 
+      return(rnorm(c(1,2,3)))
+    } else if(type_test == 24.6) {
+      return(dnorm(c(1,2,3)))
+    } else if(type_test == 24.7) {
+      return(pnorm(c(1,2,3)))
+    } else if(type_test == 24.8) {
+      return(qnorm(c(1,2,3)))
+    } else if(type_test == 24.9) {
+      return(rnorm(10, mean = -1, sd = 2))
+    } else if(type_test == 25.1) { # random values lnorm
+      x <- rlnorm(10)
+      return(x)
+    } else if(type_test == 25.2) {
+      return(dlnorm(10))
+    } else if(type_test == 25.3) {
+      return(plnorm(10))
+    } else if(type_test == 25.4) {
+      return(qlnorm(10))
+    } else if(type_test == 25.5) { 
+      return(rlnorm(c(1,2,3)))
+    } else if(type_test == 25.6) {
+      return(dlnorm(c(1,2,3)))
+    } else if(type_test == 25.7) {
+      return(plnorm(c(1,2,3)))
+    } else if(type_test == 25.8) {
+      return(qlnorm(c(1,2,3)))
+    } else if(type_test == 25.9) {
+      return(rlnorm(10, meanlog = -1, sdlog = 2))
+    } else if(type_test == 26.1) { # random values gamma
+      x <- rgamma(10, 1)
+      return(x)
+    } #else if(type_test == 26.2) {
+      #return(dgamma(10, 5))
+    #} else if(type_test == 26.3) {
+    #  return(pgamma(10, 10))
+    #} else if(type_test == 26.4) {
+    #  return(qgamma(10, 10))
+    #} else if(type_test == 26.5) { 
+    #  return(rgamma(c(1,2,3), 1))
+    #} else if(type_test == 26.6) {
+    #  return(dgamma(c(1,2,3), 1))
+    #} else if(type_test == 26.7) {
+    #  return(pgamma(c(1,2,3), 7))
+    #} else if(type_test == 26.8) {
+    #  return(qgamma(c(1,2,3), 5))
+    #} else if(type_test == 26.9) {
+    #  return(rgamma(10, 1, rate = -1))
+    #}
+
     
      
 
@@ -1340,8 +1417,232 @@ testall <- function(a, type_test) {
   return(ret)
 }
 
-test <- translate(testall, R_fct = TRUE)
+test <- translate(testall, R_fct = TRUE, verbose = FALSE)
 
+# random values
+
+# gamma
+set.seed(1234)
+res <- rgamma(10, 1)
+set.seed(1234)
+x <- test(0, 26.1)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- dgamma(10, 5)
+set.seed(1234)
+x <- test(0, 26.2)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- pgamma(10, 10)
+set.seed(1234)
+x <- test(0, 26.3)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- qgamma(10, 10)
+set.seed(1234)
+x <- test(0, 26.4)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- rgamma(c(1, 2, 3), 1)
+set.seed(1234)
+x <- test(0, 26.5)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- dgamma(c(1, 2, 3), 1)
+set.seed(1234)
+x <- test(0, 26.6)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- pgamma(c(1, 2, 3), 7)
+set.seed(1234)
+x <- test(0, 26.7)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- qgamma(c(1, 2, 3))
+set.seed(1234)
+x <- test(0, 26.8)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- rgamma(n = 10, 1, rate = -1)
+set.seed(1234)
+x <- test(0, 26.9)
+expect_equal(res, x)
+
+# lnorm
+set.seed(1234)
+res <- rlnorm(10)
+set.seed(1234)
+x <- test(0, 25.1)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- dlnorm(10)
+set.seed(1234)
+x <- test(0, 25.2)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- plnorm(10)
+set.seed(1234)
+x <- test(0, 25.3)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- qlnorm(10)
+set.seed(1234)
+x <- test(0, 25.4)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- rlnorm(c(1, 2, 3))
+set.seed(1234)
+x <- test(0, 25.5)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- dlnorm(c(1, 2, 3))
+set.seed(1234)
+x <- test(0, 25.6)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- plnorm(c(1, 2, 3))
+set.seed(1234)
+x <- test(0, 25.7)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- qlnorm(c(1, 2, 3))
+set.seed(1234)
+x <- test(0, 25.8)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- rlnorm(n = 10, meanlog = -1, sdlog = 2)
+set.seed(1234)
+x <- test(0, 25.9)
+expect_equal(res, x)
+
+
+# normal
+set.seed(1234)
+res <- rnorm(10)
+set.seed(1234)
+x <- test(0, 24.1)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- dnorm(10)
+set.seed(1234)
+x <- test(0, 24.2)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- pnorm(10)
+set.seed(1234)
+x <- test(0, 24.3)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- qnorm(10)
+set.seed(1234)
+x <- test(0, 24.4)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- rnorm(c(1, 2, 3))
+set.seed(1234)
+x <- test(0, 24.5)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- dnorm(c(1, 2, 3))
+set.seed(1234)
+x <- test(0, 24.6)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- pnorm(c(1, 2, 3))
+set.seed(1234)
+x <- test(0, 24.7)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- qnorm(c(1, 2, 3))
+set.seed(1234)
+x <- test(0, 24.8)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- rnorm(n = 10, mean = -1, sd = 2)
+set.seed(1234)
+x <- test(0, 24.9)
+expect_equal(res, x)
+
+# uniform
+set.seed(1234)
+res <- runif(10)
+set.seed(1234)
+x <- test(0, 23.1)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- dunif(10)
+set.seed(1234)
+x <- test(0, 23.2)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- punif(10)
+set.seed(1234)
+x <- test(0, 23.3)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- qunif(10)
+set.seed(1234)
+x <- test(0, 23.4)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- runif(c(1, 2, 3))
+set.seed(1234)
+x <- test(0, 23.5)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- dunif(c(1, 2, 3))
+set.seed(1234)
+x <- test(0, 23.6)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- punif(c(1, 2, 3))
+set.seed(1234)
+x <- test(0, 23.7)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- qunif(c(1, 2, 3))
+set.seed(1234)
+x <- test(0, 23.8)
+expect_equal(res, x)
+
+set.seed(1234)
+res <- runif(n = 10, min = -1, max = 2)
+set.seed(1234)
+x <- test(0, 23.9)
+expect_equal(res, x)
+
+stop("break")
 # Na, Inf, -Inf
 expect_equal(test(0, 22.1), c(NA, Inf, -Inf) )
 expect_equal(test(0, 22.2), c(1, 0, 0) )

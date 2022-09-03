@@ -43,16 +43,6 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "etr_bits/comparison.hpp"
 #include "etr_bits/looping.hpp"
 #include "etr_bits/checks_na_inf.hpp"
-
-// distributions
-/*
-#include "etr_bits/distri/uniform.hpp"
-#include "etr_bits/distri/normal.hpp"
-#include "etr_bits/distri/lnorm.hpp"
-#include "etr_bits/distri/GAMMA.hpp"
-#include "etr_bits/distri/beta.hpp"
-#include "etr_bits/distri/chisq.hpp"
-*/
 #include "etr_bits/distri/distri.hpp"
 
 //#define vec VEC<double>
