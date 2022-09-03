@@ -61,7 +61,7 @@ f <- function(a) {
   return(b)
 }  
 library(ast2ast)
-f_cpp <- translate(f)
+f_cpp <- translate(f, output = "XPtr")
 ```
 
 The C++ function depends on RcppArmadillo and ast2ast therefore the required macros and headers were included. Moreover, *ETR* requires std=c++17 therefore the corresponding plugin is added. The function *getXPtr* is defined by the function *RcppXPtrUtils::cppXPtr*. In the last 5 lines, the translated code is depicted. The function *f* returns a *sexp* and gets one argument of type *sexp* called *a*. The body of the function looks almost identical to the R function. Except that the variable *b* is defined in the first line of the body with the type *sexp*. The function *i2d* converts an integer to a double variable. This is necessary since C++ would identify the *2* as an integer which is not what the user wants in this case. 
@@ -308,7 +308,7 @@ f <- function(a) {
 }
 
 library(ast2ast)
-fa2a <- translate(f, reference = TRUE)
+fa2a <- translate(f, reference = TRUE, output = "XPtr")
 trash <- call_package(fa2a)
 ```
 
@@ -427,7 +427,7 @@ ode <- function(y, ydot) {
   ydot[1] <- -nu*(y[1] - a)
 }
 pointer_to_ode <- translate(ode,
-                          reference = TRUE)
+                          reference = TRUE, output = "XPtr")
 res_exp3 <- solve_ode(pointer_to_ode,
                       ti, y0)
 attributes(res_exp3) <- NULL

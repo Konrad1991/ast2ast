@@ -2,9 +2,9 @@
 % Please edit documentation in R/translate.R
 \name{translate}
 \alias{translate}
-\title{Translates a R function into a C++ function. The result can be an external pointer (XPtr) or an R function.}
+\title{Translates an R function into a C++ function.}
 \usage{
-translate(f, verbose = FALSE, reference = FALSE, R_fct = FALSE)
+translate(f, verbose = FALSE, reference = FALSE, output = "R")
 }
 \arguments{
 \item{f}{The function which should be translated from R to C++.}
@@ -13,13 +13,19 @@ translate(f, verbose = FALSE, reference = FALSE, R_fct = FALSE)
 
 \item{reference}{If set to TRUE the arguments are passed by reference (not possible if output should be an R function)..}
 
-\item{R_fct}{If set to TRUE an R function instead of an external pointer is created. This is usefull for testing the translated function directly in R. \strong{However, the performance of the R function is currently suboptimal}.}
+\item{output}{If set to "R" an R function wrapping the C++ code is returned. \cr
+If output is set to "XPtr" an external pointer object pointing to the C++ code is returned. \cr
+The default value is "R". 
+ \strong{However, the performance of the R function is currently suboptimal}.}
 }
 \value{
 The external pointer of the generated C++ function or an R function is created.
 }
 \description{
-Further information can be found in the vignette: 'Detailed Documentation'.
+An R function is translated to C++ soruce code and afterwards compiled. \cr
+    The result can be an external pointer (XPtr) or an R function. \cr 
+    The default value is an R function. \cr
+    Further information can be found in the vignette: 'Detailed Documentation'. \cr
 }
 \details{
 \strong{The following types are supported: }
@@ -28,7 +34,7 @@ Further information can be found in the vignette: 'Detailed Documentation'.
    \item numeric matrices
  }
  Variables can be either numeric vectors or matrices.
- Notably, it is possible that the variables change the type within the function.
+ Notably, it is possible that the variables change the type within the function. \cr
  \strong{It is possible to declare a variable of a scalar numeric data type.
          This is done by adding '_db' to the end of the variable. Each time '_db' is found
          the variable is declared as a scalar numeric data type. In this case the
@@ -41,7 +47,7 @@ Further information can be found in the vignette: 'Detailed Documentation'.
    \item information about objects: length and dim
    \item Basic operations: +, -, *, /
    \item Indices: [] and at
-   \item mathematical functions: sin, asin, sinh, cos, acos, cosh, tan, atan, tanh, log, ^ and exp
+   \item mathematical functions: sin, asin, sinh, cos, acos, cosh, tan, atan, tanh, sqrt, log, ^ and exp
    \item concatenate objects: c
    \item control flow: for, if, else if, else
    \item comparison: ==, !=, >, <, >= and <=
@@ -55,15 +61,15 @@ Further information can be found in the vignette: 'Detailed Documentation'.
 
 \itemize{
    \item allocation of memory works: Following forms are possible: vector(size_of_elements), vector(value, size_of_elements), 
-             matrix(nrows, ncols), matrix(value, nrows, ncols) and matrix(vector, nrows, ncols). The latter fills the matrix or the vector with the specified 'value'.
+             matrix(nrows, ncols), matrix(value, nrows, ncols) and matrix(vector, nrows, ncols). The latter fills the matrix or the vector with the specified 'value'. \cr
    \item For indices squared brackets '[]' can be used as common in R. Beyond that the function 'at' exists
              which accepts as first argument a variable and as the second argument you pass the desired index.
-             The caveat of using 'at' is that only one entry can be accessed. The function '[]' can return more then one element.
+             The caveat of using 'at' is that only one entry can be accessed. The function '[]' can return more then one element. \cr
              \strong{The 'at'function returns a reference to the vector entry.
                Therefore variable[index] can behave differently then at(variable, index).
                The function has to be used carefully when 'at' is used.
                Especially if '[]' and 'at' are mixed the function behaviour is difficult to predict.
-               Please test it before using it in a serious project.}
+               Please test it before using it in a serious project.}  \cr
    \item For-loops can be written as common in R
            \itemize{
                \item Nr.1 \cr
@@ -84,8 +90,8 @@ Further information can be found in the vignette: 'Detailed Documentation'.
            \item the second argument is a vector defining the points of the independent variable (x). This has to be a vector of at least length four.
            \item the third argument is a vector defining the points of the dependent variable (y). This has to be a vector of at least length four.
        }
- }
-\strong{Be aware that the R code is translated to ETR an expression template library which tries to mimic R.
+ } \cr
+\strong{Be aware that the R code is translated to ETR an expression template library which tries to mimic R. \cr
 However, it does not behave exactly like R! Please check your compiled function before using it in a serious project.
 If you want to see how ast2ast differs from R in detail check the vignette: 'Detailed Documentation'.}
 }

@@ -21,10 +21,12 @@ PC <- R6::R6Class("PC",
 
       public = list(
 
+        R_fct = NULL,
         name_fct = NULL,
         arguments = list(),
 
-        initialize = function(node) {
+        initialize = function(node, R_fct) {
+          self$R_fct = R_fct
           self$name_fct = node[[1]]
           self$arguments = node[2:length(node)]
         },
@@ -258,6 +260,52 @@ assign <- R6::R6Class("assign",
       }
 
     )
+)
+
+
+retur <- R6::R6Class("retur",
+      inherit = PC,
+                     
+      public = list(
+                     
+         replace_int = function() {
+           for(i in seq_along(self$arguments)) {
+             if(is.atomic(self$arguments[[i]])) {
+               number2 = gsub("[0-9]", "", self$arguments[[i]])
+               number2 = gsub("e", "", number2)
+               number2 = gsub(as.name("+"), "", number2)
+               number2 = gsub("-", "", number2)
+               size2 = nchar(number2)
+               if(is.na(size2)) {
+                 return()
+               }
+
+               if( (size2 == 0) && (self$R_fct) ) {
+                self$arguments[[i]] = str2lang(paste0('Rf_ScalarReal(i2d(', self$arguments[[i]], ') )') )
+               }
+              }
+          }
+        },
+                       
+        change_code = function() {
+           self$replace_int()
+        },
+                       
+        convert = function(var) {
+             self$replace_INF()
+             self$replace_NA()
+             self$replace_TF()
+             self$oaf(var)
+             self$change_code()
+             self$replace_int()
+                         
+             ret <- list()
+             ret[[1]] <- self$name_fct
+             ret <- c(ret, self$arguments)
+             return(ret)
+        }
+                       
+         )
 )
 
 subset <- R6::R6Class("subset",

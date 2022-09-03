@@ -31,12 +31,12 @@ As an example solving a simple ODE-System. The translated code is considerable f
 ## Documentation
 
 
-*translate(f, verbose = FALSE, reference = FALSE, R_fct = FALSE)*
+*translate(f, verbose = FALSE, reference = FALSE, output = "R")*
 
 - *f* The function which should be translated from R to C++.
 - *verbose* If set to TRUE the output of RcppXPtrUtils::cppXPtr is printed.
 - *reference* If set to TRUE the arguments are passed by reference. Default value is FALSE.
-- *R_fct* If set to TRUE an R function instead of an external pointer is returned. Default value is FALSE.
+- *output* If set to "R" an R function wrapping the C++ code is returned. If output is set to "XPtr" an external pointer object pointing to the C++ code is returned. The default value is "R". 
 
 The function *translate* returns an external pointer of the generated C++ function or an R function. **As a side note the R function interface is only for testing and is currently not very efficient.**
 

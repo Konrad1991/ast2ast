@@ -1417,7 +1417,10 @@ testall <- function(a, type_test) {
   return(ret)
 }
 
-test <- translate(testall, R_fct = TRUE, verbose = TRUE)
+fct <- function() { # function then one can use document outline to jump to this position
+  test <- translate(testall, verbose = TRUE)
+}
+test <- fct()
 
 # random values
 
@@ -2084,7 +2087,7 @@ bs <- function(a) {
   return(a)
 }
 
-bs_cpp <- ast2ast::translate(bs)
+bs_cpp <- ast2ast::translate(bs, output = "XPtr")
 x <- c(5, 3, 2, 10, 1)
 
 expect_equal(wrapper(bs_cpp, x), c(1, 2, 3, 5, 10) )
@@ -2099,7 +2102,7 @@ fb <- function(a) {
   }
   return(ret)
 }
-fb_cpp <- ast2ast::translate(fb)
+fb_cpp <- ast2ast::translate(fb, output = "XPtr")
 
 res <- c(1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765)
 expect_equal(wrapper(fb_cpp, x), res )

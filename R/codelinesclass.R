@@ -24,18 +24,24 @@ LC <- R6::R6Class("LC",
 # fast access via [] which will be replaced by ()
 
       public = list(
-
-       PF = c("=", "<-", "[", "for", "c", ":", "sin", "asin", "sinh", "cos", "acos", "cosh",
-        "tan", "atan", "tanh", "log", "sqrt", "^", "+", "-",
-         "*", "/", "if", "else if", "else", "{", "(",
-        "==", "!=", ">", ">=", "<", "<=", "print", "return", "vector", "matrix", "length", "dim", "cmr", "sub", "exp", "i2d", "at", "&&", "||",
+        
+       R_fct = NULL,
+        
+       PF = c(
+       "=", "<-", "[", "for", "c", ":",
+       "sin", "asin", "sinh", "cos", "acos", "cosh",
+       "tan", "atan", "tanh", "log", "sqrt", "^", "+", "-",
+       "*", "/", "if", "else if", "else", "{", "(",
+       "==", "!=", ">", ">=", "<", "<=", "print", "return",
+       "vector", "matrix", "length", "dim", "cmr",
+       "sub", "exp", "i2d", "at", "&&", "||",
        "dunif", "punif", "qunif", "runif",
        "dnorm", "pnorm", "qnorm", "rnorm",
        "dlnorm", "plnorm", "qlnorm", "rlnorm",
        "dgamma", "pgamma", "qgamma", "rgamma",
        "dbeta", "pbeta", "beta", "rbeta",
        "dnbeta", "pnbeta", "qnbeta", "rnbeta",
-       "is.na", "is.infinite"), # permitted functions
+       "is.na", "is.infinite", "Rf_ScalarReal"), # permitted functions
 
        vars = list(), # variables
        index_vars = list(),
@@ -44,7 +50,9 @@ LC <- R6::R6Class("LC",
        code = NULL,
        generic_fct = c("+", "-",
         "*", "/", "if", "else if", "else", "{", "(",
-       "==", "!=", ">", ">=", "<", "<=", "return", "vector", "matrix","length", "dim", "cmr", "exp", "at", "&&", "||"),
+        "==", "!=", ">", ">=", "<", "<=", "vector",
+        "matrix","length", "dim", "cmr", "exp", "at",
+        "&&", "||", "Rf_ScalarReal"),
 
        math = c("sin", "asin", "sinh", "cos", "acos", "cosh",
         "tan", "atan", "tanh", "log", "^", "sqrt",
@@ -76,20 +84,23 @@ LC <- R6::R6Class("LC",
           if( (as.name("<-") == fct) || (as.name("=") == fct) ) {
 
             self$check_assign_subset = TRUE
-            p <- assign$new(sexp)
+            p <- assign$new(sexp, self$R_fct)
             sexp <- p$convert(self$PF)
             self$vars <- c(self$vars, p$get_var_names())
 
           } else if( (deparse(fct) %in% self$generic_fct) ){
             self$check_assign_subset = FALSE
-            p <- generic$new(sexp)
+            p <- generic$new(sexp, self$R_fct)
             sexp <- p$convert(self$PF)
             self$vars <- c(self$vars, p$get_var_names())
 
-            if(fct == as.name('return')) {
-              self$found_return = TRUE
-            }
 
+          } else if(as.name("return") == fct) {
+            
+            p <- retur$new(sexp, self$R_fct)
+            sexp <- p$convert(self$PF)
+            self$found_return = TRUE
+            
           } else if(as.name("[") == fct) {
 
             #p <- fastaccess$new(sexp)
@@ -100,28 +111,28 @@ LC <- R6::R6Class("LC",
 
           } else if(as.name("c") == fct) {
 
-            p <- coca$new(sexp)
+            p <- coca$new(sexp, self$R_fct)
             sexp <- p$convert(self$PF)
             self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
 
           } else if(as.name(":") == fct) {
 
-            p <- range$new(sexp)
+            p <- range$new(sexp, self$R_fct)
             sexp <- p$convert(self$PF)
             self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
 
           } else if(deparse(fct) %in% self$math) {
 
-            p <- math$new(sexp)
+            p <- math$new(sexp, self$R_fct)
             sexp <- p$convert(self$PF)
             self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
 
           } else if(as.name('for') == fct) {
 
-            p <- loop$new(sexp)
+            p <- loop$new(sexp, self$R_fct)
             sexp <- p$convert(self$PF)
             self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
@@ -136,14 +147,14 @@ LC <- R6::R6Class("LC",
 
           } else if(as.name("is.na") == fct) {
             
-            p <- is_na$new(sexp)
+            p <- is_na$new(sexp, self$R_fct)
             sexp <- p$convert(self$PF)
             self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
 
           } else if(as.name("is.infinite") == fct) {
             
-            p <- is_infinite$new(sexp)
+            p <- is_infinite$new(sexp, self$R_fct)
             sexp <- p$convert(self$PF)
             self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
@@ -161,7 +172,8 @@ LC <- R6::R6Class("LC",
 
        },
 
-       initialize = function(line) {
+       initialize = function(line, R_fct) {
+         self$R_fct = R_fct
          self$ast <- self$extractast(line) # fill nodes
        },
 
