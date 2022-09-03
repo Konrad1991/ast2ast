@@ -2087,7 +2087,7 @@ bs <- function(a) {
   return(a)
 }
 
-bs_cpp <- ast2ast::translate(bs, output = "XPtr")
+bs_cpp <- ast2ast::translate(bs, verbose = FALSE, output = "XPtr")
 x <- c(5, 3, 2, 10, 1)
 
 expect_equal(wrapper(bs_cpp, x), c(1, 2, 3, 5, 10) )
