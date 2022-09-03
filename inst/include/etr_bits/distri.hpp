@@ -23,7 +23,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef DISTRI
 #define DISTRI
 
-#include "../vec.hpp"
+#include "vec.hpp"
 
 namespace etr {
 
@@ -45,7 +45,6 @@ VEC<double> dunif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
             }
         }
         VEC<double> res(max, 0.0);
-        Rcpp::Rcout << "test" << std::endl;
         for(int i = 0; i < res.size(); i++) {
             GetRNGstate();
             res[i] = R::dunif(x[i % x.size()], min_[i % min_.size()], max_[i % max_.size()], lg[i % lg.size()]);
@@ -162,7 +161,6 @@ VEC<double> dnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
             }
         }
         VEC<double> res(max, 0.0);
-        Rcpp::Rcout << "test" << std::endl;
         for(int i = 0; i < res.size(); i++) {
             GetRNGstate();
             res[i] = R::dnorm(x[i % x.size()], min_[i % min_.size()], max_[i % max_.size()], lg[i % lg.size()]);
@@ -279,7 +277,6 @@ VEC<double> dlnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<
             }
         }
         VEC<double> res(max, 0.0);
-        Rcpp::Rcout << "test" << std::endl;
         for(int i = 0; i < res.size(); i++) {
             GetRNGstate();
             res[i] = R::dlnorm(x[i % x.size()], min_[i % min_.size()], max_[i % max_.size()], lg[i % lg.size()]);
@@ -381,8 +378,8 @@ VEC<double> qlnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<
 // =======================================================================================================================
 // gamma
 // =======================================================================================================================
-VEC<double> dgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC<double>& scale, const VEC<double>& lg) {
-
+VEC<double> dgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC<double>& rate, const VEC<double>& lg) {
+    const VEC<double>& scale = 1/rate;
     if( (x.size() == 1) && (shape.size() == 1) && (scale.size() == 1) && (lg.size() == 1) ) {
         GetRNGstate();
         return R::dgamma(x[0], shape[0], scale[0], lg[0]);
@@ -396,7 +393,6 @@ VEC<double> dgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC
             }
         }
         VEC<double> res(max, 0.0);
-        Rcpp::Rcout << "test" << std::endl;
         for(int i = 0; i < res.size(); i++) {
             GetRNGstate();
             res[i] = R::dgamma(x[i % x.size()], shape[i % shape.size()], scale[i % scale.size()], lg[i % lg.size()]);
@@ -408,8 +404,8 @@ VEC<double> dgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC
     return VEC<double>(R_NaN);                                                                           
 }
                    
-VEC<double> rgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC<double>& scale) {
-
+VEC<double> rgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC<double>& rate) {
+    const VEC<double>& scale = 1/rate;
     if( (x.size() == 1) && (shape.size() == 1) && (scale.size() == 1) ) {
         VEC<double> res(x[0], 0.0);
         int size = static_cast<int>(x[0]);
@@ -439,8 +435,8 @@ VEC<double> rgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC
     return VEC<double>(R_NaN);                                                                           
 }
 
-VEC<double> pgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC<double>& scale, const VEC<double>& lower, const VEC<double>& lg) {
-
+VEC<double> pgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC<double>& rate, const VEC<double>& lower, const VEC<double>& lg) {
+    const VEC<double>& scale = 1/rate;
     if( (x.size() == 1) && (shape.size() == 1) && (scale.size() == 1) && (lg.size() == 1) ) {
         GetRNGstate();
         return R::pgamma(x[0], shape[0], scale[0], lower[0], lg[0]);
@@ -466,8 +462,8 @@ VEC<double> pgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC
     return VEC<double>(R_NaN);                                                                           
 }
 
-VEC<double> qgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC<double>& scale, const VEC<double>& lower, const VEC<double>& lg) {
-
+VEC<double> qgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC<double>& rate, const VEC<double>& lower, const VEC<double>& lg) {
+    const VEC<double>& scale = 1/rate;
     if( (x.size() == 1) && (shape.size() == 1) && (scale.size() == 1) && (lg.size() == 1) ) {
         GetRNGstate();
         return R::qgamma(x[0], shape[0], scale[0], lower[0], lg[0]);

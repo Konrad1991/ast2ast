@@ -139,6 +139,18 @@ PC <- R6::R6Class("PC",
             equal_names = names(user_args[named_args])    
             # find args required for function
             args_fct = methods::formalArgs(name_of_fct)
+            
+            # there exists exceptions
+            if(name_of_fct == "rgamma") {
+              args_fct = args_fct[c(1, 2, 3)] # scale depends on rate
+            } else if(name_of_fct == "dgamma") {
+              args_fct = args_fct[c(1,2,3,5)] # scale depends on rate
+            } else if(name_of_fct == "pgamma") {
+              args_fct = args_fct[c(1,2,3,5, 6)] # scale depends on rate
+            } else if(name_of_fct == "qgamma") {
+              args_fct = args_fct[c(1,2,3,5, 6)] # scale depends on rate
+            }
+            
             # check that user only use defined arg names
             check = all(equal_names %in% args_fct)
             if(check == FALSE) {
