@@ -41,15 +41,14 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "etr_bits/trigo.hpp"
 #include "etr_bits/interpolation.hpp"
 #include "etr_bits/comparison.hpp"
-#include "etr_bits/looping.hpp"
 #include "etr_bits/checks_na_inf.hpp"
 #include "etr_bits/distri.hpp"
 
 //#define vec VEC<double>
 //#define mat VEC<double>
 
-#define sexp VEC<double>
+#define sexp etr::VEC<double>
 
-using namespace etr;
+//using namespace etr;
 
 #endif

@@ -20,15 +20,17 @@
 PC <- R6::R6Class("PC",
 
       public = list(
-
+        
         R_fct = NULL,
         name_fct = NULL,
         arguments = list(),
-
-        initialize = function(node, R_fct) {
+        namespace_etr = NULL,
+        
+        initialize = function(node, R_fct, namespace_etr) {
           self$R_fct = R_fct
           self$name_fct = node[[1]]
           self$arguments = node[2:length(node)]
+          self$namespace_etr = namespace_etr
         },
 
         get_name = function() {
@@ -64,7 +66,7 @@ PC <- R6::R6Class("PC",
                   return()
                 }
                   if(size2 == 0) { # int found
-                    self$arguments[[i]] = str2lang(paste0('i2d(', self$arguments[[i]], ')') )
+                    self$arguments[[i]] = str2lang(paste0('etr::i2d(', self$arguments[[i]], ')') )
                   }
               }
             }
@@ -93,13 +95,14 @@ PC <- R6::R6Class("PC",
         },
 
         get_var_names = function() {
-          forbidden_fcts <- c("getlength" ,"getattributes" ,"is_matrix", "VEC",
-          "at", "d2i","i2d" ,"ass" ,"VVSIN","sinus" ,"VVsinh" ,"sinush" ,"VVasin",
+          
+          forbidden_fcts <- c("getlength" ,"getattributes" ,"is_matrix", "VEC", # has to be updated!
+          "at", "d2i", "ass" ,"VVSIN","sinus" ,"VVsinh" ,"sinush" ,"VVasin",
           "asinus" ,"VVCOS" ,"cosinus" ,"VVacos" ,"acosinus" ,"VVCOSH" ,"cosinush",
           "VVtan" ,"tangens" ,"VVatan" ,"atangens" ,"VVtanh" ,"tangensh" ,"VVMINUS",
           "VSMINUS" ,"SVMINUS" ,"VVPLUS" ,"VSPLUS" ,"SVPLUS" ,"VVTIMES" ,"VSTIMES",
           "SVTIMES" ,"VVDIV" ,"VSDIV","SVDIV","subassign","subset","It","STORE",
-          "for_","li","cmr","VVEXP","VVlog", "sqrt", "ln","exp","combine","coca","cd","colon",
+          "li","cmr","VVEXP","VVlog", "sqrt", "ln","exp","combine","coca","cd","colon",
           "length","dim","vector","matrix")
           ret <- list()
           counter <- 1
@@ -191,7 +194,7 @@ PC <- R6::R6Class("PC",
                     number2 = gsub("-", "", number2)
                     size2 = nchar(number2)
                     if(size2 == 0) { # int found
-                      arg = str2lang(paste0('i2d(', arg, ')') )
+                      arg = str2lang(paste0('etr::i2d(', arg, ')') )
                     }
                   }
                   res[[counter]] = arg
@@ -227,7 +230,13 @@ generic <- R6::R6Class("generic",
         self$oaf(var)
         self$change_code()
         ret <- list()
-        ret[[1]] <- self$name_fct
+        
+        if(deparse(self$name_fct) %in% self$namespace_etr) {
+          ret[[1]] <- as.name(paste0("etr::", self$name_fct))  
+        } else {
+          ret[[1]] <- self$name_fct  
+        }
+        
         ret <- c(ret, self$arguments)
         return(ret)
       }
@@ -254,7 +263,11 @@ assign <- R6::R6Class("assign",
         self$change_code()
 
         ret <- list()
-        ret[[1]] <- self$name_fct
+        if(deparse(self$name_fct) %in% self$namespace_etr) {
+          ret[[1]] <- as.name(paste0("etr::", self$name_fct))  
+        } else {
+          ret[[1]] <- self$name_fct  
+        }
         ret <- c(ret, self$arguments)
         return(ret)
       }
@@ -281,7 +294,7 @@ retur <- R6::R6Class("retur",
                }
 
                if( (size2 == 0) && (self$R_fct) ) {
-                self$arguments[[i]] = str2lang(paste0('Rf_ScalarReal(i2d(', self$arguments[[i]], ') )') )
+                self$arguments[[i]] = str2lang(paste0('Rf_ScalarReal(etr::i2d(', self$arguments[[i]], ') )') )
                }
               }
           }
@@ -300,7 +313,11 @@ retur <- R6::R6Class("retur",
              self$replace_int()
                          
              ret <- list()
-             ret[[1]] <- self$name_fct
+             if(deparse(self$name_fct) %in% self$namespace_etr) {
+               ret[[1]] <- as.name(paste0("etr::", self$name_fct))  
+             } else {
+               ret[[1]] <- self$name_fct  
+             }
              ret <- c(ret, self$arguments)
              return(ret)
         }
@@ -315,10 +332,11 @@ subset <- R6::R6Class("subset",
 
       subassign = NULL,
 
-      initialize = function(node, subset_or_subassign) {
+      initialize = function(node, subset_or_subassign, namespace_etr) {
         self$subassign = subset_or_subassign
         self$name_fct = node[[1]]
         self$arguments = node[2:length(node)]
+        self$namespace_etr = namespace_etr
       },
 
       change_code = function() {
@@ -373,7 +391,11 @@ subset <- R6::R6Class("subset",
         self$change_code()
 
         ret <- list()
-        ret[[1]] <- self$name_fct
+        if(deparse(self$name_fct) %in% self$namespace_etr) {
+          ret[[1]] <- as.name(paste0("etr::", self$name_fct))  
+        } else {
+          ret[[1]] <- self$name_fct  
+        }
         ret <- c(ret, self$arguments)
         return(ret)
       }
@@ -402,7 +424,11 @@ loop <- R6::R6Class("loop",
         self$change_code()
 
         ret <- list()
-        ret[[1]] <- self$name_fct
+        if(deparse(self$name_fct) %in% self$namespace_etr) {
+          ret[[1]] <- as.name(paste0("etr::", self$name_fct))  
+        } else {
+          ret[[1]] <- self$name_fct  
+        }
         ret <- c(ret, self$arguments)
         return(ret)
       },
@@ -434,7 +460,11 @@ coca <- R6::R6Class("coca",
         self$change_code()
 
         ret <- list()
-        ret[[1]] <- self$name_fct
+        if(deparse(self$name_fct) %in% self$namespace_etr) {
+          ret[[1]] <- as.name(paste0("etr::", self$name_fct))  
+        } else {
+          ret[[1]] <- self$name_fct  
+        }
         ret <- c(ret, self$arguments)
         return(ret)
       }
@@ -461,7 +491,11 @@ is_na <- R6::R6Class("is_na",
         self$change_code()
 
         ret <- list()
-        ret[[1]] <- self$name_fct
+        if(deparse(self$name_fct) %in% self$namespace_etr) {
+          ret[[1]] <- as.name(paste0("etr::", self$name_fct))  
+        } else {
+          ret[[1]] <- self$name_fct  
+        }
         ret <- c(ret, self$arguments)
         return(ret)
       }
@@ -487,7 +521,11 @@ is_infinite <- R6::R6Class("is_infinite",
         self$change_code()
 
         ret <- list()
-        ret[[1]] <- self$name_fct
+        if(deparse(self$name_fct) %in% self$namespace_etr) {
+          ret[[1]] <- as.name(paste0("etr::", self$name_fct))  
+        } else {
+          ret[[1]] <- self$name_fct  
+        }
         ret <- c(ret, self$arguments)
         return(ret)
       }
@@ -512,7 +550,11 @@ fastaccess <- R6::R6Class("fastaccess",
         self$change_code()
 
         ret <- list()
-        ret[[1]] <- self$name_fct
+        if(deparse(self$name_fct) %in% self$namespace_etr) {
+          ret[[1]] <- as.name(paste0("etr::", self$name_fct))  
+        } else {
+          ret[[1]] <- self$name_fct  
+        }
         ret <- c(ret, self$arguments)
         return(ret)
       }
@@ -525,7 +567,7 @@ printer <- R6::R6Class("printer",
 
     public = list(
 
-      initialize = function(node) {
+      initialize = function(node, namespace_etr) {
         if(length(node) == 1L) {
           self$name_fct = node
           self$arguments = NULL
@@ -533,6 +575,7 @@ printer <- R6::R6Class("printer",
           self$name_fct = node[[1]]
           self$arguments = node[2:length(node)]
         }
+        self$namespace_etr = namespace_etr
       },
 
       change_code = function() {
@@ -545,7 +588,11 @@ printer <- R6::R6Class("printer",
         self$change_code()
 
         ret <- list()
-        ret[[1]] <- self$name_fct
+        if(deparse(self$name_fct) %in% self$namespace_etr) {
+          ret[[1]] <- as.name(paste0("etr::", self$name_fct))  
+        } else {
+          ret[[1]] <- self$name_fct  
+        }
         ret <- c(ret, self$arguments)
         return(ret)
       }
@@ -572,7 +619,11 @@ range <- R6::R6Class("range",
         self$change_code()
 
         ret <- list()
-        ret[[1]] <- self$name_fct
+        if(deparse(self$name_fct) %in% self$namespace_etr) {
+          ret[[1]] <- as.name(paste0("etr::", self$name_fct))  
+        } else {
+          ret[[1]] <- self$name_fct  
+        }
         ret <- c(ret, self$arguments)
         return(ret)
       }
@@ -691,7 +742,11 @@ math <- R6::R6Class("math",
         self$change_code()
 
         ret <- list()
-        ret[[1]] <- self$name_fct
+        if(deparse(self$name_fct) %in% self$namespace_etr) {
+          ret[[1]] <- as.name(paste0("etr::", self$name_fct))  
+        } else {
+          ret[[1]] <- self$name_fct  
+        }
         ret <- c(ret, self$arguments)
         return(ret)
       }

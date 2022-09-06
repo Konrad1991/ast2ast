@@ -20,17 +20,37 @@
 
 #' Translates an R function into a C++ function. 
 #' 
-#' An R function is translated to C++ soruce code and afterwards compiled. \cr
+#' An R function is translated to C++ source code and afterwards compiled. \cr
 #'     The result can be an external pointer (XPtr) or an R function. \cr 
 #'     The default value is an R function. \cr
 #'     Further information can be found in the vignette: 'Detailed Documentation'. \cr
 #' @param f The function which should be translated from R to C++.
-#' @param verbose If set to TRUE the output of RcppXPtrUtils::cppXPtr or Rcpp::cppFunction is printed.
-#' @param reference If set to TRUE the arguments are passed by reference (not possible if output should be an R function)..
 #' @param output If set to "R" an R function wrapping the C++ code is returned. \cr
 #'               If output is set to "XPtr" an external pointer object pointing to the C++ code is returned. \cr
 #'               The default value is "R". 
 #'                \strong{However, the performance of the R function is currently suboptimal}.
+#' @param types_of_args define the types of the arguments passed to the function as an character vector. This is an optional input. \cr
+#'               The default value is 'SEXP' as this works well together with the argument 'R' output. \cr
+#'               In case one want to use an external pointer the easiest way is to pass 'sexp' for types_of_args. \cr
+#'               The possible values are: \cr
+#'               \itemize{
+#'                    \item void
+#'                    \item double
+#'                    \item SEXP
+#'                    \item sexp
+#'                    \item Rcpp::NumericVector
+#'                    \item NumericVector
+#'                    \item Rcpp::NumericMatrix
+#'                    \item NumericMatrix
+#'                    \item arma::vec
+#'                    \item vec
+#'                    \item arma::mat
+#'                    \item mat
+#'               }
+#' @param return_type is a character defining the type which the function can return. The default value is 'SEXP' as this works well with the 'R' output. \cr
+#'                    The same types as for the types_of_args are possible.
+#' @param reference If set to TRUE the arguments are passed by reference (not possible if output should be an R function).
+#' @param verbose If set to TRUE the output of RcppXPtrUtils::cppXPtr or Rcpp::cppFunction is printed.
 #' @return The external pointer of the generated C++ function or an R function is created. 
 #' @details \strong{The following types are supported: }
 #'  \enumerate{
@@ -58,6 +78,7 @@
 #'    \item returning objects: return
 #'    \item catmull-rome spline: cmr
 #'    \item to get a range of numbers the ':' function can be used
+#'    \item is.na and is.infinite can be used to test for NA and Inf.
 #'  }
 #' @details  \strong{Some details about the implemented functions}
 #' @details  \itemize{
@@ -98,14 +119,15 @@
 #' @examples #Further examples can be found in the vignette: 'Detailed Documentation'.
 #' @examples #Hello World
 #' \dontrun{
+#' # Hello World
 #' # Translating to R_fct
 #' f <- function() { print("Hello World!")}
-#' ast2ast::translate(f, R_fct = TRUE)
+#' ast2ast::translate(f)
 #' f()
 #' 
 #' # Translating to external pointer
 #' f <- function() { print("Hello World!")}
-#' pointer_to_f_cpp <- ast2ast::translate(f)
+#' pointer_to_f_cpp <- ast2ast::translate(f, output = "XPtr")
 #' Rcpp::sourceCpp(code = "
 #' #include <Rcpp.h>
 #' typedef void (*fp)();
@@ -117,8 +139,53 @@
 #' }
 #' ")
 #' call_fct(pointer_to_f_cpp)
+#' 
+#' 
+#' # Run sum example:
+#' run_sum <- function(x, n) {
+#' sz <- length(x)
+#'
+#' ov <- vector(mode = "numeric", length = sz)
+#'
+#' ov[n] <- sum(x[1:n])
+#' for(i in (n+1):sz) {
+#'
+#' ov[i] <- ov[i-1] + x[i] - x[i-n]
 #' }
-translate <- function(f, verbose = FALSE, reference = FALSE, output = "R") {
+#'
+#' ov[1:(n-1)] <- NA
+#'
+#' return(ov)
+#' }
+#' 
+#' run_sum_fast <- function(x, n) {
+#' sz <- length(x)
+#' ov <- vector(sz)
+#' 
+#' sum_db = 0
+#' for(i in 1:n) {
+#'   sum_db <- sum_db + at(x, i)
+#' }
+#' ov[n] <- sum_db
+#' 
+#' for(i in (n + 1):sz) {
+#'   ov[i] <- at(ov, i - 1) + at(x, i) - at(x, i - at(n, 1))
+#' }
+#' 
+#' ov[1:(n - 1)] <- NA
+#' 
+#' return(ov)
+#' }
+#' run_sum_cpp <- ast2ast::translate(run_sum_fast, verbose = FALSE)
+#' set.seed(42)
+#' x <- rnorm(10000)
+#' n <- 500
+#' one <- run_sum(x, n)
+#' two <- run_sum_cpp(x, n)
+#' }
+translate <- function(f, output = "R", 
+                      types_of_args = "SEXP", return_type = "SEXP",
+                      reference = FALSE, verbose = FALSE) {
 
     if(missing(f)) stop("function f is required")
 
@@ -128,6 +195,35 @@ translate <- function(f, verbose = FALSE, reference = FALSE, output = "R") {
     stopifnot(is.character(output))
     stopifnot("found unknown output format" = 
                 output %in% c("R", "XPtr"))
+    stopifnot(is.character(types_of_args))
+    stopifnot(is.character(return_type))
+    stopifnot("found unknown type of arguments for functions" = 
+              types_of_args %in% c("void", "double", "SEXP", "sexp", 
+                                   "Rcpp::NumericVector", "Rcpp::NumericMatrix",
+                                   "arma::vec", "arma::mat",
+                                   "NumericVector", "NumericMatrix",
+                                   "vec", "mat") )
+    stopifnot("found unknown return type" = 
+                return_type %in% c("void", "double", "SEXP", "sexp", 
+                                     "Rcpp::NumericVector", "Rcpp::NumericMatrix",
+                                     "arma::vec", "arma::mat",
+                                     "NumericVector", "NumericMatrix",
+                                     "vec", "mat") )
+    
+    
+    stopifnot(length(return_type) == 1)
+    
+    if( length(formalArgs(f)) != length(types_of_args) ) {
+      largs <- length(formalArgs(f))
+      ltypes <- length(types_of_args)
+      if( (largs %% ltypes) != 0) {
+        stop(paste("In length(arguments of function) %% length(types_of_args):
+                      longer object length is not a multiple of shorter object length") )
+      } else if((largs %% ltypes) == 0) {
+        types_of_args <- rep(types_of_args, largs/ltypes)   
+      }
+    }
+    
     
     R_fct = NULL
     if(output == "R") {
@@ -138,21 +234,15 @@ translate <- function(f, verbose = FALSE, reference = FALSE, output = "R") {
   
     if(R_fct == TRUE) {
       if(reference == TRUE) {
-        warning("THe desired output is an R function.
+        warning("The desired output is an R function.
                 Therefore reference cannot be set to TRUE.
                 The argument reference will be ignored!")
       }
-      stopifnot(reference == FALSE)
+      reference = TRUE
     }
-
-    desired_type = NULL
-    if(R_fct == FALSE) {
-      desired_type = 'sexp'
-    } else {
-      desired_type = 'SEXP'
-    }
-
-    fct_ret <- compiler_a2a(f, verbose, reference, R_fct, desired_type)
+    
+    fct_ret <- compiler_a2a(f, verbose, reference,
+                                     R_fct, types_of_args, return_type)
 
     return(fct_ret)
 }

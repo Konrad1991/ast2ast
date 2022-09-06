@@ -27,7 +27,7 @@ h2  {
 p:first-of-type {
   margin-bottom: 3em;
 }
-
+```
 
 ```{Rcpp, echo = FALSE, cache = TRUE, eval = TRUE}
 // [[Rcpp::depends(RcppArmadillo)]]
@@ -36,8 +36,8 @@ p:first-of-type {
 typedef void (*fp) (sexp&);
 
 // [[Rcpp::plugins(cpp17)]]
-
 using namespace Rcpp;
+using namespace etr;
 
 // [[Rcpp::export]]
 void byref(XPtr<fp> fetr, NumericVector x) { // example 1
@@ -65,6 +65,7 @@ typedef void (*fp) ();
 // [[Rcpp::plugins(cpp17)]]
 
 using namespace Rcpp;
+using namespace etr;
 
 // [[Rcpp::export]]
 void vardec(XPtr<fp> fetr) { // example 2
@@ -83,6 +84,7 @@ typedef void (*fp) ();
 // [[Rcpp::plugins(cpp17)]]
 
 using namespace Rcpp;
+using namespace etr;
 
 // [[Rcpp::export]]
 void call_fct(XPtr<fp> fetr) { // example 3
@@ -237,7 +239,7 @@ f <- function(variable) {
   variable <- 1
 }
 library(ast2ast)
-fetr <- translate(f, output = "XPtr")
+fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
 x <- 10
 output <- byref(fetr, x)
 output
@@ -298,7 +300,7 @@ f <- function() {
   print()
 }
 library(ast2ast)
-fetr <- translate(f, output = "XPtr")
+fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
 vardec(fetr)
 ```
 
@@ -379,7 +381,7 @@ print(d)
 }
 
 library(ast2ast)
-fetr <- translate(f, output = "XPtr")
+fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
 call_fct(fetr)
 ```
 
@@ -524,7 +526,7 @@ print()
 }
 
 library(ast2ast)
-fetr <- translate(f, output = "XPtr")
+fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
 call_fct(fetr)
 ```
 
@@ -548,7 +550,7 @@ f <- function() {
 }
 
 library(ast2ast)
-fetr <- translate(f, output = "XPtr")
+fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
 call_fct(fetr)
 ```
 
@@ -578,7 +580,7 @@ f <- function() {
 }
 
 library(ast2ast)
-fetr <- translate(f, output = "XPtr")
+fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
 call_fct(fetr)
 ```
 
@@ -614,7 +616,7 @@ f <- function() {
 }
 
 library(ast2ast)
-fetr <- translate(f, output = "XPtr")
+fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
 call_fct(fetr)
 ```
 
@@ -658,7 +660,7 @@ f <- function() {
 }
 
 library(ast2ast)
-fetr <- translate(f, output = "XPtr")
+fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
 call_fct(fetr)
 ```
 
@@ -686,7 +688,7 @@ f <- function() {
 }
 
 library(ast2ast)
-fetr <- translate(f, output = "XPtr")
+fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
 call_fct(fetr)
 ```
 

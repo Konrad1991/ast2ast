@@ -36,8 +36,9 @@ MA <- R6::R6Class("MA",
                     var_types = c(),
                     var_index = c(),
                     return_TF = c(),
+                    return_valtype = c(),
                     
-                    initialize = function(fct, desired_type, name_f, R_fct) {
+                    initialize = function(fct, desired_type, name_f, R_fct, return_valtype) {
                       self$name = name_f #as.character(substitute(fct))
                       self$args = methods::formalArgs(fct)
                       self$body = body(fct)
@@ -45,6 +46,7 @@ MA <- R6::R6Class("MA",
                       self$desired_type = desired_type
                       self$args_2_fct = methods::formalArgs(fct) #as.list(args(fct))
                       self$R_fct = R_fct
+                      self$return_valtype = return_valtype
                     },
                     
                     getast = function() {
@@ -231,6 +233,33 @@ MA <- R6::R6Class("MA",
                       return(sig)
                     },
                     
+                    signature_own = function(desired_type, reference, extern = FALSE) {
+                      # arguments passed to f & define signature
+                      
+                      arguments_string <- character(length(self$args))
+                      for(i in seq_along(self$args)) {
+                        y <- paste0(self$args[[i]])
+                        type <- desired_type[i]
+                        temp <- paste(type, paste0(y, type), ',', collapse = '')
+                        
+                        if(i == length(self$args)) {
+                          temp <- paste(type, paste0(y, type), collapse = '')
+                        }
+                        arguments_string[i] <- temp
+                      }
+                      
+                      arguments_string <- paste(arguments_string, collapse = " ")
+                      
+                      sig = NULL
+                      if(extern == FALSE) {
+                        sig <- paste(self$return_valtype, self$name, '(', arguments_string, ')', '{', collapse = " ")
+                      } else {
+                        sig <- paste('extern "C" {' , self$return_valtype, self$name, '(', arguments_string, ');}', collapse = " ")
+                      }
+                      
+                      return(sig)
+                    },
+                    
                     vars_declaration = function(desired_type) {
                       variables = self$get_vars()
                       args_dec <- sapply(seq_along(variables), function(x) {
@@ -262,14 +291,35 @@ MA <- R6::R6Class("MA",
                       return(args_dec)
                     },
                     
-                    build = function(verbose = FALSE, reference = FALSE) {
+                    vars_declaration_own = function(desired_type) {
+                      variables = self$get_vars()
+                      
+                      args_dec <- sapply(seq_along(variables), function(x) {
+                        temp <- paste(self$var_types[[x]], variables[[x]], ';', collapse = '')
+                        return(temp)
+                      })
+                      args_dec <- paste(args_dec, collapse = " ")
+                      
+                      fct_args = self$args_2_fct
+                      
+                      fct_args_dec <- sapply(seq_along(fct_args), function(x) {
+                        temp <- paste('sexp', fct_args[[x]], ';')
+                        temp <- c(temp, fct_args[[x]], '=', paste0(self$args[[x]], desired_type[x], ';', collapse = ''))
+                        return(temp)
+                      })
+                      
+                      args_dec <- c(args_dec, fct_args_dec)
+                      return(args_dec)
+                    },
+                    
+                    build_own = function(verbose = FALSE, reference = FALSE) {
                       self$getast()
                       self$ast2call()
                       self$call2char()
                       
                       fct = c(
-                        self$signature(self$desired_type, reference),
-                        self$vars_declaration(self$desired_type),
+                        self$signature_own(self$desired_type, reference, extern = FALSE),
+                        self$vars_declaration_own(self$desired_type),
                         self$char,
                         '}'
                       )
@@ -309,6 +359,41 @@ MA <- R6::R6Class("MA",
                       }
                       
                       fct <- paste( unlist(fct), collapse='')
+                    },
+                    
+                    # build with own types
+                    build_own_SEXP = function(verbose = FALSE, reference = FALSE) {
+                      self$getast()
+                      self$ast2call()
+                      self$call2char()
+                      
+                      fct = NULL
+                      if(self$return_type() == "void") {
+                        fct = c(
+                          "// [[Rcpp::depends(ast2ast)]] \n",
+                          "// [[Rcpp::depends(RcppArmadillo)]] \n",
+                          "// [[Rcpp::plugins(cpp17)]] \n",
+                          self$signature_own(self$desired_type, reference, extern = TRUE), "\n",
+                          self$signature_own(self$desired_type, reference, extern = FALSE), "\n",
+                          self$vars_declaration_own(self$desired_type), "\n",
+                          self$char, "\n",
+                          "return R_NilValue;",
+                          '}'
+                        )
+                      } else {
+                        fct = c(
+                          "// [[Rcpp::depends(ast2ast)]] \n",
+                          "// [[Rcpp::depends(RcppArmadillo)]] \n",
+                          "// [[Rcpp::plugins(cpp17)]] \n",
+                          self$signature_own(self$desired_type, reference, extern = TRUE), "\n",
+                          self$signature_own(self$desired_type, reference, extern = FALSE), "\n",
+                          self$vars_declaration_own(self$desired_type), "\n",
+                          self$char, "\n",
+                          '}'
+                        )
+                      }
+                      
+                      fct <- paste( unlist(fct), collapse='')
                     }
                     
                     
@@ -316,3 +401,5 @@ MA <- R6::R6Class("MA",
                   
                   
 )
+
+

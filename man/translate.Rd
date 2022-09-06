@@ -4,25 +4,54 @@
 \alias{translate}
 \title{Translates an R function into a C++ function.}
 \usage{
-translate(f, verbose = FALSE, reference = FALSE, output = "R")
+translate(
+  f,
+  output = "R",
+  types_of_args = "SEXP",
+  return_type = "SEXP",
+  reference = FALSE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{f}{The function which should be translated from R to C++.}
-
-\item{verbose}{If set to TRUE the output of RcppXPtrUtils::cppXPtr or Rcpp::cppFunction is printed.}
-
-\item{reference}{If set to TRUE the arguments are passed by reference (not possible if output should be an R function)..}
 
 \item{output}{If set to "R" an R function wrapping the C++ code is returned. \cr
 If output is set to "XPtr" an external pointer object pointing to the C++ code is returned. \cr
 The default value is "R". 
  \strong{However, the performance of the R function is currently suboptimal}.}
+
+\item{types_of_args}{define the types of the arguments passed to the function as an character vector. This is an optional input. \cr
+The default value is 'SEXP' as this works well together with the argument 'R' output. \cr
+In case one want to use an external pointer the easiest way is to pass 'sexp' for types_of_args. \cr
+The possible values are: \cr
+\itemize{
+     \item void
+     \item double
+     \item SEXP
+     \item sexp
+     \item Rcpp::NumericVector
+     \item NumericVector
+     \item Rcpp::NumericMatrix
+     \item NumericMatrix
+     \item arma::vec
+     \item vec
+     \item arma::mat
+     \item mat
+}}
+
+\item{return_type}{is a character defining the type which the function can return. The default value is 'SEXP' as this works well with the 'R' output. \cr
+The same types as for the types_of_args are possible.}
+
+\item{reference}{If set to TRUE the arguments are passed by reference (not possible if output should be an R function).}
+
+\item{verbose}{If set to TRUE the output of RcppXPtrUtils::cppXPtr or Rcpp::cppFunction is printed.}
 }
 \value{
 The external pointer of the generated C++ function or an R function is created.
 }
 \description{
-An R function is translated to C++ soruce code and afterwards compiled. \cr
+An R function is translated to C++ source code and afterwards compiled. \cr
     The result can be an external pointer (XPtr) or an R function. \cr 
     The default value is an R function. \cr
     Further information can be found in the vignette: 'Detailed Documentation'. \cr
@@ -55,6 +84,7 @@ An R function is translated to C++ soruce code and afterwards compiled. \cr
    \item returning objects: return
    \item catmull-rome spline: cmr
    \item to get a range of numbers the ':' function can be used
+   \item is.na and is.infinite can be used to test for NA and Inf.
  }
 
 \strong{Some details about the implemented functions}
@@ -99,14 +129,15 @@ If you want to see how ast2ast differs from R in detail check the vignette: 'Det
 #Further examples can be found in the vignette: 'Detailed Documentation'.
 #Hello World
 \dontrun{
+# Hello World
 # Translating to R_fct
 f <- function() { print("Hello World!")}
-ast2ast::translate(f, R_fct = TRUE)
+ast2ast::translate(f)
 f()
 
 # Translating to external pointer
 f <- function() { print("Hello World!")}
-pointer_to_f_cpp <- ast2ast::translate(f)
+pointer_to_f_cpp <- ast2ast::translate(f, output = "XPtr")
 Rcpp::sourceCpp(code = "
 #include <Rcpp.h>
 typedef void (*fp)();
@@ -118,5 +149,48 @@ void call_fct(Rcpp::XPtr<fp> inp) {
 }
 ")
 call_fct(pointer_to_f_cpp)
+
+
+# Run sum example:
+run_sum <- function(x, n) {
+sz <- length(x)
+
+ov <- vector(mode = "numeric", length = sz)
+
+ov[n] <- sum(x[1:n])
+for(i in (n+1):sz) {
+
+ov[i] <- ov[i-1] + x[i] - x[i-n]
+}
+
+ov[1:(n-1)] <- NA
+
+return(ov)
+}
+
+run_sum_fast <- function(x, n) {
+sz <- length(x)
+ov <- vector(sz)
+
+sum_db = 0
+for(i in 1:n) {
+  sum_db <- sum_db + at(x, i)
+}
+ov[n] <- sum_db
+
+for(i in (n + 1):sz) {
+  ov[i] <- at(ov, i - 1) + at(x, i) - at(x, i - at(n, 1))
+}
+
+ov[1:(n - 1)] <- NA
+
+return(ov)
+}
+run_sum_cpp <- ast2ast::translate(run_sum_fast, verbose = FALSE)
+set.seed(42)
+x <- rnorm(10000)
+n <- 500
+one <- run_sum(x, n)
+two <- run_sum_cpp(x, n)
 }
 }

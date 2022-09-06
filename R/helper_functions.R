@@ -19,16 +19,16 @@
 
 
 
-compiler_a2a <- function(f, verbose, reference, R_fct, desired_type) {
+compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type) {
   a = NULL
   fct = NULL
   fct_ret = NULL
   name_f <- as.character(substitute(f))
   
   if(R_fct == FALSE) {
-    a = MA$new(f, desired_type, name_f, R_fct)
-    fct <- a$build(verbose, reference = reference)
-    
+    a = MA$new(f, desired_type, name_f, R_fct, return_type)
+    fct <- a$build_own(verbose, reference = reference) # build
+    cat(fct)  
     tryCatch(
       expr = {
         fct_ret = RcppXPtrUtils::cppXPtr(code = fct, plugins = c("cpp17"),
@@ -41,8 +41,8 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type) {
       }
     )
   } else {
-    a = MA$new(f, desired_type, name_f, R_fct)
-    fct <- a$build_SEXP(verbose, reference = reference)
+    a = MA$new(f, desired_type, name_f, R_fct, return_type)
+    fct <- a$build_own_SEXP(verbose, reference = reference) # build_SEXP
     
     fct <- paste(
       '#include "etr.hpp"', "\n",
