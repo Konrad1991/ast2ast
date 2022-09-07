@@ -114,25 +114,70 @@ If you want to see how ast2ast differs from R in detail check the vignette: 'Det
 
 
 ```R
-# Translating to R_fct
-f <- function() { print("Hello World!")}
-ast2ast::translate(f, R_fct = TRUE)
-f()
+ # Hello World
+ # Translating to R_fct
+ f <- function() { print("Hello World!")}
+ ast2ast::translate(f)
+ f()
+ 
+ # Translating to external pointer
+ f <- function() { print("Hello World!")}
+ pointer_to_f_cpp <- ast2ast::translate(f, output = "XPtr")
+ Rcpp::sourceCpp(code = "
+ #include <Rcpp.h>
+ typedef void (*fp)();
 
-# Translating to external pointer
-f <- function() { print("Hello World!")}
-pointer_to_f_cpp <- ast2ast::translate(f)
-Rcpp::sourceCpp(code = "
-#include <Rcpp.h>
-typedef void (*fp)();
+ // [[Rcpp::export]]
+ void call_fct(Rcpp::XPtr<fp> inp) {
+   fp f = *inp;
+   f();
+ }
+ ")
+ call_fct(pointer_to_f_cpp)
+ 
+ 
+ # Run sum example:
+ run_sum <- function(x, n) {
+ sz <- length(x)
 
-// [[Rcpp::export]]
-void call_fct(Rcpp::XPtr<fp> inp) {
-  fp f = *inp;
-  f();
-}
-")
-call_fct(pointer_to_f_cpp)
+ ov <- vector(mode = "numeric", length = sz)
+
+ ov[n] <- sum(x[1:n])
+ for(i in (n+1):sz) {
+
+ ov[i] <- ov[i-1] + x[i] - x[i-n]
+ }
+
+ ov[1:(n-1)] <- NA
+
+ return(ov)
+ }
+ 
+ run_sum_fast <- function(x, n) {
+ sz <- length(x)
+ ov <- vector(sz)
+ 
+ sum_db = 0
+ for(i in 1:n) {
+   sum_db <- sum_db + at(x, i)
+ }
+ ov[n] <- sum_db
+ 
+ for(i in (n + 1):sz) {
+   ov[i] <- at(ov, i - 1) + at(x, i) - at(x, i - at(n, 1))
+ }
+ 
+ ov[1:(n - 1)] <- NA
+ 
+ return(ov)
+ }
+ run_sum_cpp <- ast2ast::translate(run_sum_fast, verbose = FALSE)
+ set.seed(42)
+ x <- rnorm(10000)
+ n <- 500
+ one <- run_sum(x, n)
+ two <- run_sum_cpp(x, n)
+
 ```
 
 ## Contribution
