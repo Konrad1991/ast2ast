@@ -174,66 +174,24 @@ MA <- R6::R6Class("MA",
                     },
                     
                     
-                    return_type = function() {
+                    return_type_correct = function() { # called for its side effects
                       return_TF <- any(TRUE %in% self$return_TF)
                       
-                      # determine return type
-                      ret_type <- as.symbol("void")
-                      if(return_TF == TRUE) {
-                        ret_type <- as.symbol(self$desired_type)
+                      des_type <- self$return_valtype
+                      
+                      if(return_TF && (des_type == "void")) {
+                        stop("Found return value in a function which should return nothing. return_type = 'void'")
+                      } else if( (return_TF == FALSE) &&
+                                 (des_type != "void")) {
+                        stop(paste("Found no return value in a function which should return something.
+                                   return_type = ", des_type))
                       }
                       
-                      return(ret_type)
-                    },
-                    
-                    signature = function(desired_type, reference) {
-                      # arguments passed to f & define signature
-                      
-                      arguments_string <- sapply(self$args, function(x) {
-                        y <- paste0(x)
-                        if(reference == TRUE) {
-                          desired_type = paste(desired_type, '&')
-                        }
-                        temp <- paste(desired_type, y, ',', collapse = '')
-                        
-                        if (parent.frame()$i[] == length(self$args) )  {
-                          temp <- paste(desired_type, y, collapse = '')
-                        }
-                        
-                        return(temp)
-                      })
-                      arguments_string <- paste(arguments_string, collapse = " ")
-                      
-                      sig <- paste(self$return_type(), self$name, '(', arguments_string, ')', '{', collapse = " ")
-                    },
-                    
-                    signature_SEXP = function(desired_type, reference, extern = FALSE) {
-                      # arguments passed to f & define signature
-                      
-                      arguments_string <- sapply(self$args, function(x) {
-                        y <- paste0(x)
-                        temp <- paste(desired_type, paste0(y, 'SEXP'), ',', collapse = '')
-                        
-                        if (parent.frame()$i[] == length(self$args) )  {
-                          temp <- paste(desired_type, paste0(y, 'SEXP'), collapse = '')
-                        }
-                        
-                        return(temp)
-                      })
-                      arguments_string <- paste(arguments_string, collapse = " ")
-                      
-                      sig = NULL
-                      if(extern == FALSE) {
-                        sig <- paste("SEXP", self$name, '(', arguments_string, ')', '{', collapse = " ")
-                      } else {
-                        sig <- paste('extern "C" {' , "SEXP", self$name, '(', arguments_string, ');}', collapse = " ")
-                      }
-                      
-                      
-                      return(sig)
                     },
                     
                     signature_own = function(desired_type, reference, extern = FALSE) {
+                      
+                      self$return_type_correct()
                       # arguments passed to f & define signature
                       
                       arguments_string <- character(length(self$args))
@@ -258,37 +216,6 @@ MA <- R6::R6Class("MA",
                       }
                       
                       return(sig)
-                    },
-                    
-                    vars_declaration = function(desired_type) {
-                      variables = self$get_vars()
-                      args_dec <- sapply(seq_along(variables), function(x) {
-                        temp <- paste(self$var_types[[x]], variables[[x]], ';', collapse = '')
-                        return(temp)
-                      })
-                      args_dec <- paste(args_dec, collapse = " ")
-                      
-                      return(args_dec)
-                    },
-                    
-                    vars_declaration_SEXP = function(desired_type) {
-                      variables = self$get_vars()
-                      
-                      args_dec <- sapply(seq_along(variables), function(x) {
-                        temp <- paste(self$var_types[[x]], variables[[x]], ';', collapse = '')
-                        return(temp)
-                      })
-                      args_dec <- paste(args_dec, collapse = " ")
-                      
-                      fct_args = self$args_2_fct
-                      fct_args_dec <- sapply(seq_along(fct_args), function(x) {
-                        temp <- paste('sexp', fct_args[[x]], ';')
-                        temp <- c(temp, fct_args[[x]], '=', paste0(self$args[[x]], 'SEXP', ';', collapse = ''))
-                        return(temp)
-                      })
-                      
-                      args_dec <- c(args_dec, fct_args_dec)
-                      return(args_dec)
                     },
                     
                     vars_declaration_own = function(desired_type) {
@@ -327,40 +254,6 @@ MA <- R6::R6Class("MA",
                       fct <- paste( unlist(fct), collapse='')
                     },
                     
-                    build_SEXP = function(verbose = FALSE, reference = FALSE) {
-                      self$getast()
-                      self$ast2call()
-                      self$call2char()
-                      
-                      fct = NULL
-                      if(self$return_type() == "void") {
-                        fct = c(
-                          "// [[Rcpp::depends(ast2ast)]] \n",
-                          "// [[Rcpp::depends(RcppArmadillo)]] \n",
-                          "// [[Rcpp::plugins(cpp17)]] \n",
-                          self$signature_SEXP(self$desired_type, reference, extern = TRUE), "\n",
-                          self$signature_SEXP(self$desired_type, reference, extern = FALSE), "\n",
-                          self$vars_declaration_SEXP(self$desired_type), "\n",
-                          self$char, "\n",
-                          "return R_NilValue;",
-                          '}'
-                        )
-                      } else {
-                        fct = c(
-                          "// [[Rcpp::depends(ast2ast)]] \n",
-                          "// [[Rcpp::depends(RcppArmadillo)]] \n",
-                          "// [[Rcpp::plugins(cpp17)]] \n",
-                          self$signature_SEXP(self$desired_type, reference, extern = TRUE), "\n",
-                          self$signature_SEXP(self$desired_type, reference, extern = FALSE), "\n",
-                          self$vars_declaration_SEXP(self$desired_type), "\n",
-                          self$char, "\n",
-                          '}'
-                        )
-                      }
-                      
-                      fct <- paste( unlist(fct), collapse='')
-                    },
-                    
                     # build with own types
                     build_own_SEXP = function(verbose = FALSE, reference = FALSE) {
                       self$getast()
@@ -368,7 +261,7 @@ MA <- R6::R6Class("MA",
                       self$call2char()
                       
                       fct = NULL
-                      if(self$return_type() == "void") {
+                      if(self$return_valtype == "void") {
                         fct = c(
                           "// [[Rcpp::depends(ast2ast)]] \n",
                           "// [[Rcpp::depends(RcppArmadillo)]] \n",
