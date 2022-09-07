@@ -34,11 +34,25 @@ As an example solving a simple ODE-System. The translated code is considerable f
 *translate(f, verbose = FALSE, reference = FALSE, output = "R")*
 
 - *f* The function which should be translated from R to C++.
-- *verbose* If set to TRUE the output of RcppXPtrUtils::cppXPtr is printed.
+- *output* If set to "R" an R function wrapping the C++ code is returned. If output is set to "XPtr" an external pointer object pointing to the C++ code is returned. The default value is "R".
+- *types_of_args* define the types of the arguments passed to the function as an character vector. This is an optional input. The default value is 'SEXP' as this works well together with the argument 'R' output. In case one want to use an external pointer the easiest way is to pass 'sexp' for types_of_args. The possible values are: 
+    * void
+    * double
+    * SEXP
+    * sexp
+    * Rcpp::NumericVector
+    * NumericVector
+    * Rcpp::NumericMatrix
+    * NumericMatrix
+    * arma::vec
+    * vec
+    * arma::mat
+    * mat
+- *return_type* is a character defining the type which the function can return. This is an optional input. The default value is 'SEXP' as this works well with the 'R' output. The same types as for the types_of_args are possible.
 - *reference* If set to TRUE the arguments are passed by reference. Default value is FALSE.
-- *output* If set to "R" an R function wrapping the C++ code is returned. If output is set to "XPtr" an external pointer object pointing to the C++ code is returned. The default value is "R". 
+- *verbose* If set to TRUE the output of RcppXPtrUtils::cppXPtr is printed.
 
-The function *translate* returns an external pointer of the generated C++ function or an R function. **As a side note the R function interface is only for testing and is currently not very efficient.**
+The function *translate* an R function to a C++ function and compiles the code afterwards. It is possible to get an external pointer of the generated C++ function or an R function. **As a side note the R function interface is only for testing and is not very efficient.**
 
 
 ### The following types are supported:
