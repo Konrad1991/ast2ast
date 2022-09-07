@@ -28,7 +28,6 @@
 #' @param output If set to "R" an R function wrapping the C++ code is returned. \cr
 #'               If output is set to "XPtr" an external pointer object pointing to the C++ code is returned. \cr
 #'               The default value is "R". 
-#'                \strong{However, the performance of the R function is currently suboptimal}.
 #' @param types_of_args define the types of the arguments passed to the function as an character vector. This is an optional input. \cr
 #'               The default value is 'SEXP' as this works well together with the argument 'R' output. \cr
 #'               In case one want to use an external pointer the easiest way is to pass 'sexp' for types_of_args. \cr
