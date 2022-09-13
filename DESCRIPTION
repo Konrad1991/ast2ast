@@ -14,3 +14,4 @@ VignetteBuilder: knitr
 Suggests: knitr, kableExtra, rmarkdown, tinytest, microbenchmark, r2sundials
 Encoding: UTF-8
 RoxygenNote: 7.1.2
+Roxygen: list(markdown = TRUE)

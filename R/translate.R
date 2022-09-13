@@ -25,12 +25,10 @@
 #'     The default value is an R function. \cr
 #'     Further information can be found in the vignette: 'Detailed Documentation'. \cr
 #' 
-#' 
 #' @param f The function which should be translated from R to C++.
 #' @param output If set to "R" an R function wrapping the C++ code is returned. \cr
 #'               If output is set to "XPtr" an external pointer object pointing to the C++ code is returned. \cr
 #'               The default value is "R". 
-#' 
 #' 
 #' @param types_of_args define the types of the arguments passed to the function as an character vector. This is an optional inputif using "XPtr" as output. \cr
 #'               The default value is 'SEXP' as this is the only possibility for output "R". \cr
@@ -40,31 +38,24 @@
 #'                    \item double
 #'                    \item SEXP
 #'                    \item sexp
-#'                    \item Rcpp::NumericVector
-#'                    \item NumericVector
-#'                    \item Rcpp::NumericMatrix
-#'                    \item NumericMatrix
-#'                    \item arma::vec
-#'                    \item vec
-#'                    \item arma::mat
-#'                    \item mat
+#'                    \item Rcpp::NumericVector or NumericVector
+#'                    \item Rcpp::NumericMatrix or NumericMatrix
+#'                    \item arma::vec or vec
+#'                    \item arma::mat or mat
 #'                    \item ptr_vec (see details for explanation)
 #'                    \item ptr_mat (see details for explanation)
 #'               }
 #' 
-#' 
 #' @param return_type is a character defining the type which the function can return. The default value is 'SEXP' as this is the only possibility for output "R". \cr
-#'                    The same types as for the types_of_args are possible. Additionally, the possibility exists to return nothing using "void" as return type. 
-#' 
+#'                    The same types - except ptr_vec and ptr_mat - as for the types_of_args are possible. Additionally, the possibility exists to return nothing using "void" as return type. 
 #' 
 #' @param reference If set to TRUE the arguments are passed by reference (not possible if output should be an R function).
 #' 
-#' 
 #' @param verbose If set to TRUE the output of RcppXPtrUtils::cppXPtr or Rcpp::cppFunction is printed.
 #' 
+#' @return If output is set to 'R' an R function is returned. Thus, the C++ code can directly be called within R. \cr
+#'         In contrast a funciton which returns an external pointer is generated if the output is set to 'XPtr'. 
 #' 
-#'
-#' @return The external pointer of the generated C++ function or an R function is created. 
 #' @details \strong{The following types are supported: }
 #'  \enumerate{
 #'    \item numeric vectors
@@ -76,9 +67,20 @@
 #'          This is done by adding '_db' to the end of the variable. Each time '_db' is found
 #'          the variable is declared as a scalar numeric data type. In this case the
 #'          object cannot change its type!}
+#'          
+#'  In case an R function is created as output only SEXP elements can be passed to the function. \cr
+#'  Furthermore, these functions always return a SEXP element. Even if nothing is returned!. 
+#'  Notably, in R every object is under the hood a SEXP object. In contrast an external pointer is created other types \cr
+#'  can be specified which are passed to the function or returned from it. See above which types are possible. \cr
+#'  Thus, it is possible to pass Rcpp or RcppArmadillo elements to the function. \cr
+#'  The ptr_vec and ptr_mat interface work in a different way. If using ptr_vec an double* pointer is expected as first element.
+#'  Additionally a second argument is needed which is of type int which defines the size of the array. 
+#'  This works in the same way for ptr_mat. But instead of the size argument two integers are needed which define the number of rows and columns. Both arguments have to be of type int. \cr
+#'  Notably, the memory is only borrowed. Thus, the memory is not automatically deleted! See vignette InformationForPaclageAuthors for more information.
+#'          
 #' @details \strong{The following functions are supported:}
 #'  \enumerate{
-#'    \item assignment: = and <-
+#'    \item assignment: = and <- 
 #'    \item allocation: vector and matrix
 #'    \item information about objects: length and dim
 #'    \item Basic operations: +, -, *, /
@@ -92,11 +94,20 @@
 #'    \item catmull-rome spline: cmr
 #'    \item to get a range of numbers the ':' function can be used
 #'    \item is.na and is.infinite can be used to test for NA and Inf.
+#'    \item d-, p-, q- and r-unif/norm/lnorm/gamma/beta/dnbeta/chisq/nchisq/t/
+#'          nt/f/nf/cauchy/exp/logis/weibull/binom/nbinom/nbinom_mu/pois/
+#'          geom/hyper/wilcox/signrank --> not finished yet
 #'  }
 #' @details  \strong{Some details about the implemented functions}
 #' @details  \itemize{
-#'    \item allocation of memory works: Following forms are possible: vector(size_of_elements), vector(value, size_of_elements), 
-#'              matrix(nrows, ncols), matrix(value, nrows, ncols) and matrix(vector, nrows, ncols). The latter fills the matrix or the vector with the specified 'value'. \cr
+#'    \item allocation of memory works: Following forms are possible:
+#'              \itemize{
+#'                  \item vector(size_of_elements)
+#'                  \item vector(value, size_of_elements)
+#'                  \item matrix(nrows, ncols)
+#'                  \item matrix(value, nrows, ncols)
+#'                  \item matrix(vector, nrows, ncols)
+#'              } 
 #'    \item For indices squared brackets '[]' can be used as common in R. Beyond that the function 'at' exists
 #'              which accepts as first argument a variable and as the second argument you pass the desired index.
 #'              The caveat of using 'at' is that only one entry can be accessed. The function '[]' can return more then one element. \cr
@@ -130,15 +141,18 @@
 #' However, it does not behave exactly like R! Please check your compiled function before using it in a serious project.
 #' If you want to see how ast2ast differs from R in detail check the vignette: 'Detailed Documentation'.}
 #' @examples #Further examples can be found in the vignette: 'Detailed Documentation'.
-#' @examples #Hello World
 #' \dontrun{
 #' # Hello World
+#' # ===========================================================================
+#' 
 #' # Translating to R_fct
+#' # ---------------------------------------------------------------------------
 #' f <- function() { print("Hello World!")}
 #' ast2ast::translate(f)
 #' f()
 #' 
 #' # Translating to external pointer
+#' # ---------------------------------------------------------------------------
 #' f <- function() { print("Hello World!")}
 #' pointer_to_f_cpp <- ast2ast::translate(f, output = "XPtr")
 #' Rcpp::sourceCpp(code = "
@@ -155,6 +169,10 @@
 #' 
 #' 
 #' # Run sum example:
+#' # ===========================================================================
+#' 
+#' # R version of run sum
+#' # ---------------------------------------------------------------------------
 #' run_sum <- function(x, n) {
 #' sz <- length(x)
 #'
@@ -171,6 +189,8 @@
 #' return(ov)
 #' }
 #' 
+#' # translated Version of R function
+#' # ---------------------------------------------------------------------------
 #' run_sum_fast <- function(x, n) {
 #' sz <- length(x)
 #' ov <- vector(sz)
