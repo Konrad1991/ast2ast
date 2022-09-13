@@ -93,7 +93,7 @@ PC <- R6::R6Class("PC",
           check = deparse(self$name_fct) %in% var
           return(check)
         },
-
+        
         get_var_names = function() {
           
           forbidden_fcts <- c("getlength" ,"getattributes" ,"is_matrix", "VEC", # has to be updated!
@@ -114,9 +114,9 @@ PC <- R6::R6Class("PC",
               ret[[counter]] <- temp
 
               if(deparse(temp) %in% forbidden_fcts) {
-                cat("Sorry you are not allowed to use: ",
-                    temp, "as a variable.", "\n")
-                stop()
+                warning(paste("You should not use: ",
+                    temp, "as a variable.", "\n",
+                    "Transpiling will be continued anyway. Please check the behaviour of the function!") )
               }
 
               counter <- counter + 1
@@ -126,7 +126,13 @@ PC <- R6::R6Class("PC",
           na_inf <- c("NA_REAL", "R_PosInf", "R_NegInf")
           indices <- ret %in% na_inf
           ret <- ret[indices == FALSE]
-
+          
+          # not allowed "etr" & "i2d"
+          ei <- c("etr", "i2d")
+          indices <- ret %in% ei
+          ret <- ret[indices == FALSE]
+          
+          
           return(ret)
         },
 
@@ -358,9 +364,9 @@ subset <- R6::R6Class("subset",
 
 
         if(self$subassign == TRUE) {
-            self$name_fct = as.name("subassign")
+            self$name_fct = as.name(paste0("etr::", "subassign"))
         } else if(self$subassign == FALSE) {
-          self$name_fct = as.name("subset")
+          self$name_fct = as.name(paste0("etr::", "subset"))
         }
 
       },

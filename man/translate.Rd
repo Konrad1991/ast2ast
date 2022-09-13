@@ -18,15 +18,13 @@ translate(
 
 \item{output}{If set to "R" an R function wrapping the C++ code is returned. \cr
 If output is set to "XPtr" an external pointer object pointing to the C++ code is returned. \cr
-The default value is "R". 
- \strong{However, the performance of the R function is currently suboptimal}.}
+The default value is "R".}
 
-\item{types_of_args}{define the types of the arguments passed to the function as an character vector. This is an optional input. \cr
-The default value is 'SEXP' as this works well together with the argument 'R' output. \cr
+\item{types_of_args}{define the types of the arguments passed to the function as an character vector. This is an optional inputif using "XPtr" as output. \cr
+The default value is 'SEXP' as this is the only possibility for output "R". \cr
 In case one want to use an external pointer the easiest way is to pass 'sexp' for types_of_args. \cr
 The possible values are: \cr
 \itemize{
-     \item void
      \item double
      \item SEXP
      \item sexp
@@ -38,10 +36,12 @@ The possible values are: \cr
      \item vec
      \item arma::mat
      \item mat
+     \item ptr_vec (see details for explanation)
+     \item ptr_mat (see details for explanation)
 }}
 
-\item{return_type}{is a character defining the type which the function can return. The default value is 'SEXP' as this works well with the 'R' output. \cr
-The same types as for the types_of_args are possible.}
+\item{return_type}{is a character defining the type which the function can return. The default value is 'SEXP' as this is the only possibility for output "R". \cr
+The same types as for the types_of_args are possible. Additionally, the possibility exists to return nothing using "void" as return type.}
 
 \item{reference}{If set to TRUE the arguments are passed by reference (not possible if output should be an R function).}
 

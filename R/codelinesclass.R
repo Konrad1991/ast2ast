@@ -112,7 +112,7 @@ LC <- R6::R6Class("LC",
             self$check_assign_subset = FALSE
             p <- generic$new(sexp, self$R_fct, self$namespace_etr)
             sexp <- p$convert(self$PF)
-            self$vars <- c(self$vars, p$get_var_names())
+            #self$vars <- c(self$vars, p$get_var_names())
 
 
           } else if(as.name("return") == fct) {
@@ -126,35 +126,35 @@ LC <- R6::R6Class("LC",
             #p <- fastaccess$new(sexp)
             p <- subset$new(sexp, self$check_assign_subset, self$namespace_etr)
             sexp <- p$convert(self$PF)
-            self$vars <- c(self$vars, p$get_var_names())
+            #self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
 
           } else if(as.name("c") == fct) {
 
             p <- coca$new(sexp, self$R_fct, self$namespace_etr)
             sexp <- p$convert(self$PF)
-            self$vars <- c(self$vars, p$get_var_names())
+            #self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
 
           } else if(as.name(":") == fct) {
 
             p <- range$new(sexp, self$R_fct, self$namespace_etr)
             sexp <- p$convert(self$PF)
-            self$vars <- c(self$vars, p$get_var_names())
+            #self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
 
           } else if(deparse(fct) %in% self$math) {
 
             p <- math$new(sexp, self$R_fct, self$namespace_etr)
             sexp <- p$convert(self$PF)
-            self$vars <- c(self$vars, p$get_var_names())
+            #self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
 
           } else if(as.name('for') == fct) {
 
             p <- loop$new(sexp, self$R_fct, self$namespace_etr)
             sexp <- p$convert(self$PF)
-            self$vars <- c(self$vars, p$get_var_names())
+            #self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
             self$index_vars <- c(self$index_vars, p$return_index_vars())
 
@@ -162,21 +162,21 @@ LC <- R6::R6Class("LC",
 
             p <- printer$new(sexp, self$namespace_etr)
             sexp <- p$convert(self$PF)
-            self$vars <- c(self$vars, p$get_var_names())
+            #self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
 
           } else if(as.name("is.na") == fct) {
             
             p <- is_na$new(sexp, self$R_fct, self$namespace_etr)
             sexp <- p$convert(self$PF)
-            self$vars <- c(self$vars, p$get_var_names())
+            #self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
 
           } else if(as.name("is.infinite") == fct) {
             
             p <- is_infinite$new(sexp, self$R_fct, self$namespace_etr)
             sexp <- p$convert(self$PF)
-            self$vars <- c(self$vars, p$get_var_names())
+            #self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
 
           } else if(as.name("i2d") == fct) {

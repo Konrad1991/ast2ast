@@ -28,13 +28,16 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
   if(R_fct == FALSE) {
     a = MA$new(f, desired_type, name_f, R_fct, return_type)
     fct <- a$build_own(verbose, reference = reference) # build
-    cat(fct)  
+      
     tryCatch(
       expr = {
-        fct_ret = RcppXPtrUtils::cppXPtr(code = fct, plugins = c("cpp17"),
-                                         depends = c("ast2ast", "RcppArmadillo"),
-                                         includes = "#include <etr.hpp>",
-                                         verbose =  verbose)
+        if(verbose == TRUE) {
+          cat(fct)
+        }
+        env <- new.env()
+        Rcpp::sourceCpp(code = fct, verbose = verbose, env = env) 
+        fct_ret <- env$getXPtr()
+        attributes(fct_ret) <- list(class = "XPtr")
       },
       error = function(e) {
         print("Sorry compilation failed!")

@@ -29,70 +29,6 @@ p:first-of-type {
 }
 ```
 
-```{Rcpp, echo = FALSE, cache = TRUE, eval = TRUE}
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::depends(ast2ast)]]
-#include "etr.hpp"
-typedef void (*fp) (sexp&);
-
-// [[Rcpp::plugins(cpp17)]]
-using namespace Rcpp;
-using namespace etr;
-
-// [[Rcpp::export]]
-void byref(XPtr<fp> fetr, NumericVector x) { // example 1
-  fp Fct = *fetr;
-
-  sexp a;
-  a = x;
-  
-  print("x before call of function:");
-  print(a);
-  Fct(a);
-  print("x after call of function:");
-  print(a);  
-  
-  return Fct(a);
-}
-```
-
-```{Rcpp, echo = FALSE, cache = TRUE}
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::depends(ast2ast)]]
-#include "etr.hpp"
-typedef void (*fp) ();
-
-// [[Rcpp::plugins(cpp17)]]
-
-using namespace Rcpp;
-using namespace etr;
-
-// [[Rcpp::export]]
-void vardec(XPtr<fp> fetr) { // example 2
-  fp Fct = *fetr;
-  Fct();
-}
-```
-
-
-```{Rcpp, echo = FALSE, cache = TRUE, eval = TRUE}
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::depends(ast2ast)]]
-#include "etr.hpp"
-typedef void (*fp) ();
-
-// [[Rcpp::plugins(cpp17)]]
-
-using namespace Rcpp;
-using namespace etr;
-
-// [[Rcpp::export]]
-void call_fct(XPtr<fp> fetr) { // example 3
-  fp Fct = *fetr;
-  Fct();
-}
-```
-
 - [Documentation](#documentation)
   * [Objects](#objects)
   * [Variable declaration](#variable-declaration)
@@ -112,7 +48,8 @@ text-align: justify}
 
 ## Documentation
 
-The package *ast2ast* translates an R function into a C++ function and returns an external pointer (XPtr) to this function. The scope of *ast2ast* is to generate functions that can be used during solving ode-systems (derivative function or jacobian function) or during optimization. More generally, the translated function can be used in fields where it is necessary to evaluate a function very often. Especially when the function is evaluated by C++ the generated external pointer is very sufficient. \
+The package *ast2ast* translates an R function into a C++ function. Either an external pointer (XPtr) or an R function is returned. The scope of *ast2ast* is to generate functions that can be used during solving ode-systems (derivative function or jacobian function) or during optimization. More generally, the translated function can be used in fields where it is necessary to evaluate a function very often. Especially when the function is evaluated by C++ the generated external pointer is very sufficient. \
+Within this vignette the functions supported by *ast2ast* are presented. 
 First of all, the supported objects and functions listed below are explained in detail. Here, the arguments which have to be passed to the functions are described and it is explained what the function returns. Furthermore, for each function, a small example is given showing how to use it. Moreover, it is explained how the function differs from R equivalents. If another differences are detected please report them. \
 This paragraph explains how the examples in this vignette are executed. First of all, an Rcpp function is created, which executes the output of the function *translate*. If you want to know how these functions work in detail you can go to the vignette *Information for Package authors*. In the examples, only the R code is shown to show how to write the code. 
 
@@ -138,90 +75,7 @@ Supported functions:
 ### Objects
 
 There exist two containers that can be used in *ast2ast* functions. Both containers can only hold the *numeric* type of R (which is equivalent to double). The first container is a vector and the second one is a matrix. **It is possible to declare a variable of a scalar numeric data type. This is done by adding *\_db* (e.g. varname\_db) to the end of the variable. Each time *\_db* is found the variable is declared as a scalar numeric data type. In this case, the object cannot change its type!** \
-It is pivotal to follow the rules of variable naming in C++. For instance, it is not allowed to use '*.*' in variable names. Moreover, the following functions are implemented in C++ and thus it is not possible to use these names:
-
-```{r, echo = FALSE, eval = TRUE}
-fct <- c(
-"getlength"
-,"getattributes"
-,"is_matrix"
-,"VEC"
-,"at"
-,"d2i"
-,"i2d"
-,"ass"
-,"VVSIN"
-,"sinus"
-,"VVsinh"
-,"sinush"
-,"VVasin"
-,"asinus"
-,"VVCOS"
-,"cosinus"
-,"VVacos"
-,"acosinus"
-,"VVCOSH"
-,"cosinush"
-,"VVtan"
-,"tangens"
-,"VVatan"
-,"atangens"
-,"VVtanh"
-,"tangensh"
-,"VVMINUS"
-,"VSMINUS"
-,"SVMINUS"
-,"VVPLUS"
-,"VSPLUS"
-,"SVPLUS"
-,"VVTIMES"
-,"VSTIMES"
-,"SVTIMES"
-,"VVDIV"
-,"VSDIV"
-,"SVDIV"
-,"subassign"
-,"subset"
-,"It"
-,"STORE"
-,"for_"
-,"li"
-,"cmr"
-,"VVEXP"
-,"VVlog"
-,"ln"
-,"exp"
-,"combine"
-,"coca"
-,"cd"
-,"colon"
-,"length"
-,"dim"
-,"vector"
-,"matrix")
-
-c1 <- fct[1:8]
-c2 <- fct[9:16]
-c3 <- fct[17:24]
-c4 <- fct[25:32]
-c5 <- fct[33:40]
-c6 <- fct[41:48]
-c7 <- fct[49:56]
-c8 <- c(fct[57:58], rep(NA, 6) )
-
-d1 <- data.frame(c1, c2, c3, c4)
-d2 <- data.frame(c5, c6, c7, c8)
-
-row.names(d1) <- NULL
-row.names(d2) <- NULL
-names(d1) <- NULL
-names(d2) <- NULL
-
-knitr::kable(d1)
-knitr::kable(d2)
-```
-
-
+It is pivotal to follow the rules of variable naming in C++. For instance, it is not allowed to use '*.*' in variable names.
 
 **Features of *ast2ast* **
 
@@ -239,10 +93,10 @@ f <- function(variable) {
   variable <- 1
 }
 library(ast2ast)
-fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
+fetr <- translate(f, verbose = TRUE)
 x <- 10
-output <- byref(fetr, x)
-output
+fetr(x)
+print(x)
 ```
 
 **Caveats:**
@@ -300,8 +154,8 @@ f <- function() {
   print()
 }
 library(ast2ast)
-fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
-vardec(fetr)
+fetr <- translate(f)
+fetr()
 ```
 
 ### Basic arithmetics
@@ -381,8 +235,8 @@ print(d)
 }
 
 library(ast2ast)
-fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
-call_fct(fetr)
+fetr <- translate(f)
+fetr()
 ```
 
 
@@ -526,8 +380,8 @@ print()
 }
 
 library(ast2ast)
-fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
-call_fct(fetr)
+fetr <- translate(f)
+fetr()
 ```
 
 ### Helper functions
@@ -550,8 +404,8 @@ f <- function() {
 }
 
 library(ast2ast)
-fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
-call_fct(fetr)
+fetr <- translate(f)
+fetr()
 ```
 
 ### Comparison functions
@@ -580,8 +434,8 @@ f <- function() {
 }
 
 library(ast2ast)
-fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
-call_fct(fetr)
+fetr <- translate(f)
+fetr()
 ```
 
 ### Control flow
@@ -616,8 +470,8 @@ f <- function() {
 }
 
 library(ast2ast)
-fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
-call_fct(fetr)
+fetr <- translate(f)
+fetr()
 ```
 
 
@@ -660,8 +514,8 @@ f <- function() {
 }
 
 library(ast2ast)
-fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
-call_fct(fetr)
+fetr <- translate(f)
+fetr()
 ```
 
 
@@ -688,8 +542,8 @@ f <- function() {
 }
 
 library(ast2ast)
-fetr <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "void")
-call_fct(fetr)
+fetr <- translate(f)
+fetr()
 ```
 
 

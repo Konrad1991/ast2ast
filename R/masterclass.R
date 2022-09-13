@@ -174,35 +174,88 @@ MA <- R6::R6Class("MA",
                     },
                     
                     
-                    return_type_correct = function() { # called for its side effects
+                    return_type_correct = function() { # called for its side effects --> to do. Does not work currently
                       return_TF <- any(TRUE %in% self$return_TF)
                       
                       des_type <- self$return_valtype
                       
-                      if(return_TF && (des_type == "void")) {
-                        stop("Found return value in a function which should return nothing. return_type = 'void'")
-                      } else if( (return_TF == FALSE) &&
-                                 (des_type != "void")) {
-                        stop(paste("Found no return value in a function which should return something.
-                                   return_type = ", des_type))
-                      }
+                      # if(self$R_fct == FALSE) {
+                      #   if(return_TF && (des_type == "void")) {
+                      #     stop("Found return value in a function which should return nothing. return_type = 'void'")
+                      #   } else if( (return_TF == FALSE) &&
+                      #              (des_type != "void")) {
+                      #     stop(paste("Found no return value in a function which should return something.
+                      #              return_type = ", des_type))
+                      #   }  
+                      # } 
                       
                     },
                     
-                    signature_own = function(desired_type, reference, extern = FALSE) {
+                    signature_own = function(desired_type, reference, extern = FALSE, typedef = FALSE) {
                       
-                      self$return_type_correct()
                       # arguments passed to f & define signature
                       
                       arguments_string <- character(length(self$args))
+                      
                       for(i in seq_along(self$args)) {
                         y <- paste0(self$args[[i]])
-                        type <- desired_type[i]
-                        temp <- paste(type, paste0(y, type), ',', collapse = '')
-                        
-                        if(i == length(self$args)) {
-                          temp <- paste(type, paste0(y, type), collapse = '')
+                        type <- NULL
+                        type_name <- NULL
+                        temp <- NULL
+                        if(reference) {
+                          type <- paste0(desired_type[i], "&")
+                          type_name <- desired_type[i]
+                        } else {
+                          type <- desired_type[i]
+                          type_name <- desired_type[i]
                         }
+                        
+                        
+                        if(desired_type[i] == "ptr_vec") {
+                          
+                          if(reference == TRUE) {
+                            stop("Reference cannot be set to TRUE in combination with ptr_vec or ptr_mat")
+                          }
+
+                          temp <- paste("double*", paste0(y, "_double_ptr"), ',', 
+                                        "int", paste0(y, "_int_size"), ',',
+                                        collapse = '')
+                          if(i == length(self$args)) {
+                            temp <- paste("double*", paste0(y, "_double_ptr"), ',', 
+                                          "int", paste0(y, "_int_size"),
+                                          collapse = '')
+                          }
+                          
+                        } else if(desired_type[i] == "ptr_mat") {
+                          
+                          if(reference == TRUE) {
+                            stop("Reference cannot be set to TRUE in combination with ptr_vec or ptr_mat")
+                          }
+                          temp <- paste("double*", paste0(y, "_double_ptr"), ',', 
+                                        "int", paste0(y, "_int_rows"), ',',
+                                        "int", paste0(y, "_int_cols"), ',',
+                                        collapse = '')
+                          if(i == length(self$args)) {
+                            temp <- paste("double*", paste0(y, "_double_ptr"), ',', 
+                                          "int", paste0(y, "_int_rows"), ',',
+                                          "int", paste0(y, "_int_cols"),
+                                          collapse = '')
+                          }
+                          
+                        } else if(self$R_fct == TRUE) { # not ptr_vec or ptr_mat
+                          temp <- paste(type, paste0(y, type_name), ',', collapse = '')
+                          
+                          if(i == length(self$args)) {
+                            temp <- paste(type, paste0(y, type_name), collapse = '')
+                          }  
+                        } else if(self$R_fct == FALSE) { # XPtr interface
+                          temp <- paste(type, y, ',', collapse = '')
+                          
+                          if(i == length(self$args)) {
+                            temp <- paste(type, y, collapse = '')
+                          }
+                        }
+ 
                         arguments_string[i] <- temp
                       }
                       
@@ -215,6 +268,11 @@ MA <- R6::R6Class("MA",
                         sig <- paste('extern "C" {' , self$return_valtype, self$name, '(', arguments_string, ');}', collapse = " ")
                       }
                       
+                      if(typedef == TRUE) {
+                        sig <- paste(self$return_valtype, '(*fct_ptr)', '(', arguments_string, ');', collapse = " ")
+                        return(sig)
+                      }
+                      
                       return(sig)
                     },
                     
@@ -222,33 +280,77 @@ MA <- R6::R6Class("MA",
                       variables = self$get_vars()
                       
                       args_dec <- sapply(seq_along(variables), function(x) {
+                        
                         temp <- paste(self$var_types[[x]], variables[[x]], ';', collapse = '')
                         return(temp)
                       })
                       args_dec <- paste(args_dec, collapse = " ")
                       
                       fct_args = self$args_2_fct
+                      fct_args_ptr = sapply(seq_along(fct_args), function(x) {
+                        if(desired_type[[x]] == "ptr_vec") {
+                          return(x)
+                        } else if(desired_type[[x]] == "ptr_mat") {
+                          return(x)
+                        }
+                        return(NA)
+                      })
+                      fct_args_ptr = fct_args_ptr[!is.na(fct_args_ptr)]
+                      
                       
                       fct_args_dec <- sapply(seq_along(fct_args), function(x) {
-                        temp <- paste('sexp', fct_args[[x]], ';')
-                        temp <- c(temp, fct_args[[x]], '=', paste0(self$args[[x]], desired_type[x], ';', collapse = ''))
+                        temp <- NULL
+                        if(desired_type[[x]] == "ptr_vec") {
+                          temp <- paste('sexp', fct_args[[x]], '(', 
+                                        paste0(fct_args[[x]], "_int_size,"),
+                                        paste0(fct_args[[x]], "_double_ptr,"),
+                                        '2);', collapse = "") # borrow
+                          
+                        } else if(desired_type[[x]] == "ptr_mat") {
+                          temp <- paste('sexp', fct_args[[x]], '(', 
+                                        paste0(fct_args[[x]], "_int_rows,"), paste0(fct_args[[x]], "_int_cols,"),
+                                        paste0(fct_args[[x]], "_double_ptr,"),
+                                        '2);', collapse = "") # borrow
+                          
+                        } else {
+                          temp <- paste('sexp', fct_args[[x]], ';')
+                          temp <- c(temp, fct_args[[x]], '=', paste0(self$args[[x]], desired_type[x], ';', collapse = ''))  
+                        }
+                        
                         return(temp)
                       })
                       
-                      args_dec <- c(args_dec, fct_args_dec)
+                      if(self$R_fct == TRUE) {
+                        args_dec <- c(args_dec, fct_args_dec)  
+                      } else {
+                        args_dec <- c(args_dec, fct_args_dec[fct_args_ptr])  
+                      }
+                      
                       return(args_dec)
                     },
                     
                     build_own = function(verbose = FALSE, reference = FALSE) {
+                      self$return_type_correct()
                       self$getast()
                       self$ast2call()
                       self$call2char()
                       
                       fct = c(
+                        "// [[Rcpp::depends(ast2ast)]] \n",
+                        "// [[Rcpp::depends(RcppArmadillo)]] \n",
+                        "// [[Rcpp::plugins(cpp17)]] \n",
+                        '#include "etr.hpp"', "\n",
+                        "// [[Rcpp::export]]", "\n",
+                        "SEXP getXPtr();", "\n", 
                         self$signature_own(self$desired_type, reference, extern = FALSE),
                         self$vars_declaration_own(self$desired_type),
                         self$char,
-                        '}'
+                        '}',
+                        
+                        "SEXP getXPtr() {", "\n", 
+                        paste("typedef", self$signature_own(self$desired_type, reference, extern = FALSE, typedef = TRUE), ";"),
+                        paste("return Rcpp::XPtr<fct_ptr>(new fct_ptr(& ", self$name, '));'),
+                        "}"
                       )
                       
                       fct <- paste( unlist(fct), collapse='')
@@ -256,12 +358,15 @@ MA <- R6::R6Class("MA",
                     
                     # build with own types
                     build_own_SEXP = function(verbose = FALSE, reference = FALSE) {
+                      return_TF <- any(TRUE %in% self$return_TF)
+                      
                       self$getast()
                       self$ast2call()
                       self$call2char()
                       
                       fct = NULL
-                      if(self$return_valtype == "void") {
+                      
+                      if(return_TF == FALSE) { 
                         fct = c(
                           "// [[Rcpp::depends(ast2ast)]] \n",
                           "// [[Rcpp::depends(RcppArmadillo)]] \n",

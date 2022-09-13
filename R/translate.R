@@ -24,16 +24,19 @@
 #'     The result can be an external pointer (XPtr) or an R function. \cr 
 #'     The default value is an R function. \cr
 #'     Further information can be found in the vignette: 'Detailed Documentation'. \cr
+#' 
+#' 
 #' @param f The function which should be translated from R to C++.
 #' @param output If set to "R" an R function wrapping the C++ code is returned. \cr
 #'               If output is set to "XPtr" an external pointer object pointing to the C++ code is returned. \cr
 #'               The default value is "R". 
-#' @param types_of_args define the types of the arguments passed to the function as an character vector. This is an optional input. \cr
-#'               The default value is 'SEXP' as this works well together with the argument 'R' output. \cr
+#' 
+#' 
+#' @param types_of_args define the types of the arguments passed to the function as an character vector. This is an optional inputif using "XPtr" as output. \cr
+#'               The default value is 'SEXP' as this is the only possibility for output "R". \cr
 #'               In case one want to use an external pointer the easiest way is to pass 'sexp' for types_of_args. \cr
 #'               The possible values are: \cr
 #'               \itemize{
-#'                    \item void
 #'                    \item double
 #'                    \item SEXP
 #'                    \item sexp
@@ -45,11 +48,22 @@
 #'                    \item vec
 #'                    \item arma::mat
 #'                    \item mat
+#'                    \item ptr_vec (see details for explanation)
+#'                    \item ptr_mat (see details for explanation)
 #'               }
-#' @param return_type is a character defining the type which the function can return. The default value is 'SEXP' as this works well with the 'R' output. \cr
-#'                    The same types as for the types_of_args are possible.
+#' 
+#' 
+#' @param return_type is a character defining the type which the function can return. The default value is 'SEXP' as this is the only possibility for output "R". \cr
+#'                    The same types as for the types_of_args are possible. Additionally, the possibility exists to return nothing using "void" as return type. 
+#' 
+#' 
 #' @param reference If set to TRUE the arguments are passed by reference (not possible if output should be an R function).
+#' 
+#' 
 #' @param verbose If set to TRUE the output of RcppXPtrUtils::cppXPtr or Rcpp::cppFunction is printed.
+#' 
+#' 
+#'
 #' @return The external pointer of the generated C++ function or an R function is created. 
 #' @details \strong{The following types are supported: }
 #'  \enumerate{
@@ -197,13 +211,14 @@ translate <- function(f, output = "R",
     stopifnot(is.character(types_of_args))
     stopifnot(is.character(return_type))
     stopifnot("found unknown type of arguments for functions" = 
-              types_of_args %in% c("void", "double", "SEXP", "sexp", 
+              types_of_args %in% c("int", "double", "SEXP", "sexp", 
                                    "Rcpp::NumericVector", "Rcpp::NumericMatrix",
                                    "arma::vec", "arma::mat",
                                    "NumericVector", "NumericMatrix",
-                                   "vec", "mat") )
+                                   "vec", "mat",
+                                   "ptr_vec", "ptr_mat") )
     stopifnot("found unknown return type" = 
-                return_type %in% c("void", "double", "SEXP", "sexp", 
+                return_type %in% c("void", "int", "double", "SEXP", "sexp", 
                                      "Rcpp::NumericVector", "Rcpp::NumericMatrix",
                                      "arma::vec", "arma::mat",
                                      "NumericVector", "NumericMatrix",
@@ -230,6 +245,21 @@ translate <- function(f, output = "R",
     } else if(output == "XPtr") {
       R_fct = FALSE
     }
+    
+    # if output == "R" --> type has to be SEXP!
+    if(R_fct) {
+      if(!all(types_of_args == "SEXP")) {
+        warning("If using 'R' as output form only SEXP is valid as type.
+                All other types will be ignored!")
+        types_of_args <- rep("SEXP", length(formalArgs(f)) )
+      }
+      
+      if( (return_type != "SEXP") ) {
+        warning("If using 'R' as output form only SEXP or void are valid as return_type.
+                All other types will be ignored!")
+        return_type <- "SEXP"
+      }
+    }
   
     if(R_fct == TRUE) {
       if(reference == TRUE) {
@@ -237,7 +267,7 @@ translate <- function(f, output = "R",
                 Therefore reference cannot be set to TRUE.
                 The argument reference will be ignored!")
       }
-      reference = TRUE
+      reference = FALSE
     }
     
     fct_ret <- compiler_a2a(f, verbose, reference,

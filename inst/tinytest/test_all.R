@@ -2088,6 +2088,7 @@ bs <- function(a) {
 }
 
 bs_cpp <- ast2ast::translate(bs, types_of_args = "sexp", return_type = "sexp",
+                             reference = TRUE,
                              verbose = TRUE, output = "XPtr")
 x <- c(5, 3, 2, 10, 1)
 
@@ -2109,3 +2110,155 @@ fb_cpp <- ast2ast::translate(fb,
 
 res <- c(1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765)
 expect_equal(wrapper(fb_cpp, x), res )
+
+
+
+
+
+# test for ptr_vec 
+Rcpp::sourceCpp(code = '
+// [[Rcpp::depends(ast2ast)]] 
+// [[Rcpp::depends(RcppArmadillo)]] 
+// [[Rcpp::plugins(cpp17)]] 
+#include "etr.hpp"
+
+#include <Rcpp.h>
+using namespace Rcpp;
+
+typedef sexp (*fct_ptr) (double* a_double_ptr, int a_int_size);
+
+// [[Rcpp::export]]
+Rcpp::NumericVector fcpp(XPtr<fct_ptr> f) {
+  fct_ptr fct = *f;
+  
+  int size = 10;
+  double* ptr = new double[size];
+  for(int i = 0; i < size; i++) {
+    ptr[i] = static_cast<double>(i);
+  }
+  
+  Rcpp::NumericVector ret = fct(ptr, size);
+
+  delete[] ptr;
+
+  return ret;
+}
+')
+
+f <- function(a) {
+  d_db = 1
+  ret <- a + 2 + d_db
+  return(ret)
+}
+
+fptr <- ast2ast::translate(f, output = "XPtr", 
+                           types_of_args = "ptr_vec", return_type = "sexp",
+                           reference = FALSE, verbose = TRUE)
+
+ret <- fcpp(fptr)
+expect_equal(ret, as.numeric(3:12))
+
+
+
+
+
+
+
+# test for ptr_mat
+Rcpp::sourceCpp(code = '
+// [[Rcpp::depends(ast2ast)]] 
+// [[Rcpp::depends(RcppArmadillo)]] 
+// [[Rcpp::plugins(cpp17)]] 
+#include "etr.hpp"
+
+#include <Rcpp.h>
+using namespace Rcpp;
+
+typedef sexp (*fct_ptr) (double* a_double_ptr, int a_int_rows, int a_int_cols);
+
+// [[Rcpp::export]]
+Rcpp::NumericMatrix fcpp(XPtr<fct_ptr> f) {
+  fct_ptr fct = *f;
+  
+  int size = 10;
+  double* ptr = new double[size];
+  for(int i = 0; i < size; i++) {
+    ptr[i] = static_cast<double>(i);
+  }
+
+  int rows = 2;
+  int cols = 5;
+  
+  Rcpp::NumericMatrix ret = fct(ptr, rows, cols);
+
+  delete[] ptr;
+
+  return ret;
+}
+')
+
+f <- function(a) {
+  d_db = 1
+  ret <- a + 2 + d_db
+  return(ret)
+}
+
+fptr <- ast2ast::translate(f, output = "XPtr", 
+                           types_of_args = "ptr_mat", return_type = "sexp",
+                           reference = FALSE, verbose = TRUE)
+
+ret <- fcpp(fptr)
+expect_equal(ret, matrix(3:12, 2, 5))
+
+
+
+
+
+
+
+
+
+# test for ptr_vec and sexp
+Rcpp::sourceCpp(code = '
+// [[Rcpp::depends(ast2ast)]] 
+// [[Rcpp::depends(RcppArmadillo)]] 
+// [[Rcpp::plugins(cpp17)]] 
+#include "etr.hpp"
+
+#include <Rcpp.h>
+using namespace Rcpp;
+
+typedef sexp (*fct_ptr) (double* a_double_ptr, int a_int_size, sexp b);
+
+// [[Rcpp::export]]
+Rcpp::NumericVector fcpp(XPtr<fct_ptr> f) {
+  fct_ptr fct = *f;
+  
+  int size = 10;
+  double* ptr = new double[size];
+  for(int i = 0; i < size; i++) {
+    ptr[i] = static_cast<double>(i);
+  }
+
+  sexp b = etr::colon(1.0, 10.0);
+  Rcpp::NumericVector ret = fct(ptr, size, b);
+
+  delete[] ptr;
+
+  return ret;
+}
+')
+
+f <- function(a, b) {
+  d_db = 1
+  ret <- a + 2 + d_db + b
+  return(ret)
+}
+
+fptr <- ast2ast::translate(f, output = "XPtr", 
+                           types_of_args = c("ptr_vec", "sexp"), return_type = "sexp",
+                           reference = FALSE, verbose = TRUE)
+
+ret <- fcpp(fptr)
+expect_equal(ret, 0:9 + 1:10 + 2 + 1)
+

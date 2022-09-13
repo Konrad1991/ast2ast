@@ -437,9 +437,10 @@ res_exp3 <- solve_ode(pointer_to_ode,
                       ti, y0)
 attributes(res_exp3) <- NULL
 
-stopifnot(identical(res_exp,
-                res_exp2,
-                res_exp3))
+plot(res_exp)
+points(res_exp2)
+points(res_exp3)
+
 out <- microbenchmark(
   r2cvodes(y0, ti,
           frhs, param = p),
