@@ -93,7 +93,7 @@ f <- function(variable) {
   variable <- 1
 }
 library(ast2ast)
-fetr <- translate(f, verbose = TRUE)
+fetr <- translate(f)
 x <- 10
 fetr(x)
 print(x)

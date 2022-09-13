@@ -328,6 +328,7 @@ library(RcppXPtrUtils)
 library(microbenchmark)
 
 # R version
+# ==============================================================================
 ti <- seq(0, 5, length.out=101)
 p <- list(a = 2)
 p <- c(nu = 2, a = 1)
@@ -336,33 +337,27 @@ frhs <- function(t, y, p, psens) {
   -p["nu"]*(y-p["a"])
 } 
 
-res_exp <- r2cvodes(y0, ti,
+res1 <- r2cvodes(y0, ti,
                     frhs, param = p)
-attributes(res_exp) <- NULL
 
-# External pointer
-ptr_exp <- cppXPtr(code = '
-int rhs_exp(double t, const vec &y,
-            vec &ydot,
-            RObject &param,
-            NumericVector &psens) {
-            
-  double a = 1;
-  double nu = 2;
-  ydot[0] = -nu*(y[0] - a);
+
+
+# external pointer version
+# ==============================================================================
+library(RcppXPtrUtils)
+ptr_exp=cppXPtr(code='
+int rhs_exp(double t, const vec &y, vec &ydot, RObject &param, NumericVector &psens) {
+  NumericVector p(param);
+  ydot[0] = -p["a"]*(y[0]-1);
   return(CV_SUCCESS);
 }
-',
-depends=c("RcppArmadillo",
-          "r2sundials","rmumps"),
-includes="using namespace arma;\n
-          #include <r2sundials.h>",
-cacheDir="lib", verbose=FALSE)
+', depends=c("RcppArmadillo","r2sundials","rmumps"),
+includes="using namespace arma;\n#include <r2sundials.h>", cacheDir="lib", verbose=FALSE)
+# For ease of use in C++, we convert param to a numeric vector instead of a list.
 
-pv <- c(a = 1)
-res_exp2 <- r2cvodes(y0, ti,
-                     ptr_exp, param = pv)
-attributes(res_exp2) <- NULL
+pv = c(a= 2)
+# new call to r2cvodes() with XPtr pointer ptr_exp.
+res3=r2sundials::r2cvodes(y0, ti, ptr_exp, param=pv)
 ```
 
 In the code below is the wrapper function defined which is later called by *r2sundials*. This function is called *rhs_exp_wrapper* and has the correct function signature. Furthermore, a global function pointer named *Fct* is defined of type *void (\**user_fct) (sexp& y_, sexp& ydot_)*. Within *rhs_exp_wrapper* the data of the vectors *y* and *ydot* are used to construct two *sexp* objects which are passed to *Fct*. Thus, the vector *ydot* is modified by the function passed from the user. Furthermore, another function called *solve_ode* is defined. Which calls the code from *r2sundials*, solves the ODE-system, and returns the output to R. In R the user defines the R function *ode*. Next, the function is translated and passed to *solve_ode*. Comparing the results shows that all three approaches (R, C++, *ast2ast*) generate the same result. Afterwards a benchmark is conducted showing that R is substantially slower than C++ and that the translated function is almost as fast as C++. Mentionable, it is possible to increase the speed of the *ast2ast* version by using the *at* function and the *_db* extension.  
@@ -420,35 +415,71 @@ return output;
 }
 ```
 ```{r, eval = TRUE}
-# ast2ast version
+# ast2ast XPtr version
+# ==============================================================================
 ti <- seq(0, 5, length.out=101)
 y0 <- 0
 
 library(ast2ast)
 ode <- function(y, ydot) {
-  nu <- 2
-  a <- 1
-  ydot[1] <- -nu*(y[1] - a)
+  nu_db <- 2
+  a_db <- 1
+  ydot[1] <- -nu_db*(y[1] - a_db)
 }
 pointer_to_ode <- translate(ode,
-                          reference = TRUE, output = "XPtr",
-                          types_of_args = "sexp", return_type = "void")
-res_exp3 <- solve_ode(pointer_to_ode,
+                            reference = TRUE, output = "XPtr",
+                            types_of_args = "sexp",
+                            return_type = "void", verbose = TRUE)
+res4 <- solve_ode(pointer_to_ode,
                       ti, y0)
-attributes(res_exp3) <- NULL
+res4 <- as.vector(res4)
 
-plot(res_exp)
-points(res_exp2)
-points(res_exp3)
 
-out <- microbenchmark(
-  r2cvodes(y0, ti,
-          frhs, param = p),
-  r2cvodes(y0, ti,
-          ptr_exp, param = pv),
-  solve_ode(pointer_to_ode,
-          ti, y0))
 
-boxplot(out, names=c("R", "C++", "ast2ast"))
+
+# Rfunction-ast2ast version
+# ==============================================================================
+ode <- function(t, y, p, psens) {
+  nu_db <- 2
+  a_db <- 1
+  return(-nu_db*(y - a_db))
+}
+
+odecpp <- translate(ode)
+
+ti <- seq(0, 5, length.out=101)
+y0 <- 0
+res2 <- r2cvodes(y0, ti,
+                    odecpp, param = p)
+
+
+# check results and conduct benchmnark
+# ==============================================================================
+df <- data.frame(time = rep(ti, 4),
+                 method = c(rep("R", 101), rep("R ast2ast", 101),
+                            rep("XPtr", 101), rep("XPtr ast2ast", 101) ), 
+                 y = c(res1, res2, res3, res4))
+
+library(ggplot2)
+ggplot() +
+  geom_point(data = df, aes(x = time, y = y,
+                            colour = method, shape = method,
+                            group = method, size = method) ) +
+  scale_colour_manual(values = c("#FFDB6D", "#D16103", "#52854C", "#293352") ) +
+  scale_size_manual(values = c(6, 4, 2, 1.5)) +
+  scale_shape_manual(values=c(19,17,4, 3)) +
+  labs(colour = "")
+
+
+r <- microbenchmark::microbenchmark(
+                               r2cvodes(y0, ti,
+                                        frhs, param = p),
+                               r2cvodes(y0, ti,
+                                        odecpp, param = p),
+                               r2sundials::r2cvodes(y0, ti, ptr_exp, param=pv),
+                               solve_ode(pointer_to_ode,
+                                                     ti, y0))
+boxplot(r, names = c("pure R", "ast2ast R", "C++", "ast2ast XPtr"))
+
 ```
 

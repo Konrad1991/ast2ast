@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Konrad Krämer" />
+
+
+<title>Information for package authors</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Information for package authors</h1>
+<h4 class="author">Konrad Krämer</h4>
+
+
+
+<style>
+body {
+text-align: justify}
+</style>
+<ul>
+<li><a href="#information-for-package-authors">Information for Package
+authors</a></li>
+<li><a href="#how-to-use-ast2ast">How to use ast2ast</a></li>
+<li><a href="#rcpp-interface">Rcpp Interface</a></li>
+<li><a href="#rcpparmadillo-interface">RcppArmadillo Interface</a></li>
+<li><a href="#pointer-interface">Pointer Interface</a></li>
+<li><a href="#example-r2sundials">Example r2sundials</a></li>
+</ul>
+<div id="information-for-package-authors" class="section level2">
+<h2>Information for Package authors</h2>
+<p>This section of the documentation describes how the external pointers
+produced by <em>ast2ast</em> can be used in packages. This information
+is intended for package authors who want to use <em>ast2ast</em> to
+enable a simple user interface as it is not necessary anymore for the
+user to write C++. The R code is translated to a modified version of an
+expression template library called <em>ETR</em> (<a href="https://github.com/Konrad1991/ETR" class="uri">https://github.com/Konrad1991/ETR</a>) which tries to mimic
+R.<br />
+</p>
+<p>The core class object is named VEC<T> and can be initialized with any
+type. Furthermore, is a typedef defined for VEC<double> called
+<em>sexp</em> alluding to the fact that all R objects are <em>SEXP</em>
+objects at C level. This class contains another class called STORE<T>
+which manages memory. To do this a raw pointer of the form <em>T*</em>
+is used. Thus, all objects are located at the heap. Beyond that, it is
+important that no static methods are implemented or that memory is
+associated with functions or global variables. Therefore, the VEC<T>
+objects can be used in parallel. However, the user has to take care that
+only one thread edits an object at a time. VEC<double> a.k.a.
+<em>sexp</em> can be converted to Rcpp::NumericVectors,
+Rcpp::NumericMatrices, arma::vec and arma::mat. Moreover, it is also
+possible to copy the data from Rcpp::NumericVectors,
+Rcpp::NumericMatrices, arma::vec or arma::mat to a <em>sexp</em>
+variable. Currently, the constructors for doing this are not
+implemented, only the <em>operator=</em> is implemented. Thus, the
+variable of type <em>sexp</em> has to be defined before the information
+of the Rcpp or RcppArmadillo variables are passed. It is possible to
+construct a <em>sexp</em> object by using a <em>double*</em> pointer and
+a size information (= int). The information about the Rcpp-,
+RcppArmadillo- and pointer-interface is explained in depth in the
+sections below.</p>
+<p>After translating the R function each variable is of type
+<em>sexp</em> except if the user uses the <em>_db</em> extension. In
+this case, the variable is of type <em>double</em>. All arguments passed
+to a function are of type <em>sexp</em> or <em>sexp&amp;</em>. It is not
+possible to transfer one variable as <em>sexp</em> and another one as
+<em>sexp&amp;</em>. The function returns either <em>void</em> or a
+<em>sexp</em> object.</p>
+</div>
+<div id="how-to-use-ast2ast" class="section level2">
+<h2>How to use ast2ast</h2>
+<p>In this paragraph, a basic example demonstrates how to write the R
+code, translate it and call it from C++. Particular emphasis is placed
+on the C++ code. First of all, the R function is defined which accepts
+one argument called <em>a</em>, adds two to <em>a</em> and stores it
+into <em>b</em>. The variable <em>b</em> is returned at the end of the
+function. The R function called <em>f</em> is translated to an external
+pointer to the <em>C++</em> function.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(a) {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  b <span class="ot">&lt;-</span> a <span class="sc">+</span> <span class="dv">2</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(b)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>}  </span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ast2ast)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>f_cpp <span class="ot">&lt;-</span> <span class="fu">translate</span>(f, <span class="at">output =</span> <span class="st">&quot;XPtr&quot;</span>, <span class="at">types_of_args =</span> <span class="st">&quot;sexp&quot;</span>, <span class="at">return_type =</span> <span class="st">&quot;sexp&quot;</span>)</span></code></pre></div>
+<p>The C++ function depends on RcppArmadillo and ast2ast therefore the
+required macros and headers were included. Moreover, <em>ETR</em>
+requires std=c++17 therefore the corresponding plugin is added. The
+function <em>getXPtr</em> is defined by the function
+<em>RcppXPtrUtils::cppXPtr</em>. In the last 5 lines, the translated
+code is depicted. The function <em>f</em> returns a <em>sexp</em> and
+gets one argument of type <em>sexp</em> called <em>a</em>. The body of
+the function looks almost identical to the R function. Except that the
+variable <em>b</em> is defined in the first line of the body with the
+type <em>sexp</em>. The function <em>i2d</em> converts an integer to a
+double variable. This is necessary since C++ would identify the
+<em>2</em> as an integer which is not what the user wants in this
+case.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(ast2ast, RcppArmadillo)]]</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;RcppArmadillo.h&gt;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::plugins(cpp17)]]</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> Rcpp<span class="op">;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> etr<span class="op">;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;etr.hpp&gt;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>SEXP getXPtr<span class="op">();</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>sexp f<span class="op">(</span>sexp a<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  sexp b<span class="op">;</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  b <span class="op">=</span> a <span class="op">+</span> i2d<span class="op">(</span><span class="dv">2</span><span class="op">);</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span><span class="op">(</span>b<span class="op">);</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Afterwards, the translated R function has to be used in C++ code.
+This would be your package code for example. First, the macros were
+defined for <em>RcppArmadillo</em> and <em>ast2ast</em>. Subsequently,
+the necessary header files were included. As already mentioned
+<em>ast2ast</em> requires std=c++17 thus the required plugin is
+included. To use the function, it is necessary to dereference the
+pointer. The result of the dereferenced pointer has to be stored in a
+function pointer. Later the function pointer can be used to call the
+translated function. Therefore, a function pointer called <em>fp</em> is
+defined. It is critical that the signature of the function pointer
+matches the one of the translated function. Perhaps it would be a good
+idea to check the R function before it is translated. After defining the
+function pointer, a function is defined which is called later by the
+user (called <em>call_package</em>). This function accepts the external
+pointer. Within the function body, a variable <em>f</em> is defined of
+type <em>fp</em> and <em>inp</em> is assigned to it. Next, a
+<em>sexp</em> object called <em>a</em> is defined which stores a vector
+of length 3 containing 1, 2 and 3. The function <em>coca</em> is
+equivalent to the <em>c</em> function R. Afterwards <em>a</em> is
+printed. Followed by the call of the function <em>f</em> and storing the
+result in <em>a</em>. The variable <em>a</em> is printed again to show
+that the values are changed according to the code defined in the R
+function.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(RcppArmadillo, ast2ast)]]</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&quot;etr.hpp&quot;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::plugins(&quot;cpp17&quot;)]]</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> sexp <span class="op">(*</span>fp<span class="op">)(</span>sexp a<span class="op">);</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> etr<span class="op">;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> call_package<span class="op">(</span>Rcpp<span class="op">::</span>XPtr<span class="op">&lt;</span>fp<span class="op">&gt;</span> inp<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  fp f <span class="op">=</span> <span class="op">*</span>inp<span class="op">;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  sexp a <span class="op">=</span> coca<span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">);</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  print<span class="op">(</span>a<span class="op">);</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  a <span class="op">=</span> f<span class="op">(</span>a<span class="op">);</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  print<span class="op">(</span><span class="st">&quot;a is now:&quot;</span><span class="op">);</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  print<span class="op">(</span>a<span class="op">);</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The user can call now the package code and pass the R function to it.
+Thus, the user only has to install the compiler or Rtools depending on
+the operating system. But it is not necessary to write the function in
+Rcpp.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">call_package</span>(f_cpp)</span></code></pre></div>
+<pre><code>## 1
+## 2
+## 3
+## a is now:
+## 3
+## 4
+## 5</code></pre>
+</div>
+<div id="rcpp-interface" class="section level2">
+<h2>Rcpp Interface</h2>
+<p>In the last section, the usage of <em>ast2ast</em> was described.
+However, only <em>sexp</em> variables were defined. Which are most
+likely not used in your package. Therefore interfaces to common
+libraries are defined. First of all, <em>ast2ast</em> can communicate
+with Rcpp which alleviates working with the library substantially. The
+code below shows that it is possible to pass a <em>sexp</em> object to a
+variable of type <em>NumericVector</em> or <em>NumericMatrix</em> and
+<em>vice versa</em>. Here, the data is always copied.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(ast2ast, RcppArmadillo)]]</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;RcppArmadillo.h&gt;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::plugins(cpp17)]]</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> Rcpp<span class="op">;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;etr.hpp&gt;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> etr<span class="op">;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> fct<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="co">// NumericVector to sexp</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  NumericVector a<span class="op">{</span><span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">};</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  sexp <span class="va">a_</span> <span class="op">=</span> a<span class="op">;</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  print<span class="op">(</span><span class="va">a_</span><span class="op">);</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  <span class="co">// sexp to NumericVector</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  sexp <span class="va">b_</span> <span class="op">=</span> coca<span class="op">(</span><span class="dv">3</span><span class="op">,</span> <span class="dv">4</span><span class="op">);</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  NumericVector b <span class="op">=</span> <span class="va">b_</span><span class="op">;</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  Rcpp<span class="op">::</span>Rcout <span class="op">&lt;&lt;</span> b <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>  <span class="co">// NumericMatrix to sexp</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>  NumericMatrix c<span class="op">(</span><span class="dv">3</span><span class="op">,</span> <span class="dv">3</span><span class="op">);</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>  sexp <span class="va">c_</span> <span class="op">=</span> c<span class="op">;</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>  print<span class="op">(</span><span class="va">c_</span><span class="op">);</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>  <span class="co">// sexp to NumericMatrix</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>  sexp <span class="va">d_</span> <span class="op">=</span> matrix<span class="op">(</span>colon<span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="dv">16</span><span class="op">),</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">4</span><span class="op">);</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>  NumericMatrix d <span class="op">=</span> <span class="va">d_</span><span class="op">;</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>  Rcpp<span class="op">::</span>Rcout <span class="op">&lt;&lt;</span> d <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>trash <span class="ot">&lt;-</span> <span class="fu">fct</span>()</span></code></pre></div>
+<pre><code>## 1
+## 2
+## 3 4
+## 0    0   0   
+## 0    0   0   
+## 0    0   0   
+## 1.00000 5.00000 9.00000 13.0000
+## 2.00000 6.00000 10.0000 14.0000
+## 3.00000 7.00000 11.0000 15.0000
+## 4.00000 8.00000 12.0000 16.0000</code></pre>
+</div>
+<div id="rcpparmadillo-interface" class="section level2">
+<h2>RcppArmadillo Interface</h2>
+<p>Besides Rcpp types, <em>sexp</em> objects can transfer data to
+<em>RcppArmadillo</em> objects and it is also possible to copy the data
+from <em>RcppArmadillo</em> types to <em>sexp</em> objects using the
+operator <em>=</em>. The code below shows that it is possible to pass a
+<em>sexp</em> object to a variable of type <em>vec</em> or <em>mat</em>
+and <em>vice versa</em>. Here the data is always copied.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(ast2ast, RcppArmadillo)]]</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;RcppArmadillo.h&gt;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::plugins(cpp17)]]</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> arma<span class="op">;</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;etr.hpp&gt;</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> etr<span class="op">;</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> fct<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  <span class="co">// vec to sexp</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  arma<span class="op">::</span>vec a<span class="op">(</span><span class="dv">4</span><span class="op">,</span> fill<span class="op">::</span>value<span class="op">(</span><span class="fl">30.0</span><span class="op">));</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  sexp <span class="va">a_</span> <span class="op">=</span> a<span class="op">;</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  print<span class="op">(</span><span class="va">a_</span><span class="op">);</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  <span class="co">// sexp to vec</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  sexp <span class="va">b_</span> <span class="op">=</span> coca<span class="op">(</span><span class="dv">3</span><span class="op">,</span> <span class="dv">4</span><span class="op">);</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  vec b <span class="op">=</span> <span class="va">b_</span><span class="op">;</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  b<span class="op">.</span>print<span class="op">();</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>  <span class="co">// mat to sexp</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  mat c<span class="op">(</span><span class="dv">3</span><span class="op">,</span> <span class="dv">3</span><span class="op">,</span> fill<span class="op">::</span>value<span class="op">(</span><span class="fl">31.0</span><span class="op">));</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  sexp <span class="va">c_</span> <span class="op">=</span> c<span class="op">;</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>  print<span class="op">(</span><span class="va">c_</span><span class="op">);</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>  <span class="co">// sexp to mat</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>  sexp <span class="va">d_</span> <span class="op">=</span> matrix<span class="op">(</span>colon<span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="dv">16</span><span class="op">),</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">4</span><span class="op">);</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>  mat d <span class="op">=</span> <span class="va">d_</span><span class="op">;</span></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>  d<span class="op">.</span>print<span class="op">();</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>trash <span class="ot">&lt;-</span> <span class="fu">fct</span>()</span></code></pre></div>
+<pre><code>## 30
+## 30
+## 30
+## 30
+##    3.0000
+##    4.0000
+## 31   31  31  
+## 31   31  31  
+## 31   31  31  
+##     1.0000    5.0000    9.0000   13.0000
+##     2.0000    6.0000   10.0000   14.0000
+##     3.0000    7.0000   11.0000   15.0000
+##     4.0000    8.0000   12.0000   16.0000</code></pre>
+</div>
+<div id="pointer-interface" class="section level2">
+<h2>Pointer Interface</h2>
+<p>You can pass the information of data stored on heap to a
+<em>sexp</em> object. The constructor for type vector accepts 3
+arguments:</p>
+<ul>
+<li><em>int</em> defining the size of the data.</li>
+<li>a pointer (<em>T*</em>) to the data</li>
+<li><em>int</em> called cob (copy, ownership, borrow).</li>
+</ul>
+<p>The constructor for the type matrix accepts 4 arguments:</p>
+<ul>
+<li><em>int</em> defining number of rows</li>
+<li><em>int</em> defining number of cols</li>
+<li>a pointer (<em>T*</em>) to the data</li>
+<li><em>int</em> called cob (copy, ownership, borrow).</li>
+</ul>
+<p>If cob is 0 then the data is copied. Else if cob is 1 then the
+pointer itself is copied. Meaning that the ownership is transferred to
+the <em>sexp</em> object and the user should not call delete [] on the
+pointer. Be aware that only one <em>sexp</em> variable can take
+ownership of one vector otherwise the memory is double freed. Else if
+cob is 2 the ownership of the pointer is only borrowed. Meaning that the
+<em>sexp</em> object cannot be resized. The user is responsible for
+freeing the memory! The code below shows how the pointer interface works
+in general. Showing how <em>sexp</em> objects can be created by passing
+the information of pointers (<em>double*</em>) which hold data on the
+heap. Currently, only constructors are written which can use the pointer
+interface.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(ast2ast, RcppArmadillo)]]</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;RcppArmadillo.h&gt;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::plugins(cpp17)]]</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> arma<span class="op">;</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;etr.hpp&gt;</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> etr<span class="op">;</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> fct<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> size <span class="op">=</span> <span class="dv">3</span><span class="op">;</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">// copy</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span><span class="op">*</span> ptr1<span class="op">;</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>    ptr1 <span class="op">=</span> <span class="kw">new</span> <span class="dt">double</span><span class="op">[</span>size<span class="op">];</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> cob <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>    sexp a<span class="op">(</span>size<span class="op">,</span> ptr1<span class="op">,</span> cob<span class="op">);</span> </span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">delete</span> <span class="op">[]</span> ptr1<span class="op">;</span></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> vector<span class="op">(</span><span class="fl">3.14</span><span class="op">,</span> <span class="dv">5</span><span class="op">);</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>    print<span class="op">(</span>a<span class="op">);</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>    print<span class="op">();</span></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    <span class="co">// take ownership</span></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span><span class="op">*</span> ptr2<span class="op">;</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>    ptr2 <span class="op">=</span> <span class="kw">new</span> <span class="dt">double</span><span class="op">[</span>size<span class="op">];</span></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>    cob <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>    sexp b<span class="op">(</span>size<span class="op">,</span> ptr2<span class="op">,</span> cob<span class="op">);</span> </span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> vector<span class="op">(</span><span class="dv">5</span><span class="op">,</span> <span class="dv">3</span><span class="op">);</span></span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>    print<span class="op">(</span>b<span class="op">);</span></span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>    print<span class="op">();</span></span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>    <span class="co">// borrow ownership</span></span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span><span class="op">*</span> ptr3<span class="op">;</span></span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>    ptr3 <span class="op">=</span> <span class="kw">new</span> <span class="dt">double</span><span class="op">[</span>size<span class="op">];</span></span>
+<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>    cob <span class="op">=</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a>    sexp c<span class="op">(</span>size<span class="op">,</span> ptr3<span class="op">,</span> cob<span class="op">);</span> </span>
+<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a>    <span class="co">//error calls resize</span></span>
+<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a>    <span class="co">//c = vector(5, size + 1); </span></span>
+<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a>    c <span class="op">=</span> vector<span class="op">(</span><span class="dv">4</span><span class="op">,</span> size<span class="op">);</span></span>
+<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a>    print<span class="op">(</span>c<span class="op">);</span></span>
+<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a>    print<span class="op">();</span></span>
+<span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a>    sexp d<span class="op">(</span>size<span class="op">,</span> ptr3<span class="op">,</span> cob<span class="op">);</span></span>
+<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a>    d <span class="op">=</span> d <span class="op">+</span> <span class="dv">10</span><span class="op">;</span></span>
+<span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a>    print<span class="op">(</span>d<span class="op">);</span></span>
+<span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a>    print<span class="op">();</span></span>
+<span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a>    <span class="kw">delete</span><span class="op">[]</span> ptr3<span class="op">;</span></span>
+<span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>trash <span class="ot">&lt;-</span> <span class="fu">fct</span>()</span></code></pre></div>
+<pre><code>## 3.14
+## 3.14
+## 3.14
+## 3.14
+## 3.14
+## 
+## 5
+## 5
+## 5
+## 
+## 4
+## 4
+## 4
+## 
+## 14
+## 14
+## 14</code></pre>
+<p>The pointer interface is particularly useful if the user function has
+to change the data of a vector or matrix of type <em>NumericVector</em>,
+<em>vec</em>, <em>NumericMatrix</em> or <em>mat</em>. Assuming that the
+user passes a function that accepts its arguments by reference it is
+easy to modify any variable which has a type that can return a pointer
+to its data. In the code below it is shown how <em>sexp</em> objects are
+constructed using the pointer interface. Thereby changing the content of
+variables which has an Rcpp type, a RcppArmadillo type, or is of type
+std::vector<double>.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(ast2ast, RcppArmadillo)]]</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;RcppArmadillo.h&gt;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;Rcpp.h&gt;</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::plugins(cpp17)]]</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> Rcpp<span class="op">;</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> arma<span class="op">;</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;etr.hpp&gt;</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> etr<span class="op">;</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="dt">void</span> <span class="op">(*</span>fp<span class="op">)(</span>sexp<span class="op">&amp;</span> a<span class="op">);</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> call_package<span class="op">(</span>Rcpp<span class="op">::</span>XPtr<span class="op">&lt;</span>fp<span class="op">&gt;</span> inp<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  fp f <span class="op">=</span> <span class="op">*</span>inp<span class="op">;</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  <span class="co">// NumericVector</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  NumericVector a_rcpp<span class="op">{</span><span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">};</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>  sexp a<span class="op">(</span>a_rcpp<span class="op">.</span>size<span class="op">(),</span> a_rcpp<span class="op">.</span>begin<span class="op">(),</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>  f<span class="op">(</span>a<span class="op">);</span></span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>  Rcpp<span class="op">::</span>Rcout <span class="op">&lt;&lt;</span> a_rcpp <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>  <span class="co">//arma::vec</span></span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>  vec a_arma<span class="op">(</span><span class="dv">2</span><span class="op">,</span> fill<span class="op">::</span>value<span class="op">(</span><span class="dv">30</span><span class="op">));</span></span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>  sexp b<span class="op">(</span><span class="dv">2</span><span class="op">,</span> a_arma<span class="op">.</span>memptr<span class="op">(),</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>  f<span class="op">(</span>b<span class="op">);</span></span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>  a_arma<span class="op">.</span>print<span class="op">();</span></span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>  <span class="co">// NumericMatrix</span></span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>  NumericMatrix c_rcpp<span class="op">(</span><span class="dv">2</span><span class="op">,</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>  sexp c<span class="op">(</span><span class="dv">2</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> c_rcpp<span class="op">.</span>begin<span class="op">(),</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>  f<span class="op">(</span>c<span class="op">);</span></span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>  Rcpp<span class="op">::</span>Rcout <span class="op">&lt;&lt;</span> c_rcpp <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a>  <span class="co">//arma::mat</span></span>
+<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a>  mat d_arma<span class="op">(</span><span class="dv">3</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> fill<span class="op">::</span>value<span class="op">(</span><span class="dv">30</span><span class="op">));</span></span>
+<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a>  sexp d<span class="op">(</span><span class="dv">3</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> d_arma<span class="op">.</span>memptr<span class="op">(),</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a>  f<span class="op">(</span>d<span class="op">);</span></span>
+<span id="cb15-38"><a href="#cb15-38" aria-hidden="true" tabindex="-1"></a>  d_arma<span class="op">.</span>print<span class="op">();</span></span>
+<span id="cb15-39"><a href="#cb15-39" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(a) {</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">&lt;-</span> a <span class="sc">+</span> <span class="dv">2</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ast2ast)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>fa2a <span class="ot">&lt;-</span> <span class="fu">translate</span>(f, <span class="at">reference =</span> <span class="cn">TRUE</span>, <span class="at">output =</span> <span class="st">&quot;XPtr&quot;</span>, <span class="at">types_of_args =</span> <span class="st">&quot;sexp&quot;</span>, <span class="at">return_type =</span> <span class="st">&quot;void&quot;</span>)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>trash <span class="ot">&lt;-</span> <span class="fu">call_package</span>(fa2a)</span></code></pre></div>
+<pre><code>## 3 4 5
+##    32.0000
+##    32.0000
+## 2.00000 2.00000
+## 2.00000 2.00000
+## 
+##    32.0000   32.0000
+##    32.0000   32.0000
+##    32.0000   32.0000</code></pre>
+</div>
+<div id="example-r2sundials" class="section level2">
+<h2>Example r2sundials</h2>
+<p>In this section an example is shown to illustrate how
+<em>ast2ast</em> could be used in other R packages. to solve ODE-systems
+very efficiently. In order to do this the R package <em>r2sundials</em>
+is used. First a wrapper function is created which is then used by
+<em>r2sundials</em>. Probably it would be more efficient when the
+package code itself would take care of the transfer of data between
+<em>Rcpp/RcppArmadillo</em> and <em>ast2ast</em>.</p>
+<p>In this example it is shown how ODE-systems can be solved by using
+<em>r2sundials</em> and <em>ast2ast</em>. The code below shows how
+<em>r2sundials</em> is used normally. Either using an R function or an
+external pointer to a C++ function.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(Rcpp)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ast2ast)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(r2sundials)</span></code></pre></div>
+<pre><code>## Loading required package: rmumps</code></pre>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RcppXPtrUtils)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(microbenchmark)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="co"># R version</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ==============================================================================</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>ti <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">5</span>, <span class="at">length.out=</span><span class="dv">101</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">a =</span> <span class="dv">2</span>)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">nu =</span> <span class="dv">2</span>, <span class="at">a =</span> <span class="dv">1</span>)</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>y0 <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>frhs <span class="ot">&lt;-</span> <span class="cf">function</span>(t, y, p, psens) {</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="sc">-</span>p[<span class="st">&quot;nu&quot;</span>]<span class="sc">*</span>(y<span class="sc">-</span>p[<span class="st">&quot;a&quot;</span>])</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>} </span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>res1 <span class="ot">&lt;-</span> <span class="fu">r2cvodes</span>(y0, ti,</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>                    frhs, <span class="at">param =</span> p)</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a><span class="co"># external pointer version</span></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a><span class="co"># ==============================================================================</span></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RcppXPtrUtils)</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>ptr_exp<span class="ot">=</span><span class="fu">cppXPtr</span>(<span class="at">code=</span><span class="st">&#39;</span></span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a><span class="st">int rhs_exp(double t, const vec &amp;y, vec &amp;ydot, RObject &amp;param, NumericVector &amp;psens) {</span></span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a><span class="st">  NumericVector p(param);</span></span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a><span class="st">  ydot[0] = -p[&quot;a&quot;]*(y[0]-1);</span></span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a><span class="st">  return(CV_SUCCESS);</span></span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a><span class="st">&#39;</span>, <span class="at">depends=</span><span class="fu">c</span>(<span class="st">&quot;RcppArmadillo&quot;</span>,<span class="st">&quot;r2sundials&quot;</span>,<span class="st">&quot;rmumps&quot;</span>),</span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a><span class="at">includes=</span><span class="st">&quot;using namespace arma;</span><span class="sc">\n</span><span class="st">#include &lt;r2sundials.h&gt;&quot;</span>, <span class="at">cacheDir=</span><span class="st">&quot;lib&quot;</span>, <span class="at">verbose=</span><span class="cn">FALSE</span>)</span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a><span class="co"># For ease of use in C++, we convert param to a numeric vector instead of a list.</span></span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>pv <span class="ot">=</span> <span class="fu">c</span>(<span class="at">a=</span> <span class="dv">2</span>)</span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a><span class="co"># new call to r2cvodes() with XPtr pointer ptr_exp.</span></span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>res3<span class="ot">=</span>r2sundials<span class="sc">::</span><span class="fu">r2cvodes</span>(y0, ti, ptr_exp, <span class="at">param=</span>pv)</span></code></pre></div>
+<p>In the code below is the wrapper function defined which is later
+called by <em>r2sundials</em>. This function is called
+<em>rhs_exp_wrapper</em> and has the correct function signature.
+Furthermore, a global function pointer named <em>Fct</em> is defined of
+type <em>void (*</em>user_fct) (sexp&amp; y_, sexp&amp; ydot_)<em>.
+Within </em>rhs_exp_wrapper* the data of the vectors <em>y</em> and
+<em>ydot</em> are used to construct two <em>sexp</em> objects which are
+passed to <em>Fct</em>. Thus, the vector <em>ydot</em> is modified by
+the function passed from the user. Furthermore, another function called
+<em>solve_ode</em> is defined. Which calls the code from
+<em>r2sundials</em>, solves the ODE-system, and returns the output to R.
+In R the user defines the R function <em>ode</em>. Next, the function is
+translated and passed to <em>solve_ode</em>. Comparing the results shows
+that all three approaches (R, C++, <em>ast2ast</em>) generate the same
+result. Afterwards a benchmark is conducted showing that R is
+substantially slower than C++ and that the translated function is almost
+as fast as C++. Mentionable, it is possible to increase the speed of the
+<em>ast2ast</em> version by using the <em>at</em> function and the *_db*
+extension.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(RcppArmadillo)]]</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(rmumps)]]</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(r2sundials)]]</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::depends(ast2ast)]]</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::plugins(&quot;cpp17&quot;)]]</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&quot;etr.hpp&quot;</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&quot;RcppArmadillo.h&quot;</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&quot;r2sundials.h&quot;</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> arma<span class="op">;</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> Rcpp<span class="op">;</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> <span class="kw">namespace</span> etr<span class="op">;</span></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="dt">int</span> <span class="op">(*</span>fp<span class="op">)(</span><span class="dt">double</span> t<span class="op">,</span> <span class="at">const</span> vec <span class="op">&amp;</span>y<span class="op">,</span></span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>             vec <span class="op">&amp;</span>ydot<span class="op">,</span> RObject <span class="op">&amp;</span>param<span class="op">,</span></span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>             NumericVector <span class="op">&amp;</span>psens<span class="op">);</span></span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="dt">void</span> <span class="op">(*</span>user_fct<span class="op">)(</span>sexp<span class="op">&amp;</span> <span class="va">y_</span><span class="op">,</span></span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>              sexp<span class="op">&amp;</span> <span class="va">ydot_</span><span class="op">);</span></span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>user_fct Fct<span class="op">;</span></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> rhs_exp_wrapper<span class="op">(</span><span class="dt">double</span> t<span class="op">,</span> <span class="at">const</span> vec <span class="op">&amp;</span>y<span class="op">,</span></span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>                    vec <span class="op">&amp;</span>ydot<span class="op">,</span> RObject <span class="op">&amp;</span>param<span class="op">,</span></span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>                    NumericVector <span class="op">&amp;</span>psens<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>  NumericVector p<span class="op">(</span>param<span class="op">);</span></span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">const</span> <span class="dt">int</span> size <span class="op">=</span> y<span class="op">.</span>size<span class="op">();</span></span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a>  sexp <span class="va">ydot_</span><span class="op">(</span>size<span class="op">,</span> ydot<span class="op">.</span>memptr<span class="op">(),</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-28"><a href="#cb21-28" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span><span class="op">*</span> ptr <span class="op">=</span> <span class="kw">const_cast</span><span class="op">&lt;</span><span class="dt">double</span><span class="op">*&gt;(</span></span>
+<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a>                y<span class="op">.</span>memptr<span class="op">());</span></span>
+<span id="cb21-30"><a href="#cb21-30" aria-hidden="true" tabindex="-1"></a>  sexp <span class="va">y_</span><span class="op">(</span>size<span class="op">,</span> ptr<span class="op">,</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb21-31"><a href="#cb21-31" aria-hidden="true" tabindex="-1"></a>  Fct<span class="op">(</span><span class="va">y_</span><span class="op">,</span> <span class="va">ydot_</span><span class="op">);</span></span>
+<span id="cb21-32"><a href="#cb21-32" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span><span class="op">(</span>CV_SUCCESS<span class="op">);</span></span>
+<span id="cb21-33"><a href="#cb21-33" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb21-34"><a href="#cb21-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-35"><a href="#cb21-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-36"><a href="#cb21-36" aria-hidden="true" tabindex="-1"></a><span class="co">// [[Rcpp::export]]</span></span>
+<span id="cb21-37"><a href="#cb21-37" aria-hidden="true" tabindex="-1"></a>NumericVector solve_ode<span class="op">(</span>XPtr<span class="op">&lt;</span>user_fct<span class="op">&gt;</span> inp<span class="op">,</span></span>
+<span id="cb21-38"><a href="#cb21-38" aria-hidden="true" tabindex="-1"></a>                        NumericVector time<span class="op">,</span></span>
+<span id="cb21-39"><a href="#cb21-39" aria-hidden="true" tabindex="-1"></a>                        NumericVector y<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb21-40"><a href="#cb21-40" aria-hidden="true" tabindex="-1"></a>Fct <span class="op">=</span> <span class="op">*</span>inp<span class="op">;</span></span>
+<span id="cb21-41"><a href="#cb21-41" aria-hidden="true" tabindex="-1"></a>XPtr<span class="op">&lt;</span>fp<span class="op">&gt;</span> ptr <span class="op">=</span> XPtr<span class="op">&lt;</span>fp<span class="op">&gt;(</span><span class="kw">new</span> fp<span class="op">(</span></span>
+<span id="cb21-42"><a href="#cb21-42" aria-hidden="true" tabindex="-1"></a>            <span class="op">&amp;</span>rhs_exp_wrapper<span class="op">));</span></span>
+<span id="cb21-43"><a href="#cb21-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-44"><a href="#cb21-44" aria-hidden="true" tabindex="-1"></a>Environment pkg <span class="op">=</span> </span>
+<span id="cb21-45"><a href="#cb21-45" aria-hidden="true" tabindex="-1"></a>  Environment<span class="op">::</span>namespace_env<span class="op">(</span><span class="st">&quot;r2sundials&quot;</span><span class="op">);</span></span>
+<span id="cb21-46"><a href="#cb21-46" aria-hidden="true" tabindex="-1"></a>Function solve <span class="op">=</span> pkg<span class="op">[</span><span class="st">&quot;r2cvodes&quot;</span><span class="op">];</span></span>
+<span id="cb21-47"><a href="#cb21-47" aria-hidden="true" tabindex="-1"></a>NumericVector output <span class="op">=</span> solve<span class="op">(</span>y<span class="op">,</span> time<span class="op">,</span></span>
+<span id="cb21-48"><a href="#cb21-48" aria-hidden="true" tabindex="-1"></a>                             ptr<span class="op">,</span> time<span class="op">);</span></span>
+<span id="cb21-49"><a href="#cb21-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-50"><a href="#cb21-50" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> output<span class="op">;</span></span>
+<span id="cb21-51"><a href="#cb21-51" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ast2ast XPtr version</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co"># ==============================================================================</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>ti <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">5</span>, <span class="at">length.out=</span><span class="dv">101</span>)</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>y0 <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ast2ast)</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>ode <span class="ot">&lt;-</span> <span class="cf">function</span>(y, ydot) {</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  nu_db <span class="ot">&lt;-</span> <span class="dv">2</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  a_db <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  ydot[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="sc">-</span>nu_db<span class="sc">*</span>(y[<span class="dv">1</span>] <span class="sc">-</span> a_db)</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>pointer_to_ode <span class="ot">&lt;-</span> <span class="fu">translate</span>(ode,</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>                            <span class="at">reference =</span> <span class="cn">TRUE</span>, <span class="at">output =</span> <span class="st">&quot;XPtr&quot;</span>,</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>                            <span class="at">types_of_args =</span> <span class="st">&quot;sexp&quot;</span>,</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>                            <span class="at">return_type =</span> <span class="st">&quot;void&quot;</span>, <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<pre><code>## // [[Rcpp::depends(ast2ast)]] 
+## // [[Rcpp::depends(RcppArmadillo)]] 
+## // [[Rcpp::plugins(cpp17)]] 
+## #include &quot;etr.hpp&quot;
+## // [[Rcpp::export]]
+## SEXP getXPtr();
+## void f ( sexp&amp; y , sexp&amp; ydot ) {double nu_db ; double a_db ;nu_db = etr::i2d(2);
+## 
+## a_db = etr::i2d(1);
+## 
+## etr::subassign(ydot, 1) = -nu_db * (etr::subset(y, 1) - a_db);
+## 
+## }SEXP getXPtr() {
+## typedef void (*fct_ptr) ( sexp&amp; y , sexp&amp; ydot ); ;return Rcpp::XPtr&lt;fct_ptr&gt;(new fct_ptr(&amp;  f ));}
+## Generated extern &quot;C&quot; functions 
+## --------------------------------------------------------
+## 
+## 
+## #include &lt;Rcpp.h&gt;
+## #ifdef RCPP_USE_GLOBAL_ROSTREAM
+## Rcpp::Rostream&lt;true&gt;&amp;  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+## Rcpp::Rostream&lt;false&gt;&amp; Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+## #endif
+## 
+## // getXPtr
+## SEXP getXPtr();
+## RcppExport SEXP sourceCpp_17_getXPtr() {
+## BEGIN_RCPP
+##     Rcpp::RObject rcpp_result_gen;
+##     Rcpp::RNGScope rcpp_rngScope_gen;
+##     rcpp_result_gen = Rcpp::wrap(getXPtr());
+##     return rcpp_result_gen;
+## END_RCPP
+## }
+## 
+## Generated R functions 
+## -------------------------------------------------------
+## 
+## `.sourceCpp_17_DLLInfo` &lt;- dyn.load(&#39;/tmp/RtmpeGgsK8/sourceCpp-x86_64-pc-linux-gnu-1.0.9/sourcecpp_1883f630cbe0b/sourceCpp_18.so&#39;)
+## 
+## getXPtr &lt;- Rcpp:::sourceCppFunction(function() {}, FALSE, `.sourceCpp_17_DLLInfo`, &#39;sourceCpp_17_getXPtr&#39;)
+## 
+## rm(`.sourceCpp_17_DLLInfo`)
+## 
+## Building shared library
+## --------------------------------------------------------
+## 
+## DIR: /tmp/RtmpeGgsK8/sourceCpp-x86_64-pc-linux-gnu-1.0.9/sourcecpp_1883f630cbe0b
+## 
+## /usr/lib/R/bin/R CMD SHLIB -o &#39;sourceCpp_18.so&#39; &#39;file1883f6744ae6a.cpp&#39;</code></pre>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>res4 <span class="ot">&lt;-</span> <span class="fu">solve_ode</span>(pointer_to_ode,</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>                      ti, y0)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>res4 <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(res4)</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Rfunction-ast2ast version</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ==============================================================================</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>ode <span class="ot">&lt;-</span> <span class="cf">function</span>(t, y, p, psens) {</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  nu_db <span class="ot">&lt;-</span> <span class="dv">2</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  a_db <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="sc">-</span>nu_db<span class="sc">*</span>(y <span class="sc">-</span> a_db))</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>odecpp <span class="ot">&lt;-</span> <span class="fu">translate</span>(ode)</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>ti <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">5</span>, <span class="at">length.out=</span><span class="dv">101</span>)</span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>y0 <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>res2 <span class="ot">&lt;-</span> <span class="fu">r2cvodes</span>(y0, ti,</span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a>                    odecpp, <span class="at">param =</span> p)</span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a><span class="co"># check results and conduct benchmnark</span></span>
+<span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a><span class="co"># ==============================================================================</span></span>
+<span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">time =</span> <span class="fu">rep</span>(ti, <span class="dv">4</span>),</span>
+<span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a>                 <span class="at">method =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="st">&quot;R&quot;</span>, <span class="dv">101</span>), <span class="fu">rep</span>(<span class="st">&quot;R ast2ast&quot;</span>, <span class="dv">101</span>),</span>
+<span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a>                            <span class="fu">rep</span>(<span class="st">&quot;XPtr&quot;</span>, <span class="dv">101</span>), <span class="fu">rep</span>(<span class="st">&quot;XPtr ast2ast&quot;</span>, <span class="dv">101</span>) ), </span>
+<span id="cb24-29"><a href="#cb24-29" aria-hidden="true" tabindex="-1"></a>                 <span class="at">y =</span> <span class="fu">c</span>(res1, res2, res3, res4))</span>
+<span id="cb24-30"><a href="#cb24-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-31"><a href="#cb24-31" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb24-32"><a href="#cb24-32" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> df, <span class="fu">aes</span>(<span class="at">x =</span> time, <span class="at">y =</span> y, <span class="at">colour =</span> method)) <span class="sc">+</span></span>
+<span id="cb24-33"><a href="#cb24-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">position =</span> <span class="st">&quot;dodge2&quot;</span>)</span></code></pre></div>
+<pre><code>## Warning: Width not defined. Set with `position_dodge2(width = ?)`</code></pre>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>r <span class="ot">&lt;-</span> microbenchmark<span class="sc">::</span><span class="fu">microbenchmark</span>(</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">r2cvodes</span>(y0, ti,</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>                                        frhs, <span class="at">param =</span> p),</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">r2cvodes</span>(y0, ti,</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>                                        odecpp, <span class="at">param =</span> p),</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>                               r2sundials<span class="sc">::</span><span class="fu">r2cvodes</span>(y0, ti, ptr_exp, <span class="at">param=</span>pv),</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">solve_ode</span>(pointer_to_ode,</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>                                                     ti, y0))</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>(r, <span class="at">names =</span> <span class="fu">c</span>(<span class="st">&quot;pure R&quot;</span>, <span class="st">&quot;ast2ast R&quot;</span>, <span class="st">&quot;C++&quot;</span>, <span class="st">&quot;ast2ast XPtr&quot;</span>))</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

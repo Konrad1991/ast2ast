@@ -11,7 +11,7 @@ Description: Enable translation of a tiny subset of R to C++. The user has to de
 License: GPL-2
 Imports: Rcpp (>= 1.0.4), purrr, R6, RcppArmadillo, methods
 VignetteBuilder: knitr
-Suggests: knitr, kableExtra, rmarkdown, tinytest, microbenchmark, r2sundials
+Suggests: knitr, kableExtra, rmarkdown, tinytest, microbenchmark, r2sundials, ggplot2
 Encoding: UTF-8
 RoxygenNote: 7.1.2
 Roxygen: list(markdown = TRUE)
