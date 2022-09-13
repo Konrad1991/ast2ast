@@ -74,7 +74,7 @@ Thus, it is possible to pass Rcpp or RcppArmadillo elements to the function. \cr
 The ptr_vec and ptr_mat interface work in a different way. If using ptr_vec an double* pointer is expected as first element.
 Additionally a second argument is needed which is of type int which defines the size of the array.
 This works in the same way for ptr_mat. But instead of the size argument two integers are needed which define the number of rows and columns. Both arguments have to be of type int. \cr
-Notably, the memory is only borrowed. Thus, the memory is not automatically deleted! See vignette InformationForPaclageAuthors for more information.
+Notably, the memory is only borrowed. Thus, the memory is not automatically deleted! See vignette InformationForPackageAuthors for more information.
 
 \strong{The following functions are supported:}
 \enumerate{

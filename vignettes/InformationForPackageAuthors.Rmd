@@ -1,7 +1,7 @@
 ---
 title: "Information for package authors"
 author: "Konrad Krämer"
-output: rmarkdown::html_vignette
+output: html_document
 #classoption:
 #- twocolumn
 # rmarkdown::html_vignette
@@ -47,10 +47,85 @@ p:first-of-type {
 
 This section of the documentation describes how the external pointers produced by *ast2ast* can be used in packages. This information is intended for package authors who want to use *ast2ast* to enable a simple user interface as it is not necessary anymore for the user to write C++. The R code is translated to a modified version of an expression template library called *ETR* (https://github.com/Konrad1991/ETR) which tries to mimic R. \
 
-The core class object is named VEC<T> and can be initialized with any type. Furthermore, is a typedef defined for VEC<double> called *sexp* alluding to the fact that all R objects are *SEXP* objects at C level. This class contains another class called STORE<T> which manages memory. To do this a raw pointer of the form *T\** is used. Thus, all objects are located at the heap. Beyond that, it is important that no static methods are implemented or that memory is associated with functions or global variables. Therefore, the VEC<T> objects can be used in parallel. However, the user has to take care that only one thread edits an object at a time. VEC<double> a.k.a. *sexp* can be converted to Rcpp::NumericVectors, Rcpp::NumericMatrices, arma::vec and arma::mat. Moreover, it is also possible to copy the data from Rcpp::NumericVectors, Rcpp::NumericMatrices, arma::vec or arma::mat to a *sexp* variable. Currently, the constructors for doing this are not implemented, only the *operator=* is implemented. Thus, the variable of type *sexp* has to be defined before the information of the Rcpp or RcppArmadillo variables are passed. It is possible to construct a *sexp* object by using a *double\** pointer and a size information (= int). The information about the Rcpp-, RcppArmadillo- and pointer-interface is explained in depth in the sections below. 
+The core class object is named VEC<T> and can be initialized with any type. Furthermore, is a typedef defined for VEC<double> called *sexp* alluding to the fact that all R objects are *SEXP* objects at C level. This class contains another class called STORE<T> which manages memory. To do this a raw pointer of the form *T\** is used. Thus, all objects are located at the heap. Beyond that, it is important that no static methods are implemented or that memory is associated with functions or global variables. Therefore, the VEC<T> objects can be used in parallel. However, the user has to take care that only one thread edits an object at a time. VEC<double> a.k.a. *sexp* can be converted to Rcpp::NumericVectors, Rcpp::NumericMatrices, arma::vec and arma::mat or to SEXP. Moreover, it is also possible to copy the data from Rcpp::NumericVectors, Rcpp::NumericMatrices, arma::vec or arma::mat to a *sexp* variable. The constructors and the *operator=* is implemented for this conversions. It is possible to construct a *sexp* object by using a *double\** pointer and a size information (= int). The information about the Rcpp-, RcppArmadillo- and pointer-interface is explained in depth in the sections below. 
 
-After translating the R function each variable is of type *sexp* except if the user uses the *\_db* extension. In this case, the variable is of type *double*. All arguments passed to a function are of type *sexp* or *sexp&*. It is not possible to transfer one variable as *sexp* and another one as *sexp&*. The function returns either *void* or a *sexp* object. 
+If the user creates an R function all input arguments are of type *SEXP*. Furthermore, is the output always of type *SEXP*. Beyond that, there exists the possibility to create a function returning an external pointer to the C++ function. If using this interface the parameter passed to the function can be of one of the following types:
 
+* double
+* SEXP
+* sexp
+* Rcpp::NumericVector or NumericVector
+* Rcpp::NumericMatrix or NumericMatrix
+* arma::vec or vec
+* arma::mat or mat
+
+**The variables are not changed or stored as sexp variable. Thus it is the safest to use sexp as type as all functions withn *ETR* are defined for sexp**. Additionally two other types are possible:
+
+* ptr_vec 
+* ptr_mat
+
+If these types are used sexp objects are created which form a shallow wrapper around these pointers. See an example below how this works. 
+
+* 1.: a Rcpp function is created which calls the translated R code:
+```{Rcpp, eval = FALSE, echo = TRUE}
+// [[Rcpp::depends(ast2ast)]] 
+// [[Rcpp::depends(RcppArmadillo)]] 
+// [[Rcpp::plugins(cpp17)]] 
+#include "etr.hpp"
+
+#include <Rcpp.h>
+using namespace Rcpp;
+
+typedef sexp (*fct_ptr) (double* a_double_ptr, int a_int_size);
+
+// [[Rcpp::export]]
+Rcpp::NumericVector fcpp(XPtr<fct_ptr> f) {
+  fct_ptr fct = *f;
+  
+  int size = 10;
+  double* ptr = new double[size];
+  for(int i = 0; i < size; i++) {
+    ptr[i] = static_cast<double>(i);
+  }
+  
+  Rcpp::NumericVector ret = fct(ptr, size);
+
+  delete[] ptr;
+
+  return ret;
+}
+```
+* 2.: a R function is defined and translated (not shown):
+```{r, eval = FALSE, echo = TRUE}
+f <- function(a) {
+  d_db = 1
+  ret <- a + 2 + d_db
+  return(ret)
+}
+```
+* 3.: The translated R function has the following code:
+```{Rcpp}
+SEXP f(double* a_double_ptr, int a_int_size ) {
+
+double d_db;
+sexp ret;
+sexp a(a_int_size, a_double_ptr, 2);
+d_db = etr::i2d(1);
+ret = a + etr::i2d(2) + d_db;
+return(ret);
+}
+```
+
+Beyond that the external poitner cannot only return SEXP objects. Further, possibilities are:
+
+* double
+* SEXP
+* sexp
+* Rcpp::NumericVector or NumericVector
+* Rcpp::NumericMatrix or NumericMatrix
+* arma::vec or vec
+* arma::mat or mat
+* void
 
 ## How to use ast2ast
 
@@ -361,7 +436,7 @@ res3=r2sundials::r2cvodes(y0, ti, ptr_exp, param=pv)
 ```
 
 In the code below is the wrapper function defined which is later called by *r2sundials*. This function is called *rhs_exp_wrapper* and has the correct function signature. Furthermore, a global function pointer named *Fct* is defined of type *void (\**user_fct) (sexp& y_, sexp& ydot_)*. Within *rhs_exp_wrapper* the data of the vectors *y* and *ydot* are used to construct two *sexp* objects which are passed to *Fct*. Thus, the vector *ydot* is modified by the function passed from the user. Furthermore, another function called *solve_ode* is defined. Which calls the code from *r2sundials*, solves the ODE-system, and returns the output to R. In R the user defines the R function *ode*. Next, the function is translated and passed to *solve_ode*. Comparing the results shows that all three approaches (R, C++, *ast2ast*) generate the same result. Afterwards a benchmark is conducted showing that R is substantially slower than C++ and that the translated function is almost as fast as C++. Mentionable, it is possible to increase the speed of the *ast2ast* version by using the *at* function and the *_db* extension.  
-```{Rcpp, eval = TRUE}
+```{Rcpp, eval = TRUE, fig_height = 8, fig_width = 8, fig.show = "hold"}
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::depends(rmumps)]]
 // [[Rcpp::depends(r2sundials)]]
