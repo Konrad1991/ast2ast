@@ -20,41 +20,32 @@
 
 #' Translates an R function into a C++ function. 
 #' 
-#' An R function is translated to C++ source code and afterwards compiled. \cr
-#'     The result can be an external pointer (XPtr) or an R function. \cr 
+#' An R function is translated to C++ source code and afterwards the code is compiled. \cr
+#'     The result can be an external pointer (*XPtr*) or an *R* function. \cr 
 #'     The default value is an R function. \cr
 #'     Further information can be found in the vignette: 'Detailed Documentation'. \cr
 #' 
 #' @param f The function which should be translated from R to C++.
-#' @param output If set to "R" an R function wrapping the C++ code is returned. \cr
-#'               If output is set to "XPtr" an external pointer object pointing to the C++ code is returned. \cr
-#'               The default value is "R". 
 #' 
-#' @param types_of_args define the types of the arguments passed to the function as an character vector. This is an optional inputif using "XPtr" as output. \cr
-#'               The default value is 'SEXP' as this is the only possibility for output "R". \cr
-#'               In case one want to use an external pointer the easiest way is to pass 'sexp' for types_of_args. \cr
-#'               The possible values are: \cr
-#'               \itemize{
-#'                    \item double
-#'                    \item SEXP
-#'                    \item sexp
-#'                    \item Rcpp::NumericVector or NumericVector
-#'                    \item Rcpp::NumericMatrix or NumericMatrix
-#'                    \item arma::vec or vec
-#'                    \item arma::mat or mat
-#'                    \item ptr_vec (see details for explanation)
-#'                    \item ptr_mat (see details for explanation)
-#'               }
+#' @param output If set to *R* an R function wrapping the C++ code is returned. \cr
+#'               If output is set to *XPtr* an external pointer object pointing to the C++ code is returned. \cr
+#'               The default value is *R*. 
 #' 
-#' @param return_type is a character defining the type which the function can return. The default value is 'SEXP' as this is the only possibility for output "R". \cr
-#'                    The same types - except ptr_vec and ptr_mat - as for the types_of_args are possible. Additionally, the possibility exists to return nothing using "void" as return type. 
+#' @param types_of_args define the types of the arguments passed to the function as an character vector. This is an optional input if using *XPtr* as output. \cr
+#'               The default value is *SEXP* as this is the only possibility for output *R*. \cr
+#'               In case one want to use an external pointer the easiest way is to pass *sexp* for types_of_args. \cr
+#'               Beyond that it is possible to pass *ptr_vec* and *ptr_mat*. 
+#'               For more information see below for details and check the vignette *InformationForPackageAuthors*.
+#'               
+#' @param return_type is a character defining the type which the function returns. The default value is *SEXP* as this is the only possibility for output *R*. \cr
+#'                    Additionally, the possibilities *sexp* and *void* exist for the external pointer interface. 
 #' 
-#' @param reference If set to TRUE the arguments are passed by reference (not possible if output should be an R function).
+#' @param reference If set to TRUE the arguments are passed by reference (not possible if output should be an *R* function).
 #' 
-#' @param verbose If set to TRUE the output of RcppXPtrUtils::cppXPtr or Rcpp::cppFunction is printed.
+#' @param verbose If set to TRUE the output of the compilation process is printed.
 #' 
-#' @return If output is set to 'R' an R function is returned. Thus, the C++ code can directly be called within R. \cr
-#'         In contrast a funciton which returns an external pointer is generated if the output is set to 'XPtr'. 
+#' @return If output is set to *R* an R function is returned. Thus, the C++ code can directly be called within R. \cr
+#'         In contrast a function which returns an external pointer is generated if the output is set to *XPtr*. 
 #' 
 #' @details \strong{The following types are supported: }
 #'  \enumerate{
@@ -63,20 +54,23 @@
 #'  }
 #'  Variables can be either numeric vectors or matrices.
 #'  Notably, it is possible that the variables change the type within the function. \cr
+#'  
 #'  \strong{It is possible to declare a variable of a scalar numeric data type.
 #'          This is done by adding '_db' to the end of the variable. Each time '_db' is found
 #'          the variable is declared as a scalar numeric data type. In this case the
 #'          object cannot change its type!}
 #'          
-#'  In case an R function is created as output only SEXP elements can be passed to the function. \cr
-#'  Furthermore, these functions always return a SEXP element. Even if nothing is returned!. 
-#'  Notably, in R every object is under the hood a SEXP object. In contrast an external pointer is created other types \cr
-#'  can be specified which are passed to the function or returned from it. See above which types are possible. \cr
-#'  Thus, it is possible to pass Rcpp or RcppArmadillo elements to the function. \cr
-#'  The ptr_vec and ptr_mat interface work in a different way. If using ptr_vec an double* pointer is expected as first element.
-#'  Additionally a second argument is needed which is of type int which defines the size of the array. 
-#'  This works in the same way for ptr_mat. But instead of the size argument two integers are needed which define the number of rows and columns. Both arguments have to be of type int. \cr
-#'  Notably, the memory is only borrowed. Thus, the memory is not automatically deleted! See vignette InformationForPackageAuthors for more information.
+#'  in R every object is under the hood a *SEXP* object.
+#'  In case an *R* function is created as output only *SEXP* elements can be passed to the function. 
+#'  Furthermore, these functions always return a *SEXP* element. Even if nothing is returned!. 
+#'  Notably, is that only numeric vectors (in R also scalar values are vectors) or numeric matrices can be passed to the function. 
+#'  
+#'  In contrast if an external pointer is created other types can be specified which are passed to the function or returned from it. 
+#'  The default value is a variable of type *sexp*. This is the data type which is used iin the C++ code. 
+#'  The *ptr_vec* and *ptr_mat* interface work in a different way. If using *ptr_vec* a *double\** pointer is expected as first element.
+#'  Additionally a second argument is needed which is of type *int* and which defines the size of the array. 
+#'  This works in the same way for *ptr_mat*. But instead of the size argument two integers are needed which define the number of rows and columns. Both arguments have to be of type *int*. \cr
+#'  Notably, the memory is only borrowed. Thus, the memory is not automatically deleted! See vignette *InformationForPackageAuthors* for more information.
 #'          
 #' @details \strong{The following functions are supported:}
 #'  \enumerate{
@@ -94,12 +88,13 @@
 #'    \item catmull-rome spline: cmr
 #'    \item to get a range of numbers the ':' function can be used
 #'    \item is.na and is.infinite can be used to test for NA and Inf.
-#'    \item d-, p-, q- and r-unif/norm/lnorm/gamma/beta/dnbeta/chisq/nchisq/t/
-#'          nt/f/nf/cauchy/exp/logis/weibull/binom/nbinom/nbinom_mu/pois/
-#'          geom/hyper/wilcox/signrank --> not finished yet
+#'    \item d-, p-, q- and r-unif, -norm, -lnorm and -gamma (for gamma argument *Scale* cannot be defined and is calculated using *1/rate*)
 #'  }
+#'  
 #' @details  \strong{Some details about the implemented functions}
+#' 
 #' @details  \itemize{
+#' 
 #'    \item allocation of memory works: Following forms are possible:
 #'              \itemize{
 #'                  \item vector(size_of_elements)
@@ -108,14 +103,16 @@
 #'                  \item matrix(value, nrows, ncols)
 #'                  \item matrix(vector, nrows, ncols)
 #'              } 
+#'              
 #'    \item For indices squared brackets '[]' can be used as common in R. Beyond that the function 'at' exists
 #'              which accepts as first argument a variable and as the second argument you pass the desired index.
-#'              The caveat of using 'at' is that only one entry can be accessed. The function '[]' can return more then one element. \cr
-#'              \strong{The 'at'function returns a reference to the vector entry.
-#'                Therefore variable[index] can behave differently then at(variable, index).
-#'                The function has to be used carefully when 'at' is used.
-#'                Especially if '[]' and 'at' are mixed the function behaviour is difficult to predict.
+#'              The caveat of using 'at' is that only **one** entry can be accessed. The function '[]' can return more then one element. \cr
+#'              \strong{The *at*-function returns a reference to the vector entry.
+#'                Therefore *variable[index]* can behave differently then *at(variable, index)*.
+#'                The function has to be used carefully when *at* is used.
+#'                Especially if *[]* and *at* are mixed the function behaviour is difficult to predict.
 #'                Please test it before using it in a serious project.}  \cr
+#'                
 #'    \item For-loops can be written as common in R
 #'            \itemize{
 #'                \item Nr.1 \cr
@@ -127,19 +124,31 @@
 #'                        # do whatever \cr
 #'                      \} \cr
 #'    }
-#'    \item Be aware that it is not possible to assign the result of a comparison to a variable.
+#'    
+#'    \item Be aware that it is possible to assign the result of a comparison to a variable. Example see below: \cr
+#'          However, the vector will contain only *0* or *1* instead of *FALSE* or *TRUE*.
+#'          ```
+#'            a = c(1, 2, 3);
+#'            b = c(1, 2, 1);
+#'            c = a != b  
+#'          ```
+#'          
 #'    \item The print function accepts either a scalar, vector, matrix, string, bool or nothing (empty line).
-#'    \item In order to return an object use the 'return' function (The last object is not returned automatically as in R).
+#'    
+#'    \item In order to return an object use the 'return' function (**The last object is not returned automatically as in R**).
+#'    
 #'    \item In order to interpolate values the 'cmr' function can be used. The function needs three arguments.
 #'          \enumerate{
-#'            \item the first argument is the point of the independent variable (x) for which the dependent variable should be calculated (y). This has to be a vector of length one.
-#'            \item the second argument is a vector defining the points of the independent variable (x). This has to be a vector of at least length four.
-#'            \item the third argument is a vector defining the points of the dependent variable (y). This has to be a vector of at least length four.
+#'            \item the first argument is the point of the independent variable (**x**) for which the dependent variable should be calculated (**y**). This has to be a vector of length one.
+#'            \item the second argument is a vector defining the points of the independent variable (**x**). This has to be a vector of at least length four.
+#'            \item the third argument is a vector defining the points of the dependent variable (**y**). This has to be a vector of at least length four.
 #'        }
 #'  } \cr
+#'
 #' \strong{Be aware that the R code is translated to ETR an expression template library which tries to mimic R. \cr
 #' However, it does not behave exactly like R! Please check your compiled function before using it in a serious project.
-#' If you want to see how ast2ast differs from R in detail check the vignette: 'Detailed Documentation'.}
+#' If you want to see how *ast2ast* differs from R in detail check the vignette: *Detailed Documentation*.}
+#' 
 #' @examples #Further examples can be found in the vignette: 'Detailed Documentation'.
 #' \dontrun{
 #' # Hello World
