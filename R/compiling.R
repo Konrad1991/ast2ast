@@ -19,12 +19,11 @@
 
 
 
-compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type) {
+compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type, name_f) {
   a = NULL
   fct = NULL
   fct_ret = NULL
-  name_f <- as.character(substitute(f))
-  
+
   if(R_fct == FALSE) {
     a = MA$new(f, desired_type, name_f, R_fct, return_type)
     fct <- a$build_own(verbose, reference = reference) # build
@@ -47,12 +46,6 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
     a = MA$new(f, desired_type, name_f, R_fct, return_type)
     fct <- a$build_own_SEXP(verbose, reference = reference) 
     
-    
-    fct <- paste(
-      '#include "etr.hpp"', "\n",
-      fct
-    )
-    
     res <- NULL
     Sys.setenv("PKG_CXXFLAGS" = "-DRFCT") # remove warnings -Wall -Wpedantic!!!!!!!!!!
     options(warn = -1)
@@ -70,36 +63,6 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
     
     if(verbose == TRUE) {
       cat(fct)
-    }
-    
-    args_f <- methods::formalArgs(f)
-    check <- length(args_f)
-    args_f <- paste(args_f, collapse = ",")
-    
-    res <- res$buildDirectory
-    
-    file <- NULL
-    if( (Sys.info()['sysname'] == "Linux") || (Sys.info()['sysname'] == 'Darwin') ) {
-      file <- list.files(res, pattern = "\\.so$") # is it necessary to check also sl?
-    } else if(Sys.info()['sysname'] == "Windows") {
-      file <- list.files(res, pattern = "\\.dll$")
-    } else {
-      stop("unsupported operating system found")
-    }
-    if(length(file) == 1) { 
-      stopifnot("find more then one shared object. Something went wrong. Sorry!"=length(file) == 1)
-      dyn.load(paste0(res, "/", file), local = FALSE, now = TRUE)
-      if(check > 0) {
-        fct_ <- paste(name_f, "<- function(", args_f, ") { .Call(", quote(name_f), ",", args_f, ")}")  
-      } else {
-        fct_ <- paste(name_f, "<- function(", args_f, ") { .Call(", quote(name_f), ")}")
-      }
-      fct_ret <- eval(parse(text = fct_))
-      return(fct_ret)
-    }
-    
-    if(length(file) == 0) {
-      stop("find no shared object. Something went wrong. Sorry!")
     }
     
   }

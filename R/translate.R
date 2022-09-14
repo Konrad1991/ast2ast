@@ -59,6 +59,8 @@ translate <- function(f, output = "R",
       R_fct = FALSE
     }
     
+    name_f <- as.character(substitute(f))
+    
     # if output == "R" --> type has to be SEXP!
     if(R_fct) {
       if(!all(types_of_args == "SEXP")) {
@@ -84,7 +86,7 @@ translate <- function(f, output = "R",
     }
     
     fct_ret <- compiler_a2a(f, verbose, reference,
-                                     R_fct, types_of_args, return_type)
+                                     R_fct, types_of_args, return_type, name_f)
 
     return(fct_ret)
 }
