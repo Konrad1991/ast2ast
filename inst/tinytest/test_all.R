@@ -90,7 +90,9 @@ testall <- function(a, type_test) {
         b <- vector(3, 2)
         a <- a + b
         return(a)
-    }  else if(type_test == 4.1) { # subtracting
+    }  
+  
+    if(type_test == 4.1) { # subtracting
         a <- a - 3
         return(a)
     } else if(type_test == 4.2) {
@@ -366,7 +368,9 @@ testall <- function(a, type_test) {
       a <- c(1, 2, 3)
       b <- c(5, 6, 7)
       return(a + b <= c(100, 100, 200))
-    } else if(type_test == 15.1) { # exponent & log & sqrt
+    } 
+  
+    if(type_test == 15.1) { # exponent & log & sqrt
       a <- a^2 + log(1)
       return(a)
     } else if(type_test == 15.2) {
@@ -1028,7 +1032,9 @@ testall <- function(a, type_test) {
       c <- c(1, 1)
       b <- a[b == c, c(1, 2)]
       return(b)
-    } else if(type_test == 18.1) { # subassign
+    } 
+  
+    if(type_test == 18.1) { # subassign
       a[c(1,2,3,4,1)] <- 1:5
       return(a)
     } else if(type_test == 18.2) {
@@ -1301,7 +1307,9 @@ testall <- function(a, type_test) {
         }
       }
       return(a)
-    } else if(type_test == 21.1) { # trigonometry
+    } 
+  
+   if(type_test == 21.1) { # trigonometry
       a <- c(0, 0.2, 0.4, 0.99)
       b <- sin(a) + asin(a) + sinh(a) + cos(a) + acos(a) + cosh(a) + tan(a) + atan(a) + tanh(a)
       return(b)

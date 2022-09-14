@@ -52,7 +52,7 @@ MA <- R6::R6Class("MA",
                     getast = function() {
                       for(i in seq_along(self$body)) {
                         # convert ast R --> ETR
-                        self$temp[[i]] = LC$new(self$body[[i]], self$R_fct)
+                        self$temp[[i]] = LC$new(self$body[[i]])
                         self$ast[[i]] = self$temp[[i]]$ast
                         
                         # get vars
@@ -62,6 +62,7 @@ MA <- R6::R6Class("MA",
                         # return was found?
                         self$return_TF = c(self$return_TF, self$temp[[i]]$found_return)
                       }
+
                     },
                     
                     get_calls = function(code) {
@@ -173,24 +174,7 @@ MA <- R6::R6Class("MA",
                       return(ret)
                     },
                     
-                    
-                    return_type_correct = function() { # called for its side effects --> to do. Does not work currently
-                      return_TF <- any(TRUE %in% self$return_TF)
-                      
-                      des_type <- self$return_valtype
-                      
-                      # if(self$R_fct == FALSE) {
-                      #   if(return_TF && (des_type == "void")) {
-                      #     stop("Found return value in a function which should return nothing. return_type = 'void'")
-                      #   } else if( (return_TF == FALSE) &&
-                      #              (des_type != "void")) {
-                      #     stop(paste("Found no return value in a function which should return something.
-                      #              return_type = ", des_type))
-                      #   }  
-                      # } 
-                      
-                    },
-                    
+                  
                     signature_own = function(desired_type, reference, extern = FALSE, typedef = FALSE) {
                       
                       # arguments passed to f & define signature
@@ -322,7 +306,7 @@ MA <- R6::R6Class("MA",
                       
                       if(self$R_fct == TRUE) {
                         args_dec <- c(args_dec, fct_args_dec)  
-                      } else {
+                      } else if(length(fct_args_ptr) >= 1) {
                         args_dec <- c(args_dec, fct_args_dec[fct_args_ptr])  
                       }
                       
@@ -330,7 +314,6 @@ MA <- R6::R6Class("MA",
                     },
                     
                     build_own = function(verbose = FALSE, reference = FALSE) {
-                      self$return_type_correct()
                       self$getast()
                       self$ast2call()
                       self$call2char()
@@ -363,7 +346,6 @@ MA <- R6::R6Class("MA",
                       self$getast()
                       self$ast2call()
                       self$call2char()
-                      
                       fct = NULL
                       
                       if(return_TF == FALSE) { 

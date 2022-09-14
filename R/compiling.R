@@ -45,7 +45,8 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
     )
   } else {
     a = MA$new(f, desired_type, name_f, R_fct, return_type)
-    fct <- a$build_own_SEXP(verbose, reference = reference) # build_SEXP
+    fct <- a$build_own_SEXP(verbose, reference = reference) 
+    
     
     fct <- paste(
       '#include "etr.hpp"', "\n",
@@ -78,7 +79,7 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
     res <- res$buildDirectory
     
     file <- NULL
-    if( (Sys.info()['sysname'] == "Linux") || (Sys.info()['sysname'] == 'macOS') ) {
+    if( (Sys.info()['sysname'] == "Linux") || (Sys.info()['sysname'] == 'Darwin') ) {
       file <- list.files(res, pattern = "\\.so$") # is it necessary to check also sl?
     } else if(Sys.info()['sysname'] == "Windows") {
       file <- list.files(res, pattern = "\\.dll$")

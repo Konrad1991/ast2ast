@@ -48,10 +48,11 @@ text-align: justify}
 
 ## Documentation
 
-The package *ast2ast* translates an R function into a C++ function. Either an external pointer (XPtr) or an R function is returned. The scope of *ast2ast* is to generate functions that can be used during solving ode-systems (derivative function or jacobian function) or during optimization. More generally, the translated function can be used in fields where it is necessary to evaluate a function very often. Especially when the function is evaluated by C++ the generated external pointer is very sufficient. \
-Within this vignette the functions supported by *ast2ast* are presented. 
+The package *ast2ast* translates an R function into a C++ function. Either an external pointer (XPtr) or an R function is returned. The scope of *ast2ast* is to generate functions that can be used during solving ode-systems (derivative function or jacobian function) or during optimization. More generally, the translated function can be used in fields where it is necessary to evaluate a function very often. Especially when the function is evaluated by C++ the generated external pointer is very sufficient see the benchmark below. \
+Within this vignette the functions supported by *ast2ast* are presented. The examples are presented using the R output form. If the XPtr output differs this is described.
 First of all, the supported objects and functions listed below are explained in detail. Here, the arguments which have to be passed to the functions are described and it is explained what the function returns. Furthermore, for each function, a small example is given showing how to use it. Moreover, it is explained how the function differs from R equivalents. If another differences are detected please report them. \
-This paragraph explains how the examples in this vignette are executed. First of all, an Rcpp function is created, which executes the output of the function *translate*. If you want to know how these functions work in detail you can go to the vignette *Information for Package authors*. In the examples, only the R code is shown to show how to write the code. 
+
+![Benchmark](benchmark.png)
 
 Supported objects:
 
@@ -71,6 +72,8 @@ Supported functions:
 *  comparison: ==, !=, >, <, >= and <=
 *  printing: print
 *  returning objects: return
+*  is.na and is.infinite can be used to test for NA and Inf.
+*  d-, p-, q- and r-unif, -norm, -lnorm and -gamma (for gamma argument *Scale* cannot be defined and is calculated using *1/rate*)
 
 ### Objects
 
@@ -83,26 +86,30 @@ It is pivotal to follow the rules of variable naming in C++. For instance, it is
 * The index of vectors and matrices starts at 1 as in R.
 * The index has to be in the boundaries of the vector or matrix. Even though this is different from the behavior in R it is a nice feature. If you access an element outside the boundaries of a vector in R *NA* is returned. 
 * The memory of the matrices is arranged column-wise as in R. 
-* In R arguments passed to a function are always copied. In *ast2ast* functions, it is possible to pass only the memory address of an object (called a reference). To do this, you have to set the *reference* parameter of the *translate* function to *TRUE*. If you pass a function by reference you can modify the object without returning it (see **Example 1**). In the Rcpp function, the variable x is printed before and after the call of the function *fetr*. Notably, if no *return* is used in the R code translated by *ast2ast* nothing is returned (in R the last object is returned in this case). You see that x is 10 before the call of the function and it is 1 after the call of the function. But the function does not return anything. Thus, the object *x* is modified in the function without copying it. 
+* In R arguments passed to a function are always copied. Here the R function behaves differently then the external pointer. 
+  * If using "R" for the *output* argument of *translate* then the function expects *SEXP* objects. These objects can be modified as long as the size is not increased (see **Example 1**).
+  * If using "XPtr" for the *output* argument of *translate* the variables can be passed by reference. Meaning to only pass the memory address of an object (called a reference). To do this, you     have to set the *reference* parameter to *TRUE*. If you pass a function by reference you can modify the object without returning it. Notably, if no *return* is used in the R code translated     by *ast2ast* nothing is returned (in R the last object is returned in this case). You see that x is 10 before the call of the function and it is 1 after the call of the function. But the       function does not return anything. Thus, the object *x* is modified in the function without copying it. 
 
-![Benchmark](benchmark.png)
+
 
 **Example 1**
-```{r by reference, eval = TRUE}
+```{r modify objects, eval = TRUE}
 f <- function(variable) {
   variable <- 1
 }
 library(ast2ast)
 fetr <- translate(f)
 x <- 10
-fetr(x)
+return_value <- fetr(x)
 print(x)
+print(return_value)
 ```
 
 **Caveats:**
 
 * Sometimes large overhead of the containers
-  * Variables which are scalars are represented as vectors of length 1. This is also how R handles scalar variables. As in C++ scalar variables are not defined as vectors the speed of the translated R function  can be substantially lower compared to a native C++ function. 
+  * Overhead is generated due to code injection. This is especially true if "R" is used for the output argument.
+  * Variables which are scalars are represented as vectors of length 1. As in C++ scalar variables are not defined as vectors the speed of the translated R function can be substantially lower      compared to a native C++ function. 
 
 
 ### Variable declaration
@@ -252,8 +259,6 @@ The following objects can be passed to *[]* when using a vector or matrix:
 * vector
 * matrix
 * result of comparison
-
-* **caveat: it is not possible to pass the results of calculations!**
 
 In case of a matrix, it is possible to pass one of the above objects to access specific rows or columns respectively ([rows, cols]). \
 
@@ -502,6 +507,7 @@ Following mathematical functions are available (see **Example 8**):
 * sqrt
 * log
 * ^ and exp
+* d-, p-, q- and r-unif, -norm, -lnorm and -gamma (for gamma argument *Scale* cannot be defined and is calculated using *1/rate*)
 
 **Example 8**
 ```{r}

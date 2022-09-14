@@ -104,20 +104,20 @@ LC <- R6::R6Class("LC",
           if( (as.name("<-") == fct) || (as.name("=") == fct) ) {
 
             self$check_assign_subset = TRUE
-            p <- assign$new(sexp, self$R_fct, self$namespace_etr)
+            p <- assign$new(sexp, self$namespace_etr)
             sexp <- p$convert(self$PF)
             self$vars <- c(self$vars, p$get_var_names())
 
           } else if( (deparse(fct) %in% self$generic_fct) ){
             self$check_assign_subset = FALSE
-            p <- generic$new(sexp, self$R_fct, self$namespace_etr)
+            p <- generic$new(sexp, self$namespace_etr)
             sexp <- p$convert(self$PF)
             #self$vars <- c(self$vars, p$get_var_names())
 
 
           } else if(as.name("return") == fct) {
             
-            p <- retur$new(sexp, self$R_fct, self$namespace_etr)
+            p <- retur$new(sexp, self$namespace_etr)
             sexp <- p$convert(self$PF)
             self$found_return = TRUE
             
@@ -131,28 +131,28 @@ LC <- R6::R6Class("LC",
 
           } else if(as.name("c") == fct) {
 
-            p <- coca$new(sexp, self$R_fct, self$namespace_etr)
+            p <- coca$new(sexp, self$namespace_etr)
             sexp <- p$convert(self$PF)
             #self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
 
           } else if(as.name(":") == fct) {
 
-            p <- range$new(sexp, self$R_fct, self$namespace_etr)
+            p <- range$new(sexp, self$namespace_etr)
             sexp <- p$convert(self$PF)
             #self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
 
           } else if(deparse(fct) %in% self$math) {
 
-            p <- math$new(sexp, self$R_fct, self$namespace_etr)
+            p <- math$new(sexp, self$namespace_etr)
             sexp <- p$convert(self$PF)
             #self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
 
           } else if(as.name('for') == fct) {
 
-            p <- loop$new(sexp, self$R_fct, self$namespace_etr)
+            p <- loop$new(sexp, self$namespace_etr)
             sexp <- p$convert(self$PF)
             #self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
@@ -167,14 +167,14 @@ LC <- R6::R6Class("LC",
 
           } else if(as.name("is.na") == fct) {
             
-            p <- is_na$new(sexp, self$R_fct, self$namespace_etr)
+            p <- is_na$new(sexp, self$namespace_etr)
             sexp <- p$convert(self$PF)
             #self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
 
           } else if(as.name("is.infinite") == fct) {
             
-            p <- is_infinite$new(sexp, self$R_fct, self$namespace_etr)
+            p <- is_infinite$new(sexp, self$namespace_etr)
             sexp <- p$convert(self$PF)
             #self$vars <- c(self$vars, p$get_var_names())
             self$check_assign_subset = FALSE
@@ -194,8 +194,7 @@ LC <- R6::R6Class("LC",
 
        },
 
-       initialize = function(line, R_fct) {
-         self$R_fct = R_fct
+       initialize = function(line) {
          self$ast <- self$extractast(line) # fill nodes
        },
 

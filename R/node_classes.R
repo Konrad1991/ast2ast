@@ -21,13 +21,11 @@ PC <- R6::R6Class("PC",
 
       public = list(
         
-        R_fct = NULL,
         name_fct = NULL,
         arguments = list(),
         namespace_etr = NULL,
         
-        initialize = function(node, R_fct, namespace_etr) {
-          self$R_fct = R_fct
+        initialize = function(node, namespace_etr) {
           self$name_fct = node[[1]]
           self$arguments = node[2:length(node)]
           self$namespace_etr = namespace_etr
@@ -299,7 +297,7 @@ retur <- R6::R6Class("retur",
                  return()
                }
 
-               if( (size2 == 0) && (self$R_fct) ) {
+               if( (size2 == 0) ) {# not optimal for XPtr interface
                 self$arguments[[i]] = str2lang(paste0('Rf_ScalarReal(etr::i2d(', self$arguments[[i]], ') )') )
                }
               }

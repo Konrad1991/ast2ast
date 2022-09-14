@@ -39,7 +39,7 @@ VEC<double> dunif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
     } else {
         std::vector<int> sizes{min_.size(), max_.size(), lg.size()};
         int max = x.size();
-        for(int i = 1; i < sizes.size(); i++) {
+        for(size_t i = 1; i < sizes.size(); i++) {
             if(sizes[i] > max) {
                 max = sizes[i];
             }
@@ -61,7 +61,7 @@ VEC<double> runif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
     if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) ) {
         VEC<double> res(x[0], 0.0);
         int size = static_cast<int>(x[0]);
-        for(int i = 0; i < size; i++) {
+        for(size_t i = 0; i < size; i++) {
             GetRNGstate();
             res[i] = R::runif(min_[i % min_.size()], max_[i % max_.size()]);
             PutRNGstate();
@@ -70,7 +70,7 @@ VEC<double> runif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
     }else {
         std::vector<int> sizes{min_.size(), max_.size()};
         int max = x.size();
-        for(int i = 1; i < sizes.size(); i++) {
+        for(size_t i = 1; i < sizes.size(); i++) {
             if(sizes[i] > max) {
                 max = sizes[i];
             }
@@ -96,7 +96,7 @@ VEC<double> punif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
     } else {
         std::vector<int> sizes{min_.size(), max_.size(), lower.size(), lg.size()};
         int max = x.size();
-        for(int i = 1; i < sizes.size(); i++) {
+        for(size_t i = 1; i < sizes.size(); i++) {
             if(sizes[i] > max) {
                 max = sizes[i];
             }
@@ -123,7 +123,7 @@ VEC<double> qunif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
     } else {
         std::vector<int> sizes{min_.size(), max_.size(), lower.size(), lg.size()};
         int max = x.size();
-        for(int i = 1; i < sizes.size(); i++) {
+        for(size_t i = 1; i < sizes.size(); i++) {
             if(sizes[i] > max) {
                 max = sizes[i];
             }
@@ -155,7 +155,7 @@ VEC<double> dnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
     } else {
         std::vector<int> sizes{min_.size(), max_.size(), lg.size()};
         int max = x.size();
-        for(int i = 1; i < sizes.size(); i++) {
+        for(size_t i = 1; i < sizes.size(); i++) {
             if(sizes[i] > max) {
                 max = sizes[i];
             }
@@ -186,7 +186,7 @@ VEC<double> rnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
     }else {
         std::vector<int> sizes{min_.size(), max_.size()};
         int max = x.size();
-        for(int i = 1; i < sizes.size(); i++) {
+        for(size_t i = 1; i < sizes.size(); i++) {
             if(sizes[i] > max) {
                 max = sizes[i];
             }
@@ -212,7 +212,7 @@ VEC<double> pnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
     } else {
         std::vector<int> sizes{min_.size(), max_.size(), lower.size(), lg.size()};
         int max = x.size();
-        for(int i = 1; i < sizes.size(); i++) {
+        for(size_t i = 1; i < sizes.size(); i++) {
             if(sizes[i] > max) {
                 max = sizes[i];
             }
@@ -239,7 +239,7 @@ VEC<double> qnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
     } else {
         std::vector<int> sizes{min_.size(), max_.size(), lower.size(), lg.size()};
         int max = x.size();
-        for(int i = 1; i < sizes.size(); i++) {
+        for(size_t i = 1; i < sizes.size(); i++) {
             if(sizes[i] > max) {
                 max = sizes[i];
             }
@@ -271,7 +271,7 @@ VEC<double> dlnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<
     } else {
         std::vector<int> sizes{min_.size(), max_.size(), lg.size()};
         int max = x.size();
-        for(int i = 1; i < sizes.size(); i++) {
+        for(size_t i = 1; i < sizes.size(); i++) {
             if(sizes[i] > max) {
                 max = sizes[i];
             }
@@ -302,7 +302,7 @@ VEC<double> rlnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<
     }else {
         std::vector<int> sizes{min_.size(), max_.size()};
         int max = x.size();
-        for(int i = 1; i < sizes.size(); i++) {
+        for(size_t i = 1; i < sizes.size(); i++) {
             if(sizes[i] > max) {
                 max = sizes[i];
             }
@@ -328,7 +328,7 @@ VEC<double> plnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<
     } else {
         std::vector<int> sizes{min_.size(), max_.size(), lower.size(), lg.size()};
         int max = x.size();
-        for(int i = 1; i < sizes.size(); i++) {
+        for(size_t i = 1; i < sizes.size(); i++) {
             if(sizes[i] > max) {
                 max = sizes[i];
             }
@@ -355,7 +355,7 @@ VEC<double> qlnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<
     } else {
         std::vector<int> sizes{min_.size(), max_.size(), lower.size(), lg.size()};
         int max = x.size();
-        for(int i = 1; i < sizes.size(); i++) {
+        for(size_t i = 1; i < sizes.size(); i++) {
             if(sizes[i] > max) {
                 max = sizes[i];
             }
@@ -387,7 +387,7 @@ VEC<double> dgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC
     } else {
         std::vector<int> sizes{shape.size(), scale.size(), lg.size()};
         int max = x.size();
-        for(int i = 1; i < sizes.size(); i++) {
+        for(size_t i = 1; i < sizes.size(); i++) {
             if(sizes[i] > max) {
                 max = sizes[i];
             }
@@ -418,7 +418,7 @@ VEC<double> rgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC
     }else {
         std::vector<int> sizes{shape.size(), scale.size()};
         int max = x.size();
-        for(int i = 1; i < sizes.size(); i++) {
+        for(size_t i = 1; i < sizes.size(); i++) {
             if(sizes[i] > max) {
                 max = sizes[i];
             }
@@ -444,7 +444,7 @@ VEC<double> pgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC
     } else {
         std::vector<int> sizes{shape.size(), scale.size(), lower.size(), lg.size()};
         int max = x.size();
-        for(int i = 1; i < sizes.size(); i++) {
+        for(size_t i = 1; i < sizes.size(); i++) {
             if(sizes[i] > max) {
                 max = sizes[i];
             }
@@ -471,7 +471,7 @@ VEC<double> qgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC
     } else {
         std::vector<int> sizes{shape.size(), scale.size(), lower.size(), lg.size()};
         int max = x.size();
-        for(int i = 1; i < sizes.size(); i++) {
+        for(size_t i = 1; i < sizes.size(); i++) {
             if(sizes[i] > max) {
                 max = sizes[i];
             }
