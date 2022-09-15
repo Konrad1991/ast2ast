@@ -1,6 +1,6 @@
 ## Test environments
 
-* local Linux PopOS, R 4.1.2
+* local Linux Mint, R 4.2.1
 * Winbuilder R-release
 * Winbuilder R-devel
 * Winbuilder R-oldrelease

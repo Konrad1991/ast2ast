@@ -1428,9 +1428,7 @@ testall <- function(a, type_test) {
 fct <- function() { # function then one can use document outline to jump to this position
   test <- translate(testall, verbose = FALSE)
 }
-trash <- fct()
-test <- testall
-
+test <- fct()
 # random values
 
 # gamma --> this is completly inconsistent
@@ -1673,7 +1671,6 @@ expect_equal(test(0, 21.1), helper() )
 test(0, 19.59)
 matrix(c(1, 2, 4, 5, 7, 8), 2, 3)
 expect_equal(test(0, 19.59), matrix(c(1, 2, 4, 5, 7, 8), 2, 3) )
-stop("break")
 expect_equal(test(0, 19.61), matrix(c(2, 5, 8), 1, 3) )
 expect_equal(test(0, 19.62), matrix(c(1, 2, 4, 5), 2, 2) )
 expect_equal(test(0, 19.63), matrix(c(1, 2, 4, 5), 2, 2) )

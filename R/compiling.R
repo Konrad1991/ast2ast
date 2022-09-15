@@ -51,7 +51,9 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
     options(warn = -1)
     tryCatch(
       expr = {
-        res <- Rcpp::sourceCpp(code = fct, verbose = verbose) 
+        env <- new.env()
+        res <- Rcpp::sourceCpp(code = fct, verbose = verbose, env = env)
+        fct_ret <- env[[name_f]]
       },
       error = function(e) {
         print("Sorry compilation failed!")

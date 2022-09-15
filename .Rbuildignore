@@ -13,4 +13,7 @@
 ^doc$
 ^Meta$
 ^.Rhistory
+^DetailedDocumentation.html
+^InformationForPackageAuthors.html
+^translate.pdf
 ^CRAN-SUBMISSION$
