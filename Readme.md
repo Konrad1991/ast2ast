@@ -24,7 +24,17 @@ As an example solving a simple ODE-System. The translated code is considerable f
 ## Documentation:
 
 See the documentation of the function *translate* to see how to use *ast2ast*: [Function translate](translate.pdf).
-If you want to get more details check [Detailed Documentation ](DetailedDocumentation.html). 
+If you want to get more details check:
+
+<div>
+  <iframe id="inlineFrameExample"
+      title="Inline Frame Example"
+      width="300"
+      height="200"
+      src="DetailedDocumentation.html">
+  </iframe>
+</div>
+
 In case you want to use *ast2ast* in other packages, or you are intersted how *ast2ast* works internally, see [Information for package authors](InformationForPackageAuthors.html).
 
 ## Contribution
