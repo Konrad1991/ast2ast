@@ -295,6 +295,77 @@ VEC< T, SVMINUS< T, L, R > > operator-(const R& a, const VEC<T, L>&  b) {
   return ret;
 }
 
+
+
+
+
+
+
+// -SEXP_VARIABLE --> check whether this is necessary for other functions!!!!!!!
+// this only holds true for +, -, * and :. Because other functions require both (or all) arguments to compile successfully
+// in R /2 and *2 does not work! Only + and - work in this way!
+// +1 does not compile!
+// Thus bug should be removed!
+template<typename T, typename L>
+class VMINUS {
+  
+private:
+  const L& l;
+  bool ismatrix;
+  int nrows;
+  int ncols;
+  
+public:
+  VMINUS(const L &a, bool ismatrix_, int nrows_, int ncols_ ) :
+  l(a), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) {}
+  
+  T operator[](const int i) const {
+    return -l[i % l.size()];
+  }
+  
+  int size() const {
+    return l.size();
+  }
+  
+  
+  bool im() const {
+    return ismatrix;
+  }
+  
+  int nc() const {
+    return ncols;
+  }
+  
+  int nr() const {
+    return nrows;
+  }
+  
+};
+
+
+template<typename T, typename L>
+VEC< T, VMINUS< T, L> > operator-(const VEC<T, L>& a) {
+  
+  bool ismatrix_ = false;
+  int nrows_ = 0;
+  int ncols_ = 0;
+  
+  if(a.im() == true) {
+    ismatrix_ = true;
+    nrows_ = a.nr();
+    ncols_ = a.nc();
+  }
+  
+  VEC<T, VMINUS<T, L> > ret (VMINUS<T, L>(a.data(), a.im(), a.nr(), a.nc() ) );
+  
+  ret.ismatrix = ismatrix_;
+  ret.ncols = ncols_;
+  ret.nrows = nrows_;
+  
+  return ret;
+}
+
+
 }
 
 #endif

@@ -9,6 +9,7 @@
 
 ## News
 
+* 16 September 2022: version 0.2 is now on CRAN
 * I gave a talk at the *useR! 2022* conference about *ast2ast*. The record can be watched using the following link: https://m.youtube.com/watch?v=5NDPOLunQTA&list=PL77T87Q0eoJjvKVFHuJZ5_BGVbPPpB8LL&index=8,
 
 ## Overview
