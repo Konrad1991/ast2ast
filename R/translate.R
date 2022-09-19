@@ -32,7 +32,7 @@ translate <- function(f, output = "R",
     stopifnot(is.character(types_of_args))
     stopifnot(is.character(return_type))
     stopifnot("found unknown type of arguments for functions" = 
-              types_of_args %in% c("SEXP", "sexp",
+              types_of_args %in% c("SEXP", "sexp", "double", 
                                    "ptr_vec", "ptr_mat") )
     stopifnot("found unknown return type" = 
                 return_type %in% c("void", "SEXP", "sexp") )

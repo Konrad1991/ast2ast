@@ -17,15 +17,15 @@
     If output is set to "XPtr"" an external pointer object pointing to the C++ code is returned. \cr
     The default value is "R".}
   \item{types_of_args}{define the types of the arguments passed to the function as an character vector. 
-    This is an optional input if using "XPtr"" as output. \cr
-    The default value is "SEXP"" as this is the only possibility for output "R". \cr
-    In case one want to use an external pointer the easiest way is to pass "sexp"" for types_of_args. \cr
-    Beyond that it is possible to pass "ptr_vec" and "ptr_mat".
+    This is an optional input if using "XPtr" as output. \cr
+    The default value is "SEXP" as this is the only possibility for output "R". \cr
+    In case one want to use an external pointer the easiest way is to pass "sexp" for types_of_args. \cr
+    Beyond that it is possible to pass "double", "ptr_vec" and "ptr_mat".
     For more information see below for details and check the vignette \emph{InformationForPackageAuthors}.
     \strong{Beyond that, be aware that the passed \emph{SEXP} objects are only copied if the object size increases.
       Thus, R objects can be modified within the function! See in section details for an example} \cr}
   \item{return_type}{is a character defining the type which the function returns. The default value is "SEXP"" as this is the only possibility for output "R". \cr
-    Additionally, the possibilities "sexp"" and "void"" exist for the external pointer interface.}
+    Additionally, the possibilities "sexp" and "void" exist for the external pointer interface.}
   \item{reference}{If set to TRUE the arguments are passed by reference (not possible if output is "R").}
   \item{verbose}{If set to TRUE the output of the compilation process is printed.}
 }
