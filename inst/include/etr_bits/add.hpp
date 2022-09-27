@@ -143,7 +143,7 @@ public:
 
 
 template<typename T, typename L, typename R>
-VEC< T, VVPLUS< T, L, R > > operator+(const VEC<T, L>& a, const VEC<T, R>& b) {
+inline VEC< T, VVPLUS< T, L, R > > operator+(const VEC<T, L>& a, const VEC<T, R>& b) {
 
   bool ismatrix_ = false;
   int nrows_ = 0;
@@ -220,7 +220,7 @@ public:
 };
 
 template<typename T, typename L, typename R>
-VEC< T, VSPLUS< T, L, R > > operator+(const VEC<T, L>& a, const R& b) {
+inline VEC< T, VSPLUS< T, L, R > > operator+(const VEC<T, L>& a, const R& b) {
 
     bool ismatrix_ = false;
     int nrows_ = 0;
@@ -283,7 +283,7 @@ public:
 
 
 template<typename T, typename L, typename R>
-VEC< T, SVPLUS< T, L, R > > operator+(const R& a, const VEC<T, L>&  b) {
+inline VEC< T, SVPLUS< T, L, R > > operator+(const R& a, const VEC<T, L>&  b) {
 
   bool ismatrix_ = false;
   int nrows_ = 0;

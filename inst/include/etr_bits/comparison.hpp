@@ -27,11 +27,11 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-bool cd(double a, double b) {
+inline bool cd(double a, double b) {
       return fabs(a - b) < 1E-3;
 }
 
-VEC<bool> operator==(VEC<double>& a, double b) {
+inline VEC<bool> operator==(VEC<double>& a, double b) {
   
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
@@ -42,7 +42,7 @@ VEC<bool> operator==(VEC<double>& a, double b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator==(const VEC<T2, R2>& a, double b) {
+inline VEC<bool> operator==(const VEC<T2, R2>& a, double b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = cd(a[i], b);
@@ -51,7 +51,7 @@ VEC<bool> operator==(const VEC<T2, R2>& a, double b) {
   return res;
 }
 
-VEC<bool> operator==(VEC<double>& a, int b) {
+inline VEC<bool> operator==(VEC<double>& a, int b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = cd(a[i], static_cast<double>(b));
@@ -61,7 +61,7 @@ VEC<bool> operator==(VEC<double>& a, int b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator==(const VEC<T2, R2>& a, int b) {
+inline VEC<bool> operator==(const VEC<T2, R2>& a, int b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = cd(a[i], static_cast<double>(b));
@@ -72,7 +72,7 @@ VEC<bool> operator==(const VEC<T2, R2>& a, int b) {
 
 
 
-VEC<bool> operator>=(VEC<double>& a, double b) {
+inline VEC<bool> operator>=(VEC<double>& a, double b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = a[i] >= b;
@@ -82,7 +82,7 @@ VEC<bool> operator>=(VEC<double>& a, double b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator>=(const VEC<T2, R2>& a, double b) {
+inline VEC<bool> operator>=(const VEC<T2, R2>& a, double b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = a[i] >= b;
@@ -91,7 +91,7 @@ VEC<bool> operator>=(const VEC<T2, R2>& a, double b) {
   return res;
 }
 
-VEC<bool> operator>=(VEC<double>& a, int b) {
+inline VEC<bool> operator>=(VEC<double>& a, int b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = a[i] >= static_cast<double>(b);
@@ -101,7 +101,7 @@ VEC<bool> operator>=(VEC<double>& a, int b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator>=(const VEC<T2, R2>& a, int b) {
+inline VEC<bool> operator>=(const VEC<T2, R2>& a, int b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = a[i] >= static_cast<double>(b);
@@ -112,7 +112,7 @@ VEC<bool> operator>=(const VEC<T2, R2>& a, int b) {
 
 
 
-VEC<bool> operator<=(VEC<double>& a, double b) {
+inline VEC<bool> operator<=(VEC<double>& a, double b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = a[i] <= b;
@@ -122,7 +122,7 @@ VEC<bool> operator<=(VEC<double>& a, double b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator<=(const VEC<T2, R2>& a, double b) {
+inline VEC<bool> operator<=(const VEC<T2, R2>& a, double b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = a[i] <= b;
@@ -131,7 +131,7 @@ VEC<bool> operator<=(const VEC<T2, R2>& a, double b) {
   return res;
 }
 
-VEC<bool> operator<=(VEC<double>& a, int b) {
+inline VEC<bool> operator<=(VEC<double>& a, int b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = a[i] <= static_cast<double>(b);
@@ -141,7 +141,7 @@ VEC<bool> operator<=(VEC<double>& a, int b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator<=(const VEC<T2, R2>& a, int b) {
+inline VEC<bool> operator<=(const VEC<T2, R2>& a, int b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = a[i] <= static_cast<double>(b);
@@ -151,7 +151,7 @@ VEC<bool> operator<=(const VEC<T2, R2>& a, int b) {
 }
 
 
-VEC<bool> operator<(VEC<double>& a, double b) {
+inline VEC<bool> operator<(VEC<double>& a, double b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = a[i] < b;
@@ -161,7 +161,7 @@ VEC<bool> operator<(VEC<double>& a, double b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator<(const VEC<T2, R2>& a, double b) {
+inline VEC<bool> operator<(const VEC<T2, R2>& a, double b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = a[i] < b;
@@ -170,7 +170,7 @@ VEC<bool> operator<(const VEC<T2, R2>& a, double b) {
   return res;
 }
 
-VEC<bool> operator<(VEC<double>& a, int b) {
+inline VEC<bool> operator<(VEC<double>& a, int b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = a[i] < static_cast<double>(b);
@@ -180,7 +180,7 @@ VEC<bool> operator<(VEC<double>& a, int b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator<(const VEC<T2, R2>& a, int b) {
+inline VEC<bool> operator<(const VEC<T2, R2>& a, int b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = a[i] < static_cast<double>(b);
@@ -191,7 +191,7 @@ VEC<bool> operator<(const VEC<T2, R2>& a, int b) {
 
 
 
-VEC<bool> operator>(VEC<double>& a, double b) {
+inline VEC<bool> operator>(VEC<double>& a, double b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < res.size(); i++) {
     res[i] = a[i] > b;
@@ -201,7 +201,7 @@ VEC<bool> operator>(VEC<double>& a, double b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator>(const VEC<T2, R2>& a, double b) {
+inline VEC<bool> operator>(const VEC<T2, R2>& a, double b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = a[i] > b;
@@ -210,7 +210,7 @@ VEC<bool> operator>(const VEC<T2, R2>& a, double b) {
   return res;
 }
 
-VEC<bool> operator>(VEC<double>& a, int b) {
+inline VEC<bool> operator>(VEC<double>& a, int b) {
   VEC<bool> res(a.size());
   for(int i = 0; i < a.size(); i++) {
     res[i] = a[i] > static_cast<double>(b);
@@ -220,7 +220,7 @@ VEC<bool> operator>(VEC<double>& a, int b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator>(const VEC<T2, R2>& a, int b) {
+inline VEC<bool> operator>(const VEC<T2, R2>& a, int b) {
   VEC<bool> res(a.size());
   for(int i = 0; i > a.size(); i++) {
     res[i] = a[i] > static_cast<double>(b);
@@ -231,7 +231,7 @@ VEC<bool> operator>(const VEC<T2, R2>& a, int b) {
 
 
 
-VEC<bool> operator!=(VEC<double>& a, double b) {
+inline VEC<bool> operator!=(VEC<double>& a, double b) {
   VEC<bool> res(a.size());
   for(int i = 0; i != a.size(); i++) {
     res[i] = a[i] != b;
@@ -241,7 +241,7 @@ VEC<bool> operator!=(VEC<double>& a, double b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator!=(const VEC<T2, R2>& a, double b) {
+inline VEC<bool> operator!=(const VEC<T2, R2>& a, double b) {
   VEC<bool> res(a.size());
   for(int i = 0; i != a.size(); i++) {
     res[i] = a[i] != b;
@@ -250,7 +250,7 @@ VEC<bool> operator!=(const VEC<T2, R2>& a, double b) {
   return res;
 }
 
-VEC<bool> operator!=(VEC<double>& a, int b) {
+inline VEC<bool> operator!=(VEC<double>& a, int b) {
   VEC<bool> res(a.size());
   for(int i = 0; i != a.size(); i++) {
     res[i] = a[i] != static_cast<double>(b);
@@ -260,7 +260,7 @@ VEC<bool> operator!=(VEC<double>& a, int b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator!=(const VEC<T2, R2>& a, int b) {
+inline VEC<bool> operator!=(const VEC<T2, R2>& a, int b) {
   VEC<bool> res(a.size());
   for(int i = 0; i != a.size(); i++) {
     res[i] = a[i] != static_cast<double>(b);
@@ -271,7 +271,7 @@ VEC<bool> operator!=(const VEC<T2, R2>& a, int b) {
 
 
 
-VEC<bool> operator==(VEC<double>& a, VEC<double>& b) {
+inline VEC<bool> operator==(VEC<double>& a, VEC<double>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -313,7 +313,7 @@ VEC<bool> operator==(VEC<double>& a, VEC<double>& b) {
 
 
 
-VEC<bool> operator>=(VEC<double>& a, VEC<double>& b) {
+inline VEC<bool> operator>=(VEC<double>& a, VEC<double>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -355,7 +355,7 @@ VEC<bool> operator>=(VEC<double>& a, VEC<double>& b) {
 
 
 
-VEC<bool> operator<=(VEC<double>& a, VEC<double>& b) {
+inline VEC<bool> operator<=(VEC<double>& a, VEC<double>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -398,7 +398,7 @@ VEC<bool> operator<=(VEC<double>& a, VEC<double>& b) {
 
 
 
-VEC<bool> operator>(VEC<double>& a, VEC<double>& b) {
+inline VEC<bool> operator>(VEC<double>& a, VEC<double>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -441,7 +441,7 @@ VEC<bool> operator>(VEC<double>& a, VEC<double>& b) {
 
 
 
-VEC<bool> operator<(VEC<double>& a, VEC<double>& b) {
+inline VEC<bool> operator<(VEC<double>& a, VEC<double>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -483,7 +483,7 @@ VEC<bool> operator<(VEC<double>& a, VEC<double>& b) {
 
 
 
-VEC<bool> operator!=(VEC<double>& a, VEC<double>& b) {
+inline VEC<bool> operator!=(VEC<double>& a, VEC<double>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -559,7 +559,7 @@ VEC<bool> operator!=(VEC<double>& a, VEC<double>& b) {
 
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<bool> operator==(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
+inline VEC<bool> operator==(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -600,7 +600,7 @@ VEC<bool> operator==(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator==(VEC<double>& a, const VEC<T2, R2>& b) {
+inline VEC<bool> operator==(VEC<double>& a, const VEC<T2, R2>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -641,7 +641,7 @@ VEC<bool> operator==(VEC<double>& a, const VEC<T2, R2>& b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator==(const VEC<T2, R2>& a, VEC<double>& b) {
+inline VEC<bool> operator==(const VEC<T2, R2>& a, VEC<double>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -684,7 +684,7 @@ VEC<bool> operator==(const VEC<T2, R2>& a, VEC<double>& b) {
 
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<bool> operator>=(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
+inline VEC<bool> operator>=(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -725,7 +725,7 @@ VEC<bool> operator>=(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator>=(VEC<double>& a, const VEC<T2, R2>& b) {
+inline VEC<bool> operator>=(VEC<double>& a, const VEC<T2, R2>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -766,7 +766,7 @@ VEC<bool> operator>=(VEC<double>& a, const VEC<T2, R2>& b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator>=(const VEC<T2, R2>& a, VEC<double>& b) {
+inline VEC<bool> operator>=(const VEC<T2, R2>& a, VEC<double>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -808,7 +808,7 @@ VEC<bool> operator>=(const VEC<T2, R2>& a, VEC<double>& b) {
 
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<bool> operator<=(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
+inline VEC<bool> operator<=(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -849,7 +849,7 @@ VEC<bool> operator<=(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator<=(VEC<double>& a, const VEC<T2, R2>& b) {
+inline VEC<bool> operator<=(VEC<double>& a, const VEC<T2, R2>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -890,7 +890,7 @@ VEC<bool> operator<=(VEC<double>& a, const VEC<T2, R2>& b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator<=(const VEC<T2, R2>& a, VEC<double>& b) {
+inline VEC<bool> operator<=(const VEC<T2, R2>& a, VEC<double>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -934,7 +934,7 @@ VEC<bool> operator<=(const VEC<T2, R2>& a, VEC<double>& b) {
 
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<bool> operator>(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
+inline VEC<bool> operator>(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -976,7 +976,7 @@ VEC<bool> operator>(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
 
 
 template<typename T2, typename R2>
-VEC<bool> operator>(VEC<double>& a, const VEC<T2, R2>& b) {
+inline VEC<bool> operator>(VEC<double>& a, const VEC<T2, R2>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -1018,7 +1018,7 @@ VEC<bool> operator>(VEC<double>& a, const VEC<T2, R2>& b) {
 
 
 template<typename T2, typename R2>
-VEC<bool> operator>(const VEC<T2, R2>& a, VEC<double>& b) {
+inline VEC<bool> operator>(const VEC<T2, R2>& a, VEC<double>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -1061,7 +1061,7 @@ VEC<bool> operator>(const VEC<T2, R2>& a, VEC<double>& b) {
 
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<bool> operator<(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
+inline VEC<bool> operator<(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -1102,7 +1102,7 @@ VEC<bool> operator<(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator<(VEC<double>& a, const VEC<T2, R2>& b) {
+inline VEC<bool> operator<(VEC<double>& a, const VEC<T2, R2>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -1143,7 +1143,7 @@ VEC<bool> operator<(VEC<double>& a, const VEC<T2, R2>& b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator<(const VEC<T2, R2>& a, VEC<double>& b) {
+inline VEC<bool> operator<(const VEC<T2, R2>& a, VEC<double>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -1188,7 +1188,7 @@ VEC<bool> operator<(const VEC<T2, R2>& a, VEC<double>& b) {
 
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<bool> operator!=(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
+inline VEC<bool> operator!=(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -1230,7 +1230,7 @@ VEC<bool> operator!=(const VEC<T2, R2>& a, const VEC<T3, R3>& b) {
 
 
 template<typename T2, typename R2>
-VEC<bool> operator!=(VEC<double>& a, const VEC<T2, R2>& b) {
+inline VEC<bool> operator!=(VEC<double>& a, const VEC<T2, R2>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
@@ -1271,7 +1271,7 @@ VEC<bool> operator!=(VEC<double>& a, const VEC<T2, R2>& b) {
 }
 
 template<typename T2, typename R2>
-VEC<bool> operator!=(const VEC<T2, R2>& a, VEC<double>& b) {
+inline VEC<bool> operator!=(const VEC<T2, R2>& a, VEC<double>& b) {
 
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;

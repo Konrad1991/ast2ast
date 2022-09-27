@@ -27,7 +27,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 namespace etr {
 
 // error function --> stop program & show message
-void ass(bool inp, std::string message) {
+inline void ass(bool inp, std::string message) {
   if(inp == false) {
       Rf_error(message.c_str());
   }

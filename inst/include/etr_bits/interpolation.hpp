@@ -28,7 +28,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 namespace etr {
 
 template<typename T>
-double li(double t, VEC<T> &time_vec, VEC<T> &par_vec) {
+inline double li(double t, VEC<T> &time_vec, VEC<T> &par_vec) {
   double t0, t1;
   double y0, y1, delta_par, delta_t, m;
   double ret;
@@ -60,7 +60,7 @@ double li(double t, VEC<T> &time_vec, VEC<T> &par_vec) {
 }
 
 template<typename T>
-double cmr(double t, VEC<T> &time_vec, VEC<T> &par_vec){
+inline double cmr(double t, VEC<T> &time_vec, VEC<T> &par_vec){
   int idx0, idx1, idx2, idx3;
   double t0, t1, t2, t3;
   double y0, y1, y2, y3;
@@ -158,9 +158,8 @@ double cmr(double t, VEC<T> &time_vec, VEC<T> &par_vec){
   return res;
 }
 
-
-template<typename T>
-double cmr(double t, VEC<T> &&time_vec, VEC<T> &&par_vec){
+template<typename T, typename R>
+inline double cmr(double t, const VEC<T, R>& time_vec, const VEC<T, R>& par_vec){
   int idx0, idx1, idx2, idx3;
   double t0, t1, t2, t3;
   double y0, y1, y2, y3;

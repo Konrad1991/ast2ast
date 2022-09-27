@@ -27,7 +27,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-  VEC<double> vector(int length) {
+  inline VEC<double> vector(int length) {
       VEC<double> ret(length); // + 1?
       for(int i = 0; i < ret.size(); i++) {
         ret[i] = 0.0;
@@ -35,13 +35,13 @@ namespace etr {
       return ret;
   }
 
-  VEC<double> vector(double inp, int length) {
+  inline VEC<double> vector(double inp, int length) {
     VEC<double> ret(length, inp);
     return ret;
   }
 
   // not copy of vector!
-  VEC<double> vector(VEC<double> inp) {
+  inline VEC<double> vector(VEC<double> inp) {
 
     ass(inp.size() == 1, "invalid length argument");
 
@@ -49,7 +49,7 @@ namespace etr {
     return ret;
   }
 
-  VEC<double> matrix(int nrows_, int ncols_) {
+  inline VEC<double> matrix(int nrows_, int ncols_) {
     VEC<double> ret(nrows_, ncols_);
     ret.ismatrix = true;
     ret.nrows = nrows_;
@@ -58,7 +58,7 @@ namespace etr {
   }
 
 
-  VEC<double> matrix(double inp, int nrows_, int ncols_) {
+  inline VEC<double> matrix(double inp, int nrows_, int ncols_) {
     VEC<double> ret(nrows_, ncols_, inp);
     ret.ismatrix = true;
     ret.nrows = nrows_;
@@ -66,7 +66,7 @@ namespace etr {
     return ret;
   }
 
-  VEC<double> matrix(VEC<double> inp, int nrows_, int ncols_) {
+  inline VEC<double> matrix(VEC<double> inp, int nrows_, int ncols_) {
     VEC<double> ret(nrows_, ncols_);
     ret = inp;
     ret.ismatrix = true;
@@ -76,7 +76,7 @@ namespace etr {
   }
 
   template<typename T2, typename R2>
-  VEC<double> matrix(const VEC<T2, R2>& inp, int nrows_, int ncols_) {
+  inline VEC<double> matrix(const VEC<T2, R2>& inp, int nrows_, int ncols_) {
     VEC<double> ret(nrows_, ncols_);
     ret = inp;
     ret.ismatrix = true;

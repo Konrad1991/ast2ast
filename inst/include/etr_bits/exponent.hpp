@@ -73,7 +73,7 @@ public:
 
 
 template<typename T, typename L, typename R>
-VEC< T, VVEXP< T, L, R> > operator^(const VEC<T, L>& a, const R exponent) {
+inline VEC< T, VVEXP< T, L, R> > operator^(const VEC<T, L>& a, const R exponent) {
 
   bool ismatrix_ = false;
   int nrows_ = 0;
@@ -96,7 +96,7 @@ VEC< T, VVEXP< T, L, R> > operator^(const VEC<T, L>& a, const R exponent) {
 
 
 template<typename T, typename L, typename R>
-VEC< T, VVEXP< T, L, R> > exp(const VEC<T, L>& a, const R exponent) {
+inline VEC< T, VVEXP< T, L, R> > exp(const VEC<T, L>& a, const R exponent) {
 
     bool ismatrix_ = false;
     int nrows_ = 0;
@@ -118,7 +118,7 @@ VEC< T, VVEXP< T, L, R> > exp(const VEC<T, L>& a, const R exponent) {
 }
 
 
-double exp(double base, double exponent) {
+inline double exp(double base, double exponent) {
   return pow(base, exponent);
 }
 
@@ -177,7 +177,7 @@ public:
 
 
 template<typename T, typename L>
-VEC< T, VVlog< T, L> > ln(const VEC<T, L>& a) {
+inline VEC< T, VVlog< T, L> > ln(const VEC<T, L>& a) {
 
     bool ismatrix_ = false;
     int nrows_ = 0;
@@ -199,11 +199,11 @@ VEC< T, VVlog< T, L> > ln(const VEC<T, L>& a) {
 }
 
 
-double ln(double base) {
+inline double ln(double base) {
   return log(base);
 }
 
-double ln(int base) {
+inline double ln(int base) {
   return log(static_cast<long double>(base));
 }
 
@@ -261,7 +261,7 @@ public:
 
 
 template<typename T, typename L>
-VEC< T, VVsqrt< T, L> > sqroot(const VEC<T, L>& a) {
+inline VEC< T, VVsqrt< T, L> > sqroot(const VEC<T, L>& a) {
 
     bool ismatrix_ = false;
     int nrows_ = 0;
@@ -283,11 +283,11 @@ VEC< T, VVsqrt< T, L> > sqroot(const VEC<T, L>& a) {
 }
 
 
-double sqroot(double inp) {
+inline double sqroot(double inp) {
   return sqrt(inp);
 }
 
-double sqroot(int inp) {
+inline double sqroot(int inp) {
   return sqrt(static_cast<long double>(inp));
 }
 

@@ -27,7 +27,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-VEC<double> is_na(const VEC<double>& inp) {
+inline VEC<double> is_na(const VEC<double>& inp) {
     VEC<double> res(inp.size());
     for(int i = 0; i < res.size(); i++) {
         res[i] = ISNA(inp[i]);
@@ -35,7 +35,7 @@ VEC<double> is_na(const VEC<double>& inp) {
     return res;
 }
 
-VEC<double> is_infinite(const VEC<double>& inp) {
+inline VEC<double> is_infinite(const VEC<double>& inp) {
     VEC<double> res(inp.size());
     for(int i = 0; i < res.size(); i++) {
         res[i] = (!R_FINITE(inp[i]) && !ISNA(inp[i]));

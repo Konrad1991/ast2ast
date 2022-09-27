@@ -30,7 +30,7 @@ namespace etr {
 // =======================================================================================================================
 // uniform
 // =======================================================================================================================
-VEC<double> dunif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lg) {
+inline VEC<double> dunif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lg) {
 
     if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) && (lg.size() == 1) ) {
         GetRNGstate();
@@ -56,7 +56,7 @@ VEC<double> dunif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
     return VEC<double>(R_NaN);                                                                           
 }
                    
-VEC<double> runif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_) {
+inline VEC<double> runif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_) {
 
     if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) ) {
         VEC<double> res(x[0], 0.0);
@@ -87,7 +87,7 @@ VEC<double> runif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
     return VEC<double>(R_NaN);                                                                           
 }
 
-VEC<double> punif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lower, const VEC<double>& lg) {
+inline VEC<double> punif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lower, const VEC<double>& lg) {
 
     if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) && (lg.size() == 1) ) {
         GetRNGstate();
@@ -114,7 +114,7 @@ VEC<double> punif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
     return VEC<double>(R_NaN);                                                                           
 }
 
-VEC<double> qunif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lower, const VEC<double>& lg) {
+inline VEC<double> qunif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lower, const VEC<double>& lg) {
 
     if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) && (lg.size() == 1) ) {
         GetRNGstate();
@@ -146,7 +146,7 @@ VEC<double> qunif_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
 // =======================================================================================================================
 // normal
 // =======================================================================================================================
-VEC<double> dnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lg) {
+inline VEC<double> dnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lg) {
 
     if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) && (lg.size() == 1) ) {
         GetRNGstate();
@@ -172,7 +172,7 @@ VEC<double> dnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
     return VEC<double>(R_NaN);                                                                           
 }
                    
-VEC<double> rnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_) {
+inline VEC<double> rnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_) {
 
     if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) ) {
         VEC<double> res(x[0], 0.0);
@@ -203,7 +203,7 @@ VEC<double> rnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
     return VEC<double>(R_NaN);                                                                           
 }
 
-VEC<double> pnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lower, const VEC<double>& lg) {
+inline VEC<double> pnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lower, const VEC<double>& lg) {
 
     if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) && (lg.size() == 1) ) {
         GetRNGstate();
@@ -230,7 +230,7 @@ VEC<double> pnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
     return VEC<double>(R_NaN);                                                                           
 }
 
-VEC<double> qnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lower, const VEC<double>& lg) {
+inline VEC<double> qnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lower, const VEC<double>& lg) {
 
     if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) && (lg.size() == 1) ) {
         GetRNGstate();
@@ -262,7 +262,7 @@ VEC<double> qnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<d
 // =======================================================================================================================
 // l normal
 // =======================================================================================================================
-VEC<double> dlnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lg) {
+inline VEC<double> dlnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lg) {
 
     if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) && (lg.size() == 1) ) {
         GetRNGstate();
@@ -288,7 +288,7 @@ VEC<double> dlnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<
     return VEC<double>(R_NaN);                                                                           
 }
                    
-VEC<double> rlnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_) {
+inline VEC<double> rlnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_) {
 
     if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) ) {
         VEC<double> res(x[0], 0.0);
@@ -319,7 +319,7 @@ VEC<double> rlnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<
     return VEC<double>(R_NaN);                                                                           
 }
 
-VEC<double> plnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lower, const VEC<double>& lg) {
+inline VEC<double> plnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lower, const VEC<double>& lg) {
 
     if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) && (lg.size() == 1) ) {
         GetRNGstate();
@@ -346,7 +346,7 @@ VEC<double> plnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<
     return VEC<double>(R_NaN);                                                                           
 }
 
-VEC<double> qlnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lower, const VEC<double>& lg) {
+inline VEC<double> qlnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<double>& max_, const VEC<double>& lower, const VEC<double>& lg) {
 
     if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) && (lg.size() == 1) ) {
         GetRNGstate();
@@ -378,7 +378,7 @@ VEC<double> qlnorm_etr(const VEC<double>& x, const VEC<double>& min_, const VEC<
 // =======================================================================================================================
 // gamma
 // =======================================================================================================================
-VEC<double> dgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC<double>& rate, const VEC<double>& lg) {
+inline VEC<double> dgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC<double>& rate, const VEC<double>& lg) {
     const VEC<double>& scale = 1/rate;
     if( (x.size() == 1) && (shape.size() == 1) && (scale.size() == 1) && (lg.size() == 1) ) {
         GetRNGstate();
@@ -404,7 +404,7 @@ VEC<double> dgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC
     return VEC<double>(R_NaN);                                                                           
 }
                    
-VEC<double> rgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC<double>& rate) {
+inline VEC<double> rgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC<double>& rate) {
     const VEC<double>& scale = 1/rate;
     if( (x.size() == 1) && (shape.size() == 1) && (scale.size() == 1) ) {
         VEC<double> res(x[0], 0.0);
@@ -435,7 +435,7 @@ VEC<double> rgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC
     return VEC<double>(R_NaN);                                                                           
 }
 
-VEC<double> pgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC<double>& rate, const VEC<double>& lower, const VEC<double>& lg) {
+inline VEC<double> pgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC<double>& rate, const VEC<double>& lower, const VEC<double>& lg) {
     const VEC<double>& scale = 1/rate;
     if( (x.size() == 1) && (shape.size() == 1) && (scale.size() == 1) && (lg.size() == 1) ) {
         GetRNGstate();
@@ -462,7 +462,7 @@ VEC<double> pgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC
     return VEC<double>(R_NaN);                                                                           
 }
 
-VEC<double> qgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC<double>& rate, const VEC<double>& lower, const VEC<double>& lg) {
+inline VEC<double> qgamma_etr(const VEC<double>& x, const VEC<double>& shape, const VEC<double>& rate, const VEC<double>& lower, const VEC<double>& lg) {
     const VEC<double>& scale = 1/rate;
     if( (x.size() == 1) && (shape.size() == 1) && (scale.size() == 1) && (lg.size() == 1) ) {
         GetRNGstate();

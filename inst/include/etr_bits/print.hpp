@@ -29,7 +29,7 @@ namespace etr {
 
 
 // print empty line
-void print() {
+inline void print() {
   #ifdef RLANG
       Rcpp::Rcout << std::endl;
   #else
@@ -37,7 +37,7 @@ void print() {
   #endif
 }
 
-void print(std::string inp) {
+inline void print(std::string inp) {
   #ifdef RLANG
       Rcpp::Rcout << inp << std::endl;
   #else
@@ -45,7 +45,7 @@ void print(std::string inp) {
   #endif
 }
 
-void print(const char* inp) {
+inline void print(const char* inp) {
   #ifdef RLANG
       Rcpp::Rcout << inp << std::endl;
   #else
@@ -55,7 +55,7 @@ void print(const char* inp) {
 
 
 
-void print(double inp){
+inline void print(double inp){
   #ifdef RLANG
       Rcpp::Rcout << inp << std::endl;
   #else
@@ -63,7 +63,7 @@ void print(double inp){
   #endif
 }
 
-void print(int inp){
+inline void print(int inp){
   #ifdef RLANG
       Rcpp::Rcout << inp << std::endl;
   #else
@@ -71,7 +71,7 @@ void print(int inp){
   #endif
 }
 
-void print(bool inp) {
+inline void print(bool inp) {
   #ifdef RLANG
       Rcpp::Rcout << inp << std::endl;
   #else
@@ -83,7 +83,7 @@ void print(bool inp) {
 // Vector & matrix
 // print fct
 // ================================================================
-void print(VEC<double>& inp) { // const
+inline void print(VEC<double>& inp) { // const
 
     if(inp.ismatrix == false) {
 
@@ -147,7 +147,7 @@ void print(VEC<double>& inp) { // const
 }
 
 
-void print(VEC<double>&& inp) { // const
+inline void print(VEC<double>&& inp) { // const
 
     if(inp.ismatrix == false) {
 
@@ -213,7 +213,7 @@ void print(VEC<double>&& inp) { // const
 
 
 
-void print(VEC<bool>& inp) { // const
+inline void print(VEC<bool>& inp) { // const
 
     if(inp.ismatrix == false) {
       if(inp.subsetted == true) {
@@ -238,7 +238,7 @@ void print(VEC<bool>& inp) { // const
 
 
 template<typename T2, typename R2>
-void print(const VEC<T2, R2> &inp) {
+inline void print(const VEC<T2, R2> &inp) {
 
   if(inp.ismatrix == false) {
 

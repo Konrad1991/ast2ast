@@ -28,7 +28,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-VEC<double> colon(int start, int end) {
+inline VEC<double> colon(int start, int end) {
   VEC<double> ret(end - start + 1);
   for(int i = 0; i < ret.size(); i++) {
     ret[i] = start + static_cast<double>(i);
@@ -36,7 +36,7 @@ VEC<double> colon(int start, int end) {
   return ret;
 }
 
-VEC<double> colon(double start, double end) {
+inline VEC<double> colon(double start, double end) {
 
   int size = static_cast<int>(floor(end - start +1));
   VEC<double> ret(size);
@@ -46,7 +46,7 @@ VEC<double> colon(double start, double end) {
   return ret;
 }
 
-VEC<double> colon(int start, double end) {
+inline VEC<double> colon(int start, double end) {
 
   int size = static_cast<int>(floor(end - static_cast<double>(start) +1));
   VEC<double> ret(size);
@@ -56,7 +56,7 @@ VEC<double> colon(int start, double end) {
   return ret;
 }
 
-VEC<double> colon(double start, int end) {
+inline VEC<double> colon(double start, int end) {
 
   int size = static_cast<int>(floor(static_cast<double>(end) - start +1));
   VEC<double> ret(size);
@@ -67,7 +67,7 @@ VEC<double> colon(double start, int end) {
 }
 
 
-VEC<double> colon(int start, VEC<double> end) {
+inline VEC<double> colon(int start, VEC<double> end) {
 
   int size = static_cast<int>(floor(end[0] - static_cast<double>(start) +1));
   VEC<double> ret(size);
@@ -77,7 +77,7 @@ VEC<double> colon(int start, VEC<double> end) {
   return ret;
 }
 
-VEC<double> colon(double start, VEC<double> end) {
+inline VEC<double> colon(double start, VEC<double> end) {
 
   int size = static_cast<int>(floor(end[0] - (start) +1));
   VEC<double> ret(size);
@@ -87,7 +87,7 @@ VEC<double> colon(double start, VEC<double> end) {
   return ret;
 }
 
-VEC<double> colon(VEC<double> start, int end) {
+inline VEC<double> colon(VEC<double> start, int end) {
 
   int size = static_cast<int>(floor(static_cast<double>(end) - (start[0]) +1));
   VEC<double> ret(size);
@@ -97,7 +97,7 @@ VEC<double> colon(VEC<double> start, int end) {
   return ret;
 }
 
-VEC<double> colon(VEC<double> start, double end) {
+inline VEC<double> colon(VEC<double> start, double end) {
 
   int size = static_cast<int>(floor(end - (start[0]) +1));
   VEC<double> ret(size);
@@ -108,7 +108,7 @@ VEC<double> colon(VEC<double> start, double end) {
 }
 
 
-VEC<double> colon(VEC<double> start, VEC<double> end) {
+inline VEC<double> colon(VEC<double> start, VEC<double> end) {
 
   int size = static_cast<int>(floor(end[0] - start[0] +1));
   VEC<double> ret(size);
@@ -120,7 +120,7 @@ VEC<double> colon(VEC<double> start, VEC<double> end) {
 
 
 template<typename T2, typename R2>
-VEC<double> colon(int start, const VEC<T2, R2>& end) {
+inline VEC<double> colon(int start, const VEC<T2, R2>& end) {
 
   int size = static_cast<int>(floor(end[0] - static_cast<double>(start) +1));
   VEC<double> ret(size);
@@ -131,7 +131,7 @@ VEC<double> colon(int start, const VEC<T2, R2>& end) {
 }
 
 template<typename T2, typename R2>
-VEC<double> colon(double start, const VEC<T2, R2>& end) {
+inline VEC<double> colon(double start, const VEC<T2, R2>& end) {
 
   int size = static_cast<int>(floor(end[0] - (start) +1));
   VEC<double> ret(size);
@@ -142,7 +142,7 @@ VEC<double> colon(double start, const VEC<T2, R2>& end) {
 }
 
 template<typename T2, typename R2>
-VEC<double> colon(const VEC<T2, R2>& start, int end) {
+inline VEC<double> colon(const VEC<T2, R2>& start, int end) {
 
   int size = static_cast<int>(floor(static_cast<double>(end) - (start[0]) +1));
   VEC<double> ret(size);
@@ -153,7 +153,7 @@ VEC<double> colon(const VEC<T2, R2>& start, int end) {
 }
 
 template<typename T2, typename R2>
-VEC<double> colon(const VEC<T2, R2>& start, double end) {
+inline VEC<double> colon(const VEC<T2, R2>& start, double end) {
 
   int size = static_cast<int>(floor(end - (start[0]) +1));
   VEC<double> ret(size);
@@ -164,7 +164,7 @@ VEC<double> colon(const VEC<T2, R2>& start, double end) {
 }
 
 template<typename T2, typename R2, typename T3, typename R3>
-VEC<double> colon(const VEC<T2, R2>& start, const VEC<T3, R3>& end) {
+inline VEC<double> colon(const VEC<T2, R2>& start, const VEC<T3, R3>& end) {
 
   int size = static_cast<int>(floor(end[0] - start[0] +1));
   VEC<double> ret(size);
@@ -175,30 +175,30 @@ VEC<double> colon(const VEC<T2, R2>& start, const VEC<T3, R3>& end) {
 }
 
 
-int length(double inp) {
+inline int length(double inp) {
   return 1;
 }
 
-int length(int inp) {
+inline int length(int inp) {
   return 1;
 }
 
-int length(bool inp) {
+inline int length(bool inp) {
   return 1;
 }
 
 template<typename T>
-int length(VEC<T>& inp) {
+inline int length(VEC<T>& inp) {
   return inp.size();
 }
 
 template<typename T2, typename R2> 
-int length(const VEC<T2, R2>& inp) {
+inline int length(const VEC<T2, R2>& inp) {
   return inp.size();
 }
 
 template<typename T>
-VEC<double> dim(const VEC<T>& inp) {
+inline VEC<double> dim(const VEC<T>& inp) {
   if(inp.im() == false) {
     std::cerr << "dim can only be called with matrix" << std::endl;
     #ifdef RLANG
@@ -217,7 +217,7 @@ VEC<double> dim(const VEC<T>& inp) {
 }
 
 
-void dim(bool inp) {
+inline void dim(bool inp) {
     std::cerr << "dim can only be called with matrix" << std::endl;
     #ifdef RLANG
       Rcpp::stop("Error");
@@ -226,7 +226,7 @@ void dim(bool inp) {
     #endif
 }
 
-void dim(int inp) {
+inline void dim(int inp) {
     std::cerr << "dim can only be called with matrix" << std::endl;
     #ifdef RLANG
       Rcpp::stop("Error");
@@ -235,7 +235,7 @@ void dim(int inp) {
     #endif
 }
 
-void dim(double inp) {
+inline void dim(double inp) {
     std::cerr << "dim can only be called with matrix" << std::endl;
     #ifdef RLANG
       Rcpp::stop("Error");

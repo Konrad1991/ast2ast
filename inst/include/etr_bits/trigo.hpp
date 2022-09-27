@@ -72,7 +72,7 @@ public:
 
 
 template<typename T, typename L>
-VEC< T, VVSIN< T, L> > sinus(const VEC<T, L>& a) {
+inline VEC< T, VVSIN< T, L> > sinus(const VEC<T, L>& a) {
 
   bool ismatrix_ = false;
   int nrows_ = 0;
@@ -94,11 +94,11 @@ VEC< T, VVSIN< T, L> > sinus(const VEC<T, L>& a) {
 }
 
 
-double sinus(double base) {
+inline double sinus(double base) {
   return sin(base);
 }
 
-double sinus(int base) {
+inline double sinus(int base) {
   return sin(static_cast<double>(base));
 }
 
@@ -149,7 +149,7 @@ public:
 
 
 template<typename T, typename L>
-VEC< T, VVsinh< T, L> > sinush(const VEC<T, L>& a) {
+inline VEC< T, VVsinh< T, L> > sinush(const VEC<T, L>& a) {
 
   bool ismatrix_ = false;
   int nrows_ = 0;
@@ -171,11 +171,11 @@ VEC< T, VVsinh< T, L> > sinush(const VEC<T, L>& a) {
 }
 
 
-double sinush(double base) {
+inline double sinush(double base) {
   return sinh(base);
 }
 
-double sinush(int base) {
+inline double sinush(int base) {
   return sinh(static_cast<double>(base));
 }
 
@@ -225,7 +225,7 @@ public:
 
 
 template<typename T, typename L>
-VEC< T, VVasin< T, L> > asinus(const VEC<T, L>& a) {
+inline VEC< T, VVasin< T, L> > asinus(const VEC<T, L>& a) {
 
   bool ismatrix_ = false;
   int nrows_ = 0;
@@ -247,11 +247,11 @@ VEC< T, VVasin< T, L> > asinus(const VEC<T, L>& a) {
 }
 
 
-double asinus(double base) {
+inline double asinus(double base) {
   return asin(base);
 }
 
-double asinus(int base) {
+inline double asinus(int base) {
   return asin(static_cast<double>(base));
 }
 
@@ -304,7 +304,7 @@ public:
 
 
 template<typename T, typename L>
-VEC< T, VVCOS< T, L> > cosinus(const VEC<T, L>& a) {
+inline VEC< T, VVCOS< T, L> > cosinus(const VEC<T, L>& a) {
 
   bool ismatrix_ = false;
   int nrows_ = 0;
@@ -326,11 +326,11 @@ VEC< T, VVCOS< T, L> > cosinus(const VEC<T, L>& a) {
 }
 
 
-double cosinus(double base) {
+inline double cosinus(double base) {
   return cos(base);
 }
 
-double cosinus(int base) {
+inline double cosinus(int base) {
   return cos(static_cast<double>(base));
 }
 
@@ -384,7 +384,7 @@ public:
 
 
 template<typename T, typename L>
-VEC< T, VVacos< T, L> > acosinus(const VEC<T, L>& a) {
+inline VEC< T, VVacos< T, L> > acosinus(const VEC<T, L>& a) {
 
   bool ismatrix_ = false;
   int nrows_ = 0;
@@ -406,11 +406,11 @@ VEC< T, VVacos< T, L> > acosinus(const VEC<T, L>& a) {
 }
 
 
-double acosinus(double base) {
+inline double acosinus(double base) {
   return acos(base);
 }
 
-double acosinus(int base) {
+inline double acosinus(int base) {
   return acos(static_cast<double>(base));
 }
 
@@ -463,7 +463,7 @@ public:
 
 
 template<typename T, typename L>
-VEC< T, VVCOSH< T, L> > cosinush(const VEC<T, L>& a) {
+inline VEC< T, VVCOSH< T, L> > cosinush(const VEC<T, L>& a) {
 
   bool ismatrix_ = false;
   int nrows_ = 0;
@@ -485,11 +485,11 @@ VEC< T, VVCOSH< T, L> > cosinush(const VEC<T, L>& a) {
 }
 
 
-double cosinush(double base) {
+inline double cosinush(double base) {
   return cosh(base);
 }
 
-double cosinush(int base) {
+inline double cosinush(int base) {
   return cosh(static_cast<double>(base));
 }
 
@@ -544,7 +544,7 @@ public:
 
 
 template<typename T, typename L>
-VEC< T, VVtan< T, L> > tangens(const VEC<T, L>& a) {
+inline VEC< T, VVtan< T, L> > tangens(const VEC<T, L>& a) {
   bool ismatrix_ = false;
   int nrows_ = 0;
   int ncols_ = 0;
@@ -566,11 +566,11 @@ VEC< T, VVtan< T, L> > tangens(const VEC<T, L>& a) {
 }
 
 
-double tangens(double base) {
+inline double tangens(double base) {
   return tan(base);
 }
 
-double tangens(int base) {
+inline double tangens(int base) {
   return tan(static_cast<double>(base));
 }
 
@@ -623,7 +623,7 @@ public:
 
 
 template<typename T, typename L>
-VEC< T, VVatan< T, L> > atangens(const VEC<T, L>& a) {
+inline VEC< T, VVatan< T, L> > atangens(const VEC<T, L>& a) {
   bool ismatrix_ = false;
   int nrows_ = 0;
   int ncols_ = 0;
@@ -644,11 +644,11 @@ VEC< T, VVatan< T, L> > atangens(const VEC<T, L>& a) {
 }
 
 
-double atangens(double base) {
+inline double atangens(double base) {
   return atan(base);
 }
 
-double atangens(int base) {
+inline double atangens(int base) {
   return atan(static_cast<double>(base));
 }
 
@@ -701,7 +701,7 @@ public:
 
 
 template<typename T, typename L>
-VEC< T, VVtanh< T, L> > tangensh(const VEC<T, L>& a) {
+inline VEC< T, VVtanh< T, L> > tangensh(const VEC<T, L>& a) {
   bool ismatrix_ = false;
   int nrows_ = 0;
   int ncols_ = 0;
@@ -722,11 +722,11 @@ VEC< T, VVtanh< T, L> > tangensh(const VEC<T, L>& a) {
 }
 
 
-double tangensh(double base) {
+inline double tangensh(double base) {
   return tanh(base);
 }
 
-double tangensh(int base) {
+inline double tangensh(int base) {
   return tanh(static_cast<double>(base));
 }
 

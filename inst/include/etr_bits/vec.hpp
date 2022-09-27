@@ -475,39 +475,39 @@ int nr() const {
 
 
 
-int d2i(double inp) {
+inline int d2i(double inp) {
   return static_cast<int>(inp);
 }
 
 
-double i2d(int inp) {
+inline double i2d(int inp) {
   return static_cast<double>(inp);
 }
 
- double& at(const VEC<double>& inp, int i) {
+inline double& at(const VEC<double>& inp, int i) {
    i--;
    return inp.d[i];
  }
 
- double& at(const VEC<double>&& inp, int i) {
+inline double& at(const VEC<double>&& inp, int i) {
    i--;
    return inp.d[i];
  }
 
 
- double& at(const VEC<double>& inp, double i_) {
+inline double& at(const VEC<double>& inp, double i_) {
    int i = d2i(i_);
    i--;
    return inp.d[i];
  }
 
- double& at(const VEC<double>&& inp, double i_) {
+inline double& at(const VEC<double>&& inp, double i_) {
    int i = d2i(i_);
    i--;
    return inp.d[i];
  }
 
- double& at(const VEC<double>& inp, int r, int c) {
+inline double& at(const VEC<double>& inp, int r, int c) {
 
    ass(inp.im() == true, "Input is not a matrix!");
    r--;
@@ -516,7 +516,7 @@ double i2d(int inp) {
  }
 
 
- double& at(const VEC<double>& inp, double r_, double c_) {
+inline double& at(const VEC<double>& inp, double r_, double c_) {
 
    ass(inp.im() == true, "Input is not a matrix!");
    int r = d2i(r_);
@@ -526,7 +526,7 @@ double i2d(int inp) {
    return inp.d[c*inp.nr() + r];
  }
 
- double& at(const VEC<double>&& inp, int r, int c) {
+inline double& at(const VEC<double>&& inp, int r, int c) {
 
    ass(inp.im() == true, "Input is not a matrix!");
    r--;
@@ -535,7 +535,7 @@ double i2d(int inp) {
  }
 
 
- double& at(const VEC<double>&& inp, double r_, double c_) {
+inline double& at(const VEC<double>&& inp, double r_, double c_) {
 
    ass(inp.im() == true, "Input is not a matrix!");
    int r = d2i(r_);
