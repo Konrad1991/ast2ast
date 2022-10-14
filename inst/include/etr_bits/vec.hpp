@@ -462,7 +462,7 @@ int nr() const {
    return It<T>{d.p + this -> size()};
  }
 
- T& back() {
+ T& back() const {
    return d.p[this -> size()];
  }
 
