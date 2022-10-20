@@ -1,0 +1,11 @@
+News for package 'ast2ast'
+
+changes in paropt version 0.2.1
+
+- all functions in C++ are now inlined
+
+News for package 'ast2ast'
+
+changes in paropt version 0.2
+
+- code can now be translated to R function and external pointer

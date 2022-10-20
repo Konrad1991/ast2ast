@@ -5,7 +5,7 @@
 * Winbuilder R-devel
 * Winbuilder R-oldrelease
 * rhub: macos-highsierra-release, macos-highsierra-release-cran,
-      macos-m1-bigsur-release, debian-clang-devel,
+      debian-clang-devel,
       debian-gcc-devel
 
 ## R CMD check results
