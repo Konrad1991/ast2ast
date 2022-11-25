@@ -335,6 +335,19 @@ subset <- R6::R6Class("subset",
     public = list(
 
       subassign = NULL,
+      
+      only_num = function() {
+        sub_args <- NULL
+        if(length(self$arguments) == 2) {
+          sub_args <- self$arguments[[2]]
+        } else if(length(self$arguments) == 3) {
+          sub_args <- self$arguments[2:length(self$arguments)]  
+        }
+        check <- sapply(sub_args, function(x) {
+          return(x %% 1 == 0)
+        })
+        return(all(check == TRUE))
+      },
 
       initialize = function(node, subset_or_subassign, namespace_etr) {
         self$subassign = subset_or_subassign
@@ -360,11 +373,18 @@ subset <- R6::R6Class("subset",
           }
         })
 
-
         if(self$subassign == TRUE) {
-            self$name_fct = as.name(paste0("etr::", "subassign"))
+            if(self$only_num()) {
+              self$name_fct = as.name(paste0("etr::", "at"))
+            } else {
+              self$name_fct = as.name(paste0("etr::", "subassign"))  
+            }
         } else if(self$subassign == FALSE) {
-          self$name_fct = as.name(paste0("etr::", "subset"))
+          if(self$only_num()) {
+            self$name_fct = as.name(paste0("etr::", "at"))
+          } else {
+            self$name_fct = as.name(paste0("etr::", "subset")) 
+          }
         }
 
       },

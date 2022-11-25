@@ -116,9 +116,8 @@
     The caveat of using 'at' is that only \strong{one} entry can be accessed. The function \emph{'[]'} can return more then one element. \cr
     \strong{The \emph{at}-function returns a reference to the vector entry.
       Therefore variable[index] can behave differently then \emph{at(variable, index)}.
-      The function has to be used carefully when \emph{at} is used.
-      Especially if \emph{'[]'} and \emph{at} are mixed the function behaviour is difficult to predict.
-      Please test it before using it in a serious project.}  \cr
+      If only integers are found within \emph{'[]'} the function \emph{at} is used.
+      }  \cr
     Here is a small example presented how to use the subset functions:
       \verb{
         f <- function() {
