@@ -8,7 +8,8 @@
     types_of_args = "SEXP",
     return_type = "SEXP",
     reference = FALSE,
-    verbose = FALSE
+    verbose = FALSE,
+    getsource = FALSE
   )
 }
 \arguments{
@@ -28,6 +29,7 @@
     Additionally, the possibilities "sexp" and "void" exist for the external pointer interface.}
   \item{reference}{If set to TRUE the arguments are passed by reference (not possible if output is "R").}
   \item{verbose}{If set to TRUE the output of the compilation process is printed.}
+  \item{getsource}{If set to TRUE the function is not compiled and instead the C++ source code itself is returned.}
 }
 \value{
   If output is set to \emph{R} an R function is returned. Thus, the C++ code can directly be called within R. \cr
@@ -116,7 +118,8 @@
     The caveat of using 'at' is that only \strong{one} entry can be accessed. The function \emph{'[]'} can return more then one element. \cr
     \strong{The \emph{at}-function returns a reference to the vector entry.
       Therefore variable[index] can behave differently then \emph{at(variable, index)}.
-      If only integers are found within \emph{'[]'} the function \emph{at} is used.
+      If only integers are found within \emph{'[]'} the function \emph{at} is used at the right side of an assignment operator (\emph{=}).
+      The \emph{at}-function can also be used on the left side of an assignment operator. However, in this case only \emph{at} should be        used at the right side. Otherwise the results are wrong.
       }  \cr
     Here is a small example presented how to use the subset functions:
       \verb{

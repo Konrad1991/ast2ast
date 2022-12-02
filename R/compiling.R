@@ -19,7 +19,7 @@
 
 
 
-compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type, name_f) {
+compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type, name_f, getsource) {
   a = NULL
   fct = NULL
   fct_ret = NULL
@@ -28,6 +28,8 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
     a = MA$new(f, desired_type, name_f, R_fct, return_type)
     fct <- a$build_own(verbose, reference = reference) # build
       
+    if(getsource == TRUE) return(fct)
+    
     tryCatch(
       expr = {
         if(verbose == TRUE) {
@@ -45,6 +47,8 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
   } else {
     a = MA$new(f, desired_type, name_f, R_fct, return_type)
     fct <- a$build_own_SEXP(verbose, reference = reference) 
+    
+    if(getsource == TRUE) return(fct)
     
     res <- NULL
     Sys.setenv("PKG_CXXFLAGS" = "-DRFCT") # remove warnings -Wall -Wpedantic!!!!!!!!!!

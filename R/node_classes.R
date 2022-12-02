@@ -344,6 +344,7 @@ subset <- R6::R6Class("subset",
           sub_args <- self$arguments[2:length(self$arguments)]  
         }
         check <- sapply(sub_args, function(x) {
+          if(!is.numeric(x)) return(FALSE)
           return(x %% 1 == 0)
         })
         return(all(check == TRUE))
@@ -374,11 +375,7 @@ subset <- R6::R6Class("subset",
         })
 
         if(self$subassign == TRUE) {
-            if(self$only_num()) {
-              self$name_fct = as.name(paste0("etr::", "at"))
-            } else {
-              self$name_fct = as.name(paste0("etr::", "subassign"))  
-            }
+            self$name_fct = as.name(paste0("etr::", "subassign"))  
         } else if(self$subassign == FALSE) {
           if(self$only_num()) {
             self$name_fct = as.name(paste0("etr::", "at"))

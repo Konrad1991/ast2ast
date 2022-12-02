@@ -19,7 +19,7 @@
 
 translate <- function(f, output = "R", 
                       types_of_args = "SEXP", return_type = "SEXP",
-                      reference = FALSE, verbose = FALSE) {
+                      reference = FALSE, verbose = FALSE, getsource = FALSE) {
 
     if(missing(f)) stop("function f is required")
 
@@ -86,7 +86,8 @@ translate <- function(f, output = "R",
     }
     
     fct_ret <- compiler_a2a(f, verbose, reference,
-                                     R_fct, types_of_args, return_type, name_f)
+                                     R_fct, types_of_args, return_type, name_f,
+                            getsource)
 
     return(fct_ret)
 }

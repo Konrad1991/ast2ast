@@ -661,7 +661,7 @@ testall <- function(a, type_test) {
       a <- 1:6
       b <- c(4, 4)
       b[1] <- a[2]
-      b[2] <- a[2.5]
+      b[2] <- a[2] #a[2.5]
       return(b)
     } else if(type_test == 16.66) {
       a <- 1:6
