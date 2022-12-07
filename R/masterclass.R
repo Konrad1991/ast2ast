@@ -328,12 +328,12 @@ MA <- R6::R6Class("MA",
                         self$signature_own(self$desired_type, reference, extern = FALSE),
                         self$vars_declaration_own(self$desired_type),
                         self$char,
-                        '}',
+                        '}\n',
                         
                         "SEXP getXPtr() {", "\n", 
-                        paste("typedef", self$signature_own(self$desired_type, reference, extern = FALSE, typedef = TRUE), ";"),
-                        paste("return Rcpp::XPtr<fct_ptr>(new fct_ptr(& ", self$name, '));'),
-                        "}"
+                        paste("typedef", self$signature_own(self$desired_type, reference, extern = FALSE, typedef = TRUE), ";\n"),
+                        paste("return Rcpp::XPtr<fct_ptr>(new fct_ptr(& ", self$name, '));\n'),
+                        "}\n"
                       )
                       
                       fct <- paste( unlist(fct), collapse='')
@@ -359,8 +359,8 @@ MA <- R6::R6Class("MA",
                           self$signature_own(self$desired_type, reference, extern = FALSE), "\n",
                           self$vars_declaration_own(self$desired_type), "\n",
                           self$char, "\n",
-                          "return R_NilValue;",
-                          '}'
+                          "return R_NilValue;\n",
+                          '}\n'
                         )
                       } else {
                         fct = c(
@@ -373,7 +373,7 @@ MA <- R6::R6Class("MA",
                           self$signature_own(self$desired_type, reference, extern = FALSE), "\n",
                           self$vars_declaration_own(self$desired_type), "\n",
                           self$char, "\n",
-                          '}'
+                          '}\n'
                         )
                       }
                       

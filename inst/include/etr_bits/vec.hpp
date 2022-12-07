@@ -474,7 +474,6 @@ int nr() const {
 }; // end class VEC
 
 
-
 inline int d2i(double inp) {
   return static_cast<int>(inp);
 }
