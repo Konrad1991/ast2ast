@@ -158,7 +158,7 @@ PC <- R6::R6Class("PC",
               args_fct = args_fct[c(1,2,3,5, 6)] # scale depends on rate
             } else if(name_of_fct == "qgamma") {
               args_fct = args_fct[c(1,2,3,5, 6)] # scale depends on rate
-            }
+            } 
             
             # check that user only use defined arg names
             check = all(equal_names %in% args_fct)
@@ -233,8 +233,12 @@ generic <- R6::R6Class("generic",
         self$replace_TF()
         self$oaf(var)
         self$change_code()
-        ret <- list()
+
+        if(paste(self$name_fct) == "vector") {
+          self$arguments = unname(self$arguments)
+        }
         
+        ret <- list()
         if(deparse(self$name_fct) %in% self$namespace_etr) {
           ret[[1]] <- as.name(paste0("etr::", self$name_fct))  
         } else {

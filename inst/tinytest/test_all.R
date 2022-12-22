@@ -1426,7 +1426,7 @@ testall <- function(a, type_test) {
 }
 
 fct <- function() { # function then one can use document outline to jump to this position
-  test <- translate(testall, verbose = FALSE)
+  test <- translate(testall, verbose = FALSE, getsource = FALSE)
 }
 test <- fct()
 # random values
