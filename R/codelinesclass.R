@@ -56,7 +56,7 @@ LC <- R6::R6Class("LC",
          "dgamma_etr", "pgamma_etr", "qgamma_etr", "rgamma_etr",
          "dbeta_etr", "pbeta_etr", "beta_etr", "rbeta_etr",
          "dnbeta_etr", "pnbeta_etr", "qnbeta_etr", "rnbeta_etr",
-         "is_na", "is_infinite", "colon"
+         "is_na", "is_infinite", "colon", "cpp2R"
        ),
        
        namespace_etr_resolved = function() {
@@ -72,7 +72,7 @@ LC <- R6::R6Class("LC",
         "*", "/", "if", "else if", "else", "{", "(",
         "==", "!=", ">", ">=", "<", "<=", "vector",
         "matrix","length", "dim", "cmr", "exp", "at",
-        "&&", "||", "Rf_ScalarReal", "::"),
+        "&&", "||", "Rf_ScalarReal", "::", "cpp2R"),
 
        math = c("sin", "asin", "sinh", "cos", "acos", "cosh",
         "tan", "atan", "tanh", "log", "^", "sqrt",
@@ -117,7 +117,7 @@ LC <- R6::R6Class("LC",
 
           } else if(as.name("return") == fct) {
             
-            p <- retur$new(sexp, self$namespace_etr)
+            p <- retur$new(sexp, self$namespace_etr, self$R_fct)
             sexp <- p$convert(self$PF)
             self$found_return = TRUE
             
@@ -194,7 +194,8 @@ LC <- R6::R6Class("LC",
 
        },
 
-       initialize = function(line) {
+       initialize = function(line, R_fct) {
+         self$R_fct <- R_fct
          self$ast <- self$extractast(line) # fill nodes
        },
 

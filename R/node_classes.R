@@ -288,26 +288,16 @@ retur <- R6::R6Class("retur",
       inherit = PC,
                      
       public = list(
-                     
-         replace_int = function() {
-           for(i in seq_along(self$arguments)) {
-             if(is.atomic(self$arguments[[i]])) {
-               number2 = gsub("[0-9]", "", self$arguments[[i]])
-               number2 = gsub("e", "", number2)
-               number2 = gsub(as.name("+"), "", number2)
-               number2 = gsub("-", "", number2)
-               size2 = nchar(number2)
-               if(is.na(size2)) {
-                 return()
-               }
 
-               if( (size2 == 0) ) {# not optimal for XPtr interface
-                self$arguments[[i]] = str2lang(paste0('Rf_ScalarReal(etr::i2d(', self$arguments[[i]], ') )') )
-               }
-              }
-          }
+        R_fct = NULL,
+
+        initialize = function(node, namespace_etr, R_fct) {
+          self$R_fct = R_fct
+          self$name_fct = node[[1]]
+          self$arguments = node[2:length(node)]
+          self$namespace_etr = namespace_etr
         },
-                       
+                                            
         change_code = function() {
            self$replace_int()
         },
@@ -318,7 +308,6 @@ retur <- R6::R6Class("retur",
              self$replace_TF()
              self$oaf(var)
              self$change_code()
-             self$replace_int()
                          
              ret <- list()
              if(deparse(self$name_fct) %in% self$namespace_etr) {
@@ -326,6 +315,11 @@ retur <- R6::R6Class("retur",
              } else {
                ret[[1]] <- self$name_fct  
              }
+
+             if(self$R_fct) {
+              self$arguments <- str2lang(paste("cpp2R(", self$arguments, ")", collapse = ""))
+             }
+
              ret <- c(ret, self$arguments)
              return(ret)
         }

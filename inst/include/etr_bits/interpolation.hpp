@@ -60,7 +60,10 @@ inline double li(double t, VEC<T> &time_vec, VEC<T> &par_vec) {
 }
 
 template<typename T>
-inline double cmr(double t, VEC<T> &time_vec, VEC<T> &par_vec){
+inline double cmr(VEC<T>& t_, VEC<T> &time_vec, VEC<T> &par_vec){
+  
+  double t = t_[0];
+  
   int idx0, idx1, idx2, idx3;
   double t0, t1, t2, t3;
   double y0, y1, y2, y3;
@@ -158,7 +161,10 @@ inline double cmr(double t, VEC<T> &time_vec, VEC<T> &par_vec){
   return res;
 }
 
-inline double cmr(double t, const VEC<double>& time_vec, const VEC<double>& par_vec){
+inline double cmr(const VEC<double>& t_, const VEC<double>& time_vec, const VEC<double>& par_vec){
+  
+  double t = t_[0];
+  
   int idx0, idx1, idx2, idx3;
   double t0, t1, t2, t3;
   double y0, y1, y2, y3;

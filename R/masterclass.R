@@ -52,7 +52,7 @@ MA <- R6::R6Class("MA",
                     getast = function() {
                       for(i in seq_along(self$body)) {
                         # convert ast R --> ETR
-                        self$temp[[i]] = LC$new(self$body[[i]])
+                        self$temp[[i]] = LC$new(self$body[[i]], self$R_fct)
                         self$ast[[i]] = self$temp[[i]]$ast
                         
                         # get vars
@@ -61,6 +61,7 @@ MA <- R6::R6Class("MA",
                         
                         # return was found?
                         self$return_TF = c(self$return_TF, self$temp[[i]]$found_return)
+                        if(any(self$return_TF == TRUE)) self$return_TF <- TRUE else self$return_TF <- FALSE
                       }
 
                     },
@@ -298,7 +299,7 @@ MA <- R6::R6Class("MA",
                           
                         } else {
                           temp <- paste('sexp', fct_args[[x]], ';')
-                          temp <- c(temp, fct_args[[x]], '=', paste0(self$args[[x]], desired_type[x], ';', collapse = ''))  
+                          temp <- c(temp, fct_args[[x]], '=', paste0(self$args[[x]], desired_type[x], ';\n', collapse = ''))  
                         }
                         
                         return(temp)
@@ -341,14 +342,13 @@ MA <- R6::R6Class("MA",
                     
                     # build with own types
                     build_own_SEXP = function(verbose = FALSE, reference = FALSE) {
-                      return_TF <- any(TRUE %in% self$return_TF)
                       
                       self$getast()
                       self$ast2call()
                       self$call2char()
                       fct = NULL
-                      
-                      if(return_TF == FALSE) { 
+
+                      if(self$return_TF == FALSE) { 
                         fct = c(
                           "// [[Rcpp::depends(ast2ast)]] \n",
                           "// [[Rcpp::depends(RcppArmadillo)]] \n",

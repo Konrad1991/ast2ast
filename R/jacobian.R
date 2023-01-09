@@ -36,8 +36,8 @@ J <- function(f, y, x,
   
   l <- dfdr::fcts()
   
-  cmr <- function() {}
-  
+  cmr <- function(a, b, c) 1
+
   l <- dfdr::fcts_add_fct(l, cmr, cmr, keep = TRUE)
   
   y <- rlang::ensym(y)
@@ -46,6 +46,9 @@ J <- function(f, y, x,
   jac <- dfdr::jacobian(f, !!y, !!x, derivs = l)
   
   if(verbose) print(jac)
+
+  const <- new.env()
+  const$const <- NULL
   
   jac_ret <- translate(jac, verbose = verbose)
   
