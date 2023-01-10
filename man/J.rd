@@ -1,9 +1,11 @@
-\name{translate}
-\alias{translate}
-\title{Translates an R function into a C++ function.}
+\name{J}
+\alias{J}
+\title{Calculates the jacobian function and translatesthe resulting function into a C++ function.}
 \usage{
   translate(
     f,
+    y,
+    x,
     output = "R",
     types_of_args = "SEXP",
     return_type = "SEXP",
@@ -14,6 +16,8 @@
 }
 \arguments{
   \item{f}{The function which should be translated from R to C++.}
+  \item{y}{The variables to compute the derivatives of (the dependent variable). For example: df/dx}
+  \item{x}{The variables to which respect the variables are calcualted (the independent variable). For example: df/dx}
   \item{output}{If set to "R"" an R function wrapping the C++ code is returned. \cr
     If output is set to "XPtr"" an external pointer object pointing to the C++ code is returned. \cr
     The default value is "R".}
@@ -91,7 +95,7 @@
       \item allocation: vector and matrix
     \item information about objects: length and dim
     \item Basic operations: +, -, *, /
-      \item Indices: \emph{'[]'} and at
+      \item Indices: \emph{'[]'}. \strong{The function 'at' cannot be used! Beyond that only integer values are allowed within the brackets.}
     \item mathematical functions: sin, asin, sinh, cos, acos, cosh, tan, atan, tanh, sqrt, log, ^ and exp
     \item concatenate objects: c
     \item control flow: for, if, else if, else
@@ -101,140 +105,22 @@
     \item catmull-rome spline: cmr
     \item to get a range of numbers the ':' function can be used
     \item is.na and is.infinite can be used to test for NA and Inf.
-    \item d-, p-, q- and r-unif, -norm, -lnorm and -gamma (for gamma argument \emph{Scale} cannot be defined and is calculated using \emph{1/rate})
-  }
-  \strong{Some details about the implemented functions}
-  \itemize{
-    \item allocation of memory works: Following forms are possible:
-      \itemize{
-        \item vector(size_of_elements)
-        \item vector(value, size_of_elements)
-        \item matrix(nrows, ncols)
-        \item matrix(value, nrows, ncols)
-        \item matrix(vector, nrows, ncols)
-      }
-    \item For indices squared brackets \emph{'[]'} can be used as common in R. Beyond that the function 'at' exists
-    which accepts as first argument a variable and as the second argument you pass the desired index.
-    The caveat of using 'at' is that only \strong{one} entry can be accessed. The function \emph{'[]'} can return more then one element. \cr
-    \strong{The \emph{at}-function returns a reference to the vector entry.
-      Therefore variable[index] can behave differently then \emph{at(variable, index)}.
-      If only integers are found within \emph{'[]'} the function \emph{at} is used at the right side of an assignment operator (\emph{=}).
-      The \emph{at}-function can also be used on the left side of an assignment operator. However, in this case only \emph{at} should be        used at the right side. Otherwise the results are wrong.
-      }  \cr
-    Here is a small example presented how to use the subset functions:
-      \verb{
-        f <- function() {
-          a <- c(1, 2, 3)
-          print(at(a, 1))
-          print(a[1:2])
-        }
-        fcpp <- ast2ast::translate(f)
-        fcpp()
-      }
-    \item For-loops can be written as common in R
-    \itemize{
-      \item Nr.1 \cr
-      for(index in variable)\{ \cr
-        # do whatever \cr
-        \} \cr
-      \item Nr.2 \cr
-      for(index in 1:length(variable)\{ \cr
-        # do whatever \cr
-        \} \cr
-        }
-    \item Be aware that it is possible to assign the result of a comparison to a variable. Example see below: \cr
-    However, the vector will contain only \emph{0} or \emph{1} instead of \emph{FALSE} or \emph{TRUE}.
-    \verb{
-      a = c(1, 2, 3)
-      b = c(1, 2, 1)
-      c = a != b
-    }
-    \item The print function accepts either a scalar, vector, matrix, string, bool or nothing (empty line).
-    \item In order to return an object use the \emph{return} function (\strong{The last object is not returned automatically as in R}).
-    \item In order to interpolate values the \emph{cmr} function can be used. The function needs three arguments.
-    \enumerate{
-      \item the first argument is the point of the independent variable (\strong{x}) for which the dependent variable should be calculated (\strong{y}). This has to be a vector of length one.
-      \item the second argument is a vector defining the points of the independent variable (\strong{x}). This has to be a vector of at least length four.
-      \item the third argument is a vector defining the points of the dependent variable (\strong{y}). This has to be a vector of at least length four.
-    }
-    \strong{Be aware that the R code is translated to ETR an expression template library which tries to mimic R. \cr
-      However, it does not behave exactly like R! Please check your compiled function before using it in a serious project.
-      If you want to see how \emph{ast2ast} differs from R in detail check the vignette: \emph{Detailed Documentation}.}
   }
 }
 \examples{ # Further examples can be found in the vignettes. 
-    \dontrun{
-      # Hello World
-      # ==========================================================================
-      
-      # Translating to R_fct
-      # --------------------------------------------------------------------------
-      f <- function() { print("Hello World!")}
-      ast2ast::translate(f)
-      f()
-      
-      # Translating to external pointer
-      # --------------------------------------------------------------------------
-      f <- function() { print("Hello World!")}
-      pointer_to_f_cpp <- ast2ast::translate(f, 
-                                             output = "XPtr", return_type = "void")
-      Rcpp::sourceCpp(code = '
-      #include <Rcpp.h>
-      typedef void (*fp)();
-
-      // [[Rcpp::export]]
-      void call_fct(Rcpp::XPtr<fp> inp) {
-        fp f = *inp;
-        f(); } ')
-        
-      call_fct(pointer_to_f_cpp)
-      
-      # Run sum example:
-      # ==========================================================================
-      
-      # R version of run sum
-      # --------------------------------------------------------------------------
-      run_sum <- function(x, n) {
-        sz <- length(x)
-        
-        ov <- vector(mode = "numeric", length = sz)
-        
-        ov[n] <- sum(x[1:n])
-        for(i in (n+1):sz) {
-          
-          ov[i] <- ov[i-1] + x[i] - x[i-n]
-        }
-        
-        ov[1:(n-1)] <- NA
-        
-        return(ov)
+  \dontrun{
+      # simple example
+      f <- function(y) {
+        ydot <- vector(length = 2)
+        a <- 1.1
+        b <- 0.4
+        c <- 0.1
+        d <- 0.4
+        ydot[1] <- y[1]*a - y[1]*y[2]*b
+        ydot[2] <- y[2]*y[1]*c - y[2]*d
+        return(ydot)
       }
-      
-      # translated Version of R function
-      # --------------------------------------------------------------------------
-      run_sum_fast <- function(x, n) {
-        sz <- length(x)
-        ov <- vector(sz)
-        
-        sum_db = 0
-        for(i in 1:n) {
-          sum_db <- sum_db + at(x, i)
-        }
-        ov[n] <- sum_db
-        
-        for(i in (n + 1):sz) {
-          ov[i] <- at(ov, i - 1) + at(x, i) - at(x, i - at(n, 1))
-        }
-        
-        ov[1:(n - 1)] <- NA
-        
-        return(ov)
-      }
-      run_sum_cpp <- ast2ast::translate(run_sum_fast, verbose = FALSE)
-      set.seed(42)
-      x <- rnorm(10000)
-      n <- 500
-      one <- run_sum(x, n)
-      two <- run_sum_cpp(x, n)
-    }
+      jac <- ast2ast::J(f, ydot, y, verbose = TRUE)
+      jac(c(10, 11))
+  }
 }
