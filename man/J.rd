@@ -2,7 +2,7 @@
 \alias{J}
 \title{Calculates the jacobian function and translatesthe resulting function into a C++ function.}
 \usage{
-  translate(
+  J(
     f,
     y,
     x,
@@ -106,6 +106,8 @@
     \item to get a range of numbers the ':' function can be used
     \item is.na and is.infinite can be used to test for NA and Inf.
   }
+  
+  For more details see: \code{\link[dfdr:jacobian]{dfdr::jacobian()}}
 }
 \examples{ # Further examples can be found in the vignettes. 
   \dontrun{

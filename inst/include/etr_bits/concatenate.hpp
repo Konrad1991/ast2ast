@@ -26,67 +26,113 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-inline VEC<double> combine(VEC<double>&& a, VEC<double>&& b) {
-  //a.ismatrix = false;
-  //b.ismatrix = false;
-  VEC<double> ret(a.size() + b.size());
-  for(int i = 0; i < ret.size(); i++) {
-    if(i < a.size()) {
-        ret[i] = a[i];
-    } else if(i >= a.size()) {
-      ret[i] = b[i - (a.size())];
-    }
-  }
-  ret.ismatrix = false;
-  return ret;
+template<class F, class...Args>
+inline F for_each_arg(F f, Args&&...args) {
+  (f(std::forward<Args>(args)),...);
+  return f;
 }
 
-inline VEC<double> combine(VEC<double>& a, VEC<double>& b) {
-  //a.ismatrix = false;
-  //b.ismatrix = false;
-  VEC<double> ret(a.size() + b.size());
-  for(int i = 0; i < ret.size(); i++) {
-    if(i < a.size()) {
-        ret[i] = a[i];
-    } else if(i >= a.size()) {
-      ret[i] = b[i - (a.size())];
-    }
-  }
-  ret.ismatrix = false;
-  return ret;
-}
-
-inline VEC<double> combine(VEC<double>& a, double b) {
-  VEC<double> ret(a.size() + 1);
-  //a.ismatrix = false;
-  for(int i = 0; i < ret.size(); i++) {
-    if(i < a.size()) {
-        ret[i] = a[i];
-    } else if(i >= a.size()) {
-      ret[i] = b;
-    }
-  }
-  ret.ismatrix = false;
-  return ret;
-}
-
-inline VEC<double> combine(double a, VEC<double>& b) {
-  VEC<double> ret(b.size() + 1);
-  //b.ismatrix = false;
-  for(int i = 0; i < ret.size(); i++) {
-    if(i == 0) {
-        ret[i] = a;
+template<typename...Args>
+inline VEC<double> coca(Args&&...args) {
+  int size = 0;
+  for_each_arg([&](auto arg){
+    if constexpr (std::is_same<decltype(arg), int>::value) {
+      size++;
+    } else if(std::is_same<decltype(arg), double>::value) {
+      size++;
     } else {
-      ret[i] = b[i -1];
+      if constexpr (is_vec<decltype(arg)>::value){
+        size += arg.size();
+      } 
     }
-  }
-  ret.ismatrix = false;
+  }, args...);
+  
+  VEC<double> ret(size, 0.0);
+  int index = 0;
+  
+  for_each_arg([&](auto arg){
+    if constexpr (std::is_same<decltype(arg), int>::value) {
+      ret[index] = static_cast<double>(arg);
+      index++;
+    } else if(std::is_same<decltype(arg), double>::value) {
+      ret[index] = arg;
+      index++;
+    } else {
+      if constexpr (is_vec<decltype(arg)>::value){
+        for(int i = 0; i < arg.size(); i++) {
+          ret[index + i] = arg[i];
+        }
+        index += arg.size();  
+      }
+    }
+  }, args...);
+  
   return ret;
 }
 
 
 
+/*
 
+ inline VEC<double> combine(VEC<double>&& a, VEC<double>&& b) {
+ //a.ismatrix = false;
+ //b.ismatrix = false;
+ VEC<double> ret(a.size() + b.size());
+ for(int i = 0; i < ret.size(); i++) {
+ if(i < a.size()) {
+ ret[i] = a[i];
+ } else if(i >= a.size()) {
+ ret[i] = b[i - (a.size())];
+ }
+ }
+ ret.ismatrix = false;
+ return ret;
+ }
+ 
+ inline VEC<double> combine(VEC<double>& a, VEC<double>& b) {
+ //a.ismatrix = false;
+ //b.ismatrix = false;
+ VEC<double> ret(a.size() + b.size());
+ for(int i = 0; i < ret.size(); i++) {
+ if(i < a.size()) {
+ ret[i] = a[i];
+ } else if(i >= a.size()) {
+ ret[i] = b[i - (a.size())];
+ }
+ }
+ ret.ismatrix = false;
+ return ret;
+ }
+ 
+ inline VEC<double> combine(VEC<double>& a, double b) {
+ VEC<double> ret(a.size() + 1);
+ //a.ismatrix = false;
+ for(int i = 0; i < ret.size(); i++) {
+ if(i < a.size()) {
+ ret[i] = a[i];
+ } else if(i >= a.size()) {
+ ret[i] = b;
+ }
+ }
+ ret.ismatrix = false;
+ return ret;
+ }
+ 
+ inline VEC<double> combine(double a, VEC<double>& b) {
+ VEC<double> ret(b.size() + 1);
+ //b.ismatrix = false;
+ for(int i = 0; i < ret.size(); i++) {
+ if(i == 0) {
+ ret[i] = a;
+ } else {
+ ret[i] = b[i -1];
+ }
+ }
+ ret.ismatrix = false;
+ return ret;
+ }
+ 
+ 
 template <typename ... Ts>
 inline VEC<double> coca (Ts && ... multi_inputs) {
     VEC<double> ret;
@@ -129,7 +175,7 @@ inline VEC<double> coca (Ts & ... multi_inputs) {
 
     return ret;
 }
-
+*/
 
 }
 

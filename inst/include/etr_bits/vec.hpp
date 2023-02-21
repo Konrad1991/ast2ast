@@ -473,11 +473,23 @@ int nr() const {
 
 }; // end class VEC
 
+// type traits for VEC<T>
+template<typename T>
+struct is_vec : std::false_type {};
+              
+template<>
+struct is_vec<VEC<double>> : std::true_type {};
+            
+template<>
+struct is_vec<std::initializer_list<double>> : std::true_type {};
+              
+template<>
+struct is_vec<double> : std::false_type {};
+              
 
 inline int d2i(double inp) {
   return static_cast<int>(inp);
 }
-
 
 inline double i2d(int inp) {
   return static_cast<double>(inp);

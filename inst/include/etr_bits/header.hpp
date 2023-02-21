@@ -48,5 +48,6 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include <memory>
 #include <vector>
 #include <math.h>
+#include <type_traits>
 
 #endif

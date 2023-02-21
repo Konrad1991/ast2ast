@@ -382,7 +382,9 @@ testall <- function(a, type_test) {
     } else if(type_test == 15.4) {
       a <- sqrt(a)
       return(a)
-    } else if(type_test == 16.1) { # subsetting
+    } 
+    
+    if(type_test == 16.1) { # subsetting
       for(i in 1:length(a)) {
           a[i] = 100
       }
@@ -499,7 +501,8 @@ testall <- function(a, type_test) {
       b <- c(1, 2)
       a[ , b] <- 20
       return(a)
-    } else if(type_test == 16.32) {
+    } 
+    if(type_test == 16.32) {
       a <- matrix(1:9, 3, 3)
       b <- c(1, 3)
       a[b , ] <- 20
@@ -634,7 +637,9 @@ testall <- function(a, type_test) {
       c <- c(1, 2, 3, 2)
       a[c == 2, b+b] <- 20
       return(a)
-    } else if(type_test == 16.61) {
+    } 
+    
+    if(type_test == 16.61) {
       a <- matrix(1:16, 4, 4)
       b <- c(2,4)
       c <- c(1, 2, 3, 2)
@@ -812,7 +817,9 @@ testall <- function(a, type_test) {
       c <- c(1, 1)
       b <- a[1.5, b + c]
       return(b)
-    } else if(type_test == 17.1) {
+    } 
+    
+    if(type_test == 17.1) {
       a <- matrix(1:9, 3, 3)
       b <- c(0, 1)
       c <- c(1, 1)
@@ -962,7 +969,9 @@ testall <- function(a, type_test) {
       a <- matrix(1:9, 3, 3)
       b <- a[, c(1, 2)]
       return(b)
-    } else if(type_test == 17.31) {
+    } 
+    
+    if(type_test == 17.31) {
       a <- matrix(1:9, 3, 3)
       b <- a[c(1, 2), ]
       return(b)

@@ -47,9 +47,6 @@ J <- function(f, y, x,
   
   if(verbose) print(jac)
 
-  const <- new.env()
-  const$const <- NULL
-  
   jac_ret <- translate(jac, verbose = verbose)
   
   return(jac_ret)
