@@ -2,7 +2,7 @@ Package: ast2ast
 Type: Package
 Title: Translates an R Function to a C++ Function
 Version: 0.3.0
-Date: 2023-01-18
+Date: 2023-02-24
 Author: Krämer Konrad [aut, cre]
 Maintainer: Krämer Konrad <konrad_kraemer@yahoo.de>
 BugReports: https://github.com/Konrad1991/ast2ast
