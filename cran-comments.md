@@ -1,12 +1,7 @@
 ## Test environments
 
-* local Linux Mint, R 4.2.1
-* Winbuilder R-release
-* Winbuilder R-devel
-* Winbuilder R-oldrelease
-* rhub: macos-highsierra-release, macos-highsierra-release-cran,
-      debian-clang-devel,
-      debian-gcc-devel
+* local Linux Ubuntu, R 4.2.2
+* rhub: all except Solaris
 
 ## R CMD check results
 

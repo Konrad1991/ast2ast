@@ -98,7 +98,7 @@ public:
   }
   // constructor for pointer
   VEC(const int n, T* ptr, int cob) : subsetted(0), ismatrix(0), d(n, ptr, cob), temp(1) {} //cob = copy, owning, borrow
-  VEC(const int r, const int c, T* ptr, int cob) : subsetted(0), ismatrix(1), nrows(r), ncols(c), d(r*c, ptr, cob), temp(1) {} //cob = copy, owning, borrow
+  VEC(const int r, const int c, T* ptr, int cob) : subsetted(0), ismatrix(1), ncols(c), nrows(r), d(r*c, ptr, cob), temp(1) {} //cob = copy, owning, borrow
 
   operator bool() const{return d[0];}
 

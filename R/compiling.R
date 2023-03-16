@@ -52,7 +52,7 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
     
     res <- NULL
     Sys.setenv("PKG_CXXFLAGS" = "-DRFCT") # remove warnings -Wall -Wpedantic!!!!!!!!!!
-    options(warn = -1)
+    #options(warn = -1)
     tryCatch(
       expr = {
         env <- new.env()
@@ -65,7 +65,7 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
     )
     
     Sys.unsetenv("PKG_CXXFLAGS") # is this correct?
-    options(warn = 0)
+    #options(warn = 0)
     
     if(verbose == TRUE) {
       cat(fct)

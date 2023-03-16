@@ -263,7 +263,9 @@ testall <- function(a, type_test) {
         b <- vector(3, 2)
         a <- a * b
         return(a)
-    } else if(type_test == 7.1) { # c, vector, matrix etc.
+    } 
+  
+    if(type_test == 7.1) { # c, vector, matrix etc.
       a <- c(1, 2, 3)
       b <- c(5, 6, 7)
       c <- c(-100, a, b, 100)
@@ -502,6 +504,7 @@ testall <- function(a, type_test) {
       a[ , b] <- 20
       return(a)
     } 
+  
     if(type_test == 16.32) {
       a <- matrix(1:9, 3, 3)
       b <- c(1, 3)
@@ -1144,7 +1147,9 @@ testall <- function(a, type_test) {
       b <- c(1, 3)
       b <- (matrix(1:9, 3, 3) + 0)[b, 2.5]
       return(b)
-    } else if(type_test == 19.32) {
+    } 
+    
+    if(type_test == 19.32) {
       b <- (matrix(1:9, 3, 3) + 0)[TRUE, TRUE]
       return(b)
     } else if(type_test == 19.33) {
