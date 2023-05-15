@@ -354,7 +354,9 @@ public:
 
   template<typename T2, typename R2>
   VEC& operator=(const VEC<T2, R2> &other_vec) {
-
+    
+    //std::cout << typeid(other_vec).name() << std::endl; 
+    
     if(subsetted == false) {
       this -> ismatrix = false;
 

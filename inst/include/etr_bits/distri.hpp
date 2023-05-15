@@ -61,7 +61,7 @@ inline VEC<double> runif_etr(const VEC<double>& x, const VEC<double>& min_, cons
     if( (x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) ) {
         VEC<double> res(x[0], 0.0);
         int size = static_cast<int>(x[0]);
-        for(size_t i = 0; i < size; i++) {
+        for(int i = 0; i < size; i++) {
             GetRNGstate();
             res[i] = R::runif(min_[i % min_.size()], max_[i % max_.size()]);
             PutRNGstate();

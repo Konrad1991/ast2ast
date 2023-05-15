@@ -184,7 +184,7 @@ inline double cmr(const VEC<double>& t_, const VEC<double>& time_vec, const VEC<
     return par_vec[par_vec.size() - 1];
   }
 
-  for(size_t i = 0; i <= time_vec.size(); i++)  {
+  for(int i = 0; i <= time_vec.size(); i++)  {
 
     if (i == (time_vec.size()-1)) {
       idx0 = time_vec.size() - 2;
