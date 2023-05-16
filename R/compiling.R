@@ -20,23 +20,25 @@
 
 
 compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type, name_f, getsource) {
-  a = NULL
-  fct = NULL
-  fct_ret = NULL
+  a <- NULL
+  fct <- NULL
+  fct_ret <- NULL
 
-  if(R_fct == FALSE) {
-    a = MA$new(f, desired_type, name_f, R_fct, return_type)
+  if (R_fct == FALSE) {
+    a <- MA$new(f, desired_type, name_f, R_fct, return_type)
     fct <- a$build_own(verbose, reference = reference) # build
-      
-    if(getsource == TRUE) return(fct)
-    
+
+    if (getsource == TRUE) {
+      return(fct)
+    }
+
     tryCatch(
       expr = {
-        if(verbose == TRUE) {
+        if (verbose == TRUE) {
           cat(fct)
         }
         env <- new.env()
-        Rcpp::sourceCpp(code = fct, verbose = verbose, env = env) 
+        Rcpp::sourceCpp(code = fct, verbose = verbose, env = env)
         fct_ret <- env$getXPtr()
         attributes(fct_ret) <- list(class = "XPtr")
       },
@@ -45,14 +47,16 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
       }
     )
   } else {
-    a = MA$new(f, desired_type, name_f, R_fct, return_type)
-    fct <- a$build_own_SEXP(verbose, reference = reference) 
-    
-    if(getsource == TRUE) return(fct)
-    
+    a <- MA$new(f, desired_type, name_f, R_fct, return_type)
+    fct <- a$build_own_SEXP(verbose, reference = reference)
+
+    if (getsource == TRUE) {
+      return(fct)
+    }
+
     res <- NULL
-    Sys.setenv("PKG_CXXFLAGS" = "-DRFCT") # remove warnings -Wall -Wpedantic!!!!!!!!!!
-    #options(warn = -1)
+    Sys.setenv("PKG_CXXFLAGS" = "-DRFCT -O2") # remove warnings -Wall -Wpedantic!!!!!!!!!!
+    # options(warn = -1)
     tryCatch(
       expr = {
         env <- new.env()
@@ -63,15 +67,14 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
         print("Sorry compilation failed!")
       }
     )
-    
+
     Sys.unsetenv("PKG_CXXFLAGS") # is this correct?
-    #options(warn = 0)
-    
-    if(verbose == TRUE) {
+    # options(warn = 0)
+
+    if (verbose == TRUE) {
       cat(fct)
     }
-    
   }
-  
+
   return(fct_ret)
 }

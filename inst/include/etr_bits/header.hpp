@@ -15,8 +15,8 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with ast2ast
-If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
+You should have received a copy of the GNU General Public License along with
+ast2ast If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 */
 
 #ifndef HEADER_H
@@ -25,29 +25,26 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 // in case for testing from C++
 #ifdef NOT_R
 #else
-  #define RLANG
+#define RLANG
 #endif
 
 // switching between r fct and external pointer
 #ifdef RFCT
-  #define SEXPINTERFACE
+#define SEXPINTERFACE
 #else
-  #define FCT_POINTER
+#define FCT_POINTER
 #endif
 
-
-
-
 #ifdef RLANG
-  // [[Rcpp::depends(RcppArmadillo)]]
-  #include "RcppArmadillo.h"
+// [[Rcpp::depends(RcppArmadillo)]]
+#include "RcppArmadillo.h"
 #endif
 
 #include <iostream>
 #include <iterator>
-#include <memory>
-#include <vector>
 #include <math.h>
+#include <memory>
 #include <type_traits>
+#include <vector>
 
 #endif

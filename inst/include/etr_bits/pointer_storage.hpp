@@ -21,7 +21,6 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef STORAGE_H
 #define STORAGE_H
 
-
 #include "util.hpp"
 
 namespace etr {
@@ -29,29 +28,24 @@ namespace etr {
 /*
 class iterator
 */
-template<typename T>
-class It {
+template <typename T> class It {
 public:
- T* p;
- T& operator*() { return *p; }
+  T *p;
+  T &operator*() { return *p; }
 
- bool operator != (const It& rhs) {
-   return p != rhs.p;
- }
- void operator ++() { ++p; }
+  bool operator!=(const It &rhs) { return p != rhs.p; }
+  void operator++() { ++p; }
 };
-
 
 /*
 - Used as interface to R, thus it store data of an SEXP
 - If new is called once delete has to be called in the destructor
 - If new is not called. Then R will delete the memory!
 */
-template<typename T>
-class STORE {
+template <typename T> class STORE {
 
 public:
-  T* p;
+  T *p;
   int sz; // size
   int capacity;
   bool todelete;
@@ -60,9 +54,9 @@ public:
 
   // Constructors
   STORE(SEXP inp) {
-    if(allocated == true) {
+    if (allocated == true) {
       ass(p != nullptr, "try to delete nullptr");
-      delete [] p;
+      delete[] p;
       p = nullptr;
     }
 
@@ -75,29 +69,27 @@ public:
     allocated = true;
   }
 
-  STORE(const STORE<T>& other) {
-    if(allocated == true) {
+  STORE(const STORE<T> &other) {
+    if (allocated == true) {
       ass(p != nullptr, "try to delete nullptr");
-      delete [] p;
+      delete[] p;
       p = nullptr;
     }
 
     sz = other.sz;
     capacity = other.sz;
     p = new T[other.sz];
-    for(int i = 0; i < other.sz; i++) {
+    for (int i = 0; i < other.sz; i++) {
       *(p + i) = other.p[i];
     }
     todelete = true;
     allocated = true;
   }
 
-
-
   STORE() {
-    if(allocated == true) {
+    if (allocated == true) {
       ass(p != nullptr, "try to delete nullptr");
-      delete [] p;
+      delete[] p;
       p = nullptr;
     }
     sz = 1;
@@ -109,9 +101,9 @@ public:
 
   STORE(const int n) {
 
-    if(allocated == true) {
+    if (allocated == true) {
       ass(p != nullptr, "try to delete nullptr");
-      delete [] p;
+      delete[] p;
       p = nullptr;
     }
     sz = n;
@@ -121,30 +113,30 @@ public:
     allocated = true;
   }
 
-  STORE(const int n, T* pinp, int cob_) {
-    //ass(false, "do not call!");
-    if(allocated == true) {
+  STORE(const int n, T *pinp, int cob_) {
+    // ass(false, "do not call!");
+    if (allocated == true) {
       ass(p != nullptr, "try to delete nullptr");
-      delete [] p;
+      delete[] p;
       p = nullptr;
     }
 
-    if(cob_ == 0) { // copy
+    if (cob_ == 0) { // copy
       sz = n;
       capacity = sz;
       p = new T[n];
-      for(int i = 0; i < sz; i++) {
+      for (int i = 0; i < sz; i++) {
         p[i] = pinp[i];
       }
       todelete = true;
       allocated = true;
-    } else if(cob_ == 1) { // owning pointer
+    } else if (cob_ == 1) { // owning pointer
       sz = n;
       capacity = sz;
       p = pinp;
       todelete = true;
-      allocated = true; //?
-    } else if(cob_ == 2) { // borrow pointer
+      allocated = true;     //?
+    } else if (cob_ == 2) { // borrow pointer
       sz = n;
       capacity = sz;
       p = pinp;
@@ -156,15 +148,15 @@ public:
 
   STORE(const int n, const double value) {
 
-    if(allocated == true) {
+    if (allocated == true) {
       ass(p != nullptr, "try to delete nullptr");
-      delete [] p;
+      delete[] p;
       p = nullptr;
     }
     sz = n;
     capacity = sz;
     p = new T[n];
-    for(int i = 0; i < sz; i++) {
+    for (int i = 0; i < sz; i++) {
       *(p + i) = value;
     }
     todelete = true;
@@ -173,47 +165,46 @@ public:
 
   STORE(std::vector<T> inp) {
 
-    if(allocated == true) {
+    if (allocated == true) {
       ass(p != nullptr, "try to delete nullptr");
-      delete [] p;
+      delete[] p;
       p = nullptr;
     }
     sz = inp.size();
     capacity = sz;
     p = new T[sz];
-    for(int i = 0; i < sz; i++) {
+    for (int i = 0; i < sz; i++) {
       p[i] = inp[i];
     }
     todelete = true;
     allocated = true;
   }
 
-  void init(const int n, T* pinp) {
+  void init(const int n, T *pinp) {
 
-        if(allocated == true) {
-          ass(p != nullptr, "try to delete nullptr");
-          delete [] p;
-          p = nullptr;
-        }
+    if (allocated == true) {
+      ass(p != nullptr, "try to delete nullptr");
+      delete[] p;
+      p = nullptr;
+    }
 
-        sz = n;
-        capacity = sz;
+    sz = n;
+    capacity = sz;
 
-        p = new T[n];
-        for(int i = 0; i < sz; i++) {
-          p[i] = pinp[i];
-        }
+    p = new T[n];
+    for (int i = 0; i < sz; i++) {
+      p[i] = pinp[i];
+    }
 
-        todelete = true;
-        allocated = true;
-
+    todelete = true;
+    allocated = true;
   }
 
   void init_sexp(SEXP inp) {
-    
-    if(allocated == true) {
+
+    if (allocated == true) {
       ass(p != nullptr, "try to delete nullptr");
-      delete [] p;
+      delete[] p;
       p = nullptr;
     }
 
@@ -224,15 +215,14 @@ public:
 
     todelete = false;
     allocated = true;
-    
   }
 
   // Destructors
   ~STORE() {
-    if( todelete == true ) {
-      if(p != nullptr) {
+    if (todelete == true) {
+      if (p != nullptr) {
         ass(p != nullptr, "try to delete nullptr");
-        delete [] p;
+        delete[] p;
         p = nullptr;
       }
     }
@@ -240,147 +230,126 @@ public:
 
   // this is difficult
   // move it
-  STORE& moveit(STORE<T>& other) {
-    T* temporary = other.p;
+  STORE &moveit(STORE<T> &other) {
+    T *temporary = other.p;
     int temp_size = other.sz;
     int temp_capacity = other.capacity;
 
-    other.p = this -> p;
-    other.sz = this -> sz;
-    other.capacity = this -> capacity;
+    other.p = this->p;
+    other.sz = this->sz;
+    other.capacity = this->capacity;
 
-    this -> p = temporary;
-    this -> sz = temp_size;
-    this -> capacity = temp_capacity;
+    this->p = temporary;
+    this->sz = temp_size;
+    this->capacity = temp_capacity;
 
     return *this;
   }
 
-  int size() const {
-    return sz;
-  }
+  int size() const { return sz; }
 
-  T* data() const {
-    return p;
-  }
+  T *data() const { return p; }
 
-  T& operator=(const T& other_T) {
+  T &operator=(const T &other_T) {
     realloc(1);
     p[0] = other_T;
 
     return *this;
   }
 
-  STORE& operator=(const STORE& other_store) {
+  STORE &operator=(const STORE &other_store) {
 
-    if(this == &other_store) {
+    if (this == &other_store) {
       return *this;
     }
 
-    if(other_store.size() > this -> sz) {
-      int diff = other_store.size() - this -> sz;
-      this -> realloc(this -> sz + diff);
+    if (other_store.size() > this->sz) {
+      int diff = other_store.size() - this->sz;
+      this->realloc(this->sz + diff);
     }
 
-    for(int i = 0; i < this -> sz; i++) {
+    for (int i = 0; i < this->sz; i++) {
       p[i] = other_store[i];
     }
     return *this;
   }
 
   // 1 indexed array
-  T& operator[](int pos) const {
-    if(pos < 0) {
+  T &operator[](int pos) const {
+    if (pos < 0) {
       Rf_error("Error: out of boundaries --> value below 1");
-    } else if(pos >= sz) {
+    } else if (pos >= sz) {
       Rf_error("Error: out of boundaries --> value beyond size of vector");
     }
     return p[pos];
   }
 
   void resize(int new_size) {
-    if(new_size > sz) {
-      if(allocated == true) {
+    if (new_size > sz) {
+      if (allocated == true) {
         ass(p != nullptr, "try to delete nullptr");
 
-        if(todelete == true) {
-          delete [] p;
+        if (todelete == true) {
+          delete[] p;
           p = nullptr;
         }
       }
 
-      p = new T[static_cast<int>(new_size*1.15)]; //*2
+      p = new T[static_cast<int>(new_size * 1.15)]; //*2
       sz = new_size;
-      capacity = static_cast<int>(new_size*1.15); //*2
+      capacity = static_cast<int>(new_size * 1.15); //*2
 
       todelete = true;
 
     } else {
       sz = new_size;
     }
-
   }
 
   void realloc(int new_size) {
-    T* temp;
+    T *temp;
     temp = new T[sz];
-    for(int i = 0; i < sz; i++) {
+    for (int i = 0; i < sz; i++) {
       temp[i] = p[i];
     }
 
     ass(p != nullptr, "try to delete nullptr");
-    delete [] p;
+    delete[] p;
     p = new T[new_size];
     sz = new_size;
-    for(int i = 0; i < sz; i++) {
+    for (int i = 0; i < sz; i++) {
       p[i] = temp[i];
     }
 
     ass(temp != nullptr, "try to delete nullptr");
-    delete [] temp;
+    delete[] temp;
     temp = nullptr;
 
     todelete = true;
   }
 
   void push_back(T input) {
-    if(sz == capacity) {
-      realloc(sz*2);
+    if (sz == capacity) {
+      realloc(sz * 2);
       capacity = sz;
-    } else if(sz < capacity) {
-      p[sz] = input; //p starts counting at 0!!!
+    } else if (sz < capacity) {
+      p[sz] = input; // p starts counting at 0!!!
     }
   }
 
   void fill(T input) {
-    for(int i = 0; i < sz; i++) {
+    for (int i = 0; i < sz; i++) {
       p[i] = input;
     }
   }
 
-  auto begin() const {
-    return It<T>{p};
-  }
+  auto begin() const { return It<T>{p}; }
 
-  auto end() const {
-    return It<T>{p + sz};
-  }
+  auto end() const { return It<T>{p + sz}; }
 
-  T& back() {
-    return p[sz];
-  }
-
+  T &back() { return p[sz]; }
 };
 
-
-
-
-
-
-
-
-
-
-}
+} // namespace etr
 
 #endif

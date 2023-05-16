@@ -19,7 +19,6 @@ You should have received a copy of the GNU General Public License along with etr
 If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 */
 
-
 #ifndef CHECKSNAINF
 #define CHECKSNAINF
 
@@ -27,23 +26,22 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-inline VEC<double> is_na(const VEC<double>& inp) {
-    VEC<double> res(inp.size());
-    for(int i = 0; i < res.size(); i++) {
-        res[i] = ISNA(inp[i]);
-    }
-    return res;
+inline VEC<double> is_na(const VEC<double> &inp) {
+  VEC<double> res(inp.size());
+  for (int i = 0; i < res.size(); i++) {
+    res[i] = ISNA(inp[i]);
+  }
+  return res;
 }
 
-inline VEC<double> is_infinite(const VEC<double>& inp) {
-    VEC<double> res(inp.size());
-    for(int i = 0; i < res.size(); i++) {
-        res[i] = (!R_FINITE(inp[i]) && !ISNA(inp[i]));
-    }
-    return res;
+inline VEC<double> is_infinite(const VEC<double> &inp) {
+  VEC<double> res(inp.size());
+  for (int i = 0; i < res.size(); i++) {
+    res[i] = (!R_FINITE(inp[i]) && !ISNA(inp[i]));
+  }
+  return res;
 }
 
-}
-
+} // namespace etr
 
 #endif

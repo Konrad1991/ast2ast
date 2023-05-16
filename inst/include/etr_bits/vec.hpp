@@ -28,13 +28,10 @@ namespace etr {
 /*
 Vector & matrix module
 */
-template< typename T, typename R = STORE<T> >
-class VEC {
+template <typename T, typename R = STORE<T>> class VEC {
 
 private:
-
 public:
-
   // Constructors
   // ================================================================
   bool subsetted;
@@ -52,66 +49,83 @@ public:
   R d;
   STORE<T> temp;
 
-  template<typename T2>
-  VEC(T2 n) = delete;
+  template <typename T2> VEC(T2 n) = delete;
 
-  VEC(const double value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {} // d(1, value) or d(1) {d[0] = value} --> all tests run positive
-  VEC(const long unsigned int n) : subsetted(0), ismatrix(0), d(1, static_cast<double>(n)), temp(1) {} // run all tests whether this is possible 
+  VEC(const double value)
+      : subsetted(0), ismatrix(0), d(1, value), temp(1) {
+  } // d(1, value) or d(1) {d[0] = value} --> all tests run positive
+  VEC(const long unsigned int n)
+      : subsetted(0), ismatrix(0), d(1, static_cast<double>(n)), temp(1) {
+  } // run all tests whether this is possible
   // Constructors for vector
-  VEC(const int n) : subsetted(0), ismatrix(0),d(n), temp(1) {d.fill(static_cast<double>(n));} // fill is a hack that sexp s = 1 works;
-  VEC(const int n, const double value) : subsetted(0), ismatrix(0), d(n, value), temp(1) {}
-  VEC(const R& other_vec) : subsetted(0), ismatrix(0), d(other_vec),  temp(1) {}
-  VEC() : subsetted(0), ismatrix(0), ncols(0), nrows(0), d(), temp() {} // maybe better initialize with 0
-  VEC(const std::vector<T> inp) : subsetted(0),  ismatrix(0), nrows(0), ncols(0), d(inp), temp(1) {}
+  VEC(const int n) : subsetted(0), ismatrix(0), d(n), temp(1) {
+    d.fill(static_cast<double>(n));
+  } // fill is a hack that sexp s = 1 works;
+  VEC(const int n, const double value)
+      : subsetted(0), ismatrix(0), d(n, value), temp(1) {}
+  VEC(const R &other_vec) : subsetted(0), ismatrix(0), d(other_vec), temp(1) {}
+  VEC()
+      : subsetted(0), ismatrix(0), ncols(0), nrows(0), d(), temp() {
+  } // maybe better initialize with 0
+  VEC(const std::vector<T> inp)
+      : subsetted(0), ismatrix(0), nrows(0), ncols(0), d(inp), temp(1) {}
   // Constructors for matrix
-  VEC(const int rows, const int cols) : subsetted(0), ismatrix(1), ncols(cols), nrows(rows), d(rows*cols), temp(1) {}
-  VEC(const int rows, const int cols, const double value) : subsetted(0), ismatrix(1), ncols(cols), nrows(rows), d(rows*cols, value), temp(1) {}
-  VEC(const int rows, const int cols, int value) : subsetted(0), ismatrix(1), nrows(rows), ncols(cols), d(rows*cols, value), temp(1) {}
+  VEC(const int rows, const int cols)
+      : subsetted(0), ismatrix(1), ncols(cols), nrows(rows), d(rows * cols),
+        temp(1) {}
+  VEC(const int rows, const int cols, const double value)
+      : subsetted(0), ismatrix(1), ncols(cols), nrows(rows),
+        d(rows * cols, value), temp(1) {}
+  VEC(const int rows, const int cols, int value)
+      : subsetted(0), ismatrix(1), nrows(rows), ncols(cols),
+        d(rows * cols, value), temp(1) {}
   // constructor for calculations
-  template<typename T2, typename R2>
-  VEC(const VEC<T2, R2> &other_vec) :d(1), temp(1) {
+  template <typename T2, typename R2>
+  VEC(const VEC<T2, R2> &other_vec) : d(1), temp(1) {
 
-      this -> d.resize(other_vec.size());
-      this -> ismatrix = false;
-      for(int i = 0; i < d.size(); i++) {
-            this -> d[i] = other_vec[i];
-      }
+    this->d.resize(other_vec.size());
+    this->ismatrix = false;
+    for (int i = 0; i < d.size(); i++) {
+      this->d[i] = other_vec[i];
+    }
 
-      if(other_vec.d.im() == true) {
-        this -> ismatrix = true;
-        this -> ncols = other_vec.d.nc();
-        this -> nrows = other_vec.d.nr();
-      }
+    if (other_vec.d.im() == true) {
+      this->ismatrix = true;
+      this->ncols = other_vec.d.nc();
+      this->nrows = other_vec.d.nr();
+    }
 
-      subsetted = false;
-
+    subsetted = false;
   }
   // constructor for COMPARISON
-  VEC(const VEC<bool>& other_vec) : d(1), temp(1) {
+  VEC(const VEC<bool> &other_vec) : d(1), temp(1) {
     d.resize(other_vec.size());
     ismatrix = false;
     subsetted = false;
-    for(int i = 0; i < d.size(); i++) {
+    for (int i = 0; i < d.size(); i++) {
       d[i] = other_vec[i];
     }
-
   }
   // constructor for pointer
-  VEC(const int n, T* ptr, int cob) : subsetted(0), ismatrix(0), d(n, ptr, cob), temp(1) {} //cob = copy, owning, borrow
-  VEC(const int r, const int c, T* ptr, int cob) : subsetted(0), ismatrix(1), ncols(c), nrows(r), d(r*c, ptr, cob), temp(1) {} //cob = copy, owning, borrow
+  VEC(const int n, T *ptr, int cob)
+      : subsetted(0), ismatrix(0), d(n, ptr, cob), temp(1) {
+  } // cob = copy, owning, borrow
+  VEC(const int r, const int c, T *ptr, int cob)
+      : subsetted(0), ismatrix(1), ncols(c), nrows(r), d(r * c, ptr, cob),
+        temp(1) {} // cob = copy, owning, borrow
 
-  operator bool() const{return d[0];}
+  operator bool() const { return d[0]; }
 
   operator SEXP() const {
     SEXP ret = R_NilValue;
 
-    if(this -> ismatrix) {
-       ret = PROTECT(Rf_allocMatrix(REALSXP, this -> nrows, this -> ncols ) );
+    if (this->ismatrix) {
+      ret = PROTECT(Rf_allocMatrix(REALSXP, this->nrows, this->ncols));
     } else {
-       ret = PROTECT(Rf_allocVector(REALSXP, this -> d.size() ) );
+      ret = PROTECT(Rf_allocVector(REALSXP, this->d.size()));
     }
 
-    for(int i = 0; i < d.size(); i++) {
+    for (int i = 0; i < d.size(); i++) {
       REAL(ret)[i] = d[i];
     }
 
@@ -125,102 +139,100 @@ public:
   VEC(Rboolean value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
   VEC(SEXP inp) : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
 
-    if(Rf_isReal(inp)) {
+    if (Rf_isReal(inp)) {
       d.init_sexp(inp);
       subsetted = false;
       ismatrix = false;
-      if(Rf_isMatrix(inp) == true) {
-      ismatrix = true;
-      ncols = Rf_ncols(inp);
-      nrows = Rf_nrows(inp);
+      if (Rf_isMatrix(inp) == true) {
+        ismatrix = true;
+        ncols = Rf_ncols(inp);
+        nrows = Rf_nrows(inp);
       }
     } else {
-      Rf_error("no numeric input"); 
+      Rf_error("no numeric input");
     }
-      
   }
-  VEC(Rcpp::NumericVector other_vec) : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
+  VEC(Rcpp::NumericVector other_vec)
+      : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
     d.resize(other_vec.size());
-    this -> ismatrix = false;
-    this -> ncols = 0;
-    this -> nrows = 0;
+    this->ismatrix = false;
+    this->ncols = 0;
+    this->nrows = 0;
     subsetted = false;
 
-    for(int i = 0; i < other_vec.size(); i++) {
+    for (int i = 0; i < other_vec.size(); i++) {
       d[i] = other_vec[i];
     }
   }
-  VEC(Rcpp::NumericMatrix other_vec) : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
+  VEC(Rcpp::NumericMatrix other_vec)
+      : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
     d.resize(other_vec.size());
-    this -> ismatrix = true;
-    this -> ncols = other_vec.ncol();
-    this -> nrows = other_vec.nrow();
+    this->ismatrix = true;
+    this->ncols = other_vec.ncol();
+    this->nrows = other_vec.nrow();
     subsetted = false;
 
-    for(int i = 0; i < other_vec.size(); i++) {
+    for (int i = 0; i < other_vec.size(); i++) {
       d[i] = other_vec[i];
     }
-
   }
-  VEC(arma::vec& other_vec) : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
+  VEC(arma::vec &other_vec) : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
     d.resize(other_vec.size());
-    this -> ismatrix = false;
-    this -> ncols = 0;
-    this -> nrows = 0;
+    this->ismatrix = false;
+    this->ncols = 0;
+    this->nrows = 0;
     subsetted = false;
 
-    for(int i = 0; i < other_vec.size(); i++) {
+    for (int i = 0; i < other_vec.size(); i++) {
       d[i] = other_vec[i];
     }
-
   }
-  VEC(arma::mat& other_vec) : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
+  VEC(arma::mat &other_vec) : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
     d.resize(other_vec.size());
-    this -> ismatrix = true;
-    this -> ncols = other_vec.n_cols;
-    this -> nrows = other_vec.n_rows;
+    this->ismatrix = true;
+    this->ncols = other_vec.n_cols;
+    this->nrows = other_vec.n_rows;
     subsetted = false;
 
-    for(int i = 0; i < other_vec.size(); i++) {
+    for (int i = 0; i < other_vec.size(); i++) {
       d[i] = other_vec[i];
     }
-
   }
 
-  VEC& operator=(SEXP inp) {
+  VEC &operator=(SEXP inp) {
     subsetted = false;
     ismatrix = false;
 
     ass(Rf_isReal(inp), "no numeric input");
-    if(Rf_isMatrix(inp) == true) {
+    if (Rf_isMatrix(inp) == true) {
       ismatrix = true;
       ncols = Rf_ncols(inp);
       nrows = Rf_nrows(inp);
     }
 
     d.init_sexp(inp);
- 
+
     return *this;
   }
 
   operator Rcpp::NumericVector() const {
-    Rcpp::NumericVector ret(this -> size());
-    for(int i = 0; i < ret.size(); i++) {
+    Rcpp::NumericVector ret(this->size());
+    for (int i = 0; i < ret.size(); i++) {
       ret[i] = d[i];
     }
 
     return ret;
   }
 
-  VEC& operator=(Rcpp::NumericVector& other_vec) {
+  VEC &operator=(Rcpp::NumericVector &other_vec) {
 
     d.resize(other_vec.size());
-    this -> ismatrix = false;
-    this -> ncols = 0;
-    this -> nrows = 0;
+    this->ismatrix = false;
+    this->ncols = 0;
+    this->nrows = 0;
     subsetted = false;
 
-    for(int i = 0; i < other_vec.size(); i++) {
+    for (int i = 0; i < other_vec.size(); i++) {
       d[i] = other_vec[i];
     }
 
@@ -228,24 +240,24 @@ public:
   }
 
   operator Rcpp::NumericMatrix() const {
-    ass(this -> im() == true, "Object cannot be converted to NumericMatrix");
-    Rcpp::NumericMatrix ret(this -> nr(), this -> nc());
-    for(int i = 0; i < ret.size(); i++) {
+    ass(this->im() == true, "Object cannot be converted to NumericMatrix");
+    Rcpp::NumericMatrix ret(this->nr(), this->nc());
+    for (int i = 0; i < ret.size(); i++) {
       ret[i] = d[i];
     }
 
     return ret;
   }
 
-  VEC& operator=(Rcpp::NumericMatrix& other_vec) {
+  VEC &operator=(Rcpp::NumericMatrix &other_vec) {
 
     d.resize(other_vec.size());
-    this -> ismatrix = true;
-    this -> ncols = other_vec.ncol();
-    this -> nrows = other_vec.nrow();
+    this->ismatrix = true;
+    this->ncols = other_vec.ncol();
+    this->nrows = other_vec.nrow();
     subsetted = false;
 
-    for(int i = 0; i < other_vec.size(); i++) {
+    for (int i = 0; i < other_vec.size(); i++) {
       d[i] = other_vec[i];
     }
 
@@ -253,23 +265,23 @@ public:
   }
 
   operator arma::vec() const {
-    arma::vec ret(this -> size());
-    for(int i = 0; i < this -> size(); i++) {
+    arma::vec ret(this->size());
+    for (int i = 0; i < this->size(); i++) {
       ret[i] = d[i];
     }
 
     return ret;
   }
 
-  VEC& operator=(arma::vec& other_vec) {
+  VEC &operator=(arma::vec &other_vec) {
 
     d.resize(other_vec.size());
-    this -> ismatrix = false;
-    this -> ncols = 0;
-    this -> nrows = 0;
+    this->ismatrix = false;
+    this->ncols = 0;
+    this->nrows = 0;
     subsetted = false;
 
-    for(int i = 0; i < other_vec.size(); i++) {
+    for (int i = 0; i < other_vec.size(); i++) {
       d[i] = other_vec[i];
     }
 
@@ -277,24 +289,24 @@ public:
   }
 
   operator arma::mat() const {
-    ass(this -> im() == true, "Object cannot be converted to arma::mat");
-    arma::mat ret(this -> nr(), this -> nc());
-    for(int i = 0; i < ret.size(); i++) {
+    ass(this->im() == true, "Object cannot be converted to arma::mat");
+    arma::mat ret(this->nr(), this->nc());
+    for (int i = 0; i < ret.size(); i++) {
       ret[i] = d[i];
     }
 
     return ret;
   }
 
-  VEC& operator=(arma::mat& other_vec) {
+  VEC &operator=(arma::mat &other_vec) {
 
     d.resize(other_vec.size());
-    this -> ismatrix = true;
-    this -> ncols = other_vec.n_cols;
-    this -> nrows = other_vec.n_rows;
+    this->ismatrix = true;
+    this->ncols = other_vec.n_cols;
+    this->nrows = other_vec.n_rows;
     subsetted = false;
 
-    for(int i = 0; i < other_vec.size(); i++) {
+    for (int i = 0; i < other_vec.size(); i++) {
       d[i] = other_vec[i];
     }
 
@@ -303,13 +315,13 @@ public:
 
   // vector & matrix operator=
   // ================================================================
-  VEC& operator=(const T &dob) {
-    if(subsetted == false) {
+  VEC &operator=(const T &dob) {
+    if (subsetted == false) {
       d.resize(1);
       ismatrix = false;
       d[0] = dob;
     } else {
-      for(std::size_t i = 0; i < indices.size(); i++) {
+      for (std::size_t i = 0; i < indices.size(); i++) {
         d[indices[i]] = dob;
       }
     }
@@ -318,33 +330,32 @@ public:
     return *this;
   }
 
-  VEC& operator=(const VEC& other_vec) {
+  VEC &operator=(const VEC &other_vec) {
 
-    if(this -> subsetted == false) {
-      if(d.size() != other_vec.size()) {
-          d.resize(other_vec.size());
+    if (this->subsetted == false) {
+      if (d.size() != other_vec.size()) {
+        d.resize(other_vec.size());
       }
 
-      this -> ismatrix = false;
+      this->ismatrix = false;
 
-      for(int i = 0; i < d.size(); i++) {
+      for (int i = 0; i < d.size(); i++) {
         d[i] = other_vec[i];
       }
 
-      if(other_vec.im() == true) {
-        this -> ismatrix = true;
-        this -> ncols = other_vec.nc();
-        this -> nrows = other_vec.nr();
+      if (other_vec.im() == true) {
+        this->ismatrix = true;
+        this->ncols = other_vec.nc();
+        this->nrows = other_vec.nr();
       }
     } else {
 
-      ass(static_cast<int>(indices.size()) <= other_vec.size(), "number of items to replace is not a multiple of replacement length");
+      ass(static_cast<int>(indices.size()) <= other_vec.size(),
+          "number of items to replace is not a multiple of replacement length");
 
-      for(std::size_t i = 0; i < indices.size(); i++) {
+      for (std::size_t i = 0; i < indices.size(); i++) {
         d[indices[i]] = other_vec[i];
       }
-
-
     }
 
     subsetted = false;
@@ -352,44 +363,40 @@ public:
     return *this;
   }
 
-  template<typename T2, typename R2>
-  VEC& operator=(const VEC<T2, R2> &other_vec) {
-    
-    //std::cout << typeid(other_vec).name() << std::endl; 
-    
-    if(subsetted == false) {
-      this -> ismatrix = false;
+  template <typename T2, typename R2>
+  VEC &operator=(const VEC<T2, R2> &other_vec) {
+
+    if (subsetted == false) {
+      this->ismatrix = false;
 
       temp.resize(other_vec.size());
-      for(int i = 0; i < temp.size(); i++) {
-            temp[i] = other_vec[i];
+      for (int i = 0; i < temp.size(); i++) {
+        temp[i] = other_vec[i];
       }
 
-      if(d.size() != other_vec.size()) { // .d?
-        d.resize(other_vec.size()); // .d ?
+      if (d.size() != other_vec.size()) { // .d?
+        d.resize(other_vec.size());       // .d ?
       }
 
-      if(d.todelete == true) {
+      if (d.todelete == true) {
         d.moveit(temp); // currently not working but why?????
       } else {
-        this -> d = temp; // copy necessary in case only ownership is borrowed!
+        this->d = temp; // copy necessary in case only ownership is borrowed!
       }
 
-
-      if(other_vec.d.im() == true) {
+      if (other_vec.d.im() == true) {
         ismatrix = true;
         ncols = other_vec.d.nc();
         nrows = other_vec.d.nr();
       }
 
-
     } else {
       temp.resize(indices.size());
-      for(int i = 0; i < temp.size(); i++) {
-          temp[i] = other_vec[i];
+      for (int i = 0; i < temp.size(); i++) {
+        temp[i] = other_vec[i];
       }
-      for(std::size_t i = 0; i < indices.size(); i++) {
-          this -> d[indices[i]] = temp[i];
+      for (std::size_t i = 0; i < indices.size(); i++) {
+        this->d[indices[i]] = temp[i];
       }
     }
 
@@ -398,169 +405,123 @@ public:
     return *this;
   }
 
-// getter methods for vector
-// ================================================================
- int size() const {
-   return d.size();
- }
+  // getter methods for vector
+  // ================================================================
+  int size() const { return d.size(); }
 
- T operator[](int i) const {
-   return d[i];
- }
+  T operator[](int i) const { return d[i]; }
 
- T& operator[](int i) {
-   return d[i];
- }
+  T &operator[](int i) { return d[i]; }
 
- const R& data() const {
-   return d; // d.p
- }
+  const R &data() const {
+    return d; // d.p
+  }
 
- R& data() {
-   return d;
- }
+  R &data() { return d; }
 
- T* pointer() {
-   return d.data();
- }
-// ================================================================
+  T *pointer() { return d.data(); }
+  // ================================================================
 
-bool is_subsetted() const {
-  return subsetted;
-}
+  bool is_subsetted() const { return subsetted; }
 
-void realloc(int new_size) { // when is it called?
-  d.realloc(new_size);
-}
+  void realloc(int new_size) { // when is it called?
+    d.realloc(new_size);
+  }
 
-// getter methods for matrix
-// ================================================================
- int ncol() const {
-   return ncols;
- }
+  // getter methods for matrix
+  // ================================================================
+  int ncol() const { return ncols; }
 
- int nrow() const {
-   return nrows;
- }
+  int nrow() const { return nrows; }
 
+  bool im() const { return ismatrix; }
 
-bool im() const {
-  return ismatrix;
-}
+  int nc() const { return ncols; }
 
-int nc() const {
-  return ncols;
-}
+  int nr() const { return nrows; }
 
-int nr() const {
-  return nrows;
-}
+  auto begin() const { return It<T>{d.p}; }
 
- auto begin() const {
-   return It<T>{d.p};
- }
+  auto end() const { return It<T>{d.p + this->size()}; }
 
- auto end() const {
-   return It<T>{d.p + this -> size()};
- }
+  T &back() const { return d.p[this->size()]; }
 
- T& back() const {
-   return d.p[this -> size()];
- }
-
- // resize indices
- void rsi(int sizenew) {
-   this -> indices.resize(sizenew);
- }
+  // resize indices
+  void rsi(int sizenew) { this->indices.resize(sizenew); }
 
 }; // end class VEC
 
 // type traits for VEC<T>
-template<typename T>
-struct is_vec : std::false_type {};
-              
-template<>
-struct is_vec<VEC<double>> : std::true_type {};
-            
-template<>
-struct is_vec<std::initializer_list<double>> : std::true_type {};
-              
-template<>
-struct is_vec<double> : std::false_type {};
-              
+template <typename T> struct is_vec : std::false_type {};
 
-inline int d2i(double inp) {
-  return static_cast<int>(inp);
+template <> struct is_vec<VEC<double>> : std::true_type {};
+
+template <> struct is_vec<std::initializer_list<double>> : std::true_type {};
+
+template <> struct is_vec<double> : std::false_type {};
+
+inline int d2i(double inp) { return static_cast<int>(inp); }
+
+inline double i2d(int inp) { return static_cast<double>(inp); }
+
+inline double &at(const VEC<double> &inp, int i) {
+  i--;
+  return inp.d[i];
 }
 
-inline double i2d(int inp) {
-  return static_cast<double>(inp);
+inline double &at(const VEC<double> &&inp, int i) {
+  i--;
+  return inp.d[i];
 }
 
-inline double& at(const VEC<double>& inp, int i) {
-   i--;
-   return inp.d[i];
- }
-
-inline double& at(const VEC<double>&& inp, int i) {
-   i--;
-   return inp.d[i];
- }
-
-
-inline double& at(const VEC<double>& inp, double i_) {
-   int i = d2i(i_);
-   i--;
-   return inp.d[i];
- }
-
-inline double& at(const VEC<double>&& inp, double i_) {
-   int i = d2i(i_);
-   i--;
-   return inp.d[i];
- }
-
-inline double& at(const VEC<double>& inp, int r, int c) {
-
-   ass(inp.im() == true, "Input is not a matrix!");
-   r--;
-   c--;
-   return inp.d[c*inp.nr() + r];
- }
-
-
-inline double& at(const VEC<double>& inp, double r_, double c_) {
-
-   ass(inp.im() == true, "Input is not a matrix!");
-   int r = d2i(r_);
-   int c = d2i(c_);
-   r--;
-   c--;
-   return inp.d[c*inp.nr() + r];
- }
-
-inline double& at(const VEC<double>&& inp, int r, int c) {
-
-   ass(inp.im() == true, "Input is not a matrix!");
-   r--;
-   c--;
-   return inp.d[c*inp.nr() + r];
- }
-
-
-inline double& at(const VEC<double>&& inp, double r_, double c_) {
-
-   ass(inp.im() == true, "Input is not a matrix!");
-   int r = d2i(r_);
-   int c = d2i(c_);
-   r--;
-   c--;
-   return inp.d[c*inp.nr() + r];
- }
-
-
-
-
+inline double &at(const VEC<double> &inp, double i_) {
+  int i = d2i(i_);
+  i--;
+  return inp.d[i];
 }
+
+inline double &at(const VEC<double> &&inp, double i_) {
+  int i = d2i(i_);
+  i--;
+  return inp.d[i];
+}
+
+inline double &at(const VEC<double> &inp, int r, int c) {
+
+  ass(inp.im() == true, "Input is not a matrix!");
+  r--;
+  c--;
+  return inp.d[c * inp.nr() + r];
+}
+
+inline double &at(const VEC<double> &inp, double r_, double c_) {
+
+  ass(inp.im() == true, "Input is not a matrix!");
+  int r = d2i(r_);
+  int c = d2i(c_);
+  r--;
+  c--;
+  return inp.d[c * inp.nr() + r];
+}
+
+inline double &at(const VEC<double> &&inp, int r, int c) {
+
+  ass(inp.im() == true, "Input is not a matrix!");
+  r--;
+  c--;
+  return inp.d[c * inp.nr() + r];
+}
+
+inline double &at(const VEC<double> &&inp, double r_, double c_) {
+
+  ass(inp.im() == true, "Input is not a matrix!");
+  int r = d2i(r_);
+  int c = d2i(c_);
+  r--;
+  c--;
+  return inp.d[c * inp.nr() + r];
+}
+
+} // namespace etr
 
 #endif

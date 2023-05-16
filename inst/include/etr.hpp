@@ -22,7 +22,6 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef A2A_H
 #define A2A_H
 
-
 #include "etr_bits/header.hpp"
 #include "etr_bits/util.hpp"
 #include "etr_bits/pointer_storage.hpp"
@@ -45,11 +44,6 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "etr_bits/distri.hpp"
 #include "etr_bits/conversion.hpp"
 
-//#define vec VEC<double>
-//#define mat VEC<double>
-
 #define sexp etr::VEC<double>
-
-//using namespace etr;
 
 #endif

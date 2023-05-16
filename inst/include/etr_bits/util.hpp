@@ -28,8 +28,8 @@ namespace etr {
 
 // error function --> stop program & show message
 inline void ass(bool inp, std::string message) {
-  if(inp == false) {
-      Rf_error(message.c_str());
+  if (inp == false) {
+    Rf_error(message.c_str());
   }
 }
 
@@ -55,6 +55,6 @@ std::vector<double> range(int start, int end) {
   return ret;
 }
 */
-}
+} // namespace etr
 
 #endif

@@ -26,51 +26,51 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-template<class F, class...Args>
-inline F for_each_arg(F f, Args&&...args) {
-  (f(std::forward<Args>(args)),...);
+template <class F, class... Args> inline F for_each_arg(F f, Args &&...args) {
+  (f(std::forward<Args>(args)), ...);
   return f;
 }
 
-template<typename...Args>
-inline VEC<double> coca(Args&&...args) {
+template <typename... Args> inline VEC<double> coca(Args &&...args) {
   int size = 0;
-  for_each_arg([&](auto arg){
-    if constexpr (std::is_same<decltype(arg), int>::value) {
-      size++;
-    } else if(std::is_same<decltype(arg), double>::value) {
-      size++;
-    } else {
-      if constexpr (is_vec<decltype(arg)>::value){
-        size += arg.size();
-      } 
-    }
-  }, args...);
-  
+  for_each_arg(
+      [&](auto arg) {
+        if constexpr (std::is_same<decltype(arg), int>::value) {
+          size++;
+        } else if (std::is_same<decltype(arg), double>::value) {
+          size++;
+        } else {
+          if constexpr (is_vec<decltype(arg)>::value) {
+            size += arg.size();
+          }
+        }
+      },
+      args...);
+
   VEC<double> ret(size, 0.0);
   int index = 0;
-  
-  for_each_arg([&](auto arg){
-    if constexpr (std::is_same<decltype(arg), int>::value) {
-      ret[index] = static_cast<double>(arg);
-      index++;
-    } else if(std::is_same<decltype(arg), double>::value) {
-      ret[index] = arg;
-      index++;
-    } else {
-      if constexpr (is_vec<decltype(arg)>::value){
-        for(int i = 0; i < arg.size(); i++) {
-          ret[index + i] = arg[i];
+
+  for_each_arg(
+      [&](auto arg) {
+        if constexpr (std::is_same<decltype(arg), int>::value) {
+          ret[index] = static_cast<double>(arg);
+          index++;
+        } else if (std::is_same<decltype(arg), double>::value) {
+          ret[index] = arg;
+          index++;
+        } else {
+          if constexpr (is_vec<decltype(arg)>::value) {
+            for (int i = 0; i < arg.size(); i++) {
+              ret[index + i] = arg[i];
+            }
+            index += arg.size();
+          }
         }
-        index += arg.size();  
-      }
-    }
-  }, args...);
-  
+      },
+      args...);
+
   return ret;
 }
-
-
 
 /*
 
@@ -88,7 +88,7 @@ inline VEC<double> coca(Args&&...args) {
  ret.ismatrix = false;
  return ret;
  }
- 
+
  inline VEC<double> combine(VEC<double>& a, VEC<double>& b) {
  //a.ismatrix = false;
  //b.ismatrix = false;
@@ -103,7 +103,7 @@ inline VEC<double> coca(Args&&...args) {
  ret.ismatrix = false;
  return ret;
  }
- 
+
  inline VEC<double> combine(VEC<double>& a, double b) {
  VEC<double> ret(a.size() + 1);
  //a.ismatrix = false;
@@ -117,7 +117,7 @@ inline VEC<double> coca(Args&&...args) {
  ret.ismatrix = false;
  return ret;
  }
- 
+
  inline VEC<double> combine(double a, VEC<double>& b) {
  VEC<double> ret(b.size() + 1);
  //b.ismatrix = false;
@@ -131,8 +131,8 @@ inline VEC<double> coca(Args&&...args) {
  ret.ismatrix = false;
  return ret;
  }
- 
- 
+
+
 template <typename ... Ts>
 inline VEC<double> coca (Ts && ... multi_inputs) {
     VEC<double> ret;
@@ -177,6 +177,6 @@ inline VEC<double> coca (Ts & ... multi_inputs) {
 }
 */
 
-}
+} // namespace etr
 
 #endif

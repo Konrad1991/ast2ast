@@ -20,64 +20,57 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 */
 #ifndef CONVERT_H
 #define CONVERT_H
-  
-#include "vec.hpp"
-  
-namespace etr {  
-  
-    inline SEXP cpp2R() {
-      return R_NilValue;
-    }
-  
-    inline SEXP cpp2R(int res) {
-      return Rf_ScalarReal(etr::i2d(res));
-    }
-  
-    inline SEXP cpp2R(bool res) {
-      return Rf_ScalarReal(etr::i2d(static_cast<int>(res)));
-    }
-  
-    inline SEXP cpp2R(double res) {
-      return Rf_ScalarReal(res);
-    }
-    
-    inline SEXP cpp2R(const VEC<double>& res) {
-      SEXP ret = R_NilValue;
-      
-      if(res.im()) {
-        ret = PROTECT(Rf_allocMatrix(REALSXP, res.nrow(), res.ncol() ) );
-      } else {
-        ret = PROTECT(Rf_allocVector(REALSXP, res.size() ) );
-      }
-      
-      for(int i = 0; i < res.size(); i++) {
-        REAL(ret)[i] = res[i];
-      }
-      
-      UNPROTECT(1);
-      
-      return ret;
-    }
 
-    template<typename T2, typename R2>
-    inline SEXP cpp2R(const VEC<T2, R2> &res) {
-      SEXP ret = R_NilValue;
-      
-      if(res.im()) {
-        ret = PROTECT(Rf_allocMatrix(REALSXP, res.nrow(), res.ncol() ) );
-      } else {
-        ret = PROTECT(Rf_allocVector(REALSXP, res.size() ) );
-      }
-      
-      for(int i = 0; i < res.size(); i++) {
-        REAL(ret)[i] = res[i];
-      }
-      
-      UNPROTECT(1);
-      
-      return ret;
-    }
-    
+#include "vec.hpp"
+
+namespace etr {
+
+inline SEXP cpp2R() { return R_NilValue; }
+
+inline SEXP cpp2R(int res) { return Rf_ScalarReal(etr::i2d(res)); }
+
+inline SEXP cpp2R(bool res) {
+  return Rf_ScalarReal(etr::i2d(static_cast<int>(res)));
 }
-  
+
+inline SEXP cpp2R(double res) { return Rf_ScalarReal(res); }
+
+inline SEXP cpp2R(const VEC<double> &res) {
+  SEXP ret = R_NilValue;
+
+  if (res.im()) {
+    ret = PROTECT(Rf_allocMatrix(REALSXP, res.nrow(), res.ncol()));
+  } else {
+    ret = PROTECT(Rf_allocVector(REALSXP, res.size()));
+  }
+
+  for (int i = 0; i < res.size(); i++) {
+    REAL(ret)[i] = res[i];
+  }
+
+  UNPROTECT(1);
+
+  return ret;
+}
+
+template <typename T2, typename R2> inline SEXP cpp2R(const VEC<T2, R2> &res) {
+  SEXP ret = R_NilValue;
+
+  if (res.im()) {
+    ret = PROTECT(Rf_allocMatrix(REALSXP, res.nrow(), res.ncol()));
+  } else {
+    ret = PROTECT(Rf_allocVector(REALSXP, res.size()));
+  }
+
+  for (int i = 0; i < res.size(); i++) {
+    REAL(ret)[i] = res[i];
+  }
+
+  UNPROTECT(1);
+
+  return ret;
+}
+
+} // namespace etr
+
 #endif
