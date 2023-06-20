@@ -250,10 +250,13 @@ MA <- R6::R6Class("MA",
       variables <- self$get_vars()
 
       args_dec <- sapply(seq_along(variables), function(x) {
-        temp <- paste(self$var_types[[x]], variables[[x]], ";", collapse = "")
+        temp <- paste( gsub(" ", "", self$var_types[[x]]),
+                      paste0(variables[[x]], ";", collapse = ""),
+                      collapse = "")
         return(temp)
       })
-      args_dec <- paste(args_dec, collapse = " ")
+      args_dec <- paste(args_dec, collapse = "")
+      args_dec <- paste("\n", args_dec, "\n")
 
       fct_args <- self$args_2_fct
       fct_args_ptr <- sapply(seq_along(fct_args), function(x) {
