@@ -55,8 +55,13 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
     }
 
     res <- NULL
-    Sys.setenv("PKG_CXXFLAGS" = "-DRFCT -O2") # remove warnings -Wall -Wpedantic!!!!!!!!!!
-    # options(warn = -1)
+    # -fsanitize=alignment,bool,bounds,builtin,enum,integer-divide-by-zero,
+    #nonnull-attribute,null,object-size,pointer-overflow,return,
+    #returns-nonnull-attribute,shift,signed-integer-overflow,
+    # unreachable,vla-bound,vptr
+    Sys.setenv("PKG_CXXFLAGS" = "-DRFCT") 
+    # -fsanitize=address --param=max-vartrack-size=9000000 -fno-omit-frame-pointer 
+    
     tryCatch(
       expr = {
         env <- new.env()
@@ -68,8 +73,7 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
       }
     )
 
-    Sys.unsetenv("PKG_CXXFLAGS") # is this correct?
-    # options(warn = 0)
+    Sys.unsetenv("PKG_CXXFLAGS") 
 
     if (verbose == TRUE) {
       cat(fct)
