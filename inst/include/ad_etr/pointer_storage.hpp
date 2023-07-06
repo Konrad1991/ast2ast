@@ -22,6 +22,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #define STORAGE_H
 
 #include "util.hpp"
+#include "traits.hpp"
 
 namespace etr {
 
@@ -42,9 +43,10 @@ public:
 - If new is called once delete has to be called in the destructor
 - If new is not called. Then R will delete the memory!
 */
-template <typename T> class STORE {
+template <typename T, typename Trait = NullTrait> class STORE {
 
 public:
+  using TypeTrait = Trait;
   T *p;
   int sz; // size
   int capacity;
