@@ -444,7 +444,7 @@ public:
 
   auto end() const { return It<T>{d.p + this->size()}; }
 
-  T &back() const { return d.p[this->size() -1]; }
+  T &back() const { return d.p[this->size() - 1]; }
 
   // resize indices
   void rsi(int sizenew) { this->indices.resize(sizenew); }

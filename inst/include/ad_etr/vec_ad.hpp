@@ -29,8 +29,9 @@ namespace etr {
 Vector & matrix module
 */
 template <typename T, typename R = STORE<T>
-// ,typename Trait = NullTrait
-  > class VEC {
+          // ,typename Trait = NullTrait
+          >
+class VEC {
 
 private:
 public:
@@ -48,12 +49,13 @@ public:
   // data
   R d;
   STORE<T> temp;
-  //using TypeTrait = Trait;
+  // using TypeTrait = Trait;
 
   template <typename T2> VEC(T2 n) = delete;
 
   VEC(const double value)
-      : subsetted(0), ismatrix(0), d(1, value), temp(1) {} // d(1, value) or d(1) {d[0] = value} --> all tests run positive
+      : subsetted(0), ismatrix(0), d(1, value), temp(1) {
+  } // d(1, value) or d(1) {d[0] = value} --> all tests run positive
   VEC(const long unsigned int n)
       : subsetted(0), ismatrix(0), d(1, static_cast<double>(n)), temp(1) {
   } // run all tests whether this is possible
@@ -316,8 +318,8 @@ public:
 
   // vector & matrix operator=
   // ================================================================
-  template<typename TD>
-  requires std::is_same_v<TD, double>
+  template <typename TD>
+    requires std::is_same_v<TD, double>
   VEC &operator=(const TD &dob) {
     if (subsetted == false) {
       d.resize(1);
@@ -365,53 +367,55 @@ public:
     return *this;
   }
 
-  template<typename Tree_L, typename Tree_R>
-  void print_tree(const Tree_L& l,const Tree_R& r) const {
-      std::string demangled_r = demangle(typeid(r).name());
-      Rcpp::Rcout << "type of R: " << demangled_r << " address of R " << &r << std::endl;
-      std::string demangled_l = demangle(typeid(l).name());
-      Rcpp::Rcout << "type of L: " << demangled_l << " address of L " << &l << std::endl;
-      Rcpp::Rcout << std::endl;
+  template <typename Tree_L, typename Tree_R>
+  void print_tree(const Tree_L &l, const Tree_R &r) const {
+    std::string demangled_r = demangle(typeid(r).name());
+    Rcpp::Rcout << "type of R: " << demangled_r << " address of R " << &r
+                << std::endl;
+    std::string demangled_l = demangle(typeid(l).name());
+    Rcpp::Rcout << "type of L: " << demangled_l << " address of L " << &l
+                << std::endl;
+    Rcpp::Rcout << std::endl;
   }
 
-  template <typename T2>  
-  requires HasTypeTrait<T2>
+  template <typename T2>
+    requires HasTypeTrait<T2>
   void walk(const T2 &other_vec) {
     if constexpr (std::is_same_v<typename T2::TypeTrait, NullTrait>) {
-        return;
+      return;
     } else {
-        auto r = other_vec.getR();
-        auto l = other_vec.getL();
-        Rcpp::Rcout << "bla1 " << &r << " " << &l << std::endl;
-        //using trait_l = typename std::remove_reference<decltype(l)>::type::TypeTrait;
-        //using trait_r = typename std::remove_reference<decltype(r)>::type::TypeTrait;
+      auto r = other_vec.getR();
+      auto l = other_vec.getL();
+      Rcpp::Rcout << "bla1 " << &r << " " << &l << std::endl;
+      // using trait_l = typename
+      // std::remove_reference<decltype(l)>::type::TypeTrait; using trait_r =
+      // typename std::remove_reference<decltype(r)>::type::TypeTrait;
 
-        using trait_l = typename decltype(l)::TypeTrait;
-        using trait_r = typename decltype(r)::TypeTrait;
+      using trait_l = typename decltype(l)::TypeTrait;
+      using trait_r = typename decltype(r)::TypeTrait;
 
-        bool isNull_l = std::is_same<trait_l, NullTrait>::value;
-        bool isNull_r = std::is_same<trait_r, NullTrait>::value;
-    
-        // base case
-        if (isNull_r && isNull_l) {
-          print_tree(l, r);
-          return; 
-        } else if (!isNull_l && isNull_r) {
-          print_tree(l, r);
-          walk(l);
-        } else if (isNull_l && !isNull_r) {
-          print_tree(l, r);
-          walk(r);
-        } else {
-          print_tree(l, r);
-          walk(l);
-        }
+      bool isNull_l = std::is_same<trait_l, NullTrait>::value;
+      bool isNull_r = std::is_same<trait_r, NullTrait>::value;
+
+      // base case
+      if (isNull_r && isNull_l) {
+        print_tree(l, r);
+        return;
+      } else if (!isNull_l && isNull_r) {
+        print_tree(l, r);
+        walk(l);
+      } else if (isNull_l && !isNull_r) {
+        print_tree(l, r);
+        walk(r);
+      } else {
+        print_tree(l, r);
+        walk(l);
+      }
     }
-    
   }
 
-  template <typename T2>  
-  requires (!HasTypeTrait<T2>)
+  template <typename T2>
+    requires(!HasTypeTrait<T2>)
   void walk(const T2 &other_vec) {
     std::string demangled = demangle(typeid(other_vec).name());
     Rcpp::Rcout << demangled << std::endl;
@@ -419,24 +423,28 @@ public:
     std::string demangled_d = demangle(typeid(d_other_vec).name());
     Rcpp::Rcout << demangled_d << std::endl;
     auto r = d_other_vec.getR();
-    auto& rRef = d_other_vec.getR(); // this works. auto& instead of auto! auto leads to a copy!
+    auto &rRef =
+        d_other_vec
+            .getR(); // this works. auto& instead of auto! auto leads to a copy!
     auto l = d_other_vec.getL();
-    Rcpp::Rcout << "bla2 " << &d_other_vec.l << " " << &d_other_vec.r << " " << &rRef << std::endl; // works --> ok than public l and r
+    Rcpp::Rcout << "bla2 " << &d_other_vec.l << " " << &d_other_vec.r << " "
+                << &rRef << std::endl; // works --> ok than public l and r
     // or maybe test a reference_wrapper in the VVPLUS class. around r and l
     Rcpp::Rcout << "bla2 " << &r << " " << &l << std::endl;
-    //using trait_l = typename std::remove_reference<decltype(l)>::type::TypeTrait;
-    //using trait_r = typename std::remove_reference<decltype(r)>::type::TypeTrait;
+    // using trait_l = typename
+    // std::remove_reference<decltype(l)>::type::TypeTrait; using trait_r =
+    // typename std::remove_reference<decltype(r)>::type::TypeTrait;
 
     using trait_l = typename decltype(l)::TypeTrait;
     using trait_r = typename decltype(r)::TypeTrait;
-    
+
     bool isNull_l = std::is_same<trait_l, NullTrait>::value;
     bool isNull_r = std::is_same<trait_r, NullTrait>::value;
 
     // base case
     if (isNull_r && isNull_l) {
       print_tree(l, r);
-      return; 
+      return;
     } else if (!isNull_l && isNull_r) {
       print_tree(l, r);
       walk(l);
@@ -447,14 +455,13 @@ public:
       print_tree(l, r);
       walk(l);
     }
-    
   }
 
   template <typename T2, typename R2>
   VEC &operator=(const VEC<T2, R2> &other_vec) {
 
     walk(other_vec);
-    
+
     if (subsetted == false) {
       this->ismatrix = false;
 
@@ -468,7 +475,7 @@ public:
       }
 
       if (d.todelete == true) {
-        d.moveit(temp); 
+        d.moveit(temp);
       } else {
         this->d = temp; // copy necessary in case only ownership is borrowed!
       }
@@ -492,7 +499,7 @@ public:
     subsetted = false;
 
     return *this;
-  } 
+  }
 
   // getter methods for vector
   // ================================================================
@@ -533,7 +540,7 @@ public:
 
   auto end() const { return It<T>{d.p + this->size()}; }
 
-  T &back() const { return d.p[this->size() -1]; }
+  T &back() const { return d.p[this->size() - 1]; }
 
   // resize indices
   void rsi(int sizenew) { this->indices.resize(sizenew); }
