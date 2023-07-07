@@ -22,6 +22,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #define VEC_H
 
 #include "pointer_storage.hpp"
+#include "operator.hpp"
 
 namespace etr {
 
@@ -32,7 +33,7 @@ template <typename T, typename R = STORE<T>
           // ,typename Trait = NullTrait
           >
 class VEC {
-
+  using store = STORE<double, NullTrait>;
 private:
 public:
   bool subsetted;
@@ -49,7 +50,6 @@ public:
   // data
   R d;
   STORE<T> temp;
-  // using TypeTrait = Trait;
 
   template <typename T2> VEC(T2 n) = delete;
 
@@ -368,99 +368,128 @@ public:
   }
 
   template <typename Tree_L, typename Tree_R>
-  void print_tree(const Tree_L &l, const Tree_R &r) const {
+  void print_tree(const Tree_L &l, const Tree_R &r, std::vector<Operation<store> >& tape) const {
     std::string demangled_r = demangle(typeid(r).name());
+    using trait_l = std::remove_reference<decltype(l)>::type::TypeTrait;
+    using trait_r = std::remove_reference<decltype(r)>::type::TypeTrait;
+    if constexpr(std::is_same<trait_l, NullTrait>::value) {
+      Rcpp::Rcout << tape.size() << "size" << std::endl;
+      tape.back().ltype = &l;
+    } 
+    if constexpr (std::is_same<trait_r, NullTrait>::value) {
+      Rcpp::Rcout << tape.size() << "sizeblablabla" << std::endl;
+      tape.back().rtype = &r;
+    }
     Rcpp::Rcout << "type of R: " << demangled_r << " address of R " << &r
+                << " value of r[0]: " << r[0]
                 << std::endl;
     std::string demangled_l = demangle(typeid(l).name());
     Rcpp::Rcout << "type of L: " << demangled_l << " address of L " << &l
+                << " value of l[0]: " << l[0]
                 << std::endl;
     Rcpp::Rcout << std::endl;
   }
 
   template <typename T2>
     requires HasTypeTrait<T2>
-  void walk(const T2 &other_vec) {
+  void walk(const T2 &other_vec, std::vector<Operation<store> >& tape) {
     if constexpr (std::is_same_v<typename T2::TypeTrait, NullTrait>) {
       return;
     } else {
-      auto r = other_vec.getR();
-      auto l = other_vec.getL();
-      Rcpp::Rcout << "bla1 " << &r << " " << &l << std::endl;
-      // using trait_l = typename
-      // std::remove_reference<decltype(l)>::type::TypeTrait; using trait_r =
-      // typename std::remove_reference<decltype(r)>::type::TypeTrait;
 
-      using trait_l = typename decltype(l)::TypeTrait;
-      using trait_r = typename decltype(r)::TypeTrait;
-
+      auto& r = other_vec.getR();
+      auto& l = other_vec.getL();
+      using trait_l = std::remove_reference<decltype(l)>::type::TypeTrait;
+      using trait_r = std::remove_reference<decltype(r)>::type::TypeTrait;
       bool isNull_l = std::is_same<trait_l, NullTrait>::value;
       bool isNull_r = std::is_same<trait_r, NullTrait>::value;
 
       // base case
+      //if constexpr (std::is_same<trait_l, NullTrait>::value && std::is_same<trait_r, NullTrait>::value) {
+      //  Operation<store> op(l[0], r[0], -1);
+      //  op.ltype = &l; 
+      //  op.rtype = &r;
+      //  tape.push_back(op);
+      //}
+
       if (isNull_r && isNull_l) {
-        print_tree(l, r);
+        Rcpp::Rcout << "1" << std::endl;
+        print_tree(l, r, tape);
+        Operation<store> op(l[0], r[0], -1);
+        tape.push_back(op);
         return;
       } else if (!isNull_l && isNull_r) {
-        print_tree(l, r);
-        walk(l);
+        Rcpp::Rcout << "2" << std::endl;
+        print_tree(l, r, tape);
+        Operation<store> op(l[0], r[0], -1);
+        tape.push_back(op);
+        walk(l, tape);
       } else if (isNull_l && !isNull_r) {
-        print_tree(l, r);
-        walk(r);
+        Rcpp::Rcout << "3" << std::endl;
+        print_tree(l, r, tape);
+        Operation<store> op(l[0], r[0], -1);
+        tape.push_back(op);
+        walk(r, tape);
       } else {
-        print_tree(l, r);
-        walk(l);
+        Rcpp::Rcout << "4" << std::endl;
+        print_tree(l, r, tape);
+        Operation<store> op(l[0], r[0], -1);
+        tape.push_back(op);
+        walk(l, tape);
       }
     }
   }
 
   template <typename T2>
     requires(!HasTypeTrait<T2>)
-  void walk(const T2 &other_vec) {
-    std::string demangled = demangle(typeid(other_vec).name());
-    Rcpp::Rcout << demangled << std::endl;
+  void walk(const T2 &other_vec, std::vector<Operation<store> >& tape) {
     auto d_other_vec = other_vec.data(); // extract e.g VVPLUS from VEC
-    std::string demangled_d = demangle(typeid(d_other_vec).name());
-    Rcpp::Rcout << demangled_d << std::endl;
-    auto r = d_other_vec.getR();
-    auto &rRef =
-        d_other_vec
-            .getR(); // this works. auto& instead of auto! auto leads to a copy!
-    auto l = d_other_vec.getL();
-    Rcpp::Rcout << "bla2 " << &d_other_vec.l << " " << &d_other_vec.r << " "
-                << &rRef << std::endl; // works --> ok than public l and r
-    // or maybe test a reference_wrapper in the VVPLUS class. around r and l
-    Rcpp::Rcout << "bla2 " << &r << " " << &l << std::endl;
-    // using trait_l = typename
-    // std::remove_reference<decltype(l)>::type::TypeTrait; using trait_r =
-    // typename std::remove_reference<decltype(r)>::type::TypeTrait;
-
-    using trait_l = typename decltype(l)::TypeTrait;
-    using trait_r = typename decltype(r)::TypeTrait;
-
+    auto& r = d_other_vec.getR();
+    auto& l = d_other_vec.getL();
+    using trait_l = std::remove_reference<decltype(l)>::type::TypeTrait;
+    using trait_r = std::remove_reference<decltype(r)>::type::TypeTrait;
     bool isNull_l = std::is_same<trait_l, NullTrait>::value;
     bool isNull_r = std::is_same<trait_r, NullTrait>::value;
 
     // base case
     if (isNull_r && isNull_l) {
-      print_tree(l, r);
+      Rcpp::Rcout << "5" << std::endl;
+      print_tree(l, r, tape);
+      Operation<store> op(l[0], r[0], -1);
+      tape.push_back(op);
       return;
     } else if (!isNull_l && isNull_r) {
-      print_tree(l, r);
-      walk(l);
+      Rcpp::Rcout << "6" << std::endl;
+      print_tree(l, r, tape);
+      Operation<store> op(l[0], r[0], -1);
+      tape.push_back(op);
+      walk(l, tape);
     } else if (isNull_l && !isNull_r) {
-      print_tree(l, r);
-      walk(r);
+      Rcpp::Rcout << "7" << std::endl;
+      print_tree(l, r, tape);
+      Operation<store> op(l[0], r[0], -1);
+      tape.push_back(op);
+      walk(r, tape);
     } else {
-      print_tree(l, r);
-      walk(l);
+      Rcpp::Rcout << "8" << std::endl;
+      print_tree(l, r, tape);
+      Operation<store> op(l[0], r[0], -1);
+      tape.push_back(op);
+      walk(l, tape);
     }
   }
 
   template <typename T2, typename R2>
   VEC &operator=(const VEC<T2, R2> &other_vec) {
+    std::vector<Operation<store> > tape;
+    tape.push_back(Operation<store>(0, 0, -2)); // just that the tape is not empty --> find better solution
+    walk(other_vec, tape);
 
-    walk(other_vec);
+    Rcpp::Rcout << "start of tape " << std::endl;
+    for(int i = 0; i < tape.size(); i++) {
+      tape[i].print();
+    }
+    Rcpp::Rcout << "end of tape " << std::endl;
 
     if (subsetted == false) {
       this->ismatrix = false;

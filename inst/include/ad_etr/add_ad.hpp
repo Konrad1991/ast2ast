@@ -41,8 +41,6 @@ public:
   using TypeTrait = Trait;
   VVPLUS(const L &a, const R &b, bool ismatrix_, int rows, int cols)
       : l(a), r(b), ismatrix(ismatrix_), rows_(rows), columns_(cols) {
-    Rcpp::Rcout << &a << " " << &b << std::endl;
-    Rcpp::Rcout << &l << " " << &r << std::endl;
   }
 
   T operator[](const int i) const { return l[i % l.size()] + r[i % r.size()]; }
@@ -59,12 +57,10 @@ public:
   int nr() const { return rows_; }
 
   const L &getL() const {
-    Rcpp::Rcout << &l << std::endl;
     return l;
   }
 
   const R &getR() const {
-    Rcpp::Rcout << &r << std::endl;
     return r;
   }
 };
@@ -72,8 +68,6 @@ public:
 template <typename T, typename L, typename R>
 inline VEC<T, VVPLUS<T, L, R>> operator+(const VEC<T, L> &a,
                                          const VEC<T, R> &b) {
-
-  Rcpp::Rcout << &a.data() << " " << &b.data() << std::endl;
 
   bool ismatrix_ = false;
   int nrows_ = 0;
