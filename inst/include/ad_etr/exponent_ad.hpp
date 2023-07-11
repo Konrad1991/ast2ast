@@ -22,13 +22,13 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef EXPONENT
 #define EXPONENT
 
-#include "vec.hpp"
+#include "vec_ad.hpp"
 
 namespace etr {
 
-template <typename T, typename L, typename R> class VVEXP {
+template <typename T, typename L, typename R, typename Trait = VVExpTrait> class VVEXP {
 
-private:
+public:
   const L &r; // const L& l;
   bool ismatrix;
   int nrow_;
@@ -36,6 +36,7 @@ private:
   double exponent;
 
 public:
+  using TypeTrait = Trait;
   VVEXP(const L &a, bool r_ismatrix, int r_rows, int r_cols, double exponent_)
       : r(a), exponent(exponent_) {
 
@@ -55,6 +56,14 @@ public:
   int nc() const { return ncol_; }
 
   int nr() const { return nrow_; }
+
+  const L &getL() const {
+    return r;
+  }
+
+  double getR() const {
+    return exponent;
+  }
 };
 
 template <typename T, typename L, typename R>

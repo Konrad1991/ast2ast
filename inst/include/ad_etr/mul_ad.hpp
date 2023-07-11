@@ -22,13 +22,14 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef MUL
 #define MUL
 
-#include "vec.hpp"
+#include "vec_ad.hpp"
 
 namespace etr {
 
-template <typename T, typename L, typename R> class VVTIMES {
+template <typename T, typename L, typename R, typename Trait = VVTimesTrait>
+class VVTIMES {
 
-private:
+public:
   const L &l; // const L& l;
   const R &r; // const R& r;
   bool ismatrix;
@@ -36,6 +37,7 @@ private:
   int columns_;
 
 public:
+  using TypeTrait = Trait;
   VVTIMES(const L &a, const R &b, bool ismatrix_, int rows, int cols)
       : l(a), r(b), ismatrix(ismatrix_), rows_(rows), columns_(cols) {}
 
@@ -51,6 +53,14 @@ public:
   int nc() const { return columns_; }
 
   int nr() const { return rows_; }
+
+  const L &getL() const {
+    return l;
+  }
+
+  const R &getR() const {
+    return r;
+  }
 };
 
 template <typename T, typename L, typename R>
@@ -92,7 +102,7 @@ inline VEC<T, VVTIMES<T, L, R>> operator*(const VEC<T, L> &a,
   return ret;
 }
 
-template <typename T, typename L, typename R> class VSTIMES {
+template <typename T, typename L, typename R, typename Trait = VSTimesTrait> class VSTIMES {
 
 private:
   const L &l;
@@ -102,6 +112,7 @@ private:
   int ncols;
 
 public:
+  using TypeTrait = Trait;
   VSTIMES(const L &a, const R &b, bool ismatrix_, int nrows_, int ncols_)
       : l(a), r(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) {}
 
@@ -117,6 +128,7 @@ public:
 };
 
 template <typename T, typename L, typename R>
+requires std::is_same_v<R, double>
 inline VEC<T, VSTIMES<T, L, R>> operator*(const VEC<T, L> &a, const R & b) {
   bool ismatrix_ = false;
   int nrows_ = 0;
@@ -138,7 +150,7 @@ inline VEC<T, VSTIMES<T, L, R>> operator*(const VEC<T, L> &a, const R & b) {
   return ret;
 }
 
-template <typename T, typename L, typename R> class SVTIMES {
+template <typename T, typename L, typename R, typename Trait = SVTimesTrait> class SVTIMES {
 
 private:
   const R &r;
@@ -148,6 +160,7 @@ private:
   const int ncols;
 
 public:
+  using TypeTrait = Trait;
   SVTIMES(const R &a, const L &b, bool ismatrix_, int nrows_, int ncols_)
       : r(a), l(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) {}
 
@@ -163,6 +176,7 @@ public:
 };
 
 template <typename T, typename L, typename R>
+requires std::is_same_v<R, double>
 inline VEC<T, SVTIMES<T, L, R>> operator*(const R & a, const VEC<T, L> &b) {
   bool ismatrix_ = false;
   int nrows_ = 0;

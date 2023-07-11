@@ -24,6 +24,10 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #define A2A_H
 
 #include "ad_etr/add_ad.hpp"
+#include "ad_etr/mul_ad.hpp"
+#include "ad_etr/subtract_ad.hpp"
+#include "ad_etr/mul_ad.hpp"
+#include "ad_etr/exponent_ad.hpp"
 #include "ad_etr/pointer_storage.hpp"
 #include "ad_etr/vec_ad.hpp"
 #include "etr_bits/header.hpp"

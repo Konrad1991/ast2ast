@@ -22,79 +22,11 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef MINUS
 #define MINUS
 
-#include "vec.hpp"
+#include "vec_ad.hpp"
 
 namespace etr {
 
-/*
-template<typename T, typename L, typename R>
-class VVMINUS {
-
-private:
-  const L& l; //const L& l;
-  const R& r; //const R& r;
-  std::vector<int> indices1;
-  std::vector<int> indices2;
-  int columns_;
-  int rows_;
-  bool ismatrix;
-
-public:
-
-  VVMINUS(const L &a, const R &b, bool ismatrix_, int rows, int cols) : l(a),
-r(b), ismatrix(ismatrix_), rows_(rows), columns_(cols) {
-
-       if(l.size() > r.size()) {
-         //ass((l.size() % r.size()) == 0, "Vector is not multiple of other
-vector"); indices1.resize(l.size()); indices2.resize(l.size()); for(int i = 0; i
-< indices2.size(); i++) { indices1[i] = i;
-
-           int times = floor(i/r.size());
-           indices2[i] =  i - times*r.size();
-         }
-       } else if(r.size() > l.size()) {
-         //ass((l.size() % r.size()) == 0, "Vector is not multiple of other
-vector"); indices1.resize(r.size()); indices2.resize(r.size()); for(int i = 0; i
-< indices2.size(); i++) { indices2[i] = i;
-
-           int times = floor(i/l.size());
-           indices1[i] =  i - times*l.size();
-         }
-     } else if(r.size() == l.size()) {
-       indices1.resize(l.size());
-       indices2.resize(r.size());
-       for(int i = 0; i < indices2.size(); i++) {
-         indices1[i] = i;
-         indices2[i] = i;
-       }
-     }
-   }
-
-   T operator[](const int i) const {
-     return l[indices1[i]] - r[indices2[i]];
-   }
-
-   int size() const {
-     int sz = (l.size() > r.size()) ? l.size() : r.size();
-     return   sz;      //l.size(); // correct?
-   }
-
-   bool im() const {
-     return ismatrix;
-   }
-
-   int nc() const {
-     return columns_;
-   }
-
-   int nr() const {
-     return rows_;
-   }
-
-};
-*/
-
-template <typename T, typename L, typename R> class VVMINUS {
+template <typename T, typename L, typename R, typename Trait = VVMinusTrait> class VVMINUS {
 
 private:
   const L &l; // const L& l;
@@ -104,6 +36,7 @@ private:
   int columns_;
 
 public:
+  using TypeTrait = Trait;
   VVMINUS(const L &a, const R &b, bool ismatrix_, int rows, int cols)
       : l(a), r(b), ismatrix(ismatrix_), rows_(rows), columns_(cols) {}
 
@@ -119,6 +52,14 @@ public:
   int nc() const { return columns_; }
 
   int nr() const { return rows_; }
+
+  const L &getL() const {
+    return l;
+  }
+
+  const R &getR() const {
+    return r;
+  }
 };
 
 template <typename T, typename L, typename R>
@@ -160,7 +101,7 @@ inline VEC<T, VVMINUS<T, L, R>> operator-(const VEC<T, L> &a,
   return ret;
 }
 
-template <typename T, typename L, typename R> class VSMINUS {
+template <typename T, typename L, typename R, typename Trait = VSMinusTrait> class VSMINUS {
 
 private:
   const L &l;
@@ -170,6 +111,7 @@ private:
   int ncols;
 
 public:
+  using TypeTrait = Trait;
   VSMINUS(const L &a, const R &b, bool ismatrix_, int nrows_, int ncols_)
       : l(a), r(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) {}
 
@@ -185,6 +127,7 @@ public:
 };
 
 template <typename T, typename L, typename R>
+requires std::is_same_v<R, double>
 inline VEC<T, VSMINUS<T, L, R>> operator-(const VEC<T, L> &a, const R & b) {
 
   bool ismatrix_ = false;
@@ -207,7 +150,7 @@ inline VEC<T, VSMINUS<T, L, R>> operator-(const VEC<T, L> &a, const R & b) {
   return ret;
 }
 
-template <typename T, typename L, typename R> class SVMINUS {
+template <typename T, typename L, typename R, typename Trait = SVMinusTrait> class SVMINUS {
 
 private:
   const R &r;
@@ -217,6 +160,7 @@ private:
   const int ncols;
 
 public:
+  using TypeTrait = Trait;
   SVMINUS(const R &a, const L &b, bool ismatrix_, int nrows_, int ncols_)
       : r(a), l(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) {}
 
@@ -232,6 +176,7 @@ public:
 };
 
 template <typename T, typename L, typename R>
+requires std::is_same_v<R, double>
 inline VEC<T, SVMINUS<T, L, R>> operator-(const R & a, const VEC<T, L> &b) {
   bool ismatrix_ = false;
   int nrows_ = 0;
@@ -259,7 +204,7 @@ inline VEC<T, SVMINUS<T, L, R>> operator-(const R & a, const VEC<T, L> &b) {
 // + and - work in this way! +1 does not compile! Thus bug should be removed!
 template <typename T, typename L> class VMINUS {
 
-private:
+public:
   const L &l;
   bool ismatrix;
   int nrows;
@@ -278,6 +223,7 @@ public:
   int nc() const { return ncols; }
 
   int nr() const { return nrows; }
+
 };
 
 template <typename T, typename L>

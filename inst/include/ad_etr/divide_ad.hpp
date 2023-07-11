@@ -22,11 +22,11 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef DIV
 #define DIV
 
-#include "vec.hpp"
+#include "vec_ad.hpp"
 
 namespace etr {
 
-template <typename T, typename L, typename R> class VVDIV {
+template <typename T, typename L, typename R, typename Trait = VVDivTrait> class VVDIV {
 
 private:
   const L &l; // const L& l;
@@ -36,6 +36,7 @@ private:
   int columns_;
 
 public:
+  using TypeTrait = Trait;
   VVDIV(const L &a, const R &b, bool ismatrix_, int rows, int cols)
       : l(a), r(b), ismatrix(ismatrix_), rows_(rows), columns_(cols) {}
 
@@ -92,9 +93,9 @@ inline VEC<T, VVDIV<T, L, R>> operator/(const VEC<T, L> &a,
   return ret;
 }
 
-template <typename T, typename L, typename R> class VSDIV {
+template <typename T, typename L, typename R, typename Trait = VSDivTrait> class VSDIV {
 
-private:
+public:
   const L &l;
   const R &r;
   bool ismatrix;
@@ -102,6 +103,7 @@ private:
   int ncols;
 
 public:
+  using TypeTrait = Trait;
   VSDIV(const L &a, const R &b, bool ismatrix_, int nrows_, int ncols_)
       : l(a), r(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) {}
 
@@ -114,9 +116,18 @@ public:
   int nc() const { return ncols; }
 
   int nr() const { return nrows; }
+
+  const L &getL() const {
+    return l;
+  }
+
+  const R &getR() const {
+    return r;
+  }
 };
 
 template <typename T, typename L, typename R>
+requires std::is_same_v<R, double>
 inline VEC<T, VSDIV<T, L, R>> operator/(const VEC<T, L> &a, const R & b) {
 
   bool ismatrix_ = false;
@@ -139,7 +150,7 @@ inline VEC<T, VSDIV<T, L, R>> operator/(const VEC<T, L> &a, const R & b) {
   return ret;
 }
 
-template <typename T, typename L, typename R> class SVDIV {
+template <typename T, typename L, typename R, typename Trait = SVDivTrait> class SVDIV {
 
 private:
   const R &r;
@@ -149,6 +160,7 @@ private:
   const int ncols;
 
 public:
+  using TypeTrait = Trait;
   SVDIV(const R &a, const L &b, bool ismatrix_, int nrows_, int ncols_)
       : r(a), l(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) {}
 
@@ -164,6 +176,7 @@ public:
 };
 
 template <typename T, typename L, typename R>
+requires std::is_same_v<R, double>
 inline VEC<T, SVDIV<T, L, R>> operator/(const R & a, const VEC<T, L> &b) {
 
   bool ismatrix_ = false;

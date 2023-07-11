@@ -24,6 +24,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "vec_ad.hpp"
 #include <cxxabi.h>
 #include <string>
+#include "header.hpp"
 
 std::string demangle(const char *mangledName) {
   int status;
@@ -36,12 +37,49 @@ std::string demangle(const char *mangledName) {
 namespace etr {
 
 struct NullTrait {};
+
 struct VVPlusTrait {};
 struct VSPlusTrait {};
 struct SVPlusTrait {};
 
+struct VVMinusTrait {};
+struct VSMinusTrait {};
+struct SVMinusTrait {};
+
+struct VVTimesTrait {};
+struct VSTimesTrait {};
+struct SVTimesTrait {};
+
+struct VVDivTrait {};
+struct VSDivTrait {};
+struct SVDivTrait {};
+
+struct VVExpTrait {};
+
+struct NullOperation {};
+
 template <typename T>
 concept HasTypeTrait = requires { typename T::TypeTrait; };
+
+template <typename T>
+constexpr int checkTraits() {
+    return -1;
+}
+
+template <>
+constexpr int checkTraits<NullTrait>() {
+    return 0;
+}
+
+template <>
+constexpr int checkTraits<VVPlusTrait>() {
+    return 1;
+}
+
+template <>
+constexpr int checkTraits<VVTimesTrait>() {
+    return 2;
+}
 
 } // namespace etr
 
