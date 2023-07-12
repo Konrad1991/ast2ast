@@ -63,22 +63,27 @@ concept HasTypeTrait = requires { typename T::TypeTrait; };
 
 template <typename T>
 constexpr int checkTraits() {
-    return -1;
+    return -2;
 }
 
 template <>
 constexpr int checkTraits<NullTrait>() {
-    return 0;
+    return -1;
 }
 
 template <>
 constexpr int checkTraits<VVPlusTrait>() {
-    return 1;
+    return 0;
 }
 
 template <>
 constexpr int checkTraits<VVTimesTrait>() {
     return 2;
+}
+
+template <>
+constexpr int checkTraits<VVMinusTrait>() {
+    return 1;
 }
 
 } // namespace etr

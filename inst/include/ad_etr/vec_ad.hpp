@@ -368,7 +368,7 @@ public:
   }
 
   template <typename Tree_L, typename Tree_R>
-  void fill_tape(const Tree_L &l, const Tree_R &r, std::vector<Operation<store> >& tape, const int& type_of_operation) const {
+  void fill_tape(const Tree_L &l, const Tree_R &r, std::vector<Operation<store> >& tape, const int optor) const {
     using trait_l = std::remove_reference<decltype(l)>::type::TypeTrait;
     using trait_r = std::remove_reference<decltype(r)>::type::TypeTrait;
     constexpr bool isNull_l = std::is_same<trait_l, NullTrait>::value;
@@ -378,14 +378,14 @@ public:
       for(int i = 0; i < l.size(); i++) l_[i] = l[i];
       std::vector<double> r_(r.size());
       for(int i = 0; i < r.size(); i++) r_[i] = r[i];
-      Operation<store> op(l_, r_, -1);
+      Operation<store> op(l_, r_, optor);
       tape.push_back(op);
     } else if constexpr (!isNull_l && isNull_r) {
       std::vector<double> l_(l.size());
       for(int i = 0; i < l.size(); i++) l_[i] = l[i];
       std::vector<double> r_(r.size());
       for(int i = 0; i < r.size(); i++) r_[i] = r[i];
-      Operation<store> op(l_, r_, -1);
+      Operation<store> op(l_, r_, optor);
       tape.push_back(op);
       tape.back().rtype = &r;
     } else if constexpr (!isNull_r && isNull_l) {
@@ -393,7 +393,7 @@ public:
       for(int i = 0; i < l.size(); i++) l_[i] = l[i];
       std::vector<double> r_(r.size());
       for(int i = 0; i < r.size(); i++) r_[i] = r[i];
-      Operation<store> op(l_, r_, -1);
+      Operation<store> op(l_, r_, optor);
       tape.push_back(op);
       tape.back().ltype = &l;
     } else if constexpr (isNull_l && isNull_r) {
@@ -401,7 +401,7 @@ public:
       for(int i = 0; i < l.size(); i++) l_[i] = l[i];
       std::vector<double> r_(r.size());
       for(int i = 0; i < r.size(); i++) r_[i] = r[i];
-      Operation<store> op(l_, r_, -1);
+      Operation<store> op(l_, r_, optor);
       tape.push_back(op);
       tape.back().ltype = &l;
       tape.back().rtype = &r;
@@ -421,16 +421,9 @@ public:
       constexpr bool isNull_l = std::is_same<trait_l, NullTrait>::value;
       constexpr bool isNull_r = std::is_same<trait_r, NullTrait>::value;
 
-      using trait_vec = std::remove_reference<decltype(other_vec)>::type::TypeTrait; // type if current operation
+      using trait_vec = std::remove_reference<decltype(other_vec)>::type::TypeTrait; 
       constexpr int vec_trait = checkTraits<trait_vec>();
-      Rcpp::Rcout << "vec_trait " << vec_trait << std::endl;
-      // create Operation op and push_back it into tape
-      // in fill_tape l and r from tape.back() are filled
-      
-      std::string demangled_l = demangle(typeid(l).name());
-      std::string demangled_r = demangle(typeid(r).name());
-      Rcpp::Rcout << "l type: " << demangled_l << " r type: " << demangled_r << " l val[0] " << l[0] << " r val[0] " << r[0] << std::endl;
-
+  
       if constexpr (isNull_r && isNull_l) {
         fill_tape(l, r, tape, vec_trait);
         return;
@@ -451,7 +444,6 @@ public:
 
     using trait_vec = std::remove_reference<decltype(d_other_vec)>::type::TypeTrait; // type if current operation
     constexpr int vec_trait = checkTraits<trait_vec>();
-    Rcpp::Rcout << "vec_trait " << vec_trait << std::endl;
 
     auto& r = d_other_vec.getR();
     auto& l = d_other_vec.getL();
@@ -459,10 +451,6 @@ public:
     using trait_r = std::remove_reference<decltype(r)>::type::TypeTrait;
     constexpr bool isNull_l = std::is_same<trait_l, NullTrait>::value;
     constexpr bool isNull_r = std::is_same<trait_r, NullTrait>::value;
-
-    std::string demangled_l = demangle(typeid(l).name());
-    std::string demangled_r = demangle(typeid(r).name());
-    Rcpp::Rcout << "l type: " << demangled_l << " r type: " << demangled_r << " l val[0] " << l[0] << " r val[0] " << r[0] << std::endl;
 
     if constexpr (isNull_r && isNull_l) {
       fill_tape(l, r, tape, vec_trait);
@@ -476,21 +464,75 @@ public:
     } 
   }
 
+  void print_deriv(std::vector<std::vector<double>>& derivatives) {
+    Rcpp::Rcout << "start derivs" << std::endl;
+    for(int k = 0; k < derivatives.size(); k++) {
+      for(int m = 0; m < derivatives[k].size(); m++) {
+        Rcpp::Rcout << derivatives[k][m] << std::endl;
+      }
+    }
+    Rcpp::Rcout << "end derivs" << std::endl;
+  }
+
+  std::vector< std::vector<double> > compute_derivatives(const std::vector<Operation<store>>& tape, int num_vars, int vector_size) {
+
+    std::vector<std::vector<double> > derivatives;
+    derivatives.resize(vector_size);
+    for(int i = 0; i < vector_size; i++) {
+      derivatives[i].resize(num_vars);
+      for(int j = 0; j < derivatives[i].size(); j++) {
+        derivatives[i][j] = 0.0;
+      }
+    }
+
+    auto eval_tape = [&](const std::vector<Operation<store>>& tape, int index, std::vector<std::vector<double> >& derivatives) { 
+
+      for (int i = tape.size() - 1; i >= 0; --i) {
+        const Operation<store>& op = tape[i];
+        const std::vector<double>& values_l = op.l;
+        const std::vector<double>& values_r = op.r;
+        derivatives[index][0] += op.evaluate_deriv(op.ltype, index);
+        derivatives[index][1] += op.evaluate_deriv(op.rtype, index);
+        if (op.op == 2 && op.ltype == op.rtype) { // Self-multiplication case
+          Rcpp::Rcout << values_l[index] << " " << derivatives[index][0] << " " << derivatives[index][1] << std::endl;
+                derivatives[index][0] += 2.0 * values_l[index] * derivatives[index][0];
+        }
+      }
+    };
+    /*
+    f = e*a*d
+    a = 1.25
+    e = c(5, 6, 7, 8)
+    d = c(1, 2, 3, 4)
+
+    should result in df/de = c(1.25, 2.5, 3.75, 5); 
+    df/da = c(5, 12, 21, 32)
+    df/dd = c(6.25, 7.5, 8.75, 10)
+    2.25
+    11.25
+    0
+    2
+    13.5
+    0
+    3
+    15.75
+    0
+    4
+    18
+    0
+    */
+
+    for(int i = 0; i < vector_size; i++) {
+      eval_tape(tape, i, derivatives);
+      print_deriv(derivatives);
+    }
+
+    return derivatives;
+  }
+
   template <typename T2, typename R2>
   VEC &operator=(const VEC<T2, R2> &other_vec) {
     std::vector<Operation<store> > tape;
-    /*
-    add traits for +, -, *, / and ^ 
-      --> the traits are later used as template parameter for class Operation.
-          This is more efficient than the current integer approach.
-    std::vector< std::vector<Operation<store> > tape(1);
-    if in walk + or - is found (via traits)
-      - add new vector to tape
-      - copy content from last vector (before creation) into the new vector
-      - save the left side in the last vector before creation
-      - save the right side int the new vector
-    */
-
     walk(other_vec, tape);
 
     Rcpp::Rcout << "start of tape " << std::endl;
@@ -498,6 +540,24 @@ public:
       tape[i].print();
     }
     Rcpp::Rcout << "end of tape " << std::endl;
+
+    // gather variables
+    std::vector<const store*> variables(tape.size() * 2);
+    size_t counter = 0;
+    for(int i = 0; i < tape.size(); i++) {
+      variables[counter] = tape[i].ltype;
+      counter++;
+      variables[counter] = tape[i].rtype;
+      counter++;
+    }  
+    remove_duplicates(variables);
+    variables.erase(std::remove(variables.begin(), variables.end(), nullptr), variables.end());
+    Rcpp::Rcout << "variables start" << std::endl;
+    for(auto i: variables) Rcpp::Rcout << i << std::endl;
+    Rcpp::Rcout << "variables end" << std::endl;  
+
+    std::vector< std::vector<double> > derivatives = compute_derivatives(tape, variables.size(), other_vec.size());
+    print_deriv(derivatives);
 
     if (subsetted == false) {
       this->ismatrix = false;
