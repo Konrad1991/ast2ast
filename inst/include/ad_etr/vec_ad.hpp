@@ -387,7 +387,6 @@ public:
       for(int i = 0; i < r.size(); i++) r_[i] = r[i];
       Operation<store> op(l_, r_, optor);
       tape.push_back(op);
-      tape.back().rtype = &r;
     } else if constexpr (!isNull_r && isNull_l) {
       std::vector<double> l_(l.size());
       for(int i = 0; i < l.size(); i++) l_[i] = l[i];
@@ -395,7 +394,6 @@ public:
       for(int i = 0; i < r.size(); i++) r_[i] = r[i];
       Operation<store> op(l_, r_, optor);
       tape.push_back(op);
-      tape.back().ltype = &l;
     } else if constexpr (isNull_l && isNull_r) {
       std::vector<double> l_(l.size());
       for(int i = 0; i < l.size(); i++) l_[i] = l[i];
@@ -403,9 +401,35 @@ public:
       for(int i = 0; i < r.size(); i++) r_[i] = r[i];
       Operation<store> op(l_, r_, optor);
       tape.push_back(op);
-      tape.back().ltype = &l;
-      tape.back().rtype = &r;
     }
+  }
+
+  template <typename T2>
+    requires HasTypeTrait<T2>
+  void extract_variables(const T2& other_vec, std::vector<const store*>& vars) {
+      auto& r = other_vec.getR();
+      auto& l = other_vec.getL();
+      using trait_l = std::remove_reference<decltype(l)>::type::TypeTrait;
+      using trait_r = std::remove_reference<decltype(r)>::type::TypeTrait;
+      constexpr bool isNull_l = std::is_same<trait_l, NullTrait>::value;
+      constexpr bool isNull_r = std::is_same<trait_r, NullTrait>::value;
+      if constexpr (isNull_l && isNull_r) {
+        vars.push_back(&l);
+        vars.push_back(&l);
+        vars.push_back(&r);
+        vars.push_back(&r);
+      } else if constexpr(!isNull_l && isNull_r) {
+        vars.push_back(&r); // r.laddress
+        vars.push_back(&r); // r.raddress
+        extract_variables(l, vars);
+      } else if constexpr(isNull_l && !isNull_r) {
+        vars.push_back(&l); // l.laddress
+        vars.push_back(&l); // l.raddress
+        extract_variables(r, vars);
+      } else {
+        extract_variables(l, vars);
+        extract_variables(r, vars);
+      }
   }
 
   template <typename T2>
@@ -420,18 +444,40 @@ public:
       using trait_r = std::remove_reference<decltype(r)>::type::TypeTrait;
       constexpr bool isNull_l = std::is_same<trait_l, NullTrait>::value;
       constexpr bool isNull_r = std::is_same<trait_r, NullTrait>::value;
-
       using trait_vec = std::remove_reference<decltype(other_vec)>::type::TypeTrait; 
       constexpr int vec_trait = checkTraits<trait_vec>();
-  
       if constexpr (isNull_r && isNull_l) {
         fill_tape(l, r, tape, vec_trait);
+        tape.back().l_addresses = std::vector<const store*> {&l};
+        tape.back().r_addresses = std::vector<const store*> {&r};
         return;
-      } else if constexpr (!isNull_l) {
+      } else if constexpr (!isNull_l && isNull_r) {
+        std::vector<const store*> variables_l;
+        extract_variables(l, variables_l);
+        remove_duplicates(variables_l);
         fill_tape(l, r, tape, vec_trait);
+        tape.back().l_addresses = variables_l;
+        tape.back().r_addresses = std::vector<const store*> {&r};
         walk(l, tape);
-      } else if constexpr (!isNull_r) {
+      } else if constexpr (isNull_l && !isNull_r) {
+        std::vector<const store*> variables_r;
+        extract_variables(r, variables_r);
+        remove_duplicates(variables_r);
         fill_tape(l, r, tape, vec_trait);
+        tape.back().r_addresses = variables_r;
+        tape.back().l_addresses = std::vector<const store*> {&l};
+        walk(r, tape);
+      } else if constexpr (!isNull_l && !isNull_r) {
+        std::vector<const store*> variables_l;
+        extract_variables(l, variables_l);
+        std::vector<const store*> variables_r;
+        extract_variables(r, variables_r);
+        fill_tape(l, r, tape, vec_trait);
+        remove_duplicates(variables_l);
+        remove_duplicates(variables_r);
+        tape.back().l_addresses = variables_l;
+        tape.back().r_addresses = variables_r;
+        walk(l, tape);
         walk(r, tape);
       } 
     }
@@ -451,88 +497,100 @@ public:
     using trait_r = std::remove_reference<decltype(r)>::type::TypeTrait;
     constexpr bool isNull_l = std::is_same<trait_l, NullTrait>::value;
     constexpr bool isNull_r = std::is_same<trait_r, NullTrait>::value;
-
     if constexpr (isNull_r && isNull_l) {
-      fill_tape(l, r, tape, vec_trait);
-      return;
-    } else if constexpr (!isNull_l) {
-      fill_tape(l, r, tape, vec_trait);
-      walk(l, tape);
-    } else if constexpr (!isNull_r) {
-      fill_tape(l, r, tape, vec_trait);
-      walk(r, tape);
+        fill_tape(l, r, tape, vec_trait);
+        tape.back().l_addresses = std::vector<const store*> {&l};
+        tape.back().r_addresses = std::vector<const store*> {&r};
+        return;
+      } else if constexpr (!isNull_l && isNull_r) {
+        std::vector<const store*> variables_l;
+        extract_variables(l, variables_l);
+        remove_duplicates(variables_l);
+        fill_tape(l, r, tape, vec_trait);
+        tape.back().l_addresses = variables_l;
+        tape.back().r_addresses = std::vector<const store*> {&r};
+        walk(l, tape);
+      } else if constexpr (isNull_l && !isNull_r) {
+        std::vector<const store*> variables_r;
+        extract_variables(r, variables_r);
+        remove_duplicates(variables_r);
+        fill_tape(l, r, tape, vec_trait);
+        tape.back().r_addresses = variables_r;
+        tape.back().l_addresses = std::vector<const store*> {&l};
+        walk(r, tape);
+      } else if constexpr (!isNull_l && !isNull_r) {
+        std::vector<const store*> variables_l;
+        extract_variables(l, variables_l);
+        std::vector<const store*> variables_r;
+        extract_variables(r, variables_r);
+        fill_tape(l, r, tape, vec_trait);
+        remove_duplicates(variables_l);
+        remove_duplicates(variables_r);
+        tape.back().l_addresses = variables_l;
+        tape.back().r_addresses = variables_r;
+        walk(l, tape);
+        walk(r, tape);
     } 
   }
 
-  void print_deriv(std::vector<std::vector<double>>& derivatives) {
-    Rcpp::Rcout << "start derivs" << std::endl;
-    for(int k = 0; k < derivatives.size(); k++) {
-      for(int m = 0; m < derivatives[k].size(); m++) {
-        Rcpp::Rcout << derivatives[k][m] << std::endl;
+  std::vector<double> backward(std::vector<Operation<store> >& tape,
+                               std::vector< std::vector<OperationInfo> >& trace_entire, int size) {
+    
+    int var_index = 0; // with plus the trace is wrong
+
+    std::vector<OperationInfo> trace;
+    for(int i = 0; i < trace_entire.size(); i++) {
+      trace.push_back(trace_entire[i][var_index]);
+    }
+    
+    std::vector<double> derivs(size);
+    std::fill(derivs.begin(), derivs.end(), 0.0); // 1.0 
+
+    for(int i = trace.size() - 1; i >= 0; i--) {
+      Rcpp::Rcout << derivs[var_index] << std::endl;
+      if(trace[i].index != -1) {
+        const Operation op = tape[i];
+        op.print();
+        if(trace[i].lr == 2) { // not correct this block!!!!
+          Rcpp::Rcout << "test1" << std::endl;
+          if (op.op == 0) {  // Addition
+              //derivs[0] += op.evaluate_deriv(true, 0);
+          } else if (op.op == 1) {  // Subtraction
+              //derivs[0] += op.evaluate_deriv(false, 0) - op.evaluate_deriv(true, 0);
+          } else if (op.op == 2) {  // Multiplication
+              //derivs[0] *= op.evaluate_deriv(true, 0);
+              //derivs[0] *= op.evaluate_deriv(false, 0);
+          }
+        } else if(trace[i].lr == 1) {
+          Rcpp::Rcout << "test2" << std::endl;
+          if (op.op == 0) {  // Addition
+              derivs[0] += op.evaluate_deriv(true, 0);
+          } else if (op.op == 1) {  // Subtraction
+              derivs[0] += op.evaluate_deriv(true, 0);
+          } else if (op.op == 2) {  // Multiplication
+              derivs[0] += op.evaluate_deriv(true, 0); // *=
+          }
+        } else if(trace[i].lr == 0) {
+          Rcpp::Rcout << "test3" << std::endl;
+          if (op.op == 0) {  // Addition
+              derivs[0] += op.evaluate_deriv(false, 0);
+          } else if (op.op == 1) {  // Subtraction
+              derivs[0] += op.evaluate_deriv(false, 0);
+          } else if (op.op == 2) {  // Multiplication
+              derivs[0] += op.evaluate_deriv(false, 0); // *=
+          } 
+        } 
       }
     }
-    Rcpp::Rcout << "end derivs" << std::endl;
-  }
-
-  std::vector< std::vector<double> > compute_derivatives(const std::vector<Operation<store>>& tape, int num_vars, int vector_size) {
-
-    std::vector<std::vector<double> > derivatives;
-    derivatives.resize(vector_size);
-    for(int i = 0; i < vector_size; i++) {
-      derivatives[i].resize(num_vars);
-      for(int j = 0; j < derivatives[i].size(); j++) {
-        derivatives[i][j] = 0.0;
-      }
-    }
-
-    auto eval_tape = [&](const std::vector<Operation<store>>& tape, int index, std::vector<std::vector<double> >& derivatives) { 
-
-      for (int i = tape.size() - 1; i >= 0; --i) {
-        const Operation<store>& op = tape[i];
-        const std::vector<double>& values_l = op.l;
-        const std::vector<double>& values_r = op.r;
-        derivatives[index][0] += op.evaluate_deriv(op.ltype, index);
-        derivatives[index][1] += op.evaluate_deriv(op.rtype, index);
-        if (op.op == 2 && op.ltype == op.rtype) { // Self-multiplication case
-          Rcpp::Rcout << values_l[index] << " " << derivatives[index][0] << " " << derivatives[index][1] << std::endl;
-                derivatives[index][0] += 2.0 * values_l[index] * derivatives[index][0];
-        }
-      }
-    };
-    /*
-    f = e*a*d
-    a = 1.25
-    e = c(5, 6, 7, 8)
-    d = c(1, 2, 3, 4)
-
-    should result in df/de = c(1.25, 2.5, 3.75, 5); 
-    df/da = c(5, 12, 21, 32)
-    df/dd = c(6.25, 7.5, 8.75, 10)
-    2.25
-    11.25
-    0
-    2
-    13.5
-    0
-    3
-    15.75
-    0
-    4
-    18
-    0
-    */
-
-    for(int i = 0; i < vector_size; i++) {
-      eval_tape(tape, i, derivatives);
-      print_deriv(derivatives);
-    }
-
-    return derivatives;
+    
+    return derivs;
   }
 
   template <typename T2, typename R2>
   VEC &operator=(const VEC<T2, R2> &other_vec) {
+
     std::vector<Operation<store> > tape;
+    
     walk(other_vec, tape);
 
     Rcpp::Rcout << "start of tape " << std::endl;
@@ -540,24 +598,50 @@ public:
       tape[i].print();
     }
     Rcpp::Rcout << "end of tape " << std::endl;
-
-    // gather variables
-    std::vector<const store*> variables(tape.size() * 2);
-    size_t counter = 0;
-    for(int i = 0; i < tape.size(); i++) {
-      variables[counter] = tape[i].ltype;
-      counter++;
-      variables[counter] = tape[i].rtype;
-      counter++;
-    }  
+    
+    std::vector<const store*> variables(tape[0].l_addresses.begin(), tape[0].l_addresses.end());
+    variables.insert(variables.end(), tape[0].r_addresses.begin(), tape[0].r_addresses.end());
     remove_duplicates(variables);
-    variables.erase(std::remove(variables.begin(), variables.end(), nullptr), variables.end());
     Rcpp::Rcout << "variables start" << std::endl;
     for(auto i: variables) Rcpp::Rcout << i << std::endl;
-    Rcpp::Rcout << "variables end" << std::endl;  
+    Rcpp::Rcout << "variables end" << std::endl; 
 
-    std::vector< std::vector<double> > derivatives = compute_derivatives(tape, variables.size(), other_vec.size());
-    print_deriv(derivatives);
+    std::vector< std::vector<OperationInfo> > trace(tape.size());
+    for(int i = 0; i < trace.size(); i++) {
+      trace[i].resize(variables.size());
+      for(int j = 0; j < variables.size(); j++) {
+        auto it_l = std::find(tape[i].l_addresses.begin(), tape[i].l_addresses.end(), variables[j]);
+        auto it_r = std::find(tape[i].r_addresses.begin(), tape[i].r_addresses.end(), variables[j]);
+        if( (it_l != tape[i].l_addresses.end() ) && ( it_r != tape[i].r_addresses.end() ) ) { // left and right
+          trace[i][j].index = i;
+          trace[i][j].lr = 2;
+        } else if (it_l != tape[i].l_addresses.end()) { // left
+          trace[i][j].index = i;
+          trace[i][j].lr = 1;
+        } else if (it_r != tape[i].r_addresses.end()) { // right
+          trace[i][j].index = i;
+          trace[i][j].lr = 0;
+        } else { // not included
+          trace[i][j].index = -1;
+          trace[i][j].lr = -1;
+        }
+      }
+    }
+
+    
+    Rcpp::Rcout << "start of trace " << std::endl;
+    for(int i = 0; i < trace.size(); i++) {
+      for(int j = 0; j < variables.size(); j++) {
+        trace[i][j].print();
+      }
+      Rcpp::Rcout << std::endl;
+    }
+    Rcpp::Rcout << "end of trace " << std::endl;
+
+    auto derivs = backward(tape, trace, other_vec.size());
+    Rcpp::Rcout << "derivs start" << std::endl; 
+    Rcpp::Rcout << derivs[0] << std::endl;
+    Rcpp::Rcout << "derivs end" << std::endl; 
 
     if (subsetted == false) {
       this->ismatrix = false;

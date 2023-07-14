@@ -23,50 +23,36 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-template<typename VarType>
+template<typename Varaddress>
 class Operation {
 
 	public:
 	std::vector<double> l;
 	std::vector<double> r;
 
-	std::vector<double> l_derivs;
-	std::vector<double> r_derivs;
-
-	const VarType* ltype;
-	const VarType* rtype;
 	const int op; // -1 = end, 0 = +, 1 = -, 2 = *, 3 = /, 4 = ^
+	std::vector<const Varaddress*> l_addresses;
+	std::vector<const Varaddress*> r_addresses;
 
-	Operation(std::vector<double>& l_, std::vector<double>& r_, int op_) : l(std::move(l_)), r(std::move(r_)), op(op_) {
-		ltype = nullptr;
-		rtype = nullptr;
-		l_derivs.resize(l.size());
-		r_derivs.resize(r.size());
-	}
+	Operation(std::vector<double>& l_, std::vector<double>& r_, int op_) : l(std::move(l_)), r(std::move(r_)), op(op_) {}
 
-	void print() {
+	void print() const {
 		int size = (l.size() > r.size()) ? l.size() : r.size();
 		for (int i = 0; i < size; i++) {
-			std::cout << "vector index " << i << " l " << l[i % l.size()] << " r " << r[i % r.size()] << " op " << op
-			 << " ltype: " << ltype << " rtype: " << rtype << std::endl;
+			std::string op_string = "";
+			if(op == 2) op_string = "*";
+			if(op == 0) op_string = "+";
+			std::cout << "vector index " << i << " l " << l[i % l.size()] << " r " << r[i % r.size()] << " operation " << op_string << std::endl;
+
+			for(int j = 0; j < l_addresses.size(); j++) {
+				Rcpp::Rcout << l_addresses[j] << std::endl;
+			}
+
+			for(int j = 0; j < r_addresses.size(); j++) {
+				Rcpp::Rcout << r_addresses[j] << std::endl;
+			}
 		}
 		
-	}
-
-	void set_derivs_l(int index, double val) {
-		this -> l_derivs[index] = val;
-	}
-
-	void set_derivs_r(int index, double val) {
-		this -> r_derivs[index] = val;
-	}
-
-	double get_derivs_l(int index) const {
-		return l_derivs[index];
-	}
-
-	double get_derivs_r(int index) const {
-		return r_derivs[index];
 	}
 
 	double get_val_l(int index) const {
@@ -94,32 +80,40 @@ class Operation {
         	case 4: // exponentiation
         	    return std::pow(l[index], r[index]);
         	default:
-        	    // Handle unsupported operation or raise an error
-        	    // based on your requirements.
         	break;
     	}
 	}
 
-	double evaluate_deriv(const VarType* var, int index) const {
+	double evaluate_deriv(bool is_l, int index) const {
     	switch (op) {
         	case 0: // addition
         	    return 1.0; 
         	case 1: // subtraction
-        	    return var == ltype ? 1.0 : -1.0; 
+        	    return is_l ? 1.0 : -1.0; 
         	case 2: // multiplication
-        	    return var == ltype ? r[index] : l[index]; 
+        	    return is_l ? r[index] : l[index]; 
         	case 3: // division
-        	    return var == ltype ? 1.0 / r[index] : -l[index] / (r[index] * r[index]);
+        	    return is_l ? 1.0 / r[index] : -l[index] / (r[index] * r[index]);
         	case 4: // exponentiation
-        	    return var == ltype ? r[index] * std::pow(l[index], r[index] - 1) : std::pow(l[index], r[index]) * std::log(l[index]); 
+        	    return is_l ? r[index] * std::pow(l[index], r[index] - 1) : std::pow(l[index], r[index]) * std::log(l[index]); 
         	default:
-        	    // Handle unsupported operation or raise an error.
         	break;
     	}
+    	return 1.0;
 	}
-
+	
 };
 
+
+class OperationInfo {
+public:
+	int index;
+	int lr;
+
+	void print() {
+		Rcpp::Rcout << index << " " << lr << std::endl;
+	}
+};
 
 
 

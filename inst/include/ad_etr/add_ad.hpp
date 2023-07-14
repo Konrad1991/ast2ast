@@ -63,6 +63,7 @@ public:
   const R &getR() const {
     return r;
   }
+
 };
 
 template <typename T, typename L, typename R>
