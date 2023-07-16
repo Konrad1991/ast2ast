@@ -18,6 +18,7 @@
 # along with ast2ast
 # If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
+#' @export
 translate <- function(f, output = "R",
                       types_of_args = "SEXP", return_type = "SEXP",
                       reference = FALSE, verbose = FALSE, getsource = FALSE) {
@@ -67,8 +68,7 @@ translate <- function(f, output = "R",
   } else if (output == "XPtr") {
     R_fct <- FALSE
   }
-
-  name_f <- as.character(substitute(f))
+  
 
   # if output == "R" --> type has to be SEXP!
   if (R_fct) {
@@ -93,6 +93,20 @@ translate <- function(f, output = "R",
                 The argument reference will be ignored!")
     }
     reference <- FALSE
+  }
+  
+  # further checks: brackets, lambda function, empty if-else 
+  
+  # add brackets if not found
+  if (body(f)[[1]] != as.name("{")) {
+    body(f) <- substitute({f_body}, list(f_body = body(f)))
+  }
+  
+  # add name for lambda functions
+  if (is.name(substitute(f))) {
+    name_f <- as.character(substitute(f))
+  } else {
+    name_f <- "lambda_fcn"
   }
 
   fct_ret <- compiler_a2a(

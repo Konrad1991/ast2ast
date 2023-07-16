@@ -18,3 +18,5 @@
 ^translate.pdf
 ^CRAN-SUBMISSION$
 ^Structure_R_Code.drawio
+^.*\.Rproj$
+^\.Rproj\.user$

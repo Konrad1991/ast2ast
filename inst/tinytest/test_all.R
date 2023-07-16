@@ -1445,7 +1445,7 @@ fct <- function() { # function then one can use document outline to jump to this
 test <- fct()
 # random values
 
-# gamma --> this is completly inconsistent
+# gamma --> this is completely inconsistent
 # the Rcpp interface is different for rate and scale respectively!!!!!!!
 set.seed(1234)
 res <- rgamma(10, 1)
@@ -2136,7 +2136,9 @@ expect_equal(wrapper(fb_cpp, x), res )
 
 
 
-
-
-
+# tests for lambda function and single-line functions
+# f_singleline <- function(x) return(sin(x))
+# f_singleline_cpp <- ast2ast::translate(f_singleline)
+# 
+# f_lambda_cpp <- ast2ast::translate(function(x) return(sin(x)))
 
