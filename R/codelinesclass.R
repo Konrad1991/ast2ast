@@ -157,7 +157,7 @@ LC <- R6::R6Class("LC",
       } else if (deparse(fct) %in% self$namespace_etr_resolved()) {
         # nothing to do.
       } else {
-        message("Error: Sorry not all  functions are supported", "\n")
+        message("Error: Sorry not all functions are supported", "\n")
         message("Function: ", fct, " not supported")
         stop()
       }

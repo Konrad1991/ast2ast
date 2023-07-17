@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License along with ast2ast
 # If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
+#' @export
 J <- function(f, y, x,
               output = "R", types_of_args = "SEXP", return_type = "SEXP",
               reference = FALSE, verbose = FALSE, getsource = FALSE) {
