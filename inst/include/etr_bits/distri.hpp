@@ -420,7 +420,7 @@ inline VEC<double> dgamma_etr(const VEC<double> &x, const VEC<double> &shape,
     return R::dgamma(x[0], shape[0], scale[0], lg[0]);
     PutRNGstate();
   } else {
-    std::vector<int> sizes{shape.size(), scale.size(), lg.size()};
+    std::vector<int> sizes{shape.size(), static_cast<int>(scale.size()), lg.size()};
     int max = x.size();
     for (size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
@@ -442,13 +442,13 @@ inline VEC<double> dgamma_etr(const VEC<double> &x, const VEC<double> &shape,
 
 inline VEC<double> rgamma_etr(const VEC<double> &x, const VEC<double> &shape,
                               const VEC<double> &rate) {
-  /*
+  
   std::vector<double> scale(rate.size());
   for(int i = 0; i < scale.size(); i++) {
     scale[i] = 1.0 / rate[i];
   }
-  */
-  const VEC<double> &scale = 1 / rate;
+  
+  //const VEC<double> &scale = 1 / rate;
   if ((x.size() == 1) && (shape.size() == 1) && (scale.size() == 1)) {
     VEC<double> res(x[0], 0.0);
     int size = static_cast<int>(x[0]);
@@ -459,7 +459,7 @@ inline VEC<double> rgamma_etr(const VEC<double> &x, const VEC<double> &shape,
     }
     return res;
   } else {
-    std::vector<int> sizes{shape.size(), scale.size()};
+    std::vector<int> sizes{shape.size(), static_cast<int>(scale.size())};
     int max = x.size();
     for (size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
@@ -492,7 +492,7 @@ inline VEC<double> pgamma_etr(const VEC<double> &x, const VEC<double> &shape,
     return R::pgamma(x[0], shape[0], scale[0], lower[0], lg[0]);
     PutRNGstate();
   } else {
-    std::vector<int> sizes{shape.size(), scale.size(), lower.size(), lg.size()};
+    std::vector<int> sizes{shape.size(), static_cast<int>(scale.size()), lower.size(), lg.size()};
     int max = x.size();
     for (size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
@@ -527,7 +527,7 @@ inline VEC<double> qgamma_etr(const VEC<double> &x, const VEC<double> &shape,
     return R::qgamma(x[0], shape[0], scale[0], lower[0], lg[0]);
     PutRNGstate();
   } else {
-    std::vector<int> sizes{shape.size(), scale.size(), lower.size(), lg.size()};
+    std::vector<int> sizes{shape.size(), static_cast<int>(scale.size()), lower.size(), lg.size()};
     int max = x.size();
     for (size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {

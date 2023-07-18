@@ -568,6 +568,9 @@ public:
   template <typename T2, typename R2>
   VEC &operator=(const VEC<T2, R2> &other_vec) {
 
+    std::string demangled = demangle(typeid(other_vec).name());
+    Rcpp::Rcout << demangled << std::endl;
+
     std::vector<Operation<store> > tape;
     
     walk(other_vec, tape);
