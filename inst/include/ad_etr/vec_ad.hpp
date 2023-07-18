@@ -534,6 +534,13 @@ public:
         fill_trace(trace, indices, num_var, i, 0);
         which(tape[i].radd, vars, indices);
         fill_trace(trace, indices, num_var, i, 1);
+      } 
+
+      if(tape[i].ladd == tape[i].radd) {
+        which(tape[i].ladd, vars, indices);
+        fill_trace(trace, indices, num_var, i, 2);
+        which(tape[i].radd, vars, indices);
+        fill_trace(trace, indices, num_var, i, 2);
       }
     }
     return trace;
@@ -550,7 +557,9 @@ public:
           derivs[j] += op.evaluate_deriv(true, 0);
         } else if(idx == 1) {
           derivs[j] += op.evaluate_deriv(false, 0);
-        }
+        } else if(idx == 2) {
+          derivs[j] += 2.0*op.evaluate_deriv(true, 0);
+        } 
       }
     }
     return derivs;
