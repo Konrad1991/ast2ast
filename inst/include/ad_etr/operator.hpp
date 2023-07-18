@@ -30,11 +30,15 @@ class Operation {
 	std::vector<double> l;
 	std::vector<double> r;
 
-	const int op; // -1 = end, 0 = +, 1 = -, 2 = *, 3 = /, 4 = ^
-	std::vector<const Varaddress*> l_addresses;
-	std::vector<const Varaddress*> r_addresses;
+	const Varaddress* ladd;
+	const Varaddress* radd;
 
-	Operation(std::vector<double>& l_, std::vector<double>& r_, int op_) : l(std::move(l_)), r(std::move(r_)), op(op_) {}
+	const int op; // -1 = end, 0 = +, 1 = -, 2 = *, 3 = /, 4 = ^
+
+	Operation(std::vector<double>& l_, std::vector<double>& r_, int op_) : l(std::move(l_)), r(std::move(r_)), op(op_) {
+		ladd = nullptr;
+		radd = nullptr;
+	}
 
 	void print() const {
 		int size = (l.size() > r.size()) ? l.size() : r.size();
@@ -42,15 +46,8 @@ class Operation {
 			std::string op_string = "";
 			if(op == 2) op_string = "*";
 			if(op == 0) op_string = "+";
-			std::cout << "vector index " << i << " l " << l[i % l.size()] << " r " << r[i % r.size()] << " operation " << op_string << std::endl;
-
-			for(int j = 0; j < l_addresses.size(); j++) {
-				Rcpp::Rcout << l_addresses[j] << std::endl;
-			}
-
-			for(int j = 0; j < r_addresses.size(); j++) {
-				Rcpp::Rcout << r_addresses[j] << std::endl;
-			}
+			std::cout << "vector index " << i << " l " << l[i % l.size()] << " r " << r[i % r.size()] << " operation " << op_string 
+					  << " address l " << ladd << " address r " << radd << std::endl;
 		}
 		
 	}

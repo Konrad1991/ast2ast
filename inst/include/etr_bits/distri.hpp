@@ -409,7 +409,11 @@ inline VEC<double> qlnorm_etr(const VEC<double> &x, const VEC<double> &min_,
 // =======================================================================================================================
 inline VEC<double> dgamma_etr(const VEC<double> &x, const VEC<double> &shape,
                               const VEC<double> &rate, const VEC<double> &lg) {
-  const VEC<double> &scale = 1 / rate;
+  std::vector<double> scale(rate.size());
+  for(int i = 0; i < scale.size(); i++) {
+    scale[i] = 1.0 / rate[i];
+  }
+  //const VEC<double> &scale = 1 / rate;
   if ((x.size() == 1) && (shape.size() == 1) && (scale.size() == 1) &&
       (lg.size() == 1)) {
     GetRNGstate();
@@ -438,6 +442,12 @@ inline VEC<double> dgamma_etr(const VEC<double> &x, const VEC<double> &shape,
 
 inline VEC<double> rgamma_etr(const VEC<double> &x, const VEC<double> &shape,
                               const VEC<double> &rate) {
+  /*
+  std::vector<double> scale(rate.size());
+  for(int i = 0; i < scale.size(); i++) {
+    scale[i] = 1.0 / rate[i];
+  }
+  */
   const VEC<double> &scale = 1 / rate;
   if ((x.size() == 1) && (shape.size() == 1) && (scale.size() == 1)) {
     VEC<double> res(x[0], 0.0);
@@ -471,7 +481,11 @@ inline VEC<double> rgamma_etr(const VEC<double> &x, const VEC<double> &shape,
 inline VEC<double> pgamma_etr(const VEC<double> &x, const VEC<double> &shape,
                               const VEC<double> &rate, const VEC<double> &lower,
                               const VEC<double> &lg) {
-  const VEC<double> &scale = 1 / rate;
+  std::vector<double> scale(rate.size());
+  for(int i = 0; i < scale.size(); i++) {
+    scale[i] = 1.0 / rate[i];
+  }
+  //const VEC<double> &scale = 1 / rate;
   if ((x.size() == 1) && (shape.size() == 1) && (scale.size() == 1) &&
       (lg.size() == 1)) {
     GetRNGstate();
@@ -502,7 +516,11 @@ inline VEC<double> pgamma_etr(const VEC<double> &x, const VEC<double> &shape,
 inline VEC<double> qgamma_etr(const VEC<double> &x, const VEC<double> &shape,
                               const VEC<double> &rate, const VEC<double> &lower,
                               const VEC<double> &lg) {
-  const VEC<double> &scale = 1 / rate;
+  std::vector<double> scale(rate.size());
+  for(int i = 0; i < scale.size(); i++) {
+    scale[i] = 1.0 / rate[i];
+  }
+  //const VEC<double> &scale = 1 / rate;
   if ((x.size() == 1) && (shape.size() == 1) && (scale.size() == 1) &&
       (lg.size() == 1)) {
     GetRNGstate();

@@ -1496,7 +1496,7 @@ x <- test(0, 26.8)
 expect_equal(res, x)
 
 set.seed(1234)
-res <- rgamma(n = 10, 1, scale = -1)
+res <- rgamma(n = 10, 1, scale = -1.0)
 set.seed(1234)
 x <- test(0, 26.9)
 expect_equal(res, x)

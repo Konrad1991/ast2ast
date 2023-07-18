@@ -387,6 +387,7 @@ public:
       for(int i = 0; i < r.size(); i++) r_[i] = r[i];
       Operation<store> op(l_, r_, optor);
       tape.push_back(op);
+      tape.back().radd = &r;
     } else if constexpr (!isNull_r && isNull_l) {
       std::vector<double> l_(l.size());
       for(int i = 0; i < l.size(); i++) l_[i] = l[i];
@@ -394,6 +395,7 @@ public:
       for(int i = 0; i < r.size(); i++) r_[i] = r[i];
       Operation<store> op(l_, r_, optor);
       tape.push_back(op);
+      tape.back().ladd = &l;
     } else if constexpr (isNull_l && isNull_r) {
       std::vector<double> l_(l.size());
       for(int i = 0; i < l.size(); i++) l_[i] = l[i];
@@ -401,35 +403,9 @@ public:
       for(int i = 0; i < r.size(); i++) r_[i] = r[i];
       Operation<store> op(l_, r_, optor);
       tape.push_back(op);
+      tape.back().ladd = &l;
+      tape.back().radd = &r;
     }
-  }
-
-  template <typename T2>
-    requires HasTypeTrait<T2>
-  void extract_variables(const T2& other_vec, std::vector<const store*>& vars) {
-      auto& r = other_vec.getR();
-      auto& l = other_vec.getL();
-      using trait_l = std::remove_reference<decltype(l)>::type::TypeTrait;
-      using trait_r = std::remove_reference<decltype(r)>::type::TypeTrait;
-      constexpr bool isNull_l = std::is_same<trait_l, NullTrait>::value;
-      constexpr bool isNull_r = std::is_same<trait_r, NullTrait>::value;
-      if constexpr (isNull_l && isNull_r) {
-        vars.push_back(&l);
-        vars.push_back(&l);
-        vars.push_back(&r);
-        vars.push_back(&r);
-      } else if constexpr(!isNull_l && isNull_r) {
-        vars.push_back(&r); // r.laddress
-        vars.push_back(&r); // r.raddress
-        extract_variables(l, vars);
-      } else if constexpr(isNull_l && !isNull_r) {
-        vars.push_back(&l); // l.laddress
-        vars.push_back(&l); // l.raddress
-        extract_variables(r, vars);
-      } else {
-        extract_variables(l, vars);
-        extract_variables(r, vars);
-      }
   }
 
   template <typename T2>
@@ -448,35 +424,15 @@ public:
       constexpr int vec_trait = checkTraits<trait_vec>();
       if constexpr (isNull_r && isNull_l) {
         fill_tape(l, r, tape, vec_trait);
-        tape.back().l_addresses = std::vector<const store*> {&l};
-        tape.back().r_addresses = std::vector<const store*> {&r};
         return;
       } else if constexpr (!isNull_l && isNull_r) {
-        std::vector<const store*> variables_l;
-        extract_variables(l, variables_l);
-        remove_duplicates(variables_l);
         fill_tape(l, r, tape, vec_trait);
-        tape.back().l_addresses = variables_l;
-        tape.back().r_addresses = std::vector<const store*> {&r};
         walk(l, tape);
       } else if constexpr (isNull_l && !isNull_r) {
-        std::vector<const store*> variables_r;
-        extract_variables(r, variables_r);
-        remove_duplicates(variables_r);
         fill_tape(l, r, tape, vec_trait);
-        tape.back().r_addresses = variables_r;
-        tape.back().l_addresses = std::vector<const store*> {&l};
         walk(r, tape);
       } else if constexpr (!isNull_l && !isNull_r) {
-        std::vector<const store*> variables_l;
-        extract_variables(l, variables_l);
-        std::vector<const store*> variables_r;
-        extract_variables(r, variables_r);
         fill_tape(l, r, tape, vec_trait);
-        remove_duplicates(variables_l);
-        remove_duplicates(variables_r);
-        tape.back().l_addresses = variables_l;
-        tape.back().r_addresses = variables_r;
         walk(l, tape);
         walk(r, tape);
       } 
@@ -487,10 +443,8 @@ public:
     requires(!HasTypeTrait<T2>)
   void walk(const T2 &other_vec, std::vector<Operation<store> >& tape) {
     auto d_other_vec = other_vec.data(); // extract e.g VVPLUS from VEC
-
     using trait_vec = std::remove_reference<decltype(d_other_vec)>::type::TypeTrait; // type if current operation
     constexpr int vec_trait = checkTraits<trait_vec>();
-
     auto& r = d_other_vec.getR();
     auto& l = d_other_vec.getL();
     using trait_l = std::remove_reference<decltype(l)>::type::TypeTrait;
@@ -499,90 +453,106 @@ public:
     constexpr bool isNull_r = std::is_same<trait_r, NullTrait>::value;
     if constexpr (isNull_r && isNull_l) {
         fill_tape(l, r, tape, vec_trait);
-        tape.back().l_addresses = std::vector<const store*> {&l};
-        tape.back().r_addresses = std::vector<const store*> {&r};
         return;
       } else if constexpr (!isNull_l && isNull_r) {
-        std::vector<const store*> variables_l;
-        extract_variables(l, variables_l);
-        remove_duplicates(variables_l);
         fill_tape(l, r, tape, vec_trait);
-        tape.back().l_addresses = variables_l;
-        tape.back().r_addresses = std::vector<const store*> {&r};
         walk(l, tape);
       } else if constexpr (isNull_l && !isNull_r) {
-        std::vector<const store*> variables_r;
-        extract_variables(r, variables_r);
-        remove_duplicates(variables_r);
         fill_tape(l, r, tape, vec_trait);
-        tape.back().r_addresses = variables_r;
-        tape.back().l_addresses = std::vector<const store*> {&l};
         walk(r, tape);
       } else if constexpr (!isNull_l && !isNull_r) {
-        std::vector<const store*> variables_l;
-        extract_variables(l, variables_l);
-        std::vector<const store*> variables_r;
-        extract_variables(r, variables_r);
         fill_tape(l, r, tape, vec_trait);
-        remove_duplicates(variables_l);
-        remove_duplicates(variables_r);
-        tape.back().l_addresses = variables_l;
-        tape.back().r_addresses = variables_r;
         walk(l, tape);
         walk(r, tape);
     } 
   }
 
-  std::vector<double> backward(std::vector<Operation<store> >& tape,
-                               std::vector< std::vector<OperationInfo> >& trace_entire, int size) {
-    
-    int var_index = 0; // with plus the trace is wrong
+  template <typename T2>
+    requires HasTypeTrait<T2>
+  void extract_variables(const T2& other_vec, std::vector<const store*>& vars) {
+      if constexpr (std::is_same_v<typename T2::TypeTrait, NullTrait>) {
+        vars.push_back(&other_vec);
+        return;
+      } else {
+          auto& r = other_vec.getR();
+          auto& l = other_vec.getL();
+          using trait_l = std::remove_reference<decltype(l)>::type::TypeTrait;
+          using trait_r = std::remove_reference<decltype(r)>::type::TypeTrait;
+          constexpr bool isNull_l = std::is_same<trait_l, NullTrait>::value;
+          constexpr bool isNull_r = std::is_same<trait_r, NullTrait>::value;
+          if constexpr (isNull_l && isNull_r) {
+            vars.push_back(&l);
+            vars.push_back(&l);
+            vars.push_back(&r);
+            vars.push_back(&r);
+          } else if constexpr(!isNull_l && isNull_r) {
+            vars.push_back(&r); // r.laddress
+            vars.push_back(&r); // r.raddress
+            extract_variables(l, vars);
+          } else if constexpr(isNull_l && !isNull_r) {
+            vars.push_back(&l); // l.laddress
+            vars.push_back(&l); // l.raddress
+            extract_variables(r, vars);
+          } else {
+            extract_variables(l, vars);
+            extract_variables(r, vars);
+          }        
+      }
+  }
 
-    std::vector<OperationInfo> trace;
-    for(int i = 0; i < trace_entire.size(); i++) {
-      trace.push_back(trace_entire[i][var_index]);
+  void which(const store* add, std::vector<const store*>& vars, std::vector<int>& indices) {
+    std::fill(indices.begin(), indices.end(), -1);
+    for(int i = 0; i < vars.size(); i++) {
+      if(vars[i] == add) {
+        indices[i] = i;
+        break;
+      } 
     }
-    
-    std::vector<double> derivs(size);
-    std::fill(derivs.begin(), derivs.end(), 0.0); // 1.0 
+  }
 
-    for(int i = trace.size() - 1; i >= 0; i--) {
-      Rcpp::Rcout << derivs[var_index] << std::endl;
-      if(trace[i].index != -1) {
-        const Operation op = tape[i];
-        op.print();
-        if(trace[i].lr == 2) { // not correct this block!!!!
-          Rcpp::Rcout << "test1" << std::endl;
-          if (op.op == 0) {  // Addition
-              //derivs[0] += op.evaluate_deriv(true, 0);
-          } else if (op.op == 1) {  // Subtraction
-              //derivs[0] += op.evaluate_deriv(false, 0) - op.evaluate_deriv(true, 0);
-          } else if (op.op == 2) {  // Multiplication
-              //derivs[0] *= op.evaluate_deriv(true, 0);
-              //derivs[0] *= op.evaluate_deriv(false, 0);
+  void fill_trace(std::vector<int>& trace, std::vector<int>& indices, int num_var, int i, int val) {
+    for(int j = 0; j < indices.size(); j++) {
+          if(indices[j] >= 0) {
+            trace[i * num_var + indices[j]] = val;
           }
-        } else if(trace[i].lr == 1) {
-          Rcpp::Rcout << "test2" << std::endl;
-          if (op.op == 0) {  // Addition
-              derivs[0] += op.evaluate_deriv(true, 0);
-          } else if (op.op == 1) {  // Subtraction
-              derivs[0] += op.evaluate_deriv(true, 0);
-          } else if (op.op == 2) {  // Multiplication
-              derivs[0] += op.evaluate_deriv(true, 0); // *=
-          }
-        } else if(trace[i].lr == 0) {
-          Rcpp::Rcout << "test3" << std::endl;
-          if (op.op == 0) {  // Addition
-              derivs[0] += op.evaluate_deriv(false, 0);
-          } else if (op.op == 1) {  // Subtraction
-              derivs[0] += op.evaluate_deriv(false, 0);
-          } else if (op.op == 2) {  // Multiplication
-              derivs[0] += op.evaluate_deriv(false, 0); // *=
-          } 
-        } 
+    }
+  }
+
+  std::vector<int> calc_trace(std::vector<Operation<store> >& tape, int num_var, std::vector<const store*>& vars) {
+    std::vector<int> trace(tape.size() * num_var);
+    std::fill(trace.begin(), trace.end(), -1);
+    std::vector<int> indices(num_var);
+    for(int i = 0; i < tape.size(); i++) {
+      if(tape[i].ladd != nullptr && tape[i].radd == nullptr) {
+        which(tape[i].ladd, vars, indices);
+        fill_trace(trace, indices, num_var, i, 0);
+      } else if(tape[i].radd != nullptr && tape[i].ladd == nullptr) {
+        which(tape[i].radd, vars, indices);
+        fill_trace(trace, indices, num_var, i, 1);
+      } else if(tape[i].ladd != nullptr && tape[i].radd != nullptr) {
+        which(tape[i].ladd, vars, indices);
+        fill_trace(trace, indices, num_var, i, 0);
+        which(tape[i].radd, vars, indices);
+        fill_trace(trace, indices, num_var, i, 1);
       }
     }
-    
+    return trace;
+  }
+
+  std::vector<double> backward(std::vector<Operation<store> >& tape, std::vector<int>& trace, int num_var) {
+    std::vector<double> derivs(num_var);
+    std::fill(derivs.begin(), derivs.end(), 0);
+    for(int i = tape.size() - 1; i >= 0; i--) {
+      Operation op = tape[i];
+      for(int j = 0; j < num_var; j++) {
+        int idx = trace[i * num_var + j];
+        if(idx == 0) {
+          derivs[j] += op.evaluate_deriv(true, 0);
+        } else if(idx == 1) {
+          derivs[j] += op.evaluate_deriv(false, 0);
+        }
+      }
+    }
     return derivs;
   }
 
@@ -598,50 +568,22 @@ public:
       tape[i].print();
     }
     Rcpp::Rcout << "end of tape " << std::endl;
-    
-    std::vector<const store*> variables(tape[0].l_addresses.begin(), tape[0].l_addresses.end());
-    variables.insert(variables.end(), tape[0].r_addresses.begin(), tape[0].r_addresses.end());
-    remove_duplicates(variables);
-    Rcpp::Rcout << "variables start" << std::endl;
-    for(auto i: variables) Rcpp::Rcout << i << std::endl;
-    Rcpp::Rcout << "variables end" << std::endl; 
 
-    std::vector< std::vector<OperationInfo> > trace(tape.size());
-    for(int i = 0; i < trace.size(); i++) {
-      trace[i].resize(variables.size());
-      for(int j = 0; j < variables.size(); j++) {
-        auto it_l = std::find(tape[i].l_addresses.begin(), tape[i].l_addresses.end(), variables[j]);
-        auto it_r = std::find(tape[i].r_addresses.begin(), tape[i].r_addresses.end(), variables[j]);
-        if( (it_l != tape[i].l_addresses.end() ) && ( it_r != tape[i].r_addresses.end() ) ) { // left and right
-          trace[i][j].index = i;
-          trace[i][j].lr = 2;
-        } else if (it_l != tape[i].l_addresses.end()) { // left
-          trace[i][j].index = i;
-          trace[i][j].lr = 1;
-        } else if (it_r != tape[i].r_addresses.end()) { // right
-          trace[i][j].index = i;
-          trace[i][j].lr = 0;
-        } else { // not included
-          trace[i][j].index = -1;
-          trace[i][j].lr = -1;
-        }
-      }
-    }
+    std::vector<const store*> vars;
+    extract_variables(other_vec.data().getL(), vars);
+    extract_variables(other_vec.data().getR(), vars);
+    remove_duplicates(vars);
+    Rcpp::Rcout << "start vars " << std::endl;
+    for(auto i: vars) Rcpp::Rcout << i << std::endl;
+    Rcpp::Rcout << "end vars " << std::endl;
+    int num_var = vars.size();
 
-    
-    Rcpp::Rcout << "start of trace " << std::endl;
-    for(int i = 0; i < trace.size(); i++) {
-      for(int j = 0; j < variables.size(); j++) {
-        trace[i][j].print();
-      }
-      Rcpp::Rcout << std::endl;
-    }
-    Rcpp::Rcout << "end of trace " << std::endl;
+    std::vector<int> trace = calc_trace(tape, num_var, vars);
 
-    auto derivs = backward(tape, trace, other_vec.size());
-    Rcpp::Rcout << "derivs start" << std::endl; 
-    Rcpp::Rcout << derivs[0] << std::endl;
-    Rcpp::Rcout << "derivs end" << std::endl; 
+    std::vector<double> derivs = backward(tape, trace, num_var);
+    Rcpp::Rcout << "start derivs " << std::endl;
+    for(auto i: derivs) Rcpp::Rcout << i << std::endl;
+    Rcpp::Rcout << "end derivs " << std::endl;
 
     if (subsetted == false) {
       this->ismatrix = false;
