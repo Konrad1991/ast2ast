@@ -18,7 +18,7 @@
 # If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 
-
+#' @importFrom Rcpp sourceCpp
 compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type, name_f, getsource) {
   a <- NULL
   fct <- NULL

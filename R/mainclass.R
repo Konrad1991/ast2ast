@@ -18,6 +18,10 @@
 # If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 # Mainclass
+#' @import R6
+#' @import RcppArmadillo
+#' @importFrom methods formalArgs
+#' @importFrom purrr map_if
 MA <- R6::R6Class("MA",
   public = list(
     R_fct = NULL,

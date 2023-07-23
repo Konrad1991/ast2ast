@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License along with ast2ast
 # If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
+#' @import R6
 LC <- R6::R6Class("LC",
 
   # for performance reason
