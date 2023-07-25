@@ -13,3 +13,9 @@ Meta
 .Rproj.user
 *.Rproj
 *.Rbuildignore
+.Rhistory
+.Rdata
+.httr-oauth
+.DS_Store
+.quarto
+docs

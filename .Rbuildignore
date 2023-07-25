@@ -20,3 +20,6 @@
 ^Structure_R_Code.drawio
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

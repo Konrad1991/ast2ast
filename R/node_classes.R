@@ -18,6 +18,7 @@
 # along with ast2ast
 # If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
+#' @import R6
 PC <- R6::R6Class("PC",
   public = list(
     name_fct = NULL,
@@ -199,7 +200,7 @@ PC <- R6::R6Class("PC",
 ) # end class
 
 
-
+#' @import R6
 generic <- R6::R6Class("generic",
   inherit = PC,
   public = list(
@@ -230,7 +231,7 @@ generic <- R6::R6Class("generic",
   )
 )
 
-
+#' @import R6
 assign <- R6::R6Class("assign",
   inherit = PC,
   public = list(
@@ -257,7 +258,7 @@ assign <- R6::R6Class("assign",
   )
 )
 
-
+#' @import R6
 retur <- R6::R6Class("retur",
   inherit = PC,
   public = list(
@@ -295,6 +296,7 @@ retur <- R6::R6Class("retur",
   )
 )
 
+#' @import R6
 subset <- R6::R6Class("subset",
   inherit = PC,
   public = list(
@@ -383,7 +385,7 @@ subset <- R6::R6Class("subset",
   )
 )
 
-
+#' @import R6
 loop <- R6::R6Class("loop",
   inherit = PC,
   public = list(
@@ -415,7 +417,7 @@ loop <- R6::R6Class("loop",
   )
 )
 
-
+#' @import R6
 coca <- R6::R6Class("coca",
   inherit = PC,
   public = list(
@@ -442,7 +444,7 @@ coca <- R6::R6Class("coca",
   )
 )
 
-
+#' @import R6
 is_na <- R6::R6Class("is_na",
   inherit = PC,
   public = list(
@@ -469,6 +471,7 @@ is_na <- R6::R6Class("is_na",
   )
 )
 
+#' @import R6
 is_infinite <- R6::R6Class("is_infinite",
   inherit = PC,
   public = list(
@@ -495,6 +498,7 @@ is_infinite <- R6::R6Class("is_infinite",
   )
 )
 
+#' @import R6
 fastaccess <- R6::R6Class("fastaccess",
   inherit = PC,
   public = list(
@@ -520,6 +524,7 @@ fastaccess <- R6::R6Class("fastaccess",
   )
 )
 
+#' @import R6
 printer <- R6::R6Class("printer",
   inherit = PC,
   public = list(
@@ -553,7 +558,7 @@ printer <- R6::R6Class("printer",
   )
 )
 
-
+#' @import R6
 range <- R6::R6Class("range",
   inherit = PC,
   public = list(
@@ -580,7 +585,7 @@ range <- R6::R6Class("range",
   )
 )
 
-
+#' @import R6
 math <- R6::R6Class("math",
   inherit = PC,
   public = list(

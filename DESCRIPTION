@@ -13,4 +13,4 @@ Imports: Rcpp (>= 1.0.4), purrr, R6, RcppArmadillo, methods, dfdr, rlang
 VignetteBuilder: knitr
 Suggests: knitr, kableExtra, rmarkdown, tinytest, microbenchmark, ggplot2, RcppXPtrUtils
 Encoding: UTF-8
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
