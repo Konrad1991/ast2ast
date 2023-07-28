@@ -30,10 +30,10 @@ namespace etr {
 Vector & matrix module
 */
 template <typename T, typename R = STORE<T>
-          // ,typename Trait = NullTrait
+          // ,typename Trait = VariableTrait
           >
 class VEC {
-  using store = STORE<double, NullTrait>;
+  using store = STORE<double, VariableTrait>;
 private:
 public:
   bool subsetted;
@@ -371,16 +371,16 @@ public:
   void fill_tape(const Tree_L &l, const Tree_R &r, std::vector<Operation<store> >& tape, const int optor) const {
     using trait_l = std::remove_reference<decltype(l)>::type::TypeTrait;
     using trait_r = std::remove_reference<decltype(r)>::type::TypeTrait;
-    constexpr bool isNull_l = std::is_same<trait_l, NullTrait>::value;
-    constexpr bool isNull_r = std::is_same<trait_r, NullTrait>::value;
-    if constexpr (!isNull_l && !isNull_r) {
+    constexpr bool isVar_l = std::is_same<trait_l, VariableTrait>::value;
+    constexpr bool isVar_r = std::is_same<trait_r, VariableTrait>::value;
+    if constexpr (!isVar_l && !isVar_r) {
       std::vector<double> l_(l.size());
       for(int i = 0; i < l.size(); i++) l_[i] = l[i];
       std::vector<double> r_(r.size());
       for(int i = 0; i < r.size(); i++) r_[i] = r[i];
       Operation<store> op(l_, r_, optor);
       tape.push_back(op);
-    } else if constexpr (!isNull_l && isNull_r) {
+    } else if constexpr (!isVar_l && isVar_r) {
       std::vector<double> l_(l.size());
       for(int i = 0; i < l.size(); i++) l_[i] = l[i];
       std::vector<double> r_(r.size());
@@ -388,7 +388,7 @@ public:
       Operation<store> op(l_, r_, optor);
       tape.push_back(op);
       tape.back().radd = &r;
-    } else if constexpr (!isNull_r && isNull_l) {
+    } else if constexpr (!isVar_r && isVar_l) {
       std::vector<double> l_(l.size());
       for(int i = 0; i < l.size(); i++) l_[i] = l[i];
       std::vector<double> r_(r.size());
@@ -396,7 +396,7 @@ public:
       Operation<store> op(l_, r_, optor);
       tape.push_back(op);
       tape.back().ladd = &l;
-    } else if constexpr (isNull_l && isNull_r) {
+    } else if constexpr (isVar_l && isVar_r) {
       std::vector<double> l_(l.size());
       for(int i = 0; i < l.size(); i++) l_[i] = l[i];
       std::vector<double> r_(r.size());
@@ -411,27 +411,32 @@ public:
   template <typename T2>
     requires HasTypeTrait<T2>
   void walk(const T2 &other_vec, std::vector<Operation<store> >& tape) {
-    if constexpr (std::is_same_v<typename T2::TypeTrait, NullTrait>) {
+    if constexpr (std::is_same_v<typename T2::TypeTrait, VariableTrait>) {
       return;
     } else {
       auto& r = other_vec.getR();
       auto& l = other_vec.getL();
       using trait_l = std::remove_reference<decltype(l)>::type::TypeTrait;
       using trait_r = std::remove_reference<decltype(r)>::type::TypeTrait;
-      constexpr bool isNull_l = std::is_same<trait_l, NullTrait>::value;
-      constexpr bool isNull_r = std::is_same<trait_r, NullTrait>::value;
+      constexpr bool isVar_l = std::is_same<trait_l, VariableTrait>::value;
+      constexpr bool isVar_r = std::is_same<trait_r, VariableTrait>::value;
       using trait_vec = std::remove_reference<decltype(other_vec)>::type::TypeTrait; 
+
+      Rcpp::Rcout << "trait node " << demangle(typeid(trait_vec).name()) <<  " value of node: " << other_vec[0] << 
+                   " trait left child " << demangle(typeid(trait_l).name()) << " value of left child: " << l[0] << 
+                   " trait right child " << demangle(typeid(trait_r).name()) << " value of right child: " << r[0] << std::endl;
+
       constexpr int vec_trait = checkTraits<trait_vec>();
-      if constexpr (isNull_r && isNull_l) {
+      if constexpr (isVar_r && isVar_l) {
         fill_tape(l, r, tape, vec_trait);
         return;
-      } else if constexpr (!isNull_l && isNull_r) {
+      } else if constexpr (!isVar_l && isVar_r) {
         fill_tape(l, r, tape, vec_trait);
         walk(l, tape);
-      } else if constexpr (isNull_l && !isNull_r) {
+      } else if constexpr (isVar_l && !isVar_r) {
         fill_tape(l, r, tape, vec_trait);
         walk(r, tape);
-      } else if constexpr (!isNull_l && !isNull_r) {
+      } else if constexpr (!isVar_l && !isVar_r) {
         fill_tape(l, r, tape, vec_trait);
         walk(l, tape);
         walk(r, tape);
@@ -449,18 +454,23 @@ public:
     auto& l = d_other_vec.getL();
     using trait_l = std::remove_reference<decltype(l)>::type::TypeTrait;
     using trait_r = std::remove_reference<decltype(r)>::type::TypeTrait;
-    constexpr bool isNull_l = std::is_same<trait_l, NullTrait>::value;
-    constexpr bool isNull_r = std::is_same<trait_r, NullTrait>::value;
-    if constexpr (isNull_r && isNull_l) {
+
+    Rcpp::Rcout << "trait node " << demangle(typeid(trait_vec).name()) <<  " value of node: " << d_other_vec[0] << 
+                   " trait left child " << demangle(typeid(trait_l).name()) << " value of left child: " << l[0] << 
+                   " trait right child " << demangle(typeid(trait_r).name()) << " value of right child: " << r[0] << std::endl;
+
+    constexpr bool isVar_l = std::is_same<trait_l, VariableTrait>::value;
+    constexpr bool isVar_r = std::is_same<trait_r, VariableTrait>::value;
+    if constexpr (isVar_r && isVar_l) {
         fill_tape(l, r, tape, vec_trait);
         return;
-      } else if constexpr (!isNull_l && isNull_r) {
+      } else if constexpr (!isVar_l && isVar_r) {
         fill_tape(l, r, tape, vec_trait);
         walk(l, tape);
-      } else if constexpr (isNull_l && !isNull_r) {
+      } else if constexpr (isVar_l && !isVar_r) {
         fill_tape(l, r, tape, vec_trait);
         walk(r, tape);
-      } else if constexpr (!isNull_l && !isNull_r) {
+      } else if constexpr (!isVar_l && !isVar_r) {
         fill_tape(l, r, tape, vec_trait);
         walk(l, tape);
         walk(r, tape);
@@ -470,7 +480,7 @@ public:
   template <typename T2>
     requires HasTypeTrait<T2>
   void extract_variables(const T2& other_vec, std::vector<const store*>& vars) {
-      if constexpr (std::is_same_v<typename T2::TypeTrait, NullTrait>) {
+      if constexpr (std::is_same_v<typename T2::TypeTrait, VariableTrait>) {
         vars.push_back(&other_vec);
         return;
       } else {
@@ -478,18 +488,18 @@ public:
           auto& l = other_vec.getL();
           using trait_l = std::remove_reference<decltype(l)>::type::TypeTrait;
           using trait_r = std::remove_reference<decltype(r)>::type::TypeTrait;
-          constexpr bool isNull_l = std::is_same<trait_l, NullTrait>::value;
-          constexpr bool isNull_r = std::is_same<trait_r, NullTrait>::value;
-          if constexpr (isNull_l && isNull_r) {
+          constexpr bool isVar_l = std::is_same<trait_l, VariableTrait>::value;
+          constexpr bool isVar_r = std::is_same<trait_r, VariableTrait>::value;
+          if constexpr (isVar_l && isVar_r) {
             vars.push_back(&l);
             vars.push_back(&l);
             vars.push_back(&r);
             vars.push_back(&r);
-          } else if constexpr(!isNull_l && isNull_r) {
+          } else if constexpr(!isVar_l && isVar_r) {
             vars.push_back(&r); // r.laddress
             vars.push_back(&r); // r.raddress
             extract_variables(l, vars);
-          } else if constexpr(isNull_l && !isNull_r) {
+          } else if constexpr(isVar_l && !isVar_r) {
             vars.push_back(&l); // l.laddress
             vars.push_back(&l); // l.raddress
             extract_variables(r, vars);

@@ -36,7 +36,7 @@ std::string demangle(const char *mangledName) {
 
 namespace etr {
 
-struct NullTrait {};
+struct VariableTrait {};
 
 struct VVPlusTrait {};
 struct VSPlusTrait {};
@@ -67,7 +67,7 @@ constexpr int checkTraits() {
 }
 
 template <>
-constexpr int checkTraits<NullTrait>() {
+constexpr int checkTraits<VariableTrait>() {
     return -1;
 }
 
