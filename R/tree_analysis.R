@@ -75,3 +75,17 @@ env$which_vars_found
 #         std::array<int, 4>{2, 1, 1, 1}). env$which_vars_found
 # And than I recursively walk over the tree and use the given information
 # to calculate the gradient
+
+
+
+# 1. Compute the derivatives of each node with respect to its variables.
+  # V1, V2, ..., Vn
+  # This can be done during the forward pass.
+  # Here the "value" of the expression is calculated.
+  # When calling operator[] of the specific classes the deriv can be stored
+  # as attribute in the same class.
+# 2. Recursive walk over expression tree
+  # multiply deriv of parent * deriv of node
+  # sum up the derivatives. Each node is associated with specific variables.
+  # The information which variable with which V is associated. 
+  # Thus, the sum can be calculated.
