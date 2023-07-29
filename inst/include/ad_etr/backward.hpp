@@ -27,9 +27,9 @@ namespace etr {
 
 typedef STORE<double>* variable ;
 
-template <typename T2, size_t num_nodes>
+template <typename T2>
   requires HasTypeTrait<T2>
-void walk(const T2 &other_vec, int& var_counter, const std::array<int, num_nodes>& which_vars_found) {
+void walk(const T2 &other_vec, int& deriv_counter, std::vector<double>& derivs) {
   if constexpr (std::is_same_v<typename T2::TypeTrait, VariableTrait>) {
     return;
   } else {
@@ -56,30 +56,26 @@ void walk(const T2 &other_vec, int& var_counter, const std::array<int, num_nodes
    Rcpp::Rcout << " trait left child " << demangle(typeid(trait_l).name()) << " value of left child: " << l[0] << " deriv of left child " << deriv_l << std::endl;
    Rcpp::Rcout << " trait right child " << demangle(typeid(trait_r).name()) << " value of right child: " << r[0] << " deriv of right child " << deriv_r << std::endl;
 
+   derivs[deriv_counter] = deriv_l;
+   derivs[deriv_counter + 1] = deriv_r;
+   deriv_counter += 2;
+
     if constexpr (isVar_r && isVar_l) {
-      Rcpp::Rcout << "var_counter" << var_counter << " " << &l << std::endl;
-      var_counter++;
-      Rcpp::Rcout << "var_counter" << var_counter << " " << &r << std::endl;
-      var_counter++;
       return;
     } else if constexpr (!isVar_l && isVar_r) {
-      Rcpp::Rcout << "var_counter" << var_counter << " " << &r << std::endl;
-      var_counter++;
-      walk(l, var_counter, which_vars_found);
+      walk(l, deriv_counter, derivs);
     } else if constexpr (isVar_l && !isVar_r) {
-      Rcpp::Rcout << "var_counter" << var_counter << " " << &l << std::endl;
-      var_counter++;
-      walk(r, var_counter, which_vars_found);
+      walk(r, deriv_counter, derivs);
     } else if constexpr (!isVar_l && !isVar_r) {
-      walk(l, var_counter, which_vars_found);
-      walk(r, var_counter, which_vars_found);
+      walk(l, deriv_counter, derivs);
+      walk(r, deriv_counter, derivs);
     } 
   }
 }
 
-template <typename T2, size_t num_nodes>
+template <typename T2>
   requires(!HasTypeTrait<T2>)
-void walk(const T2 &other_vec, int& var_counter, const std::array<int, num_nodes>& which_vars_found) {
+void walk(const T2 &other_vec, int& deriv_counter, std::vector<double>& derivs) {
   auto d_other_vec = other_vec.data(); // extract e.g VVPLUS from VEC
   using trait_vec = std::remove_reference<decltype(d_other_vec)>::type::TypeTrait; 
   auto& r = d_other_vec.getR();
@@ -104,23 +100,19 @@ void walk(const T2 &other_vec, int& var_counter, const std::array<int, num_nodes
    Rcpp::Rcout << " trait left child " << demangle(typeid(trait_l).name()) << " value of left child: " << l[0] << " deriv of left child " << deriv_l << std::endl;
    Rcpp::Rcout << " trait right child " << demangle(typeid(trait_r).name()) << " value of right child: " << r[0] << " deriv of right child " << deriv_r << std::endl;
 
+   derivs[deriv_counter] = deriv_l;
+   derivs[deriv_counter + 1] = deriv_r;
+   deriv_counter += 2;
+
   if constexpr (isVar_r && isVar_l) {
-  	  Rcpp::Rcout << "var_counter" << var_counter << " " << &l << std::endl;
-  	  var_counter++;
-      Rcpp::Rcout << "var_counter" << var_counter << " " << &r << std::endl;
-      var_counter++;
       return;
     } else if constexpr (!isVar_l && isVar_r) {
-      Rcpp::Rcout << "var_counter" << var_counter << " " << &r << std::endl;
-      var_counter++;
-      walk(l, var_counter, which_vars_found);
+      walk(l, deriv_counter, derivs);
     } else if constexpr (isVar_l && !isVar_r) {
-      Rcpp::Rcout << "var_counter" << var_counter << " " << &l << std::endl;
-      var_counter++;
-      walk(r, var_counter, which_vars_found);
+      walk(r, deriv_counter, derivs);
     } else if constexpr (!isVar_l && !isVar_r) {
-      walk(l, var_counter, which_vars_found);
-      walk(r, var_counter, which_vars_found);
+      walk(l, deriv_counter, derivs);
+      walk(r, deriv_counter, derivs);
   } 
 }
 
@@ -139,8 +131,15 @@ void assign(VEC<T1, R1> &vec,
 	for(int i = 0; i < size_vars; i++) {
 		d.emplace(i, var_list[i]);
 	}
-	std::vector<double> derivs(size_vars, 1.0);
-    walk(other_vec, counter, which_vars_found);
+	std::vector<double> derivs(num_nodes * 2, 1.0);
+    walk(other_vec, counter, derivs);
+
+    int node_counter = 0;
+    for(int i = 0; i < (num_nodes * 2); i+=2) {
+    	Rcpp::Rcout << "deriv node Nr.: " << node_counter << " deriv left " << derivs[i] << " deriv right " << derivs[i+1] <<  std::endl; 
+    	Rcpp::Rcout << "variable associated with " << d[which_vars_found[node_counter]] << std::endl;
+    	node_counter++;
+    }
 }
 
 
