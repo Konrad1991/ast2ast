@@ -28,7 +28,7 @@ is_variable <- function(node, var_list) {
 
 which_variable <- function(node, var_list) {
   node <- c(deparse(node))
-  which(node == var_list)
+  which(node == var_list) - 1
 }
 
 fill_association <- function(node, env) {
@@ -59,7 +59,10 @@ env$counter <- 0
 env$idx_vars_found <- c()
 env$which_vars_found <- c()
 env$var_list <- vars
+
+
 expression <- quote(x*x*x + y)
+
 ast <- get_ast(expression, env)
 trash <- lapply(env$association, print)
 

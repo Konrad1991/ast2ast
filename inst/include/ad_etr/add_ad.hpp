@@ -45,6 +45,10 @@ public:
 
   T operator[](const int i) const { return l[i % l.size()] + r[i % r.size()]; }
 
+  T get_deriv_left(const int i) const { return 1.0; }
+
+  T get_deriv_right(const int i) const { return 1.0; }
+
   int size() const {
     int sz = (l.size() > r.size()) ? l.size() : r.size();
     return sz; // l.size(); // correct?
