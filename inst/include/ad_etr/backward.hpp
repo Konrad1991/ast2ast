@@ -114,8 +114,8 @@ void walk(const T2 &other_vec, std::vector<double>& seeds, int idx) {
       seeds.push_back(seeds[idx] * deriv_r);
       return;
     } else if constexpr (!isVar_l && isVar_r) {
-      seeds.push_back(seeds[idx] * deriv_r);
       seeds.push_back(seeds[idx] * deriv_l);
+      seeds.push_back(seeds[idx] * deriv_r);
       idx = seeds.size() -2;
       walk(l, seeds, idx);
     } else if constexpr (isVar_l && !isVar_r) {
@@ -152,7 +152,16 @@ void assign(VEC<T1, R1> &vec,
 	std::vector<double> seeds(1, 1.0);
   int idx = 0;
   walk(other_vec, seeds, idx);
-  for(auto& i: seeds) Rcpp::Rcout << i << std::endl;
+  seeds.erase(seeds.begin());
+  
+  std::vector<double> derivs(var_list.size());
+  for(int i = 0; i < seeds.size(); i++) {
+    if(which_vars_found[i] != -1) {
+      derivs[which_vars_found[i]] += seeds[i];
+    }
+  } 
+
+  for(auto i: derivs) Rcpp::Rcout << i << std::endl;
   
 }
 
