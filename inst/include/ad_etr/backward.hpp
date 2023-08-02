@@ -29,7 +29,7 @@ typedef STORE<double>* variable ;
 
 template <typename T2>
   requires HasTypeTrait<T2>
-void walk(const T2 &other_vec, int& deriv_counter, std::vector<double>& derivs) {
+void walk(const T2 &other_vec, std::vector<double>& seeds, int idx) {
   if constexpr (std::is_same_v<typename T2::TypeTrait, VariableTrait>) {
     return;
   } else {
@@ -56,26 +56,35 @@ void walk(const T2 &other_vec, int& deriv_counter, std::vector<double>& derivs) 
    Rcpp::Rcout << " trait left child " << demangle(typeid(trait_l).name()) << " value of left child: " << l[0] << " deriv of left child " << deriv_l << std::endl;
    Rcpp::Rcout << " trait right child " << demangle(typeid(trait_r).name()) << " value of right child: " << r[0] << " deriv of right child " << deriv_r << std::endl;
 
-   derivs[deriv_counter] = deriv_l;
-   derivs[deriv_counter + 1] = deriv_r;
-   deriv_counter += 2;
-
     if constexpr (isVar_r && isVar_l) {
+      seeds.push_back(seeds[idx] * deriv_l);
+      seeds.push_back(seeds[idx] * deriv_r);
       return;
     } else if constexpr (!isVar_l && isVar_r) {
-      walk(l, deriv_counter, derivs);
+      seeds.push_back(seeds[idx] * deriv_l);
+      seeds.push_back(seeds[idx] * deriv_r);
+      idx = seeds.size() - 2;
+      walk(l, seeds, idx);
     } else if constexpr (isVar_l && !isVar_r) {
-      walk(r, deriv_counter, derivs);
+      seeds.push_back(seeds[idx] * deriv_l);
+      seeds.push_back(seeds[idx] * deriv_r);
+      idx = seeds.size() - 3;
+      walk(r, seeds, idx);
     } else if constexpr (!isVar_l && !isVar_r) {
-      walk(l, deriv_counter, derivs);
-      walk(r, deriv_counter, derivs);
+      seeds.push_back(seeds[idx] * deriv_l);
+      idx = seeds.size() -2;
+      walk(l, seeds, idx);
+      seeds.push_back(seeds[idx] * deriv_r);
+      idx = seeds.size() - 3;
+      walk(r, seeds, idx);
     } 
   }
+
 }
 
 template <typename T2>
   requires(!HasTypeTrait<T2>)
-void walk(const T2 &other_vec, int& deriv_counter, std::vector<double>& derivs) {
+void walk(const T2 &other_vec, std::vector<double>& seeds, int idx) {
   auto d_other_vec = other_vec.data(); // extract e.g VVPLUS from VEC
   using trait_vec = std::remove_reference<decltype(d_other_vec)>::type::TypeTrait; 
   auto& r = d_other_vec.getR();
@@ -100,20 +109,29 @@ void walk(const T2 &other_vec, int& deriv_counter, std::vector<double>& derivs) 
    Rcpp::Rcout << " trait left child " << demangle(typeid(trait_l).name()) << " value of left child: " << l[0] << " deriv of left child " << deriv_l << std::endl;
    Rcpp::Rcout << " trait right child " << demangle(typeid(trait_r).name()) << " value of right child: " << r[0] << " deriv of right child " << deriv_r << std::endl;
 
-   derivs[deriv_counter] = deriv_l;
-   derivs[deriv_counter + 1] = deriv_r;
-   deriv_counter += 2;
-
   if constexpr (isVar_r && isVar_l) {
+      seeds.push_back(seeds[idx] * deriv_l);
+      seeds.push_back(seeds[idx] * deriv_r);
       return;
     } else if constexpr (!isVar_l && isVar_r) {
-      walk(l, deriv_counter, derivs);
+      seeds.push_back(seeds[idx] * deriv_r);
+      seeds.push_back(seeds[idx] * deriv_l);
+      idx = seeds.size() -2;
+      walk(l, seeds, idx);
     } else if constexpr (isVar_l && !isVar_r) {
-      walk(r, deriv_counter, derivs);
+      seeds.push_back(seeds[idx] * deriv_l);
+      seeds.push_back(seeds[idx] * deriv_r);
+      idx = seeds.size() - 3;
+      walk(r, seeds, idx);
     } else if constexpr (!isVar_l && !isVar_r) {
-      walk(l, deriv_counter, derivs);
-      walk(r, deriv_counter, derivs);
+      seeds.push_back(seeds[idx] * deriv_l);
+      idx = seeds.size() -2;
+      walk(l, seeds, idx);
+      seeds.push_back(seeds[idx] * deriv_r);
+      idx = seeds.size() - 3;
+      walk(r, seeds, idx);
   } 
+
 }
 
 
@@ -122,24 +140,20 @@ template <typename T1, typename R1,
  		  size_t size_vars, size_t num_nodes
 >
 void assign(VEC<T1, R1> &vec,
-		    const VEC<T2, R2> &other_vec,
-			const std::array<const variable, size_vars>&& var_list,
-			const std::array<int, num_nodes>&& which_vars_found) {
-	int counter = 0;
+		        const VEC<T2, R2> &other_vec,
+			      const std::array<const variable, size_vars>&& var_list,
+			      const std::array<int, num_nodes>&& which_vars_found) {
+	
 	std::unordered_map<int, const variable> d;
 	d.reserve(size_vars);
 	for(int i = 0; i < size_vars; i++) {
 		d.emplace(i, var_list[i]);
 	}
-	std::vector<double> derivs(num_nodes * 2, 1.0);
-    walk(other_vec, counter, derivs);
-
-    int node_counter = 0;
-    for(int i = 0; i < (num_nodes * 2); i+=2) {
-    	Rcpp::Rcout << "deriv node Nr.: " << node_counter << " deriv left " << derivs[i] << " deriv right " << derivs[i+1] <<  std::endl; 
-    	Rcpp::Rcout << "variable associated with " << d[which_vars_found[node_counter]] << std::endl;
-    	node_counter++;
-    }
+	std::vector<double> seeds(1, 1.0);
+  int idx = 0;
+  walk(other_vec, seeds, idx);
+  for(auto& i: seeds) Rcpp::Rcout << i << std::endl;
+  
 }
 
 

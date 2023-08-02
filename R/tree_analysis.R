@@ -60,16 +60,10 @@ env$idx_vars_found <- c()
 env$which_vars_found <- c()
 env$var_list <- vars
 
-
 expression <- quote(x*x*x + y)
 
 ast <- get_ast(expression, env)
-trash <- lapply(env$association, print)
-
-env$var_list
-env$idx_vars_found
-env$which_vars_found
-
+#trash <- lapply(env$association, print)
 
 # And now the C++ code has to be modified to 
 # f.assign(x*x*x + y, 
