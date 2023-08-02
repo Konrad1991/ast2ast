@@ -140,8 +140,8 @@ test <- convert(test,
                 vars,
                 env$which_vars_found)
 
-f <- Rcpp::sourceCpp(code = test, env = globalenv())
-test_f()
+#f <- Rcpp::sourceCpp(code = test, env = globalenv())
+#test_f()
 
 #env$var_list
 #env$association
