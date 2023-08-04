@@ -18,22 +18,18 @@ Node <- R6::R6Class(
     child_right = NULL,
     unary = TRUE,
     indices = NULL,
-    parent_indices = NULL,
     
-    initialize = function(operation, child_left, child_right, operation_idx, parent_indices) {
+    initialize = function(operation, child_left, child_right, operation_idx) {
       if(!is.null(child_right)) {
         self$operation = operation
         self$child_left = child_left
         self$child_right = child_right
         self$unary = FALSE
         self$indices = c(operation_idx, operation_idx + 1, operation_idx + 2)
-        self$parent_indices <- parent_indices
       } else {
         self$operation = operation
         self$child_left = child_left
         self$child_right = NULL
-        self$indices = c(operation_idx, operation_idx + 1)
-        self$parent_indices <- parent_indices
       }
     },
     
@@ -65,19 +61,25 @@ get_ast <- function(a, env, index) {
     return(a)
   }
 
+  index <- index + 1
+  env$indices2[[length(env$indices2) + 1]] <- c(a, index -1, index)
+  parentIdx <- env$idx[[length(env$idx)]]
+
   if(length(a) == 3) { # binary operation
-    parent_is <- c(index -3, index - 2, index - 1)
-    parent_is <- ifelse(parent_is < 0, 0, parent_is)
-    node <- Node$new(a[[1]], a[[2]], a[[3]], index,  parent_is)
-    index <- index + 2
+    node <- Node$new(a[[1]], a[[2]], a[[3]], index)
     fill_association(a[[2]], env)
     fill_association(a[[3]], env)  
     env$association <- c(env$association, node)
   } 
 
   a <- as.list(a)
+  print(a)
+  print(paste("parent index ", parentIdx) )
+  print(paste("index ", index))
   lapply(a, function(x) {
-    get_ast(x, env, index + 1)
+    env$idx <- c(env$idx, parentIdx + parent.frame()$i)
+    env$indices[[length(env$indices) + 1]] <- c(deparse(a), parentIdx + parent.frame()$i)
+    get_ast(x, env, index)
   })
 }
 
@@ -89,9 +91,11 @@ env$counter <- 0
 env$idx_vars_found <- c()
 env$which_vars_found <- c()
 env$var_list <- vars
-env$idx <- 0
+env$idx <- 1
 env$indices <- list()
-
+env$indices2 <- list()
 ast <- get_ast(expression, env, 0)
 
-nothing <- lapply(env$association, print)
+#nothing <- lapply(env$association, print)
+env$idx
+env$indices2
