@@ -62,8 +62,7 @@ get_ast <- function(a, env, index) {
   }
 
   index <- index + 1
-  env$indices2[[length(env$indices2) + 1]] <- c(a, index -1, index)
-  parentIdx <- env$idx[[length(env$idx)]]
+  env$node_idx[[length(env$node_idx) + 1]] <- c(node = a, parent_idx = index -1, own_idx = index)
 
   if(length(a) == 3) { # binary operation
     node <- Node$new(a[[1]], a[[2]], a[[3]], index)
@@ -73,17 +72,21 @@ get_ast <- function(a, env, index) {
   } 
 
   a <- as.list(a)
-  print(a)
-  print(paste("parent index ", parentIdx) )
-  print(paste("index ", index))
   lapply(a, function(x) {
-    env$idx <- c(env$idx, parentIdx + parent.frame()$i)
-    env$indices[[length(env$indices) + 1]] <- c(deparse(a), parentIdx + parent.frame()$i)
+    current_idx <- parent.frame()$i[]
+    l <- c(operation = 1, left = 2, right = 3)
+    if( !(deparse(x) %in% env$functions) ) {
+      entry <- c(call = as.call(a), node = x, parent_idx = index -1,
+                 own_idx = index, replace = l[match(current_idx, l)] - 2) 
+      names(entry)[5] <- names(l[match(current_idx, l)])
+      env$child_indices[[length(env$child_indices) + 1]] <- entry
+    }
     get_ast(x, env, index)
   })
 }
 
-expression <- quote( x*x*x + y*y + z)
+expression <- quote( x*x*x + y*y + z*z)
+expression <- quote(x + y*z)
 vars <- all.vars(expression)
 env <- new.env()
 env$association <- c()
@@ -91,11 +94,22 @@ env$counter <- 0
 env$idx_vars_found <- c()
 env$which_vars_found <- c()
 env$var_list <- vars
-env$idx <- 1
-env$indices <- list()
-env$indices2 <- list()
+env$node_idx <- list()
+env$child_indices <- list()
+env$functions <- c("+", "*")
 ast <- get_ast(expression, env, 0)
 
-#nothing <- lapply(env$association, print)
-env$idx
-env$indices2
+#str(env$child_indices)
+env$which_vars_found
+
+for(i in seq_along(env$child_indices)) {
+  n <- env$child_indices[[i]]$parent_idx
+  node <- env$child_indices[[i]]
+  
+  #print(paste("parent index ", node$parent_idx))
+  #print(paste("own index ", node$own_idx))
+  #print(paste("child index ", node[5]))
+  #print(paste("parent call ", deparse(node$call)) )
+  #print(paste("currently evaluated ", deparse(node$node)) )
+  #cat("\n") 
+}
