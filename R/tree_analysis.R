@@ -43,6 +43,7 @@ get_ast <- function(a, env) {
 }
 
 expression <- quote( x*x*x + y*y + z*z)
+expression <- quote(x*x*x)
 vars <- all.vars(expression)
 env <- new.env()
 env$counter <- 0

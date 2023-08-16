@@ -27,11 +27,71 @@ namespace etr {
 
 typedef STORE<double>* variable;
 
+void fill_derivs(std::vector<double>& seeds, std::vector<double>& derivs, int ovs, int start_idx, int parent_start, int child_idx) {
+
+  if(child_idx == 0) { // left child of parent
+    int counter = parent_start * ovs;
+    for(int i = start_idx * ovs; i < start_idx * ovs + ovs; i++) {
+      derivs[i] = seeds[counter] * seeds[i];
+      counter++;
+    }
+    counter = parent_start * ovs;
+    for(int i = start_idx * ovs + ovs; i < start_idx * ovs + 2*ovs; i++) {
+      derivs[i] = seeds[counter] * seeds[i];
+      counter++;
+    }  
+  } else if(child_idx == 1) {
+    int counter = parent_start * ovs + ovs;
+    for(int i = start_idx * ovs; i < start_idx * ovs + ovs; i++) {
+      derivs[i] = seeds[counter] * seeds[i];
+      counter++;
+    }
+    counter = parent_start * ovs + ovs;
+    for(int i = start_idx * ovs + ovs; i < start_idx * ovs + 2*ovs; i++) {
+      derivs[i] = seeds[counter] * seeds[i];
+      counter++;
+    }
+  } else { // first node --> this is not possible
+    for(int i = 0; i < start_idx * ovs; i++) {
+      derivs[i] = 1.0;
+    }
+  }
+  
+}
+
+template <typename T2>
+  requires HasTypeTrait<T2>
+void fill_seed(const T2 &other_vec, std::vector<double>& seeds, int start_idx) {
+  int ovs = other_vec.size();
+  int counter = 0;
+  for(int i = ovs * start_idx; i < (ovs * start_idx) + ovs; i++) {
+    seeds[i] = other_vec.get_deriv_left(counter);
+    counter++;
+  }
+  counter = 0;
+  for(int i = (ovs * start_idx) + ovs; i < (ovs * start_idx) + 2*ovs; i++) {
+    seeds[i] = other_vec.get_deriv_right(counter);
+    counter++;
+  }
+}
+
+template <typename T2>
+  requires HasTypeTrait<T2>
+void fill_seed_variables(const T2 &other_vec, std::vector<double>& seeds, int start_idx, variable vL, variable vR) {
+  int ovs = other_vec.size();
+  for(int i = ovs * start_idx; i < (ovs * start_idx) + ovs; i++) {
+    seeds[i] = other_vec.get_deriv_left(vL);
+  }
+  for(int i = (ovs * start_idx) + ovs; i < (ovs * start_idx) + 2*ovs; i++) {
+    seeds[i] = other_vec.get_deriv_right(vR);
+  }
+}
+
 template <typename T2, size_t size_u_or_b>
   requires HasTypeTrait<T2>
 void walk(const T2 &other_vec, std::vector<double>& seeds,
           int idx, int child_idx, std::vector<double>& derivs,
-          const std::array<int, size_u_or_b>& sub, int& deriv_counter) {
+          const std::array<int, size_u_or_b>& sub, int& counter) {
   if constexpr (std::is_same_v<typename T2::TypeTrait, VariableTrait>) {
     return;
   } else {
@@ -44,45 +104,39 @@ void walk(const T2 &other_vec, std::vector<double>& seeds,
     constexpr bool isVar_vec = std::is_same<trait_vec, VariableTrait>::value;
 
     int start_idx = 0;
-    for(int i = 0; i < idx; i++) start_idx += sub[i];
+    for(int i = 0; i < counter; i++) start_idx += sub[i];
 
-    double deriv_l;
-  	double deriv_r;
+    counter++;
+
   	if constexpr (isVar_vec) {
-  	 	deriv_l = other_vec.get_deriv_left(&other_vec.l);
-  	 	deriv_r = other_vec.get_deriv_right(&other_vec.r); 
+      fill_seed_variables(other_vec, seeds, start_idx, &other_vec.l, &other_vec.r);
   	} else {
-  	 	deriv_l = other_vec.get_deriv_left(0);
-  	 	deriv_r = other_vec.get_deriv_right(0); 
-      
+      fill_seed(other_vec, seeds, start_idx); 
   	}
 
-   seeds[start_idx] = deriv_l;
-   seeds[start_idx + 1] = deriv_l;
+    int parent_start = 0;
+    for(int i = 0; i < (idx-1); i++) parent_start += sub[i];    
 
    if(child_idx >= 0) {
-    int correct_parent_node = start_idx - sub[idx - 1]; 
-    derivs[deriv_counter] = seeds[correct_parent_node + child_idx] * deriv_l;
-    derivs[deriv_counter + 1] = seeds[correct_parent_node + child_idx] * deriv_r;
-    deriv_counter += 2;
+    fill_derivs(seeds, derivs, other_vec.size(), start_idx, parent_start, child_idx);
    } else {
-    derivs[deriv_counter] = deriv_l;
-    derivs[deriv_counter + 1] = deriv_r;
-    deriv_counter += 2;
+      for(int i = 0; i < sub[0] * other_vec.size(); i++) {
+        derivs[i] = 1.0;
+      }
    }
 
     if constexpr (isVar_r && isVar_l) { 
       return;
     } else if constexpr (!isVar_l && isVar_r) {
       idx++;
-      walk(other_vec.l, seeds, idx, 0, derivs, sub, deriv_counter);
+      walk(other_vec.l, seeds, idx, 0, derivs, sub, counter);
     } else if constexpr (isVar_l && !isVar_r) {
       idx++;
-      walk(other_vec.r, seeds, idx, 1, derivs, sub, deriv_counter);
+      walk(other_vec.r, seeds, idx, 1, derivs, sub, counter);
     } else if constexpr (!isVar_l && !isVar_r) {
       idx++;
-      walk(other_vec.l, seeds, idx, 0, derivs, sub, deriv_counter);
-      walk(other_vec.r, seeds, idx, 1, derivs, sub, deriv_counter);
+      walk(other_vec.l, seeds, idx, 0, derivs, sub, counter);
+      walk(other_vec.r, seeds, idx, 1, derivs, sub, counter);
     } 
   }
 
@@ -104,22 +158,39 @@ void assign(VEC<T1, R1> &vec,
 	for(int i = 0; i < size_vars; i++) {
 		d.emplace(i, var_list[i]);
 	}
-	std::vector<double> seeds(size_u_or_b, 0.0);
+
+	std::vector<double> seeds(num_nodes * other_vec.size(), 0.0);
+
+  if(unary_or_binary[0] == 1) {
+    for(int i = 0; i < other_vec.size(); i++) { 
+      seeds[i] = 1.0;
+    }  
+  } else if(unary_or_binary[0] == 2) {
+    for(int i = 0; i < other_vec.size() * 2; i++) { 
+      seeds[i] = 1.0;
+    }
+  }
+
   int idx = 0;
-  std::vector<double> derivs_walk(num_nodes, 0.0);
-  int deriv_counter = 0;
+  std::vector<double> derivs_walk(num_nodes * other_vec.size(), 0.0);
+  int counter = 0;
   walk(other_vec.data(), seeds, idx, -1, derivs_walk,
-       unary_or_binary, deriv_counter);
+       unary_or_binary, counter);
   
-  std::vector<double> derivs(var_list.size());
-  for(int i = 0; i < derivs_walk.size(); i++) {
-    if(which_vars_found[i] != -1) {
-      derivs[which_vars_found[i]] += derivs_walk[i];
+  int ovs = other_vec.size();
+  std::vector<double> derivs(var_list.size() * ovs);
+  for(int i = 0; i < which_vars_found.size(); i++) {
+    if(which_vars_found[i] != -1) { // save segment
+      int counter = 0;
+      for(int j = i * ovs; j < ((i*ovs) + ovs); j++) {
+        derivs[which_vars_found[i] * ovs + counter] += derivs_walk[j];
+        counter++;
+      }
     }
   }
 
   for(auto i: derivs) Rcpp::Rcout << i << std::endl;
-
+  
 }
 
 
