@@ -39,23 +39,25 @@ namespace etr {
 struct VariableTrait {};
 
 struct UnaryTrait {};
+struct VSTrait {};
+struct SVTrait {};
 struct BinaryTrait{};
 
 struct VVPlusTrait : BinaryTrait {};
-struct VSPlusTrait : UnaryTrait {};
-struct SVPlusTrait : UnaryTrait {};
+struct VSPlusTrait : VSTrait {};
+struct SVPlusTrait : SVTrait {};
 
 struct VVMinusTrait : BinaryTrait{};
-struct VSMinusTrait : UnaryTrait {};
-struct SVMinusTrait : UnaryTrait{};
+struct VSMinusTrait : VSTrait {};
+struct SVMinusTrait : SVTrait{};
 
 struct VVTimesTrait :BinaryTrait {};
-struct VSTimesTrait :UnaryTrait {};
-struct SVTimesTrait :UnaryTrait {};
+struct VSTimesTrait :VSTrait {};
+struct SVTimesTrait :SVTrait {};
 
 struct VVDivTrait :BinaryTrait {};
-struct VSDivTrait :UnaryTrait {};
-struct SVDivTrait :UnaryTrait {};
+struct VSDivTrait :VSTrait {};
+struct SVDivTrait :SVTrait {};
 
 struct VVSinTrait :UnaryTrait {};
 

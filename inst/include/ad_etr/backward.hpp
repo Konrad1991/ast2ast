@@ -147,6 +147,11 @@ void walk(const T2 &other_vec, std::vector<double>& seeds,
           walk(other_vec.get(), seeds, idx, 0, derivs, sub, counter);
         }
     } else { // binary
+
+        // check whether VS or SV is found
+        constexpr bool isVS = std::is_base_of_v<VSTrait, trait_other_vec>;
+        constexpr bool isSV = std::is_base_of_v<SVTrait, trait_other_vec>;
+
         using trait_l = std::remove_reference<decltype(other_vec.getL())>::type::TypeTrait;
         using trait_r = std::remove_reference<decltype(other_vec.getR())>::type::TypeTrait;
         constexpr bool isVar_l = std::is_same<trait_l, VariableTrait>::value;
@@ -252,6 +257,152 @@ std::vector<double> assign(VEC<T1, R1> &vec,
 
   return derivs;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+template <typename T1, typename R1,
+      typename T2,
+      size_t size_vars, size_t num_nodes,
+      size_t size_u_or_b
+>
+std::vector<double> assign(VEC<T1, R1> &vec,
+            const VEC<T2, double> &other_vec,
+            const std::array<const variable, size_vars>&& var_list,
+            const std::array<int, num_nodes>&& which_vars_found,
+            const std::array<int, size_u_or_b>&& unary_or_binary) {
+  
+  std::unordered_map<int, const variable> d;
+  d.reserve(size_vars);
+  for(int i = 0; i < size_vars; i++) {
+    d.emplace(i, var_list[i]);
+  }
+
+  int size = num_nodes * other_vec.size();
+
+  std::vector<double> seeds(size, 0.0);
+
+  if(unary_or_binary[0] == 1) {
+    for(int i = 0; i < other_vec.size(); i++) { 
+      seeds[i] = 1.0;
+    }  
+  } else if(unary_or_binary[0] == 2) {
+    for(int i = 0; i < other_vec.size() * 2; i++) { 
+      seeds[i] = 1.0;
+    }
+  }
+
+  int idx = 0;
+  std::vector<double> derivs_walk(size, 0.0);
+  int counter = 0;
+  walk(other_vec.data(), seeds, idx, -1, derivs_walk,
+       unary_or_binary, counter);
+  if constexpr(num_nodes == 1) { // correct?
+    for(int i = 0; i < size; i++) { 
+      derivs_walk[i] = seeds[i];
+    }
+  } 
+  
+  int ovs = other_vec.size();
+  std::vector<double> derivs(var_list.size() * ovs, 0.0);
+  for(int i = 0; i < which_vars_found.size(); i++) {
+    if(which_vars_found[i] != -1) { // save segment
+      int counter = 0;
+      for(int j = i * ovs; j < ((i*ovs) + ovs); j++) {
+        derivs[which_vars_found[i] * ovs + counter] += derivs_walk[j];
+        counter++;
+      }
+    }
+  }
+
+  return derivs;
+}
+
+
+
+
+
+
+/*
+template <typename T1, typename R1,
+      typename T2, typename R2,
+      size_t size_vars, size_t num_nodes,
+      size_t size_u_or_b
+>
+requires std::is_base_of_v<doubleTrait, typename R2::TypeTrait>
+std::vector<double> assign(VEC<T1, R1> &vec,
+            const VEC<T2, R2> &other_vec,
+            const std::array<const variable, size_vars>&& var_list,
+            const std::array<int, num_nodes>&& which_vars_found,
+            const std::array<int, size_u_or_b>&& unary_or_binary) {
+  
+
+  std::cout << demangle(typeid(other_vec).name()) << std::endl;
+
+  std::unordered_map<int, const variable> d;
+  d.reserve(size_vars);
+  for(int i = 0; i < size_vars; i++) {
+    d.emplace(i, var_list[i]);
+  }
+
+  int size = num_nodes * other_vec.size();
+
+  std::vector<double> seeds(size, 0.0);
+
+  if(unary_or_binary[0] == 1) {
+    for(int i = 0; i < other_vec.size(); i++) { 
+      seeds[i] = 1.0;
+    }  
+  } else if(unary_or_binary[0] == 2) {
+    for(int i = 0; i < other_vec.size() * 2; i++) { 
+      seeds[i] = 1.0;
+    }
+  }
+
+  int idx = 0;
+  std::vector<double> derivs_walk(size, 0.0);
+  int counter = 0;
+  
+  walk(other_vec.data(), seeds, idx, -1, derivs_walk,
+       unary_or_binary, counter);
+
+  
+  if constexpr(num_nodes == 1) { // correct?
+    for(int i = 0; i < size; i++) { 
+      derivs_walk[i] = seeds[i];
+    }
+  } 
+  
+  
+  int ovs = other_vec.size();
+  std::vector<double> derivs(var_list.size() * ovs, 0.0);
+  
+  for(int i = 0; i < which_vars_found.size(); i++) {
+    if(which_vars_found[i] != -1) { // save segment
+      int counter = 0;
+      for(int j = i * ovs; j < ((i*ovs) + ovs); j++) {
+        derivs[which_vars_found[i] * ovs + counter] += derivs_walk[j];
+        counter++;
+      }
+    }
+  }
+  
+  return derivs;
+}
+
+*/
+
+
 
 
 }

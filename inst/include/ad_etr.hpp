@@ -35,7 +35,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "etr_bits/util.hpp"
 
 #include "etr_bits/concatenate.hpp"
-// #include "etr_bits/colon.hpp"
+#include "etr_bits/colon.hpp"
 #include "etr_bits/allocation.hpp"
 #include "etr_bits/print.hpp"
 
