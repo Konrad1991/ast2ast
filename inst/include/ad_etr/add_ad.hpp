@@ -33,7 +33,7 @@ private:
 public:
   const L &l;
   const R &r;
-  bool ismatrix;
+  bool ismatrix;  
   int rows_;
   int columns_;
 

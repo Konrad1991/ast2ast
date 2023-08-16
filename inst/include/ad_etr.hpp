@@ -30,6 +30,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "ad_etr/pointer_storage.hpp"
 #include "ad_etr/vec_ad.hpp"
 #include "ad_etr/backward.hpp"
+#include "ad_etr/trigo_ad.hpp"
 #include "etr_bits/header.hpp"
 #include "etr_bits/util.hpp"
 

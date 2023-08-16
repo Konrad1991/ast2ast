@@ -38,53 +38,37 @@ namespace etr {
 
 struct VariableTrait {};
 
-struct VVPlusTrait {};
-struct VSPlusTrait {};
-struct SVPlusTrait {};
+struct UnaryTrait {};
+struct BinaryTrait{};
 
-struct VVMinusTrait {};
-struct VSMinusTrait {};
-struct SVMinusTrait {};
+struct VVPlusTrait : BinaryTrait {};
+struct VSPlusTrait : UnaryTrait {};
+struct SVPlusTrait : UnaryTrait {};
 
-struct VVTimesTrait {};
-struct VSTimesTrait {};
-struct SVTimesTrait {};
+struct VVMinusTrait : BinaryTrait{};
+struct VSMinusTrait : UnaryTrait {};
+struct SVMinusTrait : UnaryTrait{};
 
-struct VVDivTrait {};
-struct VSDivTrait {};
-struct SVDivTrait {};
+struct VVTimesTrait :BinaryTrait {};
+struct VSTimesTrait :UnaryTrait {};
+struct SVTimesTrait :UnaryTrait {};
 
-struct VVExpTrait {};
+struct VVDivTrait :BinaryTrait {};
+struct VSDivTrait :UnaryTrait {};
+struct SVDivTrait :UnaryTrait {};
+
+struct VVSinTrait :UnaryTrait {};
 
 struct NullOperation {};
 
 template <typename T>
 concept HasTypeTrait = requires { typename T::TypeTrait; };
 
-template <typename T>
-constexpr int checkTraits() {
-    return -2;
-}
-
-template <>
-constexpr int checkTraits<VariableTrait>() {
-    return -1;
-}
-
-template <>
-constexpr int checkTraits<VVPlusTrait>() {
-    return 0;
-}
-
-template <>
-constexpr int checkTraits<VVTimesTrait>() {
-    return 2;
-}
-
-template <>
-constexpr int checkTraits<VVMinusTrait>() {
-    return 1;
-}
+template<typename Trait>
+struct TraitCategory {
+    static constexpr bool isUnary = std::is_base_of_v<UnaryTrait, Trait>;
+    static constexpr bool isBinary = std::is_base_of_v<BinaryTrait, Trait>;
+};
 
 } // namespace etr
 

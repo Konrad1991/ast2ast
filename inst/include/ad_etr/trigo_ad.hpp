@@ -22,11 +22,11 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef TRIGO
 #define TRIGO
 
-#include "vec.hpp"
+#include "vec_ad.hpp"
 
 namespace etr {
 
-template <typename T, typename L> class VVSIN {
+template <typename T, typename L, typename Trait = VVSinTrait> class VVSIN {
 
 private:
   const L &r; // const L& l;
@@ -35,6 +35,7 @@ private:
   int ncol_;
 
 public:
+  using TypeTrait = Trait;
   VVSIN(const L &a, bool r_ismatrix, int r_rows, int r_cols) : r(a) {
 
     if (r_ismatrix == true) {
@@ -46,6 +47,8 @@ public:
 
   T operator[](const int i) const { return sin(r[i % r.size()]); }
 
+  T get_deriv(const int i) const { return cos(r[i % r.size()]); };
+
   int size() const { return r.size(); }
 
   bool im() const { return ismatrix; }
@@ -53,6 +56,11 @@ public:
   int nc() const { return ncol_; }
 
   int nr() const { return nrow_; }
+
+  const L &get() const {
+    return r;
+  }
+
 };
 
 template <typename T, typename L>
