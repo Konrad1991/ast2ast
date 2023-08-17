@@ -122,3 +122,20 @@ tree_analyis <- function(expression) {
  res <- create_call(env$var_list, env$which_vars_found, env$num_args)
  gsub("to_replace", res, code)
 }
+
+
+create_vals <- function(expression) {
+    vars <- all.vars(expression)
+    env <- new.env()
+    env$counter <- 0
+    env$idx_vars_found <- c()
+    env$which_vars_found <- c()
+    env$var_list <- vars
+    env$num_args <- c()
+    ast <- get_ast(expression, env)
+    env$which_vars_found
+    env$num_args 
+    return(list(env$var_list, env$which_vars_found, env$num_args))
+}
+
+create_vals(quote(3.14 + x))

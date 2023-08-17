@@ -59,33 +59,90 @@ void fill_derivs(std::vector<double>& seeds, std::vector<double>& derivs, int ov
   
 }
 
-template <typename T2>
+
+
+
+
+template <bool VV, bool VS, bool SV, typename T2>
   requires HasTypeTrait<T2>
 void fill_seed(const T2 &other_vec, std::vector<double>& seeds, int start_idx) {
-  int ovs = other_vec.size();
-  int counter = 0;
-  for(int i = ovs * start_idx; i < (ovs * start_idx) + ovs; i++) {
-    seeds[i] = other_vec.get_deriv_left(counter);
-    counter++;
+  if constexpr (VV) {
+    int ovs = other_vec.size();
+    int counter = 0;
+    for(int i = ovs * start_idx; i < (ovs * start_idx) + ovs; i++) {
+      seeds[i] = other_vec.get_deriv_left(counter);
+      counter++;
+    }
+    counter = 0;
+    for(int i = (ovs * start_idx) + ovs; i < (ovs * start_idx) + 2*ovs; i++) {
+      seeds[i] = other_vec.get_deriv_right(counter);
+      counter++;
+    }  
+  } else if constexpr(VS) {
+    int ovs = other_vec.size();
+    int counter = 0;
+    for(int i = ovs * start_idx; i < (ovs * start_idx) + ovs; i++) {
+      seeds[i] = other_vec.get_deriv_left(counter);
+      counter++;
+    }
+    counter = 0;
+    for(int i = (ovs * start_idx) + ovs; i < (ovs * start_idx) + 2*ovs; i++) {
+      seeds[i] = other_vec.r;
+      counter++;
+    }  
+  } else if constexpr (SV) {
+    int ovs = other_vec.size();
+    int counter = 0;
+    for(int i = ovs * start_idx; i < (ovs * start_idx) + ovs; i++) {
+      seeds[i] = other_vec.l;
+      counter++;
+    }
+    counter = 0;
+    for(int i = (ovs * start_idx) + ovs; i < (ovs * start_idx) + 2*ovs; i++) {
+      seeds[i] = other_vec.get_deriv_right();
+      counter++;
+    }  
   }
-  counter = 0;
-  for(int i = (ovs * start_idx) + ovs; i < (ovs * start_idx) + 2*ovs; i++) {
-    seeds[i] = other_vec.get_deriv_right(counter);
-    counter++;
-  }
+  
 }
 
-template <typename T2>
+template <bool VV, bool VS, bool SV, typename T2>
   requires HasTypeTrait<T2>
 void fill_seed_variables(const T2 &other_vec, std::vector<double>& seeds, int start_idx, variable vL, variable vR) {
-  int ovs = other_vec.size();
-  for(int i = ovs * start_idx; i < (ovs * start_idx) + ovs; i++) {
-    seeds[i] = other_vec.get_deriv_left(vL);
+  if constexpr(VV) {
+    int ovs = other_vec.size();
+    for(int i = ovs * start_idx; i < (ovs * start_idx) + ovs; i++) {
+      seeds[i] = other_vec.get_deriv_left(vL);
+    }
+    for(int i = (ovs * start_idx) + ovs; i < (ovs * start_idx) + 2*ovs; i++) {
+      seeds[i] = other_vec.get_deriv_right(vR);
+    }  
+  } else if constexpr(VS) {
+    int ovs = other_vec.size();
+    for(int i = ovs * start_idx; i < (ovs * start_idx) + ovs; i++) {
+      seeds[i] = other_vec.get_deriv_left(vL);
+    }
+    for(int i = (ovs * start_idx) + ovs; i < (ovs * start_idx) + 2*ovs; i++) {
+      seeds[i] = 0;
+      // probably double cannot be handled.
+      // Even if i store them in a VEC when calling e.g. operator+
+      // there is no benefit as the old derivs from previous expressions are lost
+    }
+  } else if constexpr(SV) {
+    int ovs = other_vec.size();
+    for(int i = ovs * start_idx; i < (ovs * start_idx) + ovs; i++) {
+      seeds[i] = 0.0; // see above
+    }
+    for(int i = (ovs * start_idx) + ovs; i < (ovs * start_idx) + 2*ovs; i++) {
+      seeds[i] = other_vec.get_deriv_right(vR);
+    }
   }
-  for(int i = (ovs * start_idx) + ovs; i < (ovs * start_idx) + 2*ovs; i++) {
-    seeds[i] = other_vec.get_deriv_right(vR);
-  }
+  
 }
+
+
+
+
 
 template <typename T2>
   requires HasTypeTrait<T2>
@@ -106,6 +163,149 @@ void fill_seed_unary(const T2 &other_vec, std::vector<double>& seeds, int start_
     counter++;
   }
 }
+
+
+
+
+template <typename T2, size_t size_u_or_b>
+  requires HasTypeTrait<T2>
+void walk(const T2 &other_vec, std::vector<double>& seeds,
+          int idx, int child_idx, std::vector<double>& derivs,
+          const std::array<int, size_u_or_b>& sub, int& counter);
+
+
+
+template <bool isVar_vec, bool isVar_l, bool isVar_r, typename T2, size_t size_u_or_b>
+  requires HasTypeTrait<T2>
+void binaryVV(int& counter, int idx, const std::array<int, size_u_or_b>& sub, int child_idx,
+              const T2 &other_vec, std::vector<double>& seeds, std::vector<double>& derivs) {
+  int start_idx = 0;
+  for(int i = 0; i < counter; i++) start_idx += sub[i];
+  counter++;
+
+  if constexpr (isVar_vec) {
+    fill_seed_variables<true, false, false>(other_vec, seeds, start_idx, &other_vec.l, &other_vec.r);
+  } else {
+    fill_seed<true, false, false>(other_vec, seeds, start_idx); 
+  }
+
+  int parent_start = 0;
+  for(int i = 0; i < (idx-1); i++) parent_start += sub[i];    
+
+  if(child_idx >= 0) {
+    fill_derivs(seeds, derivs, other_vec.size(), start_idx, parent_start, child_idx);
+  } else {
+    for(int i = 0; i < sub[0] * other_vec.size(); i++) {
+      derivs[i] = 1.0;
+      }
+  }
+
+  if constexpr (isVar_r && isVar_l) { 
+    return;
+  } else if constexpr (!isVar_l && isVar_r) {
+    idx++;
+    walk(other_vec.l, seeds, idx, 0, derivs, sub, counter);
+  } else if constexpr (isVar_l && !isVar_r) {
+    idx++;
+    walk(other_vec.r, seeds, idx, 1, derivs, sub, counter);
+  } else if constexpr (!isVar_l && !isVar_r) {
+    idx++;
+    walk(other_vec.l, seeds, idx, 0, derivs, sub, counter);
+    walk(other_vec.r, seeds, idx, 1, derivs, sub, counter);
+  } 
+}
+
+
+
+
+template <bool isVar_vec, bool isVar_l, bool isVar_r, typename T2, size_t size_u_or_b>
+  requires HasTypeTrait<T2>
+void binaryVS(int& counter, int idx, const std::array<int, size_u_or_b>& sub, int child_idx,
+              const T2 &other_vec, std::vector<double>& seeds, std::vector<double>& derivs) {
+  int start_idx = 0;
+  for(int i = 0; i < counter; i++) start_idx += sub[i];
+  counter++;
+  
+  
+  if constexpr (isVar_vec) {
+    fill_seed_variables<false, true, false>(other_vec, seeds, start_idx, &other_vec.l, &other_vec.r);
+  } else {
+    fill_seed<false, true, false>(other_vec, seeds, start_idx); 
+  }
+  
+  
+  int parent_start = 0;
+  for(int i = 0; i < (idx-1); i++) parent_start += sub[i];    
+
+  if(child_idx >= 0) {
+    fill_derivs(seeds, derivs, other_vec.size(), start_idx, parent_start, child_idx);
+  } else {
+    for(int i = 0; i < sub[0] * other_vec.size(); i++) {
+      derivs[i] = 1.0;
+      }
+  }
+  
+  
+  if constexpr (isVar_r && isVar_l) { 
+    return;
+  } else if constexpr (!isVar_l && isVar_r) {
+    idx++;
+    walk(other_vec.l, seeds, idx, 0, derivs, sub, counter);
+  } else if constexpr (isVar_l && !isVar_r) {
+    idx++;
+  } else if constexpr (!isVar_l && !isVar_r) {
+    idx++;
+    walk(other_vec.l, seeds, idx, 0, derivs, sub, counter);
+  } 
+  
+}
+
+
+
+
+
+template <bool isVar_vec, bool isVar_l, bool isVar_r, typename T2, size_t size_u_or_b>
+  requires HasTypeTrait<T2>
+void binarySV(int& counter, int idx, const std::array<int, size_u_or_b>& sub, int child_idx,
+              const T2 &other_vec, std::vector<double>& seeds, std::vector<double>& derivs) {
+  int start_idx = 0;
+  for(int i = 0; i < counter; i++) start_idx += sub[i];
+  counter++;
+  
+  
+  if constexpr (isVar_vec) {
+    fill_seed_variables<false, false, true>(other_vec, seeds, start_idx, &other_vec.l, &other_vec.r);
+  } else {
+    fill_seed<false, false, true>(other_vec, seeds, start_idx); 
+  }
+  
+  
+  int parent_start = 0;
+  for(int i = 0; i < (idx-1); i++) parent_start += sub[i];    
+
+  if(child_idx >= 0) {
+    fill_derivs(seeds, derivs, other_vec.size(), start_idx, parent_start, child_idx);
+  } else {
+    for(int i = 0; i < sub[0] * other_vec.size(); i++) {
+      derivs[i] = 1.0;
+      }
+  }
+  
+  
+  if constexpr (isVar_r && isVar_l) { 
+    return;
+  } else if constexpr (!isVar_l && isVar_r) {
+    idx++;
+  } else if constexpr (isVar_l && !isVar_r) {
+    idx++;
+    walk(other_vec.r, seeds, idx, 1, derivs, sub, counter);
+  } else if constexpr (!isVar_l && !isVar_r) {
+    idx++;
+    walk(other_vec.r, seeds, idx, 1, derivs, sub, counter);
+  } 
+  
+}
+
 
 template <typename T2, size_t size_u_or_b>
   requires HasTypeTrait<T2>
@@ -152,50 +352,46 @@ void walk(const T2 &other_vec, std::vector<double>& seeds,
         constexpr bool isVS = std::is_base_of_v<VSTrait, trait_other_vec>;
         constexpr bool isSV = std::is_base_of_v<SVTrait, trait_other_vec>;
 
-        using trait_l = std::remove_reference<decltype(other_vec.getL())>::type::TypeTrait;
-        using trait_r = std::remove_reference<decltype(other_vec.getR())>::type::TypeTrait;
-        constexpr bool isVar_l = std::is_same<trait_l, VariableTrait>::value;
-        constexpr bool isVar_r = std::is_same<trait_r, VariableTrait>::value;
-        using trait_vec = std::remove_reference<decltype(other_vec)>::type::TypeTrait; 
-        constexpr bool isVar_vec = std::is_same<trait_vec, VariableTrait>::value;
+        if constexpr(!isVS && !isSV) {
+            using trait_l = std::remove_reference<decltype(other_vec.getL())>::type::TypeTrait;
+            using trait_r = std::remove_reference<decltype(other_vec.getR())>::type::TypeTrait;
+            constexpr bool isVar_l = std::is_same<trait_l, VariableTrait>::value;
+            constexpr bool isVar_r = std::is_same<trait_r, VariableTrait>::value;
+            using trait_vec = std::remove_reference<decltype(other_vec)>::type::TypeTrait; 
+            constexpr bool isVar_vec = std::is_same<trait_vec, VariableTrait>::value;
 
-        int start_idx = 0;
-        for(int i = 0; i < counter; i++) start_idx += sub[i];
-        counter++;
+            binaryVV<isVar_vec, isVar_l, isVar_r>(counter, idx, sub, child_idx,
+                                                  other_vec, seeds, derivs);
+            
+        } else if constexpr(isVS && !isSV) {
+            
+            using trait_l = std::remove_reference<decltype(other_vec.getL())>::type::TypeTrait;
+            using trait_r = typename std::remove_reference<decltype(other_vec.getR())>::type;
 
-        if constexpr (isVar_vec) {
-          fill_seed_variables(other_vec, seeds, start_idx, &other_vec.l, &other_vec.r);
-        } else {
-          fill_seed(other_vec, seeds, start_idx); 
+            constexpr bool isVar_l = std::is_same<trait_l, VariableTrait>::value;
+            // ======================================================
+            // how to check whether r is a variable ???
+            // ======================================================
+            constexpr bool isVar_r = false; 
+
+            using trait_vec = std::remove_reference<decltype(other_vec)>::type::TypeTrait; 
+            constexpr bool isVar_vec = std::is_same<trait_vec, VariableTrait>::value;
+
+            binaryVS<isVar_vec, isVar_l, isVar_r>(counter, idx, sub, child_idx,
+                                                  other_vec, seeds, derivs);
+            
+        } else if constexpr (isSV && !isVS) {
+            using trait_l = typename std::remove_reference<decltype(other_vec.getL())>::type;
+            //using trait_r = std::remove_reference<decltype(other_vec.getR())>::type::TypeTrait;
+            //constexpr bool isVar_r = std::is_same<trait_r, VariableTrait>::value;
+            //using trait_vec = std::remove_reference<decltype(other_vec)>::type::TypeTrait; 
+            //constexpr bool isVar_vec = std::is_same<trait_vec, VariableTrait>::value;
+
+            //binarySV<isVar_vec, isVar_l, isVar_r>(counter, idx, sub, child_idx,
+              //                                    other_vec, seeds, derivs);
         }
-
-        int parent_start = 0;
-        for(int i = 0; i < (idx-1); i++) parent_start += sub[i];    
-
-        if(child_idx >= 0) {
-          fill_derivs(seeds, derivs, other_vec.size(), start_idx, parent_start, child_idx);
-        } else {
-          for(int i = 0; i < sub[0] * other_vec.size(); i++) {
-            derivs[i] = 1.0;
-            }
-        }
-
-        if constexpr (isVar_r && isVar_l) { 
-          return;
-        } else if constexpr (!isVar_l && isVar_r) {
-          idx++;
-          walk(other_vec.l, seeds, idx, 0, derivs, sub, counter);
-        } else if constexpr (isVar_l && !isVar_r) {
-          idx++;
-          walk(other_vec.r, seeds, idx, 1, derivs, sub, counter);
-        } else if constexpr (!isVar_l && !isVar_r) {
-          idx++;
-          walk(other_vec.l, seeds, idx, 0, derivs, sub, counter);
-          walk(other_vec.r, seeds, idx, 1, derivs, sub, counter);
-        }
+        
     }
-
-    
 
   }
 
@@ -219,6 +415,7 @@ std::vector<double> assign(VEC<T1, R1> &vec,
 	}
 
   int size = num_nodes * other_vec.size();
+  if(num_nodes == 1 && (unary_or_binary[0] == 2) && (size_vars == 1)) size *= 2; // correct?
 
 	std::vector<double> seeds(size, 0.0);
 
@@ -289,6 +486,7 @@ std::vector<double> assign(VEC<T1, R1> &vec,
   }
 
   int size = num_nodes * other_vec.size();
+  if(num_nodes == 1 && (unary_or_binary[0] == 2) && (size_vars == 1)) size *= 2; // correct?
 
   std::vector<double> seeds(size, 0.0);
 

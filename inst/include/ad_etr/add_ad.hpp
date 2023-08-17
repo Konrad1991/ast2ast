@@ -29,7 +29,6 @@ namespace etr {
 template <typename T, typename L, typename R, typename Trait = VVPlusTrait>
 class VVPLUS {
 
-private:
 public:
   const L &l;
   const R &r;
@@ -113,6 +112,7 @@ template <typename T, typename L, typename R, typename Trait = VSPlusTrait>
 class VSPLUS {
 
 private:
+public:
   const L &l;
   const R &r;
   bool ismatrix;
@@ -125,6 +125,10 @@ public:
       : l(a), r(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) {}
 
   T operator[](const int i) const { return l[i % l.size()] + r; }
+
+  T get_deriv_left(const int i) const { return 1.0; }
+
+  T get_deriv_right(const int i) const { return 1.0; }
 
   int size() const { return l.size(); }
 
@@ -167,6 +171,7 @@ template <typename T, typename L, typename R, typename Trait = SVPlusTrait>
 class SVPLUS {
 
 private:
+public:
   const R &r;
   const L &l;
   const bool ismatrix;
@@ -179,6 +184,10 @@ public:
       : r(a), l(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) {}
 
   T operator[](const int i) const { return l[i % l.size()] + r; }
+
+  T get_deriv_left(const int i) const { return 1.0; }
+
+  T get_deriv_right(const int i) const { return 1.0; }
 
   int size() const { return l.size(); }
 
