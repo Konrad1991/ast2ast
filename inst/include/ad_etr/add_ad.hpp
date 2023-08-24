@@ -69,6 +69,94 @@ public:
 
 };
 
+/*
+Idea:
+template<typename L, typename R, T = double>
+inline VEC<T, PLUS<T, L, R> operator+(const L& a, const R& a) {
+  check whether L is double or VEC
+  check whether R is double or VEC
+
+  one could also check whether L or R is of any other type.
+  Maybe a SUBSET type has to be introduced for reverse ad
+  The SUBSET type would consist of:
+    - a reference to the data (STORE<double>&)
+    - a integer vector defininf the positions
+  
+  - I could define a function which is responsible for extractiong elements:
+    template<typename T>
+    T &get(T* p, int& pos, int& sz, void* indices) const {
+      if (pos < 0) {
+        Rf_error("Error: out of boundaries --> value below 1");
+      } else if (pos >= sz) {
+        Rf_error("Error: out of boundaries --> value beyond size of vector");
+      }
+      return p[pos];
+    }
+  - Then I define within STORE a function pointer e.g. ptr_get()
+  - The default is that ptr_get is set to get
+  - Than I define a struct
+    struct INDICES{
+      int* indices,
+      int size
+    };
+  - Than I define a function get_subset
+    template<typename T>
+    T &get_subset(T* p, int& pos, int& sz, void* indices) const{
+      struct INDICES* inds = (struct INDICES*)indices;
+      if (pos < 0) {
+        Rf_error("Error: out of boundaries --> value below 1");
+      } else if (pos >= inds -> sz) {
+        Rf_error("Error: out of boundaries --> value beyond size of vector");
+      }
+      return p[inds -> indices[pos]]; 
+    }
+  - Than If i create a subset I can set the get_ptr to get_subset instead of get.
+  - Furthermore it is necessary to add an attribute INDICES* inds to STORE
+      - This can be set if needed.
+
+  - But is this necessary?
+  - Is there a case where I have several STORE elements e.g. in a vector
+  - If this is not the case it is easier to do it with templates and constexpr.
+  - I think that this should work in the expression tree. But test it.
+    template <bool SUBSETTED, typename T, typename Trait = VariableTrait> class STORE {
+      ...
+      T &operator[](int pos) const {
+          if constexpr(!SUBSETTED) {
+            if (pos < 0) {
+              Rf_error("Error: out of boundaries --> value below 1");
+            } else if (pos >= sz) {
+              Rf_error("Error: out of boundaries --> value beyond size of vector");
+            }
+            return p[pos];
+            }
+          } else if constexpr(SUBSETTED) {
+            return p[inds -> indices[pos]];
+          }
+          
+      };
+
+    - Problem is in both approaches the INDICES*. Is this a large overhead??????
+
+  based on the values either specialised classes of PLUS are used. 
+  the methods behave different based on the const bool values 
+
+  template <typename T>
+  class MyClass {
+    public:
+      void DoSomething() {
+          if constexpr (std::is_integral_v<T>) {
+            // Code specific to integral types
+          } else if constexpr (std::is_floating_point_v<T>) {
+              // Code specific to floating-point types
+          } else {
+              // Generic code
+          }
+      }
+    };
+  }
+*/
+
+
 template <typename T, typename L, typename R>
 inline VEC<T, VVPLUS<T, L, R>> operator+(const VEC<T, L> &a,
                                          const VEC<T, R> &b) {
