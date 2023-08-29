@@ -81,4 +81,4 @@ expressions <- list(one = quote(y[a[b[3]]] <- x + 3),
 				    three = quote(y <- x*y + y),
 				    four = quote(y[a[y[2]]] <- x*y + 3) )
 
-trash <- lapply(expressions, lhs_found_on_rhs)
+#trash <- lapply(expressions, lhs_found_on_rhs)

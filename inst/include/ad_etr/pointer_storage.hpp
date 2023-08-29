@@ -42,7 +42,7 @@ public:
 - If new is called once delete has to be called in the destructor
 - If new is not called. Then R will delete the memory!
 */
-template <typename T, typename Trait = VariableTrait> class STORE {
+template <typename T, typename Trait = VariableTrait, bool Subsetted = false> class STORE {
 
 public:
   using TypeTrait = Trait;
@@ -52,6 +52,7 @@ public:
   bool todelete;
   bool allocated = false;
   int cob = 0;
+  INDICES ind;
 
   // Constructors
   STORE(SEXP inp) {
@@ -276,12 +277,22 @@ public:
 
   // 1 indexed array
   T &operator[](int pos) const {
-    if (pos < 0) {
-      Rf_error("Error: out of boundaries --> value below 1");
-    } else if (pos >= sz) {
-      Rf_error("Error: out of boundaries --> value beyond size of vector");
+    if constexpr(!Subsetted) {
+      if (pos < 0) {
+        Rf_error("Error: out of boundaries --> value below 1");
+      } else if (pos >= sz) {
+        Rf_error("Error: out of boundaries --> value beyond size of vector");
+      }
+      return p[pos];  
+    } else {
+      pos = ind[pos];
+      if (pos < 0) {
+        Rf_error("Error: out of boundaries --> value below 1");
+      } else if (pos >= sz) {
+        Rf_error("Error: out of boundaries --> value beyond size of vector");
+      }
+      return p[pos];  
     }
-    return p[pos];
   }
 
   void resize(int new_size) {

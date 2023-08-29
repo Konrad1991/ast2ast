@@ -39,28 +39,43 @@ template <typename T> void remove_duplicates(std::vector<T> &vec) {
   vec.erase(it, vec.end());
 }
 
-/*
-#ifdef RLANG
-#else
-  namespace Rcpp {
-    void stop(std::string inp) {
-      std::cerr << inp << std::endl;
-      exit (EXIT_FAILURE);
+class INDICES{
+public:
+  int sz = 0;
+  int* inds = nullptr;
+
+  INDICES() {}
+
+  INDICES(int sz_) : sz(sz_) {
+    ass(sz_ > 0, "Size has to be larger than 0");
+    inds = new int[sz];
+  }
+
+  void fill_with(int val) {
+    for(int i = 0; i < sz; i++) {
+      inds[i] = val;
     }
   }
-#endif
-*/
 
-/*
-// create range from start to end
-std::vector<double> range(int start, int end) {
-  std::vector<double> ret(end - start + 1);
-  for(long unsigned int i = 0; i < ret.size(); i++) {
-    ret[i] = start + static_cast<double>(i);
+  ~INDICES() {
+    if(inds != nullptr) {
+      delete[] inds;
+      sz = 0;
+      inds = nullptr;
+    }
   }
-  return ret;
-}
-*/
+
+  int operator[](int idx) const {
+    if(idx < 0) {
+      Rf_error("Error: out of boundaries --> value below 1");
+    } else if(idx > sz) {
+      Rf_error("Error: out of boundaries --> value beyond size of vector");
+    }
+    return inds[idx];
+  }
+};
+
+
 } // namespace etr
 
 #endif
