@@ -22,7 +22,6 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #define VEC_H
 
 #include "pointer_storage.hpp"
-#include "operator.hpp"
 
 namespace etr {
 
@@ -34,6 +33,7 @@ template <typename T, typename R = STORE<T>
           >
 class VEC {
   using store = STORE<double, VariableTrait>;
+
 private:
 public:
   bool subsetted;

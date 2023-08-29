@@ -26,7 +26,8 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-template <typename T, typename L, typename R, typename Trait = VVMinusTrait> class VVMINUS {
+template <typename T, typename L, typename R, typename Trait = VVMinusTrait>
+class VVMINUS {
 
 private:
   const L &l; // const L& l;
@@ -57,13 +58,9 @@ public:
 
   int nr() const { return rows_; }
 
-  const L &getL() const {
-    return l;
-  }
+  const L &getL() const { return l; }
 
-  const R &getR() const {
-    return r;
-  }
+  const R &getR() const { return r; }
 };
 
 template <typename T, typename L, typename R>
@@ -105,7 +102,8 @@ inline VEC<T, VVMINUS<T, L, R>> operator-(const VEC<T, L> &a,
   return ret;
 }
 
-template <typename T, typename L, typename R, typename Trait = VSMinusTrait> class VSMINUS {
+template <typename T, typename L, typename R, typename Trait = VSMinusTrait>
+class VSMINUS {
 
 private:
   const L &l;
@@ -131,8 +129,8 @@ public:
 };
 
 template <typename T, typename L, typename R>
-requires std::is_same_v<R, double>
-inline VEC<T, VSMINUS<T, L, R>> operator-(const VEC<T, L> &a, const R & b) {
+  requires std::is_same_v<R, double>
+inline VEC<T, VSMINUS<T, L, R>> operator-(const VEC<T, L> &a, const R &b) {
 
   bool ismatrix_ = false;
   int nrows_ = 0;
@@ -154,7 +152,8 @@ inline VEC<T, VSMINUS<T, L, R>> operator-(const VEC<T, L> &a, const R & b) {
   return ret;
 }
 
-template <typename T, typename L, typename R, typename Trait = SVMinusTrait> class SVMINUS {
+template <typename T, typename L, typename R, typename Trait = SVMinusTrait>
+class SVMINUS {
 
 private:
   const R &r;
@@ -180,8 +179,8 @@ public:
 };
 
 template <typename T, typename L, typename R>
-requires std::is_same_v<R, double>
-inline VEC<T, SVMINUS<T, L, R>> operator-(const R & a, const VEC<T, L> &b) {
+  requires std::is_same_v<R, double>
+inline VEC<T, SVMINUS<T, L, R>> operator-(const R &a, const VEC<T, L> &b) {
   bool ismatrix_ = false;
   int nrows_ = 0;
   int ncols_ = 0;
@@ -227,7 +226,6 @@ public:
   int nc() const { return ncols; }
 
   int nr() const { return nrows; }
-
 };
 
 template <typename T, typename L>

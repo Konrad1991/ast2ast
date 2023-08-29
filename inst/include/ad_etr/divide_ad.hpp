@@ -26,7 +26,8 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-template <typename T, typename L, typename R, typename Trait = VVDivTrait> class VVDIV {
+template <typename T, typename L, typename R, typename Trait = VVDivTrait>
+class VVDIV {
 
 private:
   const L &l; // const L& l;
@@ -44,7 +45,9 @@ public:
 
   T get_deriv_left(const int i) const { return 1 / r[i % r.size()]; }
 
-  T get_deriv_right(const int i) const { return (-l[i % l.size()]) / (r[i % r.size()] * r[i % r.size()]); }
+  T get_deriv_right(const int i) const {
+    return (-l[i % l.size()]) / (r[i % r.size()] * r[i % r.size()]);
+  }
 
   int size() const {
     int sz = (l.size() > r.size()) ? l.size() : r.size();
@@ -97,7 +100,8 @@ inline VEC<T, VVDIV<T, L, R>> operator/(const VEC<T, L> &a,
   return ret;
 }
 
-template <typename T, typename L, typename R, typename Trait = VSDivTrait> class VSDIV {
+template <typename T, typename L, typename R, typename Trait = VSDivTrait>
+class VSDIV {
 
 public:
   const L &l;
@@ -121,18 +125,14 @@ public:
 
   int nr() const { return nrows; }
 
-  const L &getL() const {
-    return l;
-  }
+  const L &getL() const { return l; }
 
-  const R &getR() const {
-    return r;
-  }
+  const R &getR() const { return r; }
 };
 
 template <typename T, typename L, typename R>
-requires std::is_same_v<R, double>
-inline VEC<T, VSDIV<T, L, R>> operator/(const VEC<T, L> &a, const R & b) {
+  requires std::is_same_v<R, double>
+inline VEC<T, VSDIV<T, L, R>> operator/(const VEC<T, L> &a, const R &b) {
 
   bool ismatrix_ = false;
   int nrows_ = 0;
@@ -154,7 +154,8 @@ inline VEC<T, VSDIV<T, L, R>> operator/(const VEC<T, L> &a, const R & b) {
   return ret;
 }
 
-template <typename T, typename L, typename R, typename Trait = SVDivTrait> class SVDIV {
+template <typename T, typename L, typename R, typename Trait = SVDivTrait>
+class SVDIV {
 
 private:
   const R &r;
@@ -180,8 +181,8 @@ public:
 };
 
 template <typename T, typename L, typename R>
-requires std::is_same_v<R, double>
-inline VEC<T, SVDIV<T, L, R>> operator/(const R & a, const VEC<T, L> &b) {
+  requires std::is_same_v<R, double>
+inline VEC<T, SVDIV<T, L, R>> operator/(const R &a, const VEC<T, L> &b) {
 
   bool ismatrix_ = false;
   int nrows_ = 0;

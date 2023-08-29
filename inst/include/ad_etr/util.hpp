@@ -33,12 +33,10 @@ inline void ass(bool inp, std::string message) {
   }
 }
 
-
-template <typename T>
-void remove_duplicates(std::vector<T>& vec) {
-    std::sort(vec.begin(), vec.end()); 
-    auto it = std::unique(vec.begin(), vec.end()); 
-    vec.erase(it, vec.end()); 
+template <typename T> void remove_duplicates(std::vector<T> &vec) {
+  std::sort(vec.begin(), vec.end());
+  auto it = std::unique(vec.begin(), vec.end());
+  vec.erase(it, vec.end());
 }
 
 /*

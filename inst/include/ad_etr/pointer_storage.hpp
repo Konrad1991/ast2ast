@@ -349,9 +349,13 @@ public:
 
   T &back() { return p[sz]; }
 
-  T get_deriv_left(const STORE<double, VariableTrait>* var) const { return var == this ? 1.0 : 0.0; }
+  T get_deriv_left(const STORE<double, VariableTrait> *var) const {
+    return var == this ? 1.0 : 0.0;
+  }
 
-  T get_deriv_right(const STORE<double, VariableTrait>* var) const { return var == this ? 1.0 : 0.0; }
+  T get_deriv_right(const STORE<double, VariableTrait> *var) const {
+    return var == this ? 1.0 : 0.0;
+  }
 };
 
 } // namespace etr

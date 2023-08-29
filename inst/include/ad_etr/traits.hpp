@@ -21,10 +21,10 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 #ifndef TRAITS
 
+#include "header.hpp"
 #include "vec_ad.hpp"
 #include <cxxabi.h>
 #include <string>
-#include "header.hpp"
 
 std::string demangle(const char *mangledName) {
   int status;
@@ -41,35 +41,34 @@ struct VariableTrait {};
 struct UnaryTrait {};
 struct VSTrait {};
 struct SVTrait {};
-struct BinaryTrait{};
+struct BinaryTrait {};
 
 struct VVPlusTrait : BinaryTrait {};
 struct VSPlusTrait : VSTrait {};
 struct SVPlusTrait : SVTrait {};
 
-struct VVMinusTrait : BinaryTrait{};
+struct VVMinusTrait : BinaryTrait {};
 struct VSMinusTrait : VSTrait {};
-struct SVMinusTrait : SVTrait{};
+struct SVMinusTrait : SVTrait {};
 
-struct VVTimesTrait :BinaryTrait {};
-struct VSTimesTrait :VSTrait {};
-struct SVTimesTrait :SVTrait {};
+struct VVTimesTrait : BinaryTrait {};
+struct VSTimesTrait : VSTrait {};
+struct SVTimesTrait : SVTrait {};
 
-struct VVDivTrait :BinaryTrait {};
-struct VSDivTrait :VSTrait {};
-struct SVDivTrait :SVTrait {};
+struct VVDivTrait : BinaryTrait {};
+struct VSDivTrait : VSTrait {};
+struct SVDivTrait : SVTrait {};
 
-struct VVSinTrait :UnaryTrait {};
+struct VVSinTrait : UnaryTrait {};
 
 struct NullOperation {};
 
 template <typename T>
 concept HasTypeTrait = requires { typename T::TypeTrait; };
 
-template<typename Trait>
-struct TraitCategory {
-    static constexpr bool isUnary = std::is_base_of_v<UnaryTrait, Trait>;
-    static constexpr bool isBinary = std::is_base_of_v<BinaryTrait, Trait>;
+template <typename Trait> struct TraitCategory {
+  static constexpr bool isUnary = std::is_base_of_v<UnaryTrait, Trait>;
+  static constexpr bool isBinary = std::is_base_of_v<BinaryTrait, Trait>;
 };
 
 } // namespace etr

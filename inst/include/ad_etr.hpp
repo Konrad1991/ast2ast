@@ -24,19 +24,18 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #define A2A_H
 
 #include "ad_etr/add_ad.hpp"
-#include "ad_etr/mul_ad.hpp"
-#include "ad_etr/subtract_ad.hpp"
+#include "ad_etr/backward.hpp"
 #include "ad_etr/mul_ad.hpp"
 #include "ad_etr/pointer_storage.hpp"
-#include "ad_etr/vec_ad.hpp"
-#include "ad_etr/backward.hpp"
+#include "ad_etr/subtract_ad.hpp"
 #include "ad_etr/trigo_ad.hpp"
+#include "ad_etr/vec_ad.hpp"
 #include "etr_bits/header.hpp"
 #include "etr_bits/util.hpp"
 
-#include "etr_bits/concatenate.hpp"
-#include "etr_bits/colon.hpp"
 #include "etr_bits/allocation.hpp"
+#include "etr_bits/colon.hpp"
+#include "etr_bits/concatenate.hpp"
 #include "etr_bits/print.hpp"
 
 #define sexp etr::VEC<double>

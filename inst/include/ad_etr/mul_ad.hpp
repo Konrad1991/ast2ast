@@ -58,13 +58,9 @@ public:
 
   int nr() const { return rows_; }
 
-  const L &getL() const {
-    return l;
-  }
+  const L &getL() const { return l; }
 
-  const R &getR() const {
-    return r;
-  }
+  const R &getR() const { return r; }
 };
 
 template <typename T, typename L, typename R>
@@ -106,7 +102,8 @@ inline VEC<T, VVTIMES<T, L, R>> operator*(const VEC<T, L> &a,
   return ret;
 }
 
-template <typename T, typename L, typename R, typename Trait = VSTimesTrait> class VSTIMES {
+template <typename T, typename L, typename R, typename Trait = VSTimesTrait>
+class VSTIMES {
 
 private:
   const L &l;
@@ -132,8 +129,8 @@ public:
 };
 
 template <typename T, typename L, typename R>
-requires std::is_same_v<R, double>
-inline VEC<T, VSTIMES<T, L, R>> operator*(const VEC<T, L> &a, const R & b) {
+  requires std::is_same_v<R, double>
+inline VEC<T, VSTIMES<T, L, R>> operator*(const VEC<T, L> &a, const R &b) {
   bool ismatrix_ = false;
   int nrows_ = 0;
   int ncols_ = 0;
@@ -154,7 +151,8 @@ inline VEC<T, VSTIMES<T, L, R>> operator*(const VEC<T, L> &a, const R & b) {
   return ret;
 }
 
-template <typename T, typename L, typename R, typename Trait = SVTimesTrait> class SVTIMES {
+template <typename T, typename L, typename R, typename Trait = SVTimesTrait>
+class SVTIMES {
 
 private:
   const R &r;
@@ -180,8 +178,8 @@ public:
 };
 
 template <typename T, typename L, typename R>
-requires std::is_same_v<R, double>
-inline VEC<T, SVTIMES<T, L, R>> operator*(const R & a, const VEC<T, L> &b) {
+  requires std::is_same_v<R, double>
+inline VEC<T, SVTIMES<T, L, R>> operator*(const R &a, const VEC<T, L> &b) {
   bool ismatrix_ = false;
   int nrows_ = 0;
   int ncols_ = 0;

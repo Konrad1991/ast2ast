@@ -57,10 +57,7 @@ public:
 
   int nr() const { return nrow_; }
 
-  const L &get() const {
-    return r;
-  }
-
+  const L &get() const { return r; }
 };
 
 template <typename T, typename L>
