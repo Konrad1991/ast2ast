@@ -35,20 +35,19 @@ fill_association <- function(node, env) {
     env$which_vars_found <- c(env$which_vars_found, which_var)
   } else {
     env$which_vars_found <- c(env$which_vars_found, -1)
-  } 
+  }
 }
 
 get_ast <- function(a, env) {
-  
   if (!is.call(a)) {
     return(a)
   }
 
-  if(length(a) == 3) { # binary operation
+  if (length(a) == 3) { # binary operation
     fill_association(a[[2]], env)
-    fill_association(a[[3]], env) 
-    env$num_args <- c(env$num_args, 2) 
-  } else if(length(a) == 2) { # unary operation
+    fill_association(a[[3]], env)
+    env$num_args <- c(env$num_args, 2)
+  } else if (length(a) == 2) { # unary operation
     fill_association(a[[2]], env)
     env$num_args <- c(env$num_args, 1)
   }
@@ -89,7 +88,7 @@ tree_analyis <- function(expression) {
     y[0] = 4.0;
     y[1] = 5.0;
     z[0] = 6.0;
-    z[1] = 7.0;  
+    z[1] = 7.0;
 
     to_replace
 
@@ -97,45 +96,47 @@ tree_analyis <- function(expression) {
   }
 
   // [[Rcpp::export]]
-  std::vector<double> f() {  
+  std::vector<double> f() {
     std::vector<double> res = fct();
     return res;
   }
   "
 
- create_call <- function(vars, which_vars_found, unary_or_binary) {
-  v <- sapply(vars, function(x) {paste0("&", x, ".d")})
-  v <- paste("std::array<const variable,", length(vars), ">{", paste(v, collapse = ","), "}," )
-  wvf <- paste("std::array<int,", length(which_vars_found), ">{", paste(which_vars_found, collapse = ","), "}," )
-  uob <- paste("std::array<int,", length(unary_or_binary), ">{", paste(unary_or_binary, collapse = ","), "});" )
-  res <- paste(
-    "std::vector<double> res = assign(f,",
-    deparse(expression), ",",
-    v, 
-    wvf, 
-    uob, 
-    collapse = "\n"
+  create_call <- function(vars, which_vars_found, unary_or_binary) {
+    v <- sapply(vars, function(x) {
+      paste0("&", x, ".d")
+    })
+    v <- paste("std::array<const variable,", length(vars), ">{", paste(v, collapse = ","), "},")
+    wvf <- paste("std::array<int,", length(which_vars_found), ">{", paste(which_vars_found, collapse = ","), "},")
+    uob <- paste("std::array<int,", length(unary_or_binary), ">{", paste(unary_or_binary, collapse = ","), "});")
+    res <- paste(
+      "std::vector<double> res = assign(f,",
+      deparse(expression), ",",
+      v,
+      wvf,
+      uob,
+      collapse = "\n"
     )
-  return(res)
- }
+    return(res)
+  }
 
- res <- create_call(env$var_list, env$which_vars_found, env$num_args)
- gsub("to_replace", res, code)
+  res <- create_call(env$var_list, env$which_vars_found, env$num_args)
+  gsub("to_replace", res, code)
 }
 
 
 create_vals <- function(expression) {
-    vars <- all.vars(expression)
-    env <- new.env()
-    env$counter <- 0
-    env$idx_vars_found <- c()
-    env$which_vars_found <- c()
-    env$var_list <- vars
-    env$num_args <- c()
-    ast <- get_ast(expression, env)
-    env$which_vars_found
-    env$num_args 
-    return(list(env$var_list, env$which_vars_found, env$num_args))
+  vars <- all.vars(expression)
+  env <- new.env()
+  env$counter <- 0
+  env$idx_vars_found <- c()
+  env$which_vars_found <- c()
+  env$var_list <- vars
+  env$num_args <- c()
+  ast <- get_ast(expression, env)
+  env$which_vars_found
+  env$num_args
+  return(list(env$var_list, env$which_vars_found, env$num_args))
 }
 
-create_vals(quote(3.14 + x))
+create_vals(quote(3.14 + x * x))

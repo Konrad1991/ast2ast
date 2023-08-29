@@ -56,12 +56,12 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
 
     res <- NULL
     # -fsanitize=alignment,bool,bounds,builtin,enum,integer-divide-by-zero,
-    #nonnull-attribute,null,object-size,pointer-overflow,return,
-    #returns-nonnull-attribute,shift,signed-integer-overflow,
+    # nonnull-attribute,null,object-size,pointer-overflow,return,
+    # returns-nonnull-attribute,shift,signed-integer-overflow,
     # unreachable,vla-bound,vptr
-    Sys.setenv("PKG_CXXFLAGS" = "-DRFCT") 
-    # -fsanitize=address --param=max-vartrack-size=9000000 -fno-omit-frame-pointer 
-    
+    Sys.setenv("PKG_CXXFLAGS" = "-DRFCT")
+    # -fsanitize=address --param=max-vartrack-size=9000000 -fno-omit-frame-pointer
+
     tryCatch(
       expr = {
         env <- new.env()
@@ -73,7 +73,7 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
       }
     )
 
-    Sys.unsetenv("PKG_CXXFLAGS") 
+    Sys.unsetenv("PKG_CXXFLAGS")
 
     if (verbose == TRUE) {
       cat(fct)

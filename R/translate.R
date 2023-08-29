@@ -19,17 +19,17 @@
 # If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 #' Translates an R function into a C++ function.
-#' 
+#'
 #' @aliases translate
-#' 
+#'
 #' @importFrom methods formalArgs
-#' 
+#'
 #' @description
 #' An R function is translated to C++ source code and afterwards the code is compiled.
 #' The result can be an external pointer (\emph{XPtr}) or an \emph{R} function.
-#' The default value is an R function. 
+#' The default value is an R function.
 #' Further information can be found in the vignette: \emph{Detailed Documentation}.
-#' 
+#'
 #' @details
 #' \strong{The types \emph{numeric vector} and \emph{numeric matrix} are supported.
 #' Notably, it is possible that the variables change the type within the function. }\cr
@@ -37,18 +37,18 @@
 #'   For example in the following code the variable \emph{a} contains \emph{1, 2, and 3} before the function call and afterwards \emph{1, 1 and 1}.
 #'   In contrast for variable \emph{b} the size changes and thus the object within \emph{R} is not modified. Furthermore, the variable \emph{c} is not increased and only the first element is         changed.} \cr
 #' \verb{
-#'   f <- function(a, b, c) { 
-#'     a[c(1, 2, 3)] <- 1 
-#'     b <- vector(10) 
+#'   f <- function(a, b, c) {
+#'     a[c(1, 2, 3)] <- 1
+#'     b <- vector(10)
 #'     c <- vector(1)
-#'   } 
-#'   fcpp <- ast2ast::translate(f) 
-#'   a <- c(1, 2, 3) 
-#'   b <- c(1, 2, 3) 
+#'   }
+#'   fcpp <- ast2ast::translate(f)
+#'   a <- c(1, 2, 3)
+#'   b <- c(1, 2, 3)
 #'   c <- c(1, 2, 3)
-#'   fcpp(a, b,c) 
-#'   print(a) 
-#'   print(b) 
+#'   fcpp(a, b,c)
+#'   print(a)
+#'   print(b)
 #'   print(c)
 #' }
 #' \strong{It is possible to declare a variable of a scalar numeric data type.
@@ -64,15 +64,15 @@
 #'   fcpp()
 #' } \cr
 #' In R every object is under the hood a \emph{SEXP} object.
-#' In case an \emph{R} function is created as output only \emph{SEXP} elements can be passed to the function. 
-#' Furthermore, these functions always return a \emph{SEXP} element. Even if nothing is returned; in this case \emph{NULL} is returned!. 
+#' In case an \emph{R} function is created as output only \emph{SEXP} elements can be passed to the function.
+#' Furthermore, these functions always return a \emph{SEXP} element. Even if nothing is returned; in this case \emph{NULL} is returned!.
 #' Notably, is that only numeric vectors (in R also scalar values are vectors) or numeric matrices can be passed to the function. \cr
-#' In contrast if an external pointer is created other types can be specified which are passed to the function or returned from it. 
-#' The default value is a variable of type \emph{sexp}. This is the data type which is used in the C++ code. 
+#' In contrast if an external pointer is created other types can be specified which are passed to the function or returned from it.
+#' The default value is a variable of type \emph{sexp}. This is the data type which is used in the C++ code.
 #' The \emph{ptr_vec} and \emph{ptr_mat} interface work in a different way. If using \emph{ptr_vec} a \emph{double*} pointer is expected as first element.
-#' Additionally a second argument is needed which is of type \emph{int} and which defines the size of the array. 
+#' Additionally a second argument is needed which is of type \emph{int} and which defines the size of the array.
 #' This works in the same way for \emph{ptr_mat}. But instead of the size argument two integers are needed which define the number of rows and columns.
-#' Both arguments have to be of type \emph{int}. 
+#' Both arguments have to be of type \emph{int}.
 #' Notably, the memory is only borrowed. Thus, the memory is not automatically deleted! See vignette \emph{InformationForPackageAuthors} for more information. \cr
 #' \strong{The following functions are supported:}
 #' \enumerate{
@@ -150,14 +150,14 @@
 #'     However, it does not behave exactly like R! Please check your compiled function before using it in a serious project.
 #'     If you want to see how \emph{ast2ast} differs from R in detail check the vignette: \emph{Detailed Documentation}.}
 #'   }
-#' 
+#'
 #' @param f The function which should be translated from R to C++.
-#' 
-#' @param output If set to "R"" an R function wrapping the C++ code is returned. 
+#'
+#' @param output If set to "R"" an R function wrapping the C++ code is returned.
 #' If output is set to "XPtr"" an external pointer object pointing to the C++ code is returned.
 #' The default value is "R".
-#' 
-#' @param types_of_args define the types of the arguments passed to the function as an character vector. 
+#'
+#' @param types_of_args define the types of the arguments passed to the function as an character vector.
 #' This is an optional input if using "XPtr" as output.
 #' The default value is "SEXP" as this is the only possibility for output "R".
 #' In case one want to use an external pointer the easiest way is to pass "sexp" for types_of_args.
@@ -165,97 +165,100 @@
 #' For more information see below for details and check the vignette \emph{InformationForPackageAuthors}.
 #' \strong{Beyond that, be aware that the passed \emph{SEXP} objects are only copied if the object size increases.
 #' Thus, R objects can be modified within the function! See in section details for an example}
-#' 
+#'
 #' @param return_type is a character defining the type which the function returns. The default value is "SEXP"" as this is the only possibility for output "R". \cr
 #' Additionally, the possibilities "sexp" and "void" exist for the external pointer interface.
-#' 
+#'
 #' @param reference If set to TRUE the arguments are passed by reference (not possible if output is "R").
-#' 
+#'
 #' @param verbose If set to TRUE the output of the compilation process is printed.
-#' 
+#'
 #' @param getsource If set to TRUE the function is not compiled and instead the C++ source code itself is returned.
-#' 
-#' @return 
+#'
+#' @return
 #' If output is set to R an R function is returned. Thus, the C++ code can directly be called within R.
-#' In contrast a function which returns an external pointer is generated if the output is set to *XPtr*. 
-#' 
+#' In contrast a function which returns an external pointer is generated if the output is set to *XPtr*.
+#'
 #' @examples
 #' \dontrun{
-#'      # Hello World
-#'      # ==========================================================================
-#'      
-#'      # Translating to R_fct
-#'      # --------------------------------------------------------------------------
-#'      f <- function() { print("Hello World!")}
-#'      ast2ast::translate(f)
-#'      f()
-#'      
-#'      # Translating to external pointer
-#'      # --------------------------------------------------------------------------
-#'      f <- function() { print("Hello World!")}
-#'      pointer_to_f_cpp <- ast2ast::translate(f, 
-#'                                             output = "XPtr", return_type = "void")
-#'     Rcpp::sourceCpp(code = '
+#' # Hello World
+#' # ==========================================================================
+#'
+#' # Translating to R_fct
+#' # --------------------------------------------------------------------------
+#' f <- function() {
+#'   print("Hello World!")
+#' }
+#' ast2ast::translate(f)
+#' f()
+#'
+#' # Translating to external pointer
+#' # --------------------------------------------------------------------------
+#' f <- function() {
+#'   print("Hello World!")
+#' }
+#' pointer_to_f_cpp <- ast2ast::translate(f,
+#'   output = "XPtr", return_type = "void"
+#' )
+#' Rcpp::sourceCpp(code = "
 #'     #include <Rcpp.h>
 #'     typedef void (*fp)();
 #'
 #'     // [[Rcpp::export]]
 #'     void call_fct(Rcpp::XPtr<fp> inp) {
 #'       fp f = *inp;
-#'       f(); } ')
-#'       
-#'     call_fct(pointer_to_f_cpp)
-#'     
-#'     # Run sum example:
-#'     # ==========================================================================
-#'     
-#'     # R version of run sum
-#'     # --------------------------------------------------------------------------
-#'     run_sum <- function(x, n) {
-#'       sz <- length(x)
-#'       
-#'       ov <- vector(mode = "numeric", length = sz)
-#'       
-#'       ov[n] <- sum(x[1:n])
-#'       for(i in (n+1):sz) {
-#'         
-#'         ov[i] <- ov[i-1] + x[i] - x[i-n]
-#'       }
-#'        
-#'       ov[1:(n-1)] <- NA
-#'        
-#'        return(ov)
-#'     }
-#'      
-#'     # translated Version of R function
-#'     # --------------------------------------------------------------------------
-#'      run_sum_fast <- function(x, n) {
-#'        sz <- length(x)
-#'       ov <- vector(sz)
-#'       
-#'       sum_db = 0
-#'       for(i in 1:n) {
-#'          sum_db <- sum_db + at(x, i)
-#'        }
-#'        ov[n] <- sum_db
-#'        
-#'        for(i in (n + 1):sz) {
-#'          ov[i] <- at(ov, i - 1) + at(x, i) - at(x, i - at(n, 1))
-#'       }
-#'        
-#'        ov[1:(n - 1)] <- NA
-#'        
-#'        return(ov)
-#'      }
-#'      run_sum_cpp <- ast2ast::translate(run_sum_fast, verbose = FALSE)
-#'      set.seed(42)
-#'      x <- rnorm(10000)
-#'     n <- 500
-#'      one <- run_sum(x, n)
-#'      two <- run_sum_cpp(x, n)
+#'       f(); } ")
+#'
+#' call_fct(pointer_to_f_cpp)
+#'
+#' # Run sum example:
+#' # ==========================================================================
+#'
+#' # R version of run sum
+#' # --------------------------------------------------------------------------
+#' run_sum <- function(x, n) {
+#'   sz <- length(x)
+#'
+#'   ov <- vector(mode = "numeric", length = sz)
+#'
+#'   ov[n] <- sum(x[1:n])
+#'   for (i in (n + 1):sz) {
+#'     ov[i] <- ov[i - 1] + x[i] - x[i - n]
+#'   }
+#'
+#'   ov[1:(n - 1)] <- NA
+#'
+#'   return(ov)
 #' }
-#' 
-#' 
+#'
+#' # translated Version of R function
+#' # --------------------------------------------------------------------------
+#' run_sum_fast <- function(x, n) {
+#'   sz <- length(x)
+#'   ov <- vector(sz)
+#'
+#'   sum_db <- 0
+#'   for (i in 1:n) {
+#'     sum_db <- sum_db + at(x, i)
+#'   }
+#'   ov[n] <- sum_db
+#'
+#'   for (i in (n + 1):sz) {
+#'     ov[i] <- at(ov, i - 1) + at(x, i) - at(x, i - at(n, 1))
+#'   }
+#'
+#'   ov[1:(n - 1)] <- NA
+#'
+#'   return(ov)
+#' }
+#' run_sum_cpp <- ast2ast::translate(run_sum_fast, verbose = FALSE)
+#' set.seed(42)
+#' x <- rnorm(10000)
+#' n <- 500
+#' one <- run_sum(x, n)
+#' two <- run_sum_cpp(x, n)
+#' }
+#'
 #' @export
 translate <- function(f, output = "R",
                       types_of_args = "SEXP", return_type = "SEXP",
@@ -306,7 +309,7 @@ translate <- function(f, output = "R",
   } else if (output == "XPtr") {
     R_fct <- FALSE
   }
-  
+
 
   # if output == "R" --> type has to be SEXP!
   if (R_fct) {
@@ -332,30 +335,35 @@ translate <- function(f, output = "R",
     }
     reference <- FALSE
   }
-  
-  # further checks: brackets, lambda function, empty if-else 
-  
+
+  # further checks: brackets, lambda function, empty if-else
+
   # add brackets if not found
   if (body(f)[[1]] != as.name("{")) {
-    body(f) <- substitute({f_body}, list(f_body = body(f)))
+    body(f) <- substitute(
+      {
+        f_body
+      },
+      list(f_body = body(f))
+    )
   }
-  
+
   # add name for lambda functions
   if (is.name(substitute(f))) {
     name_f <- as.character(substitute(f))
   } else {
     name_f <- "lambda_fcn"
   }
-  
+
   # TODO: add `return` keyword if not found (using last evaluated expr)
   f_b_last <- body(f)[[length(body(f))]]
   if (is.numeric(f_b_last) ||
-      is.integer(f_b_last) || is.name(f_b_last) || (
-        is.call(f_b_last) &&
-        f_b_last[[1]] != as.name("return") &&
-        f_b_last[[1]] != as.name("<-") &&
-        f_b_last[[1]] != as.name("=")
-      )) {
+    is.integer(f_b_last) || is.name(f_b_last) || (
+    is.call(f_b_last) &&
+      f_b_last[[1]] != as.name("return") &&
+      f_b_last[[1]] != as.name("<-") &&
+      f_b_last[[1]] != as.name("=")
+  )) {
     f_b_last <- substitute(return(c), list(c = f_b_last))
     body(f)[length(body(f))][[1]] <- f_b_last
   }
