@@ -32,6 +32,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "ad_etr/vec_ad.hpp"
 #include "etr_bits/header.hpp"
 #include "etr_bits/util.hpp"
+#include "ad_etr/subset_ad.hpp"
 
 #include "etr_bits/allocation.hpp"
 #include "etr_bits/colon.hpp"

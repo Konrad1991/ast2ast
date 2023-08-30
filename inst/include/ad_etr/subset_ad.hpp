@@ -24,16 +24,25 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
+  /*
+  subset assing not needed anymore
+  all variables are subsetted
+  if lhs_on_rhs --> special subset function is used
+  Instead of a new vector the VEC is changed itself
+  */
+
 inline VEC<double> subset(VEC<double> &inp) { // done
   VEC<double> ret;
   ret = inp;
   return ret;
 }
 
-inline VEC<double> subset(VEC<double> &inp, int pos) { // done
-  VEC<double> ret(1);
+inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, int pos) { // done
+  VEC<double, SUBSET<double>> ret;
+  ret.d.resize(1);
   pos--;
-  ret[0] = inp[pos];
+  ret.d.set(0, pos); 
+  ret.d.set_ptr(&inp.d);
   return ret;
 }
 

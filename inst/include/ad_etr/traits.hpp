@@ -37,6 +37,7 @@ std::string demangle(const char *mangledName) {
 namespace etr {
 
 struct VariableTrait {};
+struct SubsetTrait {};
 
 struct UnaryTrait {};
 struct VSTrait {};

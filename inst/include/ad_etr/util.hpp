@@ -33,16 +33,11 @@ inline void ass(bool inp, std::string message) {
   }
 }
 
-template <typename T> void remove_duplicates(std::vector<T> &vec) {
-  std::sort(vec.begin(), vec.end());
-  auto it = std::unique(vec.begin(), vec.end());
-  vec.erase(it, vec.end());
-}
-
 class INDICES{
 public:
   int sz = 0;
   int* inds = nullptr;
+  bool allocated = false;
 
   INDICES() {}
 
@@ -62,7 +57,38 @@ public:
       delete[] inds;
       sz = 0;
       inds = nullptr;
+      allocated = false;
     }
+  }
+
+  int size() const { return sz; }
+
+  void init(int size) {
+    sz = size;
+    inds = new int[sz];
+    allocated = true;
+  }
+
+  void resize(int new_size) {
+    if(!allocated) {
+      init(new_size);
+      return;
+    } else {
+      ass(inds != nullptr, "try to delete nullptr");
+      delete[] inds;
+      inds = new int[new_size];
+      sz = new_size;
+    }
+  }
+
+  bool subsetted() const {
+    return allocated;
+  }
+
+  void set(int idx, int val) {
+    ass(idx >= 0, "Index has to be a positive number");
+    ass(idx < sz, "Index cannot be larger than size of INDICES");
+    inds[idx] = val;
   }
 
   int operator[](int idx) const {
@@ -74,7 +100,6 @@ public:
     return inds[idx];
   }
 };
-
 
 } // namespace etr
 

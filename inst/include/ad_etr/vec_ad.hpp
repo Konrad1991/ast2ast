@@ -28,13 +28,10 @@ namespace etr {
 /*
 Vector & matrix module
 */
-template <typename T, typename R = STORE<T>
-          // ,typename Trait = VariableTrait
-          >
+template <typename T, typename R = STORE<T>>
 class VEC {
   using store = STORE<double, VariableTrait>;
 
-private:
 public:
   bool subsetted;
   std::vector<int> indices;
@@ -49,6 +46,9 @@ public:
 
   // data
   R d;
+  using trait_d = std::remove_reference<decltype(d)>::type::TypeTrait;
+  using is_var = std::is_same<trait_d, VariableTrait>;
+  using is_sub = std::is_same<trait_d, SubsetTrait>;
   STORE<T> temp;
 
   template <typename T2> VEC(T2 n) = delete;
@@ -321,17 +321,22 @@ public:
   template <typename TD>
     requires std::is_same_v<TD, double>
   VEC &operator=(const TD &dob) {
-    if (subsetted == false) {
-      d.resize(1);
-      ismatrix = false;
-      d[0] = dob;
-    } else {
-      for (std::size_t i = 0; i < indices.size(); i++) {
-        d[indices[i]] = dob;
+    if constexpr(!is_var::value) {
+      for(std::size_t i = 0; i < d.size(); i++) {
+        d[i] = dob;
       }
+    } else {
+      if (subsetted == false) {
+        d.resize(1);
+        ismatrix = false;
+        d[0] = dob;
+      } else {
+        for (std::size_t i = 0; i < indices.size(); i++) {
+          d[indices[i]] = dob;
+        }
+      }
+      subsetted = false;
     }
-
-    subsetted = false;
     return *this;
   }
 
@@ -424,6 +429,7 @@ public:
   R &data() { return d; }
 
   T *pointer() { return d.data(); }
+
   // ================================================================
 
   bool is_subsetted() const { return subsetted; }
