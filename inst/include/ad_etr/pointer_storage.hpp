@@ -52,6 +52,9 @@ public:
   bool todelete;
   bool allocated = false;
   int cob = 0;
+  bool ismatrix = false;
+  int ncols = 0;
+  int nrows = 0;
 
   // Constructors
   STORE(SEXP inp) {

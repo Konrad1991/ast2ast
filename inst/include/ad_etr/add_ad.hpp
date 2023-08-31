@@ -22,7 +22,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef ADD
 #define ADD
 
-#include "vec_ad.hpp"
+#include "vec.hpp"
 
 namespace etr {
 

@@ -22,7 +22,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef SUBSETTING
 #define SUBSETTING
 
-#include "vec_ad.hpp"
+#include "vec.hpp"
 
 namespace etr {
 
@@ -33,6 +33,18 @@ have to be saved.
 */
 
 typedef VEC<double, SUBSET<double>> vsub;
+
+template<typename Storage>
+inline void set_ptr(const VEC<double, Storage> &inp, int pos) { // 
+  using trait = std::remove_reference<decltype(inp.d)>::type::TypeTrait;
+  using is_var = std::is_same<trait, VariableTrait>;
+  VEC<double, SUBSET<double>> ret;
+  if constexpr (is_var::value) {
+    ret.d.set_ptr(&inp.d);
+  } else {
+    ret.d.set_ptr(inp.d.ptr);
+  }
+}
 
 void check_is_matrix(const VEC<double>& inp) {
     if (inp.ismatrix == false) {
