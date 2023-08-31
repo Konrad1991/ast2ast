@@ -366,7 +366,12 @@ public:
 
   SUBSET(const STORE<T>* ptr_) : ptr(ptr_) {}
 
-  SUBSET() : ptr(nullptr) {} 
+  SUBSET(int ignored) : ptr(nullptr) {}   
+
+  SUBSET() : ptr(nullptr) {
+    ind.resize(1); // only for safety
+    ind.set(0, 0);
+  } 
 
   ~SUBSET() {}
 
@@ -386,7 +391,7 @@ public:
 
   T &operator[](int pos) const {
     ass(ptr != nullptr, "SUBSET is pointing to nothing!");
-    return ptr -> p[ind[pos]];
+    return ptr -> p[ind[pos] % ind.size()];
   }
 };
 

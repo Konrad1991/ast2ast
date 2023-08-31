@@ -86,19 +86,19 @@ public:
   // constructor for calculations
   template <typename T2, typename R2>
   VEC(const VEC<T2, R2> &other_vec) : d(1), temp(1) {
-    this->d.resize(other_vec.size());
-    this->ismatrix = false;
-    for (int i = 0; i < d.size(); i++) {
-      this->d[i] = other_vec[i];
+    if constexpr (is_var::value) {
+      this->d.resize(other_vec.size());
+      this->ismatrix = false;
+      for (int i = 0; i < d.size(); i++) {
+        this->d[i] = other_vec[i];
+      }
+      if (other_vec.d.im() == true) {
+        this->ismatrix = true;
+        this->ncols = other_vec.d.nc();
+        this->nrows = other_vec.d.nr();
+      }
+      subsetted = false;  
     }
-
-    if (other_vec.d.im() == true) {
-      this->ismatrix = true;
-      this->ncols = other_vec.d.nc();
-      this->nrows = other_vec.d.nr();
-    }
-
-    subsetted = false;
   }
   // constructor for COMPARISON
   VEC(const VEC<bool> &other_vec) : d(1), temp(1) {
@@ -117,7 +117,7 @@ public:
       : subsetted(0), ismatrix(1), ncols(c), nrows(r), d(r * c, ptr, cob),
         temp(1) {} // cob = copy, owning, borrow
 
-  operator bool() const { return d[0]; }
+  operator bool() const { return d[0]; } // issue: if d has length 1 (R version 4.2)
 
   operator SEXP() const {
     SEXP ret = R_NilValue;
@@ -202,7 +202,7 @@ public:
     }
   }
 
-  VEC &operator=(SEXP inp) {
+  VEC &operator=(SEXP inp) { 
     subsetted = false;
     ismatrix = false;
 
@@ -228,17 +228,25 @@ public:
   }
 
   VEC &operator=(Rcpp::NumericVector &other_vec) {
-
-    d.resize(other_vec.size());
-    this->ismatrix = false;
-    this->ncols = 0;
-    this->nrows = 0;
-    subsetted = false;
-
-    for (int i = 0; i < other_vec.size(); i++) {
-      d[i] = other_vec[i];
+    if constexpr(!is_var::value) {
+      ass(other_vec.size() <= d.size(), "number of items to replace is not a multiple of replacement length");
+      this->ismatrix = false;
+      this->ncols = 0;
+      this->nrows = 0;
+      subsetted = false;
+      for (int i = 0; i < other_vec.size(); i++) {
+        d[i] = other_vec[i];
+      }
+    } else {
+      d.resize(other_vec.size());
+      this->ismatrix = false;
+      this->ncols = 0;
+      this->nrows = 0;
+      subsetted = false;
+      for (int i = 0; i < other_vec.size(); i++) {
+        d[i] = other_vec[i];
+      }
     }
-
     return *this;
   }
 
@@ -253,17 +261,25 @@ public:
   }
 
   VEC &operator=(Rcpp::NumericMatrix &other_vec) {
-
-    d.resize(other_vec.size());
-    this->ismatrix = true;
-    this->ncols = other_vec.ncol();
-    this->nrows = other_vec.nrow();
-    subsetted = false;
-
-    for (int i = 0; i < other_vec.size(); i++) {
-      d[i] = other_vec[i];
+    if constexpr(!is_var::value) {
+      ass(other_vec.size() <= d.size(), "number of items to replace is not a multiple of replacement length");
+      this->ismatrix = true;
+      this->ncols = other_vec.ncol();
+      this->nrows = other_vec.nrow();
+      subsetted = false;
+      for (int i = 0; i < other_vec.size(); i++) {
+        d[i] = other_vec[i];
+      }
+    } else {
+      d.resize(other_vec.size());
+      this->ismatrix = true;
+      this->ncols = other_vec.ncol();
+      this->nrows = other_vec.nrow();
+      subsetted = false;
+      for (int i = 0; i < other_vec.size(); i++) {
+        d[i] = other_vec[i];
+      }  
     }
-
     return *this;
   }
 
@@ -276,18 +292,26 @@ public:
     return ret;
   }
 
-  VEC &operator=(arma::vec &other_vec) {
-
-    d.resize(other_vec.size());
-    this->ismatrix = false;
-    this->ncols = 0;
-    this->nrows = 0;
-    subsetted = false;
-
-    for (int i = 0; i < other_vec.size(); i++) {
-      d[i] = other_vec[i];
+  VEC &operator=(arma::vec &other_vec) { // issue: correct for armadillo () vs []
+    if constexpr(!is_var::value) {
+      ass(other_vec.size() <= d.size(), "number of items to replace is not a multiple of replacement length");
+      this->ismatrix = false;
+      this->ncols = 0;
+      this->nrows = 0;
+      subsetted = false;
+      for (int i = 0; i < other_vec.size(); i++) {
+        d[i] = other_vec[i];
+      }
+    } else {
+      d.resize(other_vec.size());
+      this->ismatrix = false;
+      this->ncols = 0;
+      this->nrows = 0;
+      subsetted = false;
+      for (int i = 0; i < other_vec.size(); i++) {
+        d[i] = other_vec[i];
+      }
     }
-
     return *this;
   }
 
@@ -301,18 +325,26 @@ public:
     return ret;
   }
 
-  VEC &operator=(arma::mat &other_vec) {
-
-    d.resize(other_vec.size());
-    this->ismatrix = true;
-    this->ncols = other_vec.n_cols;
-    this->nrows = other_vec.n_rows;
-    subsetted = false;
-
-    for (int i = 0; i < other_vec.size(); i++) {
-      d[i] = other_vec[i];
+  VEC &operator=(arma::mat &other_vec) { // issue: see above
+    if constexpr(!is_var::value) {
+      ass(other_vec.size() <= d.size(), "number of items to replace is not a multiple of replacement length");
+      this->ismatrix = true;
+      this->ncols = other_vec.n_cols;
+      this->nrows = other_vec.n_rows;
+      subsetted = false;
+      for (int i = 0; i < other_vec.size(); i++) {
+        d[i] = other_vec[i];
+      }
+    } else {
+      d.resize(other_vec.size());
+      this->ismatrix = true;
+      this->ncols = other_vec.n_cols;
+      this->nrows = other_vec.n_rows;
+      subsetted = false;
+      for (int i = 0; i < other_vec.size(); i++) {
+        d[i] = other_vec[i];
+      }  
     }
-
     return *this;
   }
 
@@ -341,33 +373,37 @@ public:
   }
 
   VEC &operator=(const VEC &other_vec) {
-    if (this->subsetted == false) {
-      if (d.size() != other_vec.size()) {
-        d.resize(other_vec.size());
-      }
-
-      this->ismatrix = false;
-
-      for (int i = 0; i < d.size(); i++) {
+    if constexpr(!is_var::value) {
+      ass(static_cast<int>(d.size()) <= other_vec.size(),
+              "number of items to replace is not a multiple of replacement length");
+      for (std::size_t i = 0; i < d.size(); i++) {
         d[i] = other_vec[i];
       }
-
-      if (other_vec.im() == true) {
-        this->ismatrix = true;
-        this->ncols = other_vec.nc();
-        this->nrows = other_vec.nr();
-      }
+      subsetted = false; // issue: needed
     } else {
-
-      ass(static_cast<int>(indices.size()) <= other_vec.size(),
-          "number of items to replace is not a multiple of replacement length");
-
-      for (std::size_t i = 0; i < indices.size(); i++) {
-        d[indices[i]] = other_vec[i];
-      }
+        if (this->subsetted == false) {
+          if (d.size() != other_vec.size()) {
+            d.resize(other_vec.size());
+          }
+          this->ismatrix = false;
+          for (int i = 0; i < d.size(); i++) {
+            d[i] = other_vec[i];
+          }
+          if (other_vec.im() == true) {
+            this->ismatrix = true;
+            this->ncols = other_vec.nc();
+            this->nrows = other_vec.nr();
+          }
+        } else {
+          ass(static_cast<int>(indices.size()) <= other_vec.size(),
+              "number of items to replace is not a multiple of replacement length");
+          for (std::size_t i = 0; i < indices.size(); i++) {
+            d[indices[i]] = other_vec[i];
+          }
+        }
+        subsetted = false; 
     }
-
-    subsetted = false;
+    
 
     return *this;
   }
@@ -375,42 +411,48 @@ public:
   template <typename T2, typename R2>
   VEC &operator=(const VEC<T2, R2> &other_vec) {
 
-    if (subsetted == false) {
-      this->ismatrix = false;
-
-      temp.resize(other_vec.size());
-      for (int i = 0; i < temp.size(); i++) {
-        temp[i] = other_vec[i];
-      }
-
-      if (d.size() != other_vec.size()) { // .d?
-        d.resize(other_vec.size());       // .d ?
-      }
-
-      if (d.todelete == true) {
-        d.moveit(temp);
-      } else {
-        this->d = temp; // copy necessary in case only ownership is borrowed!
-      }
-
-      if (other_vec.d.im() == true) {
-        ismatrix = true;
-        ncols = other_vec.d.nc();
-        nrows = other_vec.d.nr();
-      }
-
+    if constexpr(!is_var::value) {
+        ass(d.size() <= other_vec.size(), "number of items to replace is not a multiple of replacement length");
+        temp.resize(d.size());
+        for (int i = 0; i < temp.size(); i++) {
+          temp[i] = other_vec[i];
+        }
+        for (std::size_t i = 0; i < d.size(); i++) {
+          this->d[i] = temp[i];
+        }
+        subsetted = false; // issue: needed?
     } else {
-      temp.resize(indices.size());
-      for (int i = 0; i < temp.size(); i++) {
-        temp[i] = other_vec[i];
+      if (subsetted == false) {
+        this->ismatrix = false;
+        temp.resize(other_vec.size());
+        for (int i = 0; i < temp.size(); i++) {
+          temp[i] = other_vec[i];
+        }
+        if (d.size() != other_vec.size()) { // .d?
+          d.resize(other_vec.size());       // .d ?
+        }
+        if (d.todelete == true) {
+          d.moveit(temp);
+        } else {
+          this->d = temp; // copy necessary in case only ownership is borrowed!
+        }
+        if (other_vec.d.im() == true) {
+          ismatrix = true;
+          ncols = other_vec.d.nc();
+          nrows = other_vec.d.nr();
+        }
+      } else {
+        temp.resize(indices.size());
+        for (int i = 0; i < temp.size(); i++) {
+          temp[i] = other_vec[i];
+        }
+        for (std::size_t i = 0; i < indices.size(); i++) {
+          this->d[indices[i]] = temp[i];
+        }
       }
-      for (std::size_t i = 0; i < indices.size(); i++) {
-        this->d[indices[i]] = temp[i];
-      }
+      subsetted = false;
     }
-
-    subsetted = false;
-
+    
     return *this;
   }
 

@@ -39,6 +39,14 @@ namespace etr {
 struct VariableTrait {};
 struct SubsetTrait {};
 
+template <typename R>
+concept HasVariableOrSubset = std::is_same_v<R::TypeTrait, VariableTrait> || std::is_same_v<R::TypeTrait, SubsetTrait>;
+
+template <typename T, typename I>
+concept IsVecBool = requires(T vec, I index) {
+    { vec[index] } -> std::same_as<bool>;
+};
+
 struct UnaryTrait {};
 struct VSTrait {};
 struct SVTrait {};

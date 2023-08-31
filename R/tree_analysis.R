@@ -139,4 +139,4 @@ create_vals <- function(expression) {
   return(list(env$var_list, env$which_vars_found, env$num_args))
 }
 
-create_vals(quote(3.14 + x * x))
+#create_vals(quote(3.14 + x * x))
