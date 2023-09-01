@@ -73,9 +73,9 @@ inline VEC<T, VVEXP<T, L, R>> operator^(const VEC<T, L> &a, const R exponent) {
   VEC<T, VVEXP<T, L, R>> ret(
       VVEXP<T, L, R>(a.data(), a.im(), a.nrow(), a.ncol(), exponent));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }
@@ -96,9 +96,9 @@ inline VEC<T, VVEXP<T, L, R>> exp(const VEC<T, L> &a, const R exponent) {
   VEC<T, VVEXP<T, L, R>> ret(
       VVEXP<T, L, R>(a.data(), a.im(), a.nrow(), a.ncol(), exponent));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }
@@ -149,9 +149,9 @@ inline VEC<T, VVlog<T, L>> ln(const VEC<T, L> &a) {
 
   VEC<T, VVlog<T, L>> ret(VVlog<T, L>(a.data(), a.im(), a.nrow(), a.ncol()));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }
@@ -204,9 +204,9 @@ inline VEC<T, VVsqrt<T, L>> sqroot(const VEC<T, L> &a) {
 
   VEC<T, VVsqrt<T, L>> ret(VVsqrt<T, L>(a.data(), a.im(), a.nrow(), a.ncol()));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }

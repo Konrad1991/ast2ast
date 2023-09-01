@@ -47,7 +47,7 @@ inline void set_ptr(const VEC<double, Storage> &inp, int pos) { //
 }
 
 void check_is_matrix(const VEC<double>& inp) {
-    if (inp.ismatrix == false) {
+    if (!inp.im()) {
       std::cerr << "incorrect number of dimensions" << std::endl;
       Rcpp::stop("Error");
     }
@@ -126,7 +126,6 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, int row, bool c) { /
   }
   VEC<double, SUBSET<double>> ret;
   ret.d.resize(inp.nc());
-  ret.ismatrix = false;
   int pst = 0;
   for (int j = 0; j < inp.d.size(); j++) {
     pst = j * inp.nr() + (row - 1);
@@ -159,7 +158,6 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, bool r, int col) { /
   if (r == false) return ret_empty();
   VEC<double, SUBSET<double>> ret;
   ret.d.resize(inp.nr());
-  ret.ismatrix = false;
   int pst = 0;
   for (int j = 0; j < inp.nr(); j++) {
     pst = (col - 1) * inp.nr() + j;
@@ -228,9 +226,9 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, bool r, VEC<double> 
   if (r == false) return ret_empty();
   VEC<double, SUBSET<double>> ret;
   ret.d.resize(inp.nr() * pos.size());
-  ret.ismatrix = true;
-  ret.ncols = pos.size();
-  ret.nrows = inp.nr();
+  ret.set_matrix(true);
+  ret.set_ncol(pos.size());
+  ret.set_nrow(inp.nr());
   int pst = 0;
   int counter = 0;
   for (int j = 0; j < pos.size(); j++) {
@@ -253,9 +251,9 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<double> &pos, bo
   if (c == false) return ret_empty();
   VEC<double, SUBSET<double>> ret;
   ret.d.resize(pos.size() * inp.nc());
-  ret.ismatrix = true;
-  ret.ncols = inp.nc();
-  ret.nrows = pos.size();
+  ret.set_matrix(true);
+  ret.set_ncol(inp.nc());
+  ret.set_nrow(pos.size());
   int pst = 0;
   int counter = 0;
   for (int i = 0; i < inp.nc(); i++) {
@@ -286,9 +284,9 @@ inline VEC<double, SUBSET<double>> subset(const VEC<double> &inp, const VEC<doub
   check_is_matrix(inp);
   VEC<double, SUBSET<double>> ret;
   ret.d.resize(rpos.size() * cpos.size());
-  ret.ismatrix = true;
-  ret.ncols = cpos.size();
-  ret.nrows = rpos.size();
+  ret.set_matrix(true);
+  ret.set_ncol(cpos.size());
+  ret.set_nrow(rpos.size());
   int pst = 0;
   int counter = 0;
   for (int i = 0; i < ret.nc(); i++) {
@@ -406,9 +404,9 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, bool r, VEC<bool> po
   }
   vsub ret;
   ret.d.resize(inp.nr() * positions.size());
-  ret.ismatrix = true;
-  ret.ncols = positions.size();
-  ret.nrows = inp.nr();
+  ret.set_matrix(true);
+  ret.set_ncol(positions.size());
+  ret.set_nrow(inp.nr());
   int pst = 0;
   counter = 0;
   for (int j = 0; j < positions.size(); j++) {
@@ -445,7 +443,7 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, bool r, VEC<bool> po
 
 
 
-
+/*
 
 inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<bool> pos, bool c) { // done
 
@@ -730,6 +728,8 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<bool> rows,
 
   return ret;
 }
+
+*/
 
 } // namespace etr
 

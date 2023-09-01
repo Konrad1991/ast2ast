@@ -53,8 +53,8 @@ public:
   bool allocated = false;
   int cob = 0;
   bool ismatrix = false;
-  int ncols = 0;
-  int nrows = 0;
+  int columns_ = 0;
+  int rows_ = 0;
 
   // Constructors
   STORE(SEXP inp) {
@@ -366,6 +366,9 @@ public:
   using TypeTrait = Trait;
   INDICES ind;
   const STORE<T>* ptr;
+  bool ismatrix = false;
+  int columns_ = 0;
+  int rows_ = 0;
 
   SUBSET(const STORE<T>* ptr_) : ptr(ptr_) {}
 

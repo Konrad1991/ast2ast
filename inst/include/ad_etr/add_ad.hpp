@@ -36,7 +36,6 @@ public:
   int rows_;
   int columns_;
 
-public:
   using TypeTrait = Trait;
   VVPLUS(const L &a, const R &b, bool ismatrix_, int rows, int cols)
       : l(a), r(b), ismatrix(ismatrix_), rows_(rows), columns_(cols) {}
@@ -95,9 +94,9 @@ inline VEC<T, VVPLUS<T, L, R>> operator+(const VEC<T, L> &a,
   VEC<T, VVPLUS<T, L, R>> ret(
       VVPLUS<T, L, R>(a.data(), b.data(), ismatrix_, nrows_, ncols_));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }
@@ -105,18 +104,16 @@ inline VEC<T, VVPLUS<T, L, R>> operator+(const VEC<T, L> &a,
 template <typename T, typename L, typename R, typename Trait = VSPlusTrait>
 class VSPLUS {
 
-private:
 public:
   const L &l;
   const R &r;
   bool ismatrix;
-  int nrows;
-  int ncols;
+  int rows_;
+  int columns_;
 
-public:
   using TypeTrait = Trait;
   VSPLUS(const L &a, const R &b, bool ismatrix_, int nrows_, int ncols_)
-      : l(a), r(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) {}
+      : l(a), r(b), ismatrix(ismatrix_), rows_(nrows_), columns_(ncols_) {}
 
   T operator[](const int i) const { return l[i % l.size()] + r; }
 
@@ -128,9 +125,9 @@ public:
 
   bool im() const { return ismatrix; }
 
-  int nc() const { return ncols; }
+  int nc() const { return columns_; }
 
-  int nr() const { return nrows; }
+  int nr() const { return rows_; }
 
   const L &getL() const { return l; }
 
@@ -142,21 +139,21 @@ template <typename T, typename L, typename R>
 inline VEC<T, VSPLUS<T, L, R>> operator+(const VEC<T, L> &a, const R &b) {
 
   bool ismatrix_ = false;
-  int nrows_ = 0;
-  int ncols_ = 0;
+  int rows_ = 0;
+  int columns_ = 0;
 
   if (a.im() == true) {
     ismatrix_ = true;
-    nrows_ = a.nr();
-    ncols_ = a.nc();
+    rows_ = a.nr();
+    columns_ = a.nc();
   }
 
   VEC<T, VSPLUS<T, L, R>> ret(
       VSPLUS<T, L, R>(a.data(), b, a.im(), a.nr(), a.nc()));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(columns_);
+  ret.set_nrow(rows_);
 
   return ret;
 }
@@ -164,18 +161,16 @@ inline VEC<T, VSPLUS<T, L, R>> operator+(const VEC<T, L> &a, const R &b) {
 template <typename T, typename L, typename R, typename Trait = SVPlusTrait>
 class SVPLUS {
 
-private:
 public:
   const L &l;
   const R &r;
-  const bool ismatrix;
-  const int nrows;
-  const int ncols;
+  bool ismatrix;
+  int rows_;
+  int columns_;
 
-public:
   using TypeTrait = Trait;
   SVPLUS(const L &a, const R &b, bool ismatrix_, int nrows_, int ncols_)
-      : l(a), r(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) {}
+      : l(a), r(b), ismatrix(ismatrix_), rows_(nrows_), columns_(ncols_) {}
 
   T operator[](const int i) const { return l + r[i % r.size()]; }
 
@@ -187,9 +182,9 @@ public:
 
   bool im() const { return ismatrix; }
 
-  int nc() const { return ncols; }
+  int nc() const { return columns_; }
 
-  int nr() const { return nrows; }
+  int nr() const { return rows_; }
 
   const L &getL() const { return l; }
 
@@ -213,9 +208,9 @@ inline VEC<T, SVPLUS<T, L, R>> operator+(const L &a, const VEC<T, R> &b) {
   VEC<T, SVPLUS<T, L, R>> ret(
       SVPLUS<T, L, R>(a, b.data(), b.im(), b.nr(), b.nc()));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }

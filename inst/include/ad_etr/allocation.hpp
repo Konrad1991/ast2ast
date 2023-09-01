@@ -50,26 +50,26 @@ inline VEC<double> vector(VEC<double> inp) {
 
 inline VEC<double> matrix(int nrows_, int ncols_) {
   VEC<double> ret(nrows_, ncols_);
-  ret.ismatrix = true;
-  ret.nrows = nrows_;
-  ret.ncols = ncols_;
+  ret.set_matrix(true);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
   return ret;
 }
 
 inline VEC<double> matrix(double inp, int nrows_, int ncols_) {
   VEC<double> ret(nrows_, ncols_, inp);
-  ret.ismatrix = true;
-  ret.nrows = nrows_;
-  ret.ncols = ncols_;
+  ret.set_matrix(true);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
   return ret;
 }
 
 inline VEC<double> matrix(VEC<double> inp, int nrows_, int ncols_) {
   VEC<double> ret(nrows_, ncols_);
   ret = inp;
-  ret.ismatrix = true;
-  ret.nrows = nrows_;
-  ret.ncols = ncols_;
+  ret.set_matrix(true);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
   return ret;
 }
 
@@ -77,9 +77,9 @@ template <typename T2, typename R2>
 inline VEC<double> matrix(const VEC<T2, R2> &inp, int nrows_, int ncols_) {
   VEC<double> ret(nrows_, ncols_);
   ret = inp;
-  ret.ismatrix = true;
-  ret.nrows = nrows_;
-  ret.ncols = ncols_;
+  ret.set_matrix(true);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
   return ret;
 }
 

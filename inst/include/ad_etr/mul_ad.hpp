@@ -36,7 +36,6 @@ public:
   int rows_;
   int columns_;
 
-public:
   using TypeTrait = Trait;
   VVTIMES(const L &a, const R &b, bool ismatrix_, int rows, int cols)
       : l(a), r(b), ismatrix(ismatrix_), rows_(rows), columns_(cols) {}
@@ -95,9 +94,9 @@ inline VEC<T, VVTIMES<T, L, R>> operator*(const VEC<T, L> &a,
   VEC<T, VVTIMES<T, L, R>> ret(
       VVTIMES<T, L, R>(a.data(), b.data(), ismatrix_, nrows_, ncols_));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }
@@ -105,14 +104,13 @@ inline VEC<T, VVTIMES<T, L, R>> operator*(const VEC<T, L> &a,
 template <typename T, typename L, typename R, typename Trait = VSTimesTrait>
 class VSTIMES {
 
-private:
+public:
   const L &l;
   const R &r;
   bool ismatrix;
   int nrows;
   int ncols;
 
-public:
   using TypeTrait = Trait;
   VSTIMES(const L &a, const R &b, bool ismatrix_, int nrows_, int ncols_)
       : l(a), r(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) {}
@@ -144,9 +142,9 @@ inline VEC<T, VSTIMES<T, L, R>> operator*(const VEC<T, L> &a, const R &b) {
   VEC<T, VSTIMES<T, L, R>> ret(
       VSTIMES<T, L, R>(a.data(), b, a.im(), a.nr(), a.nc()));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }
@@ -154,14 +152,13 @@ inline VEC<T, VSTIMES<T, L, R>> operator*(const VEC<T, L> &a, const R &b) {
 template <typename T, typename L, typename R, typename Trait = SVTimesTrait>
 class SVTIMES {
 
-private:
+public:
   const R &r;
   const L &l;
   const bool ismatrix;
   const int nrows;
   const int ncols;
 
-public:
   using TypeTrait = Trait;
   SVTIMES(const R &a, const L &b, bool ismatrix_, int nrows_, int ncols_)
       : r(a), l(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) {}
@@ -193,9 +190,9 @@ inline VEC<T, SVTIMES<T, L, R>> operator*(const R &a, const VEC<T, L> &b) {
   VEC<T, SVTIMES<T, L, R>> ret(
       SVTIMES<T, L, R>(a, b.data(), b.im(), b.nr(), b.nc()));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }

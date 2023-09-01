@@ -93,10 +93,10 @@ inline VEC<T, VVDIV<T, L, R>> operator/(const VEC<T, L> &a,
   VEC<T, VVDIV<T, L, R>> ret(
       VVDIV<T, L, R>(a.data(), b.data(), ismatrix_, nrows_, ncols_));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
-
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
+  
   return ret;
 }
 
@@ -147,9 +147,9 @@ inline VEC<T, VSDIV<T, L, R>> operator/(const VEC<T, L> &a, const R &b) {
   VEC<T, VSDIV<T, L, R>> ret(
       VSDIV<T, L, R>(a.data(), b, a.im(), a.nr(), a.nc()));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }
@@ -197,9 +197,9 @@ inline VEC<T, SVDIV<T, L, R>> operator/(const R &a, const VEC<T, L> &b) {
   VEC<T, SVDIV<T, L, R>> ret(
       SVDIV<T, L, R>(a, b.data(), b.im(), b.nr(), b.nc()));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }

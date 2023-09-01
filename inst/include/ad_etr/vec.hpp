@@ -33,89 +33,80 @@ class VEC {
   using store = STORE<double, VariableTrait>;
 
 public:
-  bool subsetted;
-  std::vector<int> indices;
-
-  // for Matrix
-  bool ismatrix;
-  int ncols;
-  int nrows;
-
-  int ncols_sub;
-  int nrows_sub;
-
   // data
   R d;
   using trait_d = std::remove_reference<decltype(d)>::type::TypeTrait;
   using is_var = std::is_same<trait_d, VariableTrait>;
   using is_sub = std::is_same<trait_d, SubsetTrait>;
-  STORE<T> temp;
 
   template <typename T2> VEC(T2 n) = delete;
 
   VEC(const double value)
-      : subsetted(0), ismatrix(0), d(1, value), temp(1) {
+      : d(1, value) {
   } // d(1, value) or d(1) {d[0] = value} --> all tests run positive
   VEC(const long unsigned int n)
-      : subsetted(0), ismatrix(0), d(1, static_cast<double>(n)), temp(1) {
+      : d(1, static_cast<double>(n)) {
   } // run all tests whether this is possible
   // Constructors for vector
-  VEC(const int n) : subsetted(0), ismatrix(0), d(n), temp(1) {
+  VEC(const int n) : d(n) {
     d.fill(static_cast<double>(n));
   } // fill is a hack that sexp s = 1 works;
-  VEC(const int n, const double value)
-      : subsetted(0), ismatrix(0), d(n, value), temp(1) {}
+  VEC(const int n, const double value) : d(n, value) {}
 
-  VEC(const R &other_vec) : subsetted(0), ismatrix(0), d(other_vec), temp(1) {}
+  VEC(const R &other_vec) : d(other_vec) {}
 
-  VEC()
-      : subsetted(0), ismatrix(0), ncols(0), nrows(0), d(), temp() {
-  } // maybe better initialize with 0
-  VEC(const std::vector<T> inp)
-      : subsetted(0), ismatrix(0), nrows(0), ncols(0), d(inp), temp(1) {}
+  VEC(): d() {} // maybe better initialize with 0
+  VEC(const std::vector<T> inp) : d(inp) {}
   // Constructors for matrix
-  VEC(const int rows, const int cols)
-      : subsetted(0), ismatrix(1), ncols(cols), nrows(rows), d(rows * cols),
-        temp(1) {}
+  VEC(const int rows, const int cols): d(rows * cols) {
+    set_matrix(true);
+    set_nrow(rows);
+    set_ncol(cols);
+  }
   VEC(const int rows, const int cols, const double value)
-      : subsetted(0), ismatrix(1), ncols(cols), nrows(rows),
-        d(rows * cols, value), temp(1) {}
+      : d(rows * cols, value) {
+    set_matrix(true);
+    set_nrow(rows);
+    set_ncol(cols);
+  }
   VEC(const int rows, const int cols, int value)
-      : subsetted(0), ismatrix(1), nrows(rows), ncols(cols),
-        d(rows * cols, value), temp(1) {}
+      : d(rows * cols, value) {
+    set_matrix(true);
+    set_nrow(rows);
+    set_ncol(cols);
+  }
   // constructor for calculations
   template <typename T2, typename R2>
-  VEC(const VEC<T2, R2> &other_vec) : d(1), temp(1) {
+  VEC(const VEC<T2, R2> &other_vec) : d(1) {
     if constexpr (is_var::value) {
       this->d.resize(other_vec.size());
-      this->ismatrix = false;
       for (int i = 0; i < d.size(); i++) {
         this->d[i] = other_vec[i];
       }
       if (other_vec.d.im() == true) {
-        this->ismatrix = true;
-        this->ncols = other_vec.d.nc();
-        this->nrows = other_vec.d.nr();
+        set_matrix(true);
+        set_nrow(other_vec.d.nr());
+        set_ncol(other_vec.d.nc());
       }
-      subsetted = false;  
     }
   }
   // constructor for COMPARISON
-  VEC(const VEC<bool> &other_vec) : d(1), temp(1) {
+  VEC(const VEC<bool> &other_vec) : d(1) {
     d.resize(other_vec.size());
-    ismatrix = false;
-    subsetted = false;
+    set_matrix(false);
     for (int i = 0; i < d.size(); i++) {
       d[i] = other_vec[i];
     }
   }
   // constructor for pointer
   VEC(const int n, T *ptr, int cob)
-      : subsetted(0), ismatrix(0), d(n, ptr, cob), temp(1) {
-  } // cob = copy, owning, borrow
+      : d(n, ptr, cob) {} // cob = copy, owning, borrow
   VEC(const int r, const int c, T *ptr, int cob)
-      : subsetted(0), ismatrix(1), ncols(c), nrows(r), d(r * c, ptr, cob),
-        temp(1) {} // cob = copy, owning, borrow
+      : d(r * c, ptr, cob) {
+      set_matrix(true);
+      set_nrow(r);
+      set_ncol(c);
+  } // cob = copy, owning, borrow
 
   operator bool() const { return d[0]; } // issue: if d has length 1 (R version 4.2)
 
@@ -138,83 +129,61 @@ public:
   }
 
   // constructor for Rcpp RcppArmadillo and SEXP
-  VEC(const bool value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
-  VEC(Rboolean value) : subsetted(0), ismatrix(0), d(1, value), temp(1) {}
-  VEC(SEXP inp) : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
-
+  VEC(const bool value) : d(1, value) {}
+  VEC(Rboolean value) : d(1, value) {}
+  VEC(SEXP inp) : d(1, 1.5) { // issue: 1.5????
     if (Rf_isReal(inp)) {
       d.init_sexp(inp);
-      subsetted = false;
-      ismatrix = false;
       if (Rf_isMatrix(inp) == true) {
-        ismatrix = true;
-        ncols = Rf_ncols(inp);
-        nrows = Rf_nrows(inp);
+        set_matrix(true);
+        set_ncol(Rf_ncols(inp));
+        set_nrow(Rf_nrows(inp));
       }
     } else {
       Rf_error("no numeric input");
     }
   }
   VEC(Rcpp::NumericVector other_vec)
-      : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
+      : d(1, 1.5) {
     d.resize(other_vec.size());
-    this->ismatrix = false;
-    this->ncols = 0;
-    this->nrows = 0;
-    subsetted = false;
-
     for (int i = 0; i < other_vec.size(); i++) {
       d[i] = other_vec[i];
     }
   }
   VEC(Rcpp::NumericMatrix other_vec)
-      : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
+      : d(1, 1.5) {
     d.resize(other_vec.size());
-    this->ismatrix = true;
-    this->ncols = other_vec.ncol();
-    this->nrows = other_vec.nrow();
-    subsetted = false;
-
+    set_matrix(true);
+    set_ncol(other_vec.ncol());
+    set_nrow(other_vec.nrow());
     for (int i = 0; i < other_vec.size(); i++) {
       d[i] = other_vec[i];
     }
   }
-  VEC(arma::vec &other_vec) : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
+  VEC(arma::vec &other_vec) : d(1, 1.5) {
     d.resize(other_vec.size());
-    this->ismatrix = false;
-    this->ncols = 0;
-    this->nrows = 0;
-    subsetted = false;
-
     for (int i = 0; i < other_vec.size(); i++) {
       d[i] = other_vec[i];
     }
   }
-  VEC(arma::mat &other_vec) : subsetted(0), ismatrix(0), d(1, 1.5), temp(1) {
+  VEC(arma::mat &other_vec) : d(1, 1.5) {
     d.resize(other_vec.size());
-    this->ismatrix = true;
-    this->ncols = other_vec.n_cols;
-    this->nrows = other_vec.n_rows;
-    subsetted = false;
-
+    set_matrix(true);
+    set_ncol(other_vec.n_cols);
+    set_nrow(other_vec.n_rows);
     for (int i = 0; i < other_vec.size(); i++) {
       d[i] = other_vec[i];
     }
   }
 
   VEC &operator=(SEXP inp) { 
-    subsetted = false;
-    ismatrix = false;
-
     ass(Rf_isReal(inp), "no numeric input");
     if (Rf_isMatrix(inp) == true) {
-      ismatrix = true;
-      ncols = Rf_ncols(inp);
-      nrows = Rf_nrows(inp);
+      set_matrix(true);
+      set_ncol(Rf_ncols(inp));
+      set_nrow(Rf_nrows(inp));
     }
-
     d.init_sexp(inp);
-
     return *this;
   }
 
@@ -223,26 +192,17 @@ public:
     for (int i = 0; i < ret.size(); i++) {
       ret[i] = d[i];
     }
-
     return ret;
   }
 
   VEC &operator=(Rcpp::NumericVector &other_vec) {
     if constexpr(!is_var::value) {
       ass(other_vec.size() <= d.size(), "number of items to replace is not a multiple of replacement length");
-      this->ismatrix = false;
-      this->ncols = 0;
-      this->nrows = 0;
-      subsetted = false;
       for (int i = 0; i < other_vec.size(); i++) {
         d[i] = other_vec[i];
       }
     } else {
       d.resize(other_vec.size());
-      this->ismatrix = false;
-      this->ncols = 0;
-      this->nrows = 0;
-      subsetted = false;
       for (int i = 0; i < other_vec.size(); i++) {
         d[i] = other_vec[i];
       }
@@ -256,26 +216,23 @@ public:
     for (int i = 0; i < ret.size(); i++) {
       ret[i] = d[i];
     }
-
     return ret;
   }
 
   VEC &operator=(Rcpp::NumericMatrix &other_vec) {
     if constexpr(!is_var::value) {
       ass(other_vec.size() <= d.size(), "number of items to replace is not a multiple of replacement length");
-      this->ismatrix = true;
-      this->ncols = other_vec.ncol();
-      this->nrows = other_vec.nrow();
-      subsetted = false;
+      set_matrix(true);
+      set_nrow(other_vec.nrow());
+      set_ncol(other_vec.ncol());
       for (int i = 0; i < other_vec.size(); i++) {
         d[i] = other_vec[i];
       }
     } else {
       d.resize(other_vec.size());
-      this->ismatrix = true;
-      this->ncols = other_vec.ncol();
-      this->nrows = other_vec.nrow();
-      subsetted = false;
+      set_matrix(true);
+      set_nrow(other_vec.nrow());
+      set_ncol(other_vec.ncol());
       for (int i = 0; i < other_vec.size(); i++) {
         d[i] = other_vec[i];
       }  
@@ -288,26 +245,17 @@ public:
     for (int i = 0; i < this->size(); i++) {
       ret[i] = d[i];
     }
-
     return ret;
   }
 
   VEC &operator=(arma::vec &other_vec) { // issue: correct for armadillo () vs []
     if constexpr(!is_var::value) {
       ass(other_vec.size() <= d.size(), "number of items to replace is not a multiple of replacement length");
-      this->ismatrix = false;
-      this->ncols = 0;
-      this->nrows = 0;
-      subsetted = false;
       for (int i = 0; i < other_vec.size(); i++) {
         d[i] = other_vec[i];
       }
     } else {
       d.resize(other_vec.size());
-      this->ismatrix = false;
-      this->ncols = 0;
-      this->nrows = 0;
-      subsetted = false;
       for (int i = 0; i < other_vec.size(); i++) {
         d[i] = other_vec[i];
       }
@@ -321,26 +269,23 @@ public:
     for (int i = 0; i < ret.size(); i++) {
       ret[i] = d[i];
     }
-
     return ret;
   }
 
   VEC &operator=(arma::mat &other_vec) { // issue: see above
     if constexpr(!is_var::value) {
       ass(other_vec.size() <= d.size(), "number of items to replace is not a multiple of replacement length");
-      this->ismatrix = true;
-      this->ncols = other_vec.n_cols;
-      this->nrows = other_vec.n_rows;
-      subsetted = false;
+      set_matrix(true);
+      set_nrow(other_vec.n_rows);
+      set_ncol(other_vec.n_cols);
       for (int i = 0; i < other_vec.size(); i++) {
         d[i] = other_vec[i];
       }
     } else {
       d.resize(other_vec.size());
-      this->ismatrix = true;
-      this->ncols = other_vec.n_cols;
-      this->nrows = other_vec.n_rows;
-      subsetted = false;
+      set_matrix(true);
+      set_nrow(other_vec.n_rows);
+      set_ncol(other_vec.n_cols);
       for (int i = 0; i < other_vec.size(); i++) {
         d[i] = other_vec[i];
       }  
@@ -358,16 +303,8 @@ public:
         d[i] = dob;
       }
     } else {
-      if (subsetted == false) {
         d.resize(1);
-        ismatrix = false;
         d[0] = dob;
-      } else {
-        for (std::size_t i = 0; i < indices.size(); i++) {
-          d[indices[i]] = dob;
-        }
-      }
-      subsetted = false;
     }
     return *this;
   }
@@ -379,32 +316,21 @@ public:
       for (std::size_t i = 0; i < d.size(); i++) {
         d[i] = other_vec[i];
       }
-      subsetted = false; // issue: needed
     } else {
-        if (this->subsetted == false) {
-          if (d.size() != other_vec.size()) {
-            d.resize(other_vec.size());
-          }
-          this->ismatrix = false;
-          for (int i = 0; i < d.size(); i++) {
-            d[i] = other_vec[i];
-          }
-          if (other_vec.im() == true) {
-            this->ismatrix = true;
-            this->ncols = other_vec.nc();
-            this->nrows = other_vec.nr();
-          }
-        } else {
-          ass(static_cast<int>(indices.size()) <= other_vec.size(),
-              "number of items to replace is not a multiple of replacement length");
-          for (std::size_t i = 0; i < indices.size(); i++) {
-            d[indices[i]] = other_vec[i];
-          }
+        if (d.size() != other_vec.size()) {
+          d.resize(other_vec.size());
         }
-        subsetted = false; 
+        for (int i = 0; i < d.size(); i++) {
+          d[i] = other_vec[i];
+        }
+    }
+
+    if (other_vec.im() == true) {
+      set_matrix(true);
+      set_nrow(other_vec.nr());
+      set_ncol(other_vec.nc());
     }
     
-
     return *this;
   }
 
@@ -412,7 +338,9 @@ public:
   VEC &operator=(const VEC<T2, R2> &other_vec) {
 
     if constexpr(!is_var::value) {
+        // issue: count references if counter <= 1 --> than directly store in d --> has to be done everywhere
         ass(d.size() <= other_vec.size(), "number of items to replace is not a multiple of replacement length");
+        store temp;
         temp.resize(d.size());
         for (int i = 0; i < temp.size(); i++) {
           temp[i] = other_vec[i];
@@ -420,10 +348,8 @@ public:
         for (std::size_t i = 0; i < d.size(); i++) {
           this->d[i] = temp[i];
         }
-        subsetted = false; // issue: needed?
     } else {
-      if (subsetted == false) {
-        this->ismatrix = false;
+        store temp;
         temp.resize(other_vec.size());
         for (int i = 0; i < temp.size(); i++) {
           temp[i] = other_vec[i];
@@ -436,21 +362,12 @@ public:
         } else {
           this->d = temp; // copy necessary in case only ownership is borrowed!
         }
-        if (other_vec.d.im() == true) {
-          ismatrix = true;
-          ncols = other_vec.d.nc();
-          nrows = other_vec.d.nr();
-        }
-      } else {
-        temp.resize(indices.size());
-        for (int i = 0; i < temp.size(); i++) {
-          temp[i] = other_vec[i];
-        }
-        for (std::size_t i = 0; i < indices.size(); i++) {
-          this->d[indices[i]] = temp[i];
-        }
-      }
-      subsetted = false;
+    }
+
+    if (other_vec.im() == true) {
+      set_matrix(true);
+      set_nrow(other_vec.nr());
+      set_ncol(other_vec.nc());
     }
     
     return *this;
@@ -474,23 +391,21 @@ public:
 
   // ================================================================
 
-  bool is_subsetted() const { return subsetted; }
-
   void realloc(int new_size) { // when is it called?
     d.realloc(new_size);
   }
 
   // getter methods for matrix
   // ================================================================
-  int ncol() const { return ncols; }
+  int ncol() const { return d.columns_; }
 
-  int nrow() const { return nrows; }
+  int nrow() const { return d.rows_; }
 
-  bool im() const { return ismatrix; }
+  bool im() const { return d.ismatrix; }
 
-  int nc() const { return ncols; }
+  int nc() const { return d.columns_; }
 
-  int nr() const { return nrows; }
+  int nr() const { return d.rows_; }
 
   auto begin() const { return It<T>{d.p}; }
 
@@ -500,6 +415,18 @@ public:
 
   // resize indices
   void rsi(int sizenew) { this->indices.resize(sizenew); }
+
+  void set_matrix(bool i) {
+    this -> d.ismatrix = i;
+  }
+
+  void set_ncol(int ncol) {
+    this -> d.columns_ = ncol;
+  }
+
+  void set_nrow(int nrow) {
+    this -> d.rows_ = nrow;
+  }
 
 }; // end class VEC
 

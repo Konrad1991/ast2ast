@@ -28,51 +28,27 @@ namespace etr {
 
 // print empty line
 inline void print() {
-#ifdef RLANG
   Rcpp::Rcout << std::endl;
-#else
-  std::cout << std::endl;
-#endif
 }
 
 inline void print(std::string inp) {
-#ifdef RLANG
   Rcpp::Rcout << inp << std::endl;
-#else
-  std::cout << inp << std::endl;
-#endif
 }
 
 inline void print(const char *inp) {
-#ifdef RLANG
   Rcpp::Rcout << inp << std::endl;
-#else
-  std::cout << inp << std::endl;
-#endif
 }
 
 inline void print(double inp) {
-#ifdef RLANG
   Rcpp::Rcout << inp << std::endl;
-#else
-  std::cout << inp << std::endl;
-#endif
 }
 
 inline void print(int inp) {
-#ifdef RLANG
   Rcpp::Rcout << inp << std::endl;
-#else
-  std::cout << inp << std::endl;
-#endif
 }
 
 inline void print(bool inp) {
-#ifdef RLANG
   Rcpp::Rcout << inp << std::endl;
-#else
-  std::cout << inp << std::endl;
-#endif
 }
 
 // Vector & matrix
@@ -80,140 +56,41 @@ inline void print(bool inp) {
 // ================================================================
 inline void print(VEC<double> &inp) { // const
 
-  if (inp.ismatrix == false) {
-
-    if (inp.subsetted == false) {
+  if (inp.im() == false) {
       for (int i = 0; i < inp.size(); i++) {
-#ifdef RLANG
         Rcpp::Rcout << inp[i] << std::endl;
-#else
-        std::cout << inp[i] << std::endl;
-#endif
       }
-    } else {
-      for (int i = 0; i < inp.size(); i++) {
-#ifdef RLANG
-        Rcpp::Rcout << inp[inp.indices[i]] << std::endl;
-#else
-        std::cout << inp[inp.indices[i]] << std::endl;
-#endif
-      }
-    }
-
-  } else if (inp.ismatrix == true) {
-
-    if (inp.subsetted == false) {
-      for (int i = 0; i < inp.nrows; i++) {
-        for (int j = 0; j < inp.ncols; j++) {
-#ifdef RLANG
-          Rcpp::Rcout << inp.d[j * inp.nrows + i] << "\t";
-#else
-          std::cout << inp.d[j * inp.nrows + i] << "\t";
-#endif
+  } else if (inp.im() == true) {
+      for (int i = 0; i < inp.nr(); i++) {
+        for (int j = 0; j < inp.nc(); j++) {
+          Rcpp::Rcout << inp.d[j * inp.nr() + i] << "\t";
         }
-#ifdef RLANG
         Rcpp::Rcout << std::endl;
-#else
-        std::cout << std::endl;
-#endif
       }
-    } else {
-
-      ass(inp.indices.size() >= 1, "insufficient size of subset");
-      for (int i = 0; i < inp.ncols_sub; i++) {
-        for (int j = 0; j < inp.nrows_sub; j++) {
-#ifdef RLANG
-          Rcpp::Rcout << inp[inp.indices[i * inp.nrows_sub + j]] << "\t";
-#else
-          std::cout << inp[inp.indices[i * inp.nrows_sub + j]] << "\t";
-#endif
-        }
-
-#ifdef RLANG
-        Rcpp::Rcout << std::endl;
-#else
-        std::cout << std::endl;
-#endif
-      }
-    }
   }
 }
 
 inline void print(VEC<double> &&inp) { // const
-
-  if (inp.ismatrix == false) {
-
-    if (inp.subsetted == false) {
+  if (inp.im() == false) {
       for (int i = 0; i < inp.size(); i++) {
-#ifdef RLANG
         Rcpp::Rcout << inp[i] << std::endl;
-#else
-        std::cout << inp[i] << std::endl;
-#endif
       }
-    } else {
-      for (int i = 0; i < inp.size(); i++) {
-#ifdef RLANG
-        Rcpp::Rcout << inp[inp.indices[i]] << std::endl;
-#else
-        std::cout << inp[inp.indices[i]] << std::endl;
-#endif
-      }
-    }
-
-  } else if (inp.ismatrix == true) {
-
-    if (inp.subsetted == false) {
-      for (int i = 0; i < inp.nrows; i++) {
-        for (int j = 0; j < inp.ncols; j++) {
-#ifdef RLANG
-          Rcpp::Rcout << inp.d[j * inp.nrows + i] << "\t";
-#else
-          std::cout << inp.d[j * inp.nrows + i] << "\t";
-#endif
+  } else if (inp.im() == true) {
+      for (int i = 0; i < inp.nr(); i++) {
+        for (int j = 0; j < inp.nc(); j++) {
+          Rcpp::Rcout << inp.d[j * inp.nr() + i] << "\t";
         }
-#ifdef RLANG
         Rcpp::Rcout << std::endl;
-#else
-        std::cout << std::endl;
-#endif
       }
-    } else {
-
-      ass(inp.indices.size() >= 1, "insufficient size of subset");
-      for (int i = 0; i < inp.ncols_sub; i++) {
-        for (int j = 0; j < inp.nrows_sub; j++) {
-#ifdef RLANG
-          Rcpp::Rcout << inp[inp.indices[i * inp.nrows_sub + j]] << "\t";
-#else
-          std::cout << inp[inp.indices[i * inp.nrows_sub + j]] << "\t";
-#endif
-        }
-#ifdef RLANG
-        Rcpp::Rcout << std::endl;
-#else
-        std::cout << std::endl;
-#endif
-      }
-    }
   }
 }
 
 inline void print(VEC<bool> &inp) { // const
 
-  if (inp.ismatrix == false) {
-    if (inp.subsetted == true) {
-      std::cerr << "Error: found VEC<bool> is subsetted" << std::endl;
-      Rcpp::stop("Error");
-    }
+  if (inp.im() == false) {
     for (int i = 0; i < inp.size(); i++) {
-#ifdef RLANG
       Rcpp::Rcout << inp[i] << std::endl;
-#else
-      std::cout << inp[i] << std::endl;
-#endif
     }
-
   } else {
     std::cerr << "Error: found VEC<bool> is matrix" << std::endl;
     Rcpp::stop("Error");
@@ -222,61 +99,17 @@ inline void print(VEC<bool> &inp) { // const
 
 template <typename T2, typename R2> inline void print(const VEC<T2, R2> &inp) {
 
-  if (inp.ismatrix == false) {
-
-    if (inp.subsetted == false) {
+  if (inp.im() == false) {
       for (int i = 0; i < inp.size(); i++) {
-#ifdef RLANG
         Rcpp::Rcout << inp[i] << std::endl;
-#else
-        std::cout << inp[i] << std::endl;
-#endif
       }
-    } else {
-      for (int i = 0; i < inp.size(); i++) {
-#ifdef RLANG
-        Rcpp::Rcout << inp[inp.indices[i]] << std::endl;
-#else
-        std::cout << inp[inp.indices[i]] << std::endl;
-#endif
-      }
-    }
-
-  } else if (inp.ismatrix == true) {
-
-    if (inp.subsetted == false) {
-      for (int i = 0; i < inp.nrows; i++) {
-        for (int j = 0; j < inp.ncols; j++) {
-#ifdef RLANG
-          Rcpp::Rcout << inp.d[j * inp.nrows + i] << "\t";
-#else
-          std::cout << inp.d[j * inp.nrows + i] << "\t";
-#endif
+  } else if (inp.im() == true) {
+      for (int i = 0; i < inp.nr(); i++) {
+        for (int j = 0; j < inp.nc(); j++) {
+          Rcpp::Rcout << inp.d[j * inp.nr() + i] << "\t";
         }
-#ifdef RLANG
         Rcpp::Rcout << std::endl;
-#else
-        std::cout << std::endl;
-#endif
       }
-    } else {
-
-      ass(inp.indices.size() >= 1, "insufficient size of subset");
-      for (int i = 0; i < inp.ncols_sub; i++) {
-        for (int j = 0; j < inp.nrows_sub; j++) {
-#ifdef RLANG
-          Rcpp::Rcout << inp[inp.indices[i * inp.nrows_sub + j]] << "\t";
-#else
-          std::cout << inp[inp.indices[i * inp.nrows_sub + j]] << "\t";
-#endif
-        }
-#ifdef RLANG
-        Rcpp::Rcout << std::endl;
-#else
-        std::cout << std::endl;
-#endif
-      }
-    }
   }
 }
 

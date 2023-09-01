@@ -28,20 +28,19 @@ namespace etr {
 
 template <typename T, typename L, typename Trait = VVSinTrait> class VVSIN {
 
-private:
+public:
   const L &r; // const L& l;
   bool ismatrix;
-  int nrow_;
-  int ncol_;
+  int rows_;
+  int columns_;
 
-public:
   using TypeTrait = Trait;
   VVSIN(const L &a, bool r_ismatrix, int r_rows, int r_cols) : r(a) {
 
     if (r_ismatrix == true) {
       ismatrix = r_ismatrix;
-      nrow_ = r_rows;
-      ncol_ = r_cols;
+      rows_ = r_rows;
+      columns_ = r_cols;
     }
   }
 
@@ -53,9 +52,9 @@ public:
 
   bool im() const { return ismatrix; }
 
-  int nc() const { return ncol_; }
+  int nc() const { return columns_; }
 
-  int nr() const { return nrow_; }
+  int nr() const { return rows_; }
 
   const L &get() const { return r; }
 };
@@ -75,9 +74,9 @@ inline VEC<T, VVSIN<T, L>> sinus(const VEC<T, L> &a) {
 
   VEC<T, VVSIN<T, L>> ret(VVSIN<T, L>(a.data(), a.im(), a.nrow(), a.ncol()));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }
@@ -88,13 +87,12 @@ inline double sinus(int base) { return sin(static_cast<double>(base)); }
 
 template <typename T, typename L> class VVsinh {
 
-private:
+public:
   const L &r; // const L& l;
   bool ismatrix;
   int nrow_;
   int ncol_;
 
-public:
   VVsinh(const L &a, bool r_ismatrix, int r_rows, int r_cols) : r(a) {
 
     if (r_ismatrix == true) {
@@ -130,9 +128,9 @@ inline VEC<T, VVsinh<T, L>> sinush(const VEC<T, L> &a) {
 
   VEC<T, VVsinh<T, L>> ret(VVsinh<T, L>(a.data(), a.im(), a.nrow(), a.ncol()));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }
@@ -185,9 +183,9 @@ inline VEC<T, VVasin<T, L>> asinus(const VEC<T, L> &a) {
 
   VEC<T, VVasin<T, L>> ret(VVasin<T, L>(a.data(), a.im(), a.nrow(), a.ncol()));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }
@@ -240,9 +238,9 @@ inline VEC<T, VVCOS<T, L>> cosinus(const VEC<T, L> &a) {
 
   VEC<T, VVCOS<T, L>> ret(VVCOS<T, L>(a.data(), a.im(), a.nrow(), a.ncol()));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }
@@ -295,9 +293,9 @@ inline VEC<T, VVacos<T, L>> acosinus(const VEC<T, L> &a) {
 
   VEC<T, VVacos<T, L>> ret(VVacos<T, L>(a.data(), a.im(), a.nrow(), a.ncol()));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }
@@ -350,9 +348,9 @@ inline VEC<T, VVCOSH<T, L>> cosinush(const VEC<T, L> &a) {
 
   VEC<T, VVCOSH<T, L>> ret(VVCOSH<T, L>(a.data(), a.im(), a.nrow(), a.ncol()));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }
@@ -404,9 +402,9 @@ inline VEC<T, VVtan<T, L>> tangens(const VEC<T, L> &a) {
 
   VEC<T, VVtan<T, L>> ret(VVtan<T, L>(a.data(), a.im(), a.nrow(), a.ncol()));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }
@@ -458,10 +456,10 @@ inline VEC<T, VVatan<T, L>> atangens(const VEC<T, L> &a) {
 
   VEC<T, VVatan<T, L>> ret(VVatan<T, L>(a.data(), a.im(), a.nrow(), a.ncol()));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
-
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
+  
   return ret;
 }
 
@@ -512,9 +510,9 @@ inline VEC<T, VVtanh<T, L>> tangensh(const VEC<T, L> &a) {
 
   VEC<T, VVtanh<T, L>> ret(VVtanh<T, L>(a.data(), a.im(), a.nrow(), a.ncol()));
 
-  ret.ismatrix = ismatrix_;
-  ret.ncols = ncols_;
-  ret.nrows = nrows_;
+  ret.set_matrix(ismatrix_);
+  ret.set_ncol(ncols_);
+  ret.set_nrow(nrows_);
 
   return ret;
 }

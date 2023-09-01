@@ -262,8 +262,6 @@ inline VEC<bool> operator==(VEC<double> &a, VEC<double> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -300,8 +298,6 @@ inline VEC<bool> operator>=(VEC<double> &a, VEC<double> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -338,8 +334,6 @@ inline VEC<bool> operator<=(VEC<double> &a, VEC<double> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -376,8 +370,6 @@ inline VEC<bool> operator>(VEC<double> &a, VEC<double> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -414,8 +406,6 @@ inline VEC<bool> operator<(VEC<double> &a, VEC<double> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -452,8 +442,6 @@ inline VEC<bool> operator!=(VEC<double> &a, VEC<double> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -491,8 +479,6 @@ inline VEC<bool> operator==(const VEC<T2, R2> &a, const VEC<T3, R3> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -530,8 +516,6 @@ inline VEC<bool> operator==(VEC<double> &a, const VEC<T2, R2> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -569,8 +553,6 @@ inline VEC<bool> operator==(const VEC<T2, R2> &a, VEC<double> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -608,8 +590,6 @@ inline VEC<bool> operator>=(const VEC<T2, R2> &a, const VEC<T3, R3> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -647,8 +627,6 @@ inline VEC<bool> operator>=(VEC<double> &a, const VEC<T2, R2> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -686,8 +664,6 @@ inline VEC<bool> operator>=(const VEC<T2, R2> &a, VEC<double> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -725,9 +701,7 @@ inline VEC<bool> operator<=(const VEC<T2, R2> &a, const VEC<T3, R3> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
-
+  
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
       res[i] = a[i] <= b[i];
@@ -764,8 +738,6 @@ inline VEC<bool> operator<=(VEC<double> &a, const VEC<T2, R2> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -803,8 +775,6 @@ inline VEC<bool> operator<=(const VEC<T2, R2> &a, VEC<double> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -842,8 +812,6 @@ inline VEC<bool> operator>(const VEC<T2, R2> &a, const VEC<T3, R3> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -881,8 +849,6 @@ inline VEC<bool> operator>(VEC<double> &a, const VEC<T2, R2> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -920,8 +886,6 @@ inline VEC<bool> operator>(const VEC<T2, R2> &a, VEC<double> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -959,8 +923,6 @@ inline VEC<bool> operator<(const VEC<T2, R2> &a, const VEC<T3, R3> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -998,8 +960,6 @@ inline VEC<bool> operator<(VEC<double> &a, const VEC<T2, R2> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -1037,8 +997,6 @@ inline VEC<bool> operator<(const VEC<T2, R2> &a, VEC<double> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -1076,8 +1034,6 @@ inline VEC<bool> operator!=(const VEC<T2, R2> &a, const VEC<T3, R3> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -1115,8 +1071,6 @@ inline VEC<bool> operator!=(VEC<double> &a, const VEC<T2, R2> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
 
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
@@ -1154,9 +1108,7 @@ inline VEC<bool> operator!=(const VEC<T2, R2> &a, VEC<double> &b) {
   int size = (a.size() >= b.size()) ? a.size() : b.size();
   int counter = 0;
   VEC<bool> res(size);
-  res.ismatrix = false;
-  res.subsetted = false;
-
+  
   if (a.size() == b.size()) {
     for (int i = 0; i < a.size(); i++) {
       res[i] = a[i] != b[i];
