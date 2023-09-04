@@ -55,6 +55,7 @@ public:
   bool ismatrix = false;
   int columns_ = 0;
   int rows_ = 0;
+  mutable signed int ref_counter = 0;
 
   // Constructors
   STORE(SEXP inp) {
@@ -397,7 +398,13 @@ public:
 
   T &operator[](int pos) const {
     ass(ptr != nullptr, "SUBSET is pointing to nothing!");
-    return ptr -> p[ind[pos] % ind.size()];
+    return ptr -> p[ind[pos] % ptr -> size()];
+  }
+
+  void fill(T input) {
+    for (int i = 0; i < ind.size(); i++) {
+      ptr -> p[i] = input;
+    }
   }
 };
 

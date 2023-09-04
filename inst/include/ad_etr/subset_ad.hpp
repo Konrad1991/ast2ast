@@ -33,27 +33,43 @@ have to be saved.
 */
 
 typedef VEC<double, SUBSET<double>> vsub;
+typedef VEC<double, STORE<double>> vstr;
+
 
 template<typename Storage>
-inline void set_ptr(const VEC<double, Storage> &inp, int pos) { // 
+inline void update_ref_counter(const VEC<double, Storage>& inp) { 
   using trait = std::remove_reference<decltype(inp.d)>::type::TypeTrait;
   using is_var = std::is_same<trait, VariableTrait>;
-  VEC<double, SUBSET<double>> ret;
-  if constexpr (is_var::value) {
-    ret.d.set_ptr(&inp.d);
-  } else {
-    ret.d.set_ptr(inp.d.ptr);
+  if constexpr(is_var::value) {
+    inp.d.ref_counter++;
+  } else if constexpr(!is_var::value) {
+    inp.d.ptr -> ref_counter++;
   }
 }
 
-void check_is_matrix(const VEC<double>& inp) {
+template<typename Storage>
+inline void set_ptr(VEC<double, SUBSET<double>>& inp, const VEC<double, Storage>& target) { // 
+  using trait_target = std::remove_reference<decltype(target.d)>::type::TypeTrait;
+  using is_var_target = std::is_same<trait_target, VariableTrait>;
+  if constexpr (is_var_target::value) {
+    inp.d.set_ptr(&target.d);
+    update_ref_counter(target);
+  } else if constexpr(!is_var_target::value)  {
+    inp.d.set_ptr(target.d.ptr);
+    update_ref_counter(target);
+  }
+}
+
+template<typename Storage>
+void check_is_matrix(const VEC<double, Storage>& inp) {
     if (!inp.im()) {
       std::cerr << "incorrect number of dimensions" << std::endl;
       Rcpp::stop("Error");
     }
 }
 
-inline VEC<double> subset_entire(const VEC<double> &inp) { 
+template<typename Storage>
+inline VEC<double> subset_entire(const VEC<double, Storage> &inp) { 
   VEC<double> ret;
   ret = inp;
   return ret;
@@ -64,47 +80,57 @@ inline VEC<double, SUBSET<double> > ret_empty() {
  return empty; 
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp) { return subset_entire(inp);}
+template<typename Storage>
+inline VEC<double> subset(const VEC<double, Storage> &inp) { return subset_entire(inp);}
 
-inline VEC<double, SUBSET<double>> subset_scalar(const VEC<double> &inp, int pos) { // 
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset_scalar(const VEC<double, Storage> &inp, int pos) { // 
+  ass(pos >= 0, "Index has to be positive");
   VEC<double, SUBSET<double>> ret;
   ret.d.resize(1);
   pos--;
   ret.d.set(0, pos); 
-  ret.d.set_ptr(&inp.d);
+  set_ptr(ret, inp);
   return ret;
 }
 
-inline VEC<double, SUBSET<double>> subset(const VEC<double> &inp, int pos) { return subset_scalar(inp, pos); }
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, int pos) { return subset_scalar(inp, pos); }
 
-inline VEC<double, SUBSET<double>> subset(const VEC<double> &inp, double pos) { return subset_scalar(inp, d2i(pos)); }
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, double pos) { return subset_scalar(inp, d2i(pos)); }
 
-inline VEC<double, SUBSET<double>> subset(const VEC<double> &inp, bool p) { // 
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, bool p) { // 
   VEC<double> ret;
   if (!p) return ret;
   return subset_entire(inp);
 }
 
-inline VEC<double, SUBSET<double>> subset(const VEC<double> &inp, long *p) { return subset_entire(inp); }
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, long *p) { return subset_entire(inp); }
 
-inline VEC<double, SUBSET<double>> subset(const VEC<double> &inp, const VEC<double> &pos) { // 
+template<typename Storage1, typename Storage2>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, const VEC<double, Storage2> &pos) { // 
   VEC<double, SUBSET<double>> ret;
   ret.d.resize(pos.size());
   for (int i = 0; i < ret.size(); i++) {
+    ass((d2i(pos[i])-1) >= 0, "Index has to be positive");
     ret.d.set(i, d2i(pos[i])-1);
   }
-  ret.d.set_ptr(&inp.d);
+  set_ptr(ret, inp);
   return ret;
 }
 
-inline VEC<double, SUBSET<double>> subset_mat_int_int(VEC<double> &inp, int r, int c) {
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset_mat_int_int(const VEC<double, Storage> &inp, int r, int c) {
   r--; c--;
   int pos = c * inp.nr() + r;
   return subset_scalar(inp, pos);
 }
 
-template<typename L, typename R>
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, L r, R c) { 
+template<typename L, typename R, typename Storage>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, L r, R c) { 
   check_is_matrix(inp);
   constexpr bool r_is_d = std::is_floating_point<L>::value;
   constexpr bool c_is_d = std::is_floating_point<R>::value;
@@ -118,7 +144,8 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, L r, R c) {
   return subset_mat_int_int(inp, d2i(r), d2i(c));
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, int row, bool c) { // 
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, int row, bool c) { // 
   check_is_matrix(inp);
   if (c == false) {
     VEC<double, SUBSET<double>> ret;
@@ -129,17 +156,20 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, int row, bool c) { /
   int pst = 0;
   for (int j = 0; j < inp.d.size(); j++) {
     pst = j * inp.nr() + (row - 1);
+    ass(pst >= 0, "Index has to be positive");
     ret.d.set(j, pst);
   }
-  ret.d.set_ptr(&inp.d);
+  set_ptr(ret, inp);
   return ret;
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, int row, long *nptr) { // 
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, int row, long *nptr) { // 
   return subset(inp, row, true);
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, int row, VEC<double> &pos) { // 
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, int row, const VEC<double> &pos) { // 
   check_is_matrix(inp);
   VEC<double, SUBSET<double>> ret;
   ret.d.resize(pos.size());
@@ -147,13 +177,15 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, int row, VEC<double>
   row--;
   for (int j = 0; j < pos.size(); j++) {
     pst = (d2i(pos[j]) - 1) * inp.nr() + row;
+    ass(pst >= 0, "Index has to be positive");
     ret.d.set(j, pst);
   }
-  ret.d.set_ptr(&inp.d);
+  set_ptr(ret, inp);
   return ret;
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, bool r, int col) { // done
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, bool r, int col) { // done
   check_is_matrix(inp);
   if (r == false) return ret_empty();
   VEC<double, SUBSET<double>> ret;
@@ -161,38 +193,46 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, bool r, int col) { /
   int pst = 0;
   for (int j = 0; j < inp.nr(); j++) {
     pst = (col - 1) * inp.nr() + j;
+    ass(pst >= 0, "Index has to be positive");
     ret.d.set(j, pst);
   }
-  ret.d.set_ptr(&inp.d);
+  set_ptr(ret, inp);
   return ret;
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, long *ptr, int col) { // done
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, long *ptr, int col) { // done
   return subset(inp, true, col);
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, double row_, bool c) { // done
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, double row_, bool c) { // done
   return subset(inp, d2i(row_), c);
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, double row_, long *nptr) { // done
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, double row_, long *nptr) { // done
   return subset(inp, d2i(row_), true); 
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, double row_,
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, double row_,
                           VEC<double> &pos) { // done
   return subset(inp, d2i(row_), pos);
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, bool r, double col_) { // done
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, bool r, double col_) { // done
   return subset(inp, r, d2i(col_));
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, long *ptr, double col_) { // done
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, long *ptr, double col_) { // done
   return subset(inp, true, d2i(col_));
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<double> &pos,
+template<typename Storage1, typename Storage2>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, const VEC<double, Storage2> &pos,
                           double col_) { // done
   int col = d2i(col_);
   check_is_matrix(inp);
@@ -202,13 +242,15 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<double> &pos,
   col--;
   for (int j = 0; j < pos.size(); j++) {
     pst = col * inp.nr() + (d2i(pos[j]) - 1);
+    ass(pst >= 0, "Index has to be positive");
     ret.d.set(j, pst);
   }
-  ret.d.set_ptr(&inp.d);
+  set_ptr(ret, inp);
   return ret;
 }
 
-inline VEC<double> subset(VEC<double> &inp, bool r, bool c) { // done
+template<typename Storage>
+inline VEC<double> subset(const VEC<double, Storage> &inp, bool r, bool c) { // done
   check_is_matrix(inp);
   if ((r == true) && (c == true)) {
     return inp;
@@ -217,11 +259,13 @@ inline VEC<double> subset(VEC<double> &inp, bool r, bool c) { // done
   return ret;
 }
 
-inline VEC<double> subset(VEC<double> &inp, bool r, long *c) { // done
+template<typename Storage>
+inline VEC<double> subset(const VEC<double, Storage> &inp, bool r, long *c) { // done
   return subset(inp, r, true);
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, bool r, VEC<double> &pos) { // done
+template<typename Storage1, typename Storage2>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, bool r, const VEC<double, Storage2> &pos) { // done
   check_is_matrix(inp);
   if (r == false) return ret_empty();
   VEC<double, SUBSET<double>> ret;
@@ -234,19 +278,22 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, bool r, VEC<double> 
   for (int j = 0; j < pos.size(); j++) {
     for (int i = 0; i < inp.nr(); i++) {
       pst = (d2i(pos[j]) - 1) * inp.nr() + i;
+      ass(pst >= 0, "Index has to be positive");
       ret.d.set(counter, pst);
       counter++;
     }
   }
-  ret.d.set_ptr(&inp.d);
+  set_ptr(ret, inp);
   return ret;
 }
 
-inline VEC<double> subset(VEC<double> &inp, long *r, bool c) { // done
+template<typename Storage>
+inline VEC<double> subset(const VEC<double, Storage> &inp, long *r, bool c) { // done
   return subset(inp, true, c);
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<double> &pos, bool c) { // done
+template<typename Storage1, typename Storage2>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, const VEC<double, Storage2> &pos, bool c) { // done
   check_is_matrix(inp);
   if (c == false) return ret_empty();
   VEC<double, SUBSET<double>> ret;
@@ -259,28 +306,33 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<double> &pos, bo
   for (int i = 0; i < inp.nc(); i++) {
     for (int j = 0; j < pos.size(); j++) {
       pst = i * inp.nr() + (d2i(pos[j]) - 1);
+      ass(pst >= 0, "Index has to be positive");
       ret.d.set(counter, pst);
       counter++;
     }
   }
-  ret.d.set_ptr(&inp.d);
+  set_ptr(ret, inp);
   return ret;
 }
 
-inline VEC<double> subset(VEC<double> &inp, long *r, long *c) { // done
+template<typename Storage>
+inline VEC<double> subset(const VEC<double, Storage> &inp, long *r, long *c) { // done
   return subset(inp, true, true);
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, long *r, VEC<double> &pos) { // done
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, long *r, const VEC<double> &pos) { // done
   return subset(inp, true, pos);
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<double> &pos, long *c) { // done
+template<typename Storage>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, const VEC<double> &pos, long *c) { // done
   return subset(inp, pos, true);
 }
 
-inline VEC<double, SUBSET<double>> subset(const VEC<double> &inp, const VEC<double> &rpos,
-                          const VEC<double> &cpos) { // done
+template<typename Storage1, typename Storage2, typename Storage3>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, const VEC<double, Storage2> &rpos,
+                          const VEC<double, Storage3> &cpos) { // done
   check_is_matrix(inp);
   VEC<double, SUBSET<double>> ret;
   ret.d.resize(rpos.size() * cpos.size());
@@ -292,15 +344,16 @@ inline VEC<double, SUBSET<double>> subset(const VEC<double> &inp, const VEC<doub
   for (int i = 0; i < ret.nc(); i++) {
     for (int j = 0; j < ret.nr(); j++) {
       pst = (d2i(cpos[i]) - 1) * inp.nr() + (d2i(rpos[j]) - 1);
+      ass(pst >= 0, "Index has to be positive");
       ret.d.set(counter, pst);
       counter++;
     }
   }
-  ret.d.set_ptr(&inp.d);
+  set_ptr(ret, inp);
   return ret;
 }
 
-int count_trues(const VEC<bool>& inp) {
+int count_trues(VEC<bool>& inp) {
   int counter = 0;
   for (int i = 0; i < inp.size(); i++) {
     if (inp[i] == true) counter++;
@@ -308,10 +361,10 @@ int count_trues(const VEC<bool>& inp) {
   return counter;
 }
 
-// issue: needs to be checked! --> not working
-template<typename T2, typename I>
-   requires HasVariableOrSubset<T2> && IsVecBool<T2, I>
-inline VEC<double, SUBSET<double> > subset(const VEC<double> &inp, T2 pos) { // T2 = VEC<bool>
+// issue: needs to be checked! 
+template<typename Storage1, typename Storage2, typename T>
+  requires std::is_same_v<T, bool>   
+inline VEC<double, SUBSET<double> > subset(const VEC<double, Storage1> &inp, const VEC<T, Storage2> pos) { // T2 = VEC<bool>
   int counter = count_trues(pos);
   VEC<double, SUBSET<double>> ret;
   ret.d.resize(counter);
@@ -320,15 +373,18 @@ inline VEC<double, SUBSET<double> > subset(const VEC<double> &inp, T2 pos) { // 
   for (int i = 0; i < pos.size(); i++) {
     if (((i % inp.size()) == 0) && i != 0) counter2++;
     if (pos[i] == true) {
-      ret[counter] = i - counter2 * inp.size();
+      int pst = i - counter2 * inp.size();
+      ass(pst >= 0, "Index has to be positive");
+      ret[counter] = pst;
       counter++;
     }
   }
-  ret.d.set_ptr(&inp.d);
+  set_ptr(ret, inp);
   return ret;
 }
 
-inline VEC<double, SUBSET<double>> subset(const VEC<double> &inp, int row, VEC<bool> pos) { // 
+template<typename Storage1, typename Storage2>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, int row, const VEC<bool, Storage2> pos) { // 
   check_is_matrix(inp);
   int counter = count_trues(pos);
   VEC<int> positions(counter);
@@ -347,14 +403,15 @@ inline VEC<double, SUBSET<double>> subset(const VEC<double> &inp, int row, VEC<b
   row--;
   for (int j = 0; j < positions.size(); j++) {
     ret[j] = (d2i(positions[j])) * inp.nr() + row;
+    ass(ret[j] >= 0, "Index has to be positive");
     
   }
-  ret.d.set_ptr(&inp.d);
+  set_ptr(ret, inp);
   return ret;
 }
 
-
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<bool> pos, int col) { // done
+template<typename Storage1, typename Storage2>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, const VEC<bool, Storage2> pos, int col) { // done
   check_is_matrix(inp);
   int counter = count_trues(pos);
   VEC<int> positions(counter);
@@ -373,22 +430,26 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<bool> pos, int c
   col--;
   for (int j = 0; j < positions.size(); j++) {
     ret[j] = col * inp.nr() + positions[j];
+    ass(ret[j] >= 0, "Index has to be positive");
   }
-  ret.d.set_ptr(&inp.d);
+  set_ptr(ret, inp);
   return ret;
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, double row,
-                          VEC<bool> pos) { // done
+template<typename Storage1, typename Storage2>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, double row,
+                          const VEC<bool, Storage2> pos) { // done
   return subset(inp, d2i(row), pos);
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<bool> pos,
+template<typename Storage1, typename Storage2>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, const VEC<bool, Storage2> pos,
                           double col) { // done
   return subset(inp, pos, d2i(col)); 
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, bool r, VEC<bool> pos) { // done
+template<typename Storage1, typename Storage2>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, bool r, const VEC<bool, Storage2> pos) { // done
   if (!r) return ret_empty();
   check_is_matrix(inp);
   int counter = count_trues(pos);
@@ -412,271 +473,135 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, bool r, VEC<bool> po
   for (int j = 0; j < positions.size(); j++) {
     for (int i = 0; i < inp.nr(); i++) {
       ret[counter] = (positions[j]) * inp.nr() + i;
+      ass(ret[counter] >= 0, "Index has to be positive");
       counter++;
     }
   }
-  ret.d.set_ptr(&inp.d);
+  set_ptr(ret, inp);
   return ret;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<bool> pos, bool c) { // done
-
+template<typename Storage1, typename Storage2>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, const VEC<bool, Storage2> pos, bool c) { // done
   check_is_matrix(inp);
-
-  if (c == false) {
-    VEC<double> empty;
-    return empty;
-  }
-
+  if (c == false) return ret_empty();
   int counter = 0;
   for (int i = 0; i < pos.size(); i++) {
-    if (pos[i] == true) {
-      counter++;
-    }
+    if (pos[i] == true) counter++;
   }
-
   VEC<int> positions(counter);
   counter = 0;
   int counter2 = 0;
   for (int i = 0; i < pos.size(); i++) {
-    if (((i % inp.nr()) == 0) && i != 0) {
-      counter2++;
-    }
+    if (((i % inp.nr()) == 0) && i != 0) counter2++;
     if (pos[i] == true) {
       positions[counter] = i - counter2 * inp.nr();
       counter++;
     }
   }
-
-  VEC<double> ret(positions.size() * inp.nc());
-  ret.ismatrix = true;
-  ret.ncols = inp.nc();
-  ret.nrows = positions.size();
-
+  vsub ret;
+  ret.d.resize(positions.size() * inp.nc());
+  ret.set_matrix(true);
+  ret.set_ncol(inp.nc());
+  ret.set_nrow(positions.size());
   int pst = 0;
   counter = 0;
   for (int i = 0; i < inp.nc(); i++) {
     for (int j = 0; j < positions.size(); j++) {
-      pst = i * inp.nr() + positions[j];
-      ret[counter] = inp[pst];
+      ret[counter] = i * inp.nr() + positions[j];
       counter++;
     }
   }
-
+  set_ptr(ret, inp);
   return ret;
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, long *r, VEC<bool> pos) { // done
+template<typename Storage1, typename Storage2>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, long *r, const VEC<bool, Storage2> pos) { // done
+  return subset(inp, true, pos);
+}
 
+template<typename Storage1, typename Storage2>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, const VEC<bool, Storage2> pos, long *c) { // done
+  return subset(inp, pos, true); 
+}
+
+template<typename Storage1, typename Storage2, typename Storage3>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, const VEC<double, Storage2> &rows,
+                          const VEC<bool, Storage3> pos) { // done
   check_is_matrix(inp);
-
   int counter = 0;
   for (int i = 0; i < pos.size(); i++) {
-    if (pos[i] == true) {
-      counter++;
-    }
+    if (pos[i] == true) counter++;
   }
-
   VEC<int> positions(counter);
   counter = 0;
   int counter2 = 0;
   for (int i = 0; i < pos.size(); i++) {
-    if (((i % inp.nc()) == 0) && i != 0) {
-      counter2++;
-    }
+    if (((i % inp.nc()) == 0) && i != 0) counter2++;
     if (pos[i] == true) {
       positions[counter] = i - counter2 * inp.nc();
       counter++;
     }
   }
-
-  VEC<double> ret(inp.nr() * positions.size());
-  ret.ismatrix = true;
-  ret.ncols = positions.size();
-  ret.nrows = inp.nr();
-
+  vsub ret;
+  ret.d.resize(rows.size() * positions.size());
+  ret.set_matrix(true);
+  ret.set_ncol(positions.size());
+  ret.set_nrow(rows.size());
   int pst = 0;
   counter = 0;
-  for (int j = 0; j < positions.size(); j++) {
-    for (int i = 0; i < inp.nr(); i++) {
-      pst = (positions[j]) * inp.nr() + i;
-      ret[counter] = inp[pst];
-      counter++;
-    }
-  }
-
-  return ret;
-}
-
-
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<bool> pos, long *c) { // done
-
-  check_is_matrix(inp);
-
-  int counter = 0;
-  for (int i = 0; i < pos.size(); i++) {
-    if (pos[i] == true) {
-      counter++;
-    }
-  }
-
-  VEC<int> positions(counter);
-  counter = 0;
-  int counter2 = 0;
-  for (int i = 0; i < pos.size(); i++) {
-    if (((i % inp.nr()) == 0) && i != 0) {
-      counter2++;
-    }
-    if (pos[i] == true) {
-      positions[counter] = i - counter2 * inp.nr();
-      counter++;
-    }
-  }
-
-  VEC<double> ret(positions.size() * inp.nc());
-  ret.ismatrix = true;
-  ret.ncols = inp.nc();
-  ret.nrows = positions.size();
-
-  int pst = 0;
-  counter = 0;
-  for (int i = 0; i < inp.nc(); i++) {
-    for (int j = 0; j < positions.size(); j++) {
-      pst = i * inp.nr() + positions[j];
-      ret[counter] = inp[pst];
-      counter++;
-    }
-  }
-
-  return ret;
-}
-
-
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<double> &rows,
-                          VEC<bool> pos) { // done
-
-  check_is_matrix(inp);
-
-  int counter = 0;
-  for (int i = 0; i < pos.size(); i++) {
-    if (pos[i] == true) {
-      counter++;
-    }
-  }
-
-  VEC<int> positions(counter);
-  counter = 0;
-  int counter2 = 0;
-  for (int i = 0; i < pos.size(); i++) {
-    if (((i % inp.nc()) == 0) && i != 0) {
-      counter2++;
-    }
-    if (pos[i] == true) {
-      positions[counter] = i - counter2 * inp.nc();
-      counter++;
-    }
-  }
-
-  VEC<double> ret(rows.size() * positions.size());
-  ret.ismatrix = true;
-  ret.ncols = positions.size();
-  ret.nrows = rows.size();
-
-  int pst = 0;
-  counter = 0;
-
   for (int j = 0; j < positions.size(); j++) {
     for (int i = 0; i < rows.size(); i++) {
-      pst = (positions[j]) * inp.nr() + d2i(rows[i]) - 1;
-      ret[counter] = inp[pst];
-      counter++;
+      ret[counter] = (positions[j]) * inp.nr() + d2i(rows[i]) - 1;
     }
   }
-
+  set_ptr(ret, inp);
   return ret;
 }
 
-
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<bool> pos,
-                          VEC<double> &cols) { // done
-
+template<typename Storage1, typename Storage2, typename Storage3>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, const VEC<bool, Storage2> pos,
+                          const VEC<double, Storage3> &cols) { // done
   check_is_matrix(inp);
-
   int counter = 0;
   for (int i = 0; i < pos.size(); i++) {
-    if (pos[i] == true) {
-      counter++;
-    }
+    if (pos[i] == true) counter++;
   }
-
   VEC<int> positions(counter);
   counter = 0;
   int counter2 = 0;
   for (int i = 0; i < pos.size(); i++) {
-    if (((i % inp.nr()) == 0) && i != 0) {
-      counter2++;
-    }
+    if (((i % inp.nr()) == 0) && i != 0) counter2++;
     if (pos[i] == true) {
       positions[counter] = i - counter2 * inp.nr();
       counter++;
     }
   }
-
-  VEC<double> ret(positions.size() * cols.size());
-  ret.ismatrix = true;
-  ret.ncols = cols.size();
-  ret.nrows = positions.size();
-
+  vsub ret;
+  ret.d.resize(positions.size() * cols.size());
+  ret.set_matrix(true);
+  ret.set_ncol(cols.size());
+  ret.set_nrow(positions.size());
   int pst = 0;
   counter = 0;
-
   for (int j = 0; j < cols.size(); j++) {
     for (int i = 0; i < positions.size(); i++) {
-      pst = (d2i(cols[j]) - 1) * inp.nr() + positions[i];
-      ret[counter] = inp[pst];
+      ret[counter] = (d2i(cols[j]) - 1) * inp.nr() + positions[i];
       counter++;
     }
   }
-
+  set_ptr(ret, inp);
   return ret;
 }
 
-inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<bool> rows,
-                          VEC<bool> cols) { // done
-
+template<typename Storage1, typename Storage2, typename Storage3>
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, const VEC<bool, Storage2> rows,
+                          const VEC<bool, Storage3> cols) { // done
   check_is_matrix(inp);
-
   int counter = 0;
   for (int i = 0; i < rows.size(); i++) {
-    if (rows[i] == true) {
-      counter++;
-    }
+    if (rows[i] == true) counter++;
   }
   VEC<int> positions_rows(counter);
   counter = 0;
@@ -690,7 +615,6 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<bool> rows,
       counter++;
     }
   }
-
   counter = 0;
   for (int i = 0; i < cols.size(); i++) {
     if (cols[i] == true) {
@@ -709,27 +633,22 @@ inline VEC<double, SUBSET<double>> subset(VEC<double> &inp, VEC<bool> rows,
       counter++;
     }
   }
-
-  VEC<double> ret(positions_rows.size() * positions_cols.size());
-  ret.ismatrix = true;
-  ret.ncols = positions_cols.size();
-  ret.nrows = positions_rows.size();
-
+  vsub ret;
+  ret.d.resize(positions_rows.size() * positions_cols.size());
+  ret.set_matrix(true);
+  ret.set_ncol(positions_cols.size());
+  ret.set_nrow(positions_rows.size());
   int pst = 0;
   counter = 0;
-
   for (int j = 0; j < positions_cols.size(); j++) {
     for (int i = 0; i < positions_rows.size(); i++) {
-      pst = positions_cols[j] * inp.nr() + positions_rows[i];
-      ret[counter] = inp[pst];
+      ret[counter] = positions_cols[j] * inp.nr() + positions_rows[i];
       counter++;
     }
   }
-
+  set_ptr(ret, inp);
   return ret;
 }
-
-*/
 
 } // namespace etr
 

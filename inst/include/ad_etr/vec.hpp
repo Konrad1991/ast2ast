@@ -338,15 +338,22 @@ public:
   VEC &operator=(const VEC<T2, R2> &other_vec) {
 
     if constexpr(!is_var::value) {
-        // issue: count references if counter <= 1 --> than directly store in d --> has to be done everywhere
-        ass(d.size() <= other_vec.size(), "number of items to replace is not a multiple of replacement length");
-        store temp;
-        temp.resize(d.size());
-        for (int i = 0; i < temp.size(); i++) {
-          temp[i] = other_vec[i];
-        }
-        for (std::size_t i = 0; i < d.size(); i++) {
-          this->d[i] = temp[i];
+        // issue: count references if counter > 0 --> than directly store in d --> has to be done everywhere
+        if(d.ptr -> ref_counter > 1) { // issue: did I missed a method for this check?
+            ass(d.size() <= other_vec.size(), "number of items to replace is not a multiple of replacement length");
+            store temp;
+            temp.resize(d.size());
+            for (int i = 0; i < temp.size(); i++) {
+              temp[i] = other_vec[i];
+            }
+            for (std::size_t i = 0; i < d.size(); i++) {
+              this->d[i] = temp[i];
+            }
+            d.ptr -> ref_counter = 0;
+        } else {
+          for (int i = 0; i < other_vec.size(); i++) {
+              this -> d[i] = other_vec[i];
+          }
         }
     } else {
         store temp;

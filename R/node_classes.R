@@ -340,7 +340,7 @@ subset <- R6::R6Class("subset",
       })
 
       if (self$subassign == TRUE) {
-        self$name_fct <- as.name(paste0("etr::", "subassign"))
+        self$name_fct <- as.name(paste0("etr::", "subset")) # subassign
       } else if (self$subassign == FALSE) {
         if (self$only_num()) {
           self$name_fct <- as.name(paste0("etr::", "at"))

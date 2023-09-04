@@ -40,7 +40,7 @@ public:
   VVPLUS(const L &a, const R &b, bool ismatrix_, int rows, int cols)
       : l(a), r(b), ismatrix(ismatrix_), rows_(rows), columns_(cols) {}
 
-  T operator[](const int i) const { return l[i % l.size()] + r[i % r.size()]; }
+  T operator[](const int i) const { return l[i % l.size()] + r[i % r.size()]; } // issue: correct with % l.size !!!!!!!!!!!
 
   T get_deriv_left(const int i) const { return 1.0; }
 
