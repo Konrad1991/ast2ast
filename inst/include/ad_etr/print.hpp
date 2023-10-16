@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License along with etr
 If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 */
 
+// issue: if last term is e.g. print(a) than this results in return(print(a))
+
 #ifndef PRINT
 #define PRINT
 

@@ -34,6 +34,11 @@ std::string demangle(const char *mangledName) {
   return result;
 }
 
+template<typename T>
+void print_type(T inp) { // issue: remove demangle and print_type. 
+  std::cout << demangle(typeid(inp).name()) << std::endl;
+}
+
 namespace etr {
 
 struct VariableTrait {};
@@ -46,6 +51,15 @@ template <typename T, typename I>
 concept IsVecBool = requires(T vec, I index) {
     { vec[index] } -> std::same_as<bool>;
 };
+
+template<typename T>
+concept isDoI = (std::is_same_v<T, double> || std::is_same_v<T, int>);
+
+template<typename L, typename R>
+concept DoubleOrInt = (std::is_same_v<L, double> || std::is_same_v<L, int>) && (std::is_same_v<R, double> || std::is_same_v<R, int>);
+
+template<typename L, typename R>
+concept BoolOrNullptr = (std::is_same_v<L, bool> || std::is_same_v<L, decltype(nullptr)>) && (std::is_same_v<R, bool> || std::is_same_v<R, decltype(nullptr)>);
 
 struct UnaryTrait {};
 struct VSTrait {};

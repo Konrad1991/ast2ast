@@ -24,6 +24,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 #include "vec.hpp"
 
+
 namespace etr {
 
 inline VEC<double> vector(int length) {
@@ -34,9 +35,46 @@ inline VEC<double> vector(int length) {
   return ret;
 }
 
+// issue: vector(1, 10) does not work
 inline VEC<double> vector(double inp, int length) {
   VEC<double> ret(length, inp);
   return ret;
+}
+
+inline VEC<double> rep(double inp, int length) {
+  VEC<double> ret(length);
+  for(int i = 0; i < ret.size(); i++) {
+   ret[i] = inp;
+  }
+  return ret; 
+}
+
+inline VEC<double> rep(double inp, double length) {
+  VEC<double> ret(static_cast<int>(length));
+  for(int i = 0; i < ret.size(); i++) {
+   ret[i] = inp;
+  }
+  return ret; 
+}
+
+template<typename T>
+requires std::is_same_v<T, double>
+inline VEC<double> rep(T inp, const VEC<double>& length) {
+  ass(length.size() == 1, "invalid 'times' argument");
+  VEC<double> ret(static_cast<int>(length[0]));
+  for(int i = 0; i < ret.size(); i++) {
+   ret[i] = inp;
+  }
+  return ret; 
+}
+
+inline VEC<double> rep(const VEC<double>& inp, VEC<double>& length) {
+  ass(length.size() == 1, "invalid 'times' argument");
+  VEC<double> ret(static_cast<int>(length[0]) * inp.size() );
+  for(int i = 0; i < ret.size(); i++) {
+    ret[i] = inp[i % inp.size()];
+  }
+  return ret; 
 }
 
 // not copy of vector!

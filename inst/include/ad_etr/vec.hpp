@@ -324,7 +324,6 @@ public:
           d[i] = other_vec[i];
         }
     }
-
     if (other_vec.im() == true) {
       set_matrix(true);
       set_nrow(other_vec.nr());
@@ -336,7 +335,6 @@ public:
 
   template <typename T2, typename R2>
   VEC &operator=(const VEC<T2, R2> &other_vec) {
-
     if constexpr(!is_var::value) {
         // issue: count references if counter > 0 --> than directly store in d --> has to be done everywhere
         if(d.ptr -> ref_counter > 1) { // issue: did I missed a method for this check?
@@ -351,7 +349,7 @@ public:
             }
             d.ptr -> ref_counter = 0;
         } else {
-          for (int i = 0; i < other_vec.size(); i++) {
+          for (int i = 0; i < d.size(); i++) {
               this -> d[i] = other_vec[i];
           }
         }

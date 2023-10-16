@@ -29,7 +29,7 @@ namespace etr {
 template <typename T, typename L, typename R, typename Trait = VVMinusTrait>
 class VVMINUS {
 
-private:
+public:
   const L &l; // const L& l;
   const R &r; // const R& r;
   bool ismatrix;
@@ -105,7 +105,7 @@ inline VEC<T, VVMINUS<T, L, R>> operator-(const VEC<T, L> &a,
 template <typename T, typename L, typename R, typename Trait = VSMinusTrait>
 class VSMINUS {
 
-private:
+public:
   const L &l;
   const R &r;
   bool ismatrix;
@@ -155,7 +155,7 @@ inline VEC<T, VSMINUS<T, L, R>> operator-(const VEC<T, L> &a, const R &b) {
 template <typename T, typename L, typename R, typename Trait = SVMinusTrait>
 class SVMINUS {
 
-private:
+public:
   const R &r;
   const L &l;
   const bool ismatrix;
