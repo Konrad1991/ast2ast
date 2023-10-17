@@ -84,6 +84,12 @@ struct SVDivTrait : SVTrait {};
 
 struct VVSinTrait : UnaryTrait {};
 
+struct VVExpTrait : UnaryTrait {};
+struct VVLogTrait : UnaryTrait {};
+struct VVSqrtTrait : UnaryTrait {};
+
+// issue: add missing traits
+
 struct NullOperation {};
 
 template <typename T>

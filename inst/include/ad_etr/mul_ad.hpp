@@ -108,12 +108,12 @@ public:
   const L &l;
   const R &r;
   bool ismatrix;
-  int nrows;
-  int ncols;
+  int rows_;
+  int columns_;
 
   using TypeTrait = Trait;
   VSTIMES(const L &a, const R &b, bool ismatrix_, int nrows_, int ncols_)
-      : l(a), r(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) {}
+      : l(a), r(b), ismatrix(ismatrix_), rows_(nrows_), columns_(ncols_) {}
 
   T operator[](const int i) const { return l[i % l.size()] * r; }
 
@@ -121,9 +121,9 @@ public:
 
   bool im() const { return ismatrix; }
 
-  int nc() const { return ncols; }
+  int nc() const { return columns_; }
 
-  int nr() const { return nrows; }
+  int nr() const { return rows_; }
 };
 
 template <typename T, typename L, typename R>
@@ -155,13 +155,13 @@ class SVTIMES {
 public:
   const R &r;
   const L &l;
-  const bool ismatrix;
-  const int nrows;
-  const int ncols;
-
+  bool ismatrix;
+  int rows_;
+  int columns_;
+  
   using TypeTrait = Trait;
   SVTIMES(const R &a, const L &b, bool ismatrix_, int nrows_, int ncols_)
-      : r(a), l(b), ismatrix(ismatrix_), nrows(nrows_), ncols(ncols_) {}
+      : r(a), l(b), ismatrix(ismatrix_), rows_(nrows_), columns_(ncols_) {}
 
   T operator[](const int i) const { return l[i % l.size()] * r; }
 
@@ -169,9 +169,9 @@ public:
 
   bool im() const { return ismatrix; }
 
-  int nc() const { return ncols; }
+  int nc() const { return columns_; }
 
-  int nr() const { return nrows; }
+  int nr() const { return rows_; }
 };
 
 template <typename T, typename L, typename R>

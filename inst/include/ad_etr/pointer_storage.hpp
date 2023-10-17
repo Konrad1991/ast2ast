@@ -366,7 +366,7 @@ template <typename T, typename Trait = SubsetTrait> class SUBSET {
 public:
   using TypeTrait = Trait;
   INDICES ind;
-  const STORE<T>* ptr;
+  const STORE<T>* ptr; 
   bool ismatrix = false;
   int columns_ = 0;
   int rows_ = 0;
@@ -407,6 +407,53 @@ public:
     }
   }
 };
+
+template <typename T, typename Trait = SubsetTrait> class SUBSETCALC {
+public:
+  using TypeTrait = Trait;
+  INDICES ind;
+  const T* ptr; 
+  bool ismatrix = false;
+  int columns_ = 0;
+  int rows_ = 0;
+
+  SUBSETCALC(const T* ptr_) : ptr(ptr_) {}
+
+  SUBSETCALC(int ignored) : ptr(nullptr) {}   
+
+  SUBSETCALC() : ptr(nullptr) {
+    ind.resize(1); // only for safety
+    ind.set(0, 0);
+  } 
+
+  ~SUBSETCALC() {}
+
+  void resize(int new_size) {
+    ind.resize(new_size);
+  }
+
+  void set(int idx, int val) {
+    ind.set(idx, val);
+  }
+
+  void set_ptr(const T* p) {
+    ptr = p;
+  }
+
+  int size() const { return ind.size(); }
+
+  double operator[](int pos) const {
+    ass(ptr != nullptr, "SUBSET is pointing to nothing!");
+    return (*ptr)[ind[pos] % ptr -> size()];
+  }
+
+  void fill(T input) {
+    for (int i = 0; i < ind.size(); i++) {
+      ptr -> p[i] = input;
+    }
+  }
+};
+
 
 } // namespace etr
 

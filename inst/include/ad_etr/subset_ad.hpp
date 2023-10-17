@@ -94,7 +94,6 @@ inline void update_ref_counter(const VEC<double, Storage>& inp) {
 
 template<typename Storage>
 inline void set_ptr(VEC<double, SUBSET<double>>& inp, const VEC<double, Storage>& target) { // 
-
   using trait_vec = std::remove_reference<decltype(inp.d)>::type::TypeTrait;
   constexpr bool isVarOrSubset_vec = std::is_same_v<trait_vec, VariableTrait> || std::is_same_v<trait_vec, SubsetTrait>;
   if constexpr(!isVarOrSubset_vec) {
@@ -109,8 +108,8 @@ inline void set_ptr(VEC<double, SUBSET<double>>& inp, const VEC<double, Storage>
       inp.d.set_ptr(&target.d);
       update_ref_counter(target);
     } else if constexpr(!is_var_target::value)  {
-      inp.d.set_ptr(target.d.ptr);
-      update_ref_counter(target);
+      //inp.d.set_ptr(target.d.ptr); // issue: this is the result of a calculation so there is no pointer...
+      //update_ref_counter(target);
     }
   }
 }
@@ -150,9 +149,11 @@ inline VEC<double, SUBSET<double> > ret_empty() {
 template<typename Storage>
 inline VEC<double> subset(const VEC<double, Storage> &inp) { return subset_entire(inp);}
 
+
+// issue: how to define the function in such a way that it can differ between the results of calculation and a normal vector?
 template<typename Storage, typename T>
 requires (std::is_same_v<T, double> || std::is_same_v<T, int>)
-inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, T pos_) { // 
+inline VEC<double, SUBSET<double>> subset(VEC<double, Storage> &inp, T pos_) { // 
   constexpr bool is_d = std::is_same_v<T, double>;
   int pos = -1;
   if constexpr(is_d) {
@@ -169,8 +170,28 @@ inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage> &inp, T pos
   return ret;
 }
 
+// issue: this is the same fct as above. Only it excepts result of calculations. 
+template<typename T, typename T2, typename R2>
+requires (std::is_same_v<T, double> || std::is_same_v<T, int>)
+inline VEC<double, SUBSETCALC<R2>> subset(const VEC<T2, R2> &inp, T pos_) { // 
+  constexpr bool is_d = std::is_same_v<T, double>;
+  int pos = -1;
+  if constexpr(is_d) {
+    pos = d2i(pos_);
+  } else {
+    pos = pos_;
+  }
+  ass(pos >= 0, "Index has to be positive");
+  VEC<double, SUBSETCALC<R2>> ret;
+  ret.d.resize(1);
+  pos--;
+  ret.d.set(0, pos); 
+  ret.d.set_ptr(&inp.d); // no need to update the ref counter
+  return ret;
+}
+
 template<typename Storage1, typename Storage2>
-inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, const VEC<double, Storage2> &pos) { // 
+inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, const VEC<double, Storage2> &pos) { //
   VEC<double, SUBSET<double>> ret;
   ret.d.resize(pos.size());
   for (int i = 0; i < ret.size(); i++) {

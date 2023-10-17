@@ -21,6 +21,17 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef VEC_H
 #define VEC_H
 
+// issue: when void fct(sexp a) and than one calls it with fct(0) there is an error:
+/*
+warning: ‘void* __builtin_memset(void*, int, long unsigned int)’ writing between 8 and 17179869176 bytes into a region of size 0 overflows the destination [-Wstringop-overflow=]
+  346 |       p[i] = input;
+      |       ~~~~~^~~~~~~
+../inst/include/ad_etr/pointer_storage.hpp: In function ‘void test()’:
+../inst/include/ad_etr/pointer_storage.hpp:115:9: note: destination object of size 0 allocated by ‘operator new []’
+  115 |     p = new T[n];
+      |         ^~~~~~~~
+*/
+
 #include "pointer_storage.hpp"
 
 namespace etr {

@@ -26,23 +26,23 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-template <typename T, typename L, typename R> class VVEXP {
-
-private:
-  const L &r; // const L& l;
-  bool ismatrix;
-  int nrow_;
-  int ncol_;
-  double exponent;
+template <typename T, typename L, typename R, typename Trait = VVExpTrait> class VVEXP {
 
 public:
+  const L &r; // const L& l;
+  bool ismatrix;
+  int rows_;
+  int columns_;
+  double exponent;
+  using TypeTrait = Trait;
+
   VVEXP(const L &a, bool r_ismatrix, int r_rows, int r_cols, double exponent_)
       : r(a), exponent(exponent_) {
 
     if (r_ismatrix == true) {
       ismatrix = r_ismatrix;
-      nrow_ = r_rows;
-      ncol_ = r_cols;
+      rows_ = r_rows;
+      columns_ = r_cols;
     }
   }
 
@@ -52,9 +52,9 @@ public:
 
   bool im() const { return ismatrix; }
 
-  int nc() const { return ncol_; }
+  int nc() const { return columns_; }
 
-  int nr() const { return nrow_; }
+  int nr() const { return rows_; }
 };
 
 template <typename T, typename L, typename R>
@@ -105,21 +105,21 @@ inline VEC<T, VVEXP<T, L, R>> exp(const VEC<T, L> &a, const R exponent) {
 
 inline double exp(double base, double exponent) { return pow(base, exponent); }
 
-template <typename T, typename L> class VVlog {
-
-private:
-  const L &r; // const L& l;
-  bool ismatrix;
-  int nrow_;
-  int ncol_;
+template <typename T, typename L, typename Trait = VVLogTrait> class VVlog {
 
 public:
+  const L &r; // const L& l;
+  bool ismatrix;
+  int rows_;
+  int columns_;
+  using TypeTrait = Trait;
+  
   VVlog(const L &a, bool r_ismatrix, int r_rows, int r_cols) : r(a) {
 
     if (r_ismatrix == true) {
       ismatrix = r_ismatrix;
-      nrow_ = r_rows;
-      ncol_ = r_cols;
+      rows_ = r_rows;
+      columns_ = r_cols;
     }
   }
 
@@ -129,9 +129,9 @@ public:
 
   bool im() const { return ismatrix; }
 
-  int nc() const { return ncol_; }
+  int nc() const { return columns_; }
 
-  int nr() const { return nrow_; }
+  int nr() const { return rows_; }
 };
 
 template <typename T, typename L>
@@ -160,21 +160,21 @@ inline double ln(double base) { return log(base); }
 
 inline double ln(int base) { return log(static_cast<long double>(base)); }
 
-template <typename T, typename L> class VVsqrt {
-
-private:
-  const L &r; // const L& l;
-  bool ismatrix;
-  int nrow_;
-  int ncol_;
+template <typename T, typename L, typename Trait = VVSqrtTrait> class VVsqrt {
 
 public:
+  const L &r; // const L& l;
+  bool ismatrix;
+  int rows_;
+  int columns_;
+  using TypeTrait = Trait;
+
   VVsqrt(const L &a, bool r_ismatrix, int r_rows, int r_cols) : r(a) {
 
     if (r_ismatrix == true) {
       ismatrix = r_ismatrix;
-      nrow_ = r_rows;
-      ncol_ = r_cols;
+      rows_ = r_rows;
+      columns_ = r_cols;
     }
   }
 
@@ -184,9 +184,9 @@ public:
 
   bool im() const { return ismatrix; }
 
-  int nc() const { return ncol_; }
+  int nc() const { return columns_; }
 
-  int nr() const { return nrow_; }
+  int nr() const { return rows_; }
 };
 
 template <typename T, typename L>
