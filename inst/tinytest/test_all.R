@@ -1667,12 +1667,12 @@ x <- test(0, 23.9)
 expect_equal(res, x)
 
 # Na, Inf, -Inf
-expect_equal(test(0, 22.1), c(NA, Inf, -Inf))
-expect_equal(test(0, 22.2), c(1, 0, 0))
+expect_equal(test(0, 22.1), c(NA, Inf, -Inf)) # failed
+expect_equal(test(0, 22.2), c(1, 0, 0)) # failed
 expect_equal(test(0, 22.3), c(0, 1, 1))
 expect_equal(test(0, 22.4), c(0, 0, 0))
 # dim
-expect_equal(test(matrix(c(1, 2, 3, 4), 2, 2), 20.1), matrix(c(2, 3, 3, 4), 2, 2))
+expect_equal(test(matrix(c(1, 2, 3, 4), 2, 2), 20.1), matrix(c(2, 3, 3, 4), 2, 2))  # failed
 # trigonometry
 helper <- function() {
   a <- c(0, 0.2, 0.4, 0.99)
@@ -1738,17 +1738,17 @@ expect_equal(test(0, 19.37), matrix(1:9, 3, 3))
 expect_equal(test(0, 19.38), matrix(1:6, 3, 2))
 expect_equal(test(0, 19.39), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
 expect_equal(test(0, 19.41), matrix(c(1, 2, 4, 5), 2, 2))
-expect_equal(test(c(1, 2, 3, 4), 18.1), c(5, 2, 3, 4))
-expect_equal(test(0, 18.2), matrix(c(1:3, 20, 5:15, 20), 4, 4))
-expect_equal(test(0, 18.3), matrix(c(20, 2, 20, 4, 5, 6), 3, 2))
-expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.4), matrix(c(20, 2, 3, 4, 5, 6, 20, 8, 9), 3, 3))
-expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.5), matrix(c(20, 20, 3:9), 3, 3))
-expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.6), matrix(c(1, 2, 3, 20, 20, 20, 20, 20, 20), 3, 3))
-expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.7), matrix(c(20, 20, 3, 20, 20, 6, 20, 20, 9), 3, 3))
-expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.8), matrix(c(20, 20, 20, 20, 20, 20, 7, 8, 9), 3, 3))
-expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.9), matrix(c(20, 2, 20, 20, 5, 20, 20, 8, 20), 3, 3))
-expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.91), matrix(c(20, 2, 20, 20, 5, 20, 7, 8, 9), 3, 3))
-expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.92), matrix(c(1, 20, 3, 20, 5:16), 4, 4))
+expect_equal(test(c(1, 2, 3, 4), 18.1), c(5, 2, 3, 4))  # failed
+expect_equal(test(0, 18.2), matrix(c(1:3, 20, 5:15, 20), 4, 4))  # failed
+expect_equal(test(0, 18.3), matrix(c(20, 2, 20, 4, 5, 6), 3, 2))  # failed
+expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.4), matrix(c(20, 2, 3, 4, 5, 6, 20, 8, 9), 3, 3))  # failed
+expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.5), matrix(c(20, 20, 3:9), 3, 3))  # failed
+expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.6), matrix(c(1, 2, 3, 20, 20, 20, 20, 20, 20), 3, 3))  # failed
+expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.7), matrix(c(20, 20, 3, 20, 20, 6, 20, 20, 9), 3, 3)) # failed
+expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.8), matrix(c(20, 20, 20, 20, 20, 20, 7, 8, 9), 3, 3)) # failed
+expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.9), matrix(c(20, 2, 20, 20, 5, 20, 20, 8, 20), 3, 3)) # failed
+expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.91), matrix(c(20, 2, 20, 20, 5, 20, 7, 8, 9), 3, 3)) # failed
+expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.92), matrix(c(1, 20, 3, 20, 5:16), 4, 4)) # failed
 # subsetting
 expect_equal(test(0, 17.25), c(1, 7))
 expect_equal(test(0, 17.26), c(4, 6))
@@ -1813,16 +1813,16 @@ expect_equal(test(0, 16.94), c(1, 3))
 expect_equal(test(0, 16.95), c(1, 4))
 expect_equal(test(0, 16.96), c(1))
 expect_equal(test(0, 16.97), c(1, 2))
-expect_equal(test(0, 16.55), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))
-expect_equal(test(0, 16.56), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))
-expect_equal(test(0, 16.57), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))
-expect_equal(test(0, 16.58), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))
-expect_equal(test(0, 16.59), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))
-expect_equal(test(0, 16.61), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))
-expect_equal(test(0, 16.62), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))
-expect_equal(test(0, 16.63), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))
-expect_equal(test(0, 16.64), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))
-expect_equal(test(0, 16.65), c(2, 2))
+expect_equal(test(0, 16.55), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))  # failed
+expect_equal(test(0, 16.56), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))  # failed
+expect_equal(test(0, 16.57), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(test(0, 16.58), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(test(0, 16.59), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(test(0, 16.61), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(test(0, 16.62), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(test(0, 16.63), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(test(0, 16.64), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(test(0, 16.65), c(2, 2)) # failed
 expect_equal(test(0, 16.66), 1:6)
 expect_equal(test(0, 16.67), c(1, 5))
 expect_equal(test(0, 16.68), c(0, 0, 0))
@@ -1834,55 +1834,55 @@ expect_equal(test(0, 16.74), c(4, 6))
 expect_equal(test(0, 16.75), c(4))
 expect_equal(test(0, 16.76), c(1, 4, 7))
 expect_equal(test(0, 16.77), c(1, 4, 7))
-expect_equal(test(c(1, 2, 3, 4), 16.31), matrix(c(20, 20, 20, 20, 20, 20, 7, 8, 9), 3, 3))
-expect_equal(test(c(1, 2, 3, 4), 16.32), matrix(c(20, 2, 20, 20, 5, 20, 20, 8, 20), 3, 3))
-expect_equal(test(c(1, 2, 3, 4), 16.33), matrix(c(20, 2, 20, 20, 5, 20, 7, 8, 9), 3, 3))
-expect_equal(test(c(1, 2, 3, 4), 16.34), matrix(c(1, 20, 3, 20, 5:16), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.35), matrix(c(20, 20, 20, 20, 5:16), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.36), matrix(c(1, 2, 3, 4, 20, 6, 7, 8, 9, 10, 11, 12, 20, 14, 15, 16), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.37), matrix(c(1:8, 20, 10:12, 20, 14:16), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.38), matrix(c(1, 20, 3, 20, 5:16), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.39), matrix(c(1:15, 20), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.41), matrix(c(1, 2, 3, 4, 5, 6, 20, 8, 9, 10, 11, 12, 13, 14, 20, 16), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.42), matrix(c(1, 2, 20, 4:16), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.43), matrix(c(1, 20, 3, 20, 5:16), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.44), matrix(c(20, 20, 20, 20, 5:16), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.45), matrix(c(1:4, rep(20, 4), 9:12, rep(20, 4)), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.46), matrix(c(1:8, rep(20, 8)), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.47), matrix(c(1, 20, 3, 20, 5, 20, 7, 20, 9, 20, 11, 20, 13, 20, 15, 20), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.48), matrix(c(20, 2:4, 20, 6:8, 20, 10:12, 20, 14:16), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.49), matrix(c(1:4, rep(20, 4), 9:12, rep(20, 4)), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.51), matrix(c(1:8, rep(20, 8)), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.52), matrix(c(1, 20, 3, 20, 5, 20, 7, 20, 9, 20, 11, 20, 13, 20, 15, 20), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.53), matrix(c(20, 2:4, 20, 6:8, 20, 10:12, 20, 14:16), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.54), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.1), rep(100, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.2), rep(0, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.3), c(0, 0, 3, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.4), rep(0, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.5), c(5, 2, 3, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.6), matrix(c(1:15, 20), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.7), matrix(c(1:15, 20), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.8), matrix(c(1:3, 20, 5:7, 20, 9:11, 20, 13:15, 20), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.9), matrix(c(1:3, 20, 5:7, 20, 9:11, 20, 13:15, 20), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.11), matrix(c(1:3, 20, 5:15, 20), 4, 4))
-expect_equal(test(c(1, 2, 3, 4), 16.12), matrix(c(20, 2, 3, 4), 2, 2))
-expect_equal(test(c(1, 2, 3, 4), 16.13), matrix(c(20, 20, 3, 4), 2, 2))
-expect_equal(test(c(1, 2, 3, 4), 16.14), matrix(c(20, 20, 3, 4), 2, 2))
-expect_equal(test(c(1, 2, 3, 4), 16.15), matrix(c(20, 2, 20, 4, 5, 6), 3, 2))
-expect_equal(test(c(1, 2, 3, 4), 16.16), matrix(c(20, 2, 3, 4, 5, 6), 3, 2))
-expect_equal(test(c(1, 2, 3, 4), 16.17), matrix(c(20, 2, 3, 20, 5, 6), 3, 2))
-expect_equal(test(c(1, 2, 3, 4), 16.18), matrix(c(20, 2, 3, 20, 5, 6), 3, 2))
-expect_equal(test(c(1, 2, 3, 4), 16.19), matrix(c(20, 2, 3, 4, 5, 6, 20, 8, 9), 3, 3))
-expect_equal(test(c(1, 2, 3, 4), 16.21), matrix(c(20, 20, 20, 4:9), 3, 3))
-expect_equal(test(c(1, 2, 3, 4), 16.22), matrix(c(20, 20, 20, 4:9), 3, 3))
-expect_equal(test(c(1, 2, 3, 4), 16.23), matrix(c(20, 20, 3:9), 3, 3))
-expect_equal(test(c(1, 2, 3, 4), 16.24), matrix(rep(20, 9), 3, 3))
-expect_equal(test(c(1, 2, 3, 4), 16.25), matrix(rep(20, 9), 3, 3))
-expect_equal(test(c(1, 2, 3, 4), 16.26), matrix(c(1, 2, 3, 20, 20, 20, 20, 20, 20), 3, 3))
-expect_equal(test(c(1, 2, 3, 4), 16.27), matrix(rep(20, 9), 3, 3))
-expect_equal(test(c(1, 2, 3, 4), 16.28), matrix(c(20, 20, 3, 20, 20, 6, 20, 20, 9), 3, 3))
-expect_equal(test(c(1, 2, 3, 4), 16.29), matrix(rep(20, 9), 3, 3))
+expect_equal(test(c(1, 2, 3, 4), 16.31), matrix(c(20, 20, 20, 20, 20, 20, 7, 8, 9), 3, 3))  # failed
+expect_equal(test(c(1, 2, 3, 4), 16.32), matrix(c(20, 2, 20, 20, 5, 20, 20, 8, 20), 3, 3)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.33), matrix(c(20, 2, 20, 20, 5, 20, 7, 8, 9), 3, 3)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.34), matrix(c(1, 20, 3, 20, 5:16), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.35), matrix(c(20, 20, 20, 20, 5:16), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.36), matrix(c(1, 2, 3, 4, 20, 6, 7, 8, 9, 10, 11, 12, 20, 14, 15, 16), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.37), matrix(c(1:8, 20, 10:12, 20, 14:16), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.38), matrix(c(1, 20, 3, 20, 5:16), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.39), matrix(c(1:15, 20), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.41), matrix(c(1, 2, 3, 4, 5, 6, 20, 8, 9, 10, 11, 12, 13, 14, 20, 16), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.42), matrix(c(1, 2, 20, 4:16), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.43), matrix(c(1, 20, 3, 20, 5:16), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.44), matrix(c(20, 20, 20, 20, 5:16), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.45), matrix(c(1:4, rep(20, 4), 9:12, rep(20, 4)), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.46), matrix(c(1:8, rep(20, 8)), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.47), matrix(c(1, 20, 3, 20, 5, 20, 7, 20, 9, 20, 11, 20, 13, 20, 15, 20), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.48), matrix(c(20, 2:4, 20, 6:8, 20, 10:12, 20, 14:16), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.49), matrix(c(1:4, rep(20, 4), 9:12, rep(20, 4)), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.51), matrix(c(1:8, rep(20, 8)), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.52), matrix(c(1, 20, 3, 20, 5, 20, 7, 20, 9, 20, 11, 20, 13, 20, 15, 20), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.53), matrix(c(20, 2:4, 20, 6:8, 20, 10:12, 20, 14:16), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.54), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.1), rep(100, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.2), rep(0, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.3), c(0, 0, 3, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.4), rep(0, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.5), c(5, 2, 3, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.6), matrix(c(1:15, 20), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.7), matrix(c(1:15, 20), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.8), matrix(c(1:3, 20, 5:7, 20, 9:11, 20, 13:15, 20), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.9), matrix(c(1:3, 20, 5:7, 20, 9:11, 20, 13:15, 20), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.11), matrix(c(1:3, 20, 5:15, 20), 4, 4)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.12), matrix(c(20, 2, 3, 4), 2, 2)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.13), matrix(c(20, 20, 3, 4), 2, 2)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.14), matrix(c(20, 20, 3, 4), 2, 2)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.15), matrix(c(20, 2, 20, 4, 5, 6), 3, 2)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.16), matrix(c(20, 2, 3, 4, 5, 6), 3, 2)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.17), matrix(c(20, 2, 3, 20, 5, 6), 3, 2)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.18), matrix(c(20, 2, 3, 20, 5, 6), 3, 2)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.19), matrix(c(20, 2, 3, 4, 5, 6, 20, 8, 9), 3, 3)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.21), matrix(c(20, 20, 20, 4:9), 3, 3)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.22), matrix(c(20, 20, 20, 4:9), 3, 3)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.23), matrix(c(20, 20, 3:9), 3, 3)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.24), matrix(rep(20, 9), 3, 3)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.25), matrix(rep(20, 9), 3, 3)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.26), matrix(c(1, 2, 3, 20, 20, 20, 20, 20, 20), 3, 3)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.27), matrix(rep(20, 9), 3, 3)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.28), matrix(c(20, 20, 3, 20, 20, 6, 20, 20, 9), 3, 3)) # failed
+expect_equal(test(c(1, 2, 3, 4), 16.29), matrix(rep(20, 9), 3, 3)) # failed
 
 # 15.1 - exponent & log
 expect_equal(test(c(1, 2, 3, 4), 15.1), c(1, 4, 9, 16))
@@ -1946,12 +1946,12 @@ expect_equal(test(0, 13.3), as.numeric(c(2, 2, 2) != 1))
 # 0 bubblesort
 x <- c(1, 5, 2, 3, 8, 10, 1.5)
 ret <- test(x, 0)
-expect_equal(ret, c(1, 1.5, 2, 3, 5, 8, 10))
+expect_equal(ret, c(1, 1.5, 2, 3, 5, 8, 10))  # failed
 
 # 1 Fibonacci
 ret <- test(0, 1)
 res <- c(1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765)
-expect_equal(ret, res)
+expect_equal(ret, res)  # failed
 
 # 2.1- random stuff
 expect_equal(test(0, 2.1), matrix(50:61, 3, 4))
@@ -1971,9 +1971,9 @@ expect_equal(test(0, 3.4), 4.14)
 # 3.5 add
 expect_equal(test(0, 3.5), rep(4, 4))
 # 3.6 add
-expect_equal(test(c(1, 2, 3, 4), 3.6), c(101, 202, 103, 204))
+expect_equal(test(c(1, 2, 3, 4), 3.6), c(101, 202, 103, 204))  # failed
 # 3.7 add
-expect_equal(test(c(1, 2, 3, 4), 3.7), c(101, 202, 303, 404, 501, 602, 703, 804, 901))
+expect_equal(test(c(1, 2, 3, 4), 3.7), c(101, 202, 303, 404, 501, 602, 703, 804, 901))  # failed
 # 3.8 add
 expect_equal(test(c(1, 2, 3, 4), 3.8), rep(4, 4))
 # 3.9 add
@@ -1998,9 +1998,9 @@ expect_equal(test(0, 4.4), 1 - 3.14)
 # 4.5 subtracting
 expect_equal(test(0, 4.5), 1 - rep(3, 4))
 # 4.6 subtracting
-expect_equal(test(c(1, 2, 3, 4), 4.6), c(1, 2, 3, 4) - c(100, 200))
+expect_equal(test(c(1, 2, 3, 4), 4.6), c(1, 2, 3, 4) - c(100, 200))  # failed
 # 4.7 subtracting
-expect_equal(test(c(1, 2, 3, 4), 4.7), c(1, 2, 3, 4) - seq(100, 900, 100))
+expect_equal(test(c(1, 2, 3, 4), 4.7), c(1, 2, 3, 4) - seq(100, 900, 100))  # failed
 # 4.8 subtracting
 expect_equal(test(c(1, 2, 3, 4), 4.8), rep(3, 4) - 1)
 # 4.9 subtracting
@@ -2025,7 +2025,7 @@ expect_equal(test(0, 5.4), 1 / 3.14)
 # 5.5 divide
 expect_equal(test(0, 5.5), 1 / rep(3, 4))
 # 5.6 divide
-expect_equal(test(c(1, 2, 3, 4), 5.6), c(1, 2, 3, 4) / c(100, 200))
+expect_equal(test(c(1, 2, 3, 4), 5.6), c(1, 2, 3, 4) / c(100, 200))  # failed
 # 5.7 divide
 expect_equal(test(c(1, 2, 3, 4), 5.7), c(1, 2, 3, 4) / seq(100, 900, 100))
 # 5.8 divide
@@ -2052,7 +2052,7 @@ expect_equal(test(0, 6.4), 1 * 3.14)
 # 6.6 times
 expect_equal(test(0, 6.5), 1 * rep(3, 4))
 # 6.6 times
-expect_equal(test(c(1, 2, 3, 4), 6.6), c(1, 2, 3, 4) * c(100, 200))
+expect_equal(test(c(1, 2, 3, 4), 6.6), c(1, 2, 3, 4) * c(100, 200))  # failed
 # 6.7 times
 expect_equal(test(c(1, 2, 3, 4), 6.7), c(1, 2, 3, 4) * seq(100, 900, 100))
 # 6.8 times
@@ -2116,7 +2116,7 @@ bs_cpp <- ast2ast::translate(bs,
 )
 x <- c(5, 3, 2, 10, 1)
 
-expect_equal(wrapper(bs_cpp, x), c(1, 2, 3, 5, 10))
+expect_equal(wrapper(bs_cpp, x), c(1, 2, 3, 5, 10))  # failed
 
 # fibonacci
 fb <- function(a) {
@@ -2134,7 +2134,7 @@ fb_cpp <- ast2ast::translate(fb,
 )
 
 res <- c(1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765)
-expect_equal(wrapper(fb_cpp, x), res)
+expect_equal(wrapper(fb_cpp, x), res)  # failed
 
 
 
