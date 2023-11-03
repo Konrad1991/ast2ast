@@ -88,6 +88,39 @@ struct VVExpTrait : UnaryTrait {};
 struct VVLogTrait : UnaryTrait {};
 struct VVSqrtTrait : UnaryTrait {};
 
+template<typename T>
+struct IsAnyOfTraits {
+    static constexpr bool value = false;
+};
+
+template<>
+struct IsAnyOfTraits<etr::UnaryTrait> {
+    static constexpr bool value = true;
+};
+
+template<>
+struct IsAnyOfTraits<etr::VSTrait> {
+    static constexpr bool value = true;
+};
+
+template<>
+struct IsAnyOfTraits<etr::SVTrait> {
+    static constexpr bool value = true;
+};
+
+template<>
+struct IsAnyOfTraits<etr::BinaryTrait> {
+    static constexpr bool value = true;
+};
+
+template<>
+struct IsAnyOfTraits<etr::VVPlusTrait> {
+    static constexpr bool value = true;
+};
+
+template<typename T>
+concept IsAnyOfTheseTraits = IsAnyOfTraits<T>::value;
+
 // issue: add missing traits
 
 struct NullOperation {};

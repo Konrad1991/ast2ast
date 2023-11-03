@@ -347,6 +347,12 @@ public:
   template <typename T2, typename R2>
   VEC &operator=(const VEC<T2, R2> &other_vec) {
     if constexpr(!is_var::value) {
+        print_type(*this);
+        std::cout << d.ptr -> ref_counter << std::endl;
+        print_type(other_vec);
+        std::cout << std::endl;
+
+        //std::cout << this -> d.ref_counter << std::endl;
         // issue: count references if counter > 0 --> than directly store in d --> has to be done everywhere
         if(d.ptr -> ref_counter > 1) { // issue: did I missed a method for this check?
             ass(d.size() <= other_vec.size(), "number of items to replace is not a multiple of replacement length");

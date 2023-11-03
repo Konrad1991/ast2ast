@@ -85,10 +85,14 @@ template<typename Storage>
 inline void update_ref_counter(const VEC<double, Storage>& inp) { 
   using trait = std::remove_reference<decltype(inp.d)>::type::TypeTrait;
   using is_var = std::is_same<trait, VariableTrait>;
+  using is_calc = IsAnyOfTraits<trait>;
+
   if constexpr(is_var::value) {
     inp.d.ref_counter++;
-  } else if constexpr(!is_var::value) {
-    inp.d.ptr -> ref_counter++;
+  } else if constexpr(!is_var::value && !is_calc::value) {
+    inp.d.ptr -> ref_counter++; // issue: this is the case for class SUBSET?
+  } else if constexpr (is_calc::value) {
+    // do nothing
   }
 }
 
@@ -123,7 +127,7 @@ void check_is_matrix(const VEC<double, Storage>& inp) {
 }
 
 template<typename Storage>
-inline VEC<double> subset_entire(const VEC<double, Storage> &inp) { 
+inline VEC<double> subset_entire(const VEC<double, Storage> &inp) { // issue: why is it copied here?
   VEC<double> ret;
   ret = inp;
   return ret;
@@ -151,6 +155,7 @@ inline VEC<double> subset(const VEC<double, Storage> &inp) { return subset_entir
 
 
 // issue: how to define the function in such a way that it can differ between the results of calculation and a normal vector?
+/*
 template<typename Storage, typename T>
 requires (std::is_same_v<T, double> || std::is_same_v<T, int>)
 inline VEC<double, SUBSET<double>> subset(VEC<double, Storage> &inp, T pos_) { // 
@@ -169,11 +174,34 @@ inline VEC<double, SUBSET<double>> subset(VEC<double, Storage> &inp, T pos_) { /
   set_ptr(ret, inp);
   return ret;
 }
+*/
 
+template<typename Storage, typename T>
+requires (std::is_same_v<T, double> || std::is_same_v<T, int>)
+inline VEC<double, SUBSETCALC<Storage>> subset(const VEC<double, Storage> &inp, T pos_) { // issue: see lvalue_ptr.cpp. In case it is the result of a calculation a shared pointer has to be used!
+  constexpr bool is_d = std::is_same_v<T, double>;
+  int pos = -1;
+  if constexpr(is_d) {
+    pos = d2i(pos_);
+  } else {
+    pos = pos_;
+  }
+  ass(pos >= 0, "Index has to be positive");
+  VEC<double, SUBSETCALC<Storage>> ret;
+  ret.d.resize(1);
+  pos--;
+  ret.d.set(0, pos); 
+  ret.d.set_ptr(&inp.d);
+  update_ref_counter(inp);
+  return ret;
+}
+
+/*
 // issue: this is the same fct as above. Only it excepts result of calculations. 
 template<typename T, typename T2, typename R2>
 requires (std::is_same_v<T, double> || std::is_same_v<T, int>)
 inline VEC<double, SUBSETCALC<R2>> subset(const VEC<T2, R2> &inp, T pos_) { // 
+  std::cout << "test" << std::endl;
   constexpr bool is_d = std::is_same_v<T, double>;
   int pos = -1;
   if constexpr(is_d) {
@@ -189,6 +217,7 @@ inline VEC<double, SUBSETCALC<R2>> subset(const VEC<T2, R2> &inp, T pos_) { //
   ret.d.set_ptr(&inp.d); // no need to update the ref counter
   return ret;
 }
+*/
 
 template<typename Storage1, typename Storage2>
 inline VEC<double, SUBSET<double>> subset(const VEC<double, Storage1> &inp, const VEC<double, Storage2> &pos) { //

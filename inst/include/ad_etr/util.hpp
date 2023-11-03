@@ -46,6 +46,30 @@ public:
     inds = new int[sz];
   }
 
+  INDICES(const INDICES& other) : sz(other.sz), allocated(other.allocated) {
+    if (other.allocated) {
+      inds = new int[sz];
+      std::copy(other.inds, other.inds + sz, inds);
+    } else {
+      inds = nullptr;
+    }
+  }
+
+  INDICES& operator=(const INDICES& other) { // deep copy
+    if (this != &other) {
+      if (allocated) delete[] inds;
+      sz = other.sz;
+      allocated = other.allocated;
+      if (allocated) {
+        inds = new int[sz];
+        std::copy(other.inds, other.inds + sz, inds);
+      } else {
+        inds = nullptr;
+      }
+    }
+    return *this;
+  }
+
   void fill_with(int val) {
     for(int i = 0; i < sz; i++) {
       inds[i] = val;
@@ -54,10 +78,12 @@ public:
 
   ~INDICES() {
     if(inds != nullptr) {
-      delete[] inds;
-      sz = 0;
-      inds = nullptr;
-      allocated = false;
+      if(allocated) {
+        delete[] inds;
+        sz = 0;
+        inds = nullptr;
+        allocated = false;  
+      }
     }
   }
 

@@ -381,7 +381,6 @@ public:
   } 
 
   ~SUBSET() {}
-
   void resize(int new_size) {
     ind.resize(new_size);
   }
@@ -421,10 +420,7 @@ public:
 
   SUBSETCALC(int ignored) : ptr(nullptr) {}   
 
-  SUBSETCALC() : ptr(nullptr) {
-    ind.resize(1); // only for safety
-    ind.set(0, 0);
-  } 
+  SUBSETCALC() : ptr(nullptr) {} 
 
   ~SUBSETCALC() {}
 
@@ -441,6 +437,11 @@ public:
   }
 
   int size() const { return ind.size(); }
+
+  double& operator[](int pos) {
+    ass(ptr != nullptr, "SUBSET is pointing to nothing!");
+    return (*ptr)[ind[pos] % ptr -> size()];
+  }
 
   double operator[](int pos) const {
     ass(ptr != nullptr, "SUBSET is pointing to nothing!");
