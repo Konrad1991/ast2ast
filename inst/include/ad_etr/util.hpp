@@ -33,6 +33,26 @@ inline void ass(bool inp, std::string message) {
   }
 }
 
+class BaseStore {
+public:
+  size_t sz;
+  bool ismatrix = false;
+  size_t rows_ = 0;
+  size_t columns_ = 0;
+  bool im() const { return this->ismatrix; }
+  int nc() const { return columns_; }
+  int nr() const { return rows_; }
+  int size() const { return sz; }
+};
+
+class BaseCalc {
+public:
+  bool ismatrix;
+  int rows_;
+  int columns_;
+  
+};
+
 class INDICES{
 public:
   int sz = 0;
