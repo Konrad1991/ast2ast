@@ -42,19 +42,15 @@ public:
 - If new is called once delete has to be called in the destructor
 - If new is not called. Then R will delete the memory!
 */
-template <typename T, typename Trait = VariableTrait> class STORE {
+template <typename T, typename Trait = VariableTrait> class STORE : public BaseStore {
 
 public:
   using TypeTrait = Trait;
   T *p;
-  int sz; // size
   int capacity;
   bool todelete;
   bool allocated = false;
   int cob = 0;
-  bool ismatrix = false;
-  int columns_ = 0;
-  int rows_ = 0;
   mutable signed int ref_counter = 0;
 
   // Constructors
@@ -249,8 +245,6 @@ public:
 
     return *this;
   }
-
-  int size() const { return sz; }
 
   T *data() const { return p; }
 

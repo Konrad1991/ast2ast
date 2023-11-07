@@ -41,6 +41,12 @@ void print_type(T inp) { // issue: remove demangle and print_type.
 
 namespace etr {
 
+template <typename T>
+constexpr bool IsBoolIntOrDouble() {
+    return std::is_same<T, bool>::value || std::is_same<T, int>::value || std::is_same<T, double>::value;
+}
+
+struct VectorTrait {};
 struct VariableTrait {};
 struct SubsetTrait {};
 
@@ -62,10 +68,12 @@ template<typename L, typename R>
 concept BoolOrNullptr = (std::is_same_v<L, bool> || std::is_same_v<L, decltype(nullptr)>) && (std::is_same_v<R, bool> || std::is_same_v<R, decltype(nullptr)>);
 
 struct UnaryTrait {};
+struct VVTrait{};
 struct VSTrait {};
 struct SVTrait {};
 struct BinaryTrait {};
 
+struct PlusTrait : BinaryTrait {};
 struct VVPlusTrait : BinaryTrait {};
 struct VSPlusTrait : VSTrait {};
 struct SVPlusTrait : SVTrait {};

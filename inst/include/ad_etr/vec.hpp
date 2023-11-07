@@ -39,11 +39,12 @@ namespace etr {
 /*
 Vector & matrix module
 */
-template <typename T, typename R = STORE<T>>
+template <typename T, typename R = STORE<T>, typename Trait = VectorTrait>
 class VEC {
   using store = STORE<double, VariableTrait>;
 
 public:
+  using TypeTrait = Trait;
   // data
   R d;
   using trait_d = std::remove_reference<decltype(d)>::type::TypeTrait;
@@ -419,15 +420,15 @@ public:
 
   // getter methods for matrix
   // ================================================================
-  int ncol() const { return d.columns_; }
+  int ncol() const { return d.nc(); }
 
-  int nrow() const { return d.rows_; }
+  int nrow() const { return d.nr(); }
 
-  bool im() const { return d.ismatrix; }
+  bool im() const { return d.im(); }
 
-  int nc() const { return d.columns_; }
+  int nc() const { return d.nc(); }
 
-  int nr() const { return d.rows_; }
+  int nr() const { return d.nr(); }
 
   auto begin() const { return It<T>{d.p}; }
 
@@ -439,15 +440,15 @@ public:
   void rsi(int sizenew) { this->indices.resize(sizenew); }
 
   void set_matrix(bool i) {
-    this -> d.ismatrix = i;
+    d.set_matrix(i);
   }
 
   void set_ncol(int ncol) {
-    this -> d.columns_ = ncol;
+    d.set_ncol(ncol);
   }
 
   void set_nrow(int nrow) {
-    this -> d.rows_ = nrow;
+    d.set_nrow(nrow);
   }
 
 }; // end class VEC

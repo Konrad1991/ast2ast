@@ -43,6 +43,15 @@ public:
   int nc() const { return columns_; }
   int nr() const { return rows_; }
   int size() const { return sz; }
+  void set_matrix(bool i) {
+    this -> ismatrix = i;
+  }
+  void set_ncol(size_t ncol) {
+    this -> columns_ = ncol;
+  }
+  void set_nrow(size_t nrow) {
+    this -> rows_ = nrow;
+  }
 };
 
 class BaseCalc {
@@ -50,7 +59,100 @@ public:
   bool ismatrix;
   int rows_;
   int columns_;
-  
+  bool im() const { return this->ismatrix; }
+  int nc() const { return columns_; }
+  int nr() const { return rows_; }
+  void set_matrix(bool i) {
+    this -> ismatrix = i;
+  }
+  void set_ncol(size_t ncol) {
+    this -> columns_ = ncol;
+  }
+  void set_nrow(size_t nrow) {
+    this -> rows_ = nrow;
+  }
+};
+
+template<typename T, typename L, typename Trait = UnaryTrait>
+class BaseUnary : public BaseCalc {
+public:
+using TypeTrait = Trait;
+  const L & r;
+  BaseUnary(const L &a, bool r_ismatrix, int r_rows, int r_cols) : r(a) {
+    if (r_ismatrix == true) {
+      ismatrix = r_ismatrix;
+      rows_ = r_rows;
+      columns_ = r_cols;
+    }
+  }
+  const L &get() const { return r; }
+};
+
+template<int Operation>
+void defineMatrix(const bool& a_im,const  bool& b_im, 
+                  const size_t a_nrow,const  size_t b_nrow,
+                  const size_t a_ncol, const size_t b_ncol,
+                  bool& ismatrix_,
+                  size_t& nrows_, size_t& ncols_) {
+  if constexpr (Operation == 1) {
+      if ((a_im == true) || (b_im == true) ||
+          (a_im == true && b_im == true)) {
+          ismatrix_ = true;
+        if ((a_im == true) && (b_im == true)) {
+          nrows_ = (a_nrow > b_nrow) ? a_nrow : b_nrow;
+          ncols_ = (a_ncol > b_ncol) ? a_ncol : b_ncol;
+        } else if ((a_im == false) && (b_im == true)) {
+          nrows_ = b_nrow;
+          ncols_ = b_ncol;
+        } else if ((a_im == true) && (b_im == false)) {
+          nrows_ = a_nrow;
+          ncols_ = a_ncol;
+        } else {
+          Rcpp::stop("Error");
+        }
+      }
+  } else if constexpr(Operation == 2) {
+        if (a_im == true) {
+          ismatrix_ = true;
+          nrows_ = a_nrow;
+          ncols_ = a_ncol;
+        } 
+  } else if constexpr(Operation == 3) {
+        if (b_im == true) {
+          ismatrix_ = true;
+          nrows_ = b_nrow;
+          ncols_ = b_ncol;
+        }
+  }
+}
+
+template<typename T, typename L, typename R, typename BTrait = BinaryTrait>
+class BaseBinary : public BaseCalc {
+public:
+  using CaseTrait = BTrait;
+  const L &l;
+  const R &r;
+  BaseBinary(const L &a, const R &b, bool ismatrix_, int rows, int cols)
+      : l(a), r(b) {
+        ismatrix = ismatrix_;
+        rows_ = rows;
+        columns_ = cols;
+  }
+  const L &getL() const { return l; }
+  const R &getR() const { return r; }
+  size_t size() const {
+    constexpr bool l_arithmetic = IsBoolIntOrDouble<L>();
+    constexpr bool r_arithmetic = IsBoolIntOrDouble<R>();
+    if constexpr(!l_arithmetic && !r_arithmetic) {
+      return (this -> l.size() > this -> r.size()) ? this -> l.size() : this -> r.size();  
+    } else if constexpr(l_arithmetic && !r_arithmetic) {
+      return this -> r.size();
+    } else if constexpr(!l_arithmetic && r_arithmetic) {
+      return this -> l.size();
+    } else if constexpr(l_arithmetic && r_arithmetic) {
+      return 1;
+    }
+  }
 };
 
 class INDICES{

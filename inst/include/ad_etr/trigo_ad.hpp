@@ -26,58 +26,30 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 namespace etr {
 
-template <typename T, typename L, typename Trait = VVSinTrait> class VVSIN {
-
+template<typename T, typename L>
+class VVSIN : public BaseUnary<T, L, VVSinTrait> {
 public:
-  const L &r; // const L& l;
-  bool ismatrix;
-  int rows_;
-  int columns_;
-
-  using TypeTrait = Trait;
-  VVSIN(const L &a, bool r_ismatrix, int r_rows, int r_cols) : r(a) {
-
-    if (r_ismatrix == true) {
-      ismatrix = r_ismatrix;
-      rows_ = r_rows;
-      columns_ = r_cols;
-    }
-  }
-
-  T operator[](const int i) const { return sin(r[i % r.size()]); }
-
-  T get_deriv(const int i) const { return cos(r[i % r.size()]); };
-
-  int size() const { return r.size(); }
-
-  bool im() const { return ismatrix; }
-
-  int nc() const { return columns_; }
-
-  int nr() const { return rows_; }
-
-  const L &get() const { return r; }
+  VVSIN(const L &a, bool r_ismatrix, int r_rows, int r_cols)
+      : BaseUnary<T, L, VVSinTrait>(a, r_ismatrix, r_rows, r_cols) {}
+  T operator[](const int i) const { return sin(this -> r[i % this -> r.size()]); }
+  T get_deriv(const int i) const { return cos(this -> r[i % this -> r.size()]); };
+  size_t size() const { return this -> r.size(); }
 };
 
 template <typename T, typename L>
 inline VEC<T, VVSIN<T, L>> sinus(const VEC<T, L> &a) {
-
   bool ismatrix_ = false;
   int nrows_ = 0;
   int ncols_ = 0;
-
   if (a.im() == true) {
     ismatrix_ = true;
     nrows_ = a.nr();
     ncols_ = a.nc();
   }
-
   VEC<T, VVSIN<T, L>> ret(VVSIN<T, L>(a.data(), a.im(), a.nrow(), a.ncol()));
-
   ret.set_matrix(ismatrix_);
   ret.set_ncol(ncols_);
   ret.set_nrow(nrows_);
-
   return ret;
 }
 
