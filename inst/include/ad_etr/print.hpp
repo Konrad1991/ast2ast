@@ -57,7 +57,6 @@ inline void print(bool inp) {
 // print fct
 // ================================================================
 inline void print(VEC<double> &inp) { // const
-
   if (inp.im() == false) {
       for (int i = 0; i < inp.size(); i++) {
         Rcpp::Rcout << inp[i] << std::endl;
@@ -100,7 +99,6 @@ inline void print(VEC<bool> &inp) { // const
 }
 
 template <typename T2, typename R2> inline void print(const VEC<T2, R2> &inp) {
-
   if (inp.im() == false) {
       for (int i = 0; i < inp.size(); i++) {
         Rcpp::Rcout << inp[i] << std::endl;

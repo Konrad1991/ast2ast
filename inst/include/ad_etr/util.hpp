@@ -33,8 +33,10 @@ inline void ass(bool inp, std::string message) {
   }
 }
 
+template<typename Trait = VariableTrait>
 class BaseStore {
 public:
+  using CaseTrait = Trait;
   size_t sz;
   bool ismatrix = false;
   size_t rows_ = 0;
@@ -134,6 +136,8 @@ public:
   const R &r;
   BaseBinary(const L &a, const R &b, bool ismatrix_, int rows, int cols)
       : l(a), r(b) {
+        print_type(a);
+        print_type(l);
         ismatrix = ismatrix_;
         rows_ = rows;
         columns_ = cols;

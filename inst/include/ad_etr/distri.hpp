@@ -35,7 +35,7 @@ inline VEC<double> dunif_etr(const VEC<double> &x, const VEC<double> &min_,
   if ((x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) &&
       (lg.size() == 1)) {
     GetRNGstate();
-    return R::dunif(x[0], min_[0], max_[0], lg[0]);
+    return VEC<double>(R::dunif(x[0], min_[0], max_[0], lg[0]));
     PutRNGstate();
   } else {
     std::vector<int> sizes{min_.size(), max_.size(), lg.size()};
@@ -97,7 +97,7 @@ inline VEC<double> punif_etr(const VEC<double> &x, const VEC<double> &min_,
   if ((x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) &&
       (lg.size() == 1)) {
     GetRNGstate();
-    return R::punif(x[0], min_[0], max_[0], lower[0], lg[0]);
+    return VEC<double>(R::punif(x[0], min_[0], max_[0], lower[0], lg[0]));
     PutRNGstate();
   } else {
     std::vector<int> sizes{min_.size(), max_.size(), lower.size(), lg.size()};
@@ -128,7 +128,7 @@ inline VEC<double> qunif_etr(const VEC<double> &x, const VEC<double> &min_,
   if ((x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) &&
       (lg.size() == 1)) {
     GetRNGstate();
-    return R::qunif(x[0], min_[0], max_[0], lower[0], lg[0]);
+    return VEC<double>(R::qunif(x[0], min_[0], max_[0], lower[0], lg[0]));
     PutRNGstate();
   } else {
     std::vector<int> sizes{min_.size(), max_.size(), lower.size(), lg.size()};
@@ -161,7 +161,7 @@ inline VEC<double> dnorm_etr(const VEC<double> &x, const VEC<double> &min_,
   if ((x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) &&
       (lg.size() == 1)) {
     GetRNGstate();
-    return R::dnorm(x[0], min_[0], max_[0], lg[0]);
+    return VEC<double>(R::dnorm(x[0], min_[0], max_[0], lg[0]));
     PutRNGstate();
   } else {
     std::vector<int> sizes{min_.size(), max_.size(), lg.size()};
@@ -223,7 +223,7 @@ inline VEC<double> pnorm_etr(const VEC<double> &x, const VEC<double> &min_,
   if ((x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) &&
       (lg.size() == 1)) {
     GetRNGstate();
-    return R::pnorm(x[0], min_[0], max_[0], lower[0], lg[0]);
+    return VEC<double>(R::pnorm(x[0], min_[0], max_[0], lower[0], lg[0]));
     PutRNGstate();
   } else {
     std::vector<int> sizes{min_.size(), max_.size(), lower.size(), lg.size()};
@@ -254,7 +254,7 @@ inline VEC<double> qnorm_etr(const VEC<double> &x, const VEC<double> &min_,
   if ((x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) &&
       (lg.size() == 1)) {
     GetRNGstate();
-    return R::qnorm(x[0], min_[0], max_[0], lower[0], lg[0]);
+    return VEC<double>(R::qnorm(x[0], min_[0], max_[0], lower[0], lg[0]));
     PutRNGstate();
   } else {
     std::vector<int> sizes{min_.size(), max_.size(), lower.size(), lg.size()};
@@ -287,7 +287,7 @@ inline VEC<double> dlnorm_etr(const VEC<double> &x, const VEC<double> &min_,
   if ((x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) &&
       (lg.size() == 1)) {
     GetRNGstate();
-    return R::dlnorm(x[0], min_[0], max_[0], lg[0]);
+    return VEC<double>(R::dlnorm(x[0], min_[0], max_[0], lg[0]));
     PutRNGstate();
   } else {
     std::vector<int> sizes{min_.size(), max_.size(), lg.size()};
@@ -349,7 +349,7 @@ inline VEC<double> plnorm_etr(const VEC<double> &x, const VEC<double> &min_,
   if ((x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) &&
       (lg.size() == 1)) {
     GetRNGstate();
-    return R::plnorm(x[0], min_[0], max_[0], lower[0], lg[0]);
+    return VEC<double>(R::plnorm(x[0], min_[0], max_[0], lower[0], lg[0]));
     PutRNGstate();
   } else {
     std::vector<int> sizes{min_.size(), max_.size(), lower.size(), lg.size()};
@@ -380,7 +380,7 @@ inline VEC<double> qlnorm_etr(const VEC<double> &x, const VEC<double> &min_,
   if ((x.size() == 1) && (min_.size() == 1) && (max_.size() == 1) &&
       (lg.size() == 1)) {
     GetRNGstate();
-    return R::qlnorm(x[0], min_[0], max_[0], lower[0], lg[0]);
+    return VEC<double>(R::qlnorm(x[0], min_[0], max_[0], lower[0], lg[0]));
     PutRNGstate();
   } else {
     std::vector<int> sizes{min_.size(), max_.size(), lower.size(), lg.size()};
@@ -417,7 +417,7 @@ inline VEC<double> dgamma_etr(const VEC<double> &x, const VEC<double> &shape,
   if ((x.size() == 1) && (shape.size() == 1) && (scale.size() == 1) &&
       (lg.size() == 1)) {
     GetRNGstate();
-    return R::dgamma(x[0], shape[0], scale[0], lg[0]);
+    return VEC<double>(R::dgamma(x[0], shape[0], scale[0], lg[0]));
     PutRNGstate();
   } else {
     std::vector<int> sizes{shape.size(), static_cast<int>(scale.size()),
@@ -490,7 +490,7 @@ inline VEC<double> pgamma_etr(const VEC<double> &x, const VEC<double> &shape,
   if ((x.size() == 1) && (shape.size() == 1) && (scale.size() == 1) &&
       (lg.size() == 1)) {
     GetRNGstate();
-    return R::pgamma(x[0], shape[0], scale[0], lower[0], lg[0]);
+    return VEC<double>(R::pgamma(x[0], shape[0], scale[0], lower[0], lg[0]));
     PutRNGstate();
   } else {
     std::vector<int> sizes{shape.size(), static_cast<int>(scale.size()),
@@ -526,7 +526,7 @@ inline VEC<double> qgamma_etr(const VEC<double> &x, const VEC<double> &shape,
   if ((x.size() == 1) && (shape.size() == 1) && (scale.size() == 1) &&
       (lg.size() == 1)) {
     GetRNGstate();
-    return R::qgamma(x[0], shape[0], scale[0], lower[0], lg[0]);
+    return VEC<double>(R::qgamma(x[0], shape[0], scale[0], lower[0], lg[0]));
     PutRNGstate();
   } else {
     std::vector<int> sizes{shape.size(), static_cast<int>(scale.size()),

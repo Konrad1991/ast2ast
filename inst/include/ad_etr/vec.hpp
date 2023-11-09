@@ -53,7 +53,7 @@ public:
 
   template <typename T2> VEC(T2 n) = delete;
 
-  VEC(const double value)
+  explicit VEC(const double value)
       : d(1, value) {
   } // d(1, value) or d(1) {d[0] = value} --> all tests run positive
   VEC(const long unsigned int n)
@@ -65,7 +65,11 @@ public:
   } // fill is a hack that sexp s = 1 works;
   VEC(const int n, const double value) : d(n, value) {}
 
-  VEC(const R &other_vec) : d(other_vec) {}
+  VEC(const R &other_vec) : d(other_vec) {
+    std::cout << "type in constructor other_vec of VEC" << std::endl;
+    print_type(other_vec);
+    std::cout << std::endl;
+  }
 
   VEC(): d() {} // maybe better initialize with 0
   VEC(const std::vector<T> inp) : d(inp) {}
@@ -320,7 +324,7 @@ public:
     }
     return *this;
   }
-
+  
   VEC &operator=(const VEC &other_vec) {
     if constexpr(!is_var::value) {
       ass(static_cast<int>(d.size()) <= other_vec.size(),
@@ -347,13 +351,8 @@ public:
 
   template <typename T2, typename R2>
   VEC &operator=(const VEC<T2, R2> &other_vec) {
-    if constexpr(!is_var::value) {
-        print_type(*this);
-        std::cout << d.ptr -> ref_counter << std::endl;
-        print_type(other_vec);
-        std::cout << std::endl;
 
-        //std::cout << this -> d.ref_counter << std::endl;
+    if constexpr(!is_var::value) {
         // issue: count references if counter > 0 --> than directly store in d --> has to be done everywhere
         if(d.ptr -> ref_counter > 1) { // issue: did I missed a method for this check?
             ass(d.size() <= other_vec.size(), "number of items to replace is not a multiple of replacement length");
@@ -372,6 +371,7 @@ public:
           }
         }
     } else {
+      Rcpp::stop("StopStopStop");
         store temp;
         temp.resize(other_vec.size());
         for (int i = 0; i < temp.size(); i++) {
