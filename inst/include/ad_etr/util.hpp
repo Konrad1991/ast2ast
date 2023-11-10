@@ -127,7 +127,7 @@ void defineMatrix(const bool& a_im,const  bool& b_im,
         }
   }
 }
-
+/*
 template<typename T, typename L, typename R, typename BTrait = BinaryTrait>
 class BaseBinary : public BaseCalc {
 public:
@@ -158,7 +158,7 @@ public:
     }
   }
 };
-
+*/
 class INDICES{
 public:
   int sz = 0;

@@ -21,20 +21,17 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef VEC_H
 #define VEC_H
 
-// issue: when void fct(sexp a) and than one calls it with fct(0) there is an error:
-/*
-warning: ‘void* __builtin_memset(void*, int, long unsigned int)’ writing between 8 and 17179869176 bytes into a region of size 0 overflows the destination [-Wstringop-overflow=]
-  346 |       p[i] = input;
-      |       ~~~~~^~~~~~~
-../inst/include/ad_etr/pointer_storage.hpp: In function ‘void test()’:
-../inst/include/ad_etr/pointer_storage.hpp:115:9: note: destination object of size 0 allocated by ‘operator new []’
-  115 |     p = new T[n];
-      |         ^~~~~~~~
-*/
-
 #include "pointer_storage.hpp"
 
 namespace etr {
+
+double Addition(double l, double r) {
+    return l + r;
+}
+
+typedef double (*binaryFct)(double, double);
+template<typename L2, typename R2, binaryFct f, typename CTrait = BinaryTrait, typename Trait = PlusTrait>
+class BinaryOperation;
 
 /*
 Vector & matrix module
@@ -55,23 +52,24 @@ public:
 
   explicit VEC(const double value)
       : d(1, value) {
-  } // d(1, value) or d(1) {d[0] = value} --> all tests run positive
+  } 
   VEC(const long unsigned int n)
       : d(1, static_cast<double>(n)) {
-  } // run all tests whether this is possible
+  } 
   // Constructors for vector
-  VEC(const int n) : d(n) {
+  explicit VEC(const int n) : d(n) {
+    static_assert(std::is_same_v<decltype(n), const int>, "Only int is allowed");
     d.fill(static_cast<double>(n));
   } // fill is a hack that sexp s = 1 works;
+
   VEC(const int n, const double value) : d(n, value) {}
 
-  VEC(const R &other_vec) : d(other_vec) {
-    std::cout << "type in constructor other_vec of VEC" << std::endl;
-    print_type(other_vec);
-    std::cout << std::endl;
-  }
+  VEC(const R &other_vec) : d(other_vec) {}
 
-  VEC(): d() {} // maybe better initialize with 0
+  template<typename LOp, typename ROp, binaryFct f>
+  explicit VEC(const BinaryOperation<LOp, ROp, f>& bO) : d(bO) {} // 
+
+  explicit VEC(): d() {} // maybe better initialize with 0
   VEC(const std::vector<T> inp) : d(inp) {}
   // Constructors for matrix
   VEC(const int rows, const int cols): d(rows * cols) {
@@ -92,20 +90,20 @@ public:
     set_ncol(cols);
   }
   // constructor for calculations
-  template <typename T2, typename R2>
-  VEC(const VEC<T2, R2> &other_vec) : d(1) {
-    if constexpr (is_var::value) {
-      this->d.resize(other_vec.size());
-      for (int i = 0; i < d.size(); i++) {
-        this->d[i] = other_vec[i];
-      }
-      if (other_vec.d.im() == true) {
-        set_matrix(true);
-        set_nrow(other_vec.d.nr());
-        set_ncol(other_vec.d.nc());
-      }
-    }
-  }
+  //template <typename T2, typename R2>
+  //VEC(const VEC<T2, R2> &other_vec) : d(1) { // issue: call to d(1) why?
+  //  if constexpr (is_var::value) {
+  //    this->d.resize(other_vec.size());
+  //    for (int i = 0; i < d.size(); i++) {
+  //      this->d[i] = other_vec[i];
+  //    }
+  //    if (other_vec.d.im() == true) {
+  //      set_matrix(true);
+  //      set_nrow(other_vec.d.nr());
+  //      set_ncol(other_vec.d.nc());
+  //    }
+  //  }
+  //}
   // constructor for COMPARISON
   VEC(const VEC<bool> &other_vec) : d(1) {
     d.resize(other_vec.size());
@@ -124,7 +122,13 @@ public:
       set_ncol(c);
   } // cob = copy, owning, borrow
 
-  operator bool() const { return d[0]; } // issue: if d has length 1 (R version 4.2)
+  operator bool() const { 
+    static_assert(std::is_same_v<T, bool>, "Only bool is allowed");
+    if (this -> size() != 1) {
+      Rcpp::stop("Error in if: the condition has length > 1");
+    } 
+    return d[0]; 
+  } 
 
   operator SEXP() const {
     SEXP ret = R_NilValue;
@@ -371,7 +375,6 @@ public:
           }
         }
     } else {
-      Rcpp::stop("StopStopStop");
         store temp;
         temp.resize(other_vec.size());
         for (int i = 0; i < temp.size(); i++) {

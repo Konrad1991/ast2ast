@@ -36,7 +36,7 @@ std::string demangle(const char *mangledName) {
 
 template<typename T>
 void print_type(T inp) { // issue: remove demangle and print_type. 
-  std::cout << demangle(typeid(inp).name()) << std::endl;
+  std::cout << demangle(typeid(inp).name()) << std::endl; 
 }
 
 namespace etr {
