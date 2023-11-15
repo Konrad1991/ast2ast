@@ -92,12 +92,22 @@ template <typename T, typename R, typename Trait> struct Vec {
   }
   
   template<typename U = R, typename T2>
-  requires std::is_same_v<U, Borrow<double>>
+  requires std::is_same_v<U, Borrow<BaseType>>
   explicit Vec(const Borrow<T2>& borrowed) : d(borrowed) {}
 
   template<typename U = R>
-  requires std::is_same_v<U, BorrowSEXP<double>>
+  requires std::is_same_v<U, BorrowSEXP<BaseType>>
   explicit Vec(SEXP inp) : d(inp) {}
+
+  template<typename L2, typename R2 = R>
+  requires std::is_same_v<R2, SubsetTrait>
+  explicit Vec(Subset<L2, R2>& inp) : d(inp) {}
+
+  template<typename L2, typename R2 = R>
+  requires std::is_same_v<R2, SubsetCalcTrait>
+  explicit Vec(SubsetCalc<L2, R2>& inp) : d(inp) {}
+
+
 
   friend std::ostream& operator<<(std::ostream& os, const Vec& vec) {
       os << "Vec [ ";
@@ -143,8 +153,24 @@ template <typename T, typename R, typename Trait> struct Vec {
 
     if constexpr (isUnaryOPInput::value || isBinaryOPInput::value) {
       if constexpr (isSubset::value) {
+        Buffer<T> temp;
         ass(other_vec.size() == this -> size(), "number of items to replace is not a multiple of replacement length");
-        for(size_t i = 0; i < other_vec.size(); i++) d[i] = other_vec[i];
+        if(d.p -> ref_counter > 1) {
+          temp.resize(other_vec.size());
+          for(size_t i = 0; i < other_vec.size(); i++) temp[i] = other_vec[i];
+          d.resize(other_vec.size());
+          if constexpr (isBorrowSEXP::value) {
+            if (d.todelete) {
+              d.moveit(temp); 
+            } else {
+              this->d = temp; 
+            }
+          } else {
+            this->d = temp; 
+          }
+      } else {
+          for(size_t i = 0; i < other_vec.size(); i++) d[i] = other_vec[i];  
+        }
       } else if constexpr (isBorrowSEXP::value){
         Buffer<T> temp;
         temp.resize(other_vec.size());

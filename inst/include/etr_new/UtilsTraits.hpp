@@ -606,13 +606,54 @@ namespace etr {
 	struct Indices : public BaseStore<size_t>{};
   
   // Points to a Variable and stores indicces in ind 
-	template <typename T, typename SubsetTrait> struct Subset : public BaseStore<T> {
-  		using TypeTrait = SubsetTrait;
+	template <typename T, typename SubsetTrait> struct Subset {
+			using TypeTrait = SubsetTrait;
+  		using CaseTrait = SubsetTrait;
   		Indices ind;
+			T* p = nullptr;
+  		size_t sz = 0;
+  		size_t capacity = 0;
+  		bool allocated = false;
+  		MatrixParameter mp;
+  		mutable signed int ref_counter = 0;
 
-  		Subset(const T* p, size_t sz) {
+  		size_t size() const { return sz; }
+  		bool im() const { return mp.im(); }
+  		size_t nc() const { return mp.nc(); }
+  		size_t nr() const { return mp.nr(); }
+  		void setMatrix(bool i, size_t nrow, size_t ncol) {
+  			mp.setMatrix(i, nrow, ncol);
+  		}
+
+  		void setMatrix(MatrixParameter& mp_) {
+  			mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
+  		}
+
+  		void setMatrix(const MatrixParameter& mp_) {
+  			mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
+  		}
+
+  		template<typename T2, typename R2>
+  		Subset(Subset<T2, R2>& other) {
+  			this -> p = other.p; this -> sz = other.sz;
+  			this -> setMatrix(other.mp);
+  		}
+
+  		Subset(T* p, size_t sz) {
   			this -> p = p; this -> sz = sz;
   			this -> setMatrix(p -> im(), p -> nr(), p -> nc());
+  		}   
+
+  		Subset(T* p, size_t sz, int idx) {
+  			this -> p = p; this -> sz = sz;
+  			this -> setMatrix(p -> im(), p -> nr(), p -> nc());
+  			resizeInd(1); setInd(0, idx);
+  		}   
+
+  		Subset(T* p, size_t sz, double idx) {
+  			this -> p = p; this -> sz = sz;
+  			this -> setMatrix(p -> im(), p -> nr(), p -> nc());
+  			resizeInd(1); setInd(0, static_cast<double>(idx));
   		}   
 
   		void resizeInd(int newSize) { ind.resize(newSize); }
@@ -630,15 +671,57 @@ namespace etr {
 	};
 
 	// A result of a caluclation is moved in obj. and p is pointing to obj 
-	template <typename T, typename SubsetCalcTrait> struct SubsetCalc : public BaseStore<T> {
-  		using TypeTrait = SubsetCalcTrait;
+	template <typename T, typename SubsetCalcTrait> struct SubsetCalc {
+			using TypeTrait = SubsetCalcTrait;
+  		using CaseTrait = SubsetCalcTrait;
   		const T obj;
   		Indices ind;
+			T* p = nullptr;
+  		size_t sz = 0;
+  		size_t capacity = 0;
+  		bool allocated = false;
+  		MatrixParameter mp;
+  		mutable signed int ref_counter = 0;
+
+  		size_t size() const { return sz; }
+  		bool im() const { return mp.im(); }
+  		size_t nc() const { return mp.nc(); }
+  		size_t nr() const { return mp.nr(); }
+  		void setMatrix(bool i, size_t nrow, size_t ncol) {
+  			mp.setMatrix(i, nrow, ncol);
+  		}
+
+  		void setMatrix(MatrixParameter& mp_) {
+  			mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
+  		}
+
+  		void setMatrix(const MatrixParameter& mp_) {
+  			mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
+  		}
+  		
+  		template<typename T2, typename R2>
+  		SubsetCalc(SubsetCalc<T2, R2>& other) {
+  			this -> p = other.p; this -> sz = other.sz;
+  			this -> setMatrix(other.mp);
+  		}
 
   		SubsetCalc(T&& obj_) : obj(obj_) {
   			this -> p = &(this -> obj);
   			this -> setMatrix(this -> p -> im(), this -> p -> nr(), this -> p -> nc());
   		}
+
+  		SubsetCalc(T* p, size_t sz, int idx) {
+  			this -> p = &(this -> obj);
+  			this -> setMatrix(this -> p -> im(), this -> p -> nr(), this -> p -> nc());
+  			resizeInd(1); setInd(0, idx);
+  		}   
+
+  		SubsetCalc(T* p, size_t sz, double idx) {
+  			this -> p = &(this -> obj);
+  			this -> setMatrix(this -> p -> im(), this -> p -> nr(), this -> p -> nc());
+  			resizeInd(1); setInd(0, static_cast<double>(idx));
+  		}
+
   		void resizeInd(int newSize) { ind.resize(newSize); }
 
   		void setInd(int idx, int val) { ind.set(idx, val); }
