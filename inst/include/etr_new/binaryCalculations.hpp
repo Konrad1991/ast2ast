@@ -12,6 +12,11 @@ struct BinaryOperation {
   const L &l;
   const R &r;
   MatrixParameter mp;
+  bool im() const { return mp.im(); }
+  size_t nc() const { return mp.nc(); }
+  size_t nr() const { return mp.nr(); }
+  BinaryOperation(const BinaryOperation& other) : l(other.l), r(other.r), mp(other.mp) {}
+  BinaryOperation(const BinaryOperation&& other) : l(std::move(other.l)), r(std::move(other.r)), mp(std::move(other.mp)) {}
   BinaryOperation(const L &l_, const R &r_) : l(l_), r(r_) {}
   template <typename LType, typename RType, binaryFct fOther,
             typename TraitOther>

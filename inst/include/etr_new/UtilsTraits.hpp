@@ -611,13 +611,10 @@ namespace etr {
   		using CaseTrait = SubsetTrait;
   		Indices ind;
 			T* p = nullptr;
-  		size_t sz = 0;
-  		size_t capacity = 0;
-  		bool allocated = false;
   		MatrixParameter mp;
   		mutable signed int ref_counter = 0;
 
-  		size_t size() const { return sz; }
+  		size_t size() const { return ind.size(); }
   		bool im() const { return mp.im(); }
   		size_t nc() const { return mp.nc(); }
   		size_t nr() const { return mp.nr(); }
@@ -634,27 +631,10 @@ namespace etr {
   		}
 
   		template<typename T2, typename R2>
-  		Subset(Subset<T2, R2>& other) {
-  			this -> p = other.p; this -> sz = other.sz;
-  			this -> setMatrix(other.mp);
+  		Subset(Vec<T2, R2>& other) {
+  			this -> p = &other.d; 
+  			this -> setMatrix(other.d.mp);
   		}
-
-  		Subset(T* p, size_t sz) {
-  			this -> p = p; this -> sz = sz;
-  			this -> setMatrix(p -> im(), p -> nr(), p -> nc());
-  		}   
-
-  		Subset(T* p, size_t sz, int idx) {
-  			this -> p = p; this -> sz = sz;
-  			this -> setMatrix(p -> im(), p -> nr(), p -> nc());
-  			resizeInd(1); setInd(0, idx);
-  		}   
-
-  		Subset(T* p, size_t sz, double idx) {
-  			this -> p = p; this -> sz = sz;
-  			this -> setMatrix(p -> im(), p -> nr(), p -> nc());
-  			resizeInd(1); setInd(0, static_cast<double>(idx));
-  		}   
 
   		void resizeInd(int newSize) { ind.resize(newSize); }
 
@@ -662,9 +642,14 @@ namespace etr {
 
   		void setPtr(const T* pOther) { this -> p = pOther; }
 
-  		T &operator[](int pos) const {
-  		  ass(this -> p != nullptr, "Subset is pointing to nothing!");
-  		  return this -> p -> operator[](ind[pos] % this -> p -> size());
+  		T &operator[](size_t pos) {
+  		  ass(p != nullptr, "Subset is pointing to nothing!");
+  		  return p -> operator[](ind[ind[pos] % ind.size()]);
+  		}
+
+  		T operator[](size_t pos) const {
+  		  ass(p != nullptr, "Subset is pointing to nothing!");
+  		  return p -> operator[](ind[ind[pos] % ind.size()]);
   		}
 
   		~Subset() {}
@@ -674,7 +659,7 @@ namespace etr {
 	template <typename T, typename SubsetCalcTrait> struct SubsetCalc {
 			using TypeTrait = SubsetCalcTrait;
   		using CaseTrait = SubsetCalcTrait;
-  		const T obj;
+  		T obj;
   		Indices ind;
 			T* p = nullptr;
   		size_t sz = 0;
@@ -698,13 +683,13 @@ namespace etr {
   		void setMatrix(const MatrixParameter& mp_) {
   			mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
   		}
-  		
-  		template<typename T2, typename R2>
-  		SubsetCalc(SubsetCalc<T2, R2>& other) {
-  			this -> p = other.p; this -> sz = other.sz;
-  			this -> setMatrix(other.mp);
-  		}
 
+  		template<typename T2, typename R2>
+  		SubsetCalc(const Vec<T2, R2>& other) : obj(std::move(other.d)) {
+  			this -> p = &obj; this -> sz = obj.size();
+  			this -> setMatrix(other.d.mp);
+  		}
+  		
   		SubsetCalc(T&& obj_) : obj(obj_) {
   			this -> p = &(this -> obj);
   			this -> setMatrix(this -> p -> im(), this -> p -> nr(), this -> p -> nc());

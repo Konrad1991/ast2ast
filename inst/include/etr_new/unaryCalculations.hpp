@@ -11,6 +11,8 @@ struct UnaryOperation {
 	using CaseTrait = Trait;
 	const I& obj;
 	MatrixParameter mp;
+	UnaryOperation(const UnaryOperation& other) : obj(other.obj), mp(other.mp) {}
+  UnaryOperation(const UnaryOperation&& other) : obj(other.obj), mp(other.mp) {}
 	UnaryOperation(const I& obj_) : obj(obj_) {}
 	template<typename IType, UnaryFct fOther, typename TraitOther>
 	UnaryOperation(const UnaryOperation<IType, fOther, TraitOther> & other) : obj(other.obj) {}

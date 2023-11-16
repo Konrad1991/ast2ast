@@ -9,7 +9,6 @@
 namespace etr {
 
 /*
-nullptr
 bool
 int
 double
@@ -17,100 +16,161 @@ vec
 vecbool
 */
 
-struct WrapperCalc {
-  SubsetCalc<BaseType> d;
-};
-
-struct Wrapper {
-  Subset<BaseType> d;
-};
-
-template<typename T>
-requires std::is_same_v<T, SubsetCalcTrait>
-inline WrapperCalc convertSubset(T& inp) {
-  return WrapperCalc(inp);
+template<typename T, typename R>
+Subset<R> convertSubset(Vec<T, R>& obj) {
+  return Subset<R, SubsetTrait>(obj);
 }
 
-template<typename T>
-requires (!std::is_same_v<T, SubsetCalcTrait>)
-inline Wrapper convertSubset(T& inp) {
-  return Wrapper(inp);
+template<typename T, typename R>
+SubsetCalc<R> convertSubset(const Vec<T, R>&& obj) {
+  return SubsetCalc<R, SubsetCalcTrait>(obj);
 }
+
+
+template<typename T, typename R>
+SubsetCalc<R> convertSubset(const Vec<T, R>& obj) {
+  return SubsetCalc<R, SubsetCalcTrait>(obj);
+}
+
 
 template<typename T2, typename R2, typename I>
-inline auto subset(const Vec<T2, R2>& vec, const I& idx) -> 
-                                                Vec<decltype(vec.d), decltype(convertSubset(vec).d)> {
-  using vecTrait = std::remove_reference<decltype(vec)>::type::TypeTrait;
-  using isVec = std::is_same<vecTrait, VectorTrait>;
-  using typeTrait = std::remove_reference<decltype(convertSubset(vec).d)>::type::TypeTrait;
-  using isSubset = std::is_same<typeTrait, SubsetTrait>;
-  using isSubsetCalc = std::is_same<typeTrait, SubsetCalcTrait>;
-
-  if constexpr(std::is_same_v<I, int>) {
-    if constexpr(isSubset::value) {
-      Subset<decltype(vec.d)> s(&vec, vec.size(), idx); 
-      Vec<decltype(vec.d), decltype(convertSubset(vec).d)> ret(s);
-      return ret;  
-    } else if constexpr(isSubsetCalc::value) {
-      SubsetCalc<decltype(vec.d)> s(&vec, vec.size(), idx); 
-      Vec<decltype(vec.d), decltype(convertSubset(vec).d)> ret(s);
-      return ret;  
-    }
-  } else if constexpr(std::is_same_v<I, double>) {
-
-  } else if constexpr(std::is_same_v<I, bool>) {
-    
-  } else if constexpr(isVec::value) {
-    if constexpr(std::is_same_v<T2, bool>) {
-
-    } else {
-
-    }
-  }
+inline auto subset(const Vec<T2, R2>&& vec, const I& idx) -> 
+                                                Vec<T2,
+                                                    SubsetCalc<decltype(convert(vec).d), SubsetCalcTrait>> {
+  return Vec<T2, decltype(convertSubset(vec))>(convertSubset(vec));
 }
+
+template<typename I>
+void calcInd(const Vec<BaseType>& vec, Indices& ind, const I& idx) {
+  if constexpr(std::is_same_v<I, bool>) {
+    if(idx) {
+      ind.resize(vec.size()); for(size_t i = 0; i < vec.size(); i++) ind[i] = i;
+      return;
+    } else {return; }
+  } else if constexpr(std::is_same_v<I, int>) {
+    ind.resize(1); ind[0] = idx - 1; return;
+  } else if constexpr(std::is_same_v<I, double>) {
+    int i = static_cast<int>(idx); ind.resize(1); ind[0] = i - 1; return;
+  } else {
+    //using vecTrait = std::remove_reference<decltype(idx)>::type::TypeTrait;
+    //using isVec = std::is_same<vecTrait, VectorTrait>;
+    //if constexpr(isVec::value) {
+    //  using whichType = std::remove_reference<decltype(idx)>::type::Type;
+    //  using isBool = std::is_same<whichType, bool>;
+    //  if constexpr (isBool::value) {
+    //  } else if constexpr(std::is_same_v<whichType, BaseType>){
+    //  } else {
+    //    static_assert(!isVec::value, "Unknown index type");  
+    //  }
+    //} else {
+    //  static_assert(!isVec::value, "Unknown index type");
+    //}
+  }
+  
+}
+
+
+template<typename I>
+inline auto subset(Vec<BaseType>& vec, const I& idx) -> Vec<BaseType,
+                                              Subset<decltype(convert(vec).d), SubsetTrait> > {
+  Subset<decltype(convert(vec).d), SubsetTrait> sub(vec);
+  calcInd(vec, sub.ind, idx);
+  return Vec<BaseType, decltype(convertSubset(vec))>(std::move(sub));
+}
+
 
 
 /*
-     [,1]      [,2]     
- [1,] "nullptr" "nullptr"
- [2,] "nullptr" "bool"   
- [3,] "nullptr" "int"    
- [4,] "nullptr" "double" 
- [5,] "nullptr" "vec"    
- [6,] "nullptr" "vecbool"
- [7,] "bool"    "nullptr"
- [8,] "bool"    "bool"   
- [9,] "bool"    "int"    
-[10,] "bool"    "double" 
-[11,] "bool"    "vec"    
-[12,] "bool"    "vecbool"
-[13,] "int"     "nullptr"
-[14,] "int"     "bool"   
-[15,] "int"     "int"    
-[16,] "int"     "double" 
-[17,] "int"     "vec"    
-[18,] "int"     "vecbool"
-[19,] "double"  "nullptr"
-[20,] "double"  "bool"   
-[21,] "double"  "int"    
-[22,] "double"  "double" 
-[23,] "double"  "vec"    
-[24,] "double"  "vecbool"
-[25,] "vec"     "nullptr"
-[26,] "vec"     "bool"   
-[27,] "vec"     "int"    
-[28,] "vec"     "double" 
-[29,] "vec"     "vec"    
-[30,] "vec"     "vecbool"
-[31,] "vecbool" "nullptr" missing
-[32,] "vecbool" "bool"   missing
-[33,] "vecbool" "int"    
-[34,] "vecbool" "double" 
-[35,] "vecbool" "vec"    
-[36,] "vecbool" "vecbool" 
+      [,1]      [,2]     
+ [1,] "bool"    "bool"   
+ [2,] "bool"    "int"    
+ [3,] "bool"    "double" 
+ [4,] "bool"    "vec"    
+ [5,] "bool"    "vecbool"
+ [6,] "int"     "bool"   
+ [7,] "int"     "int"    
+ [8,] "int"     "double" 
+ [9,] "int"     "vec"    
+[10,] "int"     "vecbool"
+[11,] "double"  "bool"   
+[12,] "double"  "int"    
+[13,] "double"  "double" 
+[14,] "double"  "vec"    
+[15,] "double"  "vecbool"
+[16,] "vec"     "bool"   
+[17,] "vec"     "int"    
+[18,] "vec"     "double" 
+[19,] "vec"     "vec"    
+[20,] "vec"     "vecbool"
+[21,] "vecbool" "bool"   
+[22,] "vecbool" "int"    
+[23,] "vecbool" "double" 
+[24,] "vecbool" "vec"    
+[25,] "vecbool" "vecbool"
 */
 
 
+
+
+/*
+inline double &at(const VEC<double> &inp, int i) {
+  i--;
+  return inp.d[i];
+}
+
+inline double &at(const VEC<double> &&inp, int i) {
+  i--;
+  return inp.d[i];
+}
+
+inline double &at(const VEC<double> &inp, double i_) {
+  int i = d2i(i_);
+  i--;
+  return inp.d[i];
+}
+
+inline double &at(const VEC<double> &&inp, double i_) {
+  int i = d2i(i_);
+  i--;
+  return inp.d[i];
+}
+
+inline double &at(const VEC<double> &inp, int r, int c) {
+
+  ass(inp.im() == true, "Input is not a matrix!");
+  r--;
+  c--;
+  return inp.d[c * inp.nr() + r];
+}
+
+inline double &at(const VEC<double> &inp, double r_, double c_) {
+
+  ass(inp.im() == true, "Input is not a matrix!");
+  int r = d2i(r_);
+  int c = d2i(c_);
+  r--;
+  c--;
+  return inp.d[c * inp.nr() + r];
+}
+
+inline double &at(const VEC<double> &&inp, int r, int c) {
+
+  ass(inp.im() == true, "Input is not a matrix!");
+  r--;
+  c--;
+  return inp.d[c * inp.nr() + r];
+}
+
+inline double &at(const VEC<double> &&inp, double r_, double c_) {
+
+  ass(inp.im() == true, "Input is not a matrix!");
+  int r = d2i(r_);
+  int c = d2i(c_);
+  r--;
+  c--;
+  return inp.d[c * inp.nr() + r];
+}
+*/
 
 };
 

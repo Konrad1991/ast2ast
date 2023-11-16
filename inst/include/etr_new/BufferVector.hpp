@@ -14,7 +14,7 @@ template <typename T, typename Trait, typename CTrait> struct Buffer : public Ba
 };
 
 template <typename T, typename R, typename Trait> struct Vec {
- 
+  using Type = T;
   using TypeTrait = Trait;
   using CaseTrait = Trait;
   R d;
@@ -67,6 +67,12 @@ template <typename T, typename R, typename Trait> struct Vec {
     }
   }
 
+  template <typename T2, typename R2, typename Trait2>
+  explicit Vec(const Vec<T2, R2, Trait2> &&other_vec) : d(std::move(other_vec.d)) {
+    using TypeTrait = Trait2;
+    using CaseTrait = Trait2;
+  }
+
   size_t size() const { return d.size(); }
   bool im() const { return d.im(); }
   size_t nc() const { return d.nc(); }
@@ -78,10 +84,20 @@ template <typename T, typename R, typename Trait> struct Vec {
   void resize(size_t newSize) { d.resize(newSize); }
 
   T& operator[](size_t idx) {
-  	return d[idx];
+    if constexpr (isSubset::value || isSubsetCalc::value) { // issue: find out why this is necessary. Maybe due to the fact that d.p is not const and set as nullptr
+      ass(d.p != nullptr, "Subset is pointing to nothing!");
+      return d.p -> operator[](d.ind[d.ind[idx] % d.ind.size()]); 
+    } else {
+      return d[idx];
+    }
   }
   T operator[](size_t idx) const {
-  	return d[idx];
+    if constexpr (isSubset::value || isSubsetCalc::value) { // issue: find out why this is necessary
+      ass(d.p != nullptr, "Subset is pointing to nothing!");
+      return d.p -> operator[](d.ind[d.ind[idx] % d.ind.size()]); 
+    } else {
+  	 return d[idx];
+    }
   }
 
   template<typename T2>
@@ -99,15 +115,23 @@ template <typename T, typename R, typename Trait> struct Vec {
   requires std::is_same_v<U, BorrowSEXP<BaseType>>
   explicit Vec(SEXP inp) : d(inp) {}
 
-  template<typename L2, typename R2 = R>
-  requires std::is_same_v<R2, SubsetTrait>
-  explicit Vec(Subset<L2, R2>& inp) : d(inp) {}
+  template<typename L2>
+  explicit Vec(Subset<L2>& inp) : d(inp) {}
 
-  template<typename L2, typename R2 = R>
-  requires std::is_same_v<R2, SubsetCalcTrait>
-  explicit Vec(SubsetCalc<L2, R2>& inp) : d(inp) {}
+  template<typename L2>
+  explicit Vec(const Subset<L2>&& inp) : d(inp) {}
 
+  template<typename L2>
+  explicit Vec(SubsetCalc<L2>& inp) : d(inp) {}
 
+  template<typename L2>
+  explicit Vec(const SubsetCalc<L2>&& inp) : d(inp) {}
+
+  template<typename L2, typename R2, binaryFct f>
+  explicit Vec(BinaryOperation<L2, R2, f>& inp) : d(inp) {}
+
+  template<typename L2, UnaryFct f>
+  explicit Vec(UnaryOperation<L2, f>& inp) : d(inp) {}
 
   friend std::ostream& operator<<(std::ostream& os, const Vec& vec) {
       os << "Vec [ ";
@@ -122,7 +146,7 @@ template <typename T, typename R, typename Trait> struct Vec {
   requires std::is_same_v<TD, double>
   Vec& operator=(const TD inp) {
     if constexpr(isSubset::value || isSubsetCalc::value) {
-      for(size_t i = 0; i < this -> size(); i++) d[i] = inp;
+      for(size_t i = 0; i < this -> size(); i++) d.p -> operator[](d.ind[d.ind[i] % d.ind.size()]) = inp; // issue: find out why this is necessary
     } else {
       d.resize(1); d[0] = inp;
     }
@@ -158,7 +182,7 @@ template <typename T, typename R, typename Trait> struct Vec {
         if(d.p -> ref_counter > 1) {
           temp.resize(other_vec.size());
           for(size_t i = 0; i < other_vec.size(); i++) temp[i] = other_vec[i];
-          d.resize(other_vec.size());
+          d.resize(other_vec.size()); // issue: needs fix for Subset class
           if constexpr (isBorrowSEXP::value) {
             if (d.todelete) {
               d.moveit(temp); 
