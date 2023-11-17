@@ -330,7 +330,7 @@ subset <- R6::R6Class("subset",
         temp <- as.character(x)
         if (length(temp) == 1L) { # temp == '' && length(temp) == 1L
           if (temp == "") {
-            return(as.symbol("nullptr"))
+            return(as.symbol("true"))
           } else {
             return(x)
           }
@@ -362,7 +362,7 @@ subset <- R6::R6Class("subset",
         }
       }
 
-      ret <- ret[ret != as.symbol("nullptr")]
+      ret <- ret[ret != as.symbol("true")]
 
       return(ret)
     },
