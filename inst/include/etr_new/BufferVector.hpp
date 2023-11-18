@@ -30,36 +30,40 @@ template <typename T, typename R, typename Trait> struct Vec {
 
   template <typename T2> Vec(T2 n) = delete;
   // move constructors
-  template <typename L2> explicit Vec(const SubsetCalc<L2> &&inp) : d(inp) {}
-  template <typename L2> explicit Vec(const Subset<L2> &&inp) : d(inp) {}
-  template <typename L2> explicit Vec(const Buffer<L2> &&inp) : d(inp) {}
+  template <typename L2> explicit Vec(const SubsetCalc<L2> &&inp) : d(inp) {d.setMatrix(inp.mp);}
+  template <typename L2> explicit Vec(const Subset<L2> &&inp) : d(inp) {d.setMatrix(inp.mp);}
+  template <typename L2> explicit Vec(const Buffer<L2> &&inp) : d(inp) {d.setMatrix(inp.mp);}
   template <typename U = R, typename T2>
     requires std::is_same_v<U, Borrow<BaseType>>
-  explicit Vec(const Borrow<T2> &&borrowed) : d(borrowed) {}
+  explicit Vec(const Borrow<T2> &&borrowed) : d(borrowed) {d.setMatrix(borrowed.mp);}
   template <typename L2, typename R2, binaryFct f, typename OperationTrait>
   explicit Vec(const BinaryOperation<L2, R2, f, OperationTrait> &&inp)
       : d(inp) {
     using TypeTrait = OperationTrait;
+    d.setMatrix(inp.m);
   }
   template <typename L2, UnaryFct f, typename OperationTrait>
   explicit Vec(UnaryOperation<L2, f, OperationTrait> &&inp) : d(inp) {
     using TypeTrait = OperationTrait;
+    d.setMatrix(inp.m);
   }
 
   // copy constructors
   template <typename L2> explicit Vec(SubsetCalc<L2> &inp) = delete;
-  template <typename L2> explicit Vec(Subset<L2> &inp) : d(inp) {}
-  template <typename L2> explicit Vec(const Buffer<L2> &inp) : d(inp) {}
+  template <typename L2> explicit Vec(Subset<L2> &inp) : d(inp) {d.setMatrix(inp.mp);}
+  template <typename L2> explicit Vec(const Buffer<L2> &inp) : d(inp) {d.setMatrix(inp.mp);}
   template <typename U = R, typename T2>
     requires std::is_same_v<U, Borrow<BaseType>>
-  explicit Vec(const Borrow<T2> &borrowed) : d(borrowed) {}
+  explicit Vec(const Borrow<T2> &borrowed) : d(borrowed) {d.setMatrix(borrowed.mp);}
   template <typename L2, typename R2, binaryFct f, typename OperationTrait>
   explicit Vec(BinaryOperation<L2, R2, f, OperationTrait> &inp) : d(inp) {
     using TypeTrait = OperationTrait;
+    d.setMatrix(inp.mp);
   }
   template <typename L2, UnaryFct f, typename OperationTrait>
   explicit Vec(UnaryOperation<L2, f, OperationTrait> &inp) : d(inp) {
     using TypeTrait = OperationTrait;
+    d.setMatrix(inp.mp);
   }
 
   // other constructors
@@ -194,8 +198,20 @@ template <typename T, typename R, typename Trait> struct Vec {
   bool im() const { return d.im(); }
   size_t nc() const { return d.nc(); }
   size_t nr() const { return d.nr(); }
-  auto begin() const { return It<T>{d.p}; }
-  auto end() const { return It<T>{d.p + this->size()}; }
+  auto begin() const { 
+    if constexpr(isSubset::value || isSubsetCalc::value) {
+      return It<T>{d.p -> p};  
+    } else {
+      return It<T>{d.p};  
+    }
+  }
+  auto end() const { 
+    if constexpr(isSubset::value || isSubsetCalc::value) {
+      return It<T>{d.p -> p + this -> size()};  
+    } else {
+      return It<T>{d.p + this->size()}; 
+    }
+  }
   T &back() const { return d.p[this->size()]; }
   void fill(T value) { d.fill(value); }
   void resize(size_t newSize) { d.resize(newSize); }

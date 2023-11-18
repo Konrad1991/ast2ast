@@ -75,6 +75,10 @@ template <typename T> struct It {
   void operator++() { ++p; }
 };
 
+struct DoubleTrait {};
+struct IntTrait {};
+struct BoolTrait {};
+
 struct BaseStoreTrait {};
 struct BufferTrait {};
 struct VectorTrait {};
@@ -720,7 +724,7 @@ template <typename T, typename SubsetTrait> struct Subset {
 
   BaseType operator[](size_t pos) const {
     ass(p != nullptr, "Subset is pointing to nothing!");
-    return this -> p->operator[](ind[pos]);
+    return this -> p->operator[](ind[pos % p -> size()]);
   }
 
   ~Subset() {}
@@ -818,14 +822,28 @@ void defineMatrix(const bool &aIM, const bool &bIM, const size_t aNrows,
   }
 }
 
+template<typename Trait = DoubleTrait>
 struct doubleWrapper {
-  double d;
+	using TypeTrait = Trait;
+  BaseType d;
 };
 
 template <typename T>
   requires std::is_same_v<T, double>
-constexpr doubleWrapper convert(const T &obj) {
-  return doubleWrapper(obj);
+constexpr doubleWrapper<DoubleTrait> convert(const T &obj) {
+  return doubleWrapper<DoubleTrait>(obj);
+}
+
+template <typename T>
+  requires std::is_same_v<T, int>
+constexpr doubleWrapper<IntTrait> convert(const T &obj) {
+  return doubleWrapper<IntTrait>(obj);
+}
+
+template <typename T>
+  requires std::is_same_v<T, bool>
+constexpr doubleWrapper<BoolTrait> convert(const T &obj) {
+  return doubleWrapper<BoolTrait>(obj);
 }
 
 template <typename T> constexpr T convert(const T &obj) {

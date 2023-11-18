@@ -1,27 +1,39 @@
-#ifndef HELPER
-#define HELPER
+#ifndef HELPER_H
+#define HELPER_H
 
 #include "BufferVector.hpp"
 
 namespace etr {
 
-inline Vec<BaseType> vector(int length) {
-  return Vec<BaseType>(length); 
+template<typename T>
+inline Vec<BaseType> vector(const T& inp) {
+  if constexpr(std::is_same_v<T, double>) {
+    return Vec<BaseType>(static_cast<size_t>(inp));
+  } else if constexpr(std::is_same_v<T, int> || std::is_same_v<T, bool>) {
+    return Vec<BaseType>(static_cast<size_t>(inp));
+  } else {
+    ass(inp.size() == 1, "invalid length argument");
+    return Vec<BaseType>(static_cast<size_t>(inp[0]));;
+  }
 }
 
-inline Vec<BaseType> vector(double inp, int length) {
-  Vec<BaseType> ret(length); ret.fill(inp);
-  return ret;
-}
-
-inline Vec<BaseType> vector(int inp, int length) {
-  Vec<BaseType> ret(length); ret.fill(static_cast<BaseType>(inp));
-  return ret;
-}
-
-inline Vec<BaseType> vector(Vec<BaseType> inp) {
-  ass(inp.size() == 1, "invalid length argument");
-  return Vec<BaseType>(static_cast<int>(inp.d[0])); 
+template<typename L, typename T>
+inline Vec<BaseType> vector(const L& s, const T& inp) {
+  size_t length = 0;
+  if constexpr(std::is_same_v<L, double> || std::is_same_v<T, int> || std::is_same_v<T, bool>) {
+    length = static_cast<size_t>(s);
+  } else {
+    ass(s.size() == 1, "invalid length argument");
+    length = s[0];
+  }
+  Vec<BaseType> ret(length);
+  if constexpr(std::is_same_v<T, double>) {
+    ret.fill(inp); return ret;
+  } else if constexpr(std::is_same_v<T, int> || std::is_same_v<T, bool>) {
+    ret.fill(static_cast<BaseType>(inp)); return ret;
+  } else {
+    ret = inp; return ret;
+  }
 }
 
 inline Vec<BaseType> matrix(int nrows, int ncols) {
@@ -50,9 +62,9 @@ template <typename... Args> inline Vec<BaseType> coca(Args &&...args) {
       [&](auto arg) {
         if constexpr (std::is_same<decltype(arg), int>::value) {
           size++;
-        } else if (std::is_same<decltype(arg), double>::value) {
+        } else if constexpr (std::is_same<decltype(arg), double>::value) {
           size++;
-        } else if (std::is_same<decltype(arg), bool>::value) {
+        } else if constexpr (std::is_same<decltype(arg), bool>::value) {
           size++;
         } else {
             size += arg.size();
@@ -82,7 +94,6 @@ template <typename... Args> inline Vec<BaseType> coca(Args &&...args) {
         }
       },
       args...);
-
   return ret;
 }
 
@@ -128,8 +139,8 @@ inline Vec<BaseType> isInfinite(const Vec<BaseType> &inp) {
 
 template<typename A, typename O>
 inline Vec<double> colon(const A& start, const O& end) {
-  using typeTraitA = std::remove_reference<decltype(start)>::type::TypeTrait;
-  using typeTraitO = std::remove_reference<decltype(end)>::type::TypeTrait;
+  using typeTraitA = std::remove_reference<decltype(convert(start))>::type::TypeTrait;
+  using typeTraitO = std::remove_reference<decltype(convert(end))>::type::TypeTrait;
   using isVecA = std::is_same<typeTraitA, VectorTrait>;
   using isVecO = std::is_same<typeTraitO, VectorTrait>;
   double s = 0.0; double e = 0.0; 
@@ -180,22 +191,23 @@ inline void print() {
 template<typename T>
 requires isBIDS<T>::value
 inline void print(const T& inp) {
-	if constexpr(std::is_same_v<T, bool>) {
-		Rcpp::Rcout << std::boolalpha << inp << std::endl;
+  if constexpr(std::is_same_v<T, bool>) {
+		Rcpp::Rcout << std::boolalpha << inp << " ";
 	} else {
 		Rcpp::Rcout << inp << std::endl;
 	}
+  Rcpp::Rcout << std::endl;
 }
 
-inline void print(const Vec<BaseType> &inp) { 
+template<typename L, typename R>
+inline void print(const Vec<L, R> &inp) { 
   if (!inp.im()) {
-      for (int i = 0; i < inp.size(); i++) {
-        Rcpp::Rcout << inp[i] << "\t";
-      }
+      for(size_t i = 0; i < inp.size(); i++) Rcpp::Rcout << inp[i] << " ";
+      Rcpp::Rcout << std::endl;
   } else {
-      for (int i = 0; i < inp.nr(); i++) {
-        for (int j = 0; j < inp.nc(); j++) {
-          Rcpp::Rcout << inp.d[j * inp.nr() + i] << "\t";
+      for (size_t i = 0; i < inp.nr(); i++) {
+        for (size_t j = 0; j < inp.nc(); j++) {
+          Rcpp::Rcout << inp[j * inp.nr() + i] << "\t";
         }
         Rcpp::Rcout << std::endl;
       }
