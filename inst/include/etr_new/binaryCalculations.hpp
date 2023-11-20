@@ -156,6 +156,32 @@ auto operator/(const L &l, const R &r)
   }
 }
 
+template <typename L, typename R>
+auto operator^(const L &l, const R &r)
+    -> Vec<double,
+           BinaryOperation<decltype(convert(l).d), decltype(convert(r).d),
+                           Pow, PowTrait>> {
+  constexpr bool isDoubleL = std::is_same_v<L, double>;
+  constexpr bool isDoubleR = std::is_same_v<R, double>;
+  if constexpr (isDoubleL && isDoubleR) {
+    return Vec<double, BinaryOperation<double, double, Pow, PowTrait>>(
+        BinaryOperation<double, double, Pow, PowTrait>(l, r));
+  } else if constexpr (!isDoubleL && isDoubleR) {
+    return Vec<double,
+               BinaryOperation<decltype(l.d), double, Pow, PowTrait>>(
+        BinaryOperation<decltype(l.d), double, Pow, PowTrait>(l.d, r));
+  } else if constexpr (isDoubleL && !isDoubleR) {
+    return Vec<double,
+               BinaryOperation<double, decltype(r.d), Pow, PowTrait>>(
+        BinaryOperation<double, decltype(r.d), Pow, PowTrait>(l, r.d));
+  } else if constexpr (!isDoubleL && !isDoubleR) {
+    return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), Pow,
+                                       PowTrait>>(
+        BinaryOperation<decltype(l.d), decltype(r.d), Pow, PowTrait>(
+            l.d, r.d));
+  }
+}
+
 } // namespace etr
 
 #endif

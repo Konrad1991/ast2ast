@@ -27,16 +27,16 @@
 ├── conversion.hpp           done                                                
 ├── distri.hpp  
 ├── divide_ad.hpp            done                                  
-├── exponent.hpp
+├── exponent.hpp						 done
 ├── header.hpp               done            
 ├── interpolation.hpp				 done
 ├── mul_ad.hpp               done            
 ├── pointer_storage.hpp      done
 ├── print.hpp                done          
-├── subset_ad.hpp
+├── subset_ad.hpp						 done
 ├── subtract_ad.hpp          done
 ├── traits.hpp               done
-├── trigo_ad.hpp             
+├── trigo_ad.hpp             done
 ├── util.hpp                 done          
 └── vec.hpp                  done
 */
@@ -95,11 +95,42 @@ struct PlusTrait {};
 struct MinusTrait {};
 struct TimesTrait {};
 struct DivideTrait {};
+struct PowTrait {};
+
+struct SinusTrait {};
+struct ASinusTrait {};
+struct SinusHTrait {};
+struct CosinusTrait {};
+struct ACosinusTrait {};
+struct CosinusHTrait {};
+struct TangensTrait {};
+struct ATangensTrait {};
+struct TangensHTrait {};
+struct ExpTrait {};
+struct LogTrait {};
+struct SquareRootTrait {};
 
 template <typename T>
 struct isBIDS { 
     static constexpr bool value = std::is_same_v<T, bool> || std::is_same_v<T, int> ||
                                   std::is_same_v<T, double> || std::is_same_v<T, const char*>;
+};
+
+template <typename R>
+concept IsVecDouble = requires {
+    typename R::TypeTrait;
+    typename R::Type;
+    requires std::is_same_v<typename R::TypeTrait, VectorTrait>;
+    requires std::is_same_v<typename R::Type, BaseType>;
+};
+
+
+template <typename R>
+concept IsVecBool = requires {
+    typename R::TypeTrait;
+    typename R::Type;
+    requires std::is_same_v<typename R::TypeTrait, VectorTrait>;
+    requires std::is_same_v<typename R::Type, bool>;
 };
 
 inline void ass(bool inp, std::string message) {
@@ -161,9 +192,21 @@ double Addition(double l, double r) { return l + r; }
 double Minus(double l, double r) { return l - r; }
 double Times(double l, double r) { return l * r; }
 double Divide(double l, double r) { return l / r; }
+double Pow(double l, double r) { return std::pow(l, r); }
 typedef double (*binaryFct)(double, double);
-struct SinusTrait {};
+
 double Sinus(double obj) { return sin(obj); }
+double SinusH(double obj) { return sinh(obj); }
+double ASinus(double obj) { return asin(obj); }
+double Cosinus(double obj) { return cos(obj); }
+double CosinusH(double obj) { return cosh(obj); }
+double ACosinus(double obj) { return acos(obj); }
+double Tangens(double obj) { return tan(obj); }
+double TangensH(double obj) { return tanh(obj); }
+double ATangens(double obj) { return atan(obj); }
+double Exp(double obj) { return exp(obj); }
+double Log(double obj) { return log(obj); }
+double SquareRoot(double obj) { return sqrt(obj); }
 typedef double (*UnaryFct)(double);
 
 template <typename T, typename BaseTrait = BaseStoreTrait> struct BaseStore;
