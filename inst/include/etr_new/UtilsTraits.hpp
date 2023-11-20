@@ -68,6 +68,12 @@ inline int d2i(double inp) { return static_cast<int>(inp); }
 
 inline double i2d(int inp) { return static_cast<double>(inp); }
 
+inline bool d2b(double inp) { return static_cast<bool>(inp); }
+
+inline bool i2b(double inp) { return static_cast<bool>(inp); }
+
+inline double b2d(bool inp) { return static_cast<double>(inp); }
+
 template <typename T> struct It {
   T *p;
   T &operator*() { return *p; }
@@ -78,6 +84,7 @@ template <typename T> struct It {
 struct DoubleTrait {};
 struct IntTrait {};
 struct BoolTrait {};
+struct ComparisonTrait {};
 
 struct BaseStoreTrait {};
 struct BufferTrait {};
@@ -96,6 +103,7 @@ struct MinusTrait {};
 struct TimesTrait {};
 struct DivideTrait {};
 struct PowTrait {};
+struct CompareDoubleTrait {};
 
 struct SinusTrait {};
 struct ASinusTrait {};
@@ -187,25 +195,33 @@ template <typename T> constexpr T convert(const T &obj) {
   return std::forward(obj);
 }
 
-double Addition(double l, double r) { return l + r; }
-double Minus(double l, double r) { return l - r; }
-double Times(double l, double r) { return l * r; }
-double Divide(double l, double r) { return l / r; }
-double Pow(double l, double r) { return std::pow(l, r); }
+inline double Addition(double l, double r) { return l + r; }
+inline double Minus(double l, double r) { return l - r; }
+inline double Times(double l, double r) { return l * r; }
+inline double Divide(double l, double r) { return l / r; }
+inline double Pow(double l, double r) { return std::pow(l, r); }
 typedef double (*binaryFct)(double, double);
 
-double Sinus(double obj) { return sin(obj); }
-double SinusH(double obj) { return sinh(obj); }
-double ASinus(double obj) { return asin(obj); }
-double Cosinus(double obj) { return cos(obj); }
-double CosinusH(double obj) { return cosh(obj); }
-double ACosinus(double obj) { return acos(obj); }
-double Tangens(double obj) { return tan(obj); }
-double TangensH(double obj) { return tanh(obj); }
-double ATangens(double obj) { return atan(obj); }
-double Exp(double obj) { return exp(obj); }
-double Log(double obj) { return log(obj); }
-double SquareRoot(double obj) { return sqrt(obj); }
+inline double Sinus(double obj) { return sin(obj); }
+inline double SinusH(double obj) { return sinh(obj); }
+inline double ASinus(double obj) { return asin(obj); }
+inline double Cosinus(double obj) { return cos(obj); }
+inline double CosinusH(double obj) { return cosh(obj); }
+inline double ACosinus(double obj) { return acos(obj); }
+inline double Tangens(double obj) { return tan(obj); }
+inline double TangensH(double obj) { return tanh(obj); }
+inline double ATangens(double obj) { return atan(obj); }
+inline double Exp(double obj) { return exp(obj); }
+inline double Log(double obj) { return log(obj); }
+inline double SquareRoot(double obj) { return sqrt(obj); }
+inline double CompareDouble(double a, double b) { 
+	if(fabs(a - b) < 1E-3) {
+		return 1.0;
+  } else {
+   	return 0.0;
+  }
+}
+
 typedef double (*UnaryFct)(double);
 
 template <typename T, typename BaseTrait = BaseStoreTrait> struct BaseStore;

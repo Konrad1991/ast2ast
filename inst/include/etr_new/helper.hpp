@@ -214,7 +214,7 @@ inline void print(const char* inp) {
 template<typename L, typename R>
 inline void print(const Vec<L, R> &inp) { 
   if (!inp.im()) {
-      for(size_t i = 0; i < inp.size(); i++) Rcpp::Rcout << inp[i] << " ";
+      for(size_t i = 0; i < inp.size(); i++) Rcpp::Rcout << std::boolalpha << inp[i] << " ";
       Rcpp::Rcout << std::endl;
   } else {
       for (size_t i = 0; i < inp.nr(); i++) {

@@ -235,6 +235,11 @@ template <typename T, typename R, typename Trait> struct Vec {
     return *this;
   }
 
+  operator bool() const {
+    ass(this -> size() == 1, "Error in if: the condition has length > 1");
+    return static_cast<bool>(d[0]);
+  }
+
   size_t size() const { return d.size(); }
   bool im() const { return d.im(); }
   size_t nc() const { return d.nc(); }

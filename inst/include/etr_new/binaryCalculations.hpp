@@ -8,6 +8,7 @@ namespace etr {
 template <typename L, typename R, binaryFct f, typename Trait = BinaryTrait,
           typename CTrait = BinaryTrait>
 struct BinaryOperation {
+  using Type = DoubleTrait;
   using TypeTrait = Trait;
   using CaseTrait = BinaryTrait;
   const L &l;
@@ -71,6 +72,7 @@ auto operator+(const L &l, const R &r)
   constexpr bool isDoubleL = std::is_same_v<L, double>;
   constexpr bool isDoubleR = std::is_same_v<R, double>;
   if constexpr (isDoubleL && isDoubleR) {
+    // issue: matrix definition is lacking
     return Vec<double, BinaryOperation<double, double, Addition, PlusTrait>>(
         BinaryOperation<double, double, Addition, PlusTrait>(l, r));
   } else if constexpr (!isDoubleL && isDoubleR) {
@@ -190,6 +192,33 @@ auto operator^(const L &l, const R &r)
             l.d, r.d));
   }
 }
+
+template <typename L, typename R>
+auto operator==(const L &l, const R &r)
+    -> Vec<double,
+           BinaryOperation<decltype(convert(l).d), decltype(convert(r).d),
+                           CompareDouble, CompareDoubleTrait>> {
+  constexpr bool isDoubleL = std::is_same_v<L, double>;
+  constexpr bool isDoubleR = std::is_same_v<R, double>;
+  if constexpr (isDoubleL && isDoubleR) {
+    return Vec<double, BinaryOperation<double, double, CompareDouble, CompareDoubleTrait>>(
+        BinaryOperation<double, double, CompareDouble, CompareDoubleTrait>(l, r));
+  } else if constexpr (!isDoubleL && isDoubleR) {
+    return Vec<double,
+               BinaryOperation<decltype(l.d), double, CompareDouble, CompareDoubleTrait>>(
+        BinaryOperation<decltype(l.d), double, CompareDouble, CompareDoubleTrait>(l.d, r));
+  } else if constexpr (isDoubleL && !isDoubleR) {
+    return Vec<double,
+               BinaryOperation<double, decltype(r.d), CompareDouble, CompareDoubleTrait>>(
+        BinaryOperation<double, decltype(r.d), CompareDouble, CompareDoubleTrait>(l, r.d));
+  } else if constexpr (!isDoubleL && !isDoubleR) {
+    return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), CompareDouble,
+                                       CompareDoubleTrait>>(
+        BinaryOperation<decltype(l.d), decltype(r.d), CompareDouble, CompareDoubleTrait>(
+            l.d, r.d));
+  }
+}
+
 
 } // namespace etr
 
