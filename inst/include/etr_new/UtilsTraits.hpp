@@ -111,9 +111,8 @@ struct LogTrait {};
 struct SquareRootTrait {};
 
 template <typename T>
-struct isBIDS { 
-    static constexpr bool value = std::is_same_v<T, bool> || std::is_same_v<T, int> ||
-                                  std::is_same_v<T, double> || std::is_same_v<T, const char*>;
+concept isBID = requires {
+	requires std::is_same_v<T, bool> || std::is_same_v<T, int> || std::is_same_v<T, double>;
 };
 
 template <typename R>
@@ -379,6 +378,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
     this->p = temporary;
     this->sz = tempSize;
     this->capacity = tempCapacity;
+    allocated = true;
     return *this;
   }
   auto begin() const { return It<T>{p}; }

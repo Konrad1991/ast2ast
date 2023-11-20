@@ -157,7 +157,7 @@ inline Vec<double> colon(const A& start, const O& end) {
   } else {
   	s = static_cast<BaseType>(start); e = static_cast<BaseType>(end);
   }
-  Vec<BaseType> ret(static_cast<int>(end - start + 1));
+  Vec<BaseType> ret(static_cast<int>(e - s + 1));
   for (int i = 0; i < ret.size(); i++) {
     ret[i] = start + static_cast<double>(i);
   }
@@ -170,7 +170,10 @@ inline int length(int inp) { return 1; }
 
 inline int length(bool inp) { return 1; }
 
-template <typename T> inline int length(const Vec<T> &inp) { return inp.size(); }
+inline int length(const Vec<BaseType> &inp) { return inp.size(); }
+
+template<typename L, typename R>
+inline int length(const Vec<L, R>& inp) { return inp.size(); }
 
 template <typename T> inline Vec<BaseType> dim(const Vec<T> &inp) {
 	using typeTraitInp = std::remove_reference<decltype(inp)>::type::TypeTrait;
@@ -189,13 +192,22 @@ inline void print() {
 }
 
 template<typename T>
-requires isBIDS<T>::value
+requires isBID<T> 
 inline void print(const T& inp) {
   if constexpr(std::is_same_v<T, bool>) {
 		Rcpp::Rcout << std::boolalpha << inp << " ";
 	} else {
 		Rcpp::Rcout << inp << std::endl;
 	}
+  Rcpp::Rcout << std::endl;
+}
+
+inline void print(const char* inp) {
+  if constexpr(std::is_same_v<T, bool>) {
+    Rcpp::Rcout << inp << " ";
+  } else {
+    Rcpp::Rcout << inp << std::endl;
+  }
   Rcpp::Rcout << std::endl;
 }
 

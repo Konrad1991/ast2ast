@@ -40,12 +40,12 @@ template <typename T, typename R, typename Trait> struct Vec {
   explicit Vec(const BinaryOperation<L2, R2, f, OperationTrait> &&inp)
       : d(inp) {
     using TypeTrait = OperationTrait;
-    d.setMatrix(inp.m);
+    d.setMatrix(inp.mp);
   }
   template <typename L2, UnaryFct f, typename OperationTrait>
   explicit Vec(UnaryOperation<L2, f, OperationTrait> &&inp) : d(inp) {
     using TypeTrait = OperationTrait;
-    d.setMatrix(inp.m);
+    d.setMatrix(inp.mp);
   }
 
   // copy constructors
@@ -114,7 +114,7 @@ template <typename T, typename R, typename Trait> struct Vec {
   T operator[](size_t idx) const { return d[idx]; }
 
   template <typename TD>
-    requires std::is_same_v<TD, double>
+    requires std::is_same_v<TD, BaseType>
   Vec &operator=(const TD inp) {
     static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
     static_assert(!isBinaryOP::value, "Cannot assign to binary calculation");
@@ -131,7 +131,43 @@ template <typename T, typename R, typename Trait> struct Vec {
     return *this;
   }
 
-  Vec &operator=(Vec<double> &other) {
+   template <typename TD>
+    requires std::is_same_v<TD, int>
+  Vec &operator=(const TD inp) {
+    static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
+    static_assert(!isBinaryOP::value, "Cannot assign to binary calculation");
+    static_assert(!isSubsetCalc::value,
+                  "Cannot assign to subset of a calculation");
+    if constexpr (isSubset::value) {
+      for (size_t i = 0; i < d.ind.size(); i++) {
+        d[i] = static_cast<BaseType>(inp);
+      }
+    } else {
+      d.resize(1);
+      d[0] = static_cast<BaseType>(inp);
+    }
+    return *this;
+  }
+
+  template <typename TD>
+    requires std::is_same_v<TD, bool>
+  Vec &operator=(const TD inp) {
+    static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
+    static_assert(!isBinaryOP::value, "Cannot assign to binary calculation");
+    static_assert(!isSubsetCalc::value,
+                  "Cannot assign to subset of a calculation");
+    if constexpr (isSubset::value) {
+      for (size_t i = 0; i < d.ind.size(); i++) {
+        d[i] = static_cast<BaseType>(inp);
+      }
+    } else {
+      d.resize(1);
+      d[0] = static_cast<BaseType>(inp);
+    }
+    return *this;
+  }
+
+  Vec &operator=(Vec<BaseType> &other) {
     static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
     static_assert(!isBinaryOP::value, "Cannot assign to binary calculation");
     if constexpr (isSubset::value) {
@@ -191,6 +227,11 @@ template <typename T, typename R, typename Trait> struct Vec {
           d[i] = temp[i];
       }
     }
+    return *this;
+  }
+
+  Vec& operator=(SEXP s) {
+    d(s);
     return *this;
   }
 

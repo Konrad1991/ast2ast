@@ -34,6 +34,15 @@ struct UnaryOperation {
       return obj.size();
     }
   }
+   void setMatrix(bool i, size_t nrow, size_t ncol) {
+    mp.setMatrix(i, nrow, ncol);
+  }
+  void setMatrix(MatrixParameter &mp_) {
+    mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
+  }
+  void setMatrix(const MatrixParameter &mp_) {
+    mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
+  }
 };
 
 template <typename T>
