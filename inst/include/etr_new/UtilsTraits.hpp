@@ -104,6 +104,11 @@ struct TimesTrait {};
 struct DivideTrait {};
 struct PowTrait {};
 struct CompareDoubleTrait {};
+struct SmallerTrait {};
+struct SmallerEqualTrait {};
+struct LargerTrait {};
+struct LargerEqualTrait {};
+struct UnEqualTrait {};
 
 struct SinusTrait {};
 struct ASinusTrait {};
@@ -216,6 +221,41 @@ inline double Log(double obj) { return log(obj); }
 inline double SquareRoot(double obj) { return sqrt(obj); }
 inline double CompareDouble(double a, double b) { 
 	if(fabs(a - b) < 1E-3) {
+		return 1.0;
+  } else {
+   	return 0.0;
+  }
+}
+inline double Smaller(double a, double b) { 
+	if(a < b) {
+		return 1.0;
+  } else {
+   	return 0.0;
+  }
+}
+inline double SmallerEqual(double a, double b) { 
+	if(a <= b) {
+		return 1.0;
+  } else {
+   	return 0.0;
+  }
+}
+inline double Larger(double a, double b) { 
+	if(a > b) {
+		return 1.0;
+  } else {
+   	return 0.0;
+  }
+}
+inline double LargerEqual(double a, double b) { 
+	if(a >= b) {
+		return 1.0;
+  } else {
+   	return 0.0;
+  }
+}
+inline double UnEqual(double a, double b) { 
+	if(fabs(a - b) > 1E-3) {
 		return 1.0;
   } else {
    	return 0.0;
