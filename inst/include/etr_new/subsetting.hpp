@@ -88,6 +88,16 @@ inline auto subset(Vec<BaseType> &vec, const I &idx)
     -> Vec<BaseType, Subset<decltype(convert(vec).d), SubsetTrait>> {
   Subset<decltype(convert(vec).d), SubsetTrait> sub(vec);
   calcInd(vec, sub.ind, idx);
+  sub.setMatrix(false, 0, 0);
+  return Vec<BaseType, decltype(convertSubset(vec))>(std::move(sub));
+}
+
+template <typename T, typename R, typename I>
+inline auto subset(Vec<T, R> &vec, const I &idx)
+    -> Vec<BaseType, Subset<decltype(convert(vec).d), SubsetTrait>> {
+  Subset<decltype(convert(vec).d), SubsetTrait> sub(vec);
+  calcInd(vec, sub.ind, idx);
+  sub.setMatrix(false, 0, 0);
   return Vec<BaseType, decltype(convertSubset(vec))>(std::move(sub));
 }
 

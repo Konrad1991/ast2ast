@@ -129,6 +129,43 @@ struct MatrixParameter {
   }
 };
 
+template<typename Trait = DoubleTrait>
+struct doubleWrapper {
+	using TypeTrait = Trait;
+  BaseType d;
+};
+
+template <typename T>
+  requires std::is_same_v<T, double>
+constexpr doubleWrapper<DoubleTrait> convert(const T &obj) {
+  return doubleWrapper<DoubleTrait>(obj);
+}
+
+template <typename T>
+  requires std::is_same_v<T, int>
+constexpr doubleWrapper<IntTrait> convert(const T &obj) {
+  return doubleWrapper<IntTrait>(obj);
+}
+
+template <typename T>
+  requires std::is_same_v<T, bool>
+constexpr doubleWrapper<BoolTrait> convert(const T &obj) {
+  return doubleWrapper<BoolTrait>(obj);
+}
+
+template <typename T> constexpr T convert(const T &obj) {
+  return std::forward(obj);
+}
+
+double Addition(double l, double r) { return l + r; }
+double Minus(double l, double r) { return l - r; }
+double Times(double l, double r) { return l * r; }
+double Divide(double l, double r) { return l / r; }
+typedef double (*binaryFct)(double, double);
+struct SinusTrait {};
+double Sinus(double obj) { return sin(obj); }
+typedef double (*UnaryFct)(double);
+
 template <typename T, typename BaseTrait = BaseStoreTrait> struct BaseStore;
 template <typename T = double, typename BorrowSEXPTrait = BorrowSEXPTrait>
 struct BorrowSEXP;
@@ -341,6 +378,71 @@ template <typename T, typename BaseTrait> struct BaseStore {
     return os;
   }
 };
+
+struct Indices : public std::vector<size_t> {};
+
+// Points to a Variable and stores indicces in ind
+template <typename T, typename SubsetTrait> struct Subset {
+  using Type = T;
+  using TypeTrait = SubsetTrait;
+  using CaseTrait = SubsetTrait;
+  Indices ind;
+  T *p = nullptr;
+  MatrixParameter mp;
+  mutable signed int ref_counter = 0;
+
+  size_t size() const { return ind.size(); }
+  bool im() const { return mp.im(); }
+  size_t nc() const { return mp.nc(); }
+  size_t nr() const { return mp.nr(); }
+  void setMatrix(bool i, size_t nrow, size_t ncol) {
+    mp.setMatrix(i, nrow, ncol);
+  }
+  void setMatrix(MatrixParameter &mp_) {
+    mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
+  }
+  void setMatrix(const MatrixParameter &mp_) {
+    mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
+  }
+  void resize(size_t newSize) { p -> resize(newSize); }
+
+  Subset(const Subset& other) {
+  	this->p = other.p;
+    this->setMatrix(other.mp);
+    this -> ind = other.ind;
+  }
+  Subset(const Subset&& other) {
+  	this->p = other.p;
+    this->setMatrix(other.mp);
+    this -> ind = other.ind;
+  }
+  template <typename T2, typename R2> Subset(Vec<T2, R2> &other) {
+    this->p = &other.d;
+  }
+  Subset(SEXP) = delete;
+  Subset(size_t i) = delete;
+  Subset(int i) = delete;
+  Subset() = delete;
+  Subset(size_t r, size_t c) = delete;
+  Subset(size_t r, size_t c, const double value) = delete;
+
+  void resizeInd(int newSize) { ind.resize(newSize); }
+  void setInd(int idx, int val) { ind[idx] = val; }
+  void setPtr(const T *pOther) { this->p = pOther; }
+
+  BaseType &operator[](size_t pos) {
+    ass(this -> p != nullptr, "Subset is pointing to nothing!");
+    return this -> p->operator[](ind[pos % p -> size()]);
+  }
+
+  BaseType operator[](size_t pos) const {
+    ass(p != nullptr, "Subset is pointing to nothing!");
+    return this -> p->operator[](ind[pos % p -> size()]);
+  }
+
+  ~Subset() {}
+};
+
 
 // Points to a Variable and stores size
 template <typename T, typename BorrowTrait> struct Borrow {
@@ -665,71 +767,6 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
   }
 };
 
-struct Indices : public std::vector<size_t> {};
-
-// Points to a Variable and stores indicces in ind
-template <typename T, typename SubsetTrait> struct Subset {
-  using Type = T;
-  using TypeTrait = SubsetTrait;
-  using CaseTrait = SubsetTrait;
-  Indices ind;
-  T *p = nullptr;
-  MatrixParameter mp;
-  mutable signed int ref_counter = 0;
-
-  size_t size() const { return ind.size(); }
-  bool im() const { return mp.im(); }
-  size_t nc() const { return mp.nc(); }
-  size_t nr() const { return mp.nr(); }
-  void setMatrix(bool i, size_t nrow, size_t ncol) {
-    mp.setMatrix(i, nrow, ncol);
-  }
-  void setMatrix(MatrixParameter &mp_) {
-    mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
-  }
-  void setMatrix(const MatrixParameter &mp_) {
-    mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
-  }
-  void resize(size_t newSize) { p -> resize(newSize); }
-
-  Subset(const Subset& other) {
-  	this->p = other.p;
-    this->setMatrix(other.mp);
-    this -> ind = other.ind;
-  }
-  Subset(const Subset&& other) {
-  	this->p = other.p;
-    this->setMatrix(other.mp);
-    this -> ind = other.ind;
-  }
-  template <typename T2, typename R2> Subset(Vec<T2, R2> &other) {
-    this->p = &other.d;
-    this->setMatrix(other.d.mp);
-  }
-  Subset(SEXP) = delete;
-  Subset(size_t i) = delete;
-  Subset(int i) = delete;
-  Subset() = delete;
-  Subset(size_t r, size_t c) = delete;
-  Subset(size_t r, size_t c, const double value) = delete;
-
-  void resizeInd(int newSize) { ind.resize(newSize); }
-  void setInd(int idx, int val) { ind[idx] = val; }
-  void setPtr(const T *pOther) { this->p = pOther; }
-
-  BaseType &operator[](size_t pos) {
-    ass(this -> p != nullptr, "Subset is pointing to nothing!");
-    return this -> p->operator[](ind[pos % p -> size()]);
-  }
-
-  BaseType operator[](size_t pos) const {
-    ass(p != nullptr, "Subset is pointing to nothing!");
-    return this -> p->operator[](ind[pos % p -> size()]);
-  }
-
-  ~Subset() {}
-};
-
 // A result of a caluclation is moved in obj. and p is pointing to obj
 template <typename T, typename SubsetCalcTrait> struct SubsetCalc {
   using Type = T;
@@ -764,7 +801,6 @@ template <typename T, typename SubsetCalcTrait> struct SubsetCalc {
   SubsetCalc(const Vec<T2, R2> &other) : obj(std::move(other.d)) {
     this->p = &obj;
     this->sz = obj.size();
-    this->setMatrix(other.d.mp);
   }
   SubsetCalc(SEXP) = delete;
   SubsetCalc(size_t i) = delete;
@@ -821,43 +857,6 @@ void defineMatrix(const bool &aIM, const bool &bIM, const size_t aNrows,
     }
   }
 }
-
-template<typename Trait = DoubleTrait>
-struct doubleWrapper {
-	using TypeTrait = Trait;
-  BaseType d;
-};
-
-template <typename T>
-  requires std::is_same_v<T, double>
-constexpr doubleWrapper<DoubleTrait> convert(const T &obj) {
-  return doubleWrapper<DoubleTrait>(obj);
-}
-
-template <typename T>
-  requires std::is_same_v<T, int>
-constexpr doubleWrapper<IntTrait> convert(const T &obj) {
-  return doubleWrapper<IntTrait>(obj);
-}
-
-template <typename T>
-  requires std::is_same_v<T, bool>
-constexpr doubleWrapper<BoolTrait> convert(const T &obj) {
-  return doubleWrapper<BoolTrait>(obj);
-}
-
-template <typename T> constexpr T convert(const T &obj) {
-  return std::forward(obj);
-}
-
-double Addition(double l, double r) { return l + r; }
-double Minus(double l, double r) { return l - r; }
-double Times(double l, double r) { return l * r; }
-double Divide(double l, double r) { return l / r; }
-typedef double (*binaryFct)(double, double);
-struct SinusTrait {};
-double Sinus(double obj) { return sin(obj); }
-typedef double (*UnaryFct)(double);
 
 } // namespace etr
 
