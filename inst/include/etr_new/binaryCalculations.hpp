@@ -21,7 +21,7 @@ struct BinaryOperation {
       : l(other.l), r(other.r), mp(other.mp) {}
   BinaryOperation(const BinaryOperation &&other)
       : l(std::move(other.l)), r(std::move(other.r)), mp(std::move(other.mp)) {}
-  BinaryOperation(const L &l_, const R &r_) : l(l_), r(r_) {}
+  BinaryOperation(const L &l_, const R &r_, const MatrixParameter& mp_) : l(l_), r(r_), mp(mp_) {}
   template <typename LType, typename RType, binaryFct fOther,
             typename TraitOther>
   BinaryOperation(const BinaryOperation<LType, RType, fOther, TraitOther>
@@ -72,22 +72,25 @@ auto operator+(const L &l, const R &r)
   constexpr bool isDoubleL = std::is_same_v<L, double>;
   constexpr bool isDoubleR = std::is_same_v<R, double>;
   if constexpr (isDoubleL && isDoubleR) {
-    // issue: matrix definition is lacking
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<double, double, Addition, PlusTrait>>(
-        BinaryOperation<double, double, Addition, PlusTrait>(l, r));
+        BinaryOperation<double, double, Addition, PlusTrait>(l, r, mp));
   } else if constexpr (!isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<decltype(l.d), double, Addition, PlusTrait>>(
-        BinaryOperation<decltype(l.d), double, Addition, PlusTrait>(l.d, r));
+        BinaryOperation<decltype(l.d), double, Addition, PlusTrait>(l.d, r, mp));
   } else if constexpr (isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<double, decltype(r.d), Addition, PlusTrait>>(
-        BinaryOperation<double, decltype(r.d), Addition, PlusTrait>(l, r.d));
+        BinaryOperation<double, decltype(r.d), Addition, PlusTrait>(l, r.d, mp));
   } else if constexpr (!isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), Addition,
                                        PlusTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), Addition, PlusTrait>(
-            l.d, r.d));
+            l.d, r.d, mp));
   }
 }
 
@@ -98,21 +101,25 @@ auto operator-(const L &l, const R &r)
   constexpr bool isDoubleL = std::is_same_v<L, double>;
   constexpr bool isDoubleR = std::is_same_v<R, double>;
   if constexpr (isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<double, double, Minus, MinusTrait>>(
-        BinaryOperation<double, double, Minus, MinusTrait>(l, r));
+        BinaryOperation<double, double, Minus, MinusTrait>(l, r, mp));
   } else if constexpr (!isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<decltype(l.d), double, Minus, MinusTrait>>(
-        BinaryOperation<decltype(l.d), double, Minus, MinusTrait>(l.d, r));
+        BinaryOperation<decltype(l.d), double, Minus, MinusTrait>(l.d, r, mp));
   } else if constexpr (isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<double, decltype(r.d), Minus, MinusTrait>>(
-        BinaryOperation<double, decltype(r.d), Minus, MinusTrait>(l, r.d));
+        BinaryOperation<double, decltype(r.d), Minus, MinusTrait>(l, r.d, mp));
   } else if constexpr (!isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), Minus,
                                        MinusTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), Minus, MinusTrait>(l.d,
-                                                                         r.d));
+                                                                         r.d, mp));
   }
 }
 
@@ -123,21 +130,25 @@ auto operator*(const L &l, const R &r)
   constexpr bool isDoubleL = std::is_same_v<L, double>;
   constexpr bool isDoubleR = std::is_same_v<R, double>;
   if constexpr (isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<double, double, Times, TimesTrait>>(
-        BinaryOperation<double, double, Times, TimesTrait>(l, r));
+        BinaryOperation<double, double, Times, TimesTrait>(l, r, mp));
   } else if constexpr (!isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<decltype(l.d), double, Times, TimesTrait>>(
-        BinaryOperation<decltype(l.d), double, Times, TimesTrait>(l.d, r));
+        BinaryOperation<decltype(l.d), double, Times, TimesTrait>(l.d, r, mp));
   } else if constexpr (isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<double, decltype(r.d), Times, TimesTrait>>(
-        BinaryOperation<double, decltype(r.d), Times, TimesTrait>(l, r.d));
+        BinaryOperation<double, decltype(r.d), Times, TimesTrait>(l, r.d, mp));
   } else if constexpr (!isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), Times,
                                        TimesTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), Times, TimesTrait>(l.d,
-                                                                         r.d));
+                                                                         r.d, mp));
   }
 }
 
@@ -149,21 +160,25 @@ auto operator/(const L &l, const R &r)
   constexpr bool isDoubleL = std::is_same_v<L, double>;
   constexpr bool isDoubleR = std::is_same_v<R, double>;
   if constexpr (isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<double, double, Divide, DivideTrait>>(
-        BinaryOperation<double, double, Divide, DivideTrait>(l, r));
+        BinaryOperation<double, double, Divide, DivideTrait>(l, r, mp));
   } else if constexpr (!isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<decltype(l.d), double, Divide, DivideTrait>>(
-        BinaryOperation<decltype(l.d), double, Divide, DivideTrait>(l.d, r));
+        BinaryOperation<decltype(l.d), double, Divide, DivideTrait>(l.d, r, mp));
   } else if constexpr (isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<double, decltype(r.d), Divide, DivideTrait>>(
-        BinaryOperation<double, decltype(r.d), Divide, DivideTrait>(l, r.d));
+        BinaryOperation<double, decltype(r.d), Divide, DivideTrait>(l, r.d, mp));
   } else if constexpr (!isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), Divide,
                                        DivideTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), Divide, DivideTrait>(
-            l.d, r.d));
+            l.d, r.d, mp));
   }
 }
 
@@ -175,21 +190,25 @@ auto operator^(const L &l, const R &r)
   constexpr bool isDoubleL = std::is_same_v<L, double>;
   constexpr bool isDoubleR = std::is_same_v<R, double>;
   if constexpr (isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<double, double, Pow, PowTrait>>(
-        BinaryOperation<double, double, Pow, PowTrait>(l, r));
+        BinaryOperation<double, double, Pow, PowTrait>(l, r, mp));
   } else if constexpr (!isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<decltype(l.d), double, Pow, PowTrait>>(
-        BinaryOperation<decltype(l.d), double, Pow, PowTrait>(l.d, r));
+        BinaryOperation<decltype(l.d), double, Pow, PowTrait>(l.d, r, mp));
   } else if constexpr (isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<double, decltype(r.d), Pow, PowTrait>>(
-        BinaryOperation<double, decltype(r.d), Pow, PowTrait>(l, r.d));
+        BinaryOperation<double, decltype(r.d), Pow, PowTrait>(l, r.d, mp));
   } else if constexpr (!isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), Pow,
                                        PowTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), Pow, PowTrait>(
-            l.d, r.d));
+            l.d, r.d, mp));
   }
 }
 
@@ -201,21 +220,25 @@ auto operator==(const L &l, const R &r)
   constexpr bool isDoubleL = std::is_same_v<L, double>;
   constexpr bool isDoubleR = std::is_same_v<R, double>;
   if constexpr (isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<double, double, Equal, EqualTrait>>(
-        BinaryOperation<double, double, Equal, EqualTrait>(l, r));
+        BinaryOperation<double, double, Equal, EqualTrait>(l, r, mp));
   } else if constexpr (!isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<decltype(l.d), double, Equal, EqualTrait>>(
-        BinaryOperation<decltype(l.d), double, Equal, EqualTrait>(l.d, r));
+        BinaryOperation<decltype(l.d), double, Equal, EqualTrait>(l.d, r, mp));
   } else if constexpr (isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<double, decltype(r.d), Equal, EqualTrait>>(
-        BinaryOperation<double, decltype(r.d), Equal, EqualTrait>(l, r.d));
+        BinaryOperation<double, decltype(r.d), Equal, EqualTrait>(l, r.d, mp));
   } else if constexpr (!isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), Equal,
                                        EqualTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), Equal, EqualTrait>(
-            l.d, r.d));
+            l.d, r.d, mp));
   }
 }
 
@@ -227,21 +250,25 @@ auto operator!=(const L &l, const R &r)
   constexpr bool isDoubleL = std::is_same_v<L, double>;
   constexpr bool isDoubleR = std::is_same_v<R, double>;
   if constexpr (isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<double, double, UnEqual, UnEqualTrait>>(
-        BinaryOperation<double, double, UnEqual, UnEqualTrait>(l, r));
+        BinaryOperation<double, double, UnEqual, UnEqualTrait>(l, r, mp));
   } else if constexpr (!isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<decltype(l.d), double, UnEqual, UnEqualTrait>>(
-        BinaryOperation<decltype(l.d), double, UnEqual, UnEqualTrait>(l.d, r));
+        BinaryOperation<decltype(l.d), double, UnEqual, UnEqualTrait>(l.d, r, mp));
   } else if constexpr (isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<double, decltype(r.d), UnEqual, UnEqualTrait>>(
-        BinaryOperation<double, decltype(r.d), UnEqual, UnEqualTrait>(l, r.d));
+        BinaryOperation<double, decltype(r.d), UnEqual, UnEqualTrait>(l, r.d, mp));
   } else if constexpr (!isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), UnEqual,
                                        UnEqualTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), UnEqual, UnEqualTrait>(
-            l.d, r.d));
+            l.d, r.d, mp));
   }
 }
 
@@ -253,21 +280,25 @@ auto operator>(const L &l, const R &r)
   constexpr bool isDoubleL = std::is_same_v<L, double>;
   constexpr bool isDoubleR = std::is_same_v<R, double>;
   if constexpr (isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<double, double, Larger, LargerTrait>>(
-        BinaryOperation<double, double, Larger, LargerTrait>(l, r));
+        BinaryOperation<double, double, Larger, LargerTrait>(l, r, mp));
   } else if constexpr (!isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<decltype(l.d), double, Larger, LargerTrait>>(
-        BinaryOperation<decltype(l.d), double, Larger, LargerTrait>(l.d, r));
+        BinaryOperation<decltype(l.d), double, Larger, LargerTrait>(l.d, r, mp));
   } else if constexpr (isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<double, decltype(r.d), Larger, LargerTrait>>(
-        BinaryOperation<double, decltype(r.d), Larger, LargerTrait>(l, r.d));
+        BinaryOperation<double, decltype(r.d), Larger, LargerTrait>(l, r.d, mp));
   } else if constexpr (!isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), Larger,
                                        LargerTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), Larger, LargerTrait>(
-            l.d, r.d));
+            l.d, r.d, mp));
   }
 }
 
@@ -279,21 +310,25 @@ auto operator>=(const L &l, const R &r)
   constexpr bool isDoubleL = std::is_same_v<L, double>;
   constexpr bool isDoubleR = std::is_same_v<R, double>;
   if constexpr (isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<double, double, LargerEqual, LargerEqualTrait>>(
-        BinaryOperation<double, double, LargerEqual, LargerEqualTrait>(l, r));
+        BinaryOperation<double, double, LargerEqual, LargerEqualTrait>(l, r, mp));
   } else if constexpr (!isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<decltype(l.d), double, LargerEqual, LargerEqualTrait>>(
-        BinaryOperation<decltype(l.d), double, LargerEqual, LargerEqualTrait>(l.d, r));
+        BinaryOperation<decltype(l.d), double, LargerEqual, LargerEqualTrait>(l.d, r, mp));
   } else if constexpr (isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<double, decltype(r.d), LargerEqual, LargerEqualTrait>>(
-        BinaryOperation<double, decltype(r.d), LargerEqual, LargerEqualTrait>(l, r.d));
+        BinaryOperation<double, decltype(r.d), LargerEqual, LargerEqualTrait>(l, r.d, mp));
   } else if constexpr (!isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), LargerEqual,
                                        LargerEqualTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), LargerEqual, LargerEqualTrait>(
-            l.d, r.d));
+            l.d, r.d, mp));
   }
 }
 
@@ -305,21 +340,25 @@ auto operator<(const L &l, const R &r)
   constexpr bool isDoubleL = std::is_same_v<L, double>;
   constexpr bool isDoubleR = std::is_same_v<R, double>;
   if constexpr (isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<double, double, Smaller, SmallerTrait>>(
-        BinaryOperation<double, double, Smaller, SmallerTrait>(l, r));
+        BinaryOperation<double, double, Smaller, SmallerTrait>(l, r, mp));
   } else if constexpr (!isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<decltype(l.d), double, Smaller, SmallerTrait>>(
-        BinaryOperation<decltype(l.d), double, Smaller, SmallerTrait>(l.d, r));
+        BinaryOperation<decltype(l.d), double, Smaller, SmallerTrait>(l.d, r, mp));
   } else if constexpr (isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<double, decltype(r.d), Smaller, SmallerTrait>>(
-        BinaryOperation<double, decltype(r.d), Smaller, SmallerTrait>(l, r.d));
+        BinaryOperation<double, decltype(r.d), Smaller, SmallerTrait>(l, r.d, mp));
   } else if constexpr (!isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), Smaller,
                                        SmallerTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), Smaller, SmallerTrait>(
-            l.d, r.d));
+            l.d, r.d, mp));
   }
 }
 
@@ -331,21 +370,25 @@ auto operator<=(const L &l, const R &r)
   constexpr bool isDoubleL = std::is_same_v<L, double>;
   constexpr bool isDoubleR = std::is_same_v<R, double>;
   if constexpr (isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<double, double, SmallerEqual, SmallerEqualTrait>>(
-        BinaryOperation<double, double, SmallerEqual, SmallerEqualTrait>(l, r));
+        BinaryOperation<double, double, SmallerEqual, SmallerEqualTrait>(l, r, mp));
   } else if constexpr (!isDoubleL && isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<decltype(l.d), double, SmallerEqual, SmallerEqualTrait>>(
-        BinaryOperation<decltype(l.d), double, SmallerEqual, SmallerEqualTrait>(l.d, r));
+        BinaryOperation<decltype(l.d), double, SmallerEqual, SmallerEqualTrait>(l.d, r, mp));
   } else if constexpr (isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double,
                BinaryOperation<double, decltype(r.d), SmallerEqual, SmallerEqualTrait>>(
-        BinaryOperation<double, decltype(r.d), SmallerEqual, SmallerEqualTrait>(l, r.d));
+        BinaryOperation<double, decltype(r.d), SmallerEqual, SmallerEqualTrait>(l, r.d, mp));
   } else if constexpr (!isDoubleL && !isDoubleR) {
+    MatrixParameter mp; defineMatrix(l, r, mp);
     return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), SmallerEqual,
                                        SmallerEqualTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), SmallerEqual, SmallerEqualTrait>(
-            l.d, r.d));
+            l.d, r.d, mp));
   }
 }
 

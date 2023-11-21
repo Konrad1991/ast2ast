@@ -175,6 +175,7 @@ struct MatrixParameter {
 template<typename Trait = DoubleTrait>
 struct doubleWrapper {
 	using TypeTrait = Trait;
+	using Type = DoubleTrait;
   BaseType d;
 };
 
@@ -922,40 +923,38 @@ template <typename T, typename SubsetCalcTrait> struct SubsetCalc {
   ~SubsetCalc() {}
 };
 
-template <int Operation>
-void defineMatrix(const bool &aIM, const bool &bIM, const size_t aNrows,
-                  const size_t bNrows, const size_t aNcols, const size_t bNcols,
+template<typename L, typename R>
+void defineMatrix(const L& l, const R& r,
                   MatrixParameter &mp) {
-  if constexpr (Operation == 1) {
-    if ((aIM == true) || (bIM == true) || (aIM == true && bIM == true)) {
-      mp.ismatrix = true;
-      if ((aIM == true) && (bIM == true)) {
-        mp.rows = (aNrows > bNrows) ? aNrows : bNrows;
-        mp.cols = (aNcols > bNcols) ? aNcols : bNcols;
-      } else if ((aIM == false) && (bIM == true)) {
-        mp.rows = bNrows;
-        mp.cols = bNcols;
-      } else if ((aIM == true) && (bIM == false)) {
-        mp.rows = aNrows;
-        mp.cols = aNcols;
-      } else {
-        Rcpp::stop("Error");
-      }
-    }
-  } else if constexpr (Operation == 2) {
-    if (aIM == true) {
-      mp.ismatrix = true;
-      mp.rows = aNrows;
-      mp.cols = aNcols;
-    }
-  } else if constexpr (Operation == 3) {
-    if (bIM == true) {
-      mp.ismatrix = true;
-      mp.rows = bNrows;
-      mp.cols = bNcols;
-    }
+	using typeTraitL = std::remove_reference<decltype(convert(l))>::type::Type;
+  using typeTraitR = std::remove_reference<decltype(convert(r))>::type::Type;
+  using isDoubleL = std::is_same<typeTraitL, DoubleTrait>;
+  using isDoubleR = std::is_same<typeTraitR, DoubleTrait>;
+  mp.setMatrix(false, 0, 0);
+  if constexpr(!isDoubleL::value && isDoubleR::value) {
+  	if(l.im()) {
+  		mp.setMatrix(true, l.nr(), l.nc());
+  	}
+  } else if constexpr(isDoubleL::value && !isDoubleR::value) {
+  	if(r.im()) {
+  		mp.setMatrix(true, r.nr(), r.nc());
+  	}
+  } else {
+  	if (l.im() && r.im()) {
+      size_t nrows = (l.nr() > r.nr()) ? l.nr() : r.nr();
+      size_t ncols = (l.nc() > r.nc()) ? l.nc() : r.nc();
+      mp.setMatrix(true, nrows, ncols);
+    } else if (!l.im() && r.im()) {
+      size_t nrows = r.nr();
+      size_t ncols = r.nc();
+      mp.setMatrix(true, nrows, ncols);
+    } else if (l.im() && !r.im()) {
+      size_t nrows = r.nr();
+      size_t ncols = r.nc();
+      mp.setMatrix(true, nrows, ncols);
+  	}	
   }
-}
+} 
 
 } // namespace etr
 
