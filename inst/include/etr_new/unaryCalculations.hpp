@@ -12,12 +12,15 @@ struct UnaryOperation {
   using CaseTrait = Trait;
   const I &obj;
   MatrixParameter mp;
+  bool im() const { return mp.im(); }
+  size_t nc() const { return mp.nc(); }
+  size_t nr() const { return mp.nr(); }
   UnaryOperation(const UnaryOperation &other) : obj(other.obj), mp(other.mp) {}
   UnaryOperation(const UnaryOperation &&other) : obj(other.obj), mp(other.mp) {}
-  UnaryOperation(const I &obj_) : obj(obj_) {}
+  UnaryOperation(const I &obj_, const MatrixParameter& mp) : obj(obj_), mp(mp) {}
   template <typename IType, UnaryFct fOther, typename TraitOther>
   UnaryOperation(const UnaryOperation<IType, fOther, TraitOther> &other)
-      : obj(other.obj) {}
+      : obj(other.obj), mp(other.mp) {}
   double operator[](size_t i) const {
     constexpr bool isDouble = std::is_same_v<I, double>;
     if constexpr (isDouble) {
@@ -52,7 +55,7 @@ auto sinus(const T &obj)
   constexpr bool isDouble = std::is_same_v<T, double>;
   if constexpr (!isDouble) {
     return Vec<double, UnaryOperation<decltype(obj.d), Sinus, SinusTrait>, UnaryTrait>
-        (UnaryOperation<decltype(obj.d), Sinus, SinusTrait>(obj.d));
+        (UnaryOperation<decltype(obj.d), Sinus, SinusTrait>(obj.d, obj.d.mp));
   } else if constexpr (isDouble) {
     return Vec<double, UnaryOperation<double, Sinus, SinusTrait>>(
         UnaryOperation<double, Sinus, SinusTrait>{obj});

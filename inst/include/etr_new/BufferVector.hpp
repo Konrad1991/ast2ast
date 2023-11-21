@@ -43,7 +43,7 @@ template <typename T, typename R, typename Trait> struct Vec {
     d.setMatrix(inp.mp);
   }
   template <typename L2, UnaryFct f, typename OperationTrait>
-  explicit Vec(UnaryOperation<L2, f, OperationTrait> &&inp) : d(inp) {
+  explicit Vec(const UnaryOperation<L2, f, OperationTrait> &&inp) : d(inp) {
     using TypeTrait = OperationTrait;
     d.setMatrix(inp.mp);
   }

@@ -226,5 +226,20 @@ inline void print(const Vec<L, R> &inp) {
   } 
 }
 
+template <typename T, typename Op, typename Trait>
+inline void print(const etr::Vec<T, Op, Trait> &inp) {
+    if (!inp.im()) {
+      for(size_t i = 0; i < inp.size(); i++) Rcpp::Rcout << std::boolalpha << inp[i] << " ";
+      Rcpp::Rcout << std::endl;
+    } else {
+      for (size_t i = 0; i < inp.nr(); i++) {
+        for (size_t j = 0; j < inp.nc(); j++) {
+          Rcpp::Rcout << inp[j * inp.nr() + i] << "\t";
+        }
+        Rcpp::Rcout << std::endl;
+      }
+  }
+}
+
 }
 #endif

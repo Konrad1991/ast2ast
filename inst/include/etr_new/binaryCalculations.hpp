@@ -26,7 +26,7 @@ struct BinaryOperation {
             typename TraitOther>
   BinaryOperation(const BinaryOperation<LType, RType, fOther, TraitOther>
                       &other) // issue: needs move constructor
-      : l(other.l), r(other.r) {}
+      : l(other.l), r(other.r), mp(other.mp) {}
   double operator[](size_t i) const {
     constexpr bool isDoubleL = std::is_same_v<L, double>;
     constexpr bool isDoubleR = std::is_same_v<R, double>;
