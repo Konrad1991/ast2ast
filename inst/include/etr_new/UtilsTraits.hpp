@@ -103,7 +103,7 @@ struct MinusTrait {};
 struct TimesTrait {};
 struct DivideTrait {};
 struct PowTrait {};
-struct CompareDoubleTrait {};
+struct EqualTrait {};
 struct SmallerTrait {};
 struct SmallerEqualTrait {};
 struct LargerTrait {};
@@ -219,7 +219,7 @@ inline double ATangens(double obj) { return atan(obj); }
 inline double Exp(double obj) { return exp(obj); }
 inline double Log(double obj) { return log(obj); }
 inline double SquareRoot(double obj) { return sqrt(obj); }
-inline double CompareDouble(double a, double b) { 
+inline double Equal(double a, double b) { 
 	if(fabs(a - b) < 1E-3) {
 		return 1.0;
   } else {

@@ -197,28 +197,157 @@ template <typename L, typename R>
 auto operator==(const L &l, const R &r)
     -> Vec<double,
            BinaryOperation<decltype(convert(l).d), decltype(convert(r).d),
-                           CompareDouble, CompareDoubleTrait>> {
+                           Equal, EqualTrait>> {
   constexpr bool isDoubleL = std::is_same_v<L, double>;
   constexpr bool isDoubleR = std::is_same_v<R, double>;
   if constexpr (isDoubleL && isDoubleR) {
-    return Vec<double, BinaryOperation<double, double, CompareDouble, CompareDoubleTrait>>(
-        BinaryOperation<double, double, CompareDouble, CompareDoubleTrait>(l, r));
+    return Vec<double, BinaryOperation<double, double, Equal, EqualTrait>>(
+        BinaryOperation<double, double, Equal, EqualTrait>(l, r));
   } else if constexpr (!isDoubleL && isDoubleR) {
     return Vec<double,
-               BinaryOperation<decltype(l.d), double, CompareDouble, CompareDoubleTrait>>(
-        BinaryOperation<decltype(l.d), double, CompareDouble, CompareDoubleTrait>(l.d, r));
+               BinaryOperation<decltype(l.d), double, Equal, EqualTrait>>(
+        BinaryOperation<decltype(l.d), double, Equal, EqualTrait>(l.d, r));
   } else if constexpr (isDoubleL && !isDoubleR) {
     return Vec<double,
-               BinaryOperation<double, decltype(r.d), CompareDouble, CompareDoubleTrait>>(
-        BinaryOperation<double, decltype(r.d), CompareDouble, CompareDoubleTrait>(l, r.d));
+               BinaryOperation<double, decltype(r.d), Equal, EqualTrait>>(
+        BinaryOperation<double, decltype(r.d), Equal, EqualTrait>(l, r.d));
   } else if constexpr (!isDoubleL && !isDoubleR) {
-    return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), CompareDouble,
-                                       CompareDoubleTrait>>(
-        BinaryOperation<decltype(l.d), decltype(r.d), CompareDouble, CompareDoubleTrait>(
+    return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), Equal,
+                                       EqualTrait>>(
+        BinaryOperation<decltype(l.d), decltype(r.d), Equal, EqualTrait>(
             l.d, r.d));
   }
 }
 
+template <typename L, typename R>
+auto operator!=(const L &l, const R &r)
+    -> Vec<double,
+           BinaryOperation<decltype(convert(l).d), decltype(convert(r).d),
+                           UnEqual, UnEqualTrait>> {
+  constexpr bool isDoubleL = std::is_same_v<L, double>;
+  constexpr bool isDoubleR = std::is_same_v<R, double>;
+  if constexpr (isDoubleL && isDoubleR) {
+    return Vec<double, BinaryOperation<double, double, UnEqual, UnEqualTrait>>(
+        BinaryOperation<double, double, UnEqual, UnEqualTrait>(l, r));
+  } else if constexpr (!isDoubleL && isDoubleR) {
+    return Vec<double,
+               BinaryOperation<decltype(l.d), double, UnEqual, UnEqualTrait>>(
+        BinaryOperation<decltype(l.d), double, UnEqual, UnEqualTrait>(l.d, r));
+  } else if constexpr (isDoubleL && !isDoubleR) {
+    return Vec<double,
+               BinaryOperation<double, decltype(r.d), UnEqual, UnEqualTrait>>(
+        BinaryOperation<double, decltype(r.d), UnEqual, UnEqualTrait>(l, r.d));
+  } else if constexpr (!isDoubleL && !isDoubleR) {
+    return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), UnEqual,
+                                       UnEqualTrait>>(
+        BinaryOperation<decltype(l.d), decltype(r.d), UnEqual, UnEqualTrait>(
+            l.d, r.d));
+  }
+}
+
+template <typename L, typename R>
+auto operator>(const L &l, const R &r)
+    -> Vec<double,
+           BinaryOperation<decltype(convert(l).d), decltype(convert(r).d),
+                           Larger, LargerTrait>> {
+  constexpr bool isDoubleL = std::is_same_v<L, double>;
+  constexpr bool isDoubleR = std::is_same_v<R, double>;
+  if constexpr (isDoubleL && isDoubleR) {
+    return Vec<double, BinaryOperation<double, double, Larger, LargerTrait>>(
+        BinaryOperation<double, double, Larger, LargerTrait>(l, r));
+  } else if constexpr (!isDoubleL && isDoubleR) {
+    return Vec<double,
+               BinaryOperation<decltype(l.d), double, Larger, LargerTrait>>(
+        BinaryOperation<decltype(l.d), double, Larger, LargerTrait>(l.d, r));
+  } else if constexpr (isDoubleL && !isDoubleR) {
+    return Vec<double,
+               BinaryOperation<double, decltype(r.d), Larger, LargerTrait>>(
+        BinaryOperation<double, decltype(r.d), Larger, LargerTrait>(l, r.d));
+  } else if constexpr (!isDoubleL && !isDoubleR) {
+    return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), Larger,
+                                       LargerTrait>>(
+        BinaryOperation<decltype(l.d), decltype(r.d), Larger, LargerTrait>(
+            l.d, r.d));
+  }
+}
+
+template <typename L, typename R>
+auto operator>=(const L &l, const R &r)
+    -> Vec<double,
+           BinaryOperation<decltype(convert(l).d), decltype(convert(r).d),
+                           LargerEqual, LargerEqualTrait>> {
+  constexpr bool isDoubleL = std::is_same_v<L, double>;
+  constexpr bool isDoubleR = std::is_same_v<R, double>;
+  if constexpr (isDoubleL && isDoubleR) {
+    return Vec<double, BinaryOperation<double, double, LargerEqual, LargerEqualTrait>>(
+        BinaryOperation<double, double, LargerEqual, LargerEqualTrait>(l, r));
+  } else if constexpr (!isDoubleL && isDoubleR) {
+    return Vec<double,
+               BinaryOperation<decltype(l.d), double, LargerEqual, LargerEqualTrait>>(
+        BinaryOperation<decltype(l.d), double, LargerEqual, LargerEqualTrait>(l.d, r));
+  } else if constexpr (isDoubleL && !isDoubleR) {
+    return Vec<double,
+               BinaryOperation<double, decltype(r.d), LargerEqual, LargerEqualTrait>>(
+        BinaryOperation<double, decltype(r.d), LargerEqual, LargerEqualTrait>(l, r.d));
+  } else if constexpr (!isDoubleL && !isDoubleR) {
+    return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), LargerEqual,
+                                       LargerEqualTrait>>(
+        BinaryOperation<decltype(l.d), decltype(r.d), LargerEqual, LargerEqualTrait>(
+            l.d, r.d));
+  }
+}
+
+template <typename L, typename R>
+auto operator<(const L &l, const R &r)
+    -> Vec<double,
+           BinaryOperation<decltype(convert(l).d), decltype(convert(r).d),
+                           Smaller, SmallerTrait>> {
+  constexpr bool isDoubleL = std::is_same_v<L, double>;
+  constexpr bool isDoubleR = std::is_same_v<R, double>;
+  if constexpr (isDoubleL && isDoubleR) {
+    return Vec<double, BinaryOperation<double, double, Smaller, SmallerTrait>>(
+        BinaryOperation<double, double, Smaller, SmallerTrait>(l, r));
+  } else if constexpr (!isDoubleL && isDoubleR) {
+    return Vec<double,
+               BinaryOperation<decltype(l.d), double, Smaller, SmallerTrait>>(
+        BinaryOperation<decltype(l.d), double, Smaller, SmallerTrait>(l.d, r));
+  } else if constexpr (isDoubleL && !isDoubleR) {
+    return Vec<double,
+               BinaryOperation<double, decltype(r.d), Smaller, SmallerTrait>>(
+        BinaryOperation<double, decltype(r.d), Smaller, SmallerTrait>(l, r.d));
+  } else if constexpr (!isDoubleL && !isDoubleR) {
+    return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), Smaller,
+                                       SmallerTrait>>(
+        BinaryOperation<decltype(l.d), decltype(r.d), Smaller, SmallerTrait>(
+            l.d, r.d));
+  }
+}
+
+template <typename L, typename R>
+auto operator<=(const L &l, const R &r)
+    -> Vec<double,
+           BinaryOperation<decltype(convert(l).d), decltype(convert(r).d),
+                           SmallerEqual, SmallerEqualTrait>> {
+  constexpr bool isDoubleL = std::is_same_v<L, double>;
+  constexpr bool isDoubleR = std::is_same_v<R, double>;
+  if constexpr (isDoubleL && isDoubleR) {
+    return Vec<double, BinaryOperation<double, double, SmallerEqual, SmallerEqualTrait>>(
+        BinaryOperation<double, double, SmallerEqual, SmallerEqualTrait>(l, r));
+  } else if constexpr (!isDoubleL && isDoubleR) {
+    return Vec<double,
+               BinaryOperation<decltype(l.d), double, SmallerEqual, SmallerEqualTrait>>(
+        BinaryOperation<decltype(l.d), double, SmallerEqual, SmallerEqualTrait>(l.d, r));
+  } else if constexpr (isDoubleL && !isDoubleR) {
+    return Vec<double,
+               BinaryOperation<double, decltype(r.d), SmallerEqual, SmallerEqualTrait>>(
+        BinaryOperation<double, decltype(r.d), SmallerEqual, SmallerEqualTrait>(l, r.d));
+  } else if constexpr (!isDoubleL && !isDoubleR) {
+    return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), SmallerEqual,
+                                       SmallerEqualTrait>>(
+        BinaryOperation<decltype(l.d), decltype(r.d), SmallerEqual, SmallerEqualTrait>(
+            l.d, r.d));
+  }
+}
 
 } // namespace etr
 
