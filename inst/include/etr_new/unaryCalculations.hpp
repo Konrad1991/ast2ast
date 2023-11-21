@@ -69,7 +69,7 @@ auto sinush(const T &obj)
   constexpr bool isDouble = std::is_same_v<T, double>;
   if constexpr (!isDouble) {
     return Vec<double, UnaryOperation<decltype(obj.d), SinusH, SinusHTrait>, UnaryTrait>
-        (UnaryOperation<decltype(obj.d), SinusH, SinusHTrait>(obj.d));
+        (UnaryOperation<decltype(obj.d), SinusH, SinusHTrait>(obj.d, obj.d.mp));
   } else if constexpr (isDouble) {
     return Vec<double, UnaryOperation<double, SinusH, SinusHTrait>>(
         UnaryOperation<double, SinusH, SinusHTrait>{obj});
@@ -83,7 +83,7 @@ auto asinus(const T &obj)
   constexpr bool isDouble = std::is_same_v<T, double>;
   if constexpr (!isDouble) {
     return Vec<double, UnaryOperation<decltype(obj.d), ASinus, ASinusTrait>, UnaryTrait>
-        (UnaryOperation<decltype(obj.d), ASinus, ASinusTrait>(obj.d));
+        (UnaryOperation<decltype(obj.d), ASinus, ASinusTrait>(obj.d, obj.d.mp));
   } else if constexpr (isDouble) {
     return Vec<double, UnaryOperation<double, ASinus, ASinusTrait>>(
         UnaryOperation<double, ASinus, ASinusTrait>{obj});
@@ -98,7 +98,7 @@ auto cosinus(const T &obj)
   constexpr bool isDouble = std::is_same_v<T, double>;
   if constexpr (!isDouble) {
     return Vec<double, UnaryOperation<decltype(obj.d), Cosinus, CosinusTrait>, UnaryTrait>
-        (UnaryOperation<decltype(obj.d), Cosinus, CosinusTrait>(obj.d));
+        (UnaryOperation<decltype(obj.d), Cosinus, CosinusTrait>(obj.d, obj.d.mp));
   } else if constexpr (isDouble) {
     return Vec<double, UnaryOperation<double, Cosinus, CosinusTrait>>(
         UnaryOperation<double, Cosinus, CosinusTrait>{obj});
@@ -112,7 +112,7 @@ auto cosinush(const T &obj)
   constexpr bool isDouble = std::is_same_v<T, double>;
   if constexpr (!isDouble) {
     return Vec<double, UnaryOperation<decltype(obj.d), CosinusH, CosinusHTrait>, UnaryTrait>
-        (UnaryOperation<decltype(obj.d), CosinusH, CosinusHTrait>(obj.d));
+        (UnaryOperation<decltype(obj.d), CosinusH, CosinusHTrait>(obj.d, obj.d.mp));
   } else if constexpr (isDouble) {
     return Vec<double, UnaryOperation<double, CosinusH, CosinusHTrait>>(
         UnaryOperation<double, CosinusH, CosinusHTrait>{obj});
@@ -126,7 +126,7 @@ auto acosinus(const T &obj)
   constexpr bool isDouble = std::is_same_v<T, double>;
   if constexpr (!isDouble) {
     return Vec<double, UnaryOperation<decltype(obj.d), ACosinus, ACosinusTrait>, UnaryTrait>
-        (UnaryOperation<decltype(obj.d), ACosinus, ACosinusTrait>(obj.d));
+        (UnaryOperation<decltype(obj.d), ACosinus, ACosinusTrait>(obj.d, obj.d.mp));
   } else if constexpr (isDouble) {
     return Vec<double, UnaryOperation<double, ACosinus, ACosinusTrait>>(
         UnaryOperation<double, ACosinus, ACosinusTrait>{obj});
@@ -140,7 +140,7 @@ auto tangens(const T &obj)
   constexpr bool isDouble = std::is_same_v<T, double>;
   if constexpr (!isDouble) {
     return Vec<double, UnaryOperation<decltype(obj.d), Tangens, TangensTrait>, UnaryTrait>
-        (UnaryOperation<decltype(obj.d), Tangens, TangensTrait>(obj.d));
+        (UnaryOperation<decltype(obj.d), Tangens, TangensTrait>(obj.d, obj.d.mp));
   } else if constexpr (isDouble) {
     return Vec<double, UnaryOperation<double, Tangens, TangensTrait>>(
         UnaryOperation<double, Tangens, TangensTrait>{obj});
@@ -154,7 +154,7 @@ auto tangensh(const T &obj)
   constexpr bool isDouble = std::is_same_v<T, double>;
   if constexpr (!isDouble) {
     return Vec<double, UnaryOperation<decltype(obj.d), TangensH, TangensHTrait>, UnaryTrait>
-        (UnaryOperation<decltype(obj.d), TangensH, TangensHTrait>(obj.d));
+        (UnaryOperation<decltype(obj.d), TangensH, TangensHTrait>(obj.d, obj.d.mp));
   } else if constexpr (isDouble) {
     return Vec<double, UnaryOperation<double, TangensH, TangensHTrait>>(
         UnaryOperation<double, TangensH, TangensHTrait>{obj});
@@ -168,7 +168,7 @@ auto atangens(const T &obj)
   constexpr bool isDouble = std::is_same_v<T, double>;
   if constexpr (!isDouble) {
     return Vec<double, UnaryOperation<decltype(obj.d), ATangens, ATangensTrait>, UnaryTrait>
-        (UnaryOperation<decltype(obj.d), ATangens, ATangensTrait>(obj.d));
+        (UnaryOperation<decltype(obj.d), ATangens, ATangensTrait>(obj.d, obj.d.mp));
   } else if constexpr (isDouble) {
     return Vec<double, UnaryOperation<double, ATangens, ATangensTrait>>(
         UnaryOperation<double, ATangens, ATangensTrait>{obj});
@@ -182,7 +182,7 @@ auto logarithm(const T &obj)
   constexpr bool isDouble = std::is_same_v<T, double>;
   if constexpr (!isDouble) {
     return Vec<double, UnaryOperation<decltype(obj.d), Log, LogTrait>, UnaryTrait>
-        (UnaryOperation<decltype(obj.d), Log, LogTrait>(obj.d));
+        (UnaryOperation<decltype(obj.d), Log, LogTrait>(obj.d, obj.d.mp));
   } else if constexpr (isDouble) {
     return Vec<double, UnaryOperation<double, Log, LogTrait>>(
         UnaryOperation<double, Log, LogTrait>{obj});
@@ -196,7 +196,7 @@ auto squareRoot(const T &obj)
   constexpr bool isDouble = std::is_same_v<T, double>;
   if constexpr (!isDouble) {
     return Vec<double, UnaryOperation<decltype(obj.d), SquareRoot, SquareRootTrait>, UnaryTrait>
-        (UnaryOperation<decltype(obj.d), SquareRoot, SquareRootTrait>(obj.d));
+        (UnaryOperation<decltype(obj.d), SquareRoot, SquareRootTrait>(obj.d, obj.d.mp));
   } else if constexpr (isDouble) {
     return Vec<double, UnaryOperation<double, SquareRoot, SquareRootTrait>>(
         UnaryOperation<double, SquareRoot, SquareRootTrait>{obj});
@@ -210,7 +210,7 @@ auto Exp(const T &obj) // issue: docuemtn that the behaviour has changed from ex
   constexpr bool isDouble = std::is_same_v<T, double>;
   if constexpr (!isDouble) {
     return Vec<double, UnaryOperation<decltype(obj.d), Exp, ExpTrait>, UnaryTrait>
-        (UnaryOperation<decltype(obj.d), Exp, ExpTrait>(obj.d));
+        (UnaryOperation<decltype(obj.d), Exp, ExpTrait>(obj.d, obj.d.mp));
   } else if constexpr (isDouble) {
     return Vec<double, UnaryOperation<double, Exp, ExpTrait>>(
         UnaryOperation<double, Exp, ExpTrait>{obj});
