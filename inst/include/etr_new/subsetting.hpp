@@ -21,19 +21,13 @@ template <typename T, typename R> Subset<R> convertSubset(Vec<T, R> &obj) {
 }
 
 template <typename T, typename R>
-SubsetCalc<R> convertSubset(const Vec<T, R> &&obj) {
-  return SubsetCalc<R, SubsetCalcTrait>(obj);
+SubsetCalc<T, R> convertSubset(const Vec<T, R> &&obj) {
+  return SubsetCalc<T, SubsetCalcTrait>(obj);
 }
 
 template <typename T, typename R>
-SubsetCalc<R> convertSubset(const Vec<T, R> &obj) {
-  return SubsetCalc<R, SubsetCalcTrait>(obj);
-}
-
-template <typename T2, typename R2, typename I>
-inline auto subset(const Vec<T2, R2> &&vec, const I &idx)
-    -> Vec<T2, SubsetCalc<decltype(convert(vec).d), SubsetCalcTrait>> {
-  return Vec<T2, decltype(convertSubset(vec))>(convertSubset(vec));
+SubsetCalc<T, R> convertSubset(const Vec<T, R> &obj) {
+  return SubsetCalc<T, SubsetCalcTrait>(obj);
 }
 
 template <typename I>
@@ -92,13 +86,70 @@ inline auto subset(Vec<BaseType> &vec, const I &idx)
   return Vec<BaseType, decltype(convertSubset(vec))>(std::move(sub));
 }
 
-template <typename T, typename R, typename I>
-inline auto subset(Vec<T, R> &vec, const I &idx)
-    -> Vec<BaseType, SubsetCalc<decltype(convert(vec).d), SubsetCalcTrait>> {
+//template <typename T, typename R, typename I>
+//inline auto subset(Vec<T, R> &vec, const I &idx)
+//    -> Vec<BaseType, SubsetCalc<decltype(convert(vec).d), SubsetCalcTrait>> {
+//  SubsetCalc<decltype(convert(vec).d), SubsetCalcTrait> sub(vec);
+//  calcInd(vec, sub.ind, idx);
+//  sub.setMatrix(false, 0, 0);
+//  return Vec<BaseType, decltype(convertSubset(vec))>(std::move(sub));
+//}
+
+
+template <typename T2, typename R2, typename Trait2,typename I>
+inline void calcInd(const Vec<T2, R2, Trait2> &&vec, Indices &ind, const I &idx) {
+  if constexpr (std::is_same_v<I, bool>) {
+    if (idx) {
+      ind.resize(vec.size());
+      for (size_t i = 0; i < vec.size(); i++)
+        ind[i] = i;
+      return;
+    } else {
+      return;
+    }
+  } else if constexpr (std::is_same_v<I, int>) {
+    ind.resize(1);
+    ind[0] = idx - 1;
+    return;
+  } else if constexpr (std::is_same_v<I, double>) {
+    int i = static_cast<int>(idx);
+    ind.resize(1);
+    ind[0] = i - 1;
+    return;
+  } else {
+      using vecTrait = std::remove_reference<decltype(idx)>::type::TypeTrait;
+      using isVec = std::is_same<vecTrait, VectorTrait>;
+      if constexpr(isVec::value) {
+          using whichType = std::remove_reference<decltype(idx)>::type::Type;
+          using isBool = std::is_same<whichType, bool>;
+          if constexpr (isBool::value) {
+            size_t sizeTrue = 0; 
+            for(size_t i = 0; i < idx.size(); i++) if(idx[i]) sizeTrue++;
+            ind.resize(sizeTrue);
+            for(size_t i = 0; i < ind.size(); i++) if(idx[i]) ind[i] = i;
+          } else if constexpr(std::is_same_v<whichType, BaseType>){
+            ind.resize(idx.size()); 
+            for(size_t i = 0; i < idx.size(); i++) {
+              size_t sizeTIdx = static_cast<size_t>(idx[i]) - 1;
+              ind[i] = sizeTIdx;
+            }
+          } else {
+            static_assert(!isVec::value || !std::is_same_v<whichType, BaseType>,
+             "Unknown type of index variable");
+          }
+      } else {
+          static_assert(!isVec::value, "Unknown type of index variable");
+      }
+  }
+}
+
+template <typename T2, typename R2, typename Trait2,typename I>
+inline auto subset(const Vec<T2, R2, Trait2> &&vec, const I& idx) 
+      -> Vec<BaseType, SubsetCalc<decltype(convert(vec).d), SubsetCalcTrait>> {
   SubsetCalc<decltype(convert(vec).d), SubsetCalcTrait> sub(vec);
   calcInd(vec, sub.ind, idx);
   sub.setMatrix(false, 0, 0);
-  return Vec<BaseType, decltype(convertSubset(vec))>(std::move(sub));
+  return Vec<BaseType, decltype(convertSubset(vec))>(std::move(sub));      
 }
 
 /*

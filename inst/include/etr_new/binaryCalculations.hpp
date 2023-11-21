@@ -5,8 +5,8 @@
 
 namespace etr {
 
-template <typename L, typename R, binaryFct f, typename Trait = BinaryTrait,
-          typename CTrait = BinaryTrait>
+template <typename L, typename R, binaryFct f, typename Trait,
+          typename CTrait>
 struct BinaryOperation {
   using Type = DoubleTrait;
   using TypeTrait = Trait;

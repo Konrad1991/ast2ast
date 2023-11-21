@@ -198,7 +198,8 @@ constexpr doubleWrapper<BoolTrait> convert(const T &obj) {
 }
 
 template <typename T> constexpr T convert(const T &obj) {
-  return std::forward(obj);
+  return obj;
+  //return std::forward(obj);
 }
 
 inline double Addition(double l, double r) { return l + r; }
@@ -277,6 +278,12 @@ template <typename T, typename Trait = BufferTrait,
 struct Buffer;
 template <typename T, typename R = Buffer<T>, typename Trait = VectorTrait>
 struct Vec;
+template <typename L, typename R, binaryFct f, typename Trait = BinaryTrait,
+          typename CTrait = BinaryTrait>
+struct BinaryOperation;
+template <typename I, UnaryFct f, typename Trait = UnaryTrait,
+          typename CTrait = UnaryTrait>
+struct UnaryOperation;
 
 struct BaseCalc {
   bool ismatrix;
@@ -867,60 +874,22 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
   }
 };
 
-// A result of a caluclation is moved in obj. and p is pointing to obj
-template <typename T, typename SubsetCalcTrait> struct SubsetCalc {
+// A result of a caluclation is stored in obj
+template <typename T, typename SubsetCalcTrait> struct SubsetCalc : public BaseStore<BaseType, SubsetCalcTrait> {
   using Type = T;
   using TypeTrait = SubsetCalcTrait;
   using CaseTrait = SubsetCalcTrait;
-  T obj;
-  Indices ind;
-  T *p = nullptr;
-  size_t sz = 0;
-  size_t capacity = 0;
-  bool allocated = false;
-  MatrixParameter mp;
-  mutable signed int ref_counter = 0;
-
-  size_t size() const { return sz; }
-  bool im() const { return mp.im(); }
-  size_t nc() const { return mp.nc(); }
-  size_t nr() const { return mp.nr(); }
-  void setMatrix(bool i, size_t nrow, size_t ncol) {
-    mp.setMatrix(i, nrow, ncol);
+  template<typename T2>
+  SubsetCalc(const T2& other) {
+  	this -> resize(other.size());
+  	for(size_t i = 0; i < this -> size(); i++) this -> operator[](i) = other[i];
   }
-
-  void setMatrix(MatrixParameter &mp_) {
-    mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
+	BaseType operator[](size_t pos) const {
+    return this -> operator[](pos);
   }
-
-  void setMatrix(const MatrixParameter &mp_) {
-    mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
+  BaseType& operator[](size_t pos) {
+    return this -> operator[](pos);
   }
-
-  template <typename T2, typename R2>
-  SubsetCalc(const Vec<T2, R2> &other) : obj(std::move(other.d)) {
-    this->p = &obj;
-    this->sz = obj.size();
-  }
-  SubsetCalc(SEXP) = delete;
-  SubsetCalc(size_t i) = delete;
-  SubsetCalc(int i) = delete;
-  SubsetCalc() = delete;
-  SubsetCalc(size_t r, size_t c) = delete;
-  SubsetCalc(size_t r, size_t c, const double value) = delete;
-
-  void resizeInd(int newSize) { ind.resize(newSize); }
-
-  void setInd(int idx, int val) { ind[idx] = val; }
-
-  void setPtr(const T *pOther) { this->p = pOther; }
-
-  T &operator[](int pos) const {
-    ass(this->p != nullptr, "Subset is pointing to nothing!");
-    return this->p->operator[](ind[pos] % this->p->size());
-  }
-
-  ~SubsetCalc() {}
 };
 
 template<typename L, typename R>

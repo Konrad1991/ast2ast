@@ -30,7 +30,7 @@ template <typename T, typename R, typename Trait> struct Vec {
 
   template <typename T2> Vec(T2 n) = delete;
   // move constructors
-  template <typename L2> explicit Vec(const SubsetCalc<L2> &&inp) : d(inp) {d.setMatrix(inp.mp);}
+  //template <typename L2> explicit Vec(const SubsetCalc<L2> &&inp) : d(inp) {d.setMatrix(inp.mp);}
   template <typename L2> explicit Vec(const Subset<L2> &&inp) : d(inp) {d.setMatrix(inp.mp);}
   template <typename L2> explicit Vec(const Buffer<L2> &&inp) : d(inp) {d.setMatrix(inp.mp);}
   template <typename U = R, typename T2>
@@ -55,7 +55,7 @@ template <typename T, typename R, typename Trait> struct Vec {
   }
 
   // copy constructors
-  template <typename L2> explicit Vec(SubsetCalc<L2> &inp) = delete;
+  template <typename L2> explicit Vec(const SubsetCalc<T, L2> &inp) : d(inp) {d.setMatrix(inp.mp);} //= delete;
   template <typename L2> explicit Vec(Subset<L2> &inp) : d(inp) {d.setMatrix(inp.mp);}
   template <typename L2> explicit Vec(const Buffer<L2> &inp) : d(inp) {d.setMatrix(inp.mp);}
   template <typename U = R, typename T2>

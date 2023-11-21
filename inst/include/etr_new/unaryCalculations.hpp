@@ -5,8 +5,8 @@
 
 namespace etr {
 
-template <typename I, UnaryFct f, typename Trait = UnaryTrait,
-          typename CTrait = UnaryTrait>
+template <typename I, UnaryFct f, typename Trait,
+          typename CTrait>
 struct UnaryOperation {
   using TypeTrait = Trait;
   using CaseTrait = Trait;
