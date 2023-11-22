@@ -91,7 +91,6 @@ struct BufferTrait {};
 struct VectorTrait {};
 struct VariableTrait {};
 struct SubsetTrait {};
-struct SubsetCalcTrait {};
 struct BorrowTrait {};
 struct BorrowSEXPTrait {};
 
@@ -271,8 +270,6 @@ template <typename T = double, typename BorrowSEXPTrait = BorrowSEXPTrait>
 struct BorrowSEXP;
 template <typename T, typename BorrowTrait = BorrowTrait> struct Borrow;
 template <typename T, typename SubsetTrait = SubsetTrait> struct Subset;
-template <typename T, typename SubsetCalcTrait = SubsetCalcTrait>
-struct SubsetCalc;
 template <typename T, typename Trait = BufferTrait,
           typename CTrait = VariableTrait>
 struct Buffer;
@@ -432,7 +429,8 @@ template <typename T, typename BaseTrait> struct BaseStore {
     return p[idx];
   }
 
-  BaseStore &moveit(BaseStore<T> &other) {
+  template<typename L2>
+  BaseStore &moveit(L2 &other) {
     T *temporary = other.p;
     int tempSize = other.sz;
     int tempCapacity = other.capacity;
@@ -638,7 +636,8 @@ template <typename T, typename BorrowTrait> struct Borrow {
     return p[idx];
   }
 
-  Borrow &moveit(Borrow<T> &other) = delete;
+  template<typename L2>
+  Borrow &moveit(L2 &other) = delete;
   auto begin() const { return It<T>{p}; }
   auto end() const { return It<T>{p + sz}; }
   T &back() { return p[sz]; }
@@ -781,7 +780,8 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
     fill(0.0);
   }
 
-  BorrowSEXP &moveit(BorrowSEXP<T> &other) {
+  template<typename L2>
+  BorrowSEXP &moveit(L2 &other) {
     if (!todelete) {
       resize(other.size());
       T *temporary = other.p;
@@ -871,24 +871,6 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
     for (size_t i = 0; i < sz; i++) {
       p[i] = val;
     }
-  }
-};
-
-// A result of a caluclation is stored in obj
-template <typename T, typename SubsetCalcTrait> struct SubsetCalc : public BaseStore<BaseType, SubsetCalcTrait> {
-  using Type = T;
-  using TypeTrait = SubsetCalcTrait;
-  using CaseTrait = SubsetCalcTrait;
-  template<typename T2>
-  SubsetCalc(const T2& other) {
-  	this -> resize(other.size());
-  	for(size_t i = 0; i < this -> size(); i++) this -> operator[](i) = other[i];
-  }
-	BaseType operator[](size_t pos) const {
-    return this -> operator[](pos);
-  }
-  BaseType& operator[](size_t pos) {
-    return this -> operator[](pos);
   }
 };
 

@@ -121,6 +121,36 @@ inline SEXP cpp2R(const Vec<BaseType> &res) {
   return ret;
 }
 
+template<typename L, typename R>
+inline SEXP cpp2R(const Vec<L, R> &res) {
+  SEXP ret = R_NilValue;
+  if (res.im()) {
+    ret = PROTECT(Rf_allocMatrix(REALSXP, res.nr(), res.nc()));
+  } else {
+    ret = PROTECT(Rf_allocVector(REALSXP, res.size()));
+  }
+  for (int i = 0; i < res.size(); i++) {
+    REAL(ret)[i] = res[i];
+  }
+  UNPROTECT(1);
+  return ret;
+}
+
+template<typename L, typename R, typename Trait>
+inline SEXP cpp2R(const Vec<L, R, Trait> &res) {
+  SEXP ret = R_NilValue;
+  if (res.im()) {
+    ret = PROTECT(Rf_allocMatrix(REALSXP, res.nr(), res.nc()));
+  } else {
+    ret = PROTECT(Rf_allocVector(REALSXP, res.size()));
+  }
+  for (int i = 0; i < res.size(); i++) {
+    REAL(ret)[i] = res[i];
+  }
+  UNPROTECT(1);
+  return ret;
+}
+
 inline Vec<BaseType> isNA(const Vec<BaseType> &inp) {
   Vec<BaseType> res(inp.size());
   for (int i = 0; i < res.size(); i++) {
