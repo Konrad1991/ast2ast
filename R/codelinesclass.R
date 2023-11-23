@@ -39,7 +39,7 @@ LC <- R6::R6Class("LC",
       "dgamma", "pgamma", "qgamma", "rgamma",
       "dbeta", "pbeta", "beta", "rbeta",
       "dnbeta", "pnbeta", "qnbeta", "rnbeta",
-      "is.na", "is.infinite", "Rf_ScalarReal"
+      "is.na", "is.infinite", "Rf_ScalarReal", "exp"
     ), # permitted functions
 
     namespace_etr = c( # have to be changed to all of the names of etr .....
@@ -48,7 +48,7 @@ LC <- R6::R6Class("LC",
       "tangens", "atangens", "tangensh",
       "ln", "sqroott", "rep",
       "print", "vector", "matrix", "length", "dim", "cmr",
-      "exp", "i2d", "at",
+      "exp", "i2d", "at", "exp",
       "dunif_etr", "punif_etr", "qunif_etr", "runif_etr",
       "dnorm_etr", "pnorm_etr", "qnorm_etr", "rnorm_etr",
       "dlnorm_etr", "plnorm_etr", "qlnorm_etr", "rlnorm_etr",

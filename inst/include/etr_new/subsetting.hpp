@@ -551,38 +551,53 @@ inline auto subset(const Vec<L, R, Trait> &vec, const IL &idxL, const IR& idxR)
   return ret;
 }
 
-inline BaseType &at(Vec<BaseType> &inp, int i) {
+inline BaseType& at(const Vec<BaseType> &inp, int i) {
   i--;
-  return inp.d[i];
+  ass(inp.d.allocated, "No memory was allocated");
+  ass(i >= 0, "Error: out of boundaries --> value below 1");
+  ass(i < inp.d.sz, "Error: out of boundaries --> value beyond size of vector");
+  return inp.d.p[i];
 }
 
-inline BaseType &at(Vec<BaseType> &inp, BaseType i_) {
+inline BaseType &at(const Vec<BaseType> &inp, BaseType i_) {
   int i = d2i(i_);
   i--;
-  return inp.d[i];
+  ass(inp.d.allocated, "No memory was allocated");
+  ass(i >= 0, "Error: out of boundaries --> value below 1");
+  ass(i < inp.d.sz, "Error: out of boundaries --> value beyond size of vector");
+  return inp.d.p[i];
 }
 
-inline BaseType &at(Vec<BaseType> &inp, int r, int c) {
+inline BaseType &at(const Vec<BaseType> &inp, int r, int c) {
   ass(inp.im() == true, "Input is not a matrix!");
   r--;
   c--;
-  return inp.d[c * inp.nr() + r];
+  ass(inp.d.allocated, "No memory was allocated");
+  ass((c * inp.nr() + r) >= 0, "Error: out of boundaries --> value below 1");
+  ass((c * inp.nr() + r) < inp.d.sz, "Error: out of boundaries --> value beyond size of vector");
+  return inp.d.p[c * inp.nr() + r];
 }
 
-inline BaseType &at(Vec<BaseType> &inp, BaseType r_, BaseType c_) {
+inline BaseType &at(const Vec<BaseType> &inp, BaseType r_, BaseType c_) {
   ass(inp.im() == true, "Input is not a matrix!");
   int r = d2i(r_);
   int c = d2i(c_);
   r--;
   c--;
-  return inp.d[c * inp.nr() + r];
+  ass(inp.d.allocated, "No memory was allocated");
+  ass((c * inp.nr() + r) >= 0, "Error: out of boundaries --> value below 1");
+  ass((c * inp.nr() + r) < inp.d.sz, "Error: out of boundaries --> value beyond size of vector");
+  return inp.d.p[c * inp.nr() + r];
 }
 
-inline BaseType &at(Vec<BaseType> &&inp, int r, int c) {
+inline BaseType &at(const Vec<BaseType> &&inp, int r, int c) {
   ass(inp.im() == true, "Input is not a matrix!");
   r--;
   c--;
-  return inp.d[c * inp.nr() + r];
+  ass(inp.d.allocated, "No memory was allocated");
+  ass((c * inp.nr() + r) >= 0, "Error: out of boundaries --> value below 1");
+  ass((c * inp.nr() + r) < inp.d.sz, "Error: out of boundaries --> value beyond size of vector");
+  return inp.d.p[c * inp.nr() + r];
 }
 
 }; // namespace etr

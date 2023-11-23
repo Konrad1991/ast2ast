@@ -445,11 +445,11 @@ coca <- R6::R6Class("coca",
 )
 
 #' @import R6
-is_na <- R6::R6Class("is_na",
+is_na <- R6::R6Class("isNA",
   inherit = PC,
   public = list(
     change_code = function() {
-      self$name_fct <- as.name("is_na")
+      self$name_fct <- as.name("isNA")
     },
     convert = function(var) {
       self$replace_int()
@@ -472,11 +472,11 @@ is_na <- R6::R6Class("is_na",
 )
 
 #' @import R6
-is_infinite <- R6::R6Class("is_infinite",
+is_infinite <- R6::R6Class("isInfinite",
   inherit = PC,
   public = list(
     change_code = function() {
-      self$name_fct <- as.name("is_infinite")
+      self$name_fct <- as.name("isInfinite")
     },
     convert = function(var) {
       self$replace_int()
@@ -610,6 +610,8 @@ math <- R6::R6Class("math",
       } else if (self$name_fct == "tanh") {
         self$name_fct <- as.name("tangensh")
       } else if (self$name_fct == "^") {
+        self$name_fct <- as.name("^")
+      } else if (self$name_fct == "exp") {
         self$name_fct <- as.name("exp")
       } else if (self$name_fct == "log") {
         self$name_fct <- as.name("ln")

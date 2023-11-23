@@ -176,7 +176,7 @@ auto atangens(const T &obj)
 }
 
 template <typename T>
-auto logarithm(const T &obj)
+auto ln(const T &obj)
     -> Vec<double, UnaryOperation<decltype(convert(obj).d), Log, LogTrait>,
            UnaryTrait> {
   constexpr bool isDouble = std::is_same_v<T, double>;
@@ -190,7 +190,7 @@ auto logarithm(const T &obj)
 }
 
 template <typename T>
-auto squareRoot(const T &obj)
+auto sqroot(const T &obj)
     -> Vec<double, UnaryOperation<decltype(convert(obj).d), SquareRoot, SquareRootTrait>,
            UnaryTrait> {
   constexpr bool isDouble = std::is_same_v<T, double>;
@@ -204,7 +204,7 @@ auto squareRoot(const T &obj)
 }
 
 template <typename T>
-auto Exp(const T &obj) // issue: docuemtn that the behaviour has changed from exponent to e^x
+auto exp(const T &obj) // issue: docuemtn that the behaviour has changed from exponent to e^x
     -> Vec<double, UnaryOperation<decltype(convert(obj).d), Exp, ExpTrait>,
            UnaryTrait> {
   constexpr bool isDouble = std::is_same_v<T, double>;
