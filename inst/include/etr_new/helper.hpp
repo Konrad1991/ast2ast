@@ -205,7 +205,7 @@ inline int length(const Vec<BaseType> &inp) { return inp.size(); }
 template<typename L, typename R>
 inline int length(const Vec<L, R>& inp) { return inp.size(); }
 
-template <typename T> inline Vec<BaseType> dim(const Vec<T> &inp) {
+inline Vec<BaseType> dim(const Vec<BaseType> &inp) {
 	using typeTraitInp = std::remove_reference<decltype(inp)>::type::TypeTrait;
 	using isVec = std::is_same<typeTraitInp, VectorTrait>;
   	static_assert(isVec::value, "dim can only be called with matrix");

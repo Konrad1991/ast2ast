@@ -1434,6 +1434,18 @@ testall <- function(a, type_test) {
   return(ret)
 }
 
+# In function ‘SEXPREC* testall(SEXP, SEXP)’:                                                                                                                                                                                                   
+#file7e5ca4fce17f.cpp:1362:23: 
+# error: use of deleted function ‘etr::Vec<T, R, Trait>::Vec(T2) [with T2 = double; T = double; R = etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>; Trait = etr::VectorTrait]’                                               
+# 1362 |     x = etr::runif_etr(etr::i2d(10), etr::i2d(0), etr::i2d(1));                                                                                                                                                                                             
+#      |         ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                                                                                                                                                                              
+#In file included from /home/konrad/R/x86_64-pc-linux-gnu-library/4.3/ast2ast/include/etr_new/subsetting.hpp:4,                                                                                                                                                      
+#                 from /home/konrad/R/x86_64-pc-linux-gnu-library/4.3/ast2ast/include/etr.hpp:55,                                                                                                                                                                    
+#                 from file7e5ca4fce17f.cpp:4:                                                                                                                                                                                                                       
+#/home/konrad/R/x86_64-pc-linux-gnu-library/4.3/ast2ast/include/etr_new/BufferVector.hpp:30:26: note: declared here                                                                                                                                                  
+#   30 |   template <typename T2> Vec(T2 n) = delete;                                                                                                                                                                                                                
+#      |                          ^~~                  
+
 fct <- function() { # function then one can use document outline to jump to this position
   test <- translate(testall, verbose = FALSE, getsource = FALSE)
 }

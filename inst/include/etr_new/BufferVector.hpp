@@ -79,6 +79,7 @@ template <typename T, typename R, typename Trait> struct Vec {
   explicit Vec(SEXP inp) : d(inp) {}
   explicit Vec(size_t sz) : d(sz) {}
   explicit Vec(int sz) : d(static_cast<size_t>(sz)) {}
+  Vec(double sz) : d(1) { d[0] = sz; } // issue: dangerous?
   explicit Vec() : d() {}
   explicit Vec(size_t rows, size_t cols) : d(rows * cols) {
     d.setMatrix(true, rows, cols);
