@@ -26,7 +26,7 @@
 ├── comparison.hpp           done                                     
 ├── concatenate.hpp          done                                    
 ├── conversion.hpp           done                                                
-├── distri.hpp  
+├── distri.hpp  						 done
 ├── divide_ad.hpp            done                                  
 ├── exponent.hpp						 done
 ├── header.hpp               done            
@@ -704,7 +704,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
   }
   BorrowSEXP(size_t i) = delete;
   BorrowSEXP(int i) = delete;
-  BorrowSEXP() = delete;
+  BorrowSEXP() {}
   BorrowSEXP(size_t r, size_t c) = delete;
   BorrowSEXP(size_t r, size_t c, const double value) = delete;
 

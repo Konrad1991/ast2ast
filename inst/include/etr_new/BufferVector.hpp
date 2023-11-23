@@ -100,12 +100,7 @@ template <typename T, typename R, typename Trait> struct Vec {
       d.setMatrix(true, other_vec.nr(), other_vec.nc());
     }
   }
-  //template <typename T2, typename R2, typename Trait2>
-  //Vec(const Vec<T2, R2, Trait2> &&other_vec)
-  //    : d(std::move(other_vec.d)) {
-  //  using TypeTrait = Trait2;
-  //  using CaseTrait = Trait2;
-  //}
+
   template <typename T2>
     requires std::is_same_v<T2, bool>
   explicit Vec(const Vec<T2> &other_vec) : d() {
@@ -269,7 +264,7 @@ template <typename T, typename R, typename Trait> struct Vec {
   }
 
   Vec& operator=(SEXP s) {
-    d(s);
+    d = s;
     return *this;
   }
 

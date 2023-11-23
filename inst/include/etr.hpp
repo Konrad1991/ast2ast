@@ -22,6 +22,8 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef A2A_H
 #define A2A_H
 
+#ifdef ETR_OLD
+
 #include "etr_bits/add.hpp"
 #include "etr_bits/allocation.hpp"
 #include "etr_bits/checks_na_inf.hpp"
@@ -43,7 +45,22 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "etr_bits/trigo.hpp"
 #include "etr_bits/util.hpp"
 #include "etr_bits/vec.hpp"
+#define sexp etr::Vec<double>
 
-#define sexp etr::VEC<double>
+#else
+
+#include "etr_new/UtilsTraits.hpp"
+#include "etr_new/unaryCalculations.hpp"
+#include "etr_new/binaryCalculations.hpp"
+#include "etr_new/subsetting.hpp"
+#include "etr_new/interpolation.hpp"
+#include "etr_new/helper.hpp"
+#include "etr_new/distri.hpp"
+#include "etr_new/BufferVector.hpp"
+
+typedef etr::Vec<etr::BaseType> sexp;
+typedef etr::Vec<etr::BaseType, etr::BorrowSEXP<etr::BaseType, etr::BorrowSEXPTrait>> BorrowSEXP;
+
+#endif
 
 #endif

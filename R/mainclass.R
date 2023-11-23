@@ -185,7 +185,6 @@ MA <- R6::R6Class("MA",
           type_name <- desired_type[i]
         }
 
-
         if (desired_type[i] == "ptr_vec") {
           if (reference == TRUE) {
             stop("Reference cannot be set to TRUE in combination with ptr_vec or ptr_mat")
@@ -264,6 +263,8 @@ MA <- R6::R6Class("MA",
       args_dec <- paste("\n", args_dec, "\n")
 
       fct_args <- self$args_2_fct
+      print(paste("fct_args", self$args_2_fct))
+
       fct_args_ptr <- sapply(seq_along(fct_args), function(x) {
         if (desired_type[[x]] == "ptr_vec") {
           return(x)
@@ -273,7 +274,6 @@ MA <- R6::R6Class("MA",
         return(NA)
       })
       fct_args_ptr <- fct_args_ptr[!is.na(fct_args_ptr)]
-
 
       fct_args_dec <- sapply(seq_along(fct_args), function(x) {
         temp <- NULL
@@ -292,10 +292,9 @@ MA <- R6::R6Class("MA",
             collapse = ""
           ) # borrow
         } else {
-          temp <- paste("sexp", fct_args[[x]], ";")
-          temp <- c(temp, fct_args[[x]], "=", paste0(self$args[[x]], desired_type[x], ";\n", collapse = ""))
+          temp <- paste("BorrowSEXP", fct_args[[x]], ";")
+          temp <- c(temp, fct_args[[x]], "=", paste0(self$args[[x]], desired_type[x], "; ", "\n", collapse = ""))
         }
-
         return(temp)
       })
 
@@ -316,8 +315,7 @@ MA <- R6::R6Class("MA",
         "// [[Rcpp::depends(ast2ast)]] \n",
         "// [[Rcpp::depends(RcppArmadillo)]] \n",
         "// [[Rcpp::plugins(cpp20)]] \n",
-        #'#include "ad_etr.hpp"', "\n",
-        '#include "ad_etr.hpp"', "\n",
+        '#include "etr.hpp"', "\n",
         "// [[Rcpp::export]]", "\n",
         "SEXP getXPtr();", "\n",
         self$signature_own(self$desired_type, reference, extern = FALSE),
@@ -345,9 +343,7 @@ MA <- R6::R6Class("MA",
           "// [[Rcpp::depends(ast2ast)]] \n",
           "// [[Rcpp::depends(RcppArmadillo)]] \n",
           "// [[Rcpp::plugins(cpp20)]] \n",
-          #'#include "ad_etr.hpp" \n',
-          '#include "ad_etr.hpp"', "\n",
-          # self$signature_own(self$desired_type, reference, extern = TRUE), "\n",
+          '#include "etr.hpp"', "\n",
           "// [[Rcpp::export]] \n",
           self$signature_own(self$desired_type, reference, extern = FALSE), "\n",
           self$vars_declaration_own(self$desired_type), "\n",
@@ -360,9 +356,7 @@ MA <- R6::R6Class("MA",
           "// [[Rcpp::depends(ast2ast)]] \n",
           "// [[Rcpp::depends(RcppArmadillo)]] \n",
           "// [[Rcpp::plugins(cpp20)]] \n",
-          #'#include "ad_etr.hpp" \n',
-          '#include "ad_etr.hpp"', "\n",
-          # self$signature_own(self$desired_type, reference, extern = TRUE), "\n",
+          '#include "etr.hpp"', "\n",
           "// [[Rcpp::export]] \n",
           self$signature_own(self$desired_type, reference, extern = FALSE), "\n",
           self$vars_declaration_own(self$desired_type), "\n",
