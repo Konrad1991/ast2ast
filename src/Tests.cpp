@@ -1,6 +1,5 @@
 // [[Rcpp::plugins(cpp20)]]
 // [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::depends(ast2ast)]]
 #include "./etr_new/UtilsTraits.hpp"
 #include "./etr_new/unaryCalculations.hpp"
 #include "./etr_new/binaryCalculations.hpp"
@@ -15,10 +14,10 @@ typedef etr::Vec<etr::BaseType, etr::BorrowSEXP<etr::BaseType, etr::BorrowSEXPTr
 
 // [[Rcpp::export]] 
 SEXP bubbleSort(SEXP aSEXP) {
-	sexpSEXP a(aSEXP);
-	sexp size;
+    sexpSEXP a(aSEXP);
+    sexp size;
     sexp temp;
-	size = etr::length(a);
+    size = etr::length(a);
     for (auto&i:  etr::colon(etr::i2d(1), size)) {;
        for (auto&j:  etr::colon(etr::i2d(1), (size - etr::i2d(1)))) {
            if (etr::subset(a, j) > etr::subset(a, j + etr::i2d(1))) {
@@ -72,7 +71,7 @@ SEXP addTest(SEXP aSEXP, SEXP typeTest) {
         a = a + etr::i2d(3);
         return(etr::cpp2R(a));
     } else if (type_test == 2.0) {;
-        a = a + etr::vector(etr::i2d(4), 3.14);
+        a = a + etr::vector(3.14, etr::i2d(4));
         return(etr::cpp2R(a));
     } else if (type_test == 3.0) {
         a = a + etr::matrix(etr::i2d(3), etr::i2d(2), etr::i2d(2));
@@ -83,7 +82,7 @@ SEXP addTest(SEXP aSEXP, SEXP typeTest) {
         return(etr::cpp2R(a));
     } else if (type_test == 5.0) {;
         a = etr::i2d(1);
-        a = a + etr::vector(etr::i2d(4), etr::i2d(3));
+        a = a + etr::vector(etr::i2d(3), etr::i2d(4));
         return(etr::cpp2R(a));
     } else if (type_test == 6.0) {;
         b = etr::vector(etr::i2d(2));
@@ -106,7 +105,7 @@ SEXP addTest(SEXP aSEXP, SEXP typeTest) {
         return(etr::cpp2R(a));
     } else if (type_test == 8.0) {;
         a = etr::i2d(1);
-        a = etr::vector(etr::i2d(4), etr::i2d(3)) + a;
+        a = etr::vector(etr::i2d(3), etr::i2d(4)) + a;
         return(etr::cpp2R(a));
     } else if (type_test == 9.0) {;
         a = etr::i2d(1);
@@ -122,7 +121,7 @@ SEXP addTest(SEXP aSEXP, SEXP typeTest) {
         a = etr::i2d(4) + a;
         return(etr::cpp2R(a));
     } else if (type_test == 13.0) {;
-        b = etr::vector(etr::i2d(2), etr::i2d(3));
+        b = etr::vector(etr::i2d(3), etr::i2d(2));
         a = a + b;
         return(etr::cpp2R(a));
     };
@@ -137,7 +136,7 @@ SEXP minusTest(SEXP aSEXP, SEXP typeTest) {
         a = a - etr::i2d(3);
         return(etr::cpp2R(a));
     } else if (type_test == 2.0) {;
-        a = a - etr::vector(etr::i2d(4), 3.14);
+        a = a - etr::vector(3.14, etr::i2d(4));
         return(etr::cpp2R(a));
     } else if (type_test == 3.0) {;
         a = a - etr::matrix(etr::i2d(3), etr::i2d(2), etr::i2d(2));
@@ -148,7 +147,7 @@ SEXP minusTest(SEXP aSEXP, SEXP typeTest) {
         return(etr::cpp2R(a));
     } else if (type_test == 5.0) {;
         a = etr::i2d(1);
-        a = a - etr::vector(etr::i2d(4), etr::i2d(3));
+        a = a - etr::vector(etr::i2d(3), etr::i2d(4));
         return(etr::cpp2R(a));
     } else if (type_test == 6.0) {;
         b = etr::vector(etr::i2d(2));
@@ -171,7 +170,7 @@ SEXP minusTest(SEXP aSEXP, SEXP typeTest) {
         return(etr::cpp2R(a));
     } else if (type_test == 8.0) {;
         a = etr::i2d(1);
-        a = etr::vector(etr::i2d(4), etr::i2d(3)) - a;
+        a = etr::vector(etr::i2d(3), etr::i2d(4)) - a;
         return(etr::cpp2R(a));
     } else if (type_test == 9.0) {;
         a = etr::i2d(1);
@@ -187,10 +186,254 @@ SEXP minusTest(SEXP aSEXP, SEXP typeTest) {
         a = etr::i2d(4) - a;
         return(etr::cpp2R(a));
     } else if (type_test == 13.0) {;
-        b = etr::vector(etr::i2d(2), etr::i2d(3));
+        b = etr::vector(etr::i2d(3), etr::i2d(2));
         a = a - b;
         return(etr::cpp2R(a));
     } 
+    return etr::cpp2R();
+}
+
+// [[Rcpp::export]]
+SEXP divideTest(SEXP aSEXP, SEXP typeTest) {
+    sexpSEXP type_test(typeTest);
+    sexpSEXP a(aSEXP); sexp b;
+    if (type_test == 1.0) {;
+        a = a/etr::i2d(3);
+        return(etr::cpp2R(a));
+    } else if (type_test == 2.0) {;
+        a = a/etr::vector(3.14, etr::i2d(4));
+        return(etr::cpp2R(a));
+    } else if (type_test == 3.0) {;
+        a = a/etr::matrix(etr::i2d(3), etr::i2d(2), etr::i2d(2));
+        return(etr::cpp2R(a));
+    } else if (type_test == 4.0) {;
+        a = etr::i2d(1);
+        a = a/3.14;
+        return(etr::cpp2R(a));
+    } else if (type_test == 5.0) {;
+        a = etr::i2d(1);
+        a = a/etr::vector(etr::i2d(3), etr::i2d(4));
+        return(etr::cpp2R(a));
+    } else if (type_test == 6.0) {;
+        b = etr::vector(etr::i2d(2));
+        etr::subset(b, 1) = etr::i2d(100);
+        etr::subset(b, 2) = etr::i2d(200);
+        a = a/b;
+        return(etr::cpp2R(a));
+    } else if (type_test == 7.0) {;
+        b = etr::vector(etr::i2d(9));
+        etr::subset(b, 1) = etr::i2d(100);
+        etr::subset(b, 2) = etr::i2d(200);
+        etr::subset(b, 3) = etr::i2d(300);
+        etr::subset(b, 4) = etr::i2d(400);
+        etr::subset(b, 5) = etr::i2d(500);
+        etr::subset(b, 6) = etr::i2d(600);
+        etr::subset(b, 7) = etr::i2d(700);
+        etr::subset(b, 8) = etr::i2d(800);
+        etr::subset(b, 9) = etr::i2d(900);
+        a = a/b;
+        return(etr::cpp2R(a));
+    } else if (type_test == 8.0) {;
+        a = etr::i2d(1);
+        a = etr::vector(etr::i2d(3), etr::i2d(4))/a;
+        return(etr::cpp2R(a));
+    } else if (type_test == 9.0) {;
+        a = etr::i2d(1);
+        a = etr::i2d(1)/etr::i2d(4);
+        return(etr::cpp2R(a));
+    } else if (type_test == 10.0) {;
+        a = a/a;
+        return(etr::cpp2R(a));
+    } else if (type_test == 11.0) {;
+        a = a/etr::i2d(1);
+        return(etr::cpp2R(a));
+    } else if (type_test == 12.0) {;
+        a = etr::i2d(4)/a;
+        return(etr::cpp2R(a));
+    } else if (type_test == 13.0) {;
+        b = etr::vector(etr::i2d(3), etr::i2d(2));
+        a = a/b;
+        return(etr::cpp2R(a));
+    }
+    return etr::cpp2R();
+}
+
+// [[Rcpp::export]]
+SEXP timesTest(SEXP aSEXP, SEXP typeTest) {
+    sexpSEXP type_test(typeTest);
+    sexpSEXP a(aSEXP); sexp b;
+    if (type_test == 1.0) {;
+        a = a * etr::i2d(3);
+        return(etr::cpp2R(a));
+    } else if (type_test == 2.0) {;
+        a = a * etr::vector(3.14, etr::i2d(4));
+        return(etr::cpp2R(a));
+    } else if (type_test == 3.0) {;
+        a = a * etr::matrix(etr::i2d(3), etr::i2d(2), etr::i2d(2));
+        return(etr::cpp2R(a));
+    } else if (type_test == 4.0) {;
+        a = etr::i2d(1);
+        a = a * 3.14;
+        return(etr::cpp2R(a));
+    } else if (type_test == 5.0) {;
+        a = etr::i2d(1);
+        a = a * etr::vector(etr::i2d(3), etr::i2d(4));
+        return(etr::cpp2R(a));
+    } else if (type_test == 6.0) {;
+        b = etr::vector(etr::i2d(2));
+        etr::subset(b, 1) = etr::i2d(100);
+        etr::subset(b, 2) = etr::i2d(200);
+        a = a * b;
+        return(etr::cpp2R(a));
+    } else if (type_test == 7.0) {;
+        b = etr::vector(etr::i2d(9));
+        etr::subset(b, 1) = etr::i2d(100);
+        etr::subset(b, 2) = etr::i2d(200);
+        etr::subset(b, 3) = etr::i2d(300);
+        etr::subset(b, 4) = etr::i2d(400);
+        etr::subset(b, 5) = etr::i2d(500);
+        etr::subset(b, 6) = etr::i2d(600);
+        etr::subset(b, 7) = etr::i2d(700);
+        etr::subset(b, 8) = etr::i2d(800);
+        etr::subset(b, 9) = etr::i2d(900);
+        a = a * b;
+        return(etr::cpp2R(a));
+    } else if (type_test == 8.0) {;
+        a = etr::i2d(1);
+        a = etr::vector(etr::i2d(3), etr::i2d(4)) * a;
+        return(etr::cpp2R(a));
+    } else if (type_test == 9.0) {;
+        a = etr::i2d(1);
+        a = etr::i2d(1) * etr::i2d(4);
+        return(etr::cpp2R(a));
+    } else if (type_test == 10.0) {;
+        a = a * a;
+        return(etr::cpp2R(a));
+    } else if (type_test == 11.0) {;
+        a = a * etr::i2d(1);
+        return(etr::cpp2R(a));
+    } else if (type_test == 12.0) {;
+        a = etr::i2d(4) * a;
+        return(etr::cpp2R(a));
+    } else if (type_test == 13.0) {;
+        b = etr::vector(etr::i2d(3), etr::i2d(2));
+        a = a * b;
+        return(etr::cpp2R(a));
+    };
+    return etr::cpp2R();
+}
+
+// [[Rcpp::export]]
+SEXP mixedStuffTest(SEXP aSEXP, SEXP typeTest) {
+    sexpSEXP type_test(typeTest);
+    sexpSEXP a(aSEXP); sexp b;
+    sexp c, d, e, f, m, v;
+    if (type_test == 7.1) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
+        c = etr::coca(-etr::i2d(100), a, b, etr::i2d(100));
+        d = etr::vector(etr::i2d(1), etr::i2d(2));
+        e = etr::matrix(-etr::i2d(1), etr::i2d(2), etr::i2d(2));
+        f = etr::coca(c, d, e, etr::i2d(2));
+        return(etr::cpp2R(f));
+    } else if (type_test == 7.2) {;
+        v = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), etr::i2d(4));
+        m = etr::matrix(etr::i2d(2), etr::i2d(2), etr::i2d(3));
+        b = etr::coca(etr::length(v), etr::dim(m));
+        return(etr::cpp2R(b));
+    } else if (type_test == 8.1) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
+        return(etr::cpp2R(a == b));
+    } else if (type_test == 8.2) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        return(etr::cpp2R(a == a));
+    } else if (type_test == 8.3) {;
+        a = etr::coca(etr::i2d(2), etr::i2d(2), etr::i2d(2));
+        return(etr::cpp2R(a == etr::i2d(2)));
+    } else if (type_test == 9.1) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(2));
+        return(etr::cpp2R(a <= b));
+    } else if (type_test == 9.2) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(4));
+        return(etr::cpp2R(a <= a));
+    } else if (type_test == 9.3) {;
+        a = etr::coca(etr::i2d(2), etr::i2d(2), etr::i2d(2));
+        return(etr::cpp2R(a <= etr::i2d(2)));
+    } else if (type_test == 10.1) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
+        return(etr::cpp2R(a < b));
+    } else if (type_test == 10.2) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        return(etr::cpp2R(a < a));
+    } else if (type_test == 10.3) {;
+        a = etr::coca(etr::i2d(2), etr::i2d(2), etr::i2d(2));
+        return(etr::cpp2R(a < etr::i2d(2)));
+    } else if (type_test == 11.1) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
+        return(etr::cpp2R(a > b));
+    } else if (type_test == 11.2) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        return(etr::cpp2R(a > a));
+    } else if (type_test == 11.3) {;
+        a = etr::coca(etr::i2d(2), etr::i2d(2), etr::i2d(2));
+        return(etr::cpp2R(a > etr::i2d(1)));
+    } else if (type_test == 12.1) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(3));
+        return(etr::cpp2R(a >= b));
+    } else if (type_test == 12.2) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        return(etr::cpp2R(a >= a));
+    } else if (type_test == 12.3) {;
+        a = etr::coca(etr::i2d(2), etr::i2d(2), etr::i2d(2));
+        return(etr::cpp2R(a >= etr::i2d(1)));
+    } else if (type_test == 13.1) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(3));
+        return(etr::cpp2R(a != b));
+    } else if (type_test == 13.2) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        return(etr::cpp2R(a != a));
+    } else if (type_test == 13.3) {;
+        a = etr::coca(etr::i2d(2), etr::i2d(2), etr::i2d(2));
+        return(etr::cpp2R(a != etr::i2d(1)));
+    } else if (type_test == 14.1) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
+        return(etr::cpp2R(a + b == b - a));
+    } else if (type_test == 14.2) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
+        return(etr::cpp2R(a + b == etr::coca(etr::i2d(100), etr::i2d(100), etr::i2d(200))));
+    } else if (type_test == 14.3) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
+        return(etr::cpp2R(a + b != b - a));
+    } else if (type_test == 14.4) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
+        return(etr::cpp2R(a + b != etr::coca(etr::i2d(100), etr::i2d(100), etr::i2d(200))));
+    } else if (type_test == 14.5) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
+        return(etr::cpp2R(a + b > b - a));
+    } else if (type_test == 14.6) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
+        return(etr::cpp2R(a + b < etr::coca(etr::i2d(100), etr::i2d(100), etr::i2d(200))));
+    } else if (type_test == 14.7) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
+        return(etr::cpp2R(a + b >= b - a));
+    } else if (type_test == 14.8) {;
+        a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
+        b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
+        return(etr::cpp2R(a + b <= etr::coca(etr::i2d(100), etr::i2d(100), etr::i2d(200))));
+    };
     return etr::cpp2R();
 }
 
@@ -238,233 +481,64 @@ expect_equal(minusTest(matrix(3, 2, 2), 11), matrix(3, 2, 2) - 1)
 expect_equal(minusTest(matrix(3, 2, 2), 12), 4 - matrix(3, 2, 2))
 expect_equal(minusTest(matrix(3, 2, 2), 13), matrix(3, 2, 2) - rep(3, 2))
 
+expect_equal(divideTest(c(1, 2, 3, 4), 1), c(1, 2, 3, 4) / 3)
+expect_equal(divideTest(c(1, 2, 3, 4), 2), c(1, 2, 3, 4) / 3.14)
+expect_equal(divideTest(c(1, 2, 3, 4), 3), 1:4 / matrix(3, 2, 2))
+expect_equal(divideTest(0, 4), 1 / 3.14)
+expect_equal(divideTest(0, 5), 1 / rep(3, 4))
+expect_equal(divideTest(c(1, 2, 3, 4), 6), c(1, 2, 3, 4) / c(100, 200))  
+expect_equal(divideTest(c(1, 2, 3, 4), 7), c(1, 2, 3, 4) / seq(100, 900, 100))
+expect_equal(divideTest(c(1, 2, 3, 4), 8), rep(3, 4) / 1)
+expect_equal(divideTest(c(1, 2, 3, 4), 9), 1 / 4)
+expect_equal(divideTest(matrix(3, 2, 2), 10), matrix(3, 2, 2) / matrix(3, 2, 2))
+expect_equal(divideTest(matrix(3, 2, 2), 11), matrix(3, 2, 2) / 1)
+expect_equal(divideTest(matrix(3, 2, 2), 12), 4 / matrix(3, 2, 2))
+expect_equal(divideTest(matrix(3, 2, 2), 13), matrix(3, 2, 2) / rep(3, 2))
+
+expect_equal(timesTest(c(1, 2, 3, 4), 1), c(1, 2, 3, 4) * 3)
+expect_equal(timesTest(c(1, 2, 3, 4), 2), c(1, 2, 3, 4) * 3.14)
+expect_equal(timesTest(c(1, 2, 3, 4), 3), 1:4 * matrix(3, 2, 2))
+expect_equal(timesTest(0, 4), 1 * 3.14)
+expect_equal(timesTest(0, 5), 1 * rep(3, 4))
+expect_equal(timesTest(c(1, 2, 3, 4), 6), c(1, 2, 3, 4) * c(100, 200))  # failed
+expect_equal(timesTest(c(1, 2, 3, 4), 7), c(1, 2, 3, 4) * seq(100, 900, 100))
+expect_equal(timesTest(c(1, 2, 3, 4), 8), rep(3, 4) * 1)
+expect_equal(timesTest(c(1, 2, 3, 4), 9), 1 * 4)
+expect_equal(timesTest(matrix(3, 2, 2), 10), matrix(3, 2, 2) * matrix(3, 2, 2))
+expect_equal(timesTest(matrix(3, 2, 2), 11), matrix(3, 2, 2) * 1)
+expect_equal(timesTest(matrix(3, 2, 2), 12), 4 * matrix(3, 2, 2))
+expect_equal(timesTest(matrix(3, 2, 2), 13), matrix(3, 2, 2) * rep(3, 2))
+
+expect_equal(mixedStuffTest(0, 7.1), c(-100, 1, 2, 3, 5, 6, 7, 100, 1, 1, rep(-1, 4), 2))
+expect_equal(mixedStuffTest(0, 7.2), c(4, 2, 3))
+expect_equal(mixedStuffTest(0, 8.1), as.numeric(c(1, 2, 3) == c(5, 6, 7)))
+expect_equal(mixedStuffTest(0, 8.2), as.numeric(c(1, 2, 3) == c(1, 2, 3)))
+expect_equal(mixedStuffTest(0, 8.3), as.numeric(c(2, 2, 2) == 2))
+expect_equal(mixedStuffTest(0, 10.1), as.numeric(c(1, 2, 3) < c(5, 6, 7)))
+expect_equal(mixedStuffTest(0, 10.2), as.numeric(c(1, 2, 3) < c(1, 2, 3)))
+expect_equal(mixedStuffTest(0, 10.3), as.numeric(c(2, 2, 2) < 2))
+expect_equal(mixedStuffTest(0, 11.1), as.numeric(c(1, 2, 3) > c(5, 6, 7)))
+expect_equal(mixedStuffTest(0, 11.2), as.numeric(c(1, 2, 3) > c(1, 2, 3)))
+expect_equal(mixedStuffTest(0, 11.3), as.numeric(c(2, 2, 2) > 1))
+expect_equal(mixedStuffTest(0, 12.1), as.numeric(c(1, 2, 3) >= c(5, 6, 3)))
+expect_equal(mixedStuffTest(0, 12.2), as.numeric(c(1, 2, 3) >= c(1, 2, 3)))
+expect_equal(mixedStuffTest(0, 12.3), as.numeric(c(2, 2, 2) >= 1))
+expect_equal(mixedStuffTest(0, 13.1), as.numeric(c(1, 2, 3) != c(5, 6, 3)))
+expect_equal(mixedStuffTest(0, 13.2), as.numeric(c(1, 2, 3) != c(1, 2, 3)))
+expect_equal(mixedStuffTest(0, 13.3), as.numeric(c(2, 2, 2) != 1))
+expect_equal(mixedStuffTest(0, 14.1), rep(as.numeric(FALSE), 3))
+expect_equal(mixedStuffTest(0, 14.2), rep(as.numeric(FALSE), 3))
+expect_equal(mixedStuffTest(0, 14.3), rep(as.numeric(TRUE), 3))
+expect_equal(mixedStuffTest(0, 14.4), rep(as.numeric(TRUE), 3))
+expect_equal(mixedStuffTest(0, 14.5), rep(as.numeric(TRUE), 3))
+expect_equal(mixedStuffTest(0, 14.6), rep(as.numeric(TRUE), 3))
+expect_equal(mixedStuffTest(0, 14.7), rep(as.numeric(TRUE), 3))
+expect_equal(mixedStuffTest(0, 14.8), rep(as.numeric(TRUE), 3))
 */
 
 
 
 /*
-else if (type_test == 5.1) {;
-    a = a/etr::i2d(3);
-    return(etr::cpp2R(a));
-} else if (type_test == 5.2) {;
-    a = a/etr::vector(3.14, etr::i2d(4));
-    return(etr::cpp2R(a));
-} else if (type_test == 5.3) {;
-    a = a/etr::matrix(etr::i2d(3), etr::i2d(2), etr::i2d(2));
-    return(etr::cpp2R(a));
-} else if (type_test == 5.4) {;
-    a = etr::i2d(1);
-    a = a/3.14;
-    return(etr::cpp2R(a));
-} else if (type_test == 5.5) {;
-    a = etr::i2d(1);
-    a = a/etr::vector(etr::i2d(3), etr::i2d(4));
-    return(etr::cpp2R(a));
-} else if (type_test == 5.6) {;
-    b = etr::vector(etr::i2d(2));
-    etr::subset(b, 1) = etr::i2d(100);
-    etr::subset(b, 2) = etr::i2d(200);
-    a = a/b;
-    return(etr::cpp2R(a));
-} else if (type_test == 5.7) {;
-    b = etr::vector(etr::i2d(9));
-    etr::subset(b, 1) = etr::i2d(100);
-    etr::subset(b, 2) = etr::i2d(200);
-    etr::subset(b, 3) = etr::i2d(300);
-    etr::subset(b, 4) = etr::i2d(400);
-    etr::subset(b, 5) = etr::i2d(500);
-    etr::subset(b, 6) = etr::i2d(600);
-    etr::subset(b, 7) = etr::i2d(700);
-    etr::subset(b, 8) = etr::i2d(800);
-    etr::subset(b, 9) = etr::i2d(900);
-    a = a/b;
-    return(etr::cpp2R(a));
-} else if (type_test == 5.8) {;
-    a = etr::i2d(1);
-    a = etr::vector(etr::i2d(3), etr::i2d(4))/a;
-    return(etr::cpp2R(a));
-} else if (type_test == 5.9) {;
-    a = etr::i2d(1);
-    a = etr::i2d(1)/etr::i2d(4);
-    return(etr::cpp2R(a));
-} else if (type_test == 5.1) {;
-    a = a/a;
-    return(etr::cpp2R(a));
-} else if (type_test == 5.11) {;
-    a = a/etr::i2d(1);
-    return(etr::cpp2R(a));
-} else if (type_test == 5.12) {;
-    a = etr::i2d(4)/a;
-    return(etr::cpp2R(a));
-} else if (type_test == 5.13) {;
-    b = etr::vector(etr::i2d(3), etr::i2d(2));
-    a = a/b;
-    return(etr::cpp2R(a));
-} else if (type_test == 6.1) {;
-    a = a * etr::i2d(3);
-    return(etr::cpp2R(a));
-} else if (type_test == 6.2) {;
-    a = a * etr::vector(3.14, etr::i2d(4));
-    return(etr::cpp2R(a));
-} else if (type_test == 6.3) {;
-    a = a * etr::matrix(etr::i2d(3), etr::i2d(2), etr::i2d(2));
-    return(etr::cpp2R(a));
-} else if (type_test == 6.4) {;
-    a = etr::i2d(1);
-    a = a * 3.14;
-    return(etr::cpp2R(a));
-} else if (type_test == 6.5) {;
-    a = etr::i2d(1);
-    a = a * etr::vector(etr::i2d(3), etr::i2d(4));
-    return(etr::cpp2R(a));
-} else if (type_test == 6.6) {;
-    b = etr::vector(etr::i2d(2));
-    etr::subset(b, 1) = etr::i2d(100);
-    etr::subset(b, 2) = etr::i2d(200);
-    a = a * b;
-    return(etr::cpp2R(a));
-} else if (type_test == 6.7) {;
-    b = etr::vector(etr::i2d(9));
-    etr::subset(b, 1) = etr::i2d(100);
-    etr::subset(b, 2) = etr::i2d(200);
-    etr::subset(b, 3) = etr::i2d(300);
-    etr::subset(b, 4) = etr::i2d(400);
-    etr::subset(b, 5) = etr::i2d(500);
-    etr::subset(b, 6) = etr::i2d(600);
-    etr::subset(b, 7) = etr::i2d(700);
-    etr::subset(b, 8) = etr::i2d(800);
-    etr::subset(b, 9) = etr::i2d(900);
-    a = a * b;
-    return(etr::cpp2R(a));
-} else if (type_test == 6.8) {;
-    a = etr::i2d(1);
-    a = etr::vector(etr::i2d(3), etr::i2d(4)) * a;
-    return(etr::cpp2R(a));
-} else if (type_test == 6.9) {;
-    a = etr::i2d(1);
-    a = etr::i2d(1) * etr::i2d(4);
-    return(etr::cpp2R(a));
-} else if (type_test == 6.1) {;
-    a = a * a;
-    return(etr::cpp2R(a));
-} else if (type_test == 6.11) {;
-    a = a * etr::i2d(1);
-    return(etr::cpp2R(a));
-} else if (type_test == 6.12) {;
-    a = etr::i2d(4) * a;
-    return(etr::cpp2R(a));
-} else if (type_test == 6.13) {;
-    b = etr::vector(etr::i2d(3), etr::i2d(2));
-    a = a * b;
-    return(etr::cpp2R(a));
-};
-
-if (type_test == 7.1) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
-    c = etr::coca(-etr::i2d(100), a, b, etr::i2d(100));
-    d = etr::vector(etr::i2d(1), etr::i2d(2));
-    e = etr::matrix(-etr::i2d(1), etr::i2d(2), etr::i2d(2));
-    f = etr::coca(c, d, e, etr::i2d(2));
-    return(etr::cpp2R(f));
-} else if (type_test == 7.2) {;
-    v = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), etr::i2d(4));
-    m = etr::matrix(etr::i2d(2), etr::i2d(2), etr::i2d(3));
-    b = etr::coca(etr::length(v), etr::dim(m));
-    return(etr::cpp2R(b));
-} else if (type_test == 8.1) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
-    return(etr::cpp2R(a == b));
-} else if (type_test == 8.2) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    return(etr::cpp2R(a == a));
-} else if (type_test == 8.3) {;
-    a = etr::coca(etr::i2d(2), etr::i2d(2), etr::i2d(2));
-    return(etr::cpp2R(a == etr::i2d(2)));
-} else if (type_test == 9.1) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(2));
-    return(etr::cpp2R(a <= b));
-} else if (type_test == 9.2) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(4));
-    return(etr::cpp2R(a <= a));
-} else if (type_test == 9.3) {;
-    a = etr::coca(etr::i2d(2), etr::i2d(2), etr::i2d(2));
-    return(etr::cpp2R(a <= etr::i2d(2)));
-} else if (type_test == 10.1) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
-    return(etr::cpp2R(a < b));
-} else if (type_test == 10.2) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    return(etr::cpp2R(a < a));
-} else if (type_test == 10.3) {;
-    a = etr::coca(etr::i2d(2), etr::i2d(2), etr::i2d(2));
-    return(etr::cpp2R(a < etr::i2d(2)));
-} else if (type_test == 11.1) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
-    return(etr::cpp2R(a > b));
-} else if (type_test == 11.2) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    return(etr::cpp2R(a > a));
-} else if (type_test == 11.3) {;
-    a = etr::coca(etr::i2d(2), etr::i2d(2), etr::i2d(2));
-    return(etr::cpp2R(a > etr::i2d(1)));
-} else if (type_test == 12.1) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(3));
-    return(etr::cpp2R(a >= b));
-} else if (type_test == 12.2) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    return(etr::cpp2R(a >= a));
-} else if (type_test == 12.3) {;
-    a = etr::coca(etr::i2d(2), etr::i2d(2), etr::i2d(2));
-    return(etr::cpp2R(a >= etr::i2d(1)));
-} else if (type_test == 13.1) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(3));
-    return(etr::cpp2R(a != b));
-} else if (type_test == 13.2) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    return(etr::cpp2R(a != a));
-} else if (type_test == 13.3) {;
-    a = etr::coca(etr::i2d(2), etr::i2d(2), etr::i2d(2));
-    return(etr::cpp2R(a != etr::i2d(1)));
-} else if (type_test == 14.1) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
-    return(etr::cpp2R(a + b == b - a));
-} else if (type_test == 14.2) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
-    return(etr::cpp2R(a + b == etr::coca(etr::i2d(100), etr::i2d(100), etr::i2d(200))));
-} else if (type_test == 14.3) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
-    return(etr::cpp2R(a + b != b - a));
-} else if (type_test == 14.4) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
-    return(etr::cpp2R(a + b != etr::coca(etr::i2d(100), etr::i2d(100), etr::i2d(200))));
-} else if (type_test == 14.5) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
-    return(etr::cpp2R(a + b > b - a));
-} else if (type_test == 14.6) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
-    return(etr::cpp2R(a + b < etr::coca(etr::i2d(100), etr::i2d(100), etr::i2d(200))));
-} else if (type_test == 14.7) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
-    return(etr::cpp2R(a + b >= b - a));
-} else if (type_test == 14.8) {;
-    a = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3));
-    b = etr::coca(etr::i2d(5), etr::i2d(6), etr::i2d(7));
-    return(etr::cpp2R(a + b <= etr::coca(etr::i2d(100), etr::i2d(100), etr::i2d(200))));
-};
 
 if (type_test == 15.1) {;
     a = etr::exp(a, etr::i2d(2)) + etr::ln(etr::i2d(1));

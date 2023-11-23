@@ -18,9 +18,9 @@ inline Vec<BaseType> vector(const T& inp) {
 }
 
 template<typename L, typename T>
-inline Vec<BaseType> vector(const L& s, const T& inp) {
+inline Vec<BaseType> vector(const T& inp, const L& s) {
   size_t length = 0;
-  if constexpr(std::is_same_v<L, double> || std::is_same_v<T, int> || std::is_same_v<T, bool>) {
+  if constexpr(std::is_same_v<L, double> || std::is_same_v<L, int> || std::is_same_v<L, bool>) {
     length = static_cast<size_t>(s);
   } else {
     ass(s.size() == 1, "invalid length argument");

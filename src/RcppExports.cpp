@@ -88,6 +88,42 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// divideTest
+SEXP divideTest(SEXP aSEXP, SEXP typeTest);
+RcppExport SEXP _ast2ast_divideTest(SEXP aSEXPSEXP, SEXP typeTestSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type aSEXP(aSEXPSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type typeTest(typeTestSEXP);
+    rcpp_result_gen = Rcpp::wrap(divideTest(aSEXP, typeTest));
+    return rcpp_result_gen;
+END_RCPP
+}
+// timesTest
+SEXP timesTest(SEXP aSEXP, SEXP typeTest);
+RcppExport SEXP _ast2ast_timesTest(SEXP aSEXPSEXP, SEXP typeTestSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type aSEXP(aSEXPSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type typeTest(typeTestSEXP);
+    rcpp_result_gen = Rcpp::wrap(timesTest(aSEXP, typeTest));
+    return rcpp_result_gen;
+END_RCPP
+}
+// mixedStuffTest
+SEXP mixedStuffTest(SEXP aSEXP, SEXP typeTest);
+RcppExport SEXP _ast2ast_mixedStuffTest(SEXP aSEXPSEXP, SEXP typeTestSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type aSEXP(aSEXPSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type typeTest(typeTestSEXP);
+    rcpp_result_gen = Rcpp::wrap(mixedStuffTest(aSEXP, typeTest));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_bubbleSort", (DL_FUNC) &_ast2ast_bubbleSort, 1},
@@ -97,6 +133,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_randomStuff3", (DL_FUNC) &_ast2ast_randomStuff3, 1},
     {"_ast2ast_addTest", (DL_FUNC) &_ast2ast_addTest, 2},
     {"_ast2ast_minusTest", (DL_FUNC) &_ast2ast_minusTest, 2},
+    {"_ast2ast_divideTest", (DL_FUNC) &_ast2ast_divideTest, 2},
+    {"_ast2ast_timesTest", (DL_FUNC) &_ast2ast_timesTest, 2},
+    {"_ast2ast_mixedStuffTest", (DL_FUNC) &_ast2ast_mixedStuffTest, 2},
     {NULL, NULL, 0}
 };
 

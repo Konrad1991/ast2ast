@@ -232,9 +232,10 @@ template <typename T, typename R, typename Trait> struct Vec {
     static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
     static_assert(!isBinaryOP::value, "Cannot assign to binary calculation");
     if constexpr (isBuffer::value) {
-      Buffer<T> temp(otherVec.size());
-      for (size_t i = 0; i < otherVec.size(); i++) 
+      Buffer<T> temp(otherVec.size()); // issue: define temp as own attribute!
+      for (size_t i = 0; i < otherVec.size(); i++) {
         temp[i] = otherVec[i];
+      }
       d.moveit(temp);
     } else if constexpr (isBorrow::value) {
       ass(otherVec.size() == this->size(),

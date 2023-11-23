@@ -29,3 +29,15 @@ minusTest <- function(aSEXP, typeTest) {
     .Call(`_ast2ast_minusTest`, aSEXP, typeTest)
 }
 
+divideTest <- function(aSEXP, typeTest) {
+    .Call(`_ast2ast_divideTest`, aSEXP, typeTest)
+}
+
+timesTest <- function(aSEXP, typeTest) {
+    .Call(`_ast2ast_timesTest`, aSEXP, typeTest)
+}
+
+mixedStuffTest <- function(aSEXP, typeTest) {
+    .Call(`_ast2ast_mixedStuffTest`, aSEXP, typeTest)
+}
+

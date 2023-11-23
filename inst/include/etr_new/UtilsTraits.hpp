@@ -14,6 +14,7 @@
 #include <memory>
 #include <type_traits>
 #include <vector>
+#include <mutex>
 
 /*
 ./ast2ast/inst/include/ad_etr/                      
@@ -22,7 +23,7 @@
 ├── backward.hpp           
 ├── checks_na_inf.hpp        done
 ├── colon.hpp                done                                        
-├── comparison.hpp                                                
+├── comparison.hpp           done                                     
 ├── concatenate.hpp          done                                    
 ├── conversion.hpp           done                                                
 ├── distri.hpp  
@@ -323,7 +324,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
   BaseStore(const BaseStore<T> &other)
       : sz(other.sz), capacity(other.capacity), allocated(other.allocated) {
     if (other.allocated) {
-      p = new T[capacity];
+      p = new T[capacity]; // issue: new (use std.:align_val_t(16)) T[capacity]
       std::copy(other.p, other.p + capacity, p);
     } else {
       p = nullptr;
@@ -447,6 +448,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
   auto end() const { return It<T>{p + sz}; }
   T &back() { return p[sz]; }
   T *data() const { return p; }
+
   void realloc(int new_size) {
     T *temp;
     temp = new T[sz];
@@ -466,6 +468,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
     temp = nullptr;
     allocated = true;
   }
+
   void push_back(T input) {
     if (sz == capacity) {
       realloc(sz * 2);
