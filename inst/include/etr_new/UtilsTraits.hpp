@@ -170,6 +170,10 @@ struct MatrixParameter {
   void setMatrix(const MatrixParameter &mp_) {
     this->setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
   }
+  friend std::ostream &operator<<(std::ostream &os, const MatrixParameter &m) {
+    os << std::boolalpha << m.ismatrix << " nrows = " << m.rows << " ncols = " << m.cols << std::endl;
+    return os;
+  }
 };
 
 template<typename Trait = DoubleTrait>
@@ -401,7 +405,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
     p = new T[capacity];
     allocated = true;
   }
-  void resize(size_t newSize) {
+  void resize(size_t newSize) { // issue: check if capacity > newSize --> than do nothing
     if (!allocated) {
       init(newSize);
       return;
@@ -496,6 +500,7 @@ template <typename T, typename SubsetTrait> struct Subset {
   using CaseTrait = SubsetTrait;
   Indices ind;
   T *p = nullptr;
+  using CurrentBaseType = std::remove_reference<decltype(*p)>::type::Type;
   MatrixParameter mp;
   mutable signed int ref_counter = 0;
 
@@ -538,12 +543,12 @@ template <typename T, typename SubsetTrait> struct Subset {
   void setInd(int idx, int val) { ind[idx] = val; }
   void setPtr(const T *pOther) { this->p = pOther; }
 
-  BaseType &operator[](size_t pos) {
+  CurrentBaseType &operator[](size_t pos) {
     ass(this -> p != nullptr, "Subset is pointing to nothing!");
     return this -> p->operator[](ind[pos % p -> size()]);
   }
 
-  BaseType operator[](size_t pos) const {
+  CurrentBaseType operator[](size_t pos) const {
     ass(p != nullptr, "Subset is pointing to nothing!");
     return this -> p->operator[](ind[pos % p -> size()]);
   }
@@ -903,8 +908,8 @@ void defineMatrix(const L& l, const R& r,
       size_t ncols = r.nc();
       mp.setMatrix(true, nrows, ncols);
     } else if (l.im() && !r.im()) {
-      size_t nrows = r.nr();
-      size_t ncols = r.nc();
+      size_t nrows = l.nr();
+      size_t ncols = l.nc();
       mp.setMatrix(true, nrows, ncols);
   	}	
   }

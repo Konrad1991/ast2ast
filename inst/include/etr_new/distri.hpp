@@ -204,8 +204,8 @@ inline Vec<BaseType> rnorm_etr(const Vec<BaseType> &x, const Vec<BaseType> &min_
   std::mutex m;
 
   if ((x.size() == 1) && (min_.size() == 1) && (max_.size() == 1)) {
-    Vec<BaseType> res(x[0], 0.0);
     size_t size = static_cast<size_t>(x[0]);
+    Vec<BaseType> res(size);
     for (size_t i = 0; i < size; i++) {
       m.lock();
       GetRNGstate();
@@ -360,8 +360,8 @@ inline Vec<BaseType> rlnorm_etr(const Vec<BaseType> &x, const Vec<BaseType> &min
   std::mutex m;
 
   if ((x.size() == 1) && (min_.size() == 1) && (max_.size() == 1)) {
-    Vec<BaseType> res(x[0], 0.0);
     size_t size = static_cast<size_t>(x[0]);
+    Vec<BaseType> res(size);
     for (size_t i = 0; i < size; i++) {
       m.lock();
       GetRNGstate();
@@ -528,8 +528,8 @@ inline Vec<BaseType> rgamma_etr(const Vec<BaseType> &x, const Vec<BaseType> &sha
 
   // const Vec<BaseType> &scale = 1 / rate;
   if ((x.size() == 1) && (shape.size() == 1) && (scale.size() == 1)) {
-    Vec<BaseType> res(x[0], 0.0);
     size_t size = static_cast<size_t>(x[0]);
+    Vec<BaseType> res(size);
     for (size_t i = 0; i < size; i++) {
       m.lock();
       GetRNGstate();

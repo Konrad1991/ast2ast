@@ -79,8 +79,11 @@ template <typename T, typename R, typename Trait> struct Vec {
   explicit Vec(SEXP inp) : d(inp) {}
   explicit Vec(size_t sz) : d(sz) {}
   explicit Vec(int sz) : d(static_cast<size_t>(sz)) {}
-  Vec(double sz) : d(1) { d[0] = sz; } // issue: dangerous?
-  explicit Vec() : d() {}
+  
+  Vec(double sz) : d(1) { d[0] = sz; } // issue: could be removed if all functions could handle double
+  Vec(Rboolean b) : d(1) { d[0] = static_cast<BaseType>(b); } // issue: can i prevent this? Maybe with the same strategy of converting int to i2d(int) in R. 
+  
+  explicit Vec() : d() { }
   explicit Vec(size_t rows, size_t cols) : d(rows * cols) {
     d.setMatrix(true, rows, cols);
   }
@@ -102,12 +105,52 @@ template <typename T, typename R, typename Trait> struct Vec {
     }
   }
 
+  template <typename T2, typename R2, typename Trait2>
+  Vec(const Vec<T2, R2, Trait2> &&other_vec) : d() {
+    using TypeTrait = Trait2;
+    using CaseTrait = Trait2;
+    this->d.resize(other_vec.size());
+    for (size_t i = 0; i < d.size(); i++) {
+      d[i] = other_vec[i];
+    }
+    if (other_vec.d.im()) {
+      d.setMatrix(true, other_vec.nr(), other_vec.nc());
+    }
+  }
+
+  /*
+  template<typename Other> // issue: are these constructors are needed? But difficult error handling
+  Vec(const Other& v) : d() {
+    this->d.resize(v.size());
+    for (size_t i = 0; i < d.size(); i++) {
+      d[i] = v[i];
+    }
+    if (v.d.im()) {
+      d.setMatrix(true, v.nr(), v.nc());
+    }
+  }
+  template<typename Other>// issue: are these constructors are needed? But difficult error handling
+  Vec(const Other&& v) : d() {
+    printType(v); 
+    this->d.resize(v.size());
+    for (size_t i = 0; i < d.size(); i++) {
+      d[i] = v[i];
+    }
+    if (v.d.im()) {
+      d.setMatrix(true, v.nr(), v.nc());
+    }
+  }
+  */
+
   template <typename T2>
     requires std::is_same_v<T2, bool>
   explicit Vec(const Vec<T2> &other_vec) : d() {
     d.resize(other_vec.size());
     for (size_t i = 0; i < d.size(); i++)
       d[i] = other_vec[i];
+    if (other_vec.d.im()) {
+      d.setMatrix(true, other_vec.nr(), other_vec.nc());
+    }
   }
 
   T &operator[](size_t idx) { return d[idx]; }
@@ -177,8 +220,8 @@ template <typename T, typename R, typename Trait> struct Vec {
             d[i] = other[i];
         }  
     }
-    if (other.d.im()) {
-      d.setMatrix(true, other.nr(), other.nc());
+    if (other.d.im() && !d.im()) {
+      d.setMatrix(true, other.d.nr(), other.d.nc());
     }
     return *this;
   }
@@ -217,8 +260,8 @@ template <typename T, typename R, typename Trait> struct Vec {
           d[i] = temp[i];
       }
     }
-    if (otherVec.d.im()) {
-      d.setMatrix(true, otherVec.nr(), otherVec.nc());
+    if (otherVec.d.im() && !d.im()) {
+      d.setMatrix(true, otherVec.d.nr(), otherVec.d.nc());
     }
     return *this;
   }

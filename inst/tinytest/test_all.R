@@ -1434,23 +1434,10 @@ testall <- function(a, type_test) {
   return(ret)
 }
 
-# In function ‘SEXPREC* testall(SEXP, SEXP)’:                                                                                                                                                                                                   
-#file7e5ca4fce17f.cpp:1362:23: 
-# error: use of deleted function ‘etr::Vec<T, R, Trait>::Vec(T2) [with T2 = double; T = double; R = etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>; Trait = etr::VectorTrait]’                                               
-# 1362 |     x = etr::runif_etr(etr::i2d(10), etr::i2d(0), etr::i2d(1));                                                                                                                                                                                             
-#      |         ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                                                                                                                                                                              
-#In file included from /home/konrad/R/x86_64-pc-linux-gnu-library/4.3/ast2ast/include/etr_new/subsetting.hpp:4,                                                                                                                                                      
-#                 from /home/konrad/R/x86_64-pc-linux-gnu-library/4.3/ast2ast/include/etr.hpp:55,                                                                                                                                                                    
-#                 from file7e5ca4fce17f.cpp:4:                                                                                                                                                                                                                       
-#/home/konrad/R/x86_64-pc-linux-gnu-library/4.3/ast2ast/include/etr_new/BufferVector.hpp:30:26: note: declared here                                                                                                                                                  
-#   30 |   template <typename T2> Vec(T2 n) = delete;                                                                                                                                                                                                                
-#      |                          ^~~                  
-
 fct <- function() { # function then one can use document outline to jump to this position
   test <- translate(testall, verbose = FALSE, getsource = FALSE)
 }
 test <- fct()
-stopifnot(false)
 # random values
 
 # gamma --> this is completely inconsistent
@@ -1501,7 +1488,7 @@ set.seed(1234)
 res <- qgamma(c(1, 2, 3), 7)
 set.seed(1234)
 x <- test(0, 26.8)
-expect_equal(res, x)
+expect_equal(res, x) # failed
 
 set.seed(1234)
 res <- rgamma(n = 10, 1, scale = -1.0)
@@ -1693,27 +1680,67 @@ expect_equal(test(0, 21.1), helper())
 test(0, 19.59)
 matrix(c(1, 2, 4, 5, 7, 8), 2, 3)
 expect_equal(test(0, 19.59), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
-expect_equal(test(0, 19.61), matrix(c(2, 5, 8), 1, 3))
+expect_equal(test(0, 19.61), matrix(c(2, 5, 8), 1, 3)) # failed
 expect_equal(test(0, 19.62), matrix(c(1, 2, 4, 5), 2, 2))
 expect_equal(test(0, 19.63), matrix(c(1, 2, 4, 5), 2, 2))
 expect_equal(test(0, 19.64), matrix(c(1, 2, 4, 5), 2, 2))
 expect_equal(test(0, 19.65), matrix(c(4, 5), 2, 1))
 expect_equal(test(0, 19.66), matrix(c(4, 5), 2, 1))
-expect_equal(test(0, 19.67), matrix(c(2, 5), 1, 2))
-expect_equal(test(0, 19.68), matrix(c(2, 5), 1, 2))
+expect_equal(test(0, 19.67), matrix(c(2, 5), 1, 2)) # failed
+expect_equal(test(0, 19.68), matrix(c(2, 5), 1, 2)) # failed
 expect_equal(test(0, 19.69), matrix(5))
 expect_equal(test(0, 19.42), c(3, 5))
-expect_equal(test(0, 19.43), c(1, 3))
-expect_equal(test(0, 19.44), c(1, 4))
-expect_equal(test(0, 19.45), c(1))
+expect_equal(test(0, 19.43), c(1, 3)) # failed
+expect_equal(test(0, 19.44), c(1, 4)) # failed
+expect_equal(test(0, 19.45), c(1)) # failed
 expect_equal(test(0, 19.46), c(1, 2))
-expect_equal(test(0, 19.47), 4)
-expect_equal(test(0, 19.48), c(1, 4))
-expect_equal(test(0, 19.49), c(1))
+expect_equal(test(0, 19.47), 4) # failed
+expect_equal(test(0, 19.48), c(1, 4)) # failed
+expect_equal(test(0, 19.49), c(1)) # failed
 expect_equal(test(0, 19.51), c(1, 2))
-expect_equal(test(0, 19.52), 4)
+expect_equal(test(0, 19.52), 4) # failed
 expect_equal(test(0, 19.53), matrix(c(1, 2, 3, 4, 5, 6), 3, 2))
-expect_equal(test(0, 19.54), matrix(4:9, 3, 2))
+
+expect_equal(test(0, 19.54), matrix(4:9, 3, 2)) # failed --> free invalid pointer!!!!!!!!! free(): Invalid write of size 8
+
+"
+Invalid write of size 8
+==182985==    at 0x157FF6D9: void etr::calcInd<bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:175)
+==182985==    by 0x157FFA8F: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, etr::VectorTrait> const&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:526)
+==182985==    by 0x157E11AA: testall(SEXPREC*, SEXPREC*) (file2cac943f4bb23.cpp:1246)
+==182985==    by 0x157EA724: sourceCpp_1_testall (file2cac943f4bb23.cpp:1462)
+==182985==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==182985==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==182985==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==182985==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==182985==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==182985==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==182985==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==182985==    by 0x516C997: ??? (in /usr/lib/R/lib/libR.so)
+==182985==  Address 0x97ae390 is 0 bytes after a block of size 16 alloc'd
+==182985==    at 0x4E05833: operator new(unsigned long) (vg_replace_malloc.c:483)
+==182985==    by 0x157FF5D8: allocate (new_allocator.h:127)
+==182985==    by 0x157FF5D8: allocate (allocator.h:185)
+==182985==    by 0x157FF5D8: allocate (alloc_traits.h:464)
+==182985==    by 0x157FF5D8: _M_allocate (stl_vector.h:346)
+==182985==    by 0x157FF5D8: _M_allocate (stl_vector.h:343)
+==182985==    by 0x157FF5D8: _M_create_storage (stl_vector.h:361)
+==182985==    by 0x157FF5D8: _Vector_base (stl_vector.h:305)
+==182985==    by 0x157FF5D8: vector (stl_vector.h:511)
+==182985==    by 0x157FF5D8: void etr::calcInd<bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:169)
+==182985==    by 0x157FFA8F: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, etr::VectorTrait> const&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:526)
+==182985==    by 0x157E11AA: testall(SEXPREC*, SEXPREC*) (file2cac943f4bb23.cpp:1246)
+==182985==    by 0x157EA724: sourceCpp_1_testall (file2cac943f4bb23.cpp:1462)
+==182985==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==182985==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==182985==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==182985==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==182985==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==182985==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==182985==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==182985== 
+"
+
 expect_equal(test(0, 19.55), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
 expect_equal(test(0, 19.56), matrix(c(2, 5, 8), 1, 3))
 expect_equal(test(0, 19.57), matrix(1:6, 3, 2))
@@ -3598,3 +3625,474 @@ ret = etr::i2d(1);
 return(etr::cpp2R(ret));
 }
 '
+
+
+
+
+
+# subsetting.hpp: 373, 527, 176, 170. 
+
+
+
+
+
+"
+==185967== Memcheck, a memory error detector
+==185967== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
+==185967== Using Valgrind-3.22.0 and LibVEX; rerun with -h for copyright info
+==185967== Command: /usr/lib/R/bin/exec/R -s -e source('./ast2ast/inst/tinytest/test_all.R')
+==185967==    
+using C++ compiler: ‘g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0’
+using C++20      
+==185967== Invalid write of size 8
+==185967==    at 0x153FA556: void etr::calcInd<etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:373)
+==185967==    by 0x153FA92F: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, etr::VectorTrait> const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:527)
+==185967==    by 0x153DBD01: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:1276)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)                                                                                                                                                                                       
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C997: ??? (in /usr/lib/R/lib/libR.so)
+==185967==  Address 0x8ce89d8 is 0 bytes after a block of size 8 alloc'd
+==185967==    at 0x4E05833: operator new(unsigned long) (vg_replace_malloc.c:483)
+==185967==    by 0x153FA3CA: allocate (new_allocator.h:127)
+==185967==    by 0x153FA3CA: allocate (allocator.h:185)
+==185967==    by 0x153FA3CA: allocate (alloc_traits.h:464)
+==185967==    by 0x153FA3CA: _M_allocate (stl_vector.h:346)
+==185967==    by 0x153FA3CA: _M_allocate (stl_vector.h:343)
+==185967==    by 0x153FA3CA: _M_create_storage (stl_vector.h:361)
+==185967==    by 0x153FA3CA: _Vector_base (stl_vector.h:305)
+==185967==    by 0x153FA3CA: vector (stl_vector.h:511)
+==185967==    by 0x153FA3CA: void etr::calcInd<etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:360)
+==185967==    by 0x153FA92F: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, etr::VectorTrait> const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:527)
+==185967==    by 0x153DBD01: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:1276)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967== 
+==185967== Invalid write of size 8
+==185967==    at 0x153F96A9: void etr::calcInd<bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:176)
+==185967==    by 0x153F9A7F: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, etr::VectorTrait> const&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:527)
+==185967==    by 0x153DB1CA: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:1246)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C997: ??? (in /usr/lib/R/lib/libR.so)
+==185967==  Address 0x98f7de0 is 0 bytes after a block of size 16 alloc'd
+==185967==    at 0x4E05833: operator new(unsigned long) (vg_replace_malloc.c:483)
+==185967==    by 0x153F95D8: allocate (new_allocator.h:127)
+==185967==    by 0x153F95D8: allocate (allocator.h:185)
+==185967==    by 0x153F95D8: allocate (alloc_traits.h:464)
+==185967==    by 0x153F95D8: _M_allocate (stl_vector.h:346)
+==185967==    by 0x153F95D8: _M_allocate (stl_vector.h:343)
+==185967==    by 0x153F95D8: _M_create_storage (stl_vector.h:361)
+==185967==    by 0x153F95D8: _Vector_base (stl_vector.h:305)
+==185967==    by 0x153F95D8: vector (stl_vector.h:511)
+==185967==    by 0x153F95D8: void etr::calcInd<bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:170)
+==185967==    by 0x153F9A7F: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, etr::VectorTrait> const&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:527)
+==185967==    by 0x153DB1CA: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:1246)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967== 
+==185967== Invalid write of size 8
+==185967==    at 0x153FA556: void etr::calcInd<etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:373)
+==185967==    by 0x153FA92F: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, etr::VectorTrait> const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:527)
+==185967==    by 0x153DB568: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:1256)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C997: ??? (in /usr/lib/R/lib/libR.so)
+==185967==  Address 0x93ef5f8 is 0 bytes after a block of size 8 alloc'd
+==185967==    at 0x4E05833: operator new(unsigned long) (vg_replace_malloc.c:483)
+==185967==    by 0x153FA3CA: allocate (new_allocator.h:127)
+==185967==    by 0x153FA3CA: allocate (allocator.h:185)
+==185967==    by 0x153FA3CA: allocate (alloc_traits.h:464)
+==185967==    by 0x153FA3CA: _M_allocate (stl_vector.h:346)
+==185967==    by 0x153FA3CA: _M_allocate (stl_vector.h:343)
+==185967==    by 0x153FA3CA: _M_create_storage (stl_vector.h:361)
+==185967==    by 0x153FA3CA: _Vector_base (stl_vector.h:305)
+==185967==    by 0x153FA3CA: vector (stl_vector.h:511)
+==185967==    by 0x153FA3CA: void etr::calcInd<etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:360)
+==185967==    by 0x153FA92F: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, etr::VectorTrait> const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:527)
+==185967==    by 0x153DB568: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:1256)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967== 
+==185967== Invalid write of size 8
+==185967==    at 0x153F96A9: void etr::calcInd<bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:176)
+==185967==    by 0x153F9A7F: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, etr::VectorTrait> const&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:527)
+==185967==    by 0x153DB963: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:1266)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C997: ??? (in /usr/lib/R/lib/libR.so)
+==185967==  Address 0x9aa5050 is 0 bytes after a block of size 16 alloc'd
+==185967==    at 0x4E05833: operator new(unsigned long) (vg_replace_malloc.c:483)
+==185967==    by 0x153F95D8: allocate (new_allocator.h:127)
+==185967==    by 0x153F95D8: allocate (allocator.h:185)
+==185967==    by 0x153F95D8: allocate (alloc_traits.h:464)
+==185967==    by 0x153F95D8: _M_allocate (stl_vector.h:346)
+==185967==    by 0x153F95D8: _M_allocate (stl_vector.h:343)
+==185967==    by 0x153F95D8: _M_create_storage (stl_vector.h:361)
+==185967==    by 0x153F95D8: _Vector_base (stl_vector.h:305)
+==185967==    by 0x153F95D8: vector (stl_vector.h:511)
+==185967==    by 0x153F95D8: void etr::calcInd<bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:170)
+==185967==    by 0x153F9A7F: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Addition, etr::PlusTrait, etr::BinaryTrait>, etr::VectorTrait> const&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:527)
+==185967==    by 0x153DB963: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:1266)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967== 
+==185967== Invalid write of size 8
+==185967==    at 0x153F96A9: void etr::calcInd<bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:176)
+==185967==    by 0x153F987D: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::VectorTrait> const&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:527)
+==185967==    by 0x153D3666: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:858)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C997: ??? (in /usr/lib/R/lib/libR.so)
+==185967==  Address 0xc8a75c0 is 0 bytes after a block of size 16 alloc'd
+==185967==    at 0x4E05833: operator new(unsigned long) (vg_replace_malloc.c:483)
+==185967==    by 0x153F95D8: allocate (new_allocator.h:127)
+==185967==    by 0x153F95D8: allocate (allocator.h:185)
+==185967==    by 0x153F95D8: allocate (alloc_traits.h:464)
+==185967==    by 0x153F95D8: _M_allocate (stl_vector.h:346)
+==185967==    by 0x153F95D8: _M_allocate (stl_vector.h:343)
+==185967==    by 0x153F95D8: _M_create_storage (stl_vector.h:361)
+==185967==    by 0x153F95D8: _Vector_base (stl_vector.h:305)
+==185967==    by 0x153F95D8: vector (stl_vector.h:511)
+==185967==    by 0x153F95D8: void etr::calcInd<bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:170)
+==185967==    by 0x153F987D: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::VectorTrait> const&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:527)
+==185967==    by 0x153D3666: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:858)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967== 
+==185967== Invalid write of size 8
+==185967==    at 0x153FA556: void etr::calcInd<etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:373)
+==185967==    by 0x153FA72D: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::VectorTrait> const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:527)
+==185967==    by 0x153D3976: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:870)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C997: ??? (in /usr/lib/R/lib/libR.so)
+==185967==  Address 0xb457ff8 is 0 bytes after a block of size 8 alloc'd
+==185967==    at 0x4E05833: operator new(unsigned long) (vg_replace_malloc.c:483)
+==185967==    by 0x153FA3CA: allocate (new_allocator.h:127)
+==185967==    by 0x153FA3CA: allocate (allocator.h:185)
+==185967==    by 0x153FA3CA: allocate (alloc_traits.h:464)
+==185967==    by 0x153FA3CA: _M_allocate (stl_vector.h:346)
+==185967==    by 0x153FA3CA: _M_allocate (stl_vector.h:343)
+==185967==    by 0x153FA3CA: _M_create_storage (stl_vector.h:361)
+==185967==    by 0x153FA3CA: _Vector_base (stl_vector.h:305)
+==185967==    by 0x153FA3CA: vector (stl_vector.h:511)
+==185967==    by 0x153FA3CA: void etr::calcInd<etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:360)
+==185967==    by 0x153FA72D: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::VectorTrait> const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:527)
+==185967==    by 0x153D3976: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:870)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967== 
+==185967== Invalid write of size 8
+==185967==    at 0x153F96A9: void etr::calcInd<bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:176)
+==185967==    by 0x153F987D: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::VectorTrait> const&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:527)
+==185967==    by 0x153D3CF2: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:882)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C997: ??? (in /usr/lib/R/lib/libR.so)
+==185967==  Address 0xb3f3040 is 0 bytes after a block of size 16 alloc'd
+==185967==    at 0x4E05833: operator new(unsigned long) (vg_replace_malloc.c:483)
+==185967==    by 0x153F95D8: allocate (new_allocator.h:127)
+==185967==    by 0x153F95D8: allocate (allocator.h:185)
+==185967==    by 0x153F95D8: allocate (alloc_traits.h:464)
+==185967==    by 0x153F95D8: _M_allocate (stl_vector.h:346)
+==185967==    by 0x153F95D8: _M_allocate (stl_vector.h:343)
+==185967==    by 0x153F95D8: _M_create_storage (stl_vector.h:361)
+==185967==    by 0x153F95D8: _Vector_base (stl_vector.h:305)
+==185967==    by 0x153F95D8: vector (stl_vector.h:511)
+==185967==    by 0x153F95D8: void etr::calcInd<bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:170)
+==185967==    by 0x153F987D: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::VectorTrait> const&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:527)
+==185967==    by 0x153D3CF2: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:882)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967== 
+==185967== Invalid write of size 8
+==185967==    at 0x153FA556: void etr::calcInd<etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:373)
+==185967==    by 0x153FA72D: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::VectorTrait> const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:527)
+==185967==    by 0x153D4002: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:894)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C997: ??? (in /usr/lib/R/lib/libR.so)
+==185967==  Address 0xcc899f8 is 0 bytes after a block of size 8 alloc'd
+==185967==    at 0x4E05833: operator new(unsigned long) (vg_replace_malloc.c:483)
+==185967==    by 0x153FA3CA: allocate (new_allocator.h:127)
+==185967==    by 0x153FA3CA: allocate (allocator.h:185)
+==185967==    by 0x153FA3CA: allocate (alloc_traits.h:464)
+==185967==    by 0x153FA3CA: _M_allocate (stl_vector.h:346)
+==185967==    by 0x153FA3CA: _M_allocate (stl_vector.h:343)
+==185967==    by 0x153FA3CA: _M_create_storage (stl_vector.h:361)
+==185967==    by 0x153FA3CA: _Vector_base (stl_vector.h:305)
+==185967==    by 0x153FA3CA: vector (stl_vector.h:511)
+==185967==    by 0x153FA3CA: void etr::calcInd<etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:360)
+==185967==    by 0x153FA72D: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::VectorTrait> const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:527)
+==185967==    by 0x153D4002: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:894)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967== 
+==185967== Invalid write of size 8
+==185967==    at 0x153F3D37: void etr::calcInd<bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::LargerEqual, etr::LargerEqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::LargerEqual, etr::LargerEqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:176)
+==185967==    by 0x153F3F0D: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::LargerEqual, etr::LargerEqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::VectorTrait> const&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::LargerEqual, etr::LargerEqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:527)
+==185967==    by 0x153CEA1A: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:581)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C997: ??? (in /usr/lib/R/lib/libR.so)
+==185967==  Address 0xb8cb660 is 0 bytes after a block of size 16 alloc'd
+==185967==    at 0x4E05833: operator new(unsigned long) (vg_replace_malloc.c:483)
+==185967==    by 0x153F3C83: allocate (new_allocator.h:127)
+==185967==    by 0x153F3C83: allocate (allocator.h:185)
+==185967==    by 0x153F3C83: allocate (alloc_traits.h:464)
+==185967==    by 0x153F3C83: _M_allocate (stl_vector.h:346)
+==185967==    by 0x153F3C83: _M_allocate (stl_vector.h:343)
+==185967==    by 0x153F3C83: _M_create_storage (stl_vector.h:361)
+==185967==    by 0x153F3C83: _Vector_base (stl_vector.h:305)
+==185967==    by 0x153F3C83: vector (stl_vector.h:511)
+==185967==    by 0x153F3C83: void etr::calcInd<bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::LargerEqual, etr::LargerEqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::LargerEqual, etr::LargerEqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:170)
+==185967==    by 0x153F3F0D: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::LargerEqual, etr::LargerEqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::VectorTrait> const&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::LargerEqual, etr::LargerEqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:527)
+==185967==    by 0x153CEA1A: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:581)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967== 
+==185967== Invalid write of size 8
+==185967==    at 0x153F42D6: void etr::calcInd<etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:373)
+==185967==    by 0x153F44BD: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::VectorTrait> const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:527)
+==185967==    by 0x153CECF8: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:591)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C997: ??? (in /usr/lib/R/lib/libR.so)
+==185967==  Address 0xb336f68 is 0 bytes after a block of size 8 alloc'd
+==185967==    at 0x4E05833: operator new(unsigned long) (vg_replace_malloc.c:483)
+==185967==    by 0x153F4185: allocate (new_allocator.h:127)
+==185967==    by 0x153F4185: allocate (allocator.h:185)
+==185967==    by 0x153F4185: allocate (alloc_traits.h:464)
+==185967==    by 0x153F4185: _M_allocate (stl_vector.h:346)
+==185967==    by 0x153F4185: _M_allocate (stl_vector.h:343)
+==185967==    by 0x153F4185: _M_create_storage (stl_vector.h:361)
+==185967==    by 0x153F4185: _Vector_base (stl_vector.h:305)
+==185967==    by 0x153F4185: vector (stl_vector.h:511)
+==185967==    by 0x153F4185: void etr::calcInd<etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:360)
+==185967==    by 0x153F44BD: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::VectorTrait> const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:527)
+==185967==    by 0x153CECF8: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:591)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967== 
+==185967== Invalid write of size 8
+==185967==    at 0x153F3D37: void etr::calcInd<bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::LargerEqual, etr::LargerEqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::LargerEqual, etr::LargerEqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:176)
+==185967==    by 0x153F3F0D: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::LargerEqual, etr::LargerEqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::VectorTrait> const&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::LargerEqual, etr::LargerEqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:527)
+==185967==    by 0x153CEFDA: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:601)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C997: ??? (in /usr/lib/R/lib/libR.so)
+==185967==  Address 0x88333e0 is 0 bytes after a block of size 16 alloc'd
+==185967==    at 0x4E05833: operator new(unsigned long) (vg_replace_malloc.c:483)
+==185967==    by 0x153F3C83: allocate (new_allocator.h:127)
+==185967==    by 0x153F3C83: allocate (allocator.h:185)
+==185967==    by 0x153F3C83: allocate (alloc_traits.h:464)
+==185967==    by 0x153F3C83: _M_allocate (stl_vector.h:346)
+==185967==    by 0x153F3C83: _M_allocate (stl_vector.h:343)
+==185967==    by 0x153F3C83: _M_create_storage (stl_vector.h:361)
+==185967==    by 0x153F3C83: _Vector_base (stl_vector.h:305)
+==185967==    by 0x153F3C83: vector (stl_vector.h:511)
+==185967==    by 0x153F3C83: void etr::calcInd<bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::LargerEqual, etr::LargerEqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::LargerEqual, etr::LargerEqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:170)
+==185967==    by 0x153F3F0D: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, bool, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::LargerEqual, etr::LargerEqualTrait, etr::ComparisonTrait>, etr::VectorTrait> >(etr::Vec<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::VectorTrait> const&, bool const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::LargerEqual, etr::LargerEqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&) (subsetting.hpp:527)
+==185967==    by 0x153CEFDA: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:601)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967== 
+==185967== Invalid write of size 8
+==185967==    at 0x153F42D6: void etr::calcInd<etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:373)
+==185967==    by 0x153F44BD: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::VectorTrait> const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:527)
+==185967==    by 0x153CF2B8: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:611)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C997: ??? (in /usr/lib/R/lib/libR.so)
+==185967==  Address 0x89d4748 is 0 bytes after a block of size 8 alloc'd
+==185967==    at 0x4E05833: operator new(unsigned long) (vg_replace_malloc.c:483)
+==185967==    by 0x153F4185: allocate (new_allocator.h:127)
+==185967==    by 0x153F4185: allocate (allocator.h:185)
+==185967==    by 0x153F4185: allocate (alloc_traits.h:464)
+==185967==    by 0x153F4185: _M_allocate (stl_vector.h:346)
+==185967==    by 0x153F4185: _M_allocate (stl_vector.h:343)
+==185967==    by 0x153F4185: _M_create_storage (stl_vector.h:361)
+==185967==    by 0x153F4185: _Vector_base (stl_vector.h:305)
+==185967==    by 0x153F4185: vector (stl_vector.h:511)
+==185967==    by 0x153F4185: void etr::calcInd<etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait> const&, etr::Indices&, etr::MatrixParameter&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:360)
+==185967==    by 0x153F44BD: etr::Vec<double, etr::Buffer<double, etr::ComparisonTrait, etr::VariableTrait>, etr::VectorTrait> etr::subset<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait>, bool>(etr::Vec<double, etr::BorrowSEXP<double, etr::BorrowSEXPTrait>, etr::VectorTrait> const&, etr::Vec<bool, etr::BinaryOperation<etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, double, &etr::Equal, etr::EqualTrait, etr::ComparisonTrait>, etr::VectorTrait> const&, bool const&) (subsetting.hpp:527)
+==185967==    by 0x153CF2B8: testall(SEXPREC*, SEXPREC*) (file2d66f466c8833.cpp:611)
+==185967==    by 0x153E4744: sourceCpp_1_testall (file2d66f466c8833.cpp:1462)
+==185967==    by 0x51142C9: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x511485C: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C34F: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516DD95: ??? (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516EBC4: Rf_applyClosure (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516BE2B: Rf_eval (in /usr/lib/R/lib/libR.so)
+==185967==    by 0x516C6B3: ??? (in /usr/lib/R/lib/libR.so)
+==185967== 
+Error in test(c(1, 2, 3, 4), 16.7) : 
+  Error: out of boundaries --> value beyond size of vector
+Calls: source ... all.equal.numeric -> attr.all.equal -> mode -> test -> .Call
+In addition: Warning messages:
+1: In qgamma(10, 10) : NaNs produced
+2: In qgamma(c(1, 2, 3), 7) : NaNs produced
+3: In rgamma(n = 10, 1, scale = -1) : NAs produced
+4: In qlnorm(10) : NaNs produced
+5: In qlnorm(c(1, 2, 3)) : NaNs produced
+6: In qnorm(10) : NaNs produced
+7: In qnorm(c(1, 2, 3)) : NaNs produced
+8: In qunif(10) : NaNs produced
+9: In qunif(c(1, 2, 3)) : NaNs produced
+Execution halted
+==185967== 
+==185967== HEAP SUMMARY:
+==185967==     in use at exit: 105,294,727 bytes in 20,592 blocks
+==185967==   total heap usage: 1,435,491 allocs, 1,414,899 frees, 970,241,272 bytes allocated
+==185967== 
+==185967== LEAK SUMMARY:
+==185967==    definitely lost: 217 bytes in 4 blocks
+==185967==    indirectly lost: 0 bytes in 0 blocks
+==185967==      possibly lost: 0 bytes in 0 blocks
+==185967==    still reachable: 105,294,510 bytes in 20,588 blocks
+==185967==                       of which reachable via heuristic:
+==185967==                         newarray           : 4,264 bytes in 1 blocks
+==185967==         suppressed: 0 bytes in 0 blocks
+==185967== Rerun with --leak-check=full to see details of leaked memory
+==185967== 
+==185967== For lists of detected and suppressed errors, rerun with: -s
+==185967== ERROR SUMMARY: 34 errors from 12 contexts (suppressed: 0 from 0)
+"

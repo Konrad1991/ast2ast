@@ -263,7 +263,6 @@ MA <- R6::R6Class("MA",
       args_dec <- paste("\n", args_dec, "\n")
 
       fct_args <- self$args_2_fct
-      print(paste("fct_args", self$args_2_fct))
 
       fct_args_ptr <- sapply(seq_along(fct_args), function(x) {
         if (desired_type[[x]] == "ptr_vec") {

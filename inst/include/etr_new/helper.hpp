@@ -18,7 +18,7 @@ inline Vec<BaseType> vector(const T& inp) {
 }
 
 template<typename L, typename T>
-inline Vec<BaseType> vector(const T& inp, const L& s) {
+inline Vec<BaseType> vector(const T& inp, const L& s) { // issue: handle the case when inp is a Vec
   size_t length = 0;
   if constexpr(std::is_same_v<L, double> || std::is_same_v<L, int> || std::is_same_v<L, bool>) {
     length = static_cast<size_t>(s);
@@ -40,15 +40,53 @@ inline Vec<BaseType> matrix(int nrows, int ncols) {
   return Vec<BaseType>(nrows, ncols);
 }
 
-inline Vec<BaseType> matrix(double inp, int nrows, int ncols) {
-  return Vec<BaseType>(nrows, ncols, inp);
-}
-
-template <typename T2, typename R2>
-inline Vec<BaseType> matrix(const Vec<T2, R2> &inp, int nrows, int ncols) {
-  Vec<BaseType> ret(nrows, ncols);
-  ret = inp;
-  return ret;
+template <typename V, typename R, typename C>
+inline Vec<BaseType> matrix(const V &inp, const R& nrows, const C& ncols) {
+  if constexpr(std::is_arithmetic_v<R> && std::is_arithmetic_v<C>) {
+    if constexpr(std::is_arithmetic_v<V>) {
+      Vec<BaseType> ret(static_cast<size_t>(nrows), static_cast<size_t>(ncols));  
+      for(size_t i = 0; i < ret.size(); i++) ret[i] = static_cast<BaseType>(inp);
+      return ret;  
+    } else {
+      Vec<BaseType> ret(static_cast<size_t>(nrows), static_cast<size_t>(ncols));  
+      for(size_t i = 0; i < ret.size(); i++) ret[i] = inp[i];
+      return ret;
+    }
+  } else if constexpr(!std::is_arithmetic_v<R> && std::is_arithmetic_v<C>) {
+    ass(nrows.size() == 1, "invalid length argument for rows");
+    if constexpr(std::is_arithmetic_v<V>) {
+      Vec<BaseType> ret(static_cast<size_t>(nrows[0]), static_cast<size_t>(ncols));
+      for(size_t i = 0; i < ret.size(); i++) ret[i] = static_cast<BaseType>(inp);
+      return ret;  
+    } else {
+      Vec<BaseType> ret(static_cast<size_t>(nrows[0]), static_cast<size_t>(ncols));
+      for(size_t i = 0; i < ret.size(); i++) ret[i] = inp[i];
+      return ret;
+    }
+  } else if constexpr(std::is_arithmetic_v<R> && !std::is_arithmetic_v<C>) {
+    ass(ncols.size() == 1, "invalid length argument for cols");
+    if constexpr(std::is_arithmetic_v<V>) {
+      Vec<BaseType> ret(static_cast<size_t>(nrows), static_cast<size_t>(ncols[0]));
+      for(size_t i = 0; i < ret.size(); i++) ret[i] = static_cast<BaseType>(inp);
+      return ret;  
+    } else {
+      Vec<BaseType> ret(static_cast<size_t>(nrows), static_cast<size_t>(ncols[0]));
+      for(size_t i = 0; i < ret.size(); i++) ret[i] = inp[i];
+      return ret;
+    }
+  } else {
+    ass(nrows.size() == 1, "invalid length argument for rows");
+    ass(ncols.size() == 1, "invalid length argument for cols");
+    if constexpr(std::is_arithmetic_v<V>) {
+      Vec<BaseType> ret(static_cast<size_t>(nrows[0]), static_cast<size_t>(ncols[0]));
+      for(size_t i = 0; i < ret.size(); i++) ret[i] = static_cast<BaseType>(inp);
+      return ret;  
+    } else {
+      Vec<BaseType> ret(static_cast<size_t>(nrows[0]), static_cast<size_t>(ncols[0]));
+      for(size_t i = 0; i < ret.size(); i++) ret[i] = inp[i];
+      return ret;
+    }
+  }
 }
 
 template <class F, class... Args> inline F forEachArg(F f, Args &&...args) {
