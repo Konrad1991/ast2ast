@@ -21,7 +21,7 @@ struct UnaryOperation {
   template <typename IType, UnaryFct fOther, typename TraitOther>
   UnaryOperation(const UnaryOperation<IType, fOther, TraitOther> &other)
       : obj(other.obj), mp(other.mp) {}
-  double operator[](size_t i) const {
+  BaseType operator[](size_t i) const {
     constexpr bool isDouble = std::is_same_v<I, double>;
     if constexpr (isDouble) {
       return f(obj);
