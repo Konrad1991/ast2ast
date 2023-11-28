@@ -208,10 +208,10 @@ inline void calcInd(const Vec<BaseType> &vec, Indices &ind, MatrixParameter& mp,
 }
 
 template <typename L, typename R>
-requires (std::is_same_v<L, int> || std::is_same_v<L, double>)
+requires (std::is_same_v<L, int> || std::is_same_v<L, double>) // issue: replace all std::vector<subset> with BaseStore<size_t>
 inline void calcInd(const Vec<BaseType> &vec, Indices &ind, MatrixParameter& mp, const L& idxL, const R& idxR) {
   ass(vec.im(), "incorrect number of dimensions" );
-  int indexRow = static_cast<BaseType>(idxL); 
+  int indexRow = static_cast<size_t>(idxL); 
   if constexpr (std::is_same_v<R, bool>) {
     if (!idxR) return;
     ind.resize(vec.nc());
@@ -224,7 +224,7 @@ inline void calcInd(const Vec<BaseType> &vec, Indices &ind, MatrixParameter& mp,
     return;
   } else if constexpr (std::is_same_v<R, double>) {
     indexRow--; 
-    ind.resize(1, 1); ind[0] = (idxR-1) * vec.nr() + indexRow;
+    ind.resize(1, 1); ind[0] = (static_cast<size_t>(idxR) -1) * vec.nr() + indexRow;
     return;
   } else {
       using vecTrait = std::remove_reference<decltype(idxR)>::type::TypeTrait;
@@ -234,8 +234,9 @@ inline void calcInd(const Vec<BaseType> &vec, Indices &ind, MatrixParameter& mp,
           using isBool = std::is_same<whichType, bool>;
           if constexpr (isBool::value) {
               size_t counter = 0;
-              for (size_t i = 0; i < idxR.size(); i++) {
-                if (idxR[i] == true) counter++;
+              size_t size = idxR.size() >= vec.nc() ? idxR.size() : vec.nc(); // issue: fix
+              for (size_t i = 0; i < size; i++) {
+                if (idxR[i]) counter++;
               }
               std::vector<int> positions(counter);
               counter = 0;
@@ -505,6 +506,7 @@ inline void calcInd(const Vec<BaseType> &vec, Indices &ind, MatrixParameter& mp,
   }
 }
 
+/*
 template <typename IL, typename IR>
 inline auto subset(Vec<BaseType> &vec, const IL &idxL, const IR & idxR)
     -> Vec<BaseType, Subset<decltype(convert(vec).d), SubsetTrait>> {
@@ -512,8 +514,28 @@ inline auto subset(Vec<BaseType> &vec, const IL &idxL, const IR & idxR)
   calcInd(vec, sub.ind, sub.mp,  idxL, idxR);
   return Vec<BaseType, decltype(convertSubset(vec))>(std::move(sub));
 }
+*/
 
 template <typename T, typename R, typename IL, typename IR>
+requires NotOperation<R>
+inline auto subset(Vec<T, R> &vec, const IL &idxL, const IR & idxR)
+    -> Vec<BaseType, Subset<decltype(convert(vec).d), SubsetTrait>> {
+  Subset<decltype(convert(vec).d), SubsetTrait> sub(vec);
+  calcInd(vec, sub.ind, sub.mp,  idxL, idxR);
+  return Vec<BaseType, decltype(convertSubset(vec))>(std::move(sub));
+}
+
+template <typename L, typename R, typename Trait, typename IL, typename IR>
+requires NotOperation<R>
+inline auto subset(Vec<L, R, Trait> &vec, const IL &idxL, const IR & idxR)
+    -> Vec<BaseType, Subset<decltype(convert(vec).d), SubsetTrait>> {
+  Subset<decltype(convert(vec).d), SubsetTrait> sub(vec);
+  calcInd(vec, sub.ind, sub.mp,  idxL, idxR);
+  return Vec<BaseType, decltype(convertSubset(vec))>(std::move(sub));
+}
+
+template <typename T, typename R, typename IL, typename IR>
+requires UnaryOrBinaryOperation<R>
 inline auto subset(const Vec<T, R> &vec, const IL &idxL, const IR& idxR)
     -> Vec<BaseType, Buffer<BaseType, ComparisonTrait>, VectorTrait> {
   Indices ind;
@@ -527,6 +549,7 @@ inline auto subset(const Vec<T, R> &vec, const IL &idxL, const IR& idxR)
 }
 
 template <typename L, typename R, typename Trait, typename IL, typename IR>
+requires UnaryOrBinaryOperation<R>
 inline auto subset(const Vec<L, R, Trait> &vec, const IL &idxL, const IR& idxR)
     -> Vec<BaseType, Buffer<BaseType, ComparisonTrait>, VectorTrait> {
   Indices ind;

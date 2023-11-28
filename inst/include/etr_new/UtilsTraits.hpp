@@ -145,6 +145,18 @@ concept IsVecBool = requires {
     requires std::is_same_v<typename R::Type, bool>;
 };
 
+template <typename T>
+concept UnaryOrBinaryOperation = requires(T t) {
+    typename std::remove_reference<decltype(t)>::type::CaseTrait;
+    requires std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, UnaryTrait>::value || std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, BinaryTrait>::value;
+};
+
+template <typename T>
+concept NotOperation = !requires(T t) {
+    typename std::remove_reference<decltype(t)>::type::CaseTrait;
+    requires std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, UnaryTrait>::value || std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, BinaryTrait>::value;
+};
+
 inline void ass(bool inp, std::string message) {
   if (!inp)
     Rf_error(message.c_str());
@@ -532,6 +544,9 @@ template <typename T, typename SubsetTrait> struct Subset {
     this -> ind = other.ind;
   }
   template <typename T2, typename R2> Subset(Vec<T2, R2> &other) {
+    this->p = &other.d;
+  }
+  template <typename T2, typename R2, typename TraitOther> Subset(const Vec<T2, R2, TraitOther> &other) {
     this->p = &other.d;
   }
   Subset(SEXP) = delete;
