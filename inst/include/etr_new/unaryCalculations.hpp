@@ -8,6 +8,7 @@ namespace etr {
 template <typename I, UnaryFct f, typename Trait,
           typename CTrait>
 struct UnaryOperation {
+  using RetType = typename CTrait::RetType;
   using TypeTrait = Trait;
   using CaseTrait = Trait;
   const I &obj;
@@ -21,7 +22,7 @@ struct UnaryOperation {
   template <typename IType, UnaryFct fOther, typename TraitOther>
   UnaryOperation(const UnaryOperation<IType, fOther, TraitOther> &other)
       : obj(other.obj), mp(other.mp) {}
-  BaseType operator[](size_t i) const {
+  RetType operator[](size_t i) const {
     constexpr bool isDouble = std::is_same_v<I, double>;
     if constexpr (isDouble) {
       return f(obj);

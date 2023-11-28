@@ -48,6 +48,7 @@ inline Vec<BaseType> matrix(const V &inp, const R& nrows, const C& ncols) {
       for(size_t i = 0; i < ret.size(); i++) ret[i] = static_cast<BaseType>(inp);
       return ret;  
     } else {
+      ass( (static_cast<size_t>(nrows) * static_cast<size_t>(ncols)) == inp.size(), "data length is not a sub-multiple or multiple of the number of rows");
       Vec<BaseType> ret(static_cast<size_t>(nrows), static_cast<size_t>(ncols));  
       for(size_t i = 0; i < ret.size(); i++) ret[i] = inp[i];
       return ret;
@@ -59,6 +60,7 @@ inline Vec<BaseType> matrix(const V &inp, const R& nrows, const C& ncols) {
       for(size_t i = 0; i < ret.size(); i++) ret[i] = static_cast<BaseType>(inp);
       return ret;  
     } else {
+      ass( (static_cast<size_t>(nrows[0]) * static_cast<size_t>(ncols)) == inp.size(), "data length is not a sub-multiple or multiple of the number of rows");
       Vec<BaseType> ret(static_cast<size_t>(nrows[0]), static_cast<size_t>(ncols));
       for(size_t i = 0; i < ret.size(); i++) ret[i] = inp[i];
       return ret;
@@ -70,6 +72,7 @@ inline Vec<BaseType> matrix(const V &inp, const R& nrows, const C& ncols) {
       for(size_t i = 0; i < ret.size(); i++) ret[i] = static_cast<BaseType>(inp);
       return ret;  
     } else {
+      ass( (static_cast<size_t>(nrows) * static_cast<size_t>(ncols[0])) == inp.size(), "data length is not a sub-multiple or multiple of the number of rows");
       Vec<BaseType> ret(static_cast<size_t>(nrows), static_cast<size_t>(ncols[0]));
       for(size_t i = 0; i < ret.size(); i++) ret[i] = inp[i];
       return ret;
@@ -82,6 +85,7 @@ inline Vec<BaseType> matrix(const V &inp, const R& nrows, const C& ncols) {
       for(size_t i = 0; i < ret.size(); i++) ret[i] = static_cast<BaseType>(inp);
       return ret;  
     } else {
+      ass( (static_cast<size_t>(nrows[0]) * static_cast<size_t>(ncols[0])) == inp.size(), "data length is not a sub-multiple or multiple of the number of rows");
       Vec<BaseType> ret(static_cast<size_t>(nrows[0]), static_cast<size_t>(ncols[0]));
       for(size_t i = 0; i < ret.size(); i++) ret[i] = inp[i];
       return ret;

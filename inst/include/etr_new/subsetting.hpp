@@ -357,32 +357,26 @@ inline void calcInd(const Vec<BaseType> &vec, Indices &ind, MatrixParameter& mp,
     for (size_t i = 0; i < idxL.size(); i++) {
       if (idxL[i]) counter++;
     }
-  std::vector<size_t> positions(counter);
-  counter = 0;
-  size_t counter2 = 0;
-  for (size_t i = 0; i < idxL.size(); i++) {
-    if (((i % vec.nr()) == 0) && i != 0) counter2++;
-    if (idxL[i]) {
-      positions[counter] = i - counter2 * vec.nr();
-      counter++;
+    std::vector<size_t> positions(counter);
+    counter = 0;
+    size_t counter2 = 0;
+    for (size_t i = 0; i < idxL.size(); i++) {
+      if (((i % vec.nr()) == 0) && i != 0) counter2++;
+      if (idxL[i]) {
+        positions[counter] = i - counter2 * vec.nr();
+        counter++;
+      }
     }
-  }
-  counter = 0;
-  for (size_t i = 0; i < idxR.nc(); i++) {
+    ind.resize(vec.nc() * positions.size());
+    counter = 0;
     for (size_t j = 0; j < positions.size(); j++) {
-      positions[counter] = i * vec.nr() + positions[j];
-      counter++;
+      for (size_t i = 0; i < vec.nr(); i++) {
+        ind[counter] = (positions[j]) * vec.nr() + i;
+        counter++;
+      }
     }
-  }
-  ind.resize(vec.nr() * positions.size());
-  counter = 0;
-  for (size_t j = 0; j < positions.size(); j++) {
-    for (size_t i = 0; i < vec.nr(); i++) {
-      ind[counter] = (positions[j]) * vec.nr() + i;
-      counter++;
-    }
-  }
     mp.setMatrix(true, positions.size(), vec.nc());
+
   } else if constexpr (std::is_same_v<R, int>) {
         size_t counter = 0;
         for (int i = 0; i < idxL.size(); i++) {

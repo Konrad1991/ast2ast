@@ -85,7 +85,7 @@ template <typename T> struct It {
 struct DoubleTrait {};
 struct IntTrait {};
 struct BoolTrait {};
-struct ComparisonTrait {};
+struct ComparisonTrait { using RetType = bool; };
 
 struct BaseStoreTrait {};
 struct BufferTrait {};
@@ -95,14 +95,14 @@ struct SubsetTrait {};
 struct BorrowTrait {};
 struct BorrowSEXPTrait {};
 
-struct UnaryTrait {};
-struct BinaryTrait {};
+struct UnaryTrait { using RetType = BaseType; };
+struct BinaryTrait { using RetType = BaseType; };
 
-struct PlusTrait {};
-struct MinusTrait {};
-struct TimesTrait {};
-struct DivideTrait {};
-struct PowTrait {};
+struct PlusTrait { using RetType = BaseType; };
+struct MinusTrait { using RetType = BaseType; };
+struct TimesTrait { using RetType = BaseType; };
+struct DivideTrait { using RetType = BaseType; };
+struct PowTrait { using RetType = BaseType; };
 struct EqualTrait {};
 struct SmallerTrait {};
 struct SmallerEqualTrait {};
@@ -302,6 +302,7 @@ struct BaseCalc {
 };
 
 template <typename T, typename BaseTrait> struct BaseStore {
+	using RetType = BaseType;
   using Type = T;
   using TypeTrait = BaseTrait;
   T *p = nullptr;
@@ -420,14 +421,14 @@ template <typename T, typename BaseTrait> struct BaseStore {
     fill(0.0);
   }
 
-  T operator[](size_t idx) const {
+  RetType operator[](size_t idx) const {
     ass(allocated, "No memory was allocated");
     ass(idx >= 0, "Error: out of boundaries --> value below 1");
     ass(idx < sz, "Error: out of boundaries --> value beyond size of vector");
     return p[idx];
   }
 
-  T &operator[](size_t idx) {
+  RetType &operator[](size_t idx) {
     ass(allocated, "No memory was allocated");
     ass(idx >= 0, "Error: out of boundaries --> value below 1");
     ass(idx < sz, "Error: out of boundaries --> value beyond size of vector");
@@ -495,6 +496,7 @@ struct Indices : public std::vector<size_t> {};
 
 // Points to a Variable and stores indicces in ind
 template <typename T, typename SubsetTrait> struct Subset {
+  using RetType = BaseType;
   using Type = T;
   using TypeTrait = SubsetTrait;
   using CaseTrait = SubsetTrait;
@@ -559,6 +561,7 @@ template <typename T, typename SubsetTrait> struct Subset {
 
 // Points to a Variable and stores size
 template <typename T, typename BorrowTrait> struct Borrow {
+  using RetType = BaseType;
   using Type = T;
   using TypeTrait = BorrowTrait;
   T *p = nullptr;
@@ -632,13 +635,13 @@ template <typename T, typename BorrowTrait> struct Borrow {
     p[idx] = val;
   }
 
-  T operator[](size_t idx) const {
+  RetType operator[](size_t idx) const {
     ass(idx >= 0, "Error: out of boundaries --> value below 1");
     ass(idx < sz, "Error: out of boundaries --> value beyond size of vector");
     return p[idx];
   }
 
-  T &operator[](size_t idx) {
+  RetType &operator[](size_t idx) {
     ass(idx >= 0, "Error: out of boundaries --> value below 1");
     ass(idx < sz, "Error: out of boundaries --> value beyond size of vector");
     return p[idx];
@@ -667,6 +670,7 @@ template <typename T, typename BorrowTrait> struct Borrow {
 
 // Points to a SEXP and stores size
 template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
+  using RetType = BaseType;
   using Type = T;
   using TypeTrait = BorrowSEXPSEXPTrait;
   using CaseTrait = BorrowSEXPSEXPTrait;
@@ -744,14 +748,14 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
     return *this;
   }
 
-  T &operator[](size_t pos) {
+  RetType &operator[](size_t pos) {
     ass(p != nullptr, "Subset is pointing to nothing!");
     ass(pos >= 0, "Error: out of boundaries --> value below 1");
     ass(pos < sz, "Error: out of boundaries --> value beyond size of vector");
     return this->p[pos];
   }
 
-  T operator[](size_t pos) const {
+  RetType operator[](size_t pos) const {
     ass(this->p != nullptr, "Subset is pointing to nothing!");
     ass(pos >= 0, "Error: out of boundaries --> value below 1");
     ass(pos < sz, "Error: out of boundaries --> value beyond size of vector");

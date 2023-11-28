@@ -9,6 +9,7 @@ namespace etr {
 
 template <typename T, typename Trait, typename CTrait>
 struct Buffer : public BaseStore<T> {
+  using RetType = BaseType;
   using TypeTrait = Trait;
   using CaseTrait = CTrait;
 };
@@ -18,6 +19,7 @@ template <typename T, typename R, typename Trait> struct Vec {
   using TypeTrait = Trait;
   using CaseTrait = Trait;
   R d;
+  using RetType = std::remove_reference<decltype(d)>::type::RetType;
   using typeTraitD = std::remove_reference<decltype(d)>::type::TypeTrait;
   using isBuffer = std::is_same<typeTraitD, BufferTrait>;
   using isBorrow = std::is_same<typeTraitD, BorrowTrait>;
@@ -153,8 +155,8 @@ template <typename T, typename R, typename Trait> struct Vec {
     }
   }
 
-  T &operator[](size_t idx) { return d[idx]; }
-  T operator[](size_t idx) const { return d[idx]; }
+  RetType &operator[](size_t idx) { return d[idx]; }
+  RetType operator[](size_t idx) const { return d[idx]; }
 
   template <typename TD>
     requires std::is_same_v<TD, BaseType>
@@ -221,7 +223,7 @@ template <typename T, typename R, typename Trait> struct Vec {
         }  
     }
     if (other.d.im() && !d.im()) {
-      d.setMatrix(true, other.d.nr(), other.d.nc());
+      d.setMatrix(true, other.d.nr(), other.d.nc()); // issue: correct?
     }
     return *this;
   }
@@ -230,7 +232,7 @@ template <typename T, typename R, typename Trait> struct Vec {
     static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
     static_assert(!isBinaryOP::value, "Cannot assign to binary calculation");
     if constexpr (isBuffer::value) {
-      Buffer<T> temp(otherVec.size());
+      Buffer<T> temp(otherVec.size()); // issue: create Buffer<T> as attribute
       for (size_t i = 0; i < otherVec.size(); i++)
         temp[i] = otherVec[i];
       d.moveit(temp);

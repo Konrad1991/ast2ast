@@ -11,6 +11,7 @@ struct BinaryOperation {
   using Type = DoubleTrait;
   using TypeTrait = Trait;
   using CaseTrait = BinaryTrait;
+  using RetType = typename CTrait::RetType;
   const L &l;
   const R &r;
   MatrixParameter mp;
@@ -27,7 +28,7 @@ struct BinaryOperation {
   BinaryOperation(const BinaryOperation<LType, RType, fOther, TraitOther>
                       &other) // issue: needs move constructor
       : l(other.l), r(other.r), mp(other.mp) {}
-  BaseType operator[](size_t i) const {
+  RetType operator[](size_t i) const {
     constexpr bool isDoubleL = std::is_same_v<L, double>;
     constexpr bool isDoubleR = std::is_same_v<R, double>;
     if constexpr (isDoubleL && isDoubleR) {
