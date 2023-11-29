@@ -82,7 +82,7 @@ template <typename T, typename R, typename Trait> struct Vec {
   explicit Vec(size_t sz) : d(sz) {}
   explicit Vec(int sz) : d(static_cast<size_t>(sz)) {}
   
-  Vec(double sz) : d(1) { d[0] = sz; } // issue: could be removed if all functions could handle double
+  Vec(double sz) : d(1) { std::cout << "bla" << std::endl; d[0] = sz; } // issue: could be removed if all functions could handle double
   Vec(Rboolean b) : d(1) { d[0] = static_cast<BaseType>(b); } // issue: can i prevent this? Maybe with the same strategy of converting int to i2d(int) in R. 
   
   explicit Vec() : d() { }

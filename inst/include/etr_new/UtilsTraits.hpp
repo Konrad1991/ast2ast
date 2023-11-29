@@ -434,8 +434,6 @@ template <typename T, typename BaseTrait> struct BaseStore {
       	this->realloc(this->sz + diff);	
     	} else {
     		this->realloc(other.size());	
-    		//this -> resize(other.size());
-    		//for(size_t i = 0; i < this -> size(); i++) p[i] = 0.0;
     	}
     }
     for (int i = 0; i < this->sz; i++) {
@@ -526,8 +524,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
     temp = new T[sz];
     for (int i = 0; i < sz; i++)
       temp[i] = p[i];
-    ass(p != nullptr, "try to delete nullptr");
-    delete[] p;
+    if(p != nullptr && allocated) delete[] p;
     p = new T[new_size];
     for (int i = 0; i < sz; i++)
       p[i] = temp[i];

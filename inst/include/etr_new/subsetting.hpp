@@ -94,10 +94,6 @@ inline auto subset(const Vec<L, R, Trait> &vec, const I &idx) -> Vec<BaseType> {
   Indices ind;
   calcInd(vec, ind, idx);
   Vec<BaseType> ret(ind.size());
-  printType(ind);
-  std::cout << ind.size() << " " << ret.size() << " " << vec.size() << std::endl;
-  for(auto i: ind) std::cout << i << std::endl;
-  for(size_t i = 0; i < vec.size(); i++) std::cout << vec[i] << std::endl;
   for(size_t i = 0; i < ret.size(); i++) ret[i] = vec[ind[i]];
   return ret;
 }
