@@ -363,7 +363,7 @@ struct BaseCalc {
 };
 
 template <typename T, typename BaseTrait> struct BaseStore {
-	using RetType = BaseType;
+	using RetType = T;
   using Type = T;
   using TypeTrait = BaseTrait;
   T *p = nullptr;
@@ -429,8 +429,14 @@ template <typename T, typename BaseTrait> struct BaseStore {
     if (this == &other)
       return *this;
     if (other.size() > this->sz) {
-      int diff = other.size() - this->sz;
-      this->realloc(this->sz + diff);
+    	if(allocated) {
+    		int diff = other.size() - this->sz;
+      	this->realloc(this->sz + diff);	
+    	} else {
+    		this->realloc(other.size());	
+    		//this -> resize(other.size());
+    		//for(size_t i = 0; i < this -> size(); i++) p[i] = 0.0;
+    	}
     }
     for (int i = 0; i < this->sz; i++) {
       p[i] = other[i];
@@ -553,7 +559,9 @@ template <typename T, typename BaseTrait> struct BaseStore {
   }
 };
 
-struct Indices : public std::vector<size_t> {};
+struct Indices : public BaseStore<size_t> {
+	using RetType = size_t;
+};
 
 // Points to a Variable and stores indicces in ind
 template <typename T, typename SubsetTrait> struct Subset {
@@ -744,7 +752,6 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
   size_t sz = 0;
   size_t capacity = 0;
   MatrixParameter mp;
-  mutable signed int ref_counter = 0;
 
   size_t size() const { return sz; }
   bool im() const { return mp.im(); }

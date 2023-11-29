@@ -77,7 +77,9 @@ inline void calcInd(const Vec<BaseType> &vec, Indices &ind, const I &idx) {
   }
 }
 
+
 template <typename L, typename R, typename Trait, typename I>
+requires NotOperation<R>
 inline auto subset(Vec<L, R, Trait> &vec, const I &idx)
     -> Vec<BaseType, Subset<decltype(convert(vec).d), SubsetTrait>> {
   Subset<decltype(convert(vec).d), SubsetTrait> sub(vec);
@@ -87,13 +89,19 @@ inline auto subset(Vec<L, R, Trait> &vec, const I &idx)
 }
 
 template <typename L, typename R, typename Trait, typename I>
-inline auto subset(const Vec<L, R, Trait> &vec, const I &idx) -> Vec<BaseType, Buffer<BaseType, ComparisonTrait>, VectorTrait> {
+requires UnaryOrBinaryOperation<R>
+inline auto subset(const Vec<L, R, Trait> &vec, const I &idx) -> Vec<BaseType> {
   Indices ind;
   calcInd(vec, ind, idx);
-  Vec<BaseType, Buffer<BaseType>, ComparisonTrait> ret(ind.size());
+  Vec<BaseType> ret(ind.size());
+  printType(ind);
+  std::cout << ind.size() << " " << ret.size() << " " << vec.size() << std::endl;
+  for(auto i: ind) std::cout << i << std::endl;
+  for(size_t i = 0; i < vec.size(); i++) std::cout << vec[i] << std::endl;
   for(size_t i = 0; i < ret.size(); i++) ret[i] = vec[ind[i]];
   return ret;
 }
+
 
 /*
       [,1]      [,2]
@@ -220,11 +228,11 @@ inline void calcInd(const Vec<BaseType> &vec, Indices &ind, MatrixParameter& mp,
     return;
   } else if constexpr (std::is_same_v<R, int>) {
     indexRow--; 
-    ind.resize(1, 1); ind[0] = (idxR-1) * vec.nr() + indexRow;
+    ind.resize(1); ind[0] = (idxR-1) * vec.nr() + indexRow;
     return;
   } else if constexpr (std::is_same_v<R, double>) {
     indexRow--; 
-    ind.resize(1, 1); ind[0] = (static_cast<size_t>(idxR) -1) * vec.nr() + indexRow;
+    ind.resize(1); ind[0] = (static_cast<size_t>(idxR) -1) * vec.nr() + indexRow;
     return;
   } else {
       using vecTrait = std::remove_reference<decltype(idxR)>::type::TypeTrait;
@@ -354,30 +362,31 @@ inline void calcInd(const Vec<BaseType> &vec, Indices &ind, MatrixParameter& mp,
   ass(vec.im(), "incorrect number of dimensions" );
   if constexpr (std::is_same_v<R, bool>) {
     if(!idxR) return;
+    size_t size = (vec.nc() >= idxL.size()) ? vec.nc() : idxL.size();
     size_t counter = 0;
-    for (size_t i = 0; i < idxL.size(); i++) {
+    for (size_t i = 0; i < size; i++) {
       if (idxL[i]) counter++;
     }
-    std::vector<size_t> positions(counter);
+    BaseStore<size_t> positions(counter);
     counter = 0;
     size_t counter2 = 0;
-    for (size_t i = 0; i < idxL.size(); i++) {
+    for (size_t i = 0; i < size; i++) {
       if (((i % vec.nr()) == 0) && i != 0) counter2++;
       if (idxL[i]) {
         positions[counter] = i - counter2 * vec.nr();
         counter++;
       }
     }
-    ind.resize(vec.nc() * positions.size());
+    ind.resize(vec.nc() * size);
+    ind.fill(0);
     counter = 0;
-    for (size_t j = 0; j < positions.size(); j++) {
-      for (size_t i = 0; i < vec.nr(); i++) {
-        ind[counter] = (positions[j]) * vec.nr() + i;
+    for (size_t j = 0; j < vec.nc(); j++) {
+      for (size_t i = 0; i < positions.size(); i++) {
+        ind[counter] = j * vec.nr() + positions[i]; 
         counter++;
       }
     }
     mp.setMatrix(true, positions.size(), vec.nc());
-
   } else if constexpr (std::is_same_v<R, int>) {
         size_t counter = 0;
         for (int i = 0; i < idxL.size(); i++) {
@@ -537,28 +546,28 @@ inline auto subset(Vec<L, R, Trait> &vec, const IL &idxL, const IR & idxR)
 template <typename T, typename R, typename IL, typename IR>
 requires UnaryOrBinaryOperation<R>
 inline auto subset(const Vec<T, R> &vec, const IL &idxL, const IR& idxR)
-    -> Vec<BaseType, Buffer<BaseType, ComparisonTrait>, VectorTrait> {
+    -> Vec<BaseType> {
   Indices ind;
   MatrixParameter mp;
   calcInd(vec, ind, mp, idxL, idxR);
-  Buffer<BaseType, ComparisonTrait> retBuffer(ind.size());
+  Buffer<BaseType> retBuffer(ind.size());
   for(size_t i = 0; i < retBuffer.size(); i++) retBuffer[i] = vec[ind[i]];
   retBuffer.setMatrix(mp);
-  Vec<BaseType, Buffer<BaseType, ComparisonTrait>, VectorTrait> ret(retBuffer);
+  Vec<BaseType> ret(retBuffer);
   return ret;
 }
 
 template <typename L, typename R, typename Trait, typename IL, typename IR>
 requires UnaryOrBinaryOperation<R>
 inline auto subset(const Vec<L, R, Trait> &vec, const IL &idxL, const IR& idxR)
-    -> Vec<BaseType, Buffer<BaseType, ComparisonTrait>, VectorTrait> {
+    -> Vec<BaseType> {
   Indices ind;
   MatrixParameter mp;
   calcInd(vec, ind, mp, idxL, idxR);
-  Buffer<BaseType, ComparisonTrait> retBuffer(ind.size());
+  Buffer<BaseType> retBuffer(ind.size());
   for(size_t i = 0; i < retBuffer.size(); i++) retBuffer[i] = vec[ind[i]];
   retBuffer.setMatrix(mp);
-  Vec<BaseType, Buffer<BaseType, ComparisonTrait>, VectorTrait> ret(retBuffer);
+  Vec<BaseType> ret(retBuffer);
   return ret;
 }
 
