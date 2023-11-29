@@ -274,20 +274,37 @@ template <typename T, typename R, typename Trait> struct Vec {
     static_assert(!isBinaryOP::value, "Cannot assign to binary calculation");
     if constexpr (isBuffer::value) {
       Buffer<T> temp(otherVec.size()); // issue: define temp as own attribute!
-      for (size_t i = 0; i < otherVec.size(); i++) {
-        temp[i] = otherVec[i];
+      using RetTypeOtherVec = std::remove_reference<decltype(otherVec.d)>::type::RetType;
+      using isBaseTypeRet = std::is_same<RetTypeOtherVec, BaseType>;
+      if constexpr(isBaseTypeRet::value) {
+        for (size_t i = 0; i < otherVec.size(); i++) {
+          temp[i] = otherVec[i];
+        }  
+      } else {
+        for (size_t i = 0; i < otherVec.size(); i++) {
+          temp[i] = static_cast<BaseType>(otherVec[i]);
+        }
       }
       d.moveit(temp);
     } else if constexpr (isBorrow::value) {
       ass(otherVec.size() == this->size(),
           "number of items to replace is not a multiple of replacement length");
       Buffer<T> temp(otherVec.size());
-      for (size_t i = 0; i < otherVec.size(); i++)
+      for (size_t i = 0; i < otherVec.size(); i++) // issue: what the hell is this
       d.moveit(temp);
     } else if constexpr (isBorrowSEXP::value) {
       Buffer<T> temp(otherVec.size());
-      for (size_t i = 0; i < otherVec.size(); i++) 
-        temp[i] = otherVec[i];
+      using RetTypeOtherVec = std::remove_reference<decltype(otherVec.d)>::type::RetType;
+      using isBaseTypeRet = std::is_same<RetTypeOtherVec, BaseType>;
+      if constexpr(isBaseTypeRet::value) {
+        for (size_t i = 0; i < otherVec.size(); i++) {
+          temp[i] = otherVec[i];
+        }  
+      } else {
+        for (size_t i = 0; i < otherVec.size(); i++) {
+          temp[i] = static_cast<BaseType>(otherVec[i]);
+        }
+      }
       if (otherVec.size() > this->size())
         d.resize(otherVec.size());
       d.moveit(temp);
@@ -295,8 +312,16 @@ template <typename T, typename R, typename Trait> struct Vec {
       ass(otherVec.size() == d.ind.size(),
           "number of items to replace is not a multiple of replacement length");
       Buffer<T> temp(otherVec.size());
-      for (size_t i = 0; i < otherVec.size(); i++) {
-        temp[i] = otherVec[i];
+      using RetTypeOtherVec = std::remove_reference<decltype(otherVec.d)>::type::RetType;
+      using isBaseTypeRet = std::is_same<RetTypeOtherVec, BaseType>;
+      if constexpr(isBaseTypeRet::value) {
+        for (size_t i = 0; i < otherVec.size(); i++) {
+          temp[i] = otherVec[i];
+        }  
+      } else {
+        for (size_t i = 0; i < otherVec.size(); i++) {
+          temp[i] = static_cast<BaseType>(otherVec[i]);
+        }
       }
       if(d.p -> size() < temp.size()) d.resize(temp.size());
       for (size_t i = 0; i < d.ind.size(); i++) {

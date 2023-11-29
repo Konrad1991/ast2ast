@@ -284,6 +284,7 @@ inline void print(const char* inp) {
 }
 
 template<typename L, typename R>
+requires NotOperation<R>
 inline void print(const Vec<L, R> &inp) { 
   if (!inp.im()) {
       for(size_t i = 0; i < inp.size(); i++) Rcpp::Rcout << std::boolalpha << inp[i] << " ";
@@ -299,6 +300,7 @@ inline void print(const Vec<L, R> &inp) {
 }
 
 template <typename T, typename Op, typename Trait>
+requires UnaryOrBinaryOperation<Op>
 inline void print(const etr::Vec<T, Op, Trait> &inp) {
     if (!inp.im()) {
       for(size_t i = 0; i < inp.size(); i++) Rcpp::Rcout << std::boolalpha << inp[i] << " ";

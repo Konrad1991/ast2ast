@@ -42,7 +42,9 @@
 └── vec.hpp                  done
 */
 
-std::string demangle(const char *mangledName) {
+namespace etr {
+
+inline std::string demangle(const char *mangledName) {
   int status;
   char *demangled = abi::__cxa_demangle(mangledName, nullptr, nullptr, &status);
   std::string result(demangled);
@@ -50,11 +52,9 @@ std::string demangle(const char *mangledName) {
   return result;
 }
 
-template <typename T> void printType(T inp) {
+template <typename T> inline void printType(T inp) {
   std::cout << demangle(typeid(inp).name()) << std::endl;
 }
-
-namespace etr {
 
 typedef double BaseType;
 
@@ -103,12 +103,60 @@ struct MinusTrait { using RetType = BaseType; };
 struct TimesTrait { using RetType = BaseType; };
 struct DivideTrait { using RetType = BaseType; };
 struct PowTrait { using RetType = BaseType; };
-struct EqualTrait {};
-struct SmallerTrait {};
-struct SmallerEqualTrait {};
-struct LargerTrait {};
-struct LargerEqualTrait {};
-struct UnEqualTrait {};
+struct EqualTrait {
+	static bool f(double a, double b) { // issue: add this to documentationion for package authors
+			if(fabs(a - b) < 1E-3) {
+				return true;
+  		} else {
+  		 	return false;
+  		}
+	}
+};
+struct SmallerTrait {
+	static bool f(double a, double b) { 
+		if(a < b) {
+			return true;
+  	} else {
+  	 	return false;
+  	}
+	}
+};
+struct SmallerEqualTrait {
+	static bool f(double a, double b) { 
+	if(a <= b) {
+		return true;
+  } else {
+   	return false;
+  }
+}
+};
+struct LargerTrait {
+	static bool f(double a, double b) { 
+		if(a > b) {
+			return true;
+  	} else {
+  	 	return false;
+  	}
+	}
+};
+struct LargerEqualTrait {
+	static bool f(double a, double b) { 
+		if(a >= b) {
+			return true;
+  	} else {
+  	 	return false;
+  	}
+	}
+};
+struct UnEqualTrait {
+	static bool f(double a, double b) { 
+		if(fabs(a - b) > 1E-3) {
+			return true;
+  	} else {
+  	 	return false;
+  	}
+	}
+};
 
 struct SinusTrait {};
 struct ASinusTrait {};
@@ -237,6 +285,7 @@ inline double ATangens(double obj) { return atan(obj); }
 inline double Exp(double obj) { return exp(obj); }
 inline double Log(double obj) { return log(obj); }
 inline double SquareRoot(double obj) { return sqrt(obj); }
+
 inline double Equal(double a, double b) { 
 	if(fabs(a - b) < 1E-3) {
 		return 1.0;

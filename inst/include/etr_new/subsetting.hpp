@@ -519,7 +519,7 @@ inline auto subset(Vec<BaseType> &vec, const IL &idxL, const IR & idxR)
 template <typename T, typename R, typename IL, typename IR>
 requires NotOperation<R>
 inline auto subset(Vec<T, R> &vec, const IL &idxL, const IR & idxR)
-    -> Vec<BaseType, Subset<decltype(convert(vec).d), SubsetTrait>> {
+    -> Vec<BaseType, Subset<decltype(convert(vec).d), SubsetTrait>> { // issue: add also NotOperation and UnaryOrBinaryOperation to vector subsetting
   Subset<decltype(convert(vec).d), SubsetTrait> sub(vec);
   calcInd(vec, sub.ind, sub.mp,  idxL, idxR);
   return Vec<BaseType, decltype(convertSubset(vec))>(std::move(sub));

@@ -33,25 +33,25 @@ struct BinaryOperation {
     constexpr bool isDoubleR = std::is_same_v<R, double>;
     if constexpr (isDoubleL && isDoubleR) {
       if constexpr(std::is_same_v<CTrait, ComparisonTrait>) {
-        return static_cast<bool>(f(l, r));
+        return Trait::f(l, r);
       } else {
         return f(l, r);
       }
     } else if constexpr (!isDoubleL && isDoubleR) {
       if constexpr(std::is_same_v<CTrait, ComparisonTrait>) {
-        return static_cast<bool>(f(l[i % l.size()], r));
+        return Trait::f(l[i % l.size()], r);
       } else {
         return f(l[i % l.size()], r);
       }
     } else if constexpr (isDoubleL && !isDoubleR) {
       if constexpr(std::is_same_v<CTrait, ComparisonTrait>) {
-        return static_cast<bool>(f(l, r[i % r.size()]));
+        return Trait::f(l, r[i % r.size()]);
       } else {
         return f(l, r[i % r.size()]);  
       }  
     } else if constexpr (!isDoubleL && !isDoubleR) {
       if constexpr(std::is_same_v<CTrait, ComparisonTrait>) {
-        return static_cast<bool>(f(l[i % l.size()], r[i % r.size()]));
+        return Trait::f(l[i % l.size()], r[i % r.size()]);
       } else {
         return f(l[i % l.size()], r[i % r.size()]);
       }
