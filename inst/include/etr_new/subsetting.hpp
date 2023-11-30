@@ -60,7 +60,13 @@ inline void calcInd(const Vec<BaseType> &vec, Indices &ind, const I &idx) {
             size_t sizeTrue = 0; 
             for(size_t i = 0; i < idx.size(); i++) if(idx[i]) sizeTrue++;
             ind.resize(sizeTrue);
-            for(size_t i = 0; i < ind.size(); i++) if(idx[i]) ind[i] = i;
+            size_t counter = 0; 
+            for(size_t i = 0; i < idx.size(); i++) {
+              if(idx[i]) {
+                ind[counter] = i;
+                counter++;
+              } 
+            }
           } else if constexpr(std::is_same_v<whichType, BaseType>){
             ind.resize(idx.size()); 
             for(size_t i = 0; i < idx.size(); i++) {
