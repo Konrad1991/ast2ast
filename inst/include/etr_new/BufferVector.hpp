@@ -376,6 +376,68 @@ template <typename T, typename R, typename Trait> struct Vec {
     os << "]";
     return os;
   }
+
+  Vec(Rcpp::NumericVector otherVec)
+      : d(otherVec.size()) {
+    d.mp.setMatrix(false, 0, 0);
+    for (size_t i = 0; i < otherVec.size(); i++) {
+      d[i] = otherVec[i];
+    }
+  }
+  Vec(arma::vec otherVec)
+      : d(otherVec.size()) {
+    d.mp.setMatrix(false, 0, 0);
+    for (size_t i = 0; i < otherVec.size(); i++) {
+      d[i] = otherVec[i];
+    }
+  }
+  Vec(Rcpp::NumericMatrix otherVec)
+      : d(otherVec.size()) {
+    d.mp.setMatrix(true, otherVec.nrow(), otherVec.ncol());
+    for (size_t i = 0; i < otherVec.size(); i++) {
+      d[i] = otherVec[i];
+    }
+  }
+  Vec(arma::mat otherVec)
+      : d(otherVec.size()) {
+    d.mp.setMatrix(true, otherVec.n_rows, otherVec.n_cols);
+    for (size_t i = 0; i < otherVec.size(); i++) {
+      d[i] = otherVec[i];
+    }
+  }
+
+  operator Rcpp::NumericVector() const {
+    Rcpp::NumericVector ret(this->size());
+    for (size_t i = 0; i < ret.size(); i++) {
+      ret[i] = d[i];
+    }
+    return ret;
+  }
+  operator Rcpp::NumericMatrix() const {
+    ass(this->im() == true, "Object cannot be converted to NumericMatrix");
+    Rcpp::NumericMatrix ret(this->nr(), this->nc());
+    for (int i = 0; i < ret.size(); i++) {
+      ret[i] = d[i];
+    }
+    return ret;
+  }
+  operator arma::vec() const {
+    arma::vec ret(this->size());
+    for (size_t i = 0; i < this->size(); i++) {
+      ret[i] = d[i];
+    }
+    return ret;
+  }
+  operator arma::mat() const {
+    ass(this->im() == true, "Object cannot be converted to arma::mat");
+    arma::mat ret(this->nr(), this->nc());
+    for (size_t i = 0; i < ret.size(); i++) {
+      ret[i] = d[i];
+    }
+    return ret;
+  }
+
+
 };
 
 } // namespace etr

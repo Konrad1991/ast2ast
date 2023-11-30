@@ -66,6 +66,7 @@ MA <- R6::R6Class("MA",
     },
     get_calls = function(code) {
       out <- purrr::map_if(code, is.list, self$get_calls)
+      print(out)
       out <- as.call(out)
       return(out)
     },
