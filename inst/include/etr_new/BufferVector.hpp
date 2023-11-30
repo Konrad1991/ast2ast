@@ -9,7 +9,7 @@ namespace etr {
 
 template <typename T, typename Trait, typename CTrait>
 struct Buffer : public BaseStore<T> {
-  using RetType = BaseType;
+  using RetType = T; //BaseType;
   using TypeTrait = Trait;
   using CaseTrait = CTrait;
 };
@@ -222,7 +222,7 @@ template <typename T, typename R, typename Trait> struct Vec {
             d[i] = other[i];
         }  
     }
-    if (other.d.im() && !d.im()) {
+    if (other.d.im()) {
       d.setMatrix(true, other.d.nr(), other.d.nc()); // issue: correct?
     }
     return *this;
@@ -259,10 +259,10 @@ template <typename T, typename R, typename Trait> struct Vec {
       }
       if(d.p -> size() < temp.size()) d.resize(temp.size());
       for (size_t i = 0; i < d.ind.size(); i++) {
-          d[i] = temp[i];
+          d[i % d.ind.size()] = temp[i];
       }
     }
-    if (otherVec.d.im() && !d.im()) {
+    if (otherVec.d.im()) { // issue:  && !d.im() missing?
       d.setMatrix(true, otherVec.d.nr(), otherVec.d.nc());
     }
     return *this;
@@ -323,12 +323,15 @@ template <typename T, typename R, typename Trait> struct Vec {
           temp[i] = static_cast<BaseType>(otherVec[i]);
         }
       }
-      if(d.p -> size() < temp.size()) d.resize(temp.size());
+      //printType(*d.p);
+      //printType(d);
+      //std::cout << d.p -> size() << " " << temp.size() << " " << otherVec.size() << std::endl;
+      //if(d.p -> size() < temp.size()) d.resize(temp.size());
       for (size_t i = 0; i < d.ind.size(); i++) {
-          d[i] = temp[i];
+          d[i % d.ind.size()] = temp[i];
       }
     }
-    if (otherVec.d.im() && !d.im()) {
+    if (otherVec.d.im()) {
       d.setMatrix(true, otherVec.d.nr(), otherVec.d.nc());
     }
     return *this;

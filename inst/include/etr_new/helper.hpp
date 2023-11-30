@@ -144,7 +144,7 @@ inline SEXP cpp2R() { return R_NilValue; }
 inline SEXP cpp2R(int res) { return Rf_ScalarReal(etr::i2d(res)); }
 
 inline SEXP cpp2R(bool res) {
-  return Rf_ScalarReal(etr::i2d(static_cast<int>(res)));
+  return Rf_ScalarReal(etr::i2d(static_cast<double>(res)));
 }
 
 inline SEXP cpp2R(double res) { return Rf_ScalarReal(res); }
@@ -152,6 +152,7 @@ inline SEXP cpp2R(double res) { return Rf_ScalarReal(res); }
 inline SEXP cpp2R(const Vec<BaseType> &res) {
   SEXP ret = R_NilValue;
   if (res.im()) {
+    ass(res.size() == res.nr() * res.nc(), "size does not match ncol*nrow");
     ret = PROTECT(Rf_allocMatrix(REALSXP, res.nr(), res.nc()));
   } else {
     ret = PROTECT(Rf_allocVector(REALSXP, res.size()));
@@ -167,6 +168,7 @@ template<typename L, typename R>
 inline SEXP cpp2R(const Vec<L, R> &res) {
   SEXP ret = R_NilValue;
   if (res.im()) {
+    ass(res.size() == res.nr() * res.nc(), "size does not match ncol*nrow");
     ret = PROTECT(Rf_allocMatrix(REALSXP, res.nr(), res.nc()));
   } else {
     ret = PROTECT(Rf_allocVector(REALSXP, res.size()));
@@ -182,6 +184,7 @@ template<typename L, typename R, typename Trait>
 inline SEXP cpp2R(const Vec<L, R, Trait> &res) {
   SEXP ret = R_NilValue;
   if (res.im()) {
+    ass(res.size() == res.nr() * res.nc(), "size does not match ncol*nrow");
     ret = PROTECT(Rf_allocMatrix(REALSXP, res.nr(), res.nc()));
   } else {
     ret = PROTECT(Rf_allocVector(REALSXP, res.size()));
@@ -302,6 +305,22 @@ inline void print(const Vec<L, R> &inp) {
 template <typename T, typename Op, typename Trait>
 requires UnaryOrBinaryOperation<Op>
 inline void print(const etr::Vec<T, Op, Trait> &inp) {
+    if (!inp.im()) {
+      for(size_t i = 0; i < inp.size(); i++) Rcpp::Rcout << std::boolalpha << inp[i] << " ";
+      Rcpp::Rcout << std::endl;
+    } else {
+      for (size_t i = 0; i < inp.nr(); i++) {
+        for (size_t j = 0; j < inp.nc(); j++) {
+          Rcpp::Rcout << inp[j * inp.nr() + i] << "\t";
+        }
+        Rcpp::Rcout << std::endl;
+      }
+  }
+}
+
+template<typename T>
+requires (!isBID<T>)
+inline void print(const T &inp) { // issue: just a quick fix for printing unary expression
     if (!inp.im()) {
       for(size_t i = 0; i < inp.size(); i++) Rcpp::Rcout << std::boolalpha << inp[i] << " ";
       Rcpp::Rcout << std::endl;

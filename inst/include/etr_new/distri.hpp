@@ -633,8 +633,7 @@ inline Vec<BaseType> qgamma_etr(const Vec<BaseType> &x, const Vec<BaseType> &sha
       }
     }
     Vec<BaseType> res(max);
-    for (size_t i = 0; i < res.size(); i++) {Vec<BaseType> ret(1); ret[0] = R_NaN;
-  return ret;
+    for (size_t i = 0; i < res.size(); i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::qgamma(x[i % x.size()], shape[i % shape.size()],

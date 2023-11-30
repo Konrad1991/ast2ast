@@ -586,6 +586,7 @@ template <typename T, typename SubsetTrait> struct Subset {
     mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
   }
   void resize(size_t newSize) { p -> resize(newSize); }
+  void realloc(size_t newSize) { p -> realloc(newSize); }
 
   Subset(const Subset& other) {
   	this->p = other.p;
