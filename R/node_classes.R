@@ -290,6 +290,7 @@ retur <- R6::R6Class("retur",
           self$arguments <- str2lang(paste("cpp2R(", self$arguments, ")", collapse = ""))  
           ret <- c(ret, self$arguments)
           return(ret)
+      }
     }
   )
 )

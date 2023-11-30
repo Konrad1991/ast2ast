@@ -65,16 +65,16 @@ If the user creates an R function all input arguments are of type *SEXP*. Furthe
 **If the aim is to modify a variable by the user function it is only possible to pass directly a *sexp* objects by reference. See the example below here a is modified whereas b is copied and thus not altered. The vector *v* can only be used for the second argument of the function *foo*.** 
 
 ```{Rcpp, eval = FALSE, echo = TRUE}
-// [[Rcpp::depends(ast2ast)]] 
-// [[Rcpp::depends(RcppArmadillo)]] 
-// [[Rcpp::plugins(cpp17)]] 
+// [[Rcpp::plugins(cpp20)]]
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::depends(ast2ast)]]
 #include "etr.hpp"
 using namespace Rcpp;
 using namespace etr;
 
 void foo(sexp& a, sexp b) {
-  a = b + 1;
-  b = 1;
+  a = b + 1.0;
+  b = 1.0;
 }
 
 // [[Rcpp::export]]
@@ -82,10 +82,8 @@ void call_fct() {
   sexp a = coca(1, 2, 3);
   sexp b = coca(1, 2, 3);
   foo(a, b);
-  print(a);
-  print(b);
-  
-  Numeric
+  etr::print(a);
+  etr::print(b);
 }
 
 ```

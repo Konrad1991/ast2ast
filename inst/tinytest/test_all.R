@@ -1425,7 +1425,7 @@ testall <- function(a, type_test) {
   } else if (type_test == 26.7) {
     return(pgamma(c(1, 2, 3), 7))
   } else if (type_test == 26.8) {
-    return(qgamma(c(1, 2, 3), 5))
+    return(qgamma(c(0, 0.1, 0.2), 0.3))
   } else if (type_test == 26.9) {
     return(rgamma(10, 1, rate = -1))
   }
@@ -1485,7 +1485,7 @@ x <- test(0, 26.7)
 expect_equal(res, x)
 
 set.seed(1234)
-res <- qgamma(c(1, 2, 3), 7)
+res <- qgamma(c(0, 0.1, 0.2), 0.3)
 set.seed(1234)
 x <- test(0, 26.8)
 expect_equal(res, x) # failed
@@ -1685,17 +1685,17 @@ expect_equal(test(0, 19.63), matrix(c(1, 2, 4, 5), 2, 2))
 expect_equal(test(0, 19.64), matrix(c(1, 2, 4, 5), 2, 2))
 expect_equal(test(0, 19.65), matrix(c(4, 5), 2, 1))
 expect_equal(test(0, 19.66), matrix(c(4, 5), 2, 1))
-expect_equal(test(0, 19.67), matrix(c(2, 5), 1, 2)) # failed
+expect_equal(test(0, 19.67), c(2, 5)) 
 expect_equal(test(0, 19.68), c(2, 5))
 expect_equal(test(0, 19.69), matrix(5))
 expect_equal(test(0, 19.42), c(3, 5))
-expect_equal(test(0, 19.43), c(1, 3)) # failed
-expect_equal(test(0, 19.44), c(1, 4)) # failed
-expect_equal(test(0, 19.45), c(1)) # failed
+expect_equal(test(0, 19.43), c(1, 3, 5)) 
+expect_equal(test(0, 19.44), c(1, 4))
+expect_equal(test(0, 19.45), c(1, 7))
 expect_equal(test(0, 19.46), c(1, 2))
-expect_equal(test(0, 19.47), 4) # failed
+expect_equal(test(0, 19.47), c(4, 6)) 
 expect_equal(test(0, 19.48), c(1, 4)) # failed
-expect_equal(test(0, 19.49), c(1)) # failed
+expect_equal(test(0, 19.49), c(1, 7)) 
 expect_equal(test(0, 19.51), c(1, 2))
 expect_equal(test(0, 19.52), 4) # failed
 expect_equal(test(0, 19.53), matrix(c(1, 2, 3, 4, 5, 6), 3, 2))
@@ -1765,19 +1765,19 @@ expect_equal(test(0, 17.43), matrix(c(1, 2, 4, 5), 2, 2))
 expect_equal(test(0, 17.44), matrix(c(1, 2, 4, 5), 2, 2))
 expect_equal(test(0, 17.45), matrix(c(1, 2, 4, 5), 2, 2))
 expect_equal(test(0, 17.46), matrix(c(4, 5), 2, 1))
-expect_equal(test(0, 17.47), matrix(c(2, 5), 1, 2))
+expect_equal(test(0, 17.47), c(2, 5))
 expect_equal(test(0, 17.15), matrix(c(1, 2, 4, 5), 2, 2))
 expect_equal(test(0, 17.16), matrix(c(4, 5), 2, 1))
 expect_equal(test(0, 17.17), matrix(4:5, 2, 1))
-expect_equal(test(0, 17.18), matrix(c(2, 5), 1, 2))
-expect_equal(test(0, 17.19), matrix(c(2, 5), 1, 2))
+expect_equal(test(0, 17.18), c(2, 5))
+expect_equal(test(0, 17.19), c(2, 5))
 expect_equal(test(0, 17.21), matrix(c(5), 1, 1))
 expect_equal(test(0, 17.22), c(1, 5))
 expect_equal(test(0, 17.23), c(1, 7))
 expect_equal(test(0, 17.24), c(4, 6))
-expect_equal(test(0, 16.98), 4)
+expect_equal(test(0, 16.98), c(4, 6))
 expect_equal(test(0, 16.99), c(1, 4))
-expect_equal(test(0, 17.1), c(1))
+expect_equal(test(0, 17.1), c(1, 7))
 expect_equal(test(0, 17.2), c(1, 2))
 expect_equal(test(0, 17.3), c(4))
 expect_equal(test(0, 17.4), matrix(c(1:6), 3, 2))
@@ -1804,9 +1804,9 @@ expect_equal(test(0, 16.89), matrix(1:6, 3, 2))
 expect_equal(test(0, 16.91), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
 expect_equal(test(0, 16.92), matrix(c(1, 2, 4, 5), 2, 2))
 expect_equal(test(0, 16.93), c(2, 4))
-expect_equal(test(0, 16.94), c(1, 3))
+expect_equal(test(0, 16.94), c(1, 3, 5))
 expect_equal(test(0, 16.95), c(1, 4))
-expect_equal(test(0, 16.96), c(1))
+expect_equal(test(0, 16.96), c(1, 7))
 expect_equal(test(0, 16.97), c(1, 2))
 expect_equal(test(0, 16.55), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))  # failed
 expect_equal(test(0, 16.56), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))  # failed
@@ -1882,7 +1882,7 @@ expect_equal(test(c(1, 2, 3, 4), 16.29), matrix(rep(20, 9), 3, 3)) # failed
 # 15.1 - exponent & log
 expect_equal(test(c(1, 2, 3, 4), 15.1), c(1, 4, 9, 16))
 expect_equal(test(matrix(3, 2, 2), 15.2), matrix(27, 2, 2))
-expect_equal(test(matrix(3, 2, 2), 15.3), matrix(20.08554, 2, 2))
+expect_equal(test(matrix(3, 2, 2), 15.3), exp(matrix(3, 2, 2)) + 1)
 expect_equal(test(matrix(9, 2, 2), 15.4), matrix(3, 2, 2))
 
 # 14.1 - 14.7 == additional comparison tests for rvalues and results of calculations

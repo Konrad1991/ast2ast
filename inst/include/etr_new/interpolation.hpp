@@ -75,7 +75,7 @@ inline double li(const A& t_, const B&timeVec, const C& parVec) {
 }
 
 template<typename A, typename B, typename C>
-inline double cmr(const A &tInp,
+inline double cmrInternal(const A &tInp,
 				  const B &timeVec,
 				  const C &parVec) {
   using typeTraitA = std::remove_reference<decltype(tInp)>::type::TypeTrait;
@@ -168,6 +168,19 @@ inline double cmr(const A &tInp,
                 (pow(x, 3) - pow(x, 2)) * (t2 - t1) * m2);
   return res;
 }
+
+
+template<typename A, typename B, typename C>
+inline double cmr(const A &tInp,
+          const B &timeVec,
+          const C &parVec) {
+  if constexpr(std::is_arithmetic_v<A>) {
+    return cmrInternal(Vec<BaseType>(tInp), timeVec, parVec);
+  } else {
+    return cmrInternal(tInp, timeVec, parVec);
+  }
+}
+
 
 }
 
