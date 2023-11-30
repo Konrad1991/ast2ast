@@ -51,6 +51,7 @@ MA <- R6::R6Class("MA",
     },
     getast = function() {
       for (i in seq_along(self$body)) {
+        print(self$body[[i]])
         # convert ast R --> ETR
         self$temp[[i]] <- LC$new(self$body[[i]], self$R_fct)
         self$ast[[i]] <- self$temp[[i]]$ast
@@ -59,9 +60,16 @@ MA <- R6::R6Class("MA",
         self$var_all <- c(self$var_all, self$temp[[i]]$vars)
         self$var_index <- c(self$var_index, self$temp[[i]]$index_vars)
 
+        print(self$return_valtype)
+        print(self$return_TF)
+        print(any(self$return_TF == TRUE))
+        print("asfsdfgdfgh")
         # return was found?
         self$return_TF <- c(self$return_TF, self$temp[[i]]$found_return)
         if (any(self$return_TF == TRUE)) self$return_TF <- TRUE else self$return_TF <- FALSE
+
+        print(self$return_valtype)
+        print(self$return_TF)
       }
     },
     get_calls = function(code) {
