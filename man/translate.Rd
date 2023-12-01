@@ -17,11 +17,11 @@ translate(
 \arguments{
 \item{f}{The function which should be translated from R to C++.}
 
-\item{output}{If set to "R"" an R function wrapping the C++ code is returned. 
+\item{output}{If set to "R"" an R function wrapping the C++ code is returned.
 If output is set to "XPtr"" an external pointer object pointing to the C++ code is returned.
 The default value is "R".}
 
-\item{types_of_args}{define the types of the arguments passed to the function as an character vector. 
+\item{types_of_args}{define the types of the arguments passed to the function as an character vector.
 This is an optional input if using "XPtr" as output.
 The default value is "SEXP" as this is the only possibility for output "R".
 In case one want to use an external pointer the easiest way is to pass "sexp" for types_of_args.
@@ -46,7 +46,7 @@ In contrast a function which returns an external pointer is generated if the out
 \description{
 An R function is translated to C++ source code and afterwards the code is compiled.
 The result can be an external pointer (\emph{XPtr}) or an \emph{R} function.
-The default value is an R function. 
+The default value is an R function.
 Further information can be found in the vignette: \emph{Detailed Documentation}.
 }
 \details{
@@ -56,18 +56,18 @@ Notably, it is possible that the variables change the type within the function. 
   For example in the following code the variable \emph{a} contains \emph{1, 2, and 3} before the function call and afterwards \emph{1, 1 and 1}.
   In contrast for variable \emph{b} the size changes and thus the object within \emph{R} is not modified. Furthermore, the variable \emph{c} is not increased and only the first element is         changed.} \cr
 \verb{
-  f <- function(a, b, c) { 
-    a[c(1, 2, 3)] <- 1 
-    b <- vector(10) 
+  f <- function(a, b, c) {
+    a[c(1, 2, 3)] <- 1
+    b <- vector(10)
     c <- vector(1)
-  } 
-  fcpp <- ast2ast::translate(f) 
-  a <- c(1, 2, 3) 
-  b <- c(1, 2, 3) 
+  }
+  fcpp <- ast2ast::translate(f)
+  a <- c(1, 2, 3)
+  b <- c(1, 2, 3)
   c <- c(1, 2, 3)
-  fcpp(a, b,c) 
-  print(a) 
-  print(b) 
+  fcpp(a, b,c)
+  print(a)
+  print(b)
   print(c)
 }
 \strong{It is possible to declare a variable of a scalar numeric data type.
@@ -83,15 +83,15 @@ Notably, it is possible that the variables change the type within the function. 
   fcpp()
 } \cr
 In R every object is under the hood a \emph{SEXP} object.
-In case an \emph{R} function is created as output only \emph{SEXP} elements can be passed to the function. 
-Furthermore, these functions always return a \emph{SEXP} element. Even if nothing is returned; in this case \emph{NULL} is returned!. 
+In case an \emph{R} function is created as output only \emph{SEXP} elements can be passed to the function.
+Furthermore, these functions always return a \emph{SEXP} element. Even if nothing is returned; in this case \emph{NULL} is returned!.
 Notably, is that only numeric vectors (in R also scalar values are vectors) or numeric matrices can be passed to the function. \cr
-In contrast if an external pointer is created other types can be specified which are passed to the function or returned from it. 
-The default value is a variable of type \emph{sexp}. This is the data type which is used in the C++ code. 
+In contrast if an external pointer is created other types can be specified which are passed to the function or returned from it.
+The default value is a variable of type \emph{sexp}. This is the data type which is used in the C++ code.
 The \emph{ptr_vec} and \emph{ptr_mat} interface work in a different way. If using \emph{ptr_vec} a \emph{double*} pointer is expected as first element.
-Additionally a second argument is needed which is of type \emph{int} and which defines the size of the array. 
+Additionally a second argument is needed which is of type \emph{int} and which defines the size of the array.
 This works in the same way for \emph{ptr_mat}. But instead of the size argument two integers are needed which define the number of rows and columns.
-Both arguments have to be of type \emph{int}. 
+Both arguments have to be of type \emph{int}.
 Notably, the memory is only borrowed. Thus, the memory is not automatically deleted! See vignette \emph{InformationForPackageAuthors} for more information. \cr
 \strong{The following functions are supported:}
 \enumerate{
@@ -172,79 +172,82 @@ Notably, the memory is only borrowed. Thus, the memory is not automatically dele
 }
 \examples{
 \dontrun{
-     # Hello World
-     # ==========================================================================
-     
-     # Translating to R_fct
-     # --------------------------------------------------------------------------
-     f <- function() { print("Hello World!")}
-     ast2ast::translate(f)
-     f()
-     
-     # Translating to external pointer
-     # --------------------------------------------------------------------------
-     f <- function() { print("Hello World!")}
-     pointer_to_f_cpp <- ast2ast::translate(f, 
-                                            output = "XPtr", return_type = "void")
-    Rcpp::sourceCpp(code = '
+# Hello World
+# ==========================================================================
+
+# Translating to R_fct
+# --------------------------------------------------------------------------
+f <- function() {
+  print("Hello World!")
+}
+ast2ast::translate(f)
+f()
+
+# Translating to external pointer
+# --------------------------------------------------------------------------
+f <- function() {
+  print("Hello World!")
+}
+pointer_to_f_cpp <- ast2ast::translate(f,
+  output = "XPtr", return_type = "void"
+)
+Rcpp::sourceCpp(code = "
     #include <Rcpp.h>
     typedef void (*fp)();
 
     // [[Rcpp::export]]
     void call_fct(Rcpp::XPtr<fp> inp) {
       fp f = *inp;
-      f(); } ')
-      
-    call_fct(pointer_to_f_cpp)
-    
-    # Run sum example:
-    # ==========================================================================
-    
-    # R version of run sum
-    # --------------------------------------------------------------------------
-    run_sum <- function(x, n) {
-      sz <- length(x)
-      
-      ov <- vector(mode = "numeric", length = sz)
-      
-      ov[n] <- sum(x[1:n])
-      for(i in (n+1):sz) {
-        
-        ov[i] <- ov[i-1] + x[i] - x[i-n]
-      }
-       
-      ov[1:(n-1)] <- NA
-       
-       return(ov)
-    }
-     
-    # translated Version of R function
-    # --------------------------------------------------------------------------
-     run_sum_fast <- function(x, n) {
-       sz <- length(x)
-      ov <- vector(sz)
-      
-      sum_db = 0
-      for(i in 1:n) {
-         sum_db <- sum_db + at(x, i)
-       }
-       ov[n] <- sum_db
-       
-       for(i in (n + 1):sz) {
-         ov[i] <- at(ov, i - 1) + at(x, i) - at(x, i - at(n, 1))
-      }
-       
-       ov[1:(n - 1)] <- NA
-       
-       return(ov)
-     }
-     run_sum_cpp <- ast2ast::translate(run_sum_fast, verbose = FALSE)
-     set.seed(42)
-     x <- rnorm(10000)
-    n <- 500
-     one <- run_sum(x, n)
-     two <- run_sum_cpp(x, n)
+      f(); } ")
+
+call_fct(pointer_to_f_cpp)
+
+# Run sum example:
+# ==========================================================================
+
+# R version of run sum
+# --------------------------------------------------------------------------
+run_sum <- function(x, n) {
+  sz <- length(x)
+
+  ov <- vector(mode = "numeric", length = sz)
+
+  ov[n] <- sum(x[1:n])
+  for (i in (n + 1):sz) {
+    ov[i] <- ov[i - 1] + x[i] - x[i - n]
+  }
+
+  ov[1:(n - 1)] <- NA
+
+  return(ov)
 }
 
+# translated Version of R function
+# --------------------------------------------------------------------------
+run_sum_fast <- function(x, n) {
+  sz <- length(x)
+  ov <- vector(sz)
+
+  sum_db <- 0
+  for (i in 1:n) {
+    sum_db <- sum_db + at(x, i)
+  }
+  ov[n] <- sum_db
+
+  for (i in (n + 1):sz) {
+    ov[i] <- at(ov, i - 1) + at(x, i) - at(x, i - at(n, 1))
+  }
+
+  ov[1:(n - 1)] <- NA
+
+  return(ov)
+}
+run_sum_cpp <- ast2ast::translate(run_sum_fast, verbose = FALSE)
+set.seed(42)
+x <- rnorm(10000)
+n <- 500
+one <- run_sum(x, n)
+two <- run_sum_cpp(x, n)
+}
 
 }

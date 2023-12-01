@@ -73,8 +73,7 @@ MA <- R6::R6Class("MA",
         self$code[[i]] <- self$get_calls(self$ast[[i]])
       }
     },
-    call2char = function() { # some errors {}
-
+    call2char = function() {
       j <- 1
       for (i in seq_along(self$code)) {
         temp <- deparse(self$code[[i]], width.cutoff = 500)
@@ -95,8 +94,8 @@ MA <- R6::R6Class("MA",
 
         self$char[[j]] <- temp
         j <- j + 1
-        self$char[[j]] <- "\n"
-        j <- j + 1
+        #self$char[[j]] <- "\n"
+        #j <- j + 1
       }
     },
     get_vars = function() {

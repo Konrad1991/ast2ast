@@ -59,7 +59,7 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
     # nonnull-attribute,null,object-size,pointer-overflow,return,
     # returns-nonnull-attribute,shift,signed-integer-overflow,
     # unreachable,vla-bound,vptr
-    Sys.setenv("PKG_CXXFLAGS" = "-DRFCT")
+    # Sys.setenv("PKG_CXXFLAGS" = "-DRFCT -Wall -Wpedantic")
     # -fsanitize=address --param=max-vartrack-size=9000000 -fno-omit-frame-pointer
 
     tryCatch(

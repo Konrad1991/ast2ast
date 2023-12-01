@@ -27,7 +27,7 @@ J(
 If output is set to "XPtr"" an external pointer object pointing to the C++ code is returned. \cr
 The default value is "R".}
 
-\item{types_of_args}{define the types of the arguments passed to the function as an character vector. 
+\item{types_of_args}{define the types of the arguments passed to the function as an character vector.
 This is an optional input if using "XPtr" as output. \cr
 The default value is "SEXP" as this is the only possibility for output "R". \cr
 In case one want to use an external pointer the easiest way is to pass "sexp" for types_of_args. \cr
@@ -61,18 +61,18 @@ Notably, it is possible that the variables change the type within the function. 
   For example in the following code the variable \emph{a} contains \emph{1, 2, and 3} before the function call and afterwards \emph{1, 1 and 1}.
   In contrast for variable \emph{b} the size changes and thus the object within \emph{R} is not modified. Furthermore, the variable \emph{c} is not increased and only the first element is         changed.} \cr
 \verb{
-  f <- function(a, b, c) { 
-    a[c(1, 2, 3)] <- 1 
-    b <- vector(10) 
+  f <- function(a, b, c) {
+    a[c(1, 2, 3)] <- 1
+    b <- vector(10)
     c <- vector(1)
-  } 
-  fcpp <- ast2ast::translate(f) 
-  a <- c(1, 2, 3) 
-  b <- c(1, 2, 3) 
+  }
+  fcpp <- ast2ast::translate(f)
+  a <- c(1, 2, 3)
+  b <- c(1, 2, 3)
   c <- c(1, 2, 3)
-  fcpp(a, b,c) 
-  print(a) 
-  print(b) 
+  fcpp(a, b,c)
+  print(a)
+  print(b)
   print(c)
 }
 \strong{It is possible to declare a variable of a scalar numeric data type.
@@ -88,15 +88,15 @@ Notably, it is possible that the variables change the type within the function. 
   fcpp()
 } \cr
 In R every object is under the hood a \emph{SEXP} object.
-In case an \emph{R} function is created as output only \emph{SEXP} elements can be passed to the function. 
-Furthermore, these functions always return a \emph{SEXP} element. Even if nothing is returned; in this case \emph{NULL} is returned!. 
+In case an \emph{R} function is created as output only \emph{SEXP} elements can be passed to the function.
+Furthermore, these functions always return a \emph{SEXP} element. Even if nothing is returned; in this case \emph{NULL} is returned!.
 Notably, is that only numeric vectors (in R also scalar values are vectors) or numeric matrices can be passed to the function. \cr
-In contrast if an external pointer is created other types can be specified which are passed to the function or returned from it. 
-The default value is a variable of type \emph{sexp}. This is the data type which is used in the C++ code. 
+In contrast if an external pointer is created other types can be specified which are passed to the function or returned from it.
+The default value is a variable of type \emph{sexp}. This is the data type which is used in the C++ code.
 The \emph{ptr_vec} and \emph{ptr_mat} interface work in a different way. If using \emph{ptr_vec} a \emph{double*} pointer is expected as first element.
-Additionally a second argument is needed which is of type \emph{int} and which defines the size of the array. 
+Additionally a second argument is needed which is of type \emph{int} and which defines the size of the array.
 This works in the same way for \emph{ptr_mat}. But instead of the size argument two integers are needed which define the number of rows and columns.
-Both arguments have to be of type \emph{int}. 
+Both arguments have to be of type \emph{int}.
 Notably, the memory is only borrowed. Thus, the memory is not automatically deleted! See vignette \emph{InformationForPackageAuthors} for more information. \cr
 \strong{The following functions are supported:}
 \enumerate{
@@ -120,19 +120,19 @@ For more details see: \code{\link[dfdr:jacobian]{dfdr::jacobian()}}
 }
 \examples{
 \dontrun{
-  # simple example
-  f <- function(y) {
-    ydot <- vector(length = 2)
-    a <- 1.1
-    b <- 0.4
-    c <- 0.1
-    d <- 0.4
-    ydot[1] <- y[1]*a - y[1]*y[2]*b
-    ydot[2] <- y[2]*y[1]*c - y[2]*d
-    return(ydot)
-  }
-  jac <- ast2ast::J(f, ydot, y, verbose = TRUE)
-  jac(c(10, 11))
+# simple example
+f <- function(y) {
+  ydot <- vector(length = 2)
+  a <- 1.1
+  b <- 0.4
+  c <- 0.1
+  d <- 0.4
+  ydot[1] <- y[1] * a - y[1] * y[2] * b
+  ydot[2] <- y[2] * y[1] * c - y[2] * d
+  return(ydot)
+}
+jac <- ast2ast::J(f, ydot, y, verbose = TRUE)
+jac(c(10, 11))
 }
 
 }

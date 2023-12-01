@@ -157,7 +157,7 @@ inline SEXP cpp2R(const Vec<BaseType> &res) {
   } else {
     ret = PROTECT(Rf_allocVector(REALSXP, res.size()));
   }
-  for (int i = 0; i < res.size(); i++) {
+  for (size_t i = 0; i < res.size(); i++) {
     REAL(ret)[i] = res[i];
   }
   UNPROTECT(1);
@@ -198,7 +198,7 @@ inline SEXP cpp2R(const Vec<L, R, Trait> &res) {
 
 inline Vec<BaseType> isNA(const Vec<BaseType> &inp) {
   Vec<BaseType> res(inp.size());
-  for (int i = 0; i < res.size(); i++) {
+  for (size_t i = 0; i < res.size(); i++) {
     res[i] = ISNA(inp[i]);
   }
   return res;
@@ -206,7 +206,7 @@ inline Vec<BaseType> isNA(const Vec<BaseType> &inp) {
 
 inline Vec<BaseType> isInfinite(const Vec<BaseType> &inp) {
   Vec<BaseType> res(inp.size());
-  for (int i = 0; i < res.size(); i++) {
+  for (size_t i = 0; i < res.size(); i++) {
     res[i] = (!R_FINITE(inp[i]) && !ISNA(inp[i]));
   }
   return res;
@@ -232,9 +232,9 @@ inline Vec<double> colon(const A& start, const O& end) {
   } else {
   	s = static_cast<BaseType>(start); e = static_cast<BaseType>(end);
   }
-  Vec<BaseType> ret(static_cast<int>(e - s + 1));
-  for (int i = 0; i < ret.size(); i++) {
-    ret[i] = start + static_cast<double>(i);
+  Vec<BaseType> ret(static_cast<size_t>(e - s + 1));
+  for (size_t i = 0; i < ret.size(); i++) {
+    ret[i] = s + static_cast<BaseType>(i);
   }
   return ret;
 }

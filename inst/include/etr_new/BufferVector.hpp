@@ -61,6 +61,9 @@ template <typename T, typename R, typename Trait> struct Vec {
   template <typename U = R, typename T2>
     requires std::is_same_v<U, Borrow<BaseType>>
   explicit Vec(const Borrow<T2> &borrowed) : d(borrowed) {d.setMatrix(borrowed.mp);}
+  template<typename U = R>
+    requires std::is_same_v<U, Borrow<BaseType>>
+  explicit Vec(T* ptr, size_t s) : d(ptr, s) { }
   template <typename L2, typename R2, binaryFct f, typename OperationTrait>
   explicit Vec(BinaryOperation<L2, R2, f, OperationTrait> &inp) : d(inp) {
     using TypeTrait = OperationTrait;
@@ -158,9 +161,7 @@ template <typename T, typename R, typename Trait> struct Vec {
   RetType &operator[](size_t idx) { return d[idx]; }
   RetType operator[](size_t idx) const { return d[idx]; }
 
-  template <typename TD>
-    requires std::is_same_v<TD, BaseType>
-  Vec &operator=(const TD inp) {
+  Vec &operator=(const T inp) {
     static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
     static_assert(!isBinaryOP::value, "Cannot assign to binary calculation");
     if constexpr (isSubset::value) {
@@ -242,7 +243,7 @@ template <typename T, typename R, typename Trait> struct Vec {
       Buffer<T> temp(otherVec.size());
       for (size_t i = 0; i < otherVec.size(); i++)
         temp[i] = otherVec[i];
-      d.moveit(temp);
+      for (size_t i = 0; i < otherVec.size(); i++) d[i] = temp[i];
     } else if constexpr (isBorrowSEXP::value) {
       Buffer<T> temp(otherVec.size());
       for (size_t i = 0; i < otherVec.size(); i++)
@@ -290,8 +291,8 @@ template <typename T, typename R, typename Trait> struct Vec {
       ass(otherVec.size() == this->size(),
           "number of items to replace is not a multiple of replacement length");
       Buffer<T> temp(otherVec.size());
-      for (size_t i = 0; i < otherVec.size(); i++) // issue: what the hell is this
-      d.moveit(temp);
+      for (size_t i = 0; i < otherVec.size(); i++) temp[i] = otherVec[i];
+      for (size_t i = 0; i < otherVec.size(); i++) d[i] = temp[i];
     } else if constexpr (isBorrowSEXP::value) {
       Buffer<T> temp(otherVec.size());
       using RetTypeOtherVec = std::remove_reference<decltype(otherVec.d)>::type::RetType;
@@ -323,10 +324,6 @@ template <typename T, typename R, typename Trait> struct Vec {
           temp[i] = static_cast<BaseType>(otherVec[i]);
         }
       }
-      //printType(*d.p);
-      //printType(d);
-      //std::cout << d.p -> size() << " " << temp.size() << " " << otherVec.size() << std::endl;
-      //if(d.p -> size() < temp.size()) d.resize(temp.size());
       for (size_t i = 0; i < d.ind.size(); i++) {
           d[i % d.ind.size()] = temp[i];
       }
@@ -342,9 +339,13 @@ template <typename T, typename R, typename Trait> struct Vec {
     return *this;
   }
 
-  operator bool() const {
-    ass(this -> size() == 1, "Error in if: the condition has length > 1");
-    return static_cast<bool>(d[0]);
+  //operator bool() const {
+  //  ass(this -> size() == 1, "Error in if: the condition has length > 1");
+  //  return static_cast<bool>(d[0]);
+  //}
+
+  operator double() const {
+    return d[0];
   }
 
   size_t size() const { return d.size(); }

@@ -430,13 +430,13 @@ template <typename T, typename BaseTrait> struct BaseStore {
       return *this;
     if (other.size() > this->sz) {
     	if(allocated) {
-    		int diff = other.size() - this->sz;
+    		size_t diff = other.size() - this->sz;
       	this->realloc(this->sz + diff);	
     	} else {
     		this->realloc(other.size());	
     	}
     }
-    for (int i = 0; i < this->sz; i++) {
+    for (size_t i = 0; i < this->sz; i++) {
       p[i] = other[i];
     }
     return *this;
@@ -519,14 +519,14 @@ template <typename T, typename BaseTrait> struct BaseStore {
   T &back() { return p[sz]; }
   T *data() const { return p; }
 
-  void realloc(int new_size) {
+  void realloc(size_t new_size) {
     T *temp;
     temp = new T[sz];
-    for (int i = 0; i < sz; i++)
+    for (size_t i = 0; i < sz; i++)
       temp[i] = p[i];
     if(p != nullptr && allocated) delete[] p;
     p = new T[new_size];
-    for (int i = 0; i < sz; i++)
+    for (size_t i = 0; i < sz; i++)
       p[i] = temp[i];
     ass(temp != nullptr, "try to delete nullptr");
     delete[] temp;
@@ -634,6 +634,7 @@ template <typename T, typename BorrowTrait> struct Borrow {
   using RetType = BaseType;
   using Type = T;
   using TypeTrait = BorrowTrait;
+  using CaseTrait = BorrowTrait;
   T *p = nullptr;
   size_t sz = 0;
   size_t capacity = 0;

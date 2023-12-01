@@ -30,8 +30,8 @@ Subset<R> convertSubset(const Vec<T, R> &obj) {
   return Subset<T, SubsetTrait>(obj);
 }
 
-template <typename I>
-inline void calcInd(const Vec<BaseType> &vec, Indices &ind, const I &idx) {
+template <typename T, typename I>
+inline void calcInd(T &vec, Indices &ind, const I &idx) {
   if constexpr (std::is_same_v<I, bool>) {
     if (idx) {
       ind.resize(vec.size());
@@ -89,7 +89,7 @@ requires NotOperation<R>
 inline auto subset(Vec<L, R> &vec, const I &idx)
     -> Vec<BaseType, Subset<decltype(convert(vec).d), SubsetTrait>> {
   Subset<decltype(convert(vec).d), SubsetTrait> sub(vec);
-  calcInd(vec, sub.ind, idx);
+  calcInd(vec, sub.ind, idx); // issue: this need ages in run_sum why?
   sub.setMatrix(false, 0, 0);
   return Vec<BaseType, decltype(convertSubset(vec))>(std::move(sub));
 }
@@ -118,7 +118,7 @@ template <typename L, typename R, typename Trait, typename I>
 requires UnaryOrBinaryOperation<R>
 inline auto subset(const Vec<L, R, Trait> &vec, const I &idx) -> Vec<BaseType> {
   Indices ind;
-  calcInd(vec, ind, idx);
+  calcInd(vec, ind, idx); // issue: everytime where const Vec<BaseType> & is used as argument. It needs ages. Because, a normal vector is converted into const Vec<BaseType> --> it is copied entirely. This has to be changed!!! Which type has to be used instead?
   Vec<BaseType> ret(ind.size());
   for(size_t i = 0; i < ret.size(); i++) ret[i] = vec[ind[i]];
   return ret;
@@ -626,54 +626,102 @@ inline auto subset(const Vec<L, R, Trait> &vec, const IL &idxL, const IR& idxR)
   return ret;
 }
 
-inline BaseType& at(const Vec<BaseType> &inp, int i) {
+// issue: not all "at" cases are catched
+
+template<typename T, typename R>
+requires std::is_same_v<R, size_t>
+inline BaseType& at(T &inp, R i) {
   i--;
   ass(inp.d.allocated, "No memory was allocated");
   ass(i >= 0, "Error: out of boundaries --> value below 1");
-  ass(i < inp.d.sz, "Error: out of boundaries --> value beyond size of vector");
+  ass(i < inp.size(), "Error: out of boundaries --> value beyond size of vector");
   return inp.d.p[i];
 }
 
-inline BaseType &at(const Vec<BaseType> &inp, BaseType i_) {
-  int i = d2i(i_);
+template<typename T>
+inline BaseType &at(T &inp, BaseType i_) {
+  size_t i = d2i(i_);
   i--;
   ass(inp.d.allocated, "No memory was allocated");
   ass(i >= 0, "Error: out of boundaries --> value below 1");
-  ass(i < inp.d.sz, "Error: out of boundaries --> value beyond size of vector");
+  ass(i < inp.size(), "Error: out of boundaries --> value beyond size of vector");
   return inp.d.p[i];
 }
 
-inline BaseType &at(const Vec<BaseType> &inp, int r, int c) {
+template<typename T>
+inline BaseType &at(T &inp, size_t r, size_t c) {
   ass(inp.im() == true, "Input is not a matrix!");
   r--;
   c--;
   ass(inp.d.allocated, "No memory was allocated");
   ass((c * inp.nr() + r) >= 0, "Error: out of boundaries --> value below 1");
-  ass((c * inp.nr() + r) < inp.d.sz, "Error: out of boundaries --> value beyond size of vector");
+  ass((c * inp.nr() + r) < inp.size(), "Error: out of boundaries --> value beyond size of vector");
+  return inp.d.p[c * inp.nr() + r];
+}
+
+template<typename T>
+inline BaseType &at(T &inp, BaseType r_, BaseType c_) {
+  ass(inp.im() == true, "Input is not a matrix!");
+  size_t r = d2i(r_);
+  size_t c = d2i(c_);
+  r--;
+  c--;
+  ass(inp.d.allocated, "No memory was allocated");
+  ass((c * inp.nr() + r) >= 0, "Error: out of boundaries --> value below 1");
+  ass((c * inp.nr() + r) < inp.size(), "Error: out of boundaries --> value beyond size of vector");
+  return inp.d.p[c * inp.nr() + r];
+}
+
+
+
+
+template<typename T, typename R>
+requires std::is_same_v<R, size_t>
+inline BaseType& at(const Vec<BaseType> &inp, R i) {
+  i--;
+  ass(i >= 0, "Error: out of boundaries --> value below 1");
+  ass(i < inp.size(), "Error: out of boundaries --> value beyond size of vector");
+  return inp.d.p[i];
+}
+
+inline BaseType &at(const Vec<BaseType> &inp, BaseType i_) {
+  size_t i = d2i(i_);
+  i--;
+  ass(i >= 0, "Error: out of boundaries --> value below 1");
+  ass(i < inp.size(), "Error: out of boundaries --> value beyond size of vector");
+  return inp.d.p[i];
+}
+
+inline BaseType &at(const Vec<BaseType> &inp, size_t r, size_t c) {
+  ass(inp.im() == true, "Input is not a matrix!");
+  r--;
+  c--;
+  ass((c * inp.nr() + r) >= 0, "Error: out of boundaries --> value below 1");
+  ass((c * inp.nr() + r) < inp.size(), "Error: out of boundaries --> value beyond size of vector");
   return inp.d.p[c * inp.nr() + r];
 }
 
 inline BaseType &at(const Vec<BaseType> &inp, BaseType r_, BaseType c_) {
   ass(inp.im() == true, "Input is not a matrix!");
-  int r = d2i(r_);
-  int c = d2i(c_);
+  size_t r = d2i(r_);
+  size_t c = d2i(c_);
   r--;
   c--;
-  ass(inp.d.allocated, "No memory was allocated");
   ass((c * inp.nr() + r) >= 0, "Error: out of boundaries --> value below 1");
-  ass((c * inp.nr() + r) < inp.d.sz, "Error: out of boundaries --> value beyond size of vector");
+  ass((c * inp.nr() + r) < inp.size(), "Error: out of boundaries --> value beyond size of vector");
   return inp.d.p[c * inp.nr() + r];
 }
 
-inline BaseType &at(const Vec<BaseType> &&inp, int r, int c) {
+inline BaseType &at(const Vec<BaseType> &&inp, size_t r, size_t c) {
   ass(inp.im() == true, "Input is not a matrix!");
   r--;
   c--;
-  ass(inp.d.allocated, "No memory was allocated");
   ass((c * inp.nr() + r) >= 0, "Error: out of boundaries --> value below 1");
-  ass((c * inp.nr() + r) < inp.d.sz, "Error: out of boundaries --> value beyond size of vector");
+  ass((c * inp.nr() + r) < inp.size(), "Error: out of boundaries --> value beyond size of vector");
   return inp.d.p[c * inp.nr() + r];
 }
+
+
 
 }; // namespace etr
 
