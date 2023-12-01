@@ -377,7 +377,38 @@ template <typename T, typename R, typename Trait> struct Vec {
     return os;
   }
 
-  // issue: operator= is missing for Rcpp and armadillo
+  Vec& operator=(Rcpp::NumericVector& otherVec) {
+    d.resize(static_cast<size_t>(otherVec.size()));
+    d.mp.setMatrix(false, 0, 0);
+    for (size_t i = 0; i < otherVec.size(); i++) {
+      d[i] = otherVec[i];
+    }
+    return *this;
+  }
+  Vec& operator=(Rcpp::NumericMatrix& otherVec) {
+    d.resize(static_cast<size_t>(otherVec.size()));
+    d.mp.setMatrix(true, otherVec.nrow(), otherVec.ncol());
+    for (size_t i = 0; i < otherVec.size(); i++) {
+      d[i] = otherVec[i];
+    }
+    return *this;
+  }
+  Vec& operator=(arma::vec& otherVec) {
+    d.resize(static_cast<size_t>(otherVec.size()));
+    d.mp.setMatrix(false, 0, 0);
+    for (size_t i = 0; i < otherVec.size(); i++) {
+      d[i] = otherVec[i];
+    }
+    return *this;
+  }
+  Vec& operator=(arma::mat& otherVec) {
+    d.resize(static_cast<size_t>(otherVec.size()));
+    d.mp.setMatrix(true, otherVec.n_rows, otherVec.n_cols);
+    for (size_t i = 0; i < otherVec.size(); i++) {
+      d[i] = otherVec[i];
+    }
+    return *this;
+  }
   Vec(Rcpp::NumericVector otherVec)
       : d() {
     d.resize(static_cast<size_t>(otherVec.size()));

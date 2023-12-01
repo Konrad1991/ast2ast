@@ -64,13 +64,10 @@ If the user creates an R function all input arguments are of type *SEXP*. Furthe
 **The variables are directly converted to sexp thereby copying the memory. Thus, the variable can not be used if an function expects a reference of type *sexp***
 **If the aim is to modify a variable by the user function it is only possible to pass directly a *sexp* objects by reference. See the example below here a is modified whereas b is copied and thus not altered. The vector *v* can only be used for the second argument of the function *foo*.** 
 
-```{Rcpp, eval = FALSE, echo = TRUE}
+```{Rcpp, eval = TRUE, echo = TRUE}
 // [[Rcpp::plugins(cpp20)]]
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::depends(ast2ast)]]
+// [[Rcpp::depends(RcppArmadillo, ast2ast)]]
 #include "etr.hpp"
-using namespace Rcpp;
-using namespace etr;
 
 void foo(sexp& a, sexp b) {
   a = b + 1.0;
@@ -79,14 +76,17 @@ void foo(sexp& a, sexp b) {
 
 // [[Rcpp::export]]
 void call_fct() {
-  sexp a = coca(1, 2, 3);
-  sexp b = coca(1, 2, 3);
+  sexp a = etr::coca(1, 2, 3);
+  sexp b = etr::coca(1, 2, 3);
   foo(a, b);
   etr::print(a);
   etr::print(b);
 }
-
 ```
+```{r, eval=TRUE, echo=TRUE}
+call_fct()
+```
+
 
 Beyond that using "XPtr" as *output* argument of the function translate it is possible to specify **ptr_vec** or a **ptr_mat** as desired types.
 If these types are used sexp objects are created which form a shallow wrapper around these pointers. See an example below how this works. 
@@ -157,18 +157,15 @@ f_cpp <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "se
 The C++ function depends on RcppArmadillo and ast2ast therefore the required macros and headers were included. Moreover, *ETR* requires std=c++17 therefore the corresponding plugin is added. The function *getXPtr* is defined and is the function which is returned. In the last 5 lines, the translated code is depicted. The function *f* returns a *sexp* and gets one argument of type *sexp* called *a*. The body of the function looks almost identical to the R function. Except that the variable *b* is defined in the first line of the body with the type *sexp*. The function *i2d* converts an integer to a double variable. This is necessary since C++ would identify the *2* as an integer which is not what the user wants in this case. 
 ```{Rcpp, eval = FALSE}
 // [[Rcpp::depends(ast2ast, RcppArmadillo)]]
-#include <RcppArmadillo.h>
-#include <Rcpp.h>
-// [[Rcpp::plugins(cpp17)]]
-using namespace Rcpp;
-using namespace etr;
+// [[Rcpp::plugins(cpp20)]]
 #include <etr.hpp>
+
 // [[Rcpp::export]]
 SEXP getXPtr();
 
 sexp f(sexp a) {
   sexp b;
-  b = a + i2d(2);
+  b = a + etr::i2d(2);
   return(b);
 }
 ```
@@ -177,7 +174,7 @@ Afterwards, the translated R function has to be used in C++ code. This would be 
 ```{Rcpp, eval = TRUE}
 // [[Rcpp::depends(RcppArmadillo, ast2ast)]]
 #include "etr.hpp"
-// [[Rcpp::plugins("cpp17")]]
+// [[Rcpp::plugins("cpp20")]]
 typedef sexp (*fp)(sexp a);
 using namespace etr;
 
@@ -204,7 +201,7 @@ In the last section, the usage of *ast2ast* was described. However, only *sexp* 
 // [[Rcpp::depends(ast2ast, RcppArmadillo)]]
 #include <RcppArmadillo.h>
 #include <Rcpp.h>
-// [[Rcpp::plugins(cpp17)]]
+// [[Rcpp::plugins(cpp20)]]
 using namespace Rcpp;
 #include <etr.hpp>
 using namespace etr;
@@ -245,7 +242,7 @@ Besides Rcpp types, *sexp* objects can transfer data to *RcppArmadillo* objects 
 // [[Rcpp::depends(ast2ast, RcppArmadillo)]]
 #include <RcppArmadillo.h>
 #include <Rcpp.h>
-// [[Rcpp::plugins(cpp17)]]
+// [[Rcpp::plugins(cpp20)]]
 using namespace arma;
 #include <etr.hpp>
 using namespace etr;
@@ -294,11 +291,11 @@ The constructor for the type matrix accepts 4 arguments:
 * *int* called cob (copy, ownership, borrow).
 
 If cob is 0 then the data is copied. Else if cob is 1 then the pointer itself is copied. Meaning that the ownership is transferred to the *sexp* object and the user should not call delete [] on the pointer. Be aware that only one *sexp* variable can take ownership of one vector otherwise the memory is double freed. Else if cob is 2 the ownership of the pointer is only borrowed. Meaning that the *sexp* object cannot be resized. The user is responsible for freeing the memory! The code below shows how the pointer interface works in general. Showing how *sexp* objects can be created by passing the information of pointers (*double\**) which hold data on the heap. Currently, only constructors are written which can use the pointer interface. 
-```{Rcpp, eval = TRUE}
+```{Rcpp, eval = FALSE}
 // [[Rcpp::depends(ast2ast, RcppArmadillo)]]
 #include <RcppArmadillo.h>
 #include <Rcpp.h>
-// [[Rcpp::plugins(cpp17)]]
+// [[Rcpp::plugins(cpp20]]
 using namespace arma;
 #include <etr.hpp>
 using namespace etr;
@@ -353,7 +350,7 @@ trash <- fct()
 ```
 
 The pointer interface is particularly useful if the user function has to change the data of a vector or matrix of type *NumericVector*, *vec*, *NumericMatrix* or *mat*. Assuming that the user passes a function that accepts its arguments by reference it is easy to modify any variable which has a type that can return a pointer to its data. In the code below it is shown how *sexp* objects are constructed using the pointer interface. Thereby changing the content of variables which has an Rcpp type, a RcppArmadillo type, or is of type std::vector<double>.
-```{Rcpp, eval = TRUE}
+```{Rcpp, eval = FALSE}
 // [[Rcpp::depends(ast2ast, RcppArmadillo)]]
 #include <RcppArmadillo.h>
 #include <Rcpp.h>
@@ -395,7 +392,7 @@ void call_package(Rcpp::XPtr<fp> inp) {
 }
 
 ```
-```{r, eval = TRUE}
+```{r, eval = FALSE}
 f <- function(a) {
   a <- a + 2
 }
