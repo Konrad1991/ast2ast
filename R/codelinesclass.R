@@ -87,6 +87,7 @@ LC <- R6::R6Class("LC",
     found_return = FALSE,
 
     extractast = function(sexp) {
+      if(is.null(sexp)) { stop("Found empty function") }
       if (!is.call(sexp)) {
         if (as.name("=") != sexp) {
           self$check_assign_subset <- FALSE
