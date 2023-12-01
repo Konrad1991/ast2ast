@@ -95,7 +95,7 @@ If these types are used sexp objects are created which form a shallow wrapper ar
 ```{Rcpp, eval = FALSE, echo = TRUE}
 // [[Rcpp::depends(ast2ast)]] 
 // [[Rcpp::depends(RcppArmadillo)]] 
-// [[Rcpp::plugins(cpp17)]] 
+// [[Rcpp::plugins(cpp20)]] 
 #include "etr.hpp"
 
 #include <Rcpp.h>
@@ -129,7 +129,7 @@ f <- function(a) {
 }
 ```
 3. The translated R function has the following code:
-```{Rcpp}
+```{Rcpp, eval = FALSE}
 SEXP f(double* a_double_ptr, int a_int_size ) {
 
 double d_db;

@@ -54,7 +54,6 @@ MA <- R6::R6Class("MA",
         # convert ast R --> ETR
         self$temp[[i]] <- LC$new(self$body[[i]], self$R_fct)
         self$ast[[i]] <- self$temp[[i]]$ast
-
         # get vars
         self$var_all <- c(self$var_all, self$temp[[i]]$vars)
         self$var_index <- c(self$var_index, self$temp[[i]]$index_vars)
@@ -66,7 +65,6 @@ MA <- R6::R6Class("MA",
     },
     get_calls = function(code) {
       out <- purrr::map_if(code, is.list, self$get_calls)
-      print(out)
       out <- as.call(out)
       return(out)
     },

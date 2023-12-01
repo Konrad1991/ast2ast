@@ -4,7 +4,7 @@
 #include "UtilsTraits.hpp"
 
 namespace etr {
-
+// issue: unary minus missing
 template <typename I, UnaryFct f, typename Trait,
           typename CTrait>
 struct UnaryOperation {

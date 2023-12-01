@@ -45,6 +45,9 @@ PC <- R6::R6Class("PC",
     },
     replace_int = function() {
       for (i in seq_along(self$arguments)) {
+        if(is.null(self$arguments[[i]])) {
+          return()
+        }
         if (is.atomic(self$arguments[[i]])) {
           number2 <- gsub("[0-9]", "", self$arguments[[i]])
           number2 <- gsub("e", "", number2)
@@ -62,6 +65,9 @@ PC <- R6::R6Class("PC",
     },
     replace_NA = function() {
       for (i in seq_along(self$arguments)) {
+        if(is.null(self$arguments[[i]])) {
+          return()
+        }
         if ((is.atomic(self$arguments[[i]])) && (is.na(self$arguments[[i]]))) {
           self$arguments[[i]] <- str2lang("NA_REAL")
         }
@@ -69,6 +75,9 @@ PC <- R6::R6Class("PC",
     },
     replace_INF = function() {
       for (i in seq_along(self$arguments)) {
+        if(is.null(self$arguments[[i]])) {
+          return()
+        }
         if ((is.atomic(self$arguments[[i]])) && (is.infinite(self$arguments[[i]]))) {
           self$arguments[[i]] <- str2lang("R_PosInf") # check for R_NegInf how?
         }
@@ -290,6 +299,8 @@ retur <- R6::R6Class("retur",
           self$arguments <- str2lang(paste("cpp2R(", self$arguments, ")", collapse = ""))  
           ret <- c(ret, self$arguments)
           return(ret)
+      } else {
+          return(c(ret, self$arguments))
       }
     }
   )
