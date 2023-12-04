@@ -148,7 +148,11 @@ inline SEXP cpp2R(bool res) { return Rf_ScalarLogical(res); }
 inline SEXP cpp2R(double res) { return Rf_ScalarReal(res); }
 
 inline SEXP cpp2R(std::string& res) { 
-  return  Rf_mkCharLen(res.data(), res.size());
+  return Rf_mkString(res.data());
+}
+
+inline SEXP cpp2R(const char* res) { 
+  return  Rf_mkString(res);
 }
 
 /*

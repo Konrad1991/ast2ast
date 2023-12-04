@@ -296,7 +296,12 @@ retur <- R6::R6Class("retur",
       }
 
       if (self$R_fct) {
-          self$arguments <- str2lang(paste("cpp2R(", self$arguments, ")", collapse = ""))  
+          if(is.character(self$arguments[[1]]) && length(self$arguments) == 1) {
+            self$arguments <- paste0("\"", self$arguments, "\"")
+            self$arguments <- str2lang(paste("cpp2R(", self$arguments, ")", collapse = ""))  
+          } else {
+            self$arguments <- str2lang(paste("cpp2R(", self$arguments, ")", collapse = ""))  
+          }
           ret <- c(ret, self$arguments)
           return(ret)
       } else {
