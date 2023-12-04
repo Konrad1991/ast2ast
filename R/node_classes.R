@@ -261,6 +261,11 @@ assign <- R6::R6Class("assign",
       } else {
         ret[[1]] <- self$name_fct
       }
+      lapply(self$arguments, function(x) {
+        if(is.character(x)){
+          stop("You cannot use characters in assignments")
+        }
+      })
       ret <- c(ret, self$arguments)
       return(ret)
     }

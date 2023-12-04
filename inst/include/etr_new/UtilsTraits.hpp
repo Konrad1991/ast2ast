@@ -208,7 +208,7 @@ concept NotOperation = !requires(T t) {
 
 inline void ass(bool inp, std::string message) {
   if (!inp)
-    Rf_error(message.c_str());
+    Rcpp::stop(message);
 }
 
 struct MatrixParameter {
@@ -365,7 +365,7 @@ struct BaseCalc {
 };
 
   template<typename T>
-auto extractRetType(const T& instance) -> typename T::RetType {
+auto extractRetType(const T& instance) -> typename T::RetType { // issue: finish work. This can be used to handle also int and bool for all unary/binary operations
   using ret = typename T::RetType;
   return instance.getRetType();  
 }
