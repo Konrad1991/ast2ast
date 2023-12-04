@@ -4,7 +4,6 @@
 #include "UtilsTraits.hpp"
 
 namespace etr {
-// issue: unary minus missing
 template <typename I, UnaryFct f, typename Trait,
           typename CTrait>
 struct UnaryOperation {
@@ -48,6 +47,21 @@ struct UnaryOperation {
     mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
   }
 };
+
+template <typename T>
+auto operator-(const T &obj)
+    -> Vec<BaseType, UnaryOperation<decltype(convert(obj).d), MinusUnary, MinusUnaryTrait>,
+           UnaryTrait> {
+  constexpr bool isDouble = std::is_same_v<T, BaseType>;
+  if constexpr (!isDouble) {
+    return Vec<BaseType, UnaryOperation<decltype(obj.d), MinusUnary, MinusUnaryTrait>, UnaryTrait>
+        (UnaryOperation<decltype(obj.d), MinusUnary, MinusUnaryTrait>(obj.d, obj.d.mp));
+  } else if constexpr (isDouble) {
+    static_assert(std::is_same_v<T, BaseType>, "This should never be called!");
+    return Vec<BaseType, UnaryOperation<BaseType, MinusUnary, MinusUnaryTrait>>(
+        UnaryOperation<BaseType, MinusUnary, MinusUnaryTrait>{obj});
+  }
+}
 
 template <typename T>
 auto sinus(const T &obj)
@@ -225,7 +239,7 @@ auto ln(const T &obj)
   if constexpr (!isDouble) {
     return Vec<double, UnaryOperation<decltype(obj.d), Log, LogTrait>, UnaryTrait>
         (UnaryOperation<decltype(obj.d), Log, LogTrait>(obj.d, obj.d.mp));
-  } else if constexpr (isDouble) { // issue: this should be never be used. Also for binary operations true. 
+  } else if constexpr (isDouble) { // issue: this should be never be used. Also for binary operations true.
     static_assert(std::is_same_v<T, BaseType>, "This should never be called!");
     return Vec<double, UnaryOperation<double, Log, LogTrait>>(
         UnaryOperation<double, Log, LogTrait>{obj});

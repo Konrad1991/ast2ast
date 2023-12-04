@@ -29,6 +29,10 @@ template <typename T, typename R, typename Trait> struct Vec {
   using isUnaryOP = std::is_same<caseTraitD, UnaryTrait>;
   using isBinaryOP = std::is_same<caseTraitD, BinaryTrait>;
 
+  RetType getRetType() const {
+    return RetType{};
+  }
+
   template <typename T2> Vec(T2 n) = delete;
   // move constructors
   template <typename L2> explicit Vec(const Subset<L2> &&inp) : d(inp) {d.setMatrix(inp.mp);}
@@ -111,7 +115,7 @@ template <typename T, typename R, typename Trait> struct Vec {
   }
 
   template <typename T2, typename R2, typename Trait2>
-  Vec(const Vec<T2, R2, Trait2> &&other_vec) : d() {
+  Vec(const Vec<T2, R2, Trait2> &&other_vec) : d() { // issue: improve. Use move her
     using TypeTrait = Trait2;
     using CaseTrait = Trait2;
     this->d.resize(other_vec.size());
@@ -344,8 +348,17 @@ template <typename T, typename R, typename Trait> struct Vec {
   //  return static_cast<bool>(d[0]);
   //}
 
-  operator double() const {
-    return d[0];
+  //operator double() const {
+  //  return d[0];
+  //}
+
+  operator RetType() const {
+    if constexpr(std::is_same_v<RetType, bool>) {
+      ass(this -> size() == 1, "Error in if: the condition has length > 1");
+      return d[0];
+    } else {
+      return d[0];
+    }
   }
 
   size_t size() const { return d.size(); }

@@ -1886,57 +1886,57 @@ expect_equal(test(matrix(3, 2, 2), 15.3), exp(matrix(3, 2, 2)) + 1)
 expect_equal(test(matrix(9, 2, 2), 15.4), matrix(3, 2, 2))
 
 # 14.1 - 14.7 == additional comparison tests for rvalues and results of calculations
-expect_equal(test(0, 14.1), rep(as.numeric(FALSE), 3))
-expect_equal(test(0, 14.2), rep(as.numeric(FALSE), 3))
-expect_equal(test(0, 14.3), rep(as.numeric(TRUE), 3))
-expect_equal(test(0, 14.4), rep(as.numeric(TRUE), 3))
-expect_equal(test(0, 14.5), rep(as.numeric(TRUE), 3))
-expect_equal(test(0, 14.6), rep(as.numeric(TRUE), 3))
-expect_equal(test(0, 14.7), rep(as.numeric(TRUE), 3))
-expect_equal(test(0, 14.8), rep(as.numeric(TRUE), 3))
+expect_equal(test(0, 14.1), rep(FALSE, 3))
+expect_equal(test(0, 14.2), rep(FALSE, 3))
+expect_equal(test(0, 14.3), rep(TRUE, 3))
+expect_equal(test(0, 14.4), rep(TRUE, 3))
+expect_equal(test(0, 14.5), rep(TRUE, 3))
+expect_equal(test(0, 14.6), rep(TRUE, 3))
+expect_equal(test(0, 14.7), rep(TRUE, 3))
+expect_equal(test(0, 14.8), rep(TRUE, 3))
 
 # 8.1==
-expect_equal(test(0, 8.1), as.numeric(c(1, 2, 3) == c(5, 6, 7)))
+expect_equal(test(0, 8.1), c(1, 2, 3) == c(5, 6, 7))
 # 8.2==
-expect_equal(test(0, 8.2), as.numeric(c(1, 2, 3) == c(1, 2, 3)))
+expect_equal(test(0, 8.2), c(1, 2, 3) == c(1, 2, 3))
 # 8.3==
-expect_equal(test(0, 8.3), as.numeric(c(2, 2, 2) == 2))
+expect_equal(test(0, 8.3), c(2, 2, 2) == 2)
 
 # 9.1<=
-expect_equal(test(0, 9.1), as.numeric(c(1, 2, 3) <= c(5, 6, 2)))
+expect_equal(test(0, 9.1), c(1, 2, 3) <= c(5, 6, 2))
 # 9.2<=
-expect_equal(test(0, 9.2), as.numeric(c(1, 2, 4) <= c(1, 2, 4)))
+expect_equal(test(0, 9.2), c(1, 2, 4) <= c(1, 2, 4))
 # 9.3<=
-expect_equal(test(0, 9.3), as.numeric(c(2, 2, 2) <= 2))
+expect_equal(test(0, 9.3), c(2, 2, 2) <= 2)
 
 
 # 10.1<
-expect_equal(test(0, 10.1), as.numeric(c(1, 2, 3) < c(5, 6, 7)))
+expect_equal(test(0, 10.1), c(1, 2, 3) < c(5, 6, 7))
 # 10.2<
-expect_equal(test(0, 10.2), as.numeric(c(1, 2, 3) < c(1, 2, 3)))
+expect_equal(test(0, 10.2), c(1, 2, 3) < c(1, 2, 3))
 # 10.3<
-expect_equal(test(0, 10.3), as.numeric(c(2, 2, 2) < 2))
+expect_equal(test(0, 10.3), c(2, 2, 2) < 2)
 
 # 11.1>
-expect_equal(test(0, 11.1), as.numeric(c(1, 2, 3) > c(5, 6, 7)))
+expect_equal(test(0, 11.1), c(1, 2, 3) > c(5, 6, 7))
 # 11.2>
-expect_equal(test(0, 11.2), as.numeric(c(1, 2, 3) > c(1, 2, 3)))
+expect_equal(test(0, 11.2), c(1, 2, 3) > c(1, 2, 3))
 # 11.3>
-expect_equal(test(0, 11.3), as.numeric(c(2, 2, 2) > 1))
+expect_equal(test(0, 11.3), c(2, 2, 2) > 1)
 
 # 12.1>
-expect_equal(test(0, 12.1), as.numeric(c(1, 2, 3) >= c(5, 6, 3)))
+expect_equal(test(0, 12.1), c(1, 2, 3) >= c(5, 6, 3))
 # 12.2>
-expect_equal(test(0, 12.2), as.numeric(c(1, 2, 3) >= c(1, 2, 3)))
+expect_equal(test(0, 12.2), c(1, 2, 3) >= c(1, 2, 3))
 # 12.3>
-expect_equal(test(0, 12.3), as.numeric(c(2, 2, 2) >= 1))
+expect_equal(test(0, 12.3), c(2, 2, 2) >= 1)
 
 # 13.1>
-expect_equal(test(0, 13.1), as.numeric(c(1, 2, 3) != c(5, 6, 3)))
+expect_equal(test(0, 13.1), c(1, 2, 3) != c(5, 6, 3))
 # 13.2>
-expect_equal(test(0, 13.2), as.numeric(c(1, 2, 3) != c(1, 2, 3)))
+expect_equal(test(0, 13.2), c(1, 2, 3) != c(1, 2, 3))
 # 13.3>
-expect_equal(test(0, 13.3), as.numeric(c(2, 2, 2) != 1))
+expect_equal(test(0, 13.3), c(2, 2, 2) != 1)
 
 # 0 bubblesort
 x <- c(1, 5, 2, 3, 8, 10, 1.5)

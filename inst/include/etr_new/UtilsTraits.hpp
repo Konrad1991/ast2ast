@@ -170,6 +170,7 @@ struct TangensHTrait {};
 struct ExpTrait {};
 struct LogTrait {};
 struct SquareRootTrait {};
+struct MinusUnaryTrait {};
 
 template <typename T>
 concept isBID = requires {
@@ -285,6 +286,7 @@ inline double ATangens(double obj) { return atan(obj); }
 inline double Exp(double obj) { return exp(obj); }
 inline double Log(double obj) { return log(obj); }
 inline double SquareRoot(double obj) { return sqrt(obj); }
+inline double MinusUnary(double obj) { return -obj; }
 
 inline double Equal(double a, double b) { 
 	if(fabs(a - b) < 1E-3) {
@@ -362,13 +364,19 @@ struct BaseCalc {
   }
 };
 
+  template<typename T>
+auto extractRetType(const T& instance) -> typename T::RetType {
+  using ret = typename T::RetType;
+  return instance.getRetType();  
+}
+
 template <typename T, typename BaseTrait> struct BaseStore {
 	using RetType = T;
   using Type = T;
   using TypeTrait = BaseTrait;
   T *p = nullptr;
-  size_t sz = 0;
-  size_t capacity = 0;
+  size_t sz = 1;
+  size_t capacity = 1;
   bool allocated = false;
   MatrixParameter mp;
 
@@ -408,7 +416,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
   BaseStore(size_t sz_) : sz(sz_), capacity(static_cast<size_t>(sz_ * 1.15)) {
     ass(sz_ > 0, "Size has to be larger than 0");
     p = new T[capacity];
-    for (size_t i = 0; i < sz; i++)
+    for (size_t i = 0; i < capacity; i++)
       p[i] = 0.0;
     allocated = true;
   }
@@ -421,7 +429,16 @@ template <typename T, typename BaseTrait> struct BaseStore {
       p[i] = 0.0;
     allocated = true;
   }
-  BaseStore() {}
+  BaseStore() {
+    sz = 1; capacity = 1; p = new T[capacity];
+    if constexpr(std::is_same_v<T, BaseType>) {
+      p[0] = 0.0;
+    } else if constexpr(std::is_same_v<T, bool>) {
+      p[0] = false;
+    }
+    allocated = true;
+    mp.setMatrix(false, 0, 0);
+  }
   BaseStore(size_t r, size_t c) = delete;
   BaseStore(size_t r, size_t c, const double value) = delete;
 
@@ -433,7 +450,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
     		size_t diff = other.size() - this->sz;
       	this->realloc(this->sz + diff);	
     	} else {
-    		this->realloc(other.size());	
+    		resize(other.size());
     	}
     }
     for (size_t i = 0; i < this->sz; i++) {
@@ -461,7 +478,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
   }
 
   void init(size_t size) {
-    if (allocated == true) {
+    if (allocated) {
       ass(p != nullptr, "try to delete nullptr");
       delete[] p;
       p = nullptr;
@@ -471,19 +488,33 @@ template <typename T, typename BaseTrait> struct BaseStore {
     p = new T[capacity];
     allocated = true;
   }
-  void resize(size_t newSize) { // issue: check if capacity > newSize --> than do nothing
+  void resize(size_t newSize) { 
     if (!allocated) {
       init(newSize);
+      if constexpr(std::is_same_v<T, BaseType>) {
+        fill(0.0);
+      } else if constexpr(std::is_same_v<T, bool>) {
+        fill(false);
+      }
       return;
     } else {
-      ass(p != nullptr, "try to delete nullptr");
-      delete[] p;
-      sz = newSize;
-      capacity = static_cast<size_t>(newSize * 1.15);
-      p = new T[capacity];
-      allocated = true;
+      if(newSize > capacity) {
+        ass(p != nullptr, "try to delete nullptr");
+        delete[] p;
+        capacity = static_cast<size_t>(newSize * 1.15);
+        p = new T[capacity];
+        sz = newSize;
+        allocated = true;  
+        if constexpr(std::is_same_v<T, BaseType>) {
+          fill(0.0);
+        } else if constexpr(std::is_same_v<T, bool>) {
+          fill(false);
+        }
+      } else {
+        sz = newSize;
+        return;
+      }
     }
-    fill(0.0);
   }
 
   RetType operator[](size_t idx) const {
@@ -570,7 +601,6 @@ template <typename T, typename SubsetTrait> struct Subset {
   T *p = nullptr;
   using CurrentBaseType = std::remove_reference<decltype(*p)>::type::Type;
   MatrixParameter mp;
-  mutable signed int ref_counter = 0;
 
   size_t size() const { return ind.size(); }
   bool im() const { return mp.im(); }
@@ -636,11 +666,10 @@ template <typename T, typename BorrowTrait> struct Borrow {
   using TypeTrait = BorrowTrait;
   using CaseTrait = BorrowTrait;
   T *p = nullptr;
-  size_t sz = 0;
-  size_t capacity = 0;
+  size_t sz = 1;
+  size_t capacity = 1;
   bool allocated = false;
   MatrixParameter mp;
-  mutable signed int ref_counter = 0;
 
   size_t size() const { return sz; }
   bool im() const { return mp.im(); }
@@ -802,19 +831,19 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
   }
 
   BorrowSEXP &operator=(SEXP inp) {
-    if (allocated == true) {
+    if (allocated) {
       ass(p != nullptr, "try to delete nullptr");
       delete[] p;
       this->p = nullptr;
     }
     p = REAL(inp);
-    sz = Rf_length(inp);
-    capacity = Rf_length(inp);
+    sz = static_cast<size_t>(Rf_length(inp));
+    capacity = sz;
     if (Rf_isMatrix(inp) == true) {
       mp.setMatrix(true, Rf_nrows(inp), Rf_ncols(inp));
     }
     todelete = false;
-    allocated = true;
+    allocated = false;
     return *this;
   }
 
@@ -845,21 +874,35 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
     todelete = true;
   }
 
-  void resize(size_t newSize) {
+  void resize(size_t newSize) { 
     if (!allocated) {
       init(newSize);
+      if constexpr(std::is_same_v<T, BaseType>) {
+        fill(0.0);
+      } else if constexpr(std::is_same_v<T, bool>) {
+        fill(false);
+      }
       return;
     } else {
-      ass(p != nullptr, "try to delete nullptr");
-      if (todelete)
+      if(newSize > capacity) {
+        ass(p != nullptr, "try to delete nullptr");
         delete[] p;
-      sz = newSize;
-      capacity = static_cast<size_t>(newSize * 1.15);
-      p = new T[capacity];
-      allocated = true;
-      todelete = true;
+        sz = newSize;
+        capacity = static_cast<size_t>(newSize * 1.15);
+        p = new T[capacity];
+        allocated = true;  
+        todelete = true;
+        sz = newSize;
+        if constexpr(std::is_same_v<T, BaseType>) {
+          fill(0.0);
+        } else if constexpr(std::is_same_v<T, bool>) {
+          fill(false);
+        }
+      } else {
+        sz = newSize;
+        return;
+      }
     }
-    fill(0.0);
   }
 
   template<typename L2>

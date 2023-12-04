@@ -96,7 +96,7 @@ inline auto subset(Vec<L, R> &vec, const I &idx)
 
 template <typename L, typename R, typename I>
 requires UnaryOrBinaryOperation<R>
-inline auto subset(const Vec<L, R> &vec, const I &idx) -> Vec<BaseType> {
+inline auto subset(const Vec<L, R> &vec, const I &idx) -> Vec<decltype(extractRetType(vec))> {
   Indices ind;
   calcInd(vec, ind, idx);
   Vec<BaseType> ret(ind.size());
@@ -116,7 +116,7 @@ inline auto subset(Vec<L, R, Trait> &vec, const I &idx)
 
 template <typename L, typename R, typename Trait, typename I>
 requires UnaryOrBinaryOperation<R>
-inline auto subset(const Vec<L, R, Trait> &vec, const I &idx) -> Vec<BaseType> {
+inline auto subset(const Vec<L, R, Trait> &vec, const I &idx) -> Vec<decltype(extractRetType(vec))> {
   Indices ind;
   calcInd(vec, ind, idx); // issue: everytime where const Vec<BaseType> & is used as argument. It needs ages. Because, a normal vector is converted into const Vec<BaseType> --> it is copied entirely. This has to be changed!!! Which type has to be used instead?
   Vec<BaseType> ret(ind.size());

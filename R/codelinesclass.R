@@ -55,7 +55,7 @@ LC <- R6::R6Class("LC",
       "dgamma_etr", "pgamma_etr", "qgamma_etr", "rgamma_etr",
       "dbeta_etr", "pbeta_etr", "beta_etr", "rbeta_etr",
       "dnbeta_etr", "pnbeta_etr", "qnbeta_etr", "rnbeta_etr",
-      "is_na", "is_infinite", "colon", "cpp2R"
+      "isNA", "isInfinite", "colon", "cpp2R"
     ),
     namespace_etr_resolved = function() {
       paste0("etr::", self$namespace_etr)
