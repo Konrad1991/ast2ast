@@ -25,7 +25,7 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
   fct_ret <- NULL
 
   if (R_fct == FALSE) {
-    fct <- buildFctXPtr(f, reference, desired_type, return_type, name_f) 
+    fct <- buildFctXPtr(f, reference, desired_type, return_type, name_f) # issue: reference == borrow has to be documented
     if (getsource == TRUE) {
       return(fct)
     }
