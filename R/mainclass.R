@@ -44,6 +44,7 @@ String <- function(value) {
   new("String", value = value)
 }
 
+# issue: more type checks should be added for XPtr and R output functions
 astClass <- R6::R6Class("astClass",
   public = list(
     args = NULL,
@@ -287,6 +288,7 @@ getXPtr <- function(typeList, retType, nameFct) {
 }
 
 handlePtr <- function(ptrList, borrow) {
+  if(length(ptrList) == 0) return("")
   ls <- lapply(ptrList, function(x) x[[1]])
   rs <- lapply(ptrList, function(x) x[2:length(x)])
   stopifnot(length(ls) == length(rs))
