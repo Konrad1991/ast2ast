@@ -415,7 +415,7 @@ inline void print(const etr::Vec<T, Op, Trait> &inp) {
   }
 }
 
-template<typename T>
+template<typename T> // issue: unnecessary new line
 requires (!isBID<T>)
 inline void print(const T &inp) { // issue: just a quick fix for printing unary expression
     if (!inp.im()) {

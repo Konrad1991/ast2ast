@@ -632,7 +632,6 @@ template<typename T, typename R>
 requires std::is_same_v<R, size_t>
 inline BaseType& at(T &inp, R i) {
   i--;
-  ass(inp.d.allocated, "No memory was allocated");
   ass(i >= 0, "Error: out of boundaries --> value below 1");
   ass(i < inp.size(), "Error: out of boundaries --> value beyond size of vector");
   return inp.d.p[i];
@@ -642,7 +641,6 @@ template<typename T>
 inline BaseType &at(T &inp, BaseType i_) {
   size_t i = d2i(i_);
   i--;
-  ass(inp.d.allocated, "No memory was allocated");
   ass(i >= 0, "Error: out of boundaries --> value below 1");
   ass(i < inp.size(), "Error: out of boundaries --> value beyond size of vector");
   return inp.d.p[i];
@@ -653,7 +651,6 @@ inline BaseType &at(T &inp, size_t r, size_t c) {
   ass(inp.im() == true, "Input is not a matrix!");
   r--;
   c--;
-  ass(inp.d.allocated, "No memory was allocated");
   ass((c * inp.nr() + r) >= 0, "Error: out of boundaries --> value below 1");
   ass((c * inp.nr() + r) < inp.size(), "Error: out of boundaries --> value beyond size of vector");
   return inp.d.p[c * inp.nr() + r];
@@ -666,7 +663,6 @@ inline BaseType &at(T &inp, BaseType r_, BaseType c_) {
   size_t c = d2i(c_);
   r--;
   c--;
-  ass(inp.d.allocated, "No memory was allocated");
   ass((c * inp.nr() + r) >= 0, "Error: out of boundaries --> value below 1");
   ass((c * inp.nr() + r) < inp.size(), "Error: out of boundaries --> value beyond size of vector");
   return inp.d.p[c * inp.nr() + r];

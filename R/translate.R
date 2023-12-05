@@ -336,9 +336,9 @@ translate <- function(f, output = "R",
     reference <- FALSE
   }
 
-  # further checks: brackets, lambda function, empty if-else
+  # issue: further checks: brackets, lambda function, empty if-else
 
-  # add brackets if not found
+  # issue: add brackets if not found. Are they added? check
   if (body(f)[[1]] != as.name("{")) {
     body(f) <- substitute(
       {

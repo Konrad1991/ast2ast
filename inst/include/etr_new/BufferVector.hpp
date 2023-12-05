@@ -127,6 +127,17 @@ template <typename T, typename R, typename Trait> struct Vec {
     }
   }
 
+  // pointer constructor
+  Vec(BaseType* ptr, size_t size) : d(size) {
+    for(size_t i = 0; i < size; i++) d[i] = ptr[i];
+    d.setMatrix(false, 0, 0);
+  }
+
+  Vec(BaseType* ptr, size_t rows, size_t cols) : d(rows * cols) {
+    for(size_t i = 0; i < d.size(); i++) d[i] = ptr[i];
+    d.setMatrix(true, rows, cols);
+  }
+
   /*
   template<typename Other> // issue: are these constructors are needed? But difficult error handling
   Vec(const Other& v) : d() {
@@ -172,6 +183,8 @@ template <typename T, typename R, typename Trait> struct Vec {
       for (size_t i = 0; i < d.ind.size(); i++) {
         d[i] = inp;
       }
+    } else if constexpr(isBorrow::value) {
+      d.sz = 1; d[0] = inp;
     } else {
       d.resize(1);
       d[0] = inp;

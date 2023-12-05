@@ -489,6 +489,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
     allocated = true;
   }
   void resize(size_t newSize) { 
+    ass(newSize >= 1, "Size has to be larger than 0");
     if (!allocated) {
       init(newSize);
       if constexpr(std::is_same_v<T, BaseType>) {
@@ -728,7 +729,14 @@ template <typename T, typename BorrowTrait> struct Borrow {
   ~Borrow() {}
 
   void init(size_t size) = delete;
-  void resize(size_t newSize) = delete;
+  void resize(size_t newSize) {
+    ass(newSize >= 1, "Size has to be larger than 0");
+    if(newSize <= capacity) {
+      sz = newSize;
+    } else {
+      ass(false, "Cannot resize Borrow element");
+    }
+  };
   void set(size_t idx, T val) {
     ass(idx >= 0, "Index has to be a positive number");
     ass(idx < sz, "Index cannot be larger than size of Indices");
@@ -875,6 +883,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
   }
 
   void resize(size_t newSize) { 
+    ass(newSize >= 1, "Size has to be larger than 0");
     if (!allocated) {
       init(newSize);
       if constexpr(std::is_same_v<T, BaseType>) {

@@ -59,7 +59,8 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "etr_new/BufferVector.hpp"
 
 typedef etr::Vec<etr::BaseType> sexp;
-typedef etr::Vec<etr::BaseType, etr::BorrowSEXP<etr::BaseType, etr::BorrowSEXPTrait>> BorrowSEXP;
+typedef etr::Vec<etr::BaseType, etr::BorrowSEXP<etr::BaseType, etr::BorrowSEXPTrait>> WrapperSEXP;
+typedef etr::Vec<etr::BaseType, etr::Borrow<etr::BaseType, etr::BorrowTrait>> Borrow;
 
 #endif
 

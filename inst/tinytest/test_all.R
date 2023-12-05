@@ -1433,9 +1433,9 @@ testall <- function(a, type_test) {
   ret <- 1
   return(ret)
 }
-
+# issue: getsource does only work for output = "R"
 fct <- function() { # function then one can use document outline to jump to this position
-  test <- translate(testall, verbose = FALSE, getsource = FALSE)
+  test <- translate(testall)
 }
 test <- fct()
 # random values

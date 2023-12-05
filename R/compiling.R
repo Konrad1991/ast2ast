@@ -25,9 +25,7 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
   fct_ret <- NULL
 
   if (R_fct == FALSE) {
-    a <- MA$new(f, desired_type, name_f, R_fct, return_type)
-    fct <- a$build_own(verbose, reference = reference) # build
-
+    fct <- buildFctXPtr(f, reference, desired_type, return_type, name_f) 
     if (getsource == TRUE) {
       return(fct)
     }
@@ -47,9 +45,7 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
       }
     )
   } else {
-    a <- MA$new(f, desired_type, name_f, R_fct, return_type)
-    fct <- a$build_own_SEXP(verbose, reference = reference)
-
+    fct <- buildFctR(f, name_f)
     if (getsource == TRUE) {
       return(fct)
     }
