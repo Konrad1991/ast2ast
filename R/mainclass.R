@@ -194,6 +194,7 @@ generateNewName <- function(name, extension, delimiter, vars) {
 
 varsDeclaration <- function(vars, types) {
   stopifnot(length(vars) == length(types))
+  if(length(vars) == 0) return("")
   l <- list()
   for(i in seq_along(1:length(vars))) {
     l[[i]] <- cString("\t ", cString(types[[i]], deparse(vars[[i]]), " ")@value, ";\n", "")@value
@@ -374,6 +375,9 @@ buildFctR <- function(fct, nameFct) {
         "// [[Rcpp::export]]\n", "\n")
   sig <- signatureR(ac$args, nameFct, ac$var_all)
   hs <- handleSEXP(ac$args, sig[[2]])
+  if(!ac$return_TF) {
+    ac$char <- c(ac$char, "\n", "return(R_NilValue); \n")
+  }
   b <- buildBody(ac$char)
   f <- cString(f, sig[[1]], hs, declarations, b, "}\n", "")
   return(f@value)
