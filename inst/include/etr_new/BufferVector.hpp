@@ -102,35 +102,59 @@ template <typename T, typename R, typename Trait> struct Vec {
   }
   // other vector constructors
   template <typename T2, typename R2, typename Trait2>
-  Vec(const Vec<T2, R2, Trait2> &other_vec) : d() {
+  Vec(const Vec<T2, R2, Trait2> &other_vec)  { // : d()
     using TypeTrait = Trait2;
     using CaseTrait = Trait2;
-    this->d.resize(other_vec.size());
-    for (size_t i = 0; i < d.size(); i++) {
-      d[i] = other_vec[i];
-    }
-    if (other_vec.d.im()) {
-      d.setMatrix(true, other_vec.nr(), other_vec.nc());
-    }
+    if constexpr (isBorrow::value) { // issue: is this safe???
+        d.sz = other_vec.size();
+        for (size_t i = 0; i < d.size(); i++) {
+          d[i] = other_vec[i];
+        }
+        if (other_vec.d.im()) {
+          d.setMatrix(true, other_vec.nr(), other_vec.nc());
+        }
+    } else {
+        this->d.resize(other_vec.size());
+        for (size_t i = 0; i < d.size(); i++) {
+          d[i] = other_vec[i];
+        }
+        if (other_vec.d.im()) {
+          d.setMatrix(true, other_vec.nr(), other_vec.nc());
+        }  
+    } 
   }
 
   template <typename T2, typename R2, typename Trait2>
-  Vec(const Vec<T2, R2, Trait2> &&other_vec) : d() { // issue: improve. Use move her
+  Vec(const Vec<T2, R2, Trait2> &&other_vec)  { // issue: improve. Use move her : d()
     using TypeTrait = Trait2;
     using CaseTrait = Trait2;
-    this->d.resize(other_vec.size());
-    for (size_t i = 0; i < d.size(); i++) {
-      d[i] = other_vec[i];
-    }
-    if (other_vec.d.im()) {
-      d.setMatrix(true, other_vec.nr(), other_vec.nc());
+    if constexpr (isBorrow::value) { // issue: is this safe???
+        d.sz = other_vec.size();
+        for (size_t i = 0; i < d.size(); i++) {
+          d[i] = other_vec[i];
+        }
+        if (other_vec.d.im()) {
+          d.setMatrix(true, other_vec.nr(), other_vec.nc());
+        }
+    } else {
+        this->d.resize(other_vec.size());
+        for (size_t i = 0; i < d.size(); i++) {
+          d[i] = other_vec[i];
+        }
+        if (other_vec.d.im()) {
+          d.setMatrix(true, other_vec.nr(), other_vec.nc());
+        }
     }
   }
 
   // pointer constructor
   Vec(BaseType* ptr, size_t size) : d(size) {
-    for(size_t i = 0; i < size; i++) d[i] = ptr[i];
-    d.setMatrix(false, 0, 0);
+    if constexpr(isBorrow::value) {
+      d.init(ptr, size); 
+    } else if constexpr(isBuffer::value) {
+      for(size_t i = 0; i < size; i++) d[i] = ptr[i];
+      d.setMatrix(false, 0, 0);  
+    }
   }
 
   Vec(BaseType* ptr, size_t rows, size_t cols) : d(rows * cols) {
@@ -255,8 +279,9 @@ template <typename T, typename R, typename Trait> struct Vec {
         temp[i] = otherVec[i];
       d.moveit(temp);
     } else if constexpr (isBorrow::value) {
-      ass(otherVec.size() == this->size(),
+      ass(otherVec.size() <= d.capacity,
           "number of items to replace is not a multiple of replacement length");
+      d.sz = otherVec.size();
       Buffer<T> temp(otherVec.size());
       for (size_t i = 0; i < otherVec.size(); i++)
         temp[i] = otherVec[i];
@@ -305,8 +330,9 @@ template <typename T, typename R, typename Trait> struct Vec {
       }
       d.moveit(temp);
     } else if constexpr (isBorrow::value) {
-      ass(otherVec.size() == this->size(),
+      ass(otherVec.size() <= d.capacity,
           "number of items to replace is not a multiple of replacement length");
+      d.sz = otherVec.size();
       Buffer<T> temp(otherVec.size());
       for (size_t i = 0; i < otherVec.size(); i++) temp[i] = otherVec[i];
       for (size_t i = 0; i < otherVec.size(); i++) d[i] = temp[i];

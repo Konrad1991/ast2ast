@@ -699,12 +699,19 @@ template <typename T, typename BorrowTrait> struct Borrow {
     mp.setMatrix(other.mp);
   }
   Borrow(SEXP s) = delete;
-  Borrow(size_t i) = delete;
+  Borrow(size_t i) {};
   Borrow(int i) = delete;
-  Borrow() = delete;
+  Borrow() {};
   Borrow(size_t r, size_t c) = delete;
   Borrow(size_t r, size_t c, const double value) = delete;
   Borrow(T *p, size_t sz) {
+    this->p = p;
+    this->sz = sz;
+    capacity = sz;
+    this->allocated = false;
+  }
+
+  void init(T *p, size_t sz) {
     this->p = p;
     this->sz = sz;
     capacity = sz;

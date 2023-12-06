@@ -22,8 +22,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef A2A_H
 #define A2A_H
 
-#ifdef ETR_OLD
-
+/*
 #include "etr_bits/add.hpp"
 #include "etr_bits/allocation.hpp"
 #include "etr_bits/checks_na_inf.hpp"
@@ -46,8 +45,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "etr_bits/util.hpp"
 #include "etr_bits/vec.hpp"
 #define sexp etr::Vec<double>
-
-#else
+*/
 
 #include "etr_new/UtilsTraits.hpp"
 #include "etr_new/unaryCalculations.hpp"
@@ -60,8 +58,9 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 typedef etr::Vec<etr::BaseType> sexp;
 typedef etr::Vec<etr::BaseType, etr::BorrowSEXP<etr::BaseType, etr::BorrowSEXPTrait>> WrapperSEXP;
-typedef etr::Vec<etr::BaseType, etr::Borrow<etr::BaseType, etr::BorrowTrait>> Borrow;
+typedef etr::Vec<etr::BaseType, etr::Borrow<etr::BaseType, etr::BorrowTrait>> BorrowPtr;
 
-#endif
+// typedef for testing BorrowPtr
+typedef sexp (*fp) (BorrowPtr a, double type_test);
 
 #endif

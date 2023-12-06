@@ -11,6 +11,7 @@ doc
 Meta
 /doc/
 /Meta/
+/vignettes/InformationForPackageAuthors_cache/
 .Rproj.user
 *.Rproj
 *.Rbuildignore

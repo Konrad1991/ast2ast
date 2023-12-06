@@ -250,7 +250,7 @@ typeSigXPtr <- function(varName, type, reference, allVars) {
 defineSigListXPtr <- function(arguments, types, nameFct, reference, retType, allVars) {
   stopifnot(length(arguments) == length(types))
   allowedTypes <- c("sexp", "double", "ptr_vec", "ptr_mat", "BorrowPtr")
-  allowedTypes <- c("sexp", "double", "BorrowPtr", "void")
+  allowedTypes <- c("sexp", "double", "void")
   stopifnot(retType %in% allowedTypes)
   typeList <- ""
   ptrNames <- list()

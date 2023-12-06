@@ -1,4 +1,4 @@
-# R package ast2ast
+  # R package ast2ast
 # Copyright (C) 2021 Konrad Krämer
 #
 # This file is part of R package ast2ast
@@ -284,7 +284,7 @@ translate <- function(f, output = "R",
   )
   stopifnot(
     "found unknown return type" =
-      return_type %in% c("SEXP", "void", "BorrowPtr", "sexp", "double")
+      return_type %in% c("SEXP", "void", "sexp", "double")
   )
 
 

@@ -182,7 +182,7 @@ callFct()
 
 #### Using Borrow
 
-Instead of passing the raw pointer directly it is also possible to pass it wrapped in a class BorrowPtr. As a side note it does not make a difference whether the argument is passed by reference or not. Here is an example for this:
+Instead of passing the raw pointer directly it is also possible to pass it wrapped in a class BorrowPtr. As a side note it does not make a difference whether the argument is passed by reference or not. Furthermore, BorrowPtr cannot be returned from a function. Here is an example for this:
 
 ```{Rcpp, eval = TRUE, echo = TRUE}
 // [[Rcpp::depends(ast2ast)]]
