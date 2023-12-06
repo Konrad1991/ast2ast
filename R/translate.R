@@ -278,13 +278,13 @@ translate <- function(f, output = "R",
   stopifnot(
     "found unknown type of arguments for functions" =
       types_of_args %in% c(
-        "SEXP", "sexp", "double",
+        "SEXP", "BorrowPtr", "sexp", "double",
         "ptr_vec", "ptr_mat"
       )
   )
   stopifnot(
     "found unknown return type" =
-      return_type %in% c("void", "SEXP", "sexp")
+      return_type %in% c("SEXP", "void", "BorrowPtr", "sexp", "double")
   )
 
 

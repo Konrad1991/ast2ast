@@ -2,9 +2,7 @@
 title: "Information for package authors"
 author: "Konrad Krämer"
 output: html_document
-#classoption:
-#- twocolumn
-# rmarkdown::html_vignette
+classoption: twocolumn
 
 vignette: >
   %\VignetteIndexEntry{Information for package authors}
@@ -34,170 +32,223 @@ p:first-of-type {
 }
 ``` 
 
-- [Information for Package authors](#information-for-package-authors)
-- [Variables](#variables)
-- [How to use ast2ast](#how-to-use-ast2ast)
-- [Rcpp Interface](#rcpp-interface)
-- [RcppArmadillo Interface](#rcpparmadillo-interface)
-- [Pointer Interface](#pointer-interface)
+- [Guidance for Package Authors](#guidance-for-package-authors)
+- [Naming rationalization ast2ast](#naming-rationalization-ast2ast)
+- [Comparison of R and ETR code](#comparison-of-r-and-etr-code)
+- [Internals of ETR](#internals-of-etr)
+- [How to use the XPtr interface](#How-to-use-the-xptr-interface)
 
 
-## Information for Package authors
+## Guidance for Package Authors
 
-This section of the documentation describes how the external pointers produced by *ast2ast* can be used in other packages. This information is intended for package authors who want to use *ast2ast* to enable a simple user interface as it is not necessary anymore for the user to write C++. The R code is translated to a modified version of an expression template library called *ETR* (https://github.com/Konrad1991/ETR) which tries to mimic R. \
-As a side note all classes and functions can be found in the namespace *etr*. 
+This section of the documentation describes how the external pointers to C++ function that are produced by *ast2ast* can be used in other packages. This information is intended for package authors who want to use the translated functions within their own code. Additionally, this section endeavors to present pertinent implementation details, providing valuable insights into the inner workings of the process.
 
-## Variables
+## Naming rationalization ast2ast
 
-The core class object is named VEC<T> and can be initialized with any type. Furthermore, is a typedef defined for VEC<double> called *sexp* alluding to the fact that all R objects are *SEXP* objects at C level. This class contains another class called STORE<T> which manages memory. To do this a raw pointer of the form *T\** is used. Thus, all objects are located at the heap. Beyond that, it is important that no static methods are implemented or that memory is associated with functions or global variables. Therefore, the VEC<T> objects can be used in parallel. However, the user has to take care that only one thread edits an object at a time. VEC<double> a.k.a. *sexp* can be converted to Rcpp::NumericVectors, Rcpp::NumericMatrices, arma::vec and arma::mat or to SEXP. Moreover, it is also possible to copy the data from Rcpp::NumericVectors, Rcpp::NumericMatrices, arma::vec or arma::mat to a *sexp* variable. The constructors and the *operator=* are implemented for this conversions. It is possible to construct a *sexp* object by using a *double\** pointer and a size information (= int). The information about the Rcpp-, RcppArmadillo- and pointer-interface is explained in depth in the sections below. 
+The nomenclature of the package, ast2ast, is rooted in the abbreviation *ast*, signifying abstract syntax tree. Originally I planned to convert the abstract syntax tree of R to the C++ tree as the literature recommended for transpilers. However, through iterative refinement, a more optimal methodology emerged. The development incorporated an Expression Template Library in C++ known as ETR, meticulously crafted to mimic R. Thus, R code is translated into ETR code, which is subsequently compiled. The original ETR library is accessible at https://github.com/Konrad1991/ETR. It's imperative to note that the version integrated into ast2ast has undergone substantial enhancements, amplifying its efficacy and adaptability.
 
-If the user creates an R function all input arguments are of type *SEXP*. Furthermore, is the output always of type *SEXP*. Beyond that, there exists the possibility to create a function returning an external pointer to the C++ function. If using this interface the parameter passed to the function can be of one of the following types as long as an *sexp* object is defined as argument for the function. 
+## Comparison of R and ETR code
 
-* double
-* SEXP
-* sexp
-* Rcpp::NumericVector or NumericVector
-* Rcpp::NumericMatrix or NumericMatrix
-* arma::vec or vec
-* arma::mat or mat
+Displayed below is a basic bubble sort function implemented in R on the left, juxtaposed with its ETR counterpart on the right. It is obvious that the two code snippets are quite similar. Remarkably, the overall structure of the R code remains unaltered. Instead, the substitution of individual functions with their ETR equivalents forms the crux of the transformation. \
+In the C++ code, all functions are located in the *etr* namespace. Certain functions share identical names in both R and C++, such as the *length* function. To mitigate potential conflicts, these calls are modified to explicitly reference the etr namespace, resulting in expressions like *etr::length*. Other functions as for example *`:`* and *`[`* cannot be defined in C++ (at least not in the way they are used in R) therefore they are replaced by functions with new names e.g. *etr::colon* and *etr::subset*. \
+Additionally, C++ necessitates explicit declaration of variable types. Within this example for all variables the type *sexp* is used. A detailed explanation is deferred to the subsequent section.
 
-**The variables are directly converted to sexp thereby copying the memory. Thus, the variable can not be used if an function expects a reference of type *sexp***
-**If the aim is to modify a variable by the user function it is only possible to pass directly a *sexp* objects by reference. See the example below here a is modified whereas b is copied and thus not altered. The vector *v* can only be used for the second argument of the function *foo*.** 
+:::::::::::::: {.columns}
+::: {.column width="35%"}
+\
+\
+\
+\
+\
+\
+\
+```{r, eval = FALSE, echo = TRUE, attr.source='.numberLines'}
+
+bubbleSort <- function(a) {
+  
+  
+  size <- length(a)
+    for (i in 1:size) {
+      for (j in 1:(size - 1)) {
+        if (a[j] > a[j + 1]) {
+          temp <- a[j]
+          a[j] <- a[j + 1]
+          a[j + 1] <- temp
+        }
+      }
+    }
+  return(a)
+}  
+```
+:::
+::: {.column width="65%"}
+```{Rcpp, eval = FALSE, echo = TRUE, attr.source='.numberLines'}
+// [[Rcpp::depends(ast2ast)]]
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::plugins(cpp20)]]
+#include "etr.hpp"
+
+// [[Rcpp::export]]
+SEXP getXPtr();
+
+sexp bubbleSort(sexp a) {
+   sexp size;
+   sexp temp;
+   size = etr::length(a);  
+   for (auto&i:  etr::colon(etr::i2d(1), size)) {;   
+       for (auto&j:  etr::colon(etr::i2d(1), (size - etr::i2d(1)))) {;   
+           if (etr::subset(a, j) > etr::subset(a, j + etr::i2d(1))) {;   
+               temp = etr::subset(a, j);   
+               etr::subset(a, j) = etr::subset(a, j + etr::i2d(1));  
+               etr::subset(a, j + etr::i2d(1)) = temp;   
+           };  
+       };  
+   };  
+   return(a);  
+}
+SEXP getXPtr ()  {
+  typedef sexp (*fct_ptr) (sexp a);
+  return Rcpp::XPtr<fct_ptr>(new fct_ptr(&bubbleSort));
+}
+```
+:::
+::::::::::::::
+
+
+## Internals of ETR
+
+### Fundamental Type in Expression Template Library R (ETR): Vec Class
+
+The core type in the expression template library R (ETR) is a class called *Vec*. Presuming a foundational familiarity with classes and templates in C++, we embark on a detailed exploration of the design inherent in this class. The Vec class incorporates three templates, namely *T*, *R*, and *Trait*. In this context, the typename *T* signifies a fundamental data type, while *R* represents another class (more details forthcoming). The third template, *Trait*, plays a crucial role in endowing the class with identifiable properties as Vec during the compile-time phase. 
+In the majority of instances, the template *T* is instantiated as a *double*, referred to as numeric in the context of R types. On certain occasions, *T* is a *bool*, denoted as *logical* in the realm of R types. The typename *R* represents another class this can be either: Buffer, BorrowSEXP, Borrow, Subset, UnaryOperation or BinaryOperation. Each of these classes contributes distinct functionalities and features to the *Vec* class. It is recommended to directly use only the classes Buffer, BorrowSEXP and Borrow. The Subset class is yielded by calls to the function subset. Whereas UnaryOperation or BinaryOperation are produced by invoking functions like *sin*, *cos*, *+* and *-*. \
+Under the hood, regardless whether they represent dataframes, vectors, functions or any other R type, all variables are of type *SEXP* in R.
+As an allusion to this fact the basic type used for most variables is called *sexp*. Where *sexp* is an alias for *Vec<etr::BaseType>* (where *etr::BaseType* itself is an alias for *double*). The *sexp* class uses an instance of class *Buffer<T>* which manages the memory of the variable. To do this a raw pointer of the form *T\** is used. Thus, all objects are located at the heap. \
+As mentioned in other sections of the documentation an R function can be either translated to an R function which calls a C++ function or to an external pointer to a C++ function. If an R function is desired as output form the function expects that all arguments passed to it are of type *SEXP* and furthermore that the function always returns an element of *SEXP*. Due to this a class called *WrapperSEXP* was introduced which is equivalent to *Vec<etr::BaseType, etr::BorrowSEXP>*. Whenever, you want to use a *SEXP* object in C++ it is necessary to construct an object of type *WrapperSEXP* and assign the *SEXP* object to it (see the code snippet below). Notably, the *WrapperSEXP* class works with the original memory section as long as it is not increased above the size of the *SEXP* object. Thus, R objects can be changed as side effect, which differs from the normal R behaviour but increases the performance. Moreover, each object that is returned is converted into a *SEXP* object. This is done by the function *cpp2R*. If no return statement is found the command *return(R_NilValue);* is added to the code. Thereby, the function returns *NULL*.
+
+```{Rcpp, eval = FALSE, echo = TRUE}
+SEXP handleSEXP(SEXP aSEXP) {
+   WrapperSEXP a; a = aSEXP;
+   /* rest of code*/
+   return(etr::cpp2R(a));  
+}
+```
+
+### The XPtr interface 
+
+In contrast if the external pointer interface is used a broader range of argument types can be used. However, *SEXP* cannot be used. The user who translates the function can choose between: *sexp*, *double*, *ptr_vec*, *ptr_mat* and *BorrowPtr*. This arguments can be either passed by copy or by reference. This is handled by the boolean *reference* argument in R. 
+For ptr_vec or ptr_mat, two (for vectors) and three (for matrices) arguments are passed to the function. The first one is the pointer pointing to the start of the memory area. In case of *vec* the second argument is of type int defining the size of the memory section. If it is a matrix two *int* arguments are used defining the number of rows and columns respectivly. In case the values should be copied the elements are passed to a *sexp* object which copies the memory section to a new one which is than handled by the class. In contrast if the elements are passed by reference an object of type *BorrowPtr* is used. *BorrowPtr* is an alias for *Vec<etr::BaseType, etr::Borrow>*. The class *BorrowPtr* behaves in the same way as a *sexp* object except that it cannot be resized. Thus, it behaves as a wrapper around the raw pointer providing the convenience of the library. Moreover, the memory section is not deleted at the end of the function. Therefore, the user which passes the pointer and the size arguments has to handle the memory itself. The advantage is that something can be written in the memory section as side effect of the function which is very efficient. 
+
+#### Using raw pointers 
 
 ```{Rcpp, eval = TRUE, echo = TRUE}
+// [[Rcpp::depends(ast2ast)]]
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::plugins(cpp20)]]
+#include "etr.hpp"
+
+sexp ptrVecCopy(etr::BaseType* a_double_ptr , int a_int_size) {
+   sexp a(a_double_ptr,a_int_size); 
+   for (auto&i:  etr::colon(etr::i2d(1), etr::length(a))) {
+	     etr::subset(a, i) = i * etr::i2d(2);	 
+	 }
+   return(a);
+}
+
+sexp ptrVecReference(etr::BaseType* a_double_ptr , int a_int_size) {
+   BorrowPtr a(a_double_ptr,a_int_size); 
+   for (auto&i:  etr::colon(etr::i2d(1), etr::length(a))) { 
+	     etr::subset(a, i) = i * etr::i2d(2);	 
+	 }
+   return(a);
+}
+
+// [[Rcpp::export]]
+void callFct ()  {
+  int size = 3;
+  double* ptr = new double[size];
+  for(int i = 0; i < size; i++) ptr[i] = 0.0;
+  ptrVecCopy(ptr, size);
+  for(int i = 0; i < size; i++) Rcpp::Rcout << ptr[i] << "\t";
+  Rcpp::Rcout << std::endl;
+  ptrVecReference(ptr, size);
+  for(int i = 0; i < size; i++) Rcpp::Rcout << ptr[i] << "\t";
+  delete[] ptr;
+}
+```
+
+```{r, eval = TRUE, echo = TRUE}
+callFct()
+```
+
+#### Using Borrow
+
+Instead of passing the raw pointer directly it is also possible to pass it wrapped in a class BorrowPtr. As a side note it does not make a difference whether the argument is passed by reference or not. Here is an example for this:
+
+```{Rcpp, eval = TRUE, echo = TRUE}
+// [[Rcpp::depends(ast2ast)]]
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::plugins(cpp20)]]
+#include "etr.hpp"
+
+void otherFct(BorrowPtr a) {
+  subset(a, true) = 3.14;
+}
+
+// [[Rcpp::export]]
+void callFct ()  {
+  int size = 3;
+  double* ptr = new double[size];
+  for(int i = 0; i < size; i++) ptr[i] = 0.0;
+  BorrowPtr a(ptr, size);
+  otherFct(a);
+  etr::print(a);
+  delete[] ptr;
+}
+```
+
+```{r, eval = TRUE, echo = TRUE}
+callFct()
+```
+
+#### Using sexp instead of pointers 
+
+Notably, the same thing can be achieved with a *sexp* object without using raw pointers. Here the code to illustrate it:
+
+```{Rcpp, eval = TRUE, echo = TRUE, cache = TRUE}
 // [[Rcpp::plugins(cpp20)]]
 // [[Rcpp::depends(RcppArmadillo, ast2ast)]]
 #include "etr.hpp"
 
-void foo(sexp& a, sexp b) {
-  a = b + 1.0;
-  b = 1.0;
+void byRef(sexp& a) {
+  for (auto&i:  etr::colon(etr::i2d(1), etr::length(a))) { 
+       etr::subset(a, i) = i * etr::i2d(2);  
+   }
 }
 
 // [[Rcpp::export]]
 void call_fct() {
-  sexp a = etr::coca(1, 2, 3);
-  sexp b = etr::coca(1, 2, 3);
-  foo(a, b);
+  sexp a = etr::vector(3);
   etr::print(a);
-  etr::print(b);
+  byRef(a);
+  etr::print(a);
 }
 ```
 ```{r, eval=TRUE, echo=TRUE}
 call_fct()
 ```
 
+### Thread safety
 
-Beyond that using "XPtr" as *output* argument of the function translate it is possible to specify **ptr_vec** or a **ptr_mat** as desired types.
-If these types are used sexp objects are created which form a shallow wrapper around these pointers. See an example below how this works. 
+The class *Vec* is thread safe in the sense that no memory is associated with functions or global variables. Moreover, almost no static methods are defined. An exception are the methods used for comparison. Notably, these comparison methods (*==*, *<=*, *>=*, *<*, *>* and *!=*) except two doubles (by copy) as arguments and return a bool. Thus, it is still possible to use instances of the class in parallel. However, the user has to take care that only one thread edits an object at a time.
 
-1. a Rcpp function is created which calls the translated R code:
-```{Rcpp, eval = FALSE, echo = TRUE}
-// [[Rcpp::depends(ast2ast)]] 
-// [[Rcpp::depends(RcppArmadillo)]] 
-// [[Rcpp::plugins(cpp20)]] 
-#include "etr.hpp"
+### Conversions 
 
-#include <Rcpp.h>
-using namespace Rcpp;
+A *sexp* can be converted to Rcpp::NumericVectors, Rcpp::NumericMatrices, arma::vec or to a arma::mat. 
 
-typedef sexp (*fct_ptr) (double* a_double_ptr, int a_int_size);
-
-// [[Rcpp::export]]
-Rcpp::NumericVector fcpp(XPtr<fct_ptr> f) {
-  fct_ptr fct = *f;
-  
-  int size = 10;
-  double* ptr = new double[size];
-  for(int i = 0; i < size; i++) {
-    ptr[i] = static_cast<double>(i);
-  }
-  
-  Rcpp::NumericVector ret = fct(ptr, size);
-
-  delete[] ptr;
-
-  return ret;
-}
-```
-2. a R function is defined and translated (not shown):
-```{r, eval = FALSE, echo = TRUE}
-f <- function(a) {
-  d_db = 1
-  ret <- a + 2 + d_db
-  return(ret)
-}
-```
-3. The translated R function has the following code:
-```{Rcpp, eval = FALSE}
-SEXP f(double* a_double_ptr, int a_int_size ) {
-
-double d_db;
-sexp ret;
-sexp a(a_int_size, a_double_ptr, 2);
-d_db = etr::i2d(1);
-ret = a + etr::i2d(2) + d_db;
-return(ret);
-}
-```
-
-
-## How to use ast2ast
-
-In this paragraph, a basic example demonstrates how to write the R code, translate it and call it from C++. Particular emphasis is placed on the C++ code. First of all, the R function is defined which accepts one argument called *a*, adds two to *a* and stores it into *b*. The variable *b* is returned at the end of the function. The R function called *f* is translated to an external pointer to the *C++* function.
-```{r, eval = TRUE}
-f <- function(a) {
-  b <- a + 2
-  return(b)
-}  
-library(ast2ast)
-f_cpp <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "sexp")
-```
-
-The C++ function depends on RcppArmadillo and ast2ast therefore the required macros and headers were included. Moreover, *ETR* requires std=c++17 therefore the corresponding plugin is added. The function *getXPtr* is defined and is the function which is returned. In the last 5 lines, the translated code is depicted. The function *f* returns a *sexp* and gets one argument of type *sexp* called *a*. The body of the function looks almost identical to the R function. Except that the variable *b* is defined in the first line of the body with the type *sexp*. The function *i2d* converts an integer to a double variable. This is necessary since C++ would identify the *2* as an integer which is not what the user wants in this case. 
-```{Rcpp, eval = FALSE}
-// [[Rcpp::depends(ast2ast, RcppArmadillo)]]
-// [[Rcpp::plugins(cpp20)]]
-#include <etr.hpp>
-
-// [[Rcpp::export]]
-SEXP getXPtr();
-
-sexp f(sexp a) {
-  sexp b;
-  b = a + etr::i2d(2);
-  return(b);
-}
-```
-
-Afterwards, the translated R function has to be used in C++ code. This would be your package code for example. First, the macros were defined for *RcppArmadillo* and *ast2ast*. Subsequently, the necessary header files were included. As already mentioned *ast2ast* requires std=c++17 thus the required plugin is included. To use the function, it is necessary to dereference the pointer. The result of the dereferenced pointer has to be stored in a function pointer. Later the function pointer can be used to call the translated function. Therefore, a function pointer called *fp* is defined. It is critical that the signature of the function pointer matches the one of the translated function. Perhaps it would be a good idea to check the R function before it is translated. After defining the function pointer, a function is defined which is called later by the user (called *call_package*). This function accepts the external pointer. Within the function body, a variable *f* is defined of type *fp* and *inp* is assigned to it. Next, a *sexp* object called *a* is defined which stores a vector of length 3 containing 1, 2 and 3. The function *coca* is equivalent to the *c* function R. Afterwards *a* is printed. Followed by the call of the function *f* and storing the result in *a*. The variable *a* is printed again to show that the values are changed according to the code defined in the R function.       
-```{Rcpp, eval = TRUE}
-// [[Rcpp::depends(RcppArmadillo, ast2ast)]]
-#include "etr.hpp"
-// [[Rcpp::plugins("cpp20")]]
-typedef sexp (*fp)(sexp a);
-using namespace etr;
-
-// [[Rcpp::export]]
-void call_package(Rcpp::XPtr<fp> inp) {
-  fp f = *inp;
-  sexp a = coca(1, 2, 3);
-  print(a);
-  a = f(a);
-  print("a is now:");
-  print(a);
-}
-```
-
-The user can call now the package code and pass the R function to it. Thus, the user only has to install the compiler or Rtools depending on the operating system. But it is not necessary to write the function in Rcpp. 
-```{r, eval = TRUE}
-call_package(f_cpp)
-```
-
-## Rcpp Interface
+### Rcpp Interface
 
 In the last section, the usage of *ast2ast* was described. However, only *sexp* variables were defined. Which are most likely not used in your package. Therefore interfaces to common libraries are defined. First of all, *ast2ast* can communicate with Rcpp which alleviates working with the library substantially. The code below shows that it is possible to pass a *sexp* object to a variable of type *NumericVector* or *NumericMatrix* and *vice versa*. Here, the data is always copied.   
-```{Rcpp, eval = TRUE}
+```{Rcpp, eval = TRUE, cache = TRUE}
 // [[Rcpp::depends(ast2ast, RcppArmadillo)]]
 #include <RcppArmadillo.h>
 #include <Rcpp.h>
@@ -205,7 +256,6 @@ In the last section, the usage of *ast2ast* was described. However, only *sexp* 
 using namespace Rcpp;
 #include <etr.hpp>
 using namespace etr;
-
 
 // [[Rcpp::export]]
 void fct() {
@@ -231,14 +281,14 @@ void fct() {
 }
 ```
 
-```{r, eval = TRUE}
+```{r, eval = TRUE, cache = TRUE}
 trash <- fct()
 ```
 
-## RcppArmadillo Interface
+### RcppArmadillo Interface
 
 Besides Rcpp types, *sexp* objects can transfer data to *RcppArmadillo* objects and it is also possible to copy the data from *RcppArmadillo* types to *sexp* objects using the operator *=*. The code below shows that it is possible to pass a *sexp* object to a variable of type *vec* or *mat* and *vice versa*. Here the data is always copied.  
-```{Rcpp, eval = TRUE}
+```{Rcpp, eval = TRUE, cache = TRUE}
 // [[Rcpp::depends(ast2ast, RcppArmadillo)]]
 #include <RcppArmadillo.h>
 #include <Rcpp.h>
@@ -271,134 +321,69 @@ void fct() {
 }
 ```
 
-```{r, eval = TRUE}
+```{r, eval = TRUE, cache = TRUE}
 trash <- fct()
 ```
 
-## Pointer Interface
+## How to use the XPtr interface
 
-You can pass the information of data stored on heap to a *sexp* object. The constructor for type vector accepts 3 arguments:
+In this paragraph, a basic example demonstrates how to write the R code, translate it to an external pointer and call it from C++. Particular emphasis is placed on the C++ code. First of all, the R function is defined which accepts one argument called *a*, adds two to *a* and stores it into *b*. The variable *b* is returned at the end of the function. The R function called *f* is translated to an external pointer to the *C++* function.
 
-* *int* defining the size of the data.
-* a pointer (*T\**) to the data
-* *int* called cob (copy, ownership, borrow).
+```{r, eval = TRUE, cache = TRUE}
+f <- function(a) {
+  b <- a + 2
+  return(b)
+}  
+library(ast2ast)
+f_cpp <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "sexp")
+```
 
-The constructor for the type matrix accepts 4 arguments:
+The C++ function depends on RcppArmadillo and ast2ast therefore the required macros and headers were included. Moreover, *ETR* requires std=c++20 therefore the corresponding plugin is added. The function *getXPtr* is defined which is the function available in R. Subsequently, the actual translated code is depicted. The function *f* returns a *sexp* and gets one argument of type *sexp* called *a*. The body of the function looks almost identical to the R function. Except that the variable *b* is defined in the first line of the body with the type *sexp*. The function *i2d* converts an integer to a double variable. This is necessary since C++ would identify the *2* as an integer which is not what the user wants in this case. 
 
-* *int* defining number of rows
-* *int* defining number of cols
-* a pointer (*T\**) to the data
-* *int* called cob (copy, ownership, borrow).
-
-If cob is 0 then the data is copied. Else if cob is 1 then the pointer itself is copied. Meaning that the ownership is transferred to the *sexp* object and the user should not call delete [] on the pointer. Be aware that only one *sexp* variable can take ownership of one vector otherwise the memory is double freed. Else if cob is 2 the ownership of the pointer is only borrowed. Meaning that the *sexp* object cannot be resized. The user is responsible for freeing the memory! The code below shows how the pointer interface works in general. Showing how *sexp* objects can be created by passing the information of pointers (*double\**) which hold data on the heap. Currently, only constructors are written which can use the pointer interface. 
 ```{Rcpp, eval = FALSE}
 // [[Rcpp::depends(ast2ast, RcppArmadillo)]]
-#include <RcppArmadillo.h>
-#include <Rcpp.h>
-// [[Rcpp::plugins(cpp20]]
-using namespace arma;
+// [[Rcpp::plugins(cpp20)]]
 #include <etr.hpp>
-using namespace etr;
 
 // [[Rcpp::export]]
-void fct() {
-    int size = 3;
-    
-    // copy
-    double* ptr1;
-    ptr1 = new double[size];
-    int cob = 0;
-    sexp a(size, ptr1, cob); 
-    delete [] ptr1;
-    a = vector(3.14, 5);
-    print(a);
-    
-    print();
-    
-    // take ownership
-    double* ptr2;
-    ptr2 = new double[size];
-    cob = 1;
-    sexp b(size, ptr2, cob); 
-    b = vector(5, 3);
-    print(b);
-    
-    print();
-    
-    // borrow ownership
-    double* ptr3;
-    ptr3 = new double[size];
-    cob = 2;
-    sexp c(size, ptr3, cob); 
-    //error calls resize
-    //c = vector(5, size + 1); 
-    c = vector(4, size);
-    print(c);
-    
-    print();
-    sexp d(size, ptr3, cob);
-    d = d + 10;
-    print(d);
-    print();
-    
-    delete[] ptr3;
+SEXP getXPtr();
+
+sexp f(sexp a) {
+  sexp b;
+  b = a + etr::i2d(2);
+  return(b);
 }
-
+SEXP getXPtr ()  {
+  typedef sexp (*fct_ptr) (sexp a);
+  return Rcpp::XPtr<fct_ptr>(new fct_ptr(&f));
+}
 ```
-```{r, eval = TRUE}
-trash <- fct()
-```
 
-The pointer interface is particularly useful if the user function has to change the data of a vector or matrix of type *NumericVector*, *vec*, *NumericMatrix* or *mat*. Assuming that the user passes a function that accepts its arguments by reference it is easy to modify any variable which has a type that can return a pointer to its data. In the code below it is shown how *sexp* objects are constructed using the pointer interface. Thereby changing the content of variables which has an Rcpp type, a RcppArmadillo type, or is of type std::vector<double>.
-```{Rcpp, eval = FALSE}
-// [[Rcpp::depends(ast2ast, RcppArmadillo)]]
-#include <RcppArmadillo.h>
-#include <Rcpp.h>
-// [[Rcpp::plugins(cpp17)]]
-using namespace Rcpp;
-using namespace arma;
-#include <etr.hpp>
-using namespace etr;
+Afterwards, the translated R function has to be used in C++ code. This would be your package code for example. First, the macros were defined for *RcppArmadillo* and *ast2ast*. Subsequently, the necessary header files were included. As already mentioned *ast2ast* requires std=c++20 thus the required plugin is included. To use the function, it is necessary to dereference the pointer. The result of the dereferenced pointer has to be stored in a function pointer. Later the function pointer can be used to call the translated function. Therefore, a function pointer called *fp* is defined. It is critical that the signature of the function pointer matches the one of the translated function. Perhaps it would be a good idea to check the R function or the produced C++ code before it is translated. After defining the function pointer, a function is defined which is called later by the user (called *call_package*). This function accepts the external pointer. Within the function body, a variable *f* is defined of type *fp* and *inp* is assigned to it. Next, a *sexp* object called *a* is defined which stores a vector of length 3 containing 1, 2 and 3. The function *coca* is equivalent to the *c* function R. Afterwards *a* is printed. Followed by the call of the function *f* and storing the result in *a*. The variable *a* is printed again to show that the values are changed according to the code defined in the R function.      
 
-typedef void (*fp)(sexp& a);
+```{Rcpp, eval = TRUE, cache = TRUE}
+// [[Rcpp::depends(RcppArmadillo, ast2ast)]]
+// [[Rcpp::plugins("cpp20")]]
+#include "etr.hpp"
+
+typedef sexp (*fp)(sexp a);
 
 // [[Rcpp::export]]
 void call_package(Rcpp::XPtr<fp> inp) {
   fp f = *inp;
-  
-  // NumericVector
-  NumericVector a_rcpp{1, 2, 3};
-  sexp a(a_rcpp.size(), a_rcpp.begin(), 2);
-  f(a);
-  Rcpp::Rcout << a_rcpp << std::endl;
-  
-  //arma::vec
-  vec a_arma(2, fill::value(30));
-  sexp b(2, a_arma.memptr(), 2);
-  f(b);
-  a_arma.print();
-  
-  // NumericMatrix
-  NumericMatrix c_rcpp(2, 2);
-  sexp c(2, 2, c_rcpp.begin(), 2);
-  f(c);
-  Rcpp::Rcout << c_rcpp << std::endl;
-  
-  //arma::mat
-  mat d_arma(3, 2, fill::value(30));
-  sexp d(3, 2, d_arma.memptr(), 2);
-  f(d);
-  d_arma.print();
+  sexp a = etr::coca(1, 2, 3);
+  etr::print(a);
+  a = f(a);
+  etr::print("a is now:");
+  etr::print(a);
 }
 
 ```
-```{r, eval = FALSE}
-f <- function(a) {
-  a <- a + 2
-}
 
-library(ast2ast)
-fa2a <- translate(f, reference = TRUE, output = "XPtr", types_of_args = "sexp", return_type = "void")
-trash <- call_package(fa2a)
+The user can call now the package code and pass the R function to it. Thus, the user only has to install the compiler or Rtools depending on the operating system. But it is not necessary to write the function in Rcpp. 
+
+```{r, eval = TRUE, cache = TRUE}
+call_package(f_cpp)
 ```
+
 

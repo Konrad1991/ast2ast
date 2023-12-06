@@ -222,8 +222,6 @@ ptrMatSig <- function(varName, vars) {
 }
 
 typeSigXPtr <- function(varName, type, reference, allVars) {
-  if(reference && type == "ptr_vec") stop("ptr_vec cannot be used by reference")
-  if(reference && type == "ptr_mat") stop("ptr_vec cannot be used by reference")
   if(!reference) {
     if(type == "ptr_vec") {
       newName <- ptrVecSig(varName, allVars)
@@ -236,6 +234,14 @@ typeSigXPtr <- function(varName, type, reference, allVars) {
     newName <- cString(type, varName, " ")
     return(newName@value)  
   } else {
+    if(type == "ptr_vec") {
+      newName <- ptrVecSig(varName, allVars)
+      return(newName)
+    }
+    if(type == "ptr_mat") {
+      newName <- ptrMatSig(varName, allVars)
+      return(newName)
+    }
     newName <- cString(type, "&", varName, " ")
     return(newName@value)  
   }
@@ -243,10 +249,8 @@ typeSigXPtr <- function(varName, type, reference, allVars) {
 
 defineSigListXPtr <- function(arguments, types, nameFct, reference, retType, allVars) {
   stopifnot(length(arguments) == length(types))
-  allowedTypes <- c("sexp", "double", "ptr_vec", "ptr_mat", "Borrow")
-  if(reference) allowedTypes <- c("sexp", "double", "Borrow") 
-  lapply(types, function(x) {stopifnot(x %in% allowedTypes)})
-  allowedTypes <- c("sexp", "double", "Borrow", "void")
+  allowedTypes <- c("sexp", "double", "ptr_vec", "ptr_mat", "BorrowPtr")
+  allowedTypes <- c("sexp", "double", "BorrowPtr", "void")
   stopifnot(retType %in% allowedTypes)
   typeList <- ""
   ptrNames <- list()
@@ -296,7 +300,7 @@ handlePtr <- function(ptrList, borrow) {
   for(i in seq_along(1:length(ls))) {
     arg <- paste(unlist(rs[[i]]), collapse = ",")
     if(borrow) {
-      temp <- cString("\t Borrow ", ls[[i]], "(",arg, ");", "")@value
+      temp <- cString("\t BorrowPtr ", ls[[i]], "(",arg, ");", "")@value
       res <- paste(res, temp, "\n")
     } else {
       temp <- cString("\t sexp ", ls[[i]], "(",arg, ");", "")@value
