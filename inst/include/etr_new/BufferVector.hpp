@@ -225,6 +225,8 @@ template <typename T, typename R, typename Trait> struct Vec {
       for (size_t i = 0; i < d.ind.size(); i++) {
         d[i] = static_cast<BaseType>(inp);
       }
+    } else if constexpr(isBorrow::value) {
+      d.sz = 1; d[0] = static_cast<BaseType>(inp);
     } else {
       d.resize(1);
       d[0] = static_cast<BaseType>(inp);
@@ -241,6 +243,8 @@ template <typename T, typename R, typename Trait> struct Vec {
       for (size_t i = 0; i < d.ind.size(); i++) {
         d[i] = static_cast<BaseType>(inp);
       }
+    } else if constexpr(isBorrow::value) {
+      d.sz = 1; d[0] = static_cast<BaseType>(inp);
     } else {
       d.resize(1);
       d[0] = static_cast<BaseType>(inp);
@@ -281,10 +285,10 @@ template <typename T, typename R, typename Trait> struct Vec {
     } else if constexpr (isBorrow::value) {
       ass(otherVec.size() <= d.capacity,
           "number of items to replace is not a multiple of replacement length");
-      d.sz = otherVec.size();
       Buffer<T> temp(otherVec.size());
       for (size_t i = 0; i < otherVec.size(); i++)
         temp[i] = otherVec[i];
+      d.sz = otherVec.size();
       for (size_t i = 0; i < otherVec.size(); i++) d[i] = temp[i];
     } else if constexpr (isBorrowSEXP::value) {
       Buffer<T> temp(otherVec.size());
@@ -332,9 +336,9 @@ template <typename T, typename R, typename Trait> struct Vec {
     } else if constexpr (isBorrow::value) {
       ass(otherVec.size() <= d.capacity,
           "number of items to replace is not a multiple of replacement length");
-      d.sz = otherVec.size();
       Buffer<T> temp(otherVec.size());
       for (size_t i = 0; i < otherVec.size(); i++) temp[i] = otherVec[i];
+      d.sz = otherVec.size();
       for (size_t i = 0; i < otherVec.size(); i++) d[i] = temp[i];
     } else if constexpr (isBorrowSEXP::value) {
       Buffer<T> temp(otherVec.size());
@@ -378,7 +382,7 @@ template <typename T, typename R, typename Trait> struct Vec {
   }
 
   Vec& operator=(SEXP s) {
-    d = s;
+    d.initSEXP(s);
     return *this;
   }
 

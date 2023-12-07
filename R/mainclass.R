@@ -354,18 +354,28 @@ signatureR <- function(arguments, nameFct, vars) {
   return(list(ret@value, newNames))
 }
 
-handleSEXP <- function(ls, rs) {
+handleSEXP <- function(ls, rs, reference) {
   stopifnot(length(ls) == length(rs))
-  res <- ""
-  for(i in seq_along(1:length(ls))) {
-    temp <- cString("\t WrapperSEXP ", ls[[i]], "; ",
-                   ls[[i]], " = ", rs[[i]], ";", "")@value
-    res <- paste(res, temp, "\n")
+  if(!reference) {
+    res <- ""
+    for(i in seq_along(1:length(ls))) {
+      temp <- cString("\t sexp ", ls[[i]], "; ",
+                     ls[[i]], " = ", rs[[i]], ";", "")@value
+      res <- paste(res, temp, "\n")
+    }
+    return(res)  
+  } else {
+    res <- ""
+    for(i in seq_along(1:length(ls))) {
+      temp <- cString("\t WrapperSEXP ", ls[[i]], "; ",
+                     ls[[i]], " = ", rs[[i]], ";", "")@value
+      res <- paste(res, temp, "\n")
+    }
+    return(res)  
   }
-  return(res)
 }
 
-buildFctR <- function(fct, nameFct) {
+buildFctR <- function(fct, nameFct, reference) {
   bodyFct <- body(fct)[2:length(body(fct))]
   arguments <- methods::formalArgs(fct)
   ac <- astClass$new(fct, nameFct, R_fct = TRUE)
@@ -380,7 +390,7 @@ buildFctR <- function(fct, nameFct) {
         '#include "etr.hpp"\n',
         "// [[Rcpp::export]]\n", "\n")
   sig <- signatureR(ac$args, nameFct, ac$var_all)
-  hs <- handleSEXP(ac$args, sig[[2]])
+  hs <- handleSEXP(ac$args, sig[[2]], reference)
   if(!ac$return_TF) {
     ac$char <- c(ac$char, "\n", "return(R_NilValue); \n")
   }

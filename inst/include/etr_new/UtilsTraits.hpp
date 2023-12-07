@@ -206,6 +206,12 @@ concept NotOperation = !requires(T t) {
     requires std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, UnaryTrait>::value || std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, BinaryTrait>::value;
 };
 
+template<typename T>
+concept IsVariable = requires {
+  typename T::CaseTrait;
+  requires std::is_same_v<typename T::CaseTrait, VariableTrait>;
+}
+
 inline void ass(bool inp, std::string message) {
   if (!inp)
     Rcpp::stop(message);
@@ -350,7 +356,7 @@ template <typename I, UnaryFct f, typename Trait = UnaryTrait,
           typename CTrait = UnaryTrait>
 struct UnaryOperation;
 
-struct BaseCalc {
+struct BaseCalc { // issue: is this used?
   bool ismatrix;
   size_t rows;
   size_t cols;
@@ -412,7 +418,23 @@ template <typename T, typename BaseTrait> struct BaseStore {
     other.allocated = false;
     other.p = nullptr;
   }
-  BaseStore(SEXP s) = delete;
+  BaseStore(SEXP s) {
+    if (allocated) {
+      ass(p != nullptr, "try to delete nullptr");
+      delete[] p;
+      this->p = nullptr;
+    }
+    p = REAL(s);
+    sz = static_cast<size_t>(Rf_length(s));
+    capacity = static_cast<size_t>(sz * 1.15);
+    if (Rf_isMatrix(s) == true) {
+      mp.setMatrix(true, Rf_nrows(s), Rf_ncols(s));
+    }
+    for (int i = 0; i < sz; i++) {
+        p[i] = REAL(s)[i];
+      }
+    allocated = true;
+  };
   BaseStore(size_t sz_) : sz(sz_), capacity(static_cast<size_t>(sz_ * 1.15)) {
     ass(sz_ > 0, "Size has to be larger than 0");
     p = new T[capacity];
@@ -465,6 +487,24 @@ template <typename T, typename BaseTrait> struct BaseStore {
     }
   }
 
+  void initSEXP(SEXP s) {
+    if (allocated) {
+      ass(p != nullptr, "try to delete nullptr");
+      delete[] p;
+      this->p = nullptr;
+    }
+    sz = static_cast<size_t>(Rf_length(s));
+    capacity = static_cast<size_t>(sz * 1.15);
+    p = new T[capacity];
+    if (Rf_isMatrix(s) == true) {
+      mp.setMatrix(true, Rf_nrows(s), Rf_ncols(s));
+    }
+    for (int i = 0; i < sz; i++) {
+        p[i] = REAL(s)[i];
+      }
+    allocated = true;
+  }
+  
   ~BaseStore() {
     if (p != nullptr) {
       if (allocated) {

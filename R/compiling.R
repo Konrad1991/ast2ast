@@ -45,7 +45,7 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
       }
     )
   } else {
-    fct <- buildFctR(f, name_f)
+    fct <- buildFctR(f, name_f, reference)
     if (getsource == TRUE) {
       return(fct)
     }
