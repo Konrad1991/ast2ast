@@ -162,6 +162,13 @@ inline auto walk(T& v,
                           TimesDeriv, TimesDerivTrait, QuarternaryTrait> { 
   auto lDeriv = walk(v.l, varDerivs);
   auto rDeriv = walk(v.r, varDerivs);
+  /*
+  Assume v.l and v.r are of type Buffer. 
+  Than lDeriv and rDeriv are of type Vec<Buffer>.
+  Thus, l, r, lDeriv and rDeriv are objects which exists. 
+  Here, it is possible to use pointers to them instead of copying. 
+  Do I have to copy v.l if it is of type Operation? 
+  */
   MatrixParameter mp; defineMatrix(v.l, v.r, mp);
   return QuaternaryOperation<decltype(v.l), decltype(v.r),
                           decltype(lDeriv.d), decltype(rDeriv.d),
