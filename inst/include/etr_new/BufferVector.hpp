@@ -162,30 +162,6 @@ template <typename T, typename R, typename Trait> struct Vec {
     d.setMatrix(true, rows, cols);
   }
 
-  /*
-  template<typename Other> // issue: are these constructors are needed? But difficult error handling
-  Vec(const Other& v) : d() {
-    this->d.resize(v.size());
-    for (size_t i = 0; i < d.size(); i++) {
-      d[i] = v[i];
-    }
-    if (v.d.im()) {
-      d.setMatrix(true, v.nr(), v.nc());
-    }
-  }
-  template<typename Other>// issue: are these constructors are needed? But difficult error handling
-  Vec(const Other&& v) : d() {
-    printType(v); 
-    this->d.resize(v.size());
-    for (size_t i = 0; i < d.size(); i++) {
-      d[i] = v[i];
-    }
-    if (v.d.im()) {
-      d.setMatrix(true, v.nr(), v.nc());
-    }
-  }
-  */
-
   template <typename T2>
     requires std::is_same_v<T2, bool>
   explicit Vec(const Vec<T2> &other_vec) : d() {
@@ -386,15 +362,6 @@ template <typename T, typename R, typename Trait> struct Vec {
     return *this;
   }
 
-  //operator bool() const {
-  //  ass(this -> size() == 1, "Error in if: the condition has length > 1");
-  //  return static_cast<bool>(d[0]);
-  //}
-
-  //operator double() const {
-  //  return d[0];
-  //}
-
   operator RetType() const {
     if constexpr(std::is_same_v<RetType, bool>) {
       ass(this -> size() == 1, "Error in if: the condition has length > 1");
@@ -529,7 +496,6 @@ template <typename T, typename R, typename Trait> struct Vec {
     }
     return ret;
   }
-
 
 };
 
