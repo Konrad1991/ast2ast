@@ -14,6 +14,8 @@ struct BinaryOperation {
   using RetType = typename CTrait::RetType;
   const L &l;
   const R &r;
+  using typeTraitL = L;
+  using typeTraitR = R;
   MatrixParameter mp;
   bool im() const { return mp.im(); }
   size_t nc() const { return mp.nc(); }

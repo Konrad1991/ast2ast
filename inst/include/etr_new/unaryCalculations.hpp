@@ -11,6 +11,7 @@ struct UnaryOperation {
   using TypeTrait = Trait;
   using CaseTrait = Trait;
   const I &obj;
+  using typeTraitObj = I; 
   MatrixParameter mp;
   bool im() const { return mp.im(); }
   size_t nc() const { return mp.nc(); }

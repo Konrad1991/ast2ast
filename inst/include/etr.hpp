@@ -54,6 +54,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "etr_new/interpolation.hpp"
 #include "etr_new/helper.hpp"
 #include "etr_new/distri.hpp"
+#include "etr_new/Derivs.hpp"
 #include "etr_new/BufferVector.hpp"
 
 typedef etr::Vec<etr::BaseType> sexp;

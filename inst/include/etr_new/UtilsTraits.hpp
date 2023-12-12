@@ -16,8 +16,7 @@
 #include <vector>
 #include <mutex>
 #include <vector>
-#include <sstream>
-
+#include <unordered_map>
 /*
 ./ast2ast/inst/include/ad_etr/                      
 ├── add_ad.hpp               done                                  
@@ -56,6 +55,11 @@ inline std::string demangle(const char *mangledName) {
 
 template <typename T> inline void printType(T inp) {
   std::cout << demangle(typeid(inp).name()) << std::endl;
+}
+
+template <typename T>
+void inline printT() {
+    std::cout << demangle(typeid(T).name()) << std::endl;
 }
 
 inline std::string convertIndentation(size_t idx) {
@@ -131,6 +135,10 @@ struct BorrowSEXPTrait {};
 
 struct UnaryTrait { using RetType = BaseType; };
 struct BinaryTrait { using RetType = BaseType; };
+struct QuarternaryTrait { using RetType = BaseType; };
+
+struct PlusDerivTrait { using RetType = BaseType; };
+struct TimesDerivTrait { using RetType = BaseType; };
 
 struct PlusTrait { using RetType = BaseType; };
 struct MinusTrait { using RetType = BaseType; };
@@ -235,6 +243,18 @@ concept UnaryOrBinaryOperation = requires(T t) {
 };
 
 template <typename T>
+concept IsUnary = requires(T t) {
+    typename std::remove_reference<decltype(t)>::type::CaseTrait;
+    requires std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, UnaryTrait>::value;
+};
+
+template <typename T>
+concept IsBinary = requires(T t) {
+    typename std::remove_reference<decltype(t)>::type::CaseTrait;
+    requires std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, BinaryTrait>::value;
+};
+
+template <typename T>
 concept NotOperation = !requires(T t) {
     typename std::remove_reference<decltype(t)>::type::CaseTrait;
     requires std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, UnaryTrait>::value || std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, BinaryTrait>::value;
@@ -244,6 +264,28 @@ template<typename T>
 concept IsVariable = requires {
   typename T::CaseTrait;
   requires std::is_same_v<typename T::CaseTrait, VariableTrait>;
+};
+
+template <typename R>
+concept IsVec = requires {
+    typename R::TypeTrait;
+    requires std::is_same_v<typename R::TypeTrait, VectorTrait>;
+};
+
+template <typename T>
+concept IsMultiplication = requires(T t) {
+    typename std::remove_reference<decltype(t)>::type::CaseTrait;
+    typename std::remove_reference<decltype(t)>::type::TypeTrait;
+    requires std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, BinaryTrait>::value;
+    requires std::is_same<typename std::remove_reference<decltype(t)>::type::TypeTrait, TimesTrait>::value;
+};
+
+template <typename T>
+concept IsAddition = requires(T t) {
+    typename std::remove_reference<decltype(t)>::type::CaseTrait;
+    typename std::remove_reference<decltype(t)>::type::TypeTrait;
+    requires std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, BinaryTrait>::value;
+    requires std::is_same<typename std::remove_reference<decltype(t)>::type::TypeTrait, PlusTrait>::value;
 };
 
 inline void ass(bool inp, std::string message) {
@@ -328,6 +370,14 @@ inline double Log(double obj) { return log(obj); }
 inline double SquareRoot(double obj) { return sqrt(obj); }
 inline double MinusUnary(double obj) { return -obj; }
 
+typedef double (*quaternaryFct)(double, double, double, double);
+inline double TimesDeriv(double l, double r, double lDeriv, double rDeriv) {
+  return l*rDeriv + r*lDeriv;
+}
+inline double PlusDeriv(double lDeriv, double rDeriv) {
+  return lDeriv + rDeriv;
+}
+
 inline double Equal(double a, double b) { 
 	if(fabs(a - b) < 1E-3) {
 		return 1.0;
@@ -389,6 +439,10 @@ struct BinaryOperation;
 template <typename I, UnaryFct f, typename Trait = UnaryTrait,
           typename CTrait = UnaryTrait>
 struct UnaryOperation;
+
+template <typename L, typename R, binaryFct f, typename Trait = BinaryTrait,
+          typename CTrait = BinaryTrait>
+struct BinaryOperationDeriv;
 
 struct BaseCalc { // issue: is this used?
   bool ismatrix;
