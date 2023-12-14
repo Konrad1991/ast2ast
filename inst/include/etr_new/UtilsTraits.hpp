@@ -17,6 +17,7 @@
 #include <mutex>
 #include <vector>
 #include <unordered_map>
+
 /*
 ./ast2ast/inst/include/ad_etr/                      
 ├── add_ad.hpp               done                                  
@@ -94,6 +95,32 @@ template<typename T> inline void printAST(T inp) {
   }
 }
 
+template<typename T> inline void printTAST() {
+  std::string s = demangle(typeid(T).name());
+  std::vector<std::string> v;
+  v.push_back("");
+  size_t counter = 0;
+  std::vector<int> indentationLevels(1, 0);
+  for(size_t i = 0; i < s.length(); i++) {
+    v[counter].push_back(s[i]);
+    if(s[i] == '<') { 
+      indentationLevels.push_back(indentationLevels[counter]+1);
+      counter++;
+      v.push_back("");
+    } else if(s[i] == '>') {
+      indentationLevels.push_back(indentationLevels[counter]-1);
+      counter++;
+      v.push_back("");
+    }
+  }
+  for(size_t i = 0; i < v.size(); i++) {
+    std::string indentation = convertIndentation(indentationLevels[i]);
+    std::cout << indentation << v[i] << std::endl;
+  }
+}
+
+
+
 typedef double BaseType;
 
 template <bool B>
@@ -139,6 +166,7 @@ struct QuarternaryTrait { using RetType = BaseType; };
 
 struct PlusDerivTrait { using RetType = BaseType; };
 struct TimesDerivTrait { using RetType = BaseType; };
+struct SinusDerivTrait { using RetType = BaseType; };
 
 struct PlusTrait { using RetType = BaseType; };
 struct MinusTrait { using RetType = BaseType; };
@@ -286,6 +314,14 @@ concept IsAddition = requires(T t) {
     typename std::remove_reference<decltype(t)>::type::TypeTrait;
     requires std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, BinaryTrait>::value;
     requires std::is_same<typename std::remove_reference<decltype(t)>::type::TypeTrait, PlusTrait>::value;
+};
+
+template<typename T>
+concept IsSinus = requires(T t) {
+  typename std::remove_reference<decltype(t)>::type::CaseTrait;
+  typename std::remove_reference<decltype(t)>::type::TypeTrait;
+  requires std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, UnaryTrait>::value;
+  requires std::is_same<typename std::remove_reference<decltype(t)>::type::TypeTrait, SinusTrait>::value;
 };
 
 inline void ass(bool inp, std::string message) {

@@ -9,7 +9,7 @@ template <typename I, UnaryFct f, typename Trait,
 struct UnaryOperation {
   using RetType = typename CTrait::RetType;
   using TypeTrait = Trait;
-  using CaseTrait = Trait;
+  using CaseTrait = CTrait;
   const I &obj;
   using typeTraitObj = I; 
   MatrixParameter mp;
