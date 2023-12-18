@@ -271,43 +271,52 @@ inline constexpr BinaryType<LDeriv, RDeriv, Trait, OpTrait> produceBinaryType() 
   return BinaryType<LDeriv, RDeriv, Trait, OpTrait>();
 }
 
-template<typename T, int Idx>
+
+template<typename T>
 struct VariableType {
   using Type = T;
-  static constexpr int Index = Idx;
+};
+template<typename T>
+inline constexpr VariableType<T> produceVariableType() {
+  return VariableType<T>();
+}
+
+template<int N>
+struct Derivative {
+  std::array<Buffer<BaseType>*, N> variables;
+  std::array<Buffer<BaseType>*, N> derivatives;
+  Derivative(std::initializer_list<Buffer<BaseType>*>& variables_) {
+    size_t i = 0;
+    for(auto& elem: variables_) {
+      variables[i] = elem;
+      derivatives[i] -> resize(elem -> size());
+      i++;
+    }
+  }
 };
 
-template <typename T, int Idx>
-inline constexpr auto CalcIncrement() {
-  if constexpr(IsVariable<T>) {
-    return 1;
-  } else {
-    //return 0;
-    return CalcIncrement<typename T::typeTraitL, Idx>() + CalcIncrement<typename T::typeTraitR, Idx>();
-  }
-}
 
-template<typename T, int Idx>
+template<typename T>
 requires IsVariable<T>
-inline constexpr auto walkT() -> VariableType<T, Idx> {
-  return VariableType<T, Idx>();
+inline constexpr auto walkT() -> VariableType<T> {
+  return VariableType<T>();
 }
 
-template <typename T, int Idx>
+template <typename T>
 requires IsMultiplication<T>
 inline constexpr auto walkT()  {
-    return produceQuarternyType< decltype( getL<typename T::typeTraitL>() ),
-                                 decltype( getR<typename T::typeTraitR>() ),   
-                                 decltype( walkT<typename T::typeTraitL, Idx + CalcIncrement<typename T::typeTraitL, Idx>()>() ),
-                                 decltype( walkT<typename T::typeTraitR, Idx + CalcIncrement<typename T::typeTraitR, Idx>()>() ),
+    return produceQuarternyType< decltype( produceVariableType< typename T::typeTraitL >() ),
+                                 decltype( produceVariableType< typename T::typeTraitR >() ),   
+                                 decltype( walkT<typename T::typeTraitL>() ),
+                                 decltype( walkT<typename T::typeTraitR>() ),
                                  QuarternaryTrait, TimesDerivTrait>();
 }
 
-template <typename T, int Idx>
+template <typename T>
 requires IsAddition<T>
 inline constexpr auto walkT()  {
-  return produceBinaryType< decltype( walkT<typename T::typeTraitL, Idx + CalcIncrement<typename T::typeTraitL, Idx>()>() ),
-                            decltype( walkT<typename T::typeTraitR, Idx + CalcIncrement<typename T::typeTraitR, Idx>()>() ),
+  return produceBinaryType< decltype( walkT<typename T::typeTraitL>() ),
+                            decltype( walkT<typename T::typeTraitR>() ),
                             QuarternaryTrait, PlusDerivTrait>();
 } 
 
@@ -316,10 +325,11 @@ requires (IsVec<T> && !IsVariable<T>)
 inline void walkT() {
   using tD = ExtractedTypeD<T>;
   printTAST<tD>();
-  constexpr int Idx = 0;
-  constexpr auto res = walkT<tD, Idx>();
+  constexpr auto res = walkT<tD>();
   std::cout << "final result "  << std::endl;
   printTAST<decltype(res)>();
+  
+
   return;
 }
 
@@ -333,6 +343,7 @@ inline void walkT() {
 /*
 traverse tree and modify variables --> struct {variable, int}
 */
+/*
 template <typename I, typename f, typename Trait, typename CTrait>
 struct UnaryType {
   using TypeTrait = Trait;
@@ -414,7 +425,7 @@ inline constexpr auto addNumbersToVars() {
   printTAST<decltype(res)>();
   return;
 }
-
+*/
 
 
 /*

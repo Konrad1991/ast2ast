@@ -164,8 +164,21 @@ struct UnaryTrait { using RetType = BaseType; };
 struct BinaryTrait { using RetType = BaseType; };
 struct QuarternaryTrait { using RetType = BaseType; };
 
-struct PlusDerivTrait { using RetType = BaseType; };
-struct TimesDerivTrait { using RetType = BaseType; };
+typedef double (*quaternaryFct)(double, double, double, double);
+inline double TimesDeriv(double l, double r, double lDeriv, double rDeriv) {
+  return l*rDeriv + r*lDeriv;
+}
+inline double PlusDeriv(double lDeriv, double rDeriv) {
+  return lDeriv + rDeriv;
+}
+
+struct PlusDerivTrait { 
+  using RetType = BaseType; 
+};
+
+struct TimesDerivTrait { 
+  using RetType = BaseType;
+};
 struct SinusDerivTrait { using RetType = BaseType; };
 
 struct PlusTrait { using RetType = BaseType; };
@@ -405,14 +418,6 @@ inline double Exp(double obj) { return exp(obj); }
 inline double Log(double obj) { return log(obj); }
 inline double SquareRoot(double obj) { return sqrt(obj); }
 inline double MinusUnary(double obj) { return -obj; }
-
-typedef double (*quaternaryFct)(double, double, double, double);
-inline double TimesDeriv(double l, double r, double lDeriv, double rDeriv) {
-  return l*rDeriv + r*lDeriv;
-}
-inline double PlusDeriv(double lDeriv, double rDeriv) {
-  return lDeriv + rDeriv;
-}
 
 inline double Equal(double a, double b) { 
 	if(fabs(a - b) < 1E-3) {

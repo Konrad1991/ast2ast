@@ -7,7 +7,6 @@
 SEXP getXPtrBorrowTest();
 
 sexp testall(BorrowPtr a, double type_test) {
-
 	 sexp size;
  	 sexp temp;
  	 sexp ret;

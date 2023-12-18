@@ -34,6 +34,38 @@ printClass <- R6::R6Class("printClass",
 					print(paste(c(times, obj), collapse = " "), collapse = "")
 				}
 			}
+		},
+
+		customAsCall = function(code) {
+			if(as.character(code[[1]]) == "diamond") {
+				stopifnot(length(code) == 3)
+				return(paste0(code[[2]], "<", code[[3]], ">"))
+			} else {
+				return(as.call(code))
+			}
+		},
+
+		getSTRING = function(code) {
+			for(i in seq_along(1:length(code))) {
+				if(is.list(code[[i]])) {
+					code[[i]] <- self$getSTRING(code[[i]])
+				}
+			}
+			code <- self$customAsCall(code)
+			return(code)
+		},
+
+		removeBackslashes = function(str) {
+			str <- deparse(str)
+			str <- paste("r{", str, "}", collapse = "")
+			print(str)
+			str <- gsub("\"", "", str)
+			return(substr(str, 3, nchar(str) - 1))
+		},
+
+		Call2STRING = function(code) {
+			code <- self$getSTRING(code)
+			return(self$removeBackslashes(code))
 		}
 
 	)
@@ -43,3 +75,8 @@ printClass <- R6::R6Class("printClass",
 #ast <- pC$getAST(quote(a*b + c*d/h -sin(f)) )
 #pC$getCALLS(ast)
 #pC$printAST(ast)
+
+#ast <- pC$getAST(quote(diamond(a, 12)*b + c*d + diamond(b, 5) * diamond(h, diamond(k, j)) ) )
+#code <- pC$Call2STRING(ast)
+#code
+
