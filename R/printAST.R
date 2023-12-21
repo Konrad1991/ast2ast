@@ -72,7 +72,7 @@ printClass <- R6::R6Class("printClass",
 )
 
 #pC <- printClass$new()
-#ast <- pC$getAST(quote(a*b + c*d/h -sin(f)) )
+#ast <- pC$getAST(quote( (a+b) * (a*b*c) ))
 #pC$getCALLS(ast)
 #pC$printAST(ast)
 

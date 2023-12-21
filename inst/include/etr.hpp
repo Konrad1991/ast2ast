@@ -22,40 +22,16 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #ifndef A2A_H
 #define A2A_H
 
-/*
-#include "etr_bits/add.hpp"
-#include "etr_bits/allocation.hpp"
-#include "etr_bits/checks_na_inf.hpp"
-#include "etr_bits/colon.hpp"
-#include "etr_bits/comparison.hpp"
-#include "etr_bits/concatenate.hpp"
-#include "etr_bits/conversion.hpp"
-#include "etr_bits/distri.hpp"
-#include "etr_bits/divide.hpp"
-#include "etr_bits/exponent.hpp"
-#include "etr_bits/header.hpp"
-#include "etr_bits/interpolation.hpp"
-#include "etr_bits/mul.hpp"
-#include "etr_bits/pointer_storage.hpp"
-#include "etr_bits/print.hpp"
-#include "etr_bits/subset.hpp"
-#include "etr_bits/subsetassign.hpp"
-#include "etr_bits/subtract.hpp"
-#include "etr_bits/trigo.hpp"
-#include "etr_bits/util.hpp"
-#include "etr_bits/vec.hpp"
-#define sexp etr::Vec<double>
-*/
 
-#include "etr_new/UtilsTraits.hpp"
-#include "etr_new/unaryCalculations.hpp"
-#include "etr_new/binaryCalculations.hpp"
-#include "etr_new/subsetting.hpp"
-#include "etr_new/interpolation.hpp"
-#include "etr_new/helper.hpp"
-#include "etr_new/distri.hpp"
-#include "etr_new/Derivs.hpp"
-#include "etr_new/BufferVector.hpp"
+#include "etr_bits/UtilsTraits.hpp"
+#include "etr_bits/unaryCalculations.hpp"
+#include "etr_bits/binaryCalculations.hpp"
+#include "etr_bits/subsetting.hpp"
+#include "etr_bits/interpolation.hpp"
+#include "etr_bits/helper.hpp"
+#include "etr_bits/distri.hpp"
+#include "etr_bits/Derivs.hpp"
+#include "etr_bits/BufferVector.hpp"
 
 typedef etr::Vec<etr::BaseType> sexp;
 typedef etr::Vec<etr::BaseType, etr::BorrowSEXP<etr::BaseType, etr::BorrowSEXPTrait>> WrapperSEXP;
