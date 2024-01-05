@@ -169,7 +169,6 @@ LC <- R6::R6Class("LC",
         message("Function: ", fct, " not supported")
         stop()
       }
-
       # convert node classes
       lapply(sexp, self$extractast)
     },

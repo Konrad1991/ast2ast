@@ -12,35 +12,34 @@
 #include <iterator>
 #include <math.h>
 #include <memory>
-#include <type_traits>
-#include <vector>
 #include <mutex>
-#include <vector>
+#include <type_traits>
 #include <unordered_map>
+#include <vector>
 
 /*
-./ast2ast/inst/include/ad_etr/                      
-├── add_ad.hpp               done                                  
+./ast2ast/inst/include/ad_etr/
+├── add_ad.hpp               done
 ├── allocation.hpp           done
-├── backward.hpp           
+├── backward.hpp
 ├── checks_na_inf.hpp        done
-├── colon.hpp                done                                        
-├── comparison.hpp           done                                     
-├── concatenate.hpp          done                                    
-├── conversion.hpp           done                                                
+├── colon.hpp                done
+├── comparison.hpp           done
+├── concatenate.hpp          done
+├── conversion.hpp           done
 ├── distri.hpp  	     done
-├── divide_ad.hpp            done                                  
+├── divide_ad.hpp            done
 ├── exponent.hpp	     done
-├── header.hpp               done            
+├── header.hpp               done
 ├── interpolation.hpp	     done
-├── mul_ad.hpp               done            
+├── mul_ad.hpp               done
 ├── pointer_storage.hpp      done
-├── print.hpp                done          
+├── print.hpp                done
 ├── subset_ad.hpp	     done
 ├── subtract_ad.hpp          done
 ├── traits.hpp               done
 ├── trigo_ad.hpp             done
-├── util.hpp                 done          
+├── util.hpp                 done
 └── vec.hpp                  done
 */
 
@@ -58,73 +57,69 @@ template <typename T> inline void printType(T inp) {
   std::cout << demangle(typeid(inp).name()) << std::endl;
 }
 
-template <typename T>
-void inline printT() {
-    std::cout << demangle(typeid(T).name()) << std::endl;
+template <typename T> void inline printT() {
+  std::cout << demangle(typeid(T).name()) << std::endl;
 }
 
 inline std::string convertIndentation(size_t idx) {
   std::string ret = "";
-  for(size_t i = 0; i < idx; i++) {
+  for (size_t i = 0; i < idx; i++) {
     ret += "\t";
   }
   return ret;
 }
 
-template<typename T> inline void printAST(T inp) {
+template <typename T> inline void printAST(T inp) {
   std::string s = demangle(typeid(inp).name());
   std::vector<std::string> v;
   v.push_back("");
   size_t counter = 0;
   std::vector<int> indentationLevels(1, 0);
-  for(size_t i = 0; i < s.length(); i++) {
+  for (size_t i = 0; i < s.length(); i++) {
     v[counter].push_back(s[i]);
-    if(s[i] == '<') { 
-      indentationLevels.push_back(indentationLevels[counter]+1);
+    if (s[i] == '<') {
+      indentationLevels.push_back(indentationLevels[counter] + 1);
       counter++;
       v.push_back("");
-    } else if(s[i] == '>') {
-      indentationLevels.push_back(indentationLevels[counter]-1);
+    } else if (s[i] == '>') {
+      indentationLevels.push_back(indentationLevels[counter] - 1);
       counter++;
       v.push_back("");
     }
   }
-  for(size_t i = 0; i < v.size(); i++) {
+  for (size_t i = 0; i < v.size(); i++) {
     std::string indentation = convertIndentation(indentationLevels[i]);
     std::cout << indentation << v[i] << std::endl;
   }
 }
 
-template<typename T> inline void printTAST() {
+template <typename T> inline void printTAST() {
   std::string s = demangle(typeid(T).name());
   std::vector<std::string> v;
   v.push_back("");
   size_t counter = 0;
   std::vector<int> indentationLevels(1, 0);
-  for(size_t i = 0; i < s.length(); i++) {
+  for (size_t i = 0; i < s.length(); i++) {
     v[counter].push_back(s[i]);
-    if(s[i] == '<') { 
-      indentationLevels.push_back(indentationLevels[counter]+1);
+    if (s[i] == '<') {
+      indentationLevels.push_back(indentationLevels[counter] + 1);
       counter++;
       v.push_back("");
-    } else if(s[i] == '>') {
-      indentationLevels.push_back(indentationLevels[counter]-1);
+    } else if (s[i] == '>') {
+      indentationLevels.push_back(indentationLevels[counter] - 1);
       counter++;
       v.push_back("");
     }
   }
-  for(size_t i = 0; i < v.size(); i++) {
+  for (size_t i = 0; i < v.size(); i++) {
     std::string indentation = convertIndentation(indentationLevels[i]);
     std::cout << indentation << v[i] << std::endl;
   }
 }
 
-
-
 typedef double BaseType;
 
-template <bool B>
-using BoolConstant = std::integral_constant<bool, B>;
+template <bool B> using BoolConstant = std::integral_constant<bool, B>;
 using TRUE = BoolConstant<true>;
 using T = BoolConstant<true>;
 using FALSE = BoolConstant<false>;
@@ -150,7 +145,9 @@ template <typename T> struct It {
 struct DoubleTrait {};
 struct IntTrait {};
 struct BoolTrait {};
-struct ComparisonTrait { using RetType = bool; };
+struct ComparisonTrait {
+  using RetType = bool;
+};
 
 struct BaseStoreTrait {};
 struct BufferTrait {};
@@ -160,85 +157,105 @@ struct SubsetTrait {};
 struct BorrowTrait {};
 struct BorrowSEXPTrait {};
 
-struct UnaryTrait { using RetType = BaseType; };
-struct BinaryTrait { using RetType = BaseType; };
-struct QuarternaryTrait { using RetType = BaseType; };
+struct UnaryTrait {
+  using RetType = BaseType;
+};
+struct BinaryTrait {
+  using RetType = BaseType;
+};
+struct QuarternaryTrait {
+  using RetType = BaseType;
+};
 
 typedef double (*quaternaryFct)(double, double, double, double);
 inline double TimesDeriv(double l, double r, double lDeriv, double rDeriv) {
-  return l*rDeriv + r*lDeriv;
+  return l * rDeriv + r * lDeriv;
 }
 inline double PlusDeriv(double lDeriv, double rDeriv) {
   return lDeriv + rDeriv;
 }
 
-struct PlusDerivTrait { 
-  using RetType = BaseType; 
-};
-
-struct TimesDerivTrait { 
+struct PlusDerivTrait {
   using RetType = BaseType;
 };
-struct SinusDerivTrait { using RetType = BaseType; };
 
-struct PlusTrait { using RetType = BaseType; };
-struct MinusTrait { using RetType = BaseType; };
-struct TimesTrait { using RetType = BaseType; };
-struct DivideTrait { using RetType = BaseType; };
-struct PowTrait { using RetType = BaseType; };
+struct TimesDerivTrait {
+  using RetType = BaseType;
+};
+struct SinusDerivTrait {
+  using RetType = BaseType;
+};
+
+struct PlusTrait {
+  using RetType = BaseType;
+};
+struct MinusTrait {
+  using RetType = BaseType;
+};
+struct TimesTrait {
+  using RetType = BaseType;
+};
+struct DivideTrait {
+  using RetType = BaseType;
+};
+struct PowTrait {
+  using RetType = BaseType;
+};
 struct EqualTrait {
-	static bool f(double a, double b) { // issue: add this to documentationion for package authors
-			if(fabs(a - b) < 1E-3) {
-				return true;
-  		} else {
-  		 	return false;
-  		}
-	}
+  static bool
+  f(double a,
+    double b) { // issue: add this to documentationion for package authors
+    if (fabs(a - b) < 1E-3) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 };
 struct SmallerTrait {
-	static bool f(double a, double b) { 
-		if(a < b) {
-			return true;
-  	} else {
-  	 	return false;
-  	}
-	}
+  static bool f(double a, double b) {
+    if (a < b) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 };
 struct SmallerEqualTrait {
-	static bool f(double a, double b) { 
-	if(a <= b) {
-		return true;
-  } else {
-   	return false;
+  static bool f(double a, double b) {
+    if (a <= b) {
+      return true;
+    } else {
+      return false;
+    }
   }
-}
 };
 struct LargerTrait {
-	static bool f(double a, double b) { 
-		if(a > b) {
-			return true;
-  	} else {
-  	 	return false;
-  	}
-	}
+  static bool f(double a, double b) {
+    if (a > b) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 };
 struct LargerEqualTrait {
-	static bool f(double a, double b) { 
-		if(a >= b) {
-			return true;
-  	} else {
-  	 	return false;
-  	}
-	}
+  static bool f(double a, double b) {
+    if (a >= b) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 };
 struct UnEqualTrait {
-	static bool f(double a, double b) { 
-		if(fabs(a - b) > 1E-3) {
-			return true;
-  	} else {
-  	 	return false;
-  	}
-	}
+  static bool f(double a, double b) {
+    if (fabs(a - b) > 1E-3) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 };
 
 struct SinusTrait {};
@@ -257,51 +274,65 @@ struct MinusUnaryTrait {};
 
 template <typename T>
 concept isBID = requires {
-	requires std::is_same_v<T, bool> || std::is_same_v<T, int> || std::is_same_v<T, double>;
+  requires std::is_same_v<T, bool> || std::is_same_v<T, int> ||
+               std::is_same_v<T, double>;
 };
 
 template <typename R>
 concept IsVecDouble = requires {
-    typename R::TypeTrait;
-    typename R::Type;
-    requires std::is_same_v<typename R::TypeTrait, VectorTrait>;
-    requires std::is_same_v<typename R::Type, BaseType>;
+  typename R::TypeTrait;
+  typename R::Type;
+  requires std::is_same_v<typename R::TypeTrait, VectorTrait>;
+  requires std::is_same_v<typename R::Type, BaseType>;
 };
-
 
 template <typename R>
 concept IsVecBool = requires {
-    typename R::TypeTrait;
-    typename R::Type;
-    requires std::is_same_v<typename R::TypeTrait, VectorTrait>;
-    requires std::is_same_v<typename R::Type, bool>;
+  typename R::TypeTrait;
+  typename R::Type;
+  requires std::is_same_v<typename R::TypeTrait, VectorTrait>;
+  requires std::is_same_v<typename R::Type, bool>;
 };
 
 template <typename T>
 concept UnaryOrBinaryOperation = requires(T t) {
-    typename std::remove_reference<decltype(t)>::type::CaseTrait;
-    requires std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, UnaryTrait>::value || std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, BinaryTrait>::value;
+  typename std::remove_reference<decltype(t)>::type::CaseTrait;
+  requires std::is_same<
+               typename std::remove_reference<decltype(t)>::type::CaseTrait,
+               UnaryTrait>::value ||
+               std::is_same<
+                   typename std::remove_reference<decltype(t)>::type::CaseTrait,
+                   BinaryTrait>::value;
 };
 
 template <typename T>
 concept IsUnary = requires(T t) {
-    typename std::remove_reference<decltype(t)>::type::CaseTrait;
-    requires std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, UnaryTrait>::value;
+  typename std::remove_reference<decltype(t)>::type::CaseTrait;
+  requires std::is_same<
+      typename std::remove_reference<decltype(t)>::type::CaseTrait,
+      UnaryTrait>::value;
 };
 
 template <typename T>
 concept IsBinary = requires(T t) {
-    typename std::remove_reference<decltype(t)>::type::CaseTrait;
-    requires std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, BinaryTrait>::value;
+  typename std::remove_reference<decltype(t)>::type::CaseTrait;
+  requires std::is_same<
+      typename std::remove_reference<decltype(t)>::type::CaseTrait,
+      BinaryTrait>::value;
 };
 
 template <typename T>
 concept NotOperation = !requires(T t) {
-    typename std::remove_reference<decltype(t)>::type::CaseTrait;
-    requires std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, UnaryTrait>::value || std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, BinaryTrait>::value;
+  typename std::remove_reference<decltype(t)>::type::CaseTrait;
+  requires std::is_same<
+               typename std::remove_reference<decltype(t)>::type::CaseTrait,
+               UnaryTrait>::value ||
+               std::is_same<
+                   typename std::remove_reference<decltype(t)>::type::CaseTrait,
+                   BinaryTrait>::value;
 };
 
-template<typename T>
+template <typename T>
 concept IsVariable = requires {
   typename T::CaseTrait;
   requires std::is_same_v<typename T::CaseTrait, VariableTrait>;
@@ -309,32 +340,44 @@ concept IsVariable = requires {
 
 template <typename R>
 concept IsVec = requires {
-    typename R::TypeTrait;
-    requires std::is_same_v<typename R::TypeTrait, VectorTrait>;
+  typename R::TypeTrait;
+  requires std::is_same_v<typename R::TypeTrait, VectorTrait>;
 };
 
 template <typename T>
 concept IsMultiplication = requires(T t) {
-    typename std::remove_reference<decltype(t)>::type::CaseTrait;
-    typename std::remove_reference<decltype(t)>::type::TypeTrait;
-    requires std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, BinaryTrait>::value;
-    requires std::is_same<typename std::remove_reference<decltype(t)>::type::TypeTrait, TimesTrait>::value;
+  typename std::remove_reference<decltype(t)>::type::CaseTrait;
+  typename std::remove_reference<decltype(t)>::type::TypeTrait;
+  requires std::is_same<
+      typename std::remove_reference<decltype(t)>::type::CaseTrait,
+      BinaryTrait>::value;
+  requires std::is_same<
+      typename std::remove_reference<decltype(t)>::type::TypeTrait,
+      TimesTrait>::value;
 };
 
 template <typename T>
 concept IsAddition = requires(T t) {
-    typename std::remove_reference<decltype(t)>::type::CaseTrait;
-    typename std::remove_reference<decltype(t)>::type::TypeTrait;
-    requires std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, BinaryTrait>::value;
-    requires std::is_same<typename std::remove_reference<decltype(t)>::type::TypeTrait, PlusTrait>::value;
+  typename std::remove_reference<decltype(t)>::type::CaseTrait;
+  typename std::remove_reference<decltype(t)>::type::TypeTrait;
+  requires std::is_same<
+      typename std::remove_reference<decltype(t)>::type::CaseTrait,
+      BinaryTrait>::value;
+  requires std::is_same<
+      typename std::remove_reference<decltype(t)>::type::TypeTrait,
+      PlusTrait>::value;
 };
 
-template<typename T>
+template <typename T>
 concept IsSinus = requires(T t) {
   typename std::remove_reference<decltype(t)>::type::CaseTrait;
   typename std::remove_reference<decltype(t)>::type::TypeTrait;
-  requires std::is_same<typename std::remove_reference<decltype(t)>::type::CaseTrait, UnaryTrait>::value;
-  requires std::is_same<typename std::remove_reference<decltype(t)>::type::TypeTrait, SinusTrait>::value;
+  requires std::is_same<
+      typename std::remove_reference<decltype(t)>::type::CaseTrait,
+      UnaryTrait>::value;
+  requires std::is_same<
+      typename std::remove_reference<decltype(t)>::type::TypeTrait,
+      SinusTrait>::value;
 };
 
 inline void ass(bool inp, std::string message) {
@@ -363,15 +406,15 @@ struct MatrixParameter {
     this->setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
   }
   friend std::ostream &operator<<(std::ostream &os, const MatrixParameter &m) {
-    os << std::boolalpha << m.ismatrix << " nrows = " << m.rows << " ncols = " << m.cols << std::endl;
+    os << std::boolalpha << m.ismatrix << " nrows = " << m.rows
+       << " ncols = " << m.cols << std::endl;
     return os;
   }
 };
 
-template<typename Trait = DoubleTrait>
-struct doubleWrapper {
-	using TypeTrait = Trait;
-	using Type = DoubleTrait;
+template <typename Trait = DoubleTrait> struct doubleWrapper {
+  using TypeTrait = Trait;
+  using Type = DoubleTrait;
   BaseType d;
 };
 
@@ -395,7 +438,7 @@ constexpr doubleWrapper<BoolTrait> convert(const T &obj) {
 
 template <typename T> constexpr T convert(const T &obj) {
   return obj;
-  //return std::forward(obj);
+  // return std::forward(obj);
 }
 
 inline double Addition(double l, double r) { return l + r; }
@@ -419,46 +462,46 @@ inline double Log(double obj) { return log(obj); }
 inline double SquareRoot(double obj) { return sqrt(obj); }
 inline double MinusUnary(double obj) { return -obj; }
 
-inline double Equal(double a, double b) { 
-	if(fabs(a - b) < 1E-3) {
-		return 1.0;
+inline double Equal(double a, double b) {
+  if (fabs(a - b) < 1E-3) {
+    return 1.0;
   } else {
-   	return 0.0;
+    return 0.0;
   }
 }
-inline double Smaller(double a, double b) { 
-	if(a < b) {
-		return 1.0;
+inline double Smaller(double a, double b) {
+  if (a < b) {
+    return 1.0;
   } else {
-   	return 0.0;
+    return 0.0;
   }
 }
-inline double SmallerEqual(double a, double b) { 
-	if(a <= b) {
-		return 1.0;
+inline double SmallerEqual(double a, double b) {
+  if (a <= b) {
+    return 1.0;
   } else {
-   	return 0.0;
+    return 0.0;
   }
 }
-inline double Larger(double a, double b) { 
-	if(a > b) {
-		return 1.0;
+inline double Larger(double a, double b) {
+  if (a > b) {
+    return 1.0;
   } else {
-   	return 0.0;
+    return 0.0;
   }
 }
-inline double LargerEqual(double a, double b) { 
-	if(a >= b) {
-		return 1.0;
+inline double LargerEqual(double a, double b) {
+  if (a >= b) {
+    return 1.0;
   } else {
-   	return 0.0;
+    return 0.0;
   }
 }
-inline double UnEqual(double a, double b) { 
-	if(fabs(a - b) > 1E-3) {
-		return 1.0;
+inline double UnEqual(double a, double b) {
+  if (fabs(a - b) > 1E-3) {
+    return 1.0;
   } else {
-   	return 0.0;
+    return 0.0;
   }
 }
 
@@ -499,14 +542,16 @@ struct BaseCalc { // issue: is this used?
   }
 };
 
-  template<typename T>
-auto extractRetType(const T& instance) -> typename T::RetType { // issue: finish work. This can be used to handle also int and bool for all unary/binary operations
+template <typename T>
+auto extractRetType(const T &instance) ->
+    typename T::RetType { // issue: finish work. This can be used to handle also
+                          // int and bool for all unary/binary operations
   using ret = typename T::RetType;
-  return instance.getRetType();  
+  return instance.getRetType();
 }
 
 template <typename T, typename BaseTrait> struct BaseStore {
-	using RetType = T;
+  using RetType = T;
   using Type = T;
   using TypeTrait = BaseTrait;
   T *p = nullptr;
@@ -560,8 +605,8 @@ template <typename T, typename BaseTrait> struct BaseStore {
       mp.setMatrix(true, Rf_nrows(s), Rf_ncols(s));
     }
     for (int i = 0; i < sz; i++) {
-        p[i] = REAL(s)[i];
-      }
+      p[i] = REAL(s)[i];
+    }
     allocated = true;
   };
   BaseStore(size_t sz_) : sz(sz_), capacity(static_cast<size_t>(sz_ * 1.15)) {
@@ -581,10 +626,12 @@ template <typename T, typename BaseTrait> struct BaseStore {
     allocated = true;
   }
   BaseStore() {
-    sz = 1; capacity = 1; p = new T[capacity];
-    if constexpr(std::is_same_v<T, BaseType>) {
+    sz = 1;
+    capacity = 1;
+    p = new T[capacity];
+    if constexpr (std::is_same_v<T, BaseType>) {
       p[0] = 0.0;
-    } else if constexpr(std::is_same_v<T, bool>) {
+    } else if constexpr (std::is_same_v<T, bool>) {
       p[0] = false;
     }
     allocated = true;
@@ -597,12 +644,12 @@ template <typename T, typename BaseTrait> struct BaseStore {
     if (this == &other)
       return *this;
     if (other.size() > this->sz) {
-    	if(allocated) {
-    		size_t diff = other.size() - this->sz;
-      	this->realloc(this->sz + diff);	
-    	} else {
-    		resize(other.size());
-    	}
+      if (allocated) {
+        size_t diff = other.size() - this->sz;
+        this->realloc(this->sz + diff);
+      } else {
+        resize(other.size());
+      }
     }
     for (size_t i = 0; i < this->sz; i++) {
       p[i] = other[i];
@@ -629,11 +676,11 @@ template <typename T, typename BaseTrait> struct BaseStore {
       mp.setMatrix(true, Rf_nrows(s), Rf_ncols(s));
     }
     for (int i = 0; i < sz; i++) {
-        p[i] = REAL(s)[i];
-      }
+      p[i] = REAL(s)[i];
+    }
     allocated = true;
   }
-  
+
   ~BaseStore() {
     if (p != nullptr) {
       if (allocated) {
@@ -657,27 +704,27 @@ template <typename T, typename BaseTrait> struct BaseStore {
     p = new T[capacity];
     allocated = true;
   }
-  void resize(size_t newSize) { 
+  void resize(size_t newSize) {
     ass(newSize >= 1, "Size has to be larger than 0");
     if (!allocated) {
       init(newSize);
-      if constexpr(std::is_same_v<T, BaseType>) {
+      if constexpr (std::is_same_v<T, BaseType>) {
         fill(0.0);
-      } else if constexpr(std::is_same_v<T, bool>) {
+      } else if constexpr (std::is_same_v<T, bool>) {
         fill(false);
       }
       return;
     } else {
-      if(newSize > capacity) {
+      if (newSize > capacity) {
         ass(p != nullptr, "try to delete nullptr");
         delete[] p;
         capacity = static_cast<size_t>(newSize * 1.15);
         p = new T[capacity];
         sz = newSize;
-        allocated = true;  
-        if constexpr(std::is_same_v<T, BaseType>) {
+        allocated = true;
+        if constexpr (std::is_same_v<T, BaseType>) {
           fill(0.0);
-        } else if constexpr(std::is_same_v<T, bool>) {
+        } else if constexpr (std::is_same_v<T, bool>) {
           fill(false);
         }
       } else {
@@ -701,8 +748,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
     return p[idx];
   }
 
-  template<typename L2>
-  BaseStore &moveit(L2 &other) {
+  template <typename L2> BaseStore &moveit(L2 &other) {
     T *temporary = other.p;
     int tempSize = other.sz;
     int tempCapacity = other.capacity;
@@ -725,7 +771,8 @@ template <typename T, typename BaseTrait> struct BaseStore {
     temp = new T[sz];
     for (size_t i = 0; i < sz; i++)
       temp[i] = p[i];
-    if(p != nullptr && allocated) delete[] p;
+    if (p != nullptr && allocated)
+      delete[] p;
     p = new T[new_size];
     for (size_t i = 0; i < sz; i++)
       p[i] = temp[i];
@@ -758,7 +805,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
 };
 
 struct Indices : public BaseStore<size_t> {
-	using RetType = size_t;
+  using RetType = size_t;
 };
 
 // Points to a Variable and stores indicces in ind
@@ -785,23 +832,24 @@ template <typename T, typename SubsetTrait> struct Subset {
   void setMatrix(const MatrixParameter &mp_) {
     mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
   }
-  void resize(size_t newSize) { p -> resize(newSize); }
-  void realloc(size_t newSize) { p -> realloc(newSize); }
+  void resize(size_t newSize) { p->resize(newSize); }
+  void realloc(size_t newSize) { p->realloc(newSize); }
 
-  Subset(const Subset& other) {
-  	this->p = other.p;
+  Subset(const Subset &other) {
+    this->p = other.p;
     this->setMatrix(other.mp);
-    this -> ind = other.ind;
+    this->ind = other.ind;
   }
-  Subset(const Subset&& other) {
-  	this->p = other.p;
+  Subset(const Subset &&other) {
+    this->p = other.p;
     this->setMatrix(other.mp);
-    this -> ind = other.ind;
+    this->ind = other.ind;
   }
   template <typename T2, typename R2> Subset(Vec<T2, R2> &other) {
     this->p = &other.d;
   }
-  template <typename T2, typename R2, typename TraitOther> Subset(const Vec<T2, R2, TraitOther> &other) {
+  template <typename T2, typename R2, typename TraitOther>
+  Subset(const Vec<T2, R2, TraitOther> &other) {
     this->p = &other.d;
   }
   Subset(SEXP) = delete;
@@ -816,18 +864,17 @@ template <typename T, typename SubsetTrait> struct Subset {
   void setPtr(const T *pOther) { this->p = pOther; }
 
   CurrentBaseType &operator[](size_t pos) {
-    ass(this -> p != nullptr, "Subset is pointing to nothing!");
-    return this -> p->operator[](ind[pos % p -> size()]);
+    ass(this->p != nullptr, "Subset is pointing to nothing!");
+    return this->p->operator[](ind[pos % p->size()]);
   }
 
   CurrentBaseType operator[](size_t pos) const {
     ass(p != nullptr, "Subset is pointing to nothing!");
-    return this -> p->operator[](ind[pos % p -> size()]);
+    return this->p->operator[](ind[pos % p->size()]);
   }
 
   ~Subset() {}
 };
-
 
 // Points to a Variable and stores size
 template <typename T, typename BorrowTrait> struct Borrow {
@@ -868,9 +915,9 @@ template <typename T, typename BorrowTrait> struct Borrow {
     mp.setMatrix(other.mp);
   }
   Borrow(SEXP s) = delete;
-  Borrow(size_t i) {};
+  Borrow(size_t i){};
   Borrow(int i) = delete;
-  Borrow() {};
+  Borrow(){};
   Borrow(size_t r, size_t c) = delete;
   Borrow(size_t r, size_t c, const double value) = delete;
   Borrow(T *p, size_t sz) {
@@ -907,7 +954,7 @@ template <typename T, typename BorrowTrait> struct Borrow {
   void init(size_t size) = delete;
   void resize(size_t newSize) {
     ass(newSize >= 1, "Size has to be larger than 0");
-    if(newSize <= capacity) {
+    if (newSize <= capacity) {
       sz = newSize;
     } else {
       ass(false, "Cannot resize Borrow element");
@@ -931,8 +978,7 @@ template <typename T, typename BorrowTrait> struct Borrow {
     return p[idx];
   }
 
-  template<typename L2>
-  Borrow &moveit(L2 &other) = delete;
+  template <typename L2> Borrow &moveit(L2 &other) = delete;
   auto begin() const { return It<T>{p}; }
   auto end() const { return It<T>{p + sz}; }
   T &back() { return p[sz]; }
@@ -1058,29 +1104,29 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
     todelete = true;
   }
 
-  void resize(size_t newSize) { 
+  void resize(size_t newSize) {
     ass(newSize >= 1, "Size has to be larger than 0");
     if (!allocated) {
       init(newSize);
-      if constexpr(std::is_same_v<T, BaseType>) {
+      if constexpr (std::is_same_v<T, BaseType>) {
         fill(0.0);
-      } else if constexpr(std::is_same_v<T, bool>) {
+      } else if constexpr (std::is_same_v<T, bool>) {
         fill(false);
       }
       return;
     } else {
-      if(newSize > capacity) {
+      if (newSize > capacity) {
         ass(p != nullptr, "try to delete nullptr");
         delete[] p;
         sz = newSize;
         capacity = static_cast<size_t>(newSize * 1.15);
         p = new T[capacity];
-        allocated = true;  
+        allocated = true;
         todelete = true;
         sz = newSize;
-        if constexpr(std::is_same_v<T, BaseType>) {
+        if constexpr (std::is_same_v<T, BaseType>) {
           fill(0.0);
-        } else if constexpr(std::is_same_v<T, bool>) {
+        } else if constexpr (std::is_same_v<T, bool>) {
           fill(false);
         }
       } else {
@@ -1090,8 +1136,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
     }
   }
 
-  template<typename L2>
-  BorrowSEXP &moveit(L2 &other) {
+  template <typename L2> BorrowSEXP &moveit(L2 &other) {
     if (!todelete) {
       resize(other.size());
       T *temporary = other.p;
@@ -1184,24 +1229,23 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
   }
 };
 
-template<typename L, typename R>
-void defineMatrix(const L& l, const R& r,
-                  MatrixParameter &mp) {
-	using typeTraitL = std::remove_reference<decltype(convert(l))>::type::Type;
+template <typename L, typename R>
+void defineMatrix(const L &l, const R &r, MatrixParameter &mp) {
+  using typeTraitL = std::remove_reference<decltype(convert(l))>::type::Type;
   using typeTraitR = std::remove_reference<decltype(convert(r))>::type::Type;
   using isDoubleL = std::is_same<typeTraitL, DoubleTrait>;
   using isDoubleR = std::is_same<typeTraitR, DoubleTrait>;
   mp.setMatrix(false, 0, 0);
-  if constexpr(!isDoubleL::value && isDoubleR::value) {
-  	if(l.im()) {
-  		mp.setMatrix(true, l.nr(), l.nc());
-  	}
-  } else if constexpr(isDoubleL::value && !isDoubleR::value) {
-  	if(r.im()) {
-  		mp.setMatrix(true, r.nr(), r.nc());
-  	}
+  if constexpr (!isDoubleL::value && isDoubleR::value) {
+    if (l.im()) {
+      mp.setMatrix(true, l.nr(), l.nc());
+    }
+  } else if constexpr (isDoubleL::value && !isDoubleR::value) {
+    if (r.im()) {
+      mp.setMatrix(true, r.nr(), r.nc());
+    }
   } else {
-  	if (l.im() && r.im()) {
+    if (l.im() && r.im()) {
       size_t nrows = (l.nr() > r.nr()) ? l.nr() : r.nr();
       size_t ncols = (l.nc() > r.nc()) ? l.nc() : r.nc();
       mp.setMatrix(true, nrows, ncols);
@@ -1213,9 +1257,9 @@ void defineMatrix(const L& l, const R& r,
       size_t nrows = l.nr();
       size_t ncols = l.nc();
       mp.setMatrix(true, nrows, ncols);
-  	}	
+    }
   }
-} 
+}
 
 } // namespace etr
 

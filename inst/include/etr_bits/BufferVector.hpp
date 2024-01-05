@@ -251,7 +251,8 @@ template <typename T, typename R, typename Trait> struct Vec {
   }
 
   Vec &operator=(const Vec<T, R, Trait> &otherVec) {
-    static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
+
+     static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
     static_assert(!isBinaryOP::value, "Cannot assign to binary calculation");
     if constexpr (isBuffer::value) {
       Buffer<T> temp(otherVec.size()); // issue: create Buffer<T> as attribute
@@ -322,7 +323,7 @@ template <typename T, typename R, typename Trait> struct Vec {
       using isBaseTypeRet = std::is_same<RetTypeOtherVec, BaseType>;
       if constexpr(isBaseTypeRet::value) {
         for (size_t i = 0; i < otherVec.size(); i++) {
-          temp[i] = otherVec[i];
+           temp[i] = otherVec[i];
         }  
       } else {
         for (size_t i = 0; i < otherVec.size(); i++) {
