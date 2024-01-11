@@ -4,6 +4,7 @@
 #include "UtilsTraits.hpp"
 #include "binaryCalculations.hpp"
 #include "unaryCalculations.hpp"
+#include <type_traits>
 
 /*
   Assume v.l and v.r are of type Buffer.
@@ -22,6 +23,10 @@ template <typename T> struct ExtractTypeD;
 template <typename T, typename R, typename Trait>
 struct ExtractTypeD<Vec<T, R, Trait>> {
   using type = R;
+};
+template <typename T, typename R, typename Trait>
+struct ExtractTypeD<const Vec<T, R, Trait>> {
+  using type = R const;
 };
 template <typename T> using ExtractedTypeD = typename ExtractTypeD<T>::type;
 
@@ -61,7 +66,7 @@ template <int NBuffer_, int NBorrow_, int NBorrowSEXP_> struct AllVars {
     LoopVariadicT(
         [&](auto arg) {
           this->varBuffer[idx] = arg;
-          this -> VarSizes[idx] = arg -> size();
+          this->VarSizes[idx] = arg->size();
           idx++;
         },
         args...);
@@ -72,7 +77,7 @@ template <int NBuffer_, int NBorrow_, int NBorrowSEXP_> struct AllVars {
     LoopVariadicT(
         [&](auto arg) {
           this->varBorrow[idx] = arg;
-          this -> VarSizes[idx + NBuffer] = arg -> size();
+          this->VarSizes[idx + NBuffer] = arg->size();
           idx++;
         },
         args...);
@@ -83,7 +88,7 @@ template <int NBuffer_, int NBorrow_, int NBorrowSEXP_> struct AllVars {
     LoopVariadicT(
         [&](auto arg) {
           this->varBorrowSEXP[idx] = arg;
-          this -> VarSizes[idx + NBuffer + NBorrow] = arg -> size();
+          this->VarSizes[idx + NBuffer + NBorrow] = arg->size();
           idx++;
         },
         args...);
@@ -128,7 +133,6 @@ template <int NBuffer_, int NBorrow_, int NBorrowSEXP_> struct AllVars {
       return varBorrowSEXP[Idx - NBuffer - NBorrowSEXP]->nc();
     }
   }
-
 };
 
 struct VarPointerTrait {};
@@ -149,18 +153,14 @@ struct VarPointer {
 
   size_t nc() { return AllVarsRef.nc(Idx); }
 
-  template<typename AV>
-  static size_t getSize(AV& av) {
+  template <typename AV> static size_t getSize(AV &av) {
     if constexpr (Idx < av.NBuffer) {
-      return av.varBuffer[Idx] -> size();
-    } else if constexpr (Idx >= av.NBuffer &&
-                         Idx < (av.NBuffer + av.NBorrow)) {
-      return av.varBorrow[Idx - av.NBuffer] -> size();
+      return av.varBuffer[Idx]->size();
+    } else if constexpr (Idx >= av.NBuffer && Idx < (av.NBuffer + av.NBorrow)) {
+      return av.varBorrow[Idx - av.NBuffer]->size();
     } else if constexpr (Idx >= (av.NBuffer + av.NBorrow) &&
-                         Idx < (av.NBuffer + av.NBorrow +
-                                av.NBorrowSEXP)) {
-      return av
-          .varBorrowSEXP[Idx - av.NBuffer - av.NBorrowSEXP] -> size();
+                         Idx < (av.NBuffer + av.NBorrow + av.NBorrowSEXP)) {
+      return av.varBorrowSEXP[Idx - av.NBuffer - av.NBorrowSEXP]->size();
     } else {
       ass(false, "Unknown variable index found");
     }
@@ -182,44 +182,43 @@ struct VarPointer {
     }
   }
 
-  template<typename AV>
-  static auto getVal(AV& av, size_t VecIdx) {
+  template <typename AV> static auto getVal(AV &av, size_t VecIdx) {
     if constexpr (Idx < av.NBuffer) {
-      return (av.varBuffer[Idx] -> operator[](VecIdx));
-    } else if constexpr (Idx >= av.NBuffer &&
-                         Idx < (av.NBuffer + av.NBorrow)) {
-      return av.varBorrow[Idx - av.NBuffer] -> operator[](VecIdx);
+      return (av.varBuffer[Idx]->operator[](VecIdx));
+    } else if constexpr (Idx >= av.NBuffer && Idx < (av.NBuffer + av.NBorrow)) {
+      return av.varBorrow[Idx - av.NBuffer]->operator[](VecIdx);
     } else if constexpr (Idx >= (av.NBuffer + av.NBorrow) &&
-                         Idx < (av.NBuffer + av.NBorrow +
-                                av.NBorrowSEXP)) {
-      return av
-          .varBorrowSEXP[Idx - av.NBuffer - av.NBorrowSEXP] -> operator[](VecIdx);
+                         Idx < (av.NBuffer + av.NBorrow + av.NBorrowSEXP)) {
+      return av.varBorrowSEXP[Idx - av.NBuffer - av.NBorrowSEXP]->operator[](
+          VecIdx);
     } else {
       ass(false, "Unknown variable index found");
     }
   }
 
-  template<typename AV>
-  static auto getDeriv(AV& av, size_t VecIdx) {
+  template <typename AV> static auto getDeriv(AV &av, size_t VecIdx) {
     if constexpr (Idx < av.NBuffer) {
-      if (av.varBuffer[Idx] -> size() != av.VarSizes[Idx]) {
-        av.Derivs[Idx].resize(av.varBuffer[Idx] -> size());
-        if(Idx == av.IndepVarIdx) av.Derivs[Idx].fill(1.0); // issue: correct?
+      if (av.varBuffer[Idx]->size() != av.VarSizes[Idx]) {
+        av.Derivs[Idx].resize(av.varBuffer[Idx]->size());
+        if (Idx == av.IndepVarIdx)
+          av.Derivs[Idx].fill(1.0); // issue: correct?
       }
       return av.Derivs[Idx][VecIdx];
-    } else if constexpr (Idx >= av.NBuffer &&
-                         Idx < (av.NBuffer + av.NBorrow)) {
-      if (av.varBorrow[Idx - av.NBuffer] -> size() != av.VarSizes[Idx]) {
-        av.Derivs[Idx].resize(av.varBorrow[Idx - av.NBuffer] -> size());
-        if(Idx == av.IndepVarIdx) av.Derivs[Idx].fill(1.0); // issue: correct?
+    } else if constexpr (Idx >= av.NBuffer && Idx < (av.NBuffer + av.NBorrow)) {
+      if (av.varBorrow[Idx - av.NBuffer]->size() != av.VarSizes[Idx]) {
+        av.Derivs[Idx].resize(av.varBorrow[Idx - av.NBuffer]->size());
+        if (Idx == av.IndepVarIdx)
+          av.Derivs[Idx].fill(1.0); // issue: correct?
       }
       return av.Derivs[Idx][VecIdx];
     } else if constexpr (Idx >= (av.NBuffer + av.NBorrow) &&
-                         Idx < (av.NBuffer + av.NBorrow +
-                                av.NBorrowSEXP)) {
-      if( av.varBorrowSEXP[Idx - av.NBuffer - av.NBorrowSEXP] -> size() != av.VarSizes[Idx]) {
-        av.Derivs[Idx].resize(av.varBorrowSEXP[Idx - av.NBuffer - av.NBorrowSEXP] -> size());
-        if(Idx == av.IndepVarIdx) av.Derivs[Idx].fill(1.0); // issue: correct?
+                         Idx < (av.NBuffer + av.NBorrow + av.NBorrowSEXP)) {
+      if (av.varBorrowSEXP[Idx - av.NBuffer - av.NBorrowSEXP]->size() !=
+          av.VarSizes[Idx]) {
+        av.Derivs[Idx].resize(
+            av.varBorrowSEXP[Idx - av.NBuffer - av.NBorrowSEXP]->size());
+        if (Idx == av.IndepVarIdx)
+          av.Derivs[Idx].fill(1.0); // issue: correct?
       }
       return av.Derivs[Idx][VecIdx];
     } else {
@@ -228,16 +227,17 @@ struct VarPointer {
   }
 };
 
-template <typename T>
-struct ExtractTypeTrait;
+template <typename T> struct ExtractTypeTrait {
+  using type = std::false_type;
+};
 
 template <typename T, int Idx, typename TypeTrait>
 struct ExtractTypeTrait<VarPointer<T, Idx, TypeTrait>> {
-    using type = TypeTrait;
+  using type = TypeTrait;
 };
 template <typename T, int Idx, typename TypeTrait>
-struct ExtractTypeTrait<const VarPointer<T, Idx, TypeTrait>&> {
-    using type = TypeTrait;
+struct ExtractTypeTrait<const VarPointer<T, Idx, TypeTrait> &> {
+  using type = TypeTrait;
 };
 template <typename T>
 using ExtractedTypeTrait = typename ExtractTypeTrait<T>::type;
@@ -248,78 +248,82 @@ concept IsVarPointer = requires {
   requires std::is_same_v<ExtractedTypeTrait<T>, VarPointerTrait>;
 };
 
-
-
 template <typename L, typename R>
-auto operator+(const L &l, const R &r) { // issue: check for scalar
-  if constexpr(!IsVec<L> && !IsVec<R>) {
-    auto lv = *l.get(); auto rv = *r.get();
-    MatrixParameter mp; defineMatrix(lv, rv, mp);
-    return Vec<BaseType, BinaryOperation<decltype(l), decltype(r), Addition,
-                                       PlusTrait> > (
-             BinaryOperation<decltype(l), decltype(r), Addition, PlusTrait>(l, r, mp) );
-  } else if constexpr(IsVec<L> && !IsVec<R>) {
-    auto lv = l.d; auto rv = *r.get();
-    MatrixParameter mp; defineMatrix(lv, rv, mp);
-    return Vec<BaseType, BinaryOperation<decltype(l), decltype(r), Addition,
-                                       PlusTrait> > (
-             BinaryOperation<decltype(l), decltype(r), Addition, PlusTrait>(l, r, mp) );
-  } else if constexpr(IsVec<L> && IsVec<R>) {
-    auto lv = *l.get(); auto rv = r.d;
-    MatrixParameter mp; defineMatrix(lv, rv, mp);
-    return Vec<BaseType, BinaryOperation<decltype(l), decltype(r), Addition,
-                                       PlusTrait> > (
-             BinaryOperation<decltype(l), decltype(r), Addition, PlusTrait>(l, r, mp) );
+auto add(const L &l, const R &r) { // issue: check for scalar. And do what?
+  if constexpr (!IsVec<L> && !IsVec<R>) {
+    auto lv = *l.get();
+    auto rv = *r.get();
+    MatrixParameter mp;
+    defineMatrix(lv, rv, mp);
+    return Vec<BaseType,
+               BinaryOperation<decltype(l), decltype(r), Addition, PlusTrait>>(
+        BinaryOperation<decltype(l), decltype(r), Addition, PlusTrait>(l, r,
+                                                                       mp));
+  } else if constexpr (IsVec<L> && !IsVec<R>) {
+    auto lv = l.d;
+    auto rv = *r.get();
+    MatrixParameter mp;
+    defineMatrix(lv, rv, mp);
+    return Vec<BaseType,
+               BinaryOperation<decltype(l), decltype(r), Addition, PlusTrait>>(
+        BinaryOperation<decltype(l), decltype(r), Addition, PlusTrait>(l, r,
+                                                                       mp));
+  } else if constexpr (!IsVec<L> && IsVec<R>) {
+    auto lv = *l.get();
+    auto rv = r.d;
+    MatrixParameter mp;
+    defineMatrix(lv, rv, mp);
+    return Vec<BaseType,
+               BinaryOperation<decltype(l), decltype(r), Addition, PlusTrait>>(
+        BinaryOperation<decltype(l), decltype(r), Addition, PlusTrait>(l, r,
+                                                                       mp));
+  } else if constexpr (IsVec<L> && IsVec<R>) {
+    auto lv = l.d;
+    auto rv = r.d;
+    MatrixParameter mp;
+    defineMatrix(lv, rv, mp);
+    return Vec<BaseType,
+               BinaryOperation<decltype(l), decltype(r), Addition, PlusTrait>>(
+        BinaryOperation<decltype(l), decltype(r), Addition, PlusTrait>(l, r,
+                                                                       mp));
   }
 }
 
-
-template <typename L, typename R>
-auto operator*(const L &l, const R &r) {
-  if constexpr(!IsVec<L> && !IsVec<R>) {
-    auto lv = *l.get(); auto rv = *r.get();
-    MatrixParameter mp; defineMatrix(lv, rv, mp);
-    return Vec<BaseType, BinaryOperation<decltype(l), decltype(r), Times,
-                                       TimesTrait> > (
-             BinaryOperation<decltype(l), decltype(r), Times, TimesTrait>(l, r, mp) );  
-  } else if constexpr(IsVec<L> && !IsVec<R>) {
-    auto lv = l.d; auto rv = *r.get();
-    MatrixParameter mp; defineMatrix(lv, rv, mp);
-    return Vec<BaseType, BinaryOperation<decltype(l), decltype(r), Times,
-                                       TimesTrait> > (
-             BinaryOperation<decltype(l), decltype(r), Times, TimesTrait>(l, r, mp) );  
-  } else if constexpr(IsVec<L> && IsVec<R>) {
-    auto lv = *l.get(); auto rv = r.d;
-    MatrixParameter mp; defineMatrix(lv, rv, mp);
-    return Vec<BaseType, BinaryOperation<decltype(l), decltype(r), Times,
-                                       TimesTrait> > (
-             BinaryOperation<decltype(l), decltype(r), Times, TimesTrait>(l, r, mp) );  
+template <typename L, typename R> auto mul(const L &l, const R &r) {
+  if constexpr (!IsVec<L> && !IsVec<R>) {
+    auto lv = *l.get();
+    auto rv = *r.get();
+    MatrixParameter mp;
+    defineMatrix(lv, rv, mp);
+    return Vec<BaseType,
+               BinaryOperation<decltype(l), decltype(r), Times, TimesTrait>>(
+        BinaryOperation<decltype(l), decltype(r), Times, TimesTrait>(l, r, mp));
+  } else if constexpr (IsVec<L> && !IsVec<R>) {
+    auto lv = l.d;
+    auto rv = *r.get();
+    MatrixParameter mp;
+    defineMatrix(lv, rv, mp);
+    return Vec<BaseType,
+               BinaryOperation<decltype(l), decltype(r), Times, TimesTrait>>(
+        BinaryOperation<decltype(l), decltype(r), Times, TimesTrait>(l, r, mp));
+  } else if constexpr (!IsVec<L> && IsVec<R>) {
+    auto lv = *l.get();
+    auto rv = r.d;
+    MatrixParameter mp;
+    defineMatrix(lv, rv, mp);
+    return Vec<BaseType,
+               BinaryOperation<decltype(l), decltype(r), Times, TimesTrait>>(
+        BinaryOperation<decltype(l), decltype(r), Times, TimesTrait>(l, r, mp));
+  } else if constexpr (IsVec<L> && IsVec<R>) {
+    auto lv = l.d;
+    auto rv = r.d;
+    MatrixParameter mp;
+    defineMatrix(lv, rv, mp);
+    return Vec<BaseType,
+               BinaryOperation<decltype(l), decltype(r), Times, TimesTrait>>(
+        BinaryOperation<decltype(l), decltype(r), Times, TimesTrait>(l, r, mp));
   }
 }
-
-
-
-
-/*
-template <typename L, typename R, int IdxL, int IdxR>
-auto operator+(const VarPointer<L, IdxL> &l, const VarPointer<R, IdxR> &r) { // issue: check for scalar
-  auto lv = *l.get(); auto rv = *r.get();
-  MatrixParameter mp; defineMatrix(lv, rv, mp);
-  return Vec<BaseType, BinaryOperation<decltype(l), decltype(r), Addition,
-                                       PlusTrait> > (
-             BinaryOperation<decltype(l), decltype(r), Addition, PlusTrait>(l, r, mp) );
-}
-
-
-template <typename L, typename R, int IdxL, int IdxR>
-auto operator*(const VarPointer<L, IdxL> &l, const VarPointer<R, IdxR> &r) {
-  auto lv = *l.get(); auto rv = *r.get();
-  MatrixParameter mp; defineMatrix(lv, rv, mp);
-  return Vec<BaseType, BinaryOperation<decltype(l), decltype(r), Times,
-                                       TimesTrait> > (
-             BinaryOperation<decltype(l), decltype(r), Times, TimesTrait>(l, r, mp) );
-}
-*/
 
 template <typename L, typename R, typename LDeriv, typename RDeriv,
           typename Trait, typename OpTrait>
@@ -330,19 +334,18 @@ struct QuarternyType {
   using typeTraitRDeriv = RDeriv;
   using TypeTrait = Trait;
 
-  template<typename AV>
-  static size_t getSize(AV& av) {
-    return LDeriv::getSize(av) > RDeriv::getSize(av) ? LDeriv::getSize(av) : RDeriv::getSize(av);
+  template <typename AV> static size_t getSize(AV &av) {
+    return LDeriv::getSize(av) > RDeriv::getSize(av) ? LDeriv::getSize(av)
+                                                     : RDeriv::getSize(av);
   }
 
-  template<typename AV>
-  static auto getVal(AV& av, size_t idx) {
+  template <typename AV> static auto getVal(AV &av, size_t idx) {
     return LDeriv::getVal(av, idx) * RDeriv::getVal(av, idx);
   }
 
-  template<typename AV>
-  static auto getDeriv(AV& av, size_t idx) {
-    return LDeriv::getDeriv(av, idx) * R::getVal(av, idx) + RDeriv::getDeriv(av, idx) * L::getVal(av, idx);
+  template <typename AV> static auto getDeriv(AV &av, size_t idx) {
+    return LDeriv::getDeriv(av, idx) * R::getVal(av, idx) +
+           RDeriv::getDeriv(av, idx) * L::getVal(av, idx);
   }
 };
 template <typename L, typename R, typename LDeriv, typename RDeriv,
@@ -358,18 +361,16 @@ struct BinaryType {
   using typeTraitRDeriv = RDeriv;
   using TypeTrait = Trait;
 
-  template<typename AV>
-  static size_t getSize(AV& av) {
-    return LDeriv::getSize(av) > RDeriv::getSize(av) ? LDeriv::getSize(av) : RDeriv::getSize(av);
+  template <typename AV> static size_t getSize(AV &av) {
+    return LDeriv::getSize(av) > RDeriv::getSize(av) ? LDeriv::getSize(av)
+                                                     : RDeriv::getSize(av);
   }
 
-  template<typename AV>
-  static auto getVal(AV& av, size_t idx) {
+  template <typename AV> static auto getVal(AV &av, size_t idx) {
     return LDeriv::getVal(av, idx) + RDeriv::getVal(av, idx);
   }
 
-  template<typename AV>
-  static auto getDeriv(AV& av, size_t idx) {
+  template <typename AV> static auto getDeriv(AV &av, size_t idx) {
     return LDeriv::getDeriv(av, idx) + RDeriv::getDeriv(av, idx);
   }
 };
@@ -385,45 +386,87 @@ inline constexpr UnaryType<I, Trait, OpTrait> produceUnaryType() {
   return UnaryType<I, Trait, OpTrait>();
 }
 
-template <typename T> struct VariableType {
-  using Type = T;
+struct VariableTypeTrait {};
 
-  template<typename AV>
-  static size_t getSize(AV& av) {
+template <typename T> struct VariableType {
+  // issue: needs to handle the case if T is e.g. BinaryOperation
+  using Type = T;
+  using TypeTrait = VariableTypeTrait;
+
+  template <typename AV> static size_t getSize(AV &av) {
     using Ty = typename std::remove_reference<Type>::type;
     return Ty::template getSize<AV>(av);
   }
-  
-  template<typename AV>
-  static auto getVal(AV& av, size_t VecIdx) {
+
+  template <typename AV> static auto getVal(AV &av, size_t VecIdx) {
     using Ty = typename std::remove_reference<Type>::type;
-    return Ty::template getVal<AV>(av, VecIdx);
+    if constexpr(IsBinary<Ty>) {
+      return Ty::template getVal<AV>(av, VecIdx);  // issue: does this always work. Reuqired that all variables are replaced by VecPointer
+    } else {
+      return Ty::template getVal<AV>(av, VecIdx);  
+    }
   }
 
-  template<typename AV>
-  static auto getDeriv(AV& av, size_t VecIdx) {
+  template <typename AV> static auto getDeriv(AV &av, size_t VecIdx) {
     using Ty = typename std::remove_reference<Type>::type;
     return Ty::template getDeriv<AV>(av, VecIdx);
   }
 };
-template <typename T> inline constexpr VariableType<T> produceVariableType() {
-  return VariableType<T>();
+template <typename TRaw> inline constexpr auto produceVariableType() {
+  using T = std::remove_reference_t<TRaw>;
+  if constexpr (IsVec<T>) {
+    using tD = ExtractedTypeD<T>;
+    return VariableType<tD>();
+  } else {
+    return VariableType<TRaw>();
+  }
+}
+
+template <typename T> struct ExtractDType;
+
+template <typename T, typename R, typename Trait>
+struct ExtractDType<Vec<T, R, Trait>> {
+  using type = R;
+};
+
+template <typename T> using ExtractedDType = typename ExtractDType<T>::type;
+
+template <typename T>
+  requires IsVarPointer<T>
+inline constexpr auto walkT() -> VariableType<T>;
+
+template <typename T>
+  requires IsMultiplication<T>
+inline constexpr auto walkT();
+
+template <typename T>
+  requires IsAddition<T>
+inline constexpr auto walkT();
+
+template <typename T> inline constexpr auto walkT() {
+  using cleanType = std::remove_const_t<std::remove_reference_t<T>>;
+  using tD = ExtractedDType<cleanType>;
+  constexpr auto res = walkT<tD>();
+  static_assert(!IsVec<decltype(res)>,
+                "Cannot create derivative expression tree");
+  return VariableType<decltype(res)>();
 }
 
 template <typename T>
   requires IsVarPointer<T>
 inline constexpr auto walkT() -> VariableType<T> {
+  static_assert(!IsVec<T>, "Cannot create derivative expression tree");
   return VariableType<T>();
 }
 
-template <typename T>
-  requires IsMultiplication<T>
+template <typename TRaw>
+  requires IsMultiplication<TRaw>
 inline constexpr auto walkT() {
+  using T = std::remove_const_t<std::remove_reference_t<TRaw>>;
   constexpr auto L = produceVariableType<typename T::typeTraitL>();
   constexpr auto R = produceVariableType<typename T::typeTraitR>();
   constexpr auto LDeriv = walkT<typename T::typeTraitL>();
   constexpr auto RDeriv = walkT<typename T::typeTraitR>();
-
   return produceQuarternyType<decltype(L), decltype(R), decltype(LDeriv),
                               decltype(RDeriv), QuarternaryTrait,
                               TimesDerivTrait>();
@@ -438,19 +481,26 @@ inline constexpr auto walkT() {
                            PlusDerivTrait>();
 }
 
+template <typename T>
+  requires(IsVec<T> && !IsVariable<T>)
+inline constexpr auto walkT() {
+  using tD = ExtractedTypeD<T>;
+  constexpr auto res = walkT<tD>();
+  return res;
+}
+
 template <typename T, typename AV>
   requires(IsVec<T> && !IsVariable<T>)
-inline void walkT(AV& av) {
+inline void eval(AV &av) {
   using tD = ExtractedTypeD<T>;
   printTAST<tD>();
-  walkT<tD>();
   constexpr auto res = walkT<tD>();
   std::cout << "final result " << std::endl;
   printTAST<decltype(res)>();
   for(size_t i = 0; i < res.getSize(av); i++) {
-    std::cout << "val = " << res.getVal(av, i) << " deriv = " << res.getDeriv(av, i) << std::endl;
+    std::cout << "val = " << res.getVal(av, i) << " deriv = " <<
+    res.getDeriv(av, i) << std::endl;
   }
-  return;
 }
 
 } // namespace etr

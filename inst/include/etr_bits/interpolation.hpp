@@ -5,8 +5,8 @@
 
 namespace etr {
 
-template<typename A, typename B, typename C>
-inline double li(const A& t_, const B&timeVec, const C& parVec) {
+template <typename A, typename B, typename C>
+inline double li(const A &t_, const B &timeVec, const C &parVec) {
   using typeTraitA = std::remove_reference<decltype(t_)>::type::TypeTrait;
   using typeTraitB = std::remove_reference<decltype(timeVec)>::type::TypeTrait;
   using typeTraitC = std::remove_reference<decltype(parVec)>::type::TypeTrait;
@@ -14,70 +14,68 @@ inline double li(const A& t_, const B&timeVec, const C& parVec) {
   using isVecB = std::is_same<typeTraitB, VectorTrait>;
   using isVecC = std::is_same<typeTraitC, VectorTrait>;
 
-  if constexpr(isVecA::value && isVecB::value && isVecC::value) {
-  	ass(t_.size() == 1, "timepoint input has to have length == 1");
-  	double t = t_[0];
-  	double t0, t1;
-  	double y0, y1, deltaPar, deltaT, m;
-  	double ret;
-  	ass(timeVec.size() == parVec.size(), "x and y differ in length");
-  	// not in boundaries
-  	if (t >= timeVec[timeVec.size()]) {
-  	  ret = parVec[parVec.size()];
-  	  return ret;
-  	} else if (t <= timeVec[0]) {
-  	  ret = parVec[0];
-  	  return ret;
-  	}
-  	// in boundaries
-  	for (size_t i = 0; i < timeVec.size(); i++) {
-  	  if (t >= timeVec[i] && t < timeVec[i + 1]) {
-  	    t0 = timeVec[i];
-  	    t1 = timeVec[i + 1];
-  	    y0 = parVec[i];
-  	    y1 = parVec[i + 1];
-  	    deltaPar = y1 - y0;
-  	    deltaT = t1 - t0;
-  	    ret = m * (t - t0) + y0;
-  	  }
-  	}
-  	return (ret);	
-  } else if constexpr(!isVecA::value && isVecB::value && isVecC::value) {
-  	double t = static_cast<BaseType>(t_);
-  	double t0, t1;
-  	double y0, y1, deltaPar, deltaT, m;
-  	double ret;
-  	ass(timeVec.size() == parVec.size(), "x and y differ in length");
-  	// not in boundaries
-  	if (t >= timeVec[timeVec.size()]) {
-  	  ret = parVec[parVec.size()];
-  	  return ret;
-  	} else if (t <= timeVec[0]) {
-  	  ret = parVec[0];
-  	  return ret;
-  	}
-  	// in boundaries
-  	for (size_t i = 0; i < timeVec.size(); i++) {
-  	  if (t >= timeVec[i] && t < timeVec[i + 1]) {
-  	    t0 = timeVec[i];
-  	    t1 = timeVec[i + 1];
-  	    y0 = parVec[i];
-  	    y1 = parVec[i + 1];
-  	    deltaPar = y1 - y0;
-  	    deltaT = t1 - t0;
-  	    ret = m * (t - t0) + y0;
-  	  }
-  	}
-  	return (ret);	
+  if constexpr (isVecA::value && isVecB::value && isVecC::value) {
+    ass(t_.size() == 1, "timepoint input has to have length == 1");
+    double t = t_[0];
+    double t0, t1;
+    double y0, y1, deltaPar, deltaT, m;
+    double ret;
+    ass(timeVec.size() == parVec.size(), "x and y differ in length");
+    // not in boundaries
+    if (t >= timeVec[timeVec.size()]) {
+      ret = parVec[parVec.size()];
+      return ret;
+    } else if (t <= timeVec[0]) {
+      ret = parVec[0];
+      return ret;
+    }
+    // in boundaries
+    for (size_t i = 0; i < timeVec.size(); i++) {
+      if (t >= timeVec[i] && t < timeVec[i + 1]) {
+        t0 = timeVec[i];
+        t1 = timeVec[i + 1];
+        y0 = parVec[i];
+        y1 = parVec[i + 1];
+        deltaPar = y1 - y0;
+        deltaT = t1 - t0;
+        ret = m * (t - t0) + y0;
+      }
+    }
+    return (ret);
+  } else if constexpr (!isVecA::value && isVecB::value && isVecC::value) {
+    double t = static_cast<BaseType>(t_);
+    double t0, t1;
+    double y0, y1, deltaPar, deltaT, m;
+    double ret;
+    ass(timeVec.size() == parVec.size(), "x and y differ in length");
+    // not in boundaries
+    if (t >= timeVec[timeVec.size()]) {
+      ret = parVec[parVec.size()];
+      return ret;
+    } else if (t <= timeVec[0]) {
+      ret = parVec[0];
+      return ret;
+    }
+    // in boundaries
+    for (size_t i = 0; i < timeVec.size(); i++) {
+      if (t >= timeVec[i] && t < timeVec[i + 1]) {
+        t0 = timeVec[i];
+        t1 = timeVec[i + 1];
+        y0 = parVec[i];
+        y1 = parVec[i + 1];
+        deltaPar = y1 - y0;
+        deltaT = t1 - t0;
+        ret = m * (t - t0) + y0;
+      }
+    }
+    return (ret);
   } else {
-  	ass(false, "Input for interpolation has to be scalar, vec, vec");
+    ass(false, "Input for interpolation has to be scalar, vec, vec");
   }
 }
 
-template<typename A, typename B, typename C>
-inline double cmrInternal(const A &tInp,
-				  const B &timeVec,
-				  const C &parVec) {
+template <typename A, typename B, typename C>
+inline double cmrInternal(const A &tInp, const B &timeVec, const C &parVec) {
   using typeTraitA = std::remove_reference<decltype(tInp)>::type::TypeTrait;
   using typeTraitB = std::remove_reference<decltype(timeVec)>::type::TypeTrait;
   using typeTraitC = std::remove_reference<decltype(parVec)>::type::TypeTrait;
@@ -86,14 +84,14 @@ inline double cmrInternal(const A &tInp,
   using isVecC = std::is_same<typeTraitC, VectorTrait>;
 
   double t = 0.0;
-  if constexpr(isVecA::value && isVecB::value && isVecC::value) {
-	t = tInp[0];
-  } else if constexpr(!isVecA::value && isVecB::value && isVecC::value) {
-  	t = static_cast<BaseType>(tInp);
+  if constexpr (isVecA::value && isVecB::value && isVecC::value) {
+    t = tInp[0];
+  } else if constexpr (!isVecA::value && isVecB::value && isVecC::value) {
+    t = static_cast<BaseType>(tInp);
   } else {
-  	ass(false, "Input for interpolation has to be scalar, vec, vec");
+    ass(false, "Input for interpolation has to be scalar, vec, vec");
   }
-  
+
   int idx0, idx1, idx2, idx3;
   double t0, t1, t2, t3;
   double y0, y1, y2, y3;
@@ -169,19 +167,15 @@ inline double cmrInternal(const A &tInp,
   return res;
 }
 
-
-template<typename A, typename B, typename C>
-inline double cmr(const A &tInp,
-          const B &timeVec,
-          const C &parVec) {
-  if constexpr(std::is_arithmetic_v<A>) {
+template <typename A, typename B, typename C>
+inline double cmr(const A &tInp, const B &timeVec, const C &parVec) {
+  if constexpr (std::is_arithmetic_v<A>) {
     return cmrInternal(Vec<BaseType>(tInp), timeVec, parVec);
   } else {
     return cmrInternal(tInp, timeVec, parVec);
   }
 }
 
-
-}
+} // namespace etr
 
 #endif

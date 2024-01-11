@@ -9,7 +9,7 @@ namespace etr {
 
 template <typename T, typename Trait, typename CTrait>
 struct Buffer : public BaseStore<T> {
-  using RetType = T; //BaseType;
+  using RetType = T; // BaseType;
   using TypeTrait = Trait;
   using CaseTrait = CTrait;
 };
@@ -19,6 +19,7 @@ template <typename T, typename R, typename Trait> struct Vec {
   using TypeTrait = Trait;
   using CaseTrait = Trait;
   R d;
+  using DType = R;
   using RetType = std::remove_reference<decltype(d)>::type::RetType;
   using typeTraitD = std::remove_reference<decltype(d)>::type::TypeTrait;
   using isBuffer = std::is_same<typeTraitD, BufferTrait>;
@@ -29,25 +30,31 @@ template <typename T, typename R, typename Trait> struct Vec {
   using isUnaryOP = std::is_same<caseTraitD, UnaryTrait>;
   using isBinaryOP = std::is_same<caseTraitD, BinaryTrait>;
 
-  RetType getRetType() const {
-    return RetType{};
-  }
+  RetType getRetType() const { return RetType{}; }
 
   template <typename T2> Vec(T2 n) = delete;
   // move constructors
-  template <typename L2> explicit Vec(const Subset<L2> &&inp) : d(inp) {d.setMatrix(inp.mp);}
-  template <typename L2> explicit Vec(const Buffer<L2> &&inp) : d(inp) {d.setMatrix(inp.mp);}
+  template <typename L2> explicit Vec(const Subset<L2> &&inp) : d(inp) {
+    d.setMatrix(inp.mp);
+  }
+  template <typename L2> explicit Vec(const Buffer<L2> &&inp) : d(inp) {
+    d.setMatrix(inp.mp);
+  }
   template <typename U = R, typename T2>
     requires std::is_same_v<U, Borrow<BaseType>>
-  explicit Vec(const Borrow<T2> &&borrowed) : d(borrowed) {d.setMatrix(borrowed.mp);}
+  explicit Vec(const Borrow<T2> &&borrowed) : d(borrowed) {
+    d.setMatrix(borrowed.mp);
+  }
   template <typename L2, typename R2, binaryFct f, typename OperationTrait>
   explicit Vec(const BinaryOperation<L2, R2, f, OperationTrait> &&inp)
       : d(inp) {
     using TypeTrait = OperationTrait;
     d.setMatrix(inp.mp);
   }
-  template <typename L2, typename R2, binaryFct f, typename OperationTrait, typename DetailTrait> // only for comparison!
-  explicit Vec(const BinaryOperation<L2, R2, f, OperationTrait, DetailTrait> &&inp)
+  template <typename L2, typename R2, binaryFct f, typename OperationTrait,
+            typename DetailTrait> // only for comparison!
+  explicit Vec(
+      const BinaryOperation<L2, R2, f, OperationTrait, DetailTrait> &&inp)
       : d(inp) {
     using TypeTrait = OperationTrait;
     d.setMatrix(inp.mp);
@@ -59,15 +66,24 @@ template <typename T, typename R, typename Trait> struct Vec {
   }
 
   // copy constructors
-  template <typename L2> explicit Vec(Subset<L2> &inp) : d(inp) {d.setMatrix(inp.mp);}
-  template <typename L2> explicit Vec(const Buffer<L2> &inp) : d(inp) {d.setMatrix(inp.mp);}
-  template <typename L2, typename TraitOther> explicit Vec(const Buffer<L2, TraitOther> &inp) : d(inp) {d.setMatrix(inp.mp);}
+  template <typename L2> explicit Vec(Subset<L2> &inp) : d(inp) {
+    d.setMatrix(inp.mp);
+  }
+  template <typename L2> explicit Vec(const Buffer<L2> &inp) : d(inp) {
+    d.setMatrix(inp.mp);
+  }
+  template <typename L2, typename TraitOther>
+  explicit Vec(const Buffer<L2, TraitOther> &inp) : d(inp) {
+    d.setMatrix(inp.mp);
+  }
   template <typename U = R, typename T2>
     requires std::is_same_v<U, Borrow<BaseType>>
-  explicit Vec(const Borrow<T2> &borrowed) : d(borrowed) {d.setMatrix(borrowed.mp);}
-  template<typename U = R>
+  explicit Vec(const Borrow<T2> &borrowed) : d(borrowed) {
+    d.setMatrix(borrowed.mp);
+  }
+  template <typename U = R>
     requires std::is_same_v<U, Borrow<BaseType>>
-  explicit Vec(T* ptr, size_t s) : d(ptr, s) { }
+  explicit Vec(T *ptr, size_t s) : d(ptr, s) {}
   template <typename L2, typename R2, binaryFct f, typename OperationTrait>
   explicit Vec(BinaryOperation<L2, R2, f, OperationTrait> &inp) : d(inp) {
     using TypeTrait = OperationTrait;
@@ -88,11 +104,16 @@ template <typename T, typename R, typename Trait> struct Vec {
   explicit Vec(SEXP inp) : d(inp) {}
   explicit Vec(size_t sz) : d(sz) {}
   explicit Vec(int sz) : d(static_cast<size_t>(sz)) {}
-  
-  Vec(double sz) : d(1) { d[0] = sz; } // issue: could be removed if all functions could handle double
-  Vec(Rboolean b) : d(1) { d[0] = static_cast<BaseType>(b); } // issue: can i prevent this? Maybe with the same strategy of converting int to i2d(int) in R. 
-  
-  explicit Vec() : d() { }
+
+  Vec(double sz) : d(1) {
+    d[0] = sz;
+  } // issue: could be removed if all functions could handle double
+  Vec(Rboolean b) : d(1) {
+    d[0] = static_cast<BaseType>(b);
+  } // issue: can i prevent this? Maybe with the same strategy of converting int
+    // to i2d(int) in R.
+
+  explicit Vec() : d() {}
   explicit Vec(size_t rows, size_t cols) : d(rows * cols) {
     d.setMatrix(true, rows, cols);
   }
@@ -102,63 +123,66 @@ template <typename T, typename R, typename Trait> struct Vec {
   }
   // other vector constructors
   template <typename T2, typename R2, typename Trait2>
-  Vec(const Vec<T2, R2, Trait2> &other_vec)  { // : d()
+  Vec(const Vec<T2, R2, Trait2> &other_vec) { // : d()
     using TypeTrait = Trait2;
     using CaseTrait = Trait2;
     if constexpr (isBorrow::value) { // issue: is this safe???
-        d.sz = other_vec.size();
-        for (size_t i = 0; i < d.size(); i++) {
-          d[i] = other_vec[i];
-        }
-        if (other_vec.d.im()) {
-          d.setMatrix(true, other_vec.nr(), other_vec.nc());
-        }
+      d.sz = other_vec.size();
+      for (size_t i = 0; i < d.size(); i++) {
+        d[i] = other_vec[i];
+      }
+      if (other_vec.d.im()) {
+        d.setMatrix(true, other_vec.nr(), other_vec.nc());
+      }
     } else {
-        this->d.resize(other_vec.size());
-        for (size_t i = 0; i < d.size(); i++) {
-          d[i] = other_vec[i];
-        }
-        if (other_vec.d.im()) {
-          d.setMatrix(true, other_vec.nr(), other_vec.nc());
-        }  
-    } 
+      this->d.resize(other_vec.size());
+      for (size_t i = 0; i < d.size(); i++) {
+        d[i] = other_vec[i];
+      }
+      if (other_vec.d.im()) {
+        d.setMatrix(true, other_vec.nr(), other_vec.nc());
+      }
+    }
   }
 
   template <typename T2, typename R2, typename Trait2>
-  Vec(const Vec<T2, R2, Trait2> &&other_vec)  { // issue: improve. Use move her : d()
+  Vec(const Vec<T2, R2, Trait2>
+          &&other_vec) { // issue: improve. Use move her : d()
     using TypeTrait = Trait2;
     using CaseTrait = Trait2;
     if constexpr (isBorrow::value) { // issue: is this safe???
-        d.sz = other_vec.size();
-        for (size_t i = 0; i < d.size(); i++) {
-          d[i] = other_vec[i];
-        }
-        if (other_vec.d.im()) {
-          d.setMatrix(true, other_vec.nr(), other_vec.nc());
-        }
+      d.sz = other_vec.size();
+      for (size_t i = 0; i < d.size(); i++) {
+        d[i] = other_vec[i];
+      }
+      if (other_vec.d.im()) {
+        d.setMatrix(true, other_vec.nr(), other_vec.nc());
+      }
     } else {
-        this->d.resize(other_vec.size());
-        for (size_t i = 0; i < d.size(); i++) {
-          d[i] = other_vec[i];
-        }
-        if (other_vec.d.im()) {
-          d.setMatrix(true, other_vec.nr(), other_vec.nc());
-        }
+      this->d.resize(other_vec.size());
+      for (size_t i = 0; i < d.size(); i++) {
+        d[i] = other_vec[i];
+      }
+      if (other_vec.d.im()) {
+        d.setMatrix(true, other_vec.nr(), other_vec.nc());
+      }
     }
   }
 
   // pointer constructor
-  Vec(BaseType* ptr, size_t size) : d(size) {
-    if constexpr(isBorrow::value) {
-      d.init(ptr, size); 
-    } else if constexpr(isBuffer::value) {
-      for(size_t i = 0; i < size; i++) d[i] = ptr[i];
-      d.setMatrix(false, 0, 0);  
+  Vec(BaseType *ptr, size_t size) : d(size) {
+    if constexpr (isBorrow::value) {
+      d.init(ptr, size);
+    } else if constexpr (isBuffer::value) {
+      for (size_t i = 0; i < size; i++)
+        d[i] = ptr[i];
+      d.setMatrix(false, 0, 0);
     }
   }
 
-  Vec(BaseType* ptr, size_t rows, size_t cols) : d(rows * cols) {
-    for(size_t i = 0; i < d.size(); i++) d[i] = ptr[i];
+  Vec(BaseType *ptr, size_t rows, size_t cols) : d(rows * cols) {
+    for (size_t i = 0; i < d.size(); i++)
+      d[i] = ptr[i];
     d.setMatrix(true, rows, cols);
   }
 
@@ -183,8 +207,9 @@ template <typename T, typename R, typename Trait> struct Vec {
       for (size_t i = 0; i < d.ind.size(); i++) {
         d[i] = inp;
       }
-    } else if constexpr(isBorrow::value) {
-      d.sz = 1; d[0] = inp;
+    } else if constexpr (isBorrow::value) {
+      d.sz = 1;
+      d[0] = inp;
     } else {
       d.resize(1);
       d[0] = inp;
@@ -192,7 +217,7 @@ template <typename T, typename R, typename Trait> struct Vec {
     return *this;
   }
 
-   template <typename TD>
+  template <typename TD>
     requires std::is_same_v<TD, int>
   Vec &operator=(const TD inp) {
     static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
@@ -201,8 +226,9 @@ template <typename T, typename R, typename Trait> struct Vec {
       for (size_t i = 0; i < d.ind.size(); i++) {
         d[i] = static_cast<BaseType>(inp);
       }
-    } else if constexpr(isBorrow::value) {
-      d.sz = 1; d[0] = static_cast<BaseType>(inp);
+    } else if constexpr (isBorrow::value) {
+      d.sz = 1;
+      d[0] = static_cast<BaseType>(inp);
     } else {
       d.resize(1);
       d[0] = static_cast<BaseType>(inp);
@@ -219,8 +245,9 @@ template <typename T, typename R, typename Trait> struct Vec {
       for (size_t i = 0; i < d.ind.size(); i++) {
         d[i] = static_cast<BaseType>(inp);
       }
-    } else if constexpr(isBorrow::value) {
-      d.sz = 1; d[0] = static_cast<BaseType>(inp);
+    } else if constexpr (isBorrow::value) {
+      d.sz = 1;
+      d[0] = static_cast<BaseType>(inp);
     } else {
       d.resize(1);
       d[0] = static_cast<BaseType>(inp);
@@ -238,11 +265,11 @@ template <typename T, typename R, typename Trait> struct Vec {
         d[i] = other[i];
       }
     } else {
-        if (size() != other.size()) {
-          resize(other.size());
-          for (size_t i = 0; i < other.size(); i++)
-            d[i] = other[i];
-        }  
+      if (size() != other.size()) {
+        resize(other.size());
+        for (size_t i = 0; i < other.size(); i++)
+          d[i] = other[i];
+      }
     }
     if (other.d.im()) {
       d.setMatrix(true, other.d.nr(), other.d.nc()); // issue: correct?
@@ -252,7 +279,7 @@ template <typename T, typename R, typename Trait> struct Vec {
 
   Vec &operator=(const Vec<T, R, Trait> &otherVec) {
 
-     static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
+    static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
     static_assert(!isBinaryOP::value, "Cannot assign to binary calculation");
     if constexpr (isBuffer::value) {
       Buffer<T> temp(otherVec.size()); // issue: create Buffer<T> as attribute
@@ -266,7 +293,8 @@ template <typename T, typename R, typename Trait> struct Vec {
       for (size_t i = 0; i < otherVec.size(); i++)
         temp[i] = otherVec[i];
       d.sz = otherVec.size();
-      for (size_t i = 0; i < otherVec.size(); i++) d[i] = temp[i];
+      for (size_t i = 0; i < otherVec.size(); i++)
+        d[i] = temp[i];
     } else if constexpr (isBorrowSEXP::value) {
       Buffer<T> temp(otherVec.size());
       for (size_t i = 0; i < otherVec.size(); i++)
@@ -281,9 +309,10 @@ template <typename T, typename R, typename Trait> struct Vec {
       for (size_t i = 0; i < otherVec.size(); i++) {
         temp[i] = otherVec[i];
       }
-      if(d.p -> size() < temp.size()) d.resize(temp.size());
+      if (d.p->size() < temp.size())
+        d.resize(temp.size());
       for (size_t i = 0; i < d.ind.size(); i++) {
-          d[i % d.ind.size()] = temp[i];
+        d[i % d.ind.size()] = temp[i];
       }
     }
     if (otherVec.d.im()) { // issue:  && !d.im() missing?
@@ -298,12 +327,13 @@ template <typename T, typename R, typename Trait> struct Vec {
     static_assert(!isBinaryOP::value, "Cannot assign to binary calculation");
     if constexpr (isBuffer::value) {
       Buffer<T> temp(otherVec.size()); // issue: define temp as own attribute!
-      using RetTypeOtherVec = std::remove_reference<decltype(otherVec.d)>::type::RetType;
+      using RetTypeOtherVec =
+          std::remove_reference<decltype(otherVec.d)>::type::RetType;
       using isBaseTypeRet = std::is_same<RetTypeOtherVec, BaseType>;
-      if constexpr(isBaseTypeRet::value) {
+      if constexpr (isBaseTypeRet::value) {
         for (size_t i = 0; i < otherVec.size(); i++) {
           temp[i] = otherVec[i];
-        }  
+        }
       } else {
         for (size_t i = 0; i < otherVec.size(); i++) {
           temp[i] = static_cast<BaseType>(otherVec[i]);
@@ -314,17 +344,20 @@ template <typename T, typename R, typename Trait> struct Vec {
       ass(otherVec.size() <= d.capacity,
           "number of items to replace is not a multiple of replacement length");
       Buffer<T> temp(otherVec.size());
-      for (size_t i = 0; i < otherVec.size(); i++) temp[i] = otherVec[i];
+      for (size_t i = 0; i < otherVec.size(); i++)
+        temp[i] = otherVec[i];
       d.sz = otherVec.size();
-      for (size_t i = 0; i < otherVec.size(); i++) d[i] = temp[i];
+      for (size_t i = 0; i < otherVec.size(); i++)
+        d[i] = temp[i];
     } else if constexpr (isBorrowSEXP::value) {
       Buffer<T> temp(otherVec.size());
-      using RetTypeOtherVec = std::remove_reference<decltype(otherVec.d)>::type::RetType;
+      using RetTypeOtherVec =
+          std::remove_reference<decltype(otherVec.d)>::type::RetType;
       using isBaseTypeRet = std::is_same<RetTypeOtherVec, BaseType>;
-      if constexpr(isBaseTypeRet::value) {
+      if constexpr (isBaseTypeRet::value) {
         for (size_t i = 0; i < otherVec.size(); i++) {
-           temp[i] = otherVec[i];
-        }  
+          temp[i] = otherVec[i];
+        }
       } else {
         for (size_t i = 0; i < otherVec.size(); i++) {
           temp[i] = static_cast<BaseType>(otherVec[i]);
@@ -337,19 +370,20 @@ template <typename T, typename R, typename Trait> struct Vec {
       ass(otherVec.size() == d.ind.size(),
           "number of items to replace is not a multiple of replacement length");
       Buffer<T> temp(otherVec.size());
-      using RetTypeOtherVec = std::remove_reference<decltype(otherVec.d)>::type::RetType;
+      using RetTypeOtherVec =
+          std::remove_reference<decltype(otherVec.d)>::type::RetType;
       using isBaseTypeRet = std::is_same<RetTypeOtherVec, BaseType>;
-      if constexpr(isBaseTypeRet::value) {
+      if constexpr (isBaseTypeRet::value) {
         for (size_t i = 0; i < otherVec.size(); i++) {
           temp[i] = otherVec[i];
-        }  
+        }
       } else {
         for (size_t i = 0; i < otherVec.size(); i++) {
           temp[i] = static_cast<BaseType>(otherVec[i]);
         }
       }
       for (size_t i = 0; i < d.ind.size(); i++) {
-          d[i % d.ind.size()] = temp[i];
+        d[i % d.ind.size()] = temp[i];
       }
     }
     if (otherVec.d.im()) {
@@ -358,14 +392,14 @@ template <typename T, typename R, typename Trait> struct Vec {
     return *this;
   }
 
-  Vec& operator=(SEXP s) {
+  Vec &operator=(SEXP s) {
     d.initSEXP(s);
     return *this;
   }
 
   operator RetType() const {
-    if constexpr(std::is_same_v<RetType, bool>) {
-      ass(this -> size() == 1, "Error in if: the condition has length > 1");
+    if constexpr (std::is_same_v<RetType, bool>) {
+      ass(this->size() == 1, "Error in if: the condition has length > 1");
       return d[0];
     } else {
       return d[0];
@@ -376,18 +410,18 @@ template <typename T, typename R, typename Trait> struct Vec {
   bool im() const { return d.im(); }
   size_t nc() const { return d.nc(); }
   size_t nr() const { return d.nr(); }
-  auto begin() const { 
-    if constexpr(isSubset::value) {
-      return It<T>{d.p -> p};  
+  auto begin() const {
+    if constexpr (isSubset::value) {
+      return It<T>{d.p->p};
     } else {
-      return It<T>{d.p};  
+      return It<T>{d.p};
     }
   }
-  auto end() const { 
-    if constexpr(isSubset::value) {
-      return It<T>{d.p -> p + this -> size()};  
+  auto end() const {
+    if constexpr (isSubset::value) {
+      return It<T>{d.p->p + this->size()};
     } else {
-      return It<T>{d.p + this->size()}; 
+      return It<T>{d.p + this->size()};
     }
   }
   T &back() const { return d.p[this->size()]; }
@@ -402,7 +436,7 @@ template <typename T, typename R, typename Trait> struct Vec {
     return os;
   }
 
-  Vec& operator=(Rcpp::NumericVector& otherVec) {
+  Vec &operator=(Rcpp::NumericVector &otherVec) {
     d.resize(static_cast<size_t>(otherVec.size()));
     d.mp.setMatrix(false, 0, 0);
     for (size_t i = 0; i < otherVec.size(); i++) {
@@ -410,7 +444,7 @@ template <typename T, typename R, typename Trait> struct Vec {
     }
     return *this;
   }
-  Vec& operator=(Rcpp::NumericMatrix& otherVec) {
+  Vec &operator=(Rcpp::NumericMatrix &otherVec) {
     d.resize(static_cast<size_t>(otherVec.size()));
     d.mp.setMatrix(true, otherVec.nrow(), otherVec.ncol());
     for (size_t i = 0; i < otherVec.size(); i++) {
@@ -418,7 +452,7 @@ template <typename T, typename R, typename Trait> struct Vec {
     }
     return *this;
   }
-  Vec& operator=(arma::vec& otherVec) {
+  Vec &operator=(arma::vec &otherVec) {
     d.resize(static_cast<size_t>(otherVec.size()));
     d.mp.setMatrix(false, 0, 0);
     for (size_t i = 0; i < otherVec.size(); i++) {
@@ -426,7 +460,7 @@ template <typename T, typename R, typename Trait> struct Vec {
     }
     return *this;
   }
-  Vec& operator=(arma::mat& otherVec) {
+  Vec &operator=(arma::mat &otherVec) {
     d.resize(static_cast<size_t>(otherVec.size()));
     d.mp.setMatrix(true, otherVec.n_rows, otherVec.n_cols);
     for (size_t i = 0; i < otherVec.size(); i++) {
@@ -434,32 +468,28 @@ template <typename T, typename R, typename Trait> struct Vec {
     }
     return *this;
   }
-  Vec(Rcpp::NumericVector otherVec)
-      : d() {
+  Vec(Rcpp::NumericVector otherVec) : d() {
     d.resize(static_cast<size_t>(otherVec.size()));
     d.mp.setMatrix(false, 0, 0);
     for (size_t i = 0; i < otherVec.size(); i++) {
       d[i] = otherVec[i];
     }
   }
-  Vec(arma::vec otherVec)
-      : d() {
+  Vec(arma::vec otherVec) : d() {
     d.resize(static_cast<size_t>(otherVec.size()));
     d.mp.setMatrix(false, 0, 0);
     for (size_t i = 0; i < otherVec.size(); i++) {
       d[i] = otherVec[i];
     }
   }
-  Vec(Rcpp::NumericMatrix otherVec)
-      : d() {
+  Vec(Rcpp::NumericMatrix otherVec) : d() {
     d.resize(static_cast<size_t>(otherVec.size()));
     d.mp.setMatrix(true, otherVec.nrow(), otherVec.ncol());
     for (size_t i = 0; i < otherVec.size(); i++) {
       d[i] = otherVec[i];
     }
   }
-  Vec(arma::mat otherVec)
-      : d() {
+  Vec(arma::mat otherVec) : d() {
     d.resize(static_cast<size_t>(otherVec.size()));
     d.mp.setMatrix(true, otherVec.n_rows, otherVec.n_cols);
     for (size_t i = 0; i < otherVec.size(); i++) {
@@ -497,7 +527,6 @@ template <typename T, typename R, typename Trait> struct Vec {
     }
     return ret;
   }
-
 };
 
 } // namespace etr
