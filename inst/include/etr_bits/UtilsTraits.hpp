@@ -1232,6 +1232,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
   }
 };
 
+
 template <typename L, typename R>
 void defineMatrix(const L &l, const R &r, MatrixParameter &mp) {
   using typeTraitL = std::remove_reference<decltype(convert(l))>::type::Type;
@@ -1263,6 +1264,115 @@ void defineMatrix(const L &l, const R &r, MatrixParameter &mp) {
     }
   }
 }
+
+template <typename LL, typename RL, typename LR, typename RR>
+void defineMatrix(Vec<LL, RL> &l, Vec<LR, RR> &r, MatrixParameter &mp) {
+    if (l.im() && r.im()) {
+      size_t nrows = (l.nr() > r.nr()) ? l.nr() : r.nr();
+      size_t ncols = (l.nc() > r.nc()) ? l.nc() : r.nc();
+      mp.setMatrix(true, nrows, ncols);
+    } else if (!l.im() && r.im()) {
+      size_t nrows = r.nr();
+      size_t ncols = r.nc();
+      mp.setMatrix(true, nrows, ncols);
+    } else if (l.im() && !r.im()) {
+      size_t nrows = l.nr();
+      size_t ncols = l.nc();
+      mp.setMatrix(true, nrows, ncols);
+    }
+}
+
+template <typename LL, typename RL, typename LR, typename RR>
+void defineMatrix(Vec<LL, RL> &&l, Vec<LR, RR> &r, MatrixParameter &mp) {
+    if (l.im() && r.im()) {
+      size_t nrows = (l.nr() > r.nr()) ? l.nr() : r.nr();
+      size_t ncols = (l.nc() > r.nc()) ? l.nc() : r.nc();
+      mp.setMatrix(true, nrows, ncols);
+    } else if (!l.im() && r.im()) {
+      size_t nrows = r.nr();
+      size_t ncols = r.nc();
+      mp.setMatrix(true, nrows, ncols);
+    } else if (l.im() && !r.im()) {
+      size_t nrows = l.nr();
+      size_t ncols = l.nc();
+      mp.setMatrix(true, nrows, ncols);
+    }
+}
+
+template <typename LL, typename RL, typename LR, typename RR>
+void defineMatrix(Vec<LL, RL> &l, Vec<LR, RR> &&r, MatrixParameter &mp) {
+    if (l.im() && r.im()) {
+      size_t nrows = (l.nr() > r.nr()) ? l.nr() : r.nr();
+      size_t ncols = (l.nc() > r.nc()) ? l.nc() : r.nc();
+      mp.setMatrix(true, nrows, ncols);
+    } else if (!l.im() && r.im()) {
+      size_t nrows = r.nr();
+      size_t ncols = r.nc();
+      mp.setMatrix(true, nrows, ncols);
+    } else if (l.im() && !r.im()) {
+      size_t nrows = l.nr();
+      size_t ncols = l.nc();
+      mp.setMatrix(true, nrows, ncols);
+    }
+}
+
+template <typename LL, typename RL, typename LR, typename RR>
+void defineMatrix(Vec<LL, RL> &&l, Vec<LR, RR> &&r, MatrixParameter &mp) {
+    if (l.im() && r.im()) {
+      size_t nrows = (l.nr() > r.nr()) ? l.nr() : r.nr();
+      size_t ncols = (l.nc() > r.nc()) ? l.nc() : r.nc();
+      mp.setMatrix(true, nrows, ncols);
+    } else if (!l.im() && r.im()) {
+      size_t nrows = r.nr();
+      size_t ncols = r.nc();
+      mp.setMatrix(true, nrows, ncols);
+    } else if (l.im() && !r.im()) {
+      size_t nrows = l.nr();
+      size_t ncols = l.nc();
+      mp.setMatrix(true, nrows, ncols);
+    }
+}
+
+template <typename LL, typename RL, typename T>
+requires (std::is_same_v<T, BaseType> || std::is_integral_v<T>)
+void defineMatrix(Vec<LL, RL> &l, const T &r, MatrixParameter &mp) {
+  if (l.im()) {
+    mp.setMatrix(true, l.nr(), l.nc());
+  } else {
+    mp.setMatrix(false, 0, 0);
+  }
+}
+
+template <typename LL, typename RL, typename T>
+requires (std::is_same_v<T, BaseType> || std::is_integral_v<T>)
+void defineMatrix(Vec<LL, RL> &&l, const T &r, MatrixParameter &mp) {
+  if (l.im()) {
+   mp.setMatrix(true, l.nr(), l.nc());
+  } else {
+    mp.setMatrix(false, 0, 0);
+  }
+}
+
+template <typename LR, typename RR, typename T>
+requires (std::is_same_v<T, BaseType> || std::is_integral_v<T>)
+void defineMatrix(const T& l, Vec<LR, RR> &r, MatrixParameter &mp) {
+  if (r.im()) {
+   mp.setMatrix(true, r.nr(), r.nc());
+  } else {
+      mp.setMatrix(false, 0, 0);
+  }
+}
+
+template <typename LR, typename RR, typename T>
+requires (std::is_same_v<T, BaseType> || std::is_integral_v<T>)
+void defineMatrix(const T& l, Vec<LR, RR> &&r, MatrixParameter &mp) {
+  if (r.im()) {
+   mp.setMatrix(true, r.nr(), r.nc());
+  } else {
+      mp.setMatrix(false, 0, 0);
+  }
+}
+
 
 } // namespace etr
 

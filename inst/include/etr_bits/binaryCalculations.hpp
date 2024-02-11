@@ -24,7 +24,8 @@ struct BinaryOperation {
   BinaryOperation(const BinaryOperation &&other)
       : l(std::move(other.l)), r(std::move(other.r)), mp(std::move(other.mp)) {}
   BinaryOperation(const L &l_, const R &r_, const MatrixParameter &mp_)
-      : l(l_), r(r_), mp(mp_) {}
+      : l(l_), r(r_), mp(mp_) {
+  }
   template <typename LType, typename RType, binaryFct fOther,
             typename TraitOther>
   BinaryOperation(const BinaryOperation<LType, RType, fOther, TraitOther>
@@ -96,12 +97,115 @@ struct BinaryOperation {
   }
 };
 
+/*
+issue:
+check for std::is_arithmetic
+--> dies is arithmetic also work for complex?
+--> onyl use real part of complex number --> how does R do it?
+--> customize defineMatrix accordingly
+--> can the vec_r somehow be moved instead of copied???
+                    Var1                  Var2
+2                 vec_l double_int_or_complex
+3                 vec_r double_int_or_complex
+4 double_int_or_complex                 vec_l
+5                 vec_l                 vec_l
+6                 vec_r                 vec_l
+7 double_int_or_complex                 vec_r
+8                 vec_l                 vec_r
+9                 vec_r                 vec_r
+*/
+
+template <typename  LL, typename  RL, typename LR, typename RR>
+inline auto operator+(Vec<LL, RL>& l, Vec<LR, RR>& r) {
+  MatrixParameter mp;
+    defineMatrix(l, r, mp);
+    return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), Addition,
+                                       PlusTrait>>(
+        BinaryOperation<decltype(l.d), decltype(r.d), Addition, PlusTrait>(
+            l.d, r.d, mp));
+}
+
+template <typename  LL, typename  RL, typename LR, typename RR>
+inline auto operator+(Vec<LL, RL>&& l, Vec<LR, RR>& r) {
+  MatrixParameter mp;
+    defineMatrix(l, r, mp);
+    return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), Addition,
+                                       PlusTrait>>(
+        BinaryOperation<decltype(l.d), decltype(r.d), Addition, PlusTrait>(
+            l.d, r.d, mp));
+}
+
+template <typename  LL, typename  RL, typename LR, typename RR>
+inline auto operator+(Vec<LL, RL>& l, Vec<LR, RR>&& r) {
+  MatrixParameter mp;
+    defineMatrix(l, r, mp);
+    return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), Addition,
+                                       PlusTrait>>(
+        BinaryOperation<decltype(l.d), decltype(r.d), Addition, PlusTrait>(
+            l.d, r.d, mp));
+}
+
+template <typename  LL, typename  RL, typename LR, typename RR>
+inline auto operator+(Vec<LL, RL>&& l, Vec<LR, RR>&& r) {
+  MatrixParameter mp;
+    defineMatrix(l, r, mp);
+    return Vec<double, BinaryOperation<decltype(l.d), decltype(r.d), Addition,
+                                       PlusTrait>>(
+        BinaryOperation<decltype(l.d), decltype(r.d), Addition, PlusTrait>(
+            l.d, r.d, mp));
+}
+
+template <typename  LL, typename  RL, typename T>
+requires (std::is_same_v<T, double> || std::is_integral_v<T>)
+inline auto operator+(Vec<LL, RL>& l, const T& r) {
+  MatrixParameter mp;
+    defineMatrix(l, r, mp);
+    return Vec<double, BinaryOperation<decltype(l.d), double, Addition,
+                                       PlusTrait>>(
+        BinaryOperation<decltype(l.d), double, Addition, PlusTrait>(
+            l.d, r, mp));
+}
+
+template <typename  LL, typename  RL, typename T>
+requires (std::is_same_v<T, double> || std::is_integral_v<T>)
+inline auto operator+(Vec<LL, RL>&& l, const T& r) {
+  MatrixParameter mp;
+    defineMatrix(l, r, mp);
+    return Vec<double, BinaryOperation<decltype(l.d), double, Addition,
+                                       PlusTrait>>(
+        BinaryOperation<decltype(l.d), double, Addition, PlusTrait>(
+            l.d, r, mp));
+}
+
+template <typename  LR, typename  RR, typename T>
+requires (std::is_same_v<T, double> || std::is_integral_v<T>)
+inline auto operator+(const T& l, Vec<LR, RR>& r) {
+  MatrixParameter mp;
+    defineMatrix(l, r, mp);
+    return Vec<double, BinaryOperation<double, decltype(r.d), Addition,
+                                       PlusTrait>>(
+        BinaryOperation<double, decltype(r.d), Addition, PlusTrait>(
+            l, r.d, mp));
+}
+
+template <typename  LR, typename  RR, typename T>
+requires (std::is_same_v<T, double> || std::is_integral_v<T>)
+inline auto operator+(const T& l, Vec<LR, RR>&& r) {
+  MatrixParameter mp;
+    defineMatrix(l, r, mp);
+    return Vec<double, BinaryOperation<double, decltype(r.d), Addition,
+                                       PlusTrait>>(
+        BinaryOperation<double, decltype(r.d), Addition, PlusTrait>(
+            l, r.d, mp));
+}
+
+/*
 template <typename L, typename R>
-auto operator+(const L &l, const R &r)
+auto operator+(L &l, R &r)
     -> Vec<double,
            BinaryOperation<decltype(convert(l).d), decltype(convert(r).d),
                            Addition, PlusTrait>> {
-  constexpr bool isDoubleL = std::is_same_v<L, double>;
+  constexpr bool isDoubleL = std::is_same_v<L, doubfind /path/to/your/project -name "*.hpp" -exec clang-format -i {} \;le>;
   constexpr bool isDoubleR = std::is_same_v<R, double>;
   if constexpr (isDoubleL && isDoubleR) {
     MatrixParameter mp;
@@ -131,6 +235,7 @@ auto operator+(const L &l, const R &r)
             l.d, r.d, mp));
   }
 }
+*/
 
 template <typename L, typename R>
 auto operator-(const L &l, const R &r)
