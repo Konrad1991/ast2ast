@@ -9,28 +9,28 @@ setMethod("initialize", signature(.Object = "String"), function(.Object, value) 
   .Object
 })
 
-setMethod("+", c("String","String"), function(e1,e2) {
-   newValue <- paste0(e1@value, e2@value)
-   new("String", value = newValue)
+setMethod("+", c("String", "String"), function(e1, e2) {
+  newValue <- paste0(e1@value, e2@value)
+  new("String", value = newValue)
 })
 
-setMethod("+", c("character","String"), function(e1,e2) {
-   newValue <- paste0(e1, e2@value)
-   new("String", value = newValue)
+setMethod("+", c("character", "String"), function(e1, e2) {
+  newValue <- paste0(e1, e2@value)
+  new("String", value = newValue)
 })
 
-setMethod("+", c("String","character"), function(e1,e2) {
-   newValue <- paste0(e1@value, e2)
-   new("String", value = newValue)
+setMethod("+", c("String", "character"), function(e1, e2) {
+  newValue <- paste0(e1@value, e2)
+  new("String", value = newValue)
 })
 
 cString <- function(...) {
   l <- list(...)
-  delim = tail(l, n = 1)[[1]]
-  values <- sapply(l[1:(length(l)-1)], function(x) {
-    if(is.character(x)) {
+  delim <- tail(l, n = 1)[[1]]
+  values <- sapply(l[1:(length(l) - 1)], function(x) {
+    if (is.character(x)) {
       return(x)
-    } else if(is(x, "String")) {
+    } else if (is(x, "String")) {
       return(x@value)
     } else {
       stop("Error can only handle class String and character")
@@ -58,14 +58,12 @@ astClass <- R6::R6Class("astClass",
     var_index = c(),
     return_TF = c(),
     R_fct = NULL,
-
     initialize = function(fct, name_f, R_fct) {
       self$args <- methods::formalArgs(fct)
-      self$args_2_fct <- methods::formalArgs(fct) 
+      self$args_2_fct <- methods::formalArgs(fct)
       self$body <- body(fct)[2:length(body(fct))]
       self$R_fct <- R_fct
     },
-
     getast = function() {
       for (i in seq_along(self$body)) {
         temp <- LC$new(self$body[[i]], self$R_fct)
@@ -76,19 +74,16 @@ astClass <- R6::R6Class("astClass",
         if (any(self$return_TF == TRUE)) self$return_TF <- TRUE else self$return_TF <- FALSE
       }
     },
-
     get_calls = function(code) {
       out <- purrr::map_if(code, is.list, self$get_calls)
       out <- as.call(out)
       return(out)
     },
-
     ast2call = function() {
       for (i in seq_along(self$ast)) {
         self$code[[i]] <- self$get_calls(self$ast[[i]])
       }
     },
-
     call2char = function() {
       j <- 1
       for (i in seq_along(self$code)) {
@@ -109,7 +104,6 @@ astClass <- R6::R6Class("astClass",
         j <- j + 1
       }
     },
-
     get_vars = function() {
       temp1 <- unique(self$var_all)
       temp2 <- unique(self$var_index)
@@ -165,7 +159,6 @@ astClass <- R6::R6Class("astClass",
       }
       return(ret)
     }
-    
   )
 )
 
@@ -180,10 +173,10 @@ generateNewName <- function(name, extension, delimiter, vars) {
   newName <- cString(name, extension, delimiter)
   i <- 0
   repeat {
-    if(i == 10) {
+    if (i == 10) {
       stop("Cannot generate a new name for the double pointer")
     }
-    if(!(newName@value %in% vars)) {
+    if (!(newName@value %in% vars)) {
       break
     } else {
       newName <- cString(newName@value, extension, delimiter)
@@ -195,9 +188,11 @@ generateNewName <- function(name, extension, delimiter, vars) {
 
 varsDeclaration <- function(vars, types) {
   stopifnot(length(vars) == length(types))
-  if(length(vars) == 0) return("")
+  if (length(vars) == 0) {
+    return("")
+  }
   l <- list()
-  for(i in seq_along(1:length(vars))) {
+  for (i in seq_along(1:length(vars))) {
     l[[i]] <- cString("\t ", cString(types[[i]], deparse(vars[[i]]), " ")@value, ";\n", "")@value
   }
   l <- do.call(paste, l)
@@ -207,8 +202,10 @@ varsDeclaration <- function(vars, types) {
 ptrVecSig <- function(varName, vars) {
   ptrName <- generateNewName(varName, "_double_ptr", "", vars)
   sizeName <- generateNewName(varName, "_int_size", "", vars)
-  res <- cString("etr::BaseType*", ptrName, ",",
-                 "int", sizeName, " ")
+  res <- cString(
+    "etr::BaseType*", ptrName, ",",
+    "int", sizeName, " "
+  )
   return(res@value)
 }
 
@@ -216,34 +213,36 @@ ptrMatSig <- function(varName, vars) {
   ptrName <- generateNewName(varName, "_double_ptr", "", vars)
   rowsName <- generateNewName(varName, "_int_rows", "", vars)
   colsName <- generateNewName(varName, "_int_cols", "", vars)
-  res <- cString("etr::BaseType*", ptrName, ",",
-                 "int ", rowsName, ",", "int ", colsName, " ")
+  res <- cString(
+    "etr::BaseType*", ptrName, ",",
+    "int ", rowsName, ",", "int ", colsName, " "
+  )
   return(res@value)
 }
 
 typeSigXPtr <- function(varName, type, reference, allVars) {
-  if(!reference) {
-    if(type == "ptr_vec") {
+  if (!reference) {
+    if (type == "ptr_vec") {
       newName <- ptrVecSig(varName, allVars)
       return(newName)
     }
-    if(type == "ptr_mat") {
+    if (type == "ptr_mat") {
       newName <- ptrMatSig(varName, allVars)
       return(newName)
     }
     newName <- cString(type, varName, " ")
-    return(newName@value)  
+    return(newName@value)
   } else {
-    if(type == "ptr_vec") {
+    if (type == "ptr_vec") {
       newName <- ptrVecSig(varName, allVars)
       return(newName)
     }
-    if(type == "ptr_mat") {
+    if (type == "ptr_mat") {
       newName <- ptrMatSig(varName, allVars)
       return(newName)
     }
     newName <- cString(type, "&", varName, " ")
-    return(newName@value)  
+    return(newName@value)
   }
 }
 
@@ -255,18 +254,18 @@ defineSigListXPtr <- function(arguments, types, nameFct, reference, retType, all
   typeList <- ""
   ptrNames <- list()
   counter <- 1
-  for(i in seq_along(1:length(arguments))) {
+  for (i in seq_along(1:length(arguments))) {
     currentName <- typeSigXPtr(arguments[[i]], types[[i]], reference, allVars)
-    if(types[[i]] == "ptr_vec") {
+    if (types[[i]] == "ptr_vec") {
       splitName <- strsplit(currentName, split = " ")[[1]]
       ptrNames[[counter]] <- list(arguments[[i]], splitName[[2]], splitName[[5]])
       counter <- counter + 1
-    } else if(types[[i]] == "ptr_mat") {
+    } else if (types[[i]] == "ptr_mat") {
       splitName <- strsplit(currentName, split = " ")[[1]]
       ptrNames[[counter]] <- list(arguments[[i]], splitName[[2]], splitName[[6]], splitName[[10]])
       counter <- counter + 1
     }
-    if(i == length(arguments)) {
+    if (i == length(arguments)) {
       typeList <- paste0(typeList, currentName)
     } else {
       typeList <- paste0(typeList, currentName, ", ")
@@ -278,7 +277,7 @@ defineSigListXPtr <- function(arguments, types, nameFct, reference, retType, all
 signatureXPtr <- function(typeList, retType, nameFct) {
   ret <- cString(retType, " ", nameFct, "(", typeList, ") {\n", "")
   return(ret@value)
-} 
+}
 
 getXPtr <- function(typeList, retType, nameFct) {
   name <- generateNewName("get", "XPtr", "", nameFct)
@@ -292,18 +291,20 @@ getXPtr <- function(typeList, retType, nameFct) {
 }
 
 handlePtr <- function(ptrList, borrow) {
-  if(length(ptrList) == 0) return("")
+  if (length(ptrList) == 0) {
+    return("")
+  }
   ls <- lapply(ptrList, function(x) x[[1]])
   rs <- lapply(ptrList, function(x) x[2:length(x)])
   stopifnot(length(ls) == length(rs))
   res <- ""
-  for(i in seq_along(1:length(ls))) {
+  for (i in seq_along(1:length(ls))) {
     arg <- paste(unlist(rs[[i]]), collapse = ",")
-    if(borrow) {
-      temp <- cString("\t BorrowPtr ", ls[[i]], "(",arg, ");", "")@value
+    if (borrow) {
+      temp <- cString("\t BorrowPtr ", ls[[i]], "(", arg, ");", "")@value
       res <- paste(res, temp, "\n")
     } else {
-      temp <- cString("\t sexp ", ls[[i]], "(",arg, ");", "")@value
+      temp <- cString("\t sexp ", ls[[i]], "(", arg, ");", "")@value
       res <- paste(res, temp, "\n")
     }
   }
@@ -319,11 +320,13 @@ buildFctXPtr <- function(fct, reference, types, retType, nameFct) {
   ac$call2char()
   vars <- ac$get_vars()
   declarations <- varsDeclaration(vars, ac$var_types)
-  f <- cString("// [[Rcpp::depends(ast2ast)]]",
-        "// [[Rcpp::depends(RcppArmadillo)]]",
-        "// [[Rcpp::plugins(cpp20)]]",
-        '#include "etr.hpp"\n',
-        "// [[Rcpp::export]]", "\n")
+  f <- cString(
+    "// [[Rcpp::depends(ast2ast)]]",
+    "// [[Rcpp::depends(RcppArmadillo)]]",
+    "// [[Rcpp::plugins(cpp20)]]",
+    '#include "etr.hpp"\n',
+    "// [[Rcpp::export]]", "\n"
+  )
   b <- buildBody(ac$char)
   sigList <- defineSigListXPtr(ac$args, types, nameFct, reference, retType, ac$var_all)
   declarationsPtr <- handlePtr(sigList[[2]], reference)
@@ -335,16 +338,16 @@ buildFctXPtr <- function(fct, reference, types, retType, nameFct) {
 
 typeSigR <- function(varName, type) {
   newName <- cString(type, varName, " ")
-  return(newName@value)  
+  return(newName@value)
 }
 
 signatureR <- function(arguments, nameFct, vars) {
   typeList <- ""
   newNames <- list()
-  for(i in seq_along(1:length(arguments))) {
+  for (i in seq_along(1:length(arguments))) {
     currentName <- generateNewName(arguments[[i]], "SEXP", "", vars)
     newNames[[i]] <- currentName@value
-    if(i == length(arguments)) {
+    if (i == length(arguments)) {
       typeList <- paste0(typeList, typeSigR(currentName, "SEXP"))
     } else {
       typeList <- paste0(typeList, typeSigR(currentName, "SEXP"), ", ")
@@ -356,22 +359,26 @@ signatureR <- function(arguments, nameFct, vars) {
 
 handleSEXP <- function(ls, rs, reference) {
   stopifnot(length(ls) == length(rs))
-  if(!reference) {
+  if (!reference) {
     res <- ""
-    for(i in seq_along(1:length(ls))) {
-      temp <- cString("\t sexp ", ls[[i]], "; ",
-                     ls[[i]], " = ", rs[[i]], ";", "")@value
+    for (i in seq_along(1:length(ls))) {
+      temp <- cString(
+        "\t sexp ", ls[[i]], "; ",
+        ls[[i]], " = ", rs[[i]], ";", ""
+      )@value
       res <- paste(res, temp, "\n")
     }
-    return(res)  
+    return(res)
   } else {
     res <- ""
-    for(i in seq_along(1:length(ls))) {
-      temp <- cString("\t WrapperSEXP ", ls[[i]], "; ",
-                     ls[[i]], " = ", rs[[i]], ";", "")@value
+    for (i in seq_along(1:length(ls))) {
+      temp <- cString(
+        "\t WrapperSEXP ", ls[[i]], "; ",
+        ls[[i]], " = ", rs[[i]], ";", ""
+      )@value
       res <- paste(res, temp, "\n")
     }
-    return(res)  
+    return(res)
   }
 }
 
@@ -384,19 +391,19 @@ buildFctR <- function(fct, nameFct, reference) {
   ac$call2char()
   vars <- ac$get_vars()
   declarations <- varsDeclaration(vars, ac$var_types)
-  f <- cString("// [[Rcpp::depends(ast2ast)]]",
-        "// [[Rcpp::depends(RcppArmadillo)]]",
-        "// [[Rcpp::plugins(cpp20)]]",
-        '#include "etr.hpp"\n',
-        "// [[Rcpp::export]]\n", "\n")
+  f <- cString(
+    "// [[Rcpp::depends(ast2ast)]]",
+    "// [[Rcpp::depends(RcppArmadillo)]]",
+    "// [[Rcpp::plugins(cpp20)]]",
+    '#include "etr.hpp"\n',
+    "// [[Rcpp::export]]\n", "\n"
+  )
   sig <- signatureR(ac$args, nameFct, ac$var_all)
   hs <- handleSEXP(ac$args, sig[[2]], reference)
-  if(!ac$return_TF) {
+  if (!ac$return_TF) {
     ac$char <- c(ac$char, "\n", "return(R_NilValue); \n")
   }
   b <- buildBody(ac$char)
   f <- cString(f, sig[[1]], hs, declarations, b, "}\n", "")
   return(f@value)
 }
-
-

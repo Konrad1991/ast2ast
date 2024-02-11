@@ -88,7 +88,7 @@ struct BinaryOperation {
     return TyL::getSize(av) > TyR::getSize(av) ? TyL::getSize(av)
                                                      : TyR::getSize(av);
   }
-  template <typename AV> static RetType getVal(AV &av, size_t VecIdx) { // issue: how to handle scalar types?
+  template <typename AV> static RetType getVal(AV &av, size_t VecIdx) { // issue: how to handle scalar types? Or temporary types?
     using TyL = typename std::remove_reference<typeTraitL>::type;
     using TyR = typename std::remove_reference<typeTraitR>::type;
     return f(TyL::template getVal<AV>(av, VecIdx % TyL::getSize(av)),

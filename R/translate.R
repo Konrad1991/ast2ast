@@ -1,4 +1,4 @@
-  # R package ast2ast
+# R package ast2ast
 # Copyright (C) 2021 Konrad Krämer
 #
 # This file is part of R package ast2ast
@@ -356,17 +356,17 @@ translate <- function(f, output = "R",
   }
 
   # TODO: add `return` keyword if not found (using last evaluated expr)
-  #f_b_last <- body(f)[[length(body(f))]]
-  #if (is.numeric(f_b_last) ||
+  # f_b_last <- body(f)[[length(body(f))]]
+  # if (is.numeric(f_b_last) ||
   #  is.integer(f_b_last) || is.name(f_b_last) || (
   #  is.call(f_b_last) &&
   #    f_b_last[[1]] != as.name("return") &&
   #    f_b_last[[1]] != as.name("<-") &&
   #    f_b_last[[1]] != as.name("=")
-  #)) {
+  # )) {
   #  f_b_last <- substitute(return(c), list(c = f_b_last))
   #  body(f)[length(body(f))][[1]] <- f_b_last
-  #}
+  # }
   fct_ret <- compiler_a2a(
     f, verbose, reference,
     R_fct, types_of_args, return_type, name_f,

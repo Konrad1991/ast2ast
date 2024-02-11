@@ -45,7 +45,7 @@ PC <- R6::R6Class("PC",
     },
     replace_int = function() {
       for (i in seq_along(self$arguments)) {
-        if(is.null(self$arguments[[i]])) {
+        if (is.null(self$arguments[[i]])) {
           return()
         }
         if (is.atomic(self$arguments[[i]])) {
@@ -65,7 +65,7 @@ PC <- R6::R6Class("PC",
     },
     replace_NA = function() {
       for (i in seq_along(self$arguments)) {
-        if(is.null(self$arguments[[i]])) {
+        if (is.null(self$arguments[[i]])) {
           return()
         }
         if ((is.atomic(self$arguments[[i]])) && (is.na(self$arguments[[i]]))) {
@@ -75,7 +75,7 @@ PC <- R6::R6Class("PC",
     },
     replace_INF = function() {
       for (i in seq_along(self$arguments)) {
-        if(is.null(self$arguments[[i]])) {
+        if (is.null(self$arguments[[i]])) {
           return()
         }
         if ((is.atomic(self$arguments[[i]])) && (is.infinite(self$arguments[[i]]))) {
@@ -262,7 +262,7 @@ assign <- R6::R6Class("assign",
         ret[[1]] <- self$name_fct
       }
       lapply(self$arguments, function(x) {
-        if(is.character(x)){
+        if (is.character(x)) {
           stop("You cannot use characters in assignments")
         }
       })
@@ -301,16 +301,16 @@ retur <- R6::R6Class("retur",
       }
 
       if (self$R_fct) {
-          if(is.character(self$arguments[[1]]) && length(self$arguments) == 1) {
-            self$arguments <- paste0("\"", self$arguments, "\"")
-            self$arguments <- str2lang(paste("cpp2R(", self$arguments, ")", collapse = ""))  
-          } else {
-            self$arguments <- str2lang(paste("cpp2R(", self$arguments, ")", collapse = ""))  
-          }
-          ret <- c(ret, self$arguments)
-          return(ret)
+        if (is.character(self$arguments[[1]]) && length(self$arguments) == 1) {
+          self$arguments <- paste0("\"", self$arguments, "\"")
+          self$arguments <- str2lang(paste("cpp2R(", self$arguments, ")", collapse = ""))
+        } else {
+          self$arguments <- str2lang(paste("cpp2R(", self$arguments, ")", collapse = ""))
+        }
+        ret <- c(ret, self$arguments)
+        return(ret)
       } else {
-          return(c(ret, self$arguments))
+        return(c(ret, self$arguments))
       }
     }
   )

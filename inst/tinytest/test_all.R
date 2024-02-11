@@ -1668,7 +1668,7 @@ expect_equal(test(0, 22.2), c(1, 0, 0)) # failed
 expect_equal(test(0, 22.3), c(0, 1, 1))
 expect_equal(test(0, 22.4), c(0, 0, 0))
 # dim
-expect_equal(test(matrix(c(1, 2, 3, 4), 2, 2), 20.1), matrix(c(2, 3, 3, 4), 2, 2))  # failed
+expect_equal(test(matrix(c(1, 2, 3, 4), 2, 2), 20.1), matrix(c(2, 3, 3, 4), 2, 2)) # failed
 # trigonometry
 helper <- function() {
   a <- c(0, 0.2, 0.4, 0.99)
@@ -1685,21 +1685,21 @@ expect_equal(test(0, 19.63), matrix(c(1, 2, 4, 5), 2, 2))
 expect_equal(test(0, 19.64), matrix(c(1, 2, 4, 5), 2, 2))
 expect_equal(test(0, 19.65), matrix(c(4, 5), 2, 1))
 expect_equal(test(0, 19.66), matrix(c(4, 5), 2, 1))
-expect_equal(test(0, 19.67), c(2, 5)) 
+expect_equal(test(0, 19.67), c(2, 5))
 expect_equal(test(0, 19.68), c(2, 5))
 expect_equal(test(0, 19.69), matrix(5))
 expect_equal(test(0, 19.42), c(3, 5))
-expect_equal(test(0, 19.43), c(1, 3, 5)) 
+expect_equal(test(0, 19.43), c(1, 3, 5))
 expect_equal(test(0, 19.44), c(1, 4))
 expect_equal(test(0, 19.45), c(1, 7))
 expect_equal(test(0, 19.46), c(1, 2))
-expect_equal(test(0, 19.47), c(4, 6)) 
+expect_equal(test(0, 19.47), c(4, 6))
 expect_equal(test(0, 19.48), c(1, 4)) # failed
-expect_equal(test(0, 19.49), c(1, 7)) 
+expect_equal(test(0, 19.49), c(1, 7))
 expect_equal(test(0, 19.51), c(1, 2))
 expect_equal(test(0, 19.52), 4) # failed
 expect_equal(test(0, 19.53), matrix(c(1, 2, 3, 4, 5, 6), 3, 2))
-expect_equal(test(0, 19.54), matrix(4:9, 3, 2)) 
+expect_equal(test(0, 19.54), matrix(4:9, 3, 2))
 expect_equal(test(0, 19.55), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
 expect_equal(test(0, 19.56), matrix(c(2, 5, 8), 1, 3))
 expect_equal(test(0, 19.57), matrix(1:6, 3, 2))
@@ -1733,12 +1733,12 @@ expect_equal(test(0, 19.37), matrix(1:9, 3, 3))
 expect_equal(test(0, 19.38), matrix(1:6, 3, 2))
 expect_equal(test(0, 19.39), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
 expect_equal(test(0, 19.41), matrix(c(1, 2, 4, 5), 2, 2))
-expect_equal(test(c(1, 2, 3, 4), 18.1), c(5, 2, 3, 4))  # failed
-expect_equal(test(0, 18.2), matrix(c(1:3, 20, 5:15, 20), 4, 4))  # failed
-expect_equal(test(0, 18.3), matrix(c(20, 2, 20, 4, 5, 6), 3, 2))  # failed
-expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.4), matrix(c(20, 2, 3, 4, 5, 6, 20, 8, 9), 3, 3))  # failed
-expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.5), matrix(c(20, 20, 3:9), 3, 3))  # failed
-expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.6), matrix(c(1, 2, 3, 20, 20, 20, 20, 20, 20), 3, 3))  # failed
+expect_equal(test(c(1, 2, 3, 4), 18.1), c(5, 2, 3, 4)) # failed
+expect_equal(test(0, 18.2), matrix(c(1:3, 20, 5:15, 20), 4, 4)) # failed
+expect_equal(test(0, 18.3), matrix(c(20, 2, 20, 4, 5, 6), 3, 2)) # failed
+expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.4), matrix(c(20, 2, 3, 4, 5, 6, 20, 8, 9), 3, 3)) # failed
+expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.5), matrix(c(20, 20, 3:9), 3, 3)) # failed
+expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.6), matrix(c(1, 2, 3, 20, 20, 20, 20, 20, 20), 3, 3)) # failed
 expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.7), matrix(c(20, 20, 3, 20, 20, 6, 20, 20, 9), 3, 3)) # failed
 expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.8), matrix(c(20, 20, 20, 20, 20, 20, 7, 8, 9), 3, 3)) # failed
 expect_equal(test(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3), 18.9), matrix(c(20, 2, 20, 20, 5, 20, 20, 8, 20), 3, 3)) # failed
@@ -1808,8 +1808,8 @@ expect_equal(test(0, 16.94), c(1, 3, 5))
 expect_equal(test(0, 16.95), c(1, 4))
 expect_equal(test(0, 16.96), c(1, 7))
 expect_equal(test(0, 16.97), c(1, 2))
-expect_equal(test(0, 16.55), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))  # failed
-expect_equal(test(0, 16.56), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))  # failed
+expect_equal(test(0, 16.55), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(test(0, 16.56), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
 expect_equal(test(0, 16.57), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
 expect_equal(test(0, 16.58), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
 expect_equal(test(0, 16.59), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
@@ -1829,7 +1829,7 @@ expect_equal(test(0, 16.74), c(4, 6))
 expect_equal(test(0, 16.75), c(4))
 expect_equal(test(0, 16.76), c(1, 4, 7))
 expect_equal(test(0, 16.77), c(1, 4, 7))
-expect_equal(test(c(1, 2, 3, 4), 16.31), matrix(c(20, 20, 20, 20, 20, 20, 7, 8, 9), 3, 3))  # failed
+expect_equal(test(c(1, 2, 3, 4), 16.31), matrix(c(20, 20, 20, 20, 20, 20, 7, 8, 9), 3, 3)) # failed
 expect_equal(test(c(1, 2, 3, 4), 16.32), matrix(c(20, 2, 20, 20, 5, 20, 20, 8, 20), 3, 3)) # failed
 expect_equal(test(c(1, 2, 3, 4), 16.33), matrix(c(20, 2, 20, 20, 5, 20, 7, 8, 9), 3, 3)) # failed
 expect_equal(test(c(1, 2, 3, 4), 16.34), matrix(c(1, 20, 3, 20, 5:16), 4, 4)) # failed
@@ -1941,12 +1941,12 @@ expect_equal(test(0, 13.3), c(2, 2, 2) != 1)
 # 0 bubblesort
 x <- c(1, 5, 2, 3, 8, 10, 1.5)
 ret <- test(x, 0)
-expect_equal(ret, c(1, 1.5, 2, 3, 5, 8, 10))  # failed
+expect_equal(ret, c(1, 1.5, 2, 3, 5, 8, 10)) # failed
 
 # 1 Fibonacci
 ret <- test(0, 1)
 res <- c(1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765)
-expect_equal(ret, res)  # failed
+expect_equal(ret, res) # failed
 
 # 2.1- random stuff
 expect_equal(test(0, 2.1), matrix(50:61, 3, 4))
@@ -1966,9 +1966,9 @@ expect_equal(test(0, 3.4), 4.14)
 # 3.5 add
 expect_equal(test(0, 3.5), rep(4, 4))
 # 3.6 add
-expect_equal(test(c(1, 2, 3, 4), 3.6), c(101, 202, 103, 204))  # failed
+expect_equal(test(c(1, 2, 3, 4), 3.6), c(101, 202, 103, 204)) # failed
 # 3.7 add
-expect_equal(test(c(1, 2, 3, 4), 3.7), c(101, 202, 303, 404, 501, 602, 703, 804, 901))  # failed
+expect_equal(test(c(1, 2, 3, 4), 3.7), c(101, 202, 303, 404, 501, 602, 703, 804, 901)) # failed
 # 3.8 add
 expect_equal(test(c(1, 2, 3, 4), 3.8), rep(4, 4))
 # 3.9 add
@@ -1993,9 +1993,9 @@ expect_equal(test(0, 4.4), 1 - 3.14)
 # 4.5 subtracting
 expect_equal(test(0, 4.5), 1 - rep(3, 4))
 # 4.6 subtracting
-expect_equal(test(c(1, 2, 3, 4), 4.6), c(1, 2, 3, 4) - c(100, 200))  # failed
+expect_equal(test(c(1, 2, 3, 4), 4.6), c(1, 2, 3, 4) - c(100, 200)) # failed
 # 4.7 subtracting
-expect_equal(test(c(1, 2, 3, 4), 4.7), c(1, 2, 3, 4) - seq(100, 900, 100))  # failed
+expect_equal(test(c(1, 2, 3, 4), 4.7), c(1, 2, 3, 4) - seq(100, 900, 100)) # failed
 # 4.8 subtracting
 expect_equal(test(c(1, 2, 3, 4), 4.8), rep(3, 4) - 1)
 # 4.9 subtracting
@@ -2020,7 +2020,7 @@ expect_equal(test(0, 5.4), 1 / 3.14)
 # 5.5 divide
 expect_equal(test(0, 5.5), 1 / rep(3, 4))
 # 5.6 divide
-expect_equal(test(c(1, 2, 3, 4), 5.6), c(1, 2, 3, 4) / c(100, 200))  # failed
+expect_equal(test(c(1, 2, 3, 4), 5.6), c(1, 2, 3, 4) / c(100, 200)) # failed
 # 5.7 divide
 expect_equal(test(c(1, 2, 3, 4), 5.7), c(1, 2, 3, 4) / seq(100, 900, 100))
 # 5.8 divide
@@ -2047,7 +2047,7 @@ expect_equal(test(0, 6.4), 1 * 3.14)
 # 6.6 times
 expect_equal(test(0, 6.5), 1 * rep(3, 4))
 # 6.6 times
-expect_equal(test(c(1, 2, 3, 4), 6.6), c(1, 2, 3, 4) * c(100, 200))  # failed
+expect_equal(test(c(1, 2, 3, 4), 6.6), c(1, 2, 3, 4) * c(100, 200)) # failed
 # 6.7 times
 expect_equal(test(c(1, 2, 3, 4), 6.7), c(1, 2, 3, 4) * seq(100, 900, 100))
 # 6.8 times
@@ -2073,110 +2073,110 @@ expect_equal(test(0, 7.2), c(4, 2, 3))
 set.seed(1234)
 res <- rgamma(10, 1)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 26.1)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 26.1)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- dgamma(10, 5)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 26.2)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 26.2)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- pgamma(10, 10)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 26.3)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 26.3)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- qgamma(10, 10)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 26.4)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 26.4)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- rgamma(c(1, 2, 3), 1)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 26.5)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 26.5)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- dgamma(c(1, 2, 3), 1)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 26.6)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 26.6)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- pgamma(c(1, 2, 3), 7)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 26.7)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 26.7)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- qgamma(c(0, 0.1, 0.2), 0.3)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 26.8)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 26.8)
 expect_equal(res, x) # failed
 
 set.seed(1234)
 res <- rgamma(n = 10, 1, scale = -1.0)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 26.9)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 26.9)
 expect_equal(res, x)
 
 # lnorm
 set.seed(1234)
 res <- rlnorm(10)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 25.1)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 25.1)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- dlnorm(10)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 25.2)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 25.2)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- plnorm(10)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 25.3)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 25.3)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- qlnorm(10)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 25.4)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 25.4)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- rlnorm(c(1, 2, 3))
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 25.5)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 25.5)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- dlnorm(c(1, 2, 3))
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 25.6)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 25.6)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- plnorm(c(1, 2, 3))
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 25.7)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 25.7)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- qlnorm(c(1, 2, 3))
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 25.8)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 25.8)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- rlnorm(n = 10, meanlog = -1, sdlog = 2)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 25.9)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 25.9)
 expect_equal(res, x)
 
 
@@ -2184,119 +2184,119 @@ expect_equal(res, x)
 set.seed(1234)
 res <- rnorm(10)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 24.1)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 24.1)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- dnorm(10)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 24.2)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 24.2)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- pnorm(10)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 24.3)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 24.3)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- qnorm(10)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 24.4)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 24.4)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- rnorm(c(1, 2, 3))
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 24.5)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 24.5)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- dnorm(c(1, 2, 3))
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 24.6)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 24.6)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- pnorm(c(1, 2, 3))
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 24.7)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 24.7)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- qnorm(c(1, 2, 3))
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 24.8)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 24.8)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- rnorm(n = 10, mean = -1, sd = 2)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 24.9)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 24.9)
 expect_equal(res, x)
 
 # uniform
 set.seed(1234)
 res <- runif(10)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 23.1)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 23.1)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- dunif(10)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 23.2)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 23.2)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- punif(10)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 23.3)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 23.3)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- qunif(10)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 23.4)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 23.4)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- runif(c(1, 2, 3))
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 23.5)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 23.5)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- dunif(c(1, 2, 3))
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 23.6)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 23.6)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- punif(c(1, 2, 3))
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 23.7)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 23.7)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- qunif(c(1, 2, 3))
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 23.8)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 23.8)
 expect_equal(res, x)
 
 set.seed(1234)
 res <- runif(n = 10, min = -1, max = 2)
 set.seed(1234)
-x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 23.9)
+x <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 23.9)
 expect_equal(res, x)
 
 # Na, Inf, -Inf
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(0, 3), 22.1), c(NA, Inf, -Inf)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(0, 3), 22.2), c(1, 0, 0)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(0, 3), 22.3), c(0, 1, 1))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(0, 3), 22.4), c(0, 0, 0))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(0, 3), 22.1), c(NA, Inf, -Inf)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(0, 3), 22.2), c(1, 0, 0)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(0, 3), 22.3), c(0, 1, 1))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(0, 3), 22.4), c(0, 0, 0))
 # dim
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 20.1, TRUE, 2, 2), matrix(c(2, 3, 3, 4), 2, 2) )  
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 20.1, TRUE, 2, 2), matrix(c(2, 3, 3, 4), 2, 2))
 # trigonometry
 helper <- function() {
   a <- c(0, 0.2, 0.4, 0.99)
@@ -2307,393 +2307,393 @@ r <- function(n) {
   rep(0.0, n)
 }
 
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),r(4), 21.1), helper())
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), r(4), 21.1), helper())
 # subassign
 matrix(c(1, 2, 4, 5, 7, 8), 2, 3)
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),r(6), 19.59), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.61), matrix(c(2, 5, 8), 1, 3)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.62), matrix(c(1, 2, 4, 5), 2, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.63), matrix(c(1, 2, 4, 5), 2, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.64), matrix(c(1, 2, 4, 5), 2, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.65), matrix(c(4, 5), 2, 1))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.66), matrix(c(4, 5), 2, 1))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.67), c(2, 5)) 
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.68), c(2, 5))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.69), matrix(5))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.42), c(3, 5))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.43), c(1, 3, 5)) 
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.44), c(1, 4))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.45), c(1, 7))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.46), c(1, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.47), c(4, 6)) 
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.48), c(1, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.49), c(1, 7)) 
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.51), c(1, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.52), 4) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.53), matrix(c(1, 2, 3, 4, 5, 6), 3, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.54), matrix(4:9, 3, 2)) 
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.55), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.56), matrix(c(2, 5, 8), 1, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.57), matrix(1:6, 3, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.58), matrix(4:9, 3, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.1), 2)
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.11), 3)
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.12), c(1, 2, 3, 4, 5, 6))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.13), c(1, 2, 3, 4, 5, 6))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.14), c(1, 5))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.15), 4)
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.16), c(1, 4, 7))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.17), c(1, 4, 7))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.18), c(1, 7))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.19), 4)
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.21), c(4, 5, 6))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.22), c(4, 5, 6))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.23), c(4, 6))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.24), 4)
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.25), c(1, 4, 7))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.26), c(1, 4, 7))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.27), c(1, 7))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.28), c(4, 5, 6))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.29), c(4, 5, 6))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.31), c(4, 6))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.32), matrix(1:9, 3, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.33), matrix(1:9, 3, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.34), matrix(c(1, 2, 3, 4, 5, 6), 3, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.35), matrix(1:9, 3, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.36), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.37), matrix(1:9, 3, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.38), matrix(1:6, 3, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.39), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 19.41), matrix(c(1, 2, 4, 5), 2, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 18.1), c(5, 2, 3, 4))  # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1.0:16.0, 18.2, TRUE, 4, 4), matrix(c(1:3, 20, 5:15, 20), 4, 4))  # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1.0:6.0, 18.3, TRUE, 3, 2), matrix(c(20, 2, 20, 4, 5, 6), 3, 2))  # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4, 5, 6, 7, 8, 9), 18.4, TRUE, 3, 3), matrix(c(20, 2, 3, 4, 5, 6, 20, 8, 9), 3, 3))  # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4, 5, 6, 7, 8, 9), 18.5, TRUE, 3, 3), matrix(c(20, 20, 3:9), 3, 3))  # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4, 5, 6, 7, 8, 9), 18.6, TRUE, 3, 3), matrix(c(1, 2, 3, 20, 20, 20, 20, 20, 20), 3, 3))  # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), r(6), 19.59), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.61), matrix(c(2, 5, 8), 1, 3)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.62), matrix(c(1, 2, 4, 5), 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.63), matrix(c(1, 2, 4, 5), 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.64), matrix(c(1, 2, 4, 5), 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.65), matrix(c(4, 5), 2, 1))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.66), matrix(c(4, 5), 2, 1))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.67), c(2, 5))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.68), c(2, 5))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.69), matrix(5))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.42), c(3, 5))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.43), c(1, 3, 5))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.44), c(1, 4))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.45), c(1, 7))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.46), c(1, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.47), c(4, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.48), c(1, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.49), c(1, 7))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.51), c(1, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.52), 4) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.53), matrix(c(1, 2, 3, 4, 5, 6), 3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.54), matrix(4:9, 3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.55), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.56), matrix(c(2, 5, 8), 1, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.57), matrix(1:6, 3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.58), matrix(4:9, 3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.1), 2)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.11), 3)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.12), c(1, 2, 3, 4, 5, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.13), c(1, 2, 3, 4, 5, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.14), c(1, 5))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.15), 4)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.16), c(1, 4, 7))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.17), c(1, 4, 7))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.18), c(1, 7))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.19), 4)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.21), c(4, 5, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.22), c(4, 5, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.23), c(4, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.24), 4)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.25), c(1, 4, 7))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.26), c(1, 4, 7))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.27), c(1, 7))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.28), c(4, 5, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.29), c(4, 5, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.31), c(4, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.32), matrix(1:9, 3, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.33), matrix(1:9, 3, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.34), matrix(c(1, 2, 3, 4, 5, 6), 3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.35), matrix(1:9, 3, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.36), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.37), matrix(1:9, 3, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.38), matrix(1:6, 3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.39), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 19.41), matrix(c(1, 2, 4, 5), 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 18.1), c(5, 2, 3, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1.0:16.0, 18.2, TRUE, 4, 4), matrix(c(1:3, 20, 5:15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1.0:6.0, 18.3, TRUE, 3, 2), matrix(c(20, 2, 20, 4, 5, 6), 3, 2)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4, 5, 6, 7, 8, 9), 18.4, TRUE, 3, 3), matrix(c(20, 2, 3, 4, 5, 6, 20, 8, 9), 3, 3)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4, 5, 6, 7, 8, 9), 18.5, TRUE, 3, 3), matrix(c(20, 20, 3:9), 3, 3)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4, 5, 6, 7, 8, 9), 18.6, TRUE, 3, 3), matrix(c(1, 2, 3, 20, 20, 20, 20, 20, 20), 3, 3)) # failed
 expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4, 5, 6, 7, 8, 9), 18.7, TRUE, 3, 3), matrix(c(20, 20, 3, 20, 20, 6, 20, 20, 9), 3, 3)) # failed
 expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4, 5, 6, 7, 8, 9), 18.8, TRUE, 3, 3), matrix(c(20, 20, 20, 20, 20, 20, 7, 8, 9), 3, 3)) # failed
 expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4, 5, 6, 7, 8, 9), 18.9, TRUE, 3, 3), matrix(c(20, 2, 20, 20, 5, 20, 20, 8, 20), 3, 3)) # failed
 expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4, 5, 6, 7, 8, 9), 18.91, TRUE, 3, 3), matrix(c(20, 2, 20, 20, 5, 20, 7, 8, 9), 3, 3)) # failed
 expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 18.92, TRUE, 4, 4), matrix(c(1, 20, 3, 20, 5:16), 4, 4)) # failed
 # subsetting
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.25, TRUE, 3, 3), c(1, 7))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.26, TRUE, 3, 3), c(4, 6))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.27, TRUE, 3, 3), matrix(1:6, 3, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.28, TRUE, 3, 3), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.29, TRUE, 3, 3), matrix(1:6, 3, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.31, TRUE, 3, 3), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.32, TRUE, 3, 3), matrix(c(1, 2, 4, 5), 2, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:6, 17.33), c(2, 4))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.34, TRUE, 3, 3), c(1, 4))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.35, TRUE, 3, 3), c(1, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.36, TRUE, 3, 3), c(1, 4))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.37, TRUE, 3, 3), c(1, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.38, TRUE, 3, 3), matrix(c(1:6), 3, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.39, TRUE, 3, 3), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.41, TRUE, 3, 3), matrix(c(1:6), 3, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.42, TRUE, 3, 3), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.43, TRUE, 3, 3), matrix(c(1, 2, 4, 5), 2, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.44, TRUE, 3, 3), matrix(c(1, 2, 4, 5), 2, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.45, TRUE, 3, 3), matrix(c(1, 2, 4, 5), 2, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.46, TRUE, 3, 3), matrix(c(4, 5), 2, 1))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.47, TRUE, 3, 3), c(2, 5))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.15, TRUE, 3, 3), matrix(c(1, 2, 4, 5), 2, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.16, TRUE, 3, 3), matrix(c(4, 5), 2, 1))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.17, TRUE, 3, 3), matrix(4:5, 2, 1))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.18, TRUE, 3, 3), c(2, 5))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.19, TRUE, 3, 3), c(2, 5))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.21, TRUE, 3, 3), matrix(c(5), 1, 1))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:6, 17.22), c(1, 5))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.23, TRUE, 3, 3), c(1, 7))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.24, TRUE, 3, 3), c(4, 6))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.98, TRUE, 3, 3), c(4, 6))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.99, TRUE, 3, 3), c(1, 4))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.1, TRUE, 3, 3), c(1, 7))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.2, TRUE, 3, 3), c(1, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.3, TRUE, 3, 3), c(4))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.4, TRUE, 3, 3), matrix(c(1:6), 3, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.5, TRUE, 3, 3), matrix(c(4:9), 3, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.6, TRUE, 3, 3), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.7, TRUE, 3, 3), matrix(c(2, 5, 8), 1, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.8, TRUE, 3, 3), matrix(c(1:6), 3, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.9, TRUE, 3, 3), matrix(c(4:9), 3, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.11, TRUE, 3, 3), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.12, TRUE, 3, 3), matrix(c(2, 5, 8), 1, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.13, TRUE, 3, 3), matrix(c(1, 2, 4, 5), 2, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 17.14, TRUE, 3, 3), matrix(c(1, 2, 4, 5), 2, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.78, TRUE, 3, 3), c(1, 7))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.79, TRUE, 3, 3), c(4, 5, 6))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.81, TRUE, 3, 3), c(4, 5, 6))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.82, TRUE, 3, 3), c(4, 6))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.83, TRUE, 3, 3), matrix(1:9, 3, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.84, TRUE, 3, 3), matrix(1:9, 3, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.85, TRUE, 3, 3), matrix(1:6, 3, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.86, TRUE, 3, 3), matrix(1:9, 3, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.87, TRUE, 3, 3), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.88, TRUE, 3, 3), matrix(1:9, 3, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.89, TRUE, 3, 3), matrix(1:6, 3, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.91, TRUE, 3, 3), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.92, TRUE, 3, 3), matrix(c(1, 2, 4, 5), 2, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:6, 16.93), c(2, 4))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:6, 16.94), c(1, 3, 5))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.95, TRUE, 3, 3), c(1, 4))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.96, TRUE, 3, 3), c(1, 7))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.97, TRUE, 3, 3), c(1, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.55, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))  # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.56, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4))  # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.57, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.58, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.59, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.61, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.62, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.63, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.64, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:6, 16.65), c(2, 2)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:6, 16.66), 1:6) # issue: check why 1:9 does not work
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:6, 16.67), c(1, 5))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.68, TRUE, 3, 3), c(0, 0, 0))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.69, TRUE, 3, 3), c(1, 7))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.71, TRUE, 3, 3), 4)
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.72, TRUE, 3, 3), c(4, 5, 6))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.73, TRUE, 3, 3), c(4, 5, 6))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.74, TRUE, 3, 3), c(4, 6))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.75, TRUE, 3, 3), c(4))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.76, TRUE, 3, 3), c(1, 4, 7))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.77, TRUE, 3, 3), c(1, 4, 7))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.31, TRUE, 3, 3), matrix(c(20, 20, 20, 20, 20, 20, 7, 8, 9), 3, 3))  # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.32, TRUE, 3, 3), matrix(c(20, 2, 20, 20, 5, 20, 20, 8, 20), 3, 3)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.33, TRUE, 3, 3), matrix(c(20, 2, 20, 20, 5, 20, 7, 8, 9), 3, 3)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.34, TRUE, 4, 4), matrix(c(1, 20, 3, 20, 5:16), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.35, TRUE, 4, 4), matrix(c(20, 20, 20, 20, 5:16), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.36, TRUE, 4, 4), matrix(c(1, 2, 3, 4, 20, 6, 7, 8, 9, 10, 11, 12, 20, 14, 15, 16), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.37, TRUE, 4, 4), matrix(c(1:8, 20, 10:12, 20, 14:16), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.38, TRUE, 4, 4), matrix(c(1, 20, 3, 20, 5:16), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.39, TRUE, 4, 4), matrix(c(1:15, 20), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.41, TRUE, 4, 4), matrix(c(1, 2, 3, 4, 5, 6, 20, 8, 9, 10, 11, 12, 13, 14, 20, 16), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.42, TRUE, 4, 4), matrix(c(1, 2, 20, 4:16), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.43, TRUE, 4, 4), matrix(c(1, 20, 3, 20, 5:16), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.44, TRUE, 4, 4), matrix(c(20, 20, 20, 20, 5:16), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.45, TRUE, 4, 4), matrix(c(1:4, rep(20, 4), 9:12, rep(20, 4)), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.46, TRUE, 4, 4), matrix(c(1:8, rep(20, 8)), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.47, TRUE, 4, 4), matrix(c(1, 20, 3, 20, 5, 20, 7, 20, 9, 20, 11, 20, 13, 20, 15, 20), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.48, TRUE, 4, 4), matrix(c(20, 2:4, 20, 6:8, 20, 10:12, 20, 14:16), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.49, TRUE, 4, 4), matrix(c(1:4, rep(20, 4), 9:12, rep(20, 4)), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.51, TRUE, 4, 4), matrix(c(1:8, rep(20, 8)), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.52, TRUE, 4, 4), matrix(c(1, 20, 3, 20, 5, 20, 7, 20, 9, 20, 11, 20, 13, 20, 15, 20), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.53, TRUE, 4, 4), matrix(c(20, 2:4, 20, 6:8, 20, 10:12, 20, 14:16), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.54, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 16.1), rep(100, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 16.2), rep(0, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 16.3), c(0, 0, 3, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 16.4), rep(0, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 16.5), c(5, 2, 3, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.6, TRUE, 4, 4), matrix(c(1:15, 20), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.7, TRUE, 4, 4), matrix(c(1:15, 20), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.8, TRUE, 4, 4), matrix(c(1:3, 20, 5:7, 20, 9:11, 20, 13:15, 20), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.9, TRUE, 4, 4), matrix(c(1:3, 20, 5:7, 20, 9:11, 20, 13:15, 20), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:16, 16.11, TRUE, 4, 4), matrix(c(1:3, 20, 5:15, 20), 4, 4)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:4, 16.12, TRUE, 2, 2), matrix(c(20, 2, 3, 4), 2, 2)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:4, 16.13, TRUE, 2, 2), matrix(c(20, 20, 3, 4), 2, 2)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:4, 16.14, TRUE, 2, 2), matrix(c(20, 20, 3, 4), 2, 2)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:6, 16.15, TRUE, 3, 2), matrix(c(20, 2, 20, 4, 5, 6), 3, 2)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:6, 16.16, TRUE, 3, 2), matrix(c(20, 2, 3, 4, 5, 6), 3, 2)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:6, 16.17, TRUE, 3, 2), matrix(c(20, 2, 3, 20, 5, 6), 3, 2)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:6, 16.18, TRUE, 3, 2), matrix(c(20, 2, 3, 20, 5, 6), 3, 2)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.19, TRUE, 3, 3), matrix(c(20, 2, 3, 4, 5, 6, 20, 8, 9), 3, 3)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.21, TRUE, 3, 3), matrix(c(20, 20, 20, 4:9), 3, 3)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.22, TRUE, 3, 3), matrix(c(20, 20, 20, 4:9), 3, 3)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.23, TRUE, 3, 3), matrix(c(20, 20, 3:9), 3, 3)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.24, TRUE, 3, 3), matrix(rep(20, 9), 3, 3)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.25, TRUE, 3, 3), matrix(rep(20, 9), 3, 3)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.26, TRUE, 3, 3), matrix(c(1, 2, 3, 20, 20, 20, 20, 20, 20), 3, 3)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.27, TRUE, 3, 3), matrix(rep(20, 9), 3, 3)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.28, TRUE, 3, 3), matrix(c(20, 20, 3, 20, 20, 6, 20, 20, 9), 3, 3)) # failed
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:9, 16.29, TRUE, 3, 3), matrix(rep(20, 9), 3, 3)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.25, TRUE, 3, 3), c(1, 7))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.26, TRUE, 3, 3), c(4, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.27, TRUE, 3, 3), matrix(1:6, 3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.28, TRUE, 3, 3), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.29, TRUE, 3, 3), matrix(1:6, 3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.31, TRUE, 3, 3), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.32, TRUE, 3, 3), matrix(c(1, 2, 4, 5), 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:6, 17.33), c(2, 4))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.34, TRUE, 3, 3), c(1, 4))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.35, TRUE, 3, 3), c(1, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.36, TRUE, 3, 3), c(1, 4))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.37, TRUE, 3, 3), c(1, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.38, TRUE, 3, 3), matrix(c(1:6), 3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.39, TRUE, 3, 3), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.41, TRUE, 3, 3), matrix(c(1:6), 3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.42, TRUE, 3, 3), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.43, TRUE, 3, 3), matrix(c(1, 2, 4, 5), 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.44, TRUE, 3, 3), matrix(c(1, 2, 4, 5), 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.45, TRUE, 3, 3), matrix(c(1, 2, 4, 5), 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.46, TRUE, 3, 3), matrix(c(4, 5), 2, 1))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.47, TRUE, 3, 3), c(2, 5))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.15, TRUE, 3, 3), matrix(c(1, 2, 4, 5), 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.16, TRUE, 3, 3), matrix(c(4, 5), 2, 1))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.17, TRUE, 3, 3), matrix(4:5, 2, 1))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.18, TRUE, 3, 3), c(2, 5))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.19, TRUE, 3, 3), c(2, 5))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.21, TRUE, 3, 3), matrix(c(5), 1, 1))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:6, 17.22), c(1, 5))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.23, TRUE, 3, 3), c(1, 7))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.24, TRUE, 3, 3), c(4, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.98, TRUE, 3, 3), c(4, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.99, TRUE, 3, 3), c(1, 4))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.1, TRUE, 3, 3), c(1, 7))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.2, TRUE, 3, 3), c(1, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.3, TRUE, 3, 3), c(4))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.4, TRUE, 3, 3), matrix(c(1:6), 3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.5, TRUE, 3, 3), matrix(c(4:9), 3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.6, TRUE, 3, 3), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.7, TRUE, 3, 3), matrix(c(2, 5, 8), 1, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.8, TRUE, 3, 3), matrix(c(1:6), 3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.9, TRUE, 3, 3), matrix(c(4:9), 3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.11, TRUE, 3, 3), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.12, TRUE, 3, 3), matrix(c(2, 5, 8), 1, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.13, TRUE, 3, 3), matrix(c(1, 2, 4, 5), 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 17.14, TRUE, 3, 3), matrix(c(1, 2, 4, 5), 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.78, TRUE, 3, 3), c(1, 7))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.79, TRUE, 3, 3), c(4, 5, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.81, TRUE, 3, 3), c(4, 5, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.82, TRUE, 3, 3), c(4, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.83, TRUE, 3, 3), matrix(1:9, 3, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.84, TRUE, 3, 3), matrix(1:9, 3, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.85, TRUE, 3, 3), matrix(1:6, 3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.86, TRUE, 3, 3), matrix(1:9, 3, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.87, TRUE, 3, 3), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.88, TRUE, 3, 3), matrix(1:9, 3, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.89, TRUE, 3, 3), matrix(1:6, 3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.91, TRUE, 3, 3), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.92, TRUE, 3, 3), matrix(c(1, 2, 4, 5), 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:6, 16.93), c(2, 4))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:6, 16.94), c(1, 3, 5))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.95, TRUE, 3, 3), c(1, 4))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.96, TRUE, 3, 3), c(1, 7))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.97, TRUE, 3, 3), c(1, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.55, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.56, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.57, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.58, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.59, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.61, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.62, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.63, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.64, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:6, 16.65), c(2, 2)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:6, 16.66), 1:6) # issue: check why 1:9 does not work
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:6, 16.67), c(1, 5))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.68, TRUE, 3, 3), c(0, 0, 0))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.69, TRUE, 3, 3), c(1, 7))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.71, TRUE, 3, 3), 4)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.72, TRUE, 3, 3), c(4, 5, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.73, TRUE, 3, 3), c(4, 5, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.74, TRUE, 3, 3), c(4, 6))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.75, TRUE, 3, 3), c(4))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.76, TRUE, 3, 3), c(1, 4, 7))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.77, TRUE, 3, 3), c(1, 4, 7))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.31, TRUE, 3, 3), matrix(c(20, 20, 20, 20, 20, 20, 7, 8, 9), 3, 3)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.32, TRUE, 3, 3), matrix(c(20, 2, 20, 20, 5, 20, 20, 8, 20), 3, 3)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.33, TRUE, 3, 3), matrix(c(20, 2, 20, 20, 5, 20, 7, 8, 9), 3, 3)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.34, TRUE, 4, 4), matrix(c(1, 20, 3, 20, 5:16), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.35, TRUE, 4, 4), matrix(c(20, 20, 20, 20, 5:16), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.36, TRUE, 4, 4), matrix(c(1, 2, 3, 4, 20, 6, 7, 8, 9, 10, 11, 12, 20, 14, 15, 16), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.37, TRUE, 4, 4), matrix(c(1:8, 20, 10:12, 20, 14:16), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.38, TRUE, 4, 4), matrix(c(1, 20, 3, 20, 5:16), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.39, TRUE, 4, 4), matrix(c(1:15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.41, TRUE, 4, 4), matrix(c(1, 2, 3, 4, 5, 6, 20, 8, 9, 10, 11, 12, 13, 14, 20, 16), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.42, TRUE, 4, 4), matrix(c(1, 2, 20, 4:16), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.43, TRUE, 4, 4), matrix(c(1, 20, 3, 20, 5:16), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.44, TRUE, 4, 4), matrix(c(20, 20, 20, 20, 5:16), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.45, TRUE, 4, 4), matrix(c(1:4, rep(20, 4), 9:12, rep(20, 4)), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.46, TRUE, 4, 4), matrix(c(1:8, rep(20, 8)), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.47, TRUE, 4, 4), matrix(c(1, 20, 3, 20, 5, 20, 7, 20, 9, 20, 11, 20, 13, 20, 15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.48, TRUE, 4, 4), matrix(c(20, 2:4, 20, 6:8, 20, 10:12, 20, 14:16), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.49, TRUE, 4, 4), matrix(c(1:4, rep(20, 4), 9:12, rep(20, 4)), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.51, TRUE, 4, 4), matrix(c(1:8, rep(20, 8)), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.52, TRUE, 4, 4), matrix(c(1, 20, 3, 20, 5, 20, 7, 20, 9, 20, 11, 20, 13, 20, 15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.53, TRUE, 4, 4), matrix(c(20, 2:4, 20, 6:8, 20, 10:12, 20, 14:16), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.54, TRUE, 4, 4), matrix(c(1:5, 20, 7, 20, 9:13, 20, 15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 16.1), rep(100, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 16.2), rep(0, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 16.3), c(0, 0, 3, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 16.4), rep(0, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 16.5), c(5, 2, 3, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.6, TRUE, 4, 4), matrix(c(1:15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.7, TRUE, 4, 4), matrix(c(1:15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.8, TRUE, 4, 4), matrix(c(1:3, 20, 5:7, 20, 9:11, 20, 13:15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.9, TRUE, 4, 4), matrix(c(1:3, 20, 5:7, 20, 9:11, 20, 13:15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:16, 16.11, TRUE, 4, 4), matrix(c(1:3, 20, 5:15, 20), 4, 4)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:4, 16.12, TRUE, 2, 2), matrix(c(20, 2, 3, 4), 2, 2)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:4, 16.13, TRUE, 2, 2), matrix(c(20, 20, 3, 4), 2, 2)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:4, 16.14, TRUE, 2, 2), matrix(c(20, 20, 3, 4), 2, 2)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:6, 16.15, TRUE, 3, 2), matrix(c(20, 2, 20, 4, 5, 6), 3, 2)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:6, 16.16, TRUE, 3, 2), matrix(c(20, 2, 3, 4, 5, 6), 3, 2)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:6, 16.17, TRUE, 3, 2), matrix(c(20, 2, 3, 20, 5, 6), 3, 2)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:6, 16.18, TRUE, 3, 2), matrix(c(20, 2, 3, 20, 5, 6), 3, 2)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.19, TRUE, 3, 3), matrix(c(20, 2, 3, 4, 5, 6, 20, 8, 9), 3, 3)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.21, TRUE, 3, 3), matrix(c(20, 20, 20, 4:9), 3, 3)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.22, TRUE, 3, 3), matrix(c(20, 20, 20, 4:9), 3, 3)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.23, TRUE, 3, 3), matrix(c(20, 20, 3:9), 3, 3)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.24, TRUE, 3, 3), matrix(rep(20, 9), 3, 3)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.25, TRUE, 3, 3), matrix(rep(20, 9), 3, 3)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.26, TRUE, 3, 3), matrix(c(1, 2, 3, 20, 20, 20, 20, 20, 20), 3, 3)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.27, TRUE, 3, 3), matrix(rep(20, 9), 3, 3)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.28, TRUE, 3, 3), matrix(c(20, 20, 3, 20, 20, 6, 20, 20, 9), 3, 3)) # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 16.29, TRUE, 3, 3), matrix(rep(20, 9), 3, 3)) # failed
 
 # 15.1 - exponent & log
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 15.1), c(1, 4, 9, 16))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:4, 15.2, TRUE, 2, 2), matrix(c(1, 8, 27, 64), 2, 2))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(3, 4), 15.3, TRUE, 2, 2), exp(matrix(3, 2, 2)) + 1)
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(9, 4), 15.4, TRUE, 2, 2), matrix(3, 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 15.1), c(1, 4, 9, 16))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:4, 15.2, TRUE, 2, 2), matrix(c(1, 8, 27, 64), 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(3, 4), 15.3, TRUE, 2, 2), exp(matrix(3, 2, 2)) + 1)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(9, 4), 15.4, TRUE, 2, 2), matrix(3, 2, 2))
 # 14.1 - 14.7 == additional comparison tests for rvalues and results of calculations
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3), 14.1), rep(0, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3), 14.2), rep(0, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3), 14.3), rep(1, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3), 14.4), rep(1, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3), 14.5), rep(1, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3), 14.6), rep(1, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3), 14.7), rep(1, 3))
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3), 14.8), rep(1, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3), 14.1), rep(0, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3), 14.2), rep(0, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3), 14.3), rep(1, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3), 14.4), rep(1, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3), 14.5), rep(1, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3), 14.6), rep(1, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3), 14.7), rep(1, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3), 14.8), rep(1, 3))
 
 # 8.1==
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 8.1), rep(0, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 8.1), rep(0, 3))
 # 8.2==
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 8.2), rep(1, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 8.2), rep(1, 3))
 # 8.3==
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 8.3), rep(1, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 8.3), rep(1, 3))
 
 # 9.1<=
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 9.1), c(1, 1, 0))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 9.1), c(1, 1, 0))
 # 9.2<=
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 9.2), rep(1, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 9.2), rep(1, 3))
 # 9.3<=
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 9.3), rep(1, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 9.3), rep(1, 3))
 
 # 10.1<
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 10.1), as.numeric(c(1, 2, 3) < c(5, 6, 7)))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 10.1), as.numeric(c(1, 2, 3) < c(5, 6, 7)))
 # 10.2<
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 10.2), as.numeric(c(1, 2, 3) < c(1, 2, 3)))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 10.2), as.numeric(c(1, 2, 3) < c(1, 2, 3)))
 # 10.3<
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 10.3), as.numeric(c(2, 2, 2) < 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 10.3), as.numeric(c(2, 2, 2) < 2))
 
 # 11.1>
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 11.1), as.numeric(c(1, 2, 3) > c(5, 6, 7)))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 11.1), as.numeric(c(1, 2, 3) > c(5, 6, 7)))
 # 11.2>
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 11.2), as.numeric(c(1, 2, 3) > c(1, 2, 3)))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 11.2), as.numeric(c(1, 2, 3) > c(1, 2, 3)))
 # 11.3>
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 11.3), as.numeric(c(2, 2, 2) > 1))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 11.3), as.numeric(c(2, 2, 2) > 1))
 
 # 12.1>
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 12.1), as.numeric(c(1, 2, 3) >= c(5, 6, 3)))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 12.1), as.numeric(c(1, 2, 3) >= c(5, 6, 3)))
 # 12.2>
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 12.2), as.numeric(c(1, 2, 3) >= c(1, 2, 3)))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 12.2), as.numeric(c(1, 2, 3) >= c(1, 2, 3)))
 # 12.3>
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 12.3), as.numeric(c(2, 2, 2) >= 1))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 12.3), as.numeric(c(2, 2, 2) >= 1))
 
 # 13.1>
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 13.1), as.numeric(c(1, 2, 3) != c(5, 6, 3)))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 13.1), as.numeric(c(1, 2, 3) != c(5, 6, 3)))
 # 13.2>
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 13.2), as.numeric(c(1, 2, 3) != c(1, 2, 3)))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 13.2), as.numeric(c(1, 2, 3) != c(1, 2, 3)))
 # 13.3>
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:3, 13.3), as.numeric(c(2, 2, 2) != 1))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:3, 13.3), as.numeric(c(2, 2, 2) != 1))
 
 # 0 bubblesort
 x <- c(1, 5, 2, 3, 8, 10, 1.5)
-ret <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),x, 0)
-expect_equal(ret, c(1, 1.5, 2, 3, 5, 8, 10))  # failed
+ret <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), x, 0)
+expect_equal(ret, c(1, 1.5, 2, 3, 5, 8, 10)) # failed
 
 # 1 Fibonacci
-ret <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 1)
+ret <- ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 1)
 res <- c(1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765)
-expect_equal(ret, res)  # failed
+expect_equal(ret, res) # failed
 
 # 2.1- random stuff
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 2.1), matrix(50:61, 3, 4))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 2.1), matrix(50:61, 3, 4))
 # 2.2- random stuff
-expect_error(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 2.2))
+expect_error(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 2.2))
 # 2.2- random stuff
-expect_error(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 2.3))
+expect_error(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 2.3))
 
 # 3.1 add
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 3.1), c(4, 5, 6, 7))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 3.1), c(4, 5, 6, 7))
 # 3.2 add
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 3.2), c(1, 2, 3, 4) + 3.14)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 3.2), c(1, 2, 3, 4) + 3.14)
 # 3.3 add
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 3.3), matrix(4:7, 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 3.3), matrix(4:7, 2, 2))
 # 3.4 add
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 3.4), 4.14)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 3.4), 4.14)
 # 3.5 add
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:4, 3.5), rep(4,4))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:4, 3.5), rep(4, 4))
 # 3.6 add
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 3.6), c(101, 202, 103, 204))  # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 3.6), c(101, 202, 103, 204)) # failed
 # 3.7 add
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(1, 9), 3.7), c(101, 201, 301, 401, 501, 601, 701, 801, 901))  # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(1, 9), 3.7), c(101, 201, 301, 401, 501, 601, 701, 801, 901)) # failed
 # 3.8 add
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:24, 3.8), rep(4, 4))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:24, 3.8), rep(4, 4))
 # 3.9 add
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 3.9), 5)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 3.9), 5)
 # 3.10 add
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(3, 4), 3.10, TRUE, 2, 2), matrix(6, 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(3, 4), 3.10, TRUE, 2, 2), matrix(6, 2, 2))
 # 3.11 add
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(3, 4), 3.11, TRUE, 2, 2), matrix(4, 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(3, 4), 3.11, TRUE, 2, 2), matrix(4, 2, 2))
 # 3.12 add
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(3, 4), 3.12, TRUE, 2, 2), matrix(7, 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(3, 4), 3.12, TRUE, 2, 2), matrix(7, 2, 2))
 # 3.13 add
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(3, 4), 3.13, TRUE, 2, 2), matrix(6, 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(3, 4), 3.13, TRUE, 2, 2), matrix(6, 2, 2))
 
 # 4.1 subtracting
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 4.1), c(1, 2, 3, 4) - 3)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 4.1), c(1, 2, 3, 4) - 3)
 # 4.2 subtracting
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 4.2), c(1, 2, 3, 4) - 3.14)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 4.2), c(1, 2, 3, 4) - 3.14)
 # 4.3 subtracting
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 4.3), 1:4 - matrix(3, 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 4.3), 1:4 - matrix(3, 2, 2))
 # 4.4 subtracting
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 4.4), 1 - 3.14)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 4.4), 1 - 3.14)
 # 4.5 subtracting
 expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(0, 4), 4.5), 1 - rep(3, 4)) # issue: does not work why?
 # 4.6 subtracting
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 4.6), c(1, 2, 3, 4) - c(100, 200))  # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 4.6), c(1, 2, 3, 4) - c(100, 200)) # failed
 # 4.7 subtracting
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 4.7), c(-99, -198, -297, -396, -495, -594, -693, -792, -891))  # issue: here the code behaves different to sexp
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:9, 4.7), c(-99, -198, -297, -396, -495, -594, -693, -792, -891)) # issue: here the code behaves different to sexp
 # 4.8 subtracting
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),1:4, 4.8), rep(3, 4) - 1) # issue: does not work why?
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 1:4, 4.8), rep(3, 4) - 1) # issue: does not work why?
 # 4.9 subtracting
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 4.9), 1 - 4)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 4.9), 1 - 4)
 # 4.10 subtracting
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(3, 4), 4.10, TRUE, 2, 2), matrix(3, 2, 2) - matrix(3, 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(3, 4), 4.10, TRUE, 2, 2), matrix(3, 2, 2) - matrix(3, 2, 2))
 # 4.11 subtracting
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(3, 4), 4.11, TRUE, 2, 2), matrix(3, 2, 2) - 1)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(3, 4), 4.11, TRUE, 2, 2), matrix(3, 2, 2) - 1)
 # 4.12 subtracting
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(3, 4), 4.12, TRUE, 2, 2), 4 - matrix(3, 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(3, 4), 4.12, TRUE, 2, 2), 4 - matrix(3, 2, 2))
 # 4.13 subtracting
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(3, 4), 4.13, TRUE, 2, 2), matrix(3, 2, 2) - rep(3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(3, 4), 4.13, TRUE, 2, 2), matrix(3, 2, 2) - rep(3, 2))
 
 # 5.1 divide
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 5.1), c(1, 2, 3, 4) / 3)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 5.1), c(1, 2, 3, 4) / 3)
 # 5.2 divide
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 5.2), c(1, 2, 3, 4) / 3.14)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 5.2), c(1, 2, 3, 4) / 3.14)
 # 5.3 divide
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 5.3), 1:4 / matrix(3, 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 5.3), 1:4 / matrix(3, 2, 2))
 # 5.4 divide
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),0, 5.4), 1 / 3.14)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), 0, 5.4), 1 / 3.14)
 # 5.5 divide
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(1, 4), 5.5), 1 / rep(3, 4)) # issue: does not work
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(1, 4), 5.5), 1 / rep(3, 4)) # issue: does not work
 # 5.6 divide
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 5.6), c(1, 2, 3, 4) / c(100, 200))  # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 5.6), c(1, 2, 3, 4) / c(100, 200)) # failed
 # 5.7 divide
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4, 5, 6, 7, 8, 9), 5.7), rep(0.01, 9)) # issue: why does it behave differnetly?
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4, 5, 6, 7, 8, 9), 5.7), rep(0.01, 9)) # issue: why does it behave differnetly?
 # 5.8 divide
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 5.8), rep(3, 4))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 5.8), rep(3, 4))
 # 5.9 divide
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 5.9), 1 / 4)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 5.9), 1 / 4)
 # 5.10 divide
 expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(3, 4), 5.10, TRUE, 2, 2), matrix(3, 2, 2) / matrix(3, 2, 2))
 # 5.11 divide
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(3, 4), 5.11, TRUE, 2, 2), matrix(3, 2, 2) / 1)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(3, 4), 5.11, TRUE, 2, 2), matrix(3, 2, 2) / 1)
 # 5.12 divide
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(3, 4), 5.12, TRUE, 2, 2), 4 / matrix(3, 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(3, 4), 5.12, TRUE, 2, 2), 4 / matrix(3, 2, 2))
 # 5.13 divide
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(3, 4), 5.13, TRUE, 2, 2), matrix(3, 2, 2) / rep(3, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(3, 4), 5.13, TRUE, 2, 2), matrix(3, 2, 2) / rep(3, 2))
 
 # 6.1 times
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 6.1), c(1, 2, 3, 4) * 3)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 6.1), c(1, 2, 3, 4) * 3)
 # 6.2 times
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 6.2), c(1, 2, 3, 4) * 3.14)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 6.2), c(1, 2, 3, 4) * 3.14)
 # 6.3 times
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 6.3), 1:4 * matrix(3, 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 6.3), 1:4 * matrix(3, 2, 2))
 # 6.4 times
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1), 6.4), 1 * 3.14)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1), 6.4), 1 * 3.14)
 # 6.6 times
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(1, 4), 6.5), 1 * rep(3, 4))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(1, 4), 6.5), 1 * rep(3, 4))
 # 6.6 times
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 6.6), c(1, 2, 3, 4) * c(100, 200))  # failed
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 6.6), c(1, 2, 3, 4) * c(100, 200)) # failed
 # 6.7 times
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4, 5, 6, 7, 8, 9), 6.7), c(100, 400, 900, 1600, 2500, 3600, 4900, 6400, 8100)) # issue: why does it behave differnetly?
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4, 5, 6, 7, 8, 9), 6.7), c(100, 400, 900, 1600, 2500, 3600, 4900, 6400, 8100)) # issue: why does it behave differnetly?
 # 6.8 times
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 6.8), rep(3, 4))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 6.8), rep(3, 4))
 # 6.9 times
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 6.9), 1 * 4)
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 6.9), 1 * 4)
 # 6.10 times
 expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(3, 4), 6.10, TRUE, 2, 2), matrix(3, 2, 2) * matrix(3, 2, 2))
 # 6.11 times
 expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(3, 4), 6.11, TRUE, 2, 2), matrix(3, 2, 2) * 1)
 # 6.12 times
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),rep(3, 4), 6.12, TRUE, 2, 2), 4 * matrix(3, 2, 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(3, 4), 6.12, TRUE, 2, 2), 4 * matrix(3, 2, 2))
 # 6.13 times
 expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), rep(3, 4), 6.13, TRUE, 2, 2), matrix(3, 2, 2) * rep(3, 2))
 
 # 7.1 colon, dim, length etc.
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3), 7.1), c(-100, 1, 2, 3, 5, 6, 7, 100, 1, 1, rep(-1, 4), 2))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3), 7.1), c(-100, 1, 2, 3, 5, 6, 7, 100, 1, 1, rep(-1, 4), 2))
 # 7.2 colon, dim, length etc.
-expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(),c(1, 2, 3, 4), 7.2), c(4, 2, 3))
+expect_equal(ast2ast:::callTestBorrow(ast2ast:::getXPtrBorrowTest(), c(1, 2, 3, 4), 7.2), c(4, 2, 3))

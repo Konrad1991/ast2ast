@@ -6,17 +6,6 @@
 #include "unaryCalculations.hpp"
 #include <type_traits>
 
-/*
-  Assume v.l and v.r are of type Buffer.
-  Than lDeriv and rDeriv are of type Vec<Buffer>.
-  Thus, l, r, lDeriv and rDeriv are objects which exists.
-  Here, it is possible to use pointers to them instead of copying.
-  if e.g. v.l is of type Operation I will move the object.
-
-*/
-
-// issue: add operation for bracket ()
-
 namespace etr {
 
 template <typename T> struct ExtractTypeD;
@@ -33,16 +22,6 @@ template <typename T> using ExtractedTypeD = typename ExtractTypeD<T>::type;
 template <typename T> constexpr T getL() { return T(); }
 
 template <typename T> constexpr T getR() { return T(); }
-
-/*
-1. Construct a VarPointer Type
-2. define size, im, nr and nc
-3. Overload operator[]
-4. operator+, operator* for VarPointer
-        4.1 A BinaryType class instance has to be the result
-5. walk funcion has to be updated.
-        5.1 check for IsVariableType, IsBinaryType, UnaryType
-*/
 
 template <class F, class... Args> inline F LoopVariadicT(F f, Args &&...args) {
   (f(std::forward<Args>(args)), ...);
@@ -248,6 +227,20 @@ concept IsVarPointer = requires {
   requires std::is_same_v<ExtractedTypeTrait<T>, VarPointerTrait>;
 };
 
+template<typename L>
+auto sinDeriv(const L &l) { // issue: check for scalar. And do what?
+  if constexpr (!IsVec<L>) {
+    auto lv = *l.get();
+    return Vec<BaseType, UnaryOperation<decltype(l), Sinus, SinusTrait>>(
+        UnaryOperation<decltype(l), Sinus, SinusTrait>(l, lv.d.mp));
+  } else {
+    auto lv = l.d;
+    return Vec<BaseType, UnaryOperation<decltype(l), Sinus, SinusTrait>>(
+        UnaryOperation<decltype(l), Sinus, SinusTrait>(l, lv.d.mp));
+  }
+}
+
+
 template <typename L, typename R>
 auto add(const L &l, const R &r) { // issue: check for scalar. And do what?
   if constexpr (!IsVec<L> && !IsVec<R>) {
@@ -360,6 +353,7 @@ struct BinaryType {
   using typeTraitLDeriv = LDeriv;
   using typeTraitRDeriv = RDeriv;
   using TypeTrait = Trait;
+  using Op = OpTrait;
 
   template <typename AV> static size_t getSize(AV &av) {
     return LDeriv::getSize(av) > RDeriv::getSize(av) ? LDeriv::getSize(av)
@@ -367,7 +361,8 @@ struct BinaryType {
   }
 
   template <typename AV> static auto getVal(AV &av, size_t idx) {
-    return LDeriv::getVal(av, idx) + RDeriv::getVal(av, idx);
+    return Op::f(LDeriv::getVal(av, idx), RDeriv::getVal(av, idx)); 
+    // LDeriv::getVal(av, idx) + RDeriv::getVal(av, idx); // issue: this has to be done in a complete other way!
   }
 
   template <typename AV> static auto getDeriv(AV &av, size_t idx) {
@@ -380,10 +375,28 @@ produceBinaryType() {
   return BinaryType<LDeriv, RDeriv, Trait, OpTrait>();
 }
 
-template <typename I, typename Trait, typename OpTrait> struct UnaryType {};
+
+
+template <typename Deriv, typename Trait, typename OpTrait>
+struct UnaryType {
+  using typeTraitObj = Deriv;
+  using TypeTrait = Trait;
+
+  template <typename AV> static size_t getSize(AV &av) {
+    return Deriv::getSize(av);  }
+
+  template <typename AV> static auto getVal(AV &av, size_t idx) {
+    return sin(Deriv::getVal(av, idx)); // issue: wrong wrong wrongcorrect?
+  }
+
+  template <typename AV> static auto getDeriv(AV &av, size_t idx) {
+    return cos(Deriv::getDeriv(av, idx));
+  }
+};
+
 template <typename I, typename Trait, typename OpTrait>
 inline constexpr UnaryType<I, Trait, OpTrait> produceUnaryType() {
-  return UnaryType<I, Trait, OpTrait>();
+  return UnaryType<I, Trait, OpTrait>(); // issue: wrong wrong wrong
 }
 
 struct VariableTypeTrait {};
@@ -479,6 +492,15 @@ inline constexpr auto walkT() {
   constexpr auto RDeriv = walkT<typename T::typeTraitR>();
   return produceBinaryType<decltype(LDeriv), decltype(RDeriv), BinaryTrait,
                            PlusDerivTrait>();
+}
+
+
+template <typename T>
+  requires IsSinus<T>
+inline constexpr auto walkT() {
+  constexpr auto obj = walkT<typename T::typeTraitObj>();
+  return produceUnaryType<decltype(obj), UnaryTrait,
+                           SinusDerivTrait>(); // issue: has to be a binary type. Change behaviour of binary type by using Traits
 }
 
 template <typename T>

@@ -85,9 +85,10 @@ LC <- R6::R6Class("LC",
 
     check_assign_subset = NULL,
     found_return = FALSE,
-
     extractast = function(sexp) {
-      if(is.null(sexp)) { stop("Found empty function") }
+      if (is.null(sexp)) {
+        stop("Found empty function")
+      }
       if (!is.call(sexp)) {
         if (as.name("=") != sexp) {
           self$check_assign_subset <- FALSE
@@ -98,8 +99,8 @@ LC <- R6::R6Class("LC",
 
       sexp <- as.list(sexp)
 
-      if(as.name("{") == sexp[[1]] && length(sexp) == 1) { # check empty if/else if/else block
-          return(str2lang("{}"))
+      if (as.name("{") == sexp[[1]] && length(sexp) == 1) { # check empty if/else if/else block
+        return(str2lang("{}"))
       }
 
       # assign to node classes

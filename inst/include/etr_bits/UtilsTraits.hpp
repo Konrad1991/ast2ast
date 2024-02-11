@@ -177,6 +177,9 @@ inline double PlusDeriv(double lDeriv, double rDeriv) {
 
 struct PlusDerivTrait {
   using RetType = BaseType;
+  static RetType f(double a, double b) {
+    return a + b;
+  }
 };
 
 struct TimesDerivTrait {

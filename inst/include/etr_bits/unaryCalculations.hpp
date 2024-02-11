@@ -47,7 +47,19 @@ struct UnaryOperation {
   void setMatrix(const MatrixParameter &mp_) {
     mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
   }
+
+  template <typename AV> static RetType getSize(AV &av) {
+    using Ty = typename std::remove_reference<typeTraitObj>::type;
+    return Ty::template getSize<AV>(av);
+  }
+
+  template <typename AV> static RetType getVal(AV &av, size_t VecIdx) {
+      using Ty = typename std::remove_reference<typeTraitObj>::type;
+      return f(Ty::template getVal<AV>(av, VecIdx % Ty::template getSize(av)) ); 
+  }
+
 };
+
 
 template <typename T>
 auto operator-(const T &obj)
