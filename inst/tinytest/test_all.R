@@ -1676,6 +1676,7 @@ helper <- function() {
   return(b)
 }
 expect_equal(test(0, 21.1), helper())
+
 # subassign
 matrix(c(1, 2, 4, 5, 7, 8), 2, 3)
 expect_equal(test(0, 19.59), matrix(c(1, 2, 4, 5, 7, 8), 2, 3))
@@ -1878,8 +1879,8 @@ expect_equal(test(c(1, 2, 3, 4), 16.26), matrix(c(1, 2, 3, 20, 20, 20, 20, 20, 2
 expect_equal(test(c(1, 2, 3, 4), 16.27), matrix(rep(20, 9), 3, 3)) # failed
 expect_equal(test(c(1, 2, 3, 4), 16.28), matrix(c(20, 20, 3, 20, 20, 6, 20, 20, 9), 3, 3)) # failed
 expect_equal(test(c(1, 2, 3, 4), 16.29), matrix(rep(20, 9), 3, 3)) # failed
-
 # 15.1 - exponent & log
+
 expect_equal(test(c(1, 2, 3, 4), 15.1), c(1, 4, 9, 16))
 expect_equal(test(matrix(3, 2, 2), 15.2), matrix(27, 2, 2))
 expect_equal(test(matrix(3, 2, 2), 15.3), exp(matrix(3, 2, 2)) + 1)
@@ -1894,7 +1895,6 @@ expect_equal(test(0, 14.5), rep(TRUE, 3))
 expect_equal(test(0, 14.6), rep(TRUE, 3))
 expect_equal(test(0, 14.7), rep(TRUE, 3))
 expect_equal(test(0, 14.8), rep(TRUE, 3))
-
 # 8.1==
 expect_equal(test(0, 8.1), c(1, 2, 3) == c(5, 6, 7))
 # 8.2==
