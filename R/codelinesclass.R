@@ -25,6 +25,9 @@ LC <- R6::R6Class("LC",
   # fast access via [] which will be replaced by ()
   public = list(
     R_fct = NULL,
+    # TODO: the types can be assigned using :: The idea is to use stuff like var::double, var::vector, var::vector(double, 10) <-- here the 10 is a fixed size. This would require a const Vector at the C++ side. Maybe this is too much work. Or can be done later
+    # FIX: what the hell is the function sub
+    # TODO: add rep as function
     PF = c(
       "::", "=", "<-", "[", "for", "c", ":",
       "sin", "asin", "sinh", "cos", "acos", "cosh",
@@ -41,7 +44,8 @@ LC <- R6::R6Class("LC",
       "dnbeta", "pnbeta", "qnbeta", "rnbeta",
       "is.na", "is.infinite", "Rf_ScalarReal", "exp"
     ), # permitted functions
-
+    # TODO: make a central place to store the permitted functions. Maybe just a R6 class
+    # FIX: dnbeta, pnbeta etc. do not seem to exist checks how this is documented
     namespace_etr = c( # have to be changed to all of the names of etr .....
       "coca", "sinus", "asinus", "sinush",
       "cosinus", "acosinus", "cosinush",
@@ -70,7 +74,7 @@ LC <- R6::R6Class("LC",
       "==", "!=", ">", ">=", "<", "<=", "vector",
       "rep",
       "matrix", "length", "dim", "cmr", "exp", "at",
-      "&&", "||", "Rf_ScalarReal", "::", "cpp2R", "print_type" # issue: remove print_type
+      "&&", "||", "Rf_ScalarReal", "::", "cpp2R", "print_type" # TODO: remove print_type
     ),
     math = c(
       "sin", "asin", "sinh", "cos", "acos", "cosh",

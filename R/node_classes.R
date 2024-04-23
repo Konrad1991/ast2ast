@@ -89,6 +89,7 @@ PC <- R6::R6Class("PC",
     },
     get_var_names = function() {
       forbidden_fcts <- c(
+        # TODO: has to be changed. As the namespace etr is used the fct names could be used in principal as variable names
         "getlength", "getattributes", "is_matrix", "VEC", # has to be updated!
         "at", "d2i", "ass", "VVSIN", "sinus", "VVsinh", "sinush", "VVasin",
         "asinus", "VVCOS", "cosinus", "VVacos", "acosinus", "VVCOSH", "cosinush",
@@ -605,6 +606,8 @@ range <- R6::R6Class("range",
   )
 )
 
+
+# TODO: Decision has to be met whether RNGs should be removed
 #' @import R6
 math <- R6::R6Class("math",
   inherit = PC,
