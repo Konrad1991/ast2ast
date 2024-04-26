@@ -147,15 +147,105 @@ fct_signature <- R6::R6Class("fct_signature",
         list()
       ),
       # NOTE: even string is allowed and returns NA
-      indexing = fct_info(
+      forLoop = fct_info(
         "for", 2L, list("any", "any"),
         list("any", "any"),
         list("symbol", "any")
       ),
-      indexing = fct_info(
+      concatenating = fct_info(
         "c", -1L, list(),
         list(),
         list()
+      ),
+      colon = fct_info(
+        ":", 2L, list("any", "any"),
+        list("any", "any"),
+        list("any", "any")
+      ),
+      sin = fct_info(
+        "sin", 1L, list("any"),
+        list("any"),
+        list("any")
+      ),
+      asin = fct_info(
+        "asin", 1L, list("any"),
+        list("any"),
+        list("any")
+      ),
+      sinh = fct_info(
+        "sinh", 1L, list("any"),
+        list("any"),
+        list("any")
+      ),
+      cos = fct_info(
+        "cos", 1L, list("any"),
+        list("any"),
+        list("any")
+      ),
+      acos = fct_info(
+        "acos", 1L, list("any"),
+        list("any"),
+        list("any")
+      ),
+      cosh = fct_info(
+        "cosh", 1L, list("any"),
+        list("any"),
+        list("any")
+      ),
+      tan = fct_info(
+        "tan", 1L, list("any"),
+        list("any"),
+        list("any")
+      ),
+      atan = fct_info(
+        "atan", 1L, list("any"),
+        list("any"),
+        list("any")
+      ),
+      tanh = fct_info(
+        "tanh", 1L, list("any"),
+        list("any"),
+        list("any")
+      ),
+      log = fct_info(
+        "log", 1L, list("any"),
+        list("any"),
+        list("any")
+      ),
+      sqrt = fct_info(
+        "sqrt", 1L, list("any"),
+        list("any"),
+        list("any")
+      ),
+      exponent = fct_info(
+        "^", 1L, list("any"),
+        list("any"),
+        list("any")
+      ),
+      plus = fct_info(
+        "+", 2L, list("any", "any"),
+        list("any", "any"),
+        list("any", "any")
+      ),
+      minus = fct_info(
+        "-", 2L, list("any", "any"),
+        list("any", "any"),
+        list("any", "any")
+      ),
+      minusUnary = fct_info(
+        "-", 1L, list("any"),
+        list("any"),
+        list("any")
+      ),
+      times = fct_info(
+        "*", 2L, list("any", "any"),
+        list("any", "any"),
+        list("any", "any")
+      ),
+      divide = fct_info(
+        "/", 2L, list("any", "any"),
+        list("any", "any"),
+        list("any", "any")
       )
     )
   )
@@ -163,3 +253,24 @@ fct_signature <- R6::R6Class("fct_signature",
 
 pf <- fct_signature$new()
 trash <- lapply(pf$FctsWithArgs, print)
+
+# TODO: this is just a mock function for testing.
+# Has to be removed for deployment
+extract_ast <- function(code) {
+  if (!is.call(code)) {
+    return(code)
+  }
+  code <- as.list(code)
+  lapply(code, extract_ast)
+}
+
+identify_call_type <- function(expr) {
+  expr <- body(expr)[[2]]
+  code <- extract_ast(expr)
+  case_string <- paste(deparse(code[[1]]), length(code), sep = "_")
+  print(case_string)
+  switch(case_string,
+    "+" = print("plus"),
+    "-" = print("minus")
+  )
+}
