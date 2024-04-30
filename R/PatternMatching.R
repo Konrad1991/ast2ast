@@ -10,6 +10,7 @@ setGeneric("when", function(e1, e2, expr) {
   standardGeneric("when")
 })
 
+
 setMethod(
   "when",
   signature(e1 = "Match", e2 = "ANY", expr = "ANY"), function(e1, e2, expr) {
@@ -143,56 +144,56 @@ setMethod(
   }
 )
 
-"+" |>
-  when("+", "plus") |>
-  g()
-
-"-" |>
-  when("+", "plus") |>
-  when("-", "minus") |>
-  g()
-
-match("+") |>
-  when("+", "+") |>
-  when("-", "-") |>
-  when("_", "default") |>
-  g()
-
-"+" |>
-  test(is.character, "asdfsdfgh") |>
-  test(is.numeric, 123) |>
-  g()
-
-"+" |>
-  when("+", "+") |>
-  when("-", "-") |>
-  when("_", "default") |>
-  g()
-
-predicate <- function(a) {
-  if (a[[1]] == "-") {
-    return(TRUE)
-  }
-  return(FALSE)
-}
-
-convert <- function(a) {
-  if (a[[1]] == "-" && length(a) == 3) {
-    return("minus")
-  } else if (a[[1]] == "-" && length(a) == 2) {
-    return("Unaryminus")
-  }
-}
-
-list("+", 1, 2) |>
-  test(predicate, convert, TRUE) |>
-  g()
-
-
-list("-", 1, 2) |>
-  test(predicate, convert, TRUE) |>
-  g()
-
-list("-", 1) |>
-  test(predicate, convert, TRUE) |>
-  g()
+# "+" |>
+#   when("+", "plus") |>
+#   g()
+# 
+# "-" |>
+#   when("+", "plus") |>
+#   when("-", "minus") |>
+#   g()
+# 
+# match("+") |>
+#   when("+", "+") |>
+#   when("-", "-") |>
+#   when("_", "default") |>
+#   g()
+# 
+# "+" |>
+#   test(is.character, "asdfsdfgh") |>
+#   test(is.numeric, 123) |>
+#   g()
+# 
+# "+" |>
+#   when("+", "+") |>
+#   when("-", "-") |>
+#   when("_", "default") |>
+#   g()
+# 
+# predicate <- function(a) {
+#   if (a[[1]] == "-") {
+#     return(TRUE)
+#   }
+#   return(FALSE)
+# }
+# 
+# convert <- function(a) {
+#   if (a[[1]] == "-" && length(a) == 3) {
+#     return("minus")
+#   } else if (a[[1]] == "-" && length(a) == 2) {
+#     return("Unaryminus")
+#   }
+# }
+# 
+# list("+", 1, 2) |>
+#   test(predicate, convert, TRUE) |>
+#   g()
+# 
+# 
+# list("-", 1, 2) |>
+#   test(predicate, convert, TRUE) |>
+#   g()
+# 
+# list("-", 1) |>
+#   test(predicate, convert, TRUE) |>
+#   g()

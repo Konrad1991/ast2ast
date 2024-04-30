@@ -383,6 +383,8 @@ handleSEXP <- function(ls, rs, reference) {
   }
 }
 
+# TODO: parsing of r code fails when the function expects no argument
+# Needs a fix
 buildFctR <- function(fct, nameFct, reference) {
   bodyFct <- body(fct)[2:length(body(fct))]
   arguments <- methods::formalArgs(fct)

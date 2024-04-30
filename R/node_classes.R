@@ -225,6 +225,10 @@ generic <- R6::R6Class("generic",
       self$change_code()
 
       if (paste(self$name_fct) == "vector") {
+        self$arguments <- order_args(self$arguments, "vector")
+        self$arguments <- unname(self$arguments)
+      } else if (paste(self$name_fct) == "matrix") {
+        self$arguments <- order_args(self$arguments, "matrix")
         self$arguments <- unname(self$arguments)
       }
 

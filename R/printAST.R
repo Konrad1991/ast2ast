@@ -69,7 +69,6 @@ printClass <- R6::R6Class("printClass",
 # ast <- pC$getAST(quote( (a+b) * (a*b*c) ))
 # pC$getCALLS(ast)
 # pC$printAST(ast)
-
 # ast <- pC$getAST(quote(diamond(a, 12)*b + c*d + diamond(b, 5) * diamond(h, diamond(k, j)) ) )
 # code <- pC$Call2STRING(ast)
 # code

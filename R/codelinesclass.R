@@ -28,39 +28,10 @@ LC <- R6::R6Class("LC",
     # TODO: the types can be assigned using :: The idea is to use stuff like var::double, var::vector, var::vector(double, 10) <-- here the 10 is a fixed size. This would require a const Vector at the C++ side. Maybe this is too much work. Or can be done later
     # FIX: what the hell is the function sub
     # TODO: add rep as function
-    PF = c(
-      "::", "=", "<-", "[", "for", "c", ":",
-      "sin", "asin", "sinh", "cos", "acos", "cosh",
-      "tan", "atan", "tanh", "log", "sqrt", "^", "+", "-",
-      "*", "/", "if", "else if", "else", "{", "(",
-      "==", "!=", ">", ">=", "<", "<=", "print", "return",
-      "vector", "matrix", "length", "dim", "cmr",
-      "sub", "exp", "i2d", "at", "&&", "||",
-      "dunif", "punif", "qunif", "runif",
-      "dnorm", "pnorm", "qnorm", "rnorm",
-      "dlnorm", "plnorm", "qlnorm", "rlnorm",
-      "dgamma", "pgamma", "qgamma", "rgamma",
-      "dbeta", "pbeta", "beta", "rbeta",
-      "dnbeta", "pnbeta", "qnbeta", "rnbeta",
-      "is.na", "is.infinite", "Rf_ScalarReal", "exp"
-    ), # permitted functions
+    PF = permitted_fcts(),# permitted functions
     # TODO: make a central place to store the permitted functions. Maybe just a R6 class
     # FIX: dnbeta, pnbeta etc. do not seem to exist checks how this is documented
-    namespace_etr = c( # have to be changed to all of the names of etr .....
-      "coca", "sinus", "asinus", "sinush",
-      "cosinus", "acosinus", "cosinush",
-      "tangens", "atangens", "tangensh",
-      "ln", "sqroott", "rep",
-      "print", "vector", "matrix", "length", "dim", "cmr",
-      "exp", "i2d", "at", "exp",
-      "dunif_etr", "punif_etr", "qunif_etr", "runif_etr",
-      "dnorm_etr", "pnorm_etr", "qnorm_etr", "rnorm_etr",
-      "dlnorm_etr", "plnorm_etr", "qlnorm_etr", "rlnorm_etr",
-      "dgamma_etr", "pgamma_etr", "qgamma_etr", "rgamma_etr",
-      "dbeta_etr", "pbeta_etr", "beta_etr", "rbeta_etr",
-      "dnbeta_etr", "pnbeta_etr", "qnbeta_etr", "rnbeta_etr",
-      "isNA", "isInfinite", "colon", "cpp2R"
-    ),
+    namespace_etr = namespace_etr(),
     namespace_etr_resolved = function() {
       paste0("etr::", self$namespace_etr)
     },
@@ -68,24 +39,8 @@ LC <- R6::R6Class("LC",
     index_vars = list(),
     ast = NULL,
     code = NULL,
-    generic_fct = c(
-      "+", "-",
-      "*", "/", "if", "else if", "else", "{", "(",
-      "==", "!=", ">", ">=", "<", "<=", "vector",
-      "rep",
-      "matrix", "length", "dim", "cmr", "exp", "at",
-      "&&", "||", "Rf_ScalarReal", "::", "cpp2R", "print_type" # TODO: remove print_type
-    ),
-    math = c(
-      "sin", "asin", "sinh", "cos", "acos", "cosh",
-      "tan", "atan", "tanh", "log", "^", "sqrt",
-      "dunif", "punif", "qunif", "runif",
-      "dnorm", "pnorm", "qnorm", "rnorm",
-      "dlnorm", "plnorm", "qlnorm", "rlnorm",
-      "dgamma", "pgamma", "qgamma", "rgamma",
-      "dbeta", "pbeta", "beta", "rbeta",
-      "dnbeta", "pnbeta", "qnbeta", "rnbeta"
-    ), # %% function is missing
+    generic_fct = generic_fcts(),
+    math = math_fcts(), # TODO: %% function is missing
 
     check_assign_subset = NULL,
     found_return = FALSE,
