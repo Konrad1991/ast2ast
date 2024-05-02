@@ -27,6 +27,7 @@ PC <- R6::R6Class("PC",
     initialize = function(node, namespace_etr) {
       self$name_fct <- node[[1]]
       self$arguments <- node[2:length(node)]
+      self$arguments <- order_args(self$arguments, self$name_fct)
       self$namespace_etr <- namespace_etr
     },
     get_name = function() {
@@ -37,7 +38,8 @@ PC <- R6::R6Class("PC",
         if (!is.null(self$arguments[[i]])) {
           if (isTRUE(self$arguments[[i]]) || (self$arguments[[i]] == as.name("T"))) {
             self$arguments[[i]] <- as.name("true")
-          } else if (isFALSE(self$arguments[[i]]) || (self$arguments[[i]] == as.name("F"))) {
+          } else if (isFALSE(self$arguments[[i]]) ||
+            (self$arguments[[i]] == as.name("F"))) {
             self$arguments[[i]] <- as.name("false")
           }
         }
@@ -131,6 +133,9 @@ PC <- R6::R6Class("PC",
 
 
       return(ret)
+    },
+    order_args = function(user_args, name_of_fct) {
+      self$arguments <- order_args(self$arguments, self$name_fct)
     },
     change_args = function(name_of_fct, user_args) {
       # get name of list
@@ -321,6 +326,7 @@ retur <- R6::R6Class("retur",
   )
 )
 
+# TODO: this has to be changed according to the new c++ ETR subsetting
 #' @import R6
 subset <- R6::R6Class("subset",
   inherit = PC,
@@ -549,6 +555,7 @@ fastaccess <- R6::R6Class("fastaccess",
   )
 )
 
+# TODO: could be also a generic function
 #' @import R6
 printer <- R6::R6Class("printer",
   inherit = PC,
