@@ -28,7 +28,7 @@ LC <- R6::R6Class("LC",
     # TODO: the types can be assigned using :: The idea is to use stuff like var::double, var::vector, var::vector(double, 10) <-- here the 10 is a fixed size. This would require a const Vector at the C++ side. Maybe this is too much work. Or can be done later
     # FIX: what the hell is the function sub
     # TODO: add rep as function
-    PF = permitted_fcts(),# permitted functions
+    PF = permitted_fcts(), # permitted functions
     # TODO: make a central place to store the permitted functions. Maybe just a R6 class
     # FIX: dnbeta, pnbeta etc. do not seem to exist checks how this is documented
     namespace_etr = namespace_etr(),
@@ -73,52 +73,42 @@ LC <- R6::R6Class("LC",
         self$check_assign_subset <- FALSE
         p <- generic$new(sexp, self$namespace_etr)
         sexp <- p$convert(self$PF)
-        # self$vars <- c(self$vars, p$get_var_names())
       } else if (as.name("return") == fct) {
         p <- retur$new(sexp, self$namespace_etr, self$R_fct)
         sexp <- p$convert(self$PF)
         self$found_return <- TRUE
       } else if (as.name("[") == fct) {
-        # p <- fastaccess$new(sexp)
         p <- subset$new(sexp, self$check_assign_subset, self$namespace_etr)
         sexp <- p$convert(self$PF)
-        # self$vars <- c(self$vars, p$get_var_names())
         self$check_assign_subset <- FALSE
       } else if (as.name("c") == fct) {
         p <- coca$new(sexp, self$namespace_etr)
         sexp <- p$convert(self$PF)
-        # self$vars <- c(self$vars, p$get_var_names())
         self$check_assign_subset <- FALSE
       } else if (as.name(":") == fct) {
         p <- range$new(sexp, self$namespace_etr)
         sexp <- p$convert(self$PF)
-        # self$vars <- c(self$vars, p$get_var_names())
         self$check_assign_subset <- FALSE
       } else if (deparse(fct) %in% self$math) {
         p <- math$new(sexp, self$namespace_etr)
         sexp <- p$convert(self$PF)
-        # self$vars <- c(self$vars, p$get_var_names())
         self$check_assign_subset <- FALSE
       } else if (as.name("for") == fct) {
         p <- loop$new(sexp, self$namespace_etr)
         sexp <- p$convert(self$PF)
-        # self$vars <- c(self$vars, p$get_var_names())
         self$check_assign_subset <- FALSE
         self$index_vars <- c(self$index_vars, p$return_index_vars())
       } else if (as.name("print") == fct) {
         p <- printer$new(sexp, self$namespace_etr)
         sexp <- p$convert(self$PF)
-        # self$vars <- c(self$vars, p$get_var_names())
         self$check_assign_subset <- FALSE
       } else if (as.name("is.na") == fct) {
         p <- is_na$new(sexp, self$namespace_etr)
         sexp <- p$convert(self$PF)
-        # self$vars <- c(self$vars, p$get_var_names())
         self$check_assign_subset <- FALSE
       } else if (as.name("is.infinite") == fct) {
         p <- is_infinite$new(sexp, self$namespace_etr)
         sexp <- p$convert(self$PF)
-        # self$vars <- c(self$vars, p$get_var_names())
         self$check_assign_subset <- FALSE
       } else if (as.name("i2d") == fct) {
         # prevent stack overflow
