@@ -2,7 +2,7 @@
 % Please edit documentation in R/jacobian.R
 \name{J}
 \alias{J}
-\title{Calculates the jacobian function and translatesthe resulting function into a C++ function.}
+\title{Calculates the jacobian function and translates the resulting function into a C++ function.}
 \usage{
 J(
   f,

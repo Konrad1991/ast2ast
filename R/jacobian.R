@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License along with ast2ast
 # If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
-#' Calculates the jacobian function and translatesthe resulting function into a C++ function.
+#' Calculates the jacobian function and translates the resulting function into a C++ function.
 #'
 #' @aliases J
 #'
