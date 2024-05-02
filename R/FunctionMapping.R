@@ -109,17 +109,22 @@ fct_signature <- R6::R6Class("fct_signature",
     # NOTE: c can be called with named args e.g. c(x = 1)
     FctsWithArgs = list(
       namespace = fct_info(
-        "namespace", 2L, list("any", "any"),
+        "::", 2L, list("any", "any"),
         list("any", "any"),
         list("symbol", "symbol")
       ),
-      assignment = fct_info(
-        "assignment", 2L, list("any", "any"),
+      assignment1 = fct_info(
+        "<-", 2L, list("any", "any"),
+        list("any", "any"),
+        list("symbol", "any")
+      ),
+      assignment2 = fct_info(
+        "=", 2L, list("any", "any"),
         list("any", "any"),
         list("symbol", "any")
       ),
       indexing = fct_info(
-        "indexing", -1L, list(),
+        "[", -1L, list(),
         list(),
         list()
       ),
@@ -301,7 +306,8 @@ fct_signature <- R6::R6Class("fct_signature",
       ),
       vector = fct_info(
         "vector", 2L, list("mode", "length"),
-        # TODO: in R logical is the default value. Does not make sense in ast2ast
+        # TODO: in R logical is the default value.
+        # Does not make sense in ast2ast
         # Needs to be documented
         list("numeric", 1),
         # NOTE: default length in R is 0. 1 is set
@@ -404,22 +410,44 @@ fct_signature <- R6::R6Class("fct_signature",
   )
 )
 
+get_arguments <- function(fct) {
+  fs <- fct_signature$new()
+  fwa <- fs$FctsWithArgs
+  res <- NULL
+  for (i in seq_along(fwa)) {
+    if (fwa[[i]]@fctName == fct) {
+      res <- fwa[[i]]
+    }
+  }
+  if (is.null(res)) stop(paste("Unsupported function: ", fct, " found"))
+  return(res)
+}
+
+wrong_name <- function(l, fwa, checkNames) {
+  n <- names(l)
+  n <- n[n != ""]
+  if (checkNames) stopifnot(all(n %in% fwa)) 
+}
+
 healthy_fct_call <- function(l, fwa) {
   if (length(fwa) == 0) {
-    return(length(l) == 0)
+    stopifnot(length(l) == 0)
   } else if (length(fwa) > 0) {
-    return(length(l) <= length(fwa))
+    stopifnot(length(l) <= length(fwa))
   }
 }
 
-wrong_name <- function(l, fwa) {
-  n <- names(l)
-  n <- n[n != ""]
-  stopifnot(all(n %in% fwa))
+check_cars <- function(l, fwa, by_name, by_idx, checkNames) {
+  healthy_fct_call(l, fwa)
+  wrong_name(l, fwa, checkNames)
+  stopifnot((length(by_name) + length(by_idx)) <= length(fwa))
+}
+
+remove_zero_indices <- function(l) {
+  l[(l != 0) & !is.null(l)]
 }
 
 which_by_name <- function(l, fwa) {
-  wrong_name(l, fwa)
   n <- names(l)
   n <- n[n != ""]
   if (length(n) == 0) {
@@ -429,106 +457,41 @@ which_by_name <- function(l, fwa) {
   }
 }
 
-which_by_index <- function(l, fwa) {
-  if (length(l) == 0) return(list())
+name_index_args <- function(l, fwa) {
+  if (length(l) == 0) {
+    return(list())
+  }
   if ((is.null(names(l)))) {
-    return(1:length(l))
+    return(list(list_names = NULL, list_indices = 1:length(l),
+                fct_names = NULL, fct_indices = 1:length(l)))
   }
   by_name <- which_by_name(l, fwa)
   res <- (1:length(fwa))[-by_name]
-  head(res, length(l) - length(by_name))
-}
-
-check_cars <- function(l, fwa) {
-  by_name <- which_by_name(l, fwa)
-  by_idx <- which_by_index(l, fwa)
-  stopifnot((length(by_name) + length(by_idx)) <= length(fwa))
-}
-
-get_arguments <- function(fct) {
-  fs <- fct_signature$new()
-  fwa <- fs$FctsWithArgs
-  return(fwa[[fct]])
-}
-
-where_by_name <- function(l, fwa) {
-  if (length(l) == 0) return(vector(length = 0))
-  n <- names(l)
-  which(n != "")
-}
-
-where_by_idx <- function(l, fwa) {
-  if (length(l) == 0) return(list())
-  if ((is.null(names(l)))) {
-    return(1:length(l))
-  }
-  which(names(l) == "")
-}
-
-remove_zero_indices <- function(l) {
-  l[(l != 0) & !is.null(l)]
+  by_index <- head(res, length(l) - length(by_name))
+  return(list(names = fwa[by_name],
+              list_indices = by_index, fct_indices = by_index))
 }
 
 order_args <- function(code_list, fct) {
   fi <- get_arguments(fct)
   arg_list <- fi@argumentNames |> unlist()
-  stopifnot(healthy_fct_call(code_list, arg_list))
-  by_name <- which_by_name(code_list, arg_list) |> remove_zero_indices()
-  where_name <- where_by_name(code_list, arg_list) |> remove_zero_indices() 
-  by_index <- which_by_index(code_list, arg_list) |> remove_zero_indices() 
-  where_index <- where_by_idx(code_list, arg_list) |> remove_zero_indices()
-  check_cars(code_list, arg_list) 
+  
+  args <- name_index_args(code_list, arg_list)
+  args <- lapply(args, remove_zero_indices)
+  names <- args$names
+  list_indices <- args$list_indices
+  fct_indices <- args$list_indices
+  
+  check_cars(code_list, arg_list, names, list_indices, !any("any" %in% arg_list))
+  
   res <- fi@argumentDefaultValues
-  if ( (length(by_name) > 0) & (length(where_name) > 0) ) res[by_name] <- code_list[where_name]
-  if ( (length(by_index) > 0) & (length(where_index) > 0) ) res[by_index] <- code_list[where_index]
+  names(res) <- fi@argumentNames
+  if (length(names) > 0) {
+    res[names] <- code_list[names]
+  }
+  if ( (length(list_indices) > 0) & (length(fct_indices) > 0) ) {
+    res[fct_indices] <- code_list[list_indices]
+  }
+  names(res) <- NULL
   return(res)
 }
-
-# Valid function call with complete arguments
-args <- list(data = 3, nrow = 2, ncol = 4)
-result <- order_args(args, "matrix")
-expected <- list(3, 2, 4)
-stopifnot(identical(result, expected))
-
-# Valid function call with missing arguments
-args <- list(data = 3, ncol = 4)
-result <- order_args(args, "matrix")
-expected <- list(3, 1, 4)
-stopifnot(identical(result, expected))
-
-# Valid function call with extra arguments (should ignore extra arguments)
-args <- list(data = 3, nrow = 2, ncol = 4, extra = "ignored")
-result <- try(order_args(args, "matrix"))
-stopifnot(inherits(result, "try-error"))
-
-# Invalid function call with missing required argument
-args <- list(nrow = 2, ncol = 4)
-result <- order_args(args, "matrix")
-expected <- list("NA", 2, 4)
-stopifnot(identical(result, expected))
-
-# Unsupported function call
-args <- list(x = 3)
-result <- try(order_args(args, "unsupported_function"))
-stopifnot(inherits(result, "try-error"))
-
-# Function call with empty arguments (should use default values)
-args <- list()
-result <- order_args(args, "matrix")
-expected <- list("NA", 1, 1)
-stopifnot(identical(result, expected))
-
-# Function call with overriding default values
-args <- list(data = 3, nrow = 2, ncol = 4)
-result <- order_args(args, "matrix")
-expected <- list(3, 2, 4)
-stopifnot(identical(result, expected))
-
-order_args(list(length = 3), "vector")
-try(order_args(list(data = 3), "vector"))
-order_args(list(data = 3), "matrix")
-order_args(list(data = 3, 2), "matrix")
-order_args(list(3, 2), "matrix")
-order_args(list(3, 2, ncol = 4), "matrix")
-order_args(list(3, ncol = 2, 4), "matrix")
-
