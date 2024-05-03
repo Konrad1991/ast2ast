@@ -13,7 +13,8 @@ FctInfo <- R6::R6Class("FctInfo",
       self$numArgs <- num_args
       self$argumentNames <- names
       self$argumentDefaultValues <- values
-      self$argumentTypes <- f
+      self$argumentTypes <- types
+      self$converter <- f
     }
   )
 )
@@ -239,16 +240,17 @@ fct_signature <- R6::R6Class("fct_signature",
         # as an empty vector is not possible in ETR.
         # In principal it would work but
         # in the field of ODE and loss fcts it does not make sense ...
-        list("character", "integer"), function(args) {
+        list("character", "integer"), function(fct, args) {
           if (args[[1]] == "numeric") {
-            return("vector_numeric")
+            fct <- "vector_numeric"
           } else if (args[[1]] == "integer") {
-            return("vector_integer")
+            fct <- "vector_integer"
           } else if (args[[1]] == "logical") {
-            return("vector_logical")
+            fct <- "vector_logical"
           } else {
             stop("Mode for function vector can only be numeric, integer or logical")
           }
+          return(list(fct, args))
         }
         # TODO: needs own fct to convert e.g.
         # etr::vector("numeric", 1), etr::vector_numeric
@@ -434,5 +436,9 @@ order_args <- function(code_list, fct) {
     res[fct_indices] <- code_list[list_indices]
   }
   names(res) <- NULL
-  return(res)
+
+  if (!is.null(fi$converter)) {
+    return(fi$converter(fct, code_list))
+  }
+  return(list(fct, res))
 }
