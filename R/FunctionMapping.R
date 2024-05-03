@@ -1,101 +1,27 @@
-# TODO: in R you can remove elements with negative indices.
-# This has also be implemented
-
-# TODO: use the functions such as permitted_fcts
-# instead of the hardcoded in e.g. class LC
-# TODO: add additional functions: break, next, while.
-# TODO: check that all functions are listed here.
-# Or whether functions which are not supported are listed here
-# TODO new function negate "!"
-permitted_fcts <- function() {
-  # TODO: the at function was missing. Is this by purpose?
-  # TODO: remove all RNG functions except, dunif, punif,
-  # qunif, runif, dnorm, pnorm, qnorm and rnorm
-  # TODO: add more functions: break, next, while
-  # TODO: add is.finite
-  c(
-    "::", "=", "<-", "[", "at", "for", "while", "next", "break", "c", ":",
-    "sin", "asin", "sinh", "cos", "acos", "cosh",
-    "tan", "atan", "tanh", "log", "sqrt",
-    "^", "+", "-", "*", "/",
-    "if", "{", "(", # TODO: check whether else if is required
-    "==", "!=", ">", ">=", "<", "<=", "print", "return",
-    "vector", "matrix", "length", "dim",
-    "exp", "&&", "||", "!",
-    "dunif", "punif", "qunif", "runif",
-    "dnorm", "pnorm", "qnorm", "rnorm",
-    "is.na", "is.infinite", "is.finite",
-    "Rf_ScalarReal", "i2d", "cmr"
-  )
-}
-
-# TODO: check whether all the names are still correct
-namespace_etr <- function() {
-  c(
-    "coca", "sinus", "asinus", "sinush",
-    "cosinus", "acosinus", "cosinush",
-    "tangens", "atangens", "tangensh",
-    "ln", "sqroott", "rep",
-    "print", "vector", "matrix", "length", "dim", "cmr",
-    "exp", "i2d", "at", "exp",
-    "dunif_etr", "punif_etr", "qunif_etr", "runif_etr",
-    "dnorm_etr", "pnorm_etr", "qnorm_etr", "rnorm_etr",
-    "isNA", "isInfinite", "colon", "cpp2R"
-  )
-}
-
-generic_fcts <- function() {
-  c(
-    "+", "-",
-    "*", "/", "if", "else if", "else", "{", "(",
-    "==", "!=", ">", ">=", "<", "<=", "vector",
-    "rep",
-    "matrix", "length", "dim", "cmr", "exp", "at",
-    "&&", "||", "Rf_ScalarReal", "::", "cpp2R",
-    "print_type" # TODO: remove print_type
-  )
-}
-
-math_fcts <- function() {
-  c(
-    "sin", "asin", "sinh", "cos", "acos", "cosh",
-    "tan", "atan", "tanh", "log", "^", "sqrt",
-    "dunif", "punif", "qunif", "runif",
-    "dnorm", "pnorm", "qnorm", "rnorm"
-  )
-}
-
-# TODO: check how to register a s4 class correctly in an R package
-# --> same way as in dfdr
-setClass("FctInfo",
-  slots = c(
-    fctName = "character",
-    numArgs = "integer",
-    argumentNames = "list",
-    argumentDefaultValues = "list",
-    argumentTypes = "list",
-    converter = "ANY"
+FctInfo <- R6::R6Class("FctInfo",
+  public = list(
+    fctName = NULL,
+    numArgs = NULL,
+    argumentNames = NULL,
+    argumentDefaultValues = NULL,
+    argumentTypes = NULL,
+    converter = NULL,
+    initialize = function(name, num_args, names, values, types, f) {
+      stopifnot(length(names) == length(values))
+      stopifnot(length(types) == length(values))
+      self$fctName <- name
+      self$numArgs <- num_args
+      self$argumentNames <- names
+      self$argumentDefaultValues <- values
+      self$argumentTypes <- f
+    }
   )
 )
-
-setMethod("print", signature(x = "FctInfo"), function(x) {
-  print(x@fctName)
-  cat("argumentNames \t")
-  print(unlist(x@argumentNames))
-  cat("argumentTypes \t")
-  print(unlist(x@argumentTypes))
-  cat("argumentDefaultValues \t")
-  print(unlist(x@argumentDefaultValues))
-})
 
 fct_info <- function(name, num_args, names, values, types, f) {
   stopifnot(length(names) == length(values))
   stopifnot(length(types) == length(values))
-  new("FctInfo",
-    fctName = name, numArgs = num_args, argumentNames = names,
-    argumentDefaultValues = values, argumentTypes = types,
-    converter = f
-  )
+  FctInfo$new(name, num_args, names, values, types, f)
 }
 
 # TODO: add check that string is only used in print.
@@ -103,7 +29,6 @@ fct_info <- function(name, num_args, names, values, types, f) {
 # NOTE: the argumentNames and argumentDefaultValues
 # defined here are not (always) the same as in R.
 # Rather they are the argument and there names supported by ETR
-#' @import R6
 fct_signature <- R6::R6Class("fct_signature",
   public = list(
     # NOTE: c can be called with named args e.g. c(x = 1)
@@ -314,8 +239,19 @@ fct_signature <- R6::R6Class("fct_signature",
         # as an empty vector is not possible in ETR.
         # In principal it would work but
         # in the field of ODE and loss fcts it does not make sense ...
-        list("character", "integer"), NULL
-        # TODO: needs own fct to convert e.g. etr::vector("numeric", 1), etr::vector_numeric
+        list("character", "integer"), function(args) {
+          if (args[[1]] == "numeric") {
+            return("vector_numeric")
+          } else if (args[[1]] == "integer") {
+            return("vector_integer")
+          } else if (args[[1]] == "logical") {
+            return("vector_logical")
+          } else {
+            stop("Mode for function vector can only be numeric, integer or logical")
+          }
+        }
+        # TODO: needs own fct to convert e.g.
+        # etr::vector("numeric", 1), etr::vector_numeric
       ),
       matrix = fct_info(
         "matrix", 3L, list("data", "nrow", "ncol"),
@@ -416,7 +352,7 @@ get_arguments <- function(fct) {
   fwa <- fs$FctsWithArgs
   res <- NULL
   for (i in seq_along(fwa)) {
-    if (fwa[[i]]@fctName == fct) {
+    if (fwa[[i]]$fctName == fct) {
       res <- fwa[[i]]
     }
   }
@@ -479,7 +415,7 @@ name_index_args <- function(l, fwa) {
 
 order_args <- function(code_list, fct) {
   fi <- get_arguments(fct)
-  arg_list <- fi@argumentNames |> unlist()
+  arg_list <- fi$argumentNames |> unlist()
 
   args <- name_index_args(code_list, arg_list)
   args <- lapply(args, remove_zero_indices)
@@ -489,8 +425,8 @@ order_args <- function(code_list, fct) {
 
   check_cars(code_list, arg_list, names, list_indices, !any("any" %in% arg_list))
 
-  res <- fi@argumentDefaultValues
-  names(res) <- fi@argumentNames
+  res <- fi$argumentDefaultValues
+  names(res) <- fi$argumentNames
   if (length(names) > 0) {
     res[names] <- code_list[names]
   }
