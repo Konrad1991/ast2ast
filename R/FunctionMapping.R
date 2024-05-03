@@ -71,11 +71,10 @@ setClass("FctInfo",
   slots = c(
     fctName = "character",
     numArgs = "integer",
-    # NOTE: -1 for cases such as c,
-    # [ where a variable number of args is possible
     argumentNames = "list",
     argumentDefaultValues = "list",
-    argumentTypes = "list"
+    argumentTypes = "list",
+    converter = "function"
   )
 )
 
@@ -89,12 +88,13 @@ setMethod("print", signature(x = "FctInfo"), function(x) {
   print(unlist(x@argumentDefaultValues))
 })
 
-fct_info <- function(name, num_args, names, values, types) {
+fct_info <- function(name, num_args, names, values, types, f) {
   stopifnot(length(names) == length(values))
   stopifnot(length(types) == length(values))
   new("FctInfo",
     fctName = name, numArgs = num_args, argumentNames = names,
-    argumentDefaultValues = values, argumentTypes = types
+    argumentDefaultValues = values, argumentTypes = types,
+    converter = f
   )
 }
 
@@ -111,198 +111,198 @@ fct_signature <- R6::R6Class("fct_signature",
       namespace = fct_info(
         "::", 2L, list("any", "any"),
         list("any", "any"),
-        list("symbol", "symbol")
+        list("symbol", "symbol"), NULL
       ),
       assignment1 = fct_info(
         "<-", 2L, list("any", "any"),
         list("any", "any"),
-        list("symbol", "any")
+        list("symbol", "any"), NULL
       ),
       assignment2 = fct_info(
         "=", 2L, list("any", "any"),
         list("any", "any"),
-        list("symbol", "any")
+        list("symbol", "any"), NULL
       ),
       indexing = fct_info(
         "[", -1L, list(),
         list(),
-        list()
+        list(), NULL
       ),
       # NOTE: even string is allowed and returns NA
       forLoop = fct_info(
         "for", 3L, list("any", "any", "any"),
         list("any", "any", "any"),
-        list("symbol", "any", "any")
+        list("symbol", "any", "any"), NULL
       ),
       whileLoop = fct_info(
         "while", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any")
+        list("any", "any"), NULL
       ),
       BreakLoop = fct_info(
         "break", 0L, list(),
         list(),
-        list()
+        list(), NULL
       ),
       NextLoop = fct_info(
         "next", 0L, list(),
         list(),
-        list()
+        list(), NULL
       ),
       concatenating = fct_info(
         "c", -1L, list(),
         list(),
-        list()
+        list(), NULL
       ),
       colon = fct_info(
         ":", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any")
+        list("any", "any"), NULL
       ),
       sin = fct_info(
         "sin", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       asin = fct_info(
         "asin", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       sinh = fct_info(
         "sinh", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       cos = fct_info(
         "cos", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       acos = fct_info(
         "acos", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       cosh = fct_info(
         "cosh", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       tan = fct_info(
         "tan", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       atan = fct_info(
         "atan", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       tanh = fct_info(
         "tanh", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       log = fct_info(
         "log", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       sqrt = fct_info(
         "sqrt", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       exponent = fct_info(
         "^", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       plus = fct_info(
         "+", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any")
+        list("any", "any"), NULL
       ),
       minus = fct_info(
         "-", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any")
+        list("any", "any"), NULL
       ),
       minusUnary = fct_info(
         "-", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       times = fct_info(
         "*", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any")
+        list("any", "any"), NULL
       ),
       divide = fct_info(
         "/", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any")
+        list("any", "any"), NULL
       ),
       IfElseIfElse = fct_info(
         "if", -1L, list(),
         # NOTE: Either length 3 or 2 dependent if else if is added
         list(),
-        list()
+        list(), NULL
       ),
       CurlyBraces = fct_info(
         # TODO: in R the last argument to `{` is used.
         # Implement this on the R level
         "{", -1L, list(),
         list(),
-        list()
+        list(), NULL
       ),
       Parenthesis = fct_info(
         # TODO: in R only one argument can be passed to `(`.
         # Implement this on the R level
         "{", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       Equal = fct_info(
         "==", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any")
+        list("any", "any"), NULL
       ),
       Larger = fct_info(
         ">", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any")
+        list("any", "any"), NULL
       ),
       Smaller = fct_info(
         "<", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any")
+        list("any", "any"), NULL
       ),
       LargerEqual = fct_info(
         ">=", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any")
+        list("any", "any"), NULL
       ),
       SmallerEqual = fct_info(
         "<=", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any")
+        list("any", "any"), NULL
       ),
       NotEqual = fct_info(
         "!=", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any")
+        list("any", "any"), NULL
       ),
       print = fct_info(
         "print", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       return = fct_info(
         "return", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       vector = fct_info(
         "vector", 2L, list("mode", "length"),
@@ -314,97 +314,98 @@ fct_signature <- R6::R6Class("fct_signature",
         # as an empty vector is not possible in ETR.
         # In principal it would work but
         # in the field of ODE and loss fcts it does not make sense ...
-        list("character", "integer")
+        list("character", "integer"), NULL 
+        # TODO: needs own fct to convert e.g. etr::vector("numeric", 1), etr::vector_numeric
       ),
       matrix = fct_info(
         "matrix", 3L, list("data", "nrow", "ncol"),
         list("NA", 1, 1),
-        list("any", "any", "any")
+        list("any", "any", "any"), NULL
       ),
       length = fct_info(
         "length", 1L, list("x"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       dim = fct_info(
         "dim", 1L, list("x"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       exp = fct_info(
         "exp", 1L, list("x"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       logicalAnd = fct_info(
         "&&", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any")
+        list("any", "any"), NULL
       ),
       logicalOr = fct_info(
         "||", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any")
+        list("any", "any"), NULL
       ),
       Negate = fct_info(
         "!", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       dunif = fct_info(
         "dunif", 4L, list("x", "min", "max", "log"),
         list("any", 0, 1, FALSE),
-        list("any", "any", "any", "any")
+        list("any", "any", "any", "any"), NULL
       ),
       punif = fct_info(
         "punif", 5L, list("q", "min", "max", "lower.tail", "log.p"),
         list("any", 0, 1, TRUE, FALSE),
-        list("any", "any", "any", "any", "any")
+        list("any", "any", "any", "any", "any"), NULL
       ),
       qunif = fct_info(
         "qunif", 5L, list("p", "min", "max", "lower.tail", "log.p"),
         list("any", 0, 1, TRUE, FALSE),
-        list("any", "any", "any", "any", "any")
+        list("any", "any", "any", "any", "any"), NULL
       ),
       runif = fct_info(
         "runif", 3L, list("n", "min", "max"),
         list("any", 0, 1),
-        list("any", "any", "any")
+        list("any", "any", "any"), NULL
       ),
       dnorm = fct_info(
         "dnorm", 4L, list("x", "mean", "sd", "log"),
         list("any", 0, 1, FALSE),
-        list("any", "any", "any", "any")
+        list("any", "any", "any", "any"), NULL
       ),
       pnorm = fct_info(
         "pnorm", 5L, list("q", "mean", "sd", "lower.tail", "log.p"),
         list("any", 0, 1, TRUE, FALSE),
-        list("any", "any", "any", "any", "any")
+        list("any", "any", "any", "any", "any"), NULL
       ),
       qnorm = fct_info(
         "qnorm", 5L, list("p", "mean", "sd", "lower.tail", "log.p"),
         list("any", 0, 1, TRUE, FALSE),
-        list("any", "any", "any", "any", "any")
+        list("any", "any", "any", "any", "any"), NULL
       ),
       rnorm = fct_info(
         "rnorm", 3L, list("n", "mean", "sd"),
         list("any", 0, 1),
-        list("any", "any", "any")
+        list("any", "any", "any"), NULL
       ),
       isNA = fct_info(
         "is.na", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       isInf = fct_info(
         "is.infinite", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       ),
       isFin = fct_info(
         "is.finite", 1L, list("any"),
         list("any"),
-        list("any")
+        list("any"), NULL
       )
     )
   )
