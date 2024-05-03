@@ -74,7 +74,7 @@ setClass("FctInfo",
     argumentNames = "list",
     argumentDefaultValues = "list",
     argumentTypes = "list",
-    converter = "function"
+    converter = "ANY"
   )
 )
 
@@ -314,7 +314,7 @@ fct_signature <- R6::R6Class("fct_signature",
         # as an empty vector is not possible in ETR.
         # In principal it would work but
         # in the field of ODE and loss fcts it does not make sense ...
-        list("character", "integer"), NULL 
+        list("character", "integer"), NULL
         # TODO: needs own fct to convert e.g. etr::vector("numeric", 1), etr::vector_numeric
       ),
       matrix = fct_info(
@@ -427,7 +427,7 @@ get_arguments <- function(fct) {
 wrong_name <- function(l, fwa, checkNames) {
   n <- names(l)
   n <- n[n != ""]
-  if (checkNames) stopifnot(all(n %in% fwa)) 
+  if (checkNames) stopifnot(all(n %in% fwa))
 }
 
 healthy_fct_call <- function(l, fwa) {
@@ -463,34 +463,38 @@ name_index_args <- function(l, fwa) {
     return(list())
   }
   if ((is.null(names(l)))) {
-    return(list(list_names = NULL, list_indices = 1:length(l),
-                fct_names = NULL, fct_indices = 1:length(l)))
+    return(list(
+      list_names = NULL, list_indices = 1:length(l),
+      fct_names = NULL, fct_indices = 1:length(l)
+    ))
   }
   by_name <- which_by_name(l, fwa)
   res <- (1:length(fwa))[-by_name]
   by_index <- head(res, length(l) - length(by_name))
-  return(list(names = fwa[by_name],
-              list_indices = by_index, fct_indices = by_index))
+  return(list(
+    names = fwa[by_name],
+    list_indices = by_index, fct_indices = by_index
+  ))
 }
 
 order_args <- function(code_list, fct) {
   fi <- get_arguments(fct)
   arg_list <- fi@argumentNames |> unlist()
-  
+
   args <- name_index_args(code_list, arg_list)
   args <- lapply(args, remove_zero_indices)
   names <- args$names
   list_indices <- args$list_indices
   fct_indices <- args$list_indices
-  
+
   check_cars(code_list, arg_list, names, list_indices, !any("any" %in% arg_list))
-  
+
   res <- fi@argumentDefaultValues
   names(res) <- fi@argumentNames
   if (length(names) > 0) {
     res[names] <- code_list[names]
   }
-  if ( (length(list_indices) > 0) & (length(fct_indices) > 0) ) {
+  if ((length(list_indices) > 0) & (length(fct_indices) > 0)) {
     res[fct_indices] <- code_list[list_indices]
   }
   names(res) <- NULL
