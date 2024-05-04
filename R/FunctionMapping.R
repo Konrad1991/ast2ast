@@ -129,7 +129,35 @@ fct_signature <- R6::R6Class("fct_signature",
       colon = fct_info(
         ":", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any"), NULL
+        list("any", "any"), function(fct, args) {
+          if (!is.list(args[[1]])) {
+            if (is.character(args[[1]])) {
+              args[[1]] <- as.numeric(args[[1]])
+              stopifnot(
+                "character cannot be converted to numeric in function colon" =
+                  !is.na(args[[1]])
+              )
+            }
+            stopifnot(
+              "Input has to be of type numeric" =
+                is.numeric(args[[1]]) | is.integer(args[[1]]) | is.logical(args[[1]])
+            )
+          }
+          if (!is.list(args[[2]])) {
+            if (is.character(args[[2]])) {
+              args[[2]] <- as.numeric(args[[2]])
+              stopifnot(
+                "character cannot be converted to numeric in function colon" =
+                  !is.na(args[[1]])
+              )
+            }
+            stopifnot(
+              "Input has to be of type numeric" =
+                is.numeric(args[[2]]) | is.integer(args[[1]]) | is.logical(args[[2]])
+            )
+          }
+          return(list(fct, args))
+        }
       ),
       sin = fct_info(
         "sin", 1L, list("any"),
