@@ -20,7 +20,7 @@ expect_error(ast2ast:::order_args(args, "matrix"))
 # Invalid function call with missing required argument
 args <- list(nrow = 2, ncol = 4)
 result <- ast2ast:::order_args(args, "matrix")
-expected <- list("NA", 2, 4)
+expected <- list(NA, 2, 4)
 expect_equal(result[[2]], expected)
 
 # Unsupported function call
@@ -30,7 +30,7 @@ expect_error(ast2ast:::order_args(args, "unsupported_function"))
 # Function call with empty arguments (should use default values)
 args <- list()
 result <- ast2ast:::order_args(args, "matrix")
-expected <- list("NA", 1, 1)
+expected <- list(NA, 1, 1)
 expect_equal(result[[2]], expected)
 
 # Function call with overriding default values

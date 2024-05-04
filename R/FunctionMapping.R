@@ -288,8 +288,29 @@ fct_signature <- R6::R6Class("fct_signature",
       ),
       matrix = fct_info(
         "matrix", 3L, list("data", "nrow", "ncol"),
-        list("NA", 1, 1),
-        list("any", "any", "any"), NULL
+        list(NA, 1, 1),
+        list("any", "any", "any"), function(fct, args) {
+          if (!is.list(args[[1]])) {
+            stopifnot(
+              "The data argument of
+              function matrix cannot be of type character" =
+                !is.character(args[[1]])
+            )
+          } else if (!is.list(args[[2]])) {
+            stopifnot(
+              "The nrow argument for vector
+              should be either numeric or integer" =
+                is.numeric(args[[2]]) | is.integer(args[[2]])
+            )
+          } else if (!is.list(args[[3]])) {
+            stopifnot(
+              "The ncol argument for vector
+              should be either numeric or integer" =
+                is.numeric(args[[3]]) | is.integer(args[[3]])
+            )
+          }
+          return(list(fct, args))
+        }
       ),
       length = fct_info(
         "length", 1L, list("x"),
