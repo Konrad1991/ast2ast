@@ -4,6 +4,32 @@ is_valid_var <- function(fct_name) {
   return(valid_name & no_dot)
 }
 
+is_numeric <- function(fct, args) {
+  if (!is.list(args[[1]])) {
+    stopifnot(
+      "Input has to be of type numeric" =
+        is.numeric(args[[1]]) | is.integer(args[[1]])
+    )
+  }
+  return(list(fct, args))
+}
+
+is_numeric_binary <- function(fct, args) {
+  if (!is.list(args[[1]])) {
+    stopifnot(
+      "Input has to be of type numeric" =
+        is.numeric(args[[1]]) | is.integer(args[[1]])
+    )
+  }
+  if (!is.list(args[[2]])) {
+    stopifnot(
+      "Input has to be of type numeric" =
+        is.numeric(args[[2]]) | is.integer(args[[1]])
+    )
+  }
+  return(list(fct, args))
+}
+
 FctInfo <- R6::R6Class("FctInfo",
   public = list(
     fctName = NULL,
@@ -108,87 +134,87 @@ fct_signature <- R6::R6Class("fct_signature",
       sin = fct_info(
         "sin", 1L, list("any"),
         list("any"),
-        list("any"), NULL
+        list("any"), is_numeric
       ),
       asin = fct_info(
         "asin", 1L, list("any"),
         list("any"),
-        list("any"), NULL
+        list("any"), is_numeric
       ),
       sinh = fct_info(
         "sinh", 1L, list("any"),
         list("any"),
-        list("any"), NULL
+        list("any"), is_numeric
       ),
       cos = fct_info(
         "cos", 1L, list("any"),
         list("any"),
-        list("any"), NULL
+        list("any"), is_numeric
       ),
       acos = fct_info(
         "acos", 1L, list("any"),
         list("any"),
-        list("any"), NULL
+        list("any"), is_numeric
       ),
       cosh = fct_info(
         "cosh", 1L, list("any"),
         list("any"),
-        list("any"), NULL
+        list("any"), is_numeric
       ),
       tan = fct_info(
         "tan", 1L, list("any"),
         list("any"),
-        list("any"), NULL
+        list("any"), is_numeric
       ),
       atan = fct_info(
         "atan", 1L, list("any"),
         list("any"),
-        list("any"), NULL
+        list("any"), is_numeric
       ),
       tanh = fct_info(
         "tanh", 1L, list("any"),
         list("any"),
-        list("any"), NULL
+        list("any"), is_numeric
       ),
       log = fct_info(
         "log", 1L, list("any"),
         list("any"),
-        list("any"), NULL
+        list("any"), is_numeric
       ),
       sqrt = fct_info(
         "sqrt", 1L, list("any"),
         list("any"),
-        list("any"), NULL
+        list("any"), is_numeric
       ),
       exponent = fct_info(
         "^", 1L, list("any"),
         list("any"),
-        list("any"), NULL
+        list("any"), is_numeric_binary
       ),
       plus = fct_info(
         "+", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any"), NULL
+        list("any", "any"), is_numeric_binary
       ),
       minus = fct_info(
         "-", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any"), NULL
+        list("any", "any"), is_numeric_binary
       ),
       minusUnary = fct_info(
         "-", 1L, list("any"),
         list("any"),
-        list("any"), NULL
+        list("any"), is_numeric
       ),
       times = fct_info(
         "*", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any"), NULL
+        list("any", "any"), is_numeric_binary
       ),
       divide = fct_info(
         "/", 2L, list("any", "any"),
         list("any", "any"),
-        list("any", "any"), NULL
+        list("any", "any"), is_numeric_binary
       ),
       IfElseIfElse = fct_info(
         "if", -1L, list(),
