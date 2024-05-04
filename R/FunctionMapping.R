@@ -8,7 +8,7 @@ is_numeric <- function(fct, args) {
   if (!is.list(args[[1]])) {
     stopifnot(
       "Input has to be of type numeric" =
-        is.numeric(args[[1]]) | is.integer(args[[1]])
+        is.numeric(args[[1]]) | is.integer(args[[1]]) | is.logical(args[[1]])
     )
   }
   return(list(fct, args))
@@ -18,13 +18,13 @@ is_numeric_binary <- function(fct, args) {
   if (!is.list(args[[1]])) {
     stopifnot(
       "Input has to be of type numeric" =
-        is.numeric(args[[1]]) | is.integer(args[[1]])
+        is.numeric(args[[1]]) | is.integer(args[[1]]) | is.logical(args[[1]])
     )
   }
   if (!is.list(args[[2]])) {
     stopifnot(
       "Input has to be of type numeric" =
-        is.numeric(args[[2]]) | is.integer(args[[1]])
+        is.numeric(args[[2]]) | is.integer(args[[1]]) | is.logical(args[[2]])
     )
   }
   return(list(fct, args))
