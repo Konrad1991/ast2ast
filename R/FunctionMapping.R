@@ -268,12 +268,21 @@ fct_signature <- R6::R6Class("fct_signature",
           } else if (args[[1]] == "logical") {
             fct <- "vector_logical"
           } else {
-            stop("Mode for function vector can only be numeric, integer or logical")
+            stop("Mode for function vector
+                  can only be numeric, integer or logical")
           }
-          if (!is.list(args[[2]])) {
-
+          if (!is.list(args[[1]])) {
+            # NOTE: is the check !is.list correct?
+            # actually the args[[2]] has to be a string literal
+            # and it is not possible to create a string using ETR
+            stopifnot(is.character(args[[1]]))
+          } else if (!is.list(args[[2]])) {
+            stopifnot(
+              "The length argument for vector
+              should be either numeric or integer" =
+                is.numeric(args[[2]]) | is.integer(args[[2]])
+            )
           }
-
           return(list(fct, args[[2]]))
         }
       ),
@@ -460,7 +469,7 @@ order_args <- function(code_list, fct) {
   names(res) <- NULL
 
   if (!is.null(fi$converter)) {
-    return(fi$converter(fct, code_list))
+    return(fi$converter(fct, res))
   }
   fi$check_types(res)
   return(list(fct, res))

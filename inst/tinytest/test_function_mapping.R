@@ -63,6 +63,15 @@ expect_equal(result[[2]], 10)
 # vector error
 args <- list(mode = "bla", length = 10)
 expect_error(ast2ast:::order_args(args, "vector"))
+# vector length argument not literal
+l <- 10
+args <- list(length = quote(l + 1))
+result <- ast2ast:::order_args(args, "vector")
+expect_equal(result[[2]], quote(l + 1))
+# vector argument switch
+args <- list(length = 5, mode = "logical")
+result <- ast2ast:::order_args(args, "vector")
+expect_equal(result[[2]], 5)
 
 # namespace operator
 args <- list("bla1", "bla2")
