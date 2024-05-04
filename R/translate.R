@@ -90,7 +90,7 @@
 #'   \item catmull-rome spline: cmr
 #'   \item to get a range of numbers the ':' function can be used
 #'   \item is.na and is.infinite can be used to test for NA and Inf.
-#'   \item d-, p-, q- and r-unif, -norm, -lnorm and -gamma (for gamma argument \emph{Scale} cannot be defined and is calculated using \emph{1/rate})
+#'   \item d-, p-, q- and r-unif, and -norm.
 #' }
 #' \strong{Some details about the implemented functions}
 #' \itemize{

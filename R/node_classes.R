@@ -151,17 +151,6 @@ PC <- R6::R6Class("PC",
       # find args required for function
       args_fct <- methods::formalArgs(name_of_fct)
 
-      # there exists exceptions
-      if (name_of_fct == "rgamma") {
-        args_fct <- args_fct[c(1, 2, 3)] # scale depends on rate
-      } else if (name_of_fct == "dgamma") {
-        args_fct <- args_fct[c(1, 2, 3, 5)] # scale depends on rate
-      } else if (name_of_fct == "pgamma") {
-        args_fct <- args_fct[c(1, 2, 3, 5, 6)] # scale depends on rate
-      } else if (name_of_fct == "qgamma") {
-        args_fct <- args_fct[c(1, 2, 3, 5, 6)] # scale depends on rate
-      }
-
       # check that user only use defined arg names
       check <- all(equal_names %in% args_fct)
       if (check == FALSE) {
@@ -675,46 +664,6 @@ math <- R6::R6Class("math",
       } else if (self$name_fct == "qnorm") {
         self$arguments <- self$change_args("qnorm", self$arguments)
         self$name_fct <- as.name("qnorm_etr")
-      } else if (self$name_fct == "rlnorm") {
-        self$arguments <- self$change_args("rlnorm", self$arguments)
-        self$name_fct <- as.name("rlnorm_etr")
-      } else if (self$name_fct == "dlnorm") {
-        self$arguments <- self$change_args("dlnorm", self$arguments)
-        self$name_fct <- as.name("dlnorm_etr")
-      } else if (self$name_fct == "plnorm") {
-        self$arguments <- self$change_args("plnorm", self$arguments)
-        self$name_fct <- as.name("plnorm_etr")
-      } else if (self$name_fct == "qlnorm") {
-        self$arguments <- self$change_args("qlnorm", self$arguments)
-        self$name_fct <- as.name("qlnorm_etr")
-      } else if (self$name_fct == "rgamma") {
-        self$arguments <- self$change_args("rgamma", self$arguments)
-        self$name_fct <- as.name("rgamma_etr")
-      } else if (self$name_fct == "dgamma") {
-        self$arguments <- self$change_args("dgamma", self$arguments)
-        self$name_fct <- as.name("dgamma_etr")
-      } else if (self$name_fct == "pgamma") {
-        self$arguments <- self$change_args("pgamma", self$arguments)
-        self$name_fct <- as.name("pgamma_etr")
-      } else if (self$name_fct == "qgamma") {
-        self$arguments <- self$change_args("qgamma", self$arguments)
-        self$name_fct <- as.name("qgamma_etr")
-      } else if (self$name_fct == "rbeta") {
-        self$name_fct <- as.name("rbeta_etr")
-      } else if (self$name_fct == "dbeta") {
-        self$name_fct <- as.name("dbeta_etr")
-      } else if (self$name_fct == "pbeta") {
-        self$name_fct <- as.name("pbeta_etr")
-      } else if (self$name_fct == "qbeta") {
-        self$name_fct <- as.name("qbeta_etr")
-      } else if (self$name_fct == "rnbeta") {
-        self$name_fct <- as.name("rnbeta_etr")
-      } else if (self$name_fct == "dnbeta") {
-        self$name_fct <- as.name("dnbeta_etr")
-      } else if (self$name_fct == "pnbeta") {
-        self$name_fct <- as.name("pnbeta_etr")
-      } else if (self$name_fct == "qnbeta") {
-        self$name_fct <- as.name("qnbeta_etr")
       }
     },
     convert = function(var) {

@@ -49,14 +49,29 @@ expect_equal(result[[2]], expected)
 args <- list(mode = "numeric", length = 10)
 result <- ast2ast:::order_args(args, "vector")
 expect_equal(result[[1]], "vector_numeric")
+expect_equal(result[[2]], 10)
 # vector logical
 args <- list(mode = "logical", length = 10)
 result <- ast2ast:::order_args(args, "vector")
 expect_equal(result[[1]], "vector_logical")
+expect_equal(result[[2]], 10)
 # vector integer
 args <- list(mode = "integer", length = 10)
 result <- ast2ast:::order_args(args, "vector")
 expect_equal(result[[1]], "vector_integer")
+expect_equal(result[[2]], 10)
 # vector error
 args <- list(mode = "bla", length = 10)
 expect_error(ast2ast:::order_args(args, "vector"))
+
+# namespace operator
+args <- list("bla1", "bla2")
+result <- ast2ast:::order_args(args, "::")
+expect_equal(result[[2]], list("bla1", "bla2"))
+expect_equal(result[[1]], "::")
+# namespace error rhs arg
+args <- list("bla1", "bla2 + 1")
+expect_error(ast2ast:::order_args(args, "::"))
+# namespace error lhs arg
+args <- list("1 + bla1", "bla2")
+expect_error(ast2ast:::order_args(args, "::"))

@@ -1,3 +1,9 @@
+is_valid_var <- function(fct_name) {
+  valid_name <- (make.names(fct_name) == fct_name)
+  no_dot <- !grepl("\\.", fct_name)
+  return(valid_name & no_dot)
+}
+
 FctInfo <- R6::R6Class("FctInfo",
   public = list(
     fctName = NULL,
@@ -15,6 +21,19 @@ FctInfo <- R6::R6Class("FctInfo",
       self$argumentDefaultValues <- values
       self$argumentTypes <- types
       self$converter <- f
+    },
+    check_types = function(args_by_user) {
+      stopifnot(length(args_by_user) == length(self$argumentTypes))
+      res <- Map(function(a, b) {
+        if (b == "any") {
+          return(TRUE)
+        }
+        if (b == "symbol") {
+          return(is_valid_var(a))
+        }
+        class(a) == b
+      }, args_by_user, self$argumentTypes)
+      stopifnot(all(res == TRUE))
     }
   )
 )
@@ -25,7 +44,8 @@ fct_info <- function(name, num_args, names, values, types, f) {
   FctInfo$new(name, num_args, names, values, types, f)
 }
 
-# TODO: add check that string is only used in print.
+# TODO: add check types in the converter function
+# TODO: add missing functions which are added meanwhile in C++ such as rep
 
 # NOTE: the argumentNames and argumentDefaultValues
 # defined here are not (always) the same as in R.
@@ -250,10 +270,12 @@ fct_signature <- R6::R6Class("fct_signature",
           } else {
             stop("Mode for function vector can only be numeric, integer or logical")
           }
-          return(list(fct, args))
+          if (!is.list(args[[2]])) {
+
+          }
+
+          return(list(fct, args[[2]]))
         }
-        # TODO: needs own fct to convert e.g.
-        # etr::vector("numeric", 1), etr::vector_numeric
       ),
       matrix = fct_info(
         "matrix", 3L, list("data", "nrow", "ncol"),
@@ -440,5 +462,6 @@ order_args <- function(code_list, fct) {
   if (!is.null(fi$converter)) {
     return(fi$converter(fct, code_list))
   }
+  fi$check_types(res)
   return(list(fct, res))
 }
