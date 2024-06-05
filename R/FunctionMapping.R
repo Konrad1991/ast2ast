@@ -186,7 +186,7 @@ fct_signature <- R6::R6Class("fct_signature",
       Parenthesis = fct_info(
         # TODO: in R only one argument can be passed to `(`.
         # Implement this on the R level
-        "{", 1L, list("any"),
+        "(", 1L, list("any"),
         list("any"),
         list("any"), NULL
       ),
@@ -240,15 +240,22 @@ fct_signature <- R6::R6Class("fct_signature",
         # as an empty vector is not possible in ETR.
         # In principal it would work but
         # in the field of ODE and loss fcts it does not make sense ...
-        list("character", "integer"), function(fct, args) {
+        list("character", "integer"),
+        function(fct, args) {
           if (args[[1]] == "numeric") {
-            fct <- "vector_numeric"
+            args <- args[[2]]
+            fct <- as.name("etr::vector_numeric")
           } else if (args[[1]] == "integer") {
-            fct <- "vector_integer"
+            args <- args[[2]]
+            fct <- as.name("etr::vector_integer")
           } else if (args[[1]] == "logical") {
-            fct <- "vector_logical"
+            args <- args[[2]]
+            fct <- as.name("etr::vector_logical")
           } else {
-            stop("Mode for function vector can only be numeric, integer or logical")
+            warning("Mode for function vector was
+              not defined and is set to numeric")
+            args <- list(args[[1]])
+            fct <- as.name("etr::vector_numeric")
           }
           return(list(fct, args))
         }
@@ -344,6 +351,11 @@ fct_signature <- R6::R6Class("fct_signature",
         "is.finite", 1L, list("any"),
         list("any"),
         list("any"), NULL
+      ),
+      cpp2R = fct_info(
+        "cpp2R", 1L, list("any"),
+        list("any"),
+        list("any"), NULL
       )
     )
   )
@@ -377,9 +389,9 @@ healthy_fct_call <- function(l, fwa) {
 }
 
 check_cars <- function(l, fwa, by_name, by_idx, checkNames) {
-  healthy_fct_call(l, fwa)
-  wrong_name(l, fwa, checkNames)
-  stopifnot((length(by_name) + length(by_idx)) <= length(fwa))
+  # healthy_fct_call(l, fwa)
+  # wrong_name(l, fwa, checkNames)
+  # stopifnot((length(by_name) + length(by_idx)) <= length(fwa))
 }
 
 remove_zero_indices <- function(l) {

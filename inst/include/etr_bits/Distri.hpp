@@ -1,7 +1,7 @@
 #ifndef DISTRI
 #define DISTRI
 
-#include "UtilsTraits.hpp"
+#include "Core.hpp"
 
 namespace etr {
 
@@ -23,15 +23,15 @@ inline Vec<BaseType> dunif_etr(const Vec<BaseType> &x,
     m.unlock();
     return ret;
   } else {
-    std::vector<size_t> sizes{min_.size(), max_.size(), lg.size()};
-    size_t max = x.size();
-    for (size_t i = 1; i < sizes.size(); i++) {
+    std::vector<std::size_t> sizes{min_.size(), max_.size(), lg.size()};
+    std::size_t max = x.size();
+    for (std::size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
         max = sizes[i];
       }
     }
     Vec<BaseType> res(max);
-    for (size_t i = 0; i < res.size(); i++) {
+    for (std::size_t i = 0; i < res.size(); i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::dunif(x[i % x.size()], min_[i % min_.size()],
@@ -52,9 +52,9 @@ inline Vec<BaseType> runif_etr(const Vec<BaseType> &x,
   std::mutex m;
 
   if ((x.size() == 1) && (min_.size() == 1) && (max_.size() == 1)) {
-    Vec<BaseType> res(static_cast<int>(x[0]));
-    size_t size = static_cast<size_t>(x[0]);
-    for (size_t i = 0; i < size; i++) {
+    Vec<BaseType> res(SI{static_cast<int>(x[0])});
+    std::size_t size = static_cast<std::size_t>(x[0]);
+    for (std::size_t i = 0; i < size; i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::runif(min_[i % min_.size()], max_[i % max_.size()]);
@@ -63,15 +63,15 @@ inline Vec<BaseType> runif_etr(const Vec<BaseType> &x,
     }
     return res;
   } else {
-    std::vector<size_t> sizes{min_.size(), max_.size()};
-    size_t max = x.size();
-    for (size_t i = 1; i < sizes.size(); i++) {
+    std::vector<std::size_t> sizes{min_.size(), max_.size()};
+    std::size_t max = x.size();
+    for (std::size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
         max = sizes[i];
       }
     }
     Vec<BaseType> res(max);
-    for (size_t i = 0; i < res.size(); i++) {
+    for (std::size_t i = 0; i < res.size(); i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::runif(min_[i % min_.size()], max_[i % max_.size()]);
@@ -103,16 +103,16 @@ inline Vec<BaseType> punif_etr(const Vec<BaseType> &x,
     m.unlock();
     return ret;
   } else {
-    std::vector<size_t> sizes{min_.size(), max_.size(), lower.size(),
+    std::vector<std::size_t> sizes{min_.size(), max_.size(), lower.size(),
                               lg.size()};
-    size_t max = x.size();
-    for (size_t i = 1; i < sizes.size(); i++) {
+    std::size_t max = x.size();
+    for (std::size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
         max = sizes[i];
       }
     }
     Vec<BaseType> res(max);
-    for (size_t i = 0; i < res.size(); i++) {
+    for (std::size_t i = 0; i < res.size(); i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::punif(x[i % x.size()], min_[i % min_.size()],
@@ -146,16 +146,16 @@ inline Vec<BaseType> qunif_etr(const Vec<BaseType> &x,
     m.unlock();
     return ret;
   } else {
-    std::vector<size_t> sizes{min_.size(), max_.size(), lower.size(),
+    std::vector<std::size_t> sizes{min_.size(), max_.size(), lower.size(),
                               lg.size()};
-    size_t max = x.size();
-    for (size_t i = 1; i < sizes.size(); i++) {
+    std::size_t max = x.size();
+    for (std::size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
         max = sizes[i];
       }
     }
     Vec<BaseType> res(max);
-    for (size_t i = 0; i < res.size(); i++) {
+    for (std::size_t i = 0; i < res.size(); i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::qunif(x[i % x.size()], min_[i % min_.size()],
@@ -191,15 +191,15 @@ inline Vec<BaseType> dnorm_etr(const Vec<BaseType> &x,
     m.unlock();
     return ret;
   } else {
-    std::vector<size_t> sizes{min_.size(), max_.size(), lg.size()};
-    size_t max = x.size();
-    for (size_t i = 1; i < sizes.size(); i++) {
+    std::vector<std::size_t> sizes{min_.size(), max_.size(), lg.size()};
+    std::size_t max = x.size();
+    for (std::size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
         max = sizes[i];
       }
     }
     Vec<BaseType> res(max);
-    for (size_t i = 0; i < res.size(); i++) {
+    for (std::size_t i = 0; i < res.size(); i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::dnorm(x[i % x.size()], min_[i % min_.size()],
@@ -221,9 +221,9 @@ inline Vec<BaseType> rnorm_etr(const Vec<BaseType> &x,
   std::mutex m;
 
   if ((x.size() == 1) && (min_.size() == 1) && (max_.size() == 1)) {
-    size_t size = static_cast<size_t>(x[0]);
+    std::size_t size = static_cast<std::size_t>(x[0]);
     Vec<BaseType> res(size);
-    for (size_t i = 0; i < size; i++) {
+    for (std::size_t i = 0; i < size; i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::rnorm(min_[i % min_.size()], max_[i % max_.size()]);
@@ -232,15 +232,15 @@ inline Vec<BaseType> rnorm_etr(const Vec<BaseType> &x,
     }
     return res;
   } else {
-    std::vector<size_t> sizes{min_.size(), max_.size()};
-    size_t max = x.size();
-    for (size_t i = 1; i < sizes.size(); i++) {
+    std::vector<std::size_t> sizes{min_.size(), max_.size()};
+    std::size_t max = x.size();
+    for (std::size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
         max = sizes[i];
       }
     }
     Vec<BaseType> res(max);
-    for (size_t i = 0; i < res.size(); i++) {
+    for (std::size_t i = 0; i < res.size(); i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::rnorm(min_[i % min_.size()], max_[i % max_.size()]);
@@ -272,16 +272,16 @@ inline Vec<BaseType> pnorm_etr(const Vec<BaseType> &x,
     m.unlock();
     return ret;
   } else {
-    std::vector<size_t> sizes{min_.size(), max_.size(), lower.size(),
+    std::vector<std::size_t> sizes{min_.size(), max_.size(), lower.size(),
                               lg.size()};
-    size_t max = x.size();
-    for (size_t i = 1; i < sizes.size(); i++) {
+    std::size_t max = x.size();
+    for (std::size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
         max = sizes[i];
       }
     }
     Vec<BaseType> res(max);
-    for (size_t i = 0; i < res.size(); i++) {
+    for (std::size_t i = 0; i < res.size(); i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::pnorm(x[i % x.size()], min_[i % min_.size()],
@@ -315,16 +315,16 @@ inline Vec<BaseType> qnorm_etr(const Vec<BaseType> &x,
     m.unlock();
     return ret;
   } else {
-    std::vector<size_t> sizes{min_.size(), max_.size(), lower.size(),
+    std::vector<std::size_t> sizes{min_.size(), max_.size(), lower.size(),
                               lg.size()};
-    size_t max = x.size();
-    for (size_t i = 1; i < sizes.size(); i++) {
+    std::size_t max = x.size();
+    for (std::size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
         max = sizes[i];
       }
     }
     Vec<BaseType> res(max);
-    for (size_t i = 0; i < res.size(); i++) {
+    for (std::size_t i = 0; i < res.size(); i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::qnorm(x[i % x.size()], min_[i % min_.size()],
@@ -360,15 +360,15 @@ inline Vec<BaseType> dlnorm_etr(const Vec<BaseType> &x,
     m.unlock();
     return ret;
   } else {
-    std::vector<size_t> sizes{min_.size(), max_.size(), lg.size()};
-    size_t max = x.size();
-    for (size_t i = 1; i < sizes.size(); i++) {
+    std::vector<std::size_t> sizes{min_.size(), max_.size(), lg.size()};
+    std::size_t max = x.size();
+    for (std::size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
         max = sizes[i];
       }
     }
     Vec<BaseType> res(max);
-    for (size_t i = 0; i < res.size(); i++) {
+    for (std::size_t i = 0; i < res.size(); i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::dlnorm(x[i % x.size()], min_[i % min_.size()],
@@ -390,9 +390,9 @@ inline Vec<BaseType> rlnorm_etr(const Vec<BaseType> &x,
   std::mutex m;
 
   if ((x.size() == 1) && (min_.size() == 1) && (max_.size() == 1)) {
-    size_t size = static_cast<size_t>(x[0]);
+    std::size_t size = static_cast<std::size_t>(x[0]);
     Vec<BaseType> res(size);
-    for (size_t i = 0; i < size; i++) {
+    for (std::size_t i = 0; i < size; i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::rlnorm(min_[i % min_.size()], max_[i % max_.size()]);
@@ -401,15 +401,15 @@ inline Vec<BaseType> rlnorm_etr(const Vec<BaseType> &x,
     }
     return res;
   } else {
-    std::vector<size_t> sizes{min_.size(), max_.size()};
-    size_t max = x.size();
-    for (size_t i = 1; i < sizes.size(); i++) {
+    std::vector<std::size_t> sizes{min_.size(), max_.size()};
+    std::size_t max = x.size();
+    for (std::size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
         max = sizes[i];
       }
     }
     Vec<BaseType> res(max);
-    for (size_t i = 0; i < res.size(); i++) {
+    for (std::size_t i = 0; i < res.size(); i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::rlnorm(min_[i % min_.size()], max_[i % max_.size()]);
@@ -441,16 +441,16 @@ inline Vec<BaseType> plnorm_etr(const Vec<BaseType> &x,
     m.unlock();
     return ret;
   } else {
-    std::vector<size_t> sizes{min_.size(), max_.size(), lower.size(),
+    std::vector<std::size_t> sizes{min_.size(), max_.size(), lower.size(),
                               lg.size()};
-    size_t max = x.size();
-    for (size_t i = 1; i < sizes.size(); i++) {
+    std::size_t max = x.size();
+    for (std::size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
         max = sizes[i];
       }
     }
     Vec<BaseType> res(max);
-    for (size_t i = 0; i < res.size(); i++) {
+    for (std::size_t i = 0; i < res.size(); i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::plnorm(x[i % x.size()], min_[i % min_.size()],
@@ -485,16 +485,16 @@ inline Vec<BaseType> qlnorm_etr(const Vec<BaseType> &x,
     m.unlock();
     return ret;
   } else {
-    std::vector<size_t> sizes{min_.size(), max_.size(), lower.size(),
+    std::vector<std::size_t> sizes{min_.size(), max_.size(), lower.size(),
                               lg.size()};
-    size_t max = x.size();
-    for (size_t i = 1; i < sizes.size(); i++) {
+    std::size_t max = x.size();
+    for (std::size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
         max = sizes[i];
       }
     }
     Vec<BaseType> res(max);
-    for (size_t i = 0; i < res.size(); i++) {
+    for (std::size_t i = 0; i < res.size(); i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::qlnorm(x[i % x.size()], min_[i % min_.size()],
@@ -520,7 +520,7 @@ inline Vec<BaseType> dgamma_etr(const Vec<BaseType> &x,
                                 const Vec<BaseType> &lg) {
   std::mutex m;
   std::vector<double> scale(rate.size());
-  for (size_t i = 0; i < scale.size(); i++) {
+  for (std::size_t i = 0; i < scale.size(); i++) {
     scale[i] = 1.0 / rate[i];
   }
   // const Vec<BaseType> &scale = 1 / rate;
@@ -534,16 +534,16 @@ inline Vec<BaseType> dgamma_etr(const Vec<BaseType> &x,
     m.unlock();
     return ret;
   } else {
-    std::vector<size_t> sizes{shape.size(), static_cast<size_t>(scale.size()),
+    std::vector<std::size_t> sizes{shape.size(), static_cast<std::size_t>(scale.size()),
                               lg.size()};
-    size_t max = x.size();
-    for (size_t i = 1; i < sizes.size(); i++) {
+    std::size_t max = x.size();
+    for (std::size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
         max = sizes[i];
       }
     }
     Vec<BaseType> res(max);
-    for (size_t i = 0; i < res.size(); i++) {
+    for (std::size_t i = 0; i < res.size(); i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::dgamma(x[i % x.size()], shape[i % shape.size()],
@@ -565,15 +565,15 @@ inline Vec<BaseType> rgamma_etr(const Vec<BaseType> &x,
   std::mutex m;
 
   std::vector<double> scale(rate.size());
-  for (size_t i = 0; i < scale.size(); i++) {
+  for (std::size_t i = 0; i < scale.size(); i++) {
     scale[i] = 1.0 / rate[i];
   }
 
   // const Vec<BaseType> &scale = 1 / rate;
   if ((x.size() == 1) && (shape.size() == 1) && (scale.size() == 1)) {
-    size_t size = static_cast<size_t>(x[0]);
+    std::size_t size = static_cast<std::size_t>(x[0]);
     Vec<BaseType> res(size);
-    for (size_t i = 0; i < size; i++) {
+    for (std::size_t i = 0; i < size; i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::rgamma(shape[i % shape.size()], scale[i % scale.size()]);
@@ -582,15 +582,15 @@ inline Vec<BaseType> rgamma_etr(const Vec<BaseType> &x,
     }
     return res;
   } else {
-    std::vector<size_t> sizes{shape.size(), static_cast<size_t>(scale.size())};
-    size_t max = x.size();
-    for (size_t i = 1; i < sizes.size(); i++) {
+    std::vector<std::size_t> sizes{shape.size(), static_cast<std::size_t>(scale.size())};
+    std::size_t max = x.size();
+    for (std::size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
         max = sizes[i];
       }
     }
     Vec<BaseType> res(max);
-    for (size_t i = 0; i < res.size(); i++) {
+    for (std::size_t i = 0; i < res.size(); i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::rgamma(shape[i % shape.size()], scale[i % scale.size()]);
@@ -612,7 +612,7 @@ inline Vec<BaseType> pgamma_etr(const Vec<BaseType> &x,
                                 const Vec<BaseType> &lg) {
   std::mutex m;
   std::vector<double> scale(rate.size());
-  for (size_t i = 0; i < scale.size(); i++) {
+  for (std::size_t i = 0; i < scale.size(); i++) {
     scale[i] = 1.0 / rate[i];
   }
   // const Vec<BaseType> &scale = 1 / rate;
@@ -626,16 +626,16 @@ inline Vec<BaseType> pgamma_etr(const Vec<BaseType> &x,
     m.unlock();
     return ret;
   } else {
-    std::vector<size_t> sizes{shape.size(), static_cast<size_t>(scale.size()),
+    std::vector<std::size_t> sizes{shape.size(), static_cast<std::size_t>(scale.size()),
                               lower.size(), lg.size()};
-    size_t max = x.size();
-    for (size_t i = 1; i < sizes.size(); i++) {
+    std::size_t max = x.size();
+    for (std::size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
         max = sizes[i];
       }
     }
     Vec<BaseType> res(max);
-    for (size_t i = 0; i < res.size(); i++) {
+    for (std::size_t i = 0; i < res.size(); i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::pgamma(x[i % x.size()], shape[i % shape.size()],
@@ -659,7 +659,7 @@ inline Vec<BaseType> qgamma_etr(const Vec<BaseType> &x,
                                 const Vec<BaseType> &lg) {
   std::mutex m;
   std::vector<double> scale(rate.size());
-  for (size_t i = 0; i < scale.size(); i++) {
+  for (std::size_t i = 0; i < scale.size(); i++) {
     scale[i] = 1.0 / rate[i];
   }
   // const Vec<BaseType> &scale = 1 / rate;
@@ -673,16 +673,16 @@ inline Vec<BaseType> qgamma_etr(const Vec<BaseType> &x,
     m.unlock();
     return ret;
   } else {
-    std::vector<size_t> sizes{shape.size(), static_cast<size_t>(scale.size()),
+    std::vector<std::size_t> sizes{shape.size(), static_cast<std::size_t>(scale.size()),
                               lower.size(), lg.size()};
-    size_t max = x.size();
-    for (size_t i = 1; i < sizes.size(); i++) {
+    std::size_t max = x.size();
+    for (std::size_t i = 1; i < sizes.size(); i++) {
       if (sizes[i] > max) {
         max = sizes[i];
       }
     }
     Vec<BaseType> res(max);
-    for (size_t i = 0; i < res.size(); i++) {
+    for (std::size_t i = 0; i < res.size(); i++) {
       m.lock();
       GetRNGstate();
       res[i] = R::qgamma(x[i % x.size()], shape[i % shape.size()],

@@ -27,7 +27,9 @@ PC <- R6::R6Class("PC",
     initialize = function(node, namespace_etr) {
       self$name_fct <- node[[1]]
       self$arguments <- node[2:length(node)]
-      self$arguments <- order_args(self$arguments, self$name_fct)
+      temp <- order_args(self$arguments, self$name_fct)
+      self$arguments <- temp[[2]]
+      self$name_fct <- temp[[1]]
       self$namespace_etr <- namespace_etr
     },
     get_name = function() {
@@ -90,17 +92,6 @@ PC <- R6::R6Class("PC",
       return(check)
     },
     get_var_names = function() {
-      forbidden_fcts <- c(
-        # TODO: has to be changed. As the namespace etr is used the fct names could be used in principal as variable names
-        "getlength", "getattributes", "is_matrix", "VEC", # has to be updated!
-        "at", "d2i", "ass", "VVSIN", "sinus", "VVsinh", "sinush", "VVasin",
-        "asinus", "VVCOS", "cosinus", "VVacos", "acosinus", "VVCOSH", "cosinush",
-        "VVtan", "tangens", "VVatan", "atangens", "VVtanh", "tangensh", "VVMINUS",
-        "VSMINUS", "SVMINUS", "VVPLUS", "VSPLUS", "SVPLUS", "VVTIMES", "VSTIMES",
-        "SVTIMES", "VVDIV", "VSDIV", "SVDIV", "subassign", "subset", "It", "STORE",
-        "li", "cmr", "VVEXP", "VVlog", "sqrt", "ln", "exp", "combine", "coca", "cd", "colon",
-        "length", "dim", "vector", "matrix"
-      )
       ret <- list()
       counter <- 1
       arg <- self$arguments
@@ -109,15 +100,6 @@ PC <- R6::R6Class("PC",
 
         if (!is.call(temp) && (length(temp) == 1L && is.name(temp))) {
           ret[[counter]] <- temp
-
-          if (deparse(temp) %in% forbidden_fcts) {
-            warning(paste(
-              "You should not use: ",
-              temp, "as a variable.", "\n",
-              "Transpiling will be continued anyway. Please check the behaviour of the function!"
-            ))
-          }
-
           counter <- counter + 1
         }
       }
@@ -230,11 +212,11 @@ generic <- R6::R6Class("generic",
       self$change_code()
 
       if (paste(self$name_fct) == "vector") {
-        self$arguments <- order_args(self$arguments, "vector")
-        self$arguments <- unname(self$arguments)
+        # self$arguments <- order_args(self$arguments, "vector")
+        # self$arguments <- unname(self$arguments)
       } else if (paste(self$name_fct) == "matrix") {
-        self$arguments <- order_args(self$arguments, "matrix")
-        self$arguments <- unname(self$arguments)
+         # self$arguments <- order_args(self$arguments, "matrix")
+         # self$arguments <- unname(self$arguments)
       }
 
       ret <- list()

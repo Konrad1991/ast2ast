@@ -23,3 +23,10 @@
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^Session.vim
+^build.lua
+^install.R
+^test.R
+^testsAll.R
+^test.cpp
+^install.sh
