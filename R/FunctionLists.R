@@ -28,7 +28,7 @@ permitted_fcts <- function() {
     "Rf_ScalarReal", "i2d", "cmr", "cpp2R",
     "vector_numeric",
     "vector_logical",
-    "vector_integer"
+    "vector_integer", "rep"
   )
 }
 
@@ -43,7 +43,7 @@ namespace_etr <- function() {
     "exp", "i2d", "at", "exp",
     "dunif_etr", "punif_etr", "qunif_etr", "runif_etr",
     "dnorm_etr", "pnorm_etr", "qnorm_etr", "rnorm_etr",
-    "isNA", "isInfinite", "colon", "cpp2R"
+    "isNA", "isInfinite", "colon", "cpp2R", "rep"
   )
 }
 
@@ -55,7 +55,7 @@ generic_fcts <- function() {
     "rep",
     "matrix", "length", "dim", "cmr", "exp", "at",
     "&&", "||", "Rf_ScalarReal", "::", "cpp2R",
-    "print_type" # TODO: remove print_type
+    "rep"
   )
 }
 

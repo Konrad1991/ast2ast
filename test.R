@@ -1,10 +1,14 @@
 f <- function(a, b) {
   a <- c(1, 2, 3)
   c <- a + b * 2
-  d <- vector(1)
+  d <- vector(1, mode = "numeric")
   print(d)
   m <- matrix(1, 2, 2)
   print(m)
+  if (a == 1) {
+    print("bla")
+  }
+  a <- -b
   return(c)
 }
 

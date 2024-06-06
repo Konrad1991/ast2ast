@@ -30,3 +30,4 @@
 ^testsAll.R
 ^test.cpp
 ^install.sh
+^testFunctionMapping.R

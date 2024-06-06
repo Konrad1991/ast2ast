@@ -48,7 +48,8 @@ PC <- R6::R6Class("PC",
       }
     },
     replace_int = function() {
-      for (i in seq_along(self$arguments)) {
+      i <- 1
+      while (i < length(self$arguments)) {
         if (is.null(self$arguments[[i]])) {
           return()
         }
@@ -61,10 +62,11 @@ PC <- R6::R6Class("PC",
           if (is.na(size2)) {
             return()
           }
-          if (size2 == 0) { # int found
+          if (size2 == 0) {
             self$arguments[[i]] <- str2lang(paste0("etr::i2d(", self$arguments[[i]], ")"))
           }
         }
+        i <- i + 1
       }
     },
     replace_NA = function() {
@@ -204,8 +206,8 @@ generic <- R6::R6Class("generic",
         # self$arguments <- order_args(self$arguments, "vector")
         # self$arguments <- unname(self$arguments)
       } else if (paste(self$name_fct) == "matrix") {
-         # self$arguments <- order_args(self$arguments, "matrix")
-         # self$arguments <- unname(self$arguments)
+        # self$arguments <- order_args(self$arguments, "matrix")
+        # self$arguments <- unname(self$arguments)
       }
 
       ret <- list()
@@ -474,7 +476,7 @@ is_na <- R6::R6Class("isNA",
 )
 
 #' @import R6
-is_infinite <- R6::R6Class("isInfinite",
+is_infinite <- R6::R6Class("isInf",
   inherit = PC,
   public = list(
     change_code = function() {
