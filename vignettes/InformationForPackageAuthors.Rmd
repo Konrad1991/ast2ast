@@ -85,7 +85,7 @@ bubbleSort <- function(a) {
 ```{Rcpp, eval = FALSE, echo = TRUE, attr.source='.numberLines'}
 // [[Rcpp::depends(ast2ast)]]
 // [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::plugins(cpp20)]]
+// [[Rcpp::plugins(cpp2a)]]
 #include "etr.hpp"
 
 // [[Rcpp::export]]
@@ -143,7 +143,7 @@ For ptr_vec or ptr_mat, two (for vectors) and three (for matrices) arguments are
 ```{Rcpp, eval = TRUE, echo = TRUE}
 // [[Rcpp::depends(ast2ast)]]
 // [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::plugins(cpp20)]]
+// [[Rcpp::plugins(cpp2a)]]
 #include "etr.hpp"
 
 sexp ptrVecCopy(etr::BaseType* a_double_ptr , int a_int_size) {
@@ -187,7 +187,7 @@ Instead of passing the raw pointer directly it is also possible to pass it wrapp
 ```{Rcpp, eval = TRUE, echo = TRUE}
 // [[Rcpp::depends(ast2ast)]]
 // [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::plugins(cpp20)]]
+// [[Rcpp::plugins(cpp2a)]]
 #include "etr.hpp"
 
 void otherFct(BorrowPtr a) {
@@ -215,7 +215,7 @@ callFct()
 Notably, the same thing can be achieved with a *sexp* object without using raw pointers. Here the code to illustrate it:
 
 ```{Rcpp, eval = TRUE, echo = TRUE, cache = TRUE}
-// [[Rcpp::plugins(cpp20)]]
+// [[Rcpp::plugins(cpp2a)]]
 // [[Rcpp::depends(RcppArmadillo, ast2ast)]]
 #include "etr.hpp"
 
@@ -252,7 +252,7 @@ In the last section, the usage of *ast2ast* was described. However, only *sexp* 
 // [[Rcpp::depends(ast2ast, RcppArmadillo)]]
 #include <RcppArmadillo.h>
 #include <Rcpp.h>
-// [[Rcpp::plugins(cpp20)]]
+// [[Rcpp::plugins(cpp2a)]]
 using namespace Rcpp;
 #include <etr.hpp>
 using namespace etr;
@@ -292,7 +292,7 @@ Besides Rcpp types, *sexp* objects can transfer data to *RcppArmadillo* objects 
 // [[Rcpp::depends(ast2ast, RcppArmadillo)]]
 #include <RcppArmadillo.h>
 #include <Rcpp.h>
-// [[Rcpp::plugins(cpp20)]]
+// [[Rcpp::plugins(cpp2a)]]
 using namespace arma;
 #include <etr.hpp>
 using namespace etr;
@@ -342,7 +342,7 @@ The C++ function depends on RcppArmadillo and ast2ast therefore the required mac
 
 ```{Rcpp, eval = FALSE}
 // [[Rcpp::depends(ast2ast, RcppArmadillo)]]
-// [[Rcpp::plugins(cpp20)]]
+// [[Rcpp::plugins(cpp2a)]]
 #include <etr.hpp>
 
 // [[Rcpp::export]]
@@ -363,7 +363,7 @@ Afterwards, the translated R function has to be used in C++ code. This would be 
 
 ```{Rcpp, eval = TRUE, cache = TRUE}
 // [[Rcpp::depends(RcppArmadillo, ast2ast)]]
-// [[Rcpp::plugins("cpp20")]]
+// [[Rcpp::plugins("cpp2a")]]
 #include "etr.hpp"
 
 typedef sexp (*fp)(sexp a);

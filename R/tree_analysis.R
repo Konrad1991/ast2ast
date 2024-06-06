@@ -71,7 +71,7 @@ tree_analyis <- function(expression) {
   env$num_args
 
   code <- "
-  // [[Rcpp::plugins(cpp20)]]
+  // [[Rcpp::plugins(cpp2a)]]
   // [[Rcpp::depends(RcppArmadillo)]]
   // [[Rcpp::depends(ast2ast)]]
   #include \"ad_etr.hpp\"

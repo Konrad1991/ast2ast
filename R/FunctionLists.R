@@ -25,7 +25,10 @@ permitted_fcts <- function() {
     "dunif", "punif", "qunif", "runif",
     "dnorm", "pnorm", "qnorm", "rnorm",
     "is.na", "is.infinite", "is.finite",
-    "Rf_ScalarReal", "i2d", "cmr"
+    "Rf_ScalarReal", "i2d", "cmr", "cpp2R",
+    "vector_numeric",
+    "vector_logical",
+    "vector_integer"
   )
 }
 

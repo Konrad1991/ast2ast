@@ -324,7 +324,7 @@ buildFctXPtr <- function(fct, reference, types, retType, nameFct) {
   f <- cString(
     "// [[Rcpp::depends(ast2ast)]]",
     "// [[Rcpp::depends(RcppArmadillo)]]",
-    "// [[Rcpp::plugins(cpp20)]]",
+    "// [[Rcpp::plugins(cpp2a)]]",
     '#include "etr.hpp"\n',
     "// [[Rcpp::export]]", "\n"
   )
@@ -397,7 +397,7 @@ buildFctR <- function(fct, nameFct, reference) {
   f <- cString(
     "// [[Rcpp::depends(ast2ast)]]",
     "// [[Rcpp::depends(RcppArmadillo)]]",
-    "// [[Rcpp::plugins(cpp20)]]",
+    "// [[Rcpp::plugins(cpp2a)]]",
     '#include "etr.hpp"\n',
     "// [[Rcpp::export]]\n", "\n"
   )

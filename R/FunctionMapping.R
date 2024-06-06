@@ -50,7 +50,7 @@ FctInfo <- R6::R6Class("FctInfo",
     },
     check_types = function(args_by_user) {
       if (self$numArgs != -1) {
-        stopifnot(length(args_by_user) == length(self$argumentTypes))  
+        stopifnot(length(args_by_user) == length(self$argumentTypes))
       }
       res <- Map(function(a, b) {
         if (is.list(a) | is.language(a)) {
@@ -92,8 +92,10 @@ fct_signature <- R6::R6Class("fct_signature",
         "::", 2L, list("any", "any"),
         list("any", "any"),
         list("symbol", "symbol"), function(fct, args) {
-          stopifnot("namespace function expects two symbols as arguments" = 
-            is_valid_var(args[[1]]) & is_valid_var(args[[2]])) 
+          stopifnot(
+            "namespace function expects two symbols as arguments" =
+              is_valid_var(args[[1]]) & is_valid_var(args[[2]])
+          )
           return(list(fct, args))
         }
       ),
@@ -101,17 +103,21 @@ fct_signature <- R6::R6Class("fct_signature",
         "<-", 2L, list("any", "any"),
         list("any", "any"),
         list("symbol", "any"), function(fct, args) {
-          stopifnot("assignment requires variable at left side" = 
-            is_valid_var(args[[1]]))
+          stopifnot(
+            "assignment requires variable at left side" =
+              is_valid_var(args[[1]])
+          )
           return(list(fct, args))
         }
       ),
       assignment2 = fct_info(
         "=", 2L, list("any", "any"),
         list("any", "any"),
-        list("symbol", "any"),  function(fct, args) {
-          stopifnot("assignment requires variable at left side" = 
-            is_valid_var(args[[1]]))
+        list("symbol", "any"), function(fct, args) {
+          stopifnot(
+            "assignment requires variable at left side" =
+              is_valid_var(args[[1]])
+          )
           return(list(fct, args))
         }
       ),
@@ -120,8 +126,10 @@ fct_signature <- R6::R6Class("fct_signature",
         list(),
         list(), function(fct, args) {
           if (!is.list(args[[1]]) & !is.language(args[[1]])) {
-            stopifnot("indexing requires variable at left side" = 
-            is_valid_var(args[[1]]))  
+            stopifnot(
+              "indexing requires variable at left side" =
+                is_valid_var(args[[1]])
+            )
           }
           return(list(fct, args))
         }
@@ -286,7 +294,7 @@ fct_signature <- R6::R6Class("fct_signature",
       Parenthesis = fct_info(
         # TODO: in R only one argument can be passed to `(`.
         # Implement this on the R level
-        "{", 1L, list("any"),
+        "(", 1L, list("any"),
         list("any"),
         list("any"), NULL
       ),
@@ -340,16 +348,21 @@ fct_signature <- R6::R6Class("fct_signature",
         # as an empty vector is not possible in ETR.
         # In principal it would work but
         # in the field of ODE and loss fcts it does not make sense ...
-        list("character", "numeric|integer"), function(fct, args) {
+        list("character", "integer"),
+        function(fct, args) {
           if (args[[1]] == "numeric") {
-            fct <- "vector_numeric"
+            args <- args[[2]]
+            fct <- as.name("etr::vector_numeric")
           } else if (args[[1]] == "integer") {
-            fct <- "vector_integer"
+            args <- args[[2]]
+            fct <- as.name("etr::vector_integer")
           } else if (args[[1]] == "logical") {
-            fct <- "vector_logical"
+            args <- args[[2]]
+            fct <- as.name("etr::vector_logical")
           } else {
-            stop("Mode for function vector
-                  can only be numeric, integer or logical")
+            warning("Mode for function vector was
+              not defined and is set to numeric")
+            fct <- as.name("etr::vector_numeric")
           }
           if (!is.list(args[[1]])) {
             # NOTE: is the check !is.list correct?
@@ -476,6 +489,11 @@ fct_signature <- R6::R6Class("fct_signature",
         "is.finite", 1L, list("any"),
         list("any"),
         list("any"), NULL
+      ),
+      cpp2R = fct_info(
+        "cpp2R", 1L, list("any"),
+        list("any"),
+        list("any"), NULL
       )
     )
   )
@@ -507,10 +525,9 @@ healthy_fct_call <- function(l, fwa) {
 }
 
 check_cars <- function(l, fwa, by_name, by_idx, checkNames) {
-  if (length(fwa) == 0) return()
-  healthy_fct_call(l, fwa)
-  wrong_name(l, fwa, checkNames)
-  stopifnot((length(by_name) + length(by_idx)) <= length(fwa))
+  # healthy_fct_call(l, fwa)
+  # wrong_name(l, fwa, checkNames)
+  # stopifnot((length(by_name) + length(by_idx)) <= length(fwa))
 }
 
 remove_zero_indices <- function(l) {
@@ -572,6 +589,6 @@ order_args <- function(code_list, fct) {
   if (!is.null(fi$converter)) {
     return(fi$converter(fct, res))
   }
-  
+
   return(list(fct, res))
 }
