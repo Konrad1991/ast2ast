@@ -49,13 +49,21 @@ FctInfo <- R6::R6Class("FctInfo",
       self$converter <- f
     },
     check_types = function(args_by_user) {
-      stopifnot(length(args_by_user) == length(self$argumentTypes))
+      if (self$numArgs != -1) {
+        stopifnot(length(args_by_user) == length(self$argumentTypes))  
+      }
       res <- Map(function(a, b) {
+        if (is.list(a) | is.language(a)) {
+          return(TRUE)
+        }
         if (b == "any") {
           return(TRUE)
         }
         if (b == "symbol") {
           return(is_valid_var(a))
+        }
+        if (b == "numeric|integer") {
+          return(is.numeric(a) | is.integer(a) | is.logical(a))
         }
         class(a) == b
       }, args_by_user, self$argumentTypes)
@@ -83,22 +91,40 @@ fct_signature <- R6::R6Class("fct_signature",
       namespace = fct_info(
         "::", 2L, list("any", "any"),
         list("any", "any"),
-        list("symbol", "symbol"), NULL
+        list("symbol", "symbol"), function(fct, args) {
+          stopifnot("namespace function expects two symbols as arguments" = 
+            is_valid_var(args[[1]]) & is_valid_var(args[[2]])) 
+          return(list(fct, args))
+        }
       ),
       assignment1 = fct_info(
         "<-", 2L, list("any", "any"),
         list("any", "any"),
-        list("symbol", "any"), NULL
+        list("symbol", "any"), function(fct, args) {
+          stopifnot("assignment requires variable at left side" = 
+            is_valid_var(args[[1]]))
+          return(list(fct, args))
+        }
       ),
       assignment2 = fct_info(
         "=", 2L, list("any", "any"),
         list("any", "any"),
-        list("symbol", "any"), NULL
+        list("symbol", "any"),  function(fct, args) {
+          stopifnot("assignment requires variable at left side" = 
+            is_valid_var(args[[1]]))
+          return(list(fct, args))
+        }
       ),
       indexing = fct_info(
         "[", -1L, list(),
         list(),
-        list(), NULL
+        list(), function(fct, args) {
+          if (!is.list(args[[1]]) & !is.language(args[[1]])) {
+            stopifnot("indexing requires variable at left side" = 
+            is_valid_var(args[[1]]))  
+          }
+          return(list(fct, args))
+        }
       ),
       # NOTE: even string is allowed and returns NA
       forLoop = fct_info(
@@ -314,7 +340,7 @@ fct_signature <- R6::R6Class("fct_signature",
         # as an empty vector is not possible in ETR.
         # In principal it would work but
         # in the field of ODE and loss fcts it does not make sense ...
-        list("character", "integer"), function(fct, args) {
+        list("character", "numeric|integer"), function(fct, args) {
           if (args[[1]] == "numeric") {
             fct <- "vector_numeric"
           } else if (args[[1]] == "integer") {
@@ -343,7 +369,7 @@ fct_signature <- R6::R6Class("fct_signature",
       matrix = fct_info(
         "matrix", 3L, list("data", "nrow", "ncol"),
         list(NA, 1, 1),
-        list("any", "any", "any"), function(fct, args) {
+        list("any", "numeric|integer", "numeric|integer"), function(fct, args) {
           if (!is.list(args[[1]])) {
             stopifnot(
               "The data argument of
@@ -475,14 +501,13 @@ wrong_name <- function(l, fwa, checkNames) {
 }
 
 healthy_fct_call <- function(l, fwa) {
-  if (length(fwa) == 0) {
-    stopifnot(length(l) == 0)
-  } else if (length(fwa) > 0) {
+  if (length(fwa) > 0) {
     stopifnot(length(l) <= length(fwa))
   }
 }
 
 check_cars <- function(l, fwa, by_name, by_idx, checkNames) {
+  if (length(fwa) == 0) return()
   healthy_fct_call(l, fwa)
   wrong_name(l, fwa, checkNames)
   stopifnot((length(by_name) + length(by_idx)) <= length(fwa))
@@ -543,9 +568,10 @@ order_args <- function(code_list, fct) {
   }
   names(res) <- NULL
 
+  fi$check_types(res)
   if (!is.null(fi$converter)) {
     return(fi$converter(fct, res))
   }
-  fi$check_types(res)
+  
   return(list(fct, res))
 }

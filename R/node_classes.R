@@ -27,7 +27,9 @@ PC <- R6::R6Class("PC",
     initialize = function(node, namespace_etr) {
       self$name_fct <- node[[1]]
       self$arguments <- node[2:length(node)]
-      self$arguments <- order_args(self$arguments, self$name_fct)
+      fct_arg <- order_args(self$arguments, self$name_fct)
+      self$name_fct <- fct_arg[[1]]
+      self$arguments <- (fct_arg[2:length(fct_arg)] |> as.list())[[1]]
       self$namespace_etr <- namespace_etr
     },
     get_name = function() {

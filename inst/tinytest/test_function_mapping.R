@@ -84,3 +84,34 @@ expect_error(ast2ast:::order_args(args, "::"))
 # namespace error lhs arg
 args <- list("1 + bla1", "bla2")
 expect_error(ast2ast:::order_args(args, "::"))
+
+
+
+args <- list(1, quote(a + 1))
+expect_error(ast2ast:::order_args(args, "::"))
+
+args <- list("a", 12)
+result <- ast2ast:::order_args(args, "=")
+expect_equal(result[[2]], list("a", 12))
+args <- list("a", 12)
+result <- ast2ast:::order_args(args, "<-")
+expect_equal(result[[2]], list("a", 12))
+args <- list("a", quote(a + 1))
+result <- ast2ast:::order_args(args, "=")
+expect_equal(result[[2]], list("a", quote(a + 1)))
+args <- list("a", quote(a + 1))
+result <- ast2ast:::order_args(args, "<-")
+expect_equal(result[[2]], list("a", quote(a + 1)))
+args <- list(1, quote(a + 1))
+expect_error(ast2ast:::order_args(args, "="))
+args <- list(quote(a + 1), quote(a + 1))
+expect_error(ast2ast:::order_args(args, "="))
+
+result <- ast2ast:::order_args(list("vec", 1), "[")
+expect_equal(result[[2]], list("vec", 1))
+
+expect_error(ast2ast:::order_args(list("vec.1", 1), "["))
+result <- ast2ast:::order_args(list(quote(vec + 1), 1), "[")
+expect_equal(result[[2]], list(quote(vec + 1), 1))
+
+expect_error(ast2ast:::order_args(list("vec.1", 1), "["))
