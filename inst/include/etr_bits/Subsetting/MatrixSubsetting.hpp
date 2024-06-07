@@ -231,10 +231,11 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
     ind[0] = (*idxR - 1) * convertSize(vec.nr()) + indexRow;
     return;
   } else if constexpr (isd<R, double, C, double>) {
+    std::cout << "testSub" << std::endl;
     std::size_t indexRow = convertSize(*idxL);
     indexRow--;
     ind.resize(1);
-    ind[0] = convertSize(*idxR) - 1 * vec.nr() + indexRow;
+    ind[0] = (convertSize(*idxR) - 1) * vec.nr() + indexRow;
     return;
   } else if constexpr (is<R, double> && IsAV<C>) {
     using DataTypeC = ExtractDataType<C>::RetType;
@@ -524,6 +525,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
       return;
     } else if constexpr ((is<DataTypeR, int> ||
                           is<DataTypeR, double>)&&is<DataTypeC, bool>) {
+      std::cout << "bla" << std::endl;
       std::size_t counter = 0;
       for (std::size_t i = 0; i < idxR->size(); i++)
         if ((*idxR)[i])
@@ -556,8 +558,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
       std::size_t counter = 0;
       for (std::size_t i = 0; i < idxR->size(); i++) {
         for (std::size_t j = 0; j < idxL->size(); j++) {
-          ind[counter] =
-              (d2i((*idxR)[i]) - 1) * vec.nr() + (d2i((*idxL)[j]) - 1);
+          ind[counter] = (d2i((*idxR)[i])) * vec.nr() + (d2i((*idxL)[j]));
           counter++;
         }
       }

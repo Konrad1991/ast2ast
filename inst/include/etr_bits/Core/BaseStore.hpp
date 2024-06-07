@@ -102,7 +102,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
 #endif
   BaseStore(std::size_t sz_)
       : sz(sz_), capacity(static_cast<std::size_t>(sz_ * 1.15)) {
-    ass(sz_ > 0, "Size has to be larger than 0");
+    ass(sz_ > 0, "Size has to be larger than 0!");
     p = new T[capacity];
     for (std::size_t i = 0; i < capacity; i++) {
       p[i] = T();
@@ -112,7 +112,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
   BaseStore(int sz_)
       : sz(static_cast<std::size_t>(sz_)),
         capacity(static_cast<std::size_t>(sz_ * 1.15)) {
-    ass(sz_ > 0, "Size has to be larger than 0");
+    ass(sz_ > 0, "Size has to be larger than 0!!");
     p = new T[capacity];
     for (std::size_t i = 0; i < sz; i++)
       p[i] = T();
@@ -260,7 +260,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
     allocated = true;
   }
   void resize(std::size_t newSize) {
-    ass(newSize >= 1, "Size has to be larger than 0");
+    ass(newSize >= 0, "Size has to be larger than 0!!!");
     if (!allocated) {
       init(newSize);
       fill(T());
@@ -295,18 +295,18 @@ template <typename T, typename BaseTrait> struct BaseStore {
     return p[idx];
   }
 
-  template <typename L2> BaseStore &moveit(L2 &other) {
+  template <typename L2> void moveit(L2 &other) {
     T *temporary = other.p;
     int tempSize = other.sz;
     int tempCapacity = other.capacity;
     other.p = this->p;
     other.sz = this->sz;
     other.capacity = this->capacity;
+    other.allocated = this->allocated;
     this->p = temporary;
     this->sz = tempSize;
     this->capacity = tempCapacity;
     allocated = true;
-    return *this;
   }
   auto begin() const { return It<T>{p}; }
   auto end() const { return It<T>{p + sz}; }

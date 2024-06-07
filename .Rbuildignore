@@ -31,3 +31,6 @@
 ^test.cpp
 ^install.sh
 ^testFunctionMapping.R
+^testETR.cpp
+^compile_commands.json
+^\.cache/

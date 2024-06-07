@@ -480,7 +480,7 @@ is_infinite <- R6::R6Class("isInf",
   inherit = PC,
   public = list(
     change_code = function() {
-      self$name_fct <- as.name("isInfinite")
+      self$name_fct <- as.name("isInf")
     },
     convert = function(var) {
       self$replace_int()

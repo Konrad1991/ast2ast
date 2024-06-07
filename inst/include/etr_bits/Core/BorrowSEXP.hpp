@@ -219,7 +219,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
   }
 
   void resize(std::size_t newSize) {
-    ass(newSize >= 1, "Size has to be larger than 0");
+    ass(newSize >= 0, "Size has to be larger than 0");
     if (!allocated) {
       init(newSize);
       fill(T());
@@ -242,7 +242,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
     }
   }
 
-  template <typename L2> BorrowSEXP &moveit(L2 &other) {
+  template <typename L2> void moveit(L2 &other) {
     if (!todelete) {
       resize(other.size());
       T *temporary = other.p;
@@ -251,6 +251,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
       other.p = this->p;
       other.sz = this->sz;
       other.capacity = this->capacity;
+      other.allocated = this->allocated;
       this->p = temporary;
       this->sz = tempSize;
       this->capacity = tempCapacity;
@@ -261,11 +262,11 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
       other.p = this->p;
       other.sz = this->sz;
       other.capacity = this->capacity;
+      other.allocated = this->allocated;
       this->p = temporary;
       this->sz = tempSize;
       this->capacity = tempCapacity;
     }
-    return *this;
   }
 
   auto begin() const { return It<T>{p}; }

@@ -2,6 +2,7 @@
 #define ASSING2VEC_ETR_H
 
 #include "VectorClass.hpp"
+#include <cstddef>
 #include <type_traits>
 
 template <typename TD>
@@ -117,7 +118,15 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
                 "Cannot assign to an r value. E.g. c(1, 2, 3) <- 1");
   using DataTypeOtherVec = typename etr::ExtractDataType<
       std::remove_reference_t<decltype(otherVec)>>::RetType;
+  using typeOtherVec = std::remove_reference_t<decltype(otherVec)>;
   if constexpr (isBuffer::value) {
+
+    if constexpr (IsSubVec<typeOtherVec>) {
+      for (size_t i = 0; i < otherVec.size(); i++) {
+        std::cout << otherVec.d.ind[i] << std::endl;
+      }
+    }
+
     temp.resize(otherVec.size());
     for (std::size_t i = 0; i < otherVec.size(); i++) {
       if constexpr (is<DataTypeOtherVec, T>) {
@@ -126,7 +135,20 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
         temp[i] = static_cast<T>(otherVec[i]);
       }
     }
-    d.moveit(temp);
+
+    if constexpr (Operation<typeOtherVec> || IsSubVec<typeOtherVec>) {
+      d.resize(otherVec.size());
+      for (std::size_t i = 0; i < otherVec.size(); i++) {
+        d[i] = temp[i];
+      }
+    } else {
+      d.moveit(temp);
+      // d.resize(otherVec.size());
+      // for (std::size_t i = 0; i < otherVec.size(); i++) {
+      //   d[i] = temp[i];
+      // }
+    }
+
   } else if constexpr (isBorrow::value) {
     ass(otherVec.size() <= d.capacity,
         "number of items to replace is not a multiple of replacement length");

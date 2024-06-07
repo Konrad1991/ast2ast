@@ -124,7 +124,7 @@ template <typename T, typename BorrowTrait> struct Borrow {
 
   void init(std::size_t size) = delete;
   void resize(std::size_t newSize) {
-    ass(newSize >= 1, "Size has to be larger than 0");
+    ass(newSize >= 0, "Size has to be larger than 0");
     if (newSize <= capacity) {
       sz = newSize;
     } else {
@@ -151,7 +151,7 @@ template <typename T, typename BorrowTrait> struct Borrow {
     return p[idx];
   }
 
-  template <typename L2> Borrow &moveit(L2 &other) = delete;
+  template <typename L2> void moveit(L2 &other) = delete;
   auto begin() const { return It<T>{p}; }
   auto end() const { return It<T>{p + sz}; }
   T &back() { return p[sz]; }

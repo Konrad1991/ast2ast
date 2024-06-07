@@ -1,45 +1,8 @@
-f <- function(a, b) {
-  a <- c(1, 2, 3)
-  c <- a + b * 2
-  d <- vector(1, mode = "numeric")
-  print(d)
-  m <- matrix(1, 2, 2)
-  print(m)
-  if (a == 1) {
-    print("bla")
-  }
-  a <- -b
-  return(c)
+f <- function(a) {
+  a[c(1, 3), c(1, 2)] <- 20
+  return(a)
 }
 
 fcpp <- ast2ast::translate(f, verbose = TRUE)
-.traceback() |> print()
 a <- c(1, 2, 3)
-b <- 3.14
-fcpp(a, b)
-
-stop("bla")
-
-Rcpp::sourceCpp(code = '
-// [[Rcpp::depends(ast2ast)]]
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::plugins(cpp2a)]]
-#include "etr.hpp"
-
-// [[Rcpp::export]]
-SEXP f(SEXP aSEXP) {
-  using namespace etr;
-  Vec<double, BorrowSEXP<double>> a;
-
-  auto test = Rf_isReal(aSEXP);
-  Rcpp::Rcout << test << std::endl;
-
-  bool b = test;
-  Rcpp::Rcout << b << std::endl;
-
-  a = aSEXP;
-  print(a);
-  return(R_NilValue);
-}')
-
-f(1.1)
+fcpp(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3))
