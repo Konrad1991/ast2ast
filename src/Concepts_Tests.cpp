@@ -1,6 +1,5 @@
+#include "etr.hpp"
 #include <stdexcept>
-#define STANDALONE_ETR
-#include "../include/etr.hpp"
 using namespace etr;
 
 template <typename I>

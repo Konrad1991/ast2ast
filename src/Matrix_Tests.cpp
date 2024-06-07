@@ -1,5 +1,4 @@
-#define STANDALONE_ETR
-#include "../include/etr.hpp"
+#include "etr.hpp"
 using namespace etr;
 
 // [[Rcpp::export]]

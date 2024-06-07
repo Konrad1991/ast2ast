@@ -1,6 +1,5 @@
+#include "etr.hpp"
 #include <stdexcept>
-#define STANDALONE_ETR
-#include "../include/etr.hpp"
 using namespace etr;
 #include <cstdint>
 #include <limits>
@@ -41,19 +40,19 @@ void test_vector_numeric() {
   {
     try {
       Vec<double> vec1 = vector_numeric(0);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
     try {
       Vec<double> vec1 = vector_numeric(-1);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
     try {
       Vec<double> vec1 = vector_numeric(SIZE_MAX);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid length argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
@@ -61,19 +60,19 @@ void test_vector_numeric() {
   {
     try {
       Vec<double> vec1 = vector_numeric(0.1);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
     try {
       Vec<double> vec1 = vector_numeric(-1.1);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
     try {
       Vec<double> vec1 = vector_numeric(std::numeric_limits<double>::max());
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid length argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
@@ -81,7 +80,7 @@ void test_vector_numeric() {
   {
     try {
       Vec<double> vec1 = vector_numeric(false);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
@@ -122,19 +121,19 @@ void test_vector_int() {
   {
     try {
       Vec<double> vec1 = vector_integer(0);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
     try {
       Vec<double> vec1 = vector_integer(-1);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
     try {
       Vec<double> vec1 = vector_integer(SIZE_MAX);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
@@ -142,19 +141,19 @@ void test_vector_int() {
   {
     try {
       Vec<double> vec1 = vector_integer(0.1);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
     try {
       Vec<double> vec1 = vector_integer(-1.1);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
     try {
       Vec<double> vec1 = vector_integer(std::numeric_limits<double>::max());
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
@@ -162,7 +161,7 @@ void test_vector_int() {
   {
     try {
       Vec<double> vec1 = vector_integer(false);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
@@ -203,19 +202,19 @@ void test_vector_bool() {
   {
     try {
       Vec<double> vec1 = vector_logical(0);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
     try {
       Vec<double> vec1 = vector_logical(-1);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
     try {
       Vec<double> vec1 = vector_logical(SIZE_MAX);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
@@ -223,19 +222,19 @@ void test_vector_bool() {
   {
     try {
       Vec<double> vec1 = vector_logical(0.1);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
     try {
       Vec<double> vec1 = vector_logical(-1.1);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
     try {
       Vec<double> vec1 = vector_logical(std::numeric_limits<double>::max());
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
@@ -243,7 +242,7 @@ void test_vector_bool() {
   {
     try {
       Vec<double> vec1 = vector_logical(false);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
@@ -265,7 +264,7 @@ void test_vector_vector() {
     v[0] = 10;
     try {
       vector_numeric(v);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid length argument";
       ass(e.what() == expectedMessage,
           "test vector as length argument with size > 1");
@@ -276,7 +275,7 @@ void test_vector_vector() {
     v[0] = -10;
     try {
       vector_numeric(v);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid length argument";
       ass(e.what() == expectedMessage,
           "test vector as length argument with size > 1");
@@ -297,7 +296,7 @@ void test_vector_AllVars() {
     Vec<double, VarPointer<decltype(av), 0, 0>, VariableTypeTrait> vp(av);
     try {
       vector_numeric<0>(av, 0);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "invalid times argument");
     }
@@ -307,7 +306,7 @@ void test_vector_AllVars() {
     Vec<double, VarPointer<decltype(av), 0, 0>, VariableTypeTrait> vp(av);
     try {
       vector_numeric<0>(av, -10);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "invalid times argument");
     }
@@ -323,7 +322,7 @@ void test_vector_AllVars() {
     Vec<double, VarPointer<decltype(av), 0, 0>, VariableTypeTrait> vp(av);
     try {
       vector_integer<0>(av, 0);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "invalid times argument");
     }
@@ -333,7 +332,7 @@ void test_vector_AllVars() {
     Vec<double, VarPointer<decltype(av), 0, 0>, VariableTypeTrait> vp(av);
     try {
       vector_integer<0>(av, -10);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "invalid times argument");
     }
@@ -349,7 +348,7 @@ void test_vector_AllVars() {
     Vec<double, VarPointer<decltype(av), 0, 0>, VariableTypeTrait> vp(av);
     try {
       vector_logical<0>(av, 0);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "invalid times argument");
     }
@@ -359,7 +358,7 @@ void test_vector_AllVars() {
     Vec<double, VarPointer<decltype(av), 0, 0>, VariableTypeTrait> vp(av);
     try {
       vector_logical<0>(av, -10);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "invalid times argument");
     }

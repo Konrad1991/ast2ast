@@ -1,7 +1,6 @@
+#include "etr.hpp"
 #include <stdexcept>
 #include <type_traits>
-#define STANDALONE_ETR
-#include "../include/etr.hpp"
 using namespace etr;
 
 // [[Rcpp::export]]
@@ -28,7 +27,7 @@ void test_rep() {
     ass(rep(1, coca(1, 2, 3) + 1).size() == 2, s + "1, 1+ c(1, 2, 3)");
     try {
       rep(1, coca(false));
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expected = "invalid times argument";
       ass(e.what() == expected, s + "invalid times argument = false");
     }

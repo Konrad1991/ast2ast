@@ -1,8 +1,7 @@
+#include "etr.hpp"
 #include <cstddef>
 #include <stdexcept>
 #include <type_traits>
-#define STANDALONE_ETR
-#include "etr.hpp"
 using namespace etr;
 
 // [[Rcpp::export]]
@@ -13,7 +12,7 @@ void test_basestore() {
     BaseStore<double> bs;
     try {
       bs[0];
-    } catch (std::runtime_error &e) {
+    } catch (const Rcpp::exception &e) {
       std::string expected = "No memory was allocated";
       ass(e.what() == expected, s + "nothing allocated");
     }

@@ -1,8 +1,7 @@
+#include "etr.hpp"
 #include <cstddef>
 #include <stdexcept>
 #include <type_traits>
-#define STANDALONE_ETR
-#include "../include/etr.hpp"
 using namespace etr;
 
 // [[Rcpp::export]]
@@ -13,7 +12,7 @@ void test_borrow() {
     Borrow<double> bs;
     try {
       bs[0];
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expected = "No memory was allocated";
       ass(e.what() == expected, s + "nothing allocated");
     }
@@ -68,7 +67,7 @@ void test_borrow() {
 
     try {
       v.resize(1000);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expected =
           "Cannot resize Borrow element above size of borrowed object";
       ass(e.what() == expected, s + "resize above size of borrowed object");

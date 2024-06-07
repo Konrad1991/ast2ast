@@ -1,8 +1,7 @@
 #include <stdexcept>
-#define STANDALONE_ETR
 
 // TODO: write tests!!!
-#include "../include/etr.hpp"
+#include "etr.hpp"
 using namespace etr;
 
 // [[Rcpp::export]]
@@ -86,14 +85,14 @@ void dim_tests() {
 
     try {
       dim(1);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expected = "dim can only be called with matrix";
       ass(e.what() == expected, s + "arithmetic");
     }
 
     try {
       dim(coca(1, 2, 3));
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expected = "dim can only be called with matrix";
       ass(e.what() == expected, s + "r variable");
     }

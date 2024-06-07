@@ -1,7 +1,6 @@
+#include "etr.hpp"
 #include <stdexcept>
 #include <type_traits>
-#define STANDALONE_ETR
-#include "../include/etr.hpp"
 using namespace etr;
 
 // [[Rcpp::export]]

@@ -1,7 +1,6 @@
 
+#include "etr.hpp"
 #include <stdexcept>
-#define STANDALONE_ETR
-#include "../include/etr.hpp"
 using namespace etr;
 
 // [[Rcpp::export]]
@@ -98,7 +97,7 @@ void test_colon() {
     try {
       etr::Vec<double> v;
       etr::colon(10, v);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expected = "No memory was allocated";
       ass(e.what() == expected, "usage of empty vec");
     }

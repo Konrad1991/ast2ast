@@ -1,8 +1,7 @@
+#include "etr.hpp"
 #include <cstddef>
 #include <stdexcept>
 #include <type_traits>
-#define STANDALONE_ETR
-#include "../include/etr.hpp"
 using namespace etr;
 
 bool eq(double a, double b) {

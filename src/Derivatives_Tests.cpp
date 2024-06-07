@@ -1,9 +1,8 @@
 #include <ios>
-#define STANDALONE_ETR
 
 // -O2 speed up!
 
-#include "../include/etr.hpp"
+#include "etr.hpp"
 using namespace etr;
 
 template <typename L, typename R> bool doubleEq(const L l, const R r) {

@@ -1,6 +1,5 @@
+#include "etr.hpp"
 #include <stdexcept>
-#define STANDALONE_ETR
-#include "../include/etr.hpp"
 using namespace etr;
 
 /*
@@ -29,14 +28,14 @@ void test_vector_subsetting() {
     ass(v(b).size() == 16, s + "vec size == 16");
     try {
       v(false);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expect = "Variable[FALSE] subsetting is not supported. Sorry";
       ass(expect == e.what(), s + "Variable[FALSE] results in runtime error");
     }
     try {
       b = false;
       v(b);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expect = "Variable[FALSE] subsetting is not supported. Sorry";
       ass(expect == e.what(), s + "Variable[FALSE] results in runtime error");
     }
@@ -46,14 +45,14 @@ void test_vector_subsetting() {
     ass(subset(colon(1, 16), true).size() == 16, s + "vec size == 16");
     try {
       subset(colon(1, 16), false);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expect = "Variable[FALSE] subsetting is not supported. Sorry";
       ass(expect == e.what(), s + "Variable[FALSE] results in runtime error");
     }
     try {
       bool b = false;
       subset(colon(1, 5), b);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expect = "Variable[FALSE] subsetting is not supported. Sorry";
       ass(expect == e.what(), s + "Variable[FALSE] results in runtime error");
     }
@@ -63,7 +62,7 @@ void test_vector_subsetting() {
     std::string s = "IntSubsetting: ";
     try {
       v(-1);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expect = "Invalid index argc";
       ass(expect == e.what(), s + "Invalid index argument");
     }
@@ -80,7 +79,7 @@ void test_vector_subsetting() {
     std::string s = "IntSubsetting: ";
     try {
       subset(coca(1, 2, 3), -1);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expect = "Invalid index argc";
       ass(expect == e.what(), s + "Invalid index argument");
     }
@@ -99,7 +98,7 @@ void test_vector_subsetting() {
     std::string s = "DoubleSubsetting: ";
     try {
       v(-1.0);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expect = "invalid index argument";
       ass(expect == e.what(), s + "invalid index argument");
     }
@@ -126,7 +125,7 @@ void test_vector_subsetting() {
     std::string s = "DoubleSubsetting: ";
     try {
       v(-1.0);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expect = "invalid index argument";
       ass(expect == e.what(), s + "invalid index argument");
     }
@@ -328,13 +327,13 @@ void test_vector_subsetting() {
     ass(at(v, 1) == 10.1, s + "at mutable");
     try {
       at(v, 0);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expected = "Error: out of boundaries --> value below 1";
       ass(e.what() == expected, s + "Error out of boundaries");
     }
     try {
       at(v, 2000);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expected =
           "Error: out of boundaries --> value beyond size of vector";
       ass(e.what() == expected, s + "Error out of boundaries");
@@ -343,14 +342,14 @@ void test_vector_subsetting() {
     ass(at(v, 2, 3) == 20.3, s + "at mutable matrix");
     try {
       at(v, 0, 0);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expected =
           "Error: out of boundaries --> value beyond size of vector";
       ass(e.what() == expected, s + "Error out of boundaries");
     }
     try {
       at(v, 2000, 1);
-    } catch (std::runtime_error &e) {
+    } catch (Rcpp::exception &e) {
       std::string expected =
           "Error: out of boundaries --> value beyond size of vector";
       ass(e.what() == expected, s + "Error out of boundaries");
