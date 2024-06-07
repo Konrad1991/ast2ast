@@ -1,8 +1,15 @@
 f <- function(a) {
-  a[c(1, 3), c(1, 2)] <- 20
-  return(a)
+  a <- matrix(1:9, 3, 3)
+  b <- c(0, 1)
+  c <- c(1, 1)
+  b <- a[b != c, 2.5]
+  return(b)
 }
 
 fcpp <- ast2ast::translate(f, verbose = TRUE)
-a <- c(1, 2, 3)
-fcpp(matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9), 3, 3))
+res1 <- fcpp(0)
+res2 <- f(0)
+str(res1)
+str(res2)
+print(res1)
+print(res2)

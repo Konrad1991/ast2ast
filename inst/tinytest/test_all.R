@@ -1,6 +1,131 @@
 library(ast2ast)
 library(tinytest)
 
+ast2ast:::test_basestore()
+ast2ast:::test_arithmetic()
+ast2ast:::test_comparison()
+ast2ast:::test_borrow()
+ast2ast:::test_cmr()
+ast2ast:::test_coca()
+ast2ast:::test_colon()
+ast2ast:::test_colon_AllVars()
+ast2ast:::test_concepts()
+ast2ast:::test_derivs()
+ast2ast:::isNA_tests()
+ast2ast:::isInf_tests()
+ast2ast:::length_tests()
+ast2ast:::dim_tests()
+ast2ast:::test_matrices()
+ast2ast:::test_rep()
+ast2ast:::test_vector_subsetting()
+ast2ast:::test_arithmetic_unary()
+ast2ast:::test_vector_numeric()
+ast2ast:::test_vector_int()
+ast2ast:::test_vector_bool()
+ast2ast:::test_vector_vector()
+ast2ast:::test_vector_AllVars()
+# Valid function call with complete arguments
+args <- list(data = 3, nrow = 2, ncol = 4)
+result <- ast2ast:::order_args(args, "matrix")
+expected <- list(data = 3, nrow = 2, ncol = 4)
+expect_equal(result[[2]], expected)
+
+# Valid function call with extra arguments (should ignore extra arguments)
+args <- list(data = 3, nrow = 2, ncol = 4, extra = "ignored")
+expect_error(ast2ast:::order_args(args, "matrix"))
+
+# Unsupported function call
+args <- list(x = 3)
+expect_error(ast2ast:::order_args(args, "unsupported_function"))
+
+# Function call with empty arguments (should use default values)
+args <- list()
+result <- ast2ast:::order_args(args, "matrix")
+expected <- list(NA, 1, 1)
+expect_equal(result[[2]], expected)
+
+# Function call with overriding default values
+args <- list(data = 3, nrow = 2, ncol = 4)
+result <- ast2ast:::order_args(args, "matrix")
+expected <- list(data = 3, nrow = 2, ncol = 4)
+expect_equal(result[[2]], expected)
+
+# assignment
+args <- list("a", 1)
+result <- ast2ast:::order_args(args, "<-")
+expected <- list("a", 1)
+expect_equal(result[[2]], expected)
+
+# vector numeric
+args <- list(mode = "numeric", length = 10)
+result <- ast2ast:::order_args(args, "vector")
+expect_equal(result[[1]], as.symbol("etr::vector_numeric"))
+expect_equal(result[[2]], 10)
+# vector logical
+args <- list(mode = "logical", length = 10)
+result <- ast2ast:::order_args(args, "vector")
+expect_equal(result[[1]], as.symbol("etr::vector_logical"))
+expect_equal(result[[2]], 10)
+# vector integer
+args <- list(mode = "integer", length = 10)
+result <- ast2ast:::order_args(args, "vector")
+expect_equal(result[[1]], as.symbol("etr::vector_integer"))
+expect_equal(result[[2]], 10)
+# vector error
+args <- list(mode = "bla", length = 10)
+expect_warning(ast2ast:::order_args(args, "vector"))
+# vector length argument not literal
+l <- 10
+args <- list(length = quote(l + 1))
+result <- ast2ast:::order_args(args, "vector")
+expect_equal(result[[2]], quote(l + 1))
+# vector argument switch
+args <- list(length = 5, mode = "logical")
+result <- ast2ast:::order_args(args, "vector")
+expect_equal(result[[2]], 5)
+
+# namespace operator
+args <- list("bla1", "bla2")
+result <- ast2ast:::order_args(args, "::")
+expect_equal(result[[2]], list("bla1", "bla2"))
+expect_equal(result[[1]], "::")
+# namespace error rhs arg
+args <- list("bla1", "bla2 + 1")
+expect_error(ast2ast:::order_args(args, "::"))
+# namespace error lhs arg
+args <- list("1 + bla1", "bla2")
+expect_error(ast2ast:::order_args(args, "::"))
+
+args <- list(1, quote(a + 1))
+expect_error(ast2ast:::order_args(args, "::"))
+
+args <- list("a", 12)
+result <- ast2ast:::order_args(args, "=")
+expect_equal(result[[2]], list("a", 12))
+args <- list("a", 12)
+result <- ast2ast:::order_args(args, "<-")
+expect_equal(result[[2]], list("a", 12))
+args <- list("a", quote(a + 1))
+result <- ast2ast:::order_args(args, "=")
+expect_equal(result[[2]], list("a", quote(a + 1)))
+args <- list("a", quote(a + 1))
+result <- ast2ast:::order_args(args, "<-")
+expect_equal(result[[2]], list("a", quote(a + 1)))
+args <- list(1, quote(a + 1))
+expect_error(ast2ast:::order_args(args, "="))
+args <- list(quote(a + 1), quote(a + 1))
+
+result <- ast2ast:::order_args(list("vec", 1), "[")
+expect_equal(result[[2]], list("vec", 1))
+
+expect_error(ast2ast:::order_args(list("vec.1", 1), "["))
+result <- ast2ast:::order_args(list(quote(vec + 1), 1), "[")
+expect_equal(result[[2]], list(quote(vec + 1), 1))
+
+expect_error(ast2ast:::order_args(list("vec.1", 1), "["))
+
+
+
 testall <- function(a, type_test) {
   if (type_test == 0) { # bubblesort
     size <- length(a)
@@ -1360,9 +1485,9 @@ testall <- function(a, type_test) {
 # FIX: getsource does only work for output = "R"
 # FIX: function needs at least one argument fix it
 fct <- function() {
-  test <- translate(testall)
+  #translate(testall, verbose = TRUE)
 }
-test <- fct()
+test <- translate(testall, verbose = TRUE)
 # TODO: document that RNGs are removed. 
 
 

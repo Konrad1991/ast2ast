@@ -39,7 +39,6 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
     }
     if constexpr (is<RetType, double>) {
       bool isreal = Rf_isReal(inp);
-      std::cout << "isreal " << isreal << std::endl;
       ass(isreal, "R object is not of type numeric");
       p = REAL(inp);
       sz = Rf_length(inp);
@@ -151,7 +150,6 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
     }
     if constexpr (is<RetType, double>) {
       bool isreal = Rf_isReal(inp);
-      std::cout << "isreal " << isreal << std::endl;
       ass(isreal, "R object is not of type numeric");
       p = REAL(inp);
       sz = Rf_length(inp);

@@ -33,10 +33,6 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "etr_bits/Subsetting.hpp"
 #include "etr_bits/UnaryCalculations.hpp"
 
-#ifdef STANDALONE_ETR
-#else
-#include "etr_bits/Distri.hpp"
-#endif
 #include "etr_bits/BufferVector.hpp"
 #include "etr_bits/Derivatives/Derivs.hpp"
 

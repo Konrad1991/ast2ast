@@ -121,12 +121,6 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
   using typeOtherVec = std::remove_reference_t<decltype(otherVec)>;
   if constexpr (isBuffer::value) {
 
-    if constexpr (IsSubVec<typeOtherVec>) {
-      for (size_t i = 0; i < otherVec.size(); i++) {
-        std::cout << otherVec.d.ind[i] << std::endl;
-      }
-    }
-
     temp.resize(otherVec.size());
     for (std::size_t i = 0; i < otherVec.size(); i++) {
       if constexpr (is<DataTypeOtherVec, T>) {
@@ -136,18 +130,7 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
       }
     }
 
-    if constexpr (Operation<typeOtherVec> || IsSubVec<typeOtherVec>) {
-      d.resize(otherVec.size());
-      for (std::size_t i = 0; i < otherVec.size(); i++) {
-        d[i] = temp[i];
-      }
-    } else {
-      d.moveit(temp);
-      // d.resize(otherVec.size());
-      // for (std::size_t i = 0; i < otherVec.size(); i++) {
-      //   d[i] = temp[i];
-      // }
-    }
+    d.moveit(temp);
 
   } else if constexpr (isBorrow::value) {
     ass(otherVec.size() <= d.capacity,

@@ -66,7 +66,6 @@ Additionally, C++ necessitates explicit declaration of variable types. Within th
 
 bubbleSort <- function(a) {
   
-  
   size <- length(a)
     for (i in 1:size) {
       for (j in 1:(size - 1)) {
@@ -227,7 +226,7 @@ void byRef(sexp& a) {
 
 // [[Rcpp::export]]
 void call_fct() {
-  sexp a = etr::vector(3);
+  sexp a = etr::vector_numeric(3);
   etr::print(a);
   byRef(a);
   etr::print(a);
@@ -366,11 +365,11 @@ Afterwards, the translated R function has to be used in C++ code. This would be 
 // [[Rcpp::plugins("cpp2a")]]
 #include "etr.hpp"
 
-typedef sexp (*fp)(sexp a);
+typedef sexp (*FP)(sexp a);
 
 // [[Rcpp::export]]
-void call_package(Rcpp::XPtr<fp> inp) {
-  fp f = *inp;
+void call_package(Rcpp::XPtr<FP> inp) {
+  FP f = *inp;
   sexp a = etr::coca(1, 2, 3);
   etr::print(a);
   a = f(a);

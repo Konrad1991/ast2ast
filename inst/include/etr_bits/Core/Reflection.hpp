@@ -13,11 +13,11 @@ inline std::string demangle(const char *mangledName) {
 }
 
 template <typename T> inline void printType(T inp) {
-  std::cout << demangle(typeid(inp).name()) << std::endl;
+  Rcpp::Rcout << demangle(typeid(inp).name()) << std::endl;
 }
 
 template <typename T> void inline printT() {
-  std::cout << demangle(typeid(T).name()) << std::endl;
+  Rcpp::Rcout << demangle(typeid(T).name()) << std::endl;
 }
 
 inline std::string convertIndentation(std::size_t idx) {
@@ -48,7 +48,7 @@ template <typename T> inline void printAST(T inp) {
   }
   for (std::size_t i = 0; i < v.size(); i++) {
     std::string indentation = convertIndentation(indentationLevels[i]);
-    std::cout << indentation << v[i] << std::endl;
+    Rcpp::Rcout << indentation << v[i] << std::endl;
   }
 }
 
@@ -72,7 +72,7 @@ template <typename T> inline void printTAST() {
   }
   for (std::size_t i = 0; i < v.size(); i++) {
     std::string indentation = convertIndentation(indentationLevels[i]);
-    std::cout << indentation << v[i] << std::endl;
+    Rcpp::Rcout << indentation << v[i] << std::endl;
   }
 }
 } // namespace etr

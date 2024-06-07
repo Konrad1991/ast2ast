@@ -19,9 +19,9 @@ template <typename T, typename R>
            OperationVec<T> && std::is_arithmetic_v<R>)
 inline auto at(const T &inp, R i) {
   if constexpr (std::is_integral_v<R>) {
-    return inp[i];
+    return inp[i - 1];
   } else if constexpr (std::is_floating_point_v<R>) {
-    return inp[d2i(i)];
+    return inp[d2i(i) - 1];
   } else {
     static_assert(sizeof(T) == 0, "Unknown type for indexing found in fct at.");
   }

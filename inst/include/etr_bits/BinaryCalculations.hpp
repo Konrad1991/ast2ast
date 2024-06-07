@@ -270,20 +270,13 @@ template <typename L, typename R> auto operator==(const L &l, const R &r) {
   constexpr bool isDoubleL = std::is_arithmetic_v<L>;
   constexpr bool isDoubleR = std::is_arithmetic_v<R>;
   if constexpr (!isDoubleL && isDoubleR) {
-    return Vec<typename std::common_type<typename ExtractDataType<L>::RetType,
-                                         R>::type,
-               BinaryOperation<decltype(l.d), R, EqualTrait>>(
+    return Vec<bool, BinaryOperation<decltype(l.d), R, EqualTrait>>(
         BinaryOperation<decltype(l.d), R, EqualTrait>(l.d, r));
   } else if constexpr (isDoubleL && !isDoubleR) {
-    return Vec<typename std::common_type<
-                   L, typename ExtractDataType<R>::RetType>::type,
-               BinaryOperation<L, decltype(r.d), EqualTrait>>(
+    return Vec<bool, BinaryOperation<L, decltype(r.d), EqualTrait>>(
         BinaryOperation<L, decltype(r.d), EqualTrait>(l, r.d));
   } else if constexpr (!isDoubleL && !isDoubleR) {
-    return Vec<
-        typename std::common_type<typename ExtractDataType<L>::RetType,
-                                  typename ExtractDataType<R>::RetType>::type,
-        BinaryOperation<decltype(l.d), decltype(r.d), EqualTrait>>(
+    return Vec<bool, BinaryOperation<decltype(l.d), decltype(r.d), EqualTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), EqualTrait>(l.d, r.d));
   } else {
     ass(false, "This case should not be reached. Contact author");
@@ -294,20 +287,14 @@ template <typename L, typename R> auto operator!=(const L &l, const R &r) {
   constexpr bool isDoubleL = std::is_arithmetic_v<L>;
   constexpr bool isDoubleR = std::is_arithmetic_v<R>;
   if constexpr (!isDoubleL && isDoubleR) {
-    return Vec<typename std::common_type<typename ExtractDataType<L>::RetType,
-                                         R>::type,
-               BinaryOperation<decltype(l.d), R, UnEqualTrait>>(
+    return Vec<bool, BinaryOperation<decltype(l.d), R, UnEqualTrait>>(
         BinaryOperation<decltype(l.d), R, UnEqualTrait>(l.d, r));
   } else if constexpr (isDoubleL && !isDoubleR) {
-    return Vec<typename std::common_type<
-                   L, typename ExtractDataType<R>::RetType>::type,
-               BinaryOperation<L, decltype(r.d), UnEqualTrait>>(
+    return Vec<bool, BinaryOperation<L, decltype(r.d), UnEqualTrait>>(
         BinaryOperation<L, decltype(r.d), UnEqualTrait>(l, r.d));
   } else if constexpr (!isDoubleL && !isDoubleR) {
-    return Vec<
-        typename std::common_type<typename ExtractDataType<L>::RetType,
-                                  typename ExtractDataType<R>::RetType>::type,
-        BinaryOperation<decltype(l.d), decltype(r.d), UnEqualTrait>>(
+    return Vec<bool,
+               BinaryOperation<decltype(l.d), decltype(r.d), UnEqualTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d),
 
                         UnEqualTrait>(l.d, r.d));
@@ -320,20 +307,14 @@ template <typename L, typename R> auto operator>(const L &l, const R &r) {
   constexpr bool isDoubleL = std::is_arithmetic_v<L>;
   constexpr bool isDoubleR = std::is_arithmetic_v<R>;
   if constexpr (!isDoubleL && isDoubleR) {
-    return Vec<typename std::common_type<typename ExtractDataType<L>::RetType,
-                                         R>::type,
-               BinaryOperation<decltype(l.d), R, LargerTrait>>(
+    return Vec<bool, BinaryOperation<decltype(l.d), R, LargerTrait>>(
         BinaryOperation<decltype(l.d), R, LargerTrait>(l.d, r));
   } else if constexpr (isDoubleL && !isDoubleR) {
-    return Vec<typename std::common_type<
-                   L, typename ExtractDataType<R>::RetType>::type,
-               BinaryOperation<L, decltype(r.d), LargerTrait>>(
+    return Vec<bool, BinaryOperation<L, decltype(r.d), LargerTrait>>(
         BinaryOperation<L, decltype(r.d), LargerTrait>(l, r.d));
   } else if constexpr (!isDoubleL && !isDoubleR) {
-    return Vec<
-        typename std::common_type<typename ExtractDataType<L>::RetType,
-                                  typename ExtractDataType<R>::RetType>::type,
-        BinaryOperation<decltype(l.d), decltype(r.d), LargerTrait>>(
+    return Vec<bool,
+               BinaryOperation<decltype(l.d), decltype(r.d), LargerTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d),
 
                         LargerTrait>(l.d, r.d));
@@ -346,20 +327,14 @@ template <typename L, typename R> auto operator>=(const L &l, const R &r) {
   constexpr bool isDoubleL = std::is_arithmetic_v<L>;
   constexpr bool isDoubleR = std::is_arithmetic_v<R>;
   if constexpr (!isDoubleL && isDoubleR) {
-    return Vec<typename std::common_type<typename ExtractDataType<L>::RetType,
-                                         R>::type,
-               BinaryOperation<decltype(l.d), R, LargerEqualTrait>>(
+    return Vec<bool, BinaryOperation<decltype(l.d), R, LargerEqualTrait>>(
         BinaryOperation<decltype(l.d), R, LargerEqualTrait>(l.d, r));
   } else if constexpr (isDoubleL && !isDoubleR) {
-    return Vec<typename std::common_type<
-                   L, typename ExtractDataType<R>::RetType>::type,
-               BinaryOperation<L, decltype(r.d), LargerEqualTrait>>(
+    return Vec<bool, BinaryOperation<L, decltype(r.d), LargerEqualTrait>>(
         BinaryOperation<L, decltype(r.d), LargerEqualTrait>(l, r.d));
   } else if constexpr (!isDoubleL && !isDoubleR) {
-    return Vec<
-        typename std::common_type<typename ExtractDataType<L>::RetType,
-                                  typename ExtractDataType<R>::RetType>::type,
-        BinaryOperation<decltype(l.d), decltype(r.d), LargerEqualTrait>>(
+    return Vec<bool,
+               BinaryOperation<decltype(l.d), decltype(r.d), LargerEqualTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d),
 
                         LargerEqualTrait>(l.d, r.d));
@@ -372,20 +347,14 @@ template <typename L, typename R> auto operator<(const L &l, const R &r) {
   constexpr bool isDoubleL = std::is_arithmetic_v<L>;
   constexpr bool isDoubleR = std::is_arithmetic_v<R>;
   if constexpr (!isDoubleL && isDoubleR) {
-    return Vec<typename std::common_type<typename ExtractDataType<L>::RetType,
-                                         R>::type,
-               BinaryOperation<decltype(l.d), R, SmallerTrait>>(
+    return Vec<bool, BinaryOperation<decltype(l.d), R, SmallerTrait>>(
         BinaryOperation<decltype(l.d), R, SmallerTrait>(l.d, r));
   } else if constexpr (isDoubleL && !isDoubleR) {
-    return Vec<typename std::common_type<
-                   L, typename ExtractDataType<R>::RetType>::type,
-               BinaryOperation<L, decltype(r.d), SmallerTrait>>(
+    return Vec<bool, BinaryOperation<L, decltype(r.d), SmallerTrait>>(
         BinaryOperation<L, decltype(r.d), SmallerTrait>(l, r.d));
   } else if constexpr (!isDoubleL && !isDoubleR) {
-    return Vec<
-        typename std::common_type<typename ExtractDataType<L>::RetType,
-                                  typename ExtractDataType<R>::RetType>::type,
-        BinaryOperation<decltype(l.d), decltype(r.d), SmallerTrait>>(
+    return Vec<bool,
+               BinaryOperation<decltype(l.d), decltype(r.d), SmallerTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d),
 
                         SmallerTrait>(l.d, r.d));
@@ -398,20 +367,14 @@ template <typename L, typename R> auto operator<=(const L &l, const R &r) {
   constexpr bool isDoubleL = std::is_arithmetic_v<L>;
   constexpr bool isDoubleR = std::is_arithmetic_v<R>;
   if constexpr (!isDoubleL && isDoubleR) {
-    return Vec<typename std::common_type<typename ExtractDataType<L>::RetType,
-                                         R>::type,
-               BinaryOperation<decltype(l.d), R, SmallerEqualTrait>>(
+    return Vec<bool, BinaryOperation<decltype(l.d), R, SmallerEqualTrait>>(
         BinaryOperation<decltype(l.d), R, SmallerEqualTrait>(l.d, r));
   } else if constexpr (isDoubleL && !isDoubleR) {
-    return Vec<typename std::common_type<
-                   L, typename ExtractDataType<R>::RetType>::type,
-               BinaryOperation<L, decltype(r.d), SmallerEqualTrait>>(
+    return Vec<bool, BinaryOperation<L, decltype(r.d), SmallerEqualTrait>>(
         BinaryOperation<L, decltype(r.d), SmallerEqualTrait>(l, r.d));
   } else if constexpr (!isDoubleL && !isDoubleR) {
     return Vec<
-        typename std::common_type<typename ExtractDataType<L>::RetType,
-                                  typename ExtractDataType<R>::RetType>::type,
-        BinaryOperation<decltype(l.d), decltype(r.d), SmallerEqualTrait>>(
+        bool, BinaryOperation<decltype(l.d), decltype(r.d), SmallerEqualTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d),
 
                         SmallerEqualTrait>(l.d, r.d));

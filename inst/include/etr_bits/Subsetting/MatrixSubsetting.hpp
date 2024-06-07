@@ -2,6 +2,7 @@
 #define SUBSETTING_MATRIX_HPP
 
 #include "UtilsSubsetting.hpp"
+#include "etr_bits/Allocation/AllocationUtils.hpp"
 
 namespace etr {
 
@@ -231,7 +232,6 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
     ind[0] = (*idxR - 1) * convertSize(vec.nr()) + indexRow;
     return;
   } else if constexpr (isd<R, double, C, double>) {
-    std::cout << "testSub" << std::endl;
     std::size_t indexRow = convertSize(*idxL);
     indexRow--;
     ind.resize(1);
@@ -438,7 +438,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
     } else if constexpr (is<DataTypeR, double>) {
       ind.resize(idxL->size());
       for (int j = 0; j < idxL->size(); j++) {
-        ind[j] = ((*idxR) - 1) * vec.nr() + (d2i((*idxL)[j]) - 1);
+        ind[j] = (convertSize(*idxR) - 1) * vec.nr() + (d2i((*idxL)[j]) - 1);
       }
       return;
     } else {
@@ -525,7 +525,6 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
       return;
     } else if constexpr ((is<DataTypeR, int> ||
                           is<DataTypeR, double>)&&is<DataTypeC, bool>) {
-      std::cout << "bla" << std::endl;
       std::size_t counter = 0;
       for (std::size_t i = 0; i < idxR->size(); i++)
         if ((*idxR)[i])
@@ -558,11 +557,12 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
       std::size_t counter = 0;
       for (std::size_t i = 0; i < idxR->size(); i++) {
         for (std::size_t j = 0; j < idxL->size(); j++) {
-          ind[counter] = (d2i((*idxR)[i])) * vec.nr() + (d2i((*idxL)[j]));
+          ind[counter] =
+              (d2i((*idxR)[i]) - 1) * vec.nr() + (d2i((*idxL)[j]) - 1);
           counter++;
         }
       }
-      mp.setMatrix(true, idxL->size(), idxR->size()); // issue: correct?
+      mp.setMatrix(true, idxL->size(), idxR->size());
       return;
     } else {
       static_assert(sizeof(T) == 0,
