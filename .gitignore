@@ -21,4 +21,4 @@ Meta
 .DS_Store
 .quarto
 docs
-/cache/
+/.cache/
