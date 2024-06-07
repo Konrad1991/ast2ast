@@ -33,4 +33,3 @@
 ^testFunctionMapping.R
 ^testETR.cpp
 ^compile_commands.json
-^\.cache/
