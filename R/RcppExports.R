@@ -2,94 +2,94 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 test_basestore <- function() {
-    invisible(.Call('_ast2ast_test_basestore', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_basestore`))
 }
 
 test_arithmetic <- function() {
-    invisible(.Call('_ast2ast_test_arithmetic', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_arithmetic`))
 }
 
 test_comparison <- function() {
-    invisible(.Call('_ast2ast_test_comparison', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_comparison`))
 }
 
 test_borrow <- function() {
-    invisible(.Call('_ast2ast_test_borrow', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_borrow`))
 }
 
 test_cmr <- function() {
-    invisible(.Call('_ast2ast_test_cmr', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_cmr`))
 }
 
 test_coca <- function() {
-    invisible(.Call('_ast2ast_test_coca', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_coca`))
 }
 
 test_colon <- function() {
-    invisible(.Call('_ast2ast_test_colon', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_colon`))
 }
 
 test_colon_AllVars <- function() {
-    invisible(.Call('_ast2ast_test_colon_AllVars', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_colon_AllVars`))
 }
 
 test_concepts <- function() {
-    invisible(.Call('_ast2ast_test_concepts', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_concepts`))
 }
 
 test_derivs <- function() {
-    invisible(.Call('_ast2ast_test_derivs', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_derivs`))
 }
 
 isNa_tests <- function() {
-    invisible(.Call('_ast2ast_isNa_tests', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_isNa_tests`))
 }
 
 isInf_tests <- function() {
-    invisible(.Call('_ast2ast_isInf_tests', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_isInf_tests`))
 }
 
 length_tests <- function() {
-    invisible(.Call('_ast2ast_length_tests', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_length_tests`))
 }
 
 dim_tests <- function() {
-    invisible(.Call('_ast2ast_dim_tests', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_dim_tests`))
 }
 
 test_matrices <- function() {
-    invisible(.Call('_ast2ast_test_matrices', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_matrices`))
 }
 
 test_rep <- function() {
-    invisible(.Call('_ast2ast_test_rep', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_rep`))
 }
 
 test_vector_subsetting <- function() {
-    invisible(.Call('_ast2ast_test_vector_subsetting', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_vector_subsetting`))
 }
 
 test_arithmetic_unary <- function() {
-    invisible(.Call('_ast2ast_test_arithmetic_unary', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_arithmetic_unary`))
 }
 
 test_vector_numeric <- function() {
-    invisible(.Call('_ast2ast_test_vector_numeric', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_vector_numeric`))
 }
 
 test_vector_int <- function() {
-    invisible(.Call('_ast2ast_test_vector_int', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_vector_int`))
 }
 
 test_vector_bool <- function() {
-    invisible(.Call('_ast2ast_test_vector_bool', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_vector_bool`))
 }
 
 test_vector_vector <- function() {
-    invisible(.Call('_ast2ast_test_vector_vector', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_vector_vector`))
 }
 
 test_vector_AllVars <- function() {
-    invisible(.Call('_ast2ast_test_vector_AllVars', PACKAGE = 'ast2ast'))
+    invisible(.Call(`_ast2ast_test_vector_AllVars`))
 }
 

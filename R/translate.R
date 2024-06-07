@@ -24,6 +24,7 @@
 #'
 #' @importFrom methods formalArgs
 #'
+#' @useDynLib ast2ast, .registration=TRUE
 #' @description
 #' An R function is translated to C++ source code and afterwards the code is compiled.
 #' The result can be an external pointer (\emph{XPtr}) or an \emph{R} function.
