@@ -64,6 +64,7 @@ LC <- R6::R6Class("LC",
 
       # assign to node classes
       fct <- sexp[[1]]
+
       if ((as.name("<-") == fct) || (as.name("=") == fct)) {
         self$check_assign_subset <- TRUE
         p <- assign$new(sexp, self$namespace_etr)
@@ -114,6 +115,11 @@ LC <- R6::R6Class("LC",
         # prevent stack overflow
       } else if (deparse(fct) %in% self$namespace_etr_resolved()) {
         # nothing to do.
+      } else if ("::" == deparse(fct)) {
+        p <- var_args$new(sexp, self$namespace_etr)
+        sexp <- p$convert(self$PF)
+        self$check_assign_subset <- FALSE
+        # TODO: check_assign_subset is not needed anymore remove
       } else {
         message("Error: Sorry not all functions are supported", "\n")
         message("Function: ", fct, " not supported")

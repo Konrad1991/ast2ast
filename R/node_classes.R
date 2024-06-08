@@ -202,14 +202,6 @@ generic <- R6::R6Class("generic",
       self$oaf(var)
       self$change_code()
 
-      if (paste(self$name_fct) == "vector") {
-        # self$arguments <- order_args(self$arguments, "vector")
-        # self$arguments <- unname(self$arguments)
-      } else if (paste(self$name_fct) == "matrix") {
-        # self$arguments <- order_args(self$arguments, "matrix")
-        # self$arguments <- unname(self$arguments)
-      }
-
       ret <- list()
       if (deparse(self$name_fct) %in% self$namespace_etr) {
         ret[[1]] <- as.name(paste0("etr::", self$name_fct))
@@ -249,6 +241,19 @@ assign <- R6::R6Class("assign",
           stop("You cannot use characters in assignments")
         }
       })
+      # NOTE: check here for new variable and its type
+      lhs <- as.list(self$arguments[[1]])
+      if (lhs[[1]] == as.name("::")) {
+        stopifnot(
+          "Unsupported usage of ::
+          should be used for defining types
+          during variable definition" = is.symbol(lhs[[2]])
+        )
+        stopifnot(
+          "Unsupported type found" = deparse(lhs[[3]]) %in% type_vars()
+        )
+        self$arguments[[1]] <- lhs[[2]]
+      }
       ret <- c(ret, self$arguments)
       return(ret)
     }

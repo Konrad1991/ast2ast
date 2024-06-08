@@ -38,7 +38,7 @@ namespace_etr <- function() {
     "coca", "sinus", "asinus", "sinush",
     "cosinus", "acosinus", "cosinush",
     "tangens", "atangens", "tangensh",
-    "ln", "sqroott", "rep",
+    "ln", "sqroot",
     "print", "vector", "matrix", "length", "dim", "cmr",
     "exp", "i2d", "at", "exp",
     "dunif_etr", "punif_etr", "qunif_etr", "runif_etr",
@@ -52,9 +52,9 @@ generic_fcts <- function() {
     "+", "-",
     "*", "/", "if", "else if", "else", "{", "(",
     "==", "!=", ">", ">=", "<", "<=", "vector",
-    "rep",
+    "rep", "::",
     "matrix", "length", "dim", "cmr", "exp", "at",
-    "&&", "||", "Rf_ScalarReal", "::", "cpp2R",
+    "&&", "||", "Rf_ScalarReal", "cpp2R",
     "rep"
   )
 }
@@ -65,5 +65,12 @@ math_fcts <- function() {
     "tan", "atan", "tanh", "log", "^", "sqrt",
     "dunif", "punif", "qunif", "runif",
     "dnorm", "pnorm", "qnorm", "rnorm"
+  )
+}
+
+type_vars <- function() {
+  c(
+    "logical", "integer", "numeric",
+    "vec_logical", "vec_integer", "vec_numeric"
   )
 }

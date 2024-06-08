@@ -157,7 +157,9 @@ FctInfo <- R6::R6Class("FctInfo",
       self$fctArgsInput <- args_by_user
       self$which_case()
       self$fill_up()
-      self$check_types()
+      if (self$numArgs != -1) {
+        self$check_types()
+      }
       if (!is.null(self$converter)) {
         self$result <- self$converter(self$fctNameInput, self$fctArgsInput)
       } else {
@@ -566,7 +568,6 @@ get_arguments <- function(fct, args) {
       res <- fwa[[i]]
     }
   }
-
 
   if (is.null(res)) stop(paste("Unsupported function: ", fct, " found"))
   return(res)

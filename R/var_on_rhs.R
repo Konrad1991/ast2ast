@@ -16,8 +16,7 @@
 #
 # You should have received a copy of the GNU General Public License along with ast2ast
 # If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
-library(R6)
-LHS_and_RHS <- R6Class("LHS_and_RHS",
+LHS_and_RHS <- R6::R6Class("LHS_and_RHS",
   public = list(
     lhs = NULL,
     rhs = NULL,

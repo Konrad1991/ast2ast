@@ -1,9 +1,6 @@
 f <- function(a) {
-  a <- matrix(1:9, 3, 3)
-  b <- c(0, 1)
-  c <- c(1, 1)
-  b <- a[b != c, 2.5]
-  return(b)
+  a::numeric <- c(1, 2, 3)
+  print(a)
 }
 
 fcpp <- ast2ast::translate(f, verbose = TRUE)
