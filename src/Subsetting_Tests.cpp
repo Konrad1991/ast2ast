@@ -358,7 +358,7 @@ void test_vector_subsetting() {
   {
     std::string s = "AtSubsetting: ";
     ass(at(coca(1, 2, 3), 1), s + "at r vec");
-    ass(at(matrix(coca(1, 2, 3, 4), 2, 2), 2) == 3, s + "r matrix");
+    ass(at(matrix(coca(1, 2, 3, 4), 2, 2), 2) == 2, s + "r matrix");
     ass(at(matrix(coca(1, 2, 3, 4), 2, 2), 2, 2) == 4, s + "r matrix");
   }
 }
