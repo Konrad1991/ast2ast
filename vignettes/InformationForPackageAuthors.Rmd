@@ -334,7 +334,7 @@ f <- function(a) {
   return(b)
 }  
 library(ast2ast)
-f_cpp <- translate(f, output = "XPtr", types_of_args = "sexp", return_type = "sexp")
+f_cpp <- translate(f, output = "XPtr", return_type = "etr::Vec<double>")
 ```
 
 The C++ function depends on RcppArmadillo and ast2ast therefore the required macros and headers were included. Moreover, *ETR* requires std=c++20 therefore the corresponding plugin is added. The function *getXPtr* is defined which is the function available in R. Subsequently, the actual translated code is depicted. The function *f* returns a *sexp* and gets one argument of type *sexp* called *a*. The body of the function looks almost identical to the R function. Except that the variable *b* is defined in the first line of the body with the type *sexp*. The function *i2d* converts an integer to a double variable. This is necessary since C++ would identify the *2* as an integer which is not what the user wants in this case. 
@@ -365,7 +365,7 @@ Afterwards, the translated R function has to be used in C++ code. This would be 
 // [[Rcpp::plugins("cpp2a")]]
 #include "etr.hpp"
 
-typedef sexp (*FP)(sexp a);
+typedef etr::Vec<double> (*FP)(etr::Vec<double> a);
 
 // [[Rcpp::export]]
 void call_package(Rcpp::XPtr<FP> inp) {

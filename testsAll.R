@@ -1358,9 +1358,8 @@ testall <- function(a, type_test) {
   return(ret)
 }
 # FIX: getsource does only work for output = "R"
-# FIX: function needs at least one argument fix it
 fct <- function() {
-  test <- translate(testall)
+  test <- translate(testall, verbose = FALSE)
 }
 test <- fct()
 # TODO: document that RNGs are removed. 

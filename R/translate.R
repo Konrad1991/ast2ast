@@ -279,13 +279,19 @@ translate <- function(f, output = "R",
   stopifnot(
     "found unknown type of arguments for functions" =
       types_of_args %in% c(
-        "SEXP", "BorrowPtr", "sexp", "double",
-        "ptr_vec", "ptr_mat"
+        "SEXP", "double",
+        "etr::Vec<double>", "etr::Vec<int>", "etr::Vec<bool>",
+        "double", "int",
+        "BorrowPtr", "double"
       )
   )
   stopifnot(
     "found unknown return type" =
-      return_type %in% c("SEXP", "void", "sexp", "double")
+      return_type %in% c(
+        "SEXP", "void", "double",
+        "etr::Vec<double>", "etr::Vec<int>", "etr::Vec<bool>",
+        "double", "void", "int"
+      )
   )
 
 
@@ -330,16 +336,15 @@ translate <- function(f, output = "R",
 
   if (R_fct == TRUE) {
     if (reference == TRUE) {
-      warning("The desired output is an R function.
-                Therefore reference cannot be set to TRUE.
-                The argument reference will be ignored!")
+      warning("The desired output is an R function. Thus,
+R objects are not copied but are passed by reference. Therefore, the content of an R object can change.
+This is in strong contrast to the usual behaviour of R functions. Please only use this with great causion")
     }
-    reference <- FALSE
   }
 
-  # issue: further checks: brackets, lambda function, empty if-else
+  # TODO: further checks: brackets, lambda function, empty if-else
 
-  # issue: add brackets if not found. Are they added? check
+  # TODO: add brackets if not found. Are they added? check
   if (body(f)[[1]] != as.name("{")) {
     body(f) <- substitute(
       {

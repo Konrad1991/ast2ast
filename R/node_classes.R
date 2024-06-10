@@ -23,8 +23,6 @@ PC <- R6::R6Class("PC",
   public = list(
     name_fct = NULL,
     arguments = list(),
-    variables = NULL,
-    variable_types = NULL,
     namespace_etr = NULL,
     initialize = function(node, namespace_etr) {
       self$name_fct <- node[[1]]
@@ -117,11 +115,6 @@ PC <- R6::R6Class("PC",
       indices <- ret %in% ei
       ret <- ret[indices == FALSE]
 
-      if (is.null(self$variables)) {
-        self$variables <- ret[[1]]
-      }
-      print(self$variables)
-      print(self$variable_types)
       return(ret)
     },
     order_args = function(user_args, name_of_fct) {
@@ -247,23 +240,7 @@ assign <- R6::R6Class("assign",
           stop("You cannot use characters in assignments")
         }
       })
-      # NOTE: check here for new variable and its type
-      lhs <- as.list(self$arguments[[1]])
-      if (lhs[[1]] == as.name("::")) {
-        stopifnot(
-          "Unsupported usage of ::
-          should be used for defining types
-          during variable definition" = is.symbol(lhs[[2]])
-        )
-        stopifnot(
-          "Unsupported type found" = deparse(lhs[[3]]) %in% type_vars()
-        )
-        self$arguments[[1]] <- lhs[[2]]
-        self$variables <- lhs[[2]]
-        self$variable_types <- lhs[[3]]
-      }
       ret <- c(ret, self$arguments)
-
       return(ret)
     }
   )
