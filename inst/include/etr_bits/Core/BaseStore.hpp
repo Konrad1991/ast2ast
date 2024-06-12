@@ -118,12 +118,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
       p[i] = T();
     allocated = true;
   }
-  BaseStore() {
-    /*
-    // TODO: check why this is called sometimes. Furthermore, add the same
-    functionality default size = 0 to other containers sz = 1; capacity = 1; p =
-    */
-  }
+  BaseStore() {}
   BaseStore(std::size_t r, std::size_t c) = delete;
   BaseStore(std::size_t r, std::size_t c, const double value) = delete;
 
@@ -282,6 +277,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
   }
 
   RetType operator[](std::size_t idx) const {
+    // TODO: can ass be faster?
     ass(allocated, "No memory was allocated");
     ass(idx >= 0, "Error: out of boundaries --> value below 1");
     ass(idx < sz, "Error: out of boundaries --> value beyond size of vector");

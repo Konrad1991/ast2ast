@@ -4,6 +4,13 @@
 #include "Header.hpp"
 
 namespace etr {
+
+#ifdef STANDALONE_ETR
+#define PRINT_STREAM std::cout
+#else
+#define PRINT_STREAM Rcpp::Rcout
+#endif
+
 inline std::string demangle(const char *mangledName) {
   int status;
   char *demangled = abi::__cxa_demangle(mangledName, nullptr, nullptr, &status);
@@ -13,11 +20,11 @@ inline std::string demangle(const char *mangledName) {
 }
 
 template <typename T> inline void printType(T inp) {
-  Rcpp::Rcout << demangle(typeid(inp).name()) << std::endl;
+  PRINT_STREAM << demangle(typeid(inp).name()) << std::endl;
 }
 
 template <typename T> void inline printT() {
-  Rcpp::Rcout << demangle(typeid(T).name()) << std::endl;
+  PRINT_STREAM << demangle(typeid(T).name()) << std::endl;
 }
 
 inline std::string convertIndentation(std::size_t idx) {
@@ -48,7 +55,7 @@ template <typename T> inline void printAST(T inp) {
   }
   for (std::size_t i = 0; i < v.size(); i++) {
     std::string indentation = convertIndentation(indentationLevels[i]);
-    Rcpp::Rcout << indentation << v[i] << std::endl;
+    PRINT_STREAM << indentation << v[i] << std::endl;
   }
 }
 
@@ -72,7 +79,7 @@ template <typename T> inline void printTAST() {
   }
   for (std::size_t i = 0; i < v.size(); i++) {
     std::string indentation = convertIndentation(indentationLevels[i]);
-    Rcpp::Rcout << indentation << v[i] << std::endl;
+    PRINT_STREAM << indentation << v[i] << std::endl;
   }
 }
 } // namespace etr

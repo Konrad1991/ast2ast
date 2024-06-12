@@ -315,7 +315,6 @@ template <typename T>
 inline auto extractRetType(const T &instance) ->
     typename T::RetType { // issue: finish work. This can be used to handle also
                           // int and bool for all unary/binary operations
-  using ret = typename T::RetType;
   return instance.getRetType();
 }
 

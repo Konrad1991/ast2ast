@@ -78,7 +78,6 @@ define_sig_list_xptr <- function(arguments, types, name_fct,
       types[[i]], reference, all_vars
     )
     if (types[[i]] == "double_ptr") {
-      print(current_name)
       split_name <- strsplit(current_name, split = " ")[[1]]
       ptr_names[[counter]] <- list(
         arguments[[i]],

@@ -1,3 +1,3 @@
-setwd("/home/konrad/Documents/GitHub/RProjects/ast2ast_supplement")
+setwd("~/Documents/")
 # roxygen2::roxygenise("ast2ast")
 install.packages("ast2ast", type = "source", repos = NULL)

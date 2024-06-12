@@ -129,5 +129,5 @@ microbenchmark::microbenchmark(
   leibniz_cpp2(rounds),
   leibniz_cpp3(rounds),
   leibniz_cpp4(rounds),
-  times = 10
+  times = 50
 )

@@ -86,8 +86,8 @@ template <typename T> auto operator-(const T &obj) {
                UnaryOperation<decltype(obj.d), MinusUnaryTrait>, UnaryTrait>(
         UnaryOperation<decltype(obj.d), MinusUnaryTrait>(obj.d));
   } else if constexpr (isDouble) {
-    return Vec<T, UnaryOperation<BaseType, MinusUnaryTrait>>(
-        UnaryOperation<BaseType, MinusUnaryTrait>{obj});
+    return Vec<T, UnaryOperation<double, MinusUnaryTrait>>(
+        UnaryOperation<double, MinusUnaryTrait>{obj});
   }
 }
 
@@ -103,8 +103,8 @@ template <typename T> auto sinus(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, BaseType>
-auto sinus(const T &obj) -> BaseType {
+  requires std::is_same_v<T, double>
+auto sinus(const T &obj) -> double {
   return Sinus(obj);
 }
 
@@ -120,8 +120,8 @@ template <typename T> auto sinush(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, BaseType>
-auto sinush(const T &obj) -> BaseType {
+  requires std::is_same_v<T, double>
+auto sinush(const T &obj) -> double {
   return SinusH(obj);
 }
 
@@ -137,8 +137,8 @@ template <typename T> auto asinus(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, BaseType>
-auto asinus(const T &obj) -> BaseType {
+  requires std::is_same_v<T, double>
+auto asinus(const T &obj) -> double {
   return ASinus(obj);
 }
 
@@ -154,8 +154,8 @@ template <typename T> auto cosinus(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, BaseType>
-auto cosinus(const T &obj) -> BaseType {
+  requires std::is_same_v<T, double>
+auto cosinus(const T &obj) -> double {
   return Cosinus(obj);
 }
 
@@ -171,8 +171,8 @@ template <typename T> auto cosinush(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, BaseType>
-auto cosinush(const T &obj) -> BaseType {
+  requires std::is_same_v<T, double>
+auto cosinush(const T &obj) -> double {
   return CosinusH(obj);
 }
 
@@ -188,8 +188,8 @@ template <typename T> auto acosinus(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, BaseType>
-auto acosinus(const T &obj) -> BaseType {
+  requires std::is_same_v<T, double>
+auto acosinus(const T &obj) -> double {
   return ACosinus(obj);
 }
 
@@ -205,8 +205,8 @@ template <typename T> auto tangens(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, BaseType>
-auto tangens(const T &obj) -> BaseType {
+  requires std::is_same_v<T, double>
+auto tangens(const T &obj) -> double {
   return Tangens(obj);
 }
 
@@ -222,8 +222,8 @@ template <typename T> auto tangensh(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, BaseType>
-auto tangensh(const T &obj) -> BaseType {
+  requires std::is_same_v<T, double>
+auto tangensh(const T &obj) -> double {
   return TangensH(obj);
 }
 
@@ -239,8 +239,8 @@ template <typename T> auto atangens(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, BaseType>
-auto atangens(const T &obj) -> BaseType {
+  requires std::is_same_v<T, double>
+auto atangens(const T &obj) -> double {
   return ATangens(obj);
 }
 
@@ -256,8 +256,8 @@ template <typename T> auto ln(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, BaseType>
-auto ln(const T &obj) -> BaseType {
+  requires std::is_same_v<T, double>
+auto ln(const T &obj) -> double {
   return log(obj);
 }
 
@@ -273,8 +273,8 @@ template <typename T> auto sqroot(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, BaseType>
-auto sqroot(const T &obj) -> BaseType {
+  requires std::is_same_v<T, double>
+auto sqroot(const T &obj) -> double {
   return SquareRoot(obj);
 }
 
@@ -291,8 +291,8 @@ auto exp(const T &obj) { // TODO: update this in the documentation
   }
 }
 template <typename T>
-  requires std::is_same_v<T, BaseType>
-auto exp(const T &obj) -> BaseType {
+  requires std::is_same_v<T, double>
+auto exp(const T &obj) -> double {
   return Exp(obj);
 }
 

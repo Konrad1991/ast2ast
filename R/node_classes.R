@@ -533,7 +533,6 @@ fastaccess <- R6::R6Class("fastaccess",
   )
 )
 
-# TODO: could be also a generic function
 #' @import R6
 printer <- R6::R6Class("printer",
   inherit = PC,
@@ -596,7 +595,6 @@ range <- R6::R6Class("range",
 )
 
 
-# TODO: Decision has to be met whether RNGs should be removed
 #' @import R6
 math <- R6::R6Class("math",
   inherit = PC,

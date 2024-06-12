@@ -25,12 +25,7 @@ LC <- R6::R6Class("LC",
   # fast access via [] which will be replaced by ()
   public = list(
     R_fct = NULL,
-    # TODO: the types can be assigned using :: The idea is to use stuff like var::double, var::vector, var::vector(double, 10) <-- here the 10 is a fixed size. This would require a const Vector at the C++ side. Maybe this is too much work. Or can be done later
-    # FIX: what the hell is the function sub
-    # TODO: add rep as function
     PF = permitted_fcts(), # permitted functions
-    # TODO: make a central place to store the permitted functions. Maybe just a R6 class
-    # FIX: dnbeta, pnbeta etc. do not seem to exist checks how this is documented
     namespace_etr = namespace_etr(),
     namespace_etr_resolved = function() {
       paste0("etr::", self$namespace_etr)
@@ -40,8 +35,7 @@ LC <- R6::R6Class("LC",
     ast = NULL,
     code = NULL,
     generic_fct = generic_fcts(),
-    math = math_fcts(), # TODO: %% function is missing
-
+    math = math_fcts(),
     check_assign_subset = NULL,
     found_return = FALSE,
     extractast = function(sexp) {

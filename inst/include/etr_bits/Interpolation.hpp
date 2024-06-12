@@ -45,7 +45,7 @@ inline double li(const A &t_, const B &timeVec, const C &parVec) {
     }
     return (ret);
   } else if constexpr (!isVecA::value && isVecB::value && isVecC::value) {
-    double t = static_cast<BaseType>(t_);
+    double t = static_cast<double>(t_);
     double t0, t1;
     double y0, y1, deltaPar, deltaT, m;
     double ret;

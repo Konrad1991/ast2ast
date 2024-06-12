@@ -1,3 +1,4 @@
+# TODO: this does not work flawless. E.g. vector("numeric", size) makes problems
 is_valid_var <- function(fct_name) {
   if (is.language(fct_name) || is.list(fct_name)) {
     return(TRUE)
@@ -175,8 +176,6 @@ fct_info <- function(name, num_args, names, values, types, f) {
   FctInfo$new(name, num_args, names, values, types, f)
 }
 
-# TODO: add check types in the converter function
-# TODO: add missing functions which are added meanwhile in C++ such as rep
 
 # NOTE: the argumentNames and argumentDefaultValues
 # defined here are not (always) the same as in R.
@@ -361,15 +360,11 @@ fct_signature <- R6::R6Class("fct_signature",
         list(), NULL
       ),
       CurlyBraces = fct_info(
-        # TODO: in R the last argument to `{` is used.
-        # Implement this on the R level
         "{", -1L, list(),
         list(),
         list(), NULL
       ),
       Parenthesis = fct_info(
-        # TODO: in R only one argument can be passed to `(`.
-        # Implement this on the R level
         "(", 1L, list("any"),
         list("any"),
         list("any"), NULL

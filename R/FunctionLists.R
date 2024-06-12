@@ -1,18 +1,5 @@
-# TODO: in R you can remove elements with negative indices.
-# This has also be implemented
-
-# TODO: use the functions such as permitted_fcts
-# instead of the hardcoded in e.g. class LC
-# TODO: add additional functions: break, next, while.
-# TODO: check that all functions are listed here.
-# Or whether functions which are not supported are listed here
-# TODO new function negate "!"
 permitted_fcts <- function() {
-  # TODO: the at function was missing. Is this by purpose?
-  # TODO: remove all RNG functions except, dunif, punif,
-  # qunif, runif, dnorm, pnorm, qnorm and rnorm
-  # TODO: add more functions: break, next, while
-  # TODO: add is.finite
+  # TODO: remove all RNG functions
   c(
     "::", "=", "<-", "[", "at", "for", "while", "next", "break", "c", ":",
     "sin", "asin", "sinh", "cos", "acos", "cosh",
@@ -32,7 +19,6 @@ permitted_fcts <- function() {
   )
 }
 
-# TODO: check whether all the names are still correct
 namespace_etr <- function() {
   c(
     "coca", "sinus", "asinus", "sinush",

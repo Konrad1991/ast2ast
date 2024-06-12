@@ -16,7 +16,6 @@ namespace etr {
 // second argument.
 
 /*
-TODO: Matrix missing implementation with 3 args
    Var1  Var2  Var3
 1 arith arith arith done
 2   vec arith arith done
