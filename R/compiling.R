@@ -45,7 +45,7 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
       }
     )
   } else {
-    fct <- build_fct_r(f, name_f, reference)
+    fct <- build_fct_r(f, name_f, reference, return_type)
     if (getsource == TRUE) {
       return(fct)
     }
@@ -57,6 +57,7 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
     # unreachable,vla-bound,vptr
     # Sys.setenv("PKG_CXXFLAGS" = "-DRFCT -Wall -Wpedantic")
     # -fsanitize=address --param=max-vartrack-size=9000000 -fno-omit-frame-pointer
+
 
     tryCatch(
       expr = {

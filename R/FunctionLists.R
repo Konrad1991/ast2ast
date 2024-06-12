@@ -27,7 +27,7 @@ permitted_fcts <- function() {
     "is.na", "is.infinite", "is.finite",
     "Rf_ScalarReal", "i2d", "cmr", "cpp2R",
     "vector_numeric",
-    "vector_logical",
+    "vector_logical", "while",
     "vector_integer", "rep"
   )
 }
@@ -40,7 +40,7 @@ namespace_etr <- function() {
     "tangens", "atangens", "tangensh",
     "ln", "sqroot",
     "print", "vector", "matrix", "length", "dim", "cmr",
-    "exp", "i2d", "at", "exp",
+    "exp", "i2d", "at", "exp", "at",
     "dunif_etr", "punif_etr", "qunif_etr", "runif_etr",
     "dnorm_etr", "pnorm_etr", "qnorm_etr", "rnorm_etr",
     "isNA", "isInfinite", "colon", "cpp2R", "rep"
@@ -55,7 +55,7 @@ generic_fcts <- function() {
     "rep", "::",
     "matrix", "length", "dim", "cmr", "exp", "at",
     "&&", "||", "Rf_ScalarReal", "cpp2R",
-    "rep"
+    "rep", "while"
   )
 }
 

@@ -51,7 +51,7 @@ template <typename T> struct It {
   void operator++() { ++p; }
 };
 
-inline void ass(bool inp, std::string message) {
+inline void ass(bool inp, const std::string &message) {
 #ifdef STANDALONE_ETR
   if (!inp)
     throw std::runtime_error(message);

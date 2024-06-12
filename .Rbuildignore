@@ -34,3 +34,6 @@
 ^testETR.cpp
 ^compile_commands.json
 ^\.cache
+^ExampleODE.R
+^Leipnitz.R
+^Benchmark.cpp

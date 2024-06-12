@@ -113,7 +113,7 @@ template <typename... Args> inline auto coca(Args &&...args) {
           using InnerType = typename ExtractDataType<tD2>::RetType;
           // using tD = ExtractedTypeD<decltype(arg)>;
           // using InnerType = typename ExtractDataType<tD>::RetType;
-          const auto &const_arg = arg;
+          // const auto &const_arg = arg;
           if constexpr (std::is_same_v<InnerType, cType>) {
             for (int i = 0; i < arg.size(); i++) {
               ret[index + i] = arg[i]; // const_arg[i];

@@ -15,8 +15,9 @@
 
 const Vec is an Operation
 */
-
+#include "../BufferVector.hpp"
 #include "AllocationUtils.hpp"
+#include "etr_bits/Core/Traits.hpp"
 #include <type_traits>
 
 namespace etr {
@@ -27,7 +28,7 @@ template <typename T> inline auto colonInternal(T start, T end) {
     Vec<T, Buffer<T, RBufTrait>, RVecTrait> ret(SI{length});
     std::size_t counter = 0;
     while (start <= end) {
-      ret[counter] = start;
+      ret.d.p[counter] = start;
       start++;
       counter++;
     }
@@ -37,7 +38,7 @@ template <typename T> inline auto colonInternal(T start, T end) {
     Vec<T, Buffer<T, RBufTrait>, RVecTrait> ret(SI{length});
     std::size_t counter = 0;
     while (end <= start) {
-      ret[counter] = start;
+      ret.d.p[counter] = start;
       start--;
       counter++;
     }

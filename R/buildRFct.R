@@ -30,12 +30,15 @@ type_sig_r <- function(var_name, type) {
   return(new_name@value)
 }
 
-signature_r <- function(arguments, name_fct, vars, argument_types) {
+signature_r <- function(arguments, name_fct, vars, argument_types, return_type) {
   type_list <- ""
   new_names <- list()
   for (i in seq_along(arguments)) {
     if (argument_types[[i]] == "SEXP") {
-      current_name <- generate_new_name(arguments[[i]], "SEXP", "", vars)
+      current_name <- generate_new_name(
+        arguments[[i]],
+        "SEXP", "", vars
+      )
     } else {
       current_name <- cString(arguments[[i]])
     }
@@ -53,7 +56,11 @@ signature_r <- function(arguments, name_fct, vars, argument_types) {
     }
   }
 
-  ret <- cString("SEXP", " ", name_fct, "(", type_list, ") {\n", "")
+  ret <- cString(
+    return_type,
+    # "SEXP",
+    " ", name_fct, "(", type_list, ") {\n", ""
+  )
   return(list(ret@value, new_names))
 }
 
@@ -109,7 +116,7 @@ build_body <- function(body_content) {
   paste(unlist(b), collapse = "")
 }
 
-build_fct_r <- function(fct, name_fct, reference) {
+build_fct_r <- function(fct, name_fct, reference, return_type) {
   ac <- astClass$new(fct, name_fct, R_fct = TRUE)
   ac$getast()
   ac$ast2call()
@@ -117,7 +124,7 @@ build_fct_r <- function(fct, name_fct, reference) {
   vars <- ac$get_vars()
   f <- r_fct_sig()
   declarations <- vars_declaration(vars, ac$var_types)
-  sig <- signature_r(ac$args, name_fct, ac$var_all, ac$args_types)
+  sig <- signature_r(ac$args, name_fct, ac$var_all, ac$args_types, return_type)
   hs <- handle_sexp(ac$args, sig[[2]], ac$args_types, reference)
   if (!ac$return_TF) {
     ac$char <- c(ac$char, "\n", "return(R_NilValue); \n")

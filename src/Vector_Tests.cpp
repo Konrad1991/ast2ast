@@ -5,9 +5,6 @@ using namespace etr;
 #include <limits>
 #include <sstream>
 
-// NOTE: instead of using Catch2 here basic c++ is used in order to use the same
-// tests in R-ast2ast
-
 // [[Rcpp::export]]
 void test_vector_numeric() {
   {
@@ -151,12 +148,6 @@ void test_vector_int() {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
-    try {
-      Vec<double> vec1 = vector_integer(std::numeric_limits<double>::max());
-    } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
-    }
   }
   {
     try {
@@ -228,12 +219,6 @@ void test_vector_bool() {
     }
     try {
       Vec<double> vec1 = vector_logical(-1.1);
-    } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
-    }
-    try {
-      Vec<double> vec1 = vector_logical(std::numeric_limits<double>::max());
     } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");

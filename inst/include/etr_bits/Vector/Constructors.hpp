@@ -199,10 +199,10 @@ Vec(Vec<T2, R2, Trait2> &&other_vec) {
       d.setMatrix(true, other_vec.nr(), other_vec.nc());
     }
   } else {
-    std::size_t temp = other_vec.size();
+    std::size_t tempSize = other_vec.size();
     d.allocated = other_vec.d.allocated;
     other_vec.d.sz = this->size();
-    d.sz = temp;
+    d.sz = tempSize;
     T *tempP = other_vec.d.p;
     other_vec.d.p = d.p;
     d.p = tempP;

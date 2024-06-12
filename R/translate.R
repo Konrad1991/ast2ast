@@ -330,7 +330,7 @@ translate <- function(f, output = "R",
       warning("If using 'R' as output form only SEXP or
                void are valid as return_type.
                All other types will be ignored!")
-      return_type <- "SEXP"
+      return_type <- "SEXP" # TODO: check suitable ret types
     }
   }
 

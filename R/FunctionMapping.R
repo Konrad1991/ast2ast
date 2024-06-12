@@ -550,6 +550,13 @@ fct_signature <- R6::R6Class("fct_signature",
         list("any", "any"),
         list("any", "integer"),
         NULL
+      ),
+      at = fct_info(
+        "at", 2L,
+        list("any", "any"),
+        list("any", "any"),
+        list("any", "integer"),
+        NULL
       )
     )
   )

@@ -2,7 +2,6 @@
 #define ASSING2VEC_ETR_H
 
 #include "VectorClass.hpp"
-#include <cstddef>
 #include <type_traits>
 
 template <typename TD>
@@ -110,6 +109,35 @@ Vec &operator=(const Vec<T, R, Trait> &otherVec) {
   return *this;
 }
 
+// TODO: finish this
+template <typename T2, typename R2, typename Trait2>
+  requires(IsRVec<const Vec<T2, R2, Trait2>> && std::is_same_v<T, T2>)
+Vec &operator=(Vec<T2, R2, Trait2> &&otherVec) {
+  static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
+  static_assert(!isBinaryOP::value, "Cannot assign to binary calculation");
+  static_assert(!isRVec::value,
+                "Cannot assign to an r value. E.g. c(1, 2, 3) <- 1");
+  std::size_t tempSize = otherVec.size();
+  std::size_t tempCapacity = otherVec.d.capacity;
+  T *tempP = otherVec.d.p;
+  bool allocated = otherVec.d.allocated;
+
+  otherVec.d.allocated = d.allocated;
+  otherVec.d.sz = this->size();
+  otherVec.d.capacity = d.capacity;
+  otherVec.d.p = d.p;
+
+  d.allocated = allocated;
+  d.sz = tempSize;
+  d.capacity = tempCapacity;
+  d.p = tempP;
+
+  if (otherVec.d.im()) {
+    d.setMatrix(true, otherVec.nr(), otherVec.nc());
+  }
+  return *this;
+}
+
 template <typename T2, typename R2, typename Trait2>
 Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
   static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
@@ -124,14 +152,12 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
     temp.resize(otherVec.size());
     for (std::size_t i = 0; i < otherVec.size(); i++) {
       if constexpr (is<DataTypeOtherVec, T>) {
-        temp[i] = otherVec[i];
+        temp[i] = otherVec.d.p[i];
       } else {
-        temp[i] = static_cast<T>(otherVec[i]);
+        temp[i] = static_cast<T>(otherVec.d.p[i]);
       }
     }
-
     d.moveit(temp);
-
   } else if constexpr (isBorrow::value) {
     ass(otherVec.size() <= d.capacity,
         "number of items to replace is not a multiple of replacement length");

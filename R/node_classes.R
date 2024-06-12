@@ -37,6 +37,10 @@ PC <- R6::R6Class("PC",
     },
     replace_TF = function() {
       for (i in seq_along(self$arguments)) {
+        if (is.symbol(self$arguments)) {
+          return()
+        }
+
         if (!is.null(self$arguments[[i]])) {
           if (isTRUE(self$arguments[[i]]) || (self$arguments[[i]] == as.name("T"))) {
             self$arguments[[i]] <- as.name("true")
@@ -50,6 +54,10 @@ PC <- R6::R6Class("PC",
     replace_int = function() {
       i <- 1
       while (i < length(self$arguments)) {
+        if (is.symbol(self$arguments)) {
+          return()
+        }
+
         if (is.null(self$arguments[[i]])) {
           return()
         }
@@ -71,6 +79,9 @@ PC <- R6::R6Class("PC",
     },
     replace_NA = function() {
       for (i in seq_along(self$arguments)) {
+        if (is.symbol(self$arguments)) {
+          return()
+        }
         if (is.null(self$arguments[[i]])) {
           return()
         }
@@ -81,6 +92,9 @@ PC <- R6::R6Class("PC",
     },
     replace_INF = function() {
       for (i in seq_along(self$arguments)) {
+        if (is.symbol(self$arguments)) {
+          return()
+        }
         if (is.null(self$arguments[[i]])) {
           return()
         }
