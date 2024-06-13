@@ -31,10 +31,10 @@ template <typename T, typename R>
   requires IsVec<T> && std::is_integral_v<R>
 inline auto &at(T &inp, R i) {
   i--;
-  ass(inp.d.allocated, "No memory was allocated");
-  ass(i >= 0, "Error: out of boundaries --> value below 1");
-  ass(i < inp.size(),
-      "Error: out of boundaries --> value beyond size of vector");
+  ass<"No memory was allocated">(inp.d.allocated);
+  ass<"Error: out of boundaries --> value below 1">(i >= 0);
+  ass<"Error: out of boundaries --> value beyond size of vector">(i <
+                                                                  inp.size());
   return inp.d.p[i];
 }
 
@@ -100,9 +100,9 @@ inline auto at(const T &inp, R r, C c) {
   if constexpr (std::is_integral_v<R> && std::is_integral_v<C>) {
     r--;
     c--;
-    ass((c * inp.nr() + r) >= 0, "Error: out of boundaries --> value below 1");
-    ass((c * inp.nr() + r) < inp.size(),
-        "Error: out of boundaries --> value beyond size of vector");
+    ass<"Error: out of boundaries --> value below 1">((c * inp.nr() + r) >= 0);
+    ass<"Error: out of boundaries --> value beyond size of vector">(
+        (c * inp.nr() + r) < inp.size());
     return inp[c * inp.nr() + r];
   } else if constexpr (!std::is_integral_v<R> && std::is_integral_v<C>) {
     int r_ = d2i(r);

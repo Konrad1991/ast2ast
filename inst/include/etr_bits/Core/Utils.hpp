@@ -61,6 +61,24 @@ inline void ass(bool inp, const std::string &message) {
 #endif
 }
 
+// https://ctrpeach.io/posts/cpp20-string-literal-template-parameters/
+template <std::size_t N> struct string_literal {
+  constexpr string_literal(const char (&str)[N]) {
+    std::copy_n(str, N, value.begin());
+  }
+  std::array<char, N> value;
+};
+
+template <string_literal msg> inline void ass(bool inp) {
+#ifdef STANDALONE_ETR
+  if (!inp)
+    throw std::runtime_error(msg.value.data());
+#else
+  if (!inp)
+    Rcpp::stop(msg.value.data());
+#endif
+}
+
 inline void warn(bool inp, std::string message) {
 #ifdef STANDALONE_ETR
   if (!inp)
