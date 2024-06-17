@@ -1,0 +1,8 @@
+pandoc: 3.1.11
+pkgdown: 2.0.9
+pkgdown_sha: ~
+articles:
+  DetailedDocumentation: DetailedDocumentation.html
+  InformationForPackageAuthors: InformationForPackageAuthors.html
+last_built: 2024-06-17T13:39Z
+
