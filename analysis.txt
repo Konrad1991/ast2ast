@@ -3,79 +3,79 @@ Flat profile:
 Each sample counts as 0.01 seconds.
   %   cumulative   self              self     total           
  time   seconds   seconds    calls   s/call   s/call  name    
- 29.44      0.68     0.68        1     0.68     0.69  etr::BaseStore<double, etr::BaseStoreTrait>::BaseStore(unsigned long)
- 22.94      1.21     0.53        1     0.53     2.27  leibnizNr1(int)
- 14.29      1.54     0.33 200000004     0.00     0.00  etr::It<double>::operator!=(etr::It<double> const&)
- 13.42      1.85     0.31 200000002     0.00     0.00  etr::It<double>::operator++()
- 10.17      2.08     0.23 200000002     0.00     0.00  etr::It<double>::operator*()
-  7.14      2.25     0.17 100000001     0.00     0.00  etr::i2d(int)
-  1.52      2.29     0.04                             unsigned long etr::convertSize<int>(int const&)
-  1.08      2.31     0.03        4     0.01     0.01  std::char_traits<char>::copy(char*, char const*, unsigned long)
-  0.00      2.31     0.00       16     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data() const
-  0.00      2.31     0.00       12     0.00     0.00  std::is_constant_evaluated()
-  0.00      2.31     0.00        8     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_get_allocator()
-  0.00      2.31     0.00        4     0.00     0.00  etr::MatrixParameter::MatrixParameter()
-  0.00      2.31     0.00        4     0.00     0.00  etr::BaseStore<double, etr::BaseStoreTrait>::~BaseStore()
-  0.00      2.31     0.00        4     0.00     0.00  __gnu_cxx::new_allocator<char>::deallocate(char*, unsigned long)
-  0.00      2.31     0.00        4     0.00     0.00  __gnu_cxx::new_allocator<char>::allocate(unsigned long, void const*)
-  0.00      2.31     0.00        4     0.00     0.00  bool __gnu_cxx::__is_null_pointer<char const>(char const*)
-  0.00      2.31     0.00        4     0.00     0.00  etr::BaseStore<double, etr::BaseStoreTrait>::size() const
-  0.00      2.31     0.00        4     0.00     0.00  __gnu_cxx::new_allocator<char>::_M_max_size() const
-  0.00      2.31     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_is_local() const
-  0.00      2.31     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_local_data() const
-  0.00      2.31     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_get_allocator() const
-  0.00      2.31     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::max_size() const
-  0.00      2.31     0.00        4     0.00     0.00  std::char_traits<char>::assign(char&, char const&)
-  0.00      2.31     0.00        4     0.00     0.00  std::char_traits<char>::length(char const*)
-  0.00      2.31     0.00        4     0.00     0.00  std::pointer_traits<char const*>::pointer_to(char const&)
-  0.00      2.31     0.00        4     0.00     0.00  std::pointer_traits<char*>::pointer_to(char&)
-  0.00      2.31     0.00        4     0.00     0.00  std::allocator_traits<std::allocator<char> >::deallocate(std::allocator<char>&, char*, unsigned long)
-  0.00      2.31     0.00        4     0.00     0.00  std::allocator_traits<std::allocator<char> >::allocate(std::allocator<char>&, unsigned long)
-  0.00      2.31     0.00        4     0.00     0.00  std::allocator_traits<std::allocator<char> >::max_size(std::allocator<char> const&)
-  0.00      2.31     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_destroy(unsigned long)
-  0.00      2.31     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()
-  0.00      2.31     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_capacity(unsigned long)
-  0.00      2.31     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_Alloc_hider::_Alloc_hider(char*, std::allocator<char> const&)
-  0.00      2.31     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_Alloc_hider::~_Alloc_hider()
-  0.00      2.31     0.00        4     0.00     0.01  void std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_construct<char const*>(char const*, char const*, std::forward_iterator_tag)
-  0.00      2.31     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_local_data()
-  0.00      2.31     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_set_length(unsigned long)
-  0.00      2.31     0.00        4     0.00     0.01  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_copy_chars(char*, char const*, char const*)
-  0.00      2.31     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data(char*)
-  0.00      2.31     0.00        4     0.00     0.01  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_copy(char*, char const*, unsigned long)
-  0.00      2.31     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_create(unsigned long&, unsigned long)
-  0.00      2.31     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_length(unsigned long)
-  0.00      2.31     0.00        4     0.00     0.01  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&)
-  0.00      2.31     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()
-  0.00      2.31     0.00        4     0.00     0.00  std::iterator_traits<char const*>::difference_type std::__distance<char const*>(char const*, char const*, std::random_access_iterator_tag)
-  0.00      2.31     0.00        4     0.00     0.00  char const* std::__addressof<char const>(char const&)
-  0.00      2.31     0.00        4     0.00     0.00  char* std::__addressof<char>(char&)
-  0.00      2.31     0.00        4     0.00     0.00  std::iterator_traits<char const*>::iterator_category std::__iterator_category<char const*>(char const* const&)
-  0.00      2.31     0.00        4     0.00     0.00  std::iterator_traits<char const*>::difference_type std::distance<char const*>(char const*, char const*)
-  0.00      2.31     0.00        4     0.00     0.00  char const* std::addressof<char const>(char const&)
-  0.00      2.31     0.00        4     0.00     0.00  char* std::addressof<char>(char&)
-  0.00      2.31     0.00        3     0.00     0.00  etr::ass(bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
-  0.00      2.31     0.00        3     0.00     0.00  etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>::Buffer()
-  0.00      2.31     0.00        3     0.00     0.00  etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>::~Buffer()
-  0.00      2.31     0.00        3     0.00     0.00  etr::BaseStore<double, etr::BaseStoreTrait>::BaseStore()
-  0.00      2.31     0.00        3     0.00     0.00  etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait>::size() const
-  0.00      2.31     0.00        2     0.00     0.00  etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait>::end() const
-  0.00      2.31     0.00        2     0.00     0.00  etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait>::begin() const
-  0.00      2.31     0.00        1     0.00     0.00  __static_initialization_and_destruction_0(int, int)
-  0.00      2.31     0.00        1     0.00     0.70  auto etr::createRVec<double, double>(double)
-  0.00      2.31     0.00        1     0.00     0.01  unsigned long etr::convertSize<double>(double const&)
-  0.00      2.31     0.00        1     0.00     0.00  bool etr::isDoubleInt<double>(double)
-  0.00      2.31     0.00        1     0.00     0.70  auto etr::vector_numeric<int>(int const&)
-  0.00      2.31     0.00        1     0.00     0.00  etr::SI::SI(unsigned long)
-  0.00      2.31     0.00        1     0.00     0.00  etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait>::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>&&)
-  0.00      2.31     0.00        1     0.00     0.00  etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait>::~Vec()
-  0.00      2.31     0.00        1     0.00     0.69  etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>::Vec(etr::SI&&)
-  0.00      2.31     0.00        1     0.00     0.00  etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>::~Vec()
-  0.00      2.31     0.00        1     0.00     0.00  etr::warn(bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)
-  0.00      2.31     0.00        1     0.00     0.00  etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>::~Buffer()
-  0.00      2.31     0.00        1     0.00     0.00  etr::MatrixParameter::im() const
-  0.00      2.31     0.00        1     0.00     0.00  etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>::size() const
-  0.00      2.31     0.00        1     0.00     0.00  etr::BaseStore<double, etr::BaseStoreTrait>::im() const
+ 29.91      0.64     0.64        1     0.64     0.65  etr::BaseStore<double, etr::BaseStoreTrait>::BaseStore(unsigned long)
+ 20.56      1.08     0.44        1     0.44     2.11  leibnizNr1(int)
+ 17.06      1.45     0.36 200000002     0.00     0.00  etr::It<double>::operator++()
+ 14.72      1.76     0.32 200000004     0.00     0.00  etr::It<double>::operator!=(etr::It<double> const&)
+  8.41      1.94     0.18 200000002     0.00     0.00  etr::It<double>::operator*()
+  6.78      2.08     0.14 100000001     0.00     0.00  etr::i2d(int)
+  1.40      2.12     0.03                             unsigned long etr::convertSize<int>(int const&)
+  1.17      2.14     0.03        4     0.01     0.01  std::char_traits<char>::copy(char*, char const*, unsigned long)
+  0.00      2.14     0.00       16     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data() const
+  0.00      2.14     0.00       12     0.00     0.00  std::is_constant_evaluated()
+  0.00      2.14     0.00        8     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_get_allocator()
+  0.00      2.14     0.00        4     0.00     0.00  etr::MatrixParameter::MatrixParameter()
+  0.00      2.14     0.00        4     0.00     0.00  etr::BaseStore<double, etr::BaseStoreTrait>::~BaseStore()
+  0.00      2.14     0.00        4     0.00     0.00  __gnu_cxx::new_allocator<char>::deallocate(char*, unsigned long)
+  0.00      2.14     0.00        4     0.00     0.00  __gnu_cxx::new_allocator<char>::allocate(unsigned long, void const*)
+  0.00      2.14     0.00        4     0.00     0.00  bool __gnu_cxx::__is_null_pointer<char const>(char const*)
+  0.00      2.14     0.00        4     0.00     0.00  etr::BaseStore<double, etr::BaseStoreTrait>::size() const
+  0.00      2.14     0.00        4     0.00     0.00  __gnu_cxx::new_allocator<char>::_M_max_size() const
+  0.00      2.14     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_is_local() const
+  0.00      2.14     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_local_data() const
+  0.00      2.14     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_get_allocator() const
+  0.00      2.14     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::max_size() const
+  0.00      2.14     0.00        4     0.00     0.00  std::char_traits<char>::assign(char&, char const&)
+  0.00      2.14     0.00        4     0.00     0.00  std::char_traits<char>::length(char const*)
+  0.00      2.14     0.00        4     0.00     0.00  std::pointer_traits<char const*>::pointer_to(char const&)
+  0.00      2.14     0.00        4     0.00     0.00  std::pointer_traits<char*>::pointer_to(char&)
+  0.00      2.14     0.00        4     0.00     0.00  std::allocator_traits<std::allocator<char> >::deallocate(std::allocator<char>&, char*, unsigned long)
+  0.00      2.14     0.00        4     0.00     0.00  std::allocator_traits<std::allocator<char> >::allocate(std::allocator<char>&, unsigned long)
+  0.00      2.14     0.00        4     0.00     0.00  std::allocator_traits<std::allocator<char> >::max_size(std::allocator<char> const&)
+  0.00      2.14     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_destroy(unsigned long)
+  0.00      2.14     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()
+  0.00      2.14     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_capacity(unsigned long)
+  0.00      2.14     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_Alloc_hider::_Alloc_hider(char*, std::allocator<char> const&)
+  0.00      2.14     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_Alloc_hider::~_Alloc_hider()
+  0.00      2.14     0.00        4     0.00     0.01  void std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_construct<char const*>(char const*, char const*, std::forward_iterator_tag)
+  0.00      2.14     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_local_data()
+  0.00      2.14     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_set_length(unsigned long)
+  0.00      2.14     0.00        4     0.00     0.01  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_copy_chars(char*, char const*, char const*)
+  0.00      2.14     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data(char*)
+  0.00      2.14     0.00        4     0.00     0.01  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_copy(char*, char const*, unsigned long)
+  0.00      2.14     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_create(unsigned long&, unsigned long)
+  0.00      2.14     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_length(unsigned long)
+  0.00      2.14     0.00        4     0.00     0.01  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&)
+  0.00      2.14     0.00        4     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string()
+  0.00      2.14     0.00        4     0.00     0.00  std::iterator_traits<char const*>::difference_type std::__distance<char const*>(char const*, char const*, std::random_access_iterator_tag)
+  0.00      2.14     0.00        4     0.00     0.00  char const* std::__addressof<char const>(char const&)
+  0.00      2.14     0.00        4     0.00     0.00  char* std::__addressof<char>(char&)
+  0.00      2.14     0.00        4     0.00     0.00  std::iterator_traits<char const*>::iterator_category std::__iterator_category<char const*>(char const* const&)
+  0.00      2.14     0.00        4     0.00     0.00  std::iterator_traits<char const*>::difference_type std::distance<char const*>(char const*, char const*)
+  0.00      2.14     0.00        4     0.00     0.00  char const* std::addressof<char const>(char const&)
+  0.00      2.14     0.00        4     0.00     0.00  char* std::addressof<char>(char&)
+  0.00      2.14     0.00        3     0.00     0.00  etr::ass(bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
+  0.00      2.14     0.00        3     0.00     0.00  etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>::Buffer()
+  0.00      2.14     0.00        3     0.00     0.00  etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>::~Buffer()
+  0.00      2.14     0.00        3     0.00     0.00  etr::BaseStore<double, etr::BaseStoreTrait>::BaseStore()
+  0.00      2.14     0.00        3     0.00     0.00  etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait>::size() const
+  0.00      2.14     0.00        2     0.00     0.00  etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait>::end() const
+  0.00      2.14     0.00        2     0.00     0.00  etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait>::begin() const
+  0.00      2.14     0.00        1     0.00     0.00  __static_initialization_and_destruction_0(int, int)
+  0.00      2.14     0.00        1     0.00     0.67  auto etr::createRVec<double, double>(double)
+  0.00      2.14     0.00        1     0.00     0.01  unsigned long etr::convertSize<double>(double const&)
+  0.00      2.14     0.00        1     0.00     0.00  bool etr::isDoubleInt<double>(double)
+  0.00      2.14     0.00        1     0.00     0.67  auto etr::vector_numeric<int>(int const&)
+  0.00      2.14     0.00        1     0.00     0.00  etr::SI::SI(unsigned long)
+  0.00      2.14     0.00        1     0.00     0.00  etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait>::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>&&)
+  0.00      2.14     0.00        1     0.00     0.00  etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait>::~Vec()
+  0.00      2.14     0.00        1     0.00     0.65  etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>::Vec(etr::SI&&)
+  0.00      2.14     0.00        1     0.00     0.00  etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>::~Vec()
+  0.00      2.14     0.00        1     0.00     0.00  etr::warn(bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)
+  0.00      2.14     0.00        1     0.00     0.00  etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>::~Buffer()
+  0.00      2.14     0.00        1     0.00     0.00  etr::MatrixParameter::im() const
+  0.00      2.14     0.00        1     0.00     0.00  etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>::size() const
+  0.00      2.14     0.00        1     0.00     0.00  etr::BaseStore<double, etr::BaseStoreTrait>::im() const
 
  %         the percentage of the total running time of the
 time       program used by this function.
@@ -113,72 +113,72 @@ notice and this notice are preserved.
 		     Call graph (explanation follows)
 
 
-granularity: each sample hit covers 4 byte(s) for 0.43% of 2.31 seconds
+granularity: each sample hit covers 4 byte(s) for 0.47% of 2.14 seconds
 
 index % time    self  children    called     name
                                                  <spontaneous>
-[1]     98.5    0.00    2.27                 main [1]
-                0.53    1.75       1/1           leibnizNr1(int) [2]
+[1]     98.6    0.00    2.11                 main [1]
+                0.44    1.67       1/1           leibnizNr1(int) [2]
 -----------------------------------------------
-                0.53    1.75       1/1           main [1]
-[2]     98.5    0.53    1.75       1         leibnizNr1(int) [2]
-                0.00    0.70       1/1           auto etr::vector_numeric<int>(int const&) [4]
-                0.33    0.00 200000004/200000004     etr::It<double>::operator!=(etr::It<double> const&) [7]
-                0.31    0.00 200000002/200000002     etr::It<double>::operator++() [8]
-                0.23    0.00 200000002/200000002     etr::It<double>::operator*() [9]
-                0.17    0.00 100000001/100000001     etr::i2d(int) [10]
+                0.44    1.67       1/1           main [1]
+[2]     98.6    0.44    1.67       1         leibnizNr1(int) [2]
+                0.00    0.67       1/1           auto etr::vector_numeric<int>(int const&) [4]
+                0.36    0.00 200000002/200000002     etr::It<double>::operator++() [7]
+                0.32    0.00 200000004/200000004     etr::It<double>::operator!=(etr::It<double> const&) [8]
+                0.18    0.00 200000002/200000002     etr::It<double>::operator*() [9]
+                0.14    0.00 100000001/100000001     etr::i2d(int) [10]
                 0.00    0.00       2/2           etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait>::begin() const [69]
                 0.00    0.00       2/2           etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait>::end() const [68]
                 0.00    0.00       1/1           etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait>::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>&&) [73]
                 0.00    0.00       1/1           etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>::~Vec() [75]
                 0.00    0.00       1/1           etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait>::~Vec() [74]
 -----------------------------------------------
-                0.00    0.70       1/1           auto etr::vector_numeric<int>(int const&) [4]
-[3]     30.5    0.00    0.70       1         auto etr::createRVec<double, double>(double) [3]
-                0.00    0.69       1/1           etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>::Vec(etr::SI&&) [5]
+                0.00    0.67       1/1           auto etr::vector_numeric<int>(int const&) [4]
+[3]     31.1    0.00    0.67       1         auto etr::createRVec<double, double>(double) [3]
+                0.00    0.65       1/1           etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>::Vec(etr::SI&&) [5]
                 0.00    0.01       1/1           unsigned long etr::convertSize<double>(double const&) [17]
                 0.00    0.01       1/4           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [16]
                 0.00    0.00       1/3           etr::ass(bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [63]
                 0.00    0.00       1/4           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string() [55]
                 0.00    0.00       1/1           etr::SI::SI(unsigned long) [72]
 -----------------------------------------------
-                0.00    0.70       1/1           leibnizNr1(int) [2]
-[4]     30.5    0.00    0.70       1         auto etr::vector_numeric<int>(int const&) [4]
-                0.00    0.70       1/1           auto etr::createRVec<double, double>(double) [3]
+                0.00    0.67       1/1           leibnizNr1(int) [2]
+[4]     31.1    0.00    0.67       1         auto etr::vector_numeric<int>(int const&) [4]
+                0.00    0.67       1/1           auto etr::createRVec<double, double>(double) [3]
 -----------------------------------------------
-                0.00    0.69       1/1           auto etr::createRVec<double, double>(double) [3]
-[5]     29.7    0.00    0.69       1         etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>::Vec(etr::SI&&) [5]
-                0.68    0.01       1/1           etr::BaseStore<double, etr::BaseStoreTrait>::BaseStore(unsigned long) [6]
+                0.00    0.65       1/1           auto etr::createRVec<double, double>(double) [3]
+[5]     30.2    0.00    0.65       1         etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>::Vec(etr::SI&&) [5]
+                0.64    0.01       1/1           etr::BaseStore<double, etr::BaseStoreTrait>::BaseStore(unsigned long) [6]
                 0.00    0.00       1/3           etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>::Buffer() [64]
 -----------------------------------------------
-                0.68    0.01       1/1           etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>::Vec(etr::SI&&) [5]
-[6]     29.7    0.68    0.01       1         etr::BaseStore<double, etr::BaseStoreTrait>::BaseStore(unsigned long) [6]
+                0.64    0.01       1/1           etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>::Vec(etr::SI&&) [5]
+[6]     30.2    0.64    0.01       1         etr::BaseStore<double, etr::BaseStoreTrait>::BaseStore(unsigned long) [6]
                 0.00    0.01       1/4           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [16]
                 0.00    0.00       1/4           etr::MatrixParameter::MatrixParameter() [27]
-                0.00    0.00       1/4           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string() [55]
                 0.00    0.00       1/3           etr::ass(bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [63]
+                0.00    0.00       1/4           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string() [55]
 -----------------------------------------------
-                0.33    0.00 200000004/200000004     leibnizNr1(int) [2]
-[7]     14.3    0.33    0.00 200000004         etr::It<double>::operator!=(etr::It<double> const&) [7]
+                0.36    0.00 200000002/200000002     leibnizNr1(int) [2]
+[7]     17.1    0.36    0.00 200000002         etr::It<double>::operator++() [7]
 -----------------------------------------------
-                0.31    0.00 200000002/200000002     leibnizNr1(int) [2]
-[8]     13.4    0.31    0.00 200000002         etr::It<double>::operator++() [8]
+                0.32    0.00 200000004/200000004     leibnizNr1(int) [2]
+[8]     14.7    0.32    0.00 200000004         etr::It<double>::operator!=(etr::It<double> const&) [8]
 -----------------------------------------------
-                0.23    0.00 200000002/200000002     leibnizNr1(int) [2]
-[9]     10.2    0.23    0.00 200000002         etr::It<double>::operator*() [9]
+                0.18    0.00 200000002/200000002     leibnizNr1(int) [2]
+[9]      8.4    0.18    0.00 200000002         etr::It<double>::operator*() [9]
 -----------------------------------------------
-                0.17    0.00 100000001/100000001     leibnizNr1(int) [2]
-[10]     7.1    0.17    0.00 100000001         etr::i2d(int) [10]
+                0.14    0.00 100000001/100000001     leibnizNr1(int) [2]
+[10]     6.8    0.14    0.00 100000001         etr::i2d(int) [10]
 -----------------------------------------------
                                                  <spontaneous>
-[11]     1.5    0.04    0.00                 unsigned long etr::convertSize<int>(int const&) [11]
+[11]     1.4    0.03    0.00                 unsigned long etr::convertSize<int>(int const&) [11]
 -----------------------------------------------
                 0.03    0.00       4/4           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_copy(char*, char const*, unsigned long) [15]
-[12]     1.1    0.03    0.00       4         std::char_traits<char>::copy(char*, char const*, unsigned long) [12]
+[12]     1.2    0.03    0.00       4         std::char_traits<char>::copy(char*, char const*, unsigned long) [12]
                 0.00    0.00       4/12          std::is_constant_evaluated() [25]
 -----------------------------------------------
                 0.00    0.03       4/4           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [16]
-[13]     1.1    0.00    0.03       4         void std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_construct<char const*>(char const*, char const*, std::forward_iterator_tag) [13]
+[13]     1.2    0.00    0.03       4         void std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_construct<char const*>(char const*, char const*, std::forward_iterator_tag) [13]
                 0.00    0.03       4/4           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_copy_chars(char*, char const*, char const*) [14]
                 0.00    0.00       4/4           bool __gnu_cxx::__is_null_pointer<char const>(char const*) [31]
                 0.00    0.00       4/4           std::iterator_traits<char const*>::difference_type std::distance<char const*>(char const*, char const*) [60]
@@ -189,24 +189,24 @@ index % time    self  children    called     name
                 0.00    0.00       4/4           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_set_length(unsigned long) [51]
 -----------------------------------------------
                 0.00    0.03       4/4           void std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_construct<char const*>(char const*, char const*, std::forward_iterator_tag) [13]
-[14]     1.1    0.00    0.03       4         std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_copy_chars(char*, char const*, char const*) [14]
+[14]     1.2    0.00    0.03       4         std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_copy_chars(char*, char const*, char const*) [14]
                 0.00    0.03       4/4           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_copy(char*, char const*, unsigned long) [15]
 -----------------------------------------------
                 0.00    0.03       4/4           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_copy_chars(char*, char const*, char const*) [14]
-[15]     1.1    0.00    0.03       4         std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_copy(char*, char const*, unsigned long) [15]
+[15]     1.2    0.00    0.03       4         std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_copy(char*, char const*, unsigned long) [15]
                 0.03    0.00       4/4           std::char_traits<char>::copy(char*, char const*, unsigned long) [12]
 -----------------------------------------------
                 0.00    0.01       1/4           auto etr::createRVec<double, double>(double) [3]
                 0.00    0.01       1/4           etr::BaseStore<double, etr::BaseStoreTrait>::BaseStore(unsigned long) [6]
                 0.00    0.01       2/4           unsigned long etr::convertSize<double>(double const&) [17]
-[16]     1.1    0.00    0.03       4         std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [16]
+[16]     1.2    0.00    0.03       4         std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [16]
                 0.00    0.03       4/4           void std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_construct<char const*>(char const*, char const*, std::forward_iterator_tag) [13]
                 0.00    0.00       4/4           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_local_data() [50]
                 0.00    0.00       4/4           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_Alloc_hider::_Alloc_hider(char*, std::allocator<char> const&) [48]
                 0.00    0.00       4/4           std::char_traits<char>::length(char const*) [39]
 -----------------------------------------------
                 0.00    0.01       1/1           auto etr::createRVec<double, double>(double) [3]
-[17]     0.5    0.00    0.01       1         unsigned long etr::convertSize<double>(double const&) [17]
+[17]     0.6    0.00    0.01       1         unsigned long etr::convertSize<double>(double const&) [17]
                 0.00    0.01       2/4           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [16]
                 0.00    0.00       2/4           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string() [55]
                 0.00    0.00       1/1           bool etr::isDoubleInt<double>(double) [71]
@@ -300,8 +300,8 @@ index % time    self  children    called     name
                 0.00    0.00       4/4           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose() [46]
 [45]     0.0    0.00    0.00       4         std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_destroy(unsigned long) [45]
                 0.00    0.00       4/16          std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data() const [24]
-                0.00    0.00       4/4           std::allocator_traits<std::allocator<char> >::deallocate(std::allocator<char>&, char*, unsigned long) [42]
                 0.00    0.00       4/8           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_get_allocator() [26]
+                0.00    0.00       4/4           std::allocator_traits<std::allocator<char> >::deallocate(std::allocator<char>&, char*, unsigned long) [42]
 -----------------------------------------------
                 0.00    0.00       4/4           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string() [55]
 [46]     0.0    0.00    0.00       4         std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose() [46]
@@ -424,8 +424,8 @@ index % time    self  children    called     name
 -----------------------------------------------
                 0.00    0.00       1/1           leibnizNr1(int) [2]
 [75]     0.0    0.00    0.00       1         etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>::~Vec() [75]
-                0.00    0.00       1/1           etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>::~Buffer() [77]
                 0.00    0.00       1/3           etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>::~Buffer() [65]
+                0.00    0.00       1/1           etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>::~Buffer() [77]
 -----------------------------------------------
                 0.00    0.00       1/1           unsigned long etr::convertSize<double>(double const&) [17]
 [76]     0.0    0.00    0.00       1         etr::warn(bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) [76]
@@ -545,8 +545,8 @@ Index by function name
    [4] auto etr::vector_numeric<int>(int const&) [69] etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait>::begin() const [51] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_set_length(unsigned long)
   [27] etr::MatrixParameter::MatrixParameter() [79] etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>::size() const [14] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_copy_chars(char*, char const*, char const*)
    [9] etr::It<double>::operator*() [80] etr::BaseStore<double, etr::BaseStoreTrait>::im() const [26] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_get_allocator()
-   [7] etr::It<double>::operator!=(etr::It<double> const&) [32] etr::BaseStore<double, etr::BaseStoreTrait>::size() const [52] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data(char*)
-   [8] etr::It<double>::operator++() [33] __gnu_cxx::new_allocator<char>::_M_max_size() const [15] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_copy(char*, char const*, unsigned long)
+   [8] etr::It<double>::operator!=(etr::It<double> const&) [32] etr::BaseStore<double, etr::BaseStoreTrait>::size() const [52] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data(char*)
+   [7] etr::It<double>::operator++() [33] __gnu_cxx::new_allocator<char>::_M_max_size() const [15] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_S_copy(char*, char const*, unsigned long)
   [72] etr::SI::SI(unsigned long) [34] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_is_local() const [53] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_create(unsigned long&, unsigned long)
   [73] etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait>::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>(etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::RBufTrait>, etr::RVecTrait>&&) [35] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_local_data() const [54] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_length(unsigned long)
   [74] etr::Vec<double, etr::Buffer<double, etr::BufferTrait, etr::VariableTrait>, etr::VectorTrait>::~Vec() [36] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_get_allocator() const [16] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&)

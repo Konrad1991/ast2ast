@@ -16,8 +16,6 @@
 7 arithmetic  const Vec done
 8        Vec  const Vec done
 9  const Vec  const Vec done
-
-const Vec is an Operation
 */
 
 namespace etr {
