@@ -58,10 +58,10 @@ struct BinaryOperation {
       } else if (l.im() && !r.im()) {
         return l.nc();
       } else {
-        ass(false, "Matrix calculation failed!");
+        ass<"Matrix calculation failed!">(false);
       }
     }
-    ass(false, "Matrix calculation failed!");
+    ass<"Matrix calculation failed!">(false);
     return (0);
   }
   std::size_t nr() const {
@@ -79,10 +79,10 @@ struct BinaryOperation {
       } else if (l.im() && !r.im()) {
         return l.nr();
       } else {
-        ass(false, "Matrix calculation failed!");
+        ass<"Matrix calculation failed!">(false);
       }
     }
-    ass(false, "Matrix calculation failed!");
+    ass<"Matrix calculation failed!">(false);
     return (0);
   }
   BinaryOperation(const BinaryOperation &other) : l(other.l), r(other.r) {}
@@ -166,7 +166,7 @@ template <typename L, typename R> auto operator+(const L &l, const R &r) {
         BinaryOperation<decltype(l.d), decltype(r.d), PlusTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), PlusTrait>(l.d, r.d));
   } else {
-    ass(false, "This case should not be reached. Contact author");
+    ass<"This case should not be reached. Contact author">(false);
   }
 }
 
@@ -190,7 +190,7 @@ template <typename L, typename R> auto operator-(const L &l, const R &r) {
         BinaryOperation<decltype(l.d), decltype(r.d), MinusTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), MinusTrait>(l.d, r.d));
   } else {
-    ass(false, "This case should not be reached. Contact author");
+    ass<"This case should not be reached. Contact author">(false);
   }
 }
 
@@ -214,7 +214,7 @@ template <typename L, typename R> auto operator*(const L &l, const R &r) {
         BinaryOperation<decltype(l.d), decltype(r.d), TimesTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), TimesTrait>(l.d, r.d));
   } else {
-    ass(false, "This case should not be reached. Contact author");
+    ass<"This case should not be reached. Contact author">(false);
   }
 }
 
@@ -238,7 +238,7 @@ template <typename L, typename R> auto operator/(const L &l, const R &r) {
         BinaryOperation<decltype(l.d), decltype(r.d), DivideTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), DivideTrait>(l.d, r.d));
   } else {
-    ass(false, "This case should not be reached. Contact author");
+    ass<"This case should not be reached. Contact author">(false);
   }
 }
 
@@ -262,7 +262,7 @@ template <typename L, typename R> auto operator^(const L &l, const R &r) {
         BinaryOperation<decltype(l.d), decltype(r.d), PowTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), PowTrait>(l.d, r.d));
   } else {
-    ass(false, "This case should not be reached. Contact author");
+    ass<"This case should not be reached. Contact author">(false);
   }
 }
 
@@ -279,7 +279,7 @@ template <typename L, typename R> auto operator==(const L &l, const R &r) {
     return Vec<bool, BinaryOperation<decltype(l.d), decltype(r.d), EqualTrait>>(
         BinaryOperation<decltype(l.d), decltype(r.d), EqualTrait>(l.d, r.d));
   } else {
-    ass(false, "This case should not be reached. Contact author");
+    ass<"This case should not be reached. Contact author">(false);
   }
 }
 
@@ -299,7 +299,7 @@ template <typename L, typename R> auto operator!=(const L &l, const R &r) {
 
                         UnEqualTrait>(l.d, r.d));
   } else {
-    ass(false, "This case should not be reached. Contact author");
+    ass<"This case should not be reached. Contact author">(false);
   }
 }
 
@@ -319,7 +319,7 @@ template <typename L, typename R> auto operator>(const L &l, const R &r) {
 
                         LargerTrait>(l.d, r.d));
   } else {
-    ass(false, "This case should not be reached. Contact author");
+    ass<"This case should not be reached. Contact author">(false);
   }
 }
 
@@ -339,7 +339,7 @@ template <typename L, typename R> auto operator>=(const L &l, const R &r) {
 
                         LargerEqualTrait>(l.d, r.d));
   } else {
-    ass(false, "This case should not be reached. Contact author");
+    ass<"This case should not be reached. Contact author">(false);
   }
 }
 
@@ -359,7 +359,7 @@ template <typename L, typename R> auto operator<(const L &l, const R &r) {
 
                         SmallerTrait>(l.d, r.d));
   } else {
-    ass(false, "This case should not be reached. Contact author");
+    ass<"This case should not be reached. Contact author">(false);
   }
 }
 
@@ -379,7 +379,7 @@ template <typename L, typename R> auto operator<=(const L &l, const R &r) {
 
                         SmallerEqualTrait>(l.d, r.d));
   } else {
-    ass(false, "This case should not be reached. Contact author");
+    ass<"This case should not be reached. Contact author">(false);
   }
 }
 

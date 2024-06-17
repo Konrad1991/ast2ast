@@ -43,50 +43,50 @@ template <typename T, typename R>
 inline auto &at(T &inp, R i_) {
   int i = d2i(i_);
   i--;
-  ass(inp.d.allocated, "No memory was allocated");
-  ass(i >= 0, "Error: out of boundaries --> value below 1");
-  ass(i < inp.size(),
-      "Error: out of boundaries --> value beyond size of vector");
+  ass<"No memory was allocated">(inp.d.allocated);
+  ass<"Error: out of boundaries --> value below 1">(i >= 0);
+  ass<"Error: out of boundaries --> value beyond size of vector">(i <
+                                                                  inp.size());
   return inp.d.p[i];
 }
 
 template <typename T, typename R, typename C>
   requires(IsVec<T> && std::is_arithmetic_v<C>)
 inline auto &at(T &inp, R r, C c) {
-  ass(inp.im() == true, "Input is not a matrix!");
-  ass(inp.d.allocated, "No memory was allocated");
+  ass<"Input is not a matrix!">(inp.im() == true);
+  ass<"No memory was allocated">(inp.d.allocated);
   if constexpr (std::is_integral_v<R> && std::is_integral_v<C>) {
     r--;
     c--;
-    ass((c * inp.nr() + r) >= 0, "Error: out of boundaries --> value below 1");
-    ass((c * inp.nr() + r) < inp.size(),
-        "Error: out of boundaries --> value beyond size of vector");
+    ass<"Error: out of boundaries --> value below 1">((c * inp.nr() + r) >= 0);
+    ass<"Error: out of boundaries --> value beyond size of vector">(
+        (c * inp.nr() + r) < inp.size());
     return inp.d.p[c * inp.nr() + r];
   } else if constexpr (!std::is_integral_v<R> && std::is_integral_v<C>) {
     int r_ = d2i(r);
     r_--;
     c--;
-    ass((c * inp.nr() + r_) >= 0, "Error: out of boundaries --> value below 1");
-    ass((c * inp.nr() + r_) < inp.size(),
-        "Error: out of boundaries --> value beyond size of vector");
+    ass<"Error: out of boundaries --> value below 1">((c * inp.nr() + r_) >= 0);
+    ass<"Error: out of boundaries --> value beyond size of vector">(
+        (c * inp.nr() + r_) < inp.size());
     return inp.d.p[c * inp.nr() + r_];
   } else if constexpr (std::is_integral_v<R> && !std::is_integral_v<C>) {
     r--;
     int c_ = d2i(c);
     c_--;
-    ass((c_ * inp.nr() + r) >= 0, "Error: out of boundaries --> value below 1");
-    ass((c_ * inp.nr() + r) < inp.size(),
-        "Error: out of boundaries --> value beyond size of vector");
+    ass<"Error: out of boundaries --> value below 1">((c_ * inp.nr() + r) >= 0);
+    ass<"Error: out of boundaries --> value beyond size of vector">(
+        (c_ * inp.nr() + r) < inp.size());
     return inp.d.p[c_ * inp.nr() + r];
   } else {
     int r_ = d2i(r);
     int c_ = d2i(c);
     r_--;
     c_--;
-    ass((c_ * inp.nr() + r_) >= 0,
-        "Error: out of boundaries --> value below 1");
-    ass((c_ * inp.nr() + r_) < inp.size(),
-        "Error: out of boundaries --> value beyond size of vector");
+    ass<"Error: out of boundaries --> value below 1">((c_ * inp.nr() + r_) >=
+                                                      0);
+    ass<"Error: out of boundaries --> value beyond size of vector">(
+        (c_ * inp.nr() + r_) < inp.size());
     return inp.d.p[c_ * inp.nr() + r_];
   }
 }
@@ -96,7 +96,7 @@ template <typename T, typename R, typename C>
            OperationVec<T> && std::is_arithmetic_v<R> &&
                std::is_arithmetic_v<C>)
 inline auto at(const T &inp, R r, C c) {
-  ass(inp.im() == true, "Input is not a matrix!");
+  ass<"Input is not a matrix!">(inp.im() == true);
   if constexpr (std::is_integral_v<R> && std::is_integral_v<C>) {
     r--;
     c--;
@@ -108,27 +108,27 @@ inline auto at(const T &inp, R r, C c) {
     int r_ = d2i(r);
     r_--;
     c--;
-    ass((c * inp.nr() + r_) >= 0, "Error: out of boundaries --> value below 1");
-    ass((c * inp.nr() + r_) < inp.size(),
-        "Error: out of boundaries --> value beyond size of vector");
+    ass<"Error: out of boundaries --> value below 1">((c * inp.nr() + r_) >= 0);
+    ass<"Error: out of boundaries --> value beyond size of vector">(
+        (c * inp.nr() + r_) < inp.size());
     return inp[c * inp.nr() + r_];
   } else if constexpr (std::is_integral_v<R> && !std::is_integral_v<C>) {
     r--;
     int c_ = d2i(c);
     c_--;
-    ass((c_ * inp.nr() + r) >= 0, "Error: out of boundaries --> value below 1");
-    ass((c_ * inp.nr() + r) < inp.size(),
-        "Error: out of boundaries --> value beyond size of vector");
+    ass<"Error: out of boundaries --> value below 1">((c_ * inp.nr() + r) >= 0);
+    ass<"Error: out of boundaries --> value beyond size of vector">(
+        (c_ * inp.nr() + r) < inp.size());
     return inp[c_ * inp.nr() + r];
   } else {
     int r_ = d2i(r);
     int c_ = d2i(c);
     r_--;
     c_--;
-    ass((c_ * inp.nr() + r_) >= 0,
-        "Error: out of boundaries --> value below 1");
-    ass((c_ * inp.nr() + r_) < inp.size(),
-        "Error: out of boundaries --> value beyond size of vector");
+    ass<"Error: out of boundaries --> value below 1">((c_ * inp.nr() + r_) >=
+                                                      0);
+    ass<"Error: out of boundaries --> value beyond size of vector">(
+        (c_ * inp.nr() + r_) < inp.size());
     return inp[c_ * inp.nr() + r_];
   }
 }

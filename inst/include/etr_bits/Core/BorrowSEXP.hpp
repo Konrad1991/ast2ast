@@ -33,13 +33,13 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
   }
   BorrowSEXP(SEXP inp) {
     if (allocated == true) {
-      ass(p != nullptr, "try to delete nullptr");
+      ass<"try to delete nullptr">(p != nullptr);
       delete[] p;
       this->p = nullptr;
     }
     if constexpr (is<RetType, double>) {
       bool isreal = Rf_isReal(inp);
-      ass(isreal, "R object is not of type numeric");
+      ass<"R object is not of type numeric">(isreal);
       p = REAL(inp);
       sz = Rf_length(inp);
       capacity = Rf_length(inp);
@@ -51,7 +51,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
       allocated = true;
     } else if constexpr (is<RetType, int>) {
       bool isint = Rf_isInteger(inp);
-      ass(isint, "R object is not of type numeric");
+      ass<"R object is not of type numeric">(isint);
       p = INTEGER(inp);
       sz = Rf_length(inp);
       capacity = Rf_length(inp);
@@ -63,7 +63,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
       allocated = true;
     } else if constexpr (is<RetType, bool>) {
       bool isbool = Rf_isLogical(inp);
-      ass(isbool, "R object is not of type numeric");
+      ass<"R object is not of type numeric">(isbool);
       p = LOGICAL(inp);
       sz = Rf_length(inp);
       capacity = Rf_length(inp);
@@ -102,12 +102,12 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
 
   BorrowSEXP &operator=(SEXP inp) {
     if (allocated == true) {
-      ass(p != nullptr, "try to delete nullptr");
+      ass<"try to delete nullptr">(p != nullptr);
       delete[] p;
       this->p = nullptr;
     }
     if constexpr (is<RetType, double>) {
-      ass(Rf_isReal(inp), "R object is not of type numeric");
+      ass<"R object is not of type numeric">(Rf_isReal(inp));
       p = REAL(inp);
       sz = Rf_length(inp);
       capacity = Rf_length(inp);
@@ -117,7 +117,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
       todelete = false;
       allocated = true;
     } else if constexpr (is<RetType, int>) {
-      ass(Rf_isInteger(inp), "R object is not of type numeric");
+      ass<"R object is not of type numeric">(Rf_isInteger(inp));
       p = INTEGER(inp);
       sz = Rf_length(inp);
       capacity = Rf_length(inp);
@@ -127,7 +127,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
       todelete = false;
       allocated = true;
     } else if constexpr (is<RetType, bool>) {
-      ass(Rf_isLogical(inp), "R object is not of type numeric");
+      ass<"R object is not of type numeric">(Rf_isLogical(inp));
       p = LOGICAL(inp);
       sz = Rf_length(inp);
       capacity = Rf_length(inp);
@@ -144,13 +144,13 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
 
   void initSEXP(SEXP inp) {
     if (allocated == true) {
-      ass(p != nullptr, "try to delete nullptr");
+      ass<"try to delete nullptr">(p != nullptr);
       delete[] p;
       this->p = nullptr;
     }
     if constexpr (is<RetType, double>) {
       bool isreal = Rf_isReal(inp);
-      ass(isreal, "R object is not of type numeric");
+      ass<"R object is not of type numeric">(isreal);
       p = REAL(inp);
       sz = Rf_length(inp);
       capacity = Rf_length(inp);
@@ -162,7 +162,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
       allocated = true;
     } else if constexpr (is<RetType, int>) {
       bool isint = Rf_isInteger(inp);
-      ass(isint, "R object is not of type numeric");
+      ass<"R object is not of type numeric">(isint);
       p = INTEGER(inp);
       sz = Rf_length(inp);
       capacity = Rf_length(inp);
@@ -174,7 +174,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
       allocated = true;
     } else if constexpr (is<RetType, bool>) {
       bool isbool = Rf_isLogical(inp);
-      ass(isbool, "R object is not of type numeric");
+      ass<"R object is not of type numeric">(isbool);
       p = LOGICAL(inp);
       sz = Rf_length(inp);
       capacity = Rf_length(inp);
@@ -190,22 +190,24 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
   }
 
   RetType &operator[](std::size_t pos) {
-    ass(p != nullptr, "Subset is pointing to nothing!");
-    ass(pos >= 0, "Error: out of boundaries --> value below 1");
-    ass(pos < sz, "Error: out of boundaries --> value beyond size of vector");
+    ass<"Subset is pointing to nothing!">(p != nullptr);
+    ass<"Error: out of boundaries --> value below 1">(pos >= 0);
+    ass<"Error: out of boundaries --> value beyond size of vector">(pos < sz);
     return this->p[pos];
   }
 
   RetType operator[](std::size_t pos) const {
-    ass(this->p != nullptr, "Subset is pointing to nothing!");
-    ass(pos >= 0, "Error: out of boundaries --> value below 1");
-    ass(pos < sz, "Error: out of boundaries --> value beyond size of vector");
+    ass<"Subset is pointing to nothing!">(this->p != nullptr);
+    ass<"Error: out of boundaries --> value below 1">(pos >= 0);
+    ass<"Error: out of boundaries --> value beyond size of vector">(pos < sz);
     return this->p[pos];
   }
 
+  void init(std::size_t size) = delete;
+  /*
   void init(std::size_t size) {
     if (allocated && todelete) {
-      ass(p != nullptr, "try to delete nullptr");
+      ass<"try to delete nullptr">(p != nullptr );
       delete[] p;
       p = nullptr;
     }
@@ -215,16 +217,24 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
     allocated = true;
     todelete = true;
   }
-
+  */
   void resize(std::size_t newSize) {
-    ass(newSize >= 0, "Size has to be larger than 0");
+    ass<"Size has to be larger than 0">(newSize >= 0);
+    if (newSize <= capacity) {
+      sz = newSize;
+    } else {
+      ass<"Cannot resize Borrow element above size of borrowed object">(false);
+    }
+
+    /*
+    ass<"Size has to be larger than 0">(newSize >= 0 );
     if (!allocated) {
       init(newSize);
       fill(T());
       return;
     } else {
       if (newSize > capacity) {
-        ass(p != nullptr, "try to delete nullptr");
+        ass<"try to delete nullptr">(p != nullptr );
         delete[] p;
         sz = newSize;
         capacity = static_cast<std::size_t>(newSize * 1.15);
@@ -238,8 +248,11 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
         return;
       }
     }
+    */
   }
 
+  template <typename L2> void moveit(L2 &other) = delete;
+  /*
   template <typename L2> void moveit(L2 &other) {
     if (!todelete) {
       resize(other.size());
@@ -266,11 +279,14 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
       this->capacity = tempCapacity;
     }
   }
+  */
 
   auto begin() const { return It<T>{p}; }
   auto end() const { return It<T>{p + sz}; }
   T &back() { return p[sz]; }
   T *data() const { return p; }
+  void realloc(int new_size) = delete;
+  /*
   void realloc(int new_size) {
     if (new_size <= sz) {
       return;
@@ -291,7 +307,10 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
       todelete = true;
     }
   }
-  void push_back(T input) {
+                                   */
+  void push_back(T input) = delete;
+  /*
+  {
     if (sz == capacity) {
       int szOld = sz;
       if (sz == 0) {
@@ -299,7 +318,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
       } else if (sz > 0) {
         realloc(sz * 2);
       } else {
-        ass(false, "negative size found.");
+        ass<"negative size found.">(false );
       }
       capacity = sz;
       p[szOld] = input;
@@ -309,6 +328,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
       sz++;
     }
   }
+*/
   friend std::ostream &operator<<(std::ostream &os, const BorrowSEXP &b) {
     os << "Vec [ ";
     for (std::size_t i = 0; i < b.size(); i++) {
@@ -329,7 +349,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
   }
 
   template <typename TInp> void fill(TInp &&inp) {
-    ass(inp.size() == sz, "cannot use fill with vectors of different lengths");
+    ass<"cannot use fill with vectors of different lengths">(inp.size() == sz);
     using DataType = ExtractDataType<std::remove_reference_t<TInp>>::RetType;
     if constexpr (IsVec<TInp>) {
       if constexpr (!is<DataType, T>) {

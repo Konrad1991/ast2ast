@@ -38,7 +38,7 @@ template <typename T, int Idx, int TypeIdx, typename Trait> struct VarPointer {
     } else if constexpr (TypeIdx == 2) {
       return av.varBorrowSEXP[Idx].size();
     } else {
-      ass(false, "Unknown variable index found");
+      ass<"Unknown variable index found">(false);
     }
   }
 
@@ -53,7 +53,7 @@ template <typename T, int Idx, int TypeIdx, typename Trait> struct VarPointer {
     } else if constexpr (TypeIdx == 2) {
       av.varBorrowSEXP[Idx].d.mp.setMatrix(is, rows, cols);
     } else {
-      ass(false, "Unknown variable index found");
+      ass<"Unknown variable index found">(false);
     }
   }
 
@@ -67,7 +67,7 @@ template <typename T, int Idx, int TypeIdx, typename Trait> struct VarPointer {
     } else if constexpr (TypeIdx == 2) {
       return AllVarsRef.varBorrowSEXP[Idx];
     } else {
-      ass(false, "Unknown variable index found");
+      ass<"Unknown variable index found">(false);
     }
   }
 
@@ -81,7 +81,7 @@ template <typename T, int Idx, int TypeIdx, typename Trait> struct VarPointer {
     } else if constexpr (TypeIdx == 2) {
       return AllVarsRef.varBorrowSEXPDerivs[Idx];
     } else {
-      ass(false, "Unknown variable index found");
+      ass<"Unknown variable index found">(false);
     }
   }
 
@@ -97,7 +97,7 @@ template <typename T, int Idx, int TypeIdx, typename Trait> struct VarPointer {
     } else if constexpr (TypeIdx == 2) {
       *ptr = av.varBorrowSEXP[Idx].d.p;
     } else {
-      ass(false, "Unknown variable index found");
+      ass<"Unknown variable index found">(false);
     }
   }
 
@@ -111,7 +111,7 @@ template <typename T, int Idx, int TypeIdx, typename Trait> struct VarPointer {
     } else if constexpr (TypeIdx == 2) {
       return av.varBorrowSEXP[Idx][VecIdx % av.varBorrowSEXP[Idx].size()];
     } else {
-      ass(false, "Unknown variable index found");
+      ass<"Unknown variable index found">(false);
     }
   }
   // TODO: check why operator[] onyl works with auto and not RetType
@@ -125,7 +125,7 @@ template <typename T, int Idx, int TypeIdx, typename Trait> struct VarPointer {
     } else if constexpr (TypeIdx == 2) {
       return AllVarsRef.varBorrowSEXP[Idx][VecIdx];
     } else {
-      ass(false, "Unknown variable index found");
+      ass<"Unknown variable index found">(false);
     }
   }
 
@@ -139,7 +139,7 @@ template <typename T, int Idx, int TypeIdx, typename Trait> struct VarPointer {
     } else if constexpr (TypeIdx == 2) {
       return AllVarsRef.varBorrowSEXP[Idx][VecIdx];
     } else {
-      ass(false, "Unknown variable index found");
+      ass<"Unknown variable index found">(false);
     }
   }
 
@@ -177,7 +177,7 @@ template <typename T, int Idx, int TypeIdx, typename Trait> struct VarPointer {
       return av.varBorrowSEXPDerivs[Idx][VecIdx %
                                          av.varBorrowSEXPDerivs[Idx].size()];
     } else {
-      ass(false, "Unknown variable index found");
+      ass<"Unknown variable index found">(false);
     }
   }
 
@@ -192,7 +192,7 @@ template <typename T, int Idx, int TypeIdx, typename Trait> struct VarPointer {
     } else if constexpr (TypeIdx == 2) {
       av.varBorrowSEXPDerivs[Idx][VecIdx] = v;
     } else {
-      ass(false, "Unknown variable index found");
+      ass<"Unknown variable index found">(false);
     }
   }
 
@@ -207,7 +207,7 @@ template <typename T, int Idx, int TypeIdx, typename Trait> struct VarPointer {
     } else if constexpr (TypeIdx == 2) {
       av.varBorrowSEXP[Idx][VecIdx] = v;
     } else {
-      ass(false, "Unknown variable index found");
+      ass<"Unknown variable index found">(false);
     }
   }
 };

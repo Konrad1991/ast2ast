@@ -39,3 +39,8 @@
 ^Benchmark.cpp
 ^RunSum.R
 ^deSolveTesting.sh
+^testJac.R
+^Benchmark.sh
+^Rplots.pdf
+^analysis.txt
+^gmon.out

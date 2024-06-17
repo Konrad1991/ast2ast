@@ -93,7 +93,7 @@ template <typename T, typename BorrowTrait> struct Borrow {
   }
 
   template <typename TInp> void fill(TInp &&inp) {
-    ass(inp.size() == sz, "cannot use fill with vectors of different lengths");
+    ass<"cannot use fill with vectors of different lengths">(inp.size() == sz);
     using DataType = ExtractDataType<std::remove_reference_t<TInp>>::RetType;
     if constexpr (IsVec<TInp>) {
       if constexpr (!is<DataType, T>) {
@@ -124,30 +124,30 @@ template <typename T, typename BorrowTrait> struct Borrow {
 
   void init(std::size_t size) = delete;
   void resize(std::size_t newSize) {
-    ass(newSize >= 0, "Size has to be larger than 0");
+    ass<"Size has to be larger than 0">(newSize >= 0);
     if (newSize <= capacity) {
       sz = newSize;
     } else {
-      ass(false, "Cannot resize Borrow element above size of borrowed object");
+      ass<"Cannot resize Borrow element above size of borrowed object">(false);
     }
   };
   void set(std::size_t idx, T val) {
-    ass(idx >= 0, "Index has to be a positive number");
+    ass<"Index has to be a positive number">(idx >= 0);
     ass(idx < sz, "Index cannot be larger than size of Indices");
     p[idx] = val;
   }
 
   RetType operator[](std::size_t idx) const {
-    ass(allocated, "No memory was allocated");
-    ass(idx >= 0, "Error: out of boundaries --> value below 1");
-    ass(idx < sz, "Error: out of boundaries --> value beyond size of vector");
+    ass<"No memory was allocated">(allocated);
+    ass<"Error: out of boundaries --> value below 1">(idx >= 0);
+    ass<"Error: out of boundaries --> value beyond size of vector">(idx < sz);
     return p[idx];
   }
 
   RetType &operator[](std::size_t idx) {
-    ass(allocated, "No memory was allocated");
-    ass(idx >= 0, "Error: out of boundaries --> value below 1");
-    ass(idx < sz, "Error: out of boundaries --> value beyond size of vector");
+    ass<"No memory was allocated">(allocated);
+    ass<"Error: out of boundaries --> value below 1">(idx >= 0);
+    ass<"Error: out of boundaries --> value beyond size of vector">(idx < sz);
     return p[idx];
   }
 

@@ -22,13 +22,13 @@ inline void calcIndVector(T &vec, Indices &ind, const I *idx) {
         ind[i] = i;
       return;
     } else {
-      ass(false, "Variable[FALSE] subsetting is not supported. Sorry");
+      ass<"Variable[FALSE] subsetting is not supported. Sorry">(false);
       return;
     }
   } else if constexpr (is<I, int>) {
     ind.resize(1);
     ind[0] = *idx - 1;
-    ass(ind[0] >= 0, "invalid index argument");
+    ass<"invalid index argument">(ind[0] >= 0);
     return;
   } else if constexpr (is<I, double>) {
     ind.resize(1);

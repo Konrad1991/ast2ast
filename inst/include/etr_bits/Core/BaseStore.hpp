@@ -54,13 +54,13 @@ template <typename T, typename BaseTrait> struct BaseStore {
 #else
   BaseStore(SEXP s) {
     if (allocated) {
-      ass(p != nullptr, "try to delete nullptr");
+      ass<"try to delete nullptr">(p != nullptr);
       delete[] p;
       this->p = nullptr;
     }
 
     if constexpr (is<RetType, double>) {
-      ass(Rf_isReal(s), "R object is not of type numeric");
+      ass<"R object is not of type numeric">(Rf_isReal(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       capacity = static_cast<std::size_t>(sz);
       p = new T[capacity];
@@ -72,7 +72,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
       }
       allocated = true;
     } else if constexpr (is<RetType, int>) {
-      ass(Rf_isInteger(s), "R object is not of type integer");
+      ass<"R object is not of type integer">(Rf_isInteger(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       capacity = static_cast<std::size_t>(sz);
       p = new T[capacity];
@@ -84,7 +84,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
       }
       allocated = true;
     } else if constexpr (is<RetType, bool>) {
-      ass(Rf_isLogical(s), "R object is not of type logical");
+      ass<"R object is not of type logical">(Rf_isLogical(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       capacity = static_cast<std::size_t>(sz);
       p = new T[capacity];
@@ -102,7 +102,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
 #endif
   BaseStore(std::size_t sz_)
       : sz(sz_), capacity(static_cast<std::size_t>(sz_ * 1.15)) {
-    ass(sz_ > 0, "Size has to be larger than 0!");
+    ass<"Size has to be larger than 0!">(sz_ > 0);
     p = new T[capacity];
     for (std::size_t i = 0; i < capacity; i++) {
       p[i] = T();
@@ -112,7 +112,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
   BaseStore(int sz_)
       : sz(static_cast<std::size_t>(sz_)),
         capacity(static_cast<std::size_t>(sz_ * 1.15)) {
-    ass(sz_ > 0, "Size has to be larger than 0!!");
+    ass<"Size has to be larger than 0!!">(sz_ > 0);
     p = new T[capacity];
     for (std::size_t i = 0; i < sz; i++)
       p[i] = T();
@@ -151,7 +151,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
   }
 
   template <typename TInp> void fill(TInp &&inp) {
-    ass(inp.size() == sz, "cannot use fill with vectors of different lengths");
+    ass<"cannot use fill with vectors of different lengths">(inp.size() == sz);
     using DataType = ExtractDataType<std::remove_reference_t<TInp>>::RetType;
     if constexpr (IsVec<TInp>) {
       if constexpr (!is<DataType, T>) {
@@ -182,12 +182,12 @@ template <typename T, typename BaseTrait> struct BaseStore {
 #else
   void initSEXP(SEXP s) {
     if (allocated) {
-      ass(p != nullptr, "try to delete nullptr");
+      ass<"try to delete nullptr">(p != nullptr);
       delete[] p;
       this->p = nullptr;
     }
     if constexpr (is<RetType, double>) {
-      ass(Rf_isReal(s), "R object is not of type numeric");
+      ass<"R object is not of type numeric">(Rf_isReal(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       capacity = static_cast<std::size_t>(sz);
       p = new T[capacity];
@@ -200,7 +200,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
       }
       allocated = true;
     } else if constexpr (is<RetType, int>) {
-      ass(Rf_isInteger(s), "R object is not of type integer");
+      ass<"R object is not of type integer">(Rf_isInteger(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       capacity = static_cast<std::size_t>(sz);
       p = new T[capacity];
@@ -213,7 +213,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
       }
       allocated = true;
     } else if constexpr (is<RetType, bool>) {
-      ass(Rf_isLogical(s), "R object is not of type logical");
+      ass<"R object is not of type logical">(Rf_isLogical(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       capacity = static_cast<std::size_t>(sz);
       p = new T[capacity];
@@ -245,7 +245,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
 
   void init(std::size_t size) {
     if (allocated) {
-      ass(p != nullptr, "try to delete nullptr");
+      ass<"try to delete nullptr">(p != nullptr);
       delete[] p;
       p = nullptr;
     }
@@ -255,14 +255,14 @@ template <typename T, typename BaseTrait> struct BaseStore {
     allocated = true;
   }
   void resize(std::size_t newSize) {
-    ass(newSize >= 0, "Size has to be larger than 0!!!");
+    ass<"Size has to be larger than 0!!!">(newSize >= 0);
     if (!allocated) {
       init(newSize);
       fill(T());
       return;
     } else {
       if (newSize > capacity) {
-        ass(p != nullptr, "try to delete nullptr");
+        ass<"try to delete nullptr">(p != nullptr);
         delete[] p;
         capacity = static_cast<std::size_t>(newSize * 1.15);
         p = new T[capacity];
@@ -335,7 +335,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
       } else if (sz > 0) {
         realloc(sz * 2);
       } else {
-        ass(false, "negative size found.");
+        ass<"negative size found.">(false);
       }
       capacity = sz;
       p[szOld] = input;

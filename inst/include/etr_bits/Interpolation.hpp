@@ -17,12 +17,12 @@ inline double li(const A &t_, const B &timeVec, const C &parVec) {
   using isVecC = std::is_same<typeTraitC, VectorTrait>;
 
   if constexpr (isVecA::value && isVecB::value && isVecC::value) {
-    ass(t_.size() == 1, "timepoint input has to have length == 1");
+    ass<"timepoint input has to have length == 1">(t_.size() == 1);
     double t = t_[0];
     double t0, t1;
     double y0, y1, deltaPar, deltaT, m;
     double ret;
-    ass(timeVec.size() == parVec.size(), "x and y differ in length");
+    ass<"x and y differ in length">(timeVec.size() == parVec.size());
     // not in boundaries
     if (t >= timeVec[timeVec.size()]) {
       ret = parVec[parVec.size()];
@@ -49,7 +49,7 @@ inline double li(const A &t_, const B &timeVec, const C &parVec) {
     double t0, t1;
     double y0, y1, deltaPar, deltaT, m;
     double ret;
-    ass(timeVec.size() == parVec.size(), "x and y differ in length");
+    ass<"x and y differ in length">(timeVec.size() == parVec.size());
     // not in boundaries
     if (t >= timeVec[timeVec.size()]) {
       ret = parVec[parVec.size()];
@@ -72,7 +72,7 @@ inline double li(const A &t_, const B &timeVec, const C &parVec) {
     }
     return (ret);
   } else {
-    ass(false, "Input for interpolation has to be scalar, vec, vec");
+    ass<"Input for interpolation has to be scalar, vec, vec">(false);
   }
 }
 
@@ -89,8 +89,8 @@ inline double cmrInternal(const A *tInp, const B *timeVec, const C *parVec) {
   idx3 = 0;
   t0 = t1 = t2 = t3 = 0.;
   y0 = y1 = y2 = y3 = 0.;
-  ass(timeVec->size() == parVec->size(), "x and y differ in length");
-  ass(timeVec->size() >= 4, "time and parameter require at least 4 elements");
+  ass<"x and y differ in length">(timeVec->size() == parVec->size());
+  ass<"time and parameter require at least 4 elements">(timeVec->size() >= 4);
   if (t < (*timeVec)[0]) {
     return (*parVec)[0];
   } else if (t > (*timeVec)[timeVec->size() - 1]) {

@@ -59,8 +59,8 @@ Vec &operator=(const Vec<T, R, Trait> &otherVec) {
     }
     d.moveit(temp);
   } else if constexpr (isBorrow::value) {
-    ass(otherVec.size() <= d.capacity,
-        "number of items to replace is not a multiple of replacement length");
+    ass<"number of items to replace is not a multiple of replacement length">(
+        otherVec.size() <= d.capacity);
     temp.resize(otherVec.size());
     for (std::size_t i = 0; i < otherVec.size(); i++) {
       if constexpr (is<DataTypeOtherVec, T>) {
@@ -69,8 +69,8 @@ Vec &operator=(const Vec<T, R, Trait> &otherVec) {
         temp[i] = static_cast<T>(otherVec[i]);
       }
     }
-    ass(d.sz <= otherVec.size(),
-        "size cannot be increased above the size of the borrowed object");
+    ass<"size cannot be increased above the size of the borrowed object">(
+        d.sz <= otherVec.size());
     d.sz = otherVec.size();
     for (std::size_t i = 0; i < otherVec.size(); i++)
       d[i] = temp[i];
@@ -87,8 +87,8 @@ Vec &operator=(const Vec<T, R, Trait> &otherVec) {
       d.resize(otherVec.size());
     d.moveit(temp);
   } else if constexpr (isSubset::value) {
-    ass(otherVec.size() == d.ind.size(),
-        "number of items to replace is not a multiple of replacement length");
+    ass<"number of items to replace is not a multiple of replacement length">(
+        otherVec.size() == d.ind.size());
     temp.resize(otherVec.size());
     for (std::size_t i = 0; i < otherVec.size(); i++) {
       if constexpr (is<DataTypeOtherVec, T>) {
@@ -160,8 +160,8 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
     }
     d.moveit(temp);
   } else if constexpr (isBorrow::value) {
-    ass(otherVec.size() <= d.capacity,
-        "number of items to replace is not a multiple of replacement length");
+    ass<"number of items to replace is not a multiple of replacement length">(
+        otherVec.size() <= d.capacity);
     temp.resize(otherVec.size());
     for (std::size_t i = 0; i < otherVec.size(); i++) {
       if constexpr (is<DataTypeOtherVec, T>) {
@@ -170,8 +170,8 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
         temp[i] = static_cast<T>(otherVec[i]);
       }
     }
-    ass(d.sz <= otherVec.size(),
-        "size cannot be increased above the size of the borrowed object");
+    ass<"size cannot be increased above the size of the borrowed object">(
+        d.sz <= otherVec.size());
     d.sz = otherVec.size();
     for (std::size_t i = 0; i < otherVec.size(); i++)
       d[i] = temp[i];
@@ -188,8 +188,8 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
       d.resize(otherVec.size());
     d.moveit(temp);
   } else if constexpr (isSubset::value) {
-    ass(otherVec.size() == d.ind.size(),
-        "number of items to replace is not a multiple of replacement length");
+    ass<"number of items to replace is not a multiple of replacement length">(
+        otherVec.size() == d.ind.size());
     temp.resize(otherVec.size());
     for (std::size_t i = 0; i < otherVec.size(); i++) {
       if constexpr (is<DataTypeOtherVec, T>) {

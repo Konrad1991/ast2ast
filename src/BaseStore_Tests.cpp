@@ -37,6 +37,7 @@ void test_basestore() {
   }
   // NOTE: allocating something with a small size so that size and capacity do
   // not differ
+  //
   {
     std::string s = "BaseStoreTestsAllocated: ";
     int size = 3;

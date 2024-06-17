@@ -130,7 +130,7 @@ Vec(const Vec<T2, R2, Trait2> &&other_vec) {
   using TypeTrait = Trait2;
   using CaseTrait = Trait2;
   if constexpr (isBorrow::value) {
-    ass(d.sz <= other_vec.size(), "Sizes do not match");
+    ass<"Sizes do not match">(d.sz <= other_vec.size());
     d.sz = other_vec.size();
     for (std::size_t i = 0; i < d.size(); i++) {
       d[i] = other_vec[i];
@@ -160,7 +160,7 @@ Vec(const Vec<T2, R2, Trait2> &&other_vec) {
   using TypeTrait = Trait2;
   using CaseTrait = Trait2;
   if constexpr (isBorrow::value) {
-    ass(d.sz <= other_vec.size(), "Sizes do not match");
+    ass<"Sizes do not match">(d.sz <= other_vec.size());
     d.sz = other_vec.size();
     for (std::size_t i = 0; i < d.size(); i++) {
       d[i] = other_vec[i];
@@ -190,7 +190,7 @@ Vec(Vec<T2, R2, Trait2> &&other_vec) {
   using TypeTrait = Trait2;
   using CaseTrait = Trait2;
   if constexpr (isBorrow::value) {
-    ass(d.sz <= other_vec.size(), "Sizes do not match");
+    ass<"Sizes do not match">(d.sz <= other_vec.size());
     d.sz = other_vec.size();
     for (std::size_t i = 0; i < d.size(); i++) {
       d[i] = other_vec[i];

@@ -39,7 +39,7 @@ namespace etr {
 template <typename T, typename I, typename R, typename C>
 inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
                           const C *idxR) {
-  ass(vec.im(), "incorrect number of dimensions");
+  ass<"incorrect number of dimensions">(vec.im());
   // NOTE: bool + X
   if constexpr (isd<R, bool, C, bool>) {
     if (*idxL && *idxR) {
@@ -49,12 +49,12 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
       mp.setMatrix(vec.d.mp);
       return;
     } else {
-      ass(false, "Variable[FALSE, FALSE] subsetting is not supported. Sorry");
+      ass<"Variable[FALSE, FALSE] subsetting is not supported. Sorry">(false);
       return;
     }
   } else if constexpr (isd<R, bool, C, int>) {
     if (!(*idxL)) {
-      ass(false, "Variable[FALSE, FALSE] subsetting is not supported. Sorry");
+      ass<"Variable[FALSE, FALSE] subsetting is not supported. Sorry">(false);
       return;
     }
     ind.resize(vec.nr());
@@ -65,7 +65,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
     return;
   } else if constexpr (isd<R, bool, C, double>) {
     if (!(*idxL)) {
-      ass(false, "Variable[FALSE, FALSE] subsetting is not supported. Sorry");
+      ass<"Variable[FALSE, FALSE] subsetting is not supported. Sorry">(false);
       return;
     }
     ind.resize(vec.nr());
@@ -78,7 +78,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
     using DataTypeC = ExtractDataType<C>::RetType;
     if constexpr (is<DataTypeC, bool>) {
       if (!(*idxL)) {
-        ass(false, "Variable[FALSE, FALSE] subsetting is not supported. Sorry");
+        ass<"Variable[FALSE, FALSE] subsetting is not supported. Sorry">(false);
         return;
       }
       std::size_t counter = 0;
@@ -86,7 +86,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
         if ((*idxR)[i])
           counter++;
       }
-      ass(counter > 0, "subset has to have at least one element");
+      ass<"subset has to have at least one element">(counter > 0);
       BaseStore<std::size_t> positions(counter);
       counter = 0;
       std::size_t counter2 = 0;
@@ -110,7 +110,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
       return;
     } else if constexpr (is<DataTypeC, double>) {
       if (!(*idxL)) {
-        ass(false, "Variable[FALSE, FALSE] subsetting is not supported. Sorry");
+        ass<"Variable[FALSE, FALSE] subsetting is not supported. Sorry">(false);
         return;
       }
       std::size_t counter = 0;
@@ -124,7 +124,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
       mp.setMatrix(true, vec.nr(), idxR->size());
     } else if constexpr (is<DataTypeC, int>) {
       if (!(*idxL)) {
-        ass(false, "Variable[FALSE, FALSE] subsetting is not supported. Sorry");
+        ass<"Variable[FALSE, FALSE] subsetting is not supported. Sorry">(false);
         return;
       }
       std::size_t counter = 0;
@@ -145,7 +145,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
   else if constexpr (isd<R, int, C, bool>) {
     std::size_t indexRow = static_cast<std::size_t>(*idxL);
     if (!(*idxR)) {
-      ass(false, "Variable[FALSE, FALSE] subsetting is not supported. Sorry");
+      ass<"Variable[FALSE, FALSE] subsetting is not supported. Sorry">(false);
       return;
     }
     ind.resize(vec.nc());
@@ -170,8 +170,8 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
     if constexpr (is<DataTypeC, bool>) {
       std::size_t indexRow = static_cast<std::size_t>(*idxL);
       std::size_t counter = 0;
-      ass(idxR->size() <= vec.nc(),
-          "Error in matrix: logical subscript too long");
+      ass<"Error in matrix: logical subscript too long">(idxR->size() <=
+                                                         vec.nc());
       for (std::size_t i = 0; i < vec.nc(); i++) {
         if ((*idxR)[i % idxR->size()])
           counter++;
@@ -217,7 +217,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
   else if constexpr (isd<R, double, C, bool>) {
     std::size_t indexRow = convertSize(*idxL);
     if (!(*idxR)) {
-      ass(false, "Variable[FALSE, FALSE] subsetting is not supported. Sorry");
+      ass<"Variable[FALSE, FALSE] subsetting is not supported. Sorry">(false);
       return;
     }
     ind.resize(vec.nc());
@@ -242,8 +242,8 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
     if constexpr (is<DataTypeC, bool>) {
       std::size_t indexRow = convertSize(*idxL);
       std::size_t counter = 0;
-      ass(idxR->size() <= vec.nc(),
-          "Error in matrix: logical subscript too long");
+      ass<"Error in matrix: logical subscript too long">(idxR->size() <=
+                                                         vec.nc());
       for (std::size_t i = 0; i < vec.nc(); i++) {
         if ((*idxR)[i % idxR->size()])
           counter++;
@@ -290,7 +290,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
     using DataTypeR = ExtractDataType<R>::RetType;
     if constexpr (is<DataTypeR, bool>) {
       if (!(*idxR)) {
-        ass(false, "Variable[FALSE, FALSE] subsetting is not supported. Sorry");
+        ass<"Variable[FALSE, FALSE] subsetting is not supported. Sorry">(false);
         return;
       }
       std::size_t counter = 0;
@@ -322,7 +322,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
       return;
     } else if constexpr (is<DataTypeR, int>) {
       if (!(*idxR)) {
-        ass(false, "Variable[FALSE, FALSE] subsetting is not supported. Sorry");
+        ass<"Variable[FALSE, FALSE] subsetting is not supported. Sorry">(false);
         return;
       }
       ind.resize(idxL->size() * vec.nc());
@@ -337,7 +337,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
       return;
     } else if constexpr (is<DataTypeR, double>) {
       if (!(*idxR)) {
-        ass(false, "Variable[FALSE, FALSE] subsetting is not supported. Sorry");
+        ass<"Variable[FALSE, FALSE] subsetting is not supported. Sorry">(false);
         return;
       }
       ind.resize(idxL->size() * vec.nc());
@@ -363,8 +363,8 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
         if ((*idxL)[i % idxL->size()])
           counter++;
       }
-      ass(idxL->size() <= vec.nr(),
-          "Error in matrix: logical subscript too long");
+      ass<"Error in matrix: logical subscript too long">(idxL->size() <=
+                                                         vec.nr());
       BaseStore<int> positions(counter);
       counter = 0;
       std::size_t counter2 = 0;
@@ -409,8 +409,8 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
         if ((*idxL)[i % idxL->size()])
           counter++;
       }
-      ass(idxL->size() <= vec.nr(),
-          "Error in matrix: logical subscript too long");
+      ass<"Error in matrix: logical subscript too long">(idxL->size() <=
+                                                         vec.nr());
       BaseStore<int> positions(counter);
       counter = 0;
       std::size_t counter2 = 0;

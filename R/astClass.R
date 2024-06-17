@@ -30,10 +30,13 @@ astClass <- R6::R6Class("astClass",
       }
     },
     get_calls = function(code) {
-      # TODO: map_if can be replaced using the same mechanism as in printAST.R --> Afterwards remove dependency purrr
-      out <- purrr::map_if(code, is.list, self$get_calls)
-      out <- as.call(out)
-      return(out)
+      for (i in seq_along(code)) {
+        if (is.list(code[[i]])) {
+          code[[i]] <- self$get_calls(code[[i]])
+        }
+      }
+      code <- as.call(code)
+      return(code)
     },
     ast2call = function() {
       for (i in seq_along(self$ast)) {

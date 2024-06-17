@@ -23,7 +23,7 @@ inline SEXP cpp2R(const char *res) { return Rf_mkString(res); }
 inline SEXP cpp2R(const Vec<BaseType> &res) {
   SEXP ret = R_NilValue;
   if (res.im()) {
-    ass(res.size() == res.nr() * res.nc(), "size does not match ncol*nrow");
+    ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc() );
     ret = PROTECT(Rf_allocMatrix(REALSXP, res.nr(), res.nc()));
   } else {
     ret = PROTECT(Rf_allocVector(REALSXP, res.size()));
@@ -39,7 +39,7 @@ template <typename L, typename R> inline SEXP cpp2R(const Vec<L, R> &&res) {
   SEXP ret = R_NilValue;
   if constexpr (std::is_same_v<L, double>) {
     if (res.im()) {
-      ass(res.size() == res.nr() * res.nc(), "size does not match ncol*nrow");
+      ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
       ret = PROTECT(Rf_allocMatrix(REALSXP, res.nr(), res.nc()));
     } else {
       ret = PROTECT(Rf_allocVector(REALSXP, res.size()));
@@ -52,7 +52,7 @@ template <typename L, typename R> inline SEXP cpp2R(const Vec<L, R> &&res) {
   } else if constexpr (std::is_same_v<L, int>) {
     SEXP ret = R_NilValue;
     if (res.im()) {
-      ass(res.size() == res.nr() * res.nc(), "size does not match ncol*nrow");
+      ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
       ret = PROTECT(Rf_allocMatrix(INTSXP, res.nr(), res.nc()));
     } else {
       ret = PROTECT(Rf_allocVector(INTSXP, res.size()));
@@ -65,7 +65,7 @@ template <typename L, typename R> inline SEXP cpp2R(const Vec<L, R> &&res) {
   } else if constexpr (std::is_same_v<L, bool>) {
     SEXP ret = R_NilValue;
     if (res.im()) {
-      ass(res.size() == res.nr() * res.nc(), "size does not match ncol*nrow");
+      ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
       ret = PROTECT(Rf_allocMatrix(LGLSXP, res.nr(), res.nc()));
     } else {
       ret = PROTECT(Rf_allocVector(LGLSXP, res.size()));
@@ -86,7 +86,7 @@ inline SEXP cpp2R(const Vec<L, R, Trait> &res) {
   SEXP ret = R_NilValue;
   if constexpr (std::is_same_v<L, double>) {
     if (res.im()) {
-      ass(res.size() == res.nr() * res.nc(), "size does not match ncol*nrow");
+      ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
       ret = PROTECT(Rf_allocMatrix(REALSXP, res.nr(), res.nc()));
     } else {
       ret = PROTECT(Rf_allocVector(REALSXP, res.size()));
@@ -99,7 +99,7 @@ inline SEXP cpp2R(const Vec<L, R, Trait> &res) {
   } else if constexpr (std::is_same_v<L, int>) {
     SEXP ret = R_NilValue;
     if (res.im()) {
-      ass(res.size() == res.nr() * res.nc(), "size does not match ncol*nrow");
+      ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
       ret = PROTECT(Rf_allocMatrix(INTSXP, res.nr(), res.nc()));
     } else {
       ret = PROTECT(Rf_allocVector(INTSXP, res.size()));
@@ -112,7 +112,7 @@ inline SEXP cpp2R(const Vec<L, R, Trait> &res) {
   } else if constexpr (std::is_same_v<L, bool>) {
     SEXP ret = R_NilValue;
     if (res.im()) {
-      ass(res.size() == res.nr() * res.nc(), "size does not match ncol*nrow");
+      ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
       ret = PROTECT(Rf_allocMatrix(LGLSXP, res.nr(), res.nc()));
     } else {
       ret = PROTECT(Rf_allocVector(LGLSXP, res.size()));

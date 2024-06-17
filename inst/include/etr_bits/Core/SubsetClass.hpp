@@ -60,12 +60,12 @@ template <typename T, typename SubsetTrait> struct Subset {
   void setPtr(const T *pOther) { this->p = pOther; }
 
   CurrentBaseType &operator[](std::size_t pos) {
-    ass(this->p != nullptr, "Subset is pointing to nothing!");
+    ass<"Subset is pointing to nothing!">(this->p != nullptr);
     return this->p->operator[](ind[pos % p->size()]);
   }
 
   CurrentBaseType operator[](std::size_t pos) const {
-    ass(p != nullptr, "Subset is pointing to nothing!");
+    ass<"Subset is pointing to nothing!">(p != nullptr);
     return this->p->operator[](ind[pos % p->size()]);
   }
 
@@ -128,7 +128,7 @@ struct Subset<const T, SubsetTrait> {
   void setPtr(const T *pOther) { this->p = pOther; }
 
   const CurrentBaseType operator[](std::size_t pos) const {
-    ass(p != nullptr, "Subset is pointing to nothing!");
+    ass<"Subset is pointing to nothing!">(p != nullptr);
     return this->p->operator[](ind[pos % p->size()]);
   }
 

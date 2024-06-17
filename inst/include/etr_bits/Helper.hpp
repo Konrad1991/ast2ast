@@ -100,13 +100,13 @@ inline int length(const T &&inp) {
 template <typename T>
   requires std::is_arithmetic_v<T>
 inline auto dim(T inp) {
-  ass(false, "dim can only be called with matrix");
+  ass<"dim can only be called with matrix">(false);
 }
 
 template <typename T>
   requires(IsRVec<T> || IsSubVec<T> || OperationVec<T>)
 inline const auto dim(const T &inp) {
-  ass(inp.im(), "dim can only be called with matrix");
+  ass<"dim can only be called with matrix">(inp.im());
   Vec<int> ret(SI{2});
   ret[0] = inp.nr();
   ret[1] = inp.nc();
@@ -116,7 +116,7 @@ inline const auto dim(const T &inp) {
 template <typename T>
   requires IsVec<T>
 inline const auto dim(T &inp) {
-  ass(inp.im(), "dim can only be called with matrix");
+  ass<"dim can only be called with matrix">(inp.im());
   Vec<int> ret(SI{2});
   ret[0] = inp.nr();
   ret[1] = inp.nc();

@@ -166,7 +166,7 @@ template <typename T, typename R, typename Trait> struct Vec {
     return ret;
   }
   operator Rcpp::NumericMatrix() const {
-    ass(this->im() == true, "Object cannot be converted to NumericMatrix");
+    ass<"Object cannot be converted to NumericMatrix">(this->im() == true);
     Rcpp::NumericMatrix ret(this->nr(), this->nc());
     for (int i = 0; i < ret.size(); i++) {
       ret[i] = d[i];
@@ -181,7 +181,7 @@ template <typename T, typename R, typename Trait> struct Vec {
     return ret;
   }
   operator arma::mat() const {
-    ass(this->im() == true, "Object cannot be converted to arma::mat");
+    ass<"Object cannot be converted to arma::mat">(this->im() == true);
     arma::mat ret(this->nr(), this->nc());
     for (std::size_t i = 0; i < ret.size(); i++) {
       ret[i] = d[i];
