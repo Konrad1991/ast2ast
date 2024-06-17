@@ -76,6 +76,7 @@ astClass <- R6::R6Class("astClass",
         })
       }
 
+      # TODO: borrow ptr and BorrowSEXP is missing
       # NOTE: check for types: db, it, lg, dbs, its, lgs, dvp, ivp, lvp, dmp, imp, lmp
       for (i in seq_along(ret)) {
         l <- as.character(ret[[i]])
