@@ -9,7 +9,7 @@
 
 ## News
 
-*  see more on: https://konrad1991.github.io/ast2ast/index.html
+*  see more on: https://konrad1991.github.io/ast2ast/ 
 * 11-04-2023: version 0.3.1 is now on CRAN
 * I gave a talk at the *useR! 2022* conference about *ast2ast*. The record can be watched using the following link: https://m.youtube.com/watch?v=5NDPOLunQTA&list=PL77T87Q0eoJjvKVFHuJZ5_BGVbPPpB8LL&index=8,
 
@@ -17,7 +17,7 @@
 
 Translates an R function into a C++ function. An external pointer to the C++ function or an R function is returned to the user. To install the Github version of the package use *devtools::install_github("Konrad1991/ast2ast", build_vignettes = TRUE)*. The package is also on CRAN and can be installed via *install.packages("ast2ast")*. 
 
-The motivation to write the package was that it is often cumbersome using R functions in applications which have to call the R function very often (> 100 calls) (e.g. ODE solving, Optimization). One possiblity is to write the function in a faster programming language e.g. C. However, learning languages such as C is difficult and time consuming. Therefore *ast2ast* is a decent alternative as the function can be written in R.    
+The motivation to write the package was that it is often cumbersome using R functions in applications which have to call the R function very often (> 100 calls) (e.g. ODE solving, Optimization). One possiblity is to write the function in a faster programming language e.g. C. However, learning languages such as C is difficult and time consuming. Therefore *ast2ast* is a decent alternative as the function can be written in R.
 
 As an example solving a simple ODE-System. The translated code is considerable faster then R code and almost as fast as C++. Code for the example can be found in the vignettes.
 
