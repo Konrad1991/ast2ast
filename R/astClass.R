@@ -11,6 +11,8 @@ astClass <- R6::R6Class("astClass",
     var_types = c(),
     var_index = c(),
     return_TF = c(),
+    variable_type_pairs = list(),
+    return_variables = list(),
     R_fct = NULL,
     initialize = function(fct, name_f, R_fct) {
       self$args <- methods::formalArgs(fct)
@@ -26,6 +28,8 @@ astClass <- R6::R6Class("astClass",
         self$var_all <- c(self$var_all, temp$vars)
         self$var_index <- c(self$var_index, temp$index_vars)
         self$return_TF <- c(self$return_TF, temp$found_return)
+        self$variable_type_pairs[[length(self$variable_type_pairs) + 1]] <- temp$variable_type_pair
+        self$return_variables[[length(self$return_variables) + 1]] <- temp$return_variable
         if (any(self$return_TF == TRUE)) self$return_TF <- TRUE else self$return_TF <- FALSE
       }
     },
@@ -193,6 +197,12 @@ astClass <- R6::R6Class("astClass",
       ret <- temp1[!is.na(temp1)]
       self$identify_type(ret)
       return(ret)
+    },
+    get_variable_type_pairs = function() {
+      return(self$variable_type_pairs)
+    },
+    get_return_variable = function() {
+      return(self$return_variables)
     }
   )
 )

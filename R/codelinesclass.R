@@ -38,6 +38,8 @@ LC <- R6::R6Class("LC",
     math = math_fcts(),
     check_assign_subset = NULL,
     found_return = FALSE,
+    variable_type_pair = NULL,
+    return_variable = NULL,
     extractast = function(sexp) {
       if (is.null(sexp)) {
         stop("Found empty function")
@@ -64,6 +66,7 @@ LC <- R6::R6Class("LC",
         p <- assign$new(sexp, self$namespace_etr)
         sexp <- p$convert(self$PF)
         self$vars <- c(self$vars, p$get_var_names())
+        self$variable_type_pair <- p$variable_type_pair
       } else if ((deparse(fct) %in% self$generic_fct)) {
         self$check_assign_subset <- FALSE
         p <- generic$new(sexp, self$namespace_etr)
@@ -72,6 +75,11 @@ LC <- R6::R6Class("LC",
         p <- retur$new(sexp, self$namespace_etr, self$R_fct)
         sexp <- p$convert(self$PF)
         self$found_return <- TRUE
+        if (length(sexp) == 2) {
+          self$return_variable <- sexp[[2]]
+        } else if (length(sexp) == 1) {
+          self$return_variable <- NULL
+        }
       } else if (as.name("[") == fct) {
         p <- subset$new(sexp, self$check_assign_subset, self$namespace_etr)
         sexp <- p$convert(self$PF)

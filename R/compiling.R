@@ -19,13 +19,13 @@
 
 
 #' @importFrom Rcpp sourceCpp
-compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type, name_f, getsource) {
-  a <- NULL
+compiler_a2a <- function(f, verbose, reference, R_fct,
+                         types_of_args, return_type, name_f, getsource) {
   fct <- NULL
   fct_ret <- NULL
 
   if (R_fct == FALSE) {
-    fct <- build_fct_xptr(f, reference, desired_type, return_type, name_f) # issue: reference == borrow has to be documented
+    fct <- build_fct_xptr(f, reference, types_of_args, return_type, name_f)
     if (getsource == TRUE) {
       return(fct)
     }
@@ -50,14 +50,12 @@ compiler_a2a <- function(f, verbose, reference, R_fct, desired_type, return_type
       return(fct)
     }
 
-    res <- NULL
     # -fsanitize=alignment,bool,bounds,builtin,enum,integer-divide-by-zero,
     # nonnull-attribute,null,object-size,pointer-overflow,return,
     # returns-nonnull-attribute,shift,signed-integer-overflow,
     # unreachable,vla-bound,vptr
     # Sys.setenv("PKG_CXXFLAGS" = "-DRFCT -Wall -Wpedantic")
     # -fsanitize=address --param=max-vartrack-size=9000000 -fno-omit-frame-pointer
-
 
     tryCatch(
       expr = {

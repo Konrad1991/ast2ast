@@ -79,9 +79,6 @@ This is in strong contrast to the usual behaviour of R functions. Please only us
     }
   }
 
-  # TODO: further checks: brackets, lambda function, empty if-else
-
-  # TODO: add brackets if not found. Are they added? check
   if (body(f)[[1]] != as.name("{")) {
     body(f) <- substitute(
       {
@@ -91,25 +88,12 @@ This is in strong contrast to the usual behaviour of R functions. Please only us
     )
   }
 
-  # add name for lambda functions
   if (is.name(substitute(f))) {
     name_f <- as.character(substitute(f))
   } else {
     name_f <- "lambda_fcn"
   }
 
-  # TODO: add `return` keyword if not found (using last evaluated expr)
-  # f_b_last <- body(f)[[length(body(f))]]
-  # if (is.numeric(f_b_last) ||
-  #  is.integer(f_b_last) || is.name(f_b_last) || (
-  #  is.call(f_b_last) &&
-  #    f_b_last[[1]] != as.name("return") &&
-  #    f_b_last[[1]] != as.name("<-") &&
-  #    f_b_last[[1]] != as.name("=")
-  # )) {
-  #  f_b_last <- substitute(return(c), list(c = f_b_last))
-  #  body(f)[length(body(f))][[1]] <- f_b_last
-  # }
   fct_ret <- compiler_a2a(
     f, verbose, reference,
     R_fct, types_of_args, return_type, name_f,

@@ -1,9 +1,15 @@
-f <- function(a) {
-  b <- (1:10)[1:3]
+f <- function(b) {
+  b::double <- 1
+  b <- 2
+  b::int <- 1
+  a <- 3.14
+  return(a)
+  return(12)
+  return(b + 2)
+  return()
 }
 
 fcpp <- ast2ast::translate(f,
-  verbose = TRUE, reference = TRUE
+  verbose = TRUE, reference = FALSE
 )
-a <- runif(10)
-fcpp(a)
+fcpp(1)

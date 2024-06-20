@@ -24,6 +24,7 @@ PC <- R6::R6Class("PC",
     name_fct = NULL,
     arguments = list(),
     namespace_etr = NULL,
+    variable_type_pair = NULL,
     initialize = function(node, namespace_etr) {
       self$name_fct <- node[[1]]
       self$arguments <- node[2:length(node)]
@@ -243,6 +244,13 @@ assign <- R6::R6Class("assign",
       self$oaf(var)
       self$change_code()
 
+      if (is.language(self$arguments[[1]])) {
+        temp <- as.list(self$arguments[[1]])
+        if (deparse(temp[[1]]) == "::") {
+          self$arguments[[1]] <- temp[[2]]
+          self$variable_type_pair <- c(temp[[2]], temp[[3]])
+        }
+      }
       ret <- list()
       if (deparse(self$name_fct) %in% self$namespace_etr) {
         ret[[1]] <- as.name(paste0("etr::", self$name_fct))
@@ -268,7 +276,12 @@ retur <- R6::R6Class("retur",
     initialize = function(node, namespace_etr, R_fct) {
       self$R_fct <- R_fct
       self$name_fct <- node[[1]]
-      self$arguments <- node[2:length(node)]
+      if (length(node) == 2) {
+        self$arguments <- node[2:length(node)]
+      } else {
+        self$arguments <- as.name("R_NilValue")
+      }
+
       self$namespace_etr <- namespace_etr
     },
     change_code = function() {
@@ -289,12 +302,7 @@ retur <- R6::R6Class("retur",
       }
 
       if (self$R_fct) {
-        if (is.character(self$arguments[[1]]) && length(self$arguments) == 1) {
-          self$arguments <- paste0("\"", self$arguments, "\"")
-          self$arguments <- str2lang(paste("cpp2R(", self$arguments, ")", collapse = ""))
-        } else {
-          self$arguments <- str2lang(paste("cpp2R(", self$arguments, ")", collapse = ""))
-        }
+        self$arguments <- str2lang(paste("cpp2R(", self$arguments, ")", collapse = ""))
         ret <- c(ret, self$arguments)
         return(ret)
       } else {
