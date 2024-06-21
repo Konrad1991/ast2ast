@@ -7,9 +7,7 @@ $ cat .git/info/exclude
 *.Rbuildignore
 *.html
 
-doc
 Meta
-/doc/
 /Meta/
 /vignettes/InformationForPackageAuthors_cache/
 .Rproj.user

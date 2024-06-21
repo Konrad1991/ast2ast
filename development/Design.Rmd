@@ -1,0 +1,209 @@
+---
+title: "Design"
+output: html_document
+date: "2024-06-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+library(gt)
+library(dplyr)
+library(tidyr)
+```
+
+
+```{r design, echo = FALSE}
+df <- data.frame(
+  category = c(
+    rep("Basic Types", 6),
+    rep("data structures", 5),
+    rep("Passing objects", 2),
+    rep("copy or borrow", 2)
+  ),
+  RFct = c(
+    "logical", "integer", "double", NA, NA, NA,
+    "scalar", "vector", NA, NA, NA,
+    "copy", NA,
+    "copy", "borrow"
+  ),
+  XPtr = c(
+    "logical", "integer", "double", "const logical", "const integer", "const double",
+    "scalar", "vector", "borrow", "ptr vector", "ptr matrix",
+    "copy", "reference",
+    "copy", "borrow"
+  )
+)
+
+gt_table <- df %>%
+  gt() %>%
+  tab_header(
+    title = "Comparison of RFct and XPtr",
+    subtitle = "Design overview"
+  ) %>%
+  sub_missing(
+    columns = everything(),
+    missing_text = "N/A"
+  ) %>%
+  cols_label(
+    category = "Category",
+    RFct = "RFct",
+    XPtr = "XPtr"
+  ) %>%
+  tab_row_group(
+    label = "Basic Types",
+    rows = 1:6
+  ) %>%
+  tab_row_group(
+    label = "Data Structures",
+    rows = 7:11
+  ) %>%
+  tab_row_group(
+    label = "Passing objects",
+    rows = 12:13
+  ) %>%
+  tab_row_group(
+    label = "copy or borrow",
+    rows = 14:15
+  ) %>%
+  tab_style(
+    style = cell_fill(color = "lightgreen"),
+    locations = cells_row_groups(groups = c("Basic Types", "Passing objects"))
+  ) %>%
+  tab_style(
+    style = cell_fill(color = "bisque"),
+    locations = cells_row_groups(groups = c("Data Structures", "copy or borrow"))
+  ) %>%
+  row_group_order(groups = c("Basic Types", "Data Structures", "Passing objects")) %>%
+  opt_row_striping() %>%
+  cols_hide(columns = c(category))
+
+gt_table
+```
+
+
+
+```{r, echo = FALSE}
+df <- data.frame(
+  category = c(
+    rep("Basic Types", 6),
+    rep("data structures", 5),
+    rep("Passing objects", 2),
+    rep("what to do with input", 2)
+  ),
+  RFct = c(
+    "logical", "integer", "double", NA, NA, NA,
+    "scalar", "vector", NA, NA, NA,
+    "copy", NA,
+    "copy", "borrow"
+  ),
+  XPtr = c(
+    "logical", "integer", "double", "const logical", "const integer", "const double",
+    "scalar", "vector", "borrow", "ptr vector", "ptr matrix",
+    "copy", "reference",
+    NA, "borrow"
+  )
+)
+
+df_split <- split(df, df$category)
+df_split <- lapply(df_split, function(x) {
+  RFct <- x$RFct
+  RFct <- paste(RFct[!is.na(RFct)], collapse = ", ")
+  XPtr <- x$XPtr
+  XPtr <- paste(XPtr[!is.na(XPtr)], collapse = ", ")
+  category <- unique(x$category)
+  df <- data.frame(c("RFct", "XPtr"), c(RFct, XPtr))
+  names(df) <- c("Types", category)
+  df
+})
+combine <- function(a, b) {
+  df <- cbind(a, b[, 2])
+  names(df) <- c(names(a), names(b)[2])
+  df
+}
+df_t <- Reduce(combine, df_split)
+
+gt_table <- gt(df_t) %>%
+  tab_style(
+    style = list(
+      cell_fill(color = "lightblue")
+    ),
+    locations = cells_body(columns = vars(`Basic Types`))
+  ) %>%
+  tab_style(
+    style = list(
+      cell_fill(color = "lightgreen")
+    ),
+    locations = cells_body(columns = vars(`data structures`))
+  ) %>%
+  tab_style(
+    style = list(
+      cell_fill(color = "lightcoral")
+    ),
+    locations = cells_body(columns = vars(`Passing objects`))
+  ) %>%
+  tab_style(
+    style = list(
+      cell_fill(color = "lightyellow")
+    ),
+    locations = cells_body(columns = vars(`what to do with input`))
+  )
+gt_table
+```
+
+
+```{cpp, eval = FALSE, echo = TRUE}
+
+// Return type either void or SEXP
+auto f(bool boolScal, int intScal, double doubleScal,
+      SEXP boolVec, SEXP intVec, SEXP doubleVec) {
+  Vec<bool> bVec; bVec = boolVec;
+  Vec<int> iVec; iVec = intVec;
+  Vec<double> dVec; dVec = doubleVec;
+  Vec<bool, Borrow<bool>> bBorrow; bBorrow = boolVec;
+  Vec<int, Borrow<int>> iBorrow; iBorrow = intVec;
+  Vec<double, Borrow<double>> dBorrow; dBorrow = doubleVec;
+}
+```
+
+```{cpp, eval = FALSE, echo = TRUE}
+
+auto f(bool boolScal, int intScal, double doubleScal,
+       bool& boolScalRef, int& intScalRef, double& doubleScalRef,
+       const bool boolScalConst, const int intScalConst, const double doubleScalConst,
+       const bool& boolScalRefConst, const int& intScalRefConst, const double& doubleScalRefConst,
+       Vec<bool> boolVec, Vec<int> intVec, Vec<double> doubleVec,
+       Vec<bool>& boolVecRef, Vec<int>& intVecRef, Vec<double>& doubleVecRef,
+       Vec<const bool> boolVecConst, Vec<const int> intVecConst, Vec<const double> doubleVecConst,
+       Vec<const bool>& boolVecRefConst, Vec<const int>& intVecRefConst, Vec<const double>& doubleVecRefConst,
+       Vec<bool, Borrow<bool>> boolBorrow, Vec<int, Borrow<int>> intBorrow, Vec<double, Borrow<double>> doubleBorrow,
+       Vec<bool, Borrow<bool>>& boolBorrowRef, Vec<int, Borrow<int>>& intBorrowRef, Vec<double, Borrow<double>>& doubleBorrowRef,
+       Vec<const bool, Borrow<const bool>> boolBorrowConst, Vec<const int, Borrow<const int>> intBorrowConst, Vec<const double, Borrow<const double>> doubleBorrowConst,
+       Vec<const bool, Borrow<const bool>>& boolBorrowRefConst, Vec<const int, Borrow<const int>>& intBorrowRefConst, Vec<const double, Borrow<const double>>& doubleBorrowRefConst,
+       bool* bPtr, int bPtrSize, const bool* bPtrConst, int bPtrConstSize,
+       int * iPtr, int iPtrSize, const int* iPtrConst, int iPtrConstSize,
+       double* dPtr, int dPtrSize, const double* dPtrConst, int dPtrConstSize,
+       bool* bPtrMat, int bPtrMatRows, int bPtrMatCols, const bool* bPtrMatConst, int bPtrMatConstRows, int bPtrMatConstCols, 
+       int * iPtrMat, int iPtrMatRows, int iPtrMatCols, const int* iPtrMatConst, int iPtrMatConstRows, int iPtrMatConstCols, 
+       double* dPtrMat, int dPtrMatRows, int dPtrMatCols, const double* dPtrMatConst, int dPtrMatConstRows, int dPtrMatConstCols 
+       ) {
+
+  // ptr have to be either copied into Vec<T> or Borrowed using Vec<T, Borrow<T>>
+  // The remaining types can be borrowed although it only makes sense if the parameters are passed by reference
+  // A Vec<T, Borrow<T>> should not be borrowed. It would work but it does not make sense
+}
+
+
+```
+
+
+
+```{r, eval = FALSE, echo = TRUE}
+
+translate <- function()
+
+```
+
+
+
+
+
