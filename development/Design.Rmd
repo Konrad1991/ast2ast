@@ -199,7 +199,9 @@ auto f(bool boolScal, int intScal, double doubleScal,
 
 ```{r, eval = FALSE, echo = TRUE}
 
-translate <- function()
+translate <- function(f, output = "R",
+                      types_of_args = "SEXP", return_type = "SEXP",
+                      reference = FALSE, verbose = FALSE, getsource = FALSE)
 
 ```
 
