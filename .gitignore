@@ -5,7 +5,6 @@ $ cat .git/info/exclude
 *.so
 *.Rhistory
 *.Rbuildignore
-*.html
 
 Meta
 /Meta/
