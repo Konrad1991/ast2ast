@@ -270,6 +270,7 @@ assign <- R6::R6Class("assign",
 
 #' @import R6
 retur <- R6::R6Class("retur",
+  # TODO: also wrap args in XPtr in e.g. convert. For example a subset should be copied before returned
   inherit = PC,
   public = list(
     R_fct = NULL,

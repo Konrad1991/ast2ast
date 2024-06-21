@@ -198,11 +198,23 @@ auto f(bool boolScal, int intScal, double doubleScal,
 
 
 ```{r, eval = FALSE, echo = TRUE}
+translate <- function(f,
+                      output = "R",
+                      # "XPtr"
+                      types_of_args = "double",
+                      # logical, int, double & for XPtr additionally: const logical, const int, const double
+                      data_structures = "vector",
+                      # scalar, vector & for XPtr additionally: borrow, ptr_vector, ptr_matrix
+                      reference = FALSE,
+                      # can be set to TRUE for XPtr
+                      handle_input = "copy",
+                      # for R can be borrow or copy & for XPtr it can be NULL and borrow
+                      return_type = "SEXP",
+                      # can be SEXP for R & for XPtr: maybe just use auto
+                      verbose = FALSE,
+                      getsource = FALSE) {
 
-translate <- function(f, output = "R",
-                      types_of_args = "SEXP", return_type = "SEXP",
-                      reference = FALSE, verbose = FALSE, getsource = FALSE)
-
+}
 ```
 
 

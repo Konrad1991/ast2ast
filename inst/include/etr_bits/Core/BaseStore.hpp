@@ -284,6 +284,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
     return p[idx];
   }
 
+  // TODO: check with static_asssert that this is never called for const T
   RetType &operator[](std::size_t idx) {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries --> value below 1">(idx >= 0);
