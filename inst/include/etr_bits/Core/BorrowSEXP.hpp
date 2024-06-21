@@ -1,6 +1,7 @@
 #ifndef BORROWSEXP_ETR_H
 #define BORROWSEXP_ETR_H
 
+// TODO: move SEXP stuff to Borrow and remove BorrowSEXP
 namespace etr {
 #ifdef STANDALONE_ETR
 #else
