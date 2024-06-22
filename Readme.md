@@ -9,7 +9,7 @@
 
 ## News
 
-*  see more on: https://konrad1991.github.io/ast2ast/ 
+* see more on: https://konrad1991.github.io/ast2ast/ 
 * 11-04-2023: version 0.3.1 is now on CRAN
 * I gave a talk at the *useR! 2022* conference about *ast2ast*. The record can be watched using the following link: https://m.youtube.com/watch?v=5NDPOLunQTA&list=PL77T87Q0eoJjvKVFHuJZ5_BGVbPPpB8LL&index=8,
 
@@ -25,9 +25,9 @@ As an example solving a simple ODE-System. The translated code is considerable f
 
 ## Documentation:
 
-See the documentation of the function *translate* to see how to use *ast2ast*: [Function translate](translate.pdf).
-If you want to get more details check: [Detailed Documentation ](DetailedDocumentation.pdf). 
-In case you want to use *ast2ast* in other packages, or you are intersted how *ast2ast* works internally, see [Information for package authors](InformationForPackageAuthors.pdf).
+Documentation for the function [J](https://konrad1991.github.io/ast2ast/J.html) and [translate](https://konrad1991.github.io/ast2ast/translate.html).
+If you want a detailed documentation please read this vignette: https://konrad1991.github.io/ast2ast/DetailedDocumentation.html
+In case you are interested on using ast2ast in your R package please refer to: https://konrad1991.github.io/ast2ast/InformationForPackageAuthors.html
 
 ## Contribution
 
