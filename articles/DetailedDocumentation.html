@@ -209,24 +209,12 @@ function without copying it.</li>
 <span>  <span class="va">variable</span> <span class="op">&lt;-</span> <span class="fl">1</span></span>
 <span><span class="op">}</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Konrad1991/ast2ast" class="external-link">ast2ast</a></span><span class="op">)</span></span>
-<span><span class="va">fetr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## list()</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## list()</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## [[1]]</span></span>
-<span><span class="co">## variable</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## [1] "variable"</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## list()</span></span></code></pre>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span><span class="va">fetr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/translate.html">translate</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span>
+<span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
 <span><span class="va">return_value</span> <span class="op">&lt;-</span> <span class="fu">fetr</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 10</span></span></code></pre>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">return_value</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## NULL</span></span></code></pre>
 <p><strong>Caveats:</strong></p>
@@ -264,7 +252,7 @@ and the size e.g. <em>vector(other_vector, size)</em>. The
 function. However, instead of the size, two arguments are needed the
 number of rows and the number of columns.</p>
 <p><strong>Example 2</strong></p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">a</span> <span class="op">&lt;-</span> <span class="fl">1</span></span>
 <span>  <span class="va">a_db</span> <span class="op">&lt;-</span> <span class="fl">3.14</span></span>
@@ -316,7 +304,7 @@ number of rows and the number of columns.</p>
 <p>As usual in R it is possible to use basic arithmetic operations on
 scalars, vectors and matrices (<strong>Example 3</strong>).</p>
 <p><strong>Example 3</strong></p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">a</span> <span class="op">&lt;-</span> <span class="fl">2</span></span>
 <span>  <span class="va">b</span> <span class="op">&lt;-</span> <span class="fl">3</span></span>
@@ -415,7 +403,7 @@ works faster. The result of <em>at</em> cannot be subsetted further. The
 <em>at</em> function returns the numeric type which is used when a
 variable is declared with the extension <em>_db</em>.</p>
 <p><strong>Example 4</strong></p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="st">"pass nothing"</span><span class="op">)</span></span>
 <span>  <span class="va">a</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fl">8</span></span>
@@ -549,7 +537,7 @@ returns a vector with the elements 1.1, 2.1, 3.1, 4.1 and 5.1. See
 <strong>Example 5</strong> in order to see how the functions can be
 applied.</p>
 <p><strong>Example 5</strong></p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">a</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fl">4</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span></span>
@@ -581,7 +569,7 @@ following options (<strong>Example 6</strong>):</p>
 <li>&gt;</li>
 </ul>
 <p><strong>Example 6</strong></p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">a</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fl">4</span></span>
 <span>  <span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">5</span><span class="op">)</span></span>
@@ -610,7 +598,7 @@ for(index in 1:length(variable){<br>
 # do whatever<br>
 }<br></p>
 <p><strong>Example 7</strong></p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">a</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fl">4</span></span>
 <span>  <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="va">a</span><span class="op">)</span> <span class="op">{</span></span>
@@ -669,7 +657,7 @@ for(index in 1:length(variable){<br>
 <em>1/rate</em>)</li>
 </ul>
 <p><strong>Example 8</strong></p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">a</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fl">4</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span><span class="op">)</span></span>
@@ -698,7 +686,7 @@ four.</li>
 variable (y). This has to be a vector of at least length four.</li>
 </ul>
 <p><strong>Example 9</strong></p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">dep</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0.5</span>, <span class="fl">2.5</span>, <span class="fl">3.5</span>, <span class="fl">4.5</span>, <span class="fl">4</span><span class="op">)</span></span>
 <span>  <span class="va">indep</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fl">7</span></span>
