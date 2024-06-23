@@ -1,4 +1,4 @@
-f <- function(b) {
+f <- function(i1, i2) {
   b::double <- 1
   b <- 2
   b::int <- 1
@@ -10,6 +10,6 @@ f <- function(b) {
 }
 
 fcpp <- ast2ast::translate(f,
-  verbose = TRUE, reference = FALSE
+  verbose = TRUE, types_of_args = c("double", "bla")
 )
 fcpp(1)
