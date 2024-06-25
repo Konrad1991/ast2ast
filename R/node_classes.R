@@ -125,9 +125,10 @@ PC <- R6::R6Class("PC",
       indices <- ret %in% na_inf
       ret <- ret[indices == FALSE]
 
-      # not allowed "etr" & "i2d"
-      ei <- c("etr", "i2d")
-      indices <- ret %in% ei
+      # NOTE: not allowed variable names
+      # TODO: add check for not allowed variable names
+      na <- c("etr", "true", "false")
+      indices <- ret %in% na
       ret <- ret[indices == FALSE]
 
       return(ret)
@@ -270,7 +271,6 @@ assign <- R6::R6Class("assign",
 
 #' @import R6
 retur <- R6::R6Class("retur",
-  # TODO: also wrap args in XPtr in e.g. convert. For example a subset should be copied before returned
   inherit = PC,
   public = list(
     R_fct = NULL,
@@ -280,7 +280,9 @@ retur <- R6::R6Class("retur",
       if (length(node) == 2) {
         self$arguments <- node[2:length(node)]
       } else {
-        self$arguments <- as.name("R_NilValue")
+        if (R_fct) {
+          self$arguments <- as.name("R_NilValue")
+        }
       }
 
       self$namespace_etr <- namespace_etr
@@ -303,7 +305,9 @@ retur <- R6::R6Class("retur",
       }
 
       if (self$R_fct) {
-        self$arguments <- str2lang(paste("cpp2R(", self$arguments, ")", collapse = ""))
+        self$arguments <- str2lang(
+          paste("cpp2R(", self$arguments, ")", collapse = "")
+        )
         ret <- c(ret, self$arguments)
         return(ret)
       } else {

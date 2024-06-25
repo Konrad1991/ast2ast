@@ -116,7 +116,7 @@ build_body <- function(body_content) {
   paste(unlist(b), collapse = "")
 }
 
-build_fct_r <- function(fct, name_fct, reference, return_type) {
+build_fct_r <- function(fct, name_fct, references, return_type) {
   ac <- astClass$new(fct, name_fct, R_fct = TRUE)
   ac$getast()
   ac$ast2call()
@@ -134,7 +134,7 @@ build_fct_r <- function(fct, name_fct, reference, return_type) {
   # cat("\n")
   # print(ac$return_variables)
   sig <- signature_r(ac$args, name_fct, ac$var_all, ac$args_types, return_type)
-  hs <- handle_sexp(ac$args, sig[[2]], ac$args_types, reference)
+  hs <- handle_sexp(ac$args, sig[[2]], ac$args_types, references)
   if (!ac$return_TF) {
     ac$char <- c(ac$char, "\n", "return(R_NilValue); \n")
   }
