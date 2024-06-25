@@ -1,4 +1,6 @@
-declare_vars <- function(variable_type_pairs, fct_args,
-                         handle_args, r_fct) {
-
+declare_vars <- function(variable_type_list) {
+  res <- sapply(variable_type_list, function(x) {
+    cString("\t", x$type, " ", x$name, ";\n", "")@value
+  })
+  cString(res, "")@value
 }
