@@ -1,4 +1,4 @@
-length_checking <- function(toa, doa, hoa, roa) {
+length_checking <- function(toa, doa, hoa, roa, output) {
   stopifnot(
     "number of type of arguments
     and data structures of arguments do not match" =
@@ -9,11 +9,13 @@ length_checking <- function(toa, doa, hoa, roa) {
     and data structures of arguments do not match" =
       length(doa) == length(hoa)
   )
-  stopifnot(
-    "number of handle arguments
+  if (output == "XPtr") {
+    stopifnot(
+      "number of handle arguments
     and references of arguments do not match" =
-      length(hoa) == length(roa)
-  )
+        length(hoa) == length(roa)
+    )
+  }
 }
 
 
@@ -67,7 +69,7 @@ allowed_structures <- function(output) {
   }
 }
 
-check_data_structures <- function(f, doa, output) {
+check_data_structures <- function(f, doa, hoa, roa, output) {
   stopifnot(is.character(doa))
   args <- methods::formalArgs(f)
   if (length(args) == 0) {
@@ -90,6 +92,19 @@ check_data_structures <- function(f, doa, output) {
       stop(paste("Unallowed data structure of arguments found: ", x))
     }
   })
+  Map(function(a, b, c) {
+    if (b == "borrow") {
+      stopifnot(
+        "It is only possible to borrow from a vector" =
+          a == "vector"
+      )
+      stopifnot(
+        "It does not make sense to borrow from a \n
+        variable which is not passed by reference" =
+          c || (output == "R")
+      )
+    }
+  }, doa, hoa, roa)
   return(doa)
 }
 

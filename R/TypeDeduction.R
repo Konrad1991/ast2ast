@@ -1,4 +1,4 @@
-deduce_types <- function(variable_pair_list, all_vars) {
+deduce_types <- function(variable_pair_list, all_vars, args) {
   l <- lapply(variable_pair_list, function(x) {
     temp <- unlist(x)
     list(name = deparse(temp[[1]]), type = deparse(temp[[2]]))
@@ -6,6 +6,7 @@ deduce_types <- function(variable_pair_list, all_vars) {
   names <- sapply(l, function(x) x[[1]])
   all_names <- sapply(all_vars, deparse)
   not_defined <- all_names[!(all_names %in% names)]
+  not_defined <- not_defined[!(not_defined) %in% args]
   for (i in seq_along(not_defined)) {
     l[[length(l) + 1]] <-
       list(name = not_defined[[i]], type = "etr::Vec<double>")

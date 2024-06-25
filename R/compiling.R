@@ -19,17 +19,11 @@
 
 
 #' @importFrom Rcpp sourceCpp
-compiler_a2a <- function(f, verbose, reference, R_fct,
-                         types_of_args, return_type, name_f, getsource) {
-  fct <- NULL
+compiler_a2a <- function(fct_code, R_fct, verbose, name_f) {
+  fct <- fct_code
   fct_ret <- NULL
 
-  if (R_fct == FALSE) {
-    fct <- build_fct_xptr(f, reference, types_of_args, return_type, name_f)
-    if (getsource == TRUE) {
-      return(fct)
-    }
-
+  if (!R_fct) {
     tryCatch(
       expr = {
         if (verbose == TRUE) {
@@ -45,11 +39,6 @@ compiler_a2a <- function(f, verbose, reference, R_fct,
       }
     )
   } else {
-    fct <- build_fct_r(f, name_f, reference, return_type)
-    if (getsource == TRUE) {
-      return(fct)
-    }
-
     # -fsanitize=alignment,bool,bounds,builtin,enum,integer-divide-by-zero,
     # nonnull-attribute,null,object-size,pointer-overflow,return,
     # returns-nonnull-attribute,shift,signed-integer-overflow,
