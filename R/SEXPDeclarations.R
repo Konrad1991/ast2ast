@@ -2,7 +2,7 @@ sexp_declarations <- function(args, handle_args,
                               data_types_of_args,
                               all_vars) {
   names <- lapply(args, function(x) {
-    generate_new_name(x, "Borrow", "_", all_vars)@value
+    generate_new_name(x, "SEXP", "", all_vars)@value
   })
   types_of_var <- Map(function(a, b) {
     if (a == "borrow") {
