@@ -5,7 +5,7 @@
 namespace etr {
 // Points to a Variable and stores size
 template <typename T, typename BorrowTrait> struct Borrow {
-  using RetType = BaseType;
+  using RetType = T;
   using Type = T;
   using TypeTrait = BorrowTrait;
   using CaseTrait = BorrowTrait;

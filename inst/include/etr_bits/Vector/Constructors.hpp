@@ -130,7 +130,8 @@ Vec(const Vec<T2, R2, Trait2> &&other_vec) {
   using TypeTrait = Trait2;
   using CaseTrait = Trait2;
   if constexpr (isBorrow::value) {
-    ass<"Sizes do not match">(d.sz <= other_vec.size());
+    ass<"Sizes do not match">(d.sz <=
+                              other_vec.size()); // FIX: is this correct?
     d.sz = other_vec.size();
     for (std::size_t i = 0; i < d.size(); i++) {
       d[i] = other_vec[i];
@@ -213,7 +214,7 @@ Vec(Vec<T2, R2, Trait2> &&other_vec) {
 }
 
 // NOTE: pointer constructor
-Vec(BaseType *ptr, std::size_t size) : d(size) {
+Vec(T *ptr, std::size_t size) : d(size) {
   if constexpr (isBorrow::value) {
     d.init(ptr, size);
   } else if constexpr (isBuffer::value) {

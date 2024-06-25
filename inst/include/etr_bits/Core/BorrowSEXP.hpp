@@ -7,7 +7,7 @@ namespace etr {
 #else
 // Points to a SEXP and stores size
 template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
-  using RetType = BaseType;
+  using RetType = T;
   using Type = T;
   using TypeTrait = BorrowSEXPSEXPTrait;
   using CaseTrait = BorrowSEXPSEXPTrait;
