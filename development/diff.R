@@ -1,5 +1,5 @@
 library(ast2ast)
 
-f <- function(x) x * x
+f <- function(x) y * x
 
 ast2ast:::d(f, x)

@@ -104,6 +104,7 @@ Vec &operator=(const TD inp) {
 }
 
 Vec &operator=(const Vec<T, R, Trait> &otherVec) {
+
   static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
   static_assert(!isBinaryOP::value, "Cannot assign to binary calculation");
   static_assert(!isRVec::value,
@@ -190,6 +191,7 @@ template <typename T2, typename R2, typename Trait2>
   requires(IsRVec<const Vec<T2, R2, Trait2>> && std::is_same_v<T, T2> &&
            isBuffer::value)
 Vec &operator=(Vec<T2, R2, Trait2> &&otherVec) {
+
   static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
   static_assert(!isBinaryOP::value, "Cannot assign to binary calculation");
   static_assert(!isRVec::value,

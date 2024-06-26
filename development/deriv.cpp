@@ -23,12 +23,18 @@ int main() {
   print(x);
   print();
 
-  assign_deriv(subset_deriv(y, 2),
-               get_deriv(subset_deriv(x, 3)) * x(3) +
-               get_deriv(subset_deriv(x, 3)) * x(3));
-  y(2) = x(3) * x(3); 
-  // y = x*x = 1, 9, 9
-  // dy/dx = get_deriv(x) * x + x * get_deriv(x) = 1, 4, 9
+  // dy/dx = get_deriv(y) * x + y * get_deriv(x) =
+  //         6 * 3 + 9 * 1 = 27
+  std::cout << &y.deriv<< std::endl;
+  auto s = subset_deriv(y, 2);
+    std::cout << &s.d<< std::endl;
+
+  assign_deriv(s,
+               get_deriv(subset_deriv(y, 3)) * x(3) + 
+               y(3) * get_deriv(subset_deriv(x, 3)));
+  // y(2) = y(3) * x(3) = 1, 27 
+  y(2) = x(3)*y(3) + 1.1;
+
   print(get_deriv(x));
   print(get_deriv(y));
   print(y);
