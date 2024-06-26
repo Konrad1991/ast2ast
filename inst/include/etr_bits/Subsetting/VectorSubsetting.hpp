@@ -88,6 +88,26 @@ inline auto subset(V &&vec, I &&idx) {
       std::move(sub));
 }
 
+template <typename V, typename I>
+  requires IsVec<V>
+inline auto subset_deriv(V &vec, I &&idx) {
+  using DataType = typename ExtractDataType<V>::RetType;
+  Subset<decltype(convert(vec).deriv), SubsetTrait> sub(vec, true);
+  calcIndVector(vec, sub.ind, &idx);
+  return Vec<DataType, decltype(convertSubset(vec)), SubVecTrait>(
+      std::move(sub));
+}
+
+template <typename V, typename I>
+  requires(IsRVec<V> || IsSubVec<V> || OperationVec<V>)
+inline auto subset_deriv(V &&vec, I &&idx) {
+  using DataType = typename ExtractDataType<V>::RetType;
+  Subset<const decltype(convert(vec).deriv), SubsetTrait> sub(vec, true);
+  calcIndVector(vec, sub.ind, &idx);
+  return Vec<DataType, decltype(convertSubsetConst(vec)), SubVecTrait>(
+      std::move(sub));
+}
+
 } // namespace etr
 
 #endif // !DEBUG

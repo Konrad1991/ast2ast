@@ -16,12 +16,43 @@ Vec &operator=(const TD inp) {
       for (std::size_t i = 0; i < d.ind.size(); i++) {
         d[i] = inp;
       }
+#ifdef DERIV_ETR
+      if (dep_var) {
+        for (std::size_t i = 0; i < d.ind.size(); i++) {
+          deriv[i] = 1;
+        }
+      } else {
+        for (std::size_t i = 0; i < d.ind.size(); i++) {
+          deriv[i] = 0;
+        }
+      }
+#endif
     } else if constexpr (isBorrow::value) {
       d.sz = 1;
       d[0] = inp;
+#ifdef DERIV_ETR
+      if (dep_var) {
+          deriv.resize(1);
+        deriv[0] = 1;
+      } else {
+         deriv.resize(1);
+        deriv[0] = 0;
+      }
+#endif
+
     } else {
       d.resize(1);
       d[0] = inp;
+#ifdef DERIV_ETR
+      if (dep_var) {
+        deriv.resize(1);
+        deriv[0] = 1;
+      } else {
+        deriv.resize(1);
+        deriv[0] = 0;
+      }
+#endif
+
     }
     return *this;
   } else {
@@ -29,12 +60,44 @@ Vec &operator=(const TD inp) {
       for (std::size_t i = 0; i < d.ind.size(); i++) {
         d[i] = static_cast<T>(inp);
       }
+#ifdef DERIV_ETR
+      if (dep_var) {
+        for (std::size_t i = 0; i < d.ind.size(); i++) {
+          deriv[i] = 1;
+        }
+      } else {
+        for (std::size_t i = 0; i < d.ind.size(); i++) {
+          deriv[i] = 0;
+        }
+      }
+#endif
+
     } else if constexpr (isBorrow::value) {
       d.sz = 1;
       d[0] = static_cast<T>(inp);
+#ifdef DERIV_ETR
+      if (dep_var) {
+        deriv.resize(1);
+        deriv[0] = 1;
+      } else {
+        deriv.resize(1);
+        deriv[0] = 0;
+      }
+#endif
+
     } else {
       d.resize(1);
       d[0] = static_cast<T>(inp);
+#ifdef DERIV_ETR
+      if (dep_var) {
+        deriv.resize(1);
+        deriv[0] = 1;
+      } else {
+        deriv.resize(1);
+        deriv[0] = 0;
+      }
+#endif
+
     }
     return *this;
   }
@@ -109,6 +172,16 @@ Vec &operator=(const Vec<T, R, Trait> &otherVec) {
   if (otherVec.d.im()) {
     d.setMatrix(true, otherVec.d.nr(), otherVec.d.nc());
   }
+
+#ifdef DERIV_ETR
+  // TODO: what if other Vec is subsetted
+  deriv.resize(otherVec.size());
+  for (std::size_t i = 0; i < deriv.size(); i++) {
+    deriv[i] = otherVec.deriv[i]; 
+  }
+#endif
+
+
   return *this;
 }
 
@@ -139,6 +212,19 @@ Vec &operator=(Vec<T2, R2, Trait2> &&otherVec) {
   if (otherVec.d.im()) {
     d.setMatrix(true, otherVec.nr(), otherVec.nc());
   }
+  #ifdef DERIV_ETR
+    deriv.resize( this -> size());
+      if (dep_var) {
+        for (std::size_t i = 0; i < deriv.size(); i++) {
+          deriv[i] = 1;
+        }
+      } else {
+        for (std::size_t i = 0; i < deriv.size(); i++) {
+          deriv[i] = 0;
+        }
+      }
+  #endif
+
   return *this;
 }
 
@@ -207,64 +293,6 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
     for (std::size_t i = 0; i < d.ind.size(); i++) {
       d[i % d.ind.size()] = temp[i];
     }
-  } else if constexpr (isVariableType::value) {
-    // TODO: temp has to be used instead of writing directly in d
-    using tD = decltype(otherVec.d);
-    using tDRaw = typename std::remove_reference<decltype(otherVec)>::type;
-    using typeExpr =
-        typename std::remove_reference<ExtractedTypeD<tDRaw>>::type;
-    // NOTE: a constant
-    if constexpr (IsConstant<decltype(otherVec)>) {
-      d.resize(otherVec.size());
-      for (std::size_t i = 0; i < otherVec.size(); i++) {
-        d.AllVarsRef.varBuffer[d.I][i] = otherVec.d[i];
-      }
-      d.AllVarsRef.resizeDerivs(R::I, R::TIdx, otherVec.size());
-      if (d.AllVarsRef.IndepVarIdx == d.I) {
-        for (std::size_t i = 0; i < otherVec.size(); i++) {
-          d.setDeriv(d.AllVarsRef, i, 1.0);
-        }
-      } else {
-        for (std::size_t i = 0; i < otherVec.size(); i++) {
-          d.setDeriv(d.AllVarsRef, i, 0.0);
-        }
-      }
-
-    }
-    // NOTE: an expression
-    else if constexpr (!IsVarPointer<tD>) {
-      constexpr auto res = walkTD<typeExpr>();
-      temp.resize(otherVec.size());
-
-      for (std::size_t i = 0; i < otherVec.size(); i++) {
-        temp[i] = otherVec.d[i];
-      }
-      d.AllVarsRef.resizeDerivs(R::I, R::TIdx, otherVec.size());
-      for (std::size_t i = 0; i < res.getSize(d.AllVarsRef); i++) {
-        d.setDeriv(d.AllVarsRef, i, res.getDeriv(d.AllVarsRef, i));
-      }
-
-      d.resize(otherVec.size());
-      for (std::size_t i = 0; i < otherVec.size(); i++) {
-        d.AllVarsRef.varBuffer[d.I][i] = temp[i];
-      }
-
-    }
-    // NOTE: a variable
-    else {
-      d.resize(otherVec.size());
-      for (std::size_t i = 0; i < d.size(); i++) {
-        d.setVal(otherVec.d.AllVarsRef, i,
-                 tD::getVal(otherVec.d.AllVarsRef, i));
-      }
-      if constexpr (is<Trait2, VariableTypeTrait>) {
-        d.AllVarsRef.resizeDerivs(R::I, R::TIdx, otherVec.size());
-        for (std::size_t i = 0; i < d.size(); i++) {
-          d.setDeriv(d.AllVarsRef, i,
-                     otherVec.d.getDeriv(otherVec.d.AllVarsRef, i));
-        }
-      }
-    }
   }
   if constexpr (isVariableType::value) {
     if (otherVec.d.im()) {
@@ -275,6 +303,23 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
       d.setMatrix(true, otherVec.d.nr(), otherVec.d.nc());
     }
   }
+
+  #ifdef DERIV_ETR
+  if constexpr(IsRVec<const Vec<T2, R2, Trait2>>) {
+    deriv.resize( this -> size());
+    if (dep_var) {
+      for (std::size_t i = 0; i < deriv.size(); i++) {
+        deriv[i] = 1;
+      }
+    } else {
+      for (std::size_t i = 0; i < deriv.size(); i++) {
+        deriv[i] = 0;
+      }
+    }
+  }
+  #endif
+
+
   return *this;
 }
 

@@ -7,13 +7,14 @@
 
 ## Tests
 
-- [ ] R CMD check --as-cran
+- [x] R CMD check --as-cran
 - [x] get code working with clang
 
 ### XPtr tests
 
 - [ ] write test with f recieving Vec, Borrows mixed
   - [ ] some of the Vecs are than borrowed
+- [ ] tests for diff
 
 ### Safety
 
@@ -21,7 +22,7 @@
 
 ## Documentation
 
-- [ ] update translate.Rd
+- [x] update translate.Rd
 - [ ] update J.Rd
 - [ ] update DetailedDocumentation.Rmd
 - [ ] update InformationForPackageAuthors.Rmd
@@ -32,14 +33,14 @@
 
 ## Derivatives
 
-- [ ] own version of *d* in ast2ast
-  - [ ] instead of replacing:
+- [x] own version of *d* in ast2ast
+  - [x] instead of replacing:
     * [ ]is.name(.) && . == x with quote(1) and 
       is.name(.) with quote(0),
     * [ ]is.name(.) with get_deriv(.)
-- [ ] add a Buffer\<double\> deriv in Vector
+- [x] add a Buffer\<double\> deriv in Vector
     * add a #ifdef so that it is not always included
-- [ ] define get_deriv function which returns deriv as Vec\<Buffer\>
+- [x] define get_deriv function which returns deriv as Vec\<Buffer\>
 - [ ] define assign_deriv
 - [ ] change each expression to:
     assign_deriv(a, expr)

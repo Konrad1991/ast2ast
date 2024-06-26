@@ -16,6 +16,11 @@ template <typename T, typename R, typename Trait> struct Vec {
   using TypeTrait = Trait;
   using CaseTrait = Trait;
   R d;
+
+#ifdef DERIV_ETR
+  Buffer<double> deriv;
+  bool dep_var = false;
+#endif
   Buffer<T> temp;
   using DType = R;
   using RetType = typename std::remove_reference<decltype(d)>::type::RetType;

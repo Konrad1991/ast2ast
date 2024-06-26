@@ -1,1448 +1,0 @@
-
-R version 4.1.2 (2021-11-01) -- "Bird Hippie"
-Copyright (C) 2021 The R Foundation for Statistical Computing
-Platform: x86_64-pc-linux-gnu (64-bit)
-
-R is free software and comes with ABSOLUTELY NO WARRANTY.
-You are welcome to redistribute it under certain conditions.
-Type 'license()' or 'licence()' for distribution details.
-
-R is a collaborative project with many contributors.
-Type 'contributors()' for more information and
-'citation()' on how to cite R or R packages in publications.
-
-Type 'demo()' for some demos, 'help()' for on-line help, or
-'help.start()' for an HTML browser interface to help.
-Type 'q()' to quit R.
-
-> if (requireNamespace("tinytest", quietly = FALSE)) {
-+   tinytest::test_package("ast2ast")
-+ }
-Loading required namespace: tinytest
-test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    5 7 9 
--3 -3 -3 
-4 10 18 
-0.25 0.4 0.5 
-1 32 729 
-test_all.R....................    0 tests    0 0 0 
-1 1 1 
-0 0 0 
-1 1 1 
-1 1 1 
-0 0 0 
-0 0 0 1 
-test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    0 tests    test_all.R....................    1 tests [0;32mOK[0m test_all.R....................    1 tests [0;32mOK[0m test_all.R....................    2 tests [0;32mOK[0m test_all.R....................    2 tests [0;32mOK[0m test_all.R....................    3 tests [0;32mOK[0m test_all.R....................    3 tests [0;32mOK[0m test_all.R....................    3 tests [0;32mOK[0m test_all.R....................    3 tests [0;32mOK[0m test_all.R....................    4 tests [0;32mOK[0m test_all.R....................    4 tests [0;32mOK[0m test_all.R....................    4 tests [0;32mOK[0m test_all.R....................    4 tests [0;32mOK[0m test_all.R....................    5 tests [0;32mOK[0m test_all.R....................    5 tests [0;32mOK[0m test_all.R....................    5 tests [0;32mOK[0m test_all.R....................    5 tests [0;32mOK[0m test_all.R....................    6 tests [0;32mOK[0m test_all.R....................    6 tests [0;32mOK[0m test_all.R....................    6 tests [0;32mOK[0m test_all.R....................    7 tests [0;32mOK[0m test_all.R....................    8 tests [0;32mOK[0m test_all.R....................    8 tests [0;32mOK[0m test_all.R....................    8 tests [0;32mOK[0m test_all.R....................    9 tests [0;32mOK[0m test_all.R....................   10 tests [0;32mOK[0m test_all.R....................   10 tests [0;32mOK[0m test_all.R....................   10 tests [0;32mOK[0m test_all.R....................   11 tests [0;32mOK[0m test_all.R....................   12 tests [0;32mOK[0m test_all.R....................   12 tests [0;32mOK[0m test_all.R....................   13 tests [0;32mOK[0m test_all.R....................   13 tests [0;32mOK[0m test_all.R....................   13 tests [0;32mOK[0m test_all.R....................   13 tests [0;32mOK[0m test_all.R....................   14 tests [0;32mOK[0m test_all.R....................   14 tests [0;32mOK[0m test_all.R....................   14 tests [0;32mOK[0m test_all.R....................   15 tests [0;32mOK[0m test_all.R....................   15 tests [0;32mOK[0m test_all.R....................   15 tests [0;32mOK[0m test_all.R....................   16 tests [0;32mOK[0m test_all.R....................   17 tests [0;32mOK[0m test_all.R....................   17 tests [0;32mOK[0m test_all.R....................   18 tests [0;32mOK[0m test_all.R....................   18 tests [0;32mOK[0m test_all.R....................   19 tests [0;32mOK[0m test_all.R....................   19 tests [0;32mOK[0m test_all.R....................   20 tests [0;32mOK[0m test_all.R....................   20 tests [0;32mOK[0m test_all.R....................   20 tests [0;32mOK[0m test_all.R....................   21 tests [0;32mOK[0m test_all.R....................   21 tests [0;32mOK[0m test_all.R....................   21 tests [0;32mOK[0m test_all.R....................   22 tests [0;32mOK[0m test_all.R....................   22 tests [0;32mOK[0m test_all.R....................   22 tests [0;32mOK[0m test_all.R....................   23 tests [0;32mOK[0m test_all.R....................   23 tests [0;32mOK[0m test_all.R....................   23 tests [0;32mOK[0m test_all.R....................   24 tests [0;32mOK[0m test_all.R....................   24 tests [0;32mOK[0m test_all.R....................   25 tests [0;32mOK[0m test_all.R....................   25 tests [0;32mOK[0m test_all.R....................   25 tests [0;32mOK[0m test_all.R....................   26 tests [0;32mOK[0m test_all.R....................   27 tests [0;32mOK[0m test_all.R....................   27 tests [0;32mOK[0m test_all.R....................   28 tests [0;32mOK[0m test_all.R....................   29 tests [0;32mOK[0m test_all.R....................   29 tests [0;32mOK[0m test_all.R....................   29 tests [0;32mOK[0m 
-Generated extern "C" functions 
---------------------------------------------------------
-
-
-#include <Rcpp.h>
-#ifdef RCPP_USE_GLOBAL_ROSTREAM
-Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
-Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
-#endif
-
-// testall
-SEXP testall(SEXP aSEXP, SEXP type_testSEXP);
-RcppExport SEXP sourceCpp_1_testall(SEXP aSEXPSEXP, SEXP type_testSEXPSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type aSEXP(aSEXPSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type type_testSEXP(type_testSEXPSEXP);
-    rcpp_result_gen = Rcpp::wrap(testall(aSEXP, type_testSEXP));
-    return rcpp_result_gen;
-END_RCPP
-}
-
-Generated R functions 
--------------------------------------------------------
-
-`.sourceCpp_1_DLLInfo` <- dyn.load('/tmp/RtmpsnmxxE/working_dir/RtmpCPMKvU/sourceCpp-x86_64-pc-linux-gnu-1.0.9/sourcecpp_192a75f1481de/sourceCpp_2.so')
-
-testall <- Rcpp:::sourceCppFunction(function(aSEXP, type_testSEXP) {}, FALSE, `.sourceCpp_1_DLLInfo`, 'sourceCpp_1_testall')
-
-rm(`.sourceCpp_1_DLLInfo`)
-
-Building shared library
---------------------------------------------------------
-
-DIR: /tmp/RtmpsnmxxE/working_dir/RtmpCPMKvU/sourceCpp-x86_64-pc-linux-gnu-1.0.9/sourcecpp_192a75f1481de
-
-/usr/lib/R/bin/R CMD SHLIB -o 'sourceCpp_2.so' 'file192a71f04e60b.cpp' 
-g++ -std=gnu++11 -I"/usr/share/R/include" -DNDEBUG -I../inst/include -fopenmp  -I"/home/konrad/R/x86_64-pc-linux-gnu-library/4.1/Rcpp/include" -I"/home/konrad/Documents/ast2ast/development/ast2ast.Rcheck/ast2ast/include" -I"/home/konrad/R/x86_64-pc-linux-gnu-library/4.1/RcppArmadillo/include" -I"/tmp/RtmpsnmxxE/working_dir/RtmpCPMKvU/sourceCpp-x86_64-pc-linux-gnu-1.0.9"   -std=c++2a -fpic  -g -O2 -ffile-prefix-map=/build/r-base-4A2Reg/r-base-4.1.2=. -fstack-protector-strong -Wformat -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2 -g  -c file192a71f04e60b.cpp -o file192a71f04e60b.o
-g++ -std=gnu++11 -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -flto=auto -ffat-lto-objects -flto=auto -Wl,-z,relro -o sourceCpp_2.so file192a71f04e60b.o -fopenmp -llapack -lblas -lgfortran -lm -lquadmath -L/usr/lib/R/lib -lR
-// [[Rcpp::depends(ast2ast)]]
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::plugins(cpp2a)]]
-#include "etr.hpp"
-
-// [[Rcpp::export]]
-SEXP testall(SEXP aSEXP, SEXP type_testSEXP) {
-	etr::Vec<double> size;
-	etr::Vec<double> temp;
-	etr::Vec<double> ret;
-	etr::Vec<double> m1;
-	etr::Vec<double> m2;
-	etr::Vec<double> b;
-	etr::Vec<double> c;
-	etr::Vec<double> d;
-	etr::Vec<double> e;
-	etr::Vec<double> f;
-	etr::Vec<double> v;
-	etr::Vec<double> m;
-	etr::Vec<double> rs;
-	etr::Vec<double> cs;
-	etr::Vec<double> a; a = aSEXP;
-	etr::Vec<double> type_test; type_test = type_testSEXP;
-
-	 if (type_test == 0) {;	 
-	     size = etr::length(a);	 
-	     for (auto&i:  etr::colon(etr::i2d(1), size)) {;	 
-	         for (auto&j:  etr::colon(etr::i2d(1), (size - 1))) {;	 
-	             if (etr::subset(a, j) > etr::subset(a, j + 1)) {;	 
-	                 temp = etr::subset(a, j);	 
-	                 etr::subset(a, j) = etr::subset(a, j + 1);	 
-	                 etr::subset(a, j + 1) = temp;	 
-	             };	 
-	         };	 
-	     };	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 1) {;	 
-	     ret = etr::vector_numeric(20);	 
-	     etr::subset(ret, 1) = 1;	 
-	     etr::subset(ret, 2) = 1;	 
-	     for (auto&i:  etr::colon(etr::i2d(3), etr::length(ret))) {;	 
-	         etr::subset(ret, i) = etr::subset(ret, i - 1) + etr::subset(ret, i - 2);	 
-	     };	 
-	     return(etr::cpp2R(ret));	 
-	 } else if (type_test == 2.1) {;	 
-	     m1 = etr::matrix(etr::colon(etr::i2d(1), 12), etr::i2d(3), 4);	 
-	     m2 = etr::matrix(etr::i2d(50), etr::i2d(3), 4);	 
-	     ret = m1 + m2 - 1;	 
-	     return(etr::cpp2R(ret));	 
-	 } else if (type_test == 2.2) {;	 
-	     etr::subset(a, 11) = 20;	 
-	 } else if (type_test == 2.3) {;	 
-	     etr::subset(a, 0) = 20;	 
-	 } else if (type_test == 3.1) {;	 
-	     a = a + 3;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 3.2) {;	 
-	     a = a + etr::rep(3.14, 4);	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 3.3) {;	 
-	     a = a + etr::matrix(etr::i2d(3), etr::i2d(2), 2);	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 3.4) {;	 
-	     a = 1;	 
-	     a = a + 3.14;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 3.5) {;	 
-	     a = 1;	 
-	     a = a + etr::rep(etr::i2d(3), 4);	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 3.6) {;	 
-	     b = etr::vector_numeric(2);	 
-	     etr::subset(b, 1) = 100;	 
-	     etr::subset(b, 2) = 200;	 
-	     a = a + b;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 3.7) {;	 
-	     b = etr::vector_numeric(9);	 
-	     etr::subset(b, 1) = 100;	 
-	     etr::subset(b, 2) = 200;	 
-	     etr::subset(b, 3) = 300;	 
-	     etr::subset(b, 4) = 400;	 
-	     etr::subset(b, 5) = 500;	 
-	     etr::subset(b, 6) = 600;	 
-	     etr::subset(b, 7) = 700;	 
-	     etr::subset(b, 8) = 800;	 
-	     etr::subset(b, 9) = 900;	 
-	     a = a + b;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 3.8) {;	 
-	     a = 1;	 
-	     a = etr::rep(etr::i2d(3), 4) + a;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 3.9) {;	 
-	     a = 1;	 
-	     a = etr::i2d(1) + 4;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 3.1) {;	 
-	     a = a + a;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 3.11) {;	 
-	     a = a + 1;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 3.12) {;	 
-	     a = etr::i2d(4) + a;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 3.13) {;	 
-	     b = etr::rep(etr::i2d(3), 2);	 
-	     a = a + b;	 
-	     return(etr::cpp2R(a));	 
-	 };	 
-	 if (type_test == 4.1) {;	 
-	     a = a - 3;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 4.2) {;	 
-	     a = a - etr::rep(3.14, 4);	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 4.3) {;	 
-	     a = a - etr::matrix(etr::i2d(3), etr::i2d(2), 2);	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 4.4) {;	 
-	     a = 1;	 
-	     a = a - 3.14;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 4.5) {;	 
-	     a = 1;	 
-	     a = a - etr::rep(etr::i2d(3), 4);	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 4.6) {;	 
-	     b = etr::vector_numeric(2);	 
-	     etr::subset(b, 1) = 100;	 
-	     etr::subset(b, 2) = 200;	 
-	     a = a - b;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 4.7) {;	 
-	     b = etr::vector_numeric(9);	 
-	     etr::subset(b, 1) = 100;	 
-	     etr::subset(b, 2) = 200;	 
-	     etr::subset(b, 3) = 300;	 
-	     etr::subset(b, 4) = 400;	 
-	     etr::subset(b, 5) = 500;	 
-	     etr::subset(b, 6) = 600;	 
-	     etr::subset(b, 7) = 700;	 
-	     etr::subset(b, 8) = 800;	 
-	     etr::subset(b, 9) = 900;	 
-	     a = a - b;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 4.8) {;	 
-	     a = 1;	 
-	     a = etr::rep(etr::i2d(3), 4) - a;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 4.9) {;	 
-	     a = 1;	 
-	     a = etr::i2d(1) - 4;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 4.1) {;	 
-	     a = a - a;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 4.11) {;	 
-	     a = a - 1;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 4.12) {;	 
-	     a = etr::i2d(4) - a;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 4.13) {;	 
-	     b = etr::rep(etr::i2d(3), 2);	 
-	     a = a - b;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 5.1) {;	 
-	     a = a/3;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 5.2) {;	 
-	     a = a/etr::rep(3.14, 4);	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 5.3) {;	 
-	     a = a/etr::matrix(etr::i2d(3), etr::i2d(2), 2);	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 5.4) {;	 
-	     a = 1;	 
-	     a = a/3.14;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 5.5) {;	 
-	     a = 1;	 
-	     a = a/etr::rep(etr::i2d(3), 4);	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 5.6) {;	 
-	     b = etr::vector_numeric(2);	 
-	     etr::subset(b, 1) = 100;	 
-	     etr::subset(b, 2) = 200;	 
-	     a = a/b;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 5.7) {;	 
-	     b = etr::vector_numeric(9);	 
-	     etr::subset(b, 1) = 100;	 
-	     etr::subset(b, 2) = 200;	 
-	     etr::subset(b, 3) = 300;	 
-	     etr::subset(b, 4) = 400;	 
-	     etr::subset(b, 5) = 500;	 
-	     etr::subset(b, 6) = 600;	 
-	     etr::subset(b, 7) = 700;	 
-	     etr::subset(b, 8) = 800;	 
-	     etr::subset(b, 9) = 900;	 
-	     a = a/b;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 5.8) {;	 
-	     a = 1;	 
-	     a = etr::rep(etr::i2d(3), 4)/a;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 5.9) {;	 
-	     a = 1;	 
-	     a = etr::i2d(1)/4;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 5.1) {;	 
-	     a = a/a;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 5.11) {;	 
-	     a = a/1;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 5.12) {;	 
-	     a = etr::i2d(4)/a;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 5.13) {;	 
-	     b = etr::rep(etr::i2d(3), 2);	 
-	     a = a/b;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 6.1) {;	 
-	     a = a * 3;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 6.2) {;	 
-	     a = a * etr::rep(3.14, 4);	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 6.3) {;	 
-	     a = a * etr::matrix(etr::i2d(3), etr::i2d(2), 2);	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 6.4) {;	 
-	     a = 1;	 
-	     a = a * 3.14;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 6.5) {;	 
-	     a = 1;	 
-	     a = a * etr::rep(etr::i2d(3), 4);	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 6.6) {;	 
-	     b = etr::vector_numeric(2);	 
-	     etr::subset(b, 1) = 100;	 
-	     etr::subset(b, 2) = 200;	 
-	     a = a * b;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 6.7) {;	 
-	     b = etr::vector_numeric(9);	 
-	     etr::subset(b, 1) = 100;	 
-	     etr::subset(b, 2) = 200;	 
-	     etr::subset(b, 3) = 300;	 
-	     etr::subset(b, 4) = 400;	 
-	     etr::subset(b, 5) = 500;	 
-	     etr::subset(b, 6) = 600;	 
-	     etr::subset(b, 7) = 700;	 
-	     etr::subset(b, 8) = 800;	 
-	     etr::subset(b, 9) = 900;	 
-	     a = a * b;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 6.8) {;	 
-	     a = 1;	 
-	     a = etr::rep(etr::i2d(3), 4) * a;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 6.9) {;	 
-	     a = 1;	 
-	     a = etr::i2d(1) * 4;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 6.1) {;	 
-	     a = a * a;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 6.11) {;	 
-	     a = a * 1;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 6.12) {;	 
-	     a = etr::i2d(4) * a;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 6.13) {;	 
-	     b = etr::rep(etr::i2d(3), 2);	 
-	     a = a * b;	 
-	     return(etr::cpp2R(a));	 
-	 };	 
-	 if (type_test == 7.1) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     b = etr::coca(etr::i2d(5), etr::i2d(6), 7);	 
-	     c = etr::coca(-100, a, b, 100);	 
-	     d = etr::rep(etr::i2d(1), 2);	 
-	     e = etr::matrix(-1, etr::i2d(2), 2);	 
-	     f = etr::coca(c, d, e, 2);	 
-	     return(etr::cpp2R(f));	 
-	 } else if (type_test == 7.2) {;	 
-	     v = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 4);	 
-	     m = etr::matrix(etr::i2d(2), etr::i2d(2), 3);	 
-	     b = etr::coca(etr::length(v), etr::dim(m));	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 8.1) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     b = etr::coca(etr::i2d(5), etr::i2d(6), 7);	 
-	     return(etr::cpp2R(a == b));	 
-	 } else if (type_test == 8.2) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     return(etr::cpp2R(a == a));	 
-	 } else if (type_test == 8.3) {;	 
-	     a = etr::coca(etr::i2d(2), etr::i2d(2), 2);	 
-	     return(etr::cpp2R(a == 2));	 
-	 } else if (type_test == 9.1) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     b = etr::coca(etr::i2d(5), etr::i2d(6), 2);	 
-	     return(etr::cpp2R(a <= b));	 
-	 } else if (type_test == 9.2) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 4);	 
-	     return(etr::cpp2R(a <= a));	 
-	 } else if (type_test == 9.3) {;	 
-	     a = etr::coca(etr::i2d(2), etr::i2d(2), 2);	 
-	     return(etr::cpp2R(a <= 2));	 
-	 } else if (type_test == 10.1) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     b = etr::coca(etr::i2d(5), etr::i2d(6), 7);	 
-	     return(etr::cpp2R(a < b));	 
-	 } else if (type_test == 10.2) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     return(etr::cpp2R(a < a));	 
-	 } else if (type_test == 10.3) {;	 
-	     a = etr::coca(etr::i2d(2), etr::i2d(2), 2);	 
-	     return(etr::cpp2R(a < 2));	 
-	 } else if (type_test == 11.1) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     b = etr::coca(etr::i2d(5), etr::i2d(6), 7);	 
-	     return(etr::cpp2R(a > b));	 
-	 } else if (type_test == 11.2) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     return(etr::cpp2R(a > a));	 
-	 } else if (type_test == 11.3) {;	 
-	     a = etr::coca(etr::i2d(2), etr::i2d(2), 2);	 
-	     return(etr::cpp2R(a > 1));	 
-	 } else if (type_test == 12.1) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     b = etr::coca(etr::i2d(5), etr::i2d(6), 3);	 
-	     return(etr::cpp2R(a >= b));	 
-	 } else if (type_test == 12.2) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     return(etr::cpp2R(a >= a));	 
-	 } else if (type_test == 12.3) {;	 
-	     a = etr::coca(etr::i2d(2), etr::i2d(2), 2);	 
-	     return(etr::cpp2R(a >= 1));	 
-	 } else if (type_test == 13.1) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     b = etr::coca(etr::i2d(5), etr::i2d(6), 3);	 
-	     return(etr::cpp2R(a != b));	 
-	 } else if (type_test == 13.2) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     return(etr::cpp2R(a != a));	 
-	 } else if (type_test == 13.3) {;	 
-	     a = etr::coca(etr::i2d(2), etr::i2d(2), 2);	 
-	     return(etr::cpp2R(a != 1));	 
-	 } else if (type_test == 14.1) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     b = etr::coca(etr::i2d(5), etr::i2d(6), 7);	 
-	     return(etr::cpp2R(a + b == b - a));	 
-	 } else if (type_test == 14.2) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     b = etr::coca(etr::i2d(5), etr::i2d(6), 7);	 
-	     return(etr::cpp2R(a + b == etr::coca(etr::i2d(100), etr::i2d(100), 200)));	 
-	 } else if (type_test == 14.3) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     b = etr::coca(etr::i2d(5), etr::i2d(6), 7);	 
-	     return(etr::cpp2R(a + b != b - a));	 
-	 } else if (type_test == 14.4) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     b = etr::coca(etr::i2d(5), etr::i2d(6), 7);	 
-	     return(etr::cpp2R(a + b != etr::coca(etr::i2d(100), etr::i2d(100), 200)));	 
-	 } else if (type_test == 14.5) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     b = etr::coca(etr::i2d(5), etr::i2d(6), 7);	 
-	     return(etr::cpp2R(a + b > b - a));	 
-	 } else if (type_test == 14.6) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     b = etr::coca(etr::i2d(5), etr::i2d(6), 7);	 
-	     return(etr::cpp2R(a + b < etr::coca(etr::i2d(100), etr::i2d(100), 200)));	 
-	 } else if (type_test == 14.7) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     b = etr::coca(etr::i2d(5), etr::i2d(6), 7);	 
-	     return(etr::cpp2R(a + b >= b - a));	 
-	 } else if (type_test == 14.8) {;	 
-	     a = etr::coca(etr::i2d(1), etr::i2d(2), 3);	 
-	     b = etr::coca(etr::i2d(5), etr::i2d(6), 7);	 
-	     return(etr::cpp2R(a + b <= etr::coca(etr::i2d(100), etr::i2d(100), 200)));	 
-	 };	 
-	 if (type_test == 15.1) {;	 
-	     a = a^2 + etr::ln(1);	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 15.2) {;	 
-	     a = a^3;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 15.3) {;	 
-	     a = etr::exp(a) + 1;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 15.4) {;	 
-	     a = etr::sqroot(a);	 
-	     return(etr::cpp2R(a));	 
-	 };	 
-	 if (type_test == 16.1) {;	 
-	     for (auto&i:  etr::colon(etr::i2d(1), etr::length(a))) {;	 
-	         etr::subset(a, i) = 100;	 
-	     };	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.2) {;	 
-	     etr::subset(a, true) = 0;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.3) {;	 
-	     etr::subset(a, 1) = 0;	 
-	     etr::subset(a, 2.3) = 0;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.4) {;	 
-	     etr::subset(a, true) = 0;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.5) {;	 
-	     b = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), etr::i2d(4), 1);	 
-	     etr::subset(a, b) = etr::colon(etr::i2d(1), 5);	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.6) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     etr::subset(a, 4, 4) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.7) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     etr::subset(a, 4, 4.5) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.8) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     etr::subset(a, 4, true) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.9) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     etr::subset(a, 4, true) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.11) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     etr::subset(a, 4, etr::coca(etr::i2d(1), 4)) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.12) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 4), etr::i2d(2), 2);	 
-	     etr::subset(a, 1.3, 1) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.13) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 4), etr::i2d(2), 2);	 
-	     etr::subset(a, true, 1) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.14) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 4), etr::i2d(2), 2);	 
-	     etr::subset(a, true, 1) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.15) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 6), etr::i2d(3), 2);	 
-	     b = etr::coca(etr::i2d(1), 3);	 
-	     etr::subset(a, b, 1) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.16) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 6), etr::i2d(3), 2);	 
-	     etr::subset(a, 1.5, 1.1) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.17) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 6), etr::i2d(3), 2);	 
-	     etr::subset(a, 1.5, true) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.18) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 6), etr::i2d(3), 2);	 
-	     etr::subset(a, 1.5, true) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.19) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(1), 3);	 
-	     etr::subset(a, 1.5, b) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.21) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     etr::subset(a, true, 1.5) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.22) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     etr::subset(a, true, 1.5) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.23) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     etr::subset(a, b, 1.5) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.24) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     etr::subset(a, true, true) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.25) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     etr::subset(a, true, true) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.26) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(2), 3);	 
-	     etr::subset(a, true, b) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.27) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     etr::subset(a, true, true) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.28) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     etr::subset(a, b, true) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.29) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     etr::subset(a, true, true) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.31) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     etr::subset(a, true, b) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 };	 
-	 if (type_test == 16.32) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(1), 3);	 
-	     etr::subset(a, b, true) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.33) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(1), 3);	 
-	     c = etr::coca(etr::i2d(1), 2);	 
-	     etr::subset(a, b, c) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.34) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     c = etr::coca(etr::i2d(1), 2);	 
-	     etr::subset(a, c + c) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.35) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     etr::subset(a, a < 5) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.36) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     c = etr::coca(etr::i2d(1), 2);	 
-	     etr::subset(a, 1, c + c) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.37) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 4);	 
-	     etr::subset(a, 1, b >= 3) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.38) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     etr::subset(a, b + b, 1) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.39) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 4);	 
-	     etr::subset(a, b > 3, 4) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.41) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     etr::subset(a, 3.5, b + b) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.42) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 4);	 
-	     etr::subset(a, 3.5, b <= 1) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.43) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     etr::subset(a, b + b, 1.5) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.44) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 4);	 
-	     etr::subset(a, b >= 1, 1.5) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.45) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     etr::subset(a, true, b + b) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.46) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 4);	 
-	     etr::subset(a, true, b >= 3) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.47) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     etr::subset(a, b + b, true) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.48) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 4);	 
-	     etr::subset(a, b == 1, true) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.49) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     etr::subset(a, true, b + b) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.51) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 4);	 
-	     etr::subset(a, true, b >= 3) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.52) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     etr::subset(a, b + b, true) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.53) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 4);	 
-	     etr::subset(a, b == 1, true) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.54) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     etr::subset(a, b + b, b + b) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.55) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     c = etr::coca(etr::i2d(2), 4);	 
-	     etr::subset(a, b + b, c) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.56) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     c = etr::coca(etr::i2d(2), 4);	 
-	     etr::subset(a, c, b + b) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.57) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     c = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 2);	 
-	     etr::subset(a, b + b, c == 2) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.58) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(2), 4);	 
-	     c = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 2);	 
-	     etr::subset(a, b, c == 2) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.59) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     c = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 2);	 
-	     etr::subset(a, c == 2, b + b) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 };	 
-	 if (type_test == 16.61) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(2), 4);	 
-	     c = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 2);	 
-	     etr::subset(a, c == 2, b) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.62) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     c = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 2);	 
-	     etr::subset(a, c == 2, c == 2) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.63) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(2), 4);	 
-	     c = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 2);	 
-	     etr::subset(a, b, c == 2) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.64) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     b = etr::coca(etr::i2d(2), 4);	 
-	     c = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 2);	 
-	     etr::subset(a, c == 2, b) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 16.65) {;	 
-	     a = etr::colon(etr::i2d(1), 6);	 
-	     b = etr::coca(etr::i2d(4), 4);	 
-	     etr::subset(b, 1) = etr::at(a, 2);	 
-	     etr::subset(b, 2) = etr::at(a, 2);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.66) {;	 
-	     a = etr::colon(etr::i2d(1), 6);	 
-	     b = etr::subset(a, true);	 
-	     c = etr::subset(b, true);	 
-	     return(etr::cpp2R(c));	 
-	 } else if (type_test == 16.67) {;	 
-	     a = etr::colon(etr::i2d(1), 6);	 
-	     b = etr::coca(etr::i2d(1), 5);	 
-	     b = etr::subset(a, b);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.68) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, 1, true);	 
-	     c = etr::subset(a, 1, true);	 
-	     return(etr::cpp2R(b - c));	 
-	 } else if (type_test == 16.69) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(1), 3);	 
-	     b = etr::subset(a, 1, b);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.71) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, 1.1, 2);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.72) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, true, 2);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.73) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, true, 2);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.74) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(1), 3);	 
-	     b = etr::subset(a, b, 2);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.75) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, 1.1, 2.2);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.76) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, 1.1, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.77) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, 1.1, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.78) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(1), 3);	 
-	     b = etr::subset(a, 1.1, b);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.79) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, true, 2.1);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.81) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, true, 2.1);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.82) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(1), 3);	 
-	     b = etr::subset(a, b, 2.5);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.83) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, true, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.84) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, true, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.85) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset(a, true, b);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.86) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, true, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.87) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset(a, b, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.88) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, true, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.89) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset(a, true, b);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.91) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset(a, b, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.92) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset(a, b, b);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.93) {;	 
-	     a = etr::colon(etr::i2d(1), 6);	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset(a, b + b);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.94) {;	 
-	     a = etr::colon(etr::i2d(1), 6);	 
-	     b = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 4);	 
-	     c = etr::coca(etr::i2d(1), etr::i2d(5), etr::i2d(3), 6.7);	 
-	     b = etr::subset(a, b == c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.95) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, 1, b + c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.96) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, 1, b != c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.97) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, b + c, 1);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.98) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, b != c, 2);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 16.99) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, 1.5, b + c);	 
-	     return(etr::cpp2R(b));	 
-	 };	 
-	 if (type_test == 17.1) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, 1.4, b != c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.2) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, b + c, 1.5);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.3) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, b != c, 2.5);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.4) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, true, b + c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.5) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), etr::i2d(1), etr::i2d(2), 3);	 
-	     c = etr::coca(etr::i2d(1), etr::i2d(1), etr::i2d(2), 5);	 
-	     b = etr::subset(a, true, b == c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.6) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, b + c, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.7) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, b == c, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.8) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, true, b + c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.9) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), etr::i2d(1), etr::i2d(2), 3);	 
-	     c = etr::coca(etr::i2d(1), etr::i2d(1), etr::i2d(2), 5);	 
-	     b = etr::subset(a, true, b == c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.11) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, b + c, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.12) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, b == c, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.13) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, b + c, b + c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.14) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     rs = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset(a, rs, b + c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.15) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     cs = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset(a, b + c, cs);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.16) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, b + c, b == c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.17) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     rs = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset(a, rs, b == c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.18) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, b == c, b + c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.19) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     cs = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset(a, b == c, cs);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.21) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, b == c, b == c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.22) {;	 
-	     a = etr::colon(etr::i2d(1), 6);	 
-	     b = etr::subset(a, etr::coca(etr::i2d(1), 5));	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.23) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, 1, etr::coca(etr::i2d(1), 3));	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.24) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, etr::coca(etr::i2d(1), 3), 2);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.25) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, 1.1, etr::coca(etr::i2d(1), 3));	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.26) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, etr::coca(etr::i2d(1), 3), 2.5);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.27) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, true, etr::coca(etr::i2d(1), 2));	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.28) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, etr::coca(etr::i2d(1), 2), true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.29) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, true, etr::coca(etr::i2d(1), 2));	 
-	     return(etr::cpp2R(b));	 
-	 };	 
-	 if (type_test == 17.31) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, etr::coca(etr::i2d(1), 2), true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.32) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, etr::coca(etr::i2d(1), 2), etr::coca(etr::i2d(1), 2));	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.33) {;	 
-	     a = etr::colon(etr::i2d(1), 6);	 
-	     b = etr::subset(a, etr::coca(etr::i2d(2), 4));	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.34) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, 1, etr::coca(etr::i2d(1), 2));	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.35) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, etr::coca(etr::i2d(1), 2), 1);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.36) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, 1.5, etr::coca(etr::i2d(1), 2));	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.37) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, etr::coca(etr::i2d(1), 2), 1.5);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.38) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, true, etr::coca(etr::i2d(1), 2));	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.39) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, etr::coca(etr::i2d(1), 2), true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.41) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, true, etr::coca(etr::i2d(1), 2));	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.42) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, etr::coca(etr::i2d(1), 2), true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.43) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::subset(a, etr::coca(etr::i2d(1), 2), etr::coca(etr::i2d(1), 2));	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.44) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     rs = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset(a, rs, etr::coca(etr::i2d(1), 2));	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.45) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     cs = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset(a, etr::coca(etr::i2d(1), 2), cs);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.46) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, etr::coca(etr::i2d(1), 2), b == c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 17.47) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3);	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset(a, b == c, etr::coca(etr::i2d(1), 2));	 
-	     return(etr::cpp2R(b));	 
-	 };	 
-	 if (type_test == 18.1) {;	 
-	     etr::subset(a, etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), etr::i2d(4), 1)) = etr::colon(etr::i2d(1), 5);	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 18.2) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     etr::subset(a, 4, etr::coca(etr::i2d(1), 4)) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 18.3) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 6), etr::i2d(3), 2);	 
-	     etr::subset(a, etr::coca(etr::i2d(1), 3), 1) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 18.4) {;	 
-	     etr::subset(a, 1.5, etr::coca(etr::i2d(1), 3)) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 18.5) {;	 
-	     etr::subset(a, etr::coca(etr::i2d(1), 2), 1.5) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 18.6) {;	 
-	     etr::subset(a, true, etr::coca(etr::i2d(2), 3)) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 18.7) {;	 
-	     etr::subset(a, etr::coca(etr::i2d(1), 2), true) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 18.8) {;	 
-	     etr::subset(a, true, etr::coca(etr::i2d(1), 2)) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 18.9) {;	 
-	     etr::subset(a, etr::coca(etr::i2d(1), 3), true) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 18.91) {;	 
-	     etr::subset(a, etr::coca(etr::i2d(1), 3), etr::coca(etr::i2d(1), 2)) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 18.92) {;	 
-	     a = etr::matrix(etr::colon(etr::i2d(1), 16), etr::i2d(4), 4);	 
-	     etr::subset(a, etr::coca(etr::i2d(2), 4)) = 20;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 19.1) {;	 
-	     b = etr::at((etr::colon(etr::i2d(1), 6) + 0), 2);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.11) {;	 
-	     b = etr::subset((etr::colon(etr::i2d(1), 6) + 0), 3.5);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.12) {;	 
-	     b = etr::subset((etr::colon(etr::i2d(1), 6) + 0), true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.13) {;	 
-	     b = etr::subset((etr::colon(etr::i2d(1), 6) + 0), true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.14) {;	 
-	     b = etr::coca(etr::i2d(1), 5);	 
-	     b = etr::subset((etr::colon(etr::i2d(1), 6) + 0), b);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.15) {;	 
-	     b = etr::at((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), 1, 2);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.16) {;	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), 1, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.17) {;	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), 1, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.18) {;	 
-	     b = etr::coca(etr::i2d(1), 3);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), 1, b);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.19) {;	 
-	     b = etr::at((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), 1, 2);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.21) {;	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), true, 2);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.22) {;	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), true, 2);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.23) {;	 
-	     b = etr::coca(etr::i2d(1), 3);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), b, 2);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.24) {;	 
-	     b = etr::subset((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), 1.1, 2.3);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.25) {;	 
-	     b = etr::subset((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), 1.1, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.26) {;	 
-	     b = etr::subset((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), 1.1, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.27) {;	 
-	     b = etr::coca(etr::i2d(1), 3);	 
-	     b = etr::subset((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), 1.1, b);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.28) {;	 
-	     b = etr::subset((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), true, 2.1);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.29) {;	 
-	     b = etr::subset((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), true, 2.1);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.31) {;	 
-	     b = etr::coca(etr::i2d(1), 3);	 
-	     b = etr::subset((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), b, 2.5);	 
-	     return(etr::cpp2R(b));	 
-	 };	 
-	 if (type_test == 19.32) {;	 
-	     b = etr::subset((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), true, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.33) {;	 
-	     b = etr::subset((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), true, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.34) {;	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), true, b);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.35) {;	 
-	     b = etr::subset((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), true, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.36) {;	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), b, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.37) {;	 
-	     b = etr::subset((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), true, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.38) {;	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), true, b);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.39) {;	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), b, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.41) {;	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset((etr::matrix(etr::colon(etr::i2d(1), 9), etr::i2d(3), 3) + 0), b, b);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.42) {;	 
-	     b = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset((etr::colon(etr::i2d(1), 6) + 1), b + b);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.43) {;	 
-	     b = etr::coca(etr::i2d(1), etr::i2d(2), etr::i2d(3), 4);	 
-	     c = etr::coca(etr::i2d(1), etr::i2d(5), etr::i2d(3), 6.7);	 
-	     b = etr::subset((etr::colon(etr::i2d(1), 6) + 0), b == c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.44) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), 1, b + c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.45) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), 1, b != c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.46) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), b + c, 1);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.47) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), b != c, 2);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.48) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), 1.5, b + c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.49) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), 1.4, b != c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.51) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), b + c, 1.5);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.52) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), b != c, 2.5);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.53) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), true, b + c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.54) {;	 
-	     b = etr::coca(etr::i2d(0), etr::i2d(1), etr::i2d(2), 3);	 
-	     c = etr::coca(etr::i2d(1), etr::i2d(1), etr::i2d(2), 5);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), true, b == c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.55) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), b + c, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.56) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), b == c, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.57) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), true, b + c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.58) {;	 
-	     b = etr::coca(etr::i2d(0), etr::i2d(1), etr::i2d(2), 3);	 
-	     c = etr::coca(etr::i2d(1), etr::i2d(1), etr::i2d(2), 5);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), true, b == c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.59) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), b + c, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.61) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), b == c, true);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.62) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), b + c, b + c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.63) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     rs = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), rs, b + c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.64) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     cs = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), b + c, cs);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.65) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), b + c, b == c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.66) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     rs = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), rs, b == c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.67) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), b == c, b + c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.68) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     cs = etr::coca(etr::i2d(1), 2);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), b == c, cs);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 19.69) {;	 
-	     b = etr::coca(etr::i2d(0), 1);	 
-	     c = etr::coca(etr::i2d(1), 1);	 
-	     b = etr::subset((etr::matrix(etr::i2d(0), etr::i2d(3), 3) + etr::colon(etr::i2d(1), 9)), b == c, b == c);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 20.1) {;	 
-	     for (auto&i:  etr::colon(etr::i2d(1), etr::at(etr::dim(a), 1))) {;	 
-	         for (auto&j:  etr::colon(etr::i2d(1), etr::at(etr::dim(a), 2))) {;	 
-	             etr::subset(a, i, j) = i + j;	 
-	         };	 
-	     };	 
-	     return(etr::cpp2R(a));	 
-	 };	 
-	 if (type_test == 21.1) {;	 
-	     a = etr::coca(etr::i2d(0), 0.2, 0.4, 0.99);	 
-	     b = etr::sinus(a) + etr::asinus(a) + etr::sinush(a) + etr::cosinus(a) + etr::acosinus(a) + etr::cosinush(a) + etr::tangens(a) + etr::atangens(a) + etr::tangensh(a);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 22.1) {;	 
-	     a = etr::colon(etr::i2d(1), 3);	 
-	     etr::subset(a, 1) = NA_REAL;	 
-	     etr::subset(a, 2) = R_PosInf;	 
-	     etr::subset(a, 3) = -R_PosInf;	 
-	     return(etr::cpp2R(a));	 
-	 } else if (type_test == 22.2) {;	 
-	     a = etr::colon(etr::i2d(1), 3);	 
-	     etr::subset(a, 1) = NA_REAL;	 
-	     etr::subset(a, 2) = R_PosInf;	 
-	     etr::subset(a, 3) = -R_PosInf;	 
-	     b = etr::isNA(a);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 22.3) {;	 
-	     a = etr::colon(etr::i2d(1), 3);	 
-	     etr::subset(a, 1) = NA_REAL;	 
-	     etr::subset(a, 2) = R_PosInf;	 
-	     etr::subset(a, 3) = -R_PosInf;	 
-	     b = isInf(a);	 
-	     return(etr::cpp2R(b));	 
-	 } else if (type_test == 22.4) {;	 
-	     a = etr::colon(etr::i2d(1), 3);	 
-	     b = isInf(a + 1);	 
-	     c = etr::isNA(a + 2);	 
-	     d = b + c;	 
-	     return(etr::cpp2R(d));	 
-	 };	 
-	 ret = 1;	 
-	 return(etr::cpp2R(ret));	 
-}
-function (aSEXP, type_testSEXP)  
-test_all.R....................   29 tests [0;32mOK[0m test_all.R....................   30 tests [0;32mOK[0m test_all.R....................   31 tests [0;32mOK[0m test_all.R....................   32 tests [0;32mOK[0m test_all.R....................   33 tests [0;32mOK[0m test_all.R....................   34 tests [0;32mOK[0m test_all.R....................   34 tests [0;32mOK[0m test_all.R....................   35 tests [0;32mOK[0m test_all.R....................   35 tests [0;32mOK[0m test_all.R....................   36 tests [0;32mOK[0m test_all.R....................   37 tests [0;32mOK[0m test_all.R....................   38 tests [0;32mOK[0m test_all.R....................   39 tests [0;32mOK[0m test_all.R....................   40 tests [0;32mOK[0m test_all.R....................   41 tests [0;32mOK[0m test_all.R....................   42 tests [0;32mOK[0m test_all.R....................   43 tests [0;32mOK[0m test_all.R....................   44 tests [0;32mOK[0m test_all.R....................   45 tests [0;32mOK[0m test_all.R....................   46 tests [0;32mOK[0m test_all.R....................   47 tests [0;32mOK[0m test_all.R....................   48 tests [0;32mOK[0m test_all.R....................   49 tests [0;32mOK[0m test_all.R....................   50 tests [0;32mOK[0m test_all.R....................   51 tests [0;32mOK[0m test_all.R....................   52 tests [0;32mOK[0m test_all.R....................   53 tests [0;32mOK[0m test_all.R....................   54 tests [0;32mOK[0m test_all.R....................   55 tests [0;32mOK[0m test_all.R....................   56 tests [0;32mOK[0m test_all.R....................   57 tests [0;32mOK[0m test_all.R....................   58 tests [0;32mOK[0m test_all.R....................   59 tests [0;32mOK[0m test_all.R....................   60 tests [0;32mOK[0m test_all.R....................   61 tests [0;32mOK[0m test_all.R....................   62 tests [0;32mOK[0m test_all.R....................   63 tests [0;32mOK[0m test_all.R....................   64 tests [0;32mOK[0m test_all.R....................   65 tests [0;32mOK[0m test_all.R....................   66 tests [0;32mOK[0m test_all.R....................   67 tests [0;32mOK[0m test_all.R....................   68 tests [0;32mOK[0m test_all.R....................   69 tests [0;32mOK[0m test_all.R....................   70 tests [0;32mOK[0m test_all.R....................   71 tests [0;32mOK[0m test_all.R....................   72 tests [0;32mOK[0m test_all.R....................   73 tests [0;32mOK[0m test_all.R....................   74 tests [0;32mOK[0m test_all.R....................   75 tests [0;32mOK[0m test_all.R....................   76 tests [0;32mOK[0m test_all.R....................   77 tests [0;32mOK[0m test_all.R....................   78 tests [0;32mOK[0m test_all.R....................   79 tests [0;32mOK[0m test_all.R....................   80 tests [0;32mOK[0m test_all.R....................   81 tests [0;32mOK[0m test_all.R....................   82 tests [0;32mOK[0m test_all.R....................   83 tests [0;32mOK[0m test_all.R....................   84 tests [0;32mOK[0m test_all.R....................   85 tests [0;32mOK[0m test_all.R....................   86 tests [0;32mOK[0m test_all.R....................   87 tests [0;32mOK[0m test_all.R....................   88 tests [0;32mOK[0m test_all.R....................   89 tests [0;32mOK[0m test_all.R....................   90 tests [0;32mOK[0m test_all.R....................   91 tests [0;32mOK[0m test_all.R....................   92 tests [0;32mOK[0m test_all.R....................   93 tests [0;32mOK[0m test_all.R....................   94 tests [0;32mOK[0m test_all.R....................   95 tests [0;32mOK[0m test_all.R....................   96 tests [0;32mOK[0m test_all.R....................   97 tests [0;32mOK[0m test_all.R....................   98 tests [0;32mOK[0m test_all.R....................   99 tests [0;32mOK[0m test_all.R....................  100 tests [0;32mOK[0m test_all.R....................  101 tests [0;32mOK[0m test_all.R....................  102 tests [0;32mOK[0m test_all.R....................  103 tests [0;32mOK[0m test_all.R....................  104 tests [0;32mOK[0m test_all.R....................  105 tests [0;32mOK[0m test_all.R....................  106 tests [0;32mOK[0m test_all.R....................  107 tests [0;32mOK[0m test_all.R....................  108 tests [0;32mOK[0m test_all.R....................  109 tests [0;32mOK[0m test_all.R....................  110 tests [0;32mOK[0m test_all.R....................  111 tests [0;32mOK[0m test_all.R....................  112 tests [0;32mOK[0m test_all.R....................  113 tests [0;32mOK[0m test_all.R....................  114 tests [0;32mOK[0m test_all.R....................  115 tests [0;32mOK[0m test_all.R....................  116 tests [0;32mOK[0m test_all.R....................  117 tests [0;32mOK[0m test_all.R....................  118 tests [0;32mOK[0m test_all.R....................  119 tests [0;32mOK[0m test_all.R....................  120 tests [0;32mOK[0m test_all.R....................  121 tests [0;32mOK[0m test_all.R....................  122 tests [0;32mOK[0m test_all.R....................  123 tests [0;32mOK[0m test_all.R....................  124 tests [0;32mOK[0m test_all.R....................  125 tests [0;32mOK[0m test_all.R....................  126 tests [0;32mOK[0m test_all.R....................  127 tests [0;32mOK[0m test_all.R....................  128 tests [0;32mOK[0m test_all.R....................  129 tests [0;32mOK[0m test_all.R....................  130 tests [0;32mOK[0m test_all.R....................  131 tests [0;32mOK[0m test_all.R....................  132 tests [0;32mOK[0m test_all.R....................  133 tests [0;32mOK[0m test_all.R....................  134 tests [0;32mOK[0m test_all.R....................  135 tests [0;32mOK[0m test_all.R....................  136 tests [0;32mOK[0m test_all.R....................  137 tests [0;32mOK[0m test_all.R....................  138 tests [0;32mOK[0m test_all.R....................  139 tests [0;32mOK[0m test_all.R....................  140 tests [0;32mOK[0m test_all.R....................  141 tests [0;32mOK[0m test_all.R....................  142 tests [0;32mOK[0m test_all.R....................  143 tests [0;32mOK[0m test_all.R....................  144 tests [0;32mOK[0m test_all.R....................  145 tests [0;32mOK[0m test_all.R....................  146 tests [0;32mOK[0m test_all.R....................  147 tests [0;32mOK[0m test_all.R....................  148 tests [0;32mOK[0m test_all.R....................  149 tests [0;32mOK[0m test_all.R....................  150 tests [0;32mOK[0m test_all.R....................  151 tests [0;32mOK[0m test_all.R....................  152 tests [0;32mOK[0m test_all.R....................  153 tests [0;32mOK[0m test_all.R....................  154 tests [0;32mOK[0m test_all.R....................  155 tests [0;32mOK[0m test_all.R....................  156 tests [0;32mOK[0m test_all.R....................  157 tests [0;32mOK[0m test_all.R....................  158 tests [0;32mOK[0m test_all.R....................  159 tests [0;32mOK[0m test_all.R....................  160 tests [0;32mOK[0m test_all.R....................  161 tests [0;32mOK[0m test_all.R....................  162 tests [0;32mOK[0m test_all.R....................  163 tests [0;32mOK[0m test_all.R....................  164 tests [0;32mOK[0m test_all.R....................  165 tests [0;32mOK[0m test_all.R....................  166 tests [0;32mOK[0m test_all.R....................  167 tests [0;32mOK[0m test_all.R....................  168 tests [0;32mOK[0m test_all.R....................  169 tests [0;32mOK[0m test_all.R....................  170 tests [0;32mOK[0m test_all.R....................  171 tests [0;32mOK[0m test_all.R....................  172 tests [0;32mOK[0m test_all.R....................  173 tests [0;32mOK[0m test_all.R....................  174 tests [0;32mOK[0m test_all.R....................  175 tests [0;32mOK[0m test_all.R....................  176 tests [0;32mOK[0m test_all.R....................  177 tests [0;32mOK[0m test_all.R....................  178 tests [0;32mOK[0m test_all.R....................  179 tests [0;32mOK[0m test_all.R....................  180 tests [0;32mOK[0m test_all.R....................  181 tests [0;32mOK[0m test_all.R....................  182 tests [0;32mOK[0m test_all.R....................  183 tests [0;32mOK[0m test_all.R....................  184 tests [0;32mOK[0m test_all.R....................  185 tests [0;32mOK[0m test_all.R....................  186 tests [0;32mOK[0m test_all.R....................  187 tests [0;32mOK[0m test_all.R....................  188 tests [0;32mOK[0m test_all.R....................  189 tests [0;32mOK[0m test_all.R....................  190 tests [0;32mOK[0m test_all.R....................  191 tests [0;32mOK[0m test_all.R....................  192 tests [0;32mOK[0m test_all.R....................  193 tests [0;32mOK[0m test_all.R....................  194 tests [0;32mOK[0m test_all.R....................  195 tests [0;32mOK[0m test_all.R....................  196 tests [0;32mOK[0m test_all.R....................  197 tests [0;32mOK[0m test_all.R....................  198 tests [0;32mOK[0m test_all.R....................  199 tests [0;32mOK[0m test_all.R....................  200 tests [0;32mOK[0m test_all.R....................  201 tests [0;32mOK[0m test_all.R....................  202 tests [0;32mOK[0m test_all.R....................  203 tests [0;32mOK[0m test_all.R....................  204 tests [0;32mOK[0m test_all.R....................  205 tests [0;32mOK[0m test_all.R....................  206 tests [0;32mOK[0m test_all.R....................  207 tests [0;32mOK[0m test_all.R....................  208 tests [0;32mOK[0m test_all.R....................  209 tests [0;32mOK[0m test_all.R....................  210 tests [0;32mOK[0m test_all.R....................  211 tests [0;32mOK[0m test_all.R....................  212 tests [0;32mOK[0m test_all.R....................  213 tests [0;32mOK[0m test_all.R....................  214 tests [0;32mOK[0m test_all.R....................  215 tests [0;32mOK[0m test_all.R....................  216 tests [0;32mOK[0m test_all.R....................  217 tests [0;32mOK[0m test_all.R....................  218 tests [0;32mOK[0m test_all.R....................  219 tests [0;32mOK[0m test_all.R....................  220 tests [0;32mOK[0m test_all.R....................  221 tests [0;32mOK[0m test_all.R....................  222 tests [0;32mOK[0m test_all.R....................  223 tests [0;32mOK[0m test_all.R....................  224 tests [0;32mOK[0m test_all.R....................  225 tests [0;32mOK[0m test_all.R....................  226 tests [0;32mOK[0m test_all.R....................  227 tests [0;32mOK[0m test_all.R....................  228 tests [0;32mOK[0m test_all.R....................  229 tests [0;32mOK[0m test_all.R....................  230 tests [0;32mOK[0m test_all.R....................  231 tests [0;32mOK[0m test_all.R....................  232 tests [0;32mOK[0m test_all.R....................  233 tests [0;32mOK[0m test_all.R....................  234 tests [0;32mOK[0m test_all.R....................  235 tests [0;32mOK[0m test_all.R....................  236 tests [0;32mOK[0m test_all.R....................  237 tests [0;32mOK[0m test_all.R....................  238 tests [0;32mOK[0m test_all.R....................  239 tests [0;32mOK[0m test_all.R....................  240 tests [0;32mOK[0m test_all.R....................  241 tests [0;32mOK[0m test_all.R....................  242 tests [0;32mOK[0m test_all.R....................  243 tests [0;32mOK[0m test_all.R....................  244 tests [0;32mOK[0m test_all.R....................  245 tests [0;32mOK[0m test_all.R....................  246 tests [0;32mOK[0m test_all.R....................  247 tests [0;32mOK[0m test_all.R....................  248 tests [0;32mOK[0m test_all.R....................  249 tests [0;32mOK[0m test_all.R....................  250 tests [0;32mOK[0m test_all.R....................  251 tests [0;32mOK[0m test_all.R....................  252 tests [0;32mOK[0m test_all.R....................  253 tests [0;32mOK[0m test_all.R....................  254 tests [0;32mOK[0m test_all.R....................  255 tests [0;32mOK[0m test_all.R....................  256 tests [0;32mOK[0m test_all.R....................  257 tests [0;32mOK[0m test_all.R....................  258 tests [0;32mOK[0m test_all.R....................  259 tests [0;32mOK[0m test_all.R....................  260 tests [0;32mOK[0m test_all.R....................  261 tests [0;32mOK[0m test_all.R....................  262 tests [0;32mOK[0m test_all.R....................  263 tests [0;32mOK[0m test_all.R....................  264 tests [0;32mOK[0m test_all.R....................  264 tests [0;32mOK[0m test_all.R....................  264 tests [0;32mOK[0m test_all.R....................  265 tests [0;32mOK[0m test_all.R....................  265 tests [0;32mOK[0m test_all.R....................  265 tests [0;32mOK[0m test_all.R....................  266 tests [0;32mOK[0m test_all.R....................  267 tests [0;32mOK[0m test_all.R....................  268 tests [0;32mOK[0m test_all.R....................  269 tests [0;32mOK[0m test_all.R....................  270 tests [0;32mOK[0m test_all.R....................  271 tests [0;32mOK[0m test_all.R....................  272 tests [0;32mOK[0m test_all.R....................  273 tests [0;32mOK[0m test_all.R....................  274 tests [0;32mOK[0m test_all.R....................  275 tests [0;32mOK[0m test_all.R....................  276 tests [0;32mOK[0m test_all.R....................  277 tests [0;32mOK[0m test_all.R....................  278 tests [0;32mOK[0m test_all.R....................  279 tests [0;32mOK[0m test_all.R....................  280 tests [0;32mOK[0m test_all.R....................  281 tests [0;32mOK[0m test_all.R....................  282 tests [0;32mOK[0m test_all.R....................  283 tests [0;32mOK[0m test_all.R....................  284 tests [0;32mOK[0m test_all.R....................  285 tests [0;32mOK[0m test_all.R....................  286 tests [0;32mOK[0m test_all.R....................  287 tests [0;32mOK[0m test_all.R....................  288 tests [0;32mOK[0m test_all.R....................  289 tests [0;32mOK[0m test_all.R....................  290 tests [0;32mOK[0m test_all.R....................  291 tests [0;32mOK[0m test_all.R....................  292 tests [0;32mOK[0m test_all.R....................  293 tests [0;32mOK[0m test_all.R....................  294 tests [0;32mOK[0m test_all.R....................  295 tests [0;32mOK[0m test_all.R....................  296 tests [0;32mOK[0m test_all.R....................  297 tests [0;32mOK[0m test_all.R....................  298 tests [0;32mOK[0m test_all.R....................  299 tests [0;32mOK[0m test_all.R....................  300 tests [0;32mOK[0m test_all.R....................  301 tests [0;32mOK[0m test_all.R....................  302 tests [0;32mOK[0m test_all.R....................  303 tests [0;32mOK[0m test_all.R....................  304 tests [0;32mOK[0m test_all.R....................  305 tests [0;32mOK[0m test_all.R....................  306 tests [0;32mOK[0m test_all.R....................  307 tests [0;32mOK[0m test_all.R....................  308 tests [0;32mOK[0m test_all.R....................  309 tests [0;32mOK[0m test_all.R....................  310 tests [0;32mOK[0m test_all.R....................  311 tests [0;32mOK[0m test_all.R....................  312 tests [0;32mOK[0m test_all.R....................  313 tests [0;32mOK[0m test_all.R....................  314 tests [0;32mOK[0m test_all.R....................  315 tests [0;32mOK[0m test_all.R....................  316 tests [0;32mOK[0m test_all.R....................  317 tests [0;32mOK[0m test_all.R....................  318 tests [0;32mOK[0m test_all.R....................  319 tests [0;32mOK[0m test_all.R....................  320 tests [0;32mOK[0m test_all.R....................  321 tests [0;32mOK[0m test_all.R....................  322 tests [0;32mOK[0m test_all.R....................  323 tests [0;32mOK[0m [0;34m35.8s[0m
-All ok, 323 results (35.8s)
-There were 50 or more warnings (use warnings() to see the first 50)
-> 
-> proc.time()
-   user  system elapsed 
- 34.781   1.080  36.060 

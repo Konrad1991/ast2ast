@@ -595,6 +595,31 @@ subset(V &&vec, R &&r,
   return Vec<DataType, decltype(convertSubsetConst(vec)), SubVecTrait>(
       std::move(sub));
 }
+
+template <typename V, typename R, typename C>
+  requires IsVec<V>
+inline auto subset_deriv(V &vec, R &&r, C &&c) {
+  using DataType = typename ExtractDataType<V>::RetType;
+  Subset<decltype(convert(vec).d), SubsetTrait> sub(vec, true);
+  calcIndMatrix(vec, sub.ind, sub.mp, &r, &c);
+  return Vec<DataType, decltype(convertSubset(vec)), SubVecTrait>(
+      std::move(sub));
+}
+
+template <typename V, typename R, typename C>
+  requires(IsRVec<V> || IsSubVec<V> || OperationVec<V>)
+inline const auto
+subset_deriv(V &&vec, R &&r,
+             C &&c) { // TODO: check that calculations can be subsetted
+  using DataType = typename ExtractDataType<V>::RetType;
+  Subset<const decltype(convert(vec).d), SubsetTrait> sub(
+      vec, true); 
+  // TODO: check whether a new trait SubsetTraitconst is needed
+  calcIndMatrix(vec, sub.ind, sub.mp, &r, &c);
+  return Vec<DataType, decltype(convertSubsetConst(vec)), SubVecTrait>(
+      std::move(sub));
+}
+
 }; // namespace etr
 
 #endif

@@ -46,6 +46,17 @@ template <typename T, typename SubsetTrait> struct Subset {
   Subset(const Vec<T2, R2, TraitOther> &other) {
     this->p = &other.d;
   }
+
+#ifdef DERIV_ETR
+
+  template <typename T2, typename R2> Subset(Vec<T2, R2> &other, bool deriv) {
+    this->p = &other.deriv;
+  }
+  template <typename T2, typename R2, typename TraitOther>
+  Subset(const Vec<T2, R2, TraitOther> &other, bool deriv) {
+    this->p = &other.deriv;
+  }
+#endif
 #ifdef STANDALONE_ETR
 #else
   Subset(SEXP) = delete;

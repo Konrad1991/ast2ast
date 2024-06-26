@@ -1,4 +1,0 @@
-J                       Calculates the jacobian function and
-                        translatesthe resulting function into a C++
-                        function.
-translate               Translates an R function into a C++ function.

@@ -1,5 +1,0 @@
-CXX_STD=CXX20
-
-PKG_CPPFLAGS= -I../inst -I../inst/include 
-PKG_CXXFLAGS=  -I../inst -I../inst/include
-
