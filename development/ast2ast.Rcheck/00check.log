@@ -1,0 +1,112 @@
+* using log directory ‘/home/konrad/Documents/ast2ast/development/ast2ast.Rcheck’
+* using R version 4.1.2 (2021-11-01)
+* using platform: x86_64-pc-linux-gnu (64-bit)
+* using session charset: UTF-8
+* using option ‘--as-cran’
+* checking for file ‘ast2ast/DESCRIPTION’ ... OK
+* checking extension type ... Package
+* this is package ‘ast2ast’ version ‘0.4’
+* package encoding: UTF-8
+* checking CRAN incoming feasibility ... Note_to_CRAN_maintainers
+Maintainer: ‘Krämer Konrad <konrad_kraemer@yahoo.de>’
+* checking package namespace information ... OK
+* checking package dependencies ... NOTE
+Package in Depends/Imports which should probably only be in LinkingTo: ‘RcppArmadillo’
+* checking if this is a source package ... OK
+* checking if there is a namespace ... OK
+* checking for executable files ... OK
+* checking for hidden files and directories ... OK
+* checking for portable file names ... OK
+* checking for sufficient/correct file permissions ... OK
+* checking serialization versions ... OK
+* checking whether package ‘ast2ast’ can be installed ... OK
+* checking installed package size ... NOTE
+  installed size is 14.3Mb
+  sub-directories of 1Mb or more:
+    R      1.7Mb
+    doc    1.3Mb
+    libs  10.8Mb
+* checking package directory ... OK
+* checking for future file timestamps ... OK
+* checking ‘build’ directory ... OK
+* checking DESCRIPTION meta-information ... OK
+* checking top-level files ... NOTE
+Non-standard file/directory found at top level:
+  ‘development’
+* checking for left-over files ... OK
+* checking index information ... OK
+* checking package subdirectories ... OK
+* checking R files for non-ASCII characters ... OK
+* checking R files for syntax errors ... OK
+* checking whether the package can be loaded ... OK
+* checking whether the package can be loaded with stated dependencies ... OK
+* checking whether the package can be unloaded cleanly ... OK
+* checking whether the namespace can be loaded with stated dependencies ... OK
+* checking whether the namespace can be unloaded cleanly ... OK
+* checking loading without being on the library search path ... OK
+* checking use of S3 registration ... OK
+* checking dependencies in R code ... OK
+* checking S3 generic/method consistency ... OK
+* checking replacement functions ... OK
+* checking foreign function calls ... OK
+* checking R code for possible problems ... NOTE
+check_variable_type_pairs : <anonymous>: no visible global function
+  definition for ‘setNames’
+Undefined global functions or variables:
+  setNames
+Consider adding
+  importFrom("stats", "setNames")
+to your NAMESPACE file.
+* checking Rd files ... OK
+* checking Rd metadata ... OK
+* checking Rd line widths ... OK
+* checking Rd cross-references ... OK
+* checking for missing documentation entries ... OK
+* checking for code/documentation mismatches ... WARNING
+Codoc mismatches from documentation object 'translate':
+translate
+  Code: function(f, output = "R", types_of_args = "double",
+                 data_structures = "vector", handle_input = "copy",
+                 references = FALSE, verbose = FALSE, getsource =
+                 FALSE)
+  Docs: function(f, output = "R", types_of_args = "SEXP", return_type =
+                 "SEXP", reference = FALSE, verbose = FALSE, getsource
+                 = FALSE)
+  Argument names in code not in docs:
+    data_structures handle_input references
+  Argument names in docs not in code:
+    return_type reference
+  Mismatches in argument names (first 3):
+    Position: 4 Code: data_structures Docs: return_type
+    Position: 5 Code: handle_input Docs: reference
+    Position: 6 Code: references Docs: verbose
+  Mismatches in argument default values:
+    Name: 'types_of_args' Code: "double" Docs: "SEXP"
+
+* checking Rd \usage sections ... OK
+* checking Rd contents ... OK
+* checking for unstated dependencies in examples ... OK
+* checking line endings in C/C++/Fortran sources/headers ... OK
+* checking line endings in Makefiles ... OK
+* checking compilation flags in Makevars ... OK
+* checking for GNU extensions in Makefiles ... OK
+* checking for portable use of $(BLAS_LIBS) and $(LAPACK_LIBS) ... OK
+* checking use of PKG_*FLAGS in Makefiles ... OK
+* checking use of SHLIB_OPENMP_*FLAGS in Makefiles ... OK
+* checking pragmas in C/C++ headers and code ... OK
+* checking compilation flags used ... OK
+* checking compiled code ... OK
+* checking installed files from ‘inst/doc’ ... OK
+* checking files in ‘vignettes’ ... OK
+* checking examples ... OK
+* checking for unstated dependencies in ‘tests’ ... OK
+* checking tests ... OK
+  Running ‘tinytest.R’ [33s/33s]
+* checking for unstated dependencies in vignettes ... OK
+* checking package vignettes in ‘inst/doc’ ... OK
+* checking re-building of vignette outputs ... OK
+* checking PDF version of manual ... OK
+* checking for non-standard things in the check directory ... OK
+* checking for detritus in the temp directory ... OK
+* DONE
+Status: 1 WARNING, 4 NOTEs

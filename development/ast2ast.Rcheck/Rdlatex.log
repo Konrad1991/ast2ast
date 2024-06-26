@@ -1,0 +1,218 @@
+Hmm ... looks like a package
+
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+LaTeX2e <2022-06-01> patch level 5
+L3 programming layer <2022-08-23> (./Rd2.tex
+(/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/book.cls
+Document Class: book 2021/10/04 v1.4n Standard LaTeX document class
+(/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/bk10.clo)) (/usr/share/R/share/texmf/tex/latex/Rd.sty (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/ifthen.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/tools/longtable.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/tools/bm.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/alltt.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/tools/verbatim.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/url/url.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/textcomp.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/fontenc.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/times.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/inconsolata/zi4.sty `inconsolata-zi4' v1.12, 2019/05/17 Text macros for Inconsolata (msharpe) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/xkeyval/xkeyval.sty (/home/konrad/.TinyTeX/texmf-dist/tex/generic/xkeyval/xkeyval.tex (/home/konrad/.TinyTeX/texmf-dist/tex/generic/xkeyval/xkvutils.tex (/home/konrad/.TinyTeX/texmf-dist/tex/generic/xkeyval/keyval.tex))))) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/graphics/color.sty (/home/konrad/.TinyTeX/texmf-dist/tex/latex/graphics-cfg/color.cfg) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/graphics-def/pdftex.def) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/graphics/mathcolor.ltx)) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hyperref/hyperref.sty (/home/konrad/.TinyTeX/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/iftex/iftex.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty (/home/konrad/.TinyTeX/texmf-dist/tex/generic/infwarerr/infwarerr.sty)) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/kvsetkeys/kvsetkeys.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/pdfescape/pdfescape.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hycolor/hycolor.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/letltxmacro/letltxmacro.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/auxhook/auxhook.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hyperref/nameref.sty (/home/konrad/.TinyTeX/texmf-dist/tex/latex/refcount/refcount.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty (/home/konrad/.TinyTeX/texmf-dist/tex/latex/kvoptions/kvoptions.sty))) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hyperref/pd1enc.def) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/intcalc/intcalc.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/etexcmds/etexcmds.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hyperref/puenc.def) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/bitset/bitset.sty (/home/konrad/.TinyTeX/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty)) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/atbegshi-ltx.sty)) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hyperref/hpdftex.def (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/atveryend-ltx.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty (/home/konrad/.TinyTeX/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty)))
+
+Package hyperref Warning: Option `hyperindex' has already been used,
+(hyperref)                setting the option has no effect on input line 377.
+
+
+Package hyperref Warning: Option `pagebackref' has already been used,
+(hyperref)                setting the option has no effect on input line 377.
+
+) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/makeidx.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/inputenc.sty)
+Writing index file Rd2.idx
+(/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/t1ptm.fd) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def)
+No file Rd2.aux.
+(/home/konrad/.TinyTeX/texmf-dist/tex/latex/inconsolata/t1zi4.fd) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/t1phv.fd)
+No file Rd2.toc.
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--45
+
+[1{/home/konrad/.TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
+Underfull \hbox (badness 10000) in paragraph at lines 71--79
+
+[2]
+Underfull \hbox (badness 10000) in paragraph at lines 89--107
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 107--119
+
+[3]
+Underfull \hbox (badness 10000) in paragraph at lines 156--158
+
+[4]
+Underfull \hbox (badness 10000) in paragraph at lines 185--189
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 211--219
+
+[5]
+Underfull \hbox (badness 10000) in paragraph at lines 229--247
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 247--259
+
+[6] (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/ts1ptm.fd) [7]
+Underfull \hbox (badness 10000) in paragraph at lines 327--331
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 331--335
+
+[8]
+Underfull \hbox (badness 10000) in paragraph at lines 365--367
+
+(/home/konrad/.TinyTeX/texmf-dist/tex/latex/inconsolata/ts1zi4.fd) [9]
+No file Rd2.ind.
+[10] (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.aux)
+
+Package rerunfilecheck Warning: File `Rd2.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+ )
+(see the transcript file for additional information)
+pdfTeX warning (dest): name{Rfn.dfdr::jacobian\(\)} has been referenced but does not exist, replaced by a fixed one
+
+{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-ts1.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}</home/konrad/.TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on Rd2.pdf (10 pages, 113905 bytes).
+Transcript written on Rd2.log.
+This is makeindex, version 2.15 [TeX Live 2022/dev] (kpathsea + Thai support).
+Scanning input file Rd2.idx....done (3 entries accepted, 0 rejected).
+Sorting entries....done (4 comparisons).
+Generating output file Rd2.ind....done (13 lines written, 0 warnings).
+Output written in Rd2.ind.
+Transcript written in Rd2.ilg.
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+LaTeX2e <2022-06-01> patch level 5
+L3 programming layer <2022-08-23> (./Rd2.tex
+(/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/book.cls
+Document Class: book 2021/10/04 v1.4n Standard LaTeX document class
+(/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/bk10.clo)) (/usr/share/R/share/texmf/tex/latex/Rd.sty (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/ifthen.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/tools/longtable.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/tools/bm.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/alltt.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/tools/verbatim.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/url/url.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/textcomp.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/fontenc.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/times.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/inconsolata/zi4.sty `inconsolata-zi4' v1.12, 2019/05/17 Text macros for Inconsolata (msharpe) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/xkeyval/xkeyval.sty (/home/konrad/.TinyTeX/texmf-dist/tex/generic/xkeyval/xkeyval.tex (/home/konrad/.TinyTeX/texmf-dist/tex/generic/xkeyval/xkvutils.tex (/home/konrad/.TinyTeX/texmf-dist/tex/generic/xkeyval/keyval.tex))))) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/graphics/color.sty (/home/konrad/.TinyTeX/texmf-dist/tex/latex/graphics-cfg/color.cfg) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/graphics-def/pdftex.def) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/graphics/mathcolor.ltx)) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hyperref/hyperref.sty (/home/konrad/.TinyTeX/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/iftex/iftex.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty (/home/konrad/.TinyTeX/texmf-dist/tex/generic/infwarerr/infwarerr.sty)) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/kvsetkeys/kvsetkeys.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/pdfescape/pdfescape.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hycolor/hycolor.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/letltxmacro/letltxmacro.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/auxhook/auxhook.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hyperref/nameref.sty (/home/konrad/.TinyTeX/texmf-dist/tex/latex/refcount/refcount.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty (/home/konrad/.TinyTeX/texmf-dist/tex/latex/kvoptions/kvoptions.sty))) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hyperref/pd1enc.def) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/intcalc/intcalc.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/etexcmds/etexcmds.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hyperref/puenc.def) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/bitset/bitset.sty (/home/konrad/.TinyTeX/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty)) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/atbegshi-ltx.sty)) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hyperref/hpdftex.def (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/atveryend-ltx.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty (/home/konrad/.TinyTeX/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty)))
+
+Package hyperref Warning: Option `hyperindex' has already been used,
+(hyperref)                setting the option has no effect on input line 377.
+
+
+Package hyperref Warning: Option `pagebackref' has already been used,
+(hyperref)                setting the option has no effect on input line 377.
+
+) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/makeidx.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/inputenc.sty)
+Writing index file Rd2.idx
+(/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/t1ptm.fd) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.aux) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.out) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.out) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/inconsolata/t1zi4.fd) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/t1phv.fd) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.toc)
+Underfull \hbox (badness 10000) in paragraph at lines 41--45
+
+[1{/home/konrad/.TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
+Underfull \hbox (badness 10000) in paragraph at lines 71--79
+
+[2]
+Underfull \hbox (badness 10000) in paragraph at lines 89--107
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 107--119
+
+[3]
+Underfull \hbox (badness 10000) in paragraph at lines 156--158
+
+[4]
+Underfull \hbox (badness 10000) in paragraph at lines 185--189
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 211--219
+
+[5]
+Underfull \hbox (badness 10000) in paragraph at lines 229--247
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 247--259
+
+[6] (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/ts1ptm.fd) [7]
+Underfull \hbox (badness 10000) in paragraph at lines 327--331
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 331--335
+
+[8]
+Underfull \hbox (badness 10000) in paragraph at lines 365--367
+
+(/home/konrad/.TinyTeX/texmf-dist/tex/latex/inconsolata/ts1zi4.fd) [9] (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.ind [10] [11]) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.aux)
+
+Package rerunfilecheck Warning: File `Rd2.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+ )
+(see the transcript file for additional information)
+pdfTeX warning (dest): name{Rfn.dfdr::jacobian\(\)} has been referenced but does not exist, replaced by a fixed one
+
+{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-ts1.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}</home/konrad/.TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on Rd2.pdf (11 pages, 114433 bytes).
+Transcript written on Rd2.log.
+This is makeindex, version 2.15 [TeX Live 2022/dev] (kpathsea + Thai support).
+Scanning input file Rd2.idx....done (3 entries accepted, 0 rejected).
+Sorting entries....done (4 comparisons).
+Generating output file Rd2.ind....done (13 lines written, 0 warnings).
+Output written in Rd2.ind.
+Transcript written in Rd2.ilg.
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+LaTeX2e <2022-06-01> patch level 5
+L3 programming layer <2022-08-23> (./Rd2.tex
+(/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/book.cls
+Document Class: book 2021/10/04 v1.4n Standard LaTeX document class
+(/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/bk10.clo)) (/usr/share/R/share/texmf/tex/latex/Rd.sty (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/ifthen.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/tools/longtable.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/tools/bm.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/alltt.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/tools/verbatim.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/url/url.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/textcomp.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/fontenc.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/times.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/inconsolata/zi4.sty `inconsolata-zi4' v1.12, 2019/05/17 Text macros for Inconsolata (msharpe) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/xkeyval/xkeyval.sty (/home/konrad/.TinyTeX/texmf-dist/tex/generic/xkeyval/xkeyval.tex (/home/konrad/.TinyTeX/texmf-dist/tex/generic/xkeyval/xkvutils.tex (/home/konrad/.TinyTeX/texmf-dist/tex/generic/xkeyval/keyval.tex))))) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/graphics/color.sty (/home/konrad/.TinyTeX/texmf-dist/tex/latex/graphics-cfg/color.cfg) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/graphics-def/pdftex.def) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/graphics/mathcolor.ltx)) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hyperref/hyperref.sty (/home/konrad/.TinyTeX/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/iftex/iftex.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty (/home/konrad/.TinyTeX/texmf-dist/tex/generic/infwarerr/infwarerr.sty)) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/kvsetkeys/kvsetkeys.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/pdfescape/pdfescape.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hycolor/hycolor.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/letltxmacro/letltxmacro.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/auxhook/auxhook.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hyperref/nameref.sty (/home/konrad/.TinyTeX/texmf-dist/tex/latex/refcount/refcount.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty (/home/konrad/.TinyTeX/texmf-dist/tex/latex/kvoptions/kvoptions.sty))) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hyperref/pd1enc.def) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/intcalc/intcalc.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/etexcmds/etexcmds.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hyperref/puenc.def) (/home/konrad/.TinyTeX/texmf-dist/tex/generic/bitset/bitset.sty (/home/konrad/.TinyTeX/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty)) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/atbegshi-ltx.sty)) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/hyperref/hpdftex.def (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/atveryend-ltx.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty (/home/konrad/.TinyTeX/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty)))
+
+Package hyperref Warning: Option `hyperindex' has already been used,
+(hyperref)                setting the option has no effect on input line 377.
+
+
+Package hyperref Warning: Option `pagebackref' has already been used,
+(hyperref)                setting the option has no effect on input line 377.
+
+) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/makeidx.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/inputenc.sty)
+Writing index file Rd2.idx
+(/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/t1ptm.fd) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.aux) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.out) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.out) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/inconsolata/t1zi4.fd) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/t1phv.fd) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.toc) [1{/home/konrad/.TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
+Underfull \hbox (badness 10000) in paragraph at lines 41--45
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 71--79
+
+[2]
+Underfull \hbox (badness 10000) in paragraph at lines 89--107
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 107--119
+
+[3]
+Underfull \hbox (badness 10000) in paragraph at lines 156--158
+
+[4]
+Underfull \hbox (badness 10000) in paragraph at lines 185--189
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 211--219
+
+[5]
+Underfull \hbox (badness 10000) in paragraph at lines 229--247
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 247--259
+
+[6] (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/ts1ptm.fd) [7]
+Underfull \hbox (badness 10000) in paragraph at lines 327--331
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 331--335
+
+[8]
+Underfull \hbox (badness 10000) in paragraph at lines 365--367
+
+(/home/konrad/.TinyTeX/texmf-dist/tex/latex/inconsolata/ts1zi4.fd) [9] (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.ind [10] [11]) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.aux) )
+(see the transcript file for additional information)
+pdfTeX warning (dest): name{Rfn.dfdr::jacobian\(\)} has been referenced but does not exist, replaced by a fixed one
+
+{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-ts1.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}</home/konrad/.TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on Rd2.pdf (11 pages, 114691 bytes).
+Transcript written on Rd2.log.
+Saving output to ‘ast2ast-manual.pdf’ ...
+Done
+You may want to clean up by 'rm -Rf /tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc'

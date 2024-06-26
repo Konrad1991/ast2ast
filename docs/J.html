@@ -1,20 +1,10 @@
-<!DOCTYPE html><html><head><title>R: Calculates the jacobian function and translatesthe resulting...</title>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Calculates the jacobian function and translatesthe resulting...</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css">
-<script type="text/javascript">
-const macros = { "\\R": "\\textsf{R}", "\\code": "\\texttt"};
-function processMathHTML() {
-    var l = document.getElementsByClassName('reqn');
-    for (let e of l) { katex.render(e.textContent, e, { throwOnError: false, macros }); }
-    return;
-}</script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js"
-    onload="processMathHTML();"></script>
 <link rel="stylesheet" type="text/css" href="R.css" />
-</head><body><div class="container"><main>
+</head><body><div class="container">
 
-<table style="width: 100%;"><tr><td>J</td><td style="text-align: right;">R Documentation</td></tr></table>
+<table width="100%" summary="page for J"><tr><td>J</td><td style="text-align: right;">R Documentation</td></tr></table>
 
 <h2>Calculates the jacobian function and translatesthe resulting function into a C++ function.</h2>
 
@@ -29,7 +19,8 @@ Further information can be found in the vignette: <em>Detailed Documentation</em
 
 <h3>Usage</h3>
 
-<pre><code class='language-R'>  J(
+<pre>
+  J(
     f,
     y,
     x,
@@ -40,31 +31,31 @@ Further information can be found in the vignette: <em>Detailed Documentation</em
     verbose = FALSE,
     getsource = FALSE
   )
-</code></pre>
+</pre>
 
 
 <h3>Arguments</h3>
 
-<table>
-<tr><td><code id="f">f</code></td>
+<table summary="R argblock">
+<tr valign="top"><td><code>f</code></td>
 <td>
 <p>The function which should be translated from R to C++.</p>
 </td></tr>
-<tr><td><code id="y">y</code></td>
+<tr valign="top"><td><code>y</code></td>
 <td>
 <p>The variables to compute the derivatives of (the dependent variable). For example: df/dx</p>
 </td></tr>
-<tr><td><code id="x">x</code></td>
+<tr valign="top"><td><code>x</code></td>
 <td>
 <p>The variables to which respect the variables are calcualted (the independent variable). For example: df/dx</p>
 </td></tr>
-<tr><td><code id="output">output</code></td>
+<tr valign="top"><td><code>output</code></td>
 <td>
 <p>If set to &quot;R&quot;&quot; an R function wrapping the C++ code is returned. <br />
 If output is set to &quot;XPtr&quot;&quot; an external pointer object pointing to the C++ code is returned. <br />
 The default value is &quot;R&quot;.</p>
 </td></tr>
-<tr><td><code id="types_of_args">types_of_args</code></td>
+<tr valign="top"><td><code>types_of_args</code></td>
 <td>
 <p>define the types of the arguments passed to the function as an character vector. 
 This is an optional input if using &quot;XPtr&quot; as output. <br />
@@ -75,20 +66,20 @@ For more information see below for details and check the vignette <em>Informatio
 <strong>Beyond that, be aware that the passed <em>SEXP</em> objects are only copied if the object size increases.
 Thus, R objects can be modified within the function! See in section details for an example</strong> <br /></p>
 </td></tr>
-<tr><td><code id="return_type">return_type</code></td>
+<tr valign="top"><td><code>return_type</code></td>
 <td>
 <p>is a character defining the type which the function returns. The default value is &quot;SEXP&quot;&quot; as this is the only possibility for output &quot;R&quot;. <br />
 Additionally, the possibilities &quot;sexp&quot; and &quot;void&quot; exist for the external pointer interface.</p>
 </td></tr>
-<tr><td><code id="reference">reference</code></td>
+<tr valign="top"><td><code>reference</code></td>
 <td>
 <p>If set to TRUE the arguments are passed by reference (not possible if output is &quot;R&quot;).</p>
 </td></tr>
-<tr><td><code id="verbose">verbose</code></td>
+<tr valign="top"><td><code>verbose</code></td>
 <td>
 <p>If set to TRUE the output of the compilation process is printed.</p>
 </td></tr>
-<tr><td><code id="getsource">getsource</code></td>
+<tr valign="top"><td><code>getsource</code></td>
 <td>
 <p>If set to TRUE the function is not compiled and instead the C++ source code itself is returned.</p>
 </td></tr>
@@ -102,7 +93,7 @@ Notably, it is possible that the variables change the type within the function. 
 <strong>Beyond that, be aware that the passed <em>SEXP</em> objects are only copied if the size increases. Thus, R objects can be modified within the function! <br />
 For example in the following code the variable <em>a</em> contains <em>1, 2, and 3</em> before the function call and afterwards <em>1, 1 and 1</em>.
 In contrast for variable <em>b</em> the size changes and thus the object within <em>R</em> is not modified. Furthermore, the variable <em>c</em> is not increased and only the first element is         changed.</strong> <br />
-<code style="white-space: pre;">&#8288;
+<code style="white-space: pre;">
     f &lt;- function(a, b, c) { 
       a[c(1, 2, 3)] &lt;- 1 
       b &lt;- vector(10) 
@@ -116,19 +107,19 @@ In contrast for variable <em>b</em> the size changes and thus the object within 
     print(a) 
     print(b) 
     print(c)
-  &#8288;</code>
+  </code>
 <strong>It is possible to declare a variable of a scalar numeric data type.
 This is done by adding <em>_db</em> to the end of the variable. Each time <em>_db</em> is found
 the variable is declared as a scalar numeric data type. In this case the
 object cannot change its type! In the example below the variable <em>a_db</em> is of type double whereas <em>b</em> is of type &quot;sexp&quot;.</strong> <br />
-<code style="white-space: pre;">&#8288;
+<code style="white-space: pre;">
     f &lt;- function() {
       a_db = 3.14
       b = 3.14
     }
     fcpp &lt;- ast2ast::translate(f, verbose = TRUE)
     fcpp()
-  &#8288;</code> <br />
+  </code> <br />
 In R every object is under the hood a <em>SEXP</em> object.
 In case an <em>R</em> function is created as output only <em>SEXP</em> elements can be passed to the function. 
 Furthermore, these functions always return a <em>SEXP</em> element. Even if nothing is returned; in this case <em>NULL</em> is returned!. 
@@ -200,7 +191,7 @@ In contrast a function which returns an external pointer is generated if the out
 
 <h3>Examples</h3>
 
-<pre><code class='language-R'> # Further examples can be found in the vignettes. 
+<pre> # Further examples can be found in the vignettes. 
   ## Not run: 
       # simple example
       f &lt;- function(y) {
@@ -217,9 +208,7 @@ In contrast a function which returns an external pointer is generated if the out
       jac(c(10, 11))
   
 ## End(Not run)
-</code></pre>
+</pre>
 
-</main>
 
-</div>
-</body></html>
+</div></body></html>

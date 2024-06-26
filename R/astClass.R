@@ -19,11 +19,29 @@ astClass <- R6::R6Class("astClass",
       self$args_2_fct <- methods::formalArgs(fct)
       self$body <- body(fct)[2:length(body(fct))]
       self$R_fct <- R_fct
-      self$identify_type_sig()
     },
     getast = function() {
       for (i in seq_along(self$body)) {
-        temp <- LC$new(self$body[[i]], self$R_fct)
+        temp <- NULL
+        e <- tryCatch(
+          {
+            temp <- LC$new(self$body[[i]], self$R_fct)
+            NULL
+          },
+          error = function(err) {
+            err
+          }
+        )
+        if (!is.null(e)) {
+          wrong_code <- paste(
+            "Error in line", i, ": \n",
+            deparse(as.call(self$body[[i]]))
+          )
+          color_print(43, conditionMessage(e))
+          color_print(41, wrong_code)
+          stop()
+        }
+
         self$ast[[i]] <- temp$ast
         self$var_all <- c(self$var_all, temp$vars)
         self$var_index <- c(self$var_index, temp$index_vars)
@@ -65,96 +83,6 @@ astClass <- R6::R6Class("astClass",
         temp <- temp2
         self$char[[j]] <- temp
         j <- j + 1
-      }
-    },
-    identify_type_sig = function() {
-      ret <- self$args
-      self$args_types <- vector("list", length = length(ret))
-      if (!is.null(self$R_fct) && (self$R_fct == TRUE)) {
-        self$args_types <- lapply(seq_along(ret), function(x) {
-          return("SEXP")
-        })
-      } else {
-        self$args_types <- lapply(seq_along(ret), function(x) {
-          return("etr::Vec<double>")
-        })
-      }
-
-      # TODO: borrow ptr and BorrowSEXP is missing
-      # NOTE: check for types: db, it, lg, dbs, its, lgs, dvp, ivp, lvp, dmp, imp, lmp
-      for (i in seq_along(ret)) {
-        l <- as.character(ret[[i]])
-        nm <- unlist(strsplit(l, "")) |>
-          tail(3) |>
-          paste(collapse = "")
-        if (nm == "_db") {
-          self$args_types[[i]] <- "double"
-        } else if (nm == "_it") {
-          self$args_types[[i]] <- "int"
-        } else if (nm == "_lg") {
-          self$args_types[[i]] <- "bool"
-        }
-        nm <- unlist(strsplit(l, "")) |>
-          tail(4) |>
-          paste(collapse = "")
-        if (nm == "_dbs") {
-          stopifnot("Vec<double> arguments not available in R interface" = !self$R_fct)
-          self$args_types[[i]] <- "etr::Vec<double>"
-        } else if (nm == "_its") {
-          stopifnot("Vec<int> arguments not available in R interface" = !self$R_fct)
-          self$args_types[[i]] <- "etr::Vec<int>"
-        } else if (nm == "_lgs") {
-          stopifnot("Vec<bool> arguments not available in R interface" = !self$R_fct)
-          self$args_types[[i]] <- "etr::Vec<bool>"
-        } else if (nm == "_dvp") {
-          stopifnot("ptr arguments not available in R interface" = !self$R_fct)
-          self$args_types[[i]] <- "double_ptr"
-        } else if (nm == "_ivp") {
-          stopifnot("ptr arguments not available in R interface" = !self$R_fct)
-          self$args_types[[i]] <- "int_ptr"
-        } else if (nm == "_lvp") {
-          stopifnot("ptr arguments not available in R interface" = !self$R_fct)
-          self$args_types[[i]] <- "bool_ptr"
-        } else if (nm == "_dmp") {
-          stopifnot("ptr arguments not available in R interface" = !self$R_fct)
-          self$args_types[[i]] <- "double_mat_ptr"
-        } else if (nm == "_imp") {
-          stopifnot("ptr arguments not available in R interface" = !self$R_fct)
-          self$args_types[[i]] <- "int_mat_ptr"
-        } else if (nm == "_lmp") {
-          stopifnot("ptr arguments not available in R interface" = !self$R_fct)
-          self$args_types[[i]] <- "bool_mat_ptr"
-        }
-      }
-    },
-    identify_type = function(ret) {
-      self$var_types <- vector("list", length = length(ret))
-      self$var_types <- lapply(self$var_types, function(x) {
-        return("etr::Vec<double>")
-      })
-      # NOTE: check for types: db, it, lg, dbs, its, lgs
-      for (i in seq_along(ret)) {
-        l <- as.character(ret[[i]])
-        nm <- unlist(strsplit(l, "")) |>
-          tail(3) |>
-          paste(collapse = "")
-        if (nm == "_db") {
-          self$var_types[[i]] <- "double"
-        } else if (nm == "_it") {
-          self$var_types[[i]] <- "int"
-        } else if (nm == "_lg") {
-          self$var_types[[i]] <- "bool"
-        }
-        nm <- unlist(strsplit(l, "")) |>
-          tail(4) |>
-          paste(collapse = "")
-        if (nm == "_dbs") {
-          self$var_types[[i]] <- "etr::Vec<double>"
-        } else if (nm == "_its") {
-          self$var_types[[i]] <- "etr::Vec<int>"
-        } else if (nm == "_lgs") {
-          self$var_types[[i]] <- "etr::Vec<bool>"
-        }
       }
     },
     get_vars = function() {

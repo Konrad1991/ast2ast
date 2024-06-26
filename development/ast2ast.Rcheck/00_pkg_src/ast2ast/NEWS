@@ -1,0 +1,14 @@
+News for package 'ast2ast'
+
+changes in ast2ast version 0.30
+
+- removed bug in cmr. 
+- refactored the conversion of sexp to SEXP
+
+changes in ast2ast version 0.2.1
+
+- all functions in C++ are now inlined
+
+changes in paropt version 0.2
+
+- code can now be translated to R function and external pointer

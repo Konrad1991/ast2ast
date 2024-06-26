@@ -2,6 +2,8 @@
 
 Rscript install.R
 
-Rscript test.R
+Rscript errorManagement.R
+
+# Rscript test.R
 
 # Rscript testsAll.R
