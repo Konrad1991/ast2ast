@@ -49,40 +49,13 @@ Non-standard file/directory found at top level:
 * checking S3 generic/method consistency ... OK
 * checking replacement functions ... OK
 * checking foreign function calls ... OK
-* checking R code for possible problems ... NOTE
-check_variable_type_pairs : <anonymous>: no visible global function
-  definition for ‘setNames’
-Undefined global functions or variables:
-  setNames
-Consider adding
-  importFrom("stats", "setNames")
-to your NAMESPACE file.
+* checking R code for possible problems ... OK
 * checking Rd files ... OK
 * checking Rd metadata ... OK
 * checking Rd line widths ... OK
 * checking Rd cross-references ... OK
 * checking for missing documentation entries ... OK
-* checking for code/documentation mismatches ... WARNING
-Codoc mismatches from documentation object 'translate':
-translate
-  Code: function(f, output = "R", types_of_args = "double",
-                 data_structures = "vector", handle_input = "copy",
-                 references = FALSE, verbose = FALSE, getsource =
-                 FALSE)
-  Docs: function(f, output = "R", types_of_args = "SEXP", return_type =
-                 "SEXP", reference = FALSE, verbose = FALSE, getsource
-                 = FALSE)
-  Argument names in code not in docs:
-    data_structures handle_input references
-  Argument names in docs not in code:
-    return_type reference
-  Mismatches in argument names (first 3):
-    Position: 4 Code: data_structures Docs: return_type
-    Position: 5 Code: handle_input Docs: reference
-    Position: 6 Code: references Docs: verbose
-  Mismatches in argument default values:
-    Name: 'types_of_args' Code: "double" Docs: "SEXP"
-
+* checking for code/documentation mismatches ... OK
 * checking Rd \usage sections ... OK
 * checking Rd contents ... OK
 * checking for unstated dependencies in examples ... OK
@@ -101,7 +74,7 @@ translate
 * checking examples ... OK
 * checking for unstated dependencies in ‘tests’ ... OK
 * checking tests ... OK
-  Running ‘tinytest.R’ [33s/33s]
+  Running ‘tinytest.R’ [36s/36s]
 * checking for unstated dependencies in vignettes ... OK
 * checking package vignettes in ‘inst/doc’ ... OK
 * checking re-building of vignette outputs ... OK
@@ -109,4 +82,4 @@ translate
 * checking for non-standard things in the check directory ... OK
 * checking for detritus in the temp directory ... OK
 * DONE
-Status: 1 WARNING, 4 NOTEs
+Status: 3 NOTEs

@@ -46,4 +46,9 @@ typedef etr::Vec<etr::BaseType, etr::Borrow<etr::BaseType, etr::BorrowTrait>>
 // typedef for testing BorrowPtr
 typedef sexp (*fp)(BorrowPtr a, double type_test);
 
+typedef bool logical;
+typedef etr::Vec<int> int_vector;
+typedef etr::Vec<bool> logical_vector;
+typedef etr::Vec<double> double_vector;
+
 #endif

@@ -10,7 +10,8 @@
 
 <h3>Description</h3>
 
-<p>An R function is translated to C++ source code and afterwards the code is compiled. <br />
+<p>An R function is translated to C++ source
+code and afterwards the code is compiled. <br />
 The result can be an external pointer (<em>XPtr</em>) or an <em>R</em> function. <br />
 The default value is an R function. <br />
 Further information can be found in the vignette: <em>Detailed Documentation</em>. <br />
@@ -23,9 +24,10 @@ Further information can be found in the vignette: <em>Detailed Documentation</em
   translate(
     f,
     output = "R",
-    types_of_args = "SEXP",
-    return_type = "SEXP",
-    reference = FALSE,
+    types_of_args = "double",
+    data_structures = "vector",
+    handle_inputs = "copy",
+    references = FALSE,
     verbose = FALSE,
     getsource = FALSE
   )
@@ -41,29 +43,58 @@ Further information can be found in the vignette: <em>Detailed Documentation</em
 </td></tr>
 <tr valign="top"><td><code>output</code></td>
 <td>
-<p>If set to &quot;R&quot;&quot; an R function wrapping the C++ code is returned. <br />
-If output is set to &quot;XPtr&quot;&quot; an external pointer object pointing to the C++ code is returned. <br />
-The default value is &quot;R&quot;.</p>
+<p>If set to 'R' an R function wrapping the C++ code is returned. <br />
+If output is set to  'XPtr' an external pointer object
+pointing to the C++ code is returned. <br />
+The default value is 'R'.</p>
 </td></tr>
 <tr valign="top"><td><code>types_of_args</code></td>
 <td>
-<p>define the types of the arguments passed to the function as an character vector. 
-This is an optional input if using &quot;XPtr&quot; as output. <br />
-The default value is &quot;SEXP&quot; as this is the only possibility for output &quot;R&quot;. <br />
-In case one want to use an external pointer the easiest way is to pass &quot;sexp&quot; for types_of_args. <br />
-Beyond that it is possible to pass &quot;double&quot;, &quot;ptr_vec&quot; and &quot;ptr_mat&quot;.
-For more information see below for details and check the vignette <em>InformationForPackageAuthors</em>.
-<strong>Beyond that, be aware that the passed <em>SEXP</em> objects are only copied if the object size increases.
-Thus, R objects can be modified within the function! See in section details for an example</strong> <br /></p>
+<p>define the types of the arguments passed
+to the function as an character vector. <br /> 
+The character vector should be either of length 1
+or has the same length as the number of arguments to the function.<br />
+In case the output is set to 'R' 'logical', 'int' or 'double' are available. <br />
+If the 'XPtr' interface is used additionally 'const logical',
+'const int' and 'const double' can be chosen. <br />
+For more information see below for details and
+check the vignette <em>InformationForPackageAuthors</em>.<br /></p>
 </td></tr>
-<tr valign="top"><td><code>return_type</code></td>
+<tr valign="top"><td><code>data_structures</code></td>
 <td>
-<p>is a character defining the type which the function returns. The default value is &quot;SEXP&quot;&quot; as this is the only possibility for output &quot;R&quot;. <br />
-Additionally, the possibilities &quot;sexp&quot; and &quot;void&quot; exist for the external pointer interface.</p>
+<p>defines the data structures of the
+arguments passed to the function (as an character vector). <br />
+The character vector should be either of length 1
+or has the same length as the number of arguments to the function.<br />
+In case the output is set to 'R' one can chose between 
+'scalar' and 'vector'. <br /> If the output is set to 'XPtr'
+one can set a data structure to 'scalar', 'vector' or 'borrow.<br />
+</p>
 </td></tr>
-<tr valign="top"><td><code>reference</code></td>
+<tr valign="top"><td><code>handle_inputs</code></td>
 <td>
-<p>If set to TRUE the arguments are passed by reference (not possible if output is &quot;R&quot;).</p>
+<p>defines how the arguments to the function 
+should be handled as character vector. <br />
+The character vector should be either of length 1
+or has the same length as the number of arguments to the function.<br />
+In case the output is an R function
+the arguments can be either copied ('copy') or borrowed ('borrow'). <br />
+<strong>If you chose borrow R objects which are passed to the function 
+are modified. <br /> This is in contrast to the usual behaviour of R.</strong> <br /> 
+If the output is an XPtr the arguments can be only borrowed ('borrow'). <br />
+In case only part of the arguments should be borrowed than an empty string
+(&quot;&quot;) can be used to indicate this.<br />
+</p>
+</td></tr>
+<tr valign="top"><td><code>references</code></td>
+<td>
+<p>defines whether the arguments are passed by reference
+or whether they are copied. This is indicated by a logical vector. <br />
+The logical vector should be either of length 1
+or has the same length as the number of arguments to the function.<br />
+If set to TRUE the arguments are passed by reference otherwise not.
+This option can be only used when the output is set to 'XPtr'
+</p>
 </td></tr>
 <tr valign="top"><td><code>verbose</code></td>
 <td>
@@ -78,57 +109,131 @@ Additionally, the possibilities &quot;sexp&quot; and &quot;void&quot; exist for 
 
 <h3>Details</h3>
 
-<p><strong>The types <em>numeric vector</em> and <em>numeric matrix</em> are supported.
-Notably, it is possible that the variables change the type within the function. </strong><br />
-<strong>Beyond that, be aware that the passed <em>SEXP</em> objects are only copied if the size increases. Thus, R objects can be modified within the function! <br />
-For example in the following code the variable <em>a</em> contains <em>1, 2, and 3</em> before the function call and afterwards <em>1, 1 and 1</em>.
-In contrast for variable <em>b</em> the size changes and thus the object within <em>R</em> is not modified. Furthermore, the variable <em>c</em> is not increased and only the first element is         changed.</strong> <br />
-<code style="white-space: pre;">
-    f &lt;- function(a, b, c) { 
-      a[c(1, 2, 3)] &lt;- 1 
-      b &lt;- vector(10) 
-      c &lt;- vector(1)
-    } 
-    fcpp &lt;- ast2ast::translate(f) 
-    a &lt;- c(1, 2, 3) 
-    b &lt;- c(1, 2, 3) 
-    c &lt;- c(1, 2, 3)
-    fcpp(a, b,c) 
-    print(a) 
-    print(b) 
-    print(c)
-  </code>
-<strong>It is possible to declare a variable of a scalar numeric data type.
-This is done by adding <em>_db</em> to the end of the variable. Each time <em>_db</em> is found
-the variable is declared as a scalar numeric data type. In this case the
-object cannot change its type! In the example below the variable <em>a_db</em> is of type double whereas <em>b</em> is of type &quot;sexp&quot;.</strong> <br />
-<code style="white-space: pre;">
-    f &lt;- function() {
-      a_db = 3.14
-      b = 3.14
-    }
-    fcpp &lt;- ast2ast::translate(f, verbose = TRUE)
-    fcpp()
-  </code> <br />
-In R every object is under the hood a <em>SEXP</em> object.
-In case an <em>R</em> function is created as output only <em>SEXP</em> elements can be passed to the function. 
-Furthermore, these functions always return a <em>SEXP</em> element. Even if nothing is returned; in this case <em>NULL</em> is returned!. 
-Notably, is that only numeric vectors (in R also scalar values are vectors) or numeric matrices can be passed to the function. <br />
-In contrast if an external pointer is created other types can be specified which are passed to the function or returned from it. 
-The default value is a variable of type <em>sexp</em>. This is the data type which is used in the C++ code. 
-The <em>ptr_vec</em> and <em>ptr_mat</em> interface work in a different way. If using <em>ptr_vec</em> a <em>double*</em> pointer is expected as first element.
-Additionally a second argument is needed which is of type <em>int</em> and which defines the size of the array. 
-This works in the same way for <em>ptr_mat</em>. But instead of the size argument two integers are needed which define the number of rows and columns.
-Both arguments have to be of type <em>int</em>. 
-Notably, the memory is only borrowed. Thus, the memory is not automatically deleted! See vignette <em>InformationForPackageAuthors</em> for more information. <br />
-<strong>The following functions are supported:</strong>
+
+
+<h4>Type system</h4>
+
+<p>Each variable has a fixed type in a C++ program. <br />
+In <em>ast2ast</em> the default type for each variable is a data structure called 'vector'. <br />
+Each object in 'vector' is as default of type 'double'. 
+Notably, it is defined at runtime <br />
+whether a variable is a 'vector' in the sense of on R vector or it is a matrix.<br />
 </p>
+
+
+
+<h4>Types of arguments to function</h4>
+
+<p>The types of the arguments to the function are set together of:
+</p>
+
+<ol>
+<li><p> types_of_args; c(&quot;int&quot;, &quot;int&quot;)
+</p>
+</li>
+<li><p> data_structures; c(&quot;vector&quot;, &quot;scalar&quot;)
+</p>
+</li>
+<li><p> handle_inputs; c(&quot;borrow&quot;, &quot;&quot;)
+</p>
+</li>
+<li><p> references; c(TRUE, TRUE)
+</p>
+</li></ol>
+
+<p>In this example this results in: 
+<code style="white-space: pre;">
+      f(etr::Vec&lt;int&gt;&amp; argumentNr1Input, int&amp; argumentNr2) {
+        etr::Vec&lt;int, etr::Borrow&lt;int&gt;&gt; argumentNr1(argumentNr1Input.d.p,
+                                                    argumentNr1Input.size());
+        ... rest of function code
+      }
+    </code>
+</p>
+
+
+
+<h4>Types within the function</h4>
+
+<p>As mentioned above the default type is a 'vector' containing 'doubles' <br />
+Additionally, it is possible to set specific types for a variable. <br />
+However, the type cannot be changed if once defined.
+It is possible to define the following types:
+</p>
+
+<ol>
+<li><p> logical
+</p>
+</li>
+<li><p> int
+</p>
+</li>
+<li><p> double
+</p>
+</li>
+<li><p> logical_vector
+</p>
+</li>
+<li><p> int_vector
+</p>
+</li>
+<li><p> double_vector
+</p>
+</li></ol>
+ 
+<p>The first three mentioned types are scalar types. <br />
+These types cannot be resized. 
+Meaning that the behave like a vector of length 1, <br />
+which cannot be extended to have more elements.
+Notably, the scalar values cannot be subsetted. <br />
+The advantage is that scalar values need less memory.
+</p>
+
+
+<h5>declare variable with type</h5>
+
+<p>The variables are declared with the type by using the <br />
+'::' operator. Here are some examples:
+<code style="white-space: pre;">
+       f &lt;- function() {
+         d::double &lt;- 3.14
+         l::logical &lt;- TRUE
+         dv::int_vector &lt;- vector(mode = "integer", length = 2)
+       }
+     </code>
+</p>
+
+
+
+<h5>Borrowing</h5>
+
+<p>As mentioned above it is possible to borrow arguments to a function. <br />
+Thus, R objects can be modified within the function. <br />
+Please be aware that it is not possible to resize the borrowed variable, <br />
+Therefore, the code below throws an error.
+Here an example:
+<code style="white-space: pre;">
+       f &lt;- function(a, b, c) { 
+         a[c(1, 2, 3)] &lt;- 1 
+         b &lt;- vector(length = 10) 
+         c &lt;- vector(length = 1)
+       } 
+       fcpp &lt;- ast2ast::translate(f, handle_inputs = "borrow") 
+       a &lt;- b &lt;- c &lt;- c(1, 2, 3) 
+       fcpp(a, b,c) 
+     </code>
+</p>
+
+
+
+<h5>The following functions are supported:</h5>
+
 
 <ol>
 <li><p> assignment: = and &lt;-
 </p>
 </li>
-<li><p> allocation: vector and matrix
+<li><p> allocation: vector, matrix and rep
 </p>
 </li>
 <li><p> information about objects: length and dim
@@ -166,43 +271,22 @@ Notably, the memory is only borrowed. Thus, the memory is not automatically dele
 </li>
 <li><p> is.na and is.infinite can be used to test for NA and Inf.
 </p>
-</li>
-<li><p> d-, p-, q- and r-unif, -norm, -lnorm and -gamma (for gamma argument <em>Scale</em> cannot be defined and is calculated using <em>1/rate</em>)
-</p>
 </li></ol>
 
-<p><strong>Some details about the implemented functions</strong>
-</p>
+
+
+<h5>Some details about the implemented functions</h5>
+
 
 <ul>
-<li><p> allocation of memory works: Following forms are possible:
-</p>
-
-<ul>
-<li><p> vector(size_of_elements)
-</p>
-</li>
-<li><p> vector(value, size_of_elements)
-</p>
-</li>
-<li><p> matrix(nrows, ncols)
-</p>
-</li>
-<li><p> matrix(value, nrows, ncols)
-</p>
-</li>
-<li><p> matrix(vector, nrows, ncols)
-</p>
-</li></ul>
-
-</li>
 <li><p> For indices squared brackets <em>'[]'</em> can be used as common in R. Beyond that the function 'at' exists
 which accepts as first argument a variable and as the second argument you pass the desired index.
 The caveat of using 'at' is that only <strong>one</strong> entry can be accessed. The function <em>'[]'</em> can return more then one element. <br />
 <strong>The <em>at</em>-function returns a reference to the vector entry.
 Therefore variable[index] can behave differently then <em>at(variable, index)</em>.
 If only integers are found within <em>'[]'</em> the function <em>at</em> is used at the right side of an assignment operator (<em>=</em>).
-The <em>at</em>-function can also be used on the left side of an assignment operator. However, in this case only <em>at</em> should be        used at the right side. Otherwise the results are wrong.
+The <em>at</em>-function can also be used on the left side of an assignment operator. 
+However, in this case only <em>at</em> should be used at the right side. Otherwise the results are wrong.
 </strong>  <br />
 Here is a small example presented how to use the subset functions:
 <code style="white-space: pre;">
@@ -216,7 +300,7 @@ Here is a small example presented how to use the subset functions:
       </code>
 </p>
 </li>
-<li><p> For-loops can be written as common in R
+<li><p> For- and while-loops can be written as common in R
 </p>
 
 <ul>
@@ -233,15 +317,6 @@ for(index in 1:length(variable){ <br />
 </p>
 </li></ul>
 
-</li>
-<li><p> Be aware that it is possible to assign the result of a comparison to a variable. Example see below: <br />
-However, the vector will contain only <em>0</em> or <em>1</em> instead of <em>FALSE</em> or <em>TRUE</em>.
-<code style="white-space: pre;">
-      a = c(1, 2, 3)
-      b = c(1, 2, 1)
-      c = a != b
-    </code>
-</p>
 </li>
 <li><p> The print function accepts either a scalar, vector, matrix, string, bool or nothing (empty line).
 </p>
@@ -264,17 +339,23 @@ However, the vector will contain only <em>0</em> or <em>1</em> instead of <em>FA
 </li></ol>
 
 <p><strong>Be aware that the R code is translated to ETR an expression template library which tries to mimic R. <br />
-However, it does not behave exactly like R! Please check your compiled function before using it in a serious project.
-If you want to see how <em>ast2ast</em> differs from R in detail check the vignette: <em>Detailed Documentation</em>.</strong>
+However, it does not behave exactly like R! Please check your compiled function before using it in a serious project. <br />
+If you want to see how <em>ast2ast</em> differs from R in detail check the vignette: <em>Detailed Documentation</em>. <br />
+In case you want to know how <em>ast2ast</em> works in detail check the vignette:   <em>InformationForPackageAuthors</em>. <br />
+</strong>
 </p>
 </li></ul>
 
 
 
+
+
 <h3>Value</h3>
 
-<p>If output is set to <em>R</em> an R function is returned. Thus, the C++ code can directly be called within R. <br />
-In contrast a function which returns an external pointer is generated if the output is set to <em>XPtr</em>. <br />
+<p>If output is set to <em>R</em> an R function is returned.
+Thus, the C++ code can directly be called within R. <br />
+In contrast a function which returns an external pointer
+is generated if the output is set to <em>XPtr</em>. <br />
 </p>
 
 
@@ -282,70 +363,70 @@ In contrast a function which returns an external pointer is generated if the out
 
 <pre> # Further examples can be found in the vignettes. 
     ## Not run: 
-      # Hello World
-      # ==========================================================================
-      
-      # Translating to R_fct
-      # --------------------------------------------------------------------------
-      f &lt;- function() { print("Hello World!")}
-      ast2ast::translate(f)
-      f()
-      
+      f &lt;- function() {
+        print("Hello World!")
+      }
+      fcpp &lt;- ast2ast::translate(f)
+      fcpp()
+
       # Translating to external pointer
       # --------------------------------------------------------------------------
-      f &lt;- function() { print("Hello World!")}
-      pointer_to_f_cpp &lt;- ast2ast::translate(f, 
-                                             output = "XPtr", return_type = "void")
-      Rcpp::sourceCpp(code = '
-      #include &lt;Rcpp.h&gt;
-      typedef void (*fp)();
+      f &lt;- function() {
+        print("Hello World!")
+      }
+      pointer_to_f_cpp &lt;- ast2ast::translate(f,
+                                             output = "XPtr", verbose = TRUE
+      )
 
-      // [[Rcpp::export]]
-      void call_fct(Rcpp::XPtr&lt;fp&gt; inp) {
-        fp f = *inp;
-        f(); } ')
-        
+      Rcpp::sourceCpp(code = "
+                      #include &lt;Rcpp.h&gt;
+                      typedef void (*fp)();
+
+                      // [[Rcpp::export]]
+                      void call_fct(Rcpp::XPtr&lt;fp&gt; inp) {
+                        fp f = *inp;
+                        f(); } ")
+
       call_fct(pointer_to_f_cpp)
-      
+
       # Run sum example:
       # ==========================================================================
-      
+
       # R version of run sum
       # --------------------------------------------------------------------------
       run_sum &lt;- function(x, n) {
         sz &lt;- length(x)
-        
+
         ov &lt;- vector(mode = "numeric", length = sz)
-        
+
         ov[n] &lt;- sum(x[1:n])
-        for(i in (n+1):sz) {
-          
-          ov[i] &lt;- ov[i-1] + x[i] - x[i-n]
+        for (i in (n + 1):sz) {
+          ov[i] &lt;- ov[i - 1] + x[i] - x[i - n]
         }
-        
-        ov[1:(n-1)] &lt;- NA
-        
+
+        ov[1:(n - 1)] &lt;- NA
+
         return(ov)
       }
-      
+
       # translated Version of R function
       # --------------------------------------------------------------------------
       run_sum_fast &lt;- function(x, n) {
         sz &lt;- length(x)
-        ov &lt;- vector(sz)
-        
-        sum_db = 0
-        for(i in 1:n) {
+        ov &lt;- vector(mode = "numeric", length = sz)
+
+        sum_db &lt;- 0
+        for (i in 1:n) {
           sum_db &lt;- sum_db + at(x, i)
         }
         ov[n] &lt;- sum_db
-        
-        for(i in (n + 1):sz) {
+
+        for (i in (n + 1):sz) {
           ov[i] &lt;- at(ov, i - 1) + at(x, i) - at(x, i - at(n, 1))
         }
-        
+
         ov[1:(n - 1)] &lt;- NA
-        
+
         return(ov)
       }
       run_sum_cpp &lt;- ast2ast::translate(run_sum_fast, verbose = FALSE)
@@ -354,7 +435,8 @@ In contrast a function which returns an external pointer is generated if the out
       n &lt;- 500
       one &lt;- run_sum(x, n)
       two &lt;- run_sum_cpp(x, n)
-    
+
+
 ## End(Not run)
 </pre>
 

@@ -3,6 +3,7 @@
 ## General
 
 - [ ] remove unnecessary code
+- [ ] remove RNG stuff
 
 ## Tests
 

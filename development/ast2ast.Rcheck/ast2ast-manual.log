@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.8.31)  26 JUN 2024 10:52
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.8.31)  26 JUN 2024 14:34
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -224,7 +224,7 @@ File: t1ptm.fd 2001/06/04 font definitions for T1/ptm.
 File: l3backend-pdftex.def 2022-08-23 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count278
 \l__pdf_internal_box=\box56
-) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.aux)
+) (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.aux)
 \openout1 = `Rd2.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 8.
@@ -246,7 +246,7 @@ LaTeX Font Info:    ... okay on input line 8.
 LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 8.
 LaTeX Font Info:    ... okay on input line 8.
 Package hyperref Info: Link coloring ON on input line 8.
- (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.out) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.out)
+ (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.out) (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.out)
 \@outlinefile=\write4
 \openout4 = `Rd2.out'.
 
@@ -263,7 +263,7 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 LaTeX Font Info:    Trying to load font information for T1+phv on input line 36.
  (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/t1phv.fd
 File: t1phv.fd 2020/03/25 scalable font definitions for T1/phv.
-) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.toc)
+) (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.toc)
 \tf@toc=\write5
 \openout5 = `Rd2.toc'.
 
@@ -298,73 +298,80 @@ Underfull \hbox (badness 10000) in paragraph at lines 156--158
 LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
 (Font)              scaled to size 9.0pt on input line 161.
 [4]
-Underfull \hbox (badness 10000) in paragraph at lines 185--189
+Underfull \hbox (badness 10000) in paragraph at lines 185--190
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 211--219
+Underfull \hbox (badness 10000) in paragraph at lines 214--223
 
  []
 
 [5]
-Underfull \hbox (badness 10000) in paragraph at lines 229--247
+Underfull \hbox (badness 10000) in paragraph at lines 223--230
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 247--259
+Underfull \hbox (badness 10000) in paragraph at lines 231--242
 
  []
 
-[6]
-LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 295.
+
+Underfull \hbox (badness 10000) in paragraph at lines 257--263
+
+ []
+
+[6] [7]
+LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 372.
  (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/ts1ptm.fd
 File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
-) [7]
-Underfull \hbox (badness 10000) in paragraph at lines 327--331
+)
+Underfull \hbox (badness 10000) in paragraph at lines 394--398
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 331--335
+Underfull \hbox (badness 10000) in paragraph at lines 398--402
 
  []
 
 [8]
-Underfull \hbox (badness 10000) in paragraph at lines 365--367
+Underfull \hbox (badness 10000) in paragraph at lines 420--421
 
  []
 
-LaTeX Font Info:    Trying to load font information for TS1+zi4 on input line 387.
-(/home/konrad/.TinyTeX/texmf-dist/tex/latex/inconsolata/ts1zi4.fd
-File: ts1zi4.fd 2018/01/14 TS1/zi4 (Inconsolata)
-)
-LaTeX Font Info:    Font shape `TS1/zi4/m/n' will be
-(Font)              scaled to size 9.0pt on input line 387.
- [9] (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.ind [10] [11
+
+Underfull \hbox (badness 10000) in paragraph at lines 432--436
+
+ []
+
+[9]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [10] (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.ind [11] [12
 
 
-]) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.aux)
+]) (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.aux)
 Package rerunfilecheck Info: File `Rd2.out' has not changed.
 (rerunfilecheck)             Checksum: 60DB610652AA3ECE16E5F0C54FEC81B6;206.
  ) 
 Here is how much of TeX's memory you used:
- 8903 strings out of 479489
- 140384 string characters out of 5874719
- 442353 words of memory out of 5000000
- 27388 multiletter control sequences out of 15000+600000
- 506879 words of font info for 65 fonts, out of 8000000 for 9000
+ 8894 strings out of 479489
+ 140107 string characters out of 5874719
+ 444353 words of memory out of 5000000
+ 27373 multiletter control sequences out of 15000+600000
+ 506590 words of font info for 64 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 89i,6n,93p,562b,727s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 89i,5n,93p,562b,750s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
 pdfTeX warning (dest): name{Rfn.dfdr::jacobian\(\)} has been referenced but does not exist, replaced by a fixed one
 
-{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-ts1.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}</home/konrad/.TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on Rd2.pdf (11 pages, 114691 bytes).
+{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}</home/konrad/.TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on Rd2.pdf (12 pages, 116436 bytes).
 PDF statistics:
- 181 PDF objects out of 1000 (max. 8388607)
- 151 compressed objects within 2 object streams
- 64 named destinations out of 1000 (max. 500000)
+ 193 PDF objects out of 1000 (max. 8388607)
+ 163 compressed objects within 2 object streams
+ 74 named destinations out of 1000 (max. 500000)
  25 words of extra memory for PDF output out of 10000 (max. 10000000)
 

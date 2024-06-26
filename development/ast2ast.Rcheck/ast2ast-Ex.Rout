@@ -85,70 +85,70 @@ Type 'q()' to quit R.
 > ### ** Examples
 >  # Further examples can be found in the vignettes. 
 >     ## Not run: 
-> ##D       # Hello World
-> ##D       # ==========================================================================
-> ##D       
-> ##D       # Translating to R_fct
-> ##D       # --------------------------------------------------------------------------
-> ##D       f <- function() { print("Hello World!")}
-> ##D       ast2ast::translate(f)
-> ##D       f()
-> ##D       
+> ##D       f <- function() {
+> ##D         print("Hello World!")
+> ##D       }
+> ##D       fcpp <- ast2ast::translate(f)
+> ##D       fcpp()
+> ##D 
 > ##D       # Translating to external pointer
 > ##D       # --------------------------------------------------------------------------
-> ##D       f <- function() { print("Hello World!")}
-> ##D       pointer_to_f_cpp <- ast2ast::translate(f, 
-> ##D                                              output = "XPtr", return_type = "void")
-> ##D       Rcpp::sourceCpp(code = '
-> ##D       #include <Rcpp.h>
-> ##D       typedef void (*fp)();
+> ##D       f <- function() {
+> ##D         print("Hello World!")
+> ##D       }
+> ##D       pointer_to_f_cpp <- ast2ast::translate(f,
+> ##D                                              output = "XPtr", verbose = TRUE
+> ##D       )
 > ##D 
-> ##D       // [[Rcpp::export]]
-> ##D       void call_fct(Rcpp::XPtr<fp> inp) {
-> ##D         fp f = *inp;
-> ##D         f(); } ')
-> ##D         
+> ##D       Rcpp::sourceCpp(code = "
+> ##D                       #include <Rcpp.h>
+> ##D                       typedef void (*fp)();
+> ##D 
+> ##D                       // [[Rcpp::export]]
+> ##D                       void call_fct(Rcpp::XPtr<fp> inp) {
+> ##D                         fp f = *inp;
+> ##D                         f(); } ")
+> ##D 
 > ##D       call_fct(pointer_to_f_cpp)
-> ##D       
+> ##D 
 > ##D       # Run sum example:
 > ##D       # ==========================================================================
-> ##D       
+> ##D 
 > ##D       # R version of run sum
 > ##D       # --------------------------------------------------------------------------
 > ##D       run_sum <- function(x, n) {
 > ##D         sz <- length(x)
-> ##D         
+> ##D 
 > ##D         ov <- vector(mode = "numeric", length = sz)
-> ##D         
+> ##D 
 > ##D         ov[n] <- sum(x[1:n])
-> ##D         for(i in (n+1):sz) {
-> ##D           
-> ##D           ov[i] <- ov[i-1] + x[i] - x[i-n]
+> ##D         for (i in (n + 1):sz) {
+> ##D           ov[i] <- ov[i - 1] + x[i] - x[i - n]
 > ##D         }
-> ##D         
-> ##D         ov[1:(n-1)] <- NA
-> ##D         
+> ##D 
+> ##D         ov[1:(n - 1)] <- NA
+> ##D 
 > ##D         return(ov)
 > ##D       }
-> ##D       
+> ##D 
 > ##D       # translated Version of R function
 > ##D       # --------------------------------------------------------------------------
 > ##D       run_sum_fast <- function(x, n) {
 > ##D         sz <- length(x)
-> ##D         ov <- vector(sz)
-> ##D         
-> ##D         sum_db = 0
-> ##D         for(i in 1:n) {
+> ##D         ov <- vector(mode = "numeric", length = sz)
+> ##D 
+> ##D         sum_db <- 0
+> ##D         for (i in 1:n) {
 > ##D           sum_db <- sum_db + at(x, i)
 > ##D         }
 > ##D         ov[n] <- sum_db
-> ##D         
-> ##D         for(i in (n + 1):sz) {
+> ##D 
+> ##D         for (i in (n + 1):sz) {
 > ##D           ov[i] <- at(ov, i - 1) + at(x, i) - at(x, i - at(n, 1))
 > ##D         }
-> ##D         
+> ##D 
 > ##D         ov[1:(n - 1)] <- NA
-> ##D         
+> ##D 
 > ##D         return(ov)
 > ##D       }
 > ##D       run_sum_cpp <- ast2ast::translate(run_sum_fast, verbose = FALSE)
@@ -157,7 +157,7 @@ Type 'q()' to quit R.
 > ##D       n <- 500
 > ##D       one <- run_sum(x, n)
 > ##D       two <- run_sum_cpp(x, n)
-> ##D     
+> ##D 
 > ## End(Not run)
 > 
 > 
@@ -169,7 +169,7 @@ Type 'q()' to quit R.
 > cleanEx()
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  0.251 0.024 0.275 0 0 
+Time elapsed:  0.26 0.016 0.277 0 0 
 > grDevices::dev.off()
 null device 
           1 

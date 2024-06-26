@@ -38,29 +38,36 @@ Underfull \hbox (badness 10000) in paragraph at lines 107--119
 Underfull \hbox (badness 10000) in paragraph at lines 156--158
 
 [4]
-Underfull \hbox (badness 10000) in paragraph at lines 185--189
+Underfull \hbox (badness 10000) in paragraph at lines 185--190
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 211--219
+Underfull \hbox (badness 10000) in paragraph at lines 214--223
 
 [5]
-Underfull \hbox (badness 10000) in paragraph at lines 229--247
+Underfull \hbox (badness 10000) in paragraph at lines 223--230
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 247--259
-
-[6] (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/ts1ptm.fd) [7]
-Underfull \hbox (badness 10000) in paragraph at lines 327--331
+Underfull \hbox (badness 10000) in paragraph at lines 231--242
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 331--335
+Underfull \hbox (badness 10000) in paragraph at lines 257--263
+
+[6] [7] (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/ts1ptm.fd)
+Underfull \hbox (badness 10000) in paragraph at lines 394--398
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 398--402
 
 [8]
-Underfull \hbox (badness 10000) in paragraph at lines 365--367
+Underfull \hbox (badness 10000) in paragraph at lines 420--421
 
-(/home/konrad/.TinyTeX/texmf-dist/tex/latex/inconsolata/ts1zi4.fd) [9]
+
+Underfull \hbox (badness 10000) in paragraph at lines 432--436
+
+[9]
+Underfull \vbox (badness 10000) has occurred while \output is active [10]
 No file Rd2.ind.
-[10] (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.aux)
+[11] (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.aux)
 
 Package rerunfilecheck Warning: File `Rd2.out' has changed.
 (rerunfilecheck)                Rerun to get outlines right
@@ -70,8 +77,8 @@ Package rerunfilecheck Warning: File `Rd2.out' has changed.
 (see the transcript file for additional information)
 pdfTeX warning (dest): name{Rfn.dfdr::jacobian\(\)} has been referenced but does not exist, replaced by a fixed one
 
-{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-ts1.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}</home/konrad/.TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on Rd2.pdf (10 pages, 113905 bytes).
+{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}</home/konrad/.TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on Rd2.pdf (11 pages, 115192 bytes).
 Transcript written on Rd2.log.
 This is makeindex, version 2.15 [TeX Live 2022/dev] (kpathsea + Thai support).
 Scanning input file Rd2.idx....done (3 entries accepted, 0 rejected).
@@ -97,7 +104,7 @@ Package hyperref Warning: Option `pagebackref' has already been used,
 
 ) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/makeidx.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/inputenc.sty)
 Writing index file Rd2.idx
-(/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/t1ptm.fd) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.aux) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.out) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.out) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/inconsolata/t1zi4.fd) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/t1phv.fd) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.toc)
+(/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/t1ptm.fd) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def) (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.aux) (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.out) (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.out) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/inconsolata/t1zi4.fd) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/t1phv.fd) (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.toc)
 Underfull \hbox (badness 10000) in paragraph at lines 41--45
 
 [1{/home/konrad/.TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
@@ -113,27 +120,34 @@ Underfull \hbox (badness 10000) in paragraph at lines 107--119
 Underfull \hbox (badness 10000) in paragraph at lines 156--158
 
 [4]
-Underfull \hbox (badness 10000) in paragraph at lines 185--189
+Underfull \hbox (badness 10000) in paragraph at lines 185--190
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 211--219
+Underfull \hbox (badness 10000) in paragraph at lines 214--223
 
 [5]
-Underfull \hbox (badness 10000) in paragraph at lines 229--247
+Underfull \hbox (badness 10000) in paragraph at lines 223--230
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 247--259
-
-[6] (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/ts1ptm.fd) [7]
-Underfull \hbox (badness 10000) in paragraph at lines 327--331
+Underfull \hbox (badness 10000) in paragraph at lines 231--242
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 331--335
+Underfull \hbox (badness 10000) in paragraph at lines 257--263
+
+[6] [7] (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/ts1ptm.fd)
+Underfull \hbox (badness 10000) in paragraph at lines 394--398
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 398--402
 
 [8]
-Underfull \hbox (badness 10000) in paragraph at lines 365--367
+Underfull \hbox (badness 10000) in paragraph at lines 420--421
 
-(/home/konrad/.TinyTeX/texmf-dist/tex/latex/inconsolata/ts1zi4.fd) [9] (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.ind [10] [11]) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.aux)
+
+Underfull \hbox (badness 10000) in paragraph at lines 432--436
+
+[9]
+Underfull \vbox (badness 10000) has occurred while \output is active [10] (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.ind [11] [12]) (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.aux)
 
 Package rerunfilecheck Warning: File `Rd2.out' has changed.
 (rerunfilecheck)                Rerun to get outlines right
@@ -143,8 +157,8 @@ Package rerunfilecheck Warning: File `Rd2.out' has changed.
 (see the transcript file for additional information)
 pdfTeX warning (dest): name{Rfn.dfdr::jacobian\(\)} has been referenced but does not exist, replaced by a fixed one
 
-{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-ts1.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}</home/konrad/.TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on Rd2.pdf (11 pages, 114433 bytes).
+{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}</home/konrad/.TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on Rd2.pdf (12 pages, 116230 bytes).
 Transcript written on Rd2.log.
 This is makeindex, version 2.15 [TeX Live 2022/dev] (kpathsea + Thai support).
 Scanning input file Rd2.idx....done (3 entries accepted, 0 rejected).
@@ -170,7 +184,7 @@ Package hyperref Warning: Option `pagebackref' has already been used,
 
 ) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/makeidx.sty) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/base/inputenc.sty)
 Writing index file Rd2.idx
-(/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/t1ptm.fd) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.aux) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.out) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.out) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/inconsolata/t1zi4.fd) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/t1phv.fd) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.toc) [1{/home/konrad/.TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
+(/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/t1ptm.fd) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def) (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.aux) (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.out) (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.out) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/inconsolata/t1zi4.fd) (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/t1phv.fd) (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.toc) [1{/home/konrad/.TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 Underfull \hbox (badness 10000) in paragraph at lines 41--45
 
 
@@ -186,33 +200,40 @@ Underfull \hbox (badness 10000) in paragraph at lines 107--119
 Underfull \hbox (badness 10000) in paragraph at lines 156--158
 
 [4]
-Underfull \hbox (badness 10000) in paragraph at lines 185--189
+Underfull \hbox (badness 10000) in paragraph at lines 185--190
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 211--219
+Underfull \hbox (badness 10000) in paragraph at lines 214--223
 
 [5]
-Underfull \hbox (badness 10000) in paragraph at lines 229--247
+Underfull \hbox (badness 10000) in paragraph at lines 223--230
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 247--259
-
-[6] (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/ts1ptm.fd) [7]
-Underfull \hbox (badness 10000) in paragraph at lines 327--331
+Underfull \hbox (badness 10000) in paragraph at lines 231--242
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 331--335
+Underfull \hbox (badness 10000) in paragraph at lines 257--263
+
+[6] [7] (/home/konrad/.TinyTeX/texmf-dist/tex/latex/psnfss/ts1ptm.fd)
+Underfull \hbox (badness 10000) in paragraph at lines 394--398
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 398--402
 
 [8]
-Underfull \hbox (badness 10000) in paragraph at lines 365--367
+Underfull \hbox (badness 10000) in paragraph at lines 420--421
 
-(/home/konrad/.TinyTeX/texmf-dist/tex/latex/inconsolata/ts1zi4.fd) [9] (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.ind [10] [11]) (/tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc/Rd2.aux) )
+
+Underfull \hbox (badness 10000) in paragraph at lines 432--436
+
+[9]
+Underfull \vbox (badness 10000) has occurred while \output is active [10] (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.ind [11] [12]) (/tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15/Rd2.aux) )
 (see the transcript file for additional information)
 pdfTeX warning (dest): name{Rfn.dfdr::jacobian\(\)} has been referenced but does not exist, replaced by a fixed one
 
-{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-ts1.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}</home/konrad/.TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on Rd2.pdf (11 pages, 114691 bytes).
+{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}{/home/konrad/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}</home/konrad/.TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/konrad/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on Rd2.pdf (12 pages, 116436 bytes).
 Transcript written on Rd2.log.
 Saving output to ‘ast2ast-manual.pdf’ ...
 Done
-You may want to clean up by 'rm -Rf /tmp/Rtmp5RHedF/Rd2pdf1116c1ae5e1fc'
+You may want to clean up by 'rm -Rf /tmp/RtmpsnmxxE/Rd2pdf18f892ccf2d15'

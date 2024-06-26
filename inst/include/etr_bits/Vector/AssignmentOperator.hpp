@@ -85,7 +85,10 @@ Vec &operator=(const Vec<T, R, Trait> &otherVec) {
     }
     if (otherVec.size() > this->size())
       d.resize(otherVec.size());
-    d.moveit(temp);
+
+    for (std::size_t i = 0; i < otherVec.size(); i++)
+      d[i] = temp[i];
+
   } else if constexpr (isSubset::value) {
     ass<"number of items to replace is not a multiple of replacement length">(
         otherVec.size() == d.ind.size());
@@ -186,7 +189,10 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
     }
     if (otherVec.size() > this->size())
       d.resize(otherVec.size());
-    d.moveit(temp);
+
+    for (std::size_t i = 0; i < otherVec.size(); i++)
+      d[i] = temp[i];
+
   } else if constexpr (isSubset::value) {
     ass<"number of items to replace is not a multiple of replacement length">(
         otherVec.size() == d.ind.size());

@@ -3,7 +3,7 @@ transpile <- function(fct, name_fct, r_fct, toa, hoa, data_types_of_args) {
   ac$getast()
   ac$ast2call()
   ac$call2char()
-  if (!ac$return_TF) {
+  if (!ac$return_TF && r_fct) {
     ac$char <- c(ac$char, "\n", "return(R_NilValue); \n")
   }
   b <- build_body(ac$char)

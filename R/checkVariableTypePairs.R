@@ -17,12 +17,10 @@ check_variable_type_pairs <- function(args, variable_pair_list) {
       "int_vector", "logical_vector"
     )
   }
-
   stopifnot(
     "Unknown type found in variable declaration" =
       types %in% allowed_types()
   )
-
   unique_names <- unique(names)
   sapply(unique_names, function(x) {
     m <- paste("Variable: ", x, "is declared with a type more than one time")

@@ -3,6 +3,7 @@
 ## General
 
 - [ ] remove unnecessary code
+- [ ] remove RNG stuff
 
 ## Tests
 
@@ -27,8 +28,7 @@
 
 ## Error handling
 
-- [ ] in ac: add try catch around ac$getast()
-  - [ ] in LC: pass error from nodeclasses
+- [x] in LC: pass error from nodeclasses
 
 ## Derivatives
 

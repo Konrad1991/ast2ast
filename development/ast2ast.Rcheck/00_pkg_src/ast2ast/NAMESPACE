@@ -7,5 +7,5 @@ importFrom(Rcpp,sourceCpp)
 importFrom(methods,formalArgs)
 importFrom("methods", "is", "new")
 importFrom("utils", "str", "tail")
-
+importFrom("stats", "setNames")
 useDynLib(ast2ast, .registration=TRUE)

@@ -13,10 +13,18 @@ xptr_sig <- function(name, fct_name) {
 
 get_xptr <- function(type_list, ret_type, name_fct, name) {
   f_line <- cString("SEXP", name, "()", " {", " ")
-  s_line <- cString(
-    "\t", "typedef ", ret_type,
-    " (*fct_ptr) (", cString(type_list, ", ")@value, ");", ""
-  )
+  s_line <- NULL
+  if (length(type_list) == 0) {
+    s_line <- cString(
+      "\t", "typedef ", ret_type,
+      " (*fct_ptr) (", ");", ""
+    )
+  } else {
+    s_line <- cString(
+      "\t", "typedef ", ret_type,
+      " (*fct_ptr) (", cString(type_list, ", ")@value, ");", ""
+    )
+  }
   t_line <- cString(
     "\t",
     "return Rcpp::XPtr<fct_ptr>(new fct_ptr(&", name_fct, "));", ""

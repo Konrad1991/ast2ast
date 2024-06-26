@@ -1,7 +1,7 @@
 translate <- function(f, output = "R",
                       types_of_args = "double",
                       data_structures = "vector",
-                      handle_input = "copy",
+                      handle_inputs = "copy",
                       references = FALSE,
                       verbose = FALSE,
                       getsource = FALSE) {
@@ -13,16 +13,16 @@ translate <- function(f, output = "R",
 
   length_checking(
     types_of_args,
-    data_structures, handle_input, references, output
+    data_structures, handle_inputs, references, output
   )
 
   types_of_args <- check_types_of_args(f, types_of_args, output)
   data_structures <- check_data_structures(
     f,
-    data_structures, handle_input, references,
+    data_structures, handle_inputs, references,
     output
   )
-  handle_input <- check_handles(f, handle_input, output)
+  handle_inputs <- check_handles(f, handle_inputs, output)
   references <- check_references(f, references, output)
   types <- build_types(types_of_args, data_structures, references, output)
 
@@ -52,7 +52,7 @@ translate <- function(f, output = "R",
   fct_code <- transpile(
     f, name_f,
     r_fct, types,
-    handle_input, types_of_args
+    handle_inputs, types_of_args
   )
 
   if (getsource) {

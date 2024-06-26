@@ -22,7 +22,26 @@ astClass <- R6::R6Class("astClass",
     },
     getast = function() {
       for (i in seq_along(self$body)) {
-        temp <- LC$new(self$body[[i]], self$R_fct)
+        temp <- NULL
+        e <- tryCatch(
+          {
+            temp <- LC$new(self$body[[i]], self$R_fct)
+            NULL
+          },
+          error = function(err) {
+            err
+          }
+        )
+        if (!is.null(e)) {
+          wrong_code <- paste(
+            "Error in line", i, ": \n",
+            deparse(as.call(self$body[[i]]))
+          )
+          color_print(43, conditionMessage(e))
+          color_print(41, wrong_code)
+          stop()
+        }
+
         self$ast[[i]] <- temp$ast
         self$var_all <- c(self$var_all, temp$vars)
         self$var_index <- c(self$var_index, temp$index_vars)

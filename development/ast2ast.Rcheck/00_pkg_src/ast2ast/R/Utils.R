@@ -14,3 +14,9 @@ generate_new_name <- function(name, extension, delimiter, vars) {
   }
   return(new_name)
 }
+
+
+color_print <- function(col, txt) {
+  # https://stackoverflow.com/questions/10802806/is-there-a-way-to-output-text-to-the-r-console-in-color
+  cat(paste0("\033[0;", col, "m", txt, "\033[0m", "\n"))
+}
