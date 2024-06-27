@@ -1,13 +1,3 @@
-# check valid input for `[`
-check_bracket <- function(ex) {
-  if (length(ex) == 3) {
-    return(ex[[3]] %% 1 == 0)
-  }
-  if (length(ex) == 4) {
-    return((ex[[3]] %% 1 == 0) && (ex[[4]] %% 1 == 0))
-  }
-}
-
 # Lifts a function so it will propagate NULL and otherwise do its thing
 lift <- function(f) {
   function(x, ...) if (rlang::is_null(x)) x else f(x, ...)
@@ -82,13 +72,8 @@ diff_vector_out <- function(expr, x, fl) {
 
 diff_expr <- lift(function(expr, x, fl) {
   if (is.call(expr)) {
-    if (as.name("[") == expr[[1]]) {
-      stopifnot("Only integers in [] allowed" = check_bracket(expr))
-      if (expr == x) {
-        return(quote(1))
-      } else {
-        return(quote(0))
-      }
+    if ((as.name("[") == expr[[1]]) || (as.name("etr::at") == expr[[1]])) {
+      return(diff_variable(expr))
     }
   }
 
@@ -235,4 +220,3 @@ diff_call <- lift(function(expr, x, fl) {
     ~ stop(paste("The function", ., "is not supported"))
   )
 })
-

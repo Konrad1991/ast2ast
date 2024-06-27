@@ -2,7 +2,7 @@
 
 Rscript install.R
 
-Rscript errorManagement.R
+Rscript diff.R
 
 # Rscript test.R
 

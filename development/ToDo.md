@@ -3,7 +3,7 @@
 ## General
 
 - [ ] remove unnecessary code
-- [ ] remove RNG stuff
+- [x] remove RNG stuff
 
 ## Tests
 
@@ -40,8 +40,21 @@
     * [ ]is.name(.) with get_deriv(.)
 - [x] add a Buffer\<double\> deriv in Vector
     * add a #ifdef so that it is not always included
+- [x] update SubsetClass so that it stores also a deriv_p* of BaseStore\<double\>
 - [x] define get_deriv function which returns deriv as Vec\<Buffer\>
-- [ ] define assign_deriv
+- [x] define assign_deriv
+- [x] update at function in ETR
+- [x] handle subsetting correctly in R fct d
+- [x] add all const functions to R fct d
+  - vector_logical
+  - vector_integer
+  - vector_numeric
+  - matrix
+  - rep
+  - colon
+  - coca
+  - cmr
+- [x] add argument so that the user sets the independent variable
 - [ ] change each expression to:
     assign_deriv(a, expr)
     a = expr

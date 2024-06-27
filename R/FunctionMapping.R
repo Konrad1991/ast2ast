@@ -219,6 +219,18 @@ fct_signature <- R6::R6Class("fct_signature",
           return(list(fct, args))
         }
       ),
+      assignment3 = fct_info(
+        "assign_deriv", 2L, list("any", "any"),
+        list("any", "any"),
+        list("symbol", "any"),
+        function(fct, args) {
+          stopifnot(
+            "assignment requires variable at left side" =
+              is_valid_var(args[[1]])
+          )
+          return(list(fct, args))
+        }
+      ),
       indexing = fct_info(
         "[", -1L, list(),
         list(),
@@ -478,46 +490,6 @@ fct_signature <- R6::R6Class("fct_signature",
         list("any"),
         list("any"), NULL
       ),
-      dunif = fct_info(
-        "dunif", 4L, list("x", "min", "max", "log"),
-        list("any", 0, 1, FALSE),
-        list("any", "any", "any", "any"), NULL
-      ),
-      punif = fct_info(
-        "punif", 5L, list("q", "min", "max", "lower.tail", "log.p"),
-        list("any", 0, 1, TRUE, FALSE),
-        list("any", "any", "any", "any", "any"), NULL
-      ),
-      qunif = fct_info(
-        "qunif", 5L, list("p", "min", "max", "lower.tail", "log.p"),
-        list("any", 0, 1, TRUE, FALSE),
-        list("any", "any", "any", "any", "any"), NULL
-      ),
-      runif = fct_info(
-        "runif", 3L, list("n", "min", "max"),
-        list("any", 0, 1),
-        list("any", "any", "any"), NULL
-      ),
-      dnorm = fct_info(
-        "dnorm", 4L, list("x", "mean", "sd", "log"),
-        list("any", 0, 1, FALSE),
-        list("any", "any", "any", "any"), NULL
-      ),
-      pnorm = fct_info(
-        "pnorm", 5L, list("q", "mean", "sd", "lower.tail", "log.p"),
-        list("any", 0, 1, TRUE, FALSE),
-        list("any", "any", "any", "any", "any"), NULL
-      ),
-      qnorm = fct_info(
-        "qnorm", 5L, list("p", "mean", "sd", "lower.tail", "log.p"),
-        list("any", 0, 1, TRUE, FALSE),
-        list("any", "any", "any", "any", "any"), NULL
-      ),
-      rnorm = fct_info(
-        "rnorm", 3L, list("n", "mean", "sd"),
-        list("any", 0, 1),
-        list("any", "any", "any"), NULL
-      ),
       isNA = fct_info(
         "is.na", 1L, list("any"),
         list("any"),
@@ -557,6 +529,12 @@ fct_signature <- R6::R6Class("fct_signature",
         list("any", "any", "any"),
         list("any", "any", "any"),
         list("any", "any", "any"),
+        NULL
+      ),
+      get_deriv = fct_info(
+        "get_deriv", 1L, list("any"),
+        list("any"),
+        list("symbol"),
         NULL
       )
     )

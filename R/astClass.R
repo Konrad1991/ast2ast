@@ -14,15 +14,21 @@ astClass <- R6::R6Class("astClass",
     variable_type_pairs = list(),
     return_variables = list(),
     R_fct = NULL,
-    initialize = function(fct, name_f, R_fct) {
+    calc_deriv = FALSE,
+    indep_var = NULL,
+    initialize = function(fct, name_f, R_fct, calc_deriv, indep_var) {
       self$args <- methods::formalArgs(fct)
       self$args_2_fct <- methods::formalArgs(fct)
       self$body <- body(fct)[2:length(body(fct))]
       self$R_fct <- R_fct
+      self$calc_deriv <- calc_deriv
+      self$indep_var <- indep_var
     },
     getast = function() {
+      counter <- 1
       for (i in seq_along(self$body)) {
         temp <- NULL
+        temp_deriv <- NULL
         e <- tryCatch(
           {
             temp <- LC$new(self$body[[i]], self$R_fct)
@@ -42,7 +48,17 @@ astClass <- R6::R6Class("astClass",
           stop()
         }
 
-        self$ast[[i]] <- temp$ast
+
+        if (self$calc_deriv) {
+          if (deriv_calc_needed(self$body[[i]])) {
+            temp_deriv <- LC$new(calc_deriv(self$body[[i]], self$indep_var), self$R_fct)
+            self$ast[[counter]] <- temp_deriv$ast
+            counter <- counter + 1
+          }
+        }
+        self$ast[[counter]] <- temp$ast
+        counter <- counter + 1
+
         self$var_all <- c(self$var_all, temp$vars)
         self$var_index <- c(self$var_index, temp$index_vars)
         self$return_TF <- c(self$return_TF, temp$found_return)

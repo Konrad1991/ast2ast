@@ -640,30 +640,6 @@ math <- R6::R6Class("math",
         self$name_fct <- as.name("ln")
       } else if (self$name_fct == "sqrt") {
         self$name_fct <- as.name("sqroot")
-      } else if (self$name_fct == "runif") {
-        self$arguments <- self$change_args("runif", self$arguments)
-        self$name_fct <- as.name("runif_etr")
-      } else if (self$name_fct == "dunif") {
-        self$arguments <- self$change_args("dunif", self$arguments)
-        self$name_fct <- as.name("dunif_etr")
-      } else if (self$name_fct == "punif") {
-        self$arguments <- self$change_args("punif", self$arguments)
-        self$name_fct <- as.name("punif_etr")
-      } else if (self$name_fct == "qunif") {
-        self$arguments <- self$change_args("qunif", self$arguments)
-        self$name_fct <- as.name("qunif_etr")
-      } else if (self$name_fct == "rnorm") {
-        self$arguments <- self$change_args("rnorm", self$arguments)
-        self$name_fct <- as.name("rnorm_etr")
-      } else if (self$name_fct == "dnorm") {
-        self$arguments <- self$change_args("dnorm", self$arguments)
-        self$name_fct <- as.name("dnorm_etr")
-      } else if (self$name_fct == "pnorm") {
-        self$arguments <- self$change_args("pnorm", self$arguments)
-        self$name_fct <- as.name("pnorm_etr")
-      } else if (self$name_fct == "qnorm") {
-        self$arguments <- self$change_args("qnorm", self$arguments)
-        self$name_fct <- as.name("qnorm_etr")
       }
     },
     convert = function(var) {

@@ -1,7 +1,9 @@
 #ifndef SUBSETTING_AT_HPP
 #define SUBSETTING_AT_HPP
 
+#include "MatrixSubsetting.hpp"
 #include "UtilsSubsetting.hpp"
+#include "VectorSubsetting.hpp"
 #include <type_traits>
 
 namespace etr {
@@ -14,6 +16,40 @@ namespace etr {
 - double double
 */
 
+#ifdef DERIV_ETR
+template <typename T, typename R>
+  requires(IsRVec<T> || IsSubVec<T> ||
+           OperationVec<T> && std::is_arithmetic_v<R>)
+inline auto at(const T &inp, R i) {
+  return subset(inp, i);
+}
+
+template <typename T, typename R>
+  requires IsVec<T> && std::is_integral_v<R>
+inline auto &at(T &inp, R i) {
+  return subset(inp, i);
+}
+
+template <typename T, typename R>
+  requires IsVec<T> && std::is_floating_point_v<R>
+inline auto &at(T &inp, R i_) {
+  return subset(inp, i_);
+}
+
+template <typename T, typename R, typename C>
+  requires(IsVec<T> && std::is_arithmetic_v<C>)
+inline auto &at(T &inp, R r, C c) {
+  return subset(inp, r, c);
+}
+
+template <typename T, typename R, typename C>
+  requires(IsRVec<T> || IsSubVec<T> ||
+           OperationVec<T> && std::is_arithmetic_v<R> &&
+               std::is_arithmetic_v<C>)
+inline auto at(const T &inp, R r, C c) {
+  return subset(inp, r, c);
+}
+#else
 template <typename T, typename R>
   requires(IsRVec<T> || IsSubVec<T> ||
            OperationVec<T> && std::is_arithmetic_v<R>)
@@ -132,6 +168,7 @@ inline auto at(const T &inp, R r, C c) {
     return inp[c_ * inp.nr() + r_];
   }
 }
+#endif
 
 } // namespace etr
 

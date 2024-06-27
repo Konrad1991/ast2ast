@@ -19,7 +19,7 @@ template <typename T, typename R, typename Trait> struct Vec {
 
 #ifdef DERIV_ETR
   Buffer<double> deriv;
-  bool dep_var = false;
+  bool indep_var = false;
 #endif
   Buffer<T> temp;
   using DType = R;

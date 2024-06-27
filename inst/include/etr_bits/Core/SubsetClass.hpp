@@ -1,6 +1,8 @@
 #ifndef SUBSETCLASS_ETR_H
 #define SUBSETCLASS_ETR_H
 
+#include "BaseStore.hpp"
+
 namespace etr {
 // Points to a Variable and stores indicces in ind
 template <typename T, typename SubsetTrait> struct Subset {
@@ -9,7 +11,11 @@ template <typename T, typename SubsetTrait> struct Subset {
   using TypeTrait = SubsetTrait;
   using CaseTrait = SubsetTrait;
   Indices ind;
+
   T *p = nullptr;
+#ifdef DERIV_ETR
+  BaseStore<double> *deriv_p = nullptr;
+#endif
   using CurrentBaseType =
       typename std::remove_reference<decltype(*p)>::type::Type;
   MatrixParameter mp;
@@ -30,6 +36,35 @@ template <typename T, typename SubsetTrait> struct Subset {
   void resize(std::size_t newSize) { p->resize(newSize); }
   void realloc(std::size_t newSize) { p->realloc(newSize); }
 
+#ifdef DERIV_ETR
+  Subset(const Subset &other) : p(other.p), deriv_p(other.deriv_p) {
+    this->setMatrix(other.mp);
+    this->ind = other.ind;
+  }
+  Subset(const Subset &&other) : p(other.p), deriv_p(other.deriv_p) {
+    this->setMatrix(other.mp);
+    this->ind = other.ind;
+  }
+  template <typename T2, typename R2> Subset(Vec<T2, R2> &other) {
+    this->p = &other.d;
+    this->deriv_p = &other.deriv;
+  }
+  template <typename T2, typename R2, typename TraitOther>
+  Subset(const Vec<T2, R2, TraitOther> &other) {
+    this->p = &other.d;
+    this->deriv_p = &other.deriv;
+  }
+  template <typename T2, typename R2> Subset(Vec<T2, R2> &other, bool deriv) {
+    this->p = &other.d;
+    this->deriv_p = &other.deriv;
+  }
+  template <typename T2, typename R2, typename TraitOther>
+  Subset(const Vec<T2, R2, TraitOther> &other, bool deriv) {
+    this->p = &other.d;
+    this->deriv_p = &other.deriv;
+  }
+
+#else
   Subset(const Subset &other) : p(other.p) {
     this->setMatrix(other.mp);
     this->ind = other.ind;
@@ -46,9 +81,6 @@ template <typename T, typename SubsetTrait> struct Subset {
   Subset(const Vec<T2, R2, TraitOther> &other) {
     this->p = &other.d;
   }
-
-#ifdef DERIV_ETR
-
   template <typename T2, typename R2> Subset(Vec<T2, R2> &other, bool deriv) {
     this->p = &other.deriv;
   }
@@ -56,7 +88,9 @@ template <typename T, typename SubsetTrait> struct Subset {
   Subset(const Vec<T2, R2, TraitOther> &other, bool deriv) {
     this->p = &other.deriv;
   }
+
 #endif
+
 #ifdef STANDALONE_ETR
 #else
   Subset(SEXP) = delete;
@@ -81,6 +115,18 @@ template <typename T, typename SubsetTrait> struct Subset {
     return this->p->operator[](ind[pos % p->size()]);
   }
 
+#ifdef DERIV_ETR
+
+  double &get_deriv(std::size_t pos) {
+    ass<"Subset is pointing to nothing!">(this->deriv_p != nullptr);
+    return this->deriv_p->operator[](ind[pos % deriv_p->size()]);
+  }
+
+  double get_deriv(std::size_t pos) const {
+    ass<"Subset is pointing to nothing!">(deriv_p != nullptr);
+    return this->deriv_p->operator[](ind[pos % deriv_p->size()]);
+  }
+#endif
   ~Subset() {}
 };
 
@@ -92,6 +138,11 @@ struct Subset<const T, SubsetTrait> {
   using CaseTrait = SubsetTrait;
   Indices ind;
   const T *p;
+
+#ifdef DERIV_ETR
+  const BaseStore<double> *deriv_p = nullptr;
+#endif
+
   using CurrentBaseType =
       typename std::remove_reference<decltype(*p)>::type::RetType;
   MatrixParameter mp;
@@ -112,6 +163,22 @@ struct Subset<const T, SubsetTrait> {
   void resize(std::size_t newSize) { p->resize(newSize); }
   void realloc(std::size_t newSize) { p->realloc(newSize); }
 
+#ifdef DERIV_ETR
+  Subset(const Subset &other) : p(other.p), deriv_p(other.deriv_p) {
+    this->setMatrix(other.mp);
+    this->ind = other.ind;
+  }
+  Subset(const Subset &&other) : p(other.p), deriv_p(other.deriv_p) {
+    this->p = other.p;
+    this->setMatrix(other.mp);
+    this->ind = other.ind;
+  }
+  template <typename T2, typename R2>
+  Subset(Vec<T2, R2> &other) : p(&other.d), deriv_p(other.deriv) {}
+  template <typename T2, typename R2, typename TraitOther>
+  Subset(const Vec<T2, R2, TraitOther> &other)
+      : p(&other.d), deriv_p(other.deriv) {}
+#else
   Subset(const Subset &other) : p(other.p) {
     this->setMatrix(other.mp);
     this->ind = other.ind;
@@ -125,6 +192,7 @@ struct Subset<const T, SubsetTrait> {
   Subset(Vec<T2, R2> &other) : p(&other.d) {}
   template <typename T2, typename R2, typename TraitOther>
   Subset(const Vec<T2, R2, TraitOther> &other) : p(&other.d) {}
+#endif
 #ifdef STANDALONE_ETR
 #else
   Subset(SEXP) = delete;
@@ -143,6 +211,14 @@ struct Subset<const T, SubsetTrait> {
     ass<"Subset is pointing to nothing!">(p != nullptr);
     return this->p->operator[](ind[pos % p->size()]);
   }
+
+#ifdef DERIV_ETR
+
+  const double get_deriv(std::size_t pos) const {
+    ass<"Subset is pointing to nothing!">(deriv_p != nullptr);
+    return this->deriv_p->operator[](ind[pos % deriv_p->size()]);
+  }
+#endif
 
   ~Subset() {}
 };

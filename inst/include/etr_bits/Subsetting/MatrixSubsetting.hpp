@@ -523,8 +523,8 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
         }
       }
       return;
-    } else if constexpr ((is<DataTypeR, int> || is<DataTypeR, double>) &&
-                         is<DataTypeC, bool>) {
+    } else if constexpr ((is<DataTypeR, int> ||
+                          is<DataTypeR, double>)&&is<DataTypeC, bool>) {
       std::size_t counter = 0;
       for (std::size_t i = 0; i < idxR->size(); i++)
         if ((*idxR)[i])
@@ -551,8 +551,8 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
       }
       mp.setMatrix(true, idxL->size(), positions.size());
       return;
-    } else if constexpr ((is<DataTypeR, int> || is<DataTypeR, double>) &&
-                         (is<DataTypeR, int> || is<DataTypeR, double>)) {
+    } else if constexpr ((is<DataTypeR, int> || is<DataTypeR, double>)&&(
+                             is<DataTypeR, int> || is<DataTypeR, double>)) {
       ind.resize(idxL->size() * idxR->size());
       std::size_t counter = 0;
       for (std::size_t i = 0; i < idxR->size(); i++) {
@@ -591,30 +591,6 @@ subset(V &&vec, R &&r,
   using DataType = typename ExtractDataType<V>::RetType;
   Subset<const decltype(convert(vec).d), SubsetTrait> sub(
       vec); // TODO: check whether a new trait SubsetTraitconst is needed
-  calcIndMatrix(vec, sub.ind, sub.mp, &r, &c);
-  return Vec<DataType, decltype(convertSubsetConst(vec)), SubVecTrait>(
-      std::move(sub));
-}
-
-template <typename V, typename R, typename C>
-  requires IsVec<V>
-inline auto subset_deriv(V &vec, R &&r, C &&c) {
-  using DataType = typename ExtractDataType<V>::RetType;
-  Subset<decltype(convert(vec).d), SubsetTrait> sub(vec, true);
-  calcIndMatrix(vec, sub.ind, sub.mp, &r, &c);
-  return Vec<DataType, decltype(convertSubset(vec)), SubVecTrait>(
-      std::move(sub));
-}
-
-template <typename V, typename R, typename C>
-  requires(IsRVec<V> || IsSubVec<V> || OperationVec<V>)
-inline const auto
-subset_deriv(V &&vec, R &&r,
-             C &&c) { // TODO: check that calculations can be subsetted
-  using DataType = typename ExtractDataType<V>::RetType;
-  Subset<const decltype(convert(vec).d), SubsetTrait> sub(
-      vec, true); 
-  // TODO: check whether a new trait SubsetTraitconst is needed
   calcIndMatrix(vec, sub.ind, sub.mp, &r, &c);
   return Vec<DataType, decltype(convertSubsetConst(vec)), SubVecTrait>(
       std::move(sub));

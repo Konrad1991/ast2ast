@@ -17,7 +17,7 @@ Vec &operator=(const TD inp) {
         d[i] = inp;
       }
 #ifdef DERIV_ETR
-      if (dep_var) {
+      if (indep_var) {
         for (std::size_t i = 0; i < d.ind.size(); i++) {
           deriv[i] = 1;
         }
@@ -31,11 +31,11 @@ Vec &operator=(const TD inp) {
       d.sz = 1;
       d[0] = inp;
 #ifdef DERIV_ETR
-      if (dep_var) {
-          deriv.resize(1);
+      if (indep_var) {
+        deriv.resize(1);
         deriv[0] = 1;
       } else {
-         deriv.resize(1);
+        deriv.resize(1);
         deriv[0] = 0;
       }
 #endif
@@ -44,7 +44,7 @@ Vec &operator=(const TD inp) {
       d.resize(1);
       d[0] = inp;
 #ifdef DERIV_ETR
-      if (dep_var) {
+      if (indep_var) {
         deriv.resize(1);
         deriv[0] = 1;
       } else {
@@ -52,7 +52,6 @@ Vec &operator=(const TD inp) {
         deriv[0] = 0;
       }
 #endif
-
     }
     return *this;
   } else {
@@ -61,7 +60,7 @@ Vec &operator=(const TD inp) {
         d[i] = static_cast<T>(inp);
       }
 #ifdef DERIV_ETR
-      if (dep_var) {
+      if (indep_var) {
         for (std::size_t i = 0; i < d.ind.size(); i++) {
           deriv[i] = 1;
         }
@@ -76,7 +75,7 @@ Vec &operator=(const TD inp) {
       d.sz = 1;
       d[0] = static_cast<T>(inp);
 #ifdef DERIV_ETR
-      if (dep_var) {
+      if (indep_var) {
         deriv.resize(1);
         deriv[0] = 1;
       } else {
@@ -89,7 +88,7 @@ Vec &operator=(const TD inp) {
       d.resize(1);
       d[0] = static_cast<T>(inp);
 #ifdef DERIV_ETR
-      if (dep_var) {
+      if (indep_var) {
         deriv.resize(1);
         deriv[0] = 1;
       } else {
@@ -97,7 +96,6 @@ Vec &operator=(const TD inp) {
         deriv[0] = 0;
       }
 #endif
-
     }
     return *this;
   }
@@ -178,10 +176,9 @@ Vec &operator=(const Vec<T, R, Trait> &otherVec) {
   // TODO: what if other Vec is subsetted
   deriv.resize(otherVec.size());
   for (std::size_t i = 0; i < deriv.size(); i++) {
-    deriv[i] = otherVec.deriv[i]; 
+    deriv[i] = otherVec.deriv[i];
   }
 #endif
-
 
   return *this;
 }
@@ -214,18 +211,18 @@ Vec &operator=(Vec<T2, R2, Trait2> &&otherVec) {
   if (otherVec.d.im()) {
     d.setMatrix(true, otherVec.nr(), otherVec.nc());
   }
-  #ifdef DERIV_ETR
-    deriv.resize( this -> size());
-      if (dep_var) {
-        for (std::size_t i = 0; i < deriv.size(); i++) {
-          deriv[i] = 1;
-        }
-      } else {
-        for (std::size_t i = 0; i < deriv.size(); i++) {
-          deriv[i] = 0;
-        }
-      }
-  #endif
+#ifdef DERIV_ETR
+  deriv.resize(this->size());
+  if (indep_var) {
+    for (std::size_t i = 0; i < deriv.size(); i++) {
+      deriv[i] = 1;
+    }
+  } else {
+    for (std::size_t i = 0; i < deriv.size(); i++) {
+      deriv[i] = 0;
+    }
+  }
+#endif
 
   return *this;
 }
@@ -306,10 +303,10 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
     }
   }
 
-  #ifdef DERIV_ETR
-  if constexpr(IsRVec<const Vec<T2, R2, Trait2>>) {
-    deriv.resize( this -> size());
-    if (dep_var) {
+#ifdef DERIV_ETR
+  if constexpr (IsRVec<const Vec<T2, R2, Trait2>>) {
+    deriv.resize(this->size());
+    if (indep_var) {
       for (std::size_t i = 0; i < deriv.size(); i++) {
         deriv[i] = 1;
       }
@@ -319,8 +316,7 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
       }
     }
   }
-  #endif
-
+#endif
 
   return *this;
 }

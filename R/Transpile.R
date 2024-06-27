@@ -1,5 +1,5 @@
-transpile <- function(fct, name_fct, r_fct, toa, hoa, data_types_of_args) {
-  ac <- astClass$new(fct, name_fct, R_fct = r_fct)
+transpile <- function(fct, name_fct, r_fct, toa, hoa, data_types_of_args, calc_deriv, indep_var) {
+  ac <- astClass$new(fct, name_fct, R_fct = r_fct, calc_deriv, indep_var)
   ac$getast()
   ac$ast2call()
   ac$call2char()

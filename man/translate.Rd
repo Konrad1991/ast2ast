@@ -9,6 +9,7 @@
     data_structures = "vector",
     handle_inputs = "copy",
     references = FALSE,
+    independent_variable = NULL,
     verbose = FALSE,
     getsource = FALSE
   )
@@ -54,6 +55,10 @@
     or has the same length as the number of arguments to the function.\cr
     If set to TRUE the arguments are passed by reference otherwise not.
     This option can be only used when the output is set to 'XPtr'
+  }
+  \item{independent_variable}{defines a variable for that all variables within the function \cr 
+    should be differentiated. The default value is "". \cr
+    In case no derivatives are required keep "".
   }
   \item{verbose}{If set to TRUE the output of the compilation process is printed.}
   \item{getsource}{If set to TRUE the function is not compiled and instead the C++ source code itself is returned.}
@@ -142,6 +147,14 @@
        a <- b <- c <- c(1, 2, 3) 
        fcpp(a, b,c) 
      }
+  }
+  \subsection{Derivatives}{
+    In case the 'independent_variable' is set. The derivatives are calculated for all variables \cr
+    with respect to the defined variable. The derivatives can be extracted by using the function 'get_deriv'. \cr
+    \verb{
+      y = x*x
+      dydx = get_deriv(y)
+    }
   }
   \subsection{The following functions are supported:}{
   \enumerate{

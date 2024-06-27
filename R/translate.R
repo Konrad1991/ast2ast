@@ -3,6 +3,7 @@ translate <- function(f, output = "R",
                       data_structures = "vector",
                       handle_inputs = "copy",
                       references = FALSE,
+                      independent_variable = "",
                       verbose = FALSE,
                       getsource = FALSE) {
   if (missing(f)) stop("function f is required")
@@ -11,6 +12,12 @@ translate <- function(f, output = "R",
   stopifnot(is.logical(verbose))
   stopifnot(is.character(output))
 
+  calc_deriv <- FALSE
+  x <- NULL
+  if (!is.null(independent_variable)) {
+    x <- independent_variable
+    calc_deriv <- TRUE
+  }
   length_checking(
     types_of_args,
     data_structures, handle_inputs, references, output
@@ -52,7 +59,8 @@ translate <- function(f, output = "R",
   fct_code <- transpile(
     f, name_f,
     r_fct, types,
-    handle_inputs, types_of_args
+    handle_inputs, types_of_args,
+    calc_deriv, x
   )
 
   if (getsource) {
@@ -64,6 +72,5 @@ translate <- function(f, output = "R",
     verbose = verbose,
     name_f
   )
-  str(fct_ret)
   return(fct_ret)
 }
