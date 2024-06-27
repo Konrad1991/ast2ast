@@ -176,8 +176,9 @@ Vec &operator=(const Vec<T, R, Trait> &otherVec) {
   // TODO: what if other Vec is subsetted
   deriv.resize(otherVec.size());
   for (std::size_t i = 0; i < deriv.size(); i++) {
-    deriv[i] = otherVec.deriv[i];
+    // deriv[i] = otherVec.deriv[i];
   }
+  // TODO: is there something to do here?
 #endif
 
   return *this;

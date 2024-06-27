@@ -1,7 +1,11 @@
 library(ast2ast)
-
 f <- function(x) {
-  y <- y[3] * x[1] + vector(length = 2) * x
+  a <- x
+  y <- a * a
+  dydx <- get_deriv(y)
+  return(dydx)
 }
 
-ast2ast::translate(f, independent_variable = "x", verbose = TRUE)
+fcpp <- ast2ast::translate(f, independent_variable = "x", verbose = TRUE)
+x <- c(1.0, 2.0, 3.0)
+fcpp(x)

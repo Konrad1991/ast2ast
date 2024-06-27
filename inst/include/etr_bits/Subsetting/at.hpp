@@ -17,38 +17,48 @@ namespace etr {
 */
 
 #ifdef DERIV_ETR
-template <typename T, typename R>
-  requires(IsRVec<T> || IsSubVec<T> ||
-           OperationVec<T> && std::is_arithmetic_v<R>)
-inline auto at(const T &inp, R i) {
-  return subset(inp, i);
+template <typename V, typename I>
+  requires IsVec<V>
+inline auto at(V &vec, I &&idx) {
+  using DataType = typename ExtractDataType<V>::RetType;
+  Subset<decltype(convert(vec).d), SubsetTrait> sub(vec);
+  calcIndVector(vec, sub.ind, &idx);
+  return Vec<DataType, decltype(convertSubset(vec)), SubVecTrait>(
+      std::move(sub));
 }
 
-template <typename T, typename R>
-  requires IsVec<T> && std::is_integral_v<R>
-inline auto &at(T &inp, R i) {
-  return subset(inp, i);
+template <typename V, typename I>
+  requires(IsRVec<V> || IsSubVec<V> || OperationVec<V>)
+inline auto at(V &&vec, I &&idx) {
+  using DataType = typename ExtractDataType<V>::RetType;
+  Subset<const decltype(convert(vec).d), SubsetTrait> sub(vec);
+  calcIndVector(vec, sub.ind, &idx);
+  return Vec<DataType, decltype(convertSubsetConst(vec)), SubVecTrait>(
+      std::move(sub));
 }
 
-template <typename T, typename R>
-  requires IsVec<T> && std::is_floating_point_v<R>
-inline auto &at(T &inp, R i_) {
-  return subset(inp, i_);
+template <typename V, typename R, typename C>
+  requires IsVec<V>
+inline auto at(V &vec, R &&r, C &&c) {
+  using DataType = typename ExtractDataType<V>::RetType;
+  Subset<decltype(convert(vec).d), SubsetTrait> sub(vec);
+  calcIndMatrix(vec, sub.ind, sub.mp, &r, &c);
+  return Vec<DataType, decltype(convertSubset(vec)), SubVecTrait>(
+      std::move(sub));
 }
 
-template <typename T, typename R, typename C>
-  requires(IsVec<T> && std::is_arithmetic_v<C>)
-inline auto &at(T &inp, R r, C c) {
-  return subset(inp, r, c);
+template <typename V, typename R, typename C>
+  requires(IsRVec<V> || IsSubVec<V> || OperationVec<V>)
+inline const auto at(V &&vec, R &&r,
+                     C &&c) { // TODO: check that calculations can be subsetted
+  using DataType = typename ExtractDataType<V>::RetType;
+  Subset<const decltype(convert(vec).d), SubsetTrait> sub(
+      vec); // TODO: check whether a new trait SubsetTraitconst is needed
+  calcIndMatrix(vec, sub.ind, sub.mp, &r, &c);
+  return Vec<DataType, decltype(convertSubsetConst(vec)), SubVecTrait>(
+      std::move(sub));
 }
 
-template <typename T, typename R, typename C>
-  requires(IsRVec<T> || IsSubVec<T> ||
-           OperationVec<T> && std::is_arithmetic_v<R> &&
-               std::is_arithmetic_v<C>)
-inline auto at(const T &inp, R r, C c) {
-  return subset(inp, r, c);
-}
 #else
 template <typename T, typename R>
   requires(IsRVec<T> || IsSubVec<T> ||
@@ -131,7 +141,7 @@ template <typename T, typename R, typename C>
   requires(IsRVec<T> || IsSubVec<T> ||
            OperationVec<T> && std::is_arithmetic_v<R> &&
                std::is_arithmetic_v<C>)
-inline auto at(const T &inp, R r, C c) {
+inline const auto at(const T &inp, R r, C c) {
   ass<"Input is not a matrix!">(inp.im() == true);
   if constexpr (std::is_integral_v<R> && std::is_integral_v<C>) {
     r--;

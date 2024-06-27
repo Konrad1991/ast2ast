@@ -23,7 +23,7 @@
 ## Documentation
 
 - [x] update translate.Rd
-- [ ] update J.Rd
+- [x] remove J.Rd
 - [ ] update DetailedDocumentation.Rmd
 - [ ] update InformationForPackageAuthors.Rmd
 
@@ -55,8 +55,9 @@
   - coca
   - cmr
 - [x] add argument so that the user sets the independent variable
-- [ ] change each expression to:
+- [x] change each expression to:
     assign_deriv(a, expr)
     a = expr
-- [ ] at the end the user extracts the derivatives
+- [x] at the end the user extracts the derivatives
   * e.g. ydot_deriv = get_deriv(ydot) 
+- [x] define set_indep

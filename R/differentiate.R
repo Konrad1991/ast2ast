@@ -86,7 +86,7 @@ diff_expr <- lift(function(expr, x, fl) {
 })
 
 diff_variable <- function(var) {
-  str2lang(paste0("get_deriv(", deparse(var), ")"))
+  str2lang(paste0("etr::get_deriv(", deparse(var), ")"))
 }
 
 diff_addition <- function(expr, x, fl) {

@@ -119,11 +119,18 @@ template <typename T, typename SubsetTrait> struct Subset {
 
   double &get_deriv(std::size_t pos) {
     ass<"Subset is pointing to nothing!">(this->deriv_p != nullptr);
+    ass<"Error: out of boundaries --> value below 1">(pos >= 0);
+    ass<"Error: out of boundaries --> value beyond size of vector">(
+        pos < (this->deriv_p->size()));
+
     return this->deriv_p->operator[](ind[pos % deriv_p->size()]);
   }
 
   double get_deriv(std::size_t pos) const {
     ass<"Subset is pointing to nothing!">(deriv_p != nullptr);
+    ass<"Error: out of boundaries --> value below 1">(pos >= 0);
+    ass<"Error: out of boundaries --> value beyond size of vector">(
+        pos < (this->deriv_p->size()));
     return this->deriv_p->operator[](ind[pos % deriv_p->size()]);
   }
 #endif
@@ -216,6 +223,10 @@ struct Subset<const T, SubsetTrait> {
 
   const double get_deriv(std::size_t pos) const {
     ass<"Subset is pointing to nothing!">(deriv_p != nullptr);
+    ass<"Error: out of boundaries --> value below 1">(pos >= 0);
+    ass<"Error: out of boundaries --> value beyond size of vector">(
+        pos < (this->deriv_p->size()));
+
     return this->deriv_p->operator[](ind[pos % deriv_p->size()]);
   }
 #endif

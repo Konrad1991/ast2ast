@@ -19,9 +19,14 @@
 
 
 #' @importFrom Rcpp sourceCpp
-compiler_a2a <- function(fct_code, R_fct, verbose, name_f) {
+compiler_a2a <- function(fct_code, R_fct,
+                         verbose, name_f, calc_deriv) {
   fct <- fct_code
   fct_ret <- NULL
+
+  if (calc_deriv) {
+    Sys.setenv("PKG_CXXFLAGS" = "-DDERIV_ETR")
+  }
 
   if (!R_fct) {
     tryCatch(

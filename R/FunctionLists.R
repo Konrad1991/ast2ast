@@ -25,7 +25,8 @@ namespace_etr <- function() {
     "ln", "sqroot",
     "print", "vector", "matrix", "length", "dim", "cmr",
     "exp", "i2d", "at", "exp", "at",
-    "isNA", "isInfinite", "colon", "cpp2R", "rep"
+    "isNA", "isInfinite", "colon", "cpp2R", "rep", "get_deriv",
+    "assign_deriv"
   )
 }
 

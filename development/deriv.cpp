@@ -5,6 +5,21 @@
 using namespace etr;
 
 int main() {
+
+  etr::Vec<double> y;
+  etr::Vec<double> dydx;
+  etr::Vec<double> x;
+  x = coca(1, 2, 3);
+  y = coca(1, 2, 3);
+  set_indep(x);
+
+  etr::assign_deriv(y, etr::get_deriv(x) * x + x * etr::get_deriv(x));
+  y = x * x;
+  dydx = etr::get_deriv(y);
+  print(dydx);
+  print(y);
+
+  /*
   Vec<double> y;
   y = coca(1, 2, 3);
   Vec<double> x;
@@ -34,4 +49,5 @@ int main() {
   print(y);
   print(x);
   print();
+  */
 }

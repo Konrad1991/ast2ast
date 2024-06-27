@@ -36,37 +36,48 @@ inline auto set_indep(T &v) {
 }
 
 template <typename L, typename R> inline void assign_deriv(L &&l, const R &r) {
-  using DataTypeOtherVec = typename etr::ExtractDataType<
-      std::remove_reference_t<decltype(r)>>::RetType;
-  l.temp.resize(r.size());
-  for (std::size_t i = 0; i < r.size(); i++) {
-    if constexpr (is<DataTypeOtherVec, double>) {
-      l.temp[i] = r[i];
-    } else {
-      l.temp[i] = static_cast<double>(r[i]);
+  if constexpr (std::is_arithmetic_v<R>) {
+    l.deriv.resize(1);
+    l.deriv[0] = r;
+  } else {
+    using DataTypeOtherVec = typename etr::ExtractDataType<
+        std::remove_reference_t<decltype(r)>>::RetType;
+    l.temp.resize(r.size());
+    for (std::size_t i = 0; i < r.size(); i++) {
+      if constexpr (is<DataTypeOtherVec, double>) {
+        l.temp[i] = r[i];
+      } else {
+        l.temp[i] = static_cast<double>(r[i]);
+      }
     }
-  }
-  l.deriv.resize(r.size());
-  for (std::size_t i = 0; i < l.temp.size(); i++) {
-    l.deriv[i] = l.temp[i];
+    l.deriv.resize(r.size());
+    for (std::size_t i = 0; i < l.temp.size(); i++) {
+      l.deriv[i] = l.temp[i];
+    }
   }
 }
 
 template <typename L, typename R>
   requires IsSubVec<L>
 inline void assign_deriv(L &&l, const R &r) {
-  using DataTypeOtherVec = typename etr::ExtractDataType<
-      std::remove_reference_t<decltype(r)>>::RetType;
-  l.temp.resize(r.size());
-  for (std::size_t i = 0; i < r.size(); i++) {
-    if constexpr (is<DataTypeOtherVec, double>) {
-      l.temp[i] = r[i];
-    } else {
-      l.temp[i] = static_cast<double>(r[i]);
+  if constexpr (std::is_arithmetic_v<R>) {
+    l.deriv.resize(1);
+    l.deriv[0] = r;
+  } else {
+
+    using DataTypeOtherVec = typename etr::ExtractDataType<
+        std::remove_reference_t<decltype(r)>>::RetType;
+    l.temp.resize(r.size());
+    for (std::size_t i = 0; i < r.size(); i++) {
+      if constexpr (is<DataTypeOtherVec, double>) {
+        l.temp[i] = r[i];
+      } else {
+        l.temp[i] = static_cast<double>(r[i]);
+      }
     }
-  }
-  for (std::size_t i = 0; i < l.temp.size(); i++) {
-    l.d.get_deriv(i) = l.temp[i];
+    for (std::size_t i = 0; i < l.temp.size(); i++) {
+      l.d.get_deriv(i) = l.temp[i];
+    }
   }
 }
 

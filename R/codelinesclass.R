@@ -123,8 +123,10 @@ LC <- R6::R6Class("LC",
         self$check_assign_subset <- FALSE
         # TODO: check_assign_subset is not needed anymore remove
       } else {
-        message("Error: Sorry not all functions are supported", "\n")
-        message("Function: ", fct, " not supported")
+        color_print(41, "Error: Sorry not all functions are supported \n")
+        color_print(41, paste0(
+          "Function: ", fct, " not supported"
+        ))
         stop()
       }
       # convert node classes

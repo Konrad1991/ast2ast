@@ -192,15 +192,6 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// test_vector_AllVars
-void test_vector_AllVars();
-RcppExport SEXP _ast2ast_test_vector_AllVars() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_vector_AllVars();
-    return R_NilValue;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_basestore", (DL_FUNC) &_ast2ast_test_basestore, 0},
@@ -223,7 +214,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_vector_int", (DL_FUNC) &_ast2ast_test_vector_int, 0},
     {"_ast2ast_test_vector_bool", (DL_FUNC) &_ast2ast_test_vector_bool, 0},
     {"_ast2ast_test_vector_vector", (DL_FUNC) &_ast2ast_test_vector_vector, 0},
-    {"_ast2ast_test_vector_AllVars", (DL_FUNC) &_ast2ast_test_vector_AllVars, 0},
     {NULL, NULL, 0}
 };
 

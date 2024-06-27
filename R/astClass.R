@@ -51,7 +51,9 @@ astClass <- R6::R6Class("astClass",
 
         if (self$calc_deriv) {
           if (deriv_calc_needed(self$body[[i]])) {
-            temp_deriv <- LC$new(calc_deriv(self$body[[i]], self$indep_var), self$R_fct)
+            temp_deriv <- LC$new(
+              calc_deriv(self$body[[i]], self$indep_var), self$R_fct
+            )
             self$ast[[counter]] <- temp_deriv$ast
             counter <- counter + 1
           }

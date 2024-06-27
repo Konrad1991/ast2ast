@@ -14,7 +14,7 @@ translate <- function(f, output = "R",
 
   calc_deriv <- FALSE
   x <- NULL
-  if (!is.null(independent_variable)) {
+  if (independent_variable != "") {
     x <- independent_variable
     calc_deriv <- TRUE
   }
@@ -70,7 +70,8 @@ translate <- function(f, output = "R",
   fct_ret <- compiler_a2a(
     fct_code, r_fct,
     verbose = verbose,
-    name_f
+    name_f,
+    calc_deriv
   )
   return(fct_ret)
 }

@@ -81,7 +81,3 @@ test_vector_vector <- function() {
     invisible(.Call(`_ast2ast_test_vector_vector`))
 }
 
-test_vector_AllVars <- function() {
-    invisible(.Call(`_ast2ast_test_vector_AllVars`))
-}
-

@@ -24,27 +24,19 @@ color_print <- function(col, txt) {
 deriv_calc_needed <- function(codeline) {
   cl <- as.list(codeline)[[1]] |> deparse()
   if ((cl == "=") || (cl == "<-")) {
-    return(TRUE)
+    fct3 <- as.list(codeline[[3]])[[1]] |> deparse()
+    if (fct3 != "get_deriv") {
+      return(TRUE)
+    }
   }
   return(FALSE)
 }
 
-traverse <- function(code) {
-  if (!is.call(code)) {
-    return(code)
-  }
-  code <- as.list(code)
-  code <- order_args(code[2:length(code)], deparse(code[[1]]))
-  lapply(code, traverse)
-}
-
 calc_deriv <- function(codeline, x) {
-  cl <- traverse(codeline)
-  print(cl)
-  # codeline[[1]] <- str2lang("assign_deriv")
-  # fct <- function() stop("something went wrong")
-  # body(fct, envir = environment(fct)) <- codeline[[3]]
-  # codeline[[2]] <- body(d(fct, x))
-  # codeline <- as.call(codeline)
+  codeline[[1]] <- str2lang("etr::assign_deriv")
+  fct <- function() stop("something went wrong")
+  body(fct, envir = environment(fct)) <- codeline[[3]]
+  codeline[[3]] <- body(d(fct, x))
+  codeline <- as.call(codeline)
   return(codeline)
 }

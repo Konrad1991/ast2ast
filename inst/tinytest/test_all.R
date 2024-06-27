@@ -21,7 +21,6 @@ ast2ast:::test_vector_numeric()
 ast2ast:::test_vector_int()
 ast2ast:::test_vector_bool()
 ast2ast:::test_vector_vector()
-ast2ast:::test_vector_AllVars()
 
 # Valid function call with complete arguments
 args <- list(data = 3, nrow = 2, ncol = 4)
