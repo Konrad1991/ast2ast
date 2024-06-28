@@ -105,7 +105,7 @@ template <typename T> auto sinus(const T &obj) {
 template <typename T>
   requires std::is_same_v<T, double>
 auto sinus(const T &obj) -> double {
-  return Sinus(obj);
+  return sin(obj);
 }
 
 template <typename T> auto sinush(const T &obj) {
@@ -121,7 +121,7 @@ template <typename T> auto sinush(const T &obj) {
 }
 template <typename T>
   requires std::is_same_v<T, double>
-auto sinush(const T &obj) -> double {
+auto sinh(const T &obj) -> double {
   return SinusH(obj);
 }
 
@@ -138,7 +138,7 @@ template <typename T> auto asinus(const T &obj) {
 }
 template <typename T>
   requires std::is_same_v<T, double>
-auto asinus(const T &obj) -> double {
+auto asin(const T &obj) -> double {
   return ASinus(obj);
 }
 
@@ -155,7 +155,7 @@ template <typename T> auto cosinus(const T &obj) {
 }
 template <typename T>
   requires std::is_same_v<T, double>
-auto cosinus(const T &obj) -> double {
+auto cos(const T &obj) -> double {
   return Cosinus(obj);
 }
 
@@ -172,7 +172,7 @@ template <typename T> auto cosinush(const T &obj) {
 }
 template <typename T>
   requires std::is_same_v<T, double>
-auto cosinush(const T &obj) -> double {
+auto cosh(const T &obj) -> double {
   return CosinusH(obj);
 }
 
@@ -189,7 +189,7 @@ template <typename T> auto acosinus(const T &obj) {
 }
 template <typename T>
   requires std::is_same_v<T, double>
-auto acosinus(const T &obj) -> double {
+auto acos(const T &obj) -> double {
   return ACosinus(obj);
 }
 
@@ -206,7 +206,7 @@ template <typename T> auto tangens(const T &obj) {
 }
 template <typename T>
   requires std::is_same_v<T, double>
-auto tangens(const T &obj) -> double {
+auto tan(const T &obj) -> double {
   return Tangens(obj);
 }
 
@@ -223,7 +223,7 @@ template <typename T> auto tangensh(const T &obj) {
 }
 template <typename T>
   requires std::is_same_v<T, double>
-auto tangensh(const T &obj) -> double {
+auto tanh(const T &obj) -> double {
   return TangensH(obj);
 }
 
@@ -240,7 +240,7 @@ template <typename T> auto atangens(const T &obj) {
 }
 template <typename T>
   requires std::is_same_v<T, double>
-auto atangens(const T &obj) -> double {
+auto atan(const T &obj) -> double {
   return ATangens(obj);
 }
 
@@ -275,7 +275,7 @@ template <typename T> auto sqroot(const T &obj) {
 template <typename T>
   requires std::is_same_v<T, double>
 auto sqroot(const T &obj) -> double {
-  return SquareRoot(obj);
+  return sqrt(obj);
 }
 
 template <typename T>
@@ -293,7 +293,7 @@ auto exp(const T &obj) { // TODO: update this in the documentation
 template <typename T>
   requires std::is_same_v<T, double>
 auto exp(const T &obj) -> double {
-  return Exp(obj);
+  return exp(obj);
 }
 
 } // namespace etr

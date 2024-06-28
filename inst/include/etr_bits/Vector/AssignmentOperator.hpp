@@ -176,7 +176,7 @@ Vec &operator=(const Vec<T, R, Trait> &otherVec) {
   // TODO: what if other Vec is subsetted
   deriv.resize(otherVec.size());
   for (std::size_t i = 0; i < deriv.size(); i++) {
-    // deriv[i] = otherVec.deriv[i];
+    deriv[i] = otherVec.deriv[i];
   }
   // TODO: is there something to do here?
 #endif
@@ -305,7 +305,8 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
   }
 
 #ifdef DERIV_ETR
-  if constexpr (IsRVec<const Vec<T2, R2, Trait2>>) {
+  if constexpr (IsRVec<const Vec<T2, R2, Trait2>> ||
+                Operation<decltype(otherVec.d)>) {
     deriv.resize(this->size());
     if (indep_var) {
       for (std::size_t i = 0; i < deriv.size(); i++) {
@@ -315,6 +316,11 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
       for (std::size_t i = 0; i < deriv.size(); i++) {
         deriv[i] = 0;
       }
+    }
+  } else {
+    deriv.resize(otherVec.size());
+    for (std::size_t i = 0; i < deriv.sz; i++) {
+      deriv[i] = otherVec.deriv[i];
     }
   }
 #endif
@@ -326,6 +332,10 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
 #else
 Vec &operator=(SEXP s) {
   d.initSEXP(s);
+#ifdef DERIV_ETR
+  deriv.resize(d.sz);
+  deriv.fill(0.0);
+#endif
   return *this;
 }
 #endif

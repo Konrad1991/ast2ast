@@ -5,6 +5,7 @@
 #include "../Core.hpp"
 #include "../UnaryCalculations.hpp"
 #include <cstddef>
+#include <type_traits>
 
 namespace etr {
 
@@ -12,6 +13,12 @@ namespace etr {
 
 template <typename T> inline auto get_deriv(T &&v) {
   Vec<double, Buffer<double>> ret{v.deriv};
+  return ret;
+}
+
+// TODO: add missing get_deriv for int etc.
+inline auto get_deriv(const double v) {
+  Vec<double, Buffer<double>> ret(SI{1});
   return ret;
 }
 
@@ -33,6 +40,13 @@ inline auto set_indep(T &v) {
   v.indep_var = true;
   v.deriv.resize(v.d.size());
   v.deriv.fill(1.0);
+}
+
+template <typename T>
+  requires IsSubVec<T>
+inline auto set_indep(T &&v) {
+  v.indep_var = true;
+  v.d.deriv_p->fill(1.0);
 }
 
 template <typename L, typename R> inline void assign_deriv(L &&l, const R &r) {
@@ -60,11 +74,11 @@ template <typename L, typename R> inline void assign_deriv(L &&l, const R &r) {
 template <typename L, typename R>
   requires IsSubVec<L>
 inline void assign_deriv(L &&l, const R &r) {
+
   if constexpr (std::is_arithmetic_v<R>) {
     l.deriv.resize(1);
     l.deriv[0] = r;
   } else {
-
     using DataTypeOtherVec = typename etr::ExtractDataType<
         std::remove_reference_t<decltype(r)>>::RetType;
     l.temp.resize(r.size());

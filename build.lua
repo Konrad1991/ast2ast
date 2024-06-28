@@ -1,5 +1,5 @@
 local function build_project()
-	local build_cmd = "Rscript testsAll.R 2>&1"
+	local build_cmd = "Rscript development/deriv_test.R  2>&1"
 	local handle = io.popen(build_cmd)
 	local result = handle:read("*a")
 	local test = handle:close()

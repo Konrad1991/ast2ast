@@ -21,9 +21,13 @@ color_print <- function(col, txt) {
   cat(paste0("\033[0;", col, "m", txt, "\033[0m", "\n"))
 }
 
-deriv_calc_needed <- function(codeline) {
+deriv_calc_needed <- function(codeline, x) {
   cl <- as.list(codeline)[[1]] |> deparse()
   if ((cl == "=") || (cl == "<-")) {
+    if (is.call(codeline[[2]]) && (deparse(codeline[[2]][[1]]) == "::")) {
+      return(FALSE)
+    }
+
     fct3 <- as.list(codeline[[3]])[[1]] |> deparse()
     if (fct3 != "get_deriv") {
       return(TRUE)
