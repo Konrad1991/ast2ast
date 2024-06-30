@@ -40,6 +40,7 @@ LC <- R6::R6Class("LC",
     found_return = FALSE,
     variable_type_pair = NULL,
     return_variable = NULL,
+    calc_deriv = FALSE,
     extractast = function(sexp) {
       if (is.null(sexp)) {
         stop("Found empty function")
@@ -64,7 +65,7 @@ LC <- R6::R6Class("LC",
       if ((as.name("<-") == fct) || (as.name("=") == fct)) {
         self$check_assign_subset <- TRUE
         p <- assign$new(sexp, self$namespace_etr)
-        sexp <- p$convert(self$PF)
+        sexp <- p$convert(self$PF, self$calc_deriv)
         self$vars <- c(self$vars, p$get_var_names())
         self$variable_type_pair <- p$variable_type_pair
       } else if ((deparse(fct) %in% self$generic_fct)) {
@@ -122,11 +123,14 @@ LC <- R6::R6Class("LC",
         sexp <- p$convert(self$PF)
         self$check_assign_subset <- FALSE
         # TODO: check_assign_subset is not needed anymore remove
+      } else if ("set_indep" == fct) {
+        self$check_assign_subset <- FALSE
+        p <- generic$new(sexp, self$namespace_etr)
+        sexp <- p$convert(self$PF)
+        self$calc_deriv <- TRUE
       } else {
-        color_print(41, "Error: Sorry not all functions are supported \n")
-        color_print(41, paste0(
-          "Function: ", fct, " not supported"
-        ))
+        message("Error: Sorry not all functions are supported", "\n")
+        message("Function: ", fct, " not supported")
         stop()
       }
       # convert node classes

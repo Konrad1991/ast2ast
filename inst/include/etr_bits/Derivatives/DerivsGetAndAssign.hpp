@@ -45,12 +45,30 @@ inline auto set_indep(T &v) {
 template <typename T>
   requires IsSubVec<T>
 inline auto set_indep(T &&v) {
-  v.indep_var = true;
-  v.d.deriv_p->fill(1.0);
+  for (std::size_t i = 0; i < v.size(); i++) {
+    v.d.get_deriv(i) = 1.0;
+  }
 }
 
-template <typename L, typename R> inline void assign_deriv(L &&l, const R &r) {
-  if constexpr (std::is_arithmetic_v<R>) {
+template <typename T>
+  requires IsVec<T>
+inline auto unset_indep(T &v) {
+  v.indep_var = true;
+  v.deriv.resize(v.d.size());
+  v.deriv.fill(0.0);
+}
+
+template <typename T>
+  requires IsSubVec<T>
+inline auto unset_indep(T &&v) {
+  for (std::size_t i = 0; i < v.size(); i++) {
+    v.d.get_deriv(i) = 0.0;
+  }
+}
+
+template <typename L, typename Expr, typename ExprDeriv>
+inline void assign(L &l, const Expr &expr, const ExprDeriv &r) {
+  if constexpr (std::is_arithmetic_v<ExprDeriv>) {
     l.deriv.resize(1);
     l.deriv[0] = r;
   } else {
@@ -69,13 +87,14 @@ template <typename L, typename R> inline void assign_deriv(L &&l, const R &r) {
       l.deriv[i] = l.temp[i];
     }
   }
+  l = expr;
 }
 
-template <typename L, typename R>
+template <typename L, typename Expr, typename ExprDeriv>
   requires IsSubVec<L>
-inline void assign_deriv(L &&l, const R &r) {
+inline void assign(L &&l, const Expr &expr, const ExprDeriv &r) {
 
-  if constexpr (std::is_arithmetic_v<R>) {
+  if constexpr (std::is_arithmetic_v<ExprDeriv>) {
     l.deriv.resize(1);
     l.deriv[0] = r;
   } else {
@@ -93,6 +112,7 @@ inline void assign_deriv(L &&l, const R &r) {
       l.d.get_deriv(i) = l.temp[i];
     }
   }
+  l = expr;
 }
 
 #endif

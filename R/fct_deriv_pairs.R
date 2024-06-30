@@ -193,5 +193,6 @@ init_fct_list <- function() {
   f <- add_fct(f, "length", matrix_deriv, TRUE)
   f <- add_fct(f, "dim", matrix_deriv, TRUE)
   f <- add_fct(f, "set_indep", matrix_deriv, TRUE)
+  f <- add_fct(f, "unset_indep", matrix_deriv, TRUE)
   return(f)
 }

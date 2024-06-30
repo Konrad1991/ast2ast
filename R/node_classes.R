@@ -238,12 +238,28 @@ assign <- R6::R6Class("assign",
       self$replace_int()
       self$name_fct <- as.name("=")
     },
-    convert = function(var) {
+    convert = function(var, calc_d) {
       self$replace_INF()
       self$replace_NA()
       self$replace_TF()
       self$oaf(var)
       self$change_code()
+
+      calc_deriv <- function(codeline) {
+        fct3 <- as.list(codeline[[3]])[[1]] |> deparse()
+        if (fct3 != "get_deriv") {
+          result <- list()
+          result[[1]] <- str2lang("etr::assign")
+          fct <- function() stop("something went wrong")
+          body(fct, envir = environment(fct)) <- codeline[[3]]
+          result[[2]] <- codeline[[2]]
+          result[[3]] <- codeline[[3]]
+          result[[4]] <- body(d(fct, x))
+          return(result)
+        } else {
+          return(codeline)
+        }
+      }
 
       if (is.language(self$arguments[[1]])) {
         temp <- as.list(self$arguments[[1]])
@@ -264,6 +280,9 @@ assign <- R6::R6Class("assign",
         }
       })
       ret <- c(ret, self$arguments)
+      if (calc_d) {
+        ret <- calc_deriv(c(self$name_fct, self$arguments))
+      }
       return(ret)
     }
   )

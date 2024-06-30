@@ -15,6 +15,7 @@
 - [ ] write test with f recieving Vec, Borrows mixed
   - [ ] some of the Vecs are than borrowed
 - [ ] tests for diff
+  - 5 examples from wikipedia
 
 ### Safety
 
@@ -61,3 +62,5 @@
 - [x] at the end the user extracts the derivatives
   * e.g. ydot_deriv = get_deriv(ydot) 
 - [x] define set_indep
+- [ ] calc of deriv in loop
+  - calc of deriv in node class assign

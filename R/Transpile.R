@@ -1,8 +1,10 @@
-transpile <- function(fct, name_fct, r_fct, toa, hoa, data_types_of_args, calc_deriv, indep_var) {
-  ac <- astClass$new(fct, name_fct, R_fct = r_fct, calc_deriv, indep_var)
+transpile <- function(fct, name_fct, r_fct, toa, hoa,
+                      data_types_of_args) {
+  ac <- astClass$new(fct, name_fct, R_fct = r_fct)
   ac$getast()
   ac$ast2call()
   ac$call2char()
+  calc_deriv <- ac$get_calc_deriv()
   if (!ac$return_TF && r_fct) {
     ac$char <- c(ac$char, "\n", "return(R_NilValue); \n")
   }
@@ -24,20 +26,15 @@ transpile <- function(fct, name_fct, r_fct, toa, hoa, data_types_of_args, calc_d
     )
     sig <- signature_code(return_type, name_fct, toa, res[[2]])
     args_copy_or_borrow_decl <- res[[1]]
-    deriv_string <- ""
-    if (calc_deriv) {
-      deriv_string <- cString("\tetr::set_indep(", indep_var, ");\n", "")@value
-    }
 
     result <- cString(
       r_fct_sig(),
       sig,
       decl,
       args_copy_or_borrow_decl,
-      deriv_string,
       b, "}\n", ""
     )@value
-    return(result)
+    return(list(calc_deriv, result))
   } else {
     res <- borrow_declarations(
       ac$args, hoa,
@@ -46,10 +43,6 @@ transpile <- function(fct, name_fct, r_fct, toa, hoa, data_types_of_args, calc_d
     sig <- signature_code(return_type, name_fct, toa, res[[2]])
     args_copy_or_borrow_decl <- res[[1]]
 
-    deriv_string <- ""
-    if (calc_deriv) {
-      deriv_string <- cString("\tetr::set_indep(", indep_var, ");\n", "")@value
-    }
     deps <- xptr_sig("get", name_fct)
     get_fct <- get_xptr(toa, return_type, name_fct, name = deps[[1]])
     result <- cString(
@@ -60,12 +53,11 @@ transpile <- function(fct, name_fct, r_fct, toa, hoa, data_types_of_args, calc_d
       sig,
       decl,
       args_copy_or_borrow_decl,
-      deriv_string,
       b, "}\n",
       "\n",
       get_fct,
       ""
     )@value
-    return(result)
+    return(list(calc_deriv, result))
   }
 }

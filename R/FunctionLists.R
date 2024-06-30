@@ -13,7 +13,8 @@ permitted_fcts <- function() {
     "Rf_ScalarReal", "i2d", "cmr", "cpp2R",
     "vector_numeric",
     "vector_logical", "while",
-    "vector_integer", "rep", "get_deriv", "assign_deriv", "set_indep"
+    "vector_integer", "rep", "get_deriv", "assign",
+    "set_indep", "unset_indep"
   )
 }
 
@@ -26,7 +27,7 @@ namespace_etr <- function() {
     "print", "vector", "matrix", "length", "dim", "cmr",
     "exp", "i2d", "at", "exp", "at",
     "isNA", "isInfinite", "colon", "cpp2R", "rep", "get_deriv",
-    "assign_deriv", "set_indep"
+    "assign_deriv", "set_indep", "unset_indep"
   )
 }
 
@@ -38,7 +39,8 @@ generic_fcts <- function() {
     "rep", "::",
     "matrix", "length", "dim", "cmr", "exp", "at",
     "&&", "||", "Rf_ScalarReal", "cpp2R",
-    "rep", "while", "get_deriv", "assign_deriv", "set_indep"
+    "rep", "while", "get_deriv", "assign",
+    "unset_indep"
   )
 }
 

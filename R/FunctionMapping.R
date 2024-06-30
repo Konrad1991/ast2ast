@@ -541,6 +541,11 @@ fct_signature <- R6::R6Class("fct_signature",
         "set_indep", 1L, list("any"),
         list("any"),
         list("any"), NULL
+      ),
+      unset_indep = fct_info(
+        "unset_indep", 1L, list("any"),
+        list("any"),
+        list("any"), NULL
       )
     )
   )
