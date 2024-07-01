@@ -254,7 +254,7 @@ assign <- R6::R6Class("assign",
           body(fct, envir = environment(fct)) <- codeline[[3]]
           result[[2]] <- codeline[[2]]
           result[[3]] <- codeline[[3]]
-          result[[4]] <- body(d(fct, x))
+          result[[4]] <- body(d(fct))
           return(result)
         } else {
           return(codeline)

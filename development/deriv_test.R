@@ -24,3 +24,6 @@ fcpp <- ast2ast::translate(f,
 )
 
 fcpp(y, x)
+
+
+print(.traceback())
