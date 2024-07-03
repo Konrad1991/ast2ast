@@ -2,7 +2,7 @@
 
 Rscript install.R
 
-Rscript deriv_test.R
+Rscript diff.R
 
 # Rscript test.R
 

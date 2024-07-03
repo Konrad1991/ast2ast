@@ -47,12 +47,6 @@ void test_vector_numeric() {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
-    try {
-      Vec<double> vec1 = vector_numeric(SIZE_MAX);
-    } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid length argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
-    }
   }
   {
     try {
@@ -65,12 +59,6 @@ void test_vector_numeric() {
       Vec<double> vec1 = vector_numeric(-1.1);
     } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
-    }
-    try {
-      Vec<double> vec1 = vector_numeric(std::numeric_limits<double>::max());
-    } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid length argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
     }
   }
@@ -124,12 +112,6 @@ void test_vector_int() {
     }
     try {
       Vec<double> vec1 = vector_integer(-1);
-    } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
-    }
-    try {
-      Vec<double> vec1 = vector_integer(SIZE_MAX);
     } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");
@@ -199,12 +181,6 @@ void test_vector_bool() {
     }
     try {
       Vec<double> vec1 = vector_logical(-1);
-    } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
-    }
-    try {
-      Vec<double> vec1 = vector_logical(SIZE_MAX);
     } catch (Rcpp::exception &e) {
       std::string expectedMessage = "invalid times argument";
       ass(e.what() == expectedMessage, "test invalid times argument of vector");

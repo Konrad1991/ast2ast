@@ -6,7 +6,7 @@ check_variable_type_pairs <- function(args, variable_pair_list) {
   names <- sapply(l, function(x) x[[1]])
   types <- sapply(l, function(x) x[[2]])
 
-  stopifnot(
+  assert(
     "Found a type declaration for an argument to the function.
     It is not allowed to define types more than one time." =
       !(names %in% args)
@@ -17,7 +17,7 @@ check_variable_type_pairs <- function(args, variable_pair_list) {
       "int_vector", "logical_vector"
     )
   }
-  stopifnot(
+  assert(
     "Unknown type found in variable declaration" =
       types %in% allowed_types()
   )
@@ -25,7 +25,7 @@ check_variable_type_pairs <- function(args, variable_pair_list) {
   sapply(unique_names, function(x) {
     m <- paste("Variable: ", x, "is declared with a type more than one time")
     do.call(
-      stopifnot,
+      assert,
       setNames(list(length(which(x == names)) == 1), paste(m, ""))
     )
   })

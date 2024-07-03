@@ -23,9 +23,9 @@ template <typename T> inline std::size_t convertSizeSubsetting(const T &inp) {
     ass<"invalid index argument">(inp >= 1);
     return inp;
   } else if constexpr (std::is_floating_point_v<T>) {
-    warn(isDoubleInt(inp),
-         "The provided size is a floating-point number with non-zero decimal "
-         "places. It has been floored to the nearest integer.");
+    warn<"The provided size is a floating-point number with non-zero decimal "
+         "places. It has been floored to the nearest integer.">(
+        isDoubleInt(inp));
     ass<"invalid index argument">(inp >= 1.0);
     return static_cast<std::size_t>(inp);
   } else if constexpr (std::is_integral_v<T>) {

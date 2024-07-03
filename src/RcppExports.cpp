@@ -39,6 +39,26 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_borrow_r
+void test_borrow_r(Rcpp::NumericVector nv);
+RcppExport SEXP _ast2ast_test_borrow_r(SEXP nvSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type nv(nvSEXP);
+    test_borrow_r(nv);
+    return R_NilValue;
+END_RCPP
+}
+// test_borrow_sexp_r
+void test_borrow_sexp_r(SEXP nv);
+RcppExport SEXP _ast2ast_test_borrow_sexp_r(SEXP nvSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type nv(nvSEXP);
+    test_borrow_sexp_r(nv);
+    return R_NilValue;
+END_RCPP
+}
 // test_borrow
 void test_borrow();
 RcppExport SEXP _ast2ast_test_borrow() {
@@ -192,11 +212,24 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// heapAddressSanitize
+SEXP heapAddressSanitize(SEXP xs);
+RcppExport SEXP _ast2ast_heapAddressSanitize(SEXP xsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xs(xsSEXP);
+    rcpp_result_gen = Rcpp::wrap(heapAddressSanitize(xs));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_basestore", (DL_FUNC) &_ast2ast_test_basestore, 0},
     {"_ast2ast_test_arithmetic", (DL_FUNC) &_ast2ast_test_arithmetic, 0},
     {"_ast2ast_test_comparison", (DL_FUNC) &_ast2ast_test_comparison, 0},
+    {"_ast2ast_test_borrow_r", (DL_FUNC) &_ast2ast_test_borrow_r, 1},
+    {"_ast2ast_test_borrow_sexp_r", (DL_FUNC) &_ast2ast_test_borrow_sexp_r, 1},
     {"_ast2ast_test_borrow", (DL_FUNC) &_ast2ast_test_borrow, 0},
     {"_ast2ast_test_cmr", (DL_FUNC) &_ast2ast_test_cmr, 0},
     {"_ast2ast_test_coca", (DL_FUNC) &_ast2ast_test_coca, 0},
@@ -214,6 +247,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_vector_int", (DL_FUNC) &_ast2ast_test_vector_int, 0},
     {"_ast2ast_test_vector_bool", (DL_FUNC) &_ast2ast_test_vector_bool, 0},
     {"_ast2ast_test_vector_vector", (DL_FUNC) &_ast2ast_test_vector_vector, 0},
+    {"_ast2ast_heapAddressSanitize", (DL_FUNC) &_ast2ast_heapAddressSanitize, 1},
     {NULL, NULL, 0}
 };
 

@@ -242,7 +242,7 @@ template <typename L, typename R> auto operator/(const L &l, const R &r) {
   }
 }
 
-template <typename L, typename R> auto operator^(const L &l, const R &r) {
+template <typename L, typename R> auto power(const L &l, const R &r) {
   constexpr bool isDoubleL = std::is_arithmetic_v<L>;
   constexpr bool isDoubleR = std::is_arithmetic_v<R>;
   if constexpr (!isDoubleL && isDoubleR) {

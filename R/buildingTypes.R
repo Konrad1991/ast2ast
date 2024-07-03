@@ -16,7 +16,7 @@ build_types <- function(toa, doa, roa, output) {
         types[i] <- cString("etr::Vec<", toa[i], ">", roa[i], "")@value
       }
     } else if (doa[i] == "borrow") {
-      stopifnot(output == "XPtr")
+      assert(output == "XPtr")
       types[i] <- cString(
         "etr::Vec<", toa[i],
         ", Borrow<", toa[i], ">>", roa[i], ""

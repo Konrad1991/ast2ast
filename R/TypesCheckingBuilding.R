@@ -1,16 +1,16 @@
 length_checking <- function(toa, doa, hoa, roa, output) {
-  stopifnot(
+  assert(
     "number of type of arguments
     and data structures of arguments do not match" =
       length(toa) == length(doa)
   )
-  stopifnot(
+  assert(
     "number of handle arguments
     and data structures of arguments do not match" =
       length(doa) == length(hoa)
   )
   if (output == "XPtr") {
-    stopifnot(
+    assert(
       "number of handle arguments
     and references of arguments do not match" =
         length(hoa) == length(roa)
@@ -32,7 +32,7 @@ allowed_types <- function(output) {
   }
 }
 check_types_of_args <- function(f, toa, output) {
-  stopifnot(is.character(toa))
+  assert(is.character(toa))
   args <- methods::formalArgs(f)
   if (length(args) == 0) {
     return()
@@ -45,7 +45,7 @@ check_types_of_args <- function(f, toa, output) {
     return(rep(toa, length(args)))
   }
 
-  stopifnot(
+  assert(
     "length of types of arguments does not match number of arguments" =
       length(args) == length(toa)
   )
@@ -70,7 +70,7 @@ allowed_structures <- function(output) {
 }
 
 check_data_structures <- function(f, doa, hoa, roa, output) {
-  stopifnot(is.character(doa))
+  assert(is.character(doa))
   args <- methods::formalArgs(f)
   if (length(args) == 0) {
     return()
@@ -82,7 +82,7 @@ check_data_structures <- function(f, doa, hoa, roa, output) {
     }
     return(rep(doa, length(args)))
   }
-  stopifnot(
+  assert(
     "length of data structures of arguments
     does not match number of arguments" =
       length(args) == length(doa)
@@ -94,11 +94,11 @@ check_data_structures <- function(f, doa, hoa, roa, output) {
   })
   Map(function(a, b, c) {
     if (b == "borrow") {
-      stopifnot(
+      assert(
         "It is only possible to borrow from a vector" =
           a == "vector"
       )
-      stopifnot(
+      assert(
         "It does not make sense to borrow from a \n
         variable which is not passed by reference" =
           c || (output == "R")
@@ -122,7 +122,7 @@ allowed_handles <- function(output) {
 }
 
 check_handles <- function(f, hoa, output) {
-  stopifnot(is.character(hoa))
+  assert(is.character(hoa))
   args <- methods::formalArgs(f)
   if (length(args) == 0) {
     return()
@@ -134,7 +134,7 @@ check_handles <- function(f, hoa, output) {
     }
     return(rep(hoa, length(args)))
   }
-  stopifnot(
+  assert(
     "length of handle of arguments does not match number of arguments" =
       length(args) == length(hoa)
   )
@@ -159,7 +159,7 @@ allowed_reference <- function(output) {
 }
 
 check_references <- function(f, roa, output) {
-  stopifnot(is.logical(roa))
+  assert(is.logical(roa))
   args <- methods::formalArgs(f)
   if (length(args) == 0) {
     return()
@@ -171,7 +171,7 @@ check_references <- function(f, roa, output) {
     }
     return(rep(roa, length(args)))
   }
-  stopifnot(
+  assert(
     "length of handle of arguments does not match number of arguments" =
       length(args) == length(roa)
   )

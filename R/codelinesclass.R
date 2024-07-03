@@ -122,15 +122,16 @@ LC <- R6::R6Class("LC",
         p <- var_args$new(sexp, self$namespace_etr)
         sexp <- p$convert(self$PF)
         self$check_assign_subset <- FALSE
-        # TODO: check_assign_subset is not needed anymore remove
       } else if ("set_indep" == fct) {
         self$check_assign_subset <- FALSE
         p <- generic$new(sexp, self$namespace_etr)
         sexp <- p$convert(self$PF)
         self$calc_deriv <- TRUE
       } else {
-        message("Error: Sorry not all functions are supported", "\n")
-        message("Function: ", fct, " not supported")
+        color_print(43, "Error: Sorry not all functions are supported")
+        color_print(43, "Function: ")
+        color_print(41, fct)
+        color_print(43, " not supported")
         stop()
       }
       # convert node classes

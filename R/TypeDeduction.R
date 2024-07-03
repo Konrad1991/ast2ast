@@ -80,12 +80,12 @@ deduce_return_type <- function(variable_pair_list,
         return(0)
       }
     })
-    stopifnot(
+    assert(
       "Found mutual exclusive return types" =
         (sum(l) == 1 || sum(l) == 0)
     )
     if (nlar >= 1) {
-      stopifnot(
+      assert(
         "Found type character as return type
         and an expression of type numeric" =
           l[3] == 0
@@ -108,7 +108,7 @@ deduce_return_type <- function(variable_pair_list,
     types_returned <- sapply(variable_returned, function(x) {
       types[which(x == names)]
     }) |> unique()
-    stopifnot(
+    assert(
       "Found returned variables of different types" =
         length(types_returned) == 1
     )
@@ -139,7 +139,7 @@ deduce_return_type <- function(variable_pair_list,
     type <- sapply(variable_returned, function(x) {
       types[which(x == names)]
     }) |> unique()
-    stopifnot(
+    assert(
       "Found mutual exclusive return types" =
         type == basic_type
     )

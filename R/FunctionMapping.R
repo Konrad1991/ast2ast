@@ -66,7 +66,7 @@ FctInfo <- R6::R6Class("FctInfo",
         }
         class(a) == b
       }, self$fctArgsInput, self$argumentTypes)
-      stopifnot(all(res == TRUE))
+      assert(all(res == TRUE))
     },
     which_case = function() {
       an <- self$argumentNames
@@ -123,7 +123,7 @@ FctInfo <- R6::R6Class("FctInfo",
         at <- attributes(au)$names
         named_args <- at[at != ""]
         unnamed_indices <- which(at == "")
-        stopifnot("Unknown keyword found" = named_args %in% self$argumentNames)
+        assert("Unknown keyword found" = named_args %in% self$argumentNames)
         temp_args <- lapply(1:self$numArgs, function(x) {
           temp <- list(self$argumentDefaultValues[[x]])
           temp <- setNames(temp, self$argumentNames[[x]])
@@ -188,7 +188,7 @@ fct_signature <- R6::R6Class("fct_signature",
         list("any", "any"),
         list("symbol", "symbol"),
         function(fct, args) {
-          stopifnot(
+          assert(
             "namespace function expects two symbols as arguments" =
               is_valid_var(args[[1]]) & is_valid_var(args[[2]])
           )
@@ -200,7 +200,7 @@ fct_signature <- R6::R6Class("fct_signature",
         list("any", "any"),
         list("symbol", "any"),
         function(fct, args) {
-          stopifnot(
+          assert(
             "assignment requires variable at left side" =
               is_valid_var(args[[1]])
           )
@@ -212,7 +212,7 @@ fct_signature <- R6::R6Class("fct_signature",
         list("any", "any"),
         list("symbol", "any"),
         function(fct, args) {
-          stopifnot(
+          assert(
             "assignment requires variable at left side" =
               is_valid_var(args[[1]])
           )
@@ -224,7 +224,7 @@ fct_signature <- R6::R6Class("fct_signature",
         list("any", "any"),
         list("symbol", "any"),
         function(fct, args) {
-          stopifnot(
+          assert(
             "assignment requires variable at left side" =
               is_valid_var(args[[1]])
           )
@@ -237,7 +237,7 @@ fct_signature <- R6::R6Class("fct_signature",
         list(),
         function(fct, args) {
           if (!is.list(args[[1]]) & !is.language(args[[1]])) {
-            stopifnot(
+            assert(
               "indexing requires variable at left side" =
                 is_valid_var(args[[1]])
             )

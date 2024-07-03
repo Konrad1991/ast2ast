@@ -48,21 +48,29 @@ text-align: justify}
 
 ## Documentation
 
-The package *ast2ast* translates an R function into a C++ function. Either an external pointer (XPtr) or an R function is returned. The scope of *ast2ast* is to generate functions that can be used during solving ode-systems (derivative function or jacobian function) or during optimization. More generally, the translated function can be used in fields where it is necessary to evaluate a function very often. Especially when the function is evaluated by C++ the generated external pointer is very sufficient see the benchmark below. \
-Within this vignette the functions supported by *ast2ast* are presented. The examples are presented using the R output form. If the XPtr output differs this is described.
-First of all, the supported objects and functions listed below are explained in detail. Here, the arguments which have to be passed to the functions are described and it is explained what the function returns. Furthermore, for each function, a small example is given showing how to use it. Moreover, it is explained how the function differs from R equivalents. If another differences are detected please report them. \
+The package *ast2ast* translates an R function into a C++ function. Either an external pointer (XPtr) or an R function is returned. 
+The scope of *ast2ast* is to generate functions that can be used during solving ode-systems (derivative function or jacobian function) or during optimization.
+More generally, the translated function can be used in fields where it is necessary to evaluate a function very often.
+Especially when the function is evaluated by C++ the generated external pointer is very sufficient see the benchmark below. \
+Within this vignette the functions supported by *ast2ast* are presented.
+The examples are presented using the R output form. In case the XPtr interface differs it it mentioned.
+First of all, the supported objects and functions listed below are explained in detail.
+Here, the arguments which have to be passed to the functions are described and it is explained what the function returns.
+Furthermore, for each function, a small example is given showing how to use it.
+Moreover, it is explained how the function differs from R equivalents. If other differences are detected please report them. \
 
 ![Benchmark](benchmark.png)
 
 Supported objects:
 
-*  vectors (containing numbers)
-*  matrices (containing numbers)
+*  scalar values
+*  vectors
+*  matrices
 
 Supported functions:
 
 *  assignment: = and <-
-*  allocation: vector and matrix
+*  allocation: vector, rep and matrix
 *  information about objects: length and dim
 *  Basic operations: +, -, *, /
 *  Indices: [] and at
@@ -73,12 +81,17 @@ Supported functions:
 *  printing: print
 *  returning objects: return
 *  is.na and is.infinite can be used to test for NA and Inf.
-*  d-, p-, q- and r-unif, -norm, -lnorm and -gamma (for gamma argument *Scale* cannot be defined and is calculated using *1/rate*)
 
 ### Objects
 
-There exist two containers that can be used in *ast2ast* functions. Both containers can only hold the *numeric* type of R (which is equivalent to double). The first container is a vector and the second one is a matrix. **It is possible to declare a variable of a scalar numeric data type. This is done by adding *\_db* (e.g. varname\_db) to the end of the variable. Each time *\_db* is found the variable is declared as a scalar numeric data type. In this case, the object cannot change its type!** \
-It is pivotal to follow the rules of variable naming in C++. For instance, it is not allowed to use '*.*' in variable names.
+There exist two containers that can be used in *ast2ast* functions.
+Both containers can only hold the *numeric* type of R 
+(which is equivalent to double). 
+The first container is a vector and the second one is a matrix.
+**It is possible to declare a variable of a scalar numeric data type
+. This is done by adding *\_db* (e.g. varname\_db) to the end of the variable. Each time *\_db* is found the variable is declared as a scalar numeric data type. In this case, the object cannot change its type!** \
+It is pivotal to follow the rules of variable naming in C++.
+For instance, it is not allowed to use '*.*' in variable names.
 
 **Features of *ast2ast* **
 
@@ -504,7 +517,6 @@ Following mathematical functions are available (see **Example 8**):
 * sqrt
 * log
 * ^ and exp
-* d-, p-, q- and r-unif, -norm, -lnorm and -gamma (for gamma argument *Scale* cannot be defined and is calculated using *1/rate*)
 
 **Example 8**
 ```{r}

@@ -89,6 +89,16 @@ inline void warn(bool inp, std::string message) {
 #endif
 }
 
+template <string_literal msg> inline void warn(bool inp) {
+#ifdef STANDALONE_ETR
+  if (!inp)
+    std::cerr << msg.value.data() << std::endl;
+#else
+  if (!inp)
+    Rcpp::warning(msg.value.data());
+#endif
+}
+
 struct SI {
   std::size_t sz = 0;
   SI(const std::size_t sz) : sz(sz) {}

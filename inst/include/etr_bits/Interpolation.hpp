@@ -178,8 +178,8 @@ inline double cmr(const A &tInp, const B &timeVec, const C &parVec) {
       typename ExtractDataType<std::remove_reference_t<A>>::RetType;
   static_assert(is<DataTypeTInp, double>,
                 "time input vector does not include doubles");
-  warn(tInp.size() > 1,
-       "time point has more than one element only the first one is used");
+  warn<"time point has more than one element only the first one is used">(
+      tInp.size() > 1);
   return cmrInternal(&tInp, &timeVec, &parVec);
 }
 

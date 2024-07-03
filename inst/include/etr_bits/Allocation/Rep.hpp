@@ -41,17 +41,15 @@ inline auto repInternal(const L *inp, const R *s) {
     }
     return ret;
   } else if constexpr (std::is_arithmetic_v<L> && !std::is_arithmetic_v<R>) {
-    warn(!(s->size() > 1),
-         "times in fct rep has more than one element. Only the "
-         "first one is used");
+    warn<"times in fct rep has more than one element. Only the "
+         "first one is used">(!(s->size() > 1));
     std::size_t length = convertSize((*s)[0]);
     Vec<L, Buffer<L, BufferTrait, RBufTrait>, RVecTrait> ret(SI{length});
     ret.fill(*inp);
     return ret;
   } else if constexpr (!std::is_arithmetic_v<L> && !std::is_arithmetic_v<R>) {
-    warn(!(s->size() > 1),
-         "times in fct rep has more than one element. Only the "
-         "first one is used");
+    warn<"times in fct rep has more than one element. Only the "
+         "first one is used">(!(s->size() > 1));
     std::size_t length = convertSize((*s)[0]) * inp->size();
     using DataType = typename ExtractDataType<L>::RetType;
     Vec<DataType, Buffer<DataType, BufferTrait, RBufTrait>, RVecTrait> ret(

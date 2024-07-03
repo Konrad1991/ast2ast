@@ -184,7 +184,7 @@ struct Subset<const T, SubsetTrait> {
   Subset(Vec<T2, R2> &other) : p(&other.d), deriv_p(other.deriv) {}
   template <typename T2, typename R2, typename TraitOther>
   Subset(const Vec<T2, R2, TraitOther> &other)
-      : p(&other.d), deriv_p(other.deriv) {}
+      : p(&other.d), deriv_p(&other.deriv) {}
 #else
   Subset(const Subset &other) : p(other.p) {
     this->setMatrix(other.mp);

@@ -17,40 +17,24 @@ Vec &operator=(const TD inp) {
         d[i] = inp;
       }
 #ifdef DERIV_ETR
-      if (indep_var) {
-        for (std::size_t i = 0; i < d.ind.size(); i++) {
-          deriv[i] = 1;
-        }
-      } else {
-        for (std::size_t i = 0; i < d.ind.size(); i++) {
-          deriv[i] = 0;
-        }
+      for (std::size_t i = 0; i < d.ind.size(); i++) {
+        deriv[i] = 0;
       }
 #endif
     } else if constexpr (isBorrow::value) {
       d.sz = 1;
       d[0] = inp;
 #ifdef DERIV_ETR
-      if (indep_var) {
-        deriv.resize(1);
-        deriv[0] = 1;
-      } else {
-        deriv.resize(1);
-        deriv[0] = 0;
-      }
+      deriv.resize(1);
+      deriv[0] = 0;
 #endif
 
     } else {
       d.resize(1);
       d[0] = inp;
 #ifdef DERIV_ETR
-      if (indep_var) {
-        deriv.resize(1);
-        deriv[0] = 1;
-      } else {
-        deriv.resize(1);
-        deriv[0] = 0;
-      }
+      deriv.resize(1);
+      deriv[0] = 0;
 #endif
     }
     return *this;
@@ -60,14 +44,8 @@ Vec &operator=(const TD inp) {
         d[i] = static_cast<T>(inp);
       }
 #ifdef DERIV_ETR
-      if (indep_var) {
-        for (std::size_t i = 0; i < d.ind.size(); i++) {
-          deriv[i] = 1;
-        }
-      } else {
-        for (std::size_t i = 0; i < d.ind.size(); i++) {
-          deriv[i] = 0;
-        }
+      for (std::size_t i = 0; i < d.ind.size(); i++) {
+        deriv[i] = 0;
       }
 #endif
 
@@ -75,26 +53,16 @@ Vec &operator=(const TD inp) {
       d.sz = 1;
       d[0] = static_cast<T>(inp);
 #ifdef DERIV_ETR
-      if (indep_var) {
-        deriv.resize(1);
-        deriv[0] = 1;
-      } else {
-        deriv.resize(1);
-        deriv[0] = 0;
-      }
+      deriv.resize(1);
+      deriv[0] = 0;
 #endif
 
     } else {
       d.resize(1);
       d[0] = static_cast<T>(inp);
 #ifdef DERIV_ETR
-      if (indep_var) {
-        deriv.resize(1);
-        deriv[0] = 1;
-      } else {
-        deriv.resize(1);
-        deriv[0] = 0;
-      }
+      deriv.resize(1);
+      deriv[0] = 0;
 #endif
     }
     return *this;
@@ -174,10 +142,10 @@ Vec &operator=(const Vec<T, R, Trait> &otherVec) {
 
 #ifdef DERIV_ETR
   // TODO: what if other Vec is subsetted
-  deriv.resize(otherVec.size());
-  for (std::size_t i = 0; i < deriv.size(); i++) {
-    deriv[i] = otherVec.deriv[i];
-  }
+  // deriv.resize(otherVec.size());
+  // for (std::size_t i = 0; i < deriv.size(); i++) {
+  //   deriv[i] = otherVec.deriv[i];
+  // }
   // TODO: is there something to do here?
 #endif
 
@@ -214,14 +182,8 @@ Vec &operator=(Vec<T2, R2, Trait2> &&otherVec) {
   }
 #ifdef DERIV_ETR
   deriv.resize(this->size());
-  if (indep_var) {
-    for (std::size_t i = 0; i < deriv.size(); i++) {
-      deriv[i] = 1;
-    }
-  } else {
-    for (std::size_t i = 0; i < deriv.size(); i++) {
-      deriv[i] = 0;
-    }
+  for (std::size_t i = 0; i < deriv.size(); i++) {
+    deriv[i] = 0;
   }
 #endif
 
@@ -230,6 +192,7 @@ Vec &operator=(Vec<T2, R2, Trait2> &&otherVec) {
 
 template <typename T2, typename R2, typename Trait2>
 Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
+
   static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
   static_assert(!isBinaryOP::value, "Cannot assign to binary calculation");
   static_assert(!isRVec::value,
@@ -294,34 +257,22 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
       d[i % d.ind.size()] = temp[i];
     }
   }
-  if constexpr (isVariableType::value) {
-    if (otherVec.d.im()) {
-      d.setMatrix(d.AllVarsRef, true, otherVec.d.nr(), otherVec.d.nc());
-    }
-  } else {
-    if (otherVec.d.im()) {
-      d.setMatrix(true, otherVec.d.nr(), otherVec.d.nc());
-    }
+  if (otherVec.d.im()) {
+    d.setMatrix(true, otherVec.d.nr(), otherVec.d.nc());
   }
 
 #ifdef DERIV_ETR
   if constexpr (IsRVec<const Vec<T2, R2, Trait2>> ||
                 Operation<decltype(otherVec.d)>) {
     deriv.resize(this->size());
-    if (indep_var) {
-      for (std::size_t i = 0; i < deriv.size(); i++) {
-        deriv[i] = 1;
-      }
-    } else {
-      for (std::size_t i = 0; i < deriv.size(); i++) {
-        deriv[i] = 0;
-      }
-    }
+    // for (std::size_t i = 0; i < deriv.size(); i++) {
+    //   deriv[i] = 0;
+    // }
   } else {
-    deriv.resize(otherVec.size());
-    for (std::size_t i = 0; i < deriv.sz; i++) {
-      deriv[i] = otherVec.deriv[i];
-    }
+    // deriv.resize(otherVec.size());
+    // for (std::size_t i = 0; i < deriv.sz; i++) {
+    //   deriv[i] = otherVec.deriv[i];
+    // }
   }
 #endif
 

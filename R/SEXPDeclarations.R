@@ -1,6 +1,13 @@
 sexp_declarations <- function(args, handle_args,
                               data_types_of_args,
-                              all_vars) {
+                              all_vars, types_of_args) {
+  other_args <- args[types_of_args != "SEXP"]
+  args <- args[types_of_args == "SEXP"]
+
+  print(args)
+  print(other_args)
+  data_types_of_args <- data_types_of_args[types_of_args == "SEXP"]
+  handle_args <- handle_args[types_of_args == "SEXP"]
   names <- lapply(args, function(x) {
     generate_new_name(x, "SEXP", "", all_vars)@value
   })
@@ -22,5 +29,5 @@ sexp_declarations <- function(args, handle_args,
     )@value
   }
   result <- c(result, "\n")
-  return(list(cString(result, "")@value, names))
+  return(list(cString(result, "")@value, unique(c(names, other_args))))
 }

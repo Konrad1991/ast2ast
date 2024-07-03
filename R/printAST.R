@@ -36,7 +36,7 @@ printClass <- R6::R6Class("printClass",
     },
     customAsCall = function(code) {
       if (as.character(code[[1]]) == "diamond") {
-        stopifnot(length(code) == 3)
+        assert(length(code) == 3)
         return(paste0(code[[2]], "<", code[[3]], ">"))
       } else {
         return(as.call(code))

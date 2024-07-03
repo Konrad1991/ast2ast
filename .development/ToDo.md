@@ -2,8 +2,10 @@
 
 ## General
 
-- [ ] remove unnecessary code
-- [x] remove RNG stuff
+- [x] remove unnecessary code
+  - [x] remove RNG stuff
+  - [x] AllVars stuff
+  - [x] unused variables/arguments in astClass
 
 ## Tests
 
@@ -12,14 +14,21 @@
 
 ### XPtr tests
 
-- [ ] write test with f recieving Vec, Borrows mixed
-  - [ ] some of the Vecs are than borrowed
-- [ ] tests for diff
-  - 5 examples from wikipedia
+- [x] write test with f recieving Vec, Borrows mixed
+  - [x] some of the Vecs are than borrowed
+- [x] tests for diff
+  - [x] 5 examples from wikipedia
+  - [x] tests from dfdr
+  - [x] tests how to handle scalar values
 
 ### Safety
 
-- [ ] sanatizer and valgrind
+- [x] sanatizer 
+  - https://github.com/eddelbuettel/sanitizers
+  - [x] docker run --rm -ti -v $PWD:/work -w /work rocker/r-devel-san bash
+  - [x] RD CMD INSTALL .
+  - [x] RD
+  - [x] test package
 
 ## Documentation
 
@@ -27,10 +36,14 @@
 - [x] remove J.Rd
 - [ ] update DetailedDocumentation.Rmd
 - [ ] update InformationForPackageAuthors.Rmd
+- [ ] docu code structure R
+- [ ] docu code structure C++
 
 ## Error handling
 
 - [x] in LC: pass error from nodeclasses
+- [x] replace all stopifnot with own assert with color
+- [x] replace all warnings/messages with own assert with color
 
 ## Derivatives
 
@@ -62,5 +75,5 @@
 - [x] at the end the user extracts the derivatives
   * e.g. ydot_deriv = get_deriv(ydot) 
 - [x] define set_indep
-- [ ] calc of deriv in loop
+- [x] calc of deriv in loop
   - calc of deriv in node class assign

@@ -112,9 +112,6 @@ template <typename T, typename Trait = VariableTypeTrait> struct VariableType;
 template <typename T, int Idx, int TypeIdx, typename Trait = VarPointerTrait>
 struct VarPointer;
 
-template <int NBuffer_, int NBorrow_, int NBorrowSEXP_, int NConstants_>
-struct AllVars;
-
 template <typename T, int Idx, typename Trait = ConstantTypeTrait>
 struct Constants;
 

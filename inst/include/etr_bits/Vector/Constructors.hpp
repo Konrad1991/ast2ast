@@ -157,12 +157,7 @@ Vec(const Vec<T2, R2, Trait2> &&other_vec) {
   }
   if (d.sz >= 1) {
     deriv.resize(d.sz);
-    this->indep_var = other_vec.indep_var;
-    if (indep_var) {
-      deriv.fill(1.0);
-    } else {
-      deriv.fill(0.0);
-    }
+    deriv.fill(1.0);
   }
 }
 
@@ -197,11 +192,7 @@ Vec(const Vec<T2, R2, Trait2> &&other_vec) {
   if (d.sz >= 1) {
     deriv.resize(d.sz);
     this->indep_var = other_vec.indep_var;
-    if (indep_var) {
-      deriv.fill(1.0);
-    } else {
-      deriv.fill(0.0);
-    }
+    deriv.fill(0.0);
   }
 }
 
@@ -234,12 +225,7 @@ Vec(Vec<T2, R2, Trait2> &&other_vec) {
   }
   if (d.sz >= 1) {
     deriv.resize(d.sz);
-    this->indep_var = other_vec.indep_var;
-    if (indep_var) {
-      deriv.fill(1.0);
-    } else {
-      deriv.fill(0.0);
-    }
+    deriv.fill(0.0);
   }
 }
 

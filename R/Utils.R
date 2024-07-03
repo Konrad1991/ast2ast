@@ -16,7 +16,30 @@ generate_new_name <- function(name, extension, delimiter, vars) {
 }
 
 
-color_print <- function(col, txt) {
+color_print <- function(col, ...) {
+  txt <- c(...)
+  txt <- paste(txt, collapse = " ")
   # https://stackoverflow.com/questions/10802806/is-there-a-way-to-output-text-to-the-r-console-in-color
   cat(paste0("\033[0;", col, "m", txt, "\033[0m", "\n"))
+}
+
+assert <- function(...) {
+  expr <- c(...)
+  message <- names(expr)
+  if (!is.null(message)) {
+    if (!expr) {
+      color_print(41, paste0("Error: ", message))
+      stop()
+    }
+  } else {
+    if (length(expr) >= 1) {
+      if (!expr) {
+        color_print(41, paste0(
+          "Error: ",
+          deparse(expr), " is not TRUE"
+        ))
+        stop()
+      }
+    }
+  }
 }

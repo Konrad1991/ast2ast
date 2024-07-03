@@ -60,6 +60,14 @@ concept IsBinary = requires(T t) {
 };
 
 template <typename T>
+concept IsSubset = requires(T t) {
+  typename std::remove_reference<decltype(t)>::type::CaseTrait;
+  requires std::is_same<
+      typename std::remove_reference<decltype(t)>::type::CaseTrait,
+      SubsetTrait>::value;
+};
+
+template <typename T>
 concept NotOperation = !requires(T t) {
   typename std::remove_reference<decltype(t)>::type::CaseTrait;
   requires std::is_same<
@@ -384,6 +392,18 @@ struct ExtractDataType<V> {
 };
 template <typename V>
   requires IsBinary<V>
+struct ExtractDataType<const V> {
+  using RetType = typename std::remove_reference_t<V>::RetType const;
+};
+
+template <typename V> struct ExtractDataType;
+template <typename V>
+  requires IsSubset<V>
+struct ExtractDataType<V> {
+  using RetType = typename std::remove_reference_t<V>::RetType;
+};
+template <typename V>
+  requires IsSubset<V>
 struct ExtractDataType<const V> {
   using RetType = typename std::remove_reference_t<V>::RetType const;
 };

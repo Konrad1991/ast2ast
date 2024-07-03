@@ -76,12 +76,18 @@ diff_expr <- lift(function(expr, fl) {
     }
   }
 
-  expr |> purrr::if(
-    is.numeric(.) ~ quote(0),
-    is.name(.) ~ diff_variable(expr),
-    is.call(.) ~ diff_call(expr, fl),
-    ~ stop(paste0("Unexpected expression ", deparse(expr), " in parsing.")) # nocov
-  )
+  if (is.numeric(expr)) {
+    return(quote(0))
+  } else if (is.name(expr)) {
+    return(diff_variable(expr))
+  } else if (is.call(expr)) {
+    return(diff_call(expr, fl))
+  } else {
+    stop(paste0(
+      "Unexpected expression ",
+      deparse(expr), " in parsing."
+    )) # nocov
+  }
 })
 
 diff_variable <- function(var) {
@@ -205,18 +211,24 @@ diff_parens <- function(expr, fl) {
 diff_call <- lift(function(expr, fl) {
   arg1 <- call_arg(expr, 1)
   arg2 <- call_arg(expr, 2)
-  call_name(expr) |> purrr::if( 
-    is.name(.) ~ . |> purrr::if(
-      . == "+" ~ diff_addition(expr, fl),
-      . == "-" ~ diff_subtraction(expr, fl),
-      . == "*" ~ diff_multiplication(expr, fl),
-      . == "/" ~ diff_division(expr, fl),
-      . == "^" ~ diff_exponentiation(expr, fl),
-      . == "(" ~ diff_parens(expr, fl),
-      (as.character(.) %in% get_names(fl)) ~ diff_built_in_function_call(expr, fl),
-      . == "c" ~ diff_vector_out(expr, fl),
-      ~ stop(paste("The function", ., "is not supported"))
-    ),
-    ~ stop(paste("The function", ., "is not supported"))
-  )
+  e <- call_name(expr)
+  if (is.name(e)) {
+    if (e == "+") {
+      diff_addition(expr, fl)
+    } else if (e == "-") {
+      diff_subtraction(expr, fl)
+    } else if (e == "*") {
+      diff_multiplication(expr, fl)
+    } else if (e == "/") {
+      diff_division(expr, fl)
+    } else if (e == "^") {
+      diff_exponentiation(expr, fl)
+    } else if (e == "(") {
+      diff_parens(expr, fl)
+    } else if ((as.character(e) %in% get_names(fl))) {
+      diff_built_in_function_call(expr, fl)
+    } else {
+      stop(paste("The function", ., "is not supported"))
+    }
+  }
 })

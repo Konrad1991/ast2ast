@@ -22,7 +22,7 @@ transpile <- function(fct, name_fct, r_fct, toa, hoa,
   if (r_fct) {
     res <- sexp_declarations(
       ac$args, hoa,
-      data_types_of_args, ac$var_all
+      data_types_of_args, ac$var_all, toa
     )
     sig <- signature_code(return_type, name_fct, toa, res[[2]])
     args_copy_or_borrow_decl <- res[[1]]

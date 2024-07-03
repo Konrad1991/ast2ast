@@ -7,9 +7,9 @@ translate <- function(f, output = "R",
                       getsource = FALSE) {
   if (missing(f)) stop("function f is required")
 
-  stopifnot(is.function(f))
-  stopifnot(is.logical(verbose))
-  stopifnot(is.character(output))
+  assert(is.function(f))
+  assert(is.logical(verbose))
+  assert(is.character(output))
 
   length_checking(
     types_of_args,

@@ -14,7 +14,7 @@ permitted_fcts <- function() {
     "vector_numeric",
     "vector_logical", "while",
     "vector_integer", "rep", "get_deriv", "assign",
-    "set_indep", "unset_indep"
+    "set_indep", "unset_indep", "power"
   )
 }
 
@@ -27,7 +27,7 @@ namespace_etr <- function() {
     "print", "vector", "matrix", "length", "dim", "cmr",
     "exp", "i2d", "at", "exp", "at",
     "isNA", "isInfinite", "colon", "cpp2R", "rep", "get_deriv",
-    "assign_deriv", "set_indep", "unset_indep"
+    "assign_deriv", "set_indep", "unset_indep", "power"
   )
 }
 
@@ -40,14 +40,14 @@ generic_fcts <- function() {
     "matrix", "length", "dim", "cmr", "exp", "at",
     "&&", "||", "Rf_ScalarReal", "cpp2R",
     "rep", "while", "get_deriv", "assign",
-    "unset_indep"
+    "unset_indep", "power"
   )
 }
 
 math_fcts <- function() {
   c(
     "sin", "asin", "sinh", "cos", "acos", "cosh",
-    "tan", "atan", "tanh", "log", "^", "sqrt"
+    "tan", "atan", "tanh", "log", "^", "sqrt", "power"
   )
 }
 

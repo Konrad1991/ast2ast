@@ -652,7 +652,7 @@ math <- R6::R6Class("math",
       } else if (self$name_fct == "tanh") {
         self$name_fct <- as.name("tangensh")
       } else if (self$name_fct == "^") {
-        self$name_fct <- as.name("^")
+        self$name_fct <- as.name("power")
       } else if (self$name_fct == "exp") {
         self$name_fct <- as.name("exp")
       } else if (self$name_fct == "log") {

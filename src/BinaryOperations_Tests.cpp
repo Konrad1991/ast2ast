@@ -16,7 +16,7 @@ void test_arithmetic() {
     print(a - b);
     print(a * b);
     print(a / b);
-    print(a ^ b);
+    print(power(a, b));
   }
 }
 

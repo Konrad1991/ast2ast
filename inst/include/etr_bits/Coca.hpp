@@ -97,7 +97,7 @@ template <typename... Args> inline auto coca(Args &&...args) {
   std::size_t index = 0;
 
   forEachArg(
-      [&](auto &&arg) {
+      [&](const auto &arg) {
         using testType =
             std::remove_const_t<std::remove_reference_t<decltype(arg)>>;
         if constexpr (std::is_arithmetic_v<testType>) {
@@ -127,59 +127,6 @@ template <typename... Args> inline auto coca(Args &&...args) {
         }
       },
       args...);
-  return ret;
-}
-
-template <int Idx, typename AV, typename... Args>
-inline auto coca(AV &av, Args &&...args) {
-  using cType = decltype(determine_type(args...));
-  int size = 0;
-  forEachArg(
-      [&](auto arg) {
-        if constexpr (std::is_arithmetic_v<decltype(arg)>) {
-          size++;
-        } else {
-          size += arg.size();
-        }
-      },
-      args...);
-
-  av.varConstants[Idx].resize(size);
-  std::size_t index = 0;
-
-  forEachArg(
-      [&](auto &&arg) {
-        using testType =
-            std::remove_const_t<std::remove_reference_t<decltype(arg)>>;
-        if constexpr (std::is_arithmetic_v<testType>) {
-          if constexpr (std::is_same_v<testType, cType>) {
-            av.varConstants[Idx][index] = arg;
-          } else {
-            av.varConstants[Idx][index] = static_cast<cType>(arg);
-          }
-          index++;
-        } else {
-          using tD = std::remove_reference_t<decltype(arg)>;
-          using tD2 = ExtractedTypeD<tD>;
-          using InnerType = typename ExtractDataType<tD2>::RetType;
-          if constexpr (std::is_same_v<InnerType, cType>) {
-            for (int i = 0; i < arg.size(); i++) {
-              av.varConstants[Idx][index + i] = arg[i];
-            }
-          } else {
-            for (int i = 0; i < arg.size(); i++) {
-              av.varConstants[Idx][index + i] = static_cast<cType>(arg[i]);
-            }
-          }
-          index += arg.size();
-        }
-      },
-      args...);
-
-  Vec<double, VarPointer<decltype(av), Idx, -1, ConstantTypeTrait>,
-      ConstantTypeTrait>
-      ret(av); // TODO: add ConstantTypeTrait to each VarPointer in fct such as
-               // coca
   return ret;
 }
 

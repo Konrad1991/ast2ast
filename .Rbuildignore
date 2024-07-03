@@ -28,5 +28,5 @@
 ^compile_commands.json
 ^\.cache
 ^\.docs
-^\development
+^\.development
 ^index.html

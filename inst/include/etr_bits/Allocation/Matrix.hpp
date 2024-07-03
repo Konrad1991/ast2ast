@@ -45,8 +45,8 @@ inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
     }
   } else if constexpr (!std::is_arithmetic_v<R> && std::is_arithmetic_v<C>) {
     if constexpr (std::is_arithmetic_v<V>) {
-      warn(nrows.size() > 1, "nrows in fct matrix has more than one element. "
-                             "Only the first one is used");
+      warn<"nrows in fct matrix has more than one element. "
+           "Only the first one is used">(nrows.size() > 1);
       Vec<V, Buffer<V, BufferTrait, RBufTrait>, RVecTrait> ret(
           convertSize(nrows[0]), convertSize(ncols));
       ret.d.fill(inp);
@@ -54,8 +54,8 @@ inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
     } else {
       using DataType =
           typename ExtractDataType<std::remove_reference_t<V>>::RetType;
-      warn(nrows.size() > 1, "nrows in fct matrix has more than one element. "
-                             "Only the first one is used");
+      warn<"nrows in fct matrix has more than one element. "
+           "Only the first one is used">(nrows.size() > 1);
       Vec<DataType, Buffer<DataType, BufferTrait, RBufTrait>, RVecTrait> ret(
           convertSize(nrows[0]), convertSize(ncols));
       ret.d.fill(inp);
@@ -63,8 +63,8 @@ inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
     }
   } else if constexpr (std::is_arithmetic_v<R> && !std::is_arithmetic_v<C>) {
     if constexpr (std::is_arithmetic_v<V>) {
-      warn(ncols.size() > 1, "ncols in fct matrix has more than one element. "
-                             "Only the first one is used");
+      warn<"ncols in fct matrix has more than one element. "
+           "Only the first one is used">(ncols.size() > 1);
       Vec<V, Buffer<V, BufferTrait, RBufTrait>, RVecTrait> ret(
           convertSize(nrows), convertSize(ncols[0]));
       ret.d.fill(inp);
@@ -72,8 +72,8 @@ inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
     } else {
       using DataType =
           typename ExtractDataType<std::remove_reference_t<V>>::RetType;
-      warn(ncols.size() > 1, "ncols in fct matrix has more than one element. "
-                             "Only the first one is used");
+      warn<"ncols in fct matrix has more than one element. "
+           "Only the first one is used">(ncols.size() > 1);
       Vec<DataType, Buffer<DataType, BufferTrait, RBufTrait>, RVecTrait> ret(
           convertSize(nrows), convertSize(ncols[0]));
       ret.d.fill(inp);
@@ -81,10 +81,10 @@ inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
     }
   } else if constexpr (!std::is_arithmetic_v<R> && !std::is_arithmetic_v<C>) {
     if constexpr (std::is_arithmetic_v<V>) {
-      warn(ncols.size() > 2, "ncols in fct matrix has more than one element. "
-                             "Only the first one is used");
-      warn(nrows.size() > 1, "nrows in fct matrix has more than one element. "
-                             "Only the first one is used");
+      warn<"ncols in fct matrix has more than one element. "
+           "Only the first one is used">(ncols.size() > 1);
+      warn<"nrows in fct matrix has more than one element. "
+           "Only the first one is used">(nrows.size() > 1);
       Vec<V, Buffer<V, BufferTrait, RBufTrait>, RVecTrait> ret(
           convertSize(nrows[0]), convertSize(ncols[0]));
       ret.d.fill(inp);
@@ -92,10 +92,10 @@ inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
     } else {
       using DataType =
           typename ExtractDataType<std::remove_reference_t<V>>::RetType;
-      warn(ncols.size() > 2, "ncols in fct matrix has more than one element. "
-                             "Only the first one is used");
-      warn(nrows.size() > 1, "nrows in fct matrix has more than one element. "
-                             "Only the first one is used");
+      warn<"ncols in fct matrix has more than one element. "
+           "Only the first one is used">(ncols.size() > 1);
+      warn<"nrows in fct matrix has more than one element. "
+           "Only the first one is used">(nrows.size() > 1);
       Vec<DataType, Buffer<DataType, BufferTrait, RBufTrait>, RVecTrait> ret(
           convertSize(nrows[0]), convertSize(ncols[0]));
       ret.d.fill(inp);

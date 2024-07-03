@@ -1,14 +1,12 @@
 astClass <- R6::R6Class("astClass",
   public = list(
     args = NULL,
-    args_types = NULL,
     args_2_fct = NULL,
     body = NULL,
     ast = list(),
     code = list(),
     char = list(),
     var_all = c(),
-    var_types = c(),
     var_index = c(),
     return_TF = c(),
     variable_type_pairs = list(),
@@ -40,6 +38,7 @@ astClass <- R6::R6Class("astClass",
           )
           color_print(43, conditionMessage(e))
           color_print(41, wrong_code)
+
           stop()
         }
 
@@ -67,13 +66,22 @@ astClass <- R6::R6Class("astClass",
         self$code[[i]] <- self$get_calls(self$ast[[i]])
       }
     },
+    add_semicolon = function(code) {
+      for (i in seq_along(code)) {
+        c <- strsplit(code[[i]], split = "")[[1]]
+        if (!(c[length(c)] %in% c("{", "}"))) {
+          code[[i]] <- paste0(code[[i]], ";")
+        }
+      }
+      return(code)
+    },
     call2char = function() {
       j <- 1
       for (i in seq_along(self$code)) {
         temp <- deparse(self$code[[i]], width.cutoff = 500)
         temp <- gsub("\\bin\\b", "", temp)
         temp <- gsub("`", "", temp)
-        temp <- paste0(temp, ";")
+        temp <- self$add_semicolon(temp)
         temp2 <- character(length(temp) * 2)
         counter <- 1
         for (i in seq_along(temp)) {

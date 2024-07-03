@@ -13,6 +13,14 @@ test_comparison <- function() {
     invisible(.Call(`_ast2ast_test_comparison`))
 }
 
+test_borrow_r <- function(nv) {
+    invisible(.Call(`_ast2ast_test_borrow_r`, nv))
+}
+
+test_borrow_sexp_r <- function(nv) {
+    invisible(.Call(`_ast2ast_test_borrow_sexp_r`, nv))
+}
+
 test_borrow <- function() {
     invisible(.Call(`_ast2ast_test_borrow`))
 }
@@ -79,5 +87,9 @@ test_vector_bool <- function() {
 
 test_vector_vector <- function() {
     invisible(.Call(`_ast2ast_test_vector_vector`))
+}
+
+heapAddressSanitize <- function(xs) {
+    .Call(`_ast2ast_heapAddressSanitize`, xs)
 }
 

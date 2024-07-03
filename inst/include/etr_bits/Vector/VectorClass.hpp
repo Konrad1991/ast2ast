@@ -19,7 +19,6 @@ template <typename T, typename R, typename Trait> struct Vec {
 
 #ifdef DERIV_ETR
   Buffer<double> deriv;
-  bool indep_var = false;
 #endif
   Buffer<T> temp;
   using DType = R;
@@ -48,11 +47,11 @@ template <typename T, typename R, typename Trait> struct Vec {
 
   operator RetType() const {
     if constexpr (std::is_same_v<RetType, bool>) {
-      warn(this->size() == 1,
-           "Error in if: the condition has length > 1"); // NOTE: otherwise
-                                                         // subsetting does not
-                                                         // work. Thus, warn
-                                                         // instead of assert
+      warn<"Warning in if: the condition has length > 1">(this->size() == 1);
+      // NOTE: otherwise
+      // subsetting does not
+      // work. Thus, warn
+      // instead of assert
       return d[0];
     } else {
       return d[0];
@@ -76,16 +75,6 @@ template <typename T, typename R, typename Trait> struct Vec {
       return It<T>{d.p->p + this->size()};
     } else {
       return It<T>{d.p + this->size()};
-    }
-  }
-
-  T *getPtr() {
-    if constexpr (isVarPointer::value) {
-      T *ptr = nullptr;
-      decltype(d)::getPtr(d.AllVarsRef, &ptr);
-      return ptr;
-    } else {
-      return d.p;
     }
   }
 

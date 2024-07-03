@@ -64,8 +64,8 @@ inline auto colon(A start, O end) {
 template <typename A, typename O>
   requires IsVec<A> && std::is_arithmetic_v<O>
 inline auto colon(A &start, O end) {
-  warn(start.size() == 1,
-       "expression has more than one element only the first is used");
+  warn<"expression has more than one element only the first is used">(
+      start.size() == 1);
   using DataTypeA = typename ExtractDataType<A>::RetType;
   using DataType = typename std::common_type<DataTypeA, O>::type;
   if constexpr (std::is_same_v<DataTypeA, DataType> &&
@@ -83,8 +83,8 @@ inline auto colon(A &start, O end) {
 template <typename A, typename O>
   requires(IsVecRorCalc<A> || IsVec<A>) && std::is_arithmetic_v<O>
 inline auto colon(const A &start, O end) {
-  warn(start.size() == 1,
-       "expression has more than one element only the first is used");
+  warn<"expression has more than one element only the first is used">(
+      start.size() == 1);
   using DataTypeA = typename ExtractDataType<A>::RetType;
   using DataType = typename std::common_type<DataTypeA, O>::type;
   if constexpr (std::is_same_v<DataTypeA, DataType> &&
@@ -105,8 +105,9 @@ inline auto colon(const A &start, O end) {
 template <typename A, typename O>
   requires std::is_arithmetic_v<A> && IsVec<O>
 inline auto colon(A start, O &end) {
-  warn(end.size() == 1,
-       "expression has more than one element only the first is used");
+  warn<"expression has more than one element only the first is used">(
+      end.size() == 1);
+
   using DataTypeO = typename ExtractDataType<O>::RetType;
   using DataType = typename std::common_type<A, DataTypeO>::type;
   if constexpr (std::is_same_v<A, DataType> &&
@@ -124,8 +125,8 @@ inline auto colon(A start, O &end) {
 template <typename A, typename O>
   requires std::is_arithmetic_v<A> && (IsVecRorCalc<O> || IsVec<O>)
 inline auto colon(A start, const O &end) {
-  warn(end.size() == 1,
-       "expression has more than one element only the first is used");
+  warn<"expression has more than one element only the first is used">(
+      end.size() == 1);
   using DataTypeO = typename ExtractDataType<O>::RetType;
   using DataType = typename std::common_type<A, DataTypeO>::type;
   if constexpr (std::is_same_v<A, DataType> &&
@@ -146,10 +147,10 @@ inline auto colon(A start, const O &end) {
 template <typename A, typename O>
   requires IsVec<A> && IsVec<O>
 inline auto colon(A &start, O &end) {
-  warn(end.size() == 1,
-       "expression has more than one element only the first is used");
-  warn(start.size() == 1,
-       "expression has more than one element only the first is used");
+  warn<"expression has more than one element only the first is used">(
+      start.size() == 1);
+  warn<"expression has more than one element only the first is used">(
+      end.size() == 1);
   using DataTypeA = typename ExtractDataType<A>::RetType;
   using DataTypeO = typename ExtractDataType<O>::RetType;
   using DataType = typename std::common_type<DataTypeA, DataTypeO>::type;
@@ -168,10 +169,10 @@ inline auto colon(A &start, O &end) {
 template <typename A, typename O>
   requires(IsVecRorCalc<A> || IsVec<A>) && IsVec<O>
 inline auto colon(const A &start, O &end) {
-  warn(end.size() == 1,
-       "expression has more than one element only the first is used");
-  warn(start.size() == 1,
-       "expression has more than one element only the first is used");
+  warn<"expression has more than one element only the first is used">(
+      start.size() == 1);
+  warn<"expression has more than one element only the first is used">(
+      end.size() == 1);
   using DataTypeA = typename ExtractDataType<A>::RetType;
   using DataTypeO = typename ExtractDataType<O>::RetType;
   using DataType = typename std::common_type<DataTypeA, DataTypeO>::type;
@@ -196,10 +197,10 @@ inline auto colon(const A &start, O &end) {
 template <typename A, typename O>
   requires IsVec<A> && (IsVecRorCalc<O> || IsVec<O>)
 inline auto colon(A &start, const O &end) {
-  warn(end.size() == 1,
-       "expression has more than one element only the first is used");
-  warn(start.size() == 1,
-       "expression has more than one element only the first is used");
+  warn<"expression has more than one element only the first is used">(
+      start.size() == 1);
+  warn<"expression has more than one element only the first is used">(
+      end.size() == 1);
   using DataTypeA = typename ExtractDataType<A>::RetType;
   using DataTypeO = typename ExtractDataType<O>::RetType;
   using DataType = typename std::common_type<DataTypeA, DataTypeO>::type;
@@ -221,10 +222,10 @@ inline auto colon(A &start, const O &end) {
 template <typename A, typename O>
   requires(IsVec<A> || IsVecRorCalc<A>) && (IsVecRorCalc<O> || IsVec<O>)
 inline auto colon(const A &start, const O &end) {
-  warn(end.size() == 1,
-       "expression has more than one element only the first is used");
-  warn(start.size() == 1,
-       "expression has more than one element only the first is used");
+  warn<"expression has more than one element only the first is used">(
+      start.size() == 1);
+  warn<"expression has more than one element only the first is used">(
+      end.size() == 1);
   using DataTypeA = typename ExtractDataType<A>::RetType;
   using DataTypeO = typename ExtractDataType<O>::RetType;
   using DataType = typename std::common_type<DataTypeA, DataTypeO>::type;
