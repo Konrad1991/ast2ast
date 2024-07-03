@@ -122,11 +122,13 @@ f <- function(a, b) {
   c <- a + b
   return(c)
 }
-fcpp <- ast2ast::translate(f, output = "XPtr", 
-                           types_of_args = c("double", "double"),
-                           data_structures = c("vector", "scalar"),
-                           handle_inputs = c("", ""),
-                           references = c(TRUE, TRUE))
+fcpp <- ast2ast::translate(f,
+  output = "XPtr",
+  types_of_args = c("double", "double"),
+  data_structures = c("vector", "scalar"),
+  handle_inputs = c("", ""),
+  references = c(TRUE, TRUE)
+)
 ```
 
 #### Afterwards the external pointer is used in an R package
