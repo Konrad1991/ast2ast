@@ -1,10 +1,20 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Translates an R function into a C++ function.</title>
+<!DOCTYPE html><html><head><title>R: Translates an R function into a C++ function.</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css">
+<script type="text/javascript">
+const macros = { "\\R": "\\textsf{R}", "\\code": "\\texttt"};
+function processMathHTML() {
+    var l = document.getElementsByClassName('reqn');
+    for (let e of l) { katex.render(e.textContent, e, { throwOnError: false, macros }); }
+    return;
+}</script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js"
+    onload="processMathHTML();"></script>
 <link rel="stylesheet" type="text/css" href="R.css" />
-</head><body><div class="container">
+</head><body><div class="container"><main>
 
-<table width="100%" summary="page for translate"><tr><td>translate</td><td style="text-align: right;">R Documentation</td></tr></table>
+<table style="width: 100%;"><tr><td>translate</td><td style="text-align: right;">R Documentation</td></tr></table>
 
 <h2>Translates an R function into a C++ function.</h2>
 
@@ -20,8 +30,7 @@ Further information can be found in the vignette: <em>Detailed Documentation</em
 
 <h3>Usage</h3>
 
-<pre>
-  translate(
+<pre><code class='language-R'>  translate(
     f,
     output = "R",
     types_of_args = "double",
@@ -31,24 +40,24 @@ Further information can be found in the vignette: <em>Detailed Documentation</em
     verbose = FALSE,
     getsource = FALSE
   )
-</pre>
+</code></pre>
 
 
 <h3>Arguments</h3>
 
-<table summary="R argblock">
-<tr valign="top"><td><code>f</code></td>
+<table>
+<tr><td><code id="f">f</code></td>
 <td>
 <p>The function which should be translated from R to C++.</p>
 </td></tr>
-<tr valign="top"><td><code>output</code></td>
+<tr><td><code id="output">output</code></td>
 <td>
 <p>If set to 'R' an R function wrapping the C++ code is returned. <br />
 If output is set to  'XPtr' an external pointer object
 pointing to the C++ code is returned. <br />
 The default value is 'R'.</p>
 </td></tr>
-<tr valign="top"><td><code>types_of_args</code></td>
+<tr><td><code id="types_of_args">types_of_args</code></td>
 <td>
 <p>define the types of the arguments passed
 to the function as an character vector. <br /> 
@@ -60,7 +69,7 @@ If the 'XPtr' interface is used additionally 'const logical',
 For more information see below for details and
 check the vignette <em>InformationForPackageAuthors</em>.<br /></p>
 </td></tr>
-<tr valign="top"><td><code>data_structures</code></td>
+<tr><td><code id="data_structures">data_structures</code></td>
 <td>
 <p>defines the data structures of the
 arguments passed to the function (as an character vector). <br />
@@ -71,7 +80,7 @@ In case the output is set to 'R' one can chose between
 one can set a data structure to 'scalar', 'vector' or 'borrow.<br />
 </p>
 </td></tr>
-<tr valign="top"><td><code>handle_inputs</code></td>
+<tr><td><code id="handle_inputs">handle_inputs</code></td>
 <td>
 <p>defines how the arguments to the function 
 should be handled as character vector. <br />
@@ -86,7 +95,7 @@ In case only part of the arguments should be borrowed than an empty string
 (&quot;&quot;) can be used to indicate this.<br />
 </p>
 </td></tr>
-<tr valign="top"><td><code>references</code></td>
+<tr><td><code id="references">references</code></td>
 <td>
 <p>defines whether the arguments are passed by reference
 or whether they are copied. This is indicated by a logical vector. <br />
@@ -96,11 +105,11 @@ If set to TRUE the arguments are passed by reference otherwise not.
 This option can be only used when the output is set to 'XPtr'
 </p>
 </td></tr>
-<tr valign="top"><td><code>verbose</code></td>
+<tr><td><code id="verbose">verbose</code></td>
 <td>
 <p>If set to TRUE the output of the compilation process is printed.</p>
 </td></tr>
-<tr valign="top"><td><code>getsource</code></td>
+<tr><td><code id="getsource">getsource</code></td>
 <td>
 <p>If set to TRUE the function is not compiled and instead the C++ source code itself is returned.</p>
 </td></tr>
@@ -142,13 +151,13 @@ whether a variable is a 'vector' in the sense of on R vector or it is a matrix.<
 </li></ol>
 
 <p>In this example this results in: 
-<code style="white-space: pre;">
+<code style="white-space: pre;">&#8288;
       f(etr::Vec&lt;int&gt;&amp; argumentNr1Input, int&amp; argumentNr2) {
         etr::Vec&lt;int, etr::Borrow&lt;int&gt;&gt; argumentNr1(argumentNr1Input.d.p,
                                                     argumentNr1Input.size());
         ... rest of function code
       }
-    </code>
+    &#8288;</code>
 </p>
 
 
@@ -194,13 +203,13 @@ The advantage is that scalar values need less memory.
 
 <p>The variables are declared with the type by using the <br />
 '::' operator. Here are some examples:
-<code style="white-space: pre;">
+<code style="white-space: pre;">&#8288;
        f &lt;- function() {
          d::double &lt;- 3.14
          l::logical &lt;- TRUE
          dv::int_vector &lt;- vector(mode = "integer", length = 2)
        }
-     </code>
+     &#8288;</code>
 </p>
 
 
@@ -212,7 +221,7 @@ Thus, R objects can be modified within the function. <br />
 Please be aware that it is not possible to resize the borrowed variable, <br />
 Therefore, the code below throws an error.
 Here an example:
-<code style="white-space: pre;">
+<code style="white-space: pre;">&#8288;
        f &lt;- function(a, b, c) { 
          a[c(1, 2, 3)] &lt;- 1 
          b &lt;- vector(length = 10) 
@@ -221,7 +230,21 @@ Here an example:
        fcpp &lt;- ast2ast::translate(f, handle_inputs = "borrow") 
        a &lt;- b &lt;- c &lt;- c(1, 2, 3) 
        fcpp(a, b,c) 
-     </code>
+     &#8288;</code>
+</p>
+
+
+
+<h5>Derivatives</h5>
+
+<p>One can use the function <em>set_deriv</em> and <em>get_deriv</em> in order to <br />
+calculate the derivative with respect to the variable which is currently set. <br />
+The derivatives can be extracted by using the function 'get_deriv'. <br />
+<code style="white-space: pre;">&#8288;
+      set_deriv(x)
+      y = x*x
+      dydx = get_deriv(y)
+    &#8288;</code>
 </p>
 
 
@@ -289,7 +312,7 @@ The <em>at</em>-function can also be used on the left side of an assignment oper
 However, in this case only <em>at</em> should be used at the right side. Otherwise the results are wrong.
 </strong>  <br />
 Here is a small example presented how to use the subset functions:
-<code style="white-space: pre;">
+<code style="white-space: pre;">&#8288;
         f &lt;- function() {
           a &lt;- c(1, 2, 3)
           print(at(a, 1))
@@ -297,7 +320,7 @@ Here is a small example presented how to use the subset functions:
         }
         fcpp &lt;- ast2ast::translate(f)
         fcpp()
-      </code>
+      &#8288;</code>
 </p>
 </li>
 <li><p> For- and while-loops can be written as common in R
@@ -361,7 +384,7 @@ is generated if the output is set to <em>XPtr</em>. <br />
 
 <h3>Examples</h3>
 
-<pre> # Further examples can be found in the vignettes. 
+<pre><code class='language-R'> # Further examples can be found in the vignettes. 
     ## Not run: 
       f &lt;- function() {
         print("Hello World!")
@@ -438,7 +461,9 @@ is generated if the output is set to <em>XPtr</em>. <br />
 
 
 ## End(Not run)
-</pre>
+</code></pre>
 
+</main>
 
-</div></body></html>
+</div>
+</body></html>

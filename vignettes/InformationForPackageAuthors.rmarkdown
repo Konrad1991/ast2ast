@@ -14,10 +14,12 @@ knitr::opts_chunk$set(echo = TRUE, eval = FALSE, cache = FALSE)
 ```
 
 
+
 <style>
 body {
 text-align: justify}
 </style>
+
 
 ```{css echo=FALSE}
 /* Define a margin before h2 element */
@@ -30,6 +32,7 @@ p:first-of-type {
   margin-bottom: 3em;
 }
 ``` 
+
 
 - [Guidance for Package Authors](#guidance-for-package-authors)
 - [Naming rationalization ast2ast](#naming-rationalization-ast2ast)
@@ -67,6 +70,7 @@ resulting in expressions like *etr::length*. Other functions as for example *`:`
 therefore they are replaced by functions with new names e.g. *etr::colon* and *etr::subset*. \
 Additionally, C++ necessitates explicit declaration of variable types. 
 Within this example for all variables the type *Vec<double>* is used. A detailed explanation is deferred to the subsequent section.
+
 
 ```{r, eval = FALSE, echo = TRUE, attr.source='.numberLines'}
 bubbleSort <- function(a) {
@@ -111,11 +115,13 @@ SEXP bubbleSort(SEXP aSEXP) {
 ```
 
 
+
 ### The XPtr interface 
 
 The XPtr interfaces creates an external pointer which can be used in other C++ programs. 
 
 #### First, one creates the external pointer of the R function. 
+
 
 ```{r, eval = TRUE, echo = TRUE}
 f <- function(a, b) {
@@ -129,7 +135,9 @@ fcpp <- ast2ast::translate(f, output = "XPtr",
                            references = c(TRUE, TRUE))
 ```
 
+
 #### Afterwards the external pointer is used in an R package
+
 
 ```{Rcpp, eval = TRUE, echo = TRUE}
 // [[Rcpp::depends(ast2ast)]]
@@ -151,12 +159,15 @@ void call_xptr(Rcpp::XPtr<FP> ep) {
   etr::print(c);
 }
 ```
+
 #### call the function from the R package
+
 
 
 ```{r, eval = TRUE, echo = TRUE}
 call_xptr(fcpp)
 ```
+
 
 
 
@@ -189,5 +200,6 @@ Thus, it is still possible to use instances of the class in parallel. However, t
 ### Conversions 
 
 A *sexp* can be converted to Rcpp::NumericVectors, Rcpp::NumericMatrices, arma::vec or to a arma::mat. 
+
 
 

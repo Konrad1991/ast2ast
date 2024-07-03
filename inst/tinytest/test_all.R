@@ -690,7 +690,7 @@ testall <- function(a, type_test) {
     return(a)
   } else if (type_test == 5.9) {
     a <- 1
-    a <- 1 / 4
+    a <- 1.0 / 4.0
     return(a)
   } else if (type_test == 5.10) {
     a <- a / a

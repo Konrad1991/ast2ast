@@ -36,8 +36,8 @@
 - [x] remove J.Rd
 - [ ] update DetailedDocumentation.Rmd
 - [ ] update InformationForPackageAuthors.Rmd
-- [ ] docu code structure R
-- [ ] docu code structure C++
+- [x] docu code structure R
+- [x] docu code structure C++
 
 ## Error handling
 

@@ -1,11 +1,10 @@
 permitted_fcts <- function() {
-  # TODO: remove all RNG functions
   c(
     "::", "=", "<-", "[", "at", "for", "while", "next", "break", "c", ":",
     "sin", "asin", "sinh", "cos", "acos", "cosh",
     "tan", "atan", "tanh", "log", "sqrt",
     "^", "+", "-", "*", "/",
-    "if", "{", "(", # TODO: check whether else if is required
+    "if", "{", "(",
     "==", "!=", ">", ">=", "<", "<=", "print", "return",
     "vector", "matrix", "length", "dim",
     "exp", "&&", "||", "!",

@@ -1,14 +1,16 @@
 library(ast2ast)
 
-
-f <- function(a, b, c) {
-  d <- a + b + c
+f <- function() {
+  a::logical <- TRUE
+  b::integer <- 1
+  c::double <- 3.14
+  d::logical_vector <- c(TRUE, FALSE)
+  e::integer_vector <- c(1L, 2L, 3L)
+  f::double_vector <- c(3.14, 3.5)
 }
-
+library(ast2ast)
 fcpp <- translate(f,
-  types_of_args = c("double", "int", "logical"),
-  data_structures = c("vector", "scalar", "scalar"),
-  handle_inputs = rep("copy", 3),
-  verbose = TRUE,
-  output = "R"
+  verbose = TRUE
 )
+
+fcpp()

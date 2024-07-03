@@ -176,7 +176,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
     } else if constexpr (is<RetType, bool>) {
       bool isbool = Rf_isLogical(inp);
       ass<"R object is not of type numeric">(isbool);
-      p = LOGICAL(inp);
+      p = reinterpret_cast<bool *>(LOGICAL(inp));
       sz = Rf_length(inp);
       capacity = Rf_length(inp);
       bool isM = Rf_isMatrix(inp);

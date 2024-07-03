@@ -9,7 +9,7 @@ check_variable_type_pairs <- function(args, variable_pair_list) {
   assert(
     "Found a type declaration for an argument to the function.
     It is not allowed to define types more than one time." =
-      !(names %in% args)
+      !any(names %in% args)
   )
   allowed_types <- function() {
     c(
@@ -19,7 +19,7 @@ check_variable_type_pairs <- function(args, variable_pair_list) {
   }
   assert(
     "Unknown type found in variable declaration" =
-      types %in% allowed_types()
+      any(types %in% allowed_types()) || (length(types) == 0)
   )
   unique_names <- unique(names)
   sapply(unique_names, function(x) {

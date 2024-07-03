@@ -17,6 +17,59 @@
 # You should have received a copy of the GNU General Public License along with ast2ast
 # If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
+permitted_fcts <- function() {
+  c(
+    "::", "=", "<-", "[", "at", "for", "while", "next", "break", "c", ":",
+    "sin", "asin", "sinh", "cos", "acos", "cosh",
+    "tan", "atan", "tanh", "log", "sqrt",
+    "^", "+", "-", "*", "/",
+    "if", "{", "(",
+    "==", "!=", ">", ">=", "<", "<=", "print", "return",
+    "vector", "matrix", "length", "dim",
+    "exp", "&&", "||", "!",
+    "is.na", "is.infinite", "is.finite",
+    "Rf_ScalarReal", "i2d", "cmr", "cpp2R",
+    "vector_numeric",
+    "vector_logical", "while",
+    "vector_integer", "rep", "get_deriv", "assign",
+    "set_indep", "unset_indep", "power"
+  )
+}
+
+namespace_etr <- function() {
+  c(
+    "coca", "sinus", "asinus", "sinush",
+    "cosinus", "acosinus", "cosinush",
+    "tangens", "atangens", "tangensh",
+    "ln", "sqroot",
+    "print", "vector", "matrix", "length", "dim", "cmr",
+    "exp", "i2d", "at", "exp", "at",
+    "isNA", "isInfinite", "colon", "cpp2R", "rep", "get_deriv",
+    "assign_deriv", "set_indep", "unset_indep", "power"
+  )
+}
+
+generic_fcts <- function() {
+  c(
+    "+", "-",
+    "*", "/", "if", "else if", "else", "{", "(",
+    "==", "!=", ">", ">=", "<", "<=", "vector",
+    "rep", "::",
+    "matrix", "length", "dim", "cmr", "exp", "at",
+    "&&", "||", "Rf_ScalarReal", "cpp2R",
+    "rep", "while", "get_deriv", "assign",
+    "unset_indep", "power"
+  )
+}
+
+math_fcts <- function() {
+  c(
+    "sin", "asin", "sinh", "cos", "acos", "cosh",
+    "tan", "atan", "tanh", "log", "^", "sqrt", "power"
+  )
+}
+
+
 #' @import R6
 LC <- R6::R6Class("LC",
 

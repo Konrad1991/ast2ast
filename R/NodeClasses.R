@@ -54,7 +54,7 @@ PC <- R6::R6Class("PC",
     },
     replace_int = function() {
       i <- 1
-      while (i < length(self$arguments)) {
+      while (i <= length(self$arguments)) {
         if (is.symbol(self$arguments)) {
           return()
         }
