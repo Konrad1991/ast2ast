@@ -19,7 +19,7 @@ build_types <- function(toa, doa, roa, output) {
       assert(output == "XPtr")
       types[i] <- cString(
         "etr::Vec<", toa[i],
-        ", Borrow<", toa[i], ">>", roa[i], ""
+        ", etr::Borrow<", toa[i], ">>", roa[i], ""
       )@value
     }
   }

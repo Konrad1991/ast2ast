@@ -16,7 +16,7 @@ rosenbrock <- function(parameter) {
 lb <- -10000
 ub <- 10000
 error_threshold <- 0.0000001
-npop <- 400
+npop <- 40
 
 pso(rep(lb, 3), rep(ub, 3), rosenbrock, 10000, npop, error_threshold)
 
@@ -42,9 +42,19 @@ rosenbrock_cpp <- ast2ast::translate(rosenbrock_cpp,
 pso_xptr(rep(lb, 3), rep(ub, 3), rosenbrock_cpp, 10000, npop, error_threshold)
 
 
-res <- microbenchmark::microbenchmark(
-  pso(rep(lb, 3), rep(ub, 3), rosenbrock, 10000, npop, error_threshold),
+r_fct <- function() {
+  set.seed(1234)
+  pso(rep(lb, 3), rep(ub, 3), rosenbrock, 10000, npop, error_threshold)
+}
+
+cpp_fct <- function() {
+  set.seed(1234)
   pso_xptr(rep(lb, 3), rep(ub, 3), rosenbrock_cpp, 10000, npop, error_threshold)
+}
+
+res <- microbenchmark::microbenchmark(
+  r_fct(),
+  cpp_fct()
 )
 res
 
