@@ -191,6 +191,35 @@ get_all_vars <- function(code) {
   all.vars(code)
 }
 
+
+replace_vars <- function(code, var_which_get_assigned,
+                         variables, symbol_table) {
+  code <- as.list(code)
+  new_expr <- code[[3]]
+
+  for (i in variables) {
+    idx <- symbol_table[symbol_table$variables == i, "ids"]
+    e <- str2lang(paste("getNum(i, ", idx, ",vm)", collapse = ""))
+    a_to_b <- function(x) {
+      if (is.name(x) && identical(x, quote(a))) {
+        return(quote(b))
+      }
+      x
+    }
+    new_expr <- pryr::modify_lang(
+      new_expr,
+      function(x) {
+        if (deparse(x) == i) {
+          return(e)
+        }
+        x
+      }
+    )
+  }
+
+  return(new_expr)
+}
+
 traverse <- function(f) {
   # create symbol table and EXPR list
   e <- new.env()
@@ -228,20 +257,12 @@ traverse <- function(f) {
     )
     return(Filter(function(x) length(x) >= 1, temp))
   })
+
+  # replace variables with their indices
+  e$EXPRESSIONS <- lapply(e$EXPRESSIONS, function(x) {
+    replace_vars(x$EXPR, x$var_which_get_assigned, x$variables, symbol_table)
+  })
   print(e$EXPRESSIONS)
-
-  temp <- e$EXPRESSIONS[[5]]
-
-  new_expr <- eval(
-    substitute(
-      substitute(
-        e,
-        list(d = quote(z))
-      ),
-      list(e = temp$EXPR)
-    )
-  )
-  print(new_expr)
   return(NULL)
 }
 
@@ -250,6 +271,7 @@ traverse <- function(f) {
 f <- function() {
   a::integer <- 1L
   a <- a + 1 + b * a
+  c::double <- 3.14
 }
 
 traverse(f)
