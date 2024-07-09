@@ -1,7 +1,21 @@
+#include "SubsetManager.h"
 #include "VectorManager.h"
 
 // User would write v3 = v1 + v2 + 3.3
 void EXPR1(VectorManager *vm) {
+
+  SubsetManager sm = create_sm();
+  size_t subsetted_vecs[] = {0, 1};
+  size_t n = 2;
+  size_t indices[] = {0, 3};
+  size_t size_indices = 2;
+  add_numerics_subsets(subsetted_vecs, n, vm, indices, size_indices, &sm);
+  printf("\n");
+  for (size_t i = 0; i < size_indices; i++) {
+    printf("%f\n", get_num_subset(i, 0, &sm));
+  }
+  printf("\n");
+
   int vars_in_expr[] = {0, 1};
   int types_of_vars[] = {2, 2};
   int nvars = 2;
@@ -12,7 +26,7 @@ void EXPR1(VectorManager *vm) {
     vm->tempNum->data[i] =
         get_num(i, 0, vm) + get_num(i, 1, vm) + get_scalar_num(2, vm);
   }
-  if (s > vm->numerics[var_left]->size) { // TODO: implement resize functions
+  if (s > vm->numerics[var_left]->size) {
     alloc_numeric(var_left, s, vm);
   }
 
@@ -20,21 +34,11 @@ void EXPR1(VectorManager *vm) {
     // TODO: add break for set_scalar_xy after first assignment
     *set_num(i, var_left, vm) = vm->tempNum->data[i];
   }
+  free_sm(&sm);
 }
 
 // TODO:
-// [ ] define structs SubsetNumeric, SubsetInteger and SubsetLogical
-// [ ] create getter and setter for those structs
-// [ ] identify in R when variable is subsetted
-//    [ ] first create symbol table
-//    [ ] traverse again and find subsetted variables.
-//        Store corresponding subsets for each expression
-//        - the variable which is subsetted
-//        - the expression defining the indices of the subset
-//            * possible expressions to define indices:
-//                * int, double, Numeric, Integer, Logical,
-//                  SubsetNumeric, SubsetInteger and SubsetLogical
-//                  but not a calculation
+
 int main() {
   VectorManager vm = create_vm();
   add_numerics(3, &vm);

@@ -34,6 +34,9 @@ typedef struct {
 } VectorManager;
 
 VectorManager create_vm();
+void save_free_num(Numeric *v);
+void save_free_int(Integer *v);
+void save_free_log(Logical *v);
 void free_and_exit(VectorManager *vm, const char *message);
 void free_vm(VectorManager *vm);
 size_t determine_size(VectorManager *vm, int *num_vars, int *types_vars, int n);
