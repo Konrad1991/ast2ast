@@ -65,6 +65,8 @@ inline void calcIndVector(T &vec, Indices &ind, const I *idx) {
     } else {
       static_assert(sizeof(T) == 0, "Unknown type of index variable");
     }
+  } else {
+    static_assert(sizeof(T) == 0, "Unknown type of index variable");
   }
 }
 
