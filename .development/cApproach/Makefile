@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -g
 
-SRCS = main.c SubsetManager.c VectorManager.c
+SRCS = main.c Print.c VectorManager.c GetAndSet.c Colon.c DetermineSize.c Subsets.c
 OBJS = $(SRCS:.c=.o)
 
 TARGET = main
@@ -13,8 +13,13 @@ $(TARGET): $(OBJS)
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-SubsetManager.o: VectorManager.h
+Print.o: VectorManager.h
 VectorManager.o: VectorManager.h
+GetAndSet.o: VectorManager.h
+Colon.o: VectorManager.h
+DetermineSize.o: VectorManager.h
+Subsets.o: VectorManager.h
+
 
 # Clean up
 clean:

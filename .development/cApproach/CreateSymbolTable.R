@@ -2,8 +2,10 @@ source("Utils.R")
 
 
 check_expr <- function(code) {
-  if (grepl("EXPR", deparse(code)) || grepl("VAR", deparse(code))) {
-    stop("Variables are not allowed to have 'EXPR' or 'VAR' within their names")
+  if (grepl("EXPR", deparse(code)) || grepl("VAR", deparse(code)) ||
+    grepl("SUBSET", deparse(code))) {
+    stop("Variables are not allowed to have 'EXPR', 'SUBSET'
+      or 'VAR' within their names")
   }
 }
 
