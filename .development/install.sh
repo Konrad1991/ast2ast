@@ -2,7 +2,9 @@
 
 Rscript install.R
 
-Rscript diff.R
+Rscript tracebackTest.R
+
+# Rscript diff.R
 
 # Rscript test.R
 

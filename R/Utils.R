@@ -15,21 +15,21 @@ generate_new_name <- function(name, extension, delimiter, vars) {
   return(new_name)
 }
 
-print_traceback <- function() {
-  tb <- traceback(1)
-  if (length(tb) > 1) {
-    color_print(41, "Traceback:")
-    for (i in seq_along(tb)) {
-      color_print(41, paste0(i, ": ", tb[[i]]))
-    }
-  }
-}
-
 color_print <- function(col, ...) {
   txt <- c(...)
   txt <- paste(txt, collapse = " ")
   # https://stackoverflow.com/questions/10802806/is-there-a-way-to-output-text-to-the-r-console-in-color
   cat(paste0("\033[0;", col, "m", txt, "\033[0m", "\n"))
+
+  # print traceback
+  tb <- capture.output(traceback())
+  tb <- sys.calls()
+  if (length(tb) > 0) {
+    cat(paste0("\033[0;", 41, "m", "Traceback: ", "\033[0m", "\n"))
+    for (i in seq_along(tb)) {
+      cat(paste0("\033[0;", 41, "m", tb[[i]], "\033[0m", "\n"))
+    }
+  }
 }
 
 assert <- function(...) {
@@ -47,7 +47,6 @@ assert <- function(...) {
           "Error: ",
           deparse(expr), " is not TRUE"
         ))
-        print_traceback()
         stop()
       }
     }
