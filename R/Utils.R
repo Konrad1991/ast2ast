@@ -20,17 +20,31 @@ color_print <- function(col, ...) {
   txt <- paste(txt, collapse = " ")
   # https://stackoverflow.com/questions/10802806/is-there-a-way-to-output-text-to-the-r-console-in-color
   cat(paste0("\033[0;", col, "m", txt, "\033[0m", "\n"))
+}
 
-  # print traceback
-  tb <- capture.output(traceback())
+print_traceback <- function() {
   tb <- sys.calls()
   if (length(tb) > 0) {
-    cat(paste0("\033[0;", 41, "m", "Traceback: ", "\033[0m", "\n"))
+    color_print(41, "Traceback:")
     for (i in seq_along(tb)) {
-      cat(paste0("\033[0;", 41, "m", tb[[i]], "\033[0m", "\n"))
+      color_print(41, paste0(i, ": ", tb[[i]]))
     }
   }
 }
+
+print_debug_info <- function() {
+  frames <- sys.frames()
+  color_print(41, "Debug Information:")
+  for (i in seq_along(frames)) {
+    color_print(41, paste0("Frame ", i, ":"))
+    for (var in ls(frames[[i]])) {
+      value <- get(var, frames[[i]])
+      color_print(41, paste0(var, ": ", deparse(value)))
+    }
+    color_print(41, "----------------------")
+  }
+}
+
 
 assert <- function(...) {
   expr <- c(...)
