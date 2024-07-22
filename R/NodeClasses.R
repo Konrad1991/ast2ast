@@ -175,7 +175,8 @@ PC <- R6::R6Class("PC",
       counter_not_equal <- 1
       counter <- 1
       res <- list()
-      for (i in seq_along(args_fct)) {
+      i <- 1
+      while (i <= length(args_fct)) {
         temp <- args_fct[[i]]
         if (temp %in% equal_names) {
           res[[counter]] <- user_args[[temp]]
@@ -201,6 +202,7 @@ PC <- R6::R6Class("PC",
             counter <- counter + 1
           }
         }
+        i <- i + 1
       }
 
       return(res)
