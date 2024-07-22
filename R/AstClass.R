@@ -29,8 +29,8 @@ astClass <- R6::R6Class("astClass",
           },
           error = function(err) {
             e <- err
-            print_traceback()
-            print_debug_info()
+            # print_traceback()
+            # print_debug_info()
             e
           }
         )

@@ -37,7 +37,8 @@ PC <- R6::R6Class("PC",
       return(self$name_fct)
     },
     replace_TF = function() {
-      for (i in seq_along(self$arguments)) {
+      i <- 1
+      while (i <= length(self$arguments)) {
         if (is.symbol(self$arguments)) {
           return()
         }
@@ -50,6 +51,7 @@ PC <- R6::R6Class("PC",
             self$arguments[[i]] <- as.name("false")
           }
         }
+        i <- i + 1
       }
     },
     replace_int = function() {
@@ -79,7 +81,8 @@ PC <- R6::R6Class("PC",
       }
     },
     replace_NA = function() {
-      for (i in seq_along(self$arguments)) {
+      i <- 1
+      while (i <= length(self$arguments)) {
         if (is.symbol(self$arguments)) {
           return()
         }
@@ -89,10 +92,12 @@ PC <- R6::R6Class("PC",
         if ((is.atomic(self$arguments[[i]])) && (is.na(self$arguments[[i]]))) {
           self$arguments[[i]] <- str2lang("NA_REAL")
         }
+        i <- i + 1
       }
     },
     replace_INF = function() {
-      for (i in seq_along(self$arguments)) {
+      i <- 1
+      while (i <= length(self$arguments)) {
         if (is.symbol(self$arguments)) {
           return()
         }
@@ -102,6 +107,7 @@ PC <- R6::R6Class("PC",
         if ((is.atomic(self$arguments[[i]])) && (is.infinite(self$arguments[[i]]))) {
           self$arguments[[i]] <- str2lang("R_PosInf") # check for R_NegInf how?
         }
+        i <- i + 1
       }
     },
     oaf = function(var) { # only allowed functions

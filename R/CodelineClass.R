@@ -108,7 +108,7 @@ LC <- R6::R6Class("LC",
 
       sexp <- as.list(sexp)
 
-      if (as.name("{") == sexp[[1]] && length(sexp) == 1) { # check empty if/else if/else block
+      if (as.name("{") == sexp[[1]] && length(sexp) == 1) {
         return(str2lang("{}"))
       }
 
