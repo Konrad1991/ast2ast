@@ -559,10 +559,12 @@ get_arguments <- function(fct, args) {
   fs <- fct_signature$new()
   fwa <- fs$FctsWithArgs
   res <- NULL
-  for (i in seq_along(fwa)) {
+  i <- 1
+  while (i <= length(fwa)) {
     if (fwa[[i]]$fctName == fct) {
       res <- fwa[[i]]
     }
+    i <- i + 1
   }
 
   if (is.null(res)) stop(paste("Unsupported function: ", fct, " found"))
