@@ -15,6 +15,15 @@ generate_new_name <- function(name, extension, delimiter, vars) {
   return(new_name)
 }
 
+print_traceback <- function() {
+  tb <- traceback(1)
+  if (length(tb) > 1) {
+    color_print(41, "Traceback:")
+    for (i in seq_along(tb)) {
+      color_print(41, paste0(i, ": ", tb[[i]]))
+    }
+  }
+}
 
 color_print <- function(col, ...) {
   txt <- c(...)
@@ -38,6 +47,7 @@ assert <- function(...) {
           "Error: ",
           deparse(expr), " is not TRUE"
         ))
+        print_traceback()
         stop()
       }
     }
