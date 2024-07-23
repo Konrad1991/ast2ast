@@ -1,8 +1,0 @@
-[
-  {
-    "directory": "/home/konrad/Documents/GitHub/RProjects/ast2ast_supplement/ast2ast",
-    "command": "clang++ -std=c++20 -DSTANDALONE_ETR -DDERIV_ETR ./src/BaseStore_Tests.cpp -I ./inst/include/",
-    "file": "./src/BaseStore_Tests.cpp"
-  }
-]
-

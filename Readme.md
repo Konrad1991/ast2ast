@@ -1,37 +1,42 @@
-<!-- badges: start -->
-[![](http://cranlogs.r-pkg.org/badges/last-month/ast2ast?color=green)](https://cran.r-project.org/package=ast2ast)
-[![](https://www.r-pkg.org/badges/version/ast2ast?color=green)](https://cran.r-project.org/package=ast2ast)
-[![License: GPL2](https://img.shields.io/badge/license-GPL2-blue.svg)](https://cran.r-project.org/web/licenses/GPL-2)
-<!-- badges: end -->
+# Translating R to C
+
+Within this document the scope of the translation from R to C is described.
+It is crucial, that very few functions are supported. Even though the relevant functions
+to define ode systems or loss functions should be available.
+
+## Supported functions
+
+- arithmetic functions:
+  - +, -, * and /
+- trigonometric functions:
+  - sin, cos, tan, etc.
+- subsetting:
+  - one element subsetting
+- interpolation via catmull rom spline interpolation
 
 
-# R package ast2ast
+## Objects
 
-## News
+- numeric vectors (can be matrices -> handled at runtime)
+- scalar doubles
+- scalar ints
 
-* see more on: https://konrad1991.github.io/ast2ast/ 
-* 11-04-2023: version 0.3.1 is now on CRAN
-* I gave a talk at the *useR! 2022* conference about *ast2ast*. The record can be watched using the following link: https://m.youtube.com/watch?v=5NDPOLunQTA&list=PL77T87Q0eoJjvKVFHuJZ5_BGVbPPpB8LL&index=8,
+## Plan
 
-## Overview
+- first traversion over R code
+  - find all variables
+  - stop at prohibited functions: e.g. EXPR_d, Vector, VectorManager, etc.
+  - create symbol table [index, variable name, type]
 
-Translates an R function into a C++ function. An external pointer to the C++ function or an R function is returned to the user. To install the Github version of the package use *devtools::install_github("Konrad1991/ast2ast", build_vignettes = TRUE)*. The package is also on CRAN and can be installed via *install.packages("ast2ast")*. 
+- second traversion over R code
+  - remove type annotation of each EXPR
+  - gather constant ints, doubles and bools
+  - gather all variables found in the expression
 
-The motivation to write the package was that it is often cumbersome using R functions in applications which have to call the R function very often (> 100 calls) (e.g. ODE solving, Optimization). One possiblity is to write the function in a faster programming language e.g. C. However, learning languages such as C is difficult and time consuming. Therefore *ast2ast* is a decent alternative as the function can be written in R.
+- define function signature
 
-As an example solving a simple ODE-System. The translated code is considerable faster then R code and almost as fast as C++. Code for the example can be found in the vignettes.
+- define function declaration
 
-![Benchmark](https://github.com/Konrad1991/ast2ast/blob/master/vignettes/benchmark.png)
+- define memory freeing
 
-## Documentation:
-
-Documentation for the function [J](https://konrad1991.github.io/ast2ast/J.html) and [translate](https://konrad1991.github.io/ast2ast/translate.html).
-If you want a detailed documentation please read this vignette: https://konrad1991.github.io/ast2ast/DetailedDocumentation.html
-In case you are interested on using ast2ast in your R package please refer to: https://konrad1991.github.io/ast2ast/InformationForPackageAuthors.html
-
-## Contribution
-
-
-Contribution would be warmly appreciated (See Code of Conduct).
-
-
+- assemble function
