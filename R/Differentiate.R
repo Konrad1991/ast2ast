@@ -160,7 +160,10 @@ diff_built_in_function_call <- lift(function(expr, fl) {
   od <- list()
   counter <- 1
   for (i in seq_along(args)) {
-    od[[counter]] <- pryr::modify_lang(outer_deriv, substi, bquote(.(deriv_args[[i]])), args[[i]])
+    od[[counter]] <- pryr::modify_lang(
+      outer_deriv, substi,
+      bquote(.(deriv_args[[i]])), args[[i]]
+    )
     counter <- counter + 1
   }
   outer_deriv <- od
@@ -212,6 +215,9 @@ diff_call <- lift(function(expr, fl) {
   arg1 <- call_arg(expr, 1)
   arg2 <- call_arg(expr, 2)
   e <- call_name(expr)
+  if (deparse(e) == "etr::i2d") {
+    return(0)
+  }
   if (is.name(e)) {
     if (e == "+") {
       diff_addition(expr, fl)

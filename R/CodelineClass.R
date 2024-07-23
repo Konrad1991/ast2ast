@@ -53,7 +53,7 @@ generic_fcts <- function() {
   c(
     "+", "-",
     "*", "/", "if", "else if", "else", "{", "(",
-    "==", "!=", ">", ">=", "<", "<=", "vector",
+    "==", "!=", ">", ">=", "<", "<=",
     "rep", "::",
     "matrix", "length", "dim", "cmr", "exp", "at",
     "&&", "||", "Rf_ScalarReal", "cpp2R",
@@ -134,6 +134,10 @@ LC <- R6::R6Class("LC",
         } else if (length(sexp) == 1) {
           self$return_variable <- NULL
         }
+      } else if (as.name("vector") == fct) {
+        self$check_assign_subset <- FALSE
+        p <- vector_class$new(sexp, self$namespace_etr)
+        sexp <- p$convert(self$PF)
       } else if (as.name("[") == fct) {
         p <- subset$new(sexp, self$check_assign_subset, self$namespace_etr)
         sexp <- p$convert(self$PF)

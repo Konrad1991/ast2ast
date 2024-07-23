@@ -167,6 +167,15 @@ numeric_deriv <- function(x) numeric(x)
 rep_deriv <- function(x, y) rep(x, y)
 matrix_deriv <- function(val = 0, x, y) matrix(val, x, y)
 
+cmr_deriv <- function(a, b, c, d) cmr(a, b, c, d)
+get_deriv_deriv <- function(a) get_deriv(a)
+colon_deriv <- function(a, b) a:b
+length_deriv <- function(a) length(a)
+dim_deriv <- function(a) dim(a)
+set_indep_deriv <- function(a) set_indep(a)
+unset_indep_deriv <- function(a) unset_indep(a)
+i2d_deriv <- function(a) etr::i2d(a)
+
 
 
 init_fct_list <- function() {
@@ -186,13 +195,14 @@ init_fct_list <- function() {
   f <- add_fct(f, "vector", vector_deriv, TRUE)
   f <- add_fct(f, "rep", rep_deriv, TRUE)
   f <- add_fct(f, "matrix", matrix_deriv, TRUE)
-  f <- add_fct(f, "c", matrix_deriv, TRUE)
-  f <- add_fct(f, "cmr", matrix_deriv, TRUE)
-  f <- add_fct(f, "get_deriv", matrix_deriv, TRUE)
-  f <- add_fct(f, ":", matrix_deriv, TRUE)
-  f <- add_fct(f, "length", matrix_deriv, TRUE)
-  f <- add_fct(f, "dim", matrix_deriv, TRUE)
-  f <- add_fct(f, "set_indep", matrix_deriv, TRUE)
-  f <- add_fct(f, "unset_indep", matrix_deriv, TRUE)
+  f <- add_fct(f, "c", c_deriv, TRUE)
+  f <- add_fct(f, "cmr", cmr_deriv, TRUE)
+  f <- add_fct(f, "get_deriv", get_deriv_deriv, TRUE)
+  f <- add_fct(f, ":", colon_deriv, TRUE)
+  f <- add_fct(f, "length", length_deriv, TRUE)
+  f <- add_fct(f, "dim", dim_deriv, TRUE)
+  f <- add_fct(f, "set_indep", set_indep_deriv, TRUE)
+  f <- add_fct(f, "unset_indep", unset_indep_deriv, TRUE)
+  f <- add_fct(f, "etr::i2d", i2d_deriv, TRUE)
   return(f)
 }

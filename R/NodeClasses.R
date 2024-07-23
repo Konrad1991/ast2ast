@@ -216,7 +216,7 @@ generic <- R6::R6Class("generic",
   inherit = PC,
   public = list(
     change_code = function() {
-      self$replace_int() # check TRUE FALSE?
+      self$replace_int()
     },
     convert = function(var) {
       self$replace_INF()
@@ -237,6 +237,30 @@ generic <- R6::R6Class("generic",
     }
   )
 )
+
+#' @import R6
+vector_class <- R6::R6Class("vector_class",
+  inherit = PC,
+  public = list(
+    convert = function(var) {
+      self$replace_INF()
+      self$replace_NA()
+      self$replace_TF()
+      self$oaf(var)
+
+      ret <- list()
+      if (deparse(self$name_fct) %in% self$namespace_etr) {
+        ret[[1]] <- as.name(paste0("etr::", self$name_fct))
+      } else {
+        ret[[1]] <- self$name_fct
+      }
+
+      ret <- c(ret, self$arguments)
+      return(ret)
+    }
+  )
+)
+
 
 #' @import R6
 assign <- R6::R6Class("assign",

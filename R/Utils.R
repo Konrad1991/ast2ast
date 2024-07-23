@@ -22,6 +22,23 @@ color_print <- function(col, ...) {
   cat(paste0("\033[0;", col, "m", txt, "\033[0m", "\n"))
 }
 
+add_line_numbers <- function(text) {
+  sprintf("%d: %s", seq_along(lines), lines)
+}
+
+color_print_wrong_code <- function(col, ...) {
+  txt <- c(...)
+  txt <- add_line_numbers(txt)
+  txt <- paste(txt, collapse = " ")
+  cat(paste0("\033[0;", col, "m", txt, "\033[0m", "\n"))
+}
+
+print_with_line_numbers <- function(text) {
+  lines <- strsplit(text, "\n")[[1]]
+  numbered_lines <- sprintf("%d: %s", seq_along(lines), lines)
+  cat(paste(numbered_lines, collapse = "\n"))
+}
+
 print_traceback <- function() {
   tb <- sys.calls()
   if (length(tb) > 0) {

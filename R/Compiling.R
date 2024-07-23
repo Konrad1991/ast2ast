@@ -40,7 +40,7 @@ compiler_a2a <- function(fct_code, R_fct,
         attributes(fct_ret) <- list(class = "XPtr")
       },
       error = function(e) {
-        print("Sorry compilation failed!")
+        color_print(43, "Sorry compilation failed!")
       }
     )
   } else {
@@ -58,14 +58,14 @@ compiler_a2a <- function(fct_code, R_fct,
         fct_ret <- env[[name_f]]
       },
       error = function(e) {
-        print("Sorry compilation failed!")
+        color_print(43, "Sorry compilation failed!")
       }
     )
 
     Sys.unsetenv("PKG_CXXFLAGS")
 
     if (verbose == TRUE) {
-      cat(fct)
+      print_with_line_numbers(fct)
     }
   }
 
