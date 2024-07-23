@@ -167,14 +167,30 @@ numeric_deriv <- function(x) numeric(x)
 rep_deriv <- function(x, y) rep(x, y)
 matrix_deriv <- function(val = 0, x, y) matrix(val, x, y)
 
+cmr <- function(a, b, c, d) {
+  print("Mock function")
+}
+get_deriv <- function(a) {
+  print("Mock function")
+}
 cmr_deriv <- function(a, b, c, d) cmr(a, b, c, d)
 get_deriv_deriv <- function(a) get_deriv(a)
 colon_deriv <- function(a, b) a:b
 length_deriv <- function(a) length(a)
 dim_deriv <- function(a) dim(a)
+
+set_indep <- function(a) {
+  print("Mock function")
+}
+unset_indep <- function(a) {
+  print("Mock function")
+}
+i2d <- function(a) {
+  print("Mock function")
+}
 set_indep_deriv <- function(a) set_indep(a)
 unset_indep_deriv <- function(a) unset_indep(a)
-i2d_deriv <- function(a) etr::i2d(a)
+i2d_deriv <- function(a) i2d(a) # etr::i2d(a)
 
 
 

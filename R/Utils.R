@@ -22,7 +22,7 @@ color_print <- function(col, ...) {
   cat(paste0("\033[0;", col, "m", txt, "\033[0m", "\n"))
 }
 
-add_line_numbers <- function(text) {
+add_line_numbers <- function(lines) {
   sprintf("%d: %s", seq_along(lines), lines)
 }
 
