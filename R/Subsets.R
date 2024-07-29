@@ -164,16 +164,41 @@ identify_subsets <- function(f, symbol_table) {
     create_calls(expr)
   })
   print(env$subsets)
-  print(env$subset_idx)
 
   for (i in seq_along(env$subsets)) {
     res <- with_what_is_subsetted(env$subsets[[i]], symbol_table)
-    def_fcts(res) |> print()
-    what_sub(env$subsets[[i]]) |> print()
-    with_what_sub(env$subsets[[i]]) |> print()
-    cat("\n\n\n\n\n")
+    fcts <- def_fcts(res)
+    what <- what_sub(env$subsets[[i]])
+    with_what <- with_what_sub(env$subsets[[i]])
+    temp <- list()
+    for (j in rev(seq_along(fcts))) {
+      if (j == length(fcts)) {
+        temp[[j]] <- paste0(
+          fcts[j], "(", i, ",",
+          what[j], ",", with_what[j], ", vm)"
+        )
+      } else if (j > 1) {
+        temp[[j]] <- paste0(fcts[j], "(", i, ", ", "%s", " , vm)")
+      } else {
+        temp[[j]] <- paste0(fcts[j], "(", i, ", ", "%s", " , vm)")
+      }
+    }
+    if (length(fcts) >= 2) {
+      for (j in rev(seq_along(fcts))) {
+        if (j < length(fcts)) {
+          temp[[j]] <- sprintf(temp[[j]], temp[[j + 1]])
+        }
+      }
+    }
+    temp <- temp[[1]]
+
+    print(temp)
+    cat("\n\n")
   }
 
+
+  # subset_something_with_not_subset(subset_vec_idx, vec_idx, with_what, VectorManager)
+  # subset_something_with_subset(subset_vec_idx, Subset*, VectorManager)
   new_body <- as.call(c(as.name("{"), new_body))
   body(f) <- new_body
   return(f)
@@ -185,7 +210,7 @@ f <- function() {
   c <- c(1, 2)
   d <- c[1]
   d <- a[b[1L]]
-  d <- a[b[c[1]]]
+  d <- a[b[d[1]]]
   return(d)
 }
 
