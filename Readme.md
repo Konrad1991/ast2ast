@@ -25,7 +25,7 @@ As an example solving a simple ODE-System. The translated code is considerable f
 
 ## Documentation:
 
-Documentation for the function [J](https://konrad1991.github.io/ast2ast/J.html) and [translate](https://konrad1991.github.io/ast2ast/translate.html).
+Documentation for the function [translate](https://konrad1991.github.io/ast2ast/translate.html).
 If you want a detailed documentation please read this vignette: https://konrad1991.github.io/ast2ast/DetailedDocumentation.html
 In case you are interested on using ast2ast in your R package please refer to: https://konrad1991.github.io/ast2ast/InformationForPackageAuthors.html
 
