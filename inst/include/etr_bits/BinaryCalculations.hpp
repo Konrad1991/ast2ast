@@ -39,7 +39,7 @@ struct BinaryOperation {
     } else {
       return l.im() || r.im();
     }
-    return false; // issue: correct?
+    return false; // TODO: correct?
   }
   std::size_t nc() const {
     if constexpr (std::is_arithmetic_v<L>) {

@@ -1,8 +1,8 @@
 #ifndef SUBSETTING_MATRIX_HPP
 #define SUBSETTING_MATRIX_HPP
 
+#include "../Allocation/AllocationUtils.hpp"
 #include "UtilsSubsetting.hpp"
-#include "etr_bits/Allocation/AllocationUtils.hpp"
 
 namespace etr {
 
@@ -190,7 +190,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
       ind.resize(positions.size());
       indexRow--;
       for (std::size_t j = 0; j < positions.size(); j++) {
-        ind[j] = (d2i(positions[j])) * vec.nr() + indexRow;
+        ind[j] = (d2i(positions[j]))*vec.nr() + indexRow;
       }
       mp.setMatrix(false, 0, 0);
       return;
@@ -262,7 +262,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
       ind.resize(positions.size());
       indexRow--;
       for (std::size_t j = 0; j < positions.size(); j++) {
-        ind[j] = (d2i(positions[j])) * vec.nr() + indexRow;
+        ind[j] = (d2i(positions[j]))*vec.nr() + indexRow;
       }
       mp.setMatrix(false, 0, 0);
       return;
@@ -523,8 +523,8 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
         }
       }
       return;
-    } else if constexpr ((is<DataTypeR, int> ||
-                          is<DataTypeR, double>)&&is<DataTypeC, bool>) {
+    } else if constexpr ((is<DataTypeR, int> || is<DataTypeR, double>) &&
+                         is<DataTypeC, bool>) {
       std::size_t counter = 0;
       for (std::size_t i = 0; i < idxR->size(); i++)
         if ((*idxR)[i])
@@ -551,8 +551,8 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
       }
       mp.setMatrix(true, idxL->size(), positions.size());
       return;
-    } else if constexpr ((is<DataTypeR, int> || is<DataTypeR, double>)&&(
-                             is<DataTypeR, int> || is<DataTypeR, double>)) {
+    } else if constexpr ((is<DataTypeR, int> || is<DataTypeR, double>) &&
+                         (is<DataTypeR, int> || is<DataTypeR, double>)) {
       ind.resize(idxL->size() * idxR->size());
       std::size_t counter = 0;
       for (std::size_t i = 0; i < idxR->size(); i++) {

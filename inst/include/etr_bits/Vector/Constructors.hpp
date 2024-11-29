@@ -67,6 +67,18 @@ template <typename L2>
 explicit Vec(Subset<L2> &inp) : d(inp), deriv(inp.size()) {
   d.setMatrix(inp.mp);
 }
+// NOTE: Subset lazy
+template <typename L2, typename R2, typename TraitL>
+  requires std::is_same_v<TraitL, SubsetClassTrait>
+explicit Vec(const SubsetClass<L2, R2, TraitL> &&inp)
+    : d(inp), deriv(inp.size()) {
+  d.setMatrix(inp.mp);
+}
+template <typename L2, typename R2, typename TraitL>
+  requires std::is_same_v<TraitL, SubsetClassTrait>
+explicit Vec(SubsetClass<L2, R2, TraitL> &inp) : d(inp), deriv(inp.size()) {
+  d.setMatrix(inp.mp);
+}
 
 // NOTE: Binary operation
 template <typename L2, typename R2, typename OperationTrait>
@@ -297,6 +309,17 @@ template <typename L2> explicit Vec(const Subset<L2> &&inp) : d(inp) {
   d.setMatrix(inp.mp);
 }
 template <typename L2> explicit Vec(Subset<L2> &inp) : d(inp) {
+  d.setMatrix(inp.mp);
+}
+// NOTE: Subset lazy
+template <typename L2, typename R2, typename TraitL>
+  requires std::is_same_v<TraitL, SubsetClassTrait>
+explicit Vec(const SubsetClass<L2, R2, TraitL> &&inp) : d(std::move(inp)) {
+  d.setMatrix(inp.mp);
+}
+template <typename L2, typename R2, typename TraitL>
+  requires std::is_same_v<TraitL, SubsetClassTrait>
+explicit Vec(SubsetClass<L2, R2, TraitL> &inp) : d(std::move(inp)) {
   d.setMatrix(inp.mp);
 }
 

@@ -30,3 +30,4 @@
 ^\.docs
 ^\.development
 ^index.html
+^compile_flags.txt

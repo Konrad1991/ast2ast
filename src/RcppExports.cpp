@@ -140,6 +140,15 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_lazy_subsets
+void test_lazy_subsets();
+RcppExport SEXP _ast2ast_test_lazy_subsets() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_lazy_subsets();
+    return R_NilValue;
+END_RCPP
+}
 // test_matrices
 void test_matrices();
 RcppExport SEXP _ast2ast_test_matrices() {
@@ -239,6 +248,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_isInf_tests", (DL_FUNC) &_ast2ast_isInf_tests, 0},
     {"_ast2ast_length_tests", (DL_FUNC) &_ast2ast_length_tests, 0},
     {"_ast2ast_dim_tests", (DL_FUNC) &_ast2ast_dim_tests, 0},
+    {"_ast2ast_test_lazy_subsets", (DL_FUNC) &_ast2ast_test_lazy_subsets, 0},
     {"_ast2ast_test_matrices", (DL_FUNC) &_ast2ast_test_matrices, 0},
     {"_ast2ast_test_rep", (DL_FUNC) &_ast2ast_test_rep, 0},
     {"_ast2ast_test_vector_subsetting", (DL_FUNC) &_ast2ast_test_vector_subsetting, 0},

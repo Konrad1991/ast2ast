@@ -363,12 +363,10 @@ concept IsVarPointer = requires {
 };
 
 template <typename T> struct ExtractDType;
-
 template <typename T, typename R, typename Trait>
 struct ExtractDType<Vec<T, R, Trait>> {
   using type = R;
 };
-
 template <typename T> using ExtractedDType = typename ExtractDType<T>::type;
 
 template <typename T>

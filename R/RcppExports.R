@@ -57,6 +57,10 @@ dim_tests <- function() {
     invisible(.Call(`_ast2ast_dim_tests`))
 }
 
+test_lazy_subsets <- function() {
+    invisible(.Call(`_ast2ast_test_lazy_subsets`))
+}
+
 test_matrices <- function() {
     invisible(.Call(`_ast2ast_test_matrices`))
 }

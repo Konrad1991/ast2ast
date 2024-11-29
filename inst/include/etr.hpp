@@ -33,6 +33,9 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "etr_bits/Subsetting.hpp"
 #include "etr_bits/UnaryCalculations.hpp"
 
+#include "etr_bits/Subsetting/LazySubsetting.hpp"
+#include "etr_bits/Evaluate.hpp"
+
 #include "etr_bits/BufferVector.hpp"
 #include "etr_bits/Derivatives/DerivsGetAndAssign.hpp"
 typedef etr::Vec<etr::BaseType> sexp;

@@ -71,8 +71,8 @@ struct TimesDerivTrait {
   }
 
   template <typename L, typename R, typename LDeriv, typename RDeriv>
-  static inline typename std::common_type<L, R>::type fDeriv(L l, R r, LDeriv ld,
-                                                    RDeriv rd) {
+  static inline typename std::common_type<L, R>::type
+  fDeriv(L l, R r, LDeriv ld, RDeriv rd) {
     return ld * r + rd * l;
   }
 };
@@ -95,8 +95,8 @@ struct DivideDerivTrait {
   }
 
   template <typename L, typename R, typename LDeriv, typename RDeriv>
-  static inline typename std::common_type<L, R>::type fDeriv(L l, R r, LDeriv ld,
-                                                    RDeriv rd) {
+  static inline typename std::common_type<L, R>::type
+  fDeriv(L l, R r, LDeriv ld, RDeriv rd) {
     return (ld * r - l * rd) /
            std::pow(rd, 2); // TODO: add check for integral ...
   }
@@ -120,8 +120,8 @@ struct DivideByConstantDerivTrait {
   }
 
   template <typename L, typename R, typename LDeriv, typename RDeriv>
-  static inline typename std::common_type<L, R>::type fDeriv(L l, R r, LDeriv ld,
-                                                    RDeriv rd) {
+  static inline typename std::common_type<L, R>::type
+  fDeriv(L l, R r, LDeriv ld, RDeriv rd) {
     return ld / r;
   }
 };
@@ -133,8 +133,8 @@ struct PowDerivTrait {
   }
 
   template <typename L, typename R, typename LDeriv, typename RDeriv>
-  static inline typename std::common_type<L, R>::type fDeriv(L l, R r, LDeriv ld,
-                                                    RDeriv rd) {
+  static inline typename std::common_type<L, R>::type
+  fDeriv(L l, R r, LDeriv ld, RDeriv rd) {
     return r * std::pow(l, r - 1) * ld;
   }
 };
@@ -231,6 +231,8 @@ struct SinusDerivTrait {
   template <typename L> static inline L f(L l) { return sin(l); }
   template <typename L> static inline L fDeriv(L l) { return cos(l); }
 };
+
+struct SubsetClassTrait {};
 
 struct PlusTrait {
   template <typename L = BaseType, typename R = BaseType>

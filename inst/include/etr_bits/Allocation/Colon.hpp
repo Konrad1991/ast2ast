@@ -16,8 +16,8 @@
 const Vec is an Operation
 */
 #include "../BufferVector.hpp"
+#include "../Core/Traits.hpp"
 #include "AllocationUtils.hpp"
-#include "etr_bits/Core/Traits.hpp"
 #include <type_traits>
 
 namespace etr {

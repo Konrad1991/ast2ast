@@ -9,6 +9,8 @@
 #include "../SEXPConversions.hpp"
 #include "../UnaryCalculations.hpp"
 
+#include "../Subsetting/LazySubsetting.hpp"
+
 namespace etr {
 
 template <typename T, typename R, typename Trait> struct Vec {
@@ -29,6 +31,7 @@ template <typename T, typename R, typename Trait> struct Vec {
   using isBorrow = typename std::is_same<typeTraitD, BorrowTrait>;
   using isBorrowSEXP = typename std::is_same<typeTraitD, BorrowSEXPTrait>;
   using isSubset = typename std::is_same<typeTraitD, SubsetTrait>;
+  using isSubsetClass = typename std::is_same<typeTraitD, SubsetClassTrait>;
   using isVarPointer = typename std::is_same<typeTraitD, VarPointerTrait>;
   using caseTraitD =
       typename std::remove_reference<decltype(d)>::type::CaseTrait;
@@ -66,6 +69,8 @@ template <typename T, typename R, typename Trait> struct Vec {
   auto begin() const {
     if constexpr (isSubset::value) {
       return It<T>{d.p->p};
+    } else if constexpr (isSubsetClass::value) {
+      return d.begin();
     } else {
       return It<T>{d.p};
     }
@@ -73,12 +78,15 @@ template <typename T, typename R, typename Trait> struct Vec {
   auto end() const {
     if constexpr (isSubset::value) {
       return It<T>{d.p->p + this->size()};
+    } else if constexpr (isSubsetClass::value) {
+      return d.end();
     } else {
       return It<T>{d.p + this->size()};
     }
   }
 
   T &back() const { return d.p[this->size()]; }
+
   void fill(T value) { d.fill(value); }
   void resize(std::size_t newSize) { d.resize(newSize); }
   friend std::ostream &operator<<(std::ostream &os, const Vec &vec) {
