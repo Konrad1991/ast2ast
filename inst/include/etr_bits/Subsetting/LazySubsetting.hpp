@@ -33,7 +33,7 @@ template <typename L, typename R> struct SubsetClassIterator {
       : l(l), r(r), index(index) {}
 
   auto operator*() const {
-    constexpr bool isArithmeticR = std::is_arithmetic_v<R>;
+    constexpr bool isArithmeticR = IsArithV<R>;
     if constexpr (isArithmeticR) {
       return l[r];
     } else if constexpr (!isArithmeticR) {
@@ -131,7 +131,7 @@ template <typename L, typename R, typename Trait> struct SubsetClass {
 template <typename L, typename R> auto subsetArithmetic(L &&l, R &&r) {
   using RetType = typename ExtractDataType<std::decay_t<L>>::RetType;
   constexpr bool isLArgRvalue = std::is_rvalue_reference_v<L &&>;
-  if constexpr(isLArgRvalue) {
+  if constexpr (isLArgRvalue) {
     if constexpr (std::is_floating_point_v<R>) {
       return static_cast<RetType>(l[static_cast<size_t>(std::floor(r)) - 1]);
     } else if constexpr (std::is_same_v<R, bool>) {
