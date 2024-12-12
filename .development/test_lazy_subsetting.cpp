@@ -63,4 +63,9 @@ void test_subset_test_with_scalar() {
   // assert
 }
 
-int main() { test_subset_test_with_scalar(); }
+int main() {
+  test_subset_test_with_scalar();
+  Vec<double> v = coca(1, 2, 3, 4);
+  auto bla = subset_test(v, coca(1, 2, 4));
+  print(bla);
+}
