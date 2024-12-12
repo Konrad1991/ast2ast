@@ -3,6 +3,7 @@
 
 // this is sorted by clang format be careful
 #include "./Core/Header.hpp"
+#include "./Core/TemplateUtils.hpp"
 #include "./Core/Utils.hpp"
 #include "./Core/Reflection.hpp"
 #include "./Core/Traits.hpp"

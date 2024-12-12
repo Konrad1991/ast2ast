@@ -33,7 +33,7 @@ template <typename L, typename R> struct SubsetClassIterator {
       : l(l), r(r), index(index) {}
 
   auto operator*() const {
-    constexpr bool isArithmeticR = std::is_arithmetic_v<R>;
+    constexpr bool isArithmeticR = IsArithV<R>;
     if constexpr (isArithmeticR) {
       return l[r];
     } else if constexpr (!isArithmeticR) {
