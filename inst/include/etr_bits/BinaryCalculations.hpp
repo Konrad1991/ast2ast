@@ -85,6 +85,9 @@ struct BinaryOperation {
     ass<"Matrix calculation failed!">(false);
     return (0);
   }
+  // TODO: are all of those constructors required?
+  // Actually only   BinaryOperation(const L &l_, const R &r_) : l(l_), r(r_) {}
+  // is used.
   BinaryOperation(const BinaryOperation &other) : l(other.l), r(other.r) {}
   BinaryOperation(const BinaryOperation &&other)
       : l(std::move(other.l)), r(std::move(other.r)) {}
