@@ -129,20 +129,9 @@ template <typename L, typename R, typename Trait> struct SubsetClass {
 // can be either a scalar (int or double), a bool, a vector or a SubsetClass
 // (wrapped in a Vec).
 
-template <typename T> using Decayed = std::decay_t<T>;
-
-template <typename T>
-constexpr bool IsFloatingPoint = std::is_floating_point_v<T>;
-
-template <typename T> constexpr bool IsIntegral = std::is_integral_v<T>;
-
-template <typename T> constexpr bool IsBool = std::is_same_v<T, bool>;
-
-template <typename T> constexpr bool IsRvalue = std::is_rvalue_reference_v<T>;
-
 template <typename L, typename R> auto subsetArithmeticR(L &&l, R &&r) {
   using RetType = typename ExtractDataType<Decayed<L>>::RetType;
-  if constexpr (IsFloatingPoint<R>) {
+  if constexpr (IsFloatingPointV<R>) {
     return static_cast<RetType>(l[static_cast<size_t>(std::floor(r)) - 1]);
   } else if constexpr (IsBool<R>) {
     if (r) {
@@ -159,7 +148,7 @@ template <typename L, typename R> auto subsetArithmeticR(L &&l, R &&r) {
 
 template <typename L, typename R> auto subsetArithmeticL(L &&l, R &&r) {
   using RetType = typename ExtractDataType<Decayed<L>>::RetType;
-  if constexpr (IsFloatingPoint<R>) {
+  if constexpr (IsFloatingPointV<R>) {
     return static_cast<RetType &>(l[static_cast<size_t>(std::floor(r)) - 1]);
   } else if constexpr (IsBool<R>) {
     if (r) {
@@ -176,7 +165,7 @@ template <typename L, typename R> auto subsetArithmeticL(L &&l, R &&r) {
 
 template <typename L, typename R> auto subsetArithmetic(L &&l, R &&r) {
   using RetType = typename ExtractDataType<Decayed<L>>::RetType;
-  constexpr bool isLArgRvalue = std::is_rvalue_reference_v<L &&>;
+  constexpr bool isLArgRvalue = IsRvalue<L &&>;
   if constexpr (isLArgRvalue) {
     return subsetArithmeticR(std::forward<decltype(l)>(l),
                              std::forward<decltype(r)>(r));
@@ -187,8 +176,8 @@ template <typename L, typename R> auto subsetArithmetic(L &&l, R &&r) {
 }
 
 template <typename L, typename R> auto subsetBoolean(L &&l, R &&r) {
-  constexpr bool isLArgRvalue = std::is_rvalue_reference_v<L &&>;
-  constexpr bool isRArgRvalue = std::is_rvalue_reference_v<R &&>;
+  constexpr bool isLArgRvalue = IsRvalue<L &&>;
+  constexpr bool isRArgRvalue = IsRvalue<R &&>;
   using dataType = typename ExtractDataType<Decayed<L>>::RetType;
   Indices ind;
   precalcVecBool(l, ind, &r);
@@ -206,8 +195,8 @@ template <typename L, typename R> auto subsetBoolean(L &&l, R &&r) {
 }
 
 template <typename L, typename R> auto subsetSubset(L &&l, R &&r) {
-  constexpr bool isLArgRvalue = std::is_rvalue_reference_v<L &&>;
-  constexpr bool isRArgRvalue = std::is_rvalue_reference_v<R &&>;
+  constexpr bool isLArgRvalue = IsRvalue<L &&>;
+  constexpr bool isRArgRvalue = IsRvalue<R &&>;
   using dataType = typename ExtractDataType<std::decay_t<L>>::RetType;
   Indices ind(r.size());
   for (std::size_t i = 0; i < r.size(); i++) {
@@ -242,21 +231,21 @@ template <typename L, typename R> auto subsetVector(L &&l, R &&r) {
 }
 
 template <typename L, typename R> auto subset_test(L &&l, R &&r) {
-  static_assert(!std::is_arithmetic_v<Decayed<L>>,
+  static_assert(!IsArithV<Decayed<L>>,
                 "\n\nYou cannot subset a scalar value\n\n");
-  constexpr bool isArithmeticL = std::is_arithmetic_v<Decayed<L>>;
-  constexpr bool isArithmeticR = std::is_arithmetic_v<Decayed<R>>;
+  constexpr bool isArithmeticL = IsArithV<Decayed<L>>;
+  constexpr bool isArithmeticR = IsArithV<Decayed<R>>;
   using LType = std::remove_reference_t<L>;
   using RType = std::remove_reference_t<R>;
-  constexpr bool isLArgRvalue = std::is_rvalue_reference_v<L &&>;
-  constexpr bool isRArgRvalue = std::is_rvalue_reference_v<R &&>;
+  constexpr bool isLArgRvalue = IsRvalue<L &&>;
+  constexpr bool isRArgRvalue = IsRvalue<R &&>;
   if constexpr (isArithmeticR) {
     return subsetArithmetic(std::forward<decltype(l)>(l),
                             std::forward<Decayed<R>>(r));
   } else {
     using dataType = typename ExtractDataType<Decayed<L>>::RetType;
     using dataTypeR = typename ExtractDataType<Decayed<R>>::RetType;
-    if constexpr (std::is_same_v<dataTypeR, bool>) {
+    if constexpr (IS<dataTypeR, bool>) {
       return subsetBoolean(std::forward<decltype(l)>(l),
                            std::forward<decltype(r)>(r));
     } else {

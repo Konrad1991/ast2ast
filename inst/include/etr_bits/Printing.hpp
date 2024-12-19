@@ -18,7 +18,7 @@ inline void print() { PRINT_STREAM << std::endl; }
 template <typename T>
   requires isBID<T>
 inline void print(const T &inp) {
-  if constexpr (std::is_same_v<T, bool>) {
+  if constexpr (IS<T, bool>) {
     PRINT_STREAM << std::boolalpha << inp << " ";
   } else {
     PRINT_STREAM << inp << std::endl;
@@ -27,7 +27,7 @@ inline void print(const T &inp) {
 }
 
 inline void print(const char *inp) {
-  if constexpr (std::is_same_v<T, bool>) {
+  if constexpr (IS<T, bool>) {
     PRINT_STREAM << inp << " ";
   } else {
     PRINT_STREAM << inp << std::endl;

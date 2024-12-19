@@ -12,58 +12,23 @@ template <typename T> struct AddConst {
 namespace etr {
 template <typename T>
 concept isBID = requires {
-  requires std::is_same_v<T, bool> || std::is_same_v<T, int> ||
-               std::is_same_v<T, double>;
-};
-
-template <typename R>
-concept IsVecDouble = requires {
-  typename R::TypeTrait;
-  typename R::Type;
-  requires std::is_same_v<typename R::TypeTrait, VectorTrait>;
-  requires std::is_same_v<typename R::Type, BaseType>;
-};
-
-template <typename R>
-concept IsVecBool = requires {
-  typename R::TypeTrait;
-  typename R::Type;
-  requires std::is_same_v<typename R::TypeTrait, VectorTrait>;
-  requires std::is_same_v<typename R::Type, bool>;
-};
-
-template <typename T>
-concept UnaryOrBinaryOperation = requires(T t) {
-  typename std::remove_reference<decltype(t)>::type::CaseTrait;
-  requires std::is_same<
-               typename std::remove_reference<decltype(t)>::type::CaseTrait,
-               UnaryTrait>::value ||
-               std::is_same<
-                   typename std::remove_reference<decltype(t)>::type::CaseTrait,
-                   BinaryTrait>::value;
-};
-
-template <typename T>
-concept IsUnary = requires(T t) {
-  typename std::remove_reference<decltype(t)>::type::CaseTrait;
-  requires std::is_same<
-      typename std::remove_reference<decltype(t)>::type::CaseTrait,
-      UnaryTrait>::value;
+  requires IS<T, bool> || IS<T, int> ||
+               IS<T, double>;
 };
 
 template <typename T>
 concept IsBinary = requires(T t) {
-  typename std::remove_reference<decltype(t)>::type::CaseTrait;
+  typename std::remove_reference<decltype(t)>::type::Trait;
   requires std::is_same<
-      typename std::remove_reference<decltype(t)>::type::CaseTrait,
+      typename std::remove_reference<decltype(t)>::type::Trait,
       BinaryTrait>::value;
 };
 
 template <typename T>
 concept IsSubset = requires(T t) {
-  typename std::remove_reference<decltype(t)>::type::CaseTrait;
+  typename std::remove_reference<decltype(t)>::type::Trait;
   requires std::is_same<
-      typename std::remove_reference<decltype(t)>::type::CaseTrait,
+      typename std::remove_reference<decltype(t)>::type::Trait,
       SubsetTrait>::value;
 };
 
@@ -119,7 +84,7 @@ concept IsRBuf = requires(T t) {
 template <typename T>
 concept IsVariable = requires {
   typename T::CaseTrait;
-  requires std::is_same_v<typename T::CaseTrait,
+  requires IS<typename T::CaseTrait,
                           VariableTrait>; // TODO: check whether this is true
                                           // for Borrow and BorrowSEXP
 };
@@ -127,22 +92,22 @@ concept IsVariable = requires {
 template <typename R>
 concept IsVec = requires {
   typename R::TypeTrait;
-  requires std::is_same_v<typename R::TypeTrait, VectorTrait>;
+  requires IS<typename R::TypeTrait, VectorTrait>;
 };
 
 template <typename R>
 concept IsVecRorCalc = requires {
   typename R::TypeTrait;
-  requires std::is_same_v<typename R::TypeTrait, RVecTrait> ||
-               std::is_same_v<typename R::TypeTrait, UnaryTrait> ||
-               std::is_same_v<typename R::TypeTrait, BinaryTrait>;
+  requires IS<typename R::TypeTrait, RVecTrait> ||
+               IS<typename R::TypeTrait, UnaryTrait> ||
+               IS<typename R::TypeTrait, BinaryTrait>;
 };
 
 // NOTE: Concepts for Derivs
 template <typename T>
 concept IsVariableType = requires {
   typename T::TypeTrait;
-  requires std::is_same_v<typename T::TypeTrait, VariableTypeTrait>;
+  requires IS<typename T::TypeTrait, VariableTypeTrait>;
 };
 
 template <typename T>
@@ -359,7 +324,7 @@ using ExtractedTypeTrait = typename ExtractTypeTrait<T>::type;
 template <typename T>
 concept IsVarPointer = requires {
   typename ExtractedTypeTrait<T>;
-  requires std::is_same_v<ExtractedTypeTrait<T>, VarPointerTrait>;
+  requires IS<ExtractedTypeTrait<T>, VarPointerTrait>;
 };
 
 template <typename T> struct ExtractDType;

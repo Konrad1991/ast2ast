@@ -184,7 +184,7 @@ inline double cmr(const A &tInp, const B &timeVec, const C &parVec) {
 }
 
 template <typename A, typename B, typename C>
-  requires std::is_arithmetic_v<A>
+  requires IsArithV<A>
 inline double cmr(A tInp, const B &timeVec, const C &parVec) {
   static_assert(IsRVec<B> || IsSubVec<B> || OperationVec<B> || IsVec<B>,
                 "time vector has to be a vector");

@@ -30,11 +30,11 @@ struct BinaryOperation {
   bool mpCalculated = false;
 
   bool im() const {
-    if constexpr (std::is_arithmetic_v<L>) {
+    if constexpr (IsArithV<L>) {
       return r.im();
-    } else if constexpr (std::is_arithmetic_v<R>) {
+    } else if constexpr (IsArithV<R>) {
       return l.im();
-    } else if constexpr (std::is_arithmetic_v<L> && std::is_arithmetic_v<R>) {
+    } else if constexpr (IsArithV<L> && IsArithV<R>) {
       return false;
     } else {
       return l.im() || r.im();
@@ -42,13 +42,13 @@ struct BinaryOperation {
     return false; // TODO: correct?
   }
   std::size_t nc() const {
-    if constexpr (std::is_arithmetic_v<L>) {
+    if constexpr (IsArithV<L>) {
       // TODO: check whether one has to add here the test whether R and L are
       // matrices. Same is true for nr
       return r.nc();
-    } else if constexpr (std::is_arithmetic_v<R>) {
+    } else if constexpr (IsArithV<R>) {
       return l.nc();
-    } else if constexpr (std::is_arithmetic_v<L> && std::is_arithmetic_v<R>) {
+    } else if constexpr (IsArithV<L> && IsArithV<R>) {
       return 0;
     } else {
       if (l.im() && r.im()) {
@@ -65,11 +65,11 @@ struct BinaryOperation {
     return (0);
   }
   std::size_t nr() const {
-    if constexpr (std::is_arithmetic_v<L>) {
+    if constexpr (IsArithV<L>) {
       return r.nr();
-    } else if constexpr (std::is_arithmetic_v<R>) {
+    } else if constexpr (IsArithV<R>) {
       return l.nr();
-    } else if constexpr (std::is_arithmetic_v<L> && std::is_arithmetic_v<R>) {
+    } else if constexpr (IsArithV<L> && IsArithV<R>) {
       return 0;
     } else {
       if (l.im() && r.im()) {
@@ -98,8 +98,8 @@ struct BinaryOperation {
       : l(other.l), r(other.r) {}
 
   auto operator[](std::size_t i) const {
-    constexpr bool isDoubleL = std::is_arithmetic_v<L>;
-    constexpr bool isDoubleR = std::is_arithmetic_v<R>;
+    constexpr bool isDoubleL = IsArithV<L>;
+    constexpr bool isDoubleR = IsArithV<R>;
     if constexpr (!isDoubleL && isDoubleR) {
       return Trait::f(l[i % l.size()], r);
     } else if constexpr (isDoubleL && !isDoubleR) {
@@ -109,8 +109,8 @@ struct BinaryOperation {
     }
   }
   std::size_t size() const {
-    constexpr bool isDoubleL = std::is_arithmetic_v<L>;
-    constexpr bool isDoubleR = std::is_arithmetic_v<R>;
+    constexpr bool isDoubleL = IsArithV<L>;
+    constexpr bool isDoubleR = IsArithV<R>;
     if constexpr (isDoubleL && isDoubleR) {
       return 1;
     } else if constexpr (!isDoubleL && isDoubleR) {
@@ -150,8 +150,8 @@ struct BinaryOperation {
 };
 
 template <typename L, typename R> auto operator+(const L &l, const R &r) {
-  constexpr bool isDoubleL = std::is_arithmetic_v<L>;
-  constexpr bool isDoubleR = std::is_arithmetic_v<R>;
+  constexpr bool isDoubleL = IsArithV<L>;
+  constexpr bool isDoubleR = IsArithV<R>;
   if constexpr (!isDoubleL && isDoubleR) {
     return Vec<typename std::common_type<typename ExtractDataType<L>::RetType,
                                          R>::type,
@@ -174,8 +174,8 @@ template <typename L, typename R> auto operator+(const L &l, const R &r) {
 }
 
 template <typename L, typename R> auto operator-(const L &l, const R &r) {
-  constexpr bool isDoubleL = std::is_arithmetic_v<L>;
-  constexpr bool isDoubleR = std::is_arithmetic_v<R>;
+  constexpr bool isDoubleL = IsArithV<L>;
+  constexpr bool isDoubleR = IsArithV<R>;
   if constexpr (!isDoubleL && isDoubleR) {
     return Vec<typename std::common_type<typename ExtractDataType<L>::RetType,
                                          R>::type,
@@ -198,8 +198,8 @@ template <typename L, typename R> auto operator-(const L &l, const R &r) {
 }
 
 template <typename L, typename R> auto operator*(const L &l, const R &r) {
-  constexpr bool isDoubleL = std::is_arithmetic_v<L>;
-  constexpr bool isDoubleR = std::is_arithmetic_v<R>;
+  constexpr bool isDoubleL = IsArithV<L>;
+  constexpr bool isDoubleR = IsArithV<R>;
   if constexpr (!isDoubleL && isDoubleR) {
     return Vec<typename std::common_type<typename ExtractDataType<L>::RetType,
                                          R>::type,
@@ -222,8 +222,8 @@ template <typename L, typename R> auto operator*(const L &l, const R &r) {
 }
 
 template <typename L, typename R> auto operator/(const L &l, const R &r) {
-  constexpr bool isDoubleL = std::is_arithmetic_v<L>;
-  constexpr bool isDoubleR = std::is_arithmetic_v<R>;
+  constexpr bool isDoubleL = IsArithV<L>;
+  constexpr bool isDoubleR = IsArithV<R>;
   if constexpr (!isDoubleL && isDoubleR) {
     return Vec<typename std::common_type<typename ExtractDataType<L>::RetType,
                                          R>::type,
@@ -246,8 +246,8 @@ template <typename L, typename R> auto operator/(const L &l, const R &r) {
 }
 
 template <typename L, typename R> auto power(const L &l, const R &r) {
-  constexpr bool isDoubleL = std::is_arithmetic_v<L>;
-  constexpr bool isDoubleR = std::is_arithmetic_v<R>;
+  constexpr bool isDoubleL = IsArithV<L>;
+  constexpr bool isDoubleR = IsArithV<R>;
   if constexpr (!isDoubleL && isDoubleR) {
     return Vec<typename std::common_type<typename ExtractDataType<L>::RetType,
                                          R>::type,
@@ -270,8 +270,8 @@ template <typename L, typename R> auto power(const L &l, const R &r) {
 }
 
 template <typename L, typename R> auto operator==(const L &l, const R &r) {
-  constexpr bool isDoubleL = std::is_arithmetic_v<L>;
-  constexpr bool isDoubleR = std::is_arithmetic_v<R>;
+  constexpr bool isDoubleL = IsArithV<L>;
+  constexpr bool isDoubleR = IsArithV<R>;
   if constexpr (!isDoubleL && isDoubleR) {
     return Vec<bool, BinaryOperation<decltype(l.d), R, EqualTrait>>(
         BinaryOperation<decltype(l.d), R, EqualTrait>(l.d, r));
@@ -287,8 +287,8 @@ template <typename L, typename R> auto operator==(const L &l, const R &r) {
 }
 
 template <typename L, typename R> auto operator!=(const L &l, const R &r) {
-  constexpr bool isDoubleL = std::is_arithmetic_v<L>;
-  constexpr bool isDoubleR = std::is_arithmetic_v<R>;
+  constexpr bool isDoubleL = IsArithV<L>;
+  constexpr bool isDoubleR = IsArithV<R>;
   if constexpr (!isDoubleL && isDoubleR) {
     return Vec<bool, BinaryOperation<decltype(l.d), R, UnEqualTrait>>(
         BinaryOperation<decltype(l.d), R, UnEqualTrait>(l.d, r));
@@ -307,8 +307,8 @@ template <typename L, typename R> auto operator!=(const L &l, const R &r) {
 }
 
 template <typename L, typename R> auto operator>(const L &l, const R &r) {
-  constexpr bool isDoubleL = std::is_arithmetic_v<L>;
-  constexpr bool isDoubleR = std::is_arithmetic_v<R>;
+  constexpr bool isDoubleL = IsArithV<L>;
+  constexpr bool isDoubleR = IsArithV<R>;
   if constexpr (!isDoubleL && isDoubleR) {
     return Vec<bool, BinaryOperation<decltype(l.d), R, LargerTrait>>(
         BinaryOperation<decltype(l.d), R, LargerTrait>(l.d, r));
@@ -327,8 +327,8 @@ template <typename L, typename R> auto operator>(const L &l, const R &r) {
 }
 
 template <typename L, typename R> auto operator>=(const L &l, const R &r) {
-  constexpr bool isDoubleL = std::is_arithmetic_v<L>;
-  constexpr bool isDoubleR = std::is_arithmetic_v<R>;
+  constexpr bool isDoubleL = IsArithV<L>;
+  constexpr bool isDoubleR = IsArithV<R>;
   if constexpr (!isDoubleL && isDoubleR) {
     return Vec<bool, BinaryOperation<decltype(l.d), R, LargerEqualTrait>>(
         BinaryOperation<decltype(l.d), R, LargerEqualTrait>(l.d, r));
@@ -347,8 +347,8 @@ template <typename L, typename R> auto operator>=(const L &l, const R &r) {
 }
 
 template <typename L, typename R> auto operator<(const L &l, const R &r) {
-  constexpr bool isDoubleL = std::is_arithmetic_v<L>;
-  constexpr bool isDoubleR = std::is_arithmetic_v<R>;
+  constexpr bool isDoubleL = IsArithV<L>;
+  constexpr bool isDoubleR = IsArithV<R>;
   if constexpr (!isDoubleL && isDoubleR) {
     return Vec<bool, BinaryOperation<decltype(l.d), R, SmallerTrait>>(
         BinaryOperation<decltype(l.d), R, SmallerTrait>(l.d, r));
@@ -367,8 +367,8 @@ template <typename L, typename R> auto operator<(const L &l, const R &r) {
 }
 
 template <typename L, typename R> auto operator<=(const L &l, const R &r) {
-  constexpr bool isDoubleL = std::is_arithmetic_v<L>;
-  constexpr bool isDoubleR = std::is_arithmetic_v<R>;
+  constexpr bool isDoubleL = IsArithV<L>;
+  constexpr bool isDoubleR = IsArithV<R>;
   if constexpr (!isDoubleL && isDoubleR) {
     return Vec<bool, BinaryOperation<decltype(l.d), R, SmallerEqualTrait>>(
         BinaryOperation<decltype(l.d), R, SmallerEqualTrait>(l.d, r));

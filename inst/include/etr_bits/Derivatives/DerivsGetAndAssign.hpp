@@ -67,10 +67,10 @@ inline auto unset_indep(T &&v) {
 
 template <typename L, typename Expr, typename ExprDeriv>
 inline void assign(L &l, const Expr &expr, const ExprDeriv &r) {
-  if constexpr (std::is_arithmetic_v<L>) {
+  if constexpr (IsArithV<L>) {
     warn<"Found usage of scalar variable. Derivatives are not stored">(false);
   } else {
-    if constexpr (std::is_arithmetic_v<ExprDeriv>) {
+    if constexpr (IsArithV<ExprDeriv>) {
       l.deriv.resize(1);
       l.deriv[0] = r;
     } else {
@@ -96,7 +96,7 @@ inline void assign(L &l, const Expr &expr, const ExprDeriv &r) {
 template <typename L, typename Expr, typename ExprDeriv>
   requires IsSubVec<L>
 inline void assign(L &&l, const Expr &expr, const ExprDeriv &r) {
-  if constexpr (std::is_arithmetic_v<ExprDeriv>) {
+  if constexpr (IsArithV<ExprDeriv>) {
     l.deriv.resize(1);
     l.deriv[0] = r;
   } else {

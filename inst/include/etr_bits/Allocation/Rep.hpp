@@ -22,12 +22,12 @@ namespace etr {
 
 template <typename L, typename R>
 inline auto repInternal(const L *inp, const R *s) {
-  if constexpr (std::is_arithmetic_v<L> && std::is_arithmetic_v<R>) {
+  if constexpr (IsArithV<L> && IsArithV<R>) {
     std::size_t length = convertSize(*s);
     Vec<L, Buffer<L, BufferTrait, RBufTrait>, RVecTrait> ret(SI{length});
     ret.fill(*inp);
     return ret;
-  } else if constexpr (!std::is_arithmetic_v<L> && std::is_arithmetic_v<R>) {
+  } else if constexpr (!IsArithV<L> && IsArithV<R>) {
     std::size_t length = convertSize(*s) * inp->size();
     using DataType = typename ExtractDataType<L>::RetType;
     Vec<DataType, Buffer<DataType, BufferTrait, RBufTrait>, RVecTrait> ret(
@@ -40,14 +40,14 @@ inline auto repInternal(const L *inp, const R *s) {
         counter = 0;
     }
     return ret;
-  } else if constexpr (std::is_arithmetic_v<L> && !std::is_arithmetic_v<R>) {
+  } else if constexpr (IsArithV<L> && !IsArithV<R>) {
     warn<"times in fct rep has more than one element. Only the "
          "first one is used">(!(s->size() > 1));
     std::size_t length = convertSize((*s)[0]);
     Vec<L, Buffer<L, BufferTrait, RBufTrait>, RVecTrait> ret(SI{length});
     ret.fill(*inp);
     return ret;
-  } else if constexpr (!std::is_arithmetic_v<L> && !std::is_arithmetic_v<R>) {
+  } else if constexpr (!IsArithV<L> && !IsArithV<R>) {
     warn<"times in fct rep has more than one element. Only the "
          "first one is used">(!(s->size() > 1));
     std::size_t length = convertSize((*s)[0]) * inp->size();

@@ -1,4 +1,5 @@
 ^README\.Rmd$
+^run_tests.sh$
 ^cran-comments\.md$
 ^README\.md$
 ^autom4te.cache

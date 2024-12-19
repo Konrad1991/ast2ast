@@ -19,10 +19,10 @@ template <typename T> inline auto convertSubsetConst(const T &obj) {
 }
 
 template <typename T> inline std::size_t convertSizeSubsetting(const T &inp) {
-  if constexpr (std::is_same_v<T, std::size_t>) {
+  if constexpr (IS<T, std::size_t>) {
     ass<"invalid index argument">(inp >= 1);
     return inp;
-  } else if constexpr (std::is_floating_point_v<T>) {
+  } else if constexpr (IsFloatingPointV<T>) {
     warn<"The provided size is a floating-point number with non-zero decimal "
          "places. It has been floored to the nearest integer.">(
         isDoubleInt(inp));

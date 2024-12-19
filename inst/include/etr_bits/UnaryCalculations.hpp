@@ -15,7 +15,7 @@ template <typename I, typename Trait, typename CTrait> struct UnaryOperation {
   using typeTraitObj = I;
   MatrixParameter mp;
   bool im() const {
-    if constexpr (!std::is_arithmetic_v<I>) {
+    if constexpr (!IsArithV<I>) {
       return obj.im();
     } else {
       return false;
@@ -23,14 +23,14 @@ template <typename I, typename Trait, typename CTrait> struct UnaryOperation {
   }
 
   std::size_t nc() const {
-    if constexpr (!std::is_arithmetic_v<I>) {
+    if constexpr (!IsArithV<I>) {
       return obj.nc();
     } else {
       return 0;
     }
   }
   std::size_t nr() const {
-    if constexpr (!std::is_arithmetic_v<I>) {
+    if constexpr (!IsArithV<I>) {
       return obj.nr();
     } else {
       return 0;
@@ -44,7 +44,7 @@ template <typename I, typename Trait, typename CTrait> struct UnaryOperation {
   UnaryOperation(const UnaryOperation<IType, TraitOther> &other)
       : obj(other.obj) {}
   RetType operator[](std::size_t i) const {
-    constexpr bool isDouble = std::is_arithmetic_v<I>;
+    constexpr bool isDouble = IsArithV<I>;
     if constexpr (isDouble) {
       return Trait::f(obj);
     } else if constexpr (!isDouble) {
@@ -52,9 +52,9 @@ template <typename I, typename Trait, typename CTrait> struct UnaryOperation {
     }
   }
   std::size_t size() const {
-    if constexpr (std::is_arithmetic_v<I>) {
+    if constexpr (IsArithV<I>) {
       return 1;
-    } else if constexpr (!std::is_arithmetic_v<I>) {
+    } else if constexpr (!IsArithV<I>) {
       return obj.size();
     }
   }
@@ -80,7 +80,7 @@ template <typename I, typename Trait, typename CTrait> struct UnaryOperation {
 };
 
 template <typename T> auto operator-(const T &obj) {
-  constexpr bool isDouble = std::is_arithmetic_v<T>;
+  constexpr bool isDouble = IsArithV<T>;
   if constexpr (!isDouble) {
     return Vec<typename ExtractDataType<T>::RetType,
                UnaryOperation<decltype(obj.d), MinusUnaryTrait>, UnaryTrait>(
@@ -92,7 +92,7 @@ template <typename T> auto operator-(const T &obj) {
 }
 
 template <typename T> auto sinus(const T &obj) {
-  constexpr bool isDouble = std::is_arithmetic_v<T>;
+  constexpr bool isDouble = IsArithV<T>;
   if constexpr (!isDouble) {
     return Vec<typename ExtractDataType<T>::RetType,
                UnaryOperation<decltype(obj.d), SinusTrait>, UnaryTrait>(
@@ -103,13 +103,13 @@ template <typename T> auto sinus(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, double>
+  requires IS<T, double>
 auto sinus(const T &obj) -> double {
   return sin(obj);
 }
 
 template <typename T> auto sinush(const T &obj) {
-  constexpr bool isDouble = std::is_arithmetic_v<T>;
+  constexpr bool isDouble = IsArithV<T>;
   if constexpr (!isDouble) {
     return Vec<typename ExtractDataType<T>::RetType,
                UnaryOperation<decltype(obj.d), SinusHTrait>, UnaryTrait>(
@@ -120,13 +120,13 @@ template <typename T> auto sinush(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, double>
+  requires IS<T, double>
 auto sinh(const T &obj) -> double {
   return SinusH(obj);
 }
 
 template <typename T> auto asinus(const T &obj) {
-  constexpr bool isDouble = std::is_arithmetic_v<T>;
+  constexpr bool isDouble = IsArithV<T>;
   if constexpr (!isDouble) {
     return Vec<typename ExtractDataType<T>::RetType,
                UnaryOperation<decltype(obj.d), ASinusTrait>, UnaryTrait>(
@@ -137,13 +137,13 @@ template <typename T> auto asinus(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, double>
+  requires IS<T, double>
 auto asin(const T &obj) -> double {
   return ASinus(obj);
 }
 
 template <typename T> auto cosinus(const T &obj) {
-  constexpr bool isDouble = std::is_arithmetic_v<T>;
+  constexpr bool isDouble = IsArithV<T>;
   if constexpr (!isDouble) {
     return Vec<typename ExtractDataType<T>::RetType,
                UnaryOperation<decltype(obj.d), CosinusTrait>, UnaryTrait>(
@@ -154,13 +154,13 @@ template <typename T> auto cosinus(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, double>
+  requires IS<T, double>
 auto cos(const T &obj) -> double {
   return Cosinus(obj);
 }
 
 template <typename T> auto cosinush(const T &obj) {
-  constexpr bool isDouble = std::is_arithmetic_v<T>;
+  constexpr bool isDouble = IsArithV<T>;
   if constexpr (!isDouble) {
     return Vec<typename ExtractDataType<T>::RetType,
                UnaryOperation<decltype(obj.d), CosinusHTrait>, UnaryTrait>(
@@ -171,13 +171,13 @@ template <typename T> auto cosinush(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, double>
+  requires IS<T, double>
 auto cosh(const T &obj) -> double {
   return CosinusH(obj);
 }
 
 template <typename T> auto acosinus(const T &obj) {
-  constexpr bool isDouble = std::is_arithmetic_v<T>;
+  constexpr bool isDouble = IsArithV<T>;
   if constexpr (!isDouble) {
     return Vec<typename ExtractDataType<T>::RetType,
                UnaryOperation<decltype(obj.d), ACosinusTrait>, UnaryTrait>(
@@ -188,13 +188,13 @@ template <typename T> auto acosinus(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, double>
+  requires IS<T, double>
 auto acos(const T &obj) -> double {
   return ACosinus(obj);
 }
 
 template <typename T> auto tangens(const T &obj) {
-  constexpr bool isDouble = std::is_arithmetic_v<T>;
+  constexpr bool isDouble = IsArithV<T>;
   if constexpr (!isDouble) {
     return Vec<typename ExtractDataType<T>::RetType,
                UnaryOperation<decltype(obj.d), TangensTrait>, UnaryTrait>(
@@ -205,13 +205,13 @@ template <typename T> auto tangens(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, double>
+  requires IS<T, double>
 auto tan(const T &obj) -> double {
   return Tangens(obj);
 }
 
 template <typename T> auto tangensh(const T &obj) {
-  constexpr bool isDouble = std::is_arithmetic_v<T>;
+  constexpr bool isDouble = IsArithV<T>;
   if constexpr (!isDouble) {
     return Vec<typename ExtractDataType<T>::RetType,
                UnaryOperation<decltype(obj.d), TangensHTrait>, UnaryTrait>(
@@ -222,13 +222,13 @@ template <typename T> auto tangensh(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, double>
+  requires IS<T, double>
 auto tanh(const T &obj) -> double {
   return TangensH(obj);
 }
 
 template <typename T> auto atangens(const T &obj) {
-  constexpr bool isDouble = std::is_arithmetic_v<T>;
+  constexpr bool isDouble = IsArithV<T>;
   if constexpr (!isDouble) {
     return Vec<typename ExtractDataType<T>::RetType,
                UnaryOperation<decltype(obj.d), ATangensTrait>, UnaryTrait>(
@@ -239,13 +239,13 @@ template <typename T> auto atangens(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, double>
+  requires IS<T, double>
 auto atan(const T &obj) -> double {
   return ATangens(obj);
 }
 
 template <typename T> auto ln(const T &obj) {
-  constexpr bool isDouble = std::is_arithmetic_v<T>;
+  constexpr bool isDouble = IsArithV<T>;
   if constexpr (!isDouble) {
     return Vec<typename ExtractDataType<T>::RetType,
                UnaryOperation<decltype(obj.d), LogTrait>, UnaryTrait>(
@@ -256,13 +256,13 @@ template <typename T> auto ln(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, double>
+  requires IS<T, double>
 auto ln(const T &obj) -> double {
   return log(obj);
 }
 
 template <typename T> auto sqroot(const T &obj) {
-  constexpr bool isDouble = std::is_arithmetic_v<T>;
+  constexpr bool isDouble = IsArithV<T>;
   if constexpr (!isDouble) {
     return Vec<typename ExtractDataType<T>::RetType,
                UnaryOperation<decltype(obj.d), SquareRootTrait>, UnaryTrait>(
@@ -273,14 +273,14 @@ template <typename T> auto sqroot(const T &obj) {
   }
 }
 template <typename T>
-  requires std::is_same_v<T, double>
+  requires IS<T, double>
 auto sqroot(const T &obj) -> double {
   return sqrt(obj);
 }
 
 template <typename T>
 auto exp(const T &obj) { // TODO: update this in the documentation
-  constexpr bool isDouble = std::is_arithmetic_v<T>;
+  constexpr bool isDouble = IsArithV<T>;
   if constexpr (!isDouble) {
     return Vec<typename ExtractDataType<T>::RetType,
                UnaryOperation<decltype(obj.d), ExpTrait>, UnaryTrait>(
@@ -291,7 +291,7 @@ auto exp(const T &obj) { // TODO: update this in the documentation
   }
 }
 template <typename T>
-  requires std::is_same_v<T, double>
+  requires IS<T, double>
 auto exp(const T &obj) -> double {
   return exp(obj);
 }

@@ -7,8 +7,7 @@ namespace etr {
 template <typename T, typename BorrowTrait> struct Borrow {
   using RetType = T;
   using Type = T;
-  using TypeTrait = BorrowTrait;
-  using CaseTrait = BorrowTrait;
+  using Trait = BorrowTrait;
   T *p = nullptr;
   std::size_t sz = 0;
   std::size_t capacity = 0;
@@ -83,9 +82,9 @@ template <typename T, typename BorrowTrait> struct Borrow {
   }
 
   template <typename TInp>
-    requires(std::is_arithmetic_v<std::remove_reference_t<TInp>>)
+    requires(IsArithV<std::remove_reference_t<TInp>>)
   void fill(TInp &&val) {
-    if constexpr (std::is_same_v<T, TInp>) {
+    if constexpr (IS<T, TInp>) {
       std::fill(p, p + sz, val);
     } else {
       auto temp = static_cast<T>(val);

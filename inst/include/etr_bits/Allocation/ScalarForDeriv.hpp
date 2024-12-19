@@ -6,7 +6,7 @@
 namespace etr {
 
 template <int Idx, typename AV, typename T>
-  requires std::is_arithmetic_v<T>
+  requires IsArithV<T>
 inline auto scalarDeriv(AV &av, T s) {
   av.varConstants[Idx].resize(1);
   av.varConstants[Idx][0] = s;

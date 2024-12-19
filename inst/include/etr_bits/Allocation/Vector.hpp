@@ -6,9 +6,9 @@
 namespace etr {
 
 template <typename T> inline auto vector_integer(const T &inp) {
-  if constexpr (std::is_same_v<T, std::size_t>) {
+  if constexpr (IS<T, std::size_t>) {
     return createRVec<int>(inp);
-  } else if constexpr (std::is_floating_point_v<T>) {
+  } else if constexpr (IsFloatingPointV<T>) {
     return createRVec<int>(inp);
   } else if constexpr (std::is_integral_v<T>) {
     return createRVec<int>(inp);
@@ -21,9 +21,9 @@ template <typename T> inline auto vector_integer(const T &inp) {
 }
 
 template <typename T> inline auto vector_integer(T &inp) {
-  if constexpr (std::is_same_v<T, std::size_t>) {
+  if constexpr (IS<T, std::size_t>) {
     return createRVec<int>(inp);
-  } else if constexpr (std::is_floating_point_v<T>) {
+  } else if constexpr (IsFloatingPointV<T>) {
     return createRVec<int>(inp);
   } else if constexpr (std::is_integral_v<T>) {
     return createRVec<int>(inp);
@@ -36,9 +36,9 @@ template <typename T> inline auto vector_integer(T &inp) {
 }
 
 template <typename T> inline auto vector_logical(const T &inp) {
-  if constexpr (std::is_same_v<T, std::size_t>) {
+  if constexpr (IS<T, std::size_t>) {
     return createRVec<int>(inp);
-  } else if constexpr (std::is_floating_point_v<T>) {
+  } else if constexpr (IsFloatingPointV<T>) {
     return createRVec<int>(inp);
   } else if constexpr (std::is_integral_v<T>) {
     return createRVec<int>(inp);
@@ -51,9 +51,9 @@ template <typename T> inline auto vector_logical(const T &inp) {
 }
 
 template <typename T> inline auto vector_logical(T &inp) {
-  if constexpr (std::is_same_v<T, std::size_t>) {
+  if constexpr (IS<T, std::size_t>) {
     return createRVec<bool>(inp);
-  } else if constexpr (std::is_floating_point_v<T>) {
+  } else if constexpr (IsFloatingPointV<T>) {
     return createRVec<bool>(inp);
   } else if constexpr (std::is_integral_v<T>) {
     return createRVec<bool>(inp);
@@ -66,9 +66,9 @@ template <typename T> inline auto vector_logical(T &inp) {
 }
 
 template <typename T> inline auto vector_numeric(const T &inp) {
-  if constexpr (std::is_same_v<T, std::size_t>) {
+  if constexpr (IS<T, std::size_t>) {
     return createRVec<BaseType>(inp);
-  } else if constexpr (std::is_floating_point_v<T>) {
+  } else if constexpr (IsFloatingPointV<T>) {
     return createRVec<BaseType>(inp);
   } else if constexpr (std::is_integral_v<T>) {
     return createRVec<BaseType>(inp);
@@ -81,9 +81,9 @@ template <typename T> inline auto vector_numeric(const T &inp) {
 }
 
 template <typename T> inline auto vector_numeric(T &inp) {
-  if constexpr (std::is_same_v<T, std::size_t>) {
+  if constexpr (IS<T, std::size_t>) {
     return createRVec<BaseType>(inp);
-  } else if constexpr (std::is_floating_point_v<T>) {
+  } else if constexpr (IsFloatingPointV<T>) {
     return createRVec<BaseType>(inp);
   } else if constexpr (std::is_integral_v<T>) {
     return createRVec<BaseType>(inp);

@@ -49,7 +49,7 @@ template <typename T, typename R, typename Trait> struct Vec {
   RetType operator[](std::size_t idx) const { return d[idx]; }
 
   operator RetType() const {
-    if constexpr (std::is_same_v<RetType, bool>) {
+    if constexpr (IS<RetType, bool>) {
       warn<"Warning in if: the condition has length > 1">(this->size() == 1);
       // NOTE: otherwise
       // subsetting does not

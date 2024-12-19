@@ -30,28 +30,28 @@ explicit Vec(const Buffer<L2, TraitOther> &inp) : d(inp), deriv(inp) {
 
 // NOTE: Borrow
 template <typename U = R, typename T2>
-  requires std::is_same_v<U, Borrow<BaseType>>
+  requires IS<U, Borrow<BaseType>>
 explicit Vec(const Borrow<T2> &&borrowed) : d(borrowed), deriv(borrowed.sz) {
   d.setMatrix(borrowed.mp);
 }
 template <typename U = R, typename T2>
-  requires std::is_same_v<U, Borrow<T>>
+  requires IS<U, Borrow<T>>
 explicit Vec(const Borrow<T2> &borrowed) : d(borrowed), deriv(borrowed.sz) {
   d.setMatrix(borrowed.mp);
 }
 template <typename U = R>
-  requires std::is_same_v<U, Borrow<T>>
+  requires IS<U, Borrow<T>>
 explicit Vec(T *ptr, std::size_t s) : d(ptr, s), deriv(s) {}
 
 // NOTE: BorrowSEXP
 #ifdef STANDALONE_ETR
 #else
 template <typename U = R>
-  requires std::is_same_v<U, BorrowSEXP<T>>
+  requires IS<U, BorrowSEXP<T>>
 explicit Vec(SEXP &&inp) = delete;
 
 template <typename U = R>
-  requires std::is_same_v<U, BorrowSEXP<T>>
+  requires IS<U, BorrowSEXP<T>>
 explicit Vec(SEXP inp) : d(inp) {
   deriv.resize(d.sz);
   deriv.fill(0.0);
@@ -69,13 +69,13 @@ explicit Vec(Subset<L2> &inp) : d(inp), deriv(inp.size()) {
 }
 // NOTE: Subset lazy
 template <typename L2, typename R2, typename TraitL>
-  requires std::is_same_v<TraitL, SubsetClassTrait>
+  requires IS<TraitL, SubsetClassTrait>
 explicit Vec(const SubsetClass<L2, R2, TraitL> &&inp)
     : d(inp), deriv(inp.size()) {
   d.setMatrix(inp.mp);
 }
 template <typename L2, typename R2, typename TraitL>
-  requires std::is_same_v<TraitL, SubsetClassTrait>
+  requires IS<TraitL, SubsetClassTrait>
 explicit Vec(SubsetClass<L2, R2, TraitL> &inp) : d(inp), deriv(inp.size()) {
   d.setMatrix(inp.mp);
 }
@@ -175,7 +175,7 @@ Vec(const Vec<T2, R2, Trait2> &&other_vec) {
 
 // NOTE: other vector which is of type RVec and has different base type
 template <typename T2, typename R2, typename Trait2>
-  requires(IsRVec<const Vec<T2, R2, Trait2>> && !std::is_same_v<T, T2>)
+  requires(IsRVec<const Vec<T2, R2, Trait2>> && !IS<T, T2>)
 Vec(const Vec<T2, R2, Trait2> &&other_vec) {
   using TypeTrait = Trait2;
   using CaseTrait = Trait2;
@@ -210,7 +210,7 @@ Vec(const Vec<T2, R2, Trait2> &&other_vec) {
 
 // NOTE: other vector which is of type RVec and with same base type
 template <typename T2, typename R2, typename Trait2>
-  requires(IsRVec<const Vec<T2, R2, Trait2>> && std::is_same_v<T, T2>)
+  requires(IsRVec<const Vec<T2, R2, Trait2>> && IS<T, T2>)
 Vec(Vec<T2, R2, Trait2> &&other_vec) {
   using TypeTrait = Trait2;
   using CaseTrait = Trait2;
@@ -279,28 +279,28 @@ explicit Vec(const Buffer<L2, TraitOther> &inp) : d(inp) {
 
 // NOTE: Borrow
 template <typename U = R, typename T2>
-  requires std::is_same_v<U, Borrow<BaseType>>
+  requires IS<U, Borrow<BaseType>>
 explicit Vec(const Borrow<T2> &&borrowed) : d(borrowed) {
   d.setMatrix(borrowed.mp);
 }
 template <typename U = R, typename T2>
-  requires std::is_same_v<U, Borrow<T>>
+  requires IS<U, Borrow<T>>
 explicit Vec(const Borrow<T2> &borrowed) : d(borrowed) {
   d.setMatrix(borrowed.mp);
 }
 template <typename U = R>
-  requires std::is_same_v<U, Borrow<T>>
+  requires IS<U, Borrow<T>>
 explicit Vec(T *ptr, std::size_t s) : d(ptr, s) {}
 
 // NOTE: BorrowSEXP
 #ifdef STANDALONE_ETR
 #else
 template <typename U = R>
-  requires std::is_same_v<U, BorrowSEXP<T>>
+  requires IS<U, BorrowSEXP<T>>
 explicit Vec(SEXP &&inp) = delete;
 
 template <typename U = R>
-  requires std::is_same_v<U, BorrowSEXP<T>>
+  requires IS<U, BorrowSEXP<T>>
 explicit Vec(SEXP inp) : d(inp) {}
 #endif
 
@@ -313,12 +313,12 @@ template <typename L2> explicit Vec(Subset<L2> &inp) : d(inp) {
 }
 // NOTE: Subset lazy
 template <typename L2, typename R2, typename TraitL>
-  requires std::is_same_v<TraitL, SubsetClassTrait>
+  requires IS<TraitL, SubsetClassTrait>
 explicit Vec(const SubsetClass<L2, R2, TraitL> &&inp) : d(std::move(inp)) {
   d.setMatrix(inp.mp);
 }
 template <typename L2, typename R2, typename TraitL>
-  requires std::is_same_v<TraitL, SubsetClassTrait>
+  requires IS<TraitL, SubsetClassTrait>
 explicit Vec(SubsetClass<L2, R2, TraitL> &inp) : d(std::move(inp)) {
   d.setMatrix(inp.mp);
 }
@@ -409,7 +409,7 @@ Vec(const Vec<T2, R2, Trait2> &&other_vec) {
 
 // NOTE: other vector which is of type RVec and has different base type
 template <typename T2, typename R2, typename Trait2>
-  requires(IsRVec<const Vec<T2, R2, Trait2>> && !std::is_same_v<T, T2>)
+  requires(IsRVec<const Vec<T2, R2, Trait2>> && !IS<T, T2>)
 Vec(const Vec<T2, R2, Trait2> &&other_vec) {
   using TypeTrait = Trait2;
   using CaseTrait = Trait2;
@@ -439,7 +439,7 @@ Vec(const Vec<T2, R2, Trait2> &&other_vec) {
 
 // NOTE: other vector which is of type RVec and with same base type
 template <typename T2, typename R2, typename Trait2>
-  requires(IsRVec<const Vec<T2, R2, Trait2>> && std::is_same_v<T, T2>)
+  requires(IsRVec<const Vec<T2, R2, Trait2>> && IS<T, T2>)
 Vec(Vec<T2, R2, Trait2> &&other_vec) {
   using TypeTrait = Trait2;
   using CaseTrait = Trait2;

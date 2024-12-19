@@ -37,7 +37,7 @@ inline SEXP cpp2R(const Vec<BaseType> &res) {
 */
 template <typename L, typename R> inline SEXP cpp2R(const Vec<L, R> &&res) {
   SEXP ret = R_NilValue;
-  if constexpr (std::is_same_v<L, double>) {
+  if constexpr (IS<L, double>) {
     if (res.im()) {
       ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
       ret = PROTECT(Rf_allocMatrix(REALSXP, res.nr(), res.nc()));
@@ -49,7 +49,7 @@ template <typename L, typename R> inline SEXP cpp2R(const Vec<L, R> &&res) {
     }
     UNPROTECT(1);
     return ret;
-  } else if constexpr (std::is_same_v<L, int>) {
+  } else if constexpr (IS<L, int>) {
     SEXP ret = R_NilValue;
     if (res.im()) {
       ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
@@ -62,7 +62,7 @@ template <typename L, typename R> inline SEXP cpp2R(const Vec<L, R> &&res) {
     }
     UNPROTECT(1);
     return ret;
-  } else if constexpr (std::is_same_v<L, bool>) {
+  } else if constexpr (IS<L, bool>) {
     SEXP ret = R_NilValue;
     if (res.im()) {
       ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
@@ -76,7 +76,7 @@ template <typename L, typename R> inline SEXP cpp2R(const Vec<L, R> &&res) {
     UNPROTECT(1);
     return ret;
   } else {
-    static_assert(std::is_same_v<L, L>, "Error cannot convert type to SEXP");
+    static_assert(IS<L, L>, "Error cannot convert type to SEXP");
     return ret;
   }
 }
@@ -84,7 +84,7 @@ template <typename L, typename R> inline SEXP cpp2R(const Vec<L, R> &&res) {
 template <typename L, typename R, typename Trait>
 inline SEXP cpp2R(const Vec<L, R, Trait> &res) {
   SEXP ret = R_NilValue;
-  if constexpr (std::is_same_v<L, double>) {
+  if constexpr (IS<L, double>) {
     if (res.im()) {
       ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
       ret = PROTECT(Rf_allocMatrix(REALSXP, res.nr(), res.nc()));
@@ -96,7 +96,7 @@ inline SEXP cpp2R(const Vec<L, R, Trait> &res) {
     }
     UNPROTECT(1);
     return ret;
-  } else if constexpr (std::is_same_v<L, int>) {
+  } else if constexpr (IS<L, int>) {
     SEXP ret = R_NilValue;
     if (res.im()) {
       ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
@@ -109,7 +109,7 @@ inline SEXP cpp2R(const Vec<L, R, Trait> &res) {
     }
     UNPROTECT(1);
     return ret;
-  } else if constexpr (std::is_same_v<L, bool>) {
+  } else if constexpr (IS<L, bool>) {
     SEXP ret = R_NilValue;
     if (res.im()) {
       ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
@@ -123,7 +123,7 @@ inline SEXP cpp2R(const Vec<L, R, Trait> &res) {
     UNPROTECT(1);
     return ret;
   } else {
-    static_assert(std::is_same_v<L, L>, "Error cannot convert type to SEXP");
+    static_assert(IS<L, L>, "Error cannot convert type to SEXP");
     return ret;
   }
 }

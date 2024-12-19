@@ -13,7 +13,7 @@ namespace etr {
 
 inline auto determine_type(const auto &rest) {
   using restType = typename std::remove_reference<decltype(rest)>::type;
-  if constexpr (std::is_arithmetic_v<restType>) {
+  if constexpr (IsArithV<restType>) {
     return typename std::remove_reference<decltype(rest)>::type{};
   } else {
     using tD = ExtractedTypeD<restType>;
@@ -24,21 +24,21 @@ inline auto determine_type(const auto &rest) {
 inline auto determine_type(const auto &first, const auto &rest) {
   using firstType = typename std::remove_reference<decltype(first)>::type;
   using restType = typename std::remove_reference<decltype(rest)>::type;
-  if constexpr (std::is_arithmetic_v<firstType> &&
-                std::is_arithmetic_v<restType>) {
+  if constexpr (IsArithV<firstType> &&
+                IsArithV<restType>) {
     return typename std::common_type<firstType, restType>::type{};
-  } else if constexpr (!std::is_arithmetic_v<firstType> &&
-                       std::is_arithmetic_v<restType>) {
+  } else if constexpr (!IsArithV<firstType> &&
+                       IsArithV<restType>) {
     using tD = ExtractedTypeD<firstType>;
     using firstInner = typename ExtractDataType<tD>::RetType;
     return typename std::common_type<firstInner, restType>::type{};
-  } else if constexpr (std::is_arithmetic_v<firstType> &&
-                       !std::is_arithmetic_v<restType>) {
+  } else if constexpr (IsArithV<firstType> &&
+                       !IsArithV<restType>) {
     using tD = ExtractedTypeD<restType>;
     using restInner = typename ExtractDataType<tD>::RetType;
     return typename std::common_type<firstType, restInner>::type{};
-  } else if constexpr (!std::is_arithmetic_v<firstType> &&
-                       !std::is_arithmetic_v<restType>) {
+  } else if constexpr (!IsArithV<firstType> &&
+                       !IsArithV<restType>) {
     using tD1 = ExtractedTypeD<firstType>;
     using firstInner = typename ExtractDataType<tD1>::RetType;
     using tD2 = ExtractedTypeD<restType>;
@@ -50,21 +50,21 @@ inline auto determine_type(const auto &first, const auto &rest) {
 inline auto determine_type(const auto &first, const auto &...rest) {
   using firstType = typename std::remove_reference<decltype(first)>::type;
   using restType = decltype(determine_type(rest...));
-  if constexpr (std::is_arithmetic_v<firstType> &&
-                std::is_arithmetic_v<restType>) {
+  if constexpr (IsArithV<firstType> &&
+                IsArithV<restType>) {
     return typename std::common_type<firstType, restType>::type{};
-  } else if constexpr (!std::is_arithmetic_v<firstType> &&
-                       std::is_arithmetic_v<restType>) {
+  } else if constexpr (!IsArithV<firstType> &&
+                       IsArithV<restType>) {
     using tD = ExtractedTypeD<firstType>;
     using firstInner = typename ExtractDataType<tD>::RetType;
     return typename std::common_type<firstInner, restType>::type{};
-  } else if constexpr (std::is_arithmetic_v<firstType> &&
-                       !std::is_arithmetic_v<restType>) {
+  } else if constexpr (IsArithV<firstType> &&
+                       !IsArithV<restType>) {
     using tD = ExtractedTypeD<restType>;
     using restInner = typename ExtractDataType<tD>::RetType;
     return typename std::common_type<firstType, restInner>::type{};
-  } else if constexpr (!std::is_arithmetic_v<firstType> &&
-                       !std::is_arithmetic_v<restType>) {
+  } else if constexpr (!IsArithV<firstType> &&
+                       !IsArithV<restType>) {
     using tD1 = ExtractedTypeD<firstType>;
     using firstInner = typename ExtractDataType<tD1>::RetType;
     using tD2 = ExtractedTypeD<restType>;
@@ -85,7 +85,7 @@ template <typename... Args> inline auto coca(Args &&...args) {
 
   forEachArg(
       [&](auto arg) {
-        if constexpr (std::is_arithmetic_v<decltype(arg)>) {
+        if constexpr (IsArithV<decltype(arg)>) {
           size++;
         } else {
           size += arg.size();
@@ -100,8 +100,8 @@ template <typename... Args> inline auto coca(Args &&...args) {
       [&](const auto &arg) {
         using testType =
             std::remove_const_t<std::remove_reference_t<decltype(arg)>>;
-        if constexpr (std::is_arithmetic_v<testType>) {
-          if constexpr (std::is_same_v<testType, cType>) {
+        if constexpr (IsArithV<testType>) {
+          if constexpr (IS<testType, cType>) {
             ret[index] = arg;
           } else {
             ret[index] = static_cast<cType>(arg);
@@ -114,7 +114,7 @@ template <typename... Args> inline auto coca(Args &&...args) {
           // using tD = ExtractedTypeD<decltype(arg)>;
           // using InnerType = typename ExtractDataType<tD>::RetType;
           // const auto &const_arg = arg;
-          if constexpr (std::is_same_v<InnerType, cType>) {
+          if constexpr (IS<InnerType, cType>) {
             for (int i = 0; i < arg.size(); i++) {
               ret[index + i] = arg[i]; // const_arg[i];
             }

@@ -29,8 +29,8 @@ namespace etr {
 
 template <typename V, typename R, typename C>
 inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
-  if constexpr (std::is_arithmetic_v<R> && std::is_arithmetic_v<C>) {
-    if constexpr (std::is_arithmetic_v<V>) {
+  if constexpr (IsArithV<R> && IsArithV<C>) {
+    if constexpr (IsArithV<V>) {
       Vec<V, Buffer<V, BufferTrait, RBufTrait>, RVecTrait> ret(
           convertSize(nrows), convertSize(ncols));
       ret.d.fill(inp);
@@ -43,8 +43,8 @@ inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
       ret.d.fill(inp);
       return ret;
     }
-  } else if constexpr (!std::is_arithmetic_v<R> && std::is_arithmetic_v<C>) {
-    if constexpr (std::is_arithmetic_v<V>) {
+  } else if constexpr (!IsArithV<R> && IsArithV<C>) {
+    if constexpr (IsArithV<V>) {
       warn<"nrows in fct matrix has more than one element. "
            "Only the first one is used">(nrows.size() > 1);
       Vec<V, Buffer<V, BufferTrait, RBufTrait>, RVecTrait> ret(
@@ -61,8 +61,8 @@ inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
       ret.d.fill(inp);
       return ret;
     }
-  } else if constexpr (std::is_arithmetic_v<R> && !std::is_arithmetic_v<C>) {
-    if constexpr (std::is_arithmetic_v<V>) {
+  } else if constexpr (IsArithV<R> && !IsArithV<C>) {
+    if constexpr (IsArithV<V>) {
       warn<"ncols in fct matrix has more than one element. "
            "Only the first one is used">(ncols.size() > 1);
       Vec<V, Buffer<V, BufferTrait, RBufTrait>, RVecTrait> ret(
@@ -79,8 +79,8 @@ inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
       ret.d.fill(inp);
       return ret;
     }
-  } else if constexpr (!std::is_arithmetic_v<R> && !std::is_arithmetic_v<C>) {
-    if constexpr (std::is_arithmetic_v<V>) {
+  } else if constexpr (!IsArithV<R> && !IsArithV<C>) {
+    if constexpr (IsArithV<V>) {
       warn<"ncols in fct matrix has more than one element. "
            "Only the first one is used">(ncols.size() > 1);
       warn<"nrows in fct matrix has more than one element. "

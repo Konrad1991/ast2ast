@@ -62,11 +62,11 @@ inline const auto at(V &&vec, R &&r,
 #else
 template <typename T, typename R>
   requires(IsRVec<T> || IsSubVec<T> ||
-           OperationVec<T> && std::is_arithmetic_v<R>)
+           OperationVec<T> && IsArithV<R>)
 inline auto at(const T &inp, R i) {
   if constexpr (std::is_integral_v<R>) {
     return inp[i - 1];
-  } else if constexpr (std::is_floating_point_v<R>) {
+  } else if constexpr (IsFloatingPointV<R>) {
     return inp[d2i(i) - 1];
   } else {
     static_assert(sizeof(T) == 0, "Unknown type for indexing found in fct at.");
@@ -85,7 +85,7 @@ inline auto &at(T &inp, R i) {
 }
 
 template <typename T, typename R>
-  requires IsVec<T> && std::is_floating_point_v<R>
+  requires IsVec<T> && IsFloatingPointV<R>
 inline auto &at(T &inp, R i_) {
   int i = d2i(i_);
   i--;
@@ -97,7 +97,7 @@ inline auto &at(T &inp, R i_) {
 }
 
 template <typename T, typename R, typename C>
-  requires(IsVec<T> && std::is_arithmetic_v<C>)
+  requires(IsVec<T> && IsArithV<C>)
 inline auto &at(T &inp, R r, C c) {
   ass<"Input is not a matrix!">(inp.im() == true);
   ass<"No memory was allocated">(inp.d.allocated);
@@ -139,8 +139,8 @@ inline auto &at(T &inp, R r, C c) {
 
 template <typename T, typename R, typename C>
   requires(IsRVec<T> || IsSubVec<T> ||
-           OperationVec<T> && std::is_arithmetic_v<R> &&
-               std::is_arithmetic_v<C>)
+           OperationVec<T> && IsArithV<R> &&
+               IsArithV<C>)
 inline const auto at(const T &inp, R r, C c) {
   ass<"Input is not a matrix!">(inp.im() == true);
   if constexpr (std::is_integral_v<R> && std::is_integral_v<C>) {

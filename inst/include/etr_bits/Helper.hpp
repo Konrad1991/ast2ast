@@ -10,26 +10,26 @@ namespace etr {
 // TODO: check how r values behave here
 
 template <typename T>
-  requires std::is_arithmetic_v<T>
+  requires IsArithV<T>
 inline bool ISNA(T inp) {
   return std::isnan(inp);
 }
 
 template <typename T>
-  requires std::is_arithmetic_v<T>
+  requires IsArithV<T>
 inline bool ISInfinite(T inp) {
   return std::isinf(inp);
 }
 
 // TODO: can the vecotr operator= handle the result of the funciton?
 template <typename T>
-  requires std::is_arithmetic_v<T>
+  requires IsArithV<T>
 inline bool isNA(T inp) {
   return std::isnan(inp);
 }
 
 template <typename T>
-  requires std::is_arithmetic_v<T>
+  requires IsArithV<T>
 inline bool isInf(T inp) {
   return std::isinf(inp);
 }
@@ -80,7 +80,7 @@ inline auto isInf(const T &&inp) {
 }
 
 template <typename T>
-  requires std::is_arithmetic_v<T>
+  requires IsArithV<T>
 inline std::size_t length(T inp) {
   return 1;
 }
@@ -98,7 +98,7 @@ inline int length(const T &&inp) {
 }
 
 template <typename T>
-  requires std::is_arithmetic_v<T>
+  requires IsArithV<T>
 inline auto dim(T inp) {
   ass<"dim can only be called with matrix">(false);
 }

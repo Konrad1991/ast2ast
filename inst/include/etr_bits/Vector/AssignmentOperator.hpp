@@ -5,7 +5,7 @@
 #include <type_traits>
 
 template <typename TD>
-  requires std::is_arithmetic_v<TD>
+  requires IsArithV<TD>
 Vec &operator=(const TD inp) {
   static_assert(!isUnaryOP::value, "Cannot assign to unary calculation");
   static_assert(!isBinaryOP::value, "Cannot assign to binary calculation");
@@ -154,7 +154,7 @@ Vec &operator=(const Vec<T, R, Trait> &otherVec) {
 
 // TODO: finish this
 template <typename T2, typename R2, typename Trait2>
-  requires(IsRVec<const Vec<T2, R2, Trait2>> && std::is_same_v<T, T2> &&
+  requires(IsRVec<const Vec<T2, R2, Trait2>> && IS<T, T2> &&
            isBuffer::value)
 Vec &operator=(Vec<T2, R2, Trait2> &&otherVec) {
 

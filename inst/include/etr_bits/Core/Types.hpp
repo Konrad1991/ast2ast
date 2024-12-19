@@ -12,20 +12,14 @@ template <typename T = double, typename BorrowSEXPTrait = BorrowSEXPTrait>
 struct BorrowSEXP;
 template <typename T, typename BorrowTrait = BorrowTrait> struct Borrow;
 template <typename T, typename SubsetTrait = SubsetTrait> struct Subset;
-template <typename T, typename Trait = BufferTrait,
-          typename CTrait = VariableTrait>
+template <typename T, typename Trait = BufferTrait>
 struct Buffer;
-template <typename T, typename R = Buffer<T>, typename Trait = VectorTrait>
+template <typename T, typename R = Buffer<T>>
 struct Vec;
-template <typename L, typename R, typename Trait = BinaryTrait,
-          typename CTrait = BinaryTrait>
+template <typename L, typename R, typename Trait = BinaryTrait>
 struct BinaryOperation;
-template <typename I, typename Trait = UnaryTrait, typename CTrait = UnaryTrait>
+template <typename I, typename Trait = UnaryTrait>
 struct UnaryOperation;
-
-template <typename L, typename R, typename Trait = BinaryTrait,
-          typename CTrait = BinaryTrait>
-struct BinaryOperationDeriv;
 
 template <typename T> struct ExtractDataType;
 template <typename T, typename R, typename Trait>
@@ -44,8 +38,8 @@ template <typename T, typename R, typename Trait>
 struct ExtractDataType<Buffer<T, R, Trait>> {
   using RetType = T;
 };
-template <typename T, typename R, typename Trait>
-struct ExtractDataType<const Buffer<T, R, Trait>> {
+template <typename T, typename Trait>
+struct ExtractDataType<const Buffer<T, Trait>> {
   using RetType = T const;
 };
 
@@ -76,19 +70,19 @@ template <typename Trait = DoubleTrait> struct doubleWrapper {
 };
 
 template <typename T>
-  requires std::is_same_v<T, double>
+  requires IS<T, double>
 constexpr doubleWrapper<DoubleTrait> convert(const T &obj) {
   return doubleWrapper<DoubleTrait>(obj);
 }
 
 template <typename T>
-  requires std::is_same_v<T, int>
+  requires IS<T, int>
 constexpr doubleWrapper<IntTrait> convert(const T &obj) {
   return doubleWrapper<IntTrait>(obj);
 }
 
 template <typename T>
-  requires std::is_same_v<T, bool>
+  requires IS<T, bool>
 constexpr doubleWrapper<BoolTrait> convert(const T &obj) {
   return doubleWrapper<BoolTrait>(obj);
 }

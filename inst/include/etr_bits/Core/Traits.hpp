@@ -88,7 +88,7 @@ struct DivideDerivTrait {
     } else if constexpr (!std::is_integral_v<L> && std::is_integral_v<R>) {
       return l / static_cast<BaseType>(r);
     } else {
-      static_assert(std::is_arithmetic_v<L> && std::is_arithmetic_v<R>,
+      static_assert(IsArithV<L> && IsArithV<R>,
                     "Type not supported by operation /");
       return l / r;
     }
@@ -113,7 +113,7 @@ struct DivideByConstantDerivTrait {
     } else if constexpr (!std::is_integral_v<L> && std::is_integral_v<R>) {
       return l / static_cast<BaseType>(r);
     } else {
-      static_assert(std::is_arithmetic_v<L> && std::is_arithmetic_v<R>,
+      static_assert(IsArithV<L> && IsArithV<R>,
                     "Type not supported by operation /");
       return l / r;
     }
@@ -264,7 +264,7 @@ struct DivideTrait {
     } else if constexpr (!std::is_integral_v<L> && std::is_integral_v<R>) {
       return l / static_cast<BaseType>(r);
     } else {
-      static_assert(std::is_arithmetic_v<L> && std::is_arithmetic_v<R>,
+      static_assert(IsArithV<L> && IsArithV<R>,
                     "Type not supported by operation /");
       return l / r;
     }
