@@ -2,6 +2,7 @@
 #define TYPES_ETR_H
 
 #include "Header.hpp"
+#include "TemplateUtils.hpp"
 #include "Traits.hpp"
 #include "Utils.hpp"
 #include <type_traits>
@@ -12,7 +13,7 @@ template <typename T = double, typename BorrowSEXPTrait = BorrowSEXPTrait>
 struct BorrowSEXP;
 template <typename T, typename BorrowTrait = BorrowTrait> struct Borrow;
 template <typename T, typename SubsetTrait = SubsetTrait> struct Subset;
-template <typename T, typename Trait = BufferTrait>
+template <typename T, typename BufferTrait = LBufferTrait>
 struct Buffer;
 template <typename T, typename R = Buffer<T>>
 struct Vec;
@@ -22,25 +23,21 @@ template <typename I, typename Trait = UnaryTrait>
 struct UnaryOperation;
 
 template <typename T> struct ExtractDataType;
-template <typename T, typename R, typename Trait>
-struct ExtractDataType<Vec<T, R, Trait>> {
+template <typename T, typename R>
+struct ExtractDataType<Vec<T, R>> {
   using RetType = T;
 };
-template <typename T, typename R, typename Trait>
-struct ExtractDataType<const Vec<T, R, Trait>> {
+template <typename T, typename R>
+struct ExtractDataType<const Vec<T, R>> {
   using RetType = T const;
 };
 template <typename T>
 using ExtractedTypeData = typename ExtractDataType<T>::RetType;
 
 template <typename T> struct ExtractDataType;
-template <typename T, typename R, typename Trait>
-struct ExtractDataType<Buffer<T, R, Trait>> {
-  using RetType = T;
-};
 template <typename T, typename Trait>
-struct ExtractDataType<const Buffer<T, Trait>> {
-  using RetType = T const;
+struct ExtractDataType<Buffer<T, Trait>> {
+  using RetType = T;
 };
 
 template <typename T, typename Trait> struct ExtractDataType<Borrow<T, Trait>> {
@@ -91,23 +88,6 @@ template <typename T> constexpr T convert(const T &obj) {
   return obj;
   // return std::forward(obj);
 }
-
-template <typename L, typename R, typename LDeriv, typename RDeriv,
-          typename Trait, typename OpTrait>
-struct QuarternyType;
-
-template <typename LDeriv, typename RDeriv, typename Trait, typename OpTrait>
-struct BinaryType;
-
-template <typename Deriv, typename Trait, typename OpTrait> struct UnaryType;
-
-template <typename T, typename Trait = VariableTypeTrait> struct VariableType;
-
-template <typename T, int Idx, int TypeIdx, typename Trait = VarPointerTrait>
-struct VarPointer;
-
-template <typename T, int Idx, typename Trait = ConstantTypeTrait>
-struct Constants;
 
 } // namespace etr
 

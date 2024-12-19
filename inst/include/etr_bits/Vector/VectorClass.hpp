@@ -13,20 +13,17 @@
 
 namespace etr {
 
-template <typename T, typename R, typename Trait> struct Vec {
+template <typename T, typename R> struct Vec {
   using Type = T;
-  using TypeTrait = Trait;
-  using CaseTrait = Trait;
   R d;
-
 #ifdef DERIV_ETR
   Buffer<double> deriv;
 #endif
   Buffer<T> temp;
   using DType = R;
-  using RetType = typename std::remove_reference<decltype(d)>::type::RetType;
+  using RetType = typename ReRef<decltype(d)>::type::RetType;
   using typeTraitD =
-      typename std::remove_reference<decltype(d)>::type::TypeTrait;
+      typename ReRef<decltype(d)>::type::TypeTrait;
   using isBuffer = typename std::is_same<typeTraitD, BufferTrait>;
   using isBorrow = typename std::is_same<typeTraitD, BorrowTrait>;
   using isBorrowSEXP = typename std::is_same<typeTraitD, BorrowSEXPTrait>;
@@ -34,7 +31,7 @@ template <typename T, typename R, typename Trait> struct Vec {
   using isSubsetClass = typename std::is_same<typeTraitD, SubsetClassTrait>;
   using isVarPointer = typename std::is_same<typeTraitD, VarPointerTrait>;
   using caseTraitD =
-      typename std::remove_reference<decltype(d)>::type::CaseTrait;
+      typename ReRef<decltype(d)>::type::CaseTrait;
   using isUnaryOP = typename std::is_same<caseTraitD, UnaryTrait>;
   using isBinaryOP = typename std::is_same<caseTraitD, BinaryTrait>;
   using isRVec = typename std::is_same<CaseTrait, RVecTrait>;

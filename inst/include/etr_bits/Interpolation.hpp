@@ -10,11 +10,11 @@ namespace etr {
 template <typename A, typename B, typename C>
 inline double li(const A &t_, const B &timeVec, const C &parVec) {
   using typeTraitA =
-      typename std::remove_reference<decltype(t_)>::type::TypeTrait;
+      typename ReRef<decltype(t_)>::type::TypeTrait;
   using typeTraitB =
-      typename std::remove_reference<decltype(timeVec)>::type::TypeTrait;
+      typename ReRef<decltype(timeVec)>::type::TypeTrait;
   using typeTraitC =
-      typename std::remove_reference<decltype(parVec)>::type::TypeTrait;
+      typename ReRef<decltype(parVec)>::type::TypeTrait;
   using isVecA = std::is_same<typeTraitA, VectorTrait>;
   using isVecB = std::is_same<typeTraitB, VectorTrait>;
   using isVecC = std::is_same<typeTraitC, VectorTrait>;
@@ -167,15 +167,15 @@ inline double cmr(const A &tInp, const B &timeVec, const C &parVec) {
   static_assert(IsRVec<C> || IsSubVec<C> || OperationVec<C> || IsVec<C>,
                 "parameter vector has to be a vector");
   using DataTypeTime =
-      typename ExtractDataType<std::remove_reference_t<B>>::RetType;
+      typename ExtractDataType<ReRef_t<B>>::RetType;
   static_assert(is<DataTypeTime, double>,
                 "time vector does not include doubles");
   using DataTypeParams =
-      typename ExtractDataType<std::remove_reference_t<C>>::RetType;
+      typename ExtractDataType<ReRef_t<C>>::RetType;
   static_assert(is<DataTypeParams, double>,
                 "parameter vector does not include doubles");
   using DataTypeTInp =
-      typename ExtractDataType<std::remove_reference_t<A>>::RetType;
+      typename ExtractDataType<ReRef_t<A>>::RetType;
   static_assert(is<DataTypeTInp, double>,
                 "time input vector does not include doubles");
   warn<"time point has more than one element only the first one is used">(
@@ -191,11 +191,11 @@ inline double cmr(A tInp, const B &timeVec, const C &parVec) {
   static_assert(IsRVec<C> || IsSubVec<C> || OperationVec<C> || IsVec<C>,
                 "parameter vector has to be a vector");
   using DataTypeTime =
-      typename ExtractDataType<std::remove_reference_t<B>>::RetType;
+      typename ExtractDataType<ReRef_t<B>>::RetType;
   static_assert(is<DataTypeTime, double>,
                 "time vector does not include doubles");
   using DataTypeParams =
-      typename ExtractDataType<std::remove_reference_t<C>>::RetType;
+      typename ExtractDataType<ReRef_t<C>>::RetType;
   static_assert(is<DataTypeParams, double>,
                 "parameter vector does not include doubles");
   if constexpr (!is<A, double>) {

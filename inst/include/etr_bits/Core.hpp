@@ -16,11 +16,10 @@
 #include "./Core/SubsetClass.hpp"
 
 namespace etr {
-template <typename T, typename Trait, typename CTrait>
+template <typename T, typename BufferTrait>
 struct Buffer : public BaseStore<T> {
   using RetType = T; // BaseType;
-  using TypeTrait = Trait;
-  using CaseTrait = CTrait;
+  using Trait = BufferTrait;
   using BaseStore<T>::BaseStore;
 };
 

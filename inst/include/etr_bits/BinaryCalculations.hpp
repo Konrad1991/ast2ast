@@ -133,8 +133,8 @@ struct BinaryOperation {
   }
 
   template <typename AV> static std::size_t getSize(AV &av) {
-    using TyL = typename std::remove_reference<typeTraitL>::type;
-    using TyR = typename std::remove_reference<typeTraitR>::type;
+    using TyL = typename ReRef<typeTraitL>::type;
+    using TyR = typename ReRef<typeTraitR>::type;
     return TyL::getSize(av) > TyR::getSize(av) ? TyL::getSize(av)
                                                : TyR::getSize(av);
   }
@@ -142,8 +142,8 @@ struct BinaryOperation {
   static RetType getVal(AV &av,
                         std::size_t VecIdx) { // issue: how to handle scalar
                                               // types? Or temporary types?
-    using TyL = typename std::remove_reference<typeTraitL>::type;
-    using TyR = typename std::remove_reference<typeTraitR>::type;
+    using TyL = typename ReRef<typeTraitL>::type;
+    using TyR = typename ReRef<typeTraitR>::type;
     return f(TyL::template getVal<AV>(av, VecIdx % TyL::getSize(av)),
              TyR::template getVal<AV>(av, VecIdx % TyR::getSize(av)));
   }

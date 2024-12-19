@@ -77,7 +77,7 @@ Vec &operator=(const Vec<T, R, Trait> &otherVec) {
                 "Cannot assign to an r value. E.g. c(1, 2, 3) <- 1");
 
   using DataTypeOtherVec = typename etr::ExtractDataType<
-      std::remove_reference_t<decltype(otherVec)>>::RetType;
+      ReRef_t<decltype(otherVec)>>::RetType;
   if constexpr (isBuffer::value) {
     temp.resize(otherVec.size());
     for (std::size_t i = 0; i < otherVec.size(); i++) {
@@ -198,8 +198,8 @@ Vec &operator=(const Vec<T2, R2, Trait2> &otherVec) {
   static_assert(!isRVec::value,
                 "Cannot assign to an r value. E.g. c(1, 2, 3) <- 1");
   using DataTypeOtherVec = typename etr::ExtractDataType<
-      std::remove_reference_t<decltype(otherVec)>>::RetType;
-  using typeOtherVec = std::remove_reference_t<decltype(otherVec)>;
+      ReRef_t<decltype(otherVec)>>::RetType;
+  using typeOtherVec = ReRef_t<decltype(otherVec)>;
   if constexpr (isBuffer::value) {
 
     temp.resize(otherVec.size());

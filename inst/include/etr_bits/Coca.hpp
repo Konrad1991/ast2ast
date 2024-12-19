@@ -12,9 +12,9 @@
 namespace etr {
 
 inline auto determine_type(const auto &rest) {
-  using restType = typename std::remove_reference<decltype(rest)>::type;
+  using restType = typename ReRef<decltype(rest)>::type;
   if constexpr (IsArithV<restType>) {
-    return typename std::remove_reference<decltype(rest)>::type{};
+    return typename ReRef<decltype(rest)>::type{};
   } else {
     using tD = ExtractedTypeD<restType>;
     return typename ExtractDataType<tD>::RetType{};
@@ -22,8 +22,8 @@ inline auto determine_type(const auto &rest) {
 };
 
 inline auto determine_type(const auto &first, const auto &rest) {
-  using firstType = typename std::remove_reference<decltype(first)>::type;
-  using restType = typename std::remove_reference<decltype(rest)>::type;
+  using firstType = typename ReRef<decltype(first)>::type;
+  using restType = typename ReRef<decltype(rest)>::type;
   if constexpr (IsArithV<firstType> &&
                 IsArithV<restType>) {
     return typename std::common_type<firstType, restType>::type{};
@@ -48,7 +48,7 @@ inline auto determine_type(const auto &first, const auto &rest) {
 }
 
 inline auto determine_type(const auto &first, const auto &...rest) {
-  using firstType = typename std::remove_reference<decltype(first)>::type;
+  using firstType = typename ReRef<decltype(first)>::type;
   using restType = decltype(determine_type(rest...));
   if constexpr (IsArithV<firstType> &&
                 IsArithV<restType>) {
@@ -99,7 +99,7 @@ template <typename... Args> inline auto coca(Args &&...args) {
   forEachArg(
       [&](const auto &arg) {
         using testType =
-            std::remove_const_t<std::remove_reference_t<decltype(arg)>>;
+            std::remove_const_t<ReRef_t<decltype(arg)>>;
         if constexpr (IsArithV<testType>) {
           if constexpr (IS<testType, cType>) {
             ret[index] = arg;
@@ -108,7 +108,7 @@ template <typename... Args> inline auto coca(Args &&...args) {
           }
           index++;
         } else {
-          using tD = std::remove_reference_t<decltype(arg)>;
+          using tD = ReRef_t<decltype(arg)>;
           using tD2 = ExtractedTypeD<tD>;
           using InnerType = typename ExtractDataType<tD2>::RetType;
           // using tD = ExtractedTypeD<decltype(arg)>;

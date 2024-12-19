@@ -37,7 +37,7 @@ inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
       return ret;
     } else {
       using DataType =
-          typename ExtractDataType<std::remove_reference_t<V>>::RetType;
+          typename ExtractDataType<ReRef_t<V>>::RetType;
       Vec<DataType, Buffer<DataType, BufferTrait, RBufTrait>, RVecTrait> ret(
           convertSize(nrows), convertSize(ncols));
       ret.d.fill(inp);
@@ -53,7 +53,7 @@ inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
       return ret;
     } else {
       using DataType =
-          typename ExtractDataType<std::remove_reference_t<V>>::RetType;
+          typename ExtractDataType<ReRef_t<V>>::RetType;
       warn<"nrows in fct matrix has more than one element. "
            "Only the first one is used">(nrows.size() > 1);
       Vec<DataType, Buffer<DataType, BufferTrait, RBufTrait>, RVecTrait> ret(
@@ -71,7 +71,7 @@ inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
       return ret;
     } else {
       using DataType =
-          typename ExtractDataType<std::remove_reference_t<V>>::RetType;
+          typename ExtractDataType<ReRef_t<V>>::RetType;
       warn<"ncols in fct matrix has more than one element. "
            "Only the first one is used">(ncols.size() > 1);
       Vec<DataType, Buffer<DataType, BufferTrait, RBufTrait>, RVecTrait> ret(
@@ -91,7 +91,7 @@ inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
       return ret;
     } else {
       using DataType =
-          typename ExtractDataType<std::remove_reference_t<V>>::RetType;
+          typename ExtractDataType<ReRef_t<V>>::RetType;
       warn<"ncols in fct matrix has more than one element. "
            "Only the first one is used">(ncols.size() > 1);
       warn<"nrows in fct matrix has more than one element. "

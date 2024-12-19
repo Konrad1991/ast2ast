@@ -75,7 +75,7 @@ inline void assign(L &l, const Expr &expr, const ExprDeriv &r) {
       l.deriv[0] = r;
     } else {
       using DataTypeOtherVec = typename etr::ExtractDataType<
-          std::remove_reference_t<decltype(r)>>::RetType;
+          ReRef_t<decltype(r)>>::RetType;
       l.temp.resize(r.size());
       for (std::size_t i = 0; i < r.size(); i++) {
         if constexpr (is<DataTypeOtherVec, double>) {
@@ -101,7 +101,7 @@ inline void assign(L &&l, const Expr &expr, const ExprDeriv &r) {
     l.deriv[0] = r;
   } else {
     using DataTypeOtherVec = typename etr::ExtractDataType<
-        std::remove_reference_t<decltype(r)>>::RetType;
+        ReRef_t<decltype(r)>>::RetType;
     l.temp.resize(r.size());
     for (std::size_t i = 0; i < r.size(); i++) {
       if constexpr (is<DataTypeOtherVec, double>) {

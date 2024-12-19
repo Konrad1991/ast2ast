@@ -69,12 +69,12 @@ template <typename I, typename Trait, typename CTrait> struct UnaryOperation {
   }
 
   template <typename AV> static RetType getSize(AV &av) {
-    using Ty = typename std::remove_reference<typeTraitObj>::type;
+    using Ty = typename ReRef<typeTraitObj>::type;
     return Ty::template getSize<AV>(av);
   }
 
   template <typename AV> static RetType getVal(AV &av, std::size_t VecIdx) {
-    using Ty = typename std::remove_reference<typeTraitObj>::type;
+    using Ty = typename ReRef<typeTraitObj>::type;
     return f(Ty::template getVal<AV>(av, VecIdx % Ty::template getSize(av)));
   }
 };

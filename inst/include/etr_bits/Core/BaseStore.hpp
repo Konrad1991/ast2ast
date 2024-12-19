@@ -140,7 +140,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
   }
 
   template <typename TInp>
-    requires(IsArithV<std::remove_reference_t<TInp>>)
+    requires(IsArithV<ReRef<TInp>>)
   void fill(TInp &&val) {
     if constexpr (IS<T, TInp>) {
       std::fill(p, p + sz, val);
@@ -153,7 +153,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
   template <typename TInp> void fill(TInp &&inp) {
     ass<"cannot use fill with vectors of different lengths">(inp.size() == sz);
     using DataType =
-        typename ExtractDataType<std::remove_reference_t<TInp>>::RetType;
+        typename ExtractDataType<ReRef<TInp>>::RetType;
     if constexpr (IsVec<TInp>) {
       if constexpr (!is<DataType, T>) {
         for (std::size_t i = 0; i < sz; i++)

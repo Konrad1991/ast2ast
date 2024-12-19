@@ -32,9 +32,9 @@ struct MatrixParameter {
 template <typename L, typename R>
 void defineMatrix(const L &l, const R &r, MatrixParameter &mp) {
   using typeTraitL =
-      typename std::remove_reference<decltype(convert(l))>::type::Type;
+      typename ReRef<decltype(convert(l))>::type::Type;
   using typeTraitR =
-      typename std::remove_reference<decltype(convert(r))>::type::Type;
+      typename ReRef<decltype(convert(r))>::type::Type;
   using isDoubleL = std::is_same<typeTraitL, DoubleTrait>;
   using isDoubleR = std::is_same<typeTraitR, DoubleTrait>;
   mp.setMatrix(false, 0, 0);

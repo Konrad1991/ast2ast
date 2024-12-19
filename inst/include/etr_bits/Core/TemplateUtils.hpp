@@ -22,6 +22,8 @@ template <typename T> constexpr bool IsIntegral = std::is_integral_v<T>;
 
 template <typename T> constexpr bool IsBool = IS<T, bool>;
 
+template <typename T> using ReRef = std::remove_reference<T>;
+
 template <typename T> constexpr bool IsRvalue = std::is_rvalue_reference_v<T>;
 
 } // namespace etr

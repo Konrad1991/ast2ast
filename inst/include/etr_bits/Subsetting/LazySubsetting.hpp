@@ -235,8 +235,8 @@ template <typename L, typename R> auto subset_test(L &&l, R &&r) {
                 "\n\nYou cannot subset a scalar value\n\n");
   constexpr bool isArithmeticL = IsArithV<Decayed<L>>;
   constexpr bool isArithmeticR = IsArithV<Decayed<R>>;
-  using LType = std::remove_reference_t<L>;
-  using RType = std::remove_reference_t<R>;
+  using LType = ReRef_t<L>;
+  using RType = ReRef_t<R>;
   constexpr bool isLArgRvalue = IsRvalue<L &&>;
   constexpr bool isRArgRvalue = IsRvalue<R &&>;
   if constexpr (isArithmeticR) {

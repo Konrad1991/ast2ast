@@ -9,7 +9,6 @@ template <typename T, typename SubsetTrait> struct Subset {
   using RetType = BaseType;
   using Type = T;
   using TypeTrait = SubsetTrait;
-  using CaseTrait = SubsetTrait;
   Indices ind;
 
   T *p = nullptr;
@@ -17,7 +16,7 @@ template <typename T, typename SubsetTrait> struct Subset {
   BaseStore<double> *deriv_p = nullptr;
 #endif
   using CurrentBaseType =
-      typename std::remove_reference<decltype(*p)>::type::Type;
+      typename ReRef<decltype(*p)>::type::Type;
   MatrixParameter mp;
 
   std::size_t size() const { return ind.size(); }
@@ -77,15 +76,15 @@ template <typename T, typename SubsetTrait> struct Subset {
   template <typename T2, typename R2> Subset(Vec<T2, R2> &other) {
     this->p = &other.d;
   }
-  template <typename T2, typename R2, typename TraitOther>
-  Subset(const Vec<T2, R2, TraitOther> &other) {
+  template <typename T2, typename R2>
+  Subset(const Vec<T2, R2> &other) {
     this->p = &other.d;
   }
   template <typename T2, typename R2> Subset(Vec<T2, R2> &other, bool deriv) {
     this->p = &other.deriv;
   }
-  template <typename T2, typename R2, typename TraitOther>
-  Subset(const Vec<T2, R2, TraitOther> &other, bool deriv) {
+  template <typename T2, typename R2>
+  Subset(const Vec<T2, R2> &other, bool deriv) {
     this->p = &other.deriv;
   }
 
@@ -142,7 +141,6 @@ struct Subset<const T, SubsetTrait> {
   using RetType = BaseType;
   using Type = T;
   using TypeTrait = SubsetTrait;
-  using CaseTrait = SubsetTrait;
   Indices ind;
   const T *p;
 
@@ -151,7 +149,7 @@ struct Subset<const T, SubsetTrait> {
 #endif
 
   using CurrentBaseType =
-      typename std::remove_reference<decltype(*p)>::type::RetType;
+      typename ReRef<decltype(*p)>::type::RetType;
   MatrixParameter mp;
 
   std::size_t size() const { return ind.size(); }
@@ -197,8 +195,8 @@ struct Subset<const T, SubsetTrait> {
   }
   template <typename T2, typename R2>
   Subset(Vec<T2, R2> &other) : p(&other.d) {}
-  template <typename T2, typename R2, typename TraitOther>
-  Subset(const Vec<T2, R2, TraitOther> &other) : p(&other.d) {}
+  template <typename T2, typename R2>
+  Subset(const Vec<T2, R2> &other) : p(&other.d) {}
 #endif
 #ifdef STANDALONE_ETR
 #else
