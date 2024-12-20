@@ -1,14 +1,6 @@
 #ifndef COCA_ETR_H
 #define COCA_ETR_H
 
-#include "BufferVector.hpp"
-#include "Core.hpp"
-#include "Core/Concepts.hpp"
-#include "Core/Reflection.hpp"
-#include "Core/Traits.hpp"
-#include "Core/Types.hpp"
-#include <type_traits>
-
 namespace etr {
 
 inline auto determine_type(const auto &rest) {
@@ -16,7 +8,7 @@ inline auto determine_type(const auto &rest) {
   if constexpr (IsArithV<restType>) {
     return typename ReRef<decltype(rest)>::type{};
   } else {
-    using tD = ExtractedTypeD<restType>;
+    using tD = ExtractedRType<restType>;
     return typename ExtractDataType<tD>::RetType{};
   }
 };
@@ -29,19 +21,19 @@ inline auto determine_type(const auto &first, const auto &rest) {
     return typename std::common_type<firstType, restType>::type{};
   } else if constexpr (!IsArithV<firstType> &&
                        IsArithV<restType>) {
-    using tD = ExtractedTypeD<firstType>;
+    using tD = ExtractedRType<firstType>;
     using firstInner = typename ExtractDataType<tD>::RetType;
     return typename std::common_type<firstInner, restType>::type{};
   } else if constexpr (IsArithV<firstType> &&
                        !IsArithV<restType>) {
-    using tD = ExtractedTypeD<restType>;
+    using tD = ExtractedRType<restType>;
     using restInner = typename ExtractDataType<tD>::RetType;
     return typename std::common_type<firstType, restInner>::type{};
   } else if constexpr (!IsArithV<firstType> &&
                        !IsArithV<restType>) {
-    using tD1 = ExtractedTypeD<firstType>;
+    using tD1 = ExtractedRType<firstType>;
     using firstInner = typename ExtractDataType<tD1>::RetType;
-    using tD2 = ExtractedTypeD<restType>;
+    using tD2 = ExtractedRType<restType>;
     using restInner = typename ExtractDataType<tD2>::RetType;
     return typename std::common_type<firstInner, restInner>::type{};
   }
@@ -55,19 +47,19 @@ inline auto determine_type(const auto &first, const auto &...rest) {
     return typename std::common_type<firstType, restType>::type{};
   } else if constexpr (!IsArithV<firstType> &&
                        IsArithV<restType>) {
-    using tD = ExtractedTypeD<firstType>;
+    using tD = ExtractedRType<firstType>;
     using firstInner = typename ExtractDataType<tD>::RetType;
     return typename std::common_type<firstInner, restType>::type{};
   } else if constexpr (IsArithV<firstType> &&
                        !IsArithV<restType>) {
-    using tD = ExtractedTypeD<restType>;
+    using tD = ExtractedRType<restType>;
     using restInner = typename ExtractDataType<tD>::RetType;
     return typename std::common_type<firstType, restInner>::type{};
   } else if constexpr (!IsArithV<firstType> &&
                        !IsArithV<restType>) {
-    using tD1 = ExtractedTypeD<firstType>;
+    using tD1 = ExtractedRType<firstType>;
     using firstInner = typename ExtractDataType<tD1>::RetType;
-    using tD2 = ExtractedTypeD<restType>;
+    using tD2 = ExtractedRType<restType>;
     using restInner = typename ExtractDataType<tD2>::RetType;
     return typename std::common_type<firstInner, restInner>::type{};
   }
@@ -93,14 +85,14 @@ template <typename... Args> inline auto coca(Args &&...args) {
       },
       args...);
 
-  Vec<cType, Buffer<cType, BufferTrait, RBufTrait>, RVecTrait> ret(SI{size});
+  Vec<cType, Buffer<cType, RBufferTrait>> ret(SI{size});
   std::size_t index = 0;
 
   forEachArg(
       [&](const auto &arg) {
         using testType =
-            std::remove_const_t<ReRef_t<decltype(arg)>>;
-        if constexpr (IsArithV<testType>) {
+            std::remove_const_t<ReRef<decltype(arg)>>;
+        if constexpr (IsArithV<Decayed<decltype(arg)>>) {
           if constexpr (IS<testType, cType>) {
             ret[index] = arg;
           } else {
@@ -108,15 +100,10 @@ template <typename... Args> inline auto coca(Args &&...args) {
           }
           index++;
         } else {
-          using tD = ReRef_t<decltype(arg)>;
-          using tD2 = ExtractedTypeD<tD>;
-          using InnerType = typename ExtractDataType<tD2>::RetType;
-          // using tD = ExtractedTypeD<decltype(arg)>;
-          // using InnerType = typename ExtractDataType<tD>::RetType;
-          // const auto &const_arg = arg;
+          using InnerType = typename ReRef<decltype(arg)>::type::RetType;
           if constexpr (IS<InnerType, cType>) {
             for (int i = 0; i < arg.size(); i++) {
-              ret[index + i] = arg[i]; // const_arg[i];
+              ret[index + i] = arg[i];
             }
           } else {
             for (int i = 0; i < arg.size(); i++) {

@@ -14,6 +14,7 @@ g++ test_new.cpp -std=c++20 -g -Wall -Wpedantic -Wextra -Wconversion
 #include "../inst/include/etr_bits/BufferVector.hpp"
 #include "../inst/include/etr_bits/BinaryCalculations.hpp"
 #include "../inst/include/etr_bits/UnaryCalculations.hpp"
+#include "../inst/include/etr_bits/Coca.hpp"
 using namespace etr;
 
 int main() {
@@ -30,7 +31,13 @@ int main() {
   for (auto& i: vec) i = 3.14;
   vec = -(vec + vec);
   std::cout << vec << std::endl;
-
+  
+  vec = coca(1, 2, 3, true);
+  std::cout << vec << std::endl;
+  
+  Vec<bool> v2;
+  v2 = coca(1, true, 2, 3.14);
+  std::cout << std::boolalpha << v2 << std::endl;
 
   vec[0] = 10;
 

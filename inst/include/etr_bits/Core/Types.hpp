@@ -29,6 +29,7 @@ struct BinaryOperation;
 template <typename I, typename UTrait = UnaryTrait>
 struct UnaryOperation;
 
+// Extract RetType
 template <typename T> struct ExtractDataType;
 template <typename T, typename R>
 struct ExtractDataType<Vec<T, R>> {
@@ -41,6 +42,21 @@ struct ExtractDataType<const Vec<T, R>> {
 template <typename T>
 using ExtractedTypeData = typename ExtractDataType<T>::RetType;
 
+
+// Extract RType
+template <typename T> struct ExtractRType;
+template <typename T, typename R>
+struct ExtractRType<Vec<T, R>> {
+  using RType = R;
+};
+template <typename T, typename R>
+struct ExtractRType<const Vec<T, R>> {
+  using RType = R const;
+};
+template <typename T>
+using ExtractedRType= typename ExtractRType<T>::RType;
+
+// Extract RetType from Buffer, etc.
 template <typename T> struct ExtractDataType;
 template <typename T, typename Trait>
 struct ExtractDataType<Buffer<T, Trait>> {
