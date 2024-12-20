@@ -101,7 +101,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
   };
 #endif
   BaseStore(std::size_t sz_)
-      : sz(sz_), capacity(static_cast<std::size_t>(sz_ * 1.15)) {
+      : sz(sz_), capacity(static_cast<std::size_t>(static_cast<double>(sz_)* 1.15)) {
     ass<"Size has to be larger than 0!">(sz_ > 0);
     p = new T[capacity];
     for (std::size_t i = 0; i < capacity; i++) {
@@ -111,7 +111,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
   }
   BaseStore(int sz_)
       : sz(static_cast<std::size_t>(sz_)),
-        capacity(static_cast<std::size_t>(sz_ * 1.15)) {
+        capacity(static_cast<std::size_t>(static_cast<double>(sz_) * 1.15)) {
     ass<"Size has to be larger than 0!!">(sz_ > 0);
     p = new T[capacity];
     for (std::size_t i = 0; i < sz; i++)
@@ -140,7 +140,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
   }
 
   template <typename TInp>
-    requires(IsArithV<ReRef<TInp>>)
+    requires(IsArithV<TInp>)
   void fill(TInp &&val) {
     if constexpr (IS<T, TInp>) {
       std::fill(p, p + sz, val);
@@ -150,7 +150,9 @@ template <typename T, typename BaseTrait> struct BaseStore {
     }
   }
 
-  template <typename TInp> void fill(TInp &&inp) {
+  template <typename TInp> 
+requires (!IsArithV<TInp>)
+  void fill(TInp &&inp) {
     ass<"cannot use fill with vectors of different lengths">(inp.size() == sz);
     using DataType =
         typename ExtractDataType<ReRef<TInp>>::RetType;
@@ -251,12 +253,12 @@ template <typename T, typename BaseTrait> struct BaseStore {
       p = nullptr;
     }
     sz = size;
-    capacity = static_cast<std::size_t>(1.15 * sz);
+    capacity = static_cast<std::size_t>(1.15 * static_cast<double>(sz));
     p = new T[capacity];
     allocated = true;
   }
   void resize(std::size_t newSize) {
-    ass<"Size has to be larger than 0!!!">(newSize >= 0);
+    ass<"Size has to be larger than 0!!!">(newSize > 0);
     if (!allocated) {
       init(newSize);
       fill(T());
@@ -265,7 +267,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
       if (newSize > capacity) {
         ass<"try to delete nullptr">(p != nullptr);
         delete[] p;
-        capacity = static_cast<std::size_t>(newSize * 1.15);
+        capacity = static_cast<std::size_t>(static_cast<double>(newSize) * 1.15);
         p = new T[capacity];
         sz = newSize;
         allocated = true;
@@ -278,25 +280,26 @@ template <typename T, typename BaseTrait> struct BaseStore {
   }
 
   RetType operator[](std::size_t idx) const {
-    // TODO: can ass be faster?
     ass<"No memory was allocated">(allocated);
-    ass<"Error: out of boundaries --> value below 1">(idx >= 0);
-    ass<"Error: out of boundaries --> value beyond size of vector">(idx < sz);
+    // NOTE: negative idx leads to overflow and
+    // is than the max possible value of std::size_t
+    ass<"Error: out of boundaries">(idx < sz);
     return p[idx];
   }
 
-  // TODO: check with static_asssert that this is never called for const T
+  // TODO: update the assertions for all operator[]
   RetType &operator[](std::size_t idx) {
     ass<"No memory was allocated">(allocated);
-    ass<"Error: out of boundaries --> value below 1">(idx >= 0);
+    // NOTE: negative idx leads to overflow and
+    // is than the max possible value of std::size_t
     ass<"Error: out of boundaries --> value beyond size of vector">(idx < sz);
     return p[idx];
   }
 
   template <typename L2> void moveit(L2 &other) {
     T *temporary = other.p;
-    int tempSize = other.sz;
-    int tempCapacity = other.capacity;
+    std::size_t tempSize = other.sz;
+    std::size_t tempCapacity = other.capacity;
     other.p = this->p;
     other.sz = this->sz;
     other.capacity = this->capacity;

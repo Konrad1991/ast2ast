@@ -3,25 +3,14 @@
 
 #include "Core.hpp"
 
-// TODO: what is needed in order that for loops work with Operations
-/*
-RetType* p;
-auto begin() const {
-  return It<RetType>{p};
-}
-auto end() const {
-  return It<RetType>{p + this -> size()};
-}
-*/
-
 namespace etr {
 
-template <typename L, typename R, typename Trait, typename CTrait>
+template <typename L, typename R, typename BTrait>
 struct BinaryOperation {
-  using Type = DoubleTrait;
-  using TypeTrait = Trait;
-  using CaseTrait = BinaryTrait;
-  using RetType = typename CTrait::RetType;
+  using Trait = BTrait;
+  // TODO: the identification of RetType misses the fact that it is bool if 
+  // BTrait is part of the Comparison Traits
+  using RetType = std::common_type_t<typename L::RetType, typename R::RetType>;
   const L &l;
   const R &r;
   using typeTraitL = L;
@@ -39,12 +28,10 @@ struct BinaryOperation {
     } else {
       return l.im() || r.im();
     }
-    return false; // TODO: correct?
+    return false;
   }
   std::size_t nc() const {
     if constexpr (IsArithV<L>) {
-      // TODO: check whether one has to add here the test whether R and L are
-      // matrices. Same is true for nr
       return r.nc();
     } else if constexpr (IsArithV<R>) {
       return l.nc();
@@ -88,14 +75,14 @@ struct BinaryOperation {
   // TODO: are all of those constructors required?
   // Actually only   BinaryOperation(const L &l_, const R &r_) : l(l_), r(r_) {}
   // is used.
-  BinaryOperation(const BinaryOperation &other) : l(other.l), r(other.r) {}
-  BinaryOperation(const BinaryOperation &&other)
-      : l(std::move(other.l)), r(std::move(other.r)) {}
+  // BinaryOperation(const BinaryOperation &other) : l(other.l), r(other.r) {}
+  // BinaryOperation(const BinaryOperation &&other)
+  //     : l(std::move(other.l)), r(std::move(other.r)) {}
   BinaryOperation(const L &l_, const R &r_) : l(l_), r(r_) {}
-  template <typename LType, typename RType, typename TraitOther>
-  BinaryOperation(const BinaryOperation<LType, RType, TraitOther>
-                      &other) // TODO: needs move constructor
-      : l(other.l), r(other.r) {}
+  // template <typename LType, typename RType, typename TraitOther>
+  // BinaryOperation(const BinaryOperation<LType, RType, TraitOther>
+  //                     &other) // TODO: needs move constructor
+  //     : l(other.l), r(other.r) {}
 
   auto operator[](std::size_t i) const {
     constexpr bool isDoubleL = IsArithV<L>;
@@ -132,21 +119,6 @@ struct BinaryOperation {
     mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
   }
 
-  template <typename AV> static std::size_t getSize(AV &av) {
-    using TyL = typename ReRef<typeTraitL>::type;
-    using TyR = typename ReRef<typeTraitR>::type;
-    return TyL::getSize(av) > TyR::getSize(av) ? TyL::getSize(av)
-                                               : TyR::getSize(av);
-  }
-  template <typename AV>
-  static RetType getVal(AV &av,
-                        std::size_t VecIdx) { // issue: how to handle scalar
-                                              // types? Or temporary types?
-    using TyL = typename ReRef<typeTraitL>::type;
-    using TyR = typename ReRef<typeTraitR>::type;
-    return f(TyL::template getVal<AV>(av, VecIdx % TyL::getSize(av)),
-             TyR::template getVal<AV>(av, VecIdx % TyR::getSize(av)));
-  }
 };
 
 template <typename L, typename R> auto operator+(const L &l, const R &r) {

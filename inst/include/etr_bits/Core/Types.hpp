@@ -1,3 +1,9 @@
+// TODO: add the iterator to each class: Buffer, Subset, Binary, Unary, Borrow, BorrowSEXP
+// Directly use the iterator methods begin, end etc. in Vec
+// Replace BaseStore with Buffer.
+// Each class has to possess RetType and Trait
+
+
 #ifndef TYPES_ETR_H
 #define TYPES_ETR_H
 
@@ -13,13 +19,14 @@ template <typename T = double, typename BorrowSEXPTrait = BorrowSEXPTrait>
 struct BorrowSEXP;
 template <typename T, typename BorrowTrait = BorrowTrait> struct Borrow;
 template <typename T, typename SubsetTrait = SubsetTrait> struct Subset;
+template <typename L, typename R, typename Trait> struct SubsetClass;
 template <typename T, typename BufferTrait = LBufferTrait>
 struct Buffer;
 template <typename T, typename R = Buffer<T>>
 struct Vec;
-template <typename L, typename R, typename Trait = BinaryTrait>
+template <typename L, typename R, typename BTrait = BinaryTrait>
 struct BinaryOperation;
-template <typename I, typename Trait = UnaryTrait>
+template <typename I, typename UTrait = UnaryTrait>
 struct UnaryOperation;
 
 template <typename T> struct ExtractDataType;

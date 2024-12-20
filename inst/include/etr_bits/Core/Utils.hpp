@@ -101,9 +101,9 @@ template <string_literal msg> inline void warn(bool inp) {
 
 struct SI {
   std::size_t sz = 0;
-  SI(const std::size_t sz) : sz(sz) {}
-  SI(const int sz) : sz(static_cast<std::size_t>(sz)) {}
-  SI(const long long sz) : sz(static_cast<std::size_t>(sz)) {}
+  SI(const std::size_t sz_) : sz(sz_) {}
+  SI(const int sz_) : sz(static_cast<std::size_t>(sz_)) {}
+  SI(const long long sz_) : sz(static_cast<std::size_t>(sz_)) {}
 };
 
 } // namespace etr

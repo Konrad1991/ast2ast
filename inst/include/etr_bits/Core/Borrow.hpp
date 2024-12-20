@@ -58,16 +58,16 @@ template <typename T, typename BorrowTrait> struct Borrow {
   };
   Borrow(std::size_t r, std::size_t c) = delete;
   Borrow(std::size_t r, std::size_t c, const double value) = delete;
-  Borrow(T *p, std::size_t sz) {
-    this->p = p;
-    this->sz = sz;
+  Borrow(T *p_, std::size_t sz_) {
+    this->p = p_;
+    this->sz = sz_;
     capacity = sz;
     this->allocated = true;
   }
 
-  void init(T *p, std::size_t sz) {
-    this->p = p;
-    this->sz = sz;
+  void init(T *p_, std::size_t sz_) {
+    this->p = p_;
+    this->sz = sz_;
     capacity = sz;
     this->allocated = true;
   }
