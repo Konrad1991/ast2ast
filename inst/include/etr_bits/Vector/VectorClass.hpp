@@ -680,7 +680,7 @@ Vec &operator=(const Vec<T2, R2> &otherVec) {
       if constexpr (is<DataTypeOtherVec, T>) {
         temp[i] = otherVec[i];
       } else {
-        temp[i] = static_cast<T>(otherVec[i]);
+        temp[i] = static_cast<T>(otherVec.d[i]);
       }
     }
     d.moveit(temp);

@@ -49,5 +49,6 @@ int main() {
 
   vec[0] = 10;
 
+
   delete[] ptr;
 }

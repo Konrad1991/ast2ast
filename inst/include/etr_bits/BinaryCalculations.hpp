@@ -25,7 +25,7 @@ struct BinaryOperation {
   using Trait = BTrait;
   // TODO: the identification of RetType misses the fact that it is bool if 
   // BTrait is part of the Comparison Traits
-  using RetType = decltype(determine_type_binary_op<L, R>());
+  using RetType = typename ReRef<decltype(determine_type_binary_op<L, R>())>;
   const L &l;
   const R &r;
   using typeTraitL = L;
