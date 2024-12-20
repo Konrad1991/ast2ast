@@ -36,7 +36,7 @@ inline void print(const char *inp) {
 }
 
 template <typename L, typename R>
-  requires NotOperation<R>
+  requires (!IsUnary<R> && !IsBinary<R>)
 inline void print(const Vec<L, R> &inp) {
   if (!inp.im()) {
     for (std::size_t i = 0; i < inp.size(); i++)
@@ -52,9 +52,9 @@ inline void print(const Vec<L, R> &inp) {
   }
 }
 
-template <typename T, typename Op, typename Trait>
-  requires UnaryOrBinaryOperation<Op>
-inline void print(const etr::Vec<T, Op, Trait> &inp) {
+template <typename T, typename Op>
+  requires (IsUnary<Op> || IsBinary<Op>)
+inline void print(const Vec<T, Op> &inp) {
   if (!inp.im()) {
     for (std::size_t i = 0; i < inp.size(); i++)
       PRINT_STREAM << std::boolalpha << inp[i] << " ";
@@ -81,22 +81,6 @@ print(const T &inp) { // issue: just a quick fix for printing unary expression
     for (std::size_t i = 0; i < inp.nr(); i++) {
       for (std::size_t j = 0; j < inp.nc(); j++) {
         PRINT_STREAM << inp[j * inp.nr() + i] << "\t";
-      }
-      PRINT_STREAM << std::endl;
-    }
-  }
-}
-
-template <typename T, typename Op, typename Trait, typename AV>
-inline void print(const etr::Vec<T, Op, Trait> &inp, AV &av) {
-  if (!inp.im()) {
-    for (std::size_t i = 0; i < inp.size(); i++)
-      PRINT_STREAM << std::boolalpha << decltype(inp.d)::getVal(av, i) << " ";
-    PRINT_STREAM << std::endl;
-  } else {
-    for (std::size_t i = 0; i < inp.nr(); i++) {
-      for (std::size_t j = 0; j < inp.nc(); j++) {
-        PRINT_STREAM << inp.d.getVal(av, j * inp.nr() + i) << "\t";
       }
       PRINT_STREAM << std::endl;
     }
