@@ -12,7 +12,7 @@ namespace etr {
 #ifdef DERIV_ETR
 
 template <typename T> inline auto get_deriv(T &&v) {
-  Vec<double, Buffer<double, BufferTrait, RBufTrait>, RVecTrait> ret(
+  Vec<double, Buffer<double, RBufferTrait>> ret(
       SI{v.size()});
   ret.d.fill(v.deriv);
   return ret;
@@ -27,7 +27,7 @@ inline auto get_deriv(const bool v) { return createRVec(1); }
 template <typename T>
   requires IsSubVec<T>
 inline auto get_deriv(T &&v) {
-  Vec<double, Buffer<double, BufferTrait, RBufTrait>, RVecTrait> deriv(
+  Vec<double, Buffer<double, RBufferTrait>> deriv(
       SI{v.size()});
   for (size_t i = 0; i < deriv.size(); i++) {
     deriv[i] = v.d.get_deriv(i);

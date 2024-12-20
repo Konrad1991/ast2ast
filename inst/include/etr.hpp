@@ -26,7 +26,7 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "etr_bits/BinaryCalculations.hpp"
 #include "etr_bits/Coca.hpp"
 #include "etr_bits/Core.hpp"
-#include "etr_bits/Helper.hpp"
+// #include "etr_bits/Helper.hpp"
 #include "etr_bits/Interpolation.hpp"
 #include "etr_bits/Printing.hpp"
 #include "etr_bits/SEXPConversions.hpp"
