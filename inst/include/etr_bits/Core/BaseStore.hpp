@@ -154,8 +154,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
 requires (!IsArithV<TInp>)
   void fill(TInp &&inp) {
     ass<"cannot use fill with vectors of different lengths">(inp.size() == sz);
-    using DataType =
-        typename ExtractDataType<ReRef<TInp>>::RetType;
+    using DataType = typename ReRef<TInp>::type::RetType;
     if constexpr (IsVec<TInp>) {
       if constexpr (!is<DataType, T>) {
         for (std::size_t i = 0; i < sz; i++)

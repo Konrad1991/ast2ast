@@ -7,9 +7,9 @@ using namespace etr;
 void test_arithmetic() {
   // NOTE: test arithmetic +, -, * and /
   {
-    std::string s = "ArithmeticTests: ";
-    Vec<double> a = coca(1, 2, 3);
-    Vec<double> b = coca(4, 5, 6);
+    std::string s; s = "ArithmeticTests: ";
+    Vec<double> a; a = coca(1, 2, 3);
+    Vec<double> b; b = coca(4, 5, 6);
     Vec<double> c;
     c = a + b;
     print(c);
@@ -25,8 +25,8 @@ void test_comparison() {
   // NOTE: test comparisons
   {
     std::string s = "ComparisonTests: ";
-    Vec<double> a = coca(1, 2, 3);
-    Vec<double> b = coca(4, 5, 6);
+    Vec<double> a; a = coca(1, 2, 3);
+    Vec<double> b; b = coca(4, 5, 6);
     print(a == b); // TODO: printing is wrong result is handled as double
     print(a != b);
     print(a >= b);

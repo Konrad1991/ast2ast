@@ -5,12 +5,27 @@
 
 namespace etr {
 
+template<typename L, typename R>
+inline auto determine_type_binary_op() {
+  if constexpr (IsVec<L> && IsVec<R>) {
+    using RetType = std::common_type_t<typename L::RetType, typename R::RetType>;
+    return RetType{};
+  } else if constexpr(!IsVec<L> && IsVec<R>) {
+    using RetType = std::common_type_t<L, typename R::RetType>;
+    return RetType{};
+  } else if constexpr(IsVec<L> && !IsVec<R>) {
+    using RetType = std::common_type_t<typename L::RetType, R>;
+    return RetType{};
+  }
+}
+
+
 template <typename L, typename R, typename BTrait>
 struct BinaryOperation {
   using Trait = BTrait;
   // TODO: the identification of RetType misses the fact that it is bool if 
   // BTrait is part of the Comparison Traits
-  using RetType = std::common_type_t<typename L::RetType, typename R::RetType>;
+  using RetType = decltype(determine_type_binary_op<L, R>());
   const L &l;
   const R &r;
   using typeTraitL = L;
