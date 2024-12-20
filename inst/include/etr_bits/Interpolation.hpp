@@ -9,17 +9,8 @@ namespace etr {
 
 template <typename A, typename B, typename C>
 inline double li(const A &t_, const B &timeVec, const C &parVec) {
-  using typeTraitA =
-      typename ReRef<decltype(t_)>::type::TypeTrait;
-  using typeTraitB =
-      typename ReRef<decltype(timeVec)>::type::TypeTrait;
-  using typeTraitC =
-      typename ReRef<decltype(parVec)>::type::TypeTrait;
-  using isVecA = std::is_same<typeTraitA, VectorTrait>;
-  using isVecB = std::is_same<typeTraitB, VectorTrait>;
-  using isVecC = std::is_same<typeTraitC, VectorTrait>;
 
-  if constexpr (isVecA::value && isVecB::value && isVecC::value) {
+  if constexpr (IsVec<A> && IsVec<B> && IsVec<C>) {
     ass<"timepoint input has to have length == 1">(t_.size() == 1);
     double t = t_[0];
     double t0, t1;
@@ -47,7 +38,7 @@ inline double li(const A &t_, const B &timeVec, const C &parVec) {
       }
     }
     return (ret);
-  } else if constexpr (!isVecA::value && isVecB::value && isVecC::value) {
+  } else if constexpr (!IsVec<A> && IsVec<B> && IsVec<C>) {
     double t = static_cast<double>(t_);
     double t0, t1;
     double y0, y1, deltaPar, deltaT, m;
@@ -160,24 +151,21 @@ inline double cmrInternal(const A *tInp, const B *timeVec, const C *parVec) {
 }
 
 template <typename A, typename B, typename C>
-  requires(IsRVec<A> || IsSubVec<A> || OperationVec<A> || IsVec<A>)
+  requires IsVec<A>
 inline double cmr(const A &tInp, const B &timeVec, const C &parVec) {
-  static_assert(IsRVec<B> || IsSubVec<B> || OperationVec<B> || IsVec<B>,
+  static_assert(IsVec<B>,
                 "time vector has to be a vector");
-  static_assert(IsRVec<C> || IsSubVec<C> || OperationVec<C> || IsVec<C>,
+  static_assert(IsVec<C>,
                 "parameter vector has to be a vector");
-  using DataTypeTime =
-      typename ExtractDataType<ReRef_t<B>>::RetType;
+  using DataTypeTime = typename ReRef<A>::type::RetType;
   static_assert(is<DataTypeTime, double>,
                 "time vector does not include doubles");
-  using DataTypeParams =
-      typename ExtractDataType<ReRef_t<C>>::RetType;
+  using DataTypeParams = typename ReRef<C>::type::RetType;
   static_assert(is<DataTypeParams, double>,
                 "parameter vector does not include doubles");
-  using DataTypeTInp =
-      typename ExtractDataType<ReRef_t<A>>::RetType;
-  static_assert(is<DataTypeTInp, double>,
-                "time input vector does not include doubles");
+  using DataTypeT = typename ReRef<A>::type::RetType;
+  static_assert(is<DataTypeT, double>,
+                "time is not of type double");
   warn<"time point has more than one element only the first one is used">(
       tInp.size() > 1);
   return cmrInternal(&tInp, &timeVec, &parVec);
@@ -186,16 +174,14 @@ inline double cmr(const A &tInp, const B &timeVec, const C &parVec) {
 template <typename A, typename B, typename C>
   requires IsArithV<A>
 inline double cmr(A tInp, const B &timeVec, const C &parVec) {
-  static_assert(IsRVec<B> || IsSubVec<B> || OperationVec<B> || IsVec<B>,
+  static_assert(IsVec<B>,
                 "time vector has to be a vector");
-  static_assert(IsRVec<C> || IsSubVec<C> || OperationVec<C> || IsVec<C>,
+  static_assert(IsVec<C>,
                 "parameter vector has to be a vector");
-  using DataTypeTime =
-      typename ExtractDataType<ReRef_t<B>>::RetType;
+  using DataTypeTime = typename ReRef<A>::type::RetType;
   static_assert(is<DataTypeTime, double>,
                 "time vector does not include doubles");
-  using DataTypeParams =
-      typename ExtractDataType<ReRef_t<C>>::RetType;
+  using DataTypeParams = typename ReRef<C>::type::RetType;
   static_assert(is<DataTypeParams, double>,
                 "parameter vector does not include doubles");
   if constexpr (!is<A, double>) {
