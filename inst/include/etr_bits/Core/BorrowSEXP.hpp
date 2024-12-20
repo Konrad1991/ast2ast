@@ -338,7 +338,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
     return os;
   }
   template <typename TInp>
-    requires(IsArithV<ReRef_t<TInp>>)
+    requires(IsArithV<ReRef<TInp>>)
   void fill(TInp &&val) {
     if constexpr (IS<T, TInp>) {
       std::fill(p, p + sz, val);
@@ -350,7 +350,7 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
 
   template <typename TInp> void fill(TInp &&inp) {
     ass<"cannot use fill with vectors of different lengths">(inp.size() == sz);
-    using DataType = ExtractDataType<ReRef_t<TInp>>::RetType;
+    using DataType = ExtractDataType<ReRef<TInp>>::RetType;
     if constexpr (IsVec<TInp>) {
       if constexpr (!is<DataType, T>) {
         for (std::size_t i = 0; i < sz; i++)

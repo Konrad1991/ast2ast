@@ -34,7 +34,7 @@ inline void calcIndVector(T &vec, Indices &ind, const I *idx) {
     ind.resize(1);
     ind[0] = convertSizeSubsetting(*idx) - 1;
     return;
-  } else if constexpr (IsAV<I>) {
+  } else if constexpr (IsVec<I>) {
 
     using IndexType = typename ExtractDataType<I>::RetType;
     if constexpr (is<IndexType, bool>) {
@@ -76,17 +76,17 @@ inline auto subset(V &vec, I &&idx) {
   using DataType = typename ExtractDataType<V>::RetType;
   Subset<decltype(convert(vec).d), SubsetTrait> sub(vec);
   calcIndVector(vec, sub.ind, &idx);
-  return Vec<DataType, decltype(convertSubset(vec)), SubVecTrait>(
+  return Vec<DataType, decltype(convertSubset(vec))>(
       std::move(sub));
 }
 
 template <typename V, typename I>
-  requires(IsRVec<V> || IsSubVec<V> || OperationVec<V>)
+  requires(IsRBufferVec<V> || IsSubsetVec<V> || IsOpVec<V>)
 inline auto subset(V &&vec, I &&idx) {
   using DataType = typename ExtractDataType<V>::RetType;
   Subset<const decltype(convert(vec).d), SubsetTrait> sub(vec);
   calcIndVector(vec, sub.ind, &idx);
-  return Vec<DataType, decltype(convertSubsetConst(vec)), SubVecTrait>(
+  return Vec<DataType, decltype(convertSubsetConst(vec))>(
       std::move(sub));
 }
 

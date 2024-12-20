@@ -48,7 +48,7 @@ inline auto at(V &vec, R &&r, C &&c) {
 }
 
 template <typename V, typename R, typename C>
-  requires(IsRVec<V> || IsSubVec<V> || OperationVec<V>)
+  requires(IsRBufferVec<V> || IsSubsetVec<V> || IsOpVec<V>)
 inline const auto at(V &&vec, R &&r,
                      C &&c) { // TODO: check that calculations can be subsetted
   using DataType = typename ExtractDataType<V>::RetType;
@@ -61,8 +61,8 @@ inline const auto at(V &&vec, R &&r,
 
 #else
 template <typename T, typename R>
-  requires(IsRVec<T> || IsSubVec<T> ||
-           OperationVec<T> && IsArithV<R>)
+  requires(IsRBufferVec<T> || IsSubsetVec<T> ||
+           IsOpVec<T> && IsArithV<R>)
 inline auto at(const T &inp, R i) {
   if constexpr (std::is_integral_v<R>) {
     return inp[i - 1];
@@ -138,8 +138,8 @@ inline auto &at(T &inp, R r, C c) {
 }
 
 template <typename T, typename R, typename C>
-  requires(IsRVec<T> || IsSubVec<T> ||
-           OperationVec<T> && IsArithV<R> &&
+  requires(IsRBufferVec<T> || IsSubsetVec<T> ||
+           IsOpVec<T> && IsArithV<R> &&
                IsArithV<C>)
 inline const auto at(const T &inp, R r, C c) {
   ass<"Input is not a matrix!">(inp.im() == true);

@@ -9,12 +9,12 @@
 
 namespace etr {
 template <typename T> inline auto convertSubset(T &obj) {
-  using R = typename ExtractDType<T>::type;
+  using R = typename ExtractRType<T>::type;
   return Subset<R, SubsetTrait>(obj);
 }
 
 template <typename T> inline auto convertSubsetConst(const T &obj) {
-  using R = typename ExtractDType<T>::type;
+  using R = typename ExtractRType<T>::type;
   return Subset<const R, SubsetTrait>(obj);
 }
 

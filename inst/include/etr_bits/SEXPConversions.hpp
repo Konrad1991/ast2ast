@@ -81,8 +81,8 @@ template <typename L, typename R> inline SEXP cpp2R(const Vec<L, R> &&res) {
   }
 }
 
-template <typename L, typename R, typename Trait>
-inline SEXP cpp2R(const Vec<L, R, Trait> &res) {
+template <typename L, typename R>
+inline SEXP cpp2R(const Vec<L, R> &res) {
   SEXP ret = R_NilValue;
   if constexpr (IS<L, double>) {
     if (res.im()) {

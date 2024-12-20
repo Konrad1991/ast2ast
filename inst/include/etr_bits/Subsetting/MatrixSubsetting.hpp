@@ -74,7 +74,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
     }
     mp.setMatrix(false, 0, 0);
     return;
-  } else if constexpr (is<R, bool> && IsAV<C>) {
+  } else if constexpr (is<R, bool> && IsVec<C>) {
     using DataTypeC = typename ExtractDataType<C>::RetType;
     if constexpr (is<DataTypeC, bool>) {
       if (!(*idxL)) {
@@ -165,7 +165,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
     ind.resize(1);
     ind[0] = (static_cast<std::size_t>(*idxR) - 1) * vec.nr() + indexRow;
     return;
-  } else if constexpr (is<R, int> && IsAV<C>) {
+  } else if constexpr (is<R, int> && IsVec<C>) {
     using DataTypeC = typename ExtractDataType<C>::RetType;
     if constexpr (is<DataTypeC, bool>) {
       std::size_t indexRow = static_cast<std::size_t>(*idxL);
@@ -237,7 +237,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
     ind.resize(1);
     ind[0] = (convertSize(*idxR) - 1) * vec.nr() + indexRow;
     return;
-  } else if constexpr (is<R, double> && IsAV<C>) {
+  } else if constexpr (is<R, double> && IsVec<C>) {
     using DataTypeC = typename ExtractDataType<C>::RetType;
     if constexpr (is<DataTypeC, bool>) {
       std::size_t indexRow = convertSize(*idxL);
@@ -286,7 +286,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
     }
   }
   // NOTE: Vec<bool|int|double> + bool
-  else if constexpr (IsAV<R> && is<C, bool>) {
+  else if constexpr ( IsVec<R> && is<C, bool>) {
     using DataTypeR = typename ExtractDataType<R>::RetType;
     if constexpr (is<DataTypeR, bool>) {
       if (!(*idxR)) {
@@ -355,7 +355,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
     }
   }
   // NOTE: Vec<bool|int|double> + int
-  else if constexpr (IsAV<R> && is<C, int>) {
+  else if constexpr (IsVec<R> && is<C, int>) {
     using DataTypeR = typename ExtractDataType<R>::RetType;
     if constexpr (is<DataTypeR, bool>) {
       std::size_t counter = 0;
@@ -401,7 +401,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
     }
   }
   // NOTE: Vec<bool|int|double> + double
-  else if constexpr (IsAV<R> && is<C, double>) {
+  else if constexpr (IsVec<R> && is<C, double>) {
     using DataTypeR = typename ExtractDataType<R>::RetType;
     if constexpr (is<DataTypeR, bool>) {
       std::size_t counter = 0;
@@ -447,7 +447,7 @@ inline void calcIndMatrix(T &vec, I &ind, MatrixParameter &mp, const R *idxL,
     }
   }
   // NOTE: vec<bool|int|double> + vec<bool|int|double>
-  else if constexpr (IsAV<R> && IsAV<C>) {
+  else if constexpr (IsVec<R> && IsVec<C>) {
     using DataTypeR = typename ExtractDataType<R>::RetType;
     using DataTypeC = typename ExtractDataType<C>::RetType;
     if constexpr (is<DataTypeR, bool> && is<DataTypeC, bool>) {
@@ -579,12 +579,12 @@ inline auto subset(V &vec, R &&r, C &&c) {
   using DataType = typename ExtractDataType<V>::RetType;
   Subset<decltype(convert(vec).d), SubsetTrait> sub(vec);
   calcIndMatrix(vec, sub.ind, sub.mp, &r, &c);
-  return Vec<DataType, decltype(convertSubset(vec)), SubVecTrait>(
+  return Vec<DataType, decltype(convertSubset(vec))>(
       std::move(sub));
 }
 
 template <typename V, typename R, typename C>
-  requires(IsRVec<V> || IsSubVec<V> || OperationVec<V>)
+  requires(IsRBufferVec<V> || IsSubsetVec<V> || IsOpVec<V>)
 inline const auto
 subset(V &&vec, R &&r,
        C &&c) { // TODO: check that calculations can be subsetted
@@ -592,7 +592,7 @@ subset(V &&vec, R &&r,
   Subset<const decltype(convert(vec).d), SubsetTrait> sub(
       vec); // TODO: check whether a new trait SubsetTraitconst is needed
   calcIndMatrix(vec, sub.ind, sub.mp, &r, &c);
-  return Vec<DataType, decltype(convertSubsetConst(vec)), SubVecTrait>(
+  return Vec<DataType, decltype(convertSubsetConst(vec))>(
       std::move(sub));
 }
 

@@ -19,6 +19,7 @@ g++ test_new.cpp -std=c++20 -g -Wall -Wpedantic -Wextra -Wconversion
 #include "../inst/include/etr_bits/Printing.hpp"
 #include "../inst/include/etr_bits/Interpolation.hpp"
 #include "../inst/include/etr_bits/Derivatives/DerivsGetAndAssign.hpp"
+#include "../inst/include/etr_bits/Subsetting.hpp"
 using namespace etr;
 
 int main() {
