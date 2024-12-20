@@ -31,14 +31,14 @@ template <typename V, typename R, typename C>
 inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
   if constexpr (IsArithV<R> && IsArithV<C>) {
     if constexpr (IsArithV<V>) {
-      Vec<V, Buffer<V, BufferTrait, RBufTrait>, RVecTrait> ret(
+      Vec<V, Buffer<V, RBufferTrait>> ret(
           convertSize(nrows), convertSize(ncols));
       ret.d.fill(inp);
       return ret;
     } else {
       using DataType =
-          typename ExtractDataType<ReRef_t<V>>::RetType;
-      Vec<DataType, Buffer<DataType, BufferTrait, RBufTrait>, RVecTrait> ret(
+          typename ExtractDataType<ReRef<V>>::RetType;
+      Vec<DataType, Buffer<DataType, RBufferTrait>> ret(
           convertSize(nrows), convertSize(ncols));
       ret.d.fill(inp);
       return ret;
@@ -47,16 +47,15 @@ inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
     if constexpr (IsArithV<V>) {
       warn<"nrows in fct matrix has more than one element. "
            "Only the first one is used">(nrows.size() > 1);
-      Vec<V, Buffer<V, BufferTrait, RBufTrait>, RVecTrait> ret(
+      Vec<V, Buffer<V, RBufferTrait>> ret(
           convertSize(nrows[0]), convertSize(ncols));
       ret.d.fill(inp);
       return ret;
     } else {
-      using DataType =
-          typename ExtractDataType<ReRef_t<V>>::RetType;
+      using DataType = typename ReRef<V>::type::RetType;
       warn<"nrows in fct matrix has more than one element. "
            "Only the first one is used">(nrows.size() > 1);
-      Vec<DataType, Buffer<DataType, BufferTrait, RBufTrait>, RVecTrait> ret(
+      Vec<DataType, Buffer<DataType, RBufferTrait>> ret(
           convertSize(nrows[0]), convertSize(ncols));
       ret.d.fill(inp);
       return ret;
@@ -65,16 +64,15 @@ inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
     if constexpr (IsArithV<V>) {
       warn<"ncols in fct matrix has more than one element. "
            "Only the first one is used">(ncols.size() > 1);
-      Vec<V, Buffer<V, BufferTrait, RBufTrait>, RVecTrait> ret(
+      Vec<V, Buffer<V, RBufferTrait>> ret(
           convertSize(nrows), convertSize(ncols[0]));
       ret.d.fill(inp);
       return ret;
     } else {
-      using DataType =
-          typename ExtractDataType<ReRef_t<V>>::RetType;
+      using DataType = typename ReRef<V>::type::RetType;
       warn<"ncols in fct matrix has more than one element. "
            "Only the first one is used">(ncols.size() > 1);
-      Vec<DataType, Buffer<DataType, BufferTrait, RBufTrait>, RVecTrait> ret(
+      Vec<DataType, Buffer<DataType, RBufferTrait>> ret(
           convertSize(nrows), convertSize(ncols[0]));
       ret.d.fill(inp);
       return ret;
@@ -85,18 +83,17 @@ inline auto matrix(const V &&inp, const R &&nrows, const C &&ncols) {
            "Only the first one is used">(ncols.size() > 1);
       warn<"nrows in fct matrix has more than one element. "
            "Only the first one is used">(nrows.size() > 1);
-      Vec<V, Buffer<V, BufferTrait, RBufTrait>, RVecTrait> ret(
+      Vec<V, Buffer<V, RBufferTrait>> ret(
           convertSize(nrows[0]), convertSize(ncols[0]));
       ret.d.fill(inp);
       return ret;
     } else {
-      using DataType =
-          typename ExtractDataType<ReRef_t<V>>::RetType;
+      using DataType = typename ReRef<V>::type::RetType;
       warn<"ncols in fct matrix has more than one element. "
            "Only the first one is used">(ncols.size() > 1);
       warn<"nrows in fct matrix has more than one element. "
            "Only the first one is used">(nrows.size() > 1);
-      Vec<DataType, Buffer<DataType, BufferTrait, RBufTrait>, RVecTrait> ret(
+      Vec<DataType, Buffer<DataType, RBufferTrait>> ret(
           convertSize(nrows[0]), convertSize(ncols[0]));
       ret.d.fill(inp);
       return ret;

@@ -33,7 +33,7 @@ template <typename T> inline std::size_t convertSize(const T &inp) {
   } else if constexpr (std::is_integral_v<T>) {
     ass<"invalid times argument">(inp >= 1);
     return static_cast<std::size_t>(inp);
-  } else if constexpr (IsVecRorCalc<T>) {
+  } else if constexpr (IsRBufferVec<T> || IsOpVec<T>) {
     ass<"invalid times argument">(inp.size() == 1 && inp[0] >= 1);
     return static_cast<std::size_t>(inp[0]);
   } else {
@@ -44,14 +44,14 @@ template <typename T> inline std::size_t convertSize(const T &inp) {
 template <typename T> inline auto createLVec(T s) {
   std::size_t size = convertSize(s);
   ass<"invalid length argument">(size > 0);
-  return Vec<BaseType, Buffer<BaseType, BufferTrait, RBufTrait>, RVecTrait>(
+  return Vec<BaseType, Buffer<BaseType, RBufferTrait>>(
       SI{size});
 }
 
 template <typename T, typename VecType = BaseType> inline auto createRVec(T s) {
   std::size_t size = convertSize(s);
   ass<"invalid length argument">(size > 0);
-  return Vec<VecType, Buffer<BaseType, BufferTrait, RBufTrait>, RVecTrait>(
+  return Vec<VecType, Buffer<BaseType, RBufferTrait>>(
       SI{size});
 }
 

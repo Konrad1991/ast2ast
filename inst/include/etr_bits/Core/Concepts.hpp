@@ -100,6 +100,19 @@ concept IsSubsetVec = requires(T t) {
   requires IsSubset<typename T::DType>;
 };
 
+template <typename T>
+concept IsOpVec = requires(T t) {
+  typename T::DType;
+  requires IsUnary<typename T::DType> || IsBinary<typename T::DType>;
+};
+
+
+template <typename T>
+concept IsVecRorCalc= requires(T t) {
+  typename T::DType;
+  requires IsOpVec<T> || IsRBufferVec<T>;
+};
+
 // Test Input class
 // ===================================================================
 // Vector

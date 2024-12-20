@@ -15,6 +15,7 @@ g++ test_new.cpp -std=c++20 -g -Wall -Wpedantic -Wextra -Wconversion
 #include "../inst/include/etr_bits/BinaryCalculations.hpp"
 #include "../inst/include/etr_bits/UnaryCalculations.hpp"
 #include "../inst/include/etr_bits/Coca.hpp"
+#include "../inst/include/etr_bits/Allocation.hpp"
 using namespace etr;
 
 int main() {
@@ -33,6 +34,9 @@ int main() {
   std::cout << vec << std::endl;
   
   vec = coca(1, 2, 3, true);
+  std::cout << vec << std::endl;
+
+  vec = vector_numeric(5);
   std::cout << vec << std::endl;
   
   Vec<bool> v2;
