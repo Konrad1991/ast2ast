@@ -30,11 +30,18 @@ int main() {
   d = a == b;
   auto e = a == b;
   auto f = a + b;
+  for (auto i: f.d) {
+    std::cout << "val: " << i << std::endl;
+  }
 
   print(c);
   print(d);
   printTAST<decltype(e)>();
   printTAST<decltype(f)>();
+  printTAST<decltype(f.d)>();
+
+  auto test = f.d;
 
   print(a + c);
+
 }

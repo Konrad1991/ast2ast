@@ -33,10 +33,9 @@ template <typename L, typename R> struct SubsetClassIterator {
       : l(l), r(r), index(index) {}
 
   auto operator*() const {
-    constexpr bool isArithmeticR = IsArithV<R>;
-    if constexpr (isArithmeticR) {
+    if constexpr (IsArithV<R>) {
       return l[r];
-    } else if constexpr (!isArithmeticR) {
+    } else if constexpr (!IsArithV<R>) {
       return l[r[index % r.size()] - 1];
     }
   }
