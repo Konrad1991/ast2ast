@@ -13,6 +13,7 @@ g++ test_new.cpp -std=c++20 -g -Wall -Wpedantic -Wextra -Wconversion
 #include "../inst/include/etr_bits/Core.hpp"
 #include "../inst/include/etr_bits/BufferVector.hpp"
 #include "../inst/include/etr_bits/BinaryCalculations.hpp"
+#include "../inst/include/etr_bits/UnaryCalculations.hpp"
 #include "../inst/include/etr_bits/Coca.hpp"
 #include "../inst/include/etr_bits/Printing.hpp"
 using namespace etr;
@@ -22,26 +23,14 @@ int main() {
   Vec<double> a;
   Vec<double> b;
   Vec<double> c;
-  Vec<bool> d;
+  Vec<double> d;
 
-  a = coca(1,2,3);
-  b = coca(1, 5, 6);
-  c = a + b;
-  d = a == b;
-  auto e = a == b;
-  auto f = a + b;
-  for (auto i: f.d) {
-    std::cout << "val: " << i << std::endl;
-  }
-
+  a = coca(1.1,2,3);
+  b = coca(1.1, 5, 6);
+  c = a + b + a + 3.14;
+  d = -c;
   print(c);
   print(d);
-  printTAST<decltype(e)>();
-  printTAST<decltype(f)>();
-  printTAST<decltype(f.d)>();
 
-  auto test = f.d;
-
-  print(a + c);
-
+  for (auto i: d.d) std::cout << i << std::endl;
 }

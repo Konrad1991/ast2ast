@@ -5,6 +5,31 @@
 
 namespace etr {
 
+template <typename I, typename Trait> struct UnaryOpClassIterator {
+  const I &obj;
+  size_t index;
+  
+  UnaryOpClassIterator(const I &obj, size_t index = 0)
+  : obj(obj), index(index) {}
+
+  auto operator*() const {
+    if constexpr (IsArithV<I>) {
+      return Trait::f(obj);
+    } else if constexpr (!IsArithV<I>) {
+      return Trait::f(obj[index % obj.size()]);
+    }
+  }
+
+  UnaryOpClassIterator &operator++() {
+    ++index;
+    return *this;
+  }
+
+  bool operator!=(const UnaryOpClassIterator &other) const {
+    return index != other.index;
+  }
+};
+
 template <typename I, typename UTrait> struct UnaryOperation {
   using Trait = UTrait;
   using RetType = typename I::RetType;
@@ -65,15 +90,8 @@ template <typename I, typename UTrait> struct UnaryOperation {
     mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
   }
 
-  template <typename AV> static RetType getSize(AV &av) {
-    using Ty = typename ReRef<typeTraitObj>::type;
-    return Ty::template getSize<AV>(av);
-  }
-
-  template <typename AV> static RetType getVal(AV &av, std::size_t VecIdx) {
-    using Ty = typename ReRef<typeTraitObj>::type;
-    return f(Ty::template getVal<AV>(av, VecIdx % Ty::template getSize(av)));
-  }
+  auto begin() const { return UnaryOpClassIterator<I, UTrait>{obj, 0}; }
+  auto end() const { return UnaryOpClassIterator<I, UTrait>{obj, this->size()}; }
 };
 
 template <typename T> auto operator-(const T &obj) {

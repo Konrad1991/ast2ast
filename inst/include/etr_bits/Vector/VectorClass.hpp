@@ -436,6 +436,33 @@ template <typename T, typename R> struct Vec {
     }
   }
 
+  // NOTE: copy constructor
+  Vec(const Vec<T, R> &&other_vec) {
+    if constexpr (IsBorrow<R>) {
+      ass<"Sizes do not match">(d.sz <= other_vec.size());
+      d.sz = other_vec.size();
+      for (std::size_t i = 0; i < d.size(); i++) {
+        d[i] = other_vec[i];
+      }
+      if (other_vec.d.im()) {
+        d.setMatrix(true, other_vec.nr(), other_vec.nc());
+      }
+    } else {
+      if (d.sz < other_vec.size()) {
+        this->d.resize(other_vec.size());
+      } else {
+        d.sz = other_vec.size();
+      }
+      for (std::size_t i = 0; i < d.size(); i++) {
+        d[i] = other_vec[i];
+      }
+      if (other_vec.d.im()) {
+        d.setMatrix(true, other_vec.nr(), other_vec.nc());
+      }
+    }
+  }
+
+
   // NOTE: other vector which is of type RVec and with same base type
   template <typename T2, typename R2>
   requires(IsRVec<const Vec<T2, R2>> && IS<T, T2>)
