@@ -13,42 +13,28 @@ g++ test_new.cpp -std=c++20 -g -Wall -Wpedantic -Wextra -Wconversion
 #include "../inst/include/etr_bits/Core.hpp"
 #include "../inst/include/etr_bits/BufferVector.hpp"
 #include "../inst/include/etr_bits/BinaryCalculations.hpp"
-#include "../inst/include/etr_bits/UnaryCalculations.hpp"
 #include "../inst/include/etr_bits/Coca.hpp"
-#include "../inst/include/etr_bits/Allocation.hpp"
 #include "../inst/include/etr_bits/Printing.hpp"
-#include "../inst/include/etr_bits/Interpolation.hpp"
-#include "../inst/include/etr_bits/Derivatives/DerivsGetAndAssign.hpp"
-#include "../inst/include/etr_bits/Subsetting.hpp"
 using namespace etr;
 
+
 int main() {
-  Buffer<double> v(10);
-  std::cout << v << std::endl;
+  Vec<double> a;
+  Vec<double> b;
+  Vec<double> c;
+  Vec<bool> d;
 
-  double* ptr = new double[5];
-  for (int i = 0; i < 5; i++) ptr[i] = 0.0;
-  Borrow<double> b(ptr, 5);
-  std::cout << b << std::endl;
+  a = coca(1,2,3);
+  b = coca(1, 5, 6);
+  c = a + b;
+  d = a == b;
+  auto e = a == b;
+  auto f = a + b;
 
-  Vec<double> vec(SI{10});
-  std::cout << vec.size() << std::endl;
-  for (auto& i: vec) i = 3.14;
-  vec = -(vec + vec);
-  std::cout << vec << std::endl;
-  
-  vec = coca(1, 2, 3, true);
-  std::cout << vec << std::endl;
+  print(c);
+  print(d);
+  printTAST<decltype(e)>();
+  printTAST<decltype(f)>();
 
-  vec = vector_numeric(5);
-  std::cout << vec << std::endl;
-  
-  Vec<bool> v2;
-  v2 = coca(1, true, 2, 3.14);
-  std::cout << std::boolalpha << v2 << std::endl;
-
-  vec[0] = 10;
-
-
-  delete[] ptr;
+  print(a + c);
 }

@@ -81,6 +81,18 @@ concept IsBinary = requires {
         IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
         IS<typename ReRef<T>::type::Trait, UnEqualTrait>;
 };
+template <typename T>
+concept IsComparison = requires {
+    typename ReRef<T>::type::Trait;
+    requires
+        IS<typename ReRef<T>::type::Trait, EqualTrait> ||
+        IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
+        IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
+        IS<typename ReRef<T>::type::Trait, LargerTrait> ||
+        IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
+        IS<typename ReRef<T>::type::Trait, UnEqualTrait>;
+};
+
 
 // Test Vec class
 // ===================================================================
@@ -105,7 +117,6 @@ concept IsOpVec = requires(T t) {
   typename T::DType;
   requires IsUnary<typename T::DType> || IsBinary<typename T::DType>;
 };
-
 
 template <typename T>
 concept IsVecRorCalc= requires(T t) {

@@ -26,6 +26,10 @@ template <typename T> using ReRef = std::remove_reference<T>;
 
 template <typename T> constexpr bool IsRvalue = std::is_rvalue_reference_v<T>;
 
+template <typename T> using IsClass = std::is_class<T>;
+
+template <typename T> constexpr bool IsClassV = std::is_class_v<T>;
+
 } // namespace etr
 
 #endif

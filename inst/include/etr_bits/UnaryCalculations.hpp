@@ -4,6 +4,7 @@
 #include "Core.hpp"
 
 namespace etr {
+
 template <typename I, typename UTrait> struct UnaryOperation {
   using Trait = UTrait;
   using RetType = typename I::RetType;
