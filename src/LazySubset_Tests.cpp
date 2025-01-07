@@ -19,16 +19,14 @@ void test_subset_test_with_scalar() {
   try {
     auto result = subset_test(l, 0);
   } catch (Rcpp::exception &e) {
-    std::string expected =
-        "Error: out of boundaries --> value beyond size of vector";
+    std::string expected = "Error: out of boundaries";
     ass(e.what() == expected, "Expected out of boundary error");
   }
   try {
     auto result = subset_test(l, 0.4);
     std::cout << result << std::endl;
   } catch (Rcpp::exception &e) {
-    std::string expected =
-        "Error: out of boundaries --> value beyond size of vector";
+    std::string expected = "Error: out of boundaries";
     ass(e.what() == expected, "Expected out of boundary error");
   }
 }

@@ -291,7 +291,7 @@ requires (!IsArithV<TInp>)
     ass<"No memory was allocated">(allocated);
     // NOTE: negative idx leads to overflow and
     // is than the max possible value of std::size_t
-    ass<"Error: out of boundaries --> value beyond size of vector">(idx < sz);
+    ass<"Error: out of boundaries">(idx < sz);
     return p[idx];
   }
 

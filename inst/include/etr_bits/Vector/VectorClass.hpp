@@ -437,7 +437,8 @@ template <typename T, typename R> struct Vec {
   }
 
   // NOTE: copy constructor
-  Vec(const Vec<T, R> &&other_vec) {
+  // TODO: add this also for the derivative part
+  Vec(const Vec<T, R> &other_vec) {
     if constexpr (IsBorrow<R>) {
       ass<"Sizes do not match">(d.sz <= other_vec.size());
       d.sz = other_vec.size();
@@ -461,7 +462,6 @@ template <typename T, typename R> struct Vec {
       }
     }
   }
-
 
   // NOTE: other vector which is of type RVec and with same base type
   template <typename T2, typename R2>
@@ -580,8 +580,7 @@ Vec &operator=(const Vec<T, R> &otherVec) {
   static_assert(!IsRBuffer<R>,
                 "Cannot assign to an r value. E.g. c(1, 2, 3) <- 1");
 
-  using DataTypeOtherVec = typename etr::ExtractDataType<
-      ReRef<decltype(otherVec)>>::RetType;
+  using DataTypeOtherVec = const Vec<T, R>::RetType;
   if constexpr (IsLBuffer<R>) {
     temp.resize(otherVec.size());
     for (std::size_t i = 0; i < otherVec.size(); i++) {

@@ -192,14 +192,14 @@ template <typename T, typename BorrowSEXPSEXPTrait> struct BorrowSEXP {
   RetType &operator[](std::size_t pos) {
     ass<"Subset is pointing to nothing!">(p != nullptr);
     ass<"Error: out of boundaries --> value below 1">(pos >= 0);
-    ass<"Error: out of boundaries --> value beyond size of vector">(pos < sz);
+    ass<"Error: out of boundaries">(pos < sz);
     return this->p[pos];
   }
 
   RetType operator[](std::size_t pos) const {
     ass<"Subset is pointing to nothing!">(this->p != nullptr);
     ass<"Error: out of boundaries --> value below 1">(pos >= 0);
-    ass<"Error: out of boundaries --> value beyond size of vector">(pos < sz);
+    ass<"Error: out of boundaries">(pos < sz);
     return this->p[pos];
   }
 

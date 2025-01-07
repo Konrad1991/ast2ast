@@ -335,7 +335,7 @@ void test_vector_subsetting() {
       at(v, 2000);
     } catch (Rcpp::exception &e) {
       std::string expected =
-          "Error: out of boundaries --> value beyond size of vector";
+          "Error: out of bounaries";
       ass(e.what() == expected, s + "Error out of boundaries");
     }
     at(v, 2, 3) = 20.3;
@@ -344,14 +344,14 @@ void test_vector_subsetting() {
       at(v, 0, 0);
     } catch (Rcpp::exception &e) {
       std::string expected =
-          "Error: out of boundaries --> value beyond size of vector";
+          "Error: out of bounaries";
       ass(e.what() == expected, s + "Error out of boundaries");
     }
     try {
       at(v, 2000, 1);
     } catch (Rcpp::exception &e) {
       std::string expected =
-          "Error: out of boundaries --> value beyond size of vector";
+          "Error: out of bounaries";
       ass(e.what() == expected, s + "Error out of boundaries");
     }
   }

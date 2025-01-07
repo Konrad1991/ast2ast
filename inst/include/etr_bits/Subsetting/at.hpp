@@ -79,7 +79,7 @@ inline auto &at(T &inp, R i) {
   i--;
   ass<"No memory was allocated">(inp.d.allocated);
   ass<"Error: out of boundaries --> value below 1">(i >= 0);
-  ass<"Error: out of boundaries --> value beyond size of vector">(i <
+  ass<"Error: out of boundaries">(i <
                                                                   inp.size());
   return inp.d.p[i];
 }
@@ -91,7 +91,7 @@ inline auto &at(T &inp, R i_) {
   i--;
   ass<"No memory was allocated">(inp.d.allocated);
   ass<"Error: out of boundaries --> value below 1">(i >= 0);
-  ass<"Error: out of boundaries --> value beyond size of vector">(i <
+  ass<"Error: out of boundaries">(i <
                                                                   inp.size());
   return inp.d.p[i];
 }
@@ -105,7 +105,7 @@ inline auto &at(T &inp, R r, C c) {
     r--;
     c--;
     ass<"Error: out of boundaries --> value below 1">((c * inp.nr() + r) >= 0);
-    ass<"Error: out of boundaries --> value beyond size of vector">(
+    ass<"Error: out of boundaries">(
         (c * inp.nr() + r) < inp.size());
     return inp.d.p[c * inp.nr() + r];
   } else if constexpr (!std::is_integral_v<R> && std::is_integral_v<C>) {
@@ -113,7 +113,7 @@ inline auto &at(T &inp, R r, C c) {
     r_--;
     c--;
     ass<"Error: out of boundaries --> value below 1">((c * inp.nr() + r_) >= 0);
-    ass<"Error: out of boundaries --> value beyond size of vector">(
+    ass<"Error: out of boundaries">(
         (c * inp.nr() + r_) < inp.size());
     return inp.d.p[c * inp.nr() + r_];
   } else if constexpr (std::is_integral_v<R> && !std::is_integral_v<C>) {
@@ -121,7 +121,7 @@ inline auto &at(T &inp, R r, C c) {
     int c_ = d2i(c);
     c_--;
     ass<"Error: out of boundaries --> value below 1">((c_ * inp.nr() + r) >= 0);
-    ass<"Error: out of boundaries --> value beyond size of vector">(
+    ass<"Error: out of boundaries">(
         (c_ * inp.nr() + r) < inp.size());
     return inp.d.p[c_ * inp.nr() + r];
   } else {
@@ -131,7 +131,7 @@ inline auto &at(T &inp, R r, C c) {
     c_--;
     ass<"Error: out of boundaries --> value below 1">((c_ * inp.nr() + r_) >=
                                                       0);
-    ass<"Error: out of boundaries --> value beyond size of vector">(
+    ass<"Error: out of boundaries">(
         (c_ * inp.nr() + r_) < inp.size());
     return inp.d.p[c_ * inp.nr() + r_];
   }
@@ -147,7 +147,7 @@ inline const auto at(const T &inp, R r, C c) {
     r--;
     c--;
     ass<"Error: out of boundaries --> value below 1">((c * inp.nr() + r) >= 0);
-    ass<"Error: out of boundaries --> value beyond size of vector">(
+    ass<"Error: out of boundaries">(
         (c * inp.nr() + r) < inp.size());
     return inp[c * inp.nr() + r];
   } else if constexpr (!std::is_integral_v<R> && std::is_integral_v<C>) {
@@ -155,7 +155,7 @@ inline const auto at(const T &inp, R r, C c) {
     r_--;
     c--;
     ass<"Error: out of boundaries --> value below 1">((c * inp.nr() + r_) >= 0);
-    ass<"Error: out of boundaries --> value beyond size of vector">(
+    ass<"Error: out of boundaries">(
         (c * inp.nr() + r_) < inp.size());
     return inp[c * inp.nr() + r_];
   } else if constexpr (std::is_integral_v<R> && !std::is_integral_v<C>) {
@@ -163,7 +163,7 @@ inline const auto at(const T &inp, R r, C c) {
     int c_ = d2i(c);
     c_--;
     ass<"Error: out of boundaries --> value below 1">((c_ * inp.nr() + r) >= 0);
-    ass<"Error: out of boundaries --> value beyond size of vector">(
+    ass<"Error: out of boundaries">(
         (c_ * inp.nr() + r) < inp.size());
     return inp[c_ * inp.nr() + r];
   } else {
@@ -173,7 +173,7 @@ inline const auto at(const T &inp, R r, C c) {
     c_--;
     ass<"Error: out of boundaries --> value below 1">((c_ * inp.nr() + r_) >=
                                                       0);
-    ass<"Error: out of boundaries --> value beyond size of vector">(
+    ass<"Error: out of boundaries">(
         (c_ * inp.nr() + r_) < inp.size());
     return inp[c_ * inp.nr() + r_];
   }

@@ -141,14 +141,14 @@ template <typename T, typename BorrowTrait> struct Borrow {
   RetType operator[](std::size_t idx) const {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries --> value below 1">(idx >= 0);
-    ass<"Error: out of boundaries --> value beyond size of vector">(idx < sz);
+    ass<"Error: out of boundaries">(idx < sz);
     return p[idx];
   }
 
   RetType &operator[](std::size_t idx) {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries --> value below 1">(idx >= 0);
-    ass<"Error: out of boundaries --> value beyond size of vector">(idx < sz);
+    ass<"Error: out of boundaries">(idx < sz);
     return p[idx];
   }
 

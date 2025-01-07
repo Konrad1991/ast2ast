@@ -1,3 +1,4 @@
+// TODO: creation of empty vec i.e. coca(); is missing
 #ifndef COCA_ETR_H
 #define COCA_ETR_H
 

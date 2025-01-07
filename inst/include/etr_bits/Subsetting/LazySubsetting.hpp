@@ -52,7 +52,6 @@ template <typename L, typename R> struct SubsetClassIterator {
 
 template <typename L, typename R, typename Trait> struct SubsetClass {
   using RetType = typename ExtractDataType<L>::RetType;
-  using CaseTrait = BinaryTrait;
   using TypeTrait = Trait;
   std::optional<L> storedL;
   std::optional<R> storedR;
@@ -127,18 +126,19 @@ template <typename L, typename R, typename Trait> struct SubsetClass {
 // subsetSubset functions mean that a vector is subsetted by something which
 // can be either a scalar (int or double), a bool, a vector or a SubsetClass
 // (wrapped in a Vec).
-
 template <typename L, typename R> auto subsetArithmeticR(L &&l, R &&r) {
   using RetType = typename ExtractDataType<Decayed<L>>::RetType;
   if constexpr (IsFloatingPointV<R>) {
+    ass<"Negative indices are not supported">(r >= 0);
     return static_cast<RetType>(l[static_cast<size_t>(std::floor(r)) - 1]);
   } else if constexpr (IsBool<R>) {
     if (r) {
       return l;
     } else {
-      return Vec<RetType>(); // TODO: check is empty vector always safe?
+      return Vec<RetType, Buffer<RetType, RBufferTrait>>(SI{0});
     }
   } else if constexpr (IsIntegral<R>) {
+    ass<"Negative indices are not supported">(r >= 0);
     return static_cast<RetType>(l.d[r - 1]);
   } else {
     ass<"Found unsupported arithmetic value">(false);
@@ -148,14 +148,16 @@ template <typename L, typename R> auto subsetArithmeticR(L &&l, R &&r) {
 template <typename L, typename R> auto subsetArithmeticL(L &&l, R &&r) {
   using RetType = typename ExtractDataType<Decayed<L>>::RetType;
   if constexpr (IsFloatingPointV<R>) {
+    ass<"Negative indices are not supported">(r >= 0);
     return static_cast<RetType &>(l[static_cast<size_t>(std::floor(r)) - 1]);
   } else if constexpr (IsBool<R>) {
     if (r) {
       return l;
     } else {
-      return Vec<RetType>(); // TODO: check is empty vector always safe?
+      return Vec<RetType>(SI{0});
     }
   } else if constexpr (IsIntegral<R>) {
+    ass<"Negative indices are not supported">(r >= 0);
     return static_cast<RetType &>(l.d[r - 1]);
   } else {
     ass<"Found unsupported arithmetic value">(false);

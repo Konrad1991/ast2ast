@@ -11,6 +11,7 @@ g++ test_new.cpp -std=c++20 -g -Wall -Wpedantic -Wextra -Wconversion
 */
 #define STANDALONE_ETR
 #include "../inst/include/etr_bits/Core.hpp"
+#include "../inst/include/etr_bits/Subsetting/LazySubsetting.hpp"
 #include "../inst/include/etr_bits/BufferVector.hpp"
 #include "../inst/include/etr_bits/BinaryCalculations.hpp"
 #include "../inst/include/etr_bits/UnaryCalculations.hpp"
@@ -29,8 +30,8 @@ int main() {
   b = coca(1.1, 5, 6);
   c = a + b + a + 3.14;
   d = -c;
-  print(c);
-  print(d);
 
-  for (auto i: d.d) std::cout << i << std::endl;
+  auto test = subset_test(a, 1);
+  printTAST<decltype(test)>();
+  std::cout << test << std::endl;
 }
