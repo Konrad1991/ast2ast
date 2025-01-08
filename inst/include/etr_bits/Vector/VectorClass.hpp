@@ -15,7 +15,6 @@ template <typename T, typename R> struct Vec {
   using DType = R;
   using RetType = typename ReRef<decltype(d)>::type::RetType;
 
-
   template <typename T2> Vec(T2 n) = delete;
 
 #ifdef DERIV_ETR
@@ -43,28 +42,28 @@ template <typename T, typename R> struct Vec {
 
   // NOTE: Borrow
   template <typename U = R, typename T2>
-  requires IS<U, Borrow<BaseType>>
+    requires IS<U, Borrow<BaseType>>
   explicit Vec(const Borrow<T2> &&borrowed) : d(borrowed), deriv(borrowed.sz) {
     d.setMatrix(borrowed.mp);
   }
   template <typename U = R, typename T2>
-  requires IS<U, Borrow<T>>
+    requires IS<U, Borrow<T>>
   explicit Vec(const Borrow<T2> &borrowed) : d(borrowed), deriv(borrowed.sz) {
     d.setMatrix(borrowed.mp);
   }
   template <typename U = R>
-  requires IS<U, Borrow<T>>
+    requires IS<U, Borrow<T>>
   explicit Vec(T *ptr, std::size_t s) : d(ptr, s), deriv(s) {}
 
   // NOTE: BorrowSEXP
 #ifdef STANDALONE_ETR
 #else
   template <typename U = R>
-  requires IS<U, BorrowSEXP<T>>
+    requires IS<U, BorrowSEXP<T>>
   explicit Vec(SEXP &&inp) = delete;
 
   template <typename U = R>
-  requires IS<U, BorrowSEXP<T>>
+    requires IS<U, BorrowSEXP<T>>
   explicit Vec(SEXP inp) : d(inp) {
     deriv.resize(d.sz);
     deriv.fill(0.0);
@@ -82,35 +81,35 @@ template <typename T, typename R> struct Vec {
   }
   // NOTE: Subset lazy
   template <typename L2, typename R2, typename TraitInp>
-  requires IS<TraitInp, SubsetClassTrait>
+    requires IS<TraitInp, SubsetClassTrait>
   explicit Vec(const SubsetClass<L2, R2, TraitInp> &&inp)
-  : d(inp), deriv(inp.size()) {
+      : d(inp), deriv(inp.size()) {
     d.setMatrix(inp.mp);
   }
   template <typename L2, typename R2, typename TraitInp>
-  requires IS<TraitInp, SubsetClassTrait>
+    requires IS<TraitInp, SubsetClassTrait>
   explicit Vec(SubsetClass<L2, R2, TraitInp> &inp) : d(inp), deriv(inp.size()) {
     d.setMatrix(inp.mp);
   }
 
   // NOTE: Binary operation
   template <typename L2, typename R2, typename OperationTrait>
-  requires IsBinaryOperation<BinaryOperation<L2, R2, OperationTrait>>
+    requires IsBinaryOperation<BinaryOperation<L2, R2, OperationTrait>>
   explicit Vec(const BinaryOperation<L2, R2, OperationTrait> &&inp)
-  : d(inp), deriv(inp.size()) {
+      : d(inp), deriv(inp.size()) {
     using TypeTrait = OperationTrait;
     d.setMatrix(inp.mp);
   }
   template <typename L2, typename R2, typename OperationTrait,
-  typename DetailTrait> // NOTE: only for comparison!
+            typename DetailTrait> // NOTE: only for comparison!
   explicit Vec(const BinaryOperation<L2, R2, OperationTrait, DetailTrait> &&inp)
-  : d(inp), deriv(inp.size()) {
+      : d(inp), deriv(inp.size()) {
     using TypeTrait = OperationTrait;
     d.setMatrix(inp.mp);
   }
   template <typename L2, typename R2, typename OperationTrait>
   explicit Vec(BinaryOperation<L2, R2, OperationTrait> &inp)
-  : d(inp), deriv(inp.size()) {
+      : d(inp), deriv(inp.size()) {
     using TypeTrait = OperationTrait;
     d.setMatrix(inp.mp);
   }
@@ -118,13 +117,13 @@ template <typename T, typename R> struct Vec {
   // NOTE: Unary operation
   template <typename L2, typename OperationTrait>
   explicit Vec(const UnaryOperation<L2, OperationTrait> &&inp)
-  : d(inp), deriv(inp.size()) {
+      : d(inp), deriv(inp.size()) {
     using TypeTrait = OperationTrait;
     d.setMatrix(inp.mp);
   }
   template <typename L2, typename OperationTrait>
   explicit Vec(UnaryOperation<L2, OperationTrait> &inp)
-  : d(inp), deriv(inp.size()) {
+      : d(inp), deriv(inp.size()) {
     using TypeTrait = OperationTrait;
     d.setMatrix(inp.mp);
   }
@@ -144,17 +143,17 @@ template <typename T, typename R> struct Vec {
 
   // NOTE: matrix constructors
   explicit Vec(std::size_t rows, std::size_t cols)
-  : d(rows * cols), deriv(rows * cols) {
+      : d(rows * cols), deriv(rows * cols) {
     d.setMatrix(true, rows, cols);
   }
   explicit Vec(std::size_t rows, std::size_t cols, const double value)
-  : d(rows * cols), deriv(rows * cols) {
+      : d(rows * cols), deriv(rows * cols) {
     d.setMatrix(true, rows, cols);
     d.fill(value);
   }
   // NOTE: other vector which is not of type RVec and has to be copied
   template <typename T2, typename R2, typename Trait2>
-  requires IsVec<const Vec<T2, R2, Trait2>>
+    requires IsVec<const Vec<T2, R2, Trait2>>
   Vec(const Vec<T2, R2, Trait2> &&other_vec) {
     using TypeTrait = Trait2;
     using CaseTrait = Trait2;
@@ -189,7 +188,7 @@ template <typename T, typename R> struct Vec {
 
   // NOTE: other vector which is of type RVec and has different base type
   template <typename T2, typename R2, typename Trait2>
-  requires(IsRVec<const Vec<T2, R2, Trait2>> && !IS<T, T2>)
+    requires(IsRVec<const Vec<T2, R2, Trait2>> && !IS<T, T2>)
   Vec(const Vec<T2, R2, Trait2> &&other_vec) {
     using TypeTrait = Trait2;
     using CaseTrait = Trait2;
@@ -224,7 +223,7 @@ template <typename T, typename R> struct Vec {
 
   // NOTE: other vector which is of type RVec and with same base type
   template <typename T2, typename R2, typename Trait2>
-  requires(IsRVec<const Vec<T2, R2, Trait2>> && IS<T, T2>)
+    requires(IsRVec<const Vec<T2, R2, Trait2>> && IS<T, T2>)
   Vec(Vec<T2, R2, Trait2> &&other_vec) {
     using TypeTrait = Trait2;
     using CaseTrait = Trait2;
@@ -267,7 +266,7 @@ template <typename T, typename R> struct Vec {
     deriv.fill(0.0);
   }
   Vec(BaseType *ptr, std::size_t rows, std::size_t cols)
-  : d(rows * cols), deriv(rows * cols) {
+      : d(rows * cols), deriv(rows * cols) {
     for (std::size_t i = 0; i < d.size(); i++)
       d[i] = ptr[i];
     d.setMatrix(true, rows, cols);
@@ -293,28 +292,28 @@ template <typename T, typename R> struct Vec {
 
   // NOTE: Borrow
   template <typename U = R, typename T2>
-  requires IS<U, Borrow<BaseType>>
+    requires IS<U, Borrow<BaseType>>
   explicit Vec(const Borrow<T2> &&borrowed) : d(borrowed) {
     d.setMatrix(borrowed.mp);
   }
   template <typename U = R, typename T2>
-  requires IS<U, Borrow<T>>
+    requires IS<U, Borrow<T>>
   explicit Vec(const Borrow<T2> &borrowed) : d(borrowed) {
     d.setMatrix(borrowed.mp);
   }
   template <typename U = R>
-  requires IS<U, Borrow<T>>
+    requires IS<U, Borrow<T>>
   explicit Vec(T *ptr, std::size_t s) : d(ptr, s) {}
 
   // NOTE: BorrowSEXP
 #ifdef STANDALONE_ETR
 #else
   template <typename U = R>
-  requires IS<U, BorrowSEXP<T>>
+    requires IS<U, BorrowSEXP<T>>
   explicit Vec(SEXP &&inp) = delete;
 
   template <typename U = R>
-  requires IS<U, BorrowSEXP<T>>
+    requires IS<U, BorrowSEXP<T>>
   explicit Vec(SEXP inp) : d(inp) {}
 #endif
 
@@ -327,12 +326,12 @@ template <typename T, typename R> struct Vec {
   }
   // NOTE: Subset lazy
   template <typename L2, typename R2, typename TraitL>
-  requires IS<TraitL, SubsetClassTrait>
+    requires IS<TraitL, SubsetClassTrait>
   explicit Vec(const SubsetClass<L2, R2, TraitL> &&inp) : d(std::move(inp)) {
     d.setMatrix(inp.mp);
   }
   template <typename L2, typename R2, typename TraitL>
-  requires IS<TraitL, SubsetClassTrait>
+    requires IS<TraitL, SubsetClassTrait>
   explicit Vec(SubsetClass<L2, R2, TraitL> &inp) : d(std::move(inp)) {
     d.setMatrix(inp.mp);
   }
@@ -375,13 +374,13 @@ template <typename T, typename R> struct Vec {
     d.setMatrix(true, rows, cols);
   }
   explicit Vec(std::size_t rows, std::size_t cols, const double value)
-  : d(rows * cols) {
+      : d(rows * cols) {
     d.setMatrix(true, rows, cols);
     d.fill(value);
   }
   // NOTE: other vector which is not of type RVec and has to be copied
   template <typename T2, typename R2, typename Trait2>
-  requires IsVec<const Vec<T2, R2>>
+    requires IsVec<const Vec<T2, R2>>
   Vec(const Vec<T2, R2> &&other_vec) {
     if constexpr (IsBorrow<R>) {
       ass<"Sizes do not match">(d.sz <=
@@ -410,7 +409,7 @@ template <typename T, typename R> struct Vec {
 
   // NOTE: other vector which is of type RVec and has different base type
   template <typename T2, typename R2>
-  requires(IsRVec<const Vec<T2, R2>> && !IS<T, T2>)
+    requires(IsRVec<const Vec<T2, R2>> && !IS<T, T2>)
   Vec(const Vec<T2, R2> &&other_vec) {
     if constexpr (IsBorrow<R>) {
       ass<"Sizes do not match">(d.sz <= other_vec.size());
@@ -465,7 +464,7 @@ template <typename T, typename R> struct Vec {
 
   // NOTE: other vector which is of type RVec and with same base type
   template <typename T2, typename R2>
-  requires(IsRVec<const Vec<T2, R2>> && IS<T, T2>)
+    requires(IsRVec<const Vec<T2, R2>> && IS<T, T2>)
   Vec(Vec<T2, R2> &&other_vec) {
     if constexpr (IsBorrow<R>) {
       ass<"Sizes do not match">(d.sz <= other_vec.size());
@@ -507,290 +506,295 @@ template <typename T, typename R> struct Vec {
   }
 #endif
 
-
-// Assignments
-template <typename TD>
-  requires IsArithV<TD>
-Vec &operator=(const TD inp) {
-  static_assert(!IsUnary<R>, "Cannot assign to unary calculation");
-  static_assert(!IsBinary<R>, "Cannot assign to binary calculation");
-  static_assert(!IsRBuffer<R>,
-                "Cannot assign to an r value. E.g. c(1, 2, 3) <- 1");
-  if constexpr (is<TD, T>) {
-    if constexpr (IsSubset<R>) {
-      for (std::size_t i = 0; i < d.ind.size(); i++) {
-        d[i] = inp;
-      }
+  // Assignments
+  template <typename TD>
+    requires IsArithV<TD>
+  Vec &operator=(const TD inp) {
+    static_assert(!IsUnary<R>, "Cannot assign to unary calculation");
+    static_assert(!IsBinary<R>, "Cannot assign to binary calculation");
+    static_assert(!IsRBuffer<R>,
+                  "Cannot assign to an r value. E.g. c(1, 2, 3) <- 1");
+    // Same Type
+    // ---------------------------------------------------------------------
+    if constexpr (is<TD, T>) {
+      if constexpr (IS<SubsetClassTrait, typename ReRef<R>::type::TypeTrait>) {
+        for (std::size_t i = 0; i < d.size(); i++) {
+          d[i] = inp;
+        }
 #ifdef DERIV_ETR
-      for (std::size_t i = 0; i < d.ind.size(); i++) {
-        deriv[i] = 0;
-      }
+        for (std::size_t i = 0; i < d.size(); i++) {
+          deriv[i] = 0;
+        }
 #endif
-    } else if constexpr (IsBorrow<R>) {
-      d.sz = 1;
-      d[0] = inp;
+      } else if constexpr (IsBorrow<R>) {
+        d.sz = 1;
+        d[0] = inp;
 #ifdef DERIV_ETR
-      deriv.resize(1);
-      deriv[0] = 0;
+        deriv.resize(1);
+        deriv[0] = 0;
 #endif
 
+      } else {
+        d.resize(1);
+        d[0] = inp;
+#ifdef DERIV_ETR
+        deriv.resize(1);
+        deriv[0] = 0;
+#endif
+      }
+      return *this;
+      // Different Type
+      // ---------------------------------------------------------------------
     } else {
-      d.resize(1);
-      d[0] = inp;
+      if constexpr (IS<SubsetClassTrait, typename ReRef<R>::type::TypeTrait>) {
+        for (std::size_t i = 0; i < d.size(); i++) {
+          d[i] = static_cast<T>(inp);
+        }
 #ifdef DERIV_ETR
-      deriv.resize(1);
-      deriv[0] = 0;
-#endif
-    }
-    return *this;
-  } else {
-    if constexpr (IsSubset<R>) {
-      for (std::size_t i = 0; i < d.ind.size(); i++) {
-        d[i] = static_cast<T>(inp);
-      }
-#ifdef DERIV_ETR
-      for (std::size_t i = 0; i < d.ind.size(); i++) {
-        deriv[i] = 0;
-      }
+        for (std::size_t i = 0; i < d.size(); i++) {
+          deriv[i] = 0;
+        }
 #endif
 
+      } else if constexpr (IsBorrow<R>) {
+        d.sz = 1;
+        d[0] = static_cast<T>(inp);
+#ifdef DERIV_ETR
+        deriv.resize(1);
+        deriv[0] = 0;
+#endif
+
+      } else {
+        d.resize(1);
+        d[0] = static_cast<T>(inp);
+#ifdef DERIV_ETR
+        deriv.resize(1);
+        deriv[0] = 0;
+#endif
+      }
+      return *this;
+    }
+  }
+
+  Vec &operator=(const Vec<T, R> &otherVec) {
+    static_assert(!IsUnary<R>, "Cannot assign to unary calculation");
+    static_assert(!IsBinary<R>, "Cannot assign to binary calculation");
+    static_assert(!IsRBuffer<R>,
+                  "Cannot assign to an r value. E.g. c(1, 2, 3) <- 1");
+
+    using DataTypeOtherVec = const Vec<T, R>::RetType;
+    if constexpr (IsLBuffer<R>) {
+      temp.resize(otherVec.size());
+      for (std::size_t i = 0; i < otherVec.size(); i++) {
+        if constexpr (is<DataTypeOtherVec, T>) {
+          temp[i] = otherVec[i];
+        } else {
+          temp[i] = static_cast<T>(otherVec[i]);
+        }
+      }
+      d.moveit(temp);
     } else if constexpr (IsBorrow<R>) {
-      d.sz = 1;
-      d[0] = static_cast<T>(inp);
-#ifdef DERIV_ETR
-      deriv.resize(1);
-      deriv[0] = 0;
-#endif
+      ass<"number of items to replace is not a multiple of replacement length">(
+          otherVec.size() <= d.capacity);
+      temp.resize(otherVec.size());
+      for (std::size_t i = 0; i < otherVec.size(); i++) {
+        if constexpr (is<DataTypeOtherVec, T>) {
+          temp[i] = otherVec[i];
+        } else {
+          temp[i] = static_cast<T>(otherVec[i]);
+        }
+      }
+      ass<"size cannot be increased above the size of the borrowed object">(
+          d.sz <= otherVec.size());
+      d.sz = otherVec.size();
+      for (std::size_t i = 0; i < otherVec.size(); i++)
+        d[i] = temp[i];
+    } else if constexpr (IsBorrowSEXP<R>) {
+      temp.resize(otherVec.size());
+      for (std::size_t i = 0; i < otherVec.size(); i++) {
+        if constexpr (is<DataTypeOtherVec, T>) {
+          temp[i] = otherVec[i];
+        } else {
+          temp[i] = static_cast<T>(otherVec[i]);
+        }
+      }
+      if (otherVec.size() > this->size())
+        d.resize(otherVec.size());
 
-    } else {
-      d.resize(1);
-      d[0] = static_cast<T>(inp);
-#ifdef DERIV_ETR
-      deriv.resize(1);
-      deriv[0] = 0;
-#endif
-    }
-    return *this;
-  }
-}
+      for (std::size_t i = 0; i < otherVec.size(); i++)
+        d[i] = temp[i];
 
-Vec &operator=(const Vec<T, R> &otherVec) {
-  static_assert(!IsUnary<R>, "Cannot assign to unary calculation");
-  static_assert(!IsBinary<R>, "Cannot assign to binary calculation");
-  static_assert(!IsRBuffer<R>,
-                "Cannot assign to an r value. E.g. c(1, 2, 3) <- 1");
-
-  using DataTypeOtherVec = const Vec<T, R>::RetType;
-  if constexpr (IsLBuffer<R>) {
-    temp.resize(otherVec.size());
-    for (std::size_t i = 0; i < otherVec.size(); i++) {
-      if constexpr (is<DataTypeOtherVec, T>) {
-        temp[i] = otherVec[i];
-      } else {
-        temp[i] = static_cast<T>(otherVec[i]);
+    } else if constexpr (IsSubset<R>) {
+      ass<"number of items to replace is not a multiple of replacement length">(
+          otherVec.size() == d.ind.size());
+      temp.resize(otherVec.size());
+      for (std::size_t i = 0; i < otherVec.size(); i++) {
+        if constexpr (is<DataTypeOtherVec, T>) {
+          temp[i] = otherVec[i];
+        } else {
+          temp[i] = static_cast<T>(otherVec[i]);
+        }
+      }
+      if (d.p->size() < temp.size())
+        d.resize(temp.size());
+      for (std::size_t i = 0; i < d.ind.size(); i++) {
+        d[i % d.ind.size()] = temp[i];
       }
     }
-    d.moveit(temp);
-  } else if constexpr (IsBorrow<R>) {
-    ass<"number of items to replace is not a multiple of replacement length">(
-        otherVec.size() <= d.capacity);
-    temp.resize(otherVec.size());
-    for (std::size_t i = 0; i < otherVec.size(); i++) {
-      if constexpr (is<DataTypeOtherVec, T>) {
-        temp[i] = otherVec[i];
-      } else {
-        temp[i] = static_cast<T>(otherVec[i]);
-      }
+    if (otherVec.d.im()) {
+      d.setMatrix(true, otherVec.d.nr(), otherVec.d.nc());
     }
-    ass<"size cannot be increased above the size of the borrowed object">(
-        d.sz <= otherVec.size());
-    d.sz = otherVec.size();
-    for (std::size_t i = 0; i < otherVec.size(); i++)
-      d[i] = temp[i];
-  } else if constexpr (IsBorrowSEXP<R>) {
-    temp.resize(otherVec.size());
-    for (std::size_t i = 0; i < otherVec.size(); i++) {
-      if constexpr (is<DataTypeOtherVec, T>) {
-        temp[i] = otherVec[i];
-      } else {
-        temp[i] = static_cast<T>(otherVec[i]);
-      }
-    }
-    if (otherVec.size() > this->size())
-      d.resize(otherVec.size());
-
-    for (std::size_t i = 0; i < otherVec.size(); i++)
-      d[i] = temp[i];
-
-  } else if constexpr (IsSubset<R>) {
-    ass<"number of items to replace is not a multiple of replacement length">(
-        otherVec.size() == d.ind.size());
-    temp.resize(otherVec.size());
-    for (std::size_t i = 0; i < otherVec.size(); i++) {
-      if constexpr (is<DataTypeOtherVec, T>) {
-        temp[i] = otherVec[i];
-      } else {
-        temp[i] = static_cast<T>(otherVec[i]);
-      }
-    }
-    if (d.p->size() < temp.size())
-      d.resize(temp.size());
-    for (std::size_t i = 0; i < d.ind.size(); i++) {
-      d[i % d.ind.size()] = temp[i];
-    }
-  }
-  if (otherVec.d.im()) {
-    d.setMatrix(true, otherVec.d.nr(), otherVec.d.nc());
-  }
 
 #ifdef DERIV_ETR
-  // TODO: what if other Vec is subsetted
-  // deriv.resize(otherVec.size());
-  // for (std::size_t i = 0; i < deriv.size(); i++) {
-  //   deriv[i] = otherVec.deriv[i];
-  // }
-  // TODO: is there something to do here?
-#endif
-
-  return *this;
-}
-
-// TODO: finish this
-template <typename T2, typename R2>
-  requires(IsRVec<const Vec<T2, R2>> && IS<T, T2>)
-Vec &operator=(Vec<T2, R2> &&otherVec) {
-  static_assert(!IsUnary<R>, "Cannot assign to unary calculation");
-  static_assert(!IsBinary<R>, "Cannot assign to binary calculation");
-  static_assert(!IsRBuffer<R>,
-                "Cannot assign to an r value. E.g. c(1, 2, 3) <- 1");
-  std::size_t tempSize = otherVec.size();
-  std::size_t tempCapacity = otherVec.d.capacity;
-  T *tempP = otherVec.d.p;
-  bool allocated = otherVec.d.allocated;
-
-  otherVec.d.allocated = d.allocated;
-  otherVec.d.sz = this->size();
-  otherVec.d.capacity = d.capacity;
-  otherVec.d.p = d.p;
-
-  d.allocated = allocated;
-  d.sz = tempSize;
-  d.capacity = tempCapacity;
-  d.p = tempP;
-
-  if (otherVec.d.im()) {
-    d.setMatrix(true, otherVec.nr(), otherVec.nc());
-  }
-#ifdef DERIV_ETR
-  deriv.resize(this->size());
-  for (std::size_t i = 0; i < deriv.size(); i++) {
-    deriv[i] = 0;
-  }
-#endif
-
-  return *this;
-}
-
-template <typename T2, typename R2>
-Vec &operator=(const Vec<T2, R2> &otherVec) {
-  static_assert(!IsUnary<R>, "Cannot assign to unary calculation");
-  static_assert(!IsBinary<R>, "Cannot assign to binary calculation");
-  static_assert(!IsRBuffer<R>,
-                "Cannot assign to an r value. E.g. c(1, 2, 3) <- 1");
-    // TODO: replace is with IS
-  using DataTypeOtherVec = typename ReRef<decltype(otherVec.d)>::type::RetType;
-  if constexpr (IsLBuffer<R>) {
-
-    temp.resize(otherVec.size());
-    for (std::size_t i = 0; i < otherVec.size(); i++) {
-      if constexpr (is<DataTypeOtherVec, T>) {
-        temp[i] = otherVec[i];
-      } else {
-        temp[i] = static_cast<T>(otherVec.d[i]);
-      }
-    }
-    d.moveit(temp);
-  } else if constexpr (IsBorrow<R>) {
-    ass<"number of items to replace is not a multiple of replacement length">(
-        otherVec.size() <= d.capacity);
-    temp.resize(otherVec.size());
-    for (std::size_t i = 0; i < otherVec.size(); i++) {
-      if constexpr (is<DataTypeOtherVec, T>) {
-        temp[i] = otherVec[i];
-      } else {
-        temp[i] = static_cast<T>(otherVec[i]);
-      }
-    }
-    ass<"size cannot be increased above the size of the borrowed object">(
-        d.sz <= otherVec.size());
-    d.sz = otherVec.size();
-    for (std::size_t i = 0; i < otherVec.size(); i++)
-      d[i] = temp[i];
-  } else if constexpr (IsBorrowSEXP<R>) {
-    temp.resize(otherVec.size());
-    for (std::size_t i = 0; i < otherVec.size(); i++) {
-      if constexpr (is<DataTypeOtherVec, T>) {
-        temp[i] = otherVec[i];
-      } else {
-        temp[i] = static_cast<T>(otherVec[i]);
-      }
-    }
-    if (otherVec.size() > this->size())
-      d.resize(otherVec.size());
-
-    for (std::size_t i = 0; i < otherVec.size(); i++)
-      d[i] = temp[i];
-
-  } else if constexpr (IsSubset<R>) {
-    ass<"number of items to replace is not a multiple of replacement length">(
-        otherVec.size() == d.ind.size());
-    temp.resize(otherVec.size());
-    for (std::size_t i = 0; i < otherVec.size(); i++) {
-      if constexpr (is<DataTypeOtherVec, T>) {
-        temp[i] = otherVec[i];
-      } else {
-        temp[i] = static_cast<T>(otherVec[i]);
-      }
-    }
-    for (std::size_t i = 0; i < d.ind.size(); i++) {
-      d[i % d.ind.size()] = temp[i];
-    }
-  }
-  if (otherVec.d.im()) {
-    d.setMatrix(true, otherVec.d.nr(), otherVec.d.nc());
-  }
-
-#ifdef DERIV_ETR
-  if constexpr (IsRVec<const Vec<T2, R2, Trait2>> ||
-                Operation<decltype(otherVec.d)>) {
-    deriv.resize(this->size());
-    // for (std::size_t i = 0; i < deriv.size(); i++) {
-    //   deriv[i] = 0;
-    // }
-  } else {
+    // TODO: what if other Vec is subsetted
     // deriv.resize(otherVec.size());
-    // for (std::size_t i = 0; i < deriv.sz; i++) {
+    // for (std::size_t i = 0; i < deriv.size(); i++) {
     //   deriv[i] = otherVec.deriv[i];
     // }
-  }
+    // TODO: is there something to do here?
 #endif
 
-  return *this;
-}
+    return *this;
+  }
+
+  // TODO: finish this
+  template <typename T2, typename R2>
+    requires(IsRVec<const Vec<T2, R2>> && IS<T, T2>)
+  Vec &operator=(Vec<T2, R2> &&otherVec) {
+    static_assert(!IsUnary<R>, "Cannot assign to unary calculation");
+    static_assert(!IsBinary<R>, "Cannot assign to binary calculation");
+    static_assert(!IsRBuffer<R>,
+                  "Cannot assign to an r value. E.g. c(1, 2, 3) <- 1");
+    std::size_t tempSize = otherVec.size();
+    std::size_t tempCapacity = otherVec.d.capacity;
+    T *tempP = otherVec.d.p;
+    bool allocated = otherVec.d.allocated;
+
+    otherVec.d.allocated = d.allocated;
+    otherVec.d.sz = this->size();
+    otherVec.d.capacity = d.capacity;
+    otherVec.d.p = d.p;
+
+    d.allocated = allocated;
+    d.sz = tempSize;
+    d.capacity = tempCapacity;
+    d.p = tempP;
+
+    if (otherVec.d.im()) {
+      d.setMatrix(true, otherVec.nr(), otherVec.nc());
+    }
+#ifdef DERIV_ETR
+    deriv.resize(this->size());
+    for (std::size_t i = 0; i < deriv.size(); i++) {
+      deriv[i] = 0;
+    }
+#endif
+
+    return *this;
+  }
+
+  template <typename T2, typename R2>
+  Vec &operator=(const Vec<T2, R2> &otherVec) {
+    static_assert(!IsUnary<R>, "Cannot assign to unary calculation");
+    static_assert(!IsBinary<R>, "Cannot assign to binary calculation");
+    static_assert(!IsRBuffer<R>,
+                  "Cannot assign to an r value. E.g. c(1, 2, 3) <- 1");
+    // TODO: replace is with IS
+    using DataTypeOtherVec =
+        typename ReRef<decltype(otherVec.d)>::type::RetType;
+    if constexpr (IsLBuffer<R>) {
+
+      temp.resize(otherVec.size());
+      for (std::size_t i = 0; i < otherVec.size(); i++) {
+        if constexpr (is<DataTypeOtherVec, T>) {
+          temp[i] = otherVec[i];
+        } else {
+          temp[i] = static_cast<T>(otherVec.d[i]);
+        }
+      }
+      d.moveit(temp);
+    } else if constexpr (IsBorrow<R>) {
+      ass<"number of items to replace is not a multiple of replacement length">(
+          otherVec.size() <= d.capacity);
+      temp.resize(otherVec.size());
+      for (std::size_t i = 0; i < otherVec.size(); i++) {
+        if constexpr (is<DataTypeOtherVec, T>) {
+          temp[i] = otherVec[i];
+        } else {
+          temp[i] = static_cast<T>(otherVec[i]);
+        }
+      }
+      ass<"size cannot be increased above the size of the borrowed object">(
+          d.sz <= otherVec.size());
+      d.sz = otherVec.size();
+      for (std::size_t i = 0; i < otherVec.size(); i++)
+        d[i] = temp[i];
+    } else if constexpr (IsBorrowSEXP<R>) {
+      temp.resize(otherVec.size());
+      for (std::size_t i = 0; i < otherVec.size(); i++) {
+        if constexpr (is<DataTypeOtherVec, T>) {
+          temp[i] = otherVec[i];
+        } else {
+          temp[i] = static_cast<T>(otherVec[i]);
+        }
+      }
+      if (otherVec.size() > this->size())
+        d.resize(otherVec.size());
+
+      for (std::size_t i = 0; i < otherVec.size(); i++)
+        d[i] = temp[i];
+
+    } else if constexpr (IS<SubsetClassTrait,
+                            typename ReRef<R>::type::TypeTrait>) {
+      std::cout << "operator=" << std::endl;
+      // std::cout << d.size() << " " << otherVec.size() << std::endl;
+      ass<"number of items to replace is not a multiple of replacement length">(
+          otherVec.size() == d.size());
+      temp.resize(otherVec.size());
+      for (std::size_t i = 0; i < otherVec.size(); i++) {
+        if constexpr (is<DataTypeOtherVec, T>) {
+          temp[i] = otherVec[i];
+        } else {
+          temp[i] = static_cast<T>(otherVec[i]);
+        }
+      }
+      for (std::size_t i = 0; i < d.size(); i++) {
+        d[i % d.size()] = temp[i];
+      }
+    }
+    if (otherVec.d.im()) {
+      d.setMatrix(true, otherVec.d.nr(), otherVec.d.nc());
+    }
+
+#ifdef DERIV_ETR
+    if constexpr (IsRVec<const Vec<T2, R2, Trait2>> ||
+                  Operation<decltype(otherVec.d)>) {
+      deriv.resize(this->size());
+      // for (std::size_t i = 0; i < deriv.size(); i++) {
+      //   deriv[i] = 0;
+      // }
+    } else {
+      // deriv.resize(otherVec.size());
+      // for (std::size_t i = 0; i < deriv.sz; i++) {
+      //   deriv[i] = otherVec.deriv[i];
+      // }
+    }
+#endif
+
+    return *this;
+  }
 
 #ifdef STANDALONE_ETR
 #else
-Vec &operator=(SEXP s) {
-  d.initSEXP(s);
+  Vec &operator=(SEXP s) {
+    d.initSEXP(s);
 #ifdef DERIV_ETR
-  deriv.resize(d.sz);
-  deriv.fill(0.0);
+    deriv.resize(d.sz);
+    deriv.fill(0.0);
 #endif
-  return *this;
-}
+    return *this;
+  }
 #endif
-
-
 
   RetType &operator[](std::size_t idx) { return d[idx]; }
   RetType operator[](std::size_t idx) const { return d[idx]; }
@@ -939,7 +943,6 @@ Vec &operator=(SEXP s) {
     return ret;
   }
 #endif
-
 };
 
 } // namespace etr

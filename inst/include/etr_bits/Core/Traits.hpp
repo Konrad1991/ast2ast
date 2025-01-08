@@ -13,13 +13,13 @@ struct ComparisonTrait {
 
 struct BaseStoreTrait {};
 struct LBufferTrait {};
-struct RBufferTrait{};
+struct RBufferTrait {};
 struct SubsetTrait {};
 struct SubsetClassTrait {};
 struct BorrowTrait {};
 struct BorrowSEXPTrait {};
-struct BinaryTrait{};
-struct UnaryTrait{};
+struct BinaryTrait {};
+struct UnaryTrait {};
 
 struct PlusTrait {
   template <typename L = BaseType, typename R = BaseType>

@@ -25,14 +25,14 @@ void precalcVecBool(V &vec, Indices &ind, I *idx) {
 }
 
 template <typename L, typename R> struct SubsetClassIterator {
-  const L &l;
+  L &l;
   const R &r;
   size_t index;
 
-  SubsetClassIterator(const L &l, const R &r, size_t index = 0)
+  SubsetClassIterator(L &l, const R &r, size_t index = 0)
       : l(l), r(r), index(index) {}
 
-  auto operator*() const {
+  auto &operator*() const {
     if constexpr (IsArithV<R>) {
       return l[r];
     } else if constexpr (!IsArithV<R>) {
@@ -50,12 +50,38 @@ template <typename L, typename R> struct SubsetClassIterator {
   }
 };
 
+template <typename L, typename R> struct SubsetClassConstantIterator {
+  L &l;
+  const R &r;
+  size_t index;
+
+  SubsetClassConstantIterator(L &l, const R &r, size_t index = 0)
+      : l(l), r(r), index(index) {}
+
+  auto operator*() const {
+    if constexpr (IsArithV<R>) {
+      return l[r];
+    } else if constexpr (!IsArithV<R>) {
+      return l[r[index % r.size()] - 1];
+    }
+  }
+
+  SubsetClassConstantIterator &operator++() {
+    ++index;
+    return *this;
+  }
+
+  bool operator!=(const SubsetClassConstantIterator &other) const {
+    return index != other.index;
+  }
+};
+
+// NOTE: Subset L values
 template <typename L, typename R, typename Trait> struct SubsetClass {
-  using RetType = typename ExtractDataType<L>::RetType;
+  using RetType = typename ReRef<L>::type::RetType;
   using TypeTrait = Trait;
-  std::optional<L> storedL;
   std::optional<R> storedR;
-  const L &l;
+  L &l;
   const R &r;
 
   using typeTraitL = L;
@@ -78,36 +104,36 @@ template <typename L, typename R, typename Trait> struct SubsetClass {
   std::size_t nr() const { return calculateDim(); }
 
   // Constructor for lvalues (both `l_` and `r_`)
-  SubsetClass(const L &l_, const R &r_) : l(l_), r(r_) {}
-
-  // Constructor for rvalues (both `l_` and `r_`)
-  SubsetClass(L &&l_, R &&r_)
-      : storedL(std::move(l_)), storedR(std::move(r_)), l(*storedL),
-        r(*storedR) {}
+  SubsetClass(L &l_, R &r_) : l(l_), r(r_) {}
 
   // Constructor for lvalue `l_` and rvalue `r_`
-  SubsetClass(const L &l_, R &&r_)
-      : storedR(std::move(r_)), l(l_), r(*storedR) {}
+  SubsetClass(L &l_, R &&r_) : storedR(std::move(r_)), l(l_), r(*storedR) {
+    std::cout << "Constructor SubsetClass" << std::endl;
+    std::cout << r.size() << std::endl;
+    std::cout << storedR->size() << std::endl;
+  }
 
-  // Constructor for rvalue `l_` and lvalue `r_`
-  SubsetClass(L &&l_, const R &r_)
-      : storedL(std::move(l_)), l(*storedL), r(r_) {}
-
-  SubsetClass(const SubsetClass &other) : l(other.l), r(other.r) {}
-  // Move constructor
-  SubsetClass(const SubsetClass &&other)
-      : storedL(other.storedL ? std::move(other.storedL) : std::optional<L>{}),
-        storedR(other.storedR ? std::move(other.storedR) : std::optional<R>{}),
-        l(other.storedL.has_value() ? *storedL : other.l),
-        r(other.storedR.has_value() ? *storedR : other.r) {}
   template <typename LType, typename RType, typename TraitL>
-  SubsetClass(const SubsetClass<LType, RType, TraitL> &other)
+  SubsetClass(SubsetClass<LType, RType, TraitL> &other)
       : l(other.l), r(other.r) {}
 
-  auto operator[](std::size_t i) const { return l[r[i % l.size()] - 1]; }
-  // TODO: it is possible to use indices larger than length of l. It is safe
-  // but not the behaviour in R
-  std::size_t size() const { return r.size(); }
+  auto &operator[](std::size_t i) {
+    if constexpr (IsArithV<R>) {
+      return l[i];
+    } else {
+      return l[r[i % l.size()] - 1];
+    }
+  }
+  std::size_t size() const {
+    if constexpr (IsArithV<R>) {
+      return l.size();
+    } else {
+      std::cout << "size method SubsetClass" << std::endl;
+      std::cout << r.size() << std::endl;
+      std::cout << storedR->size() << std::endl;
+      return r.size();
+    }
+  }
 
   void setMatrix(bool i, std::size_t nrow, std::size_t ncol) {
     mp.setMatrix(i, nrow, ncol);
@@ -122,40 +148,83 @@ template <typename L, typename R, typename Trait> struct SubsetClass {
   auto end() const { return SubsetClassIterator<L, R>{l, r, this->size()}; }
 };
 
-// NOTE: the following subsetArithmetic, subsetBoolean, subsetVector and
-// subsetSubset functions mean that a vector is subsetted by something which
-// can be either a scalar (int or double), a bool, a vector or a SubsetClass
-// (wrapped in a Vec).
-template <typename L, typename R> auto subsetArithmeticR(L &&l, R &&r) {
-  using RetType = typename ExtractDataType<Decayed<L>>::RetType;
-  if constexpr (IsFloatingPointV<R>) {
-    ass<"Negative indices are not supported">(r >= 0);
-    return static_cast<RetType>(l[static_cast<size_t>(std::floor(r)) - 1]);
-  } else if constexpr (IsBool<R>) {
-    if (r) {
-      return l;
-    } else {
-      return Vec<RetType, Buffer<RetType, RBufferTrait>>(SI{0});
-    }
-  } else if constexpr (IsIntegral<R>) {
-    ass<"Negative indices are not supported">(r >= 0);
-    return static_cast<RetType>(l.d[r - 1]);
-  } else {
-    ass<"Found unsupported arithmetic value">(false);
-  }
-}
+// NOTE: Subset R Value
+template <typename L, typename R, typename Trait>
+struct SubsetClass<const L, R, Trait> {
+  using RetType = typename ExtractDataType<L>::RetType;
+  using TypeTrait = Trait;
+  std::optional<L> storedL;
+  std::optional<R> storedR;
+  L &l;
+  const R &r;
 
-template <typename L, typename R> auto subsetArithmeticL(L &&l, R &&r) {
+  using typeTraitL = L;
+  using typeTraitR = R;
+  MatrixParameter mp;
+
+  bool im() const { return l.im() || r.im(); }
+  std::size_t calculateDim() const {
+    if (l.im() && r.im())
+      return (l.nr() > r.nr()) ? l.nr() : r.nr();
+    if (!l.im() && r.im())
+      return r.nr();
+    if (l.im() && !r.im())
+      return l.nr();
+    ass<"Matrix calculation failed!">(false);
+    return 0;
+  }
+
+  std::size_t nc() const { return calculateDim(); }
+  std::size_t nr() const { return calculateDim(); }
+
+  // Constructor for rvalues (both `l_` and `r_`)
+  SubsetClass(L &&l_, R &&r_)
+      : storedL(std::move(l_)), storedR(std::move(r_)), l(*storedL),
+        r(*storedR) {}
+
+  // Constructor for rvalue `l_` and lvalue `r_`
+  SubsetClass(L &&l_, const R &r_)
+      : storedL(std::move(l_)), l(*storedL), r(r_) {}
+
+  template <typename LType, typename RType, typename TraitL>
+  SubsetClass(SubsetClass<LType, RType, TraitL> &other)
+      : l(other.l), r(other.r) {}
+
+  const auto operator[](std::size_t i) {
+    if constexpr (IsArithV<R>) {
+      return l[i];
+    } else {
+      return l[r[i % l.size()] - 1];
+    }
+  }
+  std::size_t size() const {
+    if constexpr (IsArithV<R>) {
+      return l.size();
+    } else {
+      return r.size();
+    }
+  }
+  void setMatrix(bool i, std::size_t nrow, std::size_t ncol) {
+    mp.setMatrix(i, nrow, ncol);
+  }
+  void setMatrix(MatrixParameter &mp_) {
+    mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
+  }
+  void setMatrix(const MatrixParameter &mp_) {
+    mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
+  }
+  auto begin() const { return SubsetClassConstantIterator<L, R>{l, r, 0}; }
+  auto end() const {
+    return SubsetClassConstantIterator<L, R>{l, r, this->size()};
+  }
+};
+
+// NOTE: R = int | double
+template <typename L, typename R> inline auto &subsetArithmeticL(L &&l, R &&r) {
   using RetType = typename ExtractDataType<Decayed<L>>::RetType;
   if constexpr (IsFloatingPointV<R>) {
     ass<"Negative indices are not supported">(r >= 0);
     return static_cast<RetType &>(l[static_cast<size_t>(std::floor(r)) - 1]);
-  } else if constexpr (IsBool<R>) {
-    if (r) {
-      return l;
-    } else {
-      return Vec<RetType>(SI{0});
-    }
   } else if constexpr (IsIntegral<R>) {
     ass<"Negative indices are not supported">(r >= 0);
     return static_cast<RetType &>(l.d[r - 1]);
@@ -164,7 +233,21 @@ template <typename L, typename R> auto subsetArithmeticL(L &&l, R &&r) {
   }
 }
 
-template <typename L, typename R> auto subsetArithmetic(L &&l, R &&r) {
+template <typename L, typename R>
+inline const auto &subsetArithmeticR(L &&l, R &&r) {
+  using RetType = typename ExtractDataType<Decayed<L>>::RetType;
+  if constexpr (IsFloatingPointV<R>) {
+    ass<"Negative indices are not supported">(r >= 0);
+    return static_cast<RetType>(l[static_cast<size_t>(std::floor(r)) - 1]);
+  } else if constexpr (IsIntegral<R>) {
+    ass<"Negative indices are not supported">(r >= 0);
+    return static_cast<RetType>(l.d[r - 1]);
+  } else {
+    ass<"Found unsupported arithmetic value">(false);
+  }
+}
+
+template <typename L, typename R> inline auto &subsetArithmetic(L &&l, R &&r) {
   using RetType = typename ExtractDataType<Decayed<L>>::RetType;
   constexpr bool isLArgRvalue = IsRvalue<L &&>;
   if constexpr (isLArgRvalue) {
@@ -176,62 +259,9 @@ template <typename L, typename R> auto subsetArithmetic(L &&l, R &&r) {
   }
 }
 
-template <typename L, typename R> auto subsetBoolean(L &&l, R &&r) {
-  constexpr bool isLArgRvalue = IsRvalue<L &&>;
-  constexpr bool isRArgRvalue = IsRvalue<R &&>;
-  using dataType = typename ExtractDataType<Decayed<L>>::RetType;
-  Indices ind;
-  precalcVecBool(l, ind, &r);
-  if constexpr (isLArgRvalue) {
-    return Vec<dataType,
-               SubsetClass<decltype(l.d), decltype(ind), SubsetClassTrait>>(
-        SubsetClass<decltype(l.d), decltype(ind), SubsetClassTrait>(
-            std::move(l.d), std::move(ind)));
-  } else {
-    return Vec<dataType,
-               SubsetClass<decltype(l.d), decltype(ind), SubsetClassTrait>>(
-        SubsetClass<decltype(l.d), decltype(ind), SubsetClassTrait>(
-            l.d, std::move(ind)));
-  }
-}
-
-template <typename L, typename R> auto subsetSubset(L &&l, R &&r) {
-  constexpr bool isLArgRvalue = IsRvalue<L &&>;
-  constexpr bool isRArgRvalue = IsRvalue<R &&>;
-  using dataType = typename ExtractDataType<std::decay_t<L>>::RetType;
-  Indices ind(r.size());
-  for (std::size_t i = 0; i < r.size(); i++) {
-    ind[i] = r.d[i];
-  }
-  if constexpr (isLArgRvalue) {
-    return Vec<dataType,
-               SubsetClass<decltype(l.d), decltype(ind), SubsetClassTrait>>(
-        SubsetClass<decltype(l.d), decltype(ind), SubsetClassTrait>(
-            std::move(l.d), std::move(ind)));
-  } else {
-    return Vec<dataType,
-               SubsetClass<decltype(l.d), decltype(ind), SubsetClassTrait>>(
-        SubsetClass<decltype(l.d), decltype(ind), SubsetClassTrait>(
-            l.d, std::move(ind)));
-  }
-}
-
-template <typename L, typename R> auto subsetVector(L &&l, R &&r) {
-  using RetType = typename ExtractDataType<Decayed<L>>::RetType;
-  using SubsetType =
-      SubsetClass<decltype(l.d), decltype(r.d), SubsetClassTrait>;
-  if constexpr (IsRvalue<L &&> && IsRvalue<R &&>) {
-    return subsetSubset(std::forward<L>(l), std::forward<R>(r));
-  } else if constexpr (IsRvalue<L &&>) {
-    return Vec<RetType, SubsetType>(SubsetType(std::move(l.d), r.d));
-  } else if constexpr (IsRvalue<R &&>) {
-    return Vec<RetType, SubsetType>(SubsetType(l.d, std::move(r.d)));
-  } else {
-    return Vec<RetType, SubsetType>(SubsetType(l.d, r.d));
-  }
-}
-
-template <typename L, typename R> auto subset_test(L &&l, R &&r) {
+template <typename L, typename R>
+  requires((IsFloatingPointV<R> || IsIntegral<R>) && !IsBool<R>)
+inline auto &subset_test(L &&l, R &&r) {
   static_assert(!IsArithV<Decayed<L>>,
                 "\n\nYou cannot subset a scalar value\n\n");
   constexpr bool isArithmeticL = IsArithV<Decayed<L>>;
@@ -240,19 +270,54 @@ template <typename L, typename R> auto subset_test(L &&l, R &&r) {
   using RType = ReRef<R>;
   constexpr bool isLArgRvalue = IsRvalue<L &&>;
   constexpr bool isRArgRvalue = IsRvalue<R &&>;
-  if constexpr (isArithmeticR) {
-    return subsetArithmetic(std::forward<decltype(l)>(l),
-                            std::forward<Decayed<R>>(r));
+  return subsetArithmetic(std::forward<decltype(l)>(l),
+                          std::forward<Decayed<R>>(r));
+}
+
+// NOTE: R = bool
+template <typename L, typename R>
+inline auto subsetArithmeticBool(L &&l, R &&r) {
+  using RetType = typename ExtractDataType<Decayed<L>>::RetType;
+  constexpr bool isLArgRvalue = IsRvalue<L &&>;
+  if constexpr (isLArgRvalue) {
+    SubsetClass<const decltype(l.d), R, SubsetClassTrait> sub(std::move(l.d),
+                                                              r);
+    return Vec<RetType, decltype(sub)>(std::move(sub));
   } else {
-    using dataType = typename ExtractDataType<Decayed<L>>::RetType;
-    using dataTypeR = typename ExtractDataType<Decayed<R>>::RetType;
-    if constexpr (IS<dataTypeR, bool>) {
-      return subsetBoolean(std::forward<decltype(l)>(l),
-                           std::forward<decltype(r)>(r));
-    } else {
-      return subsetVector(std::forward<decltype(l)>(l),
-                          std::forward<decltype(r)>(r));
-    }
+    SubsetClass<decltype(l.d), R, SubsetClassTrait> sub(l.d, r);
+    return Vec<RetType, decltype(sub)>(std::move(sub));
+  }
+}
+template <typename L> inline auto subset_test(L &&l, bool &&r) {
+  static_assert(!IsArithV<Decayed<L>>,
+                "\n\nYou cannot subset a scalar value\n\n");
+  return subsetArithmeticBool(std::forward<decltype(l)>(l),
+                              std::forward<Decayed<bool>>(r));
+}
+
+// NOTE: R = Vec<int|double>
+template <typename L, typename R> inline auto subset_test(L &&l, R &&r) {
+  static_assert(!IsArithV<Decayed<L>>,
+                "\n\nYou cannot subset a scalar value\n\n");
+  using RetType = typename ExtractDataType<Decayed<L>>::RetType;
+  using SubsetType =
+      SubsetClass<decltype(l.d), decltype(r.d), SubsetClassTrait>;
+  if constexpr (IsRvalue<L &&> && IsRvalue<R &&>) {
+    SubsetClass<const decltype(l.d), R, SubsetClassTrait> sub(std::move(l.d),
+                                                              std::move(r.d));
+    return Vec<RetType, decltype(sub)>(std::move(sub));
+  } else if constexpr (IsRvalue<L &&> && !IsRvalue<R &&>) {
+    SubsetClass<const decltype(l.d), R, SubsetClassTrait> sub(std::move(l.d),
+                                                              r.d);
+    return Vec<RetType, decltype(sub)>(std::move(sub));
+  } else if constexpr (!IsRvalue<L &&> && IsRvalue<R &&>) {
+    return Vec<RetType,
+               SubsetClass<decltype(l.d), decltype(r.d), SubsetClassTrait>>(
+        SubsetClass<decltype(l.d), decltype(r.d), SubsetClassTrait>(
+            l.d, std::move(r.d)));
+  } else {
+    SubsetClass<decltype(l.d), R, SubsetClassTrait> sub(l.d, r.d);
+    return Vec<RetType, decltype(sub)>(std::move(sub));
   }
 }
 

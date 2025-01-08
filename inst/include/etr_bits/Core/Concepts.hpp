@@ -11,88 +11,87 @@ template <typename T> struct AddConst {
 
 namespace etr {
 template <typename T>
-concept isBID = requires {
-  requires IS<T, bool> || IS<T, int> ||
-               IS<T, double>;
-};
+concept isBID =
+    requires { requires IS<T, bool> || IS<T, int> || IS<T, double>; };
 
 // Test R class
 // ===================================================================
+// TODO: Test whether these really work
+// SubsetClassTrait didn't work in one test
 template <typename T>
 concept IsSubset = requires {
-    typename ReRef<T>::type::Trait;
-    requires IS<typename ReRef<T>::type::Trait, SubsetTrait>;
+  typename ReRef<T>::type::Trait;
+  requires IS<typename ReRef<T>::type::Trait, SubsetTrait>;
 };
 template <typename T>
 concept IsSubsetClass = requires {
-    typename ReRef<T>::type::Trait;
-    requires IS<typename ReRef<T>::type::Trait, SubsetClassTrait>;
+  typename ReRef<T>::type::Trait;
+  requires IS<typename ReRef<T>::type::Trait, SubsetClassTrait>;
 };
 template <typename T>
 concept IsLBuffer = requires {
-    typename ReRef<T>::type::Trait;
-    requires IS<typename ReRef<T>::type::Trait, LBufferTrait>;
+  typename ReRef<T>::type::Trait;
+  requires IS<typename ReRef<T>::type::Trait, LBufferTrait>;
 };
 template <typename T>
 concept IsRBuffer = requires {
-    typename ReRef<T>::type::Trait;
-    requires IS<typename ReRef<T>::type::Trait, RBufferTrait>;
+  typename ReRef<T>::type::Trait;
+  requires IS<typename ReRef<T>::type::Trait, RBufferTrait>;
 };
 template <typename T>
 concept IsBorrow = requires {
-    typename ReRef<T>::type::Trait;
-    requires IS<typename ReRef<T>::type::Trait, BorrowTrait>;
+  typename ReRef<T>::type::Trait;
+  requires IS<typename ReRef<T>::type::Trait, BorrowTrait>;
 };
 template <typename T>
 concept IsBorrowSEXP = requires {
-    typename ReRef<T>::type::Trait;
-    requires IS<typename ReRef<T>::type::Trait, BorrowSEXPTrait>;
+  typename ReRef<T>::type::Trait;
+  requires IS<typename ReRef<T>::type::Trait, BorrowSEXPTrait>;
 };
 
 template <typename T>
 concept IsUnary = requires {
-    typename ReRef<decltype(T{})>::type::Trait;
-    requires IS<typename ReRef<decltype(T{})>::type::Trait, SinusTrait> ||
-        IS<typename ReRef<decltype(T{})>::type::Trait, ASinusTrait> ||
-        IS<typename ReRef<decltype(T{})>::type::Trait, SinusHTrait> ||
-        IS<typename ReRef<decltype(T{})>::type::Trait, CosinusTrait> ||
-        IS<typename ReRef<decltype(T{})>::type::Trait, ACosinusTrait> ||
-        IS<typename ReRef<decltype(T{})>::type::Trait, CosinusHTrait> ||
-        IS<typename ReRef<decltype(T{})>::type::Trait, TangensTrait> ||
-        IS<typename ReRef<decltype(T{})>::type::Trait, ATangensTrait> ||
-        IS<typename ReRef<decltype(T{})>::type::Trait, TangensHTrait> ||
-        IS<typename ReRef<decltype(T{})>::type::Trait, ExpTrait> ||
-        IS<typename ReRef<decltype(T{})>::type::Trait, LogTrait> ||
-        IS<typename ReRef<decltype(T{})>::type::Trait, SquareRootTrait> ||
-        IS<typename ReRef<decltype(T{})>::type::Trait, MinusUnaryTrait>;
+  typename ReRef<decltype(T{})>::type::Trait;
+  requires IS<typename ReRef<decltype(T{})>::type::Trait, SinusTrait> ||
+               IS<typename ReRef<decltype(T{})>::type::Trait, ASinusTrait> ||
+               IS<typename ReRef<decltype(T{})>::type::Trait, SinusHTrait> ||
+               IS<typename ReRef<decltype(T{})>::type::Trait, CosinusTrait> ||
+               IS<typename ReRef<decltype(T{})>::type::Trait, ACosinusTrait> ||
+               IS<typename ReRef<decltype(T{})>::type::Trait, CosinusHTrait> ||
+               IS<typename ReRef<decltype(T{})>::type::Trait, TangensTrait> ||
+               IS<typename ReRef<decltype(T{})>::type::Trait, ATangensTrait> ||
+               IS<typename ReRef<decltype(T{})>::type::Trait, TangensHTrait> ||
+               IS<typename ReRef<decltype(T{})>::type::Trait, ExpTrait> ||
+               IS<typename ReRef<decltype(T{})>::type::Trait, LogTrait> ||
+               IS<typename ReRef<decltype(T{})>::type::Trait,
+                  SquareRootTrait> ||
+               IS<typename ReRef<decltype(T{})>::type::Trait, MinusUnaryTrait>;
 };
 template <typename T>
 concept IsBinary = requires {
-    typename ReRef<T>::type::Trait;
-    requires IS<typename ReRef<T>::type::Trait, PlusTrait> ||
-        IS<typename ReRef<T>::type::Trait, MinusTrait> ||
-        IS<typename ReRef<T>::type::Trait, TimesTrait> ||
-        IS<typename ReRef<T>::type::Trait, DivideTrait> ||
-        IS<typename ReRef<T>::type::Trait, PowTrait> ||
-        IS<typename ReRef<T>::type::Trait, EqualTrait> ||
-        IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
-        IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
-        IS<typename ReRef<T>::type::Trait, LargerTrait> ||
-        IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
-        IS<typename ReRef<T>::type::Trait, UnEqualTrait>;
+  typename ReRef<T>::type::Trait;
+  requires IS<typename ReRef<T>::type::Trait, PlusTrait> ||
+               IS<typename ReRef<T>::type::Trait, MinusTrait> ||
+               IS<typename ReRef<T>::type::Trait, TimesTrait> ||
+               IS<typename ReRef<T>::type::Trait, DivideTrait> ||
+               IS<typename ReRef<T>::type::Trait, PowTrait> ||
+               IS<typename ReRef<T>::type::Trait, EqualTrait> ||
+               IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
+               IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
+               IS<typename ReRef<T>::type::Trait, LargerTrait> ||
+               IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
+               IS<typename ReRef<T>::type::Trait, UnEqualTrait>;
 };
 template <typename T>
 concept IsComparison = requires {
-    typename ReRef<T>::type::Trait;
-    requires
-        IS<typename ReRef<T>::type::Trait, EqualTrait> ||
-        IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
-        IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
-        IS<typename ReRef<T>::type::Trait, LargerTrait> ||
-        IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
-        IS<typename ReRef<T>::type::Trait, UnEqualTrait>;
+  typename ReRef<T>::type::Trait;
+  requires IS<typename ReRef<T>::type::Trait, EqualTrait> ||
+               IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
+               IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
+               IS<typename ReRef<T>::type::Trait, LargerTrait> ||
+               IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
+               IS<typename ReRef<T>::type::Trait, UnEqualTrait>;
 };
-
 
 // Test Vec class
 // ===================================================================
@@ -119,7 +118,7 @@ concept IsOpVec = requires(T t) {
 };
 
 template <typename T>
-concept IsVecRorCalc= requires(T t) {
+concept IsVecRorCalc = requires(T t) {
   typename T::DType;
   requires IsOpVec<T> || IsRBufferVec<T>;
 };
@@ -127,14 +126,11 @@ concept IsVecRorCalc= requires(T t) {
 // Test Input class
 // ===================================================================
 // Vector
-template <typename T>
-struct is_vec: std::false_type {};
+template <typename T> struct is_vec : std::false_type {};
 
-template <typename T>
-struct is_vec<Vec<T>> : std::true_type {};
+template <typename T> struct is_vec<Vec<T>> : std::true_type {};
 
-template <typename T>
-inline constexpr bool is_vec_v = is_vec <T>::value;
+template <typename T> inline constexpr bool is_vec_v = is_vec<T>::value;
 template <typename T>
 concept IsVec = is_vec_v<T>;
 
@@ -144,10 +140,8 @@ concept IsRVec = requires(T t) {
   requires IsVec<T> && IsRBuffer<typename T::DType>;
 };
 
-
 // Binary
-template <typename T>
-struct is_binary_operation : std::false_type {};
+template <typename T> struct is_binary_operation : std::false_type {};
 
 template <typename L2, typename R2, typename OperationTrait>
 struct is_binary_operation<BinaryOperation<L2, R2, OperationTrait>>
@@ -158,8 +152,6 @@ inline constexpr bool is_binary_operation_v = is_binary_operation<T>::value;
 
 template <typename T>
 concept IsBinaryOperation = is_binary_operation_v<T>;
-
-
 
 } // namespace etr
 

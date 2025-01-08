@@ -9,9 +9,9 @@ template <typename L, typename R, typename Trait> struct BinaryOpClassIterator {
   const L &l;
   const R &r;
   size_t index;
-  
+
   BinaryOpClassIterator(const L &l, const R &r, size_t index = 0)
-  : l(l), r(r), index(index) {}
+      : l(l), r(r), index(index) {}
 
   auto operator*() const {
     if constexpr (!IsArithV<L> && IsArithV<R>) {
@@ -33,24 +33,24 @@ template <typename L, typename R, typename Trait> struct BinaryOpClassIterator {
   }
 };
 
-template<typename L, typename R, typename BTrait>
+template <typename L, typename R, typename BTrait>
 inline auto determine_type_binary_op() {
   if constexpr (IsComparison<BTrait>) {
     return bool{};
-  } else if constexpr (IsClassV<L> &&IsClassV<R>) {
-    using RetType = std::common_type_t<typename L::RetType, typename R::RetType>;
+  } else if constexpr (IsClassV<L> && IsClassV<R>) {
+    using RetType =
+        std::common_type_t<typename L::RetType, typename R::RetType>;
     return RetType{};
-  } else if constexpr(!IsClassV<L> &&IsClassV<R>) {
+  } else if constexpr (!IsClassV<L> && IsClassV<R>) {
     using RetType = std::common_type_t<L, typename R::RetType>;
     return RetType{};
-  } else if constexpr(IsClassV<L> && !IsClassV<R>) {
+  } else if constexpr (IsClassV<L> && !IsClassV<R>) {
     using RetType = std::common_type_t<typename L::RetType, R>;
     return RetType{};
   }
 }
 
-template <typename L, typename R, typename BTrait>
-struct BinaryOperation {
+template <typename L, typename R, typename BTrait> struct BinaryOperation {
   using Trait = BTrait;
   using RetType = decltype(determine_type_binary_op<L, R, BTrait>());
   const L &l;
@@ -136,79 +136,93 @@ struct BinaryOperation {
   }
 
   auto begin() const { return BinaryOpClassIterator<L, R, BTrait>{l, r, 0}; }
-  auto end() const { return BinaryOpClassIterator<L, R, BTrait>{l, r, this->size()}; }
-
+  auto end() const {
+    return BinaryOpClassIterator<L, R, BTrait>{l, r, this->size()};
+  }
 };
 
 template <typename L, typename R, typename Trait>
 using BinaryOpResult = decltype(determine_type_binary_op<L, R, Trait>());
 
 template <typename L, typename R, typename Trait>
-using BinaryVec = Vec<BinaryOpResult<L, R, Trait>, BinaryOperation<L, R, Trait>>;
+using BinaryVec =
+    Vec<BinaryOpResult<L, R, Trait>, BinaryOperation<L, R, Trait>>;
 
 template <typename L, typename R, typename Trait>
 inline auto create_bin_vec(const L &l, const R &r) {
   if constexpr (!IsArithV<L> && IsArithV<R>) {
-      return BinaryVec<decltype(l.d), R, Trait>(
+    return BinaryVec<decltype(l.d), R, Trait>(
         BinaryOperation<decltype(l.d), R, Trait>(l.d, r));
   } else if constexpr (IsArithV<L> && !IsArithV<R>) {
-      return BinaryVec<L, decltype(r.d), Trait>(
+    return BinaryVec<L, decltype(r.d), Trait>(
         BinaryOperation<L, decltype(r.d), Trait>(l, r.d));
   } else if constexpr (!IsArithV<L> && !IsArithV<R>) {
-     return BinaryVec<decltype(l.d), decltype(r.d), Trait>(
+    return BinaryVec<decltype(l.d), decltype(r.d), Trait>(
         BinaryOperation<decltype(l.d), decltype(r.d), Trait>(l.d, r.d));
   } else {
     ass<"This case should not be reached. Contact author">(false);
   }
 }
 
-// TODO: does this work with R values? If not use either approach as in LazySubsetting or change to const L&
+// TODO: does this work with R values? If not use either approach as in
+// LazySubsetting or change to const L&
 template <typename L, typename R> auto operator+(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, PlusTrait>(std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, PlusTrait>(
+      std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto operator-(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, MinusTrait>(std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, MinusTrait>(
+      std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto operator*(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, TimesTrait>(std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, TimesTrait>(
+      std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto operator/(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, DivideTrait>(std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, DivideTrait>(
+      std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto power(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, PowTrait>(std::forward<L>(l), std::forward<R>(r));
-}
-
-template <typename L, typename R> 
-requires (IsVec<L> || IsVec<R>)
-auto operator==(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, EqualTrait>(std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, PowTrait>(
+      std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R>
-requires (IsVec<L> || IsVec<R>)
+  requires(IsVec<L> || IsVec<R>)
+auto operator==(L &&l, R &&r) {
+  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, EqualTrait>(
+      std::forward<L>(l), std::forward<R>(r));
+}
+
+template <typename L, typename R>
+  requires(IsVec<L> || IsVec<R>)
 auto operator!=(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, UnEqualTrait>(std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, UnEqualTrait>(
+      std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto operator>(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, LargerTrait>(std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, LargerTrait>(
+      std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto operator>=(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, LargerEqualTrait>(std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, LargerEqualTrait>(
+      std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto operator<(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, SmallerTrait>(std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, SmallerTrait>(
+      std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto operator<=(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, SmallerEqualTrait>(std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, SmallerEqualTrait>(
+      std::forward<L>(l), std::forward<R>(r));
 }
 
 } // namespace etr

@@ -33,7 +33,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
   }
 
   // constructors
-  BaseStore(const BaseStore<T> &other)
+  BaseStore(const BaseStore &other)
       : sz(other.sz), capacity(other.capacity), allocated(other.allocated) {
     if (other.allocated) {
       p = new T[capacity];
@@ -42,14 +42,11 @@ template <typename T, typename BaseTrait> struct BaseStore {
       p = nullptr;
     }
   }
-  BaseStore(BaseStore<T> &&other) noexcept
-      : sz(other.sz), capacity(other.capacity), allocated(other.allocated),
-        p(other.p) {
-    other.capacity = 0;
-    other.sz = 0;
-    other.allocated = false;
-    other.p = nullptr;
-  }
+  BaseStore(BaseStore &&other) noexcept
+      : p(std::exchange(other.p, nullptr)), sz(std::exchange(other.sz, 0)),
+        capacity(std::exchange(other.capacity, 0)),
+        allocated(std::exchange(other.allocated, false)),
+        mp(std::move(other.mp)) {}
 #ifdef STANDALONE_ETR
 #else
   BaseStore(SEXP s) {
@@ -101,7 +98,8 @@ template <typename T, typename BaseTrait> struct BaseStore {
   };
 #endif
   BaseStore(std::size_t sz_)
-      : sz(sz_), capacity(static_cast<std::size_t>(static_cast<double>(sz_)* 1.15)) {
+      : sz(sz_),
+        capacity(static_cast<std::size_t>(static_cast<double>(sz_) * 1.15)) {
     ass<"Size has to be larger than 0!">(sz_ > 0);
     p = new T[capacity];
     for (std::size_t i = 0; i < capacity; i++) {
@@ -138,6 +136,17 @@ template <typename T, typename BaseTrait> struct BaseStore {
     }
     return *this;
   }
+  BaseStore &operator=(BaseStore &&other) noexcept {
+    if (this != &other) {
+      delete[] p;
+      p = std::exchange(other.p, nullptr);
+      sz = std::exchange(other.sz, 0);
+      capacity = std::exchange(other.capacity, 0);
+      allocated = std::exchange(other.allocated, false);
+      mp = std::move(other.mp);
+    }
+    return *this;
+  }
 
   template <typename TInp>
     requires(IsArithV<TInp>)
@@ -150,8 +159,8 @@ template <typename T, typename BaseTrait> struct BaseStore {
     }
   }
 
-  template <typename TInp> 
-requires (!IsArithV<TInp>)
+  template <typename TInp>
+    requires(!IsArithV<TInp>)
   void fill(TInp &&inp) {
     ass<"cannot use fill with vectors of different lengths">(inp.size() == sz);
     using DataType = typename ReRef<TInp>::type::RetType;
@@ -266,7 +275,8 @@ requires (!IsArithV<TInp>)
       if (newSize > capacity) {
         ass<"try to delete nullptr">(p != nullptr);
         delete[] p;
-        capacity = static_cast<std::size_t>(static_cast<double>(newSize) * 1.15);
+        capacity =
+            static_cast<std::size_t>(static_cast<double>(newSize) * 1.15);
         p = new T[capacity];
         sz = newSize;
         allocated = true;
