@@ -51,20 +51,22 @@ void test_subsetting() {
   ass<"Subset with int; a[4] = 6.28;">(subset_test(a, 4) == 6.28);
 
   a = coca(1, 2, 3, 4);
+  bool in_catch = false;
   try {
     subset_test(a, 0) = 5.0; // Invalid index (<1)
-    ass<"Subset with int; a[0] should throw exception;">(false);
   } catch (const std::exception& e) {
-    ass<"Subset with int; a[0] throws exception;">(true);
+    in_catch = true;
   }
+  ass<"Subset with int; a[0] throws exception;">(in_catch);
 
   a = coca(1, 2, 3, 4);
+  in_catch = false;
   try {
     subset_test(a, 5) = 5.0; // Invalid index (>length)
-    ass<"Subset with int; a[5] should throw exception;">(false);
   } catch (const std::exception& e) {
-    ass<"Subset with int; a[5] throws exception;">(true);
+    in_catch = true;
   }
+  ass<"Subset with int; a[5] throws exception;">(in_catch);
 
   // Test bool
   a = coca(1, 2, 3, 4);
@@ -79,12 +81,14 @@ void test_subsetting() {
   ass<"Subset with bool; a[true] changes entire vector to 42.0;">(all_values_42);
 
   a = coca(1, 2, 3, 4);
+  in_catch = false;
   try {
     subset_test(a, false) = 99.0; // Throws exception
-    ass<"Subset with bool; a[false] should throw exception;">(false);
+    print(a);
   } catch (const std::exception& e) {
-    ass<"Subset with bool; a[false] throws exception;">(true);
+    in_catch = true;
   }
+  ass<"Subset with bool; a[false] throws exception;">(in_catch);
 
   // Test double
   a = coca(1, 2, 3, 4);
@@ -104,20 +108,22 @@ void test_subsetting() {
   ass<"Subset with double; a[4] = 4.56;">(subset_test(a, 4) == 4.56);
 
   a = coca(1, 2, 3, 4);
+  in_catch = false;
   try {
     subset_test(a, 0.5) = 3.14; // Invalid index (<1)
-    ass<"Subset with double; a[0.5] should throw exception;">(false);
   } catch (const std::exception& e) {
-    ass<"Subset with double; a[0.5] throws exception;">(true);
+    in_catch = true;
   }
+  ass<"Subset with double; a[0.5] throws exception;">(in_catch);
 
   a = coca(1, 2, 3, 4);
+  in_catch = false;
   try {
     subset_test(a, 5.1) = 3.14; // Invalid index (>length)
-    ass<"Subset with double; a[5.1] should throw exception;">(false);
   } catch (const std::exception& e) {
-    ass<"Subset with double; a[5.1] throws exception;">(true);
+    in_catch = true;
   }
+  ass<"Subset with double; a[5.1] throws exception;">(in_catch);
 
   // Test LVecIntOrDouble
   Vec<int> lv_int;
@@ -137,49 +143,70 @@ void test_subsetting() {
   lv_test2 = coca(100, 200, 300);
   ass<"Subset with LVecIntOrDouble; lv_int valid indices;">(a[0] == 100 && a[1] == 200 &&a[2] == 30 && a[3] == 300 );
 
+  in_catch = false;
    try {
-     auto lv_test3 = subset_test(a, coca(0, 1, 4)); // Invalid indices (<1)
-     ass<"Subset with LVecIntOrDouble; lv indices <1 should throw exception;">(false);
+    Vec<int> invalid;
+    invalid = coca(0);
+    auto lv_test3 = subset_test(a, invalid);
+    lv_test3 = 30;
    } catch (const std::exception& e) {
-     ass<"Subset with LVecIntOrDouble; lv indices <1 throws exception;">(true);
+    in_catch = true;
    }
+  ass<"Subset with LVecIntOrDouble; lv indices <1 throws exception;">(in_catch);
 
+  in_catch = false;
   try {
-    auto lv_test4 = subset_test(a, coca(1, 2, 5)); // Invalid indices (>length)
-    ass<"Subset with LVecIntOrDouble; lv indices >length should throw exception;">(false);
+    Vec<int> invalid;
+    invalid = coca(0);
+    auto lv_test4 = subset_test(a, invalid); // Invalid indices (>length)
+    lv_test4 = 10;
   } catch (const std::exception& e) {
-    ass<"Subset with LVecIntOrDouble; lv indices >length throws exception;">(true);
+    in_catch = true;
   }
+  ass<"Subset with LVecIntOrDouble; lv indices >length throws exception;">(in_catch);
 
   // Test RVecIntOrDouble
-  std::cout << "Test RVecIntOrDouble" << std::endl;
   a = coca(10, 20, 30, 40);
   auto rv_test1 = subset_test(a, coca(1, 2, 4));
-  rv_test1[0];
+  ass<"Subset with LVecIntOrDouble; lv_int r-value valid indices;">(lv_test1[0] == 10 && lv_test1[1] == 20 && lv_test1[2] == 40);
   rv_test1 = 3.5;
-  print(a);
-  // ass<"Subset with LVecIntOrDouble; lv_int valid indices;">(rv_test1[0] == 10 && rv_test1[1] == 20 && rv_test1[2] == 40);
+  ass<"Subset with LVecIntOrDouble; lv_int r-value valid indices update;">(a[0] == 3.5 && a[1] == 3.5 && a[2] == 30 && a[3] == 3.5);
 
-  // auto rv_test2 = subset_test(a, coca(1.0, 2.0, 4.0));
-  // ass<"Subset with LVecIntOrDouble; lv_double valid indices;">(rv_test2[0] == 10 && rv_test2[1] == 20 && rv_test2[2] == 40);
-  //
-  //  try {
-  //    auto rv_test3 = subset_test(a, coca(0, 1, 4)); // Invalid indices (<1)
-  //    ass<"Subset with LVecIntOrDouble; lv indices <1 should throw exception;">(false);
-  //  } catch (const std::exception& e) {
-  //    ass<"Subset with LVecIntOrDouble; lv indices <1 throws exception;">(true);
-  //  }
-  //
-  // try {
-  //   auto rv_test4 = subset_test(a, coca(1, 2, 5)); // Invalid indices (>length)
-  //   ass<"Subset with LVecIntOrDouble; lv indices >length should throw exception;">(false);
-  // } catch (const std::exception& e) {
-  //   ass<"Subset with LVecIntOrDouble; lv indices >length throws exception;">(true);
-  // }
+  a = coca(10, 20, 30, 40);
+  auto rv_test2 = subset_test(a, coca(1.0, 2.0, 4.0));
+  ass<"Subset with LVecIntOrDouble; lv_double r-value valid indices;">(lv_test2[0] == 10 && lv_test2[1] == 20 && lv_test2[2] == 40);
+  rv_test2 = coca(100, 200, 300);
+  ass<"Subset with LVecIntOrDouble; lv_double r-value valid indices update.">(a[0] == 100 && a[1] == 200 && a[2] == 30 && a[3] == 300);
+
+  in_catch = false;
+  try {
+    auto rv_test3 = subset_test(a, coca(0)); // Invalid indices (<1)
+    rv_test3 = 30;
+  } catch (const std::exception& e) {
+    in_catch = true;
+  }
+  ass<"Subset with LVecIntOrDouble; lv r-value indices <1 throws exception;">(in_catch);
+
+  in_catch = false;
+  try {
+    auto rv_test4 = subset_test(a, coca(5)); // Invalid indices (>length)
+    rv_test4 = 10;
+  } catch (const std::exception& e) {
+    in_catch = true;
+  }
+  ass<"Subset with LVecIntOrDouble; lv r-value indices >length throws exception;">(in_catch);
 
 }
 
+
 int main() {
   test_subsetting();
+
+  Vec<double> v;
+  v = coca(1, 2, 3, 4);
+  auto lv_test = subset_test(v, coca(1, 2, 1));
+  lv_test = 10;
+  print(v);
+
 }
 

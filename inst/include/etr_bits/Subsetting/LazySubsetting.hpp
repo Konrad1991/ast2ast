@@ -76,7 +76,7 @@ template <typename L, typename R> struct SubsetClassConstantIterator {
   }
 };
 
-// NOTE: Subset L values
+// NOTE: L and R are L values
 template <typename L, typename R, typename Trait> struct SubsetClass {
   using RetType = typename ReRef<L>::type::RetType;
   using TypeTrait = Trait;
@@ -128,21 +128,13 @@ template <typename L, typename R, typename Trait> struct SubsetClass {
     }
   }
 
-  // Constructor for lvalues (both `l_` and `r_`)
-  SubsetClass(L &l_, const R &r_) : l(l_), r(r_) {
-
-  }
-  SubsetClass(L& l_, R&& r_) : l(l_), r(std::forward<R>(r_)) {
-        std::cout << "r input address " << &r_ << std::endl;
-    std::cout << "r address " << &r << std::endl;
-  }
+  SubsetClass(L &l_, const R &r_) : l(l_), r(r_) {}
 
   auto &operator[](std::size_t i) {
-    std::cout << "operator[]" << std::endl;
     if constexpr (IsArithV<R>) {
+      if (!r) ass<"Access out of bound (probably empty vector)">(false);
       return l[i];
     } else {
-      print(r);
       return l[r[i % l.size()] - 1];
     }
   }
@@ -167,13 +159,12 @@ template <typename L, typename R, typename Trait> struct SubsetClass {
   auto end() const { return SubsetClassIterator<L, R>{l, r, this->size()}; }
 };
 
-// NOTE: Subset R Value
-template <typename L,typename R, typename Trait> 
-struct SubsetClass<const L, const R, Trait> {
+// NOTE: L is L value and R is R value
+template <typename L, typename R, typename Trait> struct SubsetClass<L, const R, Trait>  {
   using RetType = typename ReRef<L>::type::RetType;
   using TypeTrait = Trait;
-  const L &l;
-  const R &r;
+  L &l;
+  R r;
 
   using typeTraitL = L;
   using typeTraitR = R;
@@ -220,15 +211,11 @@ struct SubsetClass<const L, const R, Trait> {
     }
   }
 
-  // Constructor for lvalues (both `l_` and `r_`)
-  SubsetClass(const L &l_, const R &r_) : l(l_), r(r_) {}
+  SubsetClass(L &l_, const R &r_) : l(l_), r(std::move(r_)) {}
 
-  template <typename LType, typename RType, typename TraitL>
-  SubsetClass(SubsetClass<LType, RType, TraitL> &other)
-      : l(other.l), r(other.r) {}
-
-  const auto operator[](std::size_t i) const {
+  auto &operator[](std::size_t i) {
     if constexpr (IsArithV<R>) {
+      if (!r) ass<"Access out of bound (probably empty vector)">(false);
       return l[i];
     } else {
       return l[r[i % l.size()] - 1];
@@ -254,7 +241,6 @@ struct SubsetClass<const L, const R, Trait> {
   auto begin() const { return SubsetClassIterator<L, R>{l, r, 0}; }
   auto end() const { return SubsetClassIterator<L, R>{l, r, this->size()}; }
 };
-
 
 /*
 Var1            Var2
@@ -351,22 +337,21 @@ template <typename L> inline auto subset_test(L &&l, bool &&r) {
 }
 
 // NOTE: R = Vec<int|double>
-template <typename L, typename R> inline auto subset_test(L &&l, const R &r) {
+template <typename L, typename R> inline auto subset_test(L &&l, R &&r) {
   static_assert(!IsArithV<Decayed<L>>,
                 "\n\nYou cannot subset a scalar value\n\n");
   using RetType = typename ExtractDataType<Decayed<L>>::RetType;
   using SubsetType =
       SubsetClass<decltype(l.d), decltype(r.d), SubsetClassTrait>;
-  if constexpr (!IsRvalue<L&&>) {
-    std::cout << "r address " << &r.d << std::endl;
+  if constexpr (!IsRvalue<L&&> && !IsRvalue<R&&>) {
     return Vec<RetType,
     SubsetClass<decltype(l.d), decltype(r.d), SubsetClassTrait>>(
       SubsetClass<decltype(l.d), decltype(r.d), SubsetClassTrait>(l.d, r.d)
     );
-  } else if constexpr(IsRvalue<L&&>) {
+  } if constexpr (!IsRvalue<L&&> && IsRvalue<R&&>) {
     return Vec<RetType,
-    SubsetClass<const decltype(l.d), decltype(r.d), SubsetClassTrait>>(
-      SubsetClass<const decltype(l.d), decltype(r.d), SubsetClassTrait>(l.d, r.d)
+    SubsetClass<decltype(l.d), const decltype(r.d), SubsetClassTrait>>(
+      SubsetClass<decltype(l.d), const decltype(r.d), SubsetClassTrait>(l.d, r.d)
     );
   }
 }
