@@ -243,6 +243,7 @@ template <typename T, typename BaseTrait> struct BaseStore {
 #endif
 
   ~BaseStore() {
+    std::cout << "address in destructor " << this << std::endl;
     if (p != nullptr) {
       if (allocated) {
         delete[] p;

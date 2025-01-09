@@ -746,8 +746,6 @@ template <typename T, typename R> struct Vec {
 
     } else if constexpr (IS<SubsetClassTrait,
                             typename ReRef<R>::type::TypeTrait>) {
-      std::cout << "operator=" << std::endl;
-      // std::cout << d.size() << " " << otherVec.size() << std::endl;
       ass<"number of items to replace is not a multiple of replacement length">(
           otherVec.size() == d.size());
       temp.resize(otherVec.size());

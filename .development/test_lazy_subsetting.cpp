@@ -6,25 +6,6 @@
 #include "../inst/include/etr.hpp"
 using namespace etr;
 
-// TODO:
-// 1. Place SubsetClass in Vec --> done
-// 2. Add tests in subset_test --> done
-//  a. is rvalue --> done
-//  b. is arithmetic value --> done
-// 3. Dependent on the second test the arguments to subset_test are moved or not
-// --> done
-// 4. To ponder over:
-//  a. How to subset matrices --> overload subset function. Calculate indices
-//  and put them in SubsetClass
-//  b. Is it maybe a good idea to calculate the
-//  indices once and use them afterwards?
-
-// TODO: missing subset of subset:   auto five = subset_test(v, subset_test(v,
-// coca(1, 3)));
-
-// TODO: missing subset a 'subset of subset' with something
-// Or subset a calculation with something
-
 void test_subset_test_with_scalar() {
   Vec<int> l = coca(1, 2, 3, 4);
   int scalar = 2;
