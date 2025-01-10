@@ -18,16 +18,17 @@ TODO:
 
 namespace etr {
 
-template <typename V, typename I>
-void precalcVecBool(V &vec, Indices &ind, I *idx) {
+template <typename V> void precalcVecInt(const V &vec, Indices &ind) {
   std::size_t sizeTrue = 0;
-  for (std::size_t i = 0; i < vec.size(); i++)
-    if ((*idx)[i % idx->size()])
+  for (std::size_t i = 0; i < vec.size(); i++) {
+    if (vec[i]) {
       sizeTrue++;
+    }
+  }
   ind.resize(sizeTrue);
   std::size_t counter = 0;
   for (std::size_t i = 0; i < vec.size(); i++) {
-    if ((*idx)[i % idx->size()]) {
+    if (vec[i]) {
       ind[counter] = i + 1;
       counter++;
     }
@@ -331,22 +332,38 @@ template <typename L, typename R> inline auto subset_test(L &&l, R &&r) {
   static_assert(!IsArithV<Decayed<L>>,
                 "\n\nYou cannot subset a scalar value\n\n");
   using RetType = typename ExtractDataType<Decayed<L>>::RetType;
-  using SubsetType =
-      SubsetClass<decltype(l.d), decltype(r.d), SubsetClassTrait>;
-  if constexpr (!IsRvalue<L &&> && !IsRvalue<R &&>) {
-    return Vec<RetType,
-               SubsetClass<decltype(l.d), decltype(r.d), SubsetClassTrait>>(
-        SubsetClass<decltype(l.d), decltype(r.d), SubsetClassTrait>(l.d, r.d));
-  } else if constexpr (!IsRvalue<L &&> && IsRvalue<R &&>) {
-    return Vec<RetType, SubsetClass<decltype(l.d), const decltype(r.d),
-                                    SubsetClassTrait>>(
-        SubsetClass<decltype(l.d), const decltype(r.d), SubsetClassTrait>(l.d,
-                                                                          r.d));
+  using RetTypeR = typename ExtractDataType<Decayed<R>>::RetType;
+  if constexpr (IS<RetTypeR, bool>) {
+    Indices ind;
+    precalcVecInt(r, ind);
+    if constexpr (!IsRvalue<L>) {
+      return Vec<RetType, SubsetClass<decltype(l.d), const decltype(ind),
+                                      SubsetClassTrait>>(
+          SubsetClass<decltype(l.d), const decltype(ind), SubsetClassTrait>(
+              l.d, ind));
+    } else {
+      return Vec<RetType, SubsetClass<const decltype(l.d), const decltype(ind),
+                                      SubsetClassTrait>>(
+          SubsetClass<const decltype(l.d), const decltype(ind),
+                      SubsetClassTrait>(l.d, ind));
+    }
   } else {
-    return Vec<RetType, SubsetClass<const decltype(l.d), const decltype(r.d),
-                                    SubsetClassTrait>>(
-        SubsetClass<const decltype(l.d), const decltype(r.d), SubsetClassTrait>(
-            l.d, r.d));
+    if constexpr (!IsRvalue<L &&> && !IsRvalue<R &&>) {
+      return Vec<RetType,
+                 SubsetClass<decltype(l.d), decltype(r.d), SubsetClassTrait>>(
+          SubsetClass<decltype(l.d), decltype(r.d), SubsetClassTrait>(l.d,
+                                                                      r.d));
+    } else if constexpr (!IsRvalue<L &&> && IsRvalue<R &&>) {
+      return Vec<RetType, SubsetClass<decltype(l.d), const decltype(r.d),
+                                      SubsetClassTrait>>(
+          SubsetClass<decltype(l.d), const decltype(r.d), SubsetClassTrait>(
+              l.d, r.d));
+    } else {
+      return Vec<RetType, SubsetClass<const decltype(l.d), const decltype(r.d),
+                                      SubsetClassTrait>>(
+          SubsetClass<const decltype(l.d), const decltype(r.d),
+                      SubsetClassTrait>(l.d, r.d));
+    }
   }
 }
 

@@ -215,4 +215,13 @@ int main() {
   v = coca(1, 2, 3, 4);
   auto lv_test = subset_test(coca(1, 2, 3, 4), coca(1, 2, 1));
   print(lv_test);
+
+  Vec<bool> indices;
+  indices = coca(true, false, true, false);
+  auto bool_test = subset_test(v, indices);
+  print(v);
+  bool_test = 300;
+  print(v);
+  subset_test(v, coca(true, true, true, false)) = 400;
+  print(v);
 }
