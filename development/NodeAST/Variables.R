@@ -9,7 +9,7 @@ Variables <- R6::R6Class(
       self$names <- c()
       self$types <- c()
     },
-    valid_type = function(name, type) {
+    valid_type = function(name, type, line) {
       if (!(type %in% permitted_types())) {
         self$errors[[name]] <- paste0(
           "Invalid type: ", deparse(type), " at line ", line
@@ -21,7 +21,7 @@ Variables <- R6::R6Class(
       if (type == "unknown") {
         type <- "double_vector" # Default
       } else {
-        self$valid_type(namem, type)
+        self$valid_type(name, type, line)
       }
       return(type)
     },
@@ -59,6 +59,9 @@ Variables <- R6::R6Class(
       }
     },
     check = function() {
+      if (is.null(self$names)) {
+        return("No variables found")
+      }
       res <- data.frame(
         name = unique(self$names),
         type = NA
