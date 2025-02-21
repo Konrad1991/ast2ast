@@ -77,9 +77,9 @@ BinaryNode <- R6::R6Class(
     stringify = function(indent = "") {
       ret <- ""
       if (infix_or_function(self$operator) == "infix") {
-        ret <- self$create_infix_string()
+        ret <- self$create_infix_string(indent)
       } else if (infix_or_function(self$operator) == "function") {
-        ret <- self$create_function_string()
+        ret <- self$create_function_string(indent)
       } else {
         stop(paste0(
           "Unexpected error in Binary operator",
@@ -313,8 +313,7 @@ BlockNode <- R6::R6Class(
       for (stmt in self$block) {
         if (inherits(stmt, "Node")) {
           result[[length(result) + 1]] <-
-            stmt$stringify(indent = paste0(indent, ""))
-          next
+            stmt$stringify(indent = indent)
         } else {
           result[[length(result) + 1]] <- paste0(indent, stmt)
         }
@@ -402,11 +401,33 @@ ForNode <- R6::R6Class(
         "}\n"
       ))
     },
-    stringify_error = function(indent = "") { # TODO:
-      return(paste0(indent, self$error$error_message))
+    stringify_error = function(indent = "") {
+      block_err <- self$block$stringify_error()
+      i_err <- self$i$stringify_error()
+      seq_err <- self$seq$stringify_error()
+      res <- c(i_err, seq_err, block_err)
+      res <- res[res != ""]
+      return(combine_strings(c(i_err, seq_err, block_err)))
     },
-    stringify_error_line = function(indent = "") { # TODO:
-      self$stringify()
+    stringify_error_line = function(indent = "") {
+      i_err <- self$i$stringify_error()
+      if (i_err != "") {
+        return(paste0(
+          indent, "for (",
+          self$i$stringify(""), " in ", self$seq$stringify(), ") {"
+        ))
+      }
+      seq_err <- self$seq$stringify_error()
+      if (seq_err != "") {
+        return(paste0(
+          indent, "for (",
+          self$i$stringify(""), " in ", self$seq$stringify(), ") {"
+        ))
+      }
+      block_err <- self$block$stringify_error()
+      if (block_err != "") {
+        return(self$block$stringify_error_line())
+      }
     }
   )
 )

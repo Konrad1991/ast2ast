@@ -70,6 +70,7 @@ translate <- function(fct) {
   ast <- NULL
   counter <- 1
   error_found <- FALSE
+  variables <- Variables$new()
   for (i in seq_along(b)) {
     # Create ast
     ast <- process(b[[i]])
@@ -90,15 +91,24 @@ translate <- function(fct) {
     }
     # Stringify ast
     if (!error_found) {
-      try(
+      e <- try(
         {
           code_string[[counter]] <- ast$stringify()
           counter <- counter + 1
         },
         silent = TRUE
       )
+      if (inherits(e, "error")) {
+        error_found <- TRUE
+        pe("Error: Could not stringify the AST")
+        return()
+      }
     }
+    # Find variables
+    traverse_ast(ast, action_variables, variables)
   }
+  variables$check()
+  lapply(variables$errors, pe)
   if (error_found) {
     return()
   }

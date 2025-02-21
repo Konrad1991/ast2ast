@@ -1,3 +1,7 @@
+# TODO: Remove the differentiate part entirely
+# Also remove the C++ code stuff from it
+
+
 # Lifts a function so it will propagate NULL and otherwise do its thing
 lift <- function(f) {
   function(x, ...) if (rlang::is_null(x)) x else f(x, ...)

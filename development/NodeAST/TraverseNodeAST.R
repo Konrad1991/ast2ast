@@ -1,30 +1,35 @@
-traverse_ast <- function(node, action) {
+traverse_ast <- function(node, action, ...) {
   if (!inherits(node, "Node")) {
     return() # Ignore non-nodes (literals, etc.)
   }
   if (inherits(node, "VariableNode")) {
-    action(node)
+    action(node, ...)
   } else if (inherits(node, "BinaryNode")) {
-    action(node)
-    traverse_ast(node$left_node, action)
-    traverse_ast(node$right_node, action)
+    action(node, ...)
+    traverse_ast(node$left_node, action, ...)
+    traverse_ast(node$right_node, action, ...)
   } else if (inherits(node, "UnaryNode")) {
-    action(node)
-    traverse_ast(node$obj, action)
+    action(node, ...)
+    traverse_ast(node$obj, action, ...)
   } else if (inherits(node, "IfNode")) {
-    action(node)
-    traverse_ast(node$condition, action)
-    traverse_ast(node$true_node, action)
+    action(node, ...)
+    traverse_ast(node$condition, action, ...)
+    traverse_ast(node$true_node, action, ...)
     if (!is.null(node$false_node)) {
-      traverse_ast(node$false_node, action)
+      traverse_ast(node$false_node, action, ...)
     }
   } else if (inherits(node, "BlockNode")) {
-    action(node)
-    lapply(node$block, function(stmt) traverse_ast(stmt, action))
+    action(node, ...)
+    lapply(node$block, function(stmt) traverse_ast(stmt, action, ...))
   } else if (inherits(node, "VariableNode")) {
-    action(node)
+    action(node, ...)
   } else if (inherits(node, "NullaryNode")) {
-    action(node)
+    action(node, ...)
+  } else if (inherits(node, "ForNode")) {
+    action(node, ...)
+    traverse_ast(node$i, action, ...)
+    traverse_ast(node$seq, action, ...)
+    traverse_ast(node$block, action, ...)
   }
 }
 
@@ -40,7 +45,7 @@ check_operator <- function(node) {
   }
   operator <- node$operator
   list_check_fcts <- c(check_function)
-  messages <- c("Invalid function")
+  messages <- c("Invalid function ")
   for (i in seq_along(list_check_fcts)) {
     err <- NULL
     fct <- list_check_fcts[[i]]
@@ -134,9 +139,30 @@ check_type_declaration <- function(node) {
   return()
 }
 
-# Error checking action
+# 1. Traverse: Error checking action
 action_error <- function(node) {
   check_operator(node)
   check_variable_names(node)
   check_type_declaration(node)
 }
+
+# 2. Traverse: find all variables and their types
+action_variables <- function(node, variables) {
+  if (!inherits(node, "BinaryNode")) {
+    return()
+  }
+  # Standalone type declaration
+  if (node$operator == "<-") {
+    if (!inherits(node$left_node, "BinaryNode")) {
+      variables$names <- c(variables$names, node$left_node$name)
+      variables$types <- c(variables$types, "unknown")
+      variables$lines <- c(variables$lines, node$stringify())
+    }
+  } else if (node$operator == "%type%") {
+    variables$names <- c(variables$names, node$left_node$name)
+    variables$types <- c(variables$types, node$right_node$name)
+    variables$lines <- c(variables$lines, node$stringify())
+  }
+}
+
+# 3. Traverse: translate functions
