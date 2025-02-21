@@ -82,13 +82,25 @@ translate <- function(fct) {
     # Run checks
     traverse_ast(ast, action_error)
     # Error found
-    errors <- ast$stringify_error()
+    errors <- try(
+      {
+        ast$stringify_error()
+      },
+      silent = TRUE
+    )
+    if (inherits(errors, "try-error")) {
+      error_found <- TRUE
+      pe("Error: Could not stringify the AST")
+      return()
+    }
     if (!is.null(errors) && errors != "") {
       error_found <- TRUE
       line <- ast$stringify_error_line()
       cat(line, "\n")
       pe(errors)
     }
+    # Translate
+    # traverse_ast(ast, action_translate)
     # Stringify ast
     if (!error_found) {
       e <- try(
@@ -108,7 +120,10 @@ translate <- function(fct) {
     traverse_ast(ast, action_variables, variables)
   }
   variables$check()
-  lapply(variables$errors, pe)
+  everything_ok <- lapply(variables$errors, pe)
+  if (length(everything_ok) > 0) {
+    error_found <- TRUE
+  }
   if (error_found) {
     return()
   }

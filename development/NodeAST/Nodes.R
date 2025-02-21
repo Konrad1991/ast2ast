@@ -407,7 +407,13 @@ ForNode <- R6::R6Class(
       seq_err <- self$seq$stringify_error()
       res <- c(i_err, seq_err, block_err)
       res <- res[res != ""]
-      return(combine_strings(c(i_err, seq_err, block_err)))
+      e <- paste0(i_err, seq_err, block_err, collapse = "")
+      if (e != "") {
+        return(
+          combine_strings(c(i_err, seq_err, block_err))
+        )
+      }
+      return("")
     },
     stringify_error_line = function(indent = "") {
       i_err <- self$i$stringify_error()

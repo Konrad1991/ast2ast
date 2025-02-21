@@ -1,7 +1,8 @@
 # TODO: Integrate them all
 permitted_fcts <- function() {
   c(
-    "%type%", "=", "<-", "[", "at", "for", "while", "next", "break", "c", ":",
+    "%type%", "=", "<-", "[", "at", "for", "while",
+    "next", "break", "c", ":",
     "sin", "asin", "sinh", "cos", "acos", "cosh",
     "tan", "atan", "tanh", "log", "sqrt",
     "^", "+", "-", "*", "/",
@@ -10,49 +11,53 @@ permitted_fcts <- function() {
     "vector", "matrix", "length", "dim",
     "exp", "&&", "||", "!",
     "is.na", "is.infinite", "is.finite",
-    "Rf_ScalarReal", "i2d", "cmr", "cpp2R",
-    "vector_numeric",
-    "vector_logical", "while",
-    "vector_integer", "rep", "get_deriv", "assign",
-    "set_indep", "unset_indep", "power"
+    "cmr", "vector", "while", "power"
   )
 }
 
-# TODO: translate to them
-namespace_etr <- function() {
-  c(
-    "coca", "sinus", "asinus", "sinush",
-    "cosinus", "acosinus", "cosinush",
-    "tangens", "atangens", "tangensh",
-    "ln", "sqroot",
-    "print", "vector", "matrix", "length", "dim", "cmr",
-    "exp", "i2d", "at", "exp", "at",
-    "isNA", "isInfinite", "colon", "cpp2R", "rep", "get_deriv",
-    "assign_deriv", "set_indep", "unset_indep", "power"
+# TODO: translation mapping
+# TODO: define namespace etr
+# TODO: remove %type$ during translation
+name_pairs <- function() {
+  setNames(
+    c(
+      "%type%", "=", "=",
+      "subset", "at",
+      "for", "while", "continue", "break",
+      "coca", "colon",
+      "sinus", "asinus", "sinush",
+      "cosinus", "acosinus", "cosinush",
+      "tangens", "atangens", "tangensh",
+      "ln", "sqroot",
+      "power", "+", "-", "*", "/",
+      "if", "{", "(",
+      "==", "!=", ">", ">=", "<", "<=",
+      "print", "return",
+      "vector", "matrix", "length", "dim",
+      "exp", "&&", "||", "!",
+      "isNA", "isInfinite", "isFinite",
+      "cmr"
+    ),
+    c(
+      "%type%", "=", "<-",
+      "[", "at",
+      "for", "while", "next", "break",
+      "c", ":",
+      "sin", "asin", "sinh",
+      "cos", "acos", "cosh",
+      "tan", "atan", "tanh",
+      "log", "sqrt",
+      "^", "+", "-", "*", "/",
+      "if", "{", "(",
+      "==", "!=", ">", ">=", "<", "<=",
+      "print", "return",
+      "vector", "matrix", "length", "dim",
+      "exp", "&&", "||", "!",
+      "is.na", "is.infinite", "is.finite",
+      "cmr"
+    )
   )
 }
-
-generic_fcts <- function() {
-  c(
-    "+", "-",
-    "*", "/", "if", "else if", "else", "{", "(",
-    "==", "!=", ">", ">=", "<", "<=",
-    "rep", "::",
-    "matrix", "length", "dim", "cmr", "exp", "at",
-    "&&", "||", "Rf_ScalarReal", "cpp2R",
-    "rep", "while", "get_deriv", "assign",
-    "unset_indep", "power"
-  )
-}
-
-math_fcts <- function() {
-  c(
-    "sin", "asin", "sinh", "cos", "acos", "cosh",
-    "tan", "atan", "tanh", "log", "^", "sqrt", "power"
-  )
-}
-
-
 
 # Function to combine strings
 combine_strings <- function(string_list) {
@@ -63,7 +68,7 @@ combine_strings <- function(string_list) {
 infix_or_function <- function(operator) {
   infix_list <- c(
     "+", "-", "*", "/", "^", ">", "<", ">=", "<=", "==", "!=",
-    "&", "|", "&&", "||", ":", "<-", "="
+    "&", "|", "&&", "||", ":", "<-", "=", "^"
   )
   if (operator %in% infix_list) {
     return("infix")
@@ -72,20 +77,6 @@ infix_or_function <- function(operator) {
     return("infix")
   }
   return("function")
-}
-
-permitted_fcts <- function() {
-  c(
-    "+", "-",
-    "*", "/", "<-", "=",
-    "numerc", "integer", "logical", ":",
-    "matrix", "rep", "cmr", "length", "dim",
-    "sin", "asin", "sinh", "cos", "acos", "cosh", "exp",
-    "tan", "atan", "tanh", "log", "^", "sqrt", "^", "::",
-    "if", "{",
-    "==", "<=", ">=", ">", "<", "!=",
-    "for", "print", "[", "%type%"
-  )
 }
 
 permitted_types <- function() {

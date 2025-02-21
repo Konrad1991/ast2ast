@@ -166,3 +166,10 @@ action_variables <- function(node, variables) {
 }
 
 # 3. Traverse: translate functions
+action_translate <- function(node) {
+  if (!inherits(node, "BinaryNode") &&
+    !inherits(node, "UnaryNode") && !inherits(node, "NullaryNode")) {
+    return()
+  }
+  node$operator <- name_pairs()[node$operator]
+}

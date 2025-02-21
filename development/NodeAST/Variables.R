@@ -12,7 +12,7 @@ Variables <- R6::R6Class(
     valid_type = function(name, type) {
       if (!(type %in% permitted_types())) {
         self$errors[[name]] <- paste0(
-          "Invalid type: ", type, " at line ", line
+          "Invalid type: ", deparse(type), " at line ", line
         )
         return("Error")
       }
