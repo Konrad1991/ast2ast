@@ -84,6 +84,9 @@ translate <- function(fct) {
     traverse_ast(ast, action_variables, variables)
     ast_list[[i]] <- ast
   }
+  if (error_found) {
+    return()
+  }
 
   # Run checks
   for (i in seq_len(length(ast_list))) {
@@ -99,7 +102,7 @@ translate <- function(fct) {
     if (inherits(errors, "try-error")) {
       error_found <- TRUE
       pe("Error: Could not stringify the AST")
-      return()
+      break
     }
     if (!is.null(errors) && errors != "") {
       error_found <- TRUE
@@ -107,6 +110,15 @@ translate <- function(fct) {
       cat(line, "\n")
       pe(errors)
     }
+  }
+  if (error_found) {
+    return()
+  }
+  # NOTE: this has to run after the checks!
+  variables$check()
+  everything_ok <- lapply(variables$errors, pe)
+  if (length(everything_ok) > 0) {
+    error_found <- TRUE
   }
 
   # Translate
@@ -133,10 +145,6 @@ translate <- function(fct) {
   if (error_found) {
     return()
   }
-  variables$check()
-  everything_ok <- lapply(variables$errors, pe)
-  if (length(everything_ok) > 0) {
-    error_found <- TRUE
-  }
+
   return(combine_strings(code_string))
 }
