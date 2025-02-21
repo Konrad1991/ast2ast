@@ -71,15 +71,23 @@ translate <- function(fct) {
   counter <- 1
   error_found <- FALSE
   variables <- Variables$new()
+  ast_list <- list()
+  # Create ast
   for (i in seq_along(b)) {
-    # Create ast
     ast <- process(b[[i]])
     if (inherits(ast, "ErrorNode")) {
       error_found <- TRUE
       pe(ast$error_message)
       break
     }
-    # Run checks
+    # Find variables
+    traverse_ast(ast, action_variables, variables)
+    ast_list[[i]] <- ast
+  }
+
+  # Run checks
+  for (i in seq_len(length(ast_list))) {
+    ast <- ast_list[[i]]
     traverse_ast(ast, action_error)
     # Error found
     errors <- try(
@@ -99,8 +107,12 @@ translate <- function(fct) {
       cat(line, "\n")
       pe(errors)
     }
-    # Translate
-    # traverse_ast(ast, action_translate)
+  }
+
+  # Translate
+  for (i in seq_len(length(ast_list))) {
+    ast <- ast_list[[i]]
+    traverse_ast(ast, action_translate)
     # Stringify ast
     if (!error_found) {
       e <- try(
@@ -116,16 +128,15 @@ translate <- function(fct) {
         return()
       }
     }
-    # Find variables
-    traverse_ast(ast, action_variables, variables)
+  }
+
+  if (error_found) {
+    return()
   }
   variables$check()
   everything_ok <- lapply(variables$errors, pe)
   if (length(everything_ok) > 0) {
     error_found <- TRUE
-  }
-  if (error_found) {
-    return()
   }
   return(combine_strings(code_string))
 }
