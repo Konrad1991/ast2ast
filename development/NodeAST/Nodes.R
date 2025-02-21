@@ -25,11 +25,29 @@ VariableNode <- R6::R6Class(
   )
 )
 
+LiteralNode <- R6::R6Class(
+  "LiteralNode ",
+  inherit = Node,
+  public = list(
+    name = NULL,
+    error = NULL,
+    initialize = function(obj, check) {
+      self$name <- deparse(obj)
+    },
+    stringify = function(indent = "") {
+      return(paste0(indent, self$name))
+    },
+    stringify_error = function(indent = "") {
+      return(paste0(indent, self$error$error_message))
+    }
+  )
+)
+
 handle_var <- function(code, check) {
   if (rlang::is_symbol(code)) {
     return(VariableNode$new(code, check))
   }
-  return(deparse(code))
+  return(LiteralNode$new(code, check))
 }
 
 # Define the BinaryNode
@@ -396,7 +414,7 @@ ForNode <- R6::R6Class(
       b <- self$block$stringify(paste0(indent, "  "))
       return(paste0(
         indent,
-        "for(", idx, " in ", sequence, ") {\n",
+        "for(auto& ", idx, " : ", sequence, ") {\n",
         b, "\n",
         "}\n"
       ))
@@ -419,8 +437,8 @@ ForNode <- R6::R6Class(
       i_err <- self$i$stringify_error()
       if (i_err != "") {
         return(paste0(
-          indent, "for (",
-          self$i$stringify(""), " in ", self$seq$stringify(), ") {"
+          indent, "for (auto&",
+          self$i$stringify(""), " : ", self$seq$stringify(), ") {"
         ))
       }
       seq_err <- self$seq$stringify_error()
