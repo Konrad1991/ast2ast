@@ -1,0 +1,53 @@
+if (!grepl("NodeAST", getwd())) {
+  setwd("./.development/NodeAST")
+}
+files <- list.files(path = ".", full.names = TRUE)
+files <- files[files != "./test.R"]
+trash <- lapply(files, source)
+
+f <- function() {
+  for (i in 1:10) {
+    print(i)
+    b.b <- 1
+  }
+  if (a > 10) {
+    b <- 10
+    c <- 2
+  }
+}
+fcpp <- translate(f)
+fcpp |> cat()
+cat("\n")
+
+f <- function() {
+  print(a) %type% integer <- 1
+  "a" %type% integer <- 1
+  a %type% print(a)
+  a %type% "int"
+  if (TRUE) {
+    print("test")
+    b.b <- 1
+  }
+}
+fcpp <- translate(f)
+cat("\n")
+
+f <- function() {
+  bb %type% inter <- 1
+}
+fcpp <- translate(f)
+cat("\n")
+
+fct <- function() {
+  c.c <- 1
+  c.c <- c %/% 2 %bla% 3.14
+  if (bla()) {
+    a <- 1
+  } else {
+    b <- 2
+  }
+  if (TRUE) {
+    print("test")
+  }
+}
+fcpp <- translate(fct)
