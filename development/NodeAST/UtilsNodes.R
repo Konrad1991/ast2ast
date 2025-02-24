@@ -15,6 +15,11 @@ permitted_fcts <- function() {
   )
 }
 
+# Defines the function with more than two arguments
+function_fcts <- function() {
+  c("vector", "matrix", "cmr")
+}
+
 # TODO: translation mapping
 # TODO: define namespace etr
 # TODO: remove %type$ during translation
@@ -58,6 +63,64 @@ name_pairs <- function() {
     )
   )
 }
+
+# TODO: finish
+function_registry <- list(
+  "log" = list(
+    args = c("x", "base"),
+    defaults = list(base = exp(1)),
+    validator = function(args) {
+      if (length(args) < 1) {
+        return(ErrorNode$new("log() requires at least one argument"))
+      }
+    }
+  ),
+  "exp" = list(
+    args = c("x"),
+    defaults = list(),
+    validator = function(args) {
+      if (length(args) != 1) {
+        return(ErrorNode$new("exp() requires exactly one argument"))
+      }
+    }
+  )
+)
+# if (operator %in% names(function_registry)) {
+#   args <- lapply(code[-1], process)
+#   result <- check_function_args(operator, args)
+#
+#   if (inherits(result, "ErrorNode")) {
+#     return(result)
+#   }
+#
+#   return(FunctionNode$new(operator, result))
+# }
+
+# TODO: finish
+check_function_args <- function(func_name, args) {
+  if (!func_name %in% names(function_registry)) {
+    return(ErrorNode$new(paste0("Unknown function: ", func_name)))
+  }
+
+  f_info <- function_registry[[func_name]]
+
+  # Validate number of arguments
+  err <- f_info$validator(args)
+  if (!is.null(err)) {
+    return(err)
+  }
+
+  # Fill defaults for missing arguments
+  for (arg in names(f_info$defaults)) {
+    if (!(arg %in% names(args))) {
+      args[[arg]] <- f_info$defaults[[arg]]
+    }
+  }
+
+  return(args)
+}
+
+
 
 # Function to combine strings
 combine_strings <- function(string_list) {

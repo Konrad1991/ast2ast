@@ -38,6 +38,7 @@ check_function <- function(fct) {
   fct %in% permitted_fcts()
 }
 
+# TODO: wrap error string in Error class
 # Function to check the operator
 check_operator <- function(node) {
   if (!inherits(node, "UnaryNode") && !inherits(node, "BinaryNode")) {
@@ -60,6 +61,7 @@ check_operator <- function(node) {
 }
 
 # Function to check allowed variable names
+# TODO: wrap error string in Error class
 check_variable_names <- function(node) {
   if (!inherits(node, "VariableNode")) {
     return()
@@ -78,6 +80,7 @@ check_variable_names <- function(node) {
 }
 
 # Check type declaration
+# TODO: wrap error string in Error class
 check_type_declaration <- function(node) {
   # TODO: add check that EXPR is not part of the name
   if (!inherits(node, "BinaryNode")) {
@@ -170,6 +173,9 @@ action_translate <- function(node) {
   if (!inherits(node, "BinaryNode") &&
     !inherits(node, "UnaryNode") && !inherits(node, "NullaryNode")) {
     return()
+  }
+  if (is.null(name_pairs()[node$operator])) {
+    node$error <- Error$new(error_message = paste0("Unknown operator: ", node$operator))
   }
   node$operator <- name_pairs()[node$operator]
 }

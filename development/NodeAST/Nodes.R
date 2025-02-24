@@ -168,7 +168,7 @@ UnaryNode <- R6::R6Class(
       }
     },
     stringify_error = function(indent = "") {
-      if (!inherits(self$obj, "Node")) {
+      if (!inherits(self$obj, "Node")) { # TODO: remove not necessary anymore
         return(self$error$error_message)
       }
       obj_error <- self$obj$stringify_error()
@@ -201,6 +201,42 @@ NullaryNode <- R6::R6Class(
     },
     stringify_error = function(indent = "") {
       return(paste0(indent, self$error$error_message))
+    },
+    stringify_error_line = function(indent = "") {
+      self$stringify()
+    }
+  )
+)
+
+# Define the FunctionNode class
+FunctionNode <- R6::R6Class(
+  "FunctionNode",
+  public = list(
+    operator = NULL,
+    error = NULL,
+    args = list(),
+    initialize = function() {},
+    stringify = function(indent = "") {
+      return(paste0(
+        indent, self$operator, "(",
+        paste(self$args, collapse = ","),
+        ")"
+      ))
+    },
+    stringify_error = function(indent = "") {
+      args_errors <- lapply(self$args, function(arg) {
+        arg$stringify_error()
+      }) |>
+        unlist() |>
+        c()
+      errors <- c(self$error$error_message, args_errors)
+      errors <- errors[errors != ""]
+      errors <- combine_strings(errors)
+      ret <- paste0(
+        indent,
+        errors
+      )
+      return(ret)
     },
     stringify_error_line = function(indent = "") {
       self$stringify()

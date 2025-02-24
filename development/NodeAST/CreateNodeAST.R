@@ -33,6 +33,11 @@ create_ast <- function(code, check) {
     fn$seq <- code[[3]] |> process() # TODO: check that this is a symbol
     fn$block <- code[[4]] |> process()
     return(fn)
+  } else if (operator %in% function_fcts()) {
+    fn <- FunctionNode$new()
+    fn$operator <- operator
+    fn$args <- lapply(code[-1], process)
+    return(fn)
   } else if (length(code) == 3) { # NOTE: Binary operators
     bn <- BinaryNode$new()
     bn$operator <- operator
@@ -86,6 +91,16 @@ translate <- function(fct) {
   }
   if (error_found) {
     return()
+    if (operator %in% names(function_registry)) {
+      args <- lapply(code[-1], process)
+      result <- check_function_args(operator, args)
+
+      if (inherits(result, "ErrorNode")) {
+        return(result)
+      }
+
+      return(FunctionNode$new(operator, result))
+    }
   }
 
   # Run checks
