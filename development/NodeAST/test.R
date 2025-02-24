@@ -6,7 +6,7 @@ files <- files[files != "./test.R"]
 trash <- lapply(files, source)
 
 fct <- function() {
-  a <- cmr(1, 2, 3, 4)
+  a <- cmr(1, 2, 3, 4) + c(1, 2, 3)
 }
 fcpp <- translate(fct)
 .traceback()

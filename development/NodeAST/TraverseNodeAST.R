@@ -62,6 +62,9 @@ check_args_function <- function(node) {
     stop("Something went wrong. Sorry for that.")
   }
   expected_args <- expected_n_args()[fct]
+  if (is.na(expected_args)) {
+    return(TRUE)
+  }
   args_length == expected_args
 }
 

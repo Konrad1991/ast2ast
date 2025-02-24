@@ -58,7 +58,7 @@ expected_n_args <- function() {
 
 # Defines the function with more than two arguments
 function_fcts <- function() {
-  c("vector", "matrix", "cmr")
+  c("vector", "matrix", "cmr", "c")
 }
 
 # TODO: translation mapping
