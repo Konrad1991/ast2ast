@@ -50,6 +50,7 @@ handle_var <- function(code, check) {
   return(LiteralNode$new(code, check))
 }
 
+# TODO: add exception for %type%
 # Define the BinaryNode
 BinaryNode <- R6::R6Class(
   "BinaryNode",
@@ -61,16 +62,10 @@ BinaryNode <- R6::R6Class(
     error = NULL,
     initialize = function() {},
     string_left = function() {
-      if (inherits(self$left_node, "Node")) {
-        return(self$left_node$stringify())
-      }
-      return(self$left_node)
+      return(self$left_node$stringify())
     },
     string_right = function() {
-      if (inherits(self$right_node, "Node")) {
-        return(self$right_node$stringify())
-      }
-      return(self$right_node)
+      return(self$right_node$stringify())
     },
     create_infix_string = function(indent = "") {
       paste0(
@@ -188,6 +183,7 @@ UnaryNode <- R6::R6Class(
   )
 )
 
+# TODO: add exception for next/continue and break
 # Define the NullaryNode class
 NullaryNode <- R6::R6Class(
   "NullaryNode",
@@ -211,15 +207,22 @@ NullaryNode <- R6::R6Class(
 # Define the FunctionNode class
 FunctionNode <- R6::R6Class(
   "FunctionNode",
+  inherit = Node,
   public = list(
     operator = NULL,
     error = NULL,
     args = list(),
     initialize = function() {},
     stringify = function(indent = "") {
+      args_string <- lapply(self$args, function(arg) {
+        return(arg$stringify())
+      }) |>
+        unlist() |>
+        c() |>
+        paste(collapse = ", ")
       return(paste0(
         indent, self$operator, "(",
-        paste(self$args, collapse = ","),
+        args_string,
         ")"
       ))
     },

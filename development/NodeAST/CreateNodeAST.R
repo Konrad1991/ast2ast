@@ -30,7 +30,7 @@ create_ast <- function(code, check) {
   } else if (operator == "for") {
     fn <- ForNode$new()
     fn$i <- code[[2]] |> process()
-    fn$seq <- code[[3]] |> process() # TODO: check that this is a symbol
+    fn$seq <- code[[3]] |> process()
     fn$block <- code[[4]] |> process()
     return(fn)
   } else if (operator %in% function_fcts()) {
@@ -91,16 +91,6 @@ translate <- function(fct) {
   }
   if (error_found) {
     return()
-    if (operator %in% names(function_registry)) {
-      args <- lapply(code[-1], process)
-      result <- check_function_args(operator, args)
-
-      if (inherits(result, "ErrorNode")) {
-        return(result)
-      }
-
-      return(FunctionNode$new(operator, result))
-    }
   }
 
   # Run checks

@@ -6,6 +6,13 @@ files <- files[files != "./test.R"]
 trash <- lapply(files, source)
 
 fct <- function() {
+  a <- cmr(1, 2, 3, 4)
+}
+fcpp <- translate(fct)
+.traceback()
+cat(fcpp)
+
+fct <- function() {
   c.c <- 1
   c.c <- c %/% 2 %bla% 3.14
   if (bla()) {

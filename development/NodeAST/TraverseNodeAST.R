@@ -30,28 +30,57 @@ traverse_ast <- function(node, action, ...) {
     traverse_ast(node$i, action, ...)
     traverse_ast(node$seq, action, ...)
     traverse_ast(node$block, action, ...)
+  } else if (inherits(node, "FunctionNode")) {
+    action(node, ...)
+    lapply(node$args, function(arg) traverse_ast(arg, action, ...))
+  } else if (inherits(node, "LiteralNode")) {
+
+  } else {
+
   }
 }
 
 # Function to check if the given function is allowed
-check_function <- function(fct) {
+check_function <- function(node) {
+  fct <- node$operator
   fct %in% permitted_fcts()
+}
+
+# Function to check if the number of arguments is correct
+check_args_function <- function(node) {
+  fct <- node$operator
+  args_length <- NULL
+  if (inherits(node, "NullaryNode")) {
+    args_length <- 0
+  } else if (inherits(node, "UnaryNode")) {
+    args_length <- 1
+  } else if (inherits(node, "BinaryNode")) {
+    args_length <- 2
+  } else if (inherits(node, "FunctionNode")) {
+    args_length <- node$args |> length()
+  } else {
+    stop("Something went wrong. Sorry for that.")
+  }
+  expected_args <- expected_n_args()[fct]
+  args_length == expected_args
 }
 
 # TODO: wrap error string in Error class
 # Function to check the operator
 check_operator <- function(node) {
-  if (!inherits(node, "UnaryNode") && !inherits(node, "BinaryNode")) {
+  if (!inherits(node, "UnaryNode") &&
+    !inherits(node, "BinaryNode") &&
+    !inherits(node, "NullaryNode") &&
+    !inherits(node, "FunctionNode")) {
     return()
   }
-  operator <- node$operator
-  list_check_fcts <- c(check_function)
-  messages <- c("Invalid function ")
+  list_check_fcts <- c(check_function, check_args_function)
+  messages <- c("Invalid function ", "Wrong number of arguments for: ")
   for (i in seq_along(list_check_fcts)) {
     err <- NULL
     fct <- list_check_fcts[[i]]
-    if (!fct(operator)) {
-      error_message <- paste0(messages[i], operator)
+    if (!fct(node)) {
+      error_message <- paste0(messages[i], node$operator)
       err <- Error$new(error_message = error_message)
       break
     }
@@ -171,7 +200,9 @@ action_variables <- function(node, variables) {
 # 3. Traverse: translate functions
 action_translate <- function(node) {
   if (!inherits(node, "BinaryNode") &&
-    !inherits(node, "UnaryNode") && !inherits(node, "NullaryNode")) {
+    !inherits(node, "UnaryNode") &&
+    !inherits(node, "NullaryNode") &&
+    !inherits(node, "FunctionNode")) {
     return()
   }
   if (is.null(name_pairs()[node$operator])) {

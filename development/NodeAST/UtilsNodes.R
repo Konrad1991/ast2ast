@@ -15,6 +15,47 @@ permitted_fcts <- function() {
   )
 }
 
+expected_n_args <- function() {
+  setNames(
+    c(
+      2, 2, 2,
+      2, 2,
+      3, 2, 0, 0,
+      NA, 2,
+      rep(1, 3),
+      rep(1, 3),
+      rep(1, 3),
+      rep(1, 2),
+      rep(2, 5),
+      NA, 1, 1,
+      rep(2, 6),
+      1, 1,
+      2, 3, 1, 1,
+      1, 2, 2, 1,
+      rep(1, 3),
+      3
+    ),
+    c(
+      "%type%", "=", "<-",
+      "[", "at",
+      "for", "while", "next", "break",
+      "c", ":",
+      "sin", "asin", "sinh",
+      "cos", "acos", "cosh",
+      "tan", "atan", "tanh",
+      "log", "sqrt",
+      "^", "+", "-", "*", "/",
+      "if", "{", "(",
+      "==", "!=", ">", ">=", "<", "<=",
+      "print", "return",
+      "vector", "matrix", "length", "dim",
+      "exp", "&&", "||", "!",
+      "is.na", "is.infinite", "is.finite",
+      "cmr"
+    )
+  )
+}
+
 # Defines the function with more than two arguments
 function_fcts <- function() {
   c("vector", "matrix", "cmr")
@@ -64,6 +105,20 @@ name_pairs <- function() {
   )
 }
 
+Translator <- R6::R6Class(
+  "Translator",
+  public = list(
+    default_args = NULL,
+    modify_operator = NULL,
+    modify_args = NULL,
+    initialize = function(default_args, modify_operator, modify_args) {
+      self$default_args <- default_args
+      self$modify_operator <- modify_operator
+      self$modify_args <- modify_args
+    }
+  )
+)
+
 # TODO: finish
 function_registry <- list(
   "log" = list(
@@ -85,16 +140,6 @@ function_registry <- list(
     }
   )
 )
-# if (operator %in% names(function_registry)) {
-#   args <- lapply(code[-1], process)
-#   result <- check_function_args(operator, args)
-#
-#   if (inherits(result, "ErrorNode")) {
-#     return(result)
-#   }
-#
-#   return(FunctionNode$new(operator, result))
-# }
 
 # TODO: finish
 check_function_args <- function(func_name, args) {
