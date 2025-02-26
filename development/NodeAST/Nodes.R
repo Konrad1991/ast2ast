@@ -13,6 +13,7 @@ VariableNode <- R6::R6Class(
     name = NULL,
     type = NULL,
     error = NULL,
+    context = NULL,
     initialize = function(obj, check) {
       self$name <- deparse(obj)
     },
@@ -26,11 +27,12 @@ VariableNode <- R6::R6Class(
 )
 
 LiteralNode <- R6::R6Class(
-  "LiteralNode ",
+  "LiteralNode",
   inherit = Node,
   public = list(
     name = NULL,
     error = NULL,
+    context = NULL,
     initialize = function(obj, check) {
       self$name <- deparse(obj)
     },
@@ -43,11 +45,15 @@ LiteralNode <- R6::R6Class(
   )
 )
 
-handle_var <- function(code, check) {
+handle_var <- function(code, context) {
   if (rlang::is_symbol(code)) {
-    return(VariableNode$new(code, check))
+    vn <- VariableNode$new(code, check)
+    vn$context <- context
+    return(vn)
   }
-  return(LiteralNode$new(code, check))
+  ln <- LiteralNode$new(code, check)
+  ln$context <- context
+  return(ln)
 }
 
 # TODO: add exception for %type%
@@ -58,8 +64,11 @@ BinaryNode <- R6::R6Class(
   public = list(
     operator = NULL,
     left_node = NULL,
+    left_node_name = NULL,
     right_node = NULL,
+    right_node_name = NULL,
     error = NULL,
+    context = NULL,
     initialize = function() {},
     string_left = function() {
       return(self$left_node$stringify())
@@ -141,7 +150,9 @@ UnaryNode <- R6::R6Class(
   public = list(
     operator = NULL,
     obj = NULL,
+    obj_name = NULL,
     error = NULL,
+    context = NULL,
     initialize = function() {},
     string_obj = function() {
       if (inherits(self$obj, "Node")) {
@@ -191,6 +202,7 @@ NullaryNode <- R6::R6Class(
   public = list(
     operator = NULL,
     error = NULL,
+    context = NULL,
     initialize = function() {},
     stringify = function(indent = "") {
       return(paste0(indent, self$operator, "()"))
@@ -211,7 +223,9 @@ FunctionNode <- R6::R6Class(
   public = list(
     operator = NULL,
     error = NULL,
+    context = NULL,
     args = list(),
+    args_names = list(),
     initialize = function() {},
     stringify = function(indent = "") {
       args_string <- lapply(self$args, function(arg) {
@@ -256,6 +270,7 @@ IfNode <- R6::R6Class(
     true_node = NULL,
     false_node = NULL,
     error = NULL,
+    context = NULL,
     initialize = function() {},
     string_condition = function(indent) {
       if (inherits(self$condition, "Node")) {
@@ -364,6 +379,7 @@ BlockNode <- R6::R6Class(
   public = list(
     block = NULL,
     error = NULL,
+    context = NULL,
     initialize = function() {},
     stringify = function(indent = "") {
       result <- list()
@@ -431,6 +447,7 @@ ErrorNode <- R6::R6Class(
   "ErrorNode",
   public = list(
     error_message = NULL,
+    context = NULL,
     initialize = function(error_message) {
       self$error_message <- error_message
     }
@@ -446,6 +463,7 @@ ForNode <- R6::R6Class(
     i = NULL,
     seq = NULL,
     block = NULL,
+    context = NULL,
     initialize = function() {},
     stringify = function(indent = "") {
       idx <- self$i$stringify(indent)

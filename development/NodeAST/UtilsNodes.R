@@ -1,17 +1,22 @@
 # TODO: Integrate them all
 permitted_fcts <- function() {
   c(
-    "%type%", "=", "<-", "[", "at", "for", "while",
-    "next", "break", "c", ":",
-    "sin", "asin", "sinh", "cos", "acos", "cosh",
-    "tan", "atan", "tanh", "log", "sqrt",
+    "%type%", "=", "<-",
+    "[", "at",
+    "for", "while", "next", "break",
+    "c", ":",
+    "sin", "asin", "sinh",
+    "cos", "acos", "cosh",
+    "tan", "atan", "tanh",
+    "log", "sqrt",
     "^", "+", "-", "*", "/",
     "if", "{", "(",
-    "==", "!=", ">", ">=", "<", "<=", "print", "return",
+    "==", "!=", ">", ">=", "<", "<=",
+    "print", "return",
     "vector", "matrix", "length", "dim",
     "exp", "&&", "||", "!",
     "is.na", "is.infinite", "is.finite",
-    "cmr", "vector", "while", "power"
+    "cmr", "power"
   )
 }
 
@@ -33,7 +38,7 @@ expected_n_args <- function() {
       2, 3, 1, 1,
       1, 2, 2, 1,
       rep(1, 3),
-      3
+      3, 2
     ),
     c(
       "%type%", "=", "<-",
@@ -51,10 +56,32 @@ expected_n_args <- function() {
       "vector", "matrix", "length", "dim",
       "exp", "&&", "||", "!",
       "is.na", "is.infinite", "is.finite",
-      "cmr"
+      "cmr", "power"
     )
   )
 }
+
+expected_type_of_args <- function() {
+  list(
+    "%type" = c("symbol", "symbol"),
+    "at" = c("any_except_char", list("integer", "double")),
+    "for" = c("symbol", "any_except_char", "any_except_char"),
+    "vector" = c("character", "any_except_char"),
+    "cmr" = list(
+      c("double", "double_vector"),
+      "double_vector", "double_vector"
+    )
+  )
+}
+
+# Named arguments
+named_args <- function() {
+  list(
+    "vector" = c("mode", "length"),
+    "matrix" = c("data", "nrow", "ncol")
+  )
+}
+
 
 # Defines the function with more than two arguments
 function_fcts <- function() {
@@ -82,7 +109,7 @@ name_pairs <- function() {
       "vector", "matrix", "length", "dim",
       "exp", "&&", "||", "!",
       "isNA", "isInfinite", "isFinite",
-      "cmr"
+      "cmr", "power"
     ),
     c(
       "%type%", "=", "<-",
@@ -100,7 +127,7 @@ name_pairs <- function() {
       "vector", "matrix", "length", "dim",
       "exp", "&&", "||", "!",
       "is.na", "is.infinite", "is.finite",
-      "cmr"
+      "cmr", "power"
     )
   )
 }
@@ -141,29 +168,6 @@ function_registry <- list(
   )
 )
 
-# TODO: finish
-check_function_args <- function(func_name, args) {
-  if (!func_name %in% names(function_registry)) {
-    return(ErrorNode$new(paste0("Unknown function: ", func_name)))
-  }
-
-  f_info <- function_registry[[func_name]]
-
-  # Validate number of arguments
-  err <- f_info$validator(args)
-  if (!is.null(err)) {
-    return(err)
-  }
-
-  # Fill defaults for missing arguments
-  for (arg in names(f_info$defaults)) {
-    if (!(arg %in% names(args))) {
-      args[[arg]] <- f_info$defaults[[arg]]
-    }
-  }
-
-  return(args)
-}
 
 
 
