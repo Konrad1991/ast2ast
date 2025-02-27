@@ -5,6 +5,12 @@ files <- list.files(path = ".", full.names = TRUE)
 files <- files[files != "./test.R"]
 trash <- lapply(files, source)
 
+fct <- function() {
+  a <- -(1:10)
+}
+
+translate(fct)
+
 test_invalid_variable_names <- function() {
   # Dot in variable name
   fct <- function() {
@@ -12,7 +18,7 @@ test_invalid_variable_names <- function() {
   }
   expect_error(
     translate(fct),
-    "a.a <- 1.0 ",
+    "a.a <- 1.0; ",
     "Invalid variable name: contains forbidden character --> . found in a.a"
   )
 }
@@ -24,7 +30,7 @@ test_cpp_reserved_keywords <- function() {
   }
   expect_error(
     translate(fct),
-    "virtual <- 1.0 ",
+    "virtual <- 1.0; ",
     "Invalid variable name: is a C++ keyword --> virtual"
   )
 
@@ -33,7 +39,7 @@ test_cpp_reserved_keywords <- function() {
   }
   expect_error(
     translate(fct),
-    "class <- 5.0 ",
+    "class <- 5.0; ",
     "Invalid variable name: is a C++ keyword --> class"
   )
 }
@@ -43,22 +49,22 @@ test_correct_assignments <- function() {
   fct <- function() {
     x <- 5
   }
-  expect_correct(translate(fct), "x = 5.0")
+  expect_correct(translate(fct), "x = 5.0;")
 
   fct <- function() {
     y <- 10
   }
-  expect_correct(translate(fct), "y = 10.0")
+  expect_correct(translate(fct), "y = 10.0;")
 
   fct <- function() {
     sum <- 3 + 5
   }
-  expect_correct(translate(fct), "sum = 3.0 + 5.0")
+  expect_correct(translate(fct), "sum = 3.0 + 5.0;")
 
   fct <- function() {
     quotient <- 9 / 3
   }
-  expect_correct(translate(fct), "quotient = 9.0 / 3.0")
+  expect_correct(translate(fct), "quotient = 9.0 / 3.0;")
 }
 test_correct_assignments()
 
@@ -67,12 +73,12 @@ test_type_declarations <- function() {
   fct <- function() {
     x %type% integer
   }
-  expect_correct(translate(fct), "x %type% integer")
+  expect_correct(translate(fct), "x %type% integer;")
 
   fct <- function() {
     x %type% double
   }
-  expect_correct(translate(fct), "x %type% double")
+  expect_correct(translate(fct), "x %type% double;")
 
   # Multiple type declarations
   fct <- function() {
@@ -84,7 +90,7 @@ test_type_declarations <- function() {
     character(),
     c(
       "The variable x is declared with multiple types: ",
-      "x %type% double", "x %type% double. ",
+      "x %type% double;", "x %type% double;. ",
       "A variable can only have one type declaration."
     )
   )
@@ -98,7 +104,7 @@ test_type_declarations <- function() {
     character(),
     c(
       "The variable x is declared with multiple types: ",
-      "x %type% double", "x %type% integer. ",
+      "x %type% double;", "x %type% integer;. ",
       "A variable can only have one type declaration."
     )
   )
@@ -109,7 +115,7 @@ test_type_declarations <- function() {
   }
   expect_error(
     translate(fct),
-    "x %type% d1 ",
+    "x %type% d1; ",
     c("Invalid type declaration: d1 for variable x")
   )
   fct <- function() {
@@ -117,7 +123,7 @@ test_type_declarations <- function() {
   }
   expect_error(
     translate(fct),
-    "x %type% print(a) ",
+    "x %type% print(a); ",
     c(
       "Invalid type declaration: print(a)"
     )
@@ -128,7 +134,7 @@ test_type_declarations <- function() {
   }
   expect_error(
     translate(fct),
-    "print(a) %type% integer ",
+    "print(a) %type% integer; ",
     c(
       "Invalid type declaration for: print(a)"
     )
@@ -139,7 +145,7 @@ test_type_declarations <- function() {
   }
   expect_error(
     translate(fct),
-    "print(a) %type% print(a) ",
+    "print(a) %type% print(a); ",
     c(
       "Invalid type declaration for: print(a)"
     )
@@ -150,7 +156,7 @@ test_type_declarations <- function() {
   }
   expect_error(
     translate(fct),
-    "1.0 %type% 2.0 ",
+    "1.0 %type% 2.0; ",
     c(
       "Invalid type declaration for: 1.0"
     )
@@ -166,7 +172,7 @@ test_functions_operations <- function() {
   }
   expect_error(
     translate(fct),
-    "bla(10.0) ",
+    "bla(10.0); ",
     c(
       "Invalid function bla"
     )
@@ -177,7 +183,7 @@ test_functions_operations <- function() {
   }
   expect_error(
     translate(fct),
-    "cmr(1.0) ",
+    "cmr(1.0); ",
     c(
       "Wrong number of arguments for: cmr"
     )
@@ -188,7 +194,7 @@ test_functions_operations <- function() {
   }
   expect_error(
     translate(fct),
-    "vector(10.0, 2.0) ",
+    "vector(10.0, 2.0); ",
     c(
       "Found wrong named argument for: vector"
     )
@@ -199,7 +205,7 @@ test_functions_operations <- function() {
   }
   expect_correct(
     translate(fct),
-    "subset(a, 2.0) = 3.0"
+    "subset(a, 2) = 3.0;"
   )
 
   fct <- function() {
@@ -207,7 +213,7 @@ test_functions_operations <- function() {
   }
   expect_error(
     translate(fct),
-    "print(a) <- 2.0 ",
+    "print(a) <- 2.0; ",
     c(
       "Found invalid expression at left side of assignment: <-"
     )
@@ -218,7 +224,7 @@ test_functions_operations <- function() {
   }
   expect_error(
     translate(fct),
-    "1.0 <- print(a) ",
+    "1.0 <- print(a); ",
     c(
       "Found invalid expression at left side of assignment: <-"
     )

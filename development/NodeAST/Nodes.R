@@ -33,11 +33,12 @@ LiteralNode <- R6::R6Class(
     name = NULL,
     error = NULL,
     context = NULL,
+    dont_change_number = c("print", ":", "[", "at"),
     initialize = function(obj) {
       self$name <- deparse(obj)
     },
     stringify = function(indent = "") {
-      if (self$context == "print") {
+      if (self$context %in% self$dont_change_number) {
         return(paste0(indent, self$name))
       } else if (numeric_char(self$name)) {
         if (!grepl("\\.", self$name)) {
@@ -117,6 +118,9 @@ BinaryNode <- R6::R6Class(
           " ", self$string_right()
         ))
       }
+      if (self$context == "Start") {
+        ret <- paste0(ret, ";")
+      }
       return(ret)
     },
     stringerror_left = function() {
@@ -169,19 +173,28 @@ UnaryNode <- R6::R6Class(
     },
     stringify = function(indent = "") {
       if (self$operator == "-") { # NOTE: for unary -
-        return(paste0(
+        ret <- paste0(
           indent, self$operator, "",
           self$string_obj(), ""
-        ))
+        )
+      } else if (self$operator == "(") {
+        ret <- paste0(
+          indent, self$operator,
+          self$string_obj(), ")"
+        )
       } else {
-        return(paste0(
+        ret <- paste0(
           indent, self$operator, "(",
           self$string_obj(), ")"
-        ))
+        )
       }
+      if (self$context == "Start") {
+        ret <- paste0(ret, ";")
+      }
+      return(ret)
     },
     stringify_error = function(indent = "") {
-      if (!inherits(self$obj, "Node")) { # TODO: remove not necessary anymore
+      if (!inherits(self$obj, "Node")) {
         return(self$error$error_message)
       }
       obj_error <- self$obj$stringify_error()
@@ -212,7 +225,14 @@ NullaryNode <- R6::R6Class(
     context = NULL,
     initialize = function() {},
     stringify = function(indent = "") {
-      return(paste0(indent, self$operator, "()"))
+      if (self$operator == "next" || self$operator == "break") {
+        return(paste0(indent, self$operator, ";"))
+      }
+      ret <- paste0(indent, self$operator, "()")
+      if (self$context == "Start") {
+        ret <- paste0(ret, ";")
+      }
+      return(ret)
     },
     stringify_error = function(indent = "") {
       return(paste0(indent, self$error$error_message))
@@ -241,11 +261,15 @@ FunctionNode <- R6::R6Class(
         unlist() |>
         c() |>
         paste(collapse = ", ")
-      return(paste0(
+      ret <- paste0(
         indent, self$operator, "(",
         args_string,
         ")"
-      ))
+      )
+      if (self$context == "Start") {
+        ret <- paste0(ret, ";")
+      }
+      return(ret)
     },
     stringify_error = function(indent = "") {
       args_errors <- lapply(self$args, function(arg) {

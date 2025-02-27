@@ -103,6 +103,11 @@ check_args_function <- function(node) {
   if (is.na(expected_args)) {
     return(TRUE)
   }
+  if (expected_args == "MINUS") {
+    return(
+      args_length == 1 || args_length == 2
+    )
+  }
   args_length == expected_args
 }
 

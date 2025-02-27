@@ -57,7 +57,8 @@ expected_n_args <- function() {
       rep(1, 3),
       rep(1, 3),
       rep(1, 2),
-      rep(2, 5),
+      rep(2, 4),
+      "MINUS",
       NA, 1, 1,
       rep(2, 6),
       1, 1,
@@ -75,7 +76,8 @@ expected_n_args <- function() {
       "cos", "acos", "cosh",
       "tan", "atan", "tanh",
       "log", "sqrt",
-      "^", "+", "-", "*", "/",
+      "^", "+", "*", "/",
+      "-",
       "if", "{", "(",
       "==", "!=", ">", ">=", "<", "<=",
       "print", "return",
@@ -157,47 +159,6 @@ name_pairs <- function() {
     )
   )
 }
-
-# Translator class
-# 1. Conversion of Literals based on context
-# 2. Replacing the operators with ETR names
-# 3. Replacing the BinaryNode for %type% with a variable node
-#    in case an assignment follows. Otherwise remove the entry.
-Translator <- R6::R6Class(
-  "Translator",
-  public = list(
-    default_args = NULL,
-    modify_operator = NULL,
-    modify_args = NULL,
-    initialize = function(default_args, modify_operator, modify_args) {
-      self$default_args <- default_args
-      self$modify_operator <- modify_operator
-      self$modify_args <- modify_args
-    }
-  )
-)
-
-# TODO: finish
-function_registry <- list(
-  "log" = list(
-    args = c("x", "base"),
-    defaults = list(base = exp(1)),
-    validator = function(args) {
-      if (length(args) < 1) {
-        return(ErrorNode$new("log() requires at least one argument"))
-      }
-    }
-  ),
-  "exp" = list(
-    args = c("x"),
-    defaults = list(),
-    validator = function(args) {
-      if (length(args) != 1) {
-        return(ErrorNode$new("exp() requires exactly one argument"))
-      }
-    }
-  )
-)
 
 # Function to combine strings
 combine_strings <- function(string_list) {
