@@ -16,7 +16,7 @@ create_ast <- function(code, context) {
 
   # NOTE: create nodes
   if (operator == "if") {
-    if_node <- IfNode$new()
+    if_node <- if_node$new()
     if_node$condition <- code[[2]] |> process(operator)
     if_node$true_node <- code[[3]] |> process(operator)
     if (length(code) == 4) {
@@ -25,21 +25,21 @@ create_ast <- function(code, context) {
     if_node$context <- context
     return(if_node)
   } else if (operator == "{") {
-    b_node <- BlockNode$new()
+    b_node <- block_node$new()
     b_node$block <- lapply(code[-1], function(line) {
       process(line, operator)
     })
     b_node$context <- context
     return(b_node)
   } else if (operator == "for") {
-    fn <- ForNode$new()
+    fn <- for_node$new()
     fn$i <- code[[2]] |> process(operator)
     fn$seq <- code[[3]] |> process(operator)
     fn$block <- code[[4]] |> process(operator)
     fn$context <- context
     return(fn)
   } else if (operator %in% function_fcts()) {
-    fn <- FunctionNode$new()
+    fn <- function_node$new()
     fn$operator <- operator
     fn$args_names <- names(code[-1])
     fn$args <- lapply(code[-1], function(x) {
@@ -48,7 +48,7 @@ create_ast <- function(code, context) {
     fn$context <- context
     return(fn)
   } else if (length(code) == 3) { # NOTE: Binary operators
-    bn <- BinaryNode$new()
+    bn <- binary_node$new()
     bn$operator <- operator
     bn$right_node <- code[[3]] |> process(operator)
     bn$left_node <- code[[2]] |> process(operator)
@@ -57,22 +57,22 @@ create_ast <- function(code, context) {
     bn$right_node_name <- names(code)[3]
     return(bn)
   } else if (length(code) == 2) { # NOTE: Unary operators
-    un <- UnaryNode$new()
+    un <- unary_node$new()
     un$operator <- operator
     un$obj <- code[[2]] |> process(operator)
     un$context <- context
     un$obj_name <- names(code)[2]
     return(un)
   } else if (length(code) == 1) { # NOTE: Nullary operators
-    nn <- NullaryNode$new()
+    nn <- nullary_node$new()
     nn$operator <- operator
     nn$context <- context
     return(nn)
   } else {
     return(
-      ErrorNode$new(
+      error_node$new(
         error_message = paste0(
-          "Error: Unknown operator: ", operator
+          "error: Unknown operator: ", operator
         )
       )
     )
@@ -94,7 +94,7 @@ create_ast_list <- function(b, variables) {
     if (inherits(ast, "try-error")) {
       error_found <- TRUE
     }
-    if (inherits(ast, "ErrorNode")) {
+    if (inherits(ast, "error_node")) {
       error_found <- TRUE
       pe(ast$error_message)
       break
@@ -116,7 +116,7 @@ run_checks <- function(ast_list) {
   for (i in seq_len(length(ast_list))) {
     ast <- ast_list[[i]]
     traverse_ast(ast, action_error)
-    # Error found
+    # error found
     errors <- try(
       {
         ast$stringify_error()
@@ -125,7 +125,7 @@ run_checks <- function(ast_list) {
     )
     if (inherits(errors, "try-error")) {
       error_found <- TRUE
-      pe("Error: Could not stringify the AST")
+      pe("error: Could not stringify the AST")
       break
     }
     if (!is.null(errors) && errors != "") {
@@ -151,7 +151,7 @@ sort_args <- function(ast_list) {
     )
     if (inherits(e, "try-error")) {
       error_found <- TRUE
-      pe("Error: Could not sort the arguments")
+      pe("error: Could not sort the arguments")
       break
     }
   }
@@ -180,7 +180,7 @@ check_types <- function(variables) {
   )
   if (inherits(var_types, "try-error")) {
     error_found <- TRUE
-    pe("Error: Could not check the variables")
+    pe("error: Could not check the variables")
   }
   everything_ok <- lapply(variables$errors, pe)
   if (length(everything_ok) > 0) {
@@ -216,7 +216,7 @@ type_checking <- function(ast_list, var_types) {
       pe("Could not check the type of the arguments to functions")
       break
     }
-    # Error found
+    # error found
     errors <- try(
       {
         ast$stringify_error()
@@ -225,7 +225,7 @@ type_checking <- function(ast_list, var_types) {
     )
     if (inherits(errors, "try-error")) {
       error_found <- TRUE
-      pe("Error: Could not stringify the AST")
+      pe("error: Could not stringify the AST")
       break
     }
     if (!is.null(errors) && errors != "") {
@@ -258,7 +258,7 @@ create_cpp_code <- function(ast_list) {
       )
       if (inherits(e, "error")) {
         error_found <- TRUE
-        pe("Error: Could not stringify the AST")
+        pe("error: Could not stringify the AST")
         return()
       }
     }
@@ -280,7 +280,7 @@ translate <- function(fct) {
   }
   code_string <- list()
   error_found <- FALSE
-  variables <- Variables$new()
+  variables <- variables$new()
 
   # Create ast list
   res <- create_ast_list(b, variables)

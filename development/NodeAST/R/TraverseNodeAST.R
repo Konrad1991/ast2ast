@@ -1,38 +1,38 @@
 # This function applys the function action to each node in the AST.
 # ========================================================================
 traverse_ast <- function(node, action, ...) {
-  if (inherits(node, "VariableNode")) {
+  if (inherits(node, "variable_node")) {
     action(node, ...)
-  } else if (inherits(node, "BinaryNode")) {
+  } else if (inherits(node, "binary_node")) {
     action(node, ...)
     traverse_ast(node$left_node, action, ...)
     traverse_ast(node$right_node, action, ...)
-  } else if (inherits(node, "UnaryNode")) {
+  } else if (inherits(node, "unary_node")) {
     action(node, ...)
     traverse_ast(node$obj, action, ...)
-  } else if (inherits(node, "IfNode")) {
+  } else if (inherits(node, "if_node")) {
     action(node, ...)
     traverse_ast(node$condition, action, ...)
     traverse_ast(node$true_node, action, ...)
     if (!is.null(node$false_node)) {
       traverse_ast(node$false_node, action, ...)
     }
-  } else if (inherits(node, "BlockNode")) {
+  } else if (inherits(node, "block_node")) {
     action(node, ...)
     lapply(node$block, function(stmt) traverse_ast(stmt, action, ...))
-  } else if (inherits(node, "VariableNode")) {
+  } else if (inherits(node, "variable_node")) {
     action(node, ...)
-  } else if (inherits(node, "NullaryNode")) {
+  } else if (inherits(node, "nullary_node")) {
     action(node, ...)
-  } else if (inherits(node, "ForNode")) {
+  } else if (inherits(node, "for_node")) {
     action(node, ...)
     traverse_ast(node$i, action, ...)
     traverse_ast(node$seq, action, ...)
     traverse_ast(node$block, action, ...)
-  } else if (inherits(node, "FunctionNode")) {
+  } else if (inherits(node, "function_node")) {
     action(node, ...)
     lapply(node$args, function(arg) traverse_ast(arg, action, ...))
-  } else if (inherits(node, "LiteralNode")) {
+  } else if (inherits(node, "literal_node")) {
     action(node, ...)
   } else {
     stop("Unknown node type: ", class(node))
@@ -43,12 +43,12 @@ traverse_ast <- function(node, action, ...) {
 # and stored in an instance of class Variable
 # ========================================================================
 action_variables <- function(node, variables) {
-  if (!inherits(node, "BinaryNode")) {
+  if (!inherits(node, "binary_node")) {
     return()
   }
   # Standalone type declaration
   if (node$operator == "<-") {
-    if (!inherits(node$left_node, "BinaryNode")) {
+    if (!inherits(node$left_node, "binary_node")) {
       variables$names <- c(variables$names, node$left_node$name)
       variables$types <- c(variables$types, "unknown")
       variables$lines <- c(variables$lines, node$stringify())
@@ -62,7 +62,7 @@ action_variables <- function(node, variables) {
 
 # Checks for the function operator.
 # - Function operators are part of:
-#   NullaryNode, UnaryNode, BinaryNode and FunctionNode.
+#   nullary_node, unary_node, binary_node and function_node.
 # - First it is checked whether the function is allowed.
 # - Afterwards, it is checked whether the number of arguments is correct.
 #   This is in contrast to the normal behavior of R, where missing arguments
@@ -85,13 +85,13 @@ check_function <- function(node) {
 check_args_function <- function(node) {
   fct <- node$operator
   args_length <- NULL
-  if (inherits(node, "NullaryNode")) {
+  if (inherits(node, "nullary_node")) {
     args_length <- 0
-  } else if (inherits(node, "UnaryNode")) {
+  } else if (inherits(node, "unary_node")) {
     args_length <- 1
-  } else if (inherits(node, "BinaryNode")) {
+  } else if (inherits(node, "binary_node")) {
     args_length <- 2
-  } else if (inherits(node, "FunctionNode")) {
+  } else if (inherits(node, "function_node")) {
     args_length <- node$args |> length()
   } else {
     stop("Something went wrong. Sorry for that.")
@@ -112,7 +112,7 @@ check_args_function <- function(node) {
 check_named_args <- function(node) {
   fct <- node$operator
   named_args <- named_args()
-  if (inherits(node, "FunctionNode")) {
+  if (inherits(node, "function_node")) {
     if (fct == "vector" || fct == "matrix") {
       args_names <- node$args_names
       args_names <- args_names[args_names != ""]
@@ -132,12 +132,12 @@ check_named_args <- function(node) {
 # Function to check that the first operator
 # found at lhs has to be a subsetting operation
 check_lhs_operation <- function(node) {
-  if (inherits(node, "BinaryNode")) {
+  if (inherits(node, "binary_node")) {
     if (node$operator == "<-" || node$operator == "=") {
-      if (inherits(node$left_node, "VariableNode")) {
+      if (inherits(node$left_node, "variable_node")) {
         return(TRUE)
       }
-      if (inherits(node$left_node, "BinaryNode")) {
+      if (inherits(node$left_node, "binary_node")) {
         op_left <- node$left_node$operator
         if (op_left != "%type%" && op_left != "[" && op_left != "at") {
           return(FALSE)
@@ -153,10 +153,10 @@ check_lhs_operation <- function(node) {
 
 # Function to check the operator
 check_operator <- function(node) {
-  if (!inherits(node, "UnaryNode") &&
-    !inherits(node, "BinaryNode") &&
-    !inherits(node, "NullaryNode") &&
-    !inherits(node, "FunctionNode")) {
+  if (!inherits(node, "unary_node") &&
+    !inherits(node, "binary_node") &&
+    !inherits(node, "nullary_node") &&
+    !inherits(node, "function_node")) {
     return()
   }
   list_check_fcts <- c(
@@ -174,7 +174,7 @@ check_operator <- function(node) {
     fct <- list_check_fcts[[i]]
     if (!fct(node)) {
       error_message <- paste0(messages[i], node$operator)
-      err <- Error$new(error_message = error_message)
+      err <- error$new(error_message = error_message)
       break
     }
   }
@@ -212,7 +212,7 @@ not_cpp_keyword <- function(name) {
 
 # Function to check allowed variable names
 check_variable_names <- function(node) {
-  if (!inherits(node, "VariableNode")) {
+  if (!inherits(node, "variable_node")) {
     return()
   }
   name <- node$name
@@ -221,12 +221,12 @@ check_variable_names <- function(node) {
   }
   unallowed <- unallowed_signs(name)
   if (!is.null(unallowed)) {
-    node$error <- Error$new(error_message = paste0(
+    node$error <- error$new(error_message = paste0(
       unallowed, " found in ",
       name
     ))
   } else if (not_cpp_keyword(name)) {
-    node$error <- Error$new(error_message = paste0(
+    node$error <- error$new(error_message = paste0(
       "Invalid variable name: is a C++ keyword --> ",
       name
     ))
@@ -237,15 +237,15 @@ check_variable_names <- function(node) {
 # Check type declaration
 check_type_declaration <- function(node) {
   # TODO: add check that EXPR is not part of the name
-  if (!inherits(node, "BinaryNode")) {
+  if (!inherits(node, "binary_node")) {
     return()
   }
   operator <- node$operator
   if (operator != "%type%") {
     return()
   }
-  if (!inherits(node$left_node, "VariableNode")) {
-    node$error <- Error$new(
+  if (!inherits(node$left_node, "variable_node")) {
+    node$error <- error$new(
       error_message =
         paste0(
           "Invalid type declaration for: ",
@@ -254,8 +254,8 @@ check_type_declaration <- function(node) {
     )
     return()
   }
-  if (!inherits(node$right_node, "VariableNode")) {
-    node$error <- Error$new(
+  if (!inherits(node$right_node, "variable_node")) {
+    node$error <- error$new(
       error_message =
         paste0(
           "Invalid type declaration: ",
@@ -267,14 +267,14 @@ check_type_declaration <- function(node) {
   if (node$right_node$name %in% permitted_types()) {
     return()
   }
-  node$error <- Error$new(error_message = paste0(
+  node$error <- error$new(error_message = paste0(
     "Invalid type declaration: ",
     node$right_node$name, " for variable ", node$left_node$name
   ))
   return()
 }
 
-# Error checking action
+# error checking action
 action_error <- function(node) {
   check_operator(node)
   check_variable_names(node)
@@ -284,7 +284,7 @@ action_error <- function(node) {
 # Sort arguments
 # ========================================================================
 action_sort_args <- function(node) {
-  if (!inherits(node, "FunctionNode")) {
+  if (!inherits(node, "function_node")) {
     return()
   }
   fct <- node$operator
@@ -309,15 +309,15 @@ action_sort_args <- function(node) {
 }
 
 
-# Error checking round
+# error checking round
 # Check that the types of the arguments are correct
 # ========================================================================
 extract_types <- function(node, variables) {
   extract_single_type <- function(node, variables) {
-    if (inherits(node, "VariableNode")) {
+    if (inherits(node, "variable_node")) {
       arg <- variables[variables$name == node$name, "type"]
       return(arg)
-    } else if (inherits(node, "LiteralNode")) {
+    } else if (inherits(node, "literal_node")) {
       if (numeric_char(node$name)) {
         return("double")
       } else if (is.character(node$name)) {
@@ -328,18 +328,18 @@ extract_types <- function(node, variables) {
         stop("unknown literal type")
       }
     } else {
-      return("Error unexpected node")
+      return("error unexpected node")
     }
   }
-  if (inherits(node, "UnaryNode")) {
+  if (inherits(node, "unary_node")) {
     return(
       extract_single_type(node$obj, variables)
     )
-  } else if (inherits(node, "BinaryNode")) {
+  } else if (inherits(node, "binary_node")) {
     arg1 <- extract_single_type(node$left_node, variables)
     arg2 <- extract_single_type(node$right_node, variables)
     return(list(arg1, arg2))
-  } else if (inherits(node, "FunctionNode")) {
+  } else if (inherits(node, "function_node")) {
     return(
       lapply(node$args, function(arg) extract_single_type(arg, variables))
     )
@@ -348,22 +348,22 @@ extract_types <- function(node, variables) {
 
 extract_is_symbols <- function(node) {
   is_symbol_single_node <- function(node) {
-    if (inherits(node, "VariableNode")) {
+    if (inherits(node, "variable_node")) {
       return(TRUE)
     } else {
       return(FALSE)
     }
   }
-  if (inherits(node, "UnaryNode")) {
+  if (inherits(node, "unary_node")) {
     return(is_symbol_single_node(node$obj))
-  } else if (inherits(node, "BinaryNode")) {
+  } else if (inherits(node, "binary_node")) {
     return(
       list(
         is_symbol_single_node(node$left_node),
         is_symbol_single_node(node$right_node)
       )
     )
-  } else if (inherits(node, "FunctionNode")) {
+  } else if (inherits(node, "function_node")) {
     return(
       lapply(node$args, function(arg) is_symbol_single_node(arg))
     )
@@ -386,9 +386,9 @@ valid_type <- function(type_found, type_expected) {
 }
 
 action_check_type_of_args <- function(node, variables) {
-  if (!inherits(node, "UnaryNode") &&
-    !inherits(node, "BinaryNode") &&
-    !inherits(node, "FunctionNode")) {
+  if (!inherits(node, "unary_node") &&
+    !inherits(node, "binary_node") &&
+    !inherits(node, "function_node")) {
     return()
   }
   op <- node$operator
@@ -403,7 +403,7 @@ action_check_type_of_args <- function(node, variables) {
     for (i in seq_along(e)) {
       if (length(e[[i]]) == 1 && e[[i]] == "symbol") {
         if (!arg_is_symbol[[i]]) {
-          node$error <- Error$new(
+          node$error <- error$new(
             error_message = paste0(
               "Expected type ", e[[i]], " for argument ", i,
               " of function ", node$operator, " but got ", arg_types[[i]]
@@ -412,7 +412,7 @@ action_check_type_of_args <- function(node, variables) {
           break
         }
       } else if (!valid_type(arg_types[[i]], e[[i]])) {
-        node$error <- Error$new(
+        node$error <- error$new(
           error_message = paste0(
             "Expected type ", e[[i]], " for argument ", i,
             " of function ", node$operator, " but got ", arg_types[[i]]
@@ -429,14 +429,14 @@ action_check_type_of_args <- function(node, variables) {
 # The actual translation of the AST to C++
 # ========================================================================
 action_translate <- function(node) {
-  if (!inherits(node, "BinaryNode") &&
-    !inherits(node, "UnaryNode") &&
-    !inherits(node, "NullaryNode") &&
-    !inherits(node, "FunctionNode")) {
+  if (!inherits(node, "binary_node") &&
+    !inherits(node, "unary_node") &&
+    !inherits(node, "nullary_node") &&
+    !inherits(node, "function_node")) {
     return()
   }
   if (is.null(name_pairs()[node$operator])) {
-    node$error <- Error$new(error_message = paste0("Unknown operator: ", node$operator))
+    node$error <- error$new(error_message = paste0("Unknown operator: ", node$operator))
   }
   node$operator <- name_pairs()[node$operator]
 }
@@ -445,7 +445,7 @@ action_translate <- function(node) {
 # ========================================================================
 action_print <- function(node) {
   str(node)
-  if (inherits(node, "FunctionNode")) {
+  if (inherits(node, "function_node")) {
     str(node$args)
     str(node$args_names)
   }

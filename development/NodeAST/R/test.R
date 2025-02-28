@@ -6,11 +6,38 @@ files <- files[files != "./test.R"]
 trash <- lapply(files, source)
 
 fct <- function() {
+  b <- 1L
+  c <- T
+  print(b)
+  print("test")
   a <- -(1:10)
+  if (a == 1) {
+    print("bla")
+  }
 }
 
-translate(fct)
+cat(translate(fct), "\n")
 .traceback()
+
+test_literal_translation <- function() {
+  stopifnot(determine_literal_type("1") == "numeric")
+  stopifnot(determine_literal_type("1.0") == "numeric")
+  stopifnot(determine_literal_type("1E04") == "scientific")
+  stopifnot(determine_literal_type("1e04") == "scientific")
+  stopifnot(determine_literal_type("1e4") == "scientific")
+  stopifnot(determine_literal_type("1e-4") == "scientific")
+  stopifnot(determine_literal_type("1E-04") == "scientific")
+  stopifnot(determine_literal_type("1L") == "integer")
+  stopifnot(determine_literal_type("TRUE") == "logical")
+  stopifnot(determine_literal_type("T") == "logical")
+  stopifnot(determine_literal_type("FALSE") == "logical")
+  stopifnot(determine_literal_type("F") == "logical")
+  stopifnot(determine_literal_type("text") == "character")
+  stopifnot(determine_literal_type("1.2.3") == "character")
+  stopifnot(determine_literal_type("1e--4") == "character")
+  stopifnot(determine_literal_type("2e") == "character")
+}
+test_literal_translation()
 
 test_invalid_variable_names <- function() {
   # Dot in variable name
@@ -206,7 +233,7 @@ test_functions_operations <- function() {
   }
   expect_correct(
     translate(fct),
-    "subset(a, 2) = 3.0;"
+    "etr::subset(a, 2) = 3.0;"
   )
 
   fct <- function() {

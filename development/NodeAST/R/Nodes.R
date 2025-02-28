@@ -1,5 +1,5 @@
-VariableNode <- R6::R6Class(
-  "VariableNode",
+variable_node <- R6::R6Class(
+  "variable_node",
   public = list(
     name = NULL,
     type = NULL,
@@ -17,25 +17,17 @@ VariableNode <- R6::R6Class(
   )
 )
 
-LiteralNode <- R6::R6Class(
-  "LiteralNode",
+literal_node <- R6::R6Class(
+  "literal_node",
   public = list(
     name = NULL,
     error = NULL,
     context = NULL,
-    dont_change_number = c("print", ":", "[", "at"),
     initialize = function(obj) {
       self$name <- deparse(obj)
     },
     stringify = function(indent = "") {
-      if (self$context %in% self$dont_change_number) {
-        return(paste0(indent, self$name))
-      } else if (numeric_char(self$name)) {
-        if (!grepl("\\.", self$name)) {
-          return(paste0(self$name, ".0"))
-        }
-        return(paste0(indent, self$name))
-      }
+      t_literal(self$context, self$name, indent)
     },
     stringify_error = function(indent = "") {
       return(paste0(indent, self$error$error_message))
@@ -45,19 +37,30 @@ LiteralNode <- R6::R6Class(
 
 handle_var <- function(code, context) {
   if (rlang::is_symbol(code)) {
-    vn <- VariableNode$new(code)
+    # NOTE: dont know why but short forms T and F
+    # are returned as symbols and not as logicals
+    if (deparse(code) == "T") {
+      ln <- literal_node$new(TRUE)
+      ln$context <- context
+      return(ln)
+    } else if (deparse(code) == "F") {
+      ln <- literal_node$new(FALSE)
+      ln$context <- context
+      return(ln)
+    }
+    vn <- variable_node$new(code)
     vn$context <- context
     return(vn)
   }
-  ln <- LiteralNode$new(code)
+  ln <- literal_node$new(code)
   ln$context <- context
   return(ln)
 }
 
 # TODO: add exception for %type%
-# Define the BinaryNode
-BinaryNode <- R6::R6Class(
-  "BinaryNode",
+# Define the binary_node
+binary_node <- R6::R6Class(
+  "binary_node",
   public = list(
     operator = NULL,
     left_node = NULL,
@@ -137,9 +140,9 @@ BinaryNode <- R6::R6Class(
   )
 )
 
-# Define the UnaryNode class
-UnaryNode <- R6::R6Class(
-  "UnaryNode",
+# Define the unary_node class
+unary_node <- R6::R6Class(
+  "unary_node",
   public = list(
     operator = NULL,
     obj = NULL,
@@ -191,9 +194,9 @@ UnaryNode <- R6::R6Class(
 )
 
 # TODO: add exception for next/continue and break
-# Define the NullaryNode class
-NullaryNode <- R6::R6Class(
-  "NullaryNode",
+# Define the nullary_node class
+nullary_node <- R6::R6Class(
+  "nullary_node",
   public = list(
     operator = NULL,
     error = NULL,
@@ -218,9 +221,9 @@ NullaryNode <- R6::R6Class(
   )
 )
 
-# Define the FunctionNode class
-FunctionNode <- R6::R6Class(
-  "FunctionNode",
+# Define the function_node class
+function_node <- R6::R6Class(
+  "function_node",
   public = list(
     operator = NULL,
     error = NULL,
@@ -266,9 +269,9 @@ FunctionNode <- R6::R6Class(
   )
 )
 
-# Define the IfNode class
-IfNode <- R6::R6Class(
-  "IfNode",
+# Define the if_node class
+if_node <- R6::R6Class(
+  "if_node",
   public = list(
     condition = NULL,
     true_node = NULL,
@@ -358,9 +361,9 @@ IfNode <- R6::R6Class(
   )
 )
 
-# Define the BlockNode class
-BlockNode <- R6::R6Class(
-  "BlockNode",
+# Define the block_node class
+block_node <- R6::R6Class(
+  "block_node",
   public = list(
     block = NULL,
     error = NULL,
@@ -370,7 +373,9 @@ BlockNode <- R6::R6Class(
       result <- list()
       for (stmt in self$block) {
         result[[length(result) + 1]] <-
-          stmt$stringify(indent = indent)
+          paste0(
+            stmt$stringify(indent = indent), ";"
+          )
       }
       result <- combine_strings(result)
       return(result)
@@ -414,9 +419,9 @@ BlockNode <- R6::R6Class(
   )
 )
 
-# Define the ErrorNode class
-ErrorNode <- R6::R6Class(
-  "ErrorNode",
+# Define the error_node class
+error_node <- R6::R6Class(
+  "error_node",
   public = list(
     error_message = NULL,
     context = NULL,
@@ -427,8 +432,8 @@ ErrorNode <- R6::R6Class(
 )
 
 # Define the for loop node
-ForNode <- R6::R6Class(
-  "ForNode",
+for_node <- R6::R6Class(
+  "for_node",
   public = list(
     error = NULL,
     i = NULL,

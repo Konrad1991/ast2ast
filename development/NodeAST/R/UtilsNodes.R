@@ -1,6 +1,3 @@
-numeric_char <- function(obj) {
-  !is.na(suppressWarnings(as.numeric(obj)))
-}
 cpp_keywords <- function() {
   c(
     "alignas", "alignof", "and", "and_eq", "asm",
@@ -124,21 +121,21 @@ name_pairs <- function() {
   setNames(
     c(
       "%type%", "=", "=",
-      "subset", "at",
+      "etr::subset", "etr::at",
       "for", "while", "continue", "break",
-      "coca", "colon",
-      "sinus", "asinus", "sinush",
-      "cosinus", "acosinus", "cosinush",
-      "tangens", "atangens", "tangensh",
-      "ln", "sqroot",
-      "power", "+", "-", "*", "/",
+      "etr::coca", "etr::colon",
+      "etr::sinus", "etr::asinus", "etr::sinush",
+      "etr::cosinus", "etr::acosinus", "etr::cosinush",
+      "etr::tangens", "etr::atangens", "etr::tangensh",
+      "etr::ln", "etr::sqroot",
+      "etr::power", "+", "-", "*", "/",
       "if", "{", "(",
       "==", "!=", ">", ">=", "<", "<=",
-      "print", "return",
-      "vector", "matrix", "length", "dim",
-      "exp", "&&", "||", "!",
-      "isNA", "isInfinite", "isFinite",
-      "cmr", "power"
+      "etr::print", "return",
+      "etr::vector", "etr::matrix", "etr::length", "etr::dim",
+      "etr::exp", "&&", "||", "!",
+      "etr::isNA", "etr::isInfinite", "etr::isFinite",
+      "etr::cmr", "etr::power"
     ),
     c(
       "%type%", "=", "<-",

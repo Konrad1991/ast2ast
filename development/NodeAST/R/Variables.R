@@ -1,7 +1,7 @@
 # TODO: add check that index variables used in a for loop
 # are not used in another context
-Variables <- R6::R6Class(
-  "Variables",
+variables <- R6::R6Class(
+  "variables",
   public = list(
     names = NULL,
     types = NULL,
@@ -16,7 +16,7 @@ Variables <- R6::R6Class(
         self$errors[[name]] <- paste0(
           "Invalid type: ", deparse(type), " at line ", line
         )
-        return("Error")
+        return("error")
       }
     },
     check_single_type = function(name, type, line) {
@@ -42,7 +42,7 @@ Variables <- R6::R6Class(
             ". \nIf you want to define a type",
             " you should do it at the first declaration."
           )
-          return("Error")
+          return("error")
         }
         # Contracdicting type declarations
         found_types <- which(sub$type != "unknown")
@@ -54,7 +54,7 @@ Variables <- R6::R6Class(
             lines,
             ". \nA variable can only have one type declaration."
           )
-          return("Error")
+          return("error")
         } else {
           return(sub$type[1])
         }

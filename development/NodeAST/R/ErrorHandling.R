@@ -1,5 +1,5 @@
-Error <- R6::R6Class(
-  "Error",
+error <- R6::R6Class(
+  "error",
   public = list(
     error_message = NULL,
     initialize = function(error_message) {
