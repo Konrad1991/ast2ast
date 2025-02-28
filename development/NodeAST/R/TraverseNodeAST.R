@@ -428,6 +428,14 @@ action_check_type_of_args <- function(node, variables) {
 
 # The actual translation of the AST to C++
 # ========================================================================
+action_set_true_remove_type_decl <- function(node) {
+  if (!inherits(node, "binary_node")) {
+    return()
+  }
+  if (node$operator == "%type%") {
+    node$remove_type_decl <- TRUE
+  }
+}
 action_translate <- function(node) {
   if (!inherits(node, "binary_node") &&
     !inherits(node, "unary_node") &&

@@ -246,6 +246,7 @@ create_cpp_code <- function(ast_list) {
   code_string <- list()
   for (i in seq_len(length(ast_list))) {
     ast <- ast_list[[i]]
+    traverse_ast(ast, action_set_true_remove_type_decl)
     traverse_ast(ast, action_translate)
     # Stringify ast
     if (!error_found) {
@@ -270,7 +271,6 @@ create_cpp_code <- function(ast_list) {
     )
   )
 }
-
 
 #' @export
 translate <- function(fct) {

@@ -36,6 +36,8 @@ t_literal <- function(context, obj, indent) {
     return(paste0(indent, obj))
   }
   type <- determine_literal_type(obj)
+  str(obj)
+  print(type)
 
   if (type == "numeric") {
     if (!grepl("\\.", obj)) {

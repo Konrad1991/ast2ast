@@ -69,6 +69,7 @@ binary_node <- R6::R6Class(
     right_node_name = NULL,
     error = NULL,
     context = NULL,
+    remove_type_decl = FALSE,
     initialize = function() {},
     string_left = function() {
       return(self$left_node$stringify())
@@ -98,7 +99,12 @@ binary_node <- R6::R6Class(
     },
     stringify = function(indent = "") {
       ret <- ""
-      if (infix_or_function(self$operator) == "infix") {
+      if (self$operator == "%type%" && self$remove_type_decl) {
+        if (self$context == "Start") {
+          return(ret)
+        }
+        ret <- paste0(indent, self$string_left())
+      } else if (infix_or_function(self$operator) == "infix") {
         ret <- self$create_infix_string(indent)
       } else if (infix_or_function(self$operator) == "function") {
         ret <- self$create_function_string(indent)
