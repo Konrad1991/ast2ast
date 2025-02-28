@@ -1,9 +1,6 @@
 # This function applys the function action to each node in the AST.
 # ========================================================================
 traverse_ast <- function(node, action, ...) {
-  if (!inherits(node, "Node")) {
-    return()
-  }
   if (inherits(node, "VariableNode")) {
     action(node, ...)
   } else if (inherits(node, "BinaryNode")) {

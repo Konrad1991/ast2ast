@@ -1,0 +1,24 @@
+Package: ast2ast
+Type: Package
+Title: Translates an R Function to a C++ Function
+Version: 0.4
+Date: 2024-06-06
+Author: Krämer Konrad [aut, cre]
+Maintainer: Krämer Konrad <konrad_kraemer@yahoo.de>
+BugReports: https://github.com/Konrad1991/ast2ast
+URL: https://github.com/Konrad1991/ast2ast
+Description: Mock
+License: GPL-2
+Imports: Rcpp (>= 1.0.4), R6, methods, pryr, rlang,  RcppArmadillo, purrr, crayon
+LinkingTo: Rcpp, RcppArmadillo
+VignetteBuilder: knitr
+Suggests: 
+  knitr,
+  kableExtra,
+  rmarkdown,
+  tinytest,
+  microbenchmark,
+  ggplot2,
+  RcppXPtrUtils
+Encoding: UTF-8
+RoxygenNote: 7.2.1

@@ -1,14 +1,5 @@
-# Node class.
-# All nodes inherit from it
-# Thereby, one can use inherits(instance, "Node")
-Node <- R6::R6Class(
-  "Node",
-  public = list(root = "root")
-)
-
 VariableNode <- R6::R6Class(
   "VariableNode",
-  inherit = Node,
   public = list(
     name = NULL,
     type = NULL,
@@ -28,7 +19,6 @@ VariableNode <- R6::R6Class(
 
 LiteralNode <- R6::R6Class(
   "LiteralNode",
-  inherit = Node,
   public = list(
     name = NULL,
     error = NULL,
@@ -68,7 +58,6 @@ handle_var <- function(code, context) {
 # Define the BinaryNode
 BinaryNode <- R6::R6Class(
   "BinaryNode",
-  inherit = Node,
   public = list(
     operator = NULL,
     left_node = NULL,
@@ -124,16 +113,10 @@ BinaryNode <- R6::R6Class(
       return(ret)
     },
     stringerror_left = function() {
-      if (inherits(self$left_node, "Node")) {
-        return(self$left_node$stringify_error())
-      }
-      return("")
+      return(self$left_node$stringify_error())
     },
     stringerror_right = function() {
-      if (inherits(self$right_node, "Node")) {
-        return(self$right_node$stringify_error())
-      }
-      return("")
+      return(self$right_node$stringify_error())
     },
     stringify_error = function(indent = "") {
       left_error <- self$stringerror_left()
@@ -157,7 +140,6 @@ BinaryNode <- R6::R6Class(
 # Define the UnaryNode class
 UnaryNode <- R6::R6Class(
   "UnaryNode",
-  inherit = Node,
   public = list(
     operator = NULL,
     obj = NULL,
@@ -166,10 +148,7 @@ UnaryNode <- R6::R6Class(
     context = NULL,
     initialize = function() {},
     string_obj = function() {
-      if (inherits(self$obj, "Node")) {
-        return(self$obj$stringify())
-      }
-      return(self$obj)
+      return(self$obj$stringify())
     },
     stringify = function(indent = "") {
       if (self$operator == "-") { # NOTE: for unary -
@@ -194,9 +173,6 @@ UnaryNode <- R6::R6Class(
       return(ret)
     },
     stringify_error = function(indent = "") {
-      if (!inherits(self$obj, "Node")) {
-        return(self$error$error_message)
-      }
       obj_error <- self$obj$stringify_error()
       op_error <- self$error$error_message
       errors <- c(obj_error, op_error)
@@ -218,7 +194,6 @@ UnaryNode <- R6::R6Class(
 # Define the NullaryNode class
 NullaryNode <- R6::R6Class(
   "NullaryNode",
-  inherit = Node,
   public = list(
     operator = NULL,
     error = NULL,
@@ -246,7 +221,6 @@ NullaryNode <- R6::R6Class(
 # Define the FunctionNode class
 FunctionNode <- R6::R6Class(
   "FunctionNode",
-  inherit = Node,
   public = list(
     operator = NULL,
     error = NULL,
@@ -295,7 +269,6 @@ FunctionNode <- R6::R6Class(
 # Define the IfNode class
 IfNode <- R6::R6Class(
   "IfNode",
-  inherit = Node,
   public = list(
     condition = NULL,
     true_node = NULL,
@@ -304,22 +277,13 @@ IfNode <- R6::R6Class(
     context = NULL,
     initialize = function() {},
     string_condition = function(indent) {
-      if (inherits(self$condition, "Node")) {
-        return(self$condition$stringify(indent = paste0(indent, "")))
-      }
-      return(self$condition)
+      return(self$condition$stringify(indent = paste0(indent, "")))
     },
     string_true = function(indent) {
-      if (inherits(self$true_node, "Node")) {
-        return(self$true_node$stringify(indent = paste0(indent, "  ")))
-      }
-      return(self$true_node)
+      return(self$true_node$stringify(indent = paste0(indent, "  ")))
     },
     string_false = function(indent) {
-      if (inherits(self$false_node, "Node")) {
-        return(self$false_node$stringify(indent = paste0(indent, "  ")))
-      }
-      return(self$false_node)
+      return(self$false_node$stringify(indent = paste0(indent, "  ")))
     },
     stringify = function(indent = "") {
       result <- ""
@@ -344,26 +308,17 @@ IfNode <- R6::R6Class(
       return(result)
     },
     stringify_condition_error = function(indent = "") {
-      if (!inherits(self$condition, "Node")) {
-        return(indent)
-      }
       return(self$condition$stringify_error(
         indent = paste0(indent, "")
       ))
     },
     stringify_true_node_error = function(indent = "") {
-      if (!inherits(self$true_node, "Node")) {
-        return(indent)
-      }
       return(self$true_node$stringify_error(
         indent = paste0(indent, "")
       ))
     },
     stringify_false_node_error = function(indent = "") {
       if (is.null(self$false_node)) {
-        return(indent)
-      }
-      if (!inherits(self$false_node, "Node")) {
         return(indent)
       }
       return(self$false_node$stringify_error(
@@ -406,7 +361,6 @@ IfNode <- R6::R6Class(
 # Define the BlockNode class
 BlockNode <- R6::R6Class(
   "BlockNode",
-  inherit = Node,
   public = list(
     block = NULL,
     error = NULL,
@@ -415,12 +369,8 @@ BlockNode <- R6::R6Class(
     stringify = function(indent = "") {
       result <- list()
       for (stmt in self$block) {
-        if (inherits(stmt, "Node")) {
-          result[[length(result) + 1]] <-
-            stmt$stringify(indent = indent)
-        } else {
-          result[[length(result) + 1]] <- paste0(indent, stmt)
-        }
+        result[[length(result) + 1]] <-
+          stmt$stringify(indent = indent)
       }
       result <- combine_strings(result)
       return(result)
@@ -430,10 +380,7 @@ BlockNode <- R6::R6Class(
         return("")
       }
       res <- lapply(self$block, function(elem) {
-        if (inherits(elem, "Node")) {
-          return(elem$stringify_error())
-        }
-        return("")
+        return(elem$stringify_error())
       })
       for (i in seq_along(res)) {
         if (!is.null(res[[i]]) && res[[i]] != "") {
@@ -448,10 +395,7 @@ BlockNode <- R6::R6Class(
       }
       # In which line is the error
       error_lines <- lapply(self$block, function(elem) {
-        if (inherits(elem, "Node")) {
-          return(elem$stringify_error())
-        }
-        return("")
+        return(elem$stringify_error())
       })
       idx <- c()
       for (i in seq_along(error_lines)) {
@@ -461,10 +405,7 @@ BlockNode <- R6::R6Class(
       }
       # Stringify the error line(s)
       res <- lapply(self$block, function(elem) {
-        if (inherits(elem, "Node")) {
-          return(elem$stringify())
-        }
-        return("")
+        return(elem$stringify())
       })
 
       res <- combine_strings(res[idx])
@@ -488,7 +429,6 @@ ErrorNode <- R6::R6Class(
 # Define the for loop node
 ForNode <- R6::R6Class(
   "ForNode",
-  inherit = Node,
   public = list(
     error = NULL,
     i = NULL,

@@ -1,5 +1,5 @@
-if (!grepl("NodeAST", getwd())) {
-  setwd("./development/NodeAST")
+if (!grepl("R", getwd())) {
+  setwd("./R/")
 }
 files <- list.files(path = ".", full.names = TRUE)
 files <- files[files != "./test.R"]
@@ -10,6 +10,7 @@ fct <- function() {
 }
 
 translate(fct)
+.traceback()
 
 test_invalid_variable_names <- function() {
   # Dot in variable name

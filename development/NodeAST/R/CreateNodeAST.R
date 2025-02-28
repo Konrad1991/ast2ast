@@ -279,8 +279,6 @@ translate <- function(fct) {
     b <- b[2:length(b)]
   }
   code_string <- list()
-  ast <- NULL
-  counter <- 1
   error_found <- FALSE
   variables <- Variables$new()
 
