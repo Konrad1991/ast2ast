@@ -6,16 +6,17 @@ files <- files[files != "./test.R"]
 trash <- lapply(files, source)
 
 fct <- function() {
-  a %type% integer
-  b <- 1L
-  c <- T
-  print(b)
-  print("test")
-  a <- -(1:10)
-  if (a == 1) {
-    print("bla")
-  }
-  a[]
+  # a %type% integer
+  # b <- 1L
+  # c <- T
+  # print(b)
+  # print("test")
+  # a <- -(1:10)
+  # if (a == 1) {
+  #   print("bla")
+  # }
+  TRUE + 1
+  a[TRUE]
 }
 
 cat(translate(fct), "\n")

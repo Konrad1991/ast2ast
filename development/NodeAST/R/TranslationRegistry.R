@@ -32,12 +32,18 @@ determine_literal_type <- function(obj) {
 
 t_literal <- function(context, obj, indent) {
   dont_change_number <- c("print", ":", "[", "at")
+  type <- determine_literal_type(obj)
+  if (type == "logical") {
+    obj <- tolower(obj)
+    if (obj == "t") {
+      obj <- "true"
+    } else if (obj == "f") {
+      obj <- "false"
+    }
+  }
   if (context %in% dont_change_number) {
     return(paste0(indent, obj))
   }
-  type <- determine_literal_type(obj)
-  str(obj)
-  print(type)
 
   if (type == "numeric") {
     if (!grepl("\\.", obj)) {
@@ -53,12 +59,6 @@ t_literal <- function(context, obj, indent) {
       )
     )
   } else if (type == "logical") {
-    obj <- tolower(obj)
-    if (obj == "t") {
-      obj <- "true"
-    } else if (obj == "f") {
-      obj <- "false"
-    }
     return(paste0(indent, obj))
   } else {
     return(paste0(indent, obj))

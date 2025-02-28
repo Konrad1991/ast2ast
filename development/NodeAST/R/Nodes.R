@@ -37,6 +37,12 @@ literal_node <- R6::R6Class(
 
 handle_var <- function(code, context) {
   if (rlang::is_symbol(code)) {
+    if (context == "[" && deparse(code) == "") {
+      # NOTE: empty indexing --> change all entries
+      ln <- literal_node$new(TRUE)
+      ln$context <- context
+      return(ln)
+    }
     # NOTE: dont know why but short forms T and F
     # are returned as symbols and not as logicals
     if (deparse(code) == "T") {
