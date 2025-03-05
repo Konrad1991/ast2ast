@@ -157,8 +157,8 @@ name_pairs <- function() {
 }
 
 # Function to combine strings
-combine_strings <- function(string_list) {
-  paste0(string_list, collapse = "\n")
+combine_strings <- function(string_list, collapse = "\n") {
+  paste0(string_list, collapse = collapse)
 }
 
 # Function to distinguish between infix and function calls

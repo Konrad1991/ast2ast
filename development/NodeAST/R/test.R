@@ -6,21 +6,31 @@ files <- files[files != "./test.R"]
 trash <- lapply(files, source)
 
 fct <- function() {
-  # a %type% integer
-  # b <- 1L
-  # c <- T
-  # print(b)
-  # print("test")
-  # a <- -(1:10)
-  # if (a == 1) {
-  #   print("bla")
-  # }
-  TRUE + 1
-  a[TRUE]
+  if (a == 1) {
+    print(a + 1)
+  } else if (a > 1) {
+    print(a - 1)
+  } else if (a > 2) {
+    print(a / 2)
+  } else if (a > 3) {
+    print(a * 2)
+  } else {
+    print("bla")
+  }
 }
-
-cat(translate(fct), "\n")
-.traceback()
+fcpp <- translate(fct)
+cat(fcpp)
+fct <- function() {
+  if (a == 1) {
+    print(a + 1)
+  } else {
+    if (a < 2) {
+      print(a / 2)
+    }
+  }
+}
+fcpp <- translate(fct)
+cat(fcpp)
 
 test_literal_translation <- function() {
   stopifnot(determine_literal_type("1") == "numeric")
@@ -80,22 +90,22 @@ test_correct_assignments <- function() {
   fct <- function() {
     x <- 5
   }
-  expect_correct(translate(fct), "x = 5.0;")
+  expect_correct(translate(fct), "x = 5.0;\n\n")
 
   fct <- function() {
     y <- 10
   }
-  expect_correct(translate(fct), "y = 10.0;")
+  expect_correct(translate(fct), "y = 10.0;\n\n")
 
   fct <- function() {
     sum <- 3 + 5
   }
-  expect_correct(translate(fct), "sum = 3.0 + 5.0;")
+  expect_correct(translate(fct), "sum = 3.0 + 5.0;\n\n")
 
   fct <- function() {
     quotient <- 9 / 3
   }
-  expect_correct(translate(fct), "quotient = 9.0 / 3.0;")
+  expect_correct(translate(fct), "quotient = 9.0 / 3.0;\n\n")
 }
 test_correct_assignments()
 
@@ -104,12 +114,12 @@ test_type_declarations <- function() {
   fct <- function() {
     x %type% integer
   }
-  expect_correct(translate(fct), "")
+  expect_correct(translate(fct), "\n\n")
 
   fct <- function() {
     x %type% double
   }
-  expect_correct(translate(fct), "")
+  expect_correct(translate(fct), "\n\n")
 
   # Multiple type declarations
   fct <- function() {
@@ -236,7 +246,7 @@ test_functions_operations <- function() {
   }
   expect_correct(
     translate(fct),
-    "etr::subset(a, 2) = 3.0;"
+    "etr::subset(a, 2) = 3.0;\n\n"
   )
 
   fct <- function() {

@@ -281,12 +281,46 @@ function_node <- R6::R6Class(
   )
 )
 
+handle_if <- function(code, i_node, operator) {
+  i_node$condition <- code[[2]] |> process(operator)
+  i_node$true_node <- code[[3]] |> process(operator)
+  if (length(code) == 4) {
+    s <- code[[4]]
+    while (is.call(s) && deparse(s[[1]]) == "if") {
+      else_i_node <- if_node$new()
+      else_i_node$condition <- s[[2]] |> process(operator)
+      else_i_node$true_node <- s[[3]] |> process(operator)
+      i_node$else_if_nodes[[
+        length(i_node$else_if_nodes) + 1
+      ]] <- else_i_node
+      if (length(s) == 4) {
+        s <- s[[4]]
+      } else {
+        break
+      }
+    }
+    if (!is.null(s)) {
+      if (deparse(s[[1]]) == "if") {
+        else_i_node <- if_node$new()
+        else_i_node$condition <- s[[2]] |> process(operator)
+        else_i_node$true_node <- s[[3]] |> process(operator)
+        i_node$else_if_nodes[[
+          length(i_node$else_if_nodes) + 1
+        ]] <- else_i_node
+      } else {
+        i_node$false_node <- process(s, operator)
+      }
+    }
+  }
+}
+
 # Define the if_node class
 if_node <- R6::R6Class(
   "if_node",
   public = list(
     condition = NULL,
     true_node = NULL,
+    else_if_nodes = NULL,
     false_node = NULL,
     error = NULL,
     context = NULL,
@@ -296,6 +330,13 @@ if_node <- R6::R6Class(
     },
     string_true = function(indent) {
       return(self$true_node$stringify(indent = paste0(indent, "  ")))
+    },
+    string_else_if = function(indent) {
+      l <- lapply(self$else_if_nodes, function(node) {
+        return(node$stringify(indent = paste0(indent, "")))
+      })
+      l <- paste0(" else ", l)
+      combine_strings(l, "")
     },
     string_false = function(indent) {
       return(self$false_node$stringify(indent = paste0(indent, "  ")))
@@ -309,17 +350,26 @@ if_node <- R6::R6Class(
       result <- paste0(
         result,
         self$string_true(indent),
-        "\n"
+        "\n",
+        indent,
+        "}"
       )
+      result <- combine_strings(result)
+      if (!is.null(self$else_if_nodes)) {
+        result <- paste0(
+          result,
+          self$string_else_if(indent)
+        )
+      }
       if (!is.null(self$false_node)) {
-        result <- paste0(result, indent, "} else {\n")
+        result <- paste0(result, indent, " else {\n")
         result <- paste0(
           result, self$false_node$stringify(
             indent = paste0(indent, "  ")
-          ), "\n"
+          ), indent, "\n}"
         )
       }
-      result <- paste0(result, indent, "}")
+      result <- combine_strings(result, "")
       return(result)
     },
     stringify_condition_error = function(indent = "") {

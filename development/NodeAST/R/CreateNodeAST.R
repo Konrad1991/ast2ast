@@ -16,14 +16,10 @@ create_ast <- function(code, context) {
 
   # NOTE: create nodes
   if (operator == "if") {
-    if_node <- if_node$new()
-    if_node$condition <- code[[2]] |> process(operator)
-    if_node$true_node <- code[[3]] |> process(operator)
-    if (length(code) == 4) {
-      if_node$false_node <- code[[4]] |> process(operator)
-    }
-    if_node$context <- context
-    return(if_node)
+    i_node <- if_node$new()
+    handle_if(code, i_node, operator)
+    i_node$context <- context
+    return(i_node)
   } else if (operator == "{") {
     b_node <- block_node$new()
     b_node$block <- lapply(code[-1], function(line) {
@@ -264,6 +260,7 @@ create_cpp_code <- function(ast_list) {
       }
     }
   }
+  code_string[[length(code_string) + 1]] <- "\n"
   return(
     list(
       error_found = error_found,
