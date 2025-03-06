@@ -6,7 +6,10 @@ files <- files[files != "./test.R"]
 trash <- lapply(files, source)
 
 fct <- function() {
-  i <- 1
+  for (i in 1:10) {
+    i <- 2
+    print(i)
+  }
   for (i in 1:10) {
     print(i)
   }

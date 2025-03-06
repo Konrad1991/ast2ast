@@ -527,8 +527,10 @@ for_node <- R6::R6Class(
     stringify_error_line = function(indent = "") {
       i_err <- self$i$stringify_error()
       if (i_err != "") {
+        # NOTE: const can be used as assignment to index variable is not allowed
+        # Even though this is a resitriction
         return(paste0(
-          indent, "for (auto&",
+          indent, "for (const auto&",
           self$i$stringify(""), " : ", self$seq$stringify(), ") {"
         ))
       }
