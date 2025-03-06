@@ -1,3 +1,12 @@
+# TODO: Tests
+# Tests for if blocks
+# Tests for iterations
+# Tests for all binary nodes
+# Tests for all unary nodes
+# Tests for all nullary nodes
+# TODO:
+# Handle arguments of function in variables
+# --> Prepare Variables instance for that
 if (!grepl("R", getwd())) {
   setwd("./R/")
 }
