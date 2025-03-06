@@ -43,6 +43,20 @@ traverse_ast <- function(node, action, ...) {
 # and stored in an instance of class Variable
 # ========================================================================
 action_variables <- function(node, variables) {
+  if (inherits(node, "for_node")) {
+    idx <- node$i$stringify("")
+    sequence <- node$seq$stringify("")
+    line <- paste0(
+      "",
+      "for(", idx, " in ", sequence, ") {\n"
+    )
+    variables$names <- c(variables$names, node$i$name)
+    variables$types <- c(variables$types, "unknown")
+    variables$lines <- c(variables$lines, line)
+    variables$contexts <- c(variables$contexts, "Iteration")
+    return()
+  }
+
   if (!inherits(node, "binary_node")) {
     return()
   }
@@ -52,11 +66,13 @@ action_variables <- function(node, variables) {
       variables$names <- c(variables$names, node$left_node$name)
       variables$types <- c(variables$types, "unknown")
       variables$lines <- c(variables$lines, node$stringify())
+      variables$contexts <- c(variables$contexts, node$context)
     }
   } else if (node$operator == "%type%") {
     variables$names <- c(variables$names, node$left_node$name)
     variables$types <- c(variables$types, node$right_node$name)
     variables$lines <- c(variables$lines, node$stringify())
+    variables$contexts <- c(variables$contexts, node$context)
   }
 }
 
@@ -236,7 +252,6 @@ check_variable_names <- function(node) {
 
 # Check type declaration
 check_type_declaration <- function(node) {
-  # TODO: add check that EXPR is not part of the name
   if (!inherits(node, "binary_node")) {
     return()
   }

@@ -1,15 +1,15 @@
-# TODO: add check that index variables used in a for loop
-# are not used in another context
 variables <- R6::R6Class(
   "variables",
   public = list(
     names = NULL,
     types = NULL,
     lines = NULL,
+    contexts = NULL,
     errors = list(),
     initialize = function() {
       self$names <- c()
       self$types <- c()
+      self$contexts <- c()
     },
     valid_type = function(name, type, line) {
       if (!(type %in% permitted_types())) {
@@ -60,6 +60,20 @@ variables <- R6::R6Class(
         }
       }
     },
+    iteration_var = function(sub) {
+      if (any(sub$contexts == "Iteration")) {
+        if (!all(sub$contexts == "Iteration")) {
+          iter_line <- which(sub$contexts == "Iteration")[1]
+          non_iter_line <- which(sub$contexts != "Iteration")[1]
+          self$errors[[unique(sub$name)]] <- paste0(
+            "If a variable is used as index variable in a for loop ",
+            "it cannot be used somewhere else as 'normal' variable",
+            "\nIteration: ", sub$lines[iter_line],
+            "Elsewhere: ", sub$lines[non_iter_line]
+          )
+        }
+      }
+    },
     check = function() {
       if (is.null(self$names)) {
         return("No variables found")
@@ -71,7 +85,8 @@ variables <- R6::R6Class(
       df <- data.frame(
         name = self$names,
         type = self$types,
-        lines = self$lines
+        lines = self$lines,
+        contexts = self$contexts
       )
       for (i in unique(df$name)) {
         sub <- df[df$name == i, ]
@@ -82,6 +97,7 @@ variables <- R6::R6Class(
           res[res$name == i, "type"] <-
             self$one_declaration(sub)
         }
+        self$iteration_var(sub)
       }
       return(res)
     }

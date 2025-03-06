@@ -6,6 +6,14 @@ files <- files[files != "./test.R"]
 trash <- lapply(files, source)
 
 fct <- function() {
+  i <- 1
+  for (i in 1:10) {
+    print(i)
+  }
+}
+translate(fct) |> cat()
+
+fct <- function() {
   if (a == 1) {
     print(a + 1)
   } else if (a > 1) {
@@ -117,9 +125,9 @@ test_type_declarations <- function() {
   expect_correct(translate(fct), "\n\n")
 
   fct <- function() {
-    x %type% double
+    x %type% double <- 1
   }
-  expect_correct(translate(fct), "\n\n")
+  expect_correct(translate(fct), "x = 1.0;\n\n")
 
   # Multiple type declarations
   fct <- function() {

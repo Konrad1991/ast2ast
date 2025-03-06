@@ -114,7 +114,6 @@ function_fcts <- function() {
   c("vector", "matrix", "cmr", "c")
 }
 
-# TODO: remove %type% during translation
 name_pairs <- function() {
   setNames(
     c(

@@ -63,8 +63,6 @@ handle_var <- function(code, context) {
   return(ln)
 }
 
-# TODO: add exception for %type%
-# Define the binary_node
 binary_node <- R6::R6Class(
   "binary_node",
   public = list(
@@ -205,8 +203,6 @@ unary_node <- R6::R6Class(
   )
 )
 
-# TODO: add exception for next/continue and break
-# Define the nullary_node class
 nullary_node <- R6::R6Class(
   "nullary_node",
   public = list(
