@@ -162,9 +162,9 @@ sort_args <- function(ast_list) {
 # Check types
 # Check that used type is valid;
 # Check that for each variable only one unique type is declared
-# Example: a %type% double; a %type% integer; Only one of those types is valid
+# Example: a |> type(double); a |> type(integer); Only one of those types is valid
 # Check that for each variable only once a type is declared
-# Example: a %type% double; a %type% double Redeclaration
+# Example: a |> type(double); a |> type(double) Redeclaration
 # ========================================================================
 check_types <- function(variables) {
   error_found <- FALSE
@@ -269,18 +269,19 @@ create_cpp_code <- function(ast_list) {
   )
 }
 
-#' @export
-translate <- function(fct) {
+translate_internally <- function(fct, vars = NULL) {
   b <- body(fct)
   if (b[[1]] == "{") {
     b <- b[2:length(b)]
   }
   code_string <- list()
   error_found <- FALSE
-  variables <- variables$new()
+  if (is.null(vars)) {
+    vars <- variables$new()
+  }
 
   # Create ast list
-  res <- create_ast_list(b, variables)
+  res <- create_ast_list(b, vars)
   error_found <- res$error_found
   ast_list <- res$ast_list
   if (error_found) {
@@ -302,7 +303,7 @@ translate <- function(fct) {
   }
 
   # NOTE: this has to run after the checks!
-  res <- check_types(variables)
+  res <- check_types(vars)
   error_found <- res$error_found
   var_types <- res$var_types
   if (error_found) {

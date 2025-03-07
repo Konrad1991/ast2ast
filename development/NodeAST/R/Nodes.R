@@ -103,7 +103,7 @@ binary_node <- R6::R6Class(
     },
     stringify = function(indent = "") {
       ret <- ""
-      if (self$operator == "%type%" && self$remove_type_decl) {
+      if (self$operator == "type" && self$remove_type_decl) {
         if (self$context == "Start") {
           return(ret)
         }

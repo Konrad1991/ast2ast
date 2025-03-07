@@ -1,3 +1,77 @@
+# String stuff
+string <- R6::R6Class(
+  "string",
+  public = list(
+    value = NULL,
+    initialize = function(value) {
+      self$value <- value
+    }
+  )
+)
+
+c_string <- function(...) {
+  l <- list(...)
+  delim <- tail(l, n = 1)[[1]]
+  values <- sapply(l[1:(length(l) - 1)], function(x) {
+    if (is.character(x)) {
+      return(x)
+    } else if (inherits(x, "String")) {
+      return(x$value)
+    } else {
+      stop("Error can only handle class String and character")
+    }
+  })
+  new_value <- paste0(values, collapse = delim)
+  string$new(new_value)
+}
+
+generate_new_name <- function(name, extension, delimiter, vars) {
+  new_name <- c_string(name, extension, delimiter)
+  i <- 0
+  repeat {
+    if (i == 10) {
+      stop("Cannot generate a new name for the double pointer")
+    }
+    if (!(new_name$value %in% vars)) {
+      break
+    } else {
+      new_name <- c_string(new_name$value, extension, delimiter)
+      i <- i + 1
+    }
+  }
+  return(new_name)
+}
+
+# Assemble the types
+build_types <- function(toa, doa, roa, output) {
+  if (length(toa) == 0) {
+    return()
+  }
+
+  r <- data.frame(r = c(FALSE, TRUE), l = c("", "&"))
+  roa <- r[match(roa, r$r), 2]
+  types <- character(length = length(toa))
+  for (i in seq_along(doa)) {
+    if (doa[i] == "scalar") {
+      types[i] <- c_string(toa[i], roa[i], "")$value
+    } else if (doa[i] == "vector") {
+      if (output == "R") {
+        types[i] <- "SEXP"
+      } else {
+        types[i] <- c_string("etr::Vec<", toa[i], ">", roa[i], "")$value
+      }
+    } else if (doa[i] == "borrow") {
+      assert(output == "XPtr")
+      types[i] <- c_string(
+        "etr::Vec<", toa[i],
+        ", etr::Borrow<", toa[i], ">>", roa[i], ""
+      )$value
+    }
+  }
+  return(types)
+}
+
+# List of C++ keywords
 cpp_keywords <- function() {
   c(
     "alignas", "alignof", "and", "and_eq", "asm",
@@ -25,7 +99,7 @@ cpp_keywords <- function() {
 
 permitted_fcts <- function() {
   c(
-    "%type%", "=", "<-",
+    "type", "=", "<-",
     "[", "at",
     "for", "while", "next", "break",
     "c", ":",
@@ -66,7 +140,7 @@ expected_n_args <- function() {
       3, 2
     ),
     c(
-      "%type%", "=", "<-",
+      "type", "=", "<-",
       "[", "at",
       "for", "while", "next", "break",
       "c", ":",
@@ -89,7 +163,7 @@ expected_n_args <- function() {
 
 expected_type_of_args <- function() {
   list(
-    "%type" = c("symbol", "symbol"),
+    "type" = c("symbol", "symbol"),
     "at" = c("any_except_char", list("integer", "double")),
     "for" = c("symbol", "any_except_char", "any_except_char"),
     "vector" = c("character", "any_except_char"),
@@ -117,7 +191,7 @@ function_fcts <- function() {
 name_pairs <- function() {
   setNames(
     c(
-      "%type%", "=", "=",
+      "type", "=", "=",
       "etr::subset", "etr::at",
       "for", "while", "continue", "break",
       "etr::coca", "etr::colon",
@@ -135,7 +209,7 @@ name_pairs <- function() {
       "etr::cmr", "etr::power"
     ),
     c(
-      "%type%", "=", "<-",
+      "type", "=", "<-",
       "[", "at",
       "for", "while", "next", "break",
       "c", ":",
@@ -169,9 +243,6 @@ infix_or_function <- function(operator) {
   if (operator %in% infix_list) {
     return("infix")
   }
-  if (grepl("%", operator)) {
-    return("infix")
-  }
   return("function")
 }
 
@@ -183,4 +254,8 @@ permitted_types <- function() {
     "l", "i", "d",
     "lv", "iv", "dv"
   )
+}
+
+permitted_handle_inputs <- function() {
+  c("copy", "borrow")
 }

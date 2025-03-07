@@ -6,10 +6,10 @@ variables <- R6::R6Class(
     lines = NULL,
     contexts = NULL,
     errors = list(),
-    initialize = function() {
-      self$names <- c()
-      self$types <- c()
-      self$contexts <- c()
+    initialize = function(names = NULL, types = NULL, contexts = NULL) {
+      if (is.null(names)) self$names <- c() else self$names <- names
+      if (is.null(types)) self$types <- c() else self$types <- types
+      if (is.null(contexts)) self$contexts <- c() else self$contexts <- contexts
     },
     valid_type = function(name, type, line) {
       if (!(type %in% permitted_types())) {

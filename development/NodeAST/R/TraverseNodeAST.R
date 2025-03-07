@@ -68,7 +68,7 @@ action_variables <- function(node, variables) {
       variables$lines <- c(variables$lines, node$stringify())
       variables$contexts <- c(variables$contexts, node$context)
     }
-  } else if (node$operator == "%type%") {
+  } else if (node$operator == "type") {
     variables$names <- c(variables$names, node$left_node$name)
     variables$types <- c(variables$types, node$right_node$name)
     variables$lines <- c(variables$lines, node$stringify())
@@ -155,7 +155,7 @@ check_lhs_operation <- function(node) {
       }
       if (inherits(node$left_node, "binary_node")) {
         op_left <- node$left_node$operator
-        if (op_left != "%type%" && op_left != "[" && op_left != "at") {
+        if (op_left != "type" && op_left != "[" && op_left != "at") {
           return(FALSE)
         } else {
           return(TRUE)
@@ -256,7 +256,7 @@ check_type_declaration <- function(node) {
     return()
   }
   operator <- node$operator
-  if (operator != "%type%") {
+  if (operator != "type") {
     return()
   }
   if (!inherits(node$left_node, "variable_node")) {
@@ -447,7 +447,7 @@ action_set_true_remove_type_decl <- function(node) {
   if (!inherits(node, "binary_node")) {
     return()
   }
-  if (node$operator == "%type%") {
+  if (node$operator == "type") {
     node$remove_type_decl <- TRUE
   }
 }
