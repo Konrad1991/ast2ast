@@ -292,7 +292,7 @@ handle_if <- function(code, i_node, operator) {
       if (length(s) == 4) {
         s <- s[[4]]
       } else {
-        break
+        return()
       }
     }
     if (!is.null(s)) {

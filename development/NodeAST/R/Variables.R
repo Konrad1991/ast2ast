@@ -65,12 +65,14 @@ variables <- R6::R6Class(
         if (!all(sub$contexts == "Iteration")) {
           iter_line <- which(sub$contexts == "Iteration")[1]
           non_iter_line <- which(sub$contexts != "Iteration")[1]
-          self$errors[[unique(sub$name)]] <- paste0(
-            "If a variable is used as index variable in a for loop ",
-            "it cannot be used somewhere else as 'normal' variable",
-            "\nIteration: ", sub$lines[iter_line],
-            "Elsewhere: ", sub$lines[non_iter_line]
+          error_string <- paste(
+            "You cannot assign to index variables",
+            sub$lines[iter_line],
+            sub$lines[non_iter_line],
+            sep = "\n"
           )
+          str(error_string)
+          self$errors[[unique(sub$name)]] <- error_string
         }
       }
     },
