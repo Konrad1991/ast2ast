@@ -1,14 +1,5 @@
-# Node class.
-# All nodes inherit from it
-# Thereby, one can use inherits(instance, "Node")
-Node <- R6::R6Class(
-  "Node",
-  public = list(root = "root")
-)
-
-VariableNode <- R6::R6Class(
-  "VariableNode",
-  inherit = Node,
+variable_node <- R6::R6Class(
+  "variable_node",
   public = list(
     name = NULL,
     type = NULL,
@@ -26,9 +17,8 @@ VariableNode <- R6::R6Class(
   )
 )
 
-LiteralNode <- R6::R6Class(
-  "LiteralNode",
-  inherit = Node,
+literal_node <- R6::R6Class(
+  "literal_node",
   public = list(
     name = NULL,
     error = NULL,
@@ -37,14 +27,7 @@ LiteralNode <- R6::R6Class(
       self$name <- deparse(obj)
     },
     stringify = function(indent = "") {
-      if (self$context == "print") {
-        return(paste0(indent, self$name))
-      } else if (numeric_char(self$name)) {
-        if (!grepl("\\.", self$name)) {
-          return(paste0(self$name, ".0"))
-        }
-        return(paste0(indent, self$name))
-      }
+      t_literal(self$context, self$name, indent)
     },
     stringify_error = function(indent = "") {
       return(paste0(indent, self$error$error_message))
@@ -54,20 +37,34 @@ LiteralNode <- R6::R6Class(
 
 handle_var <- function(code, context) {
   if (rlang::is_symbol(code)) {
-    vn <- VariableNode$new(code)
+    if (context == "[" && deparse(code) == "") {
+      # NOTE: empty indexing --> change all entries
+      ln <- literal_node$new(TRUE)
+      ln$context <- context
+      return(ln)
+    }
+    # NOTE: dont know why but short forms T and F
+    # are returned as symbols and not as logicals
+    if (deparse(code) == "T") {
+      ln <- literal_node$new(TRUE)
+      ln$context <- context
+      return(ln)
+    } else if (deparse(code) == "F") {
+      ln <- literal_node$new(FALSE)
+      ln$context <- context
+      return(ln)
+    }
+    vn <- variable_node$new(code)
     vn$context <- context
     return(vn)
   }
-  ln <- LiteralNode$new(code)
+  ln <- literal_node$new(code)
   ln$context <- context
   return(ln)
 }
 
-# TODO: add exception for %type%
-# Define the BinaryNode
-BinaryNode <- R6::R6Class(
-  "BinaryNode",
-  inherit = Node,
+binary_node <- R6::R6Class(
+  "binary_node",
   public = list(
     operator = NULL,
     left_node = NULL,
@@ -76,6 +73,7 @@ BinaryNode <- R6::R6Class(
     right_node_name = NULL,
     error = NULL,
     context = NULL,
+    remove_type_decl = FALSE,
     initialize = function() {},
     string_left = function() {
       return(self$left_node$stringify())
@@ -105,7 +103,12 @@ BinaryNode <- R6::R6Class(
     },
     stringify = function(indent = "") {
       ret <- ""
-      if (infix_or_function(self$operator) == "infix") {
+      if (self$operator == "type" && self$remove_type_decl) {
+        if (self$context == "Start") {
+          return(ret)
+        }
+        ret <- paste0(indent, self$string_left())
+      } else if (infix_or_function(self$operator) == "infix") {
         ret <- self$create_infix_string(indent)
       } else if (infix_or_function(self$operator) == "function") {
         ret <- self$create_function_string(indent)
@@ -117,19 +120,16 @@ BinaryNode <- R6::R6Class(
           " ", self$string_right()
         ))
       }
+      if (self$context == "Start") {
+        ret <- paste0(ret, ";")
+      }
       return(ret)
     },
     stringerror_left = function() {
-      if (inherits(self$left_node, "Node")) {
-        return(self$left_node$stringify_error())
-      }
-      return("")
+      return(self$left_node$stringify_error())
     },
     stringerror_right = function() {
-      if (inherits(self$right_node, "Node")) {
-        return(self$right_node$stringify_error())
-      }
-      return("")
+      return(self$right_node$stringify_error())
     },
     stringify_error = function(indent = "") {
       left_error <- self$stringerror_left()
@@ -150,40 +150,51 @@ BinaryNode <- R6::R6Class(
   )
 )
 
-# Define the UnaryNode class
-UnaryNode <- R6::R6Class(
-  "UnaryNode",
-  inherit = Node,
+# Define the unary_node class
+unary_node <- R6::R6Class(
+  "unary_node",
   public = list(
     operator = NULL,
     obj = NULL,
     obj_name = NULL,
     error = NULL,
     context = NULL,
+    handle_return = FALSE,
     initialize = function() {},
     string_obj = function() {
-      if (inherits(self$obj, "Node")) {
-        return(self$obj$stringify())
-      }
-      return(self$obj)
+      return(self$obj$stringify())
     },
     stringify = function(indent = "") {
       if (self$operator == "-") { # NOTE: for unary -
-        return(paste0(
+        ret <- paste0(
           indent, self$operator, "",
           self$string_obj(), ""
-        ))
-      } else {
-        return(paste0(
-          indent, self$operator, "(",
+        )
+      } else if (self$operator == "(") {
+        ret <- paste0(
+          indent, self$operator,
           self$string_obj(), ")"
-        ))
+        )
+      } else {
+        if (self$handle_return) {
+          ret <- paste0(
+            indent, self$operator, "(etr::Cast(",
+            # This either cast to SEXP and/or evals expressions which are not variables or literals
+            self$string_obj(), "))"
+          )
+        } else {
+          ret <- paste0(
+            indent, self$operator, "(",
+            self$string_obj(), ")"
+          )
+        }
       }
+      if (self$context == "Start") {
+        ret <- paste0(ret, ";")
+      }
+      return(ret)
     },
     stringify_error = function(indent = "") {
-      if (!inherits(self$obj, "Node")) { # TODO: remove not necessary anymore
-        return(self$error$error_message)
-      }
       obj_error <- self$obj$stringify_error()
       op_error <- self$error$error_message
       errors <- c(obj_error, op_error)
@@ -201,18 +212,29 @@ UnaryNode <- R6::R6Class(
   )
 )
 
-# TODO: add exception for next/continue and break
-# Define the NullaryNode class
-NullaryNode <- R6::R6Class(
-  "NullaryNode",
-  inherit = Node,
+nullary_node <- R6::R6Class(
+  "nullary_node",
   public = list(
     operator = NULL,
     error = NULL,
     context = NULL,
+    handle_return = FALSE,
     initialize = function() {},
     stringify = function(indent = "") {
-      return(paste0(indent, self$operator, "()"))
+      if (self$operator == "next" || self$operator == "break") {
+        return(paste0(indent, self$operator, ";"))
+      }
+      ret <- NULL
+      if (self$operator == "return") {
+        # Handles void stuff
+        ret <- paste0(indent, self$operator, "(etr::Cast())")
+      } else {
+        ret <- paste0(indent, self$operator, "()")
+      }
+      if (self$context == "Start") {
+        ret <- paste0(ret, ";")
+      }
+      return(ret)
     },
     stringify_error = function(indent = "") {
       return(paste0(indent, self$error$error_message))
@@ -223,10 +245,9 @@ NullaryNode <- R6::R6Class(
   )
 )
 
-# Define the FunctionNode class
-FunctionNode <- R6::R6Class(
-  "FunctionNode",
-  inherit = Node,
+# Define the function_node class
+function_node <- R6::R6Class(
+  "function_node",
   public = list(
     operator = NULL,
     error = NULL,
@@ -241,11 +262,15 @@ FunctionNode <- R6::R6Class(
         unlist() |>
         c() |>
         paste(collapse = ", ")
-      return(paste0(
+      ret <- paste0(
         indent, self$operator, "(",
         args_string,
         ")"
-      ))
+      )
+      if (self$context == "Start") {
+        ret <- paste0(ret, ";")
+      }
+      return(ret)
     },
     stringify_error = function(indent = "") {
       args_errors <- lapply(self$args, function(arg) {
@@ -268,34 +293,65 @@ FunctionNode <- R6::R6Class(
   )
 )
 
-# Define the IfNode class
-IfNode <- R6::R6Class(
-  "IfNode",
-  inherit = Node,
+handle_if <- function(code, i_node, operator) {
+  i_node$condition <- code[[2]] |> process(operator)
+  i_node$true_node <- code[[3]] |> process(operator)
+  if (length(code) == 4) {
+    s <- code[[4]]
+    while (is.call(s) && deparse(s[[1]]) == "if") {
+      else_i_node <- if_node$new()
+      else_i_node$condition <- s[[2]] |> process(operator)
+      else_i_node$true_node <- s[[3]] |> process(operator)
+      i_node$else_if_nodes[[
+        length(i_node$else_if_nodes) + 1
+      ]] <- else_i_node
+      if (length(s) == 4) {
+        s <- s[[4]]
+      } else {
+        return()
+      }
+    }
+    if (!is.null(s)) {
+      if (deparse(s[[1]]) == "if") {
+        else_i_node <- if_node$new()
+        else_i_node$condition <- s[[2]] |> process(operator)
+        else_i_node$true_node <- s[[3]] |> process(operator)
+        i_node$else_if_nodes[[
+          length(i_node$else_if_nodes) + 1
+        ]] <- else_i_node
+      } else {
+        i_node$false_node <- process(s, operator)
+      }
+    }
+  }
+}
+
+# Define the if_node class
+if_node <- R6::R6Class(
+  "if_node",
   public = list(
     condition = NULL,
     true_node = NULL,
+    else_if_nodes = NULL,
     false_node = NULL,
     error = NULL,
     context = NULL,
     initialize = function() {},
     string_condition = function(indent) {
-      if (inherits(self$condition, "Node")) {
-        return(self$condition$stringify(indent = paste0(indent, "")))
-      }
-      return(self$condition)
+      return(self$condition$stringify(indent = paste0(indent, "")))
     },
     string_true = function(indent) {
-      if (inherits(self$true_node, "Node")) {
-        return(self$true_node$stringify(indent = paste0(indent, "  ")))
-      }
-      return(self$true_node)
+      return(self$true_node$stringify(indent = paste0(indent, "  ")))
+    },
+    string_else_if = function(indent) {
+      l <- lapply(self$else_if_nodes, function(node) {
+        return(node$stringify(indent = paste0(indent, "")))
+      })
+      l <- paste0(" else ", l)
+      combine_strings(l, "")
     },
     string_false = function(indent) {
-      if (inherits(self$false_node, "Node")) {
-        return(self$false_node$stringify(indent = paste0(indent, "  ")))
-      }
-      return(self$false_node)
+      return(self$false_node$stringify(indent = paste0(indent, "  ")))
     },
     stringify = function(indent = "") {
       result <- ""
@@ -305,41 +361,41 @@ IfNode <- R6::R6Class(
       )
       result <- paste0(
         result,
-        self$string_true(indent),
-        "\n"
+        self$string_true(paste0(indent, "\t")),
+        "\n",
+        indent, "\t",
+        "}"
       )
+      result <- combine_strings(result)
+      if (!is.null(self$else_if_nodes)) {
+        result <- paste0(
+          result,
+          self$string_else_if(indent)
+        )
+      }
       if (!is.null(self$false_node)) {
-        result <- paste0(result, indent, "} else {\n")
+        result <- paste0(result, indent, " else {\n")
         result <- paste0(
           result, self$false_node$stringify(
             indent = paste0(indent, "  ")
-          ), "\n"
+          ), indent, "\n}"
         )
       }
-      result <- paste0(result, indent, "}")
+      result <- combine_strings(result, "")
       return(result)
     },
     stringify_condition_error = function(indent = "") {
-      if (!inherits(self$condition, "Node")) {
-        return(indent)
-      }
       return(self$condition$stringify_error(
         indent = paste0(indent, "")
       ))
     },
     stringify_true_node_error = function(indent = "") {
-      if (!inherits(self$true_node, "Node")) {
-        return(indent)
-      }
       return(self$true_node$stringify_error(
         indent = paste0(indent, "")
       ))
     },
     stringify_false_node_error = function(indent = "") {
       if (is.null(self$false_node)) {
-        return(indent)
-      }
-      if (!inherits(self$false_node, "Node")) {
         return(indent)
       }
       return(self$false_node$stringify_error(
@@ -379,10 +435,9 @@ IfNode <- R6::R6Class(
   )
 )
 
-# Define the BlockNode class
-BlockNode <- R6::R6Class(
-  "BlockNode",
-  inherit = Node,
+# Define the block_node class
+block_node <- R6::R6Class(
+  "block_node",
   public = list(
     block = NULL,
     error = NULL,
@@ -391,12 +446,10 @@ BlockNode <- R6::R6Class(
     stringify = function(indent = "") {
       result <- list()
       for (stmt in self$block) {
-        if (inherits(stmt, "Node")) {
-          result[[length(result) + 1]] <-
-            stmt$stringify(indent = indent)
-        } else {
-          result[[length(result) + 1]] <- paste0(indent, stmt)
-        }
+        result[[length(result) + 1]] <-
+          paste0(
+            stmt$stringify(indent = paste0(indent, "\t")), ";"
+          )
       }
       result <- combine_strings(result)
       return(result)
@@ -406,10 +459,7 @@ BlockNode <- R6::R6Class(
         return("")
       }
       res <- lapply(self$block, function(elem) {
-        if (inherits(elem, "Node")) {
-          return(elem$stringify_error())
-        }
-        return("")
+        return(elem$stringify_error())
       })
       for (i in seq_along(res)) {
         if (!is.null(res[[i]]) && res[[i]] != "") {
@@ -424,10 +474,7 @@ BlockNode <- R6::R6Class(
       }
       # In which line is the error
       error_lines <- lapply(self$block, function(elem) {
-        if (inherits(elem, "Node")) {
-          return(elem$stringify_error())
-        }
-        return("")
+        return(elem$stringify_error())
       })
       idx <- c()
       for (i in seq_along(error_lines)) {
@@ -437,10 +484,7 @@ BlockNode <- R6::R6Class(
       }
       # Stringify the error line(s)
       res <- lapply(self$block, function(elem) {
-        if (inherits(elem, "Node")) {
-          return(elem$stringify())
-        }
-        return("")
+        return(elem$stringify())
       })
 
       res <- combine_strings(res[idx])
@@ -449,9 +493,9 @@ BlockNode <- R6::R6Class(
   )
 )
 
-# Define the ErrorNode class
-ErrorNode <- R6::R6Class(
-  "ErrorNode",
+# Define the error_node class
+error_node <- R6::R6Class(
+  "error_node",
   public = list(
     error_message = NULL,
     context = NULL,
@@ -462,9 +506,8 @@ ErrorNode <- R6::R6Class(
 )
 
 # Define the for loop node
-ForNode <- R6::R6Class(
-  "ForNode",
-  inherit = Node,
+for_node <- R6::R6Class(
+  "for_node",
   public = list(
     error = NULL,
     i = NULL,
@@ -475,12 +518,12 @@ ForNode <- R6::R6Class(
     stringify = function(indent = "") {
       idx <- self$i$stringify(indent)
       sequence <- self$seq$stringify(indent)
-      b <- self$block$stringify(paste0(indent, "  "))
+      b <- self$block$stringify(paste0(indent, "\t"))
       return(paste0(
         indent,
-        "for(auto& ", idx, " : ", sequence, ") {\n",
+        "for(auto& ", idx, " : ", sequence, ") {\n", # TODO: add const auto&?
         b, "\n",
-        "}\n"
+        paste0(indent, "\t"), "}\n"
       ))
     },
     stringify_error = function(indent = "") {
@@ -500,8 +543,10 @@ ForNode <- R6::R6Class(
     stringify_error_line = function(indent = "") {
       i_err <- self$i$stringify_error()
       if (i_err != "") {
+        # NOTE: const can be used as assignment to index variable is not allowed
+        # Even though this is a resitriction
         return(paste0(
-          indent, "for (auto&",
+          indent, "for (const auto&",
           self$i$stringify(""), " : ", self$seq$stringify(), ") {"
         ))
       }

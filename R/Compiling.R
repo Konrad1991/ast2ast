@@ -18,7 +18,7 @@
 # If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 
-#' @importFrom Rcpp sourceCpp
+#' $importFrom Rcpp sourceCpp
 compiler_a2a <- function(fct_code, R_fct,
                          verbose, name_f, calc_deriv) {
   fct <- fct_code
