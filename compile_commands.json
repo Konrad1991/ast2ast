@@ -1,7 +1,0 @@
-[
-  {
-    "directory": "/home/konrad/Documents/GitHub/RProjects/ast2ast_supplement/ast2ast",
-    "command": "clang++ -std=c++20 -DSTANDALONE_ETR ./.development/test_lazy_subsetting.cpp -I ./inst/include/ -I./inst/include/etr_bits/",
-    "file": "./.development/test_lazy_subsetting.cpp"
-  }
-]
