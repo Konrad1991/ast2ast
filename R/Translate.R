@@ -14,7 +14,7 @@ translate <- function(f, args_f = NULL,
   # Check args_f / arguments
   parsed_args <- parse_input_args(f, args_f, r_fct)
   check_parsed_args(f, parsed_args, r_fct)
-  
+
   # Get name of f
   name_f <- substitute(f)
   if (!is.name(name_f)) {
@@ -23,7 +23,7 @@ translate <- function(f, args_f = NULL,
 
   # Call translate_internally
   body_cpp <- translate_internally(f, parsed_args, name_f, r_fct)
-  
+
   # Compile the code
 }
 

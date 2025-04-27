@@ -43,28 +43,7 @@ traverse_ast <- function(node, action, ...) {
 # and stored in an instance of class Variable
 # ========================================================================
 action_variables <- function(node, variables) {
-  if (inherits(node, "for_node")) {
-    idx <- node$i$stringify("")
-    sequence <- node$seq$stringify("")
-    line <- paste0(
-      "",
-      "for(", idx, " in ", sequence, ") {\n"
-    )
-    variables$add_entry(node$i$name, line, "unknown", "Iteration")
-    return()
-  }
-
-  if (!inherits(node, "binary_node")) {
-    return()
-  }
-  # Standalone type declaration
-  if (node$operator == "<-") {
-    if (!inherits(node$left_node, "binary_node")) {
-      variables$add_entry(node$left_node$name, node$stringify(), "unknown", node$context)
-    }
-  } else if (node$operator == "type") {
-    variables$add_entry(node$left_node$name, node$stringify(), node$right_node$name, node$context)
-  }
+  variables$append <- node
 }
 
 # Determine type of an expression (= Tree)

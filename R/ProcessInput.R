@@ -79,50 +79,55 @@ parse_input_args <- function(f, f_args, r_fct) {
         )
       }
       env$types <- deparse(code[[3]])
-    } else {
-      if (length(code) > 2) {
-        warning(
-          sprintf("Arguments to function: %s are ignored", deparse(code[[1]]))
-        )
-      }
+    } else if (deparse(code[[1]]) == "const") {
+      env$const <- c(env$const, deparse(code[[1]]))
+    } else if (deparse(code[[1]]) %in% c("ref", "reference")) {
       env$handling <- c(env$handling, deparse(code[[1]]))
+    } else {
+        stop(
+          sprintf("Too many arguments for: %s", deparse(code[[1]]))
+        )
     }
     lapply(code, function(x) {
       find_functions(x, env)
     })
   }
 
-  lapply(args, function(obj) {
+  l <- lapply(args, function(obj) {
     env <- new.env()
     env$handling <- c()
+    env$const <- c()
     env$types <- c()
     env$name <- get_variable_from_arg(obj, r_fct)
     if (is.symbol(obj)) {
       env$name <- deparse(obj)
     }
     find_functions(obj, env)
-    if (is.null(env$handling)) {
-      env$handling <- "copy"
-    } else if (!r_fct && env$handling == "const") {
-      env$handling <- c(env$handling, "copy")
-    }
-    if (is.null(env$types)) {
-      env$types <- "double_vector"
-    }
     list(
       handling = env$handling, types = env$types,
-      name = env$name
+      name = env$name, const = env$const
     )
+  })
+  lapply(seq_along(l), function(i) {
+    v <- variable_node$new(
+      l[[i]]$name
+    )
+    v$type <- l[[i]]$types
+    if (is.null(v$type)) v$type <- "double_vector"
+    v$const_or_mut <- l[[i]]$const
+    if (is.null(v$const_or_mut)) v$const_or_mut <- "mutable"
+    v$handling <- l[[i]]$handling
+    if (is.null(v$handling)) v$handling <- "copy"
+    v$context <- "FunctionInput"
+    v
   })
 }
 
 # Check possible type combinations
 # ========================================================================
 check_allowed_types <- function(x, name, r_fct) {
-  order_x <- x[order(x)]
-  order_x <- paste(order_x, collapse = "; ")
   if (r_fct) {
-    if (!(order_x %in% permitted_types())) {
+    if (!(x %in% permitted_types())) {
       stop(
         sprintf(
           "Found invalid combination %s for %s",
@@ -131,7 +136,7 @@ check_allowed_types <- function(x, name, r_fct) {
       )
     }
   } else {
-    if (!(order_x %in% permitted_types_xptr_fct_args())) {
+    if (!(x %in% permitted_types_xptr_fct_args())) {
       stop(
         sprintf(
           "Found invalid combination %s for %s",
@@ -145,15 +150,13 @@ check_allowed_types <- function(x, name, r_fct) {
 # Check possible function combinations
 # ========================================================================
 check_allowed_fct_combination <- function(x, name, r_fct) {
-  order_x <- x[order(x)]
-  order_x <- paste(order_x, collapse = "; ")
   if (r_fct) {
     possible_combis <- list(
       c("copy"),
       c("reference"),
       c("ref")
     )
-    if (!(order_x %in% possible_combis)) {
+    if (!(x %in% possible_combis)) {
       stop(
         sprintf(
           "Found invalid combination %s for %s",
@@ -163,14 +166,14 @@ check_allowed_fct_combination <- function(x, name, r_fct) {
     }
   } else {
     possible_combis <- list(
-      c("const; copy"),
-      c("const; reference"),
-      c("const; ref"),
-      c("copy"),
-      c("reference"),
-      c("ref")
+      c("copy; const"),
+      c("reference;", "const"),
+      c("ref; const"),
+      c("copy; mutable"),
+      c("reference; mutable"),
+      c("ref; mutable")
     )
-    if (!(order_x %in% possible_combis)) {
+    if (!(x %in% possible_combis)) {
       stop(
         sprintf(
           "Found invalid combination %s for %s",
@@ -199,14 +202,12 @@ check_parsed_args <- function(f, args, r_fct) {
   # NOTE: In case the user requests an R function as output
   # reference means that the argument is borrowed
   lapply(args, function(i) {
-    obj <- i$handling
     check_allowed_fct_combination(
-      obj, i$name,
+      i$build_handling_const(), i$name,
       r_fct
     )
-    obj <- i$types
     check_allowed_types(
-      obj, i$name,
+      i$type, i$name,
       r_fct
     )
   })

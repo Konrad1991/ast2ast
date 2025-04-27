@@ -336,16 +336,12 @@ create_fct_signature <- function(name_f, vars, return_type, r_fct) {
 
 translate_internally <- function(fct, parsed_args, name_f, r_fct) {
   vars <- variables$new()
-  vars$names <- sapply(parsed_args, function(x) x$name)
-  vars$types <- sapply(parsed_args, function(x) x$types)
-  vars$lines <- rep("FunctionInput", length(parsed_args))
-  vars$contexts <- rep("FunctionInput", length(parsed_args))
-  vars$are_const <- sapply(parsed_args, function(x) {
-    "const" %in% x$handling
+  lapply(parsed_args, function(x) {
+    vars$append <- x
   })
-  vars$are_ref <- sapply(parsed_args, function(x) {
-    ("ref" %in% x$handling) || ("reference" %in% x$handling)
-  })
+  lapply(vars$variable_list, print)
+  stop("bla")
+
 
   b <- body(fct)
   if (b[[1]] != "{") {

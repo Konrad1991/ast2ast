@@ -5,6 +5,8 @@ variable_node <- R6::R6Class(
     type = NULL,
     error = NULL,
     context = NULL,
+    handling = NULL,
+    const_or_mut = NULL,
     initialize = function(obj) {
       self$name <- deparse(obj)
     },
@@ -13,6 +15,9 @@ variable_node <- R6::R6Class(
     },
     stringify_error = function(indent = "") {
       return(paste0(indent, self$error$error_message))
+    },
+    build_handling_const = function() {
+      paste(self$handling, self$const_or_mut, sep = "; ")
     }
   )
 )
@@ -56,6 +61,7 @@ handle_var <- function(code, context) {
     }
     vn <- variable_node$new(code)
     vn$context <- context
+    vn$handling <- NULL # handling is not meaningfull for Variables defined in body
     return(vn)
   }
   ln <- literal_node$new(code)
