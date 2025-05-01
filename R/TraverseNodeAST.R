@@ -39,13 +39,6 @@ traverse_ast <- function(node, action, ...) {
   }
 }
 
-# Directly after creation of the ast the variables are gathered
-# and stored in an instance of class Variable
-# ========================================================================
-action_variables <- function(node, variables) {
-  variables$append <- node
-}
-
 # Determine type of an expression (= Tree)
 # Only trees within a return statement are considered
 # ========================================================================

@@ -97,9 +97,9 @@ create_ast_list <- function(b, variables) {
       break
     }
     # Find variables
-    traverse_ast(ast, action_variables, variables)
+    gather_vars(ast, variables)
     ast_list[[i]] <- ast
-    if (!all(all_vars_line %in% variables$names)) {
+    if (!all(all_vars_line %in% c(variables$names, permitted_types()))) {
       error_found <- TRUE
       undefined_vars <- all_vars_line[which(!(all_vars_line %in% variables$names))]
       undefined_vars <- paste(undefined_vars, collapse = ", ")
@@ -335,13 +335,7 @@ create_fct_signature <- function(name_f, vars, return_type, r_fct) {
 }
 
 translate_internally <- function(fct, parsed_args, name_f, r_fct) {
-  vars <- variables$new()
-  lapply(parsed_args, function(x) {
-    vars$append <- x
-  })
-  lapply(vars$variable_list, print)
-  stop("bla")
-
+  vars <- variables$new(parsed_args)
 
   b <- body(fct)
   if (b[[1]] != "{") {

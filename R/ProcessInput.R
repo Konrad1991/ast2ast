@@ -110,8 +110,9 @@ parse_input_args <- function(f, f_args, r_fct) {
   })
   lapply(seq_along(l), function(i) {
     v <- variable_node$new(
-      l[[i]]$name
+      "mock"
     )
+    v$name <- l[[i]]$name # Prevents parsing of character which adds \ into string
     v$type <- l[[i]]$types
     if (is.null(v$type)) v$type <- "double_vector"
     v$const_or_mut <- l[[i]]$const
@@ -119,6 +120,8 @@ parse_input_args <- function(f, f_args, r_fct) {
     v$handling <- l[[i]]$handling
     if (is.null(v$handling)) v$handling <- "copy"
     v$context <- "FunctionInput"
+    v$declared <- TRUE
+    v$initialized <- TRUE
     v
   })
 }

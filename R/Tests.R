@@ -10,9 +10,11 @@ fct <- function(a, b, c) {
   a <- 1
   b <- 2
   c <- 3
-  d |> type(integer)
+  c |> type(d)
+  d |> type(integer) <- 1
   e |> type(dv)
-  d <- 1L
+  d[1] <- 1L
+  e <- 1
   return()
 }
 args_f <- function() {
@@ -26,7 +28,7 @@ result <- translate(
   output = "XPtr"
 )
 cat(result)
-
+.traceback()
 
 fct <- function(a, c) {
   a <- 1

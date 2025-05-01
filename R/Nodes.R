@@ -7,6 +7,8 @@ variable_node <- R6::R6Class(
     context = NULL,
     handling = NULL,
     const_or_mut = NULL,
+    declared = FALSE,
+    initialized = FALSE,
     initialize = function(obj) {
       self$name <- deparse(obj)
     },
