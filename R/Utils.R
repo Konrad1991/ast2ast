@@ -71,7 +71,7 @@ cpp_keywords <- function() {
 permitted_fcts <- function() {
   c(
     "type", "=", "<-",
-    "[", "at",
+    "[", "at", "[[",
     "for", "while", "next", "break",
     "c", ":",
     "sin", "asin", "sinh",
@@ -84,6 +84,7 @@ permitted_fcts <- function() {
     "print", "return",
     "vector", "matrix", "length", "dim",
     "exp", "&&", "||", "!",
+    # TODO: add & and |
     "is.na", "is.infinite", "is.finite",
     "cmr", "power"
   )
@@ -134,7 +135,6 @@ expected_n_args <- function() {
 
 expected_type_of_args <- function() {
   list(
-    "type" = c("symbol", "symbol"),
     "at" = c("any_except_char", list("integer", "double")),
     "for" = c("symbol", "any_except_char", "any_except_char"),
     "vector" = c("character", "any_except_char"),
@@ -217,36 +217,35 @@ infix_or_function <- function(operator) {
   return("function")
 }
 
-permitted_types <- function() {
+permitted_base_types <- function() {
   c(
     "logical", "integer", "double",
-    "logical_vector", "integer_vector", "double_vector",
-    # NOTE: short forms
-    "l", "i", "d",
-    "lv", "iv", "dv"
+    "int"
   )
 }
 
-permitted_types_xptr_fct_args <- function() {
-  c(
-    permitted_types(),
+permitted_data_structs <- function(r_fct) {
+  if (r_fct) {
     c(
-      "double_borrow", "integer_borrow", "logical_borrow",
-      "db", "ib", "lb"
+      "scalar", "vec", "mat",
+      "vector", "matrix"
     )
-  )
-}
-
-permitted_handle_inputs <- function() {
-  c("copy", "borrow")
+  } else {
+    c(
+      "scalar", "vec", "mat",
+      "vector", "matrix",
+      "borrow_vec", "borrow_vector",
+      "borrow_mat", "borrow_matrix"
+    )
+  }
 }
 
 convert_types_to_etr_types <- function(type) {
   list(
     "void" = "void",
-    "logical" = "bool", "l" = "bool",
-    "integer" = "int", "i" = "int",
-    "double" = "double", "d" = "double",
+    "logical" = "bool",
+    "integer" = "int", "int" = "int",
+    "double" = "double",
     "logical_vector" = "etr::Vec<bool>", "lv" = "etr::Vec<bool>",
     "integer_vector" = "etr::Vec<int>", "iv" = "etr::Vec<int>",
     "double_vector" = "etr::Vec<double>", "dv" = "etr::Vec<double>",

@@ -6,27 +6,21 @@ files <- files[files != "Tests.R"]
 files <- sapply(files, function(x) paste0(getwd(), "/", x))
 trash <- lapply(files, source)
 
-fct <- function(a, b, c) {
-  a <- 1
-  b <- 2
-  c <- 3
-  c |> type(d)
-  d |> type(integer) <- 1
-  e |> type(dv)
-  d[1] <- 1L
-  e <- 1
-  return()
+fct <- function(x) {
+  a <- TRUE
+  b <- 1L
+  c <- 3.14
+  d <- c(1L, 2L, 3L)
+  e <- c(1.1, 2.2)
 }
-args_f <- function() {
-  a |> type(dv) |> ref() |> const()
-  b |> type(d)
-  c
-}
+
 result <- translate(
   fct,
-  args_f,
+  NULL,
   output = "XPtr"
 )
+.traceback()
+
 cat(result)
 .traceback()
 

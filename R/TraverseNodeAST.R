@@ -3,6 +3,8 @@
 traverse_ast <- function(node, action, ...) {
   if (inherits(node, "variable_node")) {
     action(node, ...)
+  } else if (inherits(node, "type_node")) {
+    action(node, ...)
   } else if (inherits(node, "binary_node")) {
     action(node, ...)
     traverse_ast(node$left_node, action, ...)
@@ -114,42 +116,47 @@ determine_common_type <- function(operator, left_type, right_type, r_fct) {
 }
 
 # Determine type of an node
-action_determine_type <- function(node, variable_types_df, env, r_fct) {
-  # TODO: While is missing
+# TODO: missing functions are:
+# while
+# concatenate
+action_determine_type <- function(node, r_fct) {
   if (inherits(node, "literal_node")) {
     type <- determine_literal_type(node$name)
     if (type %in% c("scientific", "numeric")) {
       return("double")
     }
-    return(type)
+    t <- type_node$new(str2lang(node$name), FALSE, r_fct)
+    t$base_type = type
+    t$data_struct = "scalar"
+    return(t)
   } else if (inherits(node, "variable_node")) {
-    return(
-      variable_types_df[variable_types_df$name == node$name, "type"]
-    )
+    return(node$type)
   } else if (inherits(node, "unary_node")) {
     if (node$operator == "print") {
       stop("Print cannot be used within return")
     }
     if (node$operator == "return") {
-      type <- action_determine_type(node$obj, variable_types_df, env, r_fct)
-      env$return_types <- c(env$return_types, type)
+      type <- action_determine_type(node$obj, r_fct)
     }
   } else if (inherits(node, "binary_node")) {
     if (node$operator == "type") {
-      return(node$right_node$name)
+      return(node$right_node)
     }
-    left_type <- action_determine_type(node$left_node, variable_types_df, env, r_fct)
-    right_type <- action_determine_type(node$right_node, variable_types_df, env, r_fct)
+    left_type <- action_determine_type(node$left_node, r_fct)
+    right_type <- action_determine_type(node$right_node, r_fct)
+    # TODO: Update
     return(determine_common_type(node$operator, left_type, right_type, r_fct))
   } else if (inherits(node, "function_node")) {
     if (node$operator == "cmr") {
-      return("double")
+      t <- type_node$new(str2lang("double"), FALSE, r_fct)
+      t$base_type = "double"
+      t$data_struct = "scalar"
+      return(t)
     } else if (node$operator == "matrix") {
-      return(action_determine_type(node$args[[1]]), variable_types_df, env, r_fct)
+      return(action_determine_type(node$args[[1]]), r_fct)
     } else {
       stop(sprintf("Found unsupported function: %s", node$operator))
     }
-    # TODO: concatenate
   } else {
     stop(
       sprintf("Found unsupported expression in return: %s",
@@ -236,7 +243,7 @@ check_lhs_operation <- function(node) {
       }
       if (inherits(node$left_node, "binary_node")) {
         op_left <- node$left_node$operator
-        if (op_left != "type" && op_left != "[" && op_left != "at") {
+        if (!(op_left %in% c("type", "[", "[[", "at"))) {
           return(FALSE)
         } else {
           return(TRUE)
@@ -282,7 +289,9 @@ check_operator <- function(node) {
 # Name should not contain unallowed signs
 unallowed_signs <- function(name) {
   unallowed <- c(
-    "\\." # NOTE: do i miss any here?
+    # NOTE: SEXP cannot be part of the name. Thereby, one can easily create argument names nameSEXP and assign it to name
+    # - the types of ast2ast: logical, integer, double, int cannot be used as names. Thereby, all.vars can directly be used to find all variables
+    "\\.", "SEXP"
   )
 
   sign_found <- 0
@@ -299,6 +308,14 @@ unallowed_signs <- function(name) {
       invalid_char
     ))
   }
+
+  if (name %in% permitted_base_types()) {
+    return(paste0(
+      "Invalid variable name (reserved internally)",
+      name
+    ))
+  }
+
   return(NULL)
 }
 
@@ -313,7 +330,7 @@ check_variable_names <- function(node) {
     return()
   }
   name <- node$name
-  if (name %in% permitted_types()) {
+  if (name %in% permitted_base_types()) {
     return()
   }
   unallowed <- unallowed_signs(name)
@@ -332,7 +349,7 @@ check_variable_names <- function(node) {
 }
 
 # Check type declaration
-check_type_declaration <- function(node) {
+check_type_declaration <- function(node, r_fct) {
   if (!inherits(node, "binary_node")) {
     return()
   }
@@ -350,7 +367,8 @@ check_type_declaration <- function(node) {
     )
     return()
   }
-  if (!inherits(node$right_node, "variable_node")) {
+
+  if (!inherits(node$right_node, "type_node")) {
     node$error <- error$new(
       error_message =
         paste0(
@@ -360,21 +378,28 @@ check_type_declaration <- function(node) {
     )
     return()
   }
-  if (node$right_node$name %in% permitted_types()) {
+  if (!(node$right_node$base_type %in% permitted_base_types())) {
+    node$error <- error$new(error_message = paste0(
+      "Invalid type declaration: ",
+      node$right_node$base_type, " for variable ", node$left_node$name
+    ))
     return()
   }
-  node$error <- error$new(error_message = paste0(
-    "Invalid type declaration: ",
-    node$right_node$name, " for variable ", node$left_node$name
-  ))
+  if (!(node$right_node$data_struct %in% permitted_data_structs(r_fct))) {
+    node$error <- error$new(error_message = paste0(
+      "Invalid type declaration: ",
+      node$right_node$data_struct, " for variable ", node$left_node$name
+    ))
+    return()
+  }
   return()
 }
 
 # error checking action
-action_error <- function(node) {
+action_error <- function(node, r_fct) {
   check_operator(node)
   check_variable_names(node)
-  check_type_declaration(node)
+  check_type_declaration(node, r_fct)
 }
 
 # Sort arguments
@@ -554,7 +579,6 @@ action_translate <- function(node) {
 # Printing for debugging
 # ========================================================================
 action_print <- function(node) {
-  str(node)
   if (inherits(node, "function_node")) {
     str(node$args)
     str(node$args_names)

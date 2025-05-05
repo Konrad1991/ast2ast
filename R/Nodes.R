@@ -1,3 +1,132 @@
+type_node <- R6::R6Class(
+  "type_node",
+  public = list(
+    name = NULL,
+    tree = NULL,
+    error = NULL,
+    base_type = NULL,
+    data_struct = NULL,
+    const_or_mut = "mutable",
+    copy_or_ref = "copy",
+    fct_input = FALSE,
+    r_fct = TRUE,
+
+    within_type_call = FALSE,
+
+    initialize = function(tree, fct_input, r_fct) {
+      self$tree <- tree
+      self$fct_input <- fct_input
+      self$r_fct <- r_fct
+    },
+
+    handle_type = function(type) {
+      self$name <- deparse(type[[1]])
+      type <- as.list(type[[2]])
+      if (length(type) == 1) {
+        self$data_struct <- "scalar"
+        self$base_type <- deparse(type[[1]])
+      } else if (length(type) == 2) {
+        self$data_struct <- deparse(type[[1]])
+        self$base_type <- deparse(type[[2]])
+      } else {
+        self$error <- c(self$error, "Too many arguments to function type")
+      }
+    },
+
+    handle_const = function(fct, const) {
+      if (length(const) > 1) {
+        self$error <- c(self$error, "Function const accept only one argument")
+      } else {
+        self$const_or_mut <- fct
+      }
+    },
+
+    handle_copy_or_ref = function(fct, copy_or_ref) {
+      if (length(copy_or_ref) > 1) {
+        self$error <- c(self$error, "Functions copy and ref accept only one argument")
+      } else {
+        self$copy_or_ref <- fct
+      }
+    },
+
+    traverse = function(tree) {
+      if (!is.call(tree)) {
+        return(tree)
+      }
+      tree <- as.list(tree)
+      fct <- deparse(tree[[1]])
+      if (fct == "type") {
+        self$within_type_call <- TRUE
+        self$handle_type(tree[-1])
+      } else if (fct == "const") {
+        self$handle_const(fct, tree[-1])
+        self$within_type_call <- FALSE
+      } else if (fct %in% c("copy", "ref", "reference")) {
+        self$handle_copy_or_ref(fct, tree[-1])
+        self$within_type_call <- FALSE
+      } else if (!self$within_type_call) {
+        self$error <- c(self$error, sprintf("Found unsupported function: %s", fct))
+        self$within_type_call <- FALSE
+      }
+      lapply(tree, self$traverse)
+    },
+
+    get_variable_from_arg = function() {
+      types <- c(permitted_base_types(), permitted_data_structs(self$r_fct))
+      av <- all.vars(self$tree)
+      av <- av[!(av %in% types)]
+      if (length(av) == 0) {
+        self$error <- c(self$error,
+          sprintf("Didn't found a variable within: %s", deparse(self$tree))
+        )
+      }
+      if (length(av) > 1) {
+        self$error <- c(self$error,
+          sprintf("Found invalid types. Allowed are: %s and the type found is: %s",
+            paste(types, collapse = ", "), deparse(self$tree)))
+      }
+      av
+    },
+
+    init = function(tree) {
+      self$traverse(self$tree)
+      # Set default values
+      if (is.null(self$base_type)) self$base_type <- "double"
+      if (is.null(self$data_struct)) self$data_struct <- "vector"
+      if (is.null(self$name)) {
+        self$name <- self$get_variable_from_arg()
+      }
+    },
+
+    check_allowed_base_types = function() {
+      if (!self$base_type %in% permitted_base_types()) {
+        self$error <- c(self$error, sprintf("Found unsupported base type: %s", self$base_type))
+      }
+    },
+
+    check_allowed_data_structs = function() {
+      if (!(self$data_struct %in% permitted_data_structs(self$r_fct))) {
+        self$error <- c(self$error, sprintf("Found unsupported data structure: %s", self$data_struct))
+      }
+    },
+
+    check = function() { # TODO: is this run? and isnt that the same test as in check_type_declaration
+      self$check_allowed_base_types()
+      self$check_allowed_data_structs()
+    },
+
+    stringify = function(indent = "") {
+      if (self$data_struct == "scalar") {
+        return(paste0(indent, self$base_type))
+      }
+      return(paste0(indent, self$data_struct, "(", self$base_type, ")"))
+    },
+    stringify_error = function(indent = "") {
+      return(paste0(indent, self$error))
+    }
+  )
+)
+
 variable_node <- R6::R6Class(
   "variable_node",
   public = list(
@@ -5,8 +134,6 @@ variable_node <- R6::R6Class(
     type = NULL,
     error = NULL,
     context = NULL,
-    handling = NULL,
-    const_or_mut = NULL,
     declared = FALSE,
     initialized = FALSE,
     initialize = function(obj) {
@@ -63,7 +190,6 @@ handle_var <- function(code, context) {
     }
     vn <- variable_node$new(code)
     vn$context <- context
-    vn$handling <- NULL # handling is not meaningfull for Variables defined in body
     return(vn)
   }
   ln <- literal_node$new(code)
@@ -164,7 +290,7 @@ unary_node <- R6::R6Class(
   public = list(
     operator = NULL,
     obj = NULL,
-    obj_name = NULL,
+    obj_name = NULL, # TODO: is this used?
     error = NULL,
     context = NULL,
     handle_return = FALSE,
@@ -312,7 +438,7 @@ handle_if <- function(code, i_node, operator) {
       else_i_node$true_node <- s[[3]] |> process(operator)
       i_node$else_if_nodes[[
         length(i_node$else_if_nodes) + 1
-      ]] <- else_i_node
+        ]] <- else_i_node
       if (length(s) == 4) {
         s <- s[[4]]
       } else {
@@ -326,7 +452,7 @@ handle_if <- function(code, i_node, operator) {
         else_i_node$true_node <- s[[3]] |> process(operator)
         i_node$else_if_nodes[[
           length(i_node$else_if_nodes) + 1
-        ]] <- else_i_node
+          ]] <- else_i_node
       } else {
         i_node$false_node <- process(s, operator)
       }

@@ -1,8 +1,8 @@
 # Function to process the code and create the AST
 # ========================================================================
-process <- function(code, context) {
+process <- function(code, context, r_fct) {
   if (!is.symbol(code) && is.call(code)) {
-    return(create_ast(code, context))
+    return(create_ast(code, context, r_fct))
   }
   var <- handle_var(code, context)
   return(var)
@@ -10,7 +10,7 @@ process <- function(code, context) {
 
 # Translates R Code into AST representation
 # ========================================================================
-create_ast <- function(code, context) {
+create_ast <- function(code, context, r_fct) {
   code <- as.list(code)
   operator <- deparse(code[[1]])
 
@@ -23,15 +23,15 @@ create_ast <- function(code, context) {
   } else if (operator == "{") {
     b_node <- block_node$new()
     b_node$block <- lapply(code[-1], function(line) {
-      process(line, operator)
+      process(line, operator, r_fct)
     })
     b_node$context <- context
     return(b_node)
   } else if (operator == "for") {
     fn <- for_node$new()
-    fn$i <- code[[2]] |> process(operator)
-    fn$seq <- code[[3]] |> process(operator)
-    fn$block <- code[[4]] |> process(operator)
+    fn$i <- code[[2]] |> process(operator, r_fct)
+    fn$seq <- code[[3]] |> process(operator, r_fct)
+    fn$block <- code[[4]] |> process(operator, r_fct)
     fn$context <- context
     return(fn)
   } else if (operator %in% function_fcts()) {
@@ -39,15 +39,28 @@ create_ast <- function(code, context) {
     fn$operator <- operator
     fn$args_names <- names(code[-1])
     fn$args <- lapply(code[-1], function(x) {
-      process(x, operator)
+      process(x, operator, r_fct)
     })
     fn$context <- context
     return(fn)
   } else if (length(code) == 3) { # NOTE: Binary operators
+    if (operator == "type") {
+      t <- type_node$new(as.call(code), FALSE, r_fct)
+      t$init()
+      t$check()
+      bn <- binary_node$new()
+      bn$operator <- operator
+      bn$left_node <- code[[2]] |> process(operator, r_fct)
+      bn$right_node <- t
+      bn$context <- context
+      bn$left_node_name <- names(code)[2]
+      bn$right_node_name <- names(code)[3]
+      return(bn)
+    }
     bn <- binary_node$new()
     bn$operator <- operator
-    bn$right_node <- code[[3]] |> process(operator)
-    bn$left_node <- code[[2]] |> process(operator)
+    bn$right_node <- code[[3]] |> process(operator, r_fct)
+    bn$left_node <- code[[2]] |> process(operator, r_fct)
     bn$context <- context
     bn$left_node_name <- names(code)[2]
     bn$right_node_name <- names(code)[3]
@@ -55,7 +68,7 @@ create_ast <- function(code, context) {
   } else if (length(code) == 2) { # NOTE: Unary operators
     un <- unary_node$new()
     un$operator <- operator
-    un$obj <- code[[2]] |> process(operator)
+    un$obj <- code[[2]] |> process(operator, r_fct)
     un$context <- context
     un$obj_name <- names(code)[2]
     return(un)
@@ -79,14 +92,14 @@ create_ast <- function(code, context) {
 # 2. Directly gathers the variables.
 #    Stored in an instance of class Variable
 # ========================================================================
-create_ast_list <- function(b, variables) {
+create_ast_list <- function(b, variables, r_fct) {
   # Create ast
   error_found <- FALSE
   ast_list <- list()
   for (i in seq_along(b)) {
     all_vars_line <- all.vars(b[[i]])
     ast <- try({
-      process(b[[i]], "Start")
+      process(b[[i]], "Start", r_fct)
     })
     if (inherits(ast, "try-error")) {
       error_found <- TRUE
@@ -99,7 +112,7 @@ create_ast_list <- function(b, variables) {
     # Find variables
     gather_vars(ast, variables)
     ast_list[[i]] <- ast
-    if (!all(all_vars_line %in% c(variables$names, permitted_types()))) {
+    if (!all(all_vars_line %in% c(variables$names, c(permitted_base_types(), permitted_data_structs(r_fct))))) {
       error_found <- TRUE
       undefined_vars <- all_vars_line[which(!(all_vars_line %in% variables$names))]
       undefined_vars <- paste(undefined_vars, collapse = ", ")
@@ -115,11 +128,11 @@ create_ast_list <- function(b, variables) {
 # Run checks on:
 # operators, valid variables, and type declarations
 # ========================================================================
-run_checks <- function(ast_list) {
+run_checks <- function(ast_list, r_fct) {
   error_found <- FALSE
   for (i in seq_len(length(ast_list))) {
     ast <- ast_list[[i]]
-    traverse_ast(ast, action_error)
+    traverse_ast(ast, action_error, r_fct)
     # error found
     errors <- try(
       {
@@ -182,6 +195,7 @@ check_types <- function(variables) {
     },
     silent = TRUE
   )
+  print(var_types)
   if (inherits(var_types, "try-error")) {
     error_found <- TRUE
     pe("error: Could not check the variables")
@@ -334,9 +348,7 @@ create_fct_signature <- function(name_f, vars, return_type, r_fct) {
   }
 }
 
-translate_internally <- function(fct, parsed_args, name_f, r_fct) {
-  vars <- variables$new(parsed_args)
-
+translate_internally <- function(fct, vars, name_f, r_fct) {
   b <- body(fct)
   if (b[[1]] != "{") {
     stop("Please place the body of your function f within curly brackets")
@@ -349,7 +361,7 @@ translate_internally <- function(fct, parsed_args, name_f, r_fct) {
   error_found <- FALSE
 
   # Create ast list
-  res <- create_ast_list(b, vars)
+  res <- create_ast_list(b, vars, r_fct)
   error_found <- res$error_found
   ast_list <- res$ast_list
   if (error_found) {
@@ -357,7 +369,7 @@ translate_internally <- function(fct, parsed_args, name_f, r_fct) {
   }
 
   # Run checks
-  error_found <- run_checks(ast_list)
+  error_found <- run_checks(ast_list, r_fct)
   if (error_found) {
     stop()
   }
@@ -375,6 +387,7 @@ translate_internally <- function(fct, parsed_args, name_f, r_fct) {
   if (error_found) {
     stop()
   }
+  stop("bla")
 
   # Check the types of the arguments at least where possible
   error_found <- type_checking(ast_list, vars)
