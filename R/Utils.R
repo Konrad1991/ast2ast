@@ -1,47 +1,3 @@
-generate_new_names <- function(names, extension, all_vars) {
-  sapply(names, function(x) {
-    new_x <- paste0(x, extension)
-    counter <- 1
-    while(new_x %in% all_vars) {
-      new_x <- paste0(x, extension)
-      counter <- counter + 1
-      if (counter == 10) {
-        stop("Cannot generate a new name")
-      }
-    }
-    return(new_x)
-  })
-}
-
-# Assemble the types
-build_types <- function(toa, doa, roa, output) {
-  if (length(toa) == 0) {
-    return()
-  }
-
-  r <- data.frame(r = c(FALSE, TRUE), l = c("", "&"))
-  roa <- r[match(roa, r$r), 2]
-  types <- character(length = length(toa))
-  for (i in seq_along(doa)) {
-    if (doa[i] == "scalar") {
-      types[i] <- c_string(toa[i], roa[i], "")$value
-    } else if (doa[i] == "vector") {
-      if (output == "R") {
-        types[i] <- "SEXP"
-      } else {
-        types[i] <- c_string("etr::Vec<", toa[i], ">", roa[i], "")$value
-      }
-    } else if (doa[i] == "borrow") {
-      assert(output == "XPtr")
-      types[i] <- c_string(
-        "etr::Vec<", toa[i],
-        ", etr::Borrow<", toa[i], ">>", roa[i], ""
-      )$value
-    }
-  }
-  return(types)
-}
-
 # List of C++ keywords
 cpp_keywords <- function() {
   c(
@@ -68,153 +24,580 @@ cpp_keywords <- function() {
   )
 }
 
-permitted_fcts <- function() {
-  c(
-    "type", "=", "<-",
-    "[", "at", "[[",
-    "for", "while", "next", "break",
-    "c", ":",
-    "sin", "asin", "sinh",
-    "cos", "acos", "cosh",
-    "tan", "atan", "tanh",
-    "log", "sqrt",
-    "^", "+", "-", "*", "/",
-    "if", "{", "(",
-    "==", "!=", ">", ">=", "<", "<=",
-    "print", "return",
-    "vector", "matrix", "length", "dim",
-    "exp", "&&", "||", "!",
-    # TODO: add & and |
-    "is.na", "is.infinite", "is.finite",
-    "cmr", "power"
+# Singleton class holding all information of a function required
+# ========================================================================
+Functions <- R6::R6Class(
+  "Functions",
+  public = list(
+    function_names = NULL,
+    number_of_args = list(),
+    type_check_fcts = NULL,
+    is_infixs = NULL,
+    groups = NULL,
+    cpp_names = NULL,
+
+    initialize = function() {},
+    add = function(name, num_args,
+                   check_fct, is_infix, group, cpp_name) {
+      self$function_names <- c(self$function_names, name)
+      self$number_of_args <- c(self$number_of_args, list(num_args))
+      self$type_check_fcts <- c(self$type_check_fcts, check_fct)
+      self$is_infixs <- c(self$is_infixs, is_infix)
+      self$groups <- c(self$groups, group)
+      self$cpp_names <- c(self$cpp_names, cpp_name)
+    },
+
+    permitted_fcts = function() self$function_names,
+    expected_n_args = function(name) {
+      self$number_of_args[which(self$function_names == name)]
+    },
+    check_fct = function(name) {
+      self$type_check_fcts[which(self$function_names == name)]
+    },
+    get_cpp_name = function(name) {
+      self$cpp_names[which(self$function_names == name)]
+    },
+    is_infix = function(name) {
+      all(self$is_infixs[which(self$cpp_names == name)])
+      # NOTE: cpp names have to be used as this is called after the translation.
+      # all is used due to duplicates in the cpp code (=)
+    },
+    is_group_functions = function(name) {
+      self$groups[which(self$function_names == name)] == "function_node"
+    }
   )
+)
+function_registry_global <- Functions$new()
+mock <- function(node, variables) {}
+
+is_char <- function(node, variables) {
+  if (inherits(node, "variable_node")) {
+    type <- variables$variable_type_list[[node$name]]$type
+    if (type$base_type == "character") {
+      return(TRUE)
+      # TODO: check whether string can be assigned
+    }
+  }
+  if (inherits(node, "literal_node")) {
+    type <- determine_literal_type(node$name)
+    if (type == "character") {
+      return(TRUE)
+    }
+  }
+  FALSE
+}
+is_vec_or_mat <- function(node, variables) {
+  if (inherits(node, "variable_node")) {
+    type <- variables$variable_type_list[[node$name]]$type
+    if (type$data_struct %in% c("matrix", "vector")) {
+      return(TRUE)
+    }
+  }
+  FALSE
+}
+is_vec <- function(node, variables) {
+  if (inherits(node, "variable_node")) {
+    type <- variables$variable_type_list[[node$name]]$type
+    if (type$data_struct == "vector") {
+      return(TRUE)
+    }
+  }
+  FALSE
 }
 
-expected_n_args <- function() {
-  setNames(
-    c(
-      2, 2, 2,
-      2, 2,
-      3, 2, 0, 0,
-      NA, 2,
-      rep(1, 3),
-      rep(1, 3),
-      rep(1, 3),
-      rep(1, 2),
-      rep(2, 4),
-      "MINUS",
-      NA, 1, 1,
-      rep(2, 6),
-      1, NA,
-      2, 3, 1, 1,
-      1, 2, 2, 1,
-      rep(1, 3),
-      3, 2
-    ),
-    c(
-      "type", "=", "<-",
-      "[", "at",
-      "for", "while", "next", "break",
-      "c", ":",
-      "sin", "asin", "sinh",
-      "cos", "acos", "cosh",
-      "tan", "atan", "tanh",
-      "log", "sqrt",
-      "^", "+", "*", "/",
-      "-",
-      "if", "{", "(",
-      "==", "!=", ">", ">=", "<", "<=",
-      "print", "return",
-      "vector", "matrix", "length", "dim",
-      "exp", "&&", "||", "!",
-      "is.na", "is.infinite", "is.finite",
-      "cmr", "power"
-    )
-  )
-}
-
-expected_type_of_args <- function() {
-  list(
-    "at" = c("any_except_char", list("integer", "double")),
-    "for" = c("symbol", "any_except_char", "any_except_char"),
-    "vector" = c("character", "any_except_char"),
-    "cmr" = list(
-      c("double", "double_vector"),
-      "double_vector", "double_vector"
-    )
-  )
-}
+function_registry_global$add(
+  name = "type", num_args = 2,
+  check_fct = function(node, variables) {
+    if (!(inherits(node$left_node, "variable_node") && inherits(node$right_node, "variable_node"))) {
+      node$error <- error$new("the type function expects two variables (symbols) as arguments")
+    }
+  },
+  is_infix = FALSE, group = "binary_node", cpp_name = ""
+)
+function_registry_global$add(
+  name = "=", num_args = 2,
+  check_fct = mock, is_infix = TRUE,
+  group = "binary_node", cpp_name = "="
+)
+function_registry_global$add(
+  name = "<-", num_args = 2,
+  check_fct = mock, is_infix = TRUE,
+  group = "binary_node", cpp_name = "="
+)
+function_registry_global$add(
+  name = "[", num_args = 2,
+  check_fct = function(node, variables) {
+    if (!is_vec_or_mat(node$left_node, variables)) {
+      node$error <- error$new("You can only subset variables of type matrix or vector")
+    }
+    if (is_char(node$right_node)) {
+      node$error <- error$new("You cannot use character variables or literals for subsetting")
+    }
+  },
+  is_infix = FALSE, group = "binary_node", cpp_name = "etr::subset"
+)
+function_registry_global$add(
+  name = "at", num_args = 2,
+  check_fct = function(node, variables) {
+    if (!is_vec_or_mat(node$left_node, variables)) {
+      node$error <- error$new("You can only subset variables of type matrix or vector")
+    }
+    if (is_char(node$right_node)) {
+      node$error <- error$new("You cannot use character variables or literals for subsetting")
+    }
+  },
+  is_infix = FALSE, group = "binary_node", cpp_name = "etr::at"
+)
+function_registry_global$add(
+  name = "[[", num_args = 2,
+  check_fct = function(node, variables) {
+    if (!is_vec_or_mat(node$left_node, variables)) {
+      node$error <- error$new("You can only subset variables of type matrix or vector")
+    }
+    if (is_char(node$right_node)) {
+      node$error <- error$new("You cannot use character variables or literals for subsetting")
+    }
+  },
+  is_infix = FALSE, group = "binary_node", cpp_name = "etr::at"
+)
+function_registry_global$add(
+  name = "for", num_args = 3,
+  check_fct = function(node, variables) {
+    if (!inherits(node$i, "variable_node")) {
+      node$error <- error$new(sprintf("The index variable cannot be of type %s", class(node$i)))
+    }
+  },
+  is_infix = FALSE, group = "for_node", cpp_name = "for"
+)
+function_registry_global$add(
+  name = "while", num_args = 2,
+  check_fct = mock, is_infix = FALSE,
+  group = "function_node", cpp_name = "while" # TODO: require this a own node?
+)
+function_registry_global$add(
+  name = "next", num_args = 0,
+  check_fct = mock, is_infix = FALSE,
+  group = "nullary_node", cpp_name = "continue"
+)
+function_registry_global$add(
+  name = "break", num_args = 0,
+  check_fct = mock, is_infix = FALSE,
+  group = "nullary_node", cpp_name = "break"
+)
+function_registry_global$add(
+  name = "c", num_args = NA,
+  check_fct = function(node, variables) {
+    for (i in seq_along(node$args)) {
+      if (is_char(node$args[[i]], variables)) {
+        node$error <- error$new("You cannot use character entries in c")
+        return()
+      }
+    }
+  },
+  is_infix = FALSE, group = "function_node", cpp_name = "etr::c"
+)
+function_registry_global$add(
+  name = ":", num_args = 2,
+  check_fct = function(node, variables) {
+    if (is_char(node$left_node, variables)) {
+      node$error <- error$new("You cannot use character entries in :")
+    }
+    if (is_char(node$right_node, variables)) {
+      node$error <- error$new("You cannot use character entries in :")
+    }
+  },
+  is_infix = FALSE, group = "binary_node", cpp_name = "etr::colon"
+)
+function_registry_global$add(
+  name = "sin", num_args = 1,
+  check_fct = function(node, variables) {
+    if (is_char(node$obj, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sinus"
+)
+function_registry_global$add(
+  name = "asin", num_args = 1,
+  check_fct = function(node, variables) {
+    if (is_char(node$obj, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::asinus"
+)
+function_registry_global$add(
+  name = "sinh", num_args = 1,
+  check_fct = function(node, variables) {
+    if (is_char(node$obj, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sinush"
+)
+function_registry_global$add(
+  name = "cos", num_args = 1,
+  check_fct = function(node, variables) {
+    if (is_char(node$obj, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::cosinus"
+)
+function_registry_global$add(
+  name = "acos", num_args = 1,
+  check_fct = function(node, variables) {
+    if (is_char(node$obj, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::acosinus"
+)
+function_registry_global$add(
+  name = "cosh", num_args = 1,
+  check_fct = function(node, variables) {
+    if (is_char(node$obj, variables)) {
+      node$error <- error::new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::cosinush"
+)
+function_registry_global$add(
+  name = "tan", num_args = 1,
+  check_fct = function(node, variables) {
+    if (is_char(node$obj, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::tangens"
+)
+function_registry_global$add(
+  name = "atan", num_args = 1,
+  check_fct = function(node, variables) {
+    if (is_char(node$obj, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::atangens"
+)
+function_registry_global$add(
+  name = "tanh", num_args = 1,
+  check_fct = function(node, variables) {
+    if (is_char(node$obj, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::tangensh"
+)
+function_registry_global$add(
+  name = "log", num_args = 1,
+  check_fct = function(node, variables) {
+    if (is_char(node$obj, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::ln" # TODO: requires change to log
+)
+function_registry_global$add(
+  name = "sqrt", num_args = 1,
+  check_fct = function(node, variables) {
+    if (is_char(node$obj, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sqroot"
+)
+function_registry_global$add(
+  name = "exp", num_args = 1,
+  check_fct = function(node, variables) {
+    if (is_char(node$obj, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::exp"
+)
+function_registry_global$add(
+  name = "^", num_args = 2,
+  check_fct = function(node, variables) {
+    if (is_char(node$left_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+    if (is_char(node$right_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = TRUE, group = "binary_node", cpp_name = "etr::power" # TODO: is infix argument used during translation to C++?
+)
+function_registry_global$add(
+  name = "+", num_args = 2,
+  check_fct = function(node, variables) {
+    if (is_char(node$left_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+    if (is_char(node$right_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = TRUE, group = "binary_node", cpp_name = "+"
+)
+function_registry_global$add(
+  name = "-", num_args = c(1, 2),
+  check_fct = function(node, variables) {
+    if (is_char(node$left_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+    if (is_char(node$right_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = TRUE, group = "binary_node", cpp_name = "-"
+)
+function_registry_global$add(
+  name = "*", num_args = 2,
+  check_fct = function(node, variables) {
+    if (is_char(node$left_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+    if (is_char(node$right_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = TRUE, group = "binary_node", cpp_name = "*"
+)
+function_registry_global$add(
+  name = "/", num_args = 2,
+  check_fct = function(node, variables) {
+    if (is_char(node$left_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+    if (is_char(node$right_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = TRUE, group = "binary_node", cpp_name = "/"
+)
+# NOTE: somewhen add checks that it evaluates to logical
+function_registry_global$add(
+  name = "if", num_args = NA,
+  check_fct = mock, is_infix = FALSE, group = "if_node", cpp_name = "if"
+)
+function_registry_global$add(
+  name = "{", num_args = 1,
+  check_fct = mock, is_infix = FALSE, group = "block_node", cpp_name = "{"
+)
+function_registry_global$add(
+  name = "(", num_args = 1,
+  check_fct = mock, is_infix = FALSE, group = "unary_node", cpp_name = "("
+)
+function_registry_global$add(
+  name = "==", num_args = 2,
+  check_fct = function(node, variables) {
+    if (is_char(node$left_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+    if (is_char(node$right_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = TRUE, group = "binary_node", cpp_name = "=="
+)
+function_registry_global$add(
+  name = "!=", num_args = 2,
+  check_fct = function(node, variables) {
+    if (is_char(node$left_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+    if (is_char(node$right_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = TRUE, group = "binary_node", cpp_name = "!="
+)
+function_registry_global$add(
+  name = ">", num_args = 2,
+  check_fct = function(node, variables) {
+    if (is_char(node$left_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+    if (is_char(node$right_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = TRUE, group = "binary_node", cpp_name = ">"
+)
+function_registry_global$add(
+  name = ">=", num_args = 2,
+  check_fct = function(node, variables) {
+    if (is_char(node$left_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+    if (is_char(node$right_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = TRUE, group = "binary_node", cpp_name = ">="
+)
+function_registry_global$add(
+  name = "<", num_args = 2,
+  check_fct = function(node, variables) {
+    if (is_char(node$left_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+    if (is_char(node$right_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = TRUE, group = "binary_node", cpp_name = "<"
+)
+function_registry_global$add(
+  name = "<=", num_args = 2,
+  check_fct = function(node, variables) {
+    if (is_char(node$left_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+    if (is_char(node$right_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = TRUE, group = "binary_node", cpp_name = "<="
+)
+# TODO: add & and |
+function_registry_global$add(
+  name = "&&", num_args = 2,
+  check_fct = function(node, variables) {
+    if (is_char(node$left_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+    if (is_char(node$right_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = TRUE, group = "binary_node", cpp_name = "&&"
+)
+function_registry_global$add(
+  name = "||", num_args = 2,
+  check_fct = function(node, variables) {
+    if (is_char(node$left_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+    if (is_char(node$right_node, variables)) {
+      node$error <- error$new(sprintf("You cannot use character entries in %s", node$operator))
+    }
+  },
+  is_infix = TRUE, group = "binary_node", cpp_name = "||"
+)
+function_registry_global$add(
+  name = "print", num_args = 1,
+  check_fct = mock, is_infix = FALSE, group = "unary_node", cpp_name = "etr::print"
+)
+function_registry_global$add(
+  name = "return", num_args = c(0, 1),
+  check_fct = mock, is_infix = FALSE, group = "unary_node", cpp_name = "return"
+)
+function_registry_global$add(
+  name = "vector", num_args = 2,
+  check_fct = function(node, variables) {
+    if (!is_char(node$left_node)) {
+     node$error <- error$new("mode of vector has to be of type character")
+    }
+  },
+  is_infix = FALSE, group = "function_node", cpp_name = "etr::vector"
+)
+function_registry_global$add(
+  name = "matrix", num_args = 3,
+  check_fct = function(node, variables) {
+    if (is_char(node$args[[1]])) {
+     node$error <- error$new("You cannot fill a matrix with character entries")
+    }
+  },
+  is_infix = FALSE, group = "function_node", cpp_name = "etr::matrix"
+)
+function_registry_global$add(
+  name = "length", num_args = 1,
+  check_fct = function(node, variables) {
+    if (!is_vec_or_mat(node$obj, variables)) {
+      node$error <- error$new("You can only call length on variables of type matrix or vector")
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::length"
+)
+function_registry_global$add(
+  name = "dim", num_args = 1,
+  check_fct = function(node, variables) {
+    if (!is_vec_or_mat(node$obj, variables)) {
+      node$error <- error$new("You can only call dim on variables of type matrix or vector")
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::dim"
+)
+function_registry_global$add(
+  name = "!", num_args = 1,
+  check_fct = function(node, variables) {
+    if (!is_vec_or_mat(node$obj, variables)) {
+      node$error <- error$new("You can only call dim on variables of type matrix or vector")
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "!"
+)
+function_registry_global$add(
+  name = "is.na", num_args = 1,
+  check_fct = function(node, variables) {
+    if (!is_vec_or_mat(node$obj, variables)) {
+      node$error <- error$new("You can only call dim on variables of type matrix or vector")
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::isNA"
+)
+function_registry_global$add(
+  name = "is.infinite", num_args = 1,
+  check_fct = function(node, variables) {
+    if (!is_vec_or_mat(node$obj, variables)) {
+      node$error <- error$new("You can only call dim on variables of type matrix or vector")
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::isInfinite"
+)
+function_registry_global$add(
+  name = "is.finite", num_args = 1,
+  check_fct = function(node, variables) {
+    if (!is_vec_or_mat(node$obj, variables)) {
+      node$error <- error$new("You can only call dim on variables of type matrix or vector")
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::isFinite"
+)
+function_registry_global$add(
+  name = "cmr", num_args = 3,
+  check_fct = function(node, variables) {
+    if (!is_vec(node$args[[2]], variables)) {
+      node$error <- error$new("The second argument to cmr has to be a vector")
+    }
+    if (!is_vec(node$args[[3]], variables)) {
+      node$error <- error$new("The third argument to cmr has to be a vector")
+    }
+    if (inherits(node, "variable_node")) {
+      type <- variables$variable_type_list[[str2lang(node$args[[2]]$name)]]$type
+      if (type$base_type != "double") {
+        node$error <- error$new("Vectors of second argument to cmr does not contain doubles")
+      }
+    }
+    if (inherits(node, "variable_node")) {
+      type <- variables$variable_type_list[[str2lang(node$args[[3]]$name)]]$type
+      if (type$base_type != "double") {
+        node$error <- error$new("Vectors of third argument to cmr does not contain doubles")
+      }
+    }
+  },
+  is_infix = FALSE, group = "function_node", cpp_name = "etr::cmr"
+)
 
 # Named arguments
+# TODO: add this also into function_registry_global
 named_args <- function() {
   list(
     "vector" = c("mode", "length"),
     "matrix" = c("data", "nrow", "ncol")
   )
-}
-
-
-# Defines the function with more than two arguments
-function_fcts <- function() {
-  c("vector", "matrix", "cmr", "c")
-}
-
-name_pairs <- function() {
-  setNames(
-    c(
-      "type", "=", "=",
-      "etr::subset", "etr::at",
-      "for", "while", "continue", "break",
-      "etr::coca", "etr::colon",
-      "etr::sinus", "etr::asinus", "etr::sinush",
-      "etr::cosinus", "etr::acosinus", "etr::cosinush",
-      "etr::tangens", "etr::atangens", "etr::tangensh",
-      "etr::ln", "etr::sqroot",
-      "etr::power", "+", "-", "*", "/",
-      "if", "{", "(",
-      "==", "!=", ">", ">=", "<", "<=",
-      "etr::print", "return",
-      "etr::vector", "etr::matrix", "etr::length", "etr::dim",
-      "etr::exp", "&&", "||", "!",
-      "etr::isNA", "etr::isInfinite", "etr::isFinite",
-      "etr::cmr", "etr::power"
-    ),
-    c(
-      "type", "=", "<-",
-      "[", "at",
-      "for", "while", "next", "break",
-      "c", ":",
-      "sin", "asin", "sinh",
-      "cos", "acos", "cosh",
-      "tan", "atan", "tanh",
-      "log", "sqrt",
-      "^", "+", "-", "*", "/",
-      "if", "{", "(",
-      "==", "!=", ">", ">=", "<", "<=",
-      "print", "return",
-      "vector", "matrix", "length", "dim",
-      "exp", "&&", "||", "!",
-      "is.na", "is.infinite", "is.finite",
-      "cmr", "power"
-    )
-  )
-}
-
-# Function to combine strings
-combine_strings <- function(string_list, collapse = "\n") {
-  paste0(string_list, collapse = collapse)
-}
-
-# Function to distinguish between infix and function calls
-infix_or_function <- function(operator) {
-  infix_list <- c(
-    "+", "-", "*", "/", "^", ">", "<", ">=", "<=", "==", "!=",
-    "&", "|", "&&", "||", ":", "<-", "=", "^"
-  )
-  if (operator %in% infix_list) {
-    return("infix")
-  }
-  return("function")
 }
 
 permitted_base_types <- function() {
@@ -240,69 +623,43 @@ permitted_data_structs <- function(r_fct) {
   }
 }
 
-convert_types_to_etr_types <- function(type) {
-  list(
-    "void" = "void",
-    "logical" = "bool",
-    "integer" = "int", "int" = "int",
-    "double" = "double",
-    "logical_vector" = "etr::Vec<bool>", "lv" = "etr::Vec<bool>",
-    "integer_vector" = "etr::Vec<int>", "iv" = "etr::Vec<int>",
-    "double_vector" = "etr::Vec<double>", "dv" = "etr::Vec<double>",
-    "logical_borrow" = "etr::Vec<bool, etr::Borrow<bool>>", "lb" = "etr::Vec<bool, etr::Borrow<bool>>",
-    "integer_borrow" = "etr::Vec<int, etr::Borrow<int>>", "ib" = "etr::Vec<int, etr::Borrow<int>>",
-    "double_borrow" = "etr::Vec<double, etr::Borrow<double>>", "db" = "etr::Vec<double, etr::Borrow<double>>"
-  )[[type]]
-}
-
-convert_vecs_to_borrows <- function(type) {
-  res <- list(
-    "logical_vector" = "etr::Vec<bool, etr::Borrow<bool>>", "lv" = "etr::Vec<bool, etr::Borrow<bool>>",
-    "integer_vector" = "etr::Vec<int, etr::Borrow<int>>", "iv" = "etr::Vec<int, etr::Borrow<int>>",
-    "double_vector" = "etr::Vec<double, etr::Borrow<double>>", "dv" = "etr::Vec<double, etr::Borrow<double>>"
-  )
-  new_type <- try({
-    res[[type]]
-  })
-  if (inherits(new_type , "try-error")) {
-    return(convert_types_to_etr_types(type))
+convert_types_to_etr_types <- function(base_type, data_struct, r_fct, indent = "") {
+  if (data_struct == "scalar") {
+    list(
+      "void" = "void",
+      "R_NilValue" = "R_NilValue",
+      "logical" = "bool",
+      "integer" = "int", "int" = "int",
+      "double" = "double")[base_type]
+  } else if (data_struct %in% c("vector", "matrix", "vec", "mat")) {
+    data_struct <- c(vector = "etr::Vec", vec = "etr::Vec", matrix = "etr::Mat", mat = "etr::Mat")[data_struct]
+    return(paste0(indent, data_struct, "<", base_type, ">"))
+  } else if (data_struct %in% c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat") && !r_fct) {
+    data_struct <- c(borrow_vector = "etr::Vec", borrow_vec = "etr::Vec",  borrow_mattrix = "etr::Mat", borrow_mat = "etr::Mat")[data_struct]
+    return(paste0(indent, data_struct, "<", base_type, ", etr::Borrow<", base_type, ">>"))
+  } else if (data_struct %in% c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat") && !r_fct) {
+    data_struct <- c(vector = "etr::Vec", vec = "etr::Vec", matrix = "etr::Mat", mat = "etr::Mat")[data_struct]
+    return(paste0(indent, data_struct, "<", base_type, ", etr::BorrowSEXP<", base_type, ">>"))
   }
-  return(new_type)
 }
 
-converter_functions <- function(type) {
-  list(
-    "logical" = "etr::SEXP2Bool", "integer" = "etr::SEXP2Int", "double" = "etr::SEX2Double",
-    "l" = "etr::SEXP2Bool", "i" = "etr::SEXP2Int", "d" = "etr::SEX2Double",
-    "lv" = "etr::SEXP2BoolVec",
-    "iv" = "etr::SEXP2IntVec",
-    "dv" = "etr::SEXP2DoubleVec",
-    "logical_vector" = "etr::SEXP2BoolVec",
-    "integer_vector" = "etr::SEXP2IntVec",
-    "double_vector" = "etr::SEXP2DoubleVec",
-    "double_borrow", "integer_borrow", "logical_borrow",
-    "lb" = "etr::SEXP2BoolVec",
-    "ib" = "etr::SEXP2IntVec",
-    "db" = "etr::SEXP2DoubleVec",
-    "logical_borrow" = "etr::SEXP2BoolBorrow",
-    "integer_borrow" = "etr::SEXP2IntBorrow",
-    "double_borrow" = "etr::SEXP2DoubleBorrow"
-  )[type]
+# Function to combine strings
+combine_strings <- function(string_list, collapse = "\n") {
+  paste0(string_list, collapse = collapse)
 }
-
-converter_functions_ref <- function(type) {
-  res <- list(
-    "logical_vector" = "logical_borrow", "lv" = "logical_borrow",
-    "integer_vector" = "integer_borrow", "iv" = "integer_borrow",
-    "double_vector" = "double_borrow", "dv" = "double_borrow"
-  )
-  new_type <- try({
-    res[[type]]
+generate_new_names <- function(names, extension, all_vars) {
+  sapply(names, function(x) {
+    new_x <- paste0(x, extension)
+    counter <- 1
+    while(new_x %in% all_vars) {
+      new_x <- paste0(x, extension)
+      counter <- counter + 1
+      if (counter == 10) {
+        stop("Cannot generate a new name")
+      }
+    }
+    return(new_x)
   })
-  if (inherits(new_type , "try-error")) {
-    return(converter_functions(type))
-  }
-  return(converter_functions(new_type))
 }
 
 remove_blank_lines <- function(chars) {
@@ -313,10 +670,6 @@ remove_blank_lines <- function(chars) {
   Filter(Negate(empty_line), chars) |> combine_strings("\n")
 }
 
-# Stuff to create
-# - includes
-# - Function signature
-# - Variable declarations
 r_fct_sig <- function() {
   combine_strings(
     c("// [[Rcpp::depends(ast2ast)]]",
@@ -326,138 +679,16 @@ r_fct_sig <- function() {
       "// [[Rcpp::export]]\n"), "\n"
   )
 }
-create_signature_r <- function(vars_types_df, name_f) {
-  if (is.character(vars_types_df)) {
-    signature <- paste0("SEXP ", name_f, "() {", collapse = "")
-    return(signature)
-  }
-  vars_types_df <- vars_types_df[vars_types_df$function_input, ]
-  new_names <- vars_types_df$new_name
-  if (is.null(new_names) || identical(new_names, character())) {
-    signature <- paste0("SEXP ", name_f, "() {", collapse = "")
-    return(signature)
-  }
-  type <- "SEXP"
-  args <- paste(type, new_names , collapse = ", ")
-  signature <- paste0("SEXP ", name_f, "(", 
-    args, ") {", collapse = ""
-  )
-}
-create_variable_declarations_r <- function(vars_types_df) {
-  if (class(vars_types_df) == "character") {
-    return("")
-  }
-  res <- apply(vars_types_df, 1, function(i) {
-    res <- NULL
-    if (i["function_input"]) {
-      if (i["are_ref"]) {
-        cast_fct <- converter_functions_ref(i["type"])
-        t <- convert_vecs_to_borrows(i["type"])
-        res <- paste0("\t", t, " ", i["name"], " = ", 
-          cast_fct, "(", i["new_name"], ");")
-      } else {
-        cast_fct <- converter_functions(i["type"])
-        t <- convert_types_to_etr_types(i["type"])
-        res <- paste0("\t", t, " ", i["name"], " = ", 
-          cast_fct, "(", i["new_name"], ");")
-      }
-    } else {
-      t <- i["type"] |> convert_types_to_etr_types()
-      n <- i["name"]
-      res <- paste0("\t", t, " ", n, ";")
-    }
-    res
-  })
-  combine_strings(res, "\n")
-}
-
-xptr_sig <- function(fct_name) {
+xptr_sig <- function() {
   combine_strings(
     c(
       "// [[Rcpp::depends(ast2ast)]]",
       "// [[Rcpp::depends(RcppArmadillo)]]",
       "// [[Rcpp::plugins(cpp2a)]]",
       '#include "etr.hpp"\n',
-      "// [[Rcpp::export]]"
+      "// [[Rcpp::export]]",
+      "SEXP getXPtr();\n"
     ),
     "\n"
   )
-}
-create_arg_type_pairs <- function(vars_types_df) {
-  if (class(vars_types_df) == "character") {
-    return("")
-  }
-  df <- vars_types_df[vars_types_df$function_input, ]
-  arg_types <- apply(df, 1, function(obj) {
-    res <- convert_types_to_etr_types(obj["type"])
-    if (obj["are_ref"]) {
-      res <- paste(res, "&", sep = "")
-    }
-    if (obj["are_const"]) {
-      res <- paste("const ", res, sep = "")
-    }
-    paste(res, obj["name"], sep = " ")
-  })
-}
-create_signature_xptr <- function(vars_types_df, name_f, return_type, forward_decl = FALSE) {
-  arg_types <- create_arg_type_pairs(vars_types_df)
-  arg_types <- paste(arg_types, collapse = ", ")
-  return_type <- convert_types_to_etr_types(return_type)
-  if (forward_decl) {
-    return(
-      signature <- paste0(return_type, " ",
-        name_f, "(", arg_types, ");")
-    )
-  }
-  paste0(return_type, " ",
-    name_f, "(", arg_types, ") {")
-}
-create_variable_declarations_xptr <- function(vars_types_df) {
-  if (class(vars_types_df) == "character") {
-    return("")
-  }
-  df <- vars_types_df[!vars_types_df$function_input, ]
-  if (nrow(df) == 0) return("")
-  apply(df, 1, function(x) {
-    t <- x[["type"]] |> convert_types_to_etr_types()
-    n <- x[["name"]]
-    paste0("\t", t, " ", n, ";")
-  })
-}
-get_xptr <- function(vars_types_df, name_fct, new_name, return_type) {
-  arg_types <- create_arg_type_pairs(vars_types_df)
-  forward_decl <- create_signature_xptr(vars_types_df, new_name, return_type, TRUE)
-  typedef_line <- NULL
-  return_xptr_fct <- combine_strings(c("SEXP ", name_fct, "()", ""), "")
-  if (length(arg_types) == 0) {
-    typedef_line <- combine_strings(
-      c(
-        "typedef ", return_type,
-        " (*fct_ptr) (", ");", ""
-      ), " ")
-  } else {
-    typedef_line <- combine_strings(
-      c(
-        "typedef ", return_type,
-        " (*fct_ptr) (", combine_strings(arg_types, ", "), ");", ""
-      ), " ")
-  }
-  body <- combine_strings(
-    c(
-    "\t",
-    "return Rcpp::XPtr<fct_ptr>(new fct_ptr(&", new_name, "));", ""
-    ), ""
-  )
-  combine_strings(c(
-    paste0(return_xptr_fct, ";"), "\n",
-    forward_decl,
-    typedef_line,
-    paste0(return_xptr_fct, " {"), "\n",
-    body,
-    "}"), "\n")
-}
-
-# Helper dataframe empty
-df_empty <- function(df) {
-  (ncol(df) == 0) || (nrow(df) == 0)
 }

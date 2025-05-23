@@ -15,17 +15,36 @@
 
 const Vec is an Operation
 */
-#include "../BufferVector.hpp"
+#include "../DataStructures.hpp"
 #include "../Core/Traits.hpp"
-#include "AllocationUtils.hpp"
 #include <type_traits>
 
 namespace etr {
 
-template <typename T> inline auto colonInternal(T start, T end) {
+template<typename T>
+inline auto ConvertValueColon(const T& obj) {
+  using DecayedT = Decayed<T>;
+
+  // TODO: adapt other static_assert messages in the same way
+  static_assert(!IsBool<DecayedT>,
+  "\n\n[etr::colon error]\n"
+  "You passed a boolean value to the ':' operator.\n"
+  "This is not allowed in R and not supported here.\n"
+  "Please use integer or double values only.\n\n");
+
+  if constexpr(IsArithV<DecayedT>) {
+    return obj;
+  } else {
+    ass<": accepts only vector of length 1">(obj.size() == 1);
+    return obj[0];
+  }
+}
+
+template <typename DataType, typename S, typename E> inline auto colonInternal(S& start, E& end) {
   if (start < end) {
-    std::size_t length = convertSize(end - start + 1);
-    Vec<T, Buffer<T, RBufferTrait>> ret(SI{length});
+    std::size_t length = static_cast<std::size_t>(end - start + 1);
+    ass<"invalid start or end values as argument to colon(:)">(length >= 1);
+    Vec<DataType, Buffer<DataType, RBufferTrait>> ret(SI{length});
     std::size_t counter = 0;
     while (start <= end) {
       ret.d.p[counter] = start;
@@ -34,8 +53,9 @@ template <typename T> inline auto colonInternal(T start, T end) {
     }
     return ret;
   } else {
-    std::size_t length = convertSize(start - end + 1);
-    Vec<T, Buffer<T, RBufferTrait>> ret(SI{length});
+    std::size_t length = static_cast<std::size_t>(start - end + 1);
+    ass<"invalid start or end values as argument to colon(:)">(length >= 1);
+    Vec<DataType, Buffer<DataType, RBufferTrait>> ret(SI{length});
     std::size_t counter = 0;
     while (end <= start) {
       ret.d.p[counter] = start;
@@ -47,204 +67,11 @@ template <typename T> inline auto colonInternal(T start, T end) {
 }
 
 template <typename A, typename O>
-  requires IsArithV<A> && IsArithV<O>
-inline auto colon(A start, O end) {
-  using DataType = typename std::common_type<A, O>::type;
-  if constexpr (IS<A, DataType> && IS<O, DataType>) {
-    return colonInternal(start, end);
-  } else if constexpr (!IS<A, DataType> &&
-                       IS<O, DataType>) {
-    return colonInternal(static_cast<DataType>(start), end);
-  } else if constexpr (IS<A, DataType> &&
-                       !IS<O, DataType>) {
-    return colonInternal(start, static_cast<DataType>(end));
-  }
-}
-
-template <typename A, typename O>
-  requires IsVec<A> && IsArithV<O>
-inline auto colon(A &start, O end) {
-  warn<"expression has more than one element only the first is used">(
-      start.size() == 1);
-  using DataTypeA = typename ExtractDataType<A>::RetType;
-  using DataType = typename std::common_type<DataTypeA, O>::type;
-  if constexpr (IS<DataTypeA, DataType> &&
-                IS<O, DataType>) {
-    return colonInternal(start[0], end);
-  } else if constexpr (!IS<DataTypeA, DataType> &&
-                       IS<O, DataType>) {
-    return colonInternal(static_cast<DataType>(start[0]), end);
-  } else if constexpr (IS<DataTypeA, DataType> &&
-                       !IS<O, DataType>) {
-    return colonInternal(start[0], static_cast<DataType>(end));
-  }
-}
-
-template <typename A, typename O>
-  requires(IsVecRorCalc<A> || IsVec<A>) && IsArithV<O>
-inline auto colon(const A &start, O end) {
-  warn<"expression has more than one element only the first is used">(
-      start.size() == 1);
-  using DataTypeA = typename ExtractDataType<A>::RetType;
-  using DataType = typename std::common_type<DataTypeA, O>::type;
-  if constexpr (IS<DataTypeA, DataType> &&
-                IS<O, DataType>) {
-    DataType temp = start[0];
-    return colonInternal(temp, end);
-  } else if constexpr (!IS<DataTypeA, DataType> &&
-                       IS<O, DataType>) {
-    DataType temp = static_cast<DataType>(start[0]);
-    return colonInternal(temp, end);
-  } else if constexpr (IS<DataTypeA, DataType> &&
-                       !IS<O, DataType>) {
-    DataType temp = start[0];
-    return colonInternal(temp, static_cast<DataType>(end));
-  }
-}
-
-template <typename A, typename O>
-  requires IsArithV<A> && IsVec<O>
-inline auto colon(A start, O &end) {
-  warn<"expression has more than one element only the first is used">(
-      end.size() == 1);
-
-  using DataTypeO = typename ExtractDataType<O>::RetType;
-  using DataType = typename std::common_type<A, DataTypeO>::type;
-  if constexpr (IS<A, DataType> &&
-                IS<DataTypeO, DataType>) {
-    return colonInternal(start, end[0]);
-  } else if constexpr (!IS<A, DataType> &&
-                       IS<DataTypeO, DataType>) {
-    return colonInternal(static_cast<DataType>(start), end[0]);
-  } else if constexpr (IS<A, DataType> &&
-                       !IS<DataTypeO, DataType>) {
-    return colonInternal(start, static_cast<DataType>(end[0]));
-  }
-}
-
-template <typename A, typename O>
-  requires IsArithV<A> && (IsVecRorCalc<O> || IsVec<O>)
-inline auto colon(A start, const O &end) {
-  warn<"expression has more than one element only the first is used">(
-      end.size() == 1);
-  using DataTypeO = typename ExtractDataType<O>::RetType;
-  using DataType = typename std::common_type<A, DataTypeO>::type;
-  if constexpr (IS<A, DataType> &&
-                IS<DataTypeO, DataType>) {
-    DataType temp = end[0];
-    return colonInternal(start, temp);
-  } else if constexpr (!IS<A, DataType> &&
-                       IS<DataTypeO, DataType>) {
-    DataType temp = end[0];
-    return colonInternal(static_cast<DataType>(start), temp);
-  } else if constexpr (IS<A, DataType> &&
-                       !IS<DataTypeO, DataType>) {
-    DataType temp = end[0];
-    return colonInternal(start, static_cast<DataType>(temp));
-  }
-}
-
-template <typename A, typename O>
-  requires IsVec<A> && IsVec<O>
-inline auto colon(A &start, O &end) {
-  warn<"expression has more than one element only the first is used">(
-      start.size() == 1);
-  warn<"expression has more than one element only the first is used">(
-      end.size() == 1);
-  using DataTypeA = typename ExtractDataType<A>::RetType;
-  using DataTypeO = typename ExtractDataType<O>::RetType;
-  using DataType = typename std::common_type<DataTypeA, DataTypeO>::type;
-  if constexpr (IS<DataTypeA, DataType> &&
-                IS<DataTypeO, DataType>) {
-    return colonInternal(start[0], end[0]);
-  } else if constexpr (!IS<DataTypeA, DataType> &&
-                       IS<DataTypeO, DataType>) {
-    return colonInternal(static_cast<DataType>(start[0]), end[0]);
-  } else if constexpr (IS<DataTypeA, DataType> &&
-                       !IS<DataTypeO, DataType>) {
-    return colonInternal(start[0], static_cast<DataType>(end[0]));
-  }
-}
-
-template <typename A, typename O>
-  requires(IsVecRorCalc<A> || IsVec<A>) && IsVec<O>
-inline auto colon(const A &start, O &end) {
-  warn<"expression has more than one element only the first is used">(
-      start.size() == 1);
-  warn<"expression has more than one element only the first is used">(
-      end.size() == 1);
-  using DataTypeA = typename ExtractDataType<A>::RetType;
-  using DataTypeO = typename ExtractDataType<O>::RetType;
-  using DataType = typename std::common_type<DataTypeA, DataTypeO>::type;
-  if constexpr (IS<DataTypeA, DataType> &&
-                IS<DataTypeO, DataType>) {
-    DataType tempStart = start[0];
-    DataType tempEnd = end[0];
-    return colonInternal(tempStart, tempEnd);
-  } else if constexpr (!IS<DataTypeA, DataType> &&
-                       IS<DataTypeO, DataType>) {
-    DataType tempStart = start[0];
-    DataType tempEnd = end[0];
-    return colonInternal(static_cast<DataType>(tempStart), tempEnd);
-  } else if constexpr (IS<DataTypeA, DataType> &&
-                       !IS<DataTypeO, DataType>) {
-    DataType tempStart = start[0];
-    DataType tempEnd = end[0];
-    return colonInternal(tempStart, static_cast<DataType>(tempEnd));
-  }
-}
-
-template <typename A, typename O>
-  requires IsVec<A> && (IsVecRorCalc<O> || IsVec<O>)
-inline auto colon(A &start, const O &end) {
-  warn<"expression has more than one element only the first is used">(
-      start.size() == 1);
-  warn<"expression has more than one element only the first is used">(
-      end.size() == 1);
-  using DataTypeA = typename ExtractDataType<A>::RetType;
-  using DataTypeO = typename ExtractDataType<O>::RetType;
-  using DataType = typename std::common_type<DataTypeA, DataTypeO>::type;
-  if constexpr (IS<DataTypeA, DataType> &&
-                IS<DataTypeO, DataType>) {
-    DataType tempEnd = end[0];
-    return colonInternal(start[0], tempEnd);
-  } else if constexpr (!IS<DataTypeA, DataType> &&
-                       IS<DataTypeO, DataType>) {
-    DataType tempEnd = end[0];
-    return colonInternal(static_cast<DataType>(start[0]), tempEnd);
-  } else if constexpr (IS<DataTypeA, DataType> &&
-                       !IS<DataTypeO, DataType>) {
-    DataType tempEnd = end[0];
-    return colonInternal(start[0], static_cast<DataType>(tempEnd));
-  }
-}
-
-template <typename A, typename O>
-  requires(IsVec<A> || IsVecRorCalc<A>) && (IsVecRorCalc<O> || IsVec<O>)
-inline auto colon(const A &start, const O &end) {
-  warn<"expression has more than one element only the first is used">(
-      start.size() == 1);
-  warn<"expression has more than one element only the first is used">(
-      end.size() == 1);
-  using DataTypeA = typename ExtractDataType<A>::RetType;
-  using DataTypeO = typename ExtractDataType<O>::RetType;
-  using DataType = typename std::common_type<DataTypeA, DataTypeO>::type;
-  if constexpr (IS<DataTypeA, DataType> &&
-                IS<DataTypeO, DataType>) {
-    DataType tempStart = start[0];
-    DataType tempEnd = end[0];
-    return colonInternal(tempStart, tempEnd);
-  } else if constexpr (!IS<DataTypeA, DataType> &&
-                       IS<DataTypeO, DataType>) {
-    DataType tempStart = start[0];
-    DataType tempEnd = end[0];
-    return colonInternal(static_cast<DataType>(tempStart), tempEnd);
-  } else if constexpr (IS<DataTypeA, DataType> &&
-                       !IS<DataTypeO, DataType>) {
-    DataType tempStart = start[0];
-    DataType tempEnd = end[0];
-    return colonInternal(tempStart, static_cast<DataType>(tempEnd));
-  }
+inline auto colon(const A& start,const O& end) {
+  auto s = ConvertValueColon(start);
+  auto e = ConvertValueColon(end);
+  using DataType = typename std::common_type<decltype(s), decltype(e)>::type;
+  return colonInternal<DataType>(s, e);
 }
 
 } // namespace etr

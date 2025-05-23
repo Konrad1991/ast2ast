@@ -1,9 +1,7 @@
-#ifndef SUBSETTING
-#define SUBSETTING
+#ifndef SUBSETTING_ETR_HPP
+#define SUBSETTING_ETR_HPP
 
-#include "Subsetting/MatrixSubsetting.hpp"
-#include "Subsetting/ScalarSubsetting.hpp"
-#include "Subsetting/VectorSubsetting.hpp"
-#include "Subsetting/at.hpp"
+#include "Subsetting/PreservingSubsetting.hpp"
+#include "Subsetting/SimplifyingSubsetting.hpp"
 
 #endif

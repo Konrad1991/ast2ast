@@ -88,7 +88,7 @@ type_node <- R6::R6Class(
       av
     },
 
-    init = function(tree) {
+    init = function() {
       self$traverse(self$tree)
       # Set default values
       if (is.null(self$base_type)) self$base_type <- "double"
@@ -123,6 +123,31 @@ type_node <- R6::R6Class(
     },
     stringify_error = function(indent = "") {
       return(paste0(indent, self$error))
+    },
+
+    generate_type = function(indent = "") {
+      convert_types_to_etr_types(self$base_type, self$data_struct, self$r_fct, indent)
+    },
+    stringify_signature = function(r_fct) {
+      if (!self$fct_input) return("")
+      if (r_fct) {
+        return(paste0("SEXP ", self$name, "SEXP"))
+      }
+      type <- convert_types_to_etr_types(self$base_type, self$data_struct, self$r_fct, "")
+      if (self$const_or_mut == "const") type <- paste0("const ", type)
+      if (self$copy_or_ref %in% c("ref", "reference")) type <- paste0(type, "&")
+      paste0(type, " ", self$name)
+    },
+    stringify_declaration = function(indent = "", r_fct) {
+      if (!r_fct && self$fct_input) return("")
+      if (r_fct && self$fct_input) {
+        type <- convert_types_to_etr_types(self$base_type, self$data_struct, self$r_fct, indent)
+        return(
+          paste0(indent, type, " ", self$name, " = ", paste0(self$name, "SEXP;"))
+        )
+      }
+      type <- convert_types_to_etr_types(self$base_type, self$data_struct, self$r_fct, indent)
+      paste0(indent, type, " ", self$name, ";")
     }
   )
 )
@@ -137,7 +162,7 @@ variable_node <- R6::R6Class(
     declared = FALSE,
     initialized = FALSE,
     initialize = function(obj) {
-      self$name <- deparse(obj)
+      self$name <- obj
     },
     stringify = function(indent = "") {
       return(paste0(indent, self$name))
@@ -145,8 +170,11 @@ variable_node <- R6::R6Class(
     stringify_error = function(indent = "") {
       return(paste0(indent, self$error$error_message))
     },
-    build_handling_const = function() {
-      paste(self$handling, self$const_or_mut, sep = "; ")
+    stringify_signature = function(r_fct) {
+      self$type$stringify_signature(r_fct)
+    },
+    stringify_declaration = function(indent = "", r_fct) {
+      self$type$stringify_declaration(indent, r_fct)
     }
   )
 )
@@ -208,6 +236,7 @@ binary_node <- R6::R6Class(
     error = NULL,
     context = NULL,
     remove_type_decl = FALSE,
+    type = NULL,
     initialize = function() {},
     string_left = function() {
       return(self$left_node$stringify())
@@ -242,9 +271,9 @@ binary_node <- R6::R6Class(
           return(ret)
         }
         ret <- paste0(indent, self$string_left())
-      } else if (infix_or_function(self$operator) == "infix") {
+      } else if (function_registry_global$is_infix(self$operator)) {
         ret <- self$create_infix_string(indent)
-      } else if (infix_or_function(self$operator) == "function") {
+      } else if (!function_registry_global$is_infix(self$operator)) {
         ret <- self$create_function_string(indent)
       } else {
         stop(paste0(

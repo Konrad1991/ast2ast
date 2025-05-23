@@ -1,16 +1,3 @@
-# Handle the case when f_args is NULL
-# ========================================================================
-parse_null_args <- function(f, r_fct) {
-  args <- formals(f) |> as.list() |> names()
-  lapply(args, function(obj) {
-    t <- type_node$new(NULL, TRUE, r_fct)
-    t$base_type <- "double"
-    t$data_struct <- "vector"
-    t$copy_or_ref <- "copy"
-    t$name <- obj
-  })
-}
-
 # Parses the langauge object and extracts:
 # - how to handle the argument (copy, reference, ref)
 # - the type of the argument (actual type, const)
@@ -68,108 +55,121 @@ parse_input_args <- function(f, f_args, r_fct) {
   variables
 }
 
-# Gather relevant nodes in each ast entry
+# Gather relevant nodes in each ast entry & return nodes
 # ========================================================================
-gather_vars <- function(node, variables) {
+gather_vars_and_returns <- function(node, variables) {
   if (inherits(node, "variable_node")) {
-    name <- str2lang(node$name) # TODO: Check why str2lang is required
+    name <- node$name
     variables$variable_list[[name]] <- c(variables$variable_list[[name]], node)
     variables$names <- c(variables$names, node$name)
+  } else if ( (inherits(node, "unary_node") || inherits(node, "nullary_node")) && node$operator == "return") {
+    variables$return_list <- c(variables$return_list, node)
   } else if (inherits(node, "binary_node") && inherits(node$left_node, "variable_node")) {
-    name <- str2lang(node$left_node$name)
+    name <- node$left_node$name
     variables$variable_list[[name]] <- c(variables$variable_list[[name]], node)
     variables$names <- c(variables$names, node$left_node$name)
   } else if (inherits(node, "binary_node") && inherits(node$left_node, "binary_node")) {
     if (node$left_node$operator == "type") {
-      name <- str2lang(node$left_node$left_node$name)
+      name <- node$left_node$left_node$name
       node$left_node$left_node$type <- node$left_node$right_node
       variables$variable_list[[name]] <- c(variables$variable_list[[name]], node)
       variables$names <- c(variables$names, node$left_node$left_node$name)
     } else if (node$left_node$operator %in% c("[", "[[")) {
-      name <- str2lang(node$left_node$left_node$name)
+      name <- node$left_node$left_node$name
       variables$variable_list[[name]] <- c(variables$variable_list[[name]], node)
       variables$names <- c(variables$names, node$left_node$left_node$name)
     }
   } else if (inherits(node, "if_node")) {
-    gather_vars(node$true_node, variables)
+    gather_vars_and_returns(node$true_node, variables)
     if (!is.null(node$else_if_nodes)) {
       lapply(node$else_if_nodes, function(branch) {
-        gather_vars(branch, variables)
+        gather_vars_and_returns(branch, variables)
       })
     }
     if (!is.null(node$false_node)) {
-      gather_vars(node$false_node, variables)
+      gather_vars_and_returns(node$false_node, variables)
     }
   } else if (inherits(node, "block_node")) {
-    lapply(node$block, function(stmt) gather_vars(stmt, variables))
+    lapply(node$block, function(stmt) gather_vars_and_returns(stmt, variables))
   } else if (inherits(node, "for_node")) {
     name <- node$i$name # TODO: Assuming it is a variable node. Maybe requires a check
     variables$variable_list[[name]] <- c(variables$variable_list[[name]], node)
     variables$names <- c(variables$names, node$i$name)
-    lapply(node$block$block, function(stmt) gather_vars(stmt, variables))
+    lapply(node$block$block, function(stmt) gather_vars_and_returns(stmt, variables))
   }
 }
 
-# Check types
+infer_common_type <- function(all_types, r_fct, name) {
+  all_base_types <- sapply(all_types, \(x) x$base_type)
+  all_data_structs <- sapply(all_types, \(x) x$data_struct)
+  null_type <- "void"
+  if (r_fct) null_type <- "R_NilValue"
+
+  base_type <- null_type
+  if (any(all_base_types == "logical")) {
+    base_type <- "logical"
+  }
+  if (any(all_base_types %in% c("int", "integer"))) {
+    base_type <- "integer"
+  }
+  if (any(all_base_types == "double")) {
+    base_type <- "double"
+  }
+  data_struct <- "scalar"
+  if (any(all_data_structs %in% c("vec", "vector"))) {
+    data_struct <- "vector"
+  }
+  if (any(all_data_structs %in% c("mat", "matrix"))) {
+    data_struct <- "matrix"
+  }
+  t <- type_node$new(name, FALSE, r_fct)
+  t$base_type <- base_type
+  t$data_struct <-  data_struct
+  t
+}
+
+# Variable class
 # ========================================================================
-# - Check that used type is valid; --> Done during action_error
-# - Check that for each variable only one unique type is declared
-# - Check that for each variable only once a type is declared
-# - Check that the type declaration occures at the first occurance of the variable
-# - Check that the iterator variables are not used elsewhere
-
-determine_type_of_assignment <- function(node) {
-  if (inherits(node, "variable_node") && node$type$fct_input) {
-    return("function_argument")
-  } else if (inherits(node, "binary_node")) {
-    if (node$operator %in% c("<-", "=") && inherits(node$left_node, "variable_node")) {
-      return("assign_to_variable")
-    }
-    if (node$operator %in% c("<-", "=") && inherits(node$left_node, "binary_node")) {
-      if (node$left_node$operator == "type") {
-        return("assign_to_declaration")
-      }
-      if (node$left_node$operator %in% c("[", "[[", "at")) {
-        return("assign_to_subset")
-      }
-    }
-    if (node$operator == "type") {
-      return("declaration")
-    }
-  } else if (inherits(node, "for_node")) {
-    return("iteration")
-  }
-  return("Unknown node at lhs")
-}
-
+# - gathers variables in variable_list
+# - run checks for types
+# - Infer missing types
+# - gather also the return nodes
 variables <- R6::R6Class(
   "variables",
   public = list(
     r_fct = NULL,
     variable_list = list(),
     names = c(),
-    errors = NULL,
-
     variable_type_list = list(),
+
+    return_list = list(),
+
+    errors = NULL,
 
     initialize = function(f, f_args, r_fct) {
       parsed_args <- parse_input_args(f, f_args, r_fct)
       self$r_fct <- r_fct
-      all_vars <- all.vars(body(f))
+      arguments <- formals(f) |> names() |> as.character()
+      all_vars <- c(arguments, all.vars(body(f)))
       all_vars <- setdiff(all_vars, permitted_base_types()) # TODO: add check that permitted_base_types are not used as variables
       self$variable_list <- rep(list(NULL), length(all_vars))
       names(self$variable_list) <- all_vars
 
       self$variable_type_list <- self$variable_list
 
-      # TODO: str2lang(x$name) does not work when function accepts 0 arguments
-      self$variable_list[sapply(parsed_args, \(x) str2lang(x$name))] <- parsed_args
+      names <- sapply(parsed_args, \(x) str2lang(x$name))
+      names(parsed_args) <- arguments
+      lapply(arguments, function(name) {
+        self$variable_list[[name]] <- c(parsed_args[[name]]) # NOTE: the wrap in c is necessary so that all entries are lists!
+        self$variable_type_list[[name]] <- parsed_args[[name]]
+      })
       # names is incrementaly updated.
       self$names <- sapply(parsed_args, function(x) str2lang(x$name))
     },
 
     # Determine types
     # ========================================================================
+    # TODO: handle for node; if node and block node
     determine_types_rhs = function(node) {
       if (inherits(node, "literal_node")) {
         type <- determine_literal_type(node$name)
@@ -181,24 +181,26 @@ variables <- R6::R6Class(
         t$data_struct <- "scalar"
         return(t)
       } else if (inherits(node, "variable_node")) {
-        return(self$variable_type_list[[node$name]]$type) # TODO: is a check needed that the variable possesses a type?
+        return(self$variable_type_list[[str2lang(node$name)]]$type) # TODO: is a check needed that the variable possesses a type?
       } else if (inherits(node, "unary_node")) {
         if (node$operator == "print") {
           self$errors <- c(self$errors, sprintf("Found print within an expression: %s", node$stringify()))
         } else if (node$operator == "return") {
           if (node$context == "Start") {
-            return(self$determine_types_rhs(node$obj))
+            return(self$flatten_type(self$determine_types_rhs(node$obj)))
           } else {
             self$errors <- c(self$errors, sprintf("Found return within an expressio: %s", node$stringify()))
           }
         } else if (node$operator %in% c("sin", "asin", "sinh", "cos", "acos", "cosh", "tan", "atan", "tanh", "log", "sqrt", "exp")) {
           inner_type <- self$determine_types_rhs(node$obj)
+          inner_type <- self$flatten_type(inner_type)
           t <- type_node$new(NA, FALSE, self$r_fct)
           t$base_type <- "double"
           t$data_struct <- inner_type$data_struct
           return(t)
         } else if (node$operator == "-") {
           inner_type <- self$determine_types_rhs(node$obj)
+          inner_type <- self$flatten_type(inner_type)
           base_type <- inner_type$base_type
           if (base_type == "logical") base_type <- "int" # TODO: inform user about type promotion
           t <- type_node$new(NA, FALSE, self$r_fct)
@@ -207,14 +209,16 @@ variables <- R6::R6Class(
           return(t)
         } else if (node$operator == "(") {
           inner_type <- self$determine_types_rhs(node$obj)
+          inner_type <- self$flatten_type(inner_type)
           return(inner_type)
         } else if (node$operator %in% c("length", "dim")) {
           t <- type_node$new(NA, FALSE, self$r_fct)
           t$base_type <- "integer"
-          printt$data_struct <- "vector"
+          t$data_struct <- "vector"
           return(t)
         } else if (node$operator %in% c("is.na", "is.finite", "is.infinite")) {
           inner_type <- self$determine_types_rhs(node$obj)
+          inner_type <- self$flatten_type(inner_type)
           t <- type_node$new(NA, FALSE, self$r_fct)
           t$base_type <- "logical"
           t$data_struct <- inner_type$data_struct
@@ -225,7 +229,9 @@ variables <- R6::R6Class(
           self$errors <- c(self$errors, sprintf("Found assignment within an expression: %s", node$stringify()))
         } else if (node$operator == ":") {
           left_type <- self$determine_types_rhs(node$left_node)
-          right_node <- self$determine_types_rhs(node$right_node)
+          right_type <- self$determine_types_rhs(node$right_node)
+          left_type <- self$flatten_type(left_type)
+          right_type <- self$flatten_type(right_type)
           left_base_type <- left_type$base_type
           right_base_type <- right_type$base_type
           if (left_base_type == "logical") left_base_type <- "integer"
@@ -240,7 +246,9 @@ variables <- R6::R6Class(
           return(t)
         } else if (node$operator %in% c("^", "+", "*", "/", "-", "power")) {
           left_type <- self$determine_types_rhs(node$left_node)
-          right_node <- self$determine_types_rhs(node$right_node)
+          right_type <- self$determine_types_rhs(node$right_node)
+          left_type <- self$flatten_type(left_type)
+          right_type <- self$flatten_type(right_type)
           left_base_type <- left_type$base_type
           right_base_type <- right_type$base_type
           if (left_base_type == "logical") left_base_type <- "integer"
@@ -259,7 +267,9 @@ variables <- R6::R6Class(
           return(t)
         } else if (node$operator %in% c("==", "!=", ">", ">=", "<", "<=", "&&", "||")) {
           left_type <- self$determine_types_rhs(node$left_node)
-          right_node <- self$determine_types_rhs(node$right_node)
+          right_type <- self$determine_types_rhs(node$right_node)
+          left_type <- self$flatten_type(left_type)
+          right_type <- self$flatten_type(right_type)
           common_type <- "logical"
           common_data_struct <- "scalar"
           if (any(c(left_type$data_struct, right_type$data_struct) %in% "vector")) {
@@ -275,6 +285,7 @@ variables <- R6::R6Class(
         } else if (node$operator %in% c("[", "[[", "at")) {
           # This is due to number of args vector subsetting
           left_type_node <- self$determine_types_rhs(node$left_node)
+          left_type_node <- self$flatten_type(left_type_node)
           t <- type_node$new(NA, FALSE, self$r_fct)
           t$base_type <- left_type_node
           t$data_struct <- "vector"
@@ -295,12 +306,16 @@ variables <- R6::R6Class(
         } else if (node$operator == "matrix") {
           first_arg <- node$args[[1]]
           type_first_arg <- self$determine_types_rhs(first_arg)
+          type_first_arg <- self$flatten_type(type_first_arg)
           t <- type_node$new(NA, FALSE, self$r_fct)
           t$base_type <- type_first_arg
           t$data_struct <- "matrix"
           return(t)
         } else if (node$operator == "c") {
-          types_of_args <- lapply(node$args, self$determine_types_rhs)
+          types_of_args <- lapply(node$args, function(x) {
+            temp <- self$determine_types_rhs(x)
+            self$flatten_type(temp)
+          })
           types_of_args <- sapply(types_of_args, \(x) x$base_type)
           common_type <- "logical"
           if (any(types_of_args %in% c("int", "integer"))) {
@@ -316,6 +331,7 @@ variables <- R6::R6Class(
           # This is due to number of args matrix subsetting
           first_arg <- node$args[[1]]
           type_first_arg <- self$determine_types_rhs(first_arg)
+          type_first_arg <- self$flatten_type(type_first_arg)
           t <- type_node$new(NA, FALSE, self$r_fct)
           t$base_type <- type_first_arg
           t$data_struct <- "matrix"
@@ -323,39 +339,95 @@ variables <- R6::R6Class(
         }
       } else {
         self$errors <- c(self$errors, sprintf("Cannot determine the type for: %s", node$stringify()))
+        stop()
       }
     },
 
+    flatten_type = function(type) {
+      if (inherits(type$base_type, "type_node")) {
+        type$base_type <- type$base_type$base_type
+        type <- self$flatten_type(type)
+      }
+      if (inherits(type$data_struct, "type_node")) {
+        type$data_struct <- type$data_struct$data_struct
+        type <- self$flatten_type(type)
+      }
+      return(type)
+    },
+
+    # Infer types
+    # ========================================================================
+    determine_type_of_assignment = function(node) {
+      if (inherits(node, "variable_node") && node$type$fct_input) {
+        return("function_argument")
+      } else if (inherits(node, "binary_node")) {
+        if (node$operator %in% c("<-", "=") && inherits(node$left_node, "variable_node")) {
+          return("assign_to_variable")
+        }
+        if (node$operator %in% c("<-", "=") && inherits(node$left_node, "binary_node")) {
+          if (node$left_node$operator == "type") {
+            return("assign_to_declaration")
+          }
+          if (node$left_node$operator %in% c("[", "[[", "at")) {
+            return("assign_to_subset")
+          }
+        }
+        if (node$operator == "type") {
+          return("declaration")
+        }
+      } else if (inherits(node, "for_node")) {
+        return("iteration")
+      }
+      return("Unknown node at lhs")
+    },
+    infer_missing_type = function(nodes, name) {
+      temp_l <- lapply(nodes, function(x) {
+        if (inherits(x, "binary_node") && x$operator %in% c("<-", "=")) {
+          x <- x$right_node
+        }
+        self$determine_types_rhs(x)
+      })
+      t <- infer_common_type(temp_l, self$r_fct, name)
+      t$init()
+      v <- variable_node$new(name)
+      v$type <- t
+      self$variable_type_list[[name]] <- v
+    },
+    infer_types = function() {
+
+      names <- unique(self$names)
+
+      for (name in names) {
+        nodes <- self$variable_list[[name]]
+        assignment_types <- lapply(nodes, self$determine_type_of_assignment)
+        num_declarations <- sum(assignment_types %in% c("function_argument", "declaration", "assign_to_declaration"))
+        if (num_declarations == 0) {
+          self$infer_missing_type(nodes, name)
+        }
+      }
+    },
+    # Check types
+    # ========================================================================
+    # - Check that used type is valid; --> Done during action_error
+    # - Check that for each variable only one unique type is declared
+    # - Check that for each variable only once a type is declared
+    # - Check that the type declaration occures at the first occurance of the variable
+    # - Check that the iterator variables are not used elsewhere
+    # - TODO: check that the variables are used in the correct context. 
+    #   - Types of lhs matches at least nearly the type of rhs
+    #   - Types of variables appropriate as function argument
     check = function() {
       names <- unique(self$names)
 
       for (name in names) {
         nodes <- self$variable_list[[name]]
 
-        if (is.list(nodes)) {
-          temp_l <- lapply(nodes, function(x) {
-            if (inherits(x, "binary_node") && x$operator %in% c("<-", "=")) {
-              x <- x$right_node
-            }
-            temp <- self$determine_types_rhs(x)
-          })
-          lapply(temp_l, function(x) {
-            cat("Base type: ", x$base_type, "Data struct: ", x$data_struct, "\n")
-          })
-        } else {
-          node_rhs <- nodes
-          if (inherits(nodes, "binary_node") && nodes$operator %in% c("<-", "=")) {
-            node_rhs <- nodes$right_node
-          }
-          self$variable_type_list[[name]] <- traverse_ast(node_rhs, self$determine_types_rhs)
-        }
-
-        if (is.null(nodes)) next
-        assignment_types <- lapply(nodes, determine_type_of_assignment)
+        if (is.null(nodes)) next # TODO: requires this a check? Is this case realistic?
+        assignment_types <- lapply(nodes, self$determine_type_of_assignment)
 
         # Check: how many type declarations?
-        num_declarations <- sum(assignment_types %in% c("declaration", "assign_to_declaration"))
-        declaration_indices <- which(assignment_types %in% c("declaration", "assign_to_declaration"))
+        num_declarations <- sum(assignment_types %in% c("function_argument", "declaration", "assign_to_declaration"))
+        declaration_indices <- which(assignment_types %in% c("function_argument", "declaration", "assign_to_declaration"))
 
         # (1) At most one type declaration
         if (num_declarations > 1) {
@@ -379,14 +451,10 @@ variables <- R6::R6Class(
               ))
           }
         }
+
       }
 
     }
-    # Infer type for variables with no type declaration; Find common type across all assignments and store it in self$variable_type_list
-    # For each assignment check that type is suitable for rhs
-    # Use the type_node to declare the variable declarations
-    # Use the type nodes to define the function signature. --> append SEXP to name in case r_fct
-    # Combine it to cpp code
 
   )
 )

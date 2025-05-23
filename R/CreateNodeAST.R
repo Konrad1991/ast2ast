@@ -1,3 +1,5 @@
+# FIX: a line with only a variable fails: example: a;
+
 # Function to process the code and create the AST
 # ========================================================================
 process <- function(code, context, r_fct) {
@@ -34,7 +36,7 @@ create_ast <- function(code, context, r_fct) {
     fn$block <- code[[4]] |> process(operator, r_fct)
     fn$context <- context
     return(fn)
-  } else if (operator %in% function_fcts()) {
+  } else if (function_registry_global$is_group_functions(operator)) {
     fn <- function_node$new()
     fn$operator <- operator
     fn$args_names <- names(code[-1])
@@ -110,7 +112,7 @@ create_ast_list <- function(b, variables, r_fct) {
       break
     }
     # Find variables
-    gather_vars(ast, variables)
+    gather_vars_and_returns(ast, variables)
     ast_list[[i]] <- ast
     if (!all(all_vars_line %in% c(variables$names, c(permitted_base_types(), permitted_data_structs(r_fct))))) {
       error_found <- TRUE
@@ -187,17 +189,18 @@ sort_args <- function(ast_list) {
 # Check that for each variable only once a type is declared
 # Example: a |> type(double); a |> type(double) Redeclaration
 # ========================================================================
-check_types <- function(variables) {
+determine_and_check_types <- function(variables) {
   error_found <- FALSE
   var_types <- try(
     {
+      variables$infer_types()
       variables$check()
     },
     silent = TRUE
   )
-  print(var_types)
   if (inherits(var_types, "try-error")) {
     error_found <- TRUE
+    print(var_types) # TODO: remove
     pe("error: Could not check the variables")
   }
   everything_ok <- lapply(variables$errors, pe)
@@ -218,12 +221,11 @@ check_types <- function(variables) {
 # The type checks are more vigorous
 # ========================================================================
 type_checking <- function(ast_list, vars) {
-  var_types <- vars$df
   error_found <- FALSE
   for (i in seq_len(length(ast_list))) {
     ast <- ast_list[[i]]
     e <- try(
-      traverse_ast(ast, action_check_type_of_args, var_types)
+      traverse_ast(ast, action_check_type_of_args, vars)
     )
     if (inherits(e, "try-error")) {
       error_found <- TRUE
@@ -254,41 +256,41 @@ type_checking <- function(ast_list, vars) {
 
 # Determine the type of each return Expression
 # ========================================================================
-determine_types_of_returns <- function(ast_list, vars, r_fct) {
-  variables_types_df <- vars$df
-  return_types <- list()
-  for (i in seq_len(length(ast_list))) {
-    env <- new.env()
-    env$return_types <- c()
-    ast <- ast_list[[i]]
-    if (inherits(ast, "unary_node")) {
-      if (ast$operator == "return") {
-        action_determine_type(ast, variables_types_df, env, r_fct)
-      }
+determine_types_of_returns <- function(vars) {
+  null_ret_type <- "void"
+  if (vars$r_fct) null_ret_type <- "R_NilValue"
+  if (identical(vars$return_list, list())) {
+    t <- type_node$new(NA, FALSE, vars$r_fct)
+    t$base_type <- null_ret_type
+    t$data_struct <- "scalar"
+    return(t)
+  }
+  return_types <- lapply(vars$return_list, function(x) {
+    if (inherits(x, "nullary_node")) {
+      t <- type_node$new(NA, FALSE, vars$r_fct)
+      t$base_type <- null_ret_type
+      t$data_struct <- "scalar"
+      return(t)
     }
-    return_types[[length(return_types) + 1]] <- env$return_types
+    vars$determine_types_rhs(x$obj)
+  })
+  all_base_types <- sapply(return_types, \(x) x$base_type)
+  if (any(all_base_types == null_ret_type) && !all(all_base_types == null_ret_type)) {
+    all_base_types[all_base_types == null_ret_type] <- "NULL"
+    lapply(seq_along(vars$return_list), function(x) {
+      stmt <- vars$return_list[[x]]
+      type <- all_base_types[x]
+      pe(stmt$stringify_error_line(), " inferred type: ", type, "\n")
+    })
+    stop()
   }
-  res <- sapply(return_types, function(x) x)
-  if (identical(res, list())) {
-    return("void")
-  }
-  return(res)
-}
-
-check_return_types <- function(return_types) {
-  unique_ret_types <- unique(return_types)
-  if (length(unique_ret_types) != length(return_types)) {
-    unique_ret_types <- paste(unique_ret_types, collapse = ", ")
-    stop(
-      sprintf("Found different return types. In C++ only one unique type is allowed.
-  The following types were detected: %s", unique_ret_types)
-    )
-  }
+  common_type <- infer_common_type(return_types, vars$r_fct, "return")
+  return(common_type)
 }
 
 # Translates the AST representation into C++ code
 # ========================================================================
-create_cpp_code <- function(ast_list) {
+translate_to_cpp_code <- function(ast_list) {
   counter <- 1
   error_found <- FALSE
   code_string <- list()
@@ -325,26 +327,54 @@ create_cpp_code <- function(ast_list) {
 }
 
 
-# Create function signature & variable declarations
+# Assembles function (includes, signature, declarations, body)
 # ========================================================================
-create_fct_signature <- function(name_f, vars, return_type, r_fct) {
-  vars_types_df <- vars$df
+assemble <- function(name_f, vars, return_type, body, r_fct) {
+  arguments <- lapply(vars$variable_type_list, function(x) {
+    x$stringify_signature(r_fct)
+  })
+  arguments <- arguments[arguments != ""]
+  declarations <- lapply(vars$variable_type_list, function(x) {
+    x$stringify_declaration(indent = "    ", r_fct)
+  })
+  declarations <- declarations[declarations != ""]
+  ret_type <- return_type$generate_type("")
+  body <- paste0(body, collapse = "\n")
   if (r_fct) {
-    new_names <- NULL
-    if (class(vars_types_df) != "character") {
-      vars_types_df$new_name <- sapply(vars_types_df$name, function(obj) {
-        generate_new_names(obj, "SEXP", vars_types_df$name)
-      })
-    }
-    signature <- create_signature_r(vars_types_df, name_f)
-    declarations <- create_variable_declarations_r(vars_types_df)
-    return(combine_strings(c(r_fct_sig(), signature, declarations), "\n"))
+    signature <- paste0("SEXP ", name_f, "(", paste(arguments, collapse = ", "), ") {")
+    declarations <- combine_strings(declarations, "\n")
+    includes <- r_fct_sig()
+    return(
+      paste0(
+        includes,
+        signature, "\n",
+        declarations, "\n",
+        body, "}",
+        collapse = "\n"
+      )
+    )
   } else {
-    new_name <- generate_new_names(name_f, "XPtr", c(name_f, "fct_ptr"))
-    signature <- create_signature_xptr(vars_types_df, new_name, return_type)
-    declarations <- create_variable_declarations_xptr(vars_types_df)
-    xptr_stuff <- get_xptr(vars_types_df, name_f, new_name, return_type)
-    return(combine_strings(c(xptr_sig(name_f), xptr_stuff, signature, declarations), "\n"))
+    includes <- xptr_sig()
+    signature <- paste0(ret_type, " ", name_f, "(", paste(arguments, collapse = ", "), ") {")
+    declarations <- combine_strings(declarations, "\n")
+    def_get_xptr <- "SEXP getXPtr() {\n"
+    typedef_line <- paste0(
+      "   typedef ", ret_type, "(*fct_ptr) (",
+      paste(arguments, collapse = ", "), ");"
+    )
+    rest <- sprintf("   return Rcpp::XPtr<fct_ptr>(new fct_ptr(&  %s ));\n }", deparse(name_f))
+
+    return(
+      paste0(
+        includes, "\n",
+        signature, "\n",
+        declarations, "\n",
+        body, "}\n\n",
+        def_get_xptr,
+        typedef_line, "\n",
+        rest, collapse = "\n"
+      )
+    )
   }
 }
 
@@ -383,11 +413,10 @@ translate_internally <- function(fct, vars, name_f, r_fct) {
   }
 
   # NOTE: this has to run after the checks!
-  error_found <- check_types(vars)
+  error_found <- determine_and_check_types(vars)
   if (error_found) {
     stop()
   }
-  stop("bla")
 
   # Check the types of the arguments at least where possible
   error_found <- type_checking(ast_list, vars)
@@ -396,11 +425,10 @@ translate_internally <- function(fct, vars, name_f, r_fct) {
   }
 
   # Determine types
-  return_types <- determine_types_of_returns(ast_list, vars, r_fct)
-  check_return_types(return_types)
+  return_types <- determine_types_of_returns(vars)
 
   # Translate
-  res <- create_cpp_code(ast_list)
+  body <- translate_to_cpp_code(ast_list)
   error_found <- res$error_found
   code_string <- res$code_string
   if (error_found) {
@@ -408,8 +436,7 @@ translate_internally <- function(fct, vars, name_f, r_fct) {
   }
 
   # Create function signature & variable declarations
-  signature_decls <- create_fct_signature(name_f, vars, return_types, r_fct)
-
-  res <- combine_strings(c(signature_decls, code_string, "}"), "\n")
-  remove_blank_lines(res)
+  code <- assemble(name_f, vars, return_types, body$code_string, r_fct)
+  code <- remove_blank_lines(code)
+  return(code)
 }

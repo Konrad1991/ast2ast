@@ -11,10 +11,8 @@ struct ComparisonTrait {
   using RetType = bool;
 };
 
-struct BaseStoreTrait {};
 struct LBufferTrait {};
 struct RBufferTrait {};
-struct SubsetTrait {};
 struct SubsetClassTrait {};
 struct BorrowTrait {};
 struct BorrowSEXPTrait {};
@@ -22,34 +20,34 @@ struct BinaryTrait {};
 struct UnaryTrait {};
 
 struct PlusTrait {
-  template <typename L = BaseType, typename R = BaseType>
+  template <typename L, typename R>
   static inline typename std::common_type<L, R>::type f(L l, R r) {
     return l + r;
   }
 };
 
 struct MinusTrait {
-  template <typename L = BaseType, typename R = BaseType>
+  template <typename L, typename R>
   static inline typename std::common_type<L, R>::type f(L l, R r) {
     return l - r;
   }
 };
 struct TimesTrait {
-  template <typename L = BaseType, typename R = BaseType>
+  template <typename L, typename R>
   static inline typename std::common_type<L, R>::type f(L l, R r) {
     return l * r;
   }
 };
 struct DivideTrait {
-  template <typename L = BaseType, typename R = BaseType>
+  template <typename L, typename R>
   static inline auto f(L l, R r) {
     if constexpr (std::is_integral_v<L> && std::is_integral_v<R>) {
-      return static_cast<BaseType>(static_cast<BaseType>(l) /
-                                   static_cast<BaseType>(r));
+      return static_cast<double>(static_cast<double>(l) /
+                                   static_cast<double>(r));
     } else if constexpr (std::is_integral_v<L> && !std::is_integral_v<R>) {
-      return static_cast<BaseType>(l) / r;
+      return static_cast<double>(l) / r;
     } else if constexpr (!std::is_integral_v<L> && std::is_integral_v<R>) {
-      return l / static_cast<BaseType>(r);
+      return l / static_cast<double>(r);
     } else {
       static_assert(IsArithV<L> && IsArithV<R>,
                     "Type not supported by operation /");
@@ -58,13 +56,13 @@ struct DivideTrait {
   }
 };
 struct PowTrait {
-  template <typename L = BaseType, typename R = BaseType>
+  template <typename L, typename R>
   static inline typename std::common_type<L, R>::type f(L l, R r) {
     return std::pow(l, r);
   }
 };
 struct EqualTrait {
-  template <typename L = BaseType, typename R = BaseType>
+  template <typename L, typename R>
   static inline bool
   f(L a,
     R b) { // issue: add this to documentationion for package authors
@@ -76,7 +74,7 @@ struct EqualTrait {
   }
 };
 struct SmallerTrait {
-  template <typename L = BaseType, typename R = BaseType>
+  template <typename L, typename R>
   static bool f(L a, R b) {
     if (a < b) {
       return true;
@@ -86,7 +84,7 @@ struct SmallerTrait {
   }
 };
 struct SmallerEqualTrait {
-  template <typename L = BaseType, typename R = BaseType>
+  template <typename L, typename R>
   static bool f(L a, R b) {
     if (a <= b) {
       return true;
@@ -96,7 +94,7 @@ struct SmallerEqualTrait {
   }
 };
 struct LargerTrait {
-  template <typename L = BaseType, typename R = BaseType>
+  template <typename L, typename R>
   static bool f(L a, R b) {
     if (a > b) {
       return true;
@@ -106,7 +104,7 @@ struct LargerTrait {
   }
 };
 struct LargerEqualTrait {
-  template <typename L = BaseType, typename R = BaseType>
+  template <typename L, typename R>
   static bool f(L a, R b) {
     if (a >= b) {
       return true;
@@ -116,7 +114,7 @@ struct LargerEqualTrait {
   }
 };
 struct UnEqualTrait {
-  template <typename L = BaseType, typename R = BaseType>
+  template <typename L, typename R>
   static bool f(L a, R b) {
     if (fabs(a - b) > 1E-3) {
       return true;
@@ -127,43 +125,43 @@ struct UnEqualTrait {
 };
 
 struct SinusTrait {
-  template <typename L = BaseType> static inline auto f(L a) { return sin(a); }
+  template <typename L> static inline auto f(L a) { return sin(a); }
 };
 struct ASinusTrait {
-  template <typename L = BaseType> static inline auto f(L a) { return asin(a); }
+  template <typename L> static inline auto f(L a) { return asin(a); }
 };
 struct SinusHTrait {
-  template <typename L = BaseType> static inline auto f(L a) { return sinh(a); }
+  template <typename L> static inline auto f(L a) { return sinh(a); }
 };
 struct CosinusTrait {
-  template <typename L = BaseType> static inline auto f(L a) { return cos(a); }
+  template <typename L> static inline auto f(L a) { return cos(a); }
 };
 struct ACosinusTrait {
-  template <typename L = BaseType> static inline auto f(L a) { return acos(a); }
+  template <typename L> static inline auto f(L a) { return acos(a); }
 };
 struct CosinusHTrait {
-  template <typename L = BaseType> static inline auto f(L a) { return cosh(a); }
+  template <typename L> static inline auto f(L a) { return cosh(a); }
 };
 struct TangensTrait {
-  template <typename L = BaseType> static inline auto f(L a) { return tan(a); }
+  template <typename L> static inline auto f(L a) { return tan(a); }
 };
 struct ATangensTrait {
-  template <typename L = BaseType> static inline auto f(L a) { return atan(a); }
+  template <typename L> static inline auto f(L a) { return atan(a); }
 };
 struct TangensHTrait {
-  template <typename L = BaseType> static inline auto f(L a) { return tanh(a); }
+  template <typename L> static inline auto f(L a) { return tanh(a); }
 };
 struct ExpTrait {
-  template <typename L = BaseType> static inline auto f(L a) { return exp(a); }
+  template <typename L> static inline auto f(L a) { return exp(a); }
 };
 struct LogTrait {
-  template <typename L = BaseType> static inline auto f(L a) { return log(a); }
+  template <typename L> static inline auto f(L a) { return log(a); }
 };
 struct SquareRootTrait {
-  template <typename L = BaseType> static inline auto f(L a) { return sqrt(a); }
+  template <typename L> static inline auto f(L a) { return sqrt(a); }
 };
 struct MinusUnaryTrait {
-  template <typename L = BaseType> static inline auto f(L a) { return -a; }
+  template <typename L> static inline auto f(L a) { return -a; }
 };
 
 } // namespace etr

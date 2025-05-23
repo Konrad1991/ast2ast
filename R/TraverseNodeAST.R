@@ -41,129 +41,6 @@ traverse_ast <- function(node, action, ...) {
   }
 }
 
-# Determine type of an expression (= Tree)
-# Only trees within a return statement are considered
-# ========================================================================
-# Determine common type
-determine_common_type <- function(operator, left_type, right_type, r_fct) {
-  is_vec <- function(type, r_fct) {
-    vec_types <- c("lv", "logical_vector",
-            "iv", "integer_vector",
-            "dv", "double_vector")
-    if (!r_fct) {
-      vec_types <- c(vec_types,
-        c("lb", "logical_borrow", "ib", "integer_borrow", "db", "double_borrow")
-      )
-    }
-    if (type %in% vec_types) {
-      return(TRUE)
-    }
-    return(FALSE)
-  }
-  vector_or_scalar <- function(left_type, right_type, r_fct) {
-    if (!is_vec(left_type, r_fct) && !is_vec(right_type, r_fct)) {
-      return("scalar")
-    }
-    return("vector")
-  }
-  detect_data_type <- function(type) {
-    if (type %in% c("l", "logical", "lv", "logical_vector", "lb", "logical_borrow")) {
-      return("logical")
-    }
-    if (type %in% c("i", "integer", "iv", "integer_vector", "ib", "integer_borrow")) {
-      return("integer")
-    }
-    if (type %in% c("d", "double", "dv", "double_vector", "db", "double_borrow")) {
-      return("double")
-    }
-    stop(sprintf("Found unsupported type: %s", type))
-  }
-  common_type <- function(operator, left_type, right_type) {
-    if (operator %in% c("==", "<", ">", "<=", ">=", "!=")) {
-      return("logical")
-    }
-    dtl <- detect_data_type(left_type)
-    dtr <- detect_data_type(right_type)
-    if (dtl == dtr) {
-      return(dtl)
-    }
-    # d d
-    # d i
-    # d l
-    # l d
-    # i d
-    if ( (dtl == "double") || (dtr == "double") ) {
-      return("double")
-    }
-    # i i
-    # l i
-    # i l
-    if ( (dtl == "integer") || (dtr == "integer") ) {
-      return("integer")
-    }
-    # l l
-    if ( (dtl == "logical") || (dtr == "logical") ) {
-      return("integer") # Promote logical
-    }
-
-    stop("Could not identify the common data type")
-  }
-  data_type <- common_type(operator, left_type, right_type)
-  if (vector_or_scalar(left_type, right_type, r_fct) == "vector") {
-    return(paste0(data_type, "_vector"))
-  }
-  return(data_type)
-}
-
-# Determine type of an node
-# TODO: missing functions are:
-# while
-# concatenate
-action_determine_type <- function(node, r_fct) {
-  if (inherits(node, "literal_node")) {
-    type <- determine_literal_type(node$name)
-    if (type %in% c("scientific", "numeric")) {
-      return("double")
-    }
-    t <- type_node$new(str2lang(node$name), FALSE, r_fct)
-    t$base_type = type
-    t$data_struct = "scalar"
-    return(t)
-  } else if (inherits(node, "variable_node")) {
-    return(node$type)
-  } else if (inherits(node, "unary_node")) {
-    if (node$operator == "print") {
-      stop("Print cannot be used within return")
-    }
-    if (node$operator == "return") {
-      type <- action_determine_type(node$obj, r_fct)
-    }
-  } else if (inherits(node, "binary_node")) {
-    if (node$operator == "type") {
-      return(node$right_node)
-    }
-    left_type <- action_determine_type(node$left_node, r_fct)
-    right_type <- action_determine_type(node$right_node, r_fct)
-    # TODO: Update
-    return(determine_common_type(node$operator, left_type, right_type, r_fct))
-  } else if (inherits(node, "function_node")) {
-    if (node$operator == "cmr") {
-      t <- type_node$new(str2lang("double"), FALSE, r_fct)
-      t$base_type = "double"
-      t$data_struct = "scalar"
-      return(t)
-    } else if (node$operator == "matrix") {
-      return(action_determine_type(node$args[[1]]), r_fct)
-    } else {
-      stop(sprintf("Found unsupported function: %s", node$operator))
-    }
-  } else {
-    stop(
-      sprintf("Found unsupported expression in return: %s",
-        node$stringify()))
-  }
-}
-
 # Checks for the function operator.
 # - Function operators are part of:
 #   nullary_node, unary_node, binary_node and function_node.
@@ -182,7 +59,7 @@ action_determine_type <- function(node, r_fct) {
 # Function to check if the given function is allowed
 check_function <- function(node) {
   fct <- node$operator
-  fct %in% permitted_fcts()
+  fct %in% function_registry_global$permitted_fcts()
 }
 
 # Function to check if the number of arguments is correct
@@ -200,16 +77,11 @@ check_args_function <- function(node) {
   } else {
     stop("Something went wrong. Sorry for that.")
   }
-  expected_args <- expected_n_args()[fct]
-  if (is.na(expected_args)) {
+  expected_args <- function_registry_global$expected_n_args(fct)
+  if (is.na(expected_args)) { # TODO: why this check?
     return(TRUE)
   }
-  if (expected_args == "MINUS") {
-    return(
-      args_length == 1 || args_length == 2
-    )
-  }
-  args_length == expected_args
+  any(args_length == expected_args[[1]])
 }
 
 # Function to check that the named args are correct
@@ -264,7 +136,8 @@ check_operator <- function(node) {
     return()
   }
   list_check_fcts <- c(
-    check_function, check_args_function,
+    check_function,
+    check_args_function,
     check_named_args,
     check_lhs_operation
   )
@@ -291,7 +164,7 @@ unallowed_signs <- function(name) {
   unallowed <- c(
     # NOTE: SEXP cannot be part of the name. Thereby, one can easily create argument names nameSEXP and assign it to name
     # - the types of ast2ast: logical, integer, double, int cannot be used as names. Thereby, all.vars can directly be used to find all variables
-    "\\.", "SEXP"
+    "\\.", "SEXP", "getXPtr", "fct_ptr"
   )
 
   sign_found <- 0
@@ -329,7 +202,7 @@ check_variable_names <- function(node) {
   if (!inherits(node, "variable_node")) {
     return()
   }
-  name <- node$name
+  name <- node$name |> deparse()
   if (name %in% permitted_base_types()) {
     return()
   }
@@ -425,7 +298,12 @@ action_sort_args <- function(node) {
         counter <- counter + 1
       }
     }
-    node$args <- args
+    # NOTE: the loop is a requirement.
+    # Thereby, the references (especially the args list in function nodes)
+    # in "variables" are still valid otherwise the list is empty
+    for (i in seq_along(args)) {
+      node$args[[i]] <- args[[i]]
+    }
   }
 }
 
@@ -433,118 +311,14 @@ action_sort_args <- function(node) {
 # error checking round
 # Check that the types of the arguments are correct
 # ========================================================================
-extract_types <- function(node, variables) {
-  extract_single_type <- function(node, variables) {
-    if (inherits(node, "variable_node")) {
-      arg <- variables[variables$name == node$name, "type"]
-      return(arg)
-    } else if (inherits(node, "literal_node")) {
-      if (numeric_char(node$name)) {
-        return("double")
-      } else if (is.character(node$name)) {
-        return("character")
-      } else if (is.logical(node$name)) {
-        return("logical")
-      } else {
-        stop("unknown literal type")
-      }
-    } else {
-      return("error unexpected node")
-    }
-  }
-  if (inherits(node, "unary_node")) {
-    return(
-      extract_single_type(node$obj, variables)
-    )
-  } else if (inherits(node, "binary_node")) {
-    arg1 <- extract_single_type(node$left_node, variables)
-    arg2 <- extract_single_type(node$right_node, variables)
-    return(list(arg1, arg2))
-  } else if (inherits(node, "function_node")) {
-    return(
-      lapply(node$args, function(arg) extract_single_type(arg, variables))
-    )
-  }
-}
-
-extract_is_symbols <- function(node) {
-  is_symbol_single_node <- function(node) {
-    if (inherits(node, "variable_node")) {
-      return(TRUE)
-    } else {
-      return(FALSE)
-    }
-  }
-  if (inherits(node, "unary_node")) {
-    return(is_symbol_single_node(node$obj))
-  } else if (inherits(node, "binary_node")) {
-    return(
-      list(
-        is_symbol_single_node(node$left_node),
-        is_symbol_single_node(node$right_node)
-      )
-    )
-  } else if (inherits(node, "function_node")) {
-    return(
-      lapply(node$args, function(arg) is_symbol_single_node(arg))
-    )
-  }
-}
-
-valid_type <- function(type_found, type_expected) {
-  if (length(type_expected) > 1) {
-    if (type_found %in% type_expected) {
-      return(TRUE)
-    } else {
-      return(FALSE)
-    }
-  } # NOTE: handles cmr
-  if (type_expected == "any_except_char") {
-    return(type_found != "character")
-  } else {
-    return(type_found == type_expected)
-  }
-}
-
 action_check_type_of_args <- function(node, variables) {
   if (!inherits(node, "unary_node") &&
     !inherits(node, "binary_node") &&
     !inherits(node, "function_node")) {
     return()
   }
-  op <- node$operator
-  if (op == "print") {
-    return()
-  }
-  ea <- expected_type_of_args()
-  if (op %in% names(ea)) {
-    e <- ea[[node$operator]]
-    arg_types <- extract_types(node, variables)
-    arg_is_symbol <- extract_is_symbols(node)
-    for (i in seq_along(e)) {
-      if (length(e[[i]]) == 1 && e[[i]] == "symbol") {
-        if (!arg_is_symbol[[i]]) {
-          node$error <- error$new(
-            error_message = paste0(
-              "Expected type ", e[[i]], " for argument ", i,
-              " of function ", node$operator, " but got ", arg_types[[i]]
-            )
-          )
-          break
-        }
-      } else if (!valid_type(arg_types[[i]], e[[i]])) {
-        node$error <- error$new(
-          error_message = paste0(
-            "Expected type ", e[[i]], " for argument ", i,
-            " of function ", node$operator, " but got ", arg_types[[i]]
-          )
-        )
-        break
-      }
-    }
-  } else {
-
-  }
+  type_check_fct <- function_registry_global$check_fct(node$operator)
+  type_check_fct[[1]](node, variables)
 }
 
 # The actual translation of the AST to C++
@@ -570,17 +344,10 @@ action_translate <- function(node) {
     !inherits(node, "function_node")) {
     return()
   }
-  if (is.null(name_pairs()[node$operator])) {
+  op <- function_registry_global$get_cpp_name(node$operator)
+  if (is.null(op)) {
     node$error <- error$new(error_message = paste0("Unknown operator: ", node$operator))
   }
-  node$operator <- name_pairs()[node$operator]
+  node$operator <- op
 }
 
-# Printing for debugging
-# ========================================================================
-action_print <- function(node) {
-  if (inherits(node, "function_node")) {
-    str(node$args)
-    str(node$args_names)
-  }
-}

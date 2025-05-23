@@ -1,5 +1,5 @@
-#ifndef SUBSETTING_AT_HPP
-#define SUBSETTING_AT_HPP
+#ifndef SUBSETTING_SIMPLIFYING_ETR_HPP
+#define SUBSETTING_SIMPLIFYING_ETR_HPP
 
 namespace etr {
 
@@ -29,7 +29,7 @@ template <typename T, typename R>
 requires (
 !IsBufferVec<T> && !IsBorrowVec<T> && !IsBufferMat<T> && !IsBorrowMat<T>
 )
-inline const auto& at(const T &inp, R i) {
+inline const auto at(const T &inp, R i) {
   return inp[ExtractIndex(i) - 1];
 }
 template <typename T, typename R>
@@ -49,7 +49,7 @@ template <typename T, typename R, typename C>
 requires (
 !IsBufferVec<T> && !IsBorrowVec<T> && !IsBufferMat<T> && !IsBorrowMat<T>
 )
-inline const auto& at(const T &inp, R row, C col) {
+inline const auto at(const T &inp, R row, C col) {
   std::size_t c = ExtractIndex(row);
   std::size_t r = ExtractIndex(col);
   return inp[(c - 1) * inp.nr() + (r - 1)];

@@ -3,8 +3,8 @@
 #include <optional>
 #include <type_traits>
 
-#ifndef SUBSETTING_ETR_HPP
-#define SUBSETTING_ETR_HPP
+#ifndef SUBSETTING_PRESERVING_ETR_HPP
+#define SUBSETTING_PRESERVING_ETR_HPP
 
 namespace etr {
 
@@ -212,8 +212,8 @@ public:
   Holder<L> l;
   ConstHolder<R> r;
 
-  mutable size_t row_i = 0;
-  mutable size_t col_i = 0;
+  mutable std::size_t row_i = 0;
+  mutable std::size_t col_i = 0;
 
   // L is l value & R is l value
   SubsetClass(L& l_, const R& r_) : l(l_), r(r_) {}
@@ -234,7 +234,7 @@ public:
         row_i = 0;
         ++col_i;
       }
-      return l.get()[idx]; // TODO: check whether % l.size() is required
+      return l.get()[idx];
     } else if constexpr(IsArithV<rowT> && !IsArithV<colT>) {
       const size_t idx = (col[col_i] - 1) * l.get().nr() + row - 1;
       ++col_i;
@@ -421,7 +421,7 @@ inline auto subset(L&& l, R&& r) {
     ass<"Negative indices are not supported">(rs >= 1);
     return Vec<RetType, SubsetClass<LDecayed, RDecayed, SubsetClassTrait>>(
       SubsetClass<LDecayed, RDecayed, SubsetClassTrait>(
-        std::forward<L>(l), std::forward<R>(rs)));
+        std::forward<L>(l), std::forward<decltype(rs)>(rs)));
   } else if constexpr (IsInteger<RDecayed>) {
     ass<"Negative indices are not supported">(r >= 1);
     return Vec<RetType, SubsetClass<LDecayed, RDecayed, SubsetClassTrait>>(

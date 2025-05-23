@@ -19,40 +19,15 @@ You should have received a copy of the GNU General Public License along with etr
 If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 */
 
-#ifndef A2A_H
-#define A2A_H
+#ifndef ETR_HPP
+#define ETR_HPP
 
-#include "etr_bits/Allocation.hpp"
-#include "etr_bits/BinaryCalculations.hpp"
-#include "etr_bits/Coca.hpp"
 #include "etr_bits/Core.hpp"
-// #include "etr_bits/Helper.hpp"
+#include "etr_bits/DataStructures.hpp"
+#include "etr_bits/Allocation.hpp"
+#include "etr_bits/Calculations.hpp"
 #include "etr_bits/Interpolation.hpp"
-#include "etr_bits/Printing.hpp"
-#include "etr_bits/SEXPConversions.hpp"
 #include "etr_bits/Subsetting.hpp"
-#include "etr_bits/UnaryCalculations.hpp"
-
-#include "etr_bits/Subsetting/LazySubsetting.hpp"
-#include "etr_bits/Evaluate.hpp"
-
-#include "etr_bits/BufferVector.hpp"
-#include "etr_bits/Derivatives/DerivsGetAndAssign.hpp"
-typedef etr::Vec<etr::BaseType> sexp;
-typedef etr::Vec<etr::BaseType,
-                 etr::BorrowSEXP<etr::BaseType, etr::BorrowSEXPTrait>>
-    WrapperSEXP;
-typedef etr::Vec<etr::BaseType, etr::Borrow<etr::BaseType, etr::BorrowTrait>>
-    BorrowPtr;
-
-// typedef for testing BorrowPtr
-typedef sexp (*fp)(BorrowPtr a, double type_test);
-
-typedef bool logical;
-typedef int integer;
-typedef etr::Vec<int> int_vector;
-typedef etr::Vec<int> integer_vector;
-typedef etr::Vec<bool> logical_vector;
-typedef etr::Vec<double> double_vector;
+#include "etr_bits/Utilities.hpp"
 
 #endif

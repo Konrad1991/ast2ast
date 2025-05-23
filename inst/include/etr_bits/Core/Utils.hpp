@@ -3,26 +3,38 @@
 
 #include "Header.hpp"
 
+
 namespace etr {
+
+// Helper
+// -----------------------------------------------------------------------------------------------------------
+template <typename T, typename U>
+inline constexpr bool IS = std::is_same_v<T, U>;
+
+template <typename T> using IsArith = std::is_arithmetic<T>;
+template <typename T> constexpr bool IsArithV = std::is_arithmetic_v<T>;
+template <typename T> using Decayed = std::decay_t<T>;
+
+template <typename T> using ReRef = std::remove_reference<T>;
+template <typename T> constexpr bool IsRvalue = std::is_rvalue_reference_v<T>;
+
+template <typename T> using IsClass = std::is_class<T>;
+template <typename T> constexpr bool IsClassV = std::is_class_v<T>;
+
 template <typename T, typename U> constexpr bool is = IS<T, U>;
+
 template <typename LT, typename LU, typename RT, typename RU>
 constexpr bool isd = IS<LT, LU> && IS<RT, RU>;
+
+template <typename T>
+inline constexpr bool IsPair = false;
+template <typename A, typename B>
+inline constexpr bool IsPair<std::pair<A, B>> = true;
 
 template <typename T1, typename T2>
 typename std::common_type<T1, T2>::type CommonType(T1 arg1, T2 arg2) {
   return arg1 + arg2; // Fake function just for getting the common type
 }
-
-template <typename T> inline bool isDoubleInt(const T d) {
-  int i = d;
-  if ((d - i) > 0) {
-    return false;
-  }
-  return true;
-}
-
-// TODO: check is this needed anymore
-typedef double BaseType;
 
 template <bool B> using BoolConstant = std::integral_constant<bool, B>;
 using TRUE = BoolConstant<true>;
@@ -35,13 +47,9 @@ const double NA = std::numeric_limits<double>::quiet_NaN();
 const double Inf = std::numeric_limits<double>::infinity();
 
 inline int d2i(double inp) { return static_cast<int>(inp); }
-
 inline double i2d(int inp) { return static_cast<double>(inp); }
-
 inline bool d2b(double inp) { return static_cast<bool>(inp); }
-
 inline bool i2b(double inp) { return static_cast<bool>(inp); }
-
 inline double b2d(bool inp) { return static_cast<double>(inp); }
 
 template <typename T> struct It {

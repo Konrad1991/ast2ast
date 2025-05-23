@@ -12,78 +12,150 @@ template <typename T, typename BorrowTrait> struct Borrow {
   std::size_t sz = 0;
   std::size_t capacity = 0;
   bool allocated = false;
-  MatrixParameter mp;
+  bool is_matrix = false;
+  std::size_t nrow = 0;
+  std::size_t ncol = 0;
 
   std::size_t size() const { return sz; }
-  bool im() const { return mp.im(); }
-  std::size_t nc() const { return mp.nc(); }
-  std::size_t nr() const { return mp.nr(); }
-  void setMatrix(bool i, std::size_t nrow, std::size_t ncol) {
-    mp.setMatrix(i, nrow, ncol);
+  std::size_t nr() const { return nrow; }
+  std::size_t nc() const { return ncol; }
+  bool im() const { return is_matrix; }
+  void set_matrix_default() noexcept {
+    is_matrix = false;
+    nrow = 0;
+    ncol = 0;
+  }
+  void set_matrix(std::size_t nrow_, std::size_t ncol_) {
+    is_matrix = true;
+    nrow = nrow_;
+    ncol = ncol_;
   }
 
-  void setMatrix(const MatrixParameter &mp_) {
-    mp.setMatrix(mp_.ismatrix, mp_.rows, mp_.cols);
-  }
+  // Empty constructor
+  Borrow() { };
 
+  // Copy constructor
   Borrow(const Borrow<T> &other)
-      : sz(other.sz), capacity(other.capacity), allocated(other.allocated) {
+    : sz(other.sz), capacity(other.capacity), allocated(other.allocated),
+    is_matrix(other.is_matrix), nrow(other.nrow), ncol(other.ncol) {
     p = other.p;
-    mp.setMatrix(other.mp);
   }
+  // Copy assignment
+  Borrow &operator=(const Borrow<T> &other) {
+    p = other.p;
+    sz = other.sz;
+    capacity = other.capacity;
+    allocated = other.allocated;
+    if (other.is_matrix) {
+      is_matrix = true;
+      nrow = other.nrow;
+      ncol = other.ncol;
+    } else {
+      set_matrix_default();
+    }
+    return *this;
+  }
+  // Move constructor
   Borrow(Borrow<T> &&other) noexcept
-      : sz(other.sz), capacity(other.capacity), allocated(other.allocated),
-        p(other.p) {
+    : sz(other.sz), capacity(other.capacity), allocated(other.allocated),
+    is_matrix(std::exchange(other.is_matrix, false)),
+    nrow(std::exchange(other.nrow, 0)), ncol(std::exchange(other.ncol, 0)),
+    p(other.p) {
     other.capacity = 0;
     other.sz = 0;
     other.allocated = false;
     other.p = nullptr;
-    mp.setMatrix(other.mp);
   }
+  // Move assignment
+  Borrow& operator=(Borrow<T> && other) {
+    sz = other.sz;
+    capacity = other.capacity;
+    allocated = other.allocated;
+    is_matrix = other.is_matrix;
+    nrow = other.nrow;
+    ncol = other.ncol;
+    p = other.p;
+    other.capacity = 0;
+    other.sz = 0;
+    other.allocated = false;
+    other.p = nullptr;
+    other.is_matrix = false;
+    other.nrow = 0;
+    other.ncol = 0;
+    return *this;
+  }
+
+  Borrow(std::size_t i) = delete;
+
 #ifdef STANDALONE_ETR
 #else
-  Borrow(SEXP s) = delete;
-#endif
-
-  Borrow(std::size_t i) {
-    sz = 0;
-    capacity = 0;
-    allocated = false;
-  };
-  Borrow(int i) = delete;
-  Borrow() {
-    sz = 0;
-    capacity = 0;
-    allocated = false;
-  };
-  Borrow(std::size_t r, std::size_t c) = delete;
-  Borrow(std::size_t r, std::size_t c, const double value) = delete;
-  Borrow(T *p_, std::size_t sz_) {
-    this->p = p_;
-    this->sz = sz_;
-    capacity = sz;
-    this->allocated = true;
+  void initSEXP(SEXP s) {
+    if constexpr (is<RetType, double>) {
+      ass<"R object is not of type numeric">(Rf_isReal(s));
+      sz = static_cast<std::size_t>(Rf_length(s));
+      capacity = static_cast<std::size_t>(sz);
+      p = REAL(s);
+      if (Rf_isMatrix(s)) {
+        set_matrix(Rf_nrows(s), Rf_ncols(s));
+      }
+    } else if constexpr (is<RetType, int>) {
+      ass<"R object is not of type integer">(Rf_isInteger(s));
+      sz = static_cast<std::size_t>(Rf_length(s));
+      capacity = static_cast<std::size_t>(sz);
+      p = INTEGER(s);
+      allocated = true;
+      if (Rf_isMatrix(s)) {
+        set_matrix(Rf_nrows(s), Rf_ncols(s));
+      }
+    } else if constexpr (is<RetType, bool>) {
+      ass<"R object is not of type logical">(Rf_isLogical(s));
+      sz = static_cast<std::size_t>(Rf_length(s));
+      capacity = static_cast<std::size_t>(sz);
+      p = LOGICAL(s);
+      allocated = true;
+      if (Rf_isMatrix(s)) {
+        set_matrix(Rf_nrows(s), Rf_ncols(s));
+      }
+    } else {
+      static_assert(sizeof(T) == 0, "Unsupported type found");
+    }
   }
+  Borrow(SEXP s) {
+    initSEXP(s);
+  };
+#endif
 
   void init(T *p_, std::size_t sz_) {
     this->p = p_;
     this->sz = sz_;
     capacity = sz;
     this->allocated = true;
+    set_matrix_default();
+  }
+  Borrow(T *p_, std::size_t sz_) {
+    init(p_, sz_);
+  }
+  Borrow(T *p_, int sz_) {
+    init(p_, sz_);
   }
 
-  Borrow &operator=(const Borrow<T> &other) {
-    p = other.p;
-    sz = other.sz;
-    capacity = other.capacity;
-    allocated = other.allocated;
-    mp.setMatrix(other.mp);
-    return *this;
+  void init(T *p_, std::size_t nrow_, std::size_t ncol_) {
+    this->p = p_;
+    this->sz = nrow_ * ncol_;
+    capacity = sz;
+    this->allocated = true;
+    set_matrix(nrow_, ncol_);
+  }
+  Borrow(T *p_, std::size_t nrow_, std::size_t ncol_) {
+    init(p_, nrow_, ncol_);
+  }
+  Borrow(T *p_, int nrow_, int ncol_) {
+    init(p_, nrow_, ncol_);
   }
 
   template <typename TInp>
-    requires(IsArithV<ReRef<TInp>>)
-  void fill(TInp &&val) {
+    requires(IsArithV<Decayed<TInp>>)
+  void fill(const TInp &val) {
     if constexpr (IS<T, TInp>) {
       std::fill(p, p + sz, val);
     } else {
@@ -92,10 +164,9 @@ template <typename T, typename BorrowTrait> struct Borrow {
     }
   }
 
-  template <typename TInp> void fill(TInp &&inp) {
+  template <typename TInp> void fill(const TInp &inp) {
     ass<"cannot use fill with vectors of different lengths">(inp.size() == sz);
-    using DataType =
-        typename ExtractDataType<ReRef<TInp>>::RetType;
+    using DataType = typename ExtractDataType<Decayed<TInp>>::RetType;
     if constexpr (IsVec<TInp>) {
       if constexpr (!is<DataType, T>) {
         for (std::size_t i = 0; i < sz; i++)
@@ -140,14 +211,16 @@ template <typename T, typename BorrowTrait> struct Borrow {
 
   RetType operator[](std::size_t idx) const {
     ass<"No memory was allocated">(allocated);
-    ass<"Error: out of boundaries --> value below 1">(idx >= 0);
+    // NOTE: negative idx leads to overflow and
+    // is than the max possible value of std::size_t
     ass<"Error: out of boundaries">(idx < sz);
     return p[idx];
   }
 
   RetType &operator[](std::size_t idx) {
     ass<"No memory was allocated">(allocated);
-    ass<"Error: out of boundaries --> value below 1">(idx >= 0);
+    // NOTE: negative idx leads to overflow and
+    // is than the max possible value of std::size_t
     ass<"Error: out of boundaries">(idx < sz);
     return p[idx];
   }
@@ -161,15 +234,6 @@ template <typename T, typename BorrowTrait> struct Borrow {
   void push_back(T input) = delete;
   void setSize(std::size_t sz_) { this->sz = sz_; }
   void setPtr(const T *pOther) { this->p = pOther; }
-
-  friend std::ostream &operator<<(std::ostream &os, const Borrow &b) {
-    os << "Vec [ ";
-    for (std::size_t i = 0; i < b.size(); i++) {
-      os << b.p[i] << " ";
-    }
-    os << "]";
-    return os;
-  }
 };
 
 } // namespace etr

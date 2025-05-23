@@ -21,6 +21,25 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_borrow_r
+void test_borrow_r(Rcpp::NumericVector nv);
+RcppExport SEXP _ast2ast_test_borrow_r(SEXP nvSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type nv(nvSEXP);
+    test_borrow_r(nv);
+    return R_NilValue;
+END_RCPP
+}
+// test_borrow
+void test_borrow();
+RcppExport SEXP _ast2ast_test_borrow() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_borrow();
+    return R_NilValue;
+END_RCPP
+}
 // test_arithmetic
 void test_arithmetic();
 RcppExport SEXP _ast2ast_test_arithmetic() {
@@ -39,35 +58,6 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// test_borrow_r
-void test_borrow_r(Rcpp::NumericVector nv);
-RcppExport SEXP _ast2ast_test_borrow_r(SEXP nvSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type nv(nvSEXP);
-    test_borrow_r(nv);
-    return R_NilValue;
-END_RCPP
-}
-// test_borrow_sexp_r
-void test_borrow_sexp_r(SEXP nv);
-RcppExport SEXP _ast2ast_test_borrow_sexp_r(SEXP nvSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type nv(nvSEXP);
-    test_borrow_sexp_r(nv);
-    return R_NilValue;
-END_RCPP
-}
-// test_borrow
-void test_borrow();
-RcppExport SEXP _ast2ast_test_borrow() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_borrow();
-    return R_NilValue;
-END_RCPP
-}
 // test_cmr
 void test_cmr();
 RcppExport SEXP _ast2ast_test_cmr() {
@@ -77,12 +67,12 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// test_coca
-void test_coca();
-RcppExport SEXP _ast2ast_test_coca() {
+// test_c
+void test_c();
+RcppExport SEXP _ast2ast_test_c() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    test_coca();
+    test_c();
     return R_NilValue;
 END_RCPP
 }
@@ -113,12 +103,12 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// isInf_tests
-void isInf_tests();
-RcppExport SEXP _ast2ast_isInf_tests() {
+// isFinite_tests
+void isFinite_tests();
+RcppExport SEXP _ast2ast_isFinite_tests() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    isInf_tests();
+    isFinite_tests();
     return R_NilValue;
 END_RCPP
 }
@@ -140,12 +130,21 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// test_lazy_subsets
-void test_lazy_subsets();
-RcppExport SEXP _ast2ast_test_lazy_subsets() {
+// test_subset_with_scalar
+void test_subset_with_scalar();
+RcppExport SEXP _ast2ast_test_subset_with_scalar() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    test_lazy_subsets();
+    test_subset_with_scalar();
+    return R_NilValue;
+END_RCPP
+}
+// test_vector_subsetting
+void test_vector_subsetting();
+RcppExport SEXP _ast2ast_test_vector_subsetting() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_vector_subsetting();
     return R_NilValue;
 END_RCPP
 }
@@ -167,15 +166,6 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// test_vector_subsetting
-void test_vector_subsetting();
-RcppExport SEXP _ast2ast_test_vector_subsetting() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_vector_subsetting();
-    return R_NilValue;
-END_RCPP
-}
 // test_arithmetic_unary
 void test_arithmetic_unary();
 RcppExport SEXP _ast2ast_test_arithmetic_unary() {
@@ -185,79 +175,66 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// test_vector_numeric
-void test_vector_numeric();
-RcppExport SEXP _ast2ast_test_vector_numeric() {
+// test_numeric
+void test_numeric();
+RcppExport SEXP _ast2ast_test_numeric() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    test_vector_numeric();
+    test_numeric();
     return R_NilValue;
 END_RCPP
 }
-// test_vector_int
-void test_vector_int();
-RcppExport SEXP _ast2ast_test_vector_int() {
+// test_int
+void test_int();
+RcppExport SEXP _ast2ast_test_int() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    test_vector_int();
+    test_int();
     return R_NilValue;
 END_RCPP
 }
-// test_vector_bool
-void test_vector_bool();
-RcppExport SEXP _ast2ast_test_vector_bool() {
+// test_bool
+void test_bool();
+RcppExport SEXP _ast2ast_test_bool() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    test_vector_bool();
+    test_bool();
     return R_NilValue;
 END_RCPP
 }
-// test_vector_vector
-void test_vector_vector();
-RcppExport SEXP _ast2ast_test_vector_vector() {
+// test_vector
+void test_vector();
+RcppExport SEXP _ast2ast_test_vector() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    test_vector_vector();
+    test_vector();
     return R_NilValue;
-END_RCPP
-}
-// heapAddressSanitize
-SEXP heapAddressSanitize(SEXP xs);
-RcppExport SEXP _ast2ast_heapAddressSanitize(SEXP xsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xs(xsSEXP);
-    rcpp_result_gen = Rcpp::wrap(heapAddressSanitize(xs));
-    return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_basestore", (DL_FUNC) &_ast2ast_test_basestore, 0},
+    {"_ast2ast_test_borrow_r", (DL_FUNC) &_ast2ast_test_borrow_r, 1},
+    {"_ast2ast_test_borrow", (DL_FUNC) &_ast2ast_test_borrow, 0},
     {"_ast2ast_test_arithmetic", (DL_FUNC) &_ast2ast_test_arithmetic, 0},
     {"_ast2ast_test_comparison", (DL_FUNC) &_ast2ast_test_comparison, 0},
-    {"_ast2ast_test_borrow_r", (DL_FUNC) &_ast2ast_test_borrow_r, 1},
-    {"_ast2ast_test_borrow_sexp_r", (DL_FUNC) &_ast2ast_test_borrow_sexp_r, 1},
-    {"_ast2ast_test_borrow", (DL_FUNC) &_ast2ast_test_borrow, 0},
     {"_ast2ast_test_cmr", (DL_FUNC) &_ast2ast_test_cmr, 0},
-    {"_ast2ast_test_coca", (DL_FUNC) &_ast2ast_test_coca, 0},
+    {"_ast2ast_test_c", (DL_FUNC) &_ast2ast_test_c, 0},
     {"_ast2ast_test_colon", (DL_FUNC) &_ast2ast_test_colon, 0},
     {"_ast2ast_test_concepts", (DL_FUNC) &_ast2ast_test_concepts, 0},
     {"_ast2ast_isNa_tests", (DL_FUNC) &_ast2ast_isNa_tests, 0},
-    {"_ast2ast_isInf_tests", (DL_FUNC) &_ast2ast_isInf_tests, 0},
+    {"_ast2ast_isFinite_tests", (DL_FUNC) &_ast2ast_isFinite_tests, 0},
     {"_ast2ast_length_tests", (DL_FUNC) &_ast2ast_length_tests, 0},
     {"_ast2ast_dim_tests", (DL_FUNC) &_ast2ast_dim_tests, 0},
-    {"_ast2ast_test_lazy_subsets", (DL_FUNC) &_ast2ast_test_lazy_subsets, 0},
+    {"_ast2ast_test_subset_with_scalar", (DL_FUNC) &_ast2ast_test_subset_with_scalar, 0},
+    {"_ast2ast_test_vector_subsetting", (DL_FUNC) &_ast2ast_test_vector_subsetting, 0},
     {"_ast2ast_test_matrices", (DL_FUNC) &_ast2ast_test_matrices, 0},
     {"_ast2ast_test_rep", (DL_FUNC) &_ast2ast_test_rep, 0},
-    {"_ast2ast_test_vector_subsetting", (DL_FUNC) &_ast2ast_test_vector_subsetting, 0},
     {"_ast2ast_test_arithmetic_unary", (DL_FUNC) &_ast2ast_test_arithmetic_unary, 0},
-    {"_ast2ast_test_vector_numeric", (DL_FUNC) &_ast2ast_test_vector_numeric, 0},
-    {"_ast2ast_test_vector_int", (DL_FUNC) &_ast2ast_test_vector_int, 0},
-    {"_ast2ast_test_vector_bool", (DL_FUNC) &_ast2ast_test_vector_bool, 0},
-    {"_ast2ast_test_vector_vector", (DL_FUNC) &_ast2ast_test_vector_vector, 0},
-    {"_ast2ast_heapAddressSanitize", (DL_FUNC) &_ast2ast_heapAddressSanitize, 1},
+    {"_ast2ast_test_numeric", (DL_FUNC) &_ast2ast_test_numeric, 0},
+    {"_ast2ast_test_int", (DL_FUNC) &_ast2ast_test_int, 0},
+    {"_ast2ast_test_bool", (DL_FUNC) &_ast2ast_test_bool, 0},
+    {"_ast2ast_test_vector", (DL_FUNC) &_ast2ast_test_vector, 0},
     {NULL, NULL, 0}
 };
 

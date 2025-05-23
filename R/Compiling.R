@@ -19,16 +19,12 @@
 
 
 #' $importFrom Rcpp sourceCpp
-compiler_a2a <- function(fct_code, R_fct,
-                         verbose, name_f, calc_deriv) {
+compile <- function(fct_code, r_fct,
+                         verbose, name_f) {
   fct <- fct_code
   fct_ret <- NULL
 
-  if (calc_deriv) {
-    Sys.setenv("PKG_CXXFLAGS" = "-DDERIV_ETR")
-  }
-
-  if (!R_fct) {
+  if (!r_fct) {
     tryCatch(
       expr = {
         if (verbose == TRUE) {
@@ -40,7 +36,8 @@ compiler_a2a <- function(fct_code, R_fct,
         attributes(fct_ret) <- list(class = "XPtr")
       },
       error = function(e) {
-        color_print(43, "Sorry compilation failed!")
+        print(e)
+        stop("Sorry compilation failed!")
       }
     )
   } else {
@@ -58,14 +55,15 @@ compiler_a2a <- function(fct_code, R_fct,
         fct_ret <- env[[name_f]]
       },
       error = function(e) {
-        color_print(43, "Sorry compilation failed!")
+        print(e)
+        stop("Sorry compilation failed!")
       }
     )
 
     Sys.unsetenv("PKG_CXXFLAGS")
 
     if (verbose == TRUE) {
-      print_with_line_numbers(fct)
+      cat(fct)
     }
   }
 

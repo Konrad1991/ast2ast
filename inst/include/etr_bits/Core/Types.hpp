@@ -8,28 +8,98 @@
 #define TYPES_ETR_H
 
 #include "Header.hpp"
-#include "TemplateUtils.hpp"
 #include "Traits.hpp"
 #include "Utils.hpp"
 #include <type_traits>
 
 namespace etr {
-template <typename T, typename BaseTrait = BaseStoreTrait> struct BaseStore;
-template <typename T = double, typename BorrowSEXPTrait = BorrowSEXPTrait>
-struct BorrowSEXP;
+
+
+// Inner data structs
+// -----------------------------------------------------------------------------------------------------------
+template <typename T, typename  BufferTrait = LBufferTrait> struct Buffer;
 template <typename T, typename BorrowTrait = BorrowTrait> struct Borrow;
-template <typename T, typename SubsetTrait = SubsetTrait> struct Subset;
 template <typename L, typename R, typename Trait> struct SubsetClass;
-template <typename T, typename BufferTrait = LBufferTrait>
-struct Buffer;
-template <typename T, typename R = Buffer<T>>
-struct Vec;
 template <typename L, typename R, typename BTrait = BinaryTrait>
 struct BinaryOperation;
 template <typename I, typename UTrait = UnaryTrait>
 struct UnaryOperation;
+/*
+Each inner data struct requires:
+- copy constructor
+- copy assignment
+- move constructor
+- move assignment
+- size
+- im
+- nr
+- nc
+- const auto& operator[]
+- auto& operator[]
+- begin
+- end
+Classes                     Status
+Buffer                      Done
+Borrow                      Done
+BinaryOperation             Done
+UnaryOperation              Done with constructors and assignments
+SubsetClass                 Done with constructors and assignments
 
-// Extract RetType
+*/
+
+// Outer data structs
+// -----------------------------------------------------------------------------------------------------------
+template <typename T, typename R = Buffer<T>>
+struct Vec;
+template <typename T, typename R = Buffer<T>>
+struct Mat;
+
+// Extract data type from inner data structs
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> struct ExtractDataType;
+template <typename T, typename Trait>
+struct ExtractDataType<Buffer<T, Trait>> {
+  using RetType = T;
+};
+template <typename T, typename Trait>
+struct ExtractDataType<const Buffer<T, Trait>> {
+  using RetType = T;
+};
+template <typename T, typename Trait>
+struct ExtractDataType<Borrow<T, Trait>> {
+  using RetType = T;
+};
+template <typename T, typename Trait>
+struct ExtractDataType<const Borrow<T, Trait>> {
+  using RetType = T const;
+};
+template <typename T, typename R, typename Trait>
+struct ExtractDataType<SubsetClass<T, R, Trait>> {
+  using RetType = T;
+};
+template <typename T, typename R, typename Trait>
+struct ExtractDataType<const SubsetClass<T, R, Trait>> {
+  using RetType = T;
+};
+template <typename T, typename Trait>
+struct ExtractDataType<UnaryOperation<T, Trait>> {
+  using RetType = T;
+};
+template <typename T, typename Trait>
+struct ExtractDataType<const UnaryOperation<T, Trait>> {
+  using RetType = T;
+};
+template <typename T, typename R, typename Trait>
+struct ExtractDataType<BinaryOperation<T, R, Trait>> {
+  using RetType = T;
+};
+template <typename T, typename R, typename Trait>
+struct ExtractDataType<const BinaryOperation<T, R, Trait>> {
+  using RetType = T;
+};
+
+// Extract data type from outer data structs
+// -----------------------------------------------------------------------------------------------------------
 template <typename T> struct ExtractDataType;
 template <typename T, typename R>
 struct ExtractDataType<Vec<T, R>> {
@@ -39,11 +109,20 @@ template <typename T, typename R>
 struct ExtractDataType<const Vec<T, R>> {
   using RetType = T const;
 };
+template <typename T, typename R>
+struct ExtractDataType<Mat<T, R>> {
+  using RetType = T;
+};
+template <typename T, typename R>
+struct ExtractDataType<const Mat<T, R>> {
+  using RetType = T const;
+};
+
 template <typename T>
 using ExtractedTypeData = typename ExtractDataType<T>::RetType;
 
-
-// Extract RType
+// Extract inner data structs from outer data structs
+// -----------------------------------------------------------------------------------------------------------
 template <typename T> struct ExtractRType;
 template <typename T, typename R>
 struct ExtractRType<Vec<T, R>> {
@@ -53,64 +132,16 @@ template <typename T, typename R>
 struct ExtractRType<const Vec<T, R>> {
   using RType = R const;
 };
+template <typename T, typename R>
+struct ExtractRType<Mat<T, R>> {
+  using RType = R;
+};
+template <typename T, typename R>
+struct ExtractRType<const Mat<T, R>> {
+  using RType = R const;
+};
 template <typename T>
 using ExtractedRType= typename ExtractRType<T>::RType;
-
-// Extract RetType from Buffer, etc.
-template <typename T> struct ExtractDataType;
-template <typename T, typename Trait>
-struct ExtractDataType<Buffer<T, Trait>> {
-  using RetType = T;
-};
-
-template <typename T, typename Trait> struct ExtractDataType<Borrow<T, Trait>> {
-  using RetType = T;
-};
-template <typename T, typename Trait>
-struct ExtractDataType<const Borrow<T, Trait>> {
-  using RetType = T const;
-};
-
-#ifdef STANDALONE_ETR
-#else
-/*
-template <> struct ExtractDataType<Rboolean> {
-  using RetType = bool;
-};
-template <> struct ExtractDataType<const Rboolean> {
-  using RetType = bool const;
-};
-*/
-#endif
-
-template <typename Trait = DoubleTrait> struct doubleWrapper {
-  using TypeTrait = Trait;
-  using Type = DoubleTrait;
-  BaseType d;
-};
-
-template <typename T>
-  requires IS<T, double>
-constexpr doubleWrapper<DoubleTrait> convert(const T &obj) {
-  return doubleWrapper<DoubleTrait>(obj);
-}
-
-template <typename T>
-  requires IS<T, int>
-constexpr doubleWrapper<IntTrait> convert(const T &obj) {
-  return doubleWrapper<IntTrait>(obj);
-}
-
-template <typename T>
-  requires IS<T, bool>
-constexpr doubleWrapper<BoolTrait> convert(const T &obj) {
-  return doubleWrapper<BoolTrait>(obj);
-}
-
-template <typename T> constexpr T convert(const T &obj) {
-  return obj;
-  // return std::forward(obj);
-}
 
 } // namespace etr
 

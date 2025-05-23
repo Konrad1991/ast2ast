@@ -21,9 +21,11 @@ translate <- function(f, args_f = NULL,
   }
 
   # Call translate_internally
-  body_cpp <- translate_internally(f, vars, name_f, r_fct)
+  cpp_code <- translate_internally(f, vars, name_f, r_fct)
+  if (getsource) return(cpp_code)
 
   # Compile the code
+  compile(cpp_code, r_fct, verbose, as.character(name_f))
 }
 
 

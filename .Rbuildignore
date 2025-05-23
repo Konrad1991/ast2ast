@@ -30,5 +30,6 @@
 ^\.cache
 ^\.docs
 ^\development
+^\notes
 ^index.html
 ^compile_flags.txt

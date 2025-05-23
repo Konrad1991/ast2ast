@@ -1,10 +1,9 @@
-#ifndef ALLOCATION_ETR_H
-#define ALLOCATION_ETR_H
+#ifndef ALLOCATION_ETR_HPP
+#define ALLOCATION_ETR_HPP
 
-#include "Allocation/AllocationUtils.hpp"
+#include "Allocation/Coca.hpp"
 #include "Allocation/Colon.hpp"
-#include "Allocation/Matrix.hpp"
 #include "Allocation/Rep.hpp"
-#include "Allocation/Vector.hpp"
+#include "Allocation/VectorAndMatrix.hpp"
 
 #endif
