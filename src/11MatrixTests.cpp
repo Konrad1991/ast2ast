@@ -9,7 +9,7 @@ void test_matrices() {
     ass(matrix(1, 2, 2).size() == 4, std::string(s) + "1, 2, 2");
     ass(matrix(true, 2, 2).size() == 4, std::string(s) + "true, 2, 2");
     ass(matrix(1.1, 2, 2).size() == 4, std::string(s) + "1.1, 2, 2");
-    Vec<int> m1; m1 = matrix(1, 2, 2);
+    Mat<int> m1; m1 = matrix(1, 2, 2);
     using DataType1 = ExtractDataType<
         std::remove_reference_t<decltype(matrix(1, 2, 2))>>::RetType;
     static_assert(is<DataType1, int>, "Data type int");

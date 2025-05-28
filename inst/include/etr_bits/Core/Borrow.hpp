@@ -8,6 +8,7 @@ template <typename T, typename BorrowTrait> struct Borrow {
   using RetType = T;
   using Type = T;
   using Trait = BorrowTrait;
+  using TypeTrait = BorrowTrait;
   T *p = nullptr;
   std::size_t sz = 0;
   std::size_t capacity = 0;

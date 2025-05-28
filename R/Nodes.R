@@ -9,6 +9,7 @@ type_node <- R6::R6Class(
     const_or_mut = "mutable",
     copy_or_ref = "copy",
     fct_input = FALSE,
+    iterator = FALSE,
     r_fct = TRUE,
 
     within_type_call = FALSE,
@@ -139,6 +140,7 @@ type_node <- R6::R6Class(
       paste0(type, " ", self$name)
     },
     stringify_declaration = function(indent = "", r_fct) {
+      if (self$iterator) return("")
       if (!r_fct && self$fct_input) return("")
       if (r_fct && self$fct_input) {
         type <- convert_types_to_etr_types(self$base_type, self$data_struct, self$r_fct, indent)
@@ -684,9 +686,9 @@ for_node <- R6::R6Class(
       b <- self$block$stringify(paste0(indent, "\t"))
       return(paste0(
         indent,
-        "for(auto& ", idx, " : ", sequence, ") {\n", # TODO: add const auto&?
+        "for(const auto& ", idx, " : ", sequence, ") {\n",
         b, "\n",
-        paste0(indent, "\t"), "}\n"
+        "\t", "}\n"
       ))
     },
     stringify_error = function(indent = "") {
@@ -710,14 +712,14 @@ for_node <- R6::R6Class(
         # Even though this is a resitriction
         return(paste0(
           indent, "for (const auto&",
-          self$i$stringify(""), " : ", self$seq$stringify(), ") {"
+          self$i$stringify(""), " : ", self$seq$stringify(""), ") {"
         ))
       }
       seq_err <- self$seq$stringify_error()
       if (seq_err != "") {
         return(paste0(
           indent, "for (",
-          self$i$stringify(""), " in ", self$seq$stringify(), ") {"
+          self$i$stringify(""), " in ", self$seq$stringify(""), ") {"
         ))
       }
       block_err <- self$block$stringify_error()

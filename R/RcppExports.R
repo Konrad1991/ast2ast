@@ -37,20 +37,24 @@ test_concepts <- function() {
     invisible(.Call(`_ast2ast_test_concepts`))
 }
 
-isNa_tests <- function() {
-    invisible(.Call(`_ast2ast_isNa_tests`))
+test_isNA <- function() {
+    invisible(.Call(`_ast2ast_test_isNA`))
 }
 
-isFinite_tests <- function() {
-    invisible(.Call(`_ast2ast_isFinite_tests`))
+test_isFinite <- function() {
+    invisible(.Call(`_ast2ast_test_isFinite`))
 }
 
-length_tests <- function() {
-    invisible(.Call(`_ast2ast_length_tests`))
+test_isInfinite <- function() {
+    invisible(.Call(`_ast2ast_test_isInfinite`))
 }
 
-dim_tests <- function() {
-    invisible(.Call(`_ast2ast_dim_tests`))
+test_length <- function() {
+    invisible(.Call(`_ast2ast_test_length`))
+}
+
+test_dim <- function() {
+    invisible(.Call(`_ast2ast_test_dim`))
 }
 
 test_subset_with_scalar <- function() {
@@ -59,6 +63,14 @@ test_subset_with_scalar <- function() {
 
 test_vector_subsetting <- function() {
     invisible(.Call(`_ast2ast_test_vector_subsetting`))
+}
+
+test_matrix_subsetting <- function() {
+    invisible(.Call(`_ast2ast_test_matrix_subsetting`))
+}
+
+test_at_subsetting <- function() {
+    invisible(.Call(`_ast2ast_test_at_subsetting`))
 }
 
 test_matrices <- function() {

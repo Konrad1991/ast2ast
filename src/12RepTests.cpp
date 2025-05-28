@@ -23,12 +23,12 @@ void test_rep() {
   // NOTE: arithmetic + vector
   {
     std::string s = "RepAriVecTesting: ";
-    ass(rep(1, c(1, 2, 3)).size() == 1, std::string(s) + "1, c(1, 2, 3)");
-    ass(rep(1, c(1, 2, 3) + 1).size() == 2, std::string(s) + "1, 1+ c(1, 2, 3)");
+    ass(rep(1, c(1)).size() == 1, std::string(s) + "1, c(1)");
+    ass(rep(1, c(1) + 1).size() == 2, std::string(s) + "1, 1+ c(1)");
     try {
       rep(1, c(false));
     } catch (Rcpp::exception &e) {
-      std::string expected = "invalid times argument";
+      std::string expected = "times in fct rep has to be a positive integer";
       ass(e.what() == expected, std::string(s) + "invalid times argument = false");
     }
   }
@@ -43,9 +43,9 @@ void test_rep() {
   // NOTE: vector + vector
   {
     std::string s = "RepVecVecTesting: ";
-    ass(rep(c(1, 2, 3), c(5, 6, 7)).size() == 15,
+    ass(rep(c(1, 2, 3), c(5)).size() == 15,
         std::string(s) + "c(1, 2, 3), c(5, 6, 7)");
-    ass(rep(c(1, 2, 3) + 1, c(5, 6, 7) + 1).size() == 18,
+    ass(rep(c(1, 2, 3) + 1, c(5) + 1).size() == 18,
         std::string(s) + "c(1, 2, 3) + 1, c(5, 6, 7) + 1");
   }
 }

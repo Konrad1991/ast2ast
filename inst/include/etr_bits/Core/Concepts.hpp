@@ -76,6 +76,16 @@ concept IsComparison = requires {
                IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
                IS<typename ReRef<T>::type::Trait, UnEqualTrait>;
 };
+template <typename T>
+concept IsComparisonTrait = requires(T t) { // required as in binary operation the trait is directly tested
+  typename T;
+  requires IS<T, EqualTrait> ||
+               IS<T, SmallerTrait> ||
+               IS<T, SmallerEqualTrait> ||
+               IS<T, LargerTrait> ||
+               IS<T, LargerEqualTrait> ||
+               IS<T, UnEqualTrait>;
+};
 
 // Input class (outer data structures)
 // -----------------------------------------------------------------------------------------------------------

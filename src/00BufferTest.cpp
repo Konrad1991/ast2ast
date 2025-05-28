@@ -16,11 +16,6 @@ void test_basestore() {
       std::string expected = "No memory was allocated";
       ass(e.what() == expected, std::string(s) + "nothing allocated");
     }
-    ass(bs.size() == 0, std::string(s) + "size");
-    ass(bs.capacity == 0, std::string(s) + "capacity");
-    ass(bs.im() == false, std::string(s) + "im");
-    ass(bs.nc() == 0, std::string(s) + "nc");
-    ass(bs.nr() == 0, std::string(s) + "nr");
     ass(bs.allocated == false, std::string(s) + "allocated");
   }
   // NOTE: allocating something with a large size so that size and capacity

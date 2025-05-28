@@ -1,8 +1,6 @@
 #ifndef BUFFER_VECTOR_ETR_HPP
 #define BUFFER_VECTOR_ETR_HPP
 
-#include "../Core.hpp"
-
 namespace etr {
 
 template <typename T, typename R> struct Vec {
@@ -11,10 +9,39 @@ template <typename T, typename R> struct Vec {
   Buffer<T> temp;
   using DType = R;
   using RetType = typename ReRef<decltype(d)>::type::RetType;
+  using InnerTrait = typename ReRef<R>::type::TypeTrait;
 
   // NOTE: define Vector with specific size
   explicit Vec(SI &sz) : d(sz.sz) {}
   explicit Vec(SI &&sz) : d(sz.sz) {}
+
+  //  NOTE: Copy other Vec
+  //  It is important to note that Vec<Borrow> does not require the copy and move constructors below.
+  //  It is only possible to construct Vec<Borrow> with pointers and size arguments
+  Vec(const Vec& other) {
+    if constexpr (IsBorrow<R>) {
+      d = other.d;
+    } else {
+      assign(other);
+    }
+  }
+  //  NOTE: Move other Vec
+  //  e.g. vec = std::move(other_vec)
+  Vec(Vec&& other) noexcept {
+    d.moveit(other.d);
+  }
+  // move: e.g. Vec<int> vec = c(1, 2, 3)
+  template<typename T2, typename R2>
+  requires(IS<T, T2> && IsLBuffer<R> && IsRArrayLike<Vec<T2, R2>>)
+  Vec(Vec<T2, R2>&& other) {
+    d.moveit(other.d);
+  }
+  // move: e.g. Vec<int> vec = c(1.2, 2.2, 3.3)
+  template<typename T2, typename R2>
+  requires((!IS<T, T2>) && IsLBuffer<R> && IsRArrayLike<Vec<T2, R2>>)
+  Vec(Vec<T2, R2>&& other) {
+    assign(other);
+  }
 
   // NOTE: Buffer
   template <typename L2> explicit Vec(Buffer<L2> &&inp) : d(inp) { }
@@ -35,13 +62,7 @@ template <typename T, typename R> struct Vec {
 
 #ifdef STANDALONE_ETR
 #else
-  template <typename U = R>
-    requires IS<U, Borrow<T>>
-  explicit Vec(SEXP &&inp) = delete;
-
-  template <typename U = R>
-    requires IS<U, Borrow<T>>
-  explicit Vec(SEXP inp) : d(inp) {}
+  Vec(SEXP inp) : d(inp) {}
 #endif
 
   // NOTE: Subset lazy
@@ -74,6 +95,8 @@ template <typename T, typename R> struct Vec {
   template<typename T2>
   requires IsBorrow<R>
   explicit Vec(T* ptr, std::size_t sz) : d(ptr, sz) {}
+  template<typename T2>
+  requires IsBorrow<R>
   explicit Vec(T* ptr, int sz) : d(ptr, sz) {}
 
   // NOTE: empty vector
@@ -126,10 +149,7 @@ template <typename T, typename R> struct Vec {
   template <typename TD>
     requires IsArithV<TD>
   Vec &operator=(const TD inp) {
-    static_assert(!IsUnary<R>, "Cannot assign to unary calculation");
-    static_assert(!IsBinary<R>, "Cannot assign to binary calculation");
-    static_assert(!IsRBuffer<R>,
-                  "Cannot assign to an r value. E.g. c(1, 2, 3) <- 1");
+    invalid_lhs();
     // Same Type
     // ---------------------------------------------------------------------
     if constexpr (is<TD, T>) {
@@ -169,12 +189,9 @@ template <typename T, typename R> struct Vec {
   void invalid_lhs() {
     static_assert(!IsUnary<R>, "Cannot assign to unary calculation");
     static_assert(!IsBinary<R>, "Cannot assign to binary calculation");
-    static_assert(!IsRBuffer<R>,
-                  "Cannot assign to an r value. E.g. c(1, 2, 3) <- 1");
   }
   template <typename OtherObj, typename DataTypeOtherObj>
   void copyWithTemp(const OtherObj& other_obj) {
-    // TODO: instead of copying move R objects into temp
     temp.resize(other_obj.size());
     for (std::size_t i = 0; i < other_obj.size(); i++) {
       if constexpr (is<DataTypeOtherObj, T>) {
@@ -184,13 +201,12 @@ template <typename T, typename R> struct Vec {
       }
     }
   }
-  template <typename T2>
-  requires (!IsArithV<T2>)
-  Vec &operator=(const T2 &other_obj) {
+
+  template<typename T2>
+  void assign(const T2& other_obj) {
     invalid_lhs();
     using DataTypeOtherVec = typename ReRef<decltype(other_obj.d)>::type::RetType;
-    copyWithTemp<T2, DataTypeOtherVec>(other_obj);
-
+    copyWithTemp<T2, DataTypeOtherVec>(std::forward<decltype(other_obj)>(other_obj));
     if constexpr (IsLBuffer<R>) {
       d.moveit(temp);
     } else if constexpr (IsBorrow<R>) {
@@ -201,8 +217,47 @@ template <typename T, typename R> struct Vec {
     } else if constexpr (IS<SubsetClassTrait, typename ReRef<R>::type::TypeTrait>) {
       ass<"number of items to replace is not a multiple of replacement length">(other_obj.size() == d.size());
       for (std::size_t i = 0; i < d.size(); i++) d[i % d.size()] = temp[i];
+    } else if constexpr (IsRBuffer<R>) { // Sometimes in c() required
+      d.moveit(temp);
     }
+  }
 
+  // copy assignment
+  // Intended for: Calculations, subsets
+  template <typename T2>
+  requires (
+    !IsArithV<Decayed<T2>> && (!IsRArrayLike<T2>)
+  )
+  Vec &operator=(const T2 &other_obj) {
+    assign(std::forward<decltype(other_obj)>(other_obj));
+    return *this;
+  }
+
+  // copy assignment
+  // defined to handle the case where the type of *this and other_obj is the same
+  Vec& operator=(const Vec& other_obj) {
+    assign(std::forward<decltype(other_obj)>(other_obj));
+    return *this;
+  }
+
+  // move assignment
+  // Intended to swap resources between Buffer and RBuffer e.g. v = c(1, 2, 3)
+  template<typename T2, typename R2>
+  requires(
+    IS<T, T2> && IsLBuffer<R> && IsRArrayLike<Vec<T2, R2>>
+  )
+  Vec& operator=(Vec<T2, R2>&& other_obj) {
+    d.moveit(other_obj.d);
+    return *this;
+  }
+  // move assignment
+  // If R is borrow it has to be copied!
+  template<typename T2, typename R2>
+  requires(
+  IsBorrow<R>
+  )
+  Vec& operator=(Vec<T2, R2>&& other_obj) {
+    assign(std::forward<decltype(other_obj)>(other_obj));
     return *this;
   }
 
@@ -233,18 +288,10 @@ template <typename T, typename R> struct Vec {
   std::size_t nr() const { return d.nr(); }
 
   auto begin() const {
-    if constexpr (IsSubsetClass<R>) {
-      return d.begin();
-    } else {
-      return It<T>{d.p};
-    }
+    return d.begin();
   }
   auto end() const {
-    if constexpr (IsSubsetClass<R>) {
-      return d.end();
-    } else {
-      return It<T>{d.p + this->size()};
-    }
+    return d.end();
   }
 
   T &back() const { return d.p[this->size()]; }

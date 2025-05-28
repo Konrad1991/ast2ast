@@ -15,7 +15,6 @@ struct LBufferTrait {};
 struct RBufferTrait {};
 struct SubsetClassTrait {};
 struct BorrowTrait {};
-struct BorrowSEXPTrait {};
 struct BinaryTrait {};
 struct UnaryTrait {};
 

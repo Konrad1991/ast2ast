@@ -94,39 +94,48 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// isNa_tests
-void isNa_tests();
-RcppExport SEXP _ast2ast_isNa_tests() {
+// test_isNA
+void test_isNA();
+RcppExport SEXP _ast2ast_test_isNA() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    isNa_tests();
+    test_isNA();
     return R_NilValue;
 END_RCPP
 }
-// isFinite_tests
-void isFinite_tests();
-RcppExport SEXP _ast2ast_isFinite_tests() {
+// test_isFinite
+void test_isFinite();
+RcppExport SEXP _ast2ast_test_isFinite() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    isFinite_tests();
+    test_isFinite();
     return R_NilValue;
 END_RCPP
 }
-// length_tests
-void length_tests();
-RcppExport SEXP _ast2ast_length_tests() {
+// test_isInfinite
+void test_isInfinite();
+RcppExport SEXP _ast2ast_test_isInfinite() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    length_tests();
+    test_isInfinite();
     return R_NilValue;
 END_RCPP
 }
-// dim_tests
-void dim_tests();
-RcppExport SEXP _ast2ast_dim_tests() {
+// test_length
+void test_length();
+RcppExport SEXP _ast2ast_test_length() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    dim_tests();
+    test_length();
+    return R_NilValue;
+END_RCPP
+}
+// test_dim
+void test_dim();
+RcppExport SEXP _ast2ast_test_dim() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_dim();
     return R_NilValue;
 END_RCPP
 }
@@ -145,6 +154,24 @@ RcppExport SEXP _ast2ast_test_vector_subsetting() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     test_vector_subsetting();
+    return R_NilValue;
+END_RCPP
+}
+// test_matrix_subsetting
+void test_matrix_subsetting();
+RcppExport SEXP _ast2ast_test_matrix_subsetting() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_matrix_subsetting();
+    return R_NilValue;
+END_RCPP
+}
+// test_at_subsetting
+void test_at_subsetting();
+RcppExport SEXP _ast2ast_test_at_subsetting() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_at_subsetting();
     return R_NilValue;
 END_RCPP
 }
@@ -222,12 +249,15 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_c", (DL_FUNC) &_ast2ast_test_c, 0},
     {"_ast2ast_test_colon", (DL_FUNC) &_ast2ast_test_colon, 0},
     {"_ast2ast_test_concepts", (DL_FUNC) &_ast2ast_test_concepts, 0},
-    {"_ast2ast_isNa_tests", (DL_FUNC) &_ast2ast_isNa_tests, 0},
-    {"_ast2ast_isFinite_tests", (DL_FUNC) &_ast2ast_isFinite_tests, 0},
-    {"_ast2ast_length_tests", (DL_FUNC) &_ast2ast_length_tests, 0},
-    {"_ast2ast_dim_tests", (DL_FUNC) &_ast2ast_dim_tests, 0},
+    {"_ast2ast_test_isNA", (DL_FUNC) &_ast2ast_test_isNA, 0},
+    {"_ast2ast_test_isFinite", (DL_FUNC) &_ast2ast_test_isFinite, 0},
+    {"_ast2ast_test_isInfinite", (DL_FUNC) &_ast2ast_test_isInfinite, 0},
+    {"_ast2ast_test_length", (DL_FUNC) &_ast2ast_test_length, 0},
+    {"_ast2ast_test_dim", (DL_FUNC) &_ast2ast_test_dim, 0},
     {"_ast2ast_test_subset_with_scalar", (DL_FUNC) &_ast2ast_test_subset_with_scalar, 0},
     {"_ast2ast_test_vector_subsetting", (DL_FUNC) &_ast2ast_test_vector_subsetting, 0},
+    {"_ast2ast_test_matrix_subsetting", (DL_FUNC) &_ast2ast_test_matrix_subsetting, 0},
+    {"_ast2ast_test_at_subsetting", (DL_FUNC) &_ast2ast_test_at_subsetting, 0},
     {"_ast2ast_test_matrices", (DL_FUNC) &_ast2ast_test_matrices, 0},
     {"_ast2ast_test_rep", (DL_FUNC) &_ast2ast_test_rep, 0},
     {"_ast2ast_test_arithmetic_unary", (DL_FUNC) &_ast2ast_test_arithmetic_unary, 0},

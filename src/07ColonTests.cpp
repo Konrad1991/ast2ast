@@ -50,7 +50,7 @@ void test_colon() {
 
   // NOTE: vectors and arithmetics
   {
-    etr::Vec<double> v; v = etr::c(1, 2, 3);
+    etr::Vec<double> v; v = etr::c(1);
     etr::Vec<double> vec1; vec1 = etr::colon(v, 10);
     ass(vec1.size() == 10, "vec size = 10");
     etr::Vec<double> vec2; vec2 = etr::colon(v, 1);
@@ -60,11 +60,11 @@ void test_colon() {
     etr::Vec<double> vec3; vec3 = etr::colon(v, 0);
     ass(vec3.size() == 1, "vec size == 1");
     ass(vec3[0] == 0, "vec3[0] == 0");
-    ass(etr::colon(etr::c(1, 2, 3), 7).size() == 7, "vec size == 7");
-    ass(etr::colon(etr::c(1, 2, 3), 1).size() == 1, "vec size == 1");
-    ass(etr::colon(etr::c(1, 2, 3), 1)[0] == 1, "vec[0] == 1 ");
-    ass(etr::colon(etr::c(0, 2, 3), 0)[0] == 0, "vec[0] == 0");
-    ass(etr::colon(etr::c(0, 2, 3), 0).size() == 1, "vec size == 1");
+    ass(etr::colon(etr::c(1), 7).size() == 7, "vec size == 7");
+    ass(etr::colon(etr::c(1), 1).size() == 1, "vec size == 1");
+    ass(etr::colon(etr::c(1), 1)[0] == 1, "vec[0] == 1 ");
+    ass(etr::colon(etr::c(0), 0)[0] == 0, "vec[0] == 0");
+    ass(etr::colon(etr::c(0), 0).size() == 1, "vec size == 1");
     ass(etr::colon(etr::c(0) + 0, 0).size() == 1, "vec size == 1");
     ass(etr::colon(etr::c(0) + 1, 0).size() == 2, "vec size == 2");
     ass(etr::colon(0 + etr::c(0), 0).size() == 1, "vec size == 1");
@@ -75,17 +75,17 @@ void test_colon() {
 
   // NOTE: Vectors & arithmetics
   {
-    ass(etr::colon(etr::c(1, 2, 3) + 0, 7).size() == 7, "vec size = 7");
-    ass(etr::colon(etr::c(1, 2, 3) + 0, 1).size() == 1, "vec size = 1");
-    ass(etr::colon(etr::c(1, 2, 3) + 0, 1)[0] == 1, "vec[0] == 1");
-    ass(etr::colon(etr::c(0, 2, 3) + 0, 0)[0] == 0, "vec[0] == 0");
-    ass(etr::colon(etr::c(0, 2, 3) + 0, 0).size() == 1, "vec size = 1");
+    ass(etr::colon(etr::c(1) + 0, 7).size() == 7, "vec size = 7");
+    ass(etr::colon(etr::c(1) + 0, 1).size() == 1, "vec size = 1");
+    ass(etr::colon(etr::c(1) + 0, 1)[0] == 1, "vec[0] == 1");
+    ass(etr::colon(etr::c(0) + 0, 0)[0] == 0, "vec[0] == 0");
+    ass(etr::colon(etr::c(0) + 0, 0).size() == 1, "vec size = 1");
     ass(etr::colon(etr::c(0) + 0, 0).size() == 1, "vec size == 1");
   }
   // NOTE: arithmetic & vector
   {
 
-    etr::Vec<double> v; v = etr::c(1, 2, 3);
+    etr::Vec<double> v; v = etr::c(1);
     etr::Vec<double> vec1; vec1 = etr::colon(10, v);
     ass(vec1.size() == 10, "vec size = 10");
     ass(vec1[0] == 10, "vec[0] == 10");
@@ -98,7 +98,7 @@ void test_colon() {
       etr::Vec<double> v;
       etr::colon(10, v);
     } catch (Rcpp::exception &e) {
-      std::string expected = "No memory was allocated";
+      std::string expected = ": accepts only vector of length 1";
       ass(e.what() == expected, "usage of empty vec");
     }
   }
@@ -113,7 +113,7 @@ void test_colon() {
 
   // NOTE: negative start value
   {
-    etr::Vec<double> v; v = etr::c(1, 2, 3);
+    etr::Vec<double> v; v = etr::c(1);
     etr::Vec<double> vec1; vec1 = etr::colon(-5, v);
     ass(vec1.size() == 7, "vec size == 7");
     ass(vec1[0] == -5, "vec[0] == -5");
@@ -122,8 +122,8 @@ void test_colon() {
 
   // NOTE: vector & vector
   {
-    etr::Vec<double> v1; v1 = etr::c(1, 2, 3);
-    etr::Vec<double> v2; v2 = etr::c(4, 5, 6);
+    etr::Vec<double> v1; v1 = etr::c(1);
+    etr::Vec<double> v2; v2 = etr::c(4);
     etr::Vec<double> result; result = etr::colon(v1, v2);
     ass(result.size() == 4, "result size = 4");
     ass(result[0] == 1, "result[0] = 1");
@@ -134,8 +134,8 @@ void test_colon() {
 
   // NOTE: different types
   {
-    etr::Vec<int> v1; v1 = etr::c(1, 2, 3);
-    etr::Vec<double> v2; v2 = etr::c(4, 5, 6);
+    etr::Vec<int> v1; v1 = etr::c(1);
+    etr::Vec<double> v2; v2 = etr::c(4);
     etr::Vec<double> result; result = etr::colon(v1, v2);
     ass(result.size() == 4, "result size == 4");
     ass(result[0] == 1, "result[0] == 1");

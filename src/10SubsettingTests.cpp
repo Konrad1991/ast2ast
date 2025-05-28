@@ -34,14 +34,13 @@ void test_subset_with_scalar() {
   try {
     auto result = subset(l, 0);
   } catch (Rcpp::exception &e) {
-    std::string expected = "Error: out of boundaries";
+    std::string expected = "Negative indices are not supported";
     ass(e.what() == expected, "Expected out of boundary error");
   }
   try {
     auto result = subset(l, 0.4);
-    std::cout << result << std::endl;
   } catch (Rcpp::exception &e) {
-    std::string expected = "Error: out of boundaries";
+    std::string expected = "Negative indices are not supported";
     ass(e.what() == expected, "Expected out of boundary error");
   }
 }
@@ -49,7 +48,6 @@ void test_subset_with_scalar() {
 // [[Rcpp::export]]
 void test_vector_subsetting() {
   Vec<double> v; v = colon(1, 16);
-  Mat<double> m(4, 4); m = colon(1, 16);
   // NOTE: boolsubsetting
   {
     std::string s = "BoolSubsetting: ";
@@ -91,9 +89,9 @@ void test_vector_subsetting() {
   {
     std::string s = "IntSubsetting: ";
     try {
-     subset(v,-1);
+      subset(v,-1);
     } catch (Rcpp::exception &e) {
-      std::string expect = "Invalid index argc";
+      std::string expect = "Negative indices are not supported";
       ass(expect == e.what(), std::string(s) + "Invalid index argument");
     }
     ass(subset(v, 1).size() == 1, std::string(s) + "vec(1).size() == 1");
@@ -110,7 +108,7 @@ void test_vector_subsetting() {
     try {
       subset(c(1, 2, 3), -1);
     } catch (Rcpp::exception &e) {
-      std::string expect = "Invalid index argc";
+      std::string expect = "Negative indices are not supported";
       ass(expect == e.what(), std::string(s) + "Invalid index argument");
     }
     ass(subset(c(1, 2, 3), 1).size() == 1, std::string(s) + "vec(1).size() == 1");
@@ -202,8 +200,13 @@ void test_vector_subsetting() {
     b[1] = false;
     b[2] = true;
     b[3] = true;
-    ass(subset(v, b).size() == 12, std::string(s) + "vec[b] == 12");
+    ass(subset(v, b).size() == 3, std::string(s) + "vec[b] == 12");
   }
+}
+
+// [[Rcpp::export]]
+void test_matrix_subsetting() {
+  Mat<double> m(4, 4); m = matrix(colon(1, 16), 4, 4);
   // NOTE: matrix bool + bool|int|double
   {
     std::string s = "MatrixBoolScalarSubsetting: ";
@@ -224,12 +227,11 @@ void test_vector_subsetting() {
     ass(subset(matrix(colon(1, 16), 4, 4), true, 1.1).size() == 4,
         std::string(s) + "vec[T,1.1]");
     ass(subset(matrix(colon(1, 16), 4, 4), true, c(1, 2, 3) + 1).size() ==
-            12,
+        12,
         std::string(s) + "vec[T, c(1, 2, 3) + 1]");
     ass(subset(matrix(colon(1, 16), 4, 4), true, idx).size() == 12,
         std::string(s) + "vec[T, idx]");
   }
-
   // NOTE:matrix int + bool|int|double
   {
     std::string s = "MatrixIntScalarSubsetting: ";
@@ -274,6 +276,7 @@ void test_vector_subsetting() {
     b[3] = true;
     ass(subset(m, b, 1).size() == 3, std::string(s) + "vec[b, 1]");
     Vec<int> idx; idx = c(1, 2, 4);
+
     ass(subset(m, idx, 1).size() == 3, std::string(s) + "vec[i, 1]");
     Vec<double> d; d = c(1.1, 2.2, 4.9);
     ass(subset(m, d, 1).size() == 3, std::string(s) + "vec[d, 1]");
@@ -335,9 +338,15 @@ void test_vector_subsetting() {
         std::string(s) + "vec[d, idx]");
 
     ass(subset(m, c(1.1, 2.2, 3.3), c(1.1, 2.2, 3.3) + c(1.1, 2.2, 3.3, 4.4))
-                .size() == 12,
+        .size() == 12,
         std::string(s) + "vec[d,d]");
   }
+}
+
+// [[Rcpp::export]]
+void test_at_subsetting() {
+  Vec<double> v; v = colon(1, 16);
+  Mat<double> m(4, 4); m = matrix(colon(1, 16), 4, 4);
   // NOTE: at testing
   {
     std::string s = "AtSubsetting: ";
@@ -346,14 +355,13 @@ void test_vector_subsetting() {
     try {
       at(v, 0);
     } catch (Rcpp::exception &e) {
-      std::string expected = "Error: out of boundaries --> value below 1";
+      std::string expected = "Error: out of boundaries";
       ass(e.what() == expected, std::string(s) + "Error out of boundaries");
     }
     try {
       at(v, 2000);
     } catch (Rcpp::exception &e) {
-      std::string expected =
-          "Error: out of bounaries";
+      std::string expected = "Error: out of boundaries";
       ass(e.what() == expected, std::string(s) + "Error out of boundaries");
     }
     at(m, 2, 3) = 20.3;
@@ -361,15 +369,13 @@ void test_vector_subsetting() {
     try {
       at(m, 0, 0);
     } catch (Rcpp::exception &e) {
-      std::string expected =
-          "Error: out of bounaries";
+      std::string expected = "Error: out of boundaries";
       ass(e.what() == expected, std::string(s) + "Error out of boundaries");
     }
     try {
       at(m, 2000, 1);
     } catch (Rcpp::exception &e) {
-      std::string expected =
-          "Error: out of bounaries";
+      std::string expected = "Error: out of boundaries";
       ass(e.what() == expected, std::string(s) + "Error out of boundaries");
     }
   }
@@ -380,3 +386,4 @@ void test_vector_subsetting() {
     ass(at(matrix(c(1, 2, 3, 4), 2, 2), 2, 2) == 4, std::string(s) + "r matrix");
   }
 }
+

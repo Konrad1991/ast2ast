@@ -42,8 +42,8 @@ Classes                     Status
 Buffer                      Done
 Borrow                      Done
 BinaryOperation             Done
-UnaryOperation              Done with constructors and assignments
-SubsetClass                 Done with constructors and assignments
+UnaryOperation              Done
+SubsetClass                 Done
 
 */
 

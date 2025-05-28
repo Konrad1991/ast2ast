@@ -89,7 +89,7 @@ is_char <- function(node, variables) {
 is_vec_or_mat <- function(node, variables) {
   if (inherits(node, "variable_node")) {
     type <- variables$variable_type_list[[node$name]]$type
-    if (type$data_struct %in% c("matrix", "vector")) {
+    if (type$data_struct %in% c("matrix", "vector", "vec", "mat")) {
       return(TRUE)
     }
   }
@@ -98,7 +98,7 @@ is_vec_or_mat <- function(node, variables) {
 is_vec <- function(node, variables) {
   if (inherits(node, "variable_node")) {
     type <- variables$variable_type_list[[node$name]]$type
-    if (type$data_struct == "vector") {
+    if (type$data_struct %in% c("vector", "vec")) {
       return(TRUE)
     }
   }
@@ -130,7 +130,7 @@ function_registry_global$add(
     if (!is_vec_or_mat(node$left_node, variables)) {
       node$error <- error$new("You can only subset variables of type matrix or vector")
     }
-    if (is_char(node$right_node)) {
+    if (is_char(node$right_node, variables)) {
       node$error <- error$new("You cannot use character variables or literals for subsetting")
     }
   },
@@ -142,7 +142,7 @@ function_registry_global$add(
     if (!is_vec_or_mat(node$left_node, variables)) {
       node$error <- error$new("You can only subset variables of type matrix or vector")
     }
-    if (is_char(node$right_node)) {
+    if (is_char(node$right_node, variables)) {
       node$error <- error$new("You cannot use character variables or literals for subsetting")
     }
   },
@@ -154,7 +154,7 @@ function_registry_global$add(
     if (!is_vec_or_mat(node$left_node, variables)) {
       node$error <- error$new("You can only subset variables of type matrix or vector")
     }
-    if (is_char(node$right_node)) {
+    if (is_char(node$right_node, variables)) {
       node$error <- error$new("You cannot use character variables or literals for subsetting")
     }
   },
@@ -497,7 +497,7 @@ function_registry_global$add(
 function_registry_global$add(
   name = "vector", num_args = 2,
   check_fct = function(node, variables) {
-    if (!is_char(node$left_node)) {
+    if (!is_char(node$left_node, variables)) {
      node$error <- error$new("mode of vector has to be of type character")
     }
   },
@@ -506,7 +506,7 @@ function_registry_global$add(
 function_registry_global$add(
   name = "matrix", num_args = 3,
   check_fct = function(node, variables) {
-    if (is_char(node$args[[1]])) {
+    if (is_char(node$args[[1]], variables)) {
      node$error <- error$new("You cannot fill a matrix with character entries")
     }
   },
@@ -623,23 +623,27 @@ permitted_data_structs <- function(r_fct) {
   }
 }
 
+convert_base_type <- function(r_type) {
+  list(
+    "void" = "void",
+    "R_NilValue" = "R_NilValue",
+    "logical" = "bool",
+    "integer" = "int", "int" = "int",
+    "double" = "double")[r_type]
+}
+
 convert_types_to_etr_types <- function(base_type, data_struct, r_fct, indent = "") {
   if (data_struct == "scalar") {
-    list(
-      "void" = "void",
-      "R_NilValue" = "R_NilValue",
-      "logical" = "bool",
-      "integer" = "int", "int" = "int",
-      "double" = "double")[base_type]
+    convert_base_type(base_type)
   } else if (data_struct %in% c("vector", "matrix", "vec", "mat")) {
     data_struct <- c(vector = "etr::Vec", vec = "etr::Vec", matrix = "etr::Mat", mat = "etr::Mat")[data_struct]
-    return(paste0(indent, data_struct, "<", base_type, ">"))
+    return(paste0(indent, data_struct, "<", convert_base_type(base_type), ">"))
   } else if (data_struct %in% c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat") && !r_fct) {
     data_struct <- c(borrow_vector = "etr::Vec", borrow_vec = "etr::Vec",  borrow_mattrix = "etr::Mat", borrow_mat = "etr::Mat")[data_struct]
-    return(paste0(indent, data_struct, "<", base_type, ", etr::Borrow<", base_type, ">>"))
+    return(paste0(indent, data_struct, "<", convert_base_type(base_type), ", etr::Borrow<", convert_base_type(base_type), ">>"))
   } else if (data_struct %in% c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat") && !r_fct) {
     data_struct <- c(vector = "etr::Vec", vec = "etr::Vec", matrix = "etr::Mat", mat = "etr::Mat")[data_struct]
-    return(paste0(indent, data_struct, "<", base_type, ", etr::BorrowSEXP<", base_type, ">>"))
+    return(paste0(indent, data_struct, "<", convert_base_type(base_type), ", etr::BorrowSEXP<", convert_base_type(base_type), ">>"))
   }
 }
 

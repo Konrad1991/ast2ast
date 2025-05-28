@@ -1,5 +1,3 @@
-// FIX: non allocated Buffer does not throw error but sigint instead
-// Control that allocated = true
 #ifndef BUFFER_ETR_H
 #define BUFFER_ETR_H
 
@@ -26,8 +24,7 @@ template <typename T, typename BufferTrait> struct Buffer {
   std::size_t ncol = 0;
 
   std::size_t size() const {
-    ass<"No memory was allocated">(allocated);
-    // NOTE: this prevents usage of not allocated Buffer
+    if (!allocated) return 0;
     return sz;
   }
   std::size_t nr() const {

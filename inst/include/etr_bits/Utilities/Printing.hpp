@@ -40,7 +40,8 @@ inline void print(const Object& obj) {
       PRINT_STREAM << obj[i] << " ";
     PRINT_STREAM << std::endl;
   } else if constexpr(IsMat<Object>) {
-    auto res = obj;// copy/eval because of subsetted matrices
+    using RetType = typename ExtractDataType<Decayed<Object>>::RetType;
+    Mat<RetType> res; res = obj;// copy/eval because of subsetted matrices
     for (std::size_t r = 0; r < res.nr(); r++) {
       for (std::size_t c = 0; c < res.nc(); c++) {
         PRINT_STREAM << res[c* res.nr() + r] << " ";

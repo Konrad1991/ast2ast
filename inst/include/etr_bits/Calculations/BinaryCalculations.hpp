@@ -3,37 +3,38 @@
 
 namespace etr {
 
-template <typename L, typename R, typename Trait> struct BinaryOpClassIterator {
-  const L &l;
-  const R &r;
+template <typename L, typename R, typename Trait>
+struct BinaryOpClassIterator {
+  ConstHolder<L> l;
+  ConstHolder<R> r;
   size_t index;
 
-  BinaryOpClassIterator(const L &l, const R &r, size_t index = 0)
-  : l(l), r(r), index(index) {}
+  BinaryOpClassIterator(const L& l_, const R& r_, size_t index = 0)
+    : l(l_), r(r_), index(index) {}
 
   auto operator*() const {
     if constexpr (!IsArithV<L> && IsArithV<R>) {
-      return Trait::f(l[index % l.size()], r);
+      return Trait::f(l.get()[index % l.get().size()], r.get());
     } else if constexpr (IsArithV<L> && !IsArithV<R>) {
-      return Trait::f(l, r[index % r.size()]);
+      return Trait::f(l.get(), r.get()[index % r.get().size()]);
     } else if constexpr (!IsArithV<L> && !IsArithV<R>) {
-      return Trait::f(l[index % l.size()], r[index % r.size()]);
+      return Trait::f(l.get()[index % l.get().size()], r.get()[index % r.get().size()]);
     }
   }
 
-  BinaryOpClassIterator &operator++() {
+  BinaryOpClassIterator& operator++() {
     ++index;
     return *this;
   }
 
-  bool operator!=(const BinaryOpClassIterator &other) const {
+  bool operator!=(const BinaryOpClassIterator& other) const {
     return index != other.index;
   }
 };
 
 template <typename L, typename R, typename BTrait>
 inline auto determine_type_binary_op() {
-  if constexpr (IsComparison<BTrait>) {
+  if constexpr (IsComparisonTrait<BTrait>) {
     return bool{};
   } else if constexpr (IsClassV<L> && IsClassV<R>) {
     using RetType =
@@ -56,6 +57,7 @@ template <typename L, typename R, typename BTrait> struct BinaryOperation {
   const R &r;
   using typeTraitL = L;
   using typeTraitR = R;
+  using TypeTrait = BinaryTrait;
 
   BinaryOperation(const L &l_, const R &r_) : l(l_), r(r_) {}
   auto operator[](std::size_t i) const {
@@ -188,14 +190,14 @@ template <typename L, typename R> auto power(L &&l, R &&r) {
 }
 
 template <typename L, typename R>
-  requires(IsVec<L> || IsVec<R>)
+  requires(IsVec<Decayed<L>> || IsVec<Decayed<R>>)
 auto operator==(L &&l, R &&r) {
   return create_bin_vec<std::decay_t<L>, std::decay_t<R>, EqualTrait>(
       std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R>
-  requires(IsVec<L> || IsVec<R>)
+  requires(IsVec<Decayed<L>> || IsVec<Decayed<R>>)
 auto operator!=(L &&l, R &&r) {
   return create_bin_vec<std::decay_t<L>, std::decay_t<R>, UnEqualTrait>(
       std::forward<L>(l), std::forward<R>(r));

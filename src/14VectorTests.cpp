@@ -38,28 +38,28 @@ void test_numeric() {
     try {
       Vec<double> vec1; vec1 = numeric(0);
     } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
+      std::string expected = "size in fct vector/logical/integer/numeric has to be a positive integer";
+      ass(e.what() == expected, "test invalid times argument of vector");
     }
     try {
       Vec<double> vec1; vec1 = numeric(-1);
     } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
+      std::string expected = "size in fct vector/logical/integer/numeric has to be a positive integer";
+      ass(e.what() == expected, "test invalid times argument of vector");
     }
   }
   {
     try {
       Vec<double> vec1; vec1 = numeric(0.1);
     } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
+      std::string expected = "size in fct vector/logical/integer/numeric has to be a positive integer";
+      ass(e.what() == expected, "test invalid times argument of vector");
     }
     try {
       Vec<double> vec1; vec1 = numeric(-1.1);
     } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
+      std::string expected = "size in fct vector/logical/integer/numeric has to be a positive integer";
+      ass(e.what() == expected, "test invalid times argument of vector");
     }
   }
 }
@@ -97,36 +97,36 @@ void test_int() {
     try {
       Vec<double> vec1; vec1 = integer(0);
     } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
+      std::string expected = "size in fct vector/logical/integer/numeric has to be a positive integer";
+      ass(e.what() == expected, "test invalid times argument of vector I");
     }
     try {
       Vec<double> vec1; vec1 = integer(-1);
     } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
+      std::string expected = "size in fct vector/logical/integer/numeric has to be a positive integer";
+      ass(e.what() == expected, "test invalid times argument of vector II");
     }
   }
   {
     try {
       Vec<double> vec1; vec1 = integer(0.1);
     } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
+      std::string expected = "size in fct vector/logical/integer/numeric has to be a positive integer";
+      ass(e.what() == expected, "test invalid times argument of vector III");
     }
     try {
       Vec<double> vec1; vec1 = integer(-1.1);
     } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
+      std::string expected = "size in fct vector/logical/integer/numeric has to be a positive integer";
+      ass(e.what() == expected, "test invalid times argument of vector IV");
     }
   }
   {
     try {
       Vec<double> vec1; vec1 = integer(false);
     } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
+      std::string expected = "size in fct vector/logical/integer/numeric has to be a positive integer";
+      ass(e.what() == expected, "test invalid times argument of vector V");
     }
     Vec<double> vec2; vec2 = integer(true);
     ass(vec2.size() == 1, "Vector should be of size 1");
@@ -166,36 +166,36 @@ void test_bool() {
     try {
       Vec<double> vec1; vec1 = logical(0);
     } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
+      std::string expected = "size in fct vector/logical/integer/numeric has to be a positive integer";
+      ass(e.what() == expected, "test invalid times argument of vector");
     }
     try {
       Vec<double> vec1; vec1 = logical(-1);
     } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
+      std::string expected = "size in fct vector/logical/integer/numeric has to be a positive integer";
+      ass(e.what() == expected, "test invalid times argument of vector");
     }
   }
   {
     try {
       Vec<double> vec1; vec1 = logical(0.1);
     } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
+      std::string expected = "size in fct vector/logical/integer/numeric has to be a positive integer";
+      ass(e.what() == expected, "test invalid times argument of vector");
     }
     try {
       Vec<double> vec1; vec1 = logical(-1.1);
     } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
+      std::string expected = "size in fct vector/logical/integer/numeric has to be a positive integer";
+      ass(e.what() == expected, "test invalid times argument of vector");
     }
   }
   {
     try {
       Vec<double> vec1; vec1 = logical(false);
     } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid times argument";
-      ass(e.what() == expectedMessage, "test invalid times argument of vector");
+      std::string expected = "size in fct vector/logical/integer/numeric has to be a positive integer";
+      ass(e.what() == expected, "test invalid times argument of vector");
     }
     Vec<double> vec2; vec2 = logical(true);
     ass(vec2.size() == 1, "Vector should be of size 1");
@@ -216,8 +216,8 @@ void test_vector() {
     try {
       numeric(v);
     } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid length argument";
-      ass(e.what() == expectedMessage,
+      std::string expected = "size in vector/logical/integer/numeric has to be a vector of length 1";
+      ass(e.what() == expected,
           "test vector as length argument with size > 1");
     }
   }
@@ -227,8 +227,8 @@ void test_vector() {
     try {
       numeric(v);
     } catch (Rcpp::exception &e) {
-      std::string expectedMessage = "invalid length argument";
-      ass(e.what() == expectedMessage,
+      std::string expected = "size in vector/logical/integer/numeric has to be a vector of length 1";
+      ass(e.what() == expected,
           "test vector as length argument with size > 1");
     }
   }

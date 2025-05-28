@@ -25,14 +25,14 @@ inline auto isNA(const T &&inp) {
 template <typename T>
   requires IsArithV<T>
 inline bool isInfinite(T inp) {
-  return std::isinf(inp);
+  return std::isinf(inp) && (!std::isnan(inp));
 }
 template <typename T>
   requires IsArrayLike<T>
 inline auto isInfinite(T &inp) {
   Vec<bool, Buffer<bool, RBufferTrait>> res( SI{inp.size()});
   for (std::size_t i = 0; i < res.size(); i++) {
-    res[i] = std::isinf(inp[i]);
+    res[i] = std::isinf(inp[i]) && (!std::isnan(inp[i]));
   }
   return res;
 }
@@ -42,14 +42,14 @@ inline auto isInfinite(T &inp) {
 template <typename T>
   requires IsArithV<T>
 inline bool isFinite(T inp) {
-  return !std::isinf(inp);
+  return !std::isinf(inp) && (!std::isnan(inp));
 }
 template <typename T>
   requires IsArrayLike<T>
 inline auto isFinite(T &inp) {
   Vec<bool, Buffer<bool, RBufferTrait>> res( SI{inp.size()});
   for (std::size_t i = 0; i < res.size(); i++) {
-    res[i] = !std::isinf(inp[i]);
+    res[i] = !std::isinf(inp[i]) && (!std::isnan(inp[i]));
   }
   return res;
 }

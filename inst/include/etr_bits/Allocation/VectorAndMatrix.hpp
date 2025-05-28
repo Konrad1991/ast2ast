@@ -14,7 +14,7 @@ inline std::size_t ConvertSizeVec(const T& s) {
       return s;
     } else {
       std::size_t s_ = static_cast<std::size_t>(std::floor(s));
-      ass<"size in fct vector/logical/integer/numericep has to be a positive integer">(s_ >= 1);
+      ass<"size in fct vector/logical/integer/numeric has to be a positive integer">(s_ >= 1);
       return s_;
     }
   } else {

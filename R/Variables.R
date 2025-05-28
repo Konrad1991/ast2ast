@@ -99,6 +99,11 @@ gather_vars_and_returns <- function(node, variables) {
   }
 }
 
+is_iterator <- function(all_types) {
+  all_data_structs <- sapply(all_types, \(x) x$data_struct)
+  any(all_data_structs == "iterator")
+}
+
 infer_common_type <- function(all_types, r_fct, name) {
   all_base_types <- sapply(all_types, \(x) x$base_type)
   all_data_structs <- sapply(all_types, \(x) x$data_struct)
@@ -157,7 +162,8 @@ variables <- R6::R6Class(
 
       self$variable_type_list <- self$variable_list
 
-      names <- sapply(parsed_args, \(x) str2lang(x$name))
+      names <- sapply(parsed_args, \(x) {
+        str2lang(x$name)})
       names(parsed_args) <- arguments
       lapply(arguments, function(name) {
         self$variable_list[[name]] <- c(parsed_args[[name]]) # NOTE: the wrap in c is necessary so that all entries are lists!
@@ -181,7 +187,11 @@ variables <- R6::R6Class(
         t$data_struct <- "scalar"
         return(t)
       } else if (inherits(node, "variable_node")) {
-        return(self$variable_type_list[[str2lang(node$name)]]$type) # TODO: is a check needed that the variable possesses a type?
+        name <- node$name
+        if (is.symbol(node$name)) {
+          name <- deparse(node$name)
+        }
+        return(self$variable_type_list[[str2lang(name)]]$type) # TODO: is a check needed that the variable possesses a type?
       } else if (inherits(node, "unary_node")) {
         if (node$operator == "print") {
           self$errors <- c(self$errors, sprintf("Found print within an expression: %s", node$stringify()))
@@ -289,7 +299,7 @@ variables <- R6::R6Class(
           t <- type_node$new(NA, FALSE, self$r_fct)
           t$base_type <- left_type_node
           t$data_struct <- "vector"
-          return(t)
+          return(self$flatten_type(t)) # TODO: add this flattening step everywhere
         }
       } else if (inherits(node, "function_node")) {
         if (node$operator == "cmr") {
@@ -337,6 +347,13 @@ variables <- R6::R6Class(
           t$data_struct <- "matrix"
           return(t)
         }
+      } else if (inherits(node, "for_node")) {
+        type_seq <- self$determine_types_rhs(node$seq)
+        type_seq <- self$flatten_type(type_seq)
+        t <- type_node$new(NA, FALSE, self$r_fct)
+        t$base_type <- type_seq$base_type
+        t$data_struct <- "iterator"
+        return(t)
       } else {
         self$errors <- c(self$errors, sprintf("Cannot determine the type for: %s", node$stringify()))
         stop()
@@ -389,14 +406,13 @@ variables <- R6::R6Class(
       })
       t <- infer_common_type(temp_l, self$r_fct, name)
       t$init()
+      if (is_iterator(temp_l)) t$iterator <- TRUE
       v <- variable_node$new(name)
       v$type <- t
       self$variable_type_list[[name]] <- v
     },
     infer_types = function() {
-
       names <- unique(self$names)
-
       for (name in names) {
         nodes <- self$variable_list[[name]]
         assignment_types <- lapply(nodes, self$determine_type_of_assignment)

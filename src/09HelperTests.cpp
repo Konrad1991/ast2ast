@@ -5,7 +5,7 @@
 using namespace etr;
 
 // [[Rcpp::export]]
-void isNa_tests() {
+void test_isNA() {
   // NOTE: testing isNA
   {
     std::string s = "isNaTests: ";
@@ -13,19 +13,19 @@ void isNa_tests() {
     v = numeric(3);
     v[0] = NA;
     v[1] = Inf;
-    ass(isNA(v[0]), std::string(s) + "true");
-    ass(!isNA(v[1]), std::string(s) + "false");
-    ass(!isNA(v[2]), std::string(s) + "false");
+    ass(isNA(v[0]), std::string(s) + "NA");
+    ass(!isNA(v[1]), std::string(s) + "Inf");
+    ass(!isNA(v[2]), std::string(s) + "0.0");
     ass(isNA(NA), std::string(s) + "NA");
-    ass(!isNA(3.14), std::string(s) + "double");
-    ass(!isNA(14), std::string(s) + "double");
-    ass(!isNA(Inf), std::string(s) + "double");
-    ass(!isNA(-Inf), std::string(s) + "double");
+    ass(!isNA(3.14), std::string(s) + "3.14");
+    ass(!isNA(14), std::string(s) + "14");
+    ass(!isNA(Inf), std::string(s) + "Inf");
+    ass(!isNA(-Inf), std::string(s) + "-Inf");
   }
 }
 
 // [[Rcpp::export]]
-void isFinite_tests() {
+void test_isFinite() {
   // NOTE: testing isFinite
   {
     std::string s = "isFiniteTests: ";
@@ -33,19 +33,38 @@ void isFinite_tests() {
     v = numeric(3);
     v[0] = NA;
     v[1] = Inf;
-    ass(!isFinite(v[0]), std::string(s) + "false");
-    ass(isFinite(v[1]), std::string(s) + "true");
-    ass(!isFinite(v[2]), std::string(s) + "true");
+    ass(!isFinite(v[0]), std::string(s) + "NA");
+    ass(!isFinite(v[1]), std::string(s) + "Inf");
+    ass(isFinite(v[2]), std::string(s) + "0.0");
     ass(!isFinite(NA), std::string(s) + "NA");
-    ass(!isFinite(3.14), std::string(s) + "double");
-    ass(!isFinite(14), std::string(s) + "double");
-    ass(isFinite(Inf), std::string(s) + "double");
-    ass(isFinite(-Inf), std::string(s) + "double");
+    ass(isFinite(3.14), std::string(s) + "3.14");
+    ass(isFinite(14), std::string(s) + "14");
+    ass(!isFinite(Inf), std::string(s) + "Inf");
+    ass(!isFinite(-Inf), std::string(s) + "-Inf");
+  }
+}
+// [[Rcpp::export]]
+void test_isInfinite() {
+  // NOTE: testing isInfinite
+  {
+    std::string s = "isInfiniteTests: ";
+    Vec<double> v;
+    v = numeric(3);
+    v[0] = NA;
+    v[1] = Inf;
+    ass(!isInfinite(v[0]), std::string(s) + "NA");
+    ass(isInfinite(v[1]), std::string(s) + "Inf");
+    ass(!isInfinite(v[2]), std::string(s) + "0.0");
+    ass(!isInfinite(NA), std::string(s) + "NA");
+    ass(!isInfinite(3.14), std::string(s) + "3.14");
+    ass(!isInfinite(14), std::string(s) + "14");
+    ass(isInfinite(Inf), std::string(s) + "Inf");
+    ass(isInfinite(-Inf), std::string(s) + "-Inf");
   }
 }
 
 // [[Rcpp::export]]
-void length_tests() {
+void test_length() {
   // NOTE: test lengthTests
   {
     std::string s = "lengthTests: ";
@@ -69,7 +88,7 @@ void length_tests() {
 }
 
 // [[Rcpp::export]]
-void dim_tests() {
+void test_dim() {
   // NOTE: test dim tests
   {
     std::string s = "dimTests: ";

@@ -1,10 +1,6 @@
 #ifndef BUFFER_MATRIX_ETR_HPP
 #define BUFFER_MATRIX_ETR_HPP
 
-// TODO: create a common class for Vec and Mat
-// Or at least adapt Mat to the changes made in Vec
-#include "../Core.hpp"
-
 namespace etr {
 
 template <typename T, typename R> struct Mat {
@@ -15,8 +11,34 @@ template <typename T, typename R> struct Mat {
   using RetType = typename ReRef<decltype(d)>::type::RetType;
 
   // NOTE: define Matrix with specific size
-  explicit Mat(SI &&nrow, SI&& ncol) : d(nrow.sz * ncol.sz) {
-    d.set_matrix(nrow.sz, ncol.sz);
+  explicit Mat(SI &&nrow, SI&& ncol) : d(nrow.sz, ncol.sz) {}
+
+  //  NOTE: Copy other Mat
+  //  It is important to note that Mat<Borrow> does not require the copy and move constructors below.
+  //  It is only possible to construct Mat<Borrow> with pointers and size arguments
+  Mat(const Mat& other) {
+    if constexpr (IsBorrow<R>) {
+      d = other.d;
+    } else {
+      assign(other);
+    }
+  }
+  //  NOTE: Move other Mat
+  //  e.g. vec = std::move(other_vec)
+  Mat(Mat&& other) noexcept {
+    d.moveit(other.d);
+  }
+  // move: e.g. Mat<int> vec = c(1, 2, 3)
+  template<typename T2, typename R2>
+  requires(IS<T, T2> && IsLBuffer<R> && IsRArrayLike<Mat<T2, R2>>)
+  Mat(Mat<T2, R2>&& other) {
+    d.moveit(other.d);
+  }
+  // move: e.g. Mat<int> vec = c(1.2, 2.2, 3.3)
+  template<typename T2, typename R2>
+  requires((!IS<T, T2>) && IsLBuffer<R> && IsRArrayLike<Mat<T2, R2>>)
+  Mat(Mat<T2, R2>&& other) {
+    assign(other);
   }
 
   // NOTE: Buffer
@@ -129,10 +151,7 @@ template <typename T, typename R> struct Mat {
   template <typename TD>
     requires IsArithV<TD>
   Mat &operator=(const TD inp) {
-    static_assert(!IsUnary<R>, "Cannot assign to unary calculation");
-    static_assert(!IsBinary<R>, "Cannot assign to binary calculation");
-    static_assert(!IsRBuffer<R>,
-                  "Cannot assign to an r value. E.g. c(1, 2, 3) <- 1");
+    invalid_lhs();
     // Same Type
     // ---------------------------------------------------------------------
     if constexpr (is<TD, T>) {
@@ -172,13 +191,9 @@ template <typename T, typename R> struct Mat {
   void invalid_lhs() {
     static_assert(!IsUnary<R>, "Cannot assign to unary calculation");
     static_assert(!IsBinary<R>, "Cannot assign to binary calculation");
-    static_assert(!IsRBuffer<R>,
-                  "Cannot assign to an r value. E.g. c(1, 2, 3) <- 1");
   }
   template <typename OtherObj, typename DataTypeOtherObj>
   void copyWithTemp(const OtherObj& other_obj) {
-    // TODO: instead of copying move R objects into temp
-    // If moveing copy of matrix has to be handled differently. Therefore, it is now in each if constexpr
     temp.resize(other_obj.size());
     for (std::size_t i = 0; i < other_obj.size(); i++) {
       if constexpr (is<DataTypeOtherObj, T>) {
@@ -188,27 +203,64 @@ template <typename T, typename R> struct Mat {
       }
     }
   }
-  template <typename T2>
-  requires (!IsArithV<T2>)
-  Mat &operator=(const T2 &other_obj) {
+
+  template<typename T2>
+  void assign(const T2& other_obj) {
     invalid_lhs();
     using DataTypeOtherVec = typename ReRef<decltype(other_obj.d)>::type::RetType;
-    copyWithTemp<T2, DataTypeOtherVec>(other_obj);
-
+    copyWithTemp<T2, DataTypeOtherVec>(std::forward<decltype(other_obj)>(other_obj));
     if constexpr (IsLBuffer<R>) {
       d.moveit(temp);
-      copy_matrix_dim(other_obj);
     } else if constexpr (IsBorrow<R>) {
       ass<"number of items to replace is not a multiple of replacement length">(other_obj.size() <= d.capacity);
       ass<"size cannot be increased above the size of the borrowed object">(d.sz <= other_obj.size());
       d.sz = other_obj.size();
-      copy_matrix_dim(other_obj);
       for (std::size_t i = 0; i < other_obj.size(); i++) d[i] = temp[i];
     } else if constexpr (IS<SubsetClassTrait, typename ReRef<R>::type::TypeTrait>) {
       ass<"number of items to replace is not a multiple of replacement length">(other_obj.size() == d.size());
-      copy_matrix_dim(other_obj);
       for (std::size_t i = 0; i < d.size(); i++) d[i % d.size()] = temp[i];
+    } else if constexpr (IsRBuffer<R>) { // Sometimes in c() required
+      d.moveit(temp);
     }
+    copy_matrix_dim(other_obj);
+  }
+
+  // copy assignment
+  // Intended for: Calculations, subsets
+  template <typename T2>
+  requires (
+  !IsArithV<Decayed<T2>> && (!IsRArrayLike<T2>)
+  )
+  Mat &operator=(const T2 &other_obj) {
+    assign(std::forward<decltype(other_obj)>(other_obj));
+    return *this;
+  }
+
+  // copy assignment
+  // defined to handle the case where the type of *this and other_obj is the same
+  Mat& operator=(const Mat& other_obj) {
+    assign(std::forward<decltype(other_obj)>(other_obj));
+    return *this;
+  }
+
+  // move assignment
+  // Intended to swap resources between Buffer and RBuffer e.g. v = c(1, 2, 3)
+  template<typename T2, typename R2>
+  requires(
+  IS<T, T2> && IsLBuffer<R> && IsRArrayLike<Mat<T2, R2>>
+  )
+  Mat& operator=(Mat<T2, R2>&& other_obj) {
+    d.moveit(other_obj.d);
+    return *this;
+  }
+  // move assignment
+  // If R is borrow it has to be copied!
+  template<typename T2, typename R2>
+  requires(
+  IsBorrow<R>
+  )
+  Mat& operator=(Mat<T2, R2>&& other_obj) {
+    assign(std::forward<decltype(other_obj)>(other_obj));
     return *this;
   }
 
@@ -241,23 +293,15 @@ template <typename T, typename R> struct Mat {
 
   template<typename OtherObj>
   void copy_matrix_dim(const OtherObj& other) {
-    d.set_matrix(other.nr(), other.nc());
+    if (other.im()) d.set_matrix(other.nr(), other.nc());
     ass<"Length does not match nrow*ncol">(d.size() == (d.nr() * d.nc()));
   }
 
   auto begin() const {
-    if constexpr (IsSubsetClass<R>) {
-      return d.begin();
-    } else {
-      return It<T>{d.p};
-    }
+    return d.begin();
   }
   auto end() const {
-    if constexpr (IsSubsetClass<R>) {
-      return d.end();
-    } else {
-      return It<T>{d.p + this->size()};
-    }
+    return d.end();
   }
 
   T &back() const { return d.p[this->size()]; }

@@ -3,27 +3,31 @@
 
 namespace etr {
 
-template <typename I, typename Trait> struct UnaryOpClassIterator {
-  const I &obj;
+template <typename I, typename Trait>
+struct UnaryOpClassIterator {
+  ConstHolder<I> obj;
   size_t index;
 
-  UnaryOpClassIterator(const I &obj, size_t index = 0)
-  : obj(obj), index(index) {}
+  UnaryOpClassIterator(const I& obj_, size_t index = 0)
+    : obj(obj_), index(index) {}
+
+  UnaryOpClassIterator(I&& obj_, size_t index = 0)
+    : obj(std::move(obj_)), index(index) {}
 
   auto operator*() const {
     if constexpr (IsArithV<I>) {
-      return Trait::f(obj);
-    } else if constexpr (!IsArithV<I>) {
-      return Trait::f(obj[index % obj.size()]);
+      return Trait::f(obj.get());
+    } else {
+      return Trait::f(obj.get()[index % obj.get().size()]);
     }
   }
 
-  UnaryOpClassIterator &operator++() {
+  UnaryOpClassIterator& operator++() {
     ++index;
     return *this;
   }
 
-  bool operator!=(const UnaryOpClassIterator &other) const {
+  bool operator!=(const UnaryOpClassIterator& other) const {
     return index != other.index;
   }
 };
@@ -34,6 +38,7 @@ template <typename I, typename UTrait> struct UnaryOperation {
   using Type = typename I::RetType;
   const I &obj;
   using typeTraitObj = I;
+  using TypeTrait = UnaryTrait;
 
   bool im() const {
     if constexpr (!IsArithV<I>) {
