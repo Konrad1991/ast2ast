@@ -2,38 +2,41 @@
 
 # Function to process the code and create the AST
 # ========================================================================
-process <- function(code, context, r_fct) {
+process <- function(code, context, r_fct, branch_depth) {
+  print(branch_depth$branch_depth)
   if (!is.symbol(code) && is.call(code)) {
-    return(create_ast(code, context, r_fct))
+    return(create_ast(code, context, r_fct, branch_depth))
   }
-  var <- handle_var(code, context)
+  var <- handle_var(code, context, branch_depth)
   return(var)
 }
 
 # Translates R Code into AST representation
 # ========================================================================
-create_ast <- function(code, context, r_fct) {
+create_ast <- function(code, context, r_fct, branch_depth) {
   code <- as.list(code)
   operator <- deparse(code[[1]])
 
   # NOTE: create nodes
   if (operator == "if") {
     i_node <- if_node$new()
-    handle_if(code, i_node, operator)
+    handle_if(code, i_node, operator, r_fct, branch_depth)
     i_node$context <- context
     return(i_node)
   } else if (operator == "{") {
     b_node <- block_node$new()
     b_node$block <- lapply(code[-1], function(line) {
-      process(line, operator, r_fct)
+      process(line, operator, r_fct, branch_depth)
     })
     b_node$context <- context
     return(b_node)
   } else if (operator == "for") {
     fn <- for_node$new()
-    fn$i <- code[[2]] |> process(operator, r_fct)
-    fn$seq <- code[[3]] |> process(operator, r_fct)
-    fn$block <- code[[4]] |> process(operator, r_fct)
+    fn$i <- code[[2]] |> process(operator, r_fct, branch_depth)
+    fn$seq <- code[[3]] |> process(operator, r_fct, branch_depth)
+    branch_depth$branch_depth <- branch_depth$branch_depth + 1
+    fn$block <- code[[4]] |> process(operator, r_fct, branch_depth)
+    branch_depth$branch_depth <- branch_depth$branch_depth - 1
     fn$context <- context
     return(fn)
   } else if (function_registry_global$is_group_functions(operator)) {
@@ -41,7 +44,7 @@ create_ast <- function(code, context, r_fct) {
     fn$operator <- operator
     fn$args_names <- names(code[-1])
     fn$args <- lapply(code[-1], function(x) {
-      process(x, operator, r_fct)
+      process(x, operator, r_fct, branch_depth)
     })
     fn$context <- context
     return(fn)
@@ -52,7 +55,7 @@ create_ast <- function(code, context, r_fct) {
       t$check()
       bn <- binary_node$new()
       bn$operator <- operator
-      bn$left_node <- code[[2]] |> process(operator, r_fct)
+      bn$left_node <- code[[2]] |> process(operator, r_fct, branch_depth)
       bn$right_node <- t
       bn$context <- context
       bn$left_node_name <- names(code)[2]
@@ -61,8 +64,8 @@ create_ast <- function(code, context, r_fct) {
     }
     bn <- binary_node$new()
     bn$operator <- operator
-    bn$right_node <- code[[3]] |> process(operator, r_fct)
-    bn$left_node <- code[[2]] |> process(operator, r_fct)
+    bn$right_node <- code[[3]] |> process(operator, r_fct, branch_depth)
+    bn$left_node <- code[[2]] |> process(operator, r_fct, branch_depth)
     bn$context <- context
     bn$left_node_name <- names(code)[2]
     bn$right_node_name <- names(code)[3]
@@ -70,7 +73,7 @@ create_ast <- function(code, context, r_fct) {
   } else if (length(code) == 2) { # NOTE: Unary operators
     un <- unary_node$new()
     un$operator <- operator
-    un$obj <- code[[2]] |> process(operator, r_fct)
+    un$obj <- code[[2]] |> process(operator, r_fct, branch_depth)
     un$context <- context
     un$obj_name <- names(code)[2]
     return(un)
@@ -98,10 +101,12 @@ create_ast_list <- function(b, variables, r_fct) {
   # Create ast
   error_found <- FALSE
   ast_list <- list()
+  env <- new.env()
+  env$branch_depth <- 0
   for (i in seq_along(b)) {
     all_vars_line <- all.vars(b[[i]])
     ast <- try({
-      process(b[[i]], "Start", r_fct)
+      process(b[[i]], "Start", r_fct, env)
     })
     if (inherits(ast, "try-error")) {
       error_found <- TRUE
@@ -200,7 +205,7 @@ determine_and_check_types <- function(variables) {
   )
   if (inherits(var_types, "try-error")) {
     error_found <- TRUE
-    print(var_types) # TODO: remove
+    pe(var_types) # TODO: remove
     pe("error: Could not check the variables")
   }
   everything_ok <- lapply(variables$errors, pe)

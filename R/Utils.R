@@ -63,6 +63,10 @@ Functions <- R6::R6Class(
       # all is used due to duplicates in the cpp code (=)
     },
     is_group_functions = function(name) {
+      idx <- which(self$function_names == name)
+      if (identical(idx, integer())) {
+        return(FALSE) # NOTE: the error for unknown function is handled later
+      }
       self$groups[which(self$function_names == name)] == "function_node"
     }
   )
@@ -108,11 +112,12 @@ is_vec <- function(node, variables) {
 function_registry_global$add(
   name = "type", num_args = 2,
   check_fct = function(node, variables) {
-    if (!(inherits(node$left_node, "variable_node") && inherits(node$right_node, "variable_node"))) {
-      node$error <- error$new("the type function expects two variables (symbols) as arguments")
+    if (!(inherits(node$left_node, "variable_node") &&
+      !(inherits(node$right_node, "variable_node")) || inherits(node$right_node, "binary_node"))) {
+      node$error <- error$new("the type function expects a variable as first argument and either a symbol or a function such as vec(double)")
     }
   },
-  is_infix = FALSE, group = "binary_node", cpp_name = ""
+  is_infix = FALSE, group = "binary_node", cpp_name = "type" # the removement of the type is handled in the node itself
 )
 function_registry_global$add(
   name = "=", num_args = 2,
@@ -497,11 +502,15 @@ function_registry_global$add(
 function_registry_global$add(
   name = "vector", num_args = 2,
   check_fct = function(node, variables) {
-    if (!is_char(node$left_node, variables)) {
+    if (!is_char(node$args[[1]], variables)) {
      node$error <- error$new("mode of vector has to be of type character")
     }
   },
   is_infix = FALSE, group = "function_node", cpp_name = "etr::vector"
+)
+function_registry_global$add(
+  name = "numeric", num_args = 1,
+  check_fct = mock, is_infix = FALSE, group = "unary_node", cpp_name = "etr::numeric"
 )
 function_registry_global$add(
   name = "matrix", num_args = 3,

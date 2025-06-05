@@ -1,3 +1,41 @@
+# The type infer system
+# Variable type list stores names-type_node
+# All arguments to the function are added to the list
+# When a declaration or assignment to declaration is found it is added to the list
+#   Open question: Should declarations only be allowed at branch depth 0? --> Yes
+# The types of the remaining variables are inferred
+# For each expression a type is inferred (if possible)
+#   Open question:
+#   Should the detected type directly be added to the variable type list?
+#   The alternative is to use all the types and combine them to a common type
+#   However, this approach only works when allowing to detect partial types
+#   I. v <- numeric(10); II. v[i] <- v[i+1] + v[i]
+#   In the example I. would result in vec(double). When directly adding it to the list
+#   one can infer from II. that it is indeed a vec(double)
+#   Otherwise one can only infer vec(X) from II. as the data type of v is not known.
+#
+# - What is here the approach of other languages?
+#
+# if (a < 2) {
+#   b <- numeric(10)
+#   b[1] <- b[1] + b[2] + 3
+# } else {
+#   b[1] <- b[1] + b[2] + 4
+# }
+# if a >= 2 this would result in an error in R as b is not known.
+# However, in ast2ast b would be declared at the beginning of the function and it would work.
+#
+# Maybe, one could say that allocation functions (c, logical, integer, numeric, matrix, and :)
+# are initialisations and declarations if no type is declared before
+# Check whether variables are declared and initialisiated before used elsewhere
+# And check whether the variables are initialisiated at the same or lower branch depth
+#
+# - Add branch depth information
+# - Add declared and initialisiated attribute to variable node
+# - Where an initalisation is any assignment where the variable at lhs is not subsetted
+# NOTE: all these steps can be handled in gather_vars_and_returns
+
+
 # Parses the langauge object and extracts:
 # - how to handle the argument (copy, reference, ref)
 # - the type of the argument (actual type, const)
@@ -92,7 +130,7 @@ gather_vars_and_returns <- function(node, variables) {
   } else if (inherits(node, "block_node")) {
     lapply(node$block, function(stmt) gather_vars_and_returns(stmt, variables))
   } else if (inherits(node, "for_node")) {
-    name <- node$i$name # TODO: Assuming it is a variable node. Maybe requires a check
+    name <- node$i$name
     variables$variable_list[[name]] <- c(variables$variable_list[[name]], node)
     variables$names <- c(variables$names, node$i$name)
     lapply(node$block$block, function(stmt) gather_vars_and_returns(stmt, variables))
@@ -233,6 +271,13 @@ variables <- R6::R6Class(
           t$base_type <- "logical"
           t$data_struct <- inner_type$data_struct
           return(t)
+        } else if (node$operator %in% c("numeric", "integer", "logical")){
+          inner_type <- self$determine_types_rhs(node$obj)
+          inner_type <- self$flatten_type(inner_type)
+          t <- type_node$new(NA, FALSE, self$r_fct)
+          t$base_type <- c(numeric = "double", integer = "int", logical = "bool")[node$operator]
+          t$data_struct <- "vector"
+          return(t)
         }
       } else if (inherits(node, "binary_node")) {
         if (node$operator %in% c("=", "<-")) {
@@ -310,7 +355,7 @@ variables <- R6::R6Class(
         } else if (node$operator == "vector") {
           mode <- node$args[[1]]
           t <- type_node$new(NA, FALSE, self$r_fct)
-          t$base_type <- mode
+          t$base_type <- c(numeric = "double", logical = "bool", integer = "int")[str2lang(mode$name)]
           t$data_struct <- "vector"
           return(t)
         } else if (node$operator == "matrix") {
@@ -398,12 +443,30 @@ variables <- R6::R6Class(
       return("Unknown node at lhs")
     },
     infer_missing_type = function(nodes, name) {
-      temp_l <- lapply(nodes, function(x) {
-        if (inherits(x, "binary_node") && x$operator %in% c("<-", "=")) {
-          x <- x$right_node
+      temp_l <- list()
+      for (x in seq_along(nodes)) {
+        if (inherits(nodes[[x]], "binary_node") && nodes[[x]]$operator %in% c("<-", "=")) {
+          nodes[[x]] <- nodes[[x]]$right_node
         }
-        self$determine_types_rhs(x)
-      })
+        res <- try(self$determine_types_rhs(nodes[[x]]), silent = TRUE) # TODO: identify cases where it fails. And figure out why it fails
+        if (inherits(res, "try-error")) {
+          next
+        }
+        self$variable_type_list[[name]] <- res
+        # TODO:
+        # The assignment to variable_type_list is required for stuff like this:
+        # I. v <- numeric(10)
+        # II. v[i] <- v[i+1] + v[i]
+        # The type can be inferred for I. But it is only possible to do this for II. if the type found in I. is added to the variable_type_list
+        # However, information from one branch could be used in another one.
+        # if () {v <- numeric(19)} else {v[i] <- v[i + 1] + v[i]}
+        # Proper solution would be to store the branch depth and throw an error if the type cannot be determined
+        # This has to be done in create AST. Increment counter more everytime a block is entered and decrement when block is finished
+        temp_l[[length(temp_l) + 1]] <- res
+      }
+      if (identical(temp_l, list())) {
+        stop(sprintf("Cannot infer the type for: %s", name))
+      }
       t <- infer_common_type(temp_l, self$r_fct, name)
       t$init()
       if (is_iterator(temp_l)) t$iterator <- TRUE
@@ -419,6 +482,17 @@ variables <- R6::R6Class(
         num_declarations <- sum(assignment_types %in% c("function_argument", "declaration", "assign_to_declaration"))
         if (num_declarations == 0) {
           self$infer_missing_type(nodes, name)
+        } else {
+          which_decl <- which(assignment_types == "declaration")
+          if (length(which_decl) == 1) {
+            self$variable_type_list[[name]] <- nodes[[which_decl]]$right_node
+            next
+          }
+          which_assign_decl <- which(assignment_types == "assign_to_declaration")
+          if (length(which_assign_decl) == 1) {
+            self$variable_type_list[[name]] <- nodes[[which_assign_decl]]$left_node$right_node
+            next
+          }
         }
       }
     },
@@ -429,7 +503,7 @@ variables <- R6::R6Class(
     # - Check that for each variable only once a type is declared
     # - Check that the type declaration occures at the first occurance of the variable
     # - Check that the iterator variables are not used elsewhere
-    # - TODO: check that the variables are used in the correct context. 
+    # - TODO: check that the variables are used in the correct context.
     #   - Types of lhs matches at least nearly the type of rhs
     #   - Types of variables appropriate as function argument
     check = function() {
@@ -459,7 +533,7 @@ variables <- R6::R6Class(
         }
 
         # (3) Iterator variables must not be used elsewhere
-        if (any(assignment_types == "iteration") && length(nodes) != 1) {
+        if (any(assignment_types == "iteration") && (!all(assignment_types == "iteration"))) { # The second check is when for example i is used several times
           if (length(nodes) > 1) {
             self$errors <- c(self$errors,
               sprintf("Iterator variable '%s' is used at left hand site of assignment. First misuse here: %s \n",

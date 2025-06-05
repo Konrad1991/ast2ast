@@ -163,6 +163,7 @@ variable_node <- R6::R6Class(
     context = NULL,
     declared = FALSE,
     initialized = FALSE,
+    branch_depth = 0,
     initialize = function(obj) {
       self$name <- obj
     },
@@ -199,7 +200,7 @@ literal_node <- R6::R6Class(
   )
 )
 
-handle_var <- function(code, context) {
+handle_var <- function(code, context, branch_depth) {
   if (rlang::is_symbol(code)) {
     if (context == "[" && deparse(code) == "") {
       # NOTE: empty indexing --> change all entries
@@ -458,15 +459,16 @@ function_node <- R6::R6Class(
   )
 )
 
-handle_if <- function(code, i_node, operator) {
-  i_node$condition <- code[[2]] |> process(operator)
-  i_node$true_node <- code[[3]] |> process(operator)
+handle_if <- function(code, i_node, r_fct, operator, branch_depth) {
+  i_node$condition <- code[[2]] |> process(operator, r_fct, branch_depth)
+  branch_depth$branch_depth <- branch_depth$branch_depth + 1
+  i_node$true_node <- code[[3]] |> process(operator, r_fct, branch_depth)
   if (length(code) == 4) {
     s <- code[[4]]
     while (is.call(s) && deparse(s[[1]]) == "if") {
       else_i_node <- if_node$new()
-      else_i_node$condition <- s[[2]] |> process(operator)
-      else_i_node$true_node <- s[[3]] |> process(operator)
+      else_i_node$condition <- s[[2]] |> process(operator, r_fct, branch_depth)
+      else_i_node$true_node <- s[[3]] |> process(operator, r_fct, branch_depth)
       i_node$else_if_nodes[[
         length(i_node$else_if_nodes) + 1
         ]] <- else_i_node
@@ -479,16 +481,17 @@ handle_if <- function(code, i_node, operator) {
     if (!is.null(s)) {
       if (deparse(s[[1]]) == "if") {
         else_i_node <- if_node$new()
-        else_i_node$condition <- s[[2]] |> process(operator)
-        else_i_node$true_node <- s[[3]] |> process(operator)
+        else_i_node$condition <- s[[2]] |> process(operator, r_fct, branch_depth)
+        else_i_node$true_node <- s[[3]] |> process(operator, r_fct, branch_depth)
         i_node$else_if_nodes[[
           length(i_node$else_if_nodes) + 1
           ]] <- else_i_node
       } else {
-        i_node$false_node <- process(s, operator)
+        i_node$false_node <- process(s, operator, r_fct, branch_depth)
       }
     }
   }
+  branch_depth$branch_depth <- branch_depth$branch_depth -1
 }
 
 # Define the if_node class
@@ -559,6 +562,12 @@ if_node <- R6::R6Class(
         indent = paste0(indent, "")
       ))
     },
+    string_else_if_node_error = function(indent = "") {
+      l <- lapply(self$else_if_nodes, function(node) {
+        return(node$stringify_error(indent = paste0(indent, "")))
+      })
+      combine_strings(l, "")
+    },
     stringify_false_node_error = function(indent = "") {
       if (is.null(self$false_node)) {
         return(indent)
@@ -570,8 +579,9 @@ if_node <- R6::R6Class(
     stringify_error = function(indent = "") {
       condition_error <- self$stringify_condition_error()
       true_error <- self$stringify_true_node_error()
+      else_if_error <- self$string_else_if_node_error()
       false_error <- self$stringify_false_node_error()
-      errors <- c(condition_error, true_error, false_error)
+      errors <- c(condition_error, true_error, else_if_error, false_error)
       errors <- errors[errors != ""]
       errors <- combine_strings(errors)
       ret <- paste0(

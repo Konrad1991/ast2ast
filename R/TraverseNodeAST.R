@@ -19,6 +19,9 @@ traverse_ast <- function(node, action, ...) {
     if (!is.null(node$false_node)) {
       traverse_ast(node$false_node, action, ...)
     }
+    if(!is.null(node$else_if_nodes)) {
+      lapply(node$else_if_nodes, function(arg) { traverse_ast(arg, action, ...) })
+    }
   } else if (inherits(node, "block_node")) {
     action(node, ...)
     lapply(node$block, function(stmt) traverse_ast(stmt, action, ...))
@@ -58,6 +61,7 @@ traverse_ast <- function(node, action, ...) {
 # ========================================================================
 # Function to check if the given function is allowed
 check_function <- function(node) {
+  if (is.null(node$operator)) return(TRUE)
   fct <- node$operator
   fct %in% function_registry_global$permitted_fcts()
 }
@@ -65,6 +69,7 @@ check_function <- function(node) {
 # Function to check if the number of arguments is correct
 check_args_function <- function(node) {
   fct <- node$operator
+  if (is.null(fct)) return(TRUE)
   args_length <- NULL
   if (inherits(node, "nullary_node")) {
     args_length <- 0
@@ -87,6 +92,7 @@ check_args_function <- function(node) {
 # Function to check that the named args are correct
 check_named_args <- function(node) {
   fct <- node$operator
+  if (is.null(fct)) return(TRUE)
   named_args <- named_args()
   if (inherits(node, "function_node")) {
     if (fct == "vector" || fct == "matrix") {
@@ -129,12 +135,6 @@ check_lhs_operation <- function(node) {
 
 # Function to check the operator
 check_operator <- function(node) {
-  if (!inherits(node, "unary_node") &&
-    !inherits(node, "binary_node") &&
-    !inherits(node, "nullary_node") &&
-    !inherits(node, "function_node")) {
-    return()
-  }
   list_check_fcts <- c(
     check_function,
     check_args_function,
@@ -146,8 +146,8 @@ check_operator <- function(node) {
     "Found wrong named argument for: ",
     "Found invalid expression at left side of assignment: "
   )
+  err <- NULL
   for (i in seq_along(list_check_fcts)) {
-    err <- NULL
     fct <- list_check_fcts[[i]]
     if (!fct(node)) {
       error_message <- paste0(messages[i], node$operator)
