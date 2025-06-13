@@ -44,6 +44,12 @@ traverse_ast <- function(node, action, ...) {
   }
 }
 
+# For debugging
+action_print <- function(node) {
+  # print(node)
+  str(node)
+}
+
 # Checks for the function operator.
 # - Function operators are part of:
 #   nullary_node, unary_node, binary_node and function_node.

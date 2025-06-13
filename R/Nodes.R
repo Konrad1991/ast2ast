@@ -1,6 +1,7 @@
 type_node <- R6::R6Class(
   "type_node",
   public = list(
+    id = NULL,
     name = NULL,
     tree = NULL,
     error = NULL,
@@ -150,6 +151,16 @@ type_node <- R6::R6Class(
       }
       type <- convert_types_to_etr_types(self$base_type, self$data_struct, self$r_fct, indent)
       paste0(indent, type, " ", self$name, ";")
+    },
+
+    print = function() {
+      print("Type:")
+      print(self$base_type)
+      print(self$data_struct)
+      print(self$const_or_mut)
+      print(self$copy_or_ref)
+      print(self$fct_input)
+      print(self$iterator)
     }
   )
 )
@@ -157,13 +168,14 @@ type_node <- R6::R6Class(
 variable_node <- R6::R6Class(
   "variable_node",
   public = list(
+    id = NULL,
     name = NULL,
     type = NULL,
     error = NULL,
     context = NULL,
     declared = FALSE,
     initialized = FALSE,
-    branch_depth = 0,
+    last_assignment = NULL,
     initialize = function(obj) {
       self$name <- obj
     },
@@ -178,6 +190,12 @@ variable_node <- R6::R6Class(
     },
     stringify_declaration = function(indent = "", r_fct) {
       self$type$stringify_declaration(indent, r_fct)
+    },
+    print = function() {
+      cat(
+        "Id:", self$id, "Variable:", deparse(self$name),
+        "Last assignment: ", self$last_assignment
+      )
     }
   )
 )
@@ -185,6 +203,7 @@ variable_node <- R6::R6Class(
 literal_node <- R6::R6Class(
   "literal_node",
   public = list(
+    id = NULL,
     name = NULL,
     error = NULL,
     context = NULL,
@@ -196,16 +215,23 @@ literal_node <- R6::R6Class(
     },
     stringify_error = function(indent = "") {
       return(paste0(indent, self$error$error_message))
+    },
+    print = function() {
+      # cat("Id:", self$id, self$stringify(), "\n")
+      NULL
     }
   )
 )
 
-handle_var <- function(code, context, branch_depth) {
+handle_var <- function(code, context, env) {
   if (rlang::is_symbol(code)) {
     if (context == "[" && deparse(code) == "") {
       # NOTE: empty indexing --> change all entries
       ln <- literal_node$new(TRUE)
       ln$context <- context
+      env$id <- env$id + 1
+      ln$id <- env$id
+      env$all_nodes[[env$id]] <- ln
       return(ln)
     }
     # NOTE: dont know why but short forms T and F
@@ -213,24 +239,38 @@ handle_var <- function(code, context, branch_depth) {
     if (deparse(code) == "T") {
       ln <- literal_node$new(TRUE)
       ln$context <- context
+      env$id <- env$id + 1
+      ln$id <- env$id
+      env$all_nodes[[env$id]] <- ln
       return(ln)
     } else if (deparse(code) == "F") {
       ln <- literal_node$new(FALSE)
       ln$context <- context
+      env$id <- env$id + 1
+      ln$id <- env$id
+      env$all_nodes[[env$id]] <- ln
       return(ln)
     }
     vn <- variable_node$new(code)
+    vn$last_assignment <- env$last_assignment[[vn$name]] %||% NA
     vn$context <- context
+    env$id <- env$id + 1
+    vn$id <- env$id
+    env$all_nodes[[env$id]] <- vn
     return(vn)
   }
   ln <- literal_node$new(code)
   ln$context <- context
+  env$id <- env$id + 1
+  ln$id <- env$id
+  env$all_nodes[[env$id]] <- ln
   return(ln)
 }
 
 binary_node <- R6::R6Class(
   "binary_node",
   public = list(
+    id = NULL,
     operator = NULL,
     left_node = NULL,
     left_node_name = NULL,
@@ -312,6 +352,9 @@ binary_node <- R6::R6Class(
     },
     stringify_error_line = function(indent = "") {
       self$stringify()
+    },
+    print = function() {
+      cat("Id:", self$id, self$stringify(), "\n")
     }
   )
 )
@@ -320,6 +363,7 @@ binary_node <- R6::R6Class(
 unary_node <- R6::R6Class(
   "unary_node",
   public = list(
+    id = NULL,
     operator = NULL,
     obj = NULL,
     obj_name = NULL, # TODO: is this used?
@@ -374,6 +418,9 @@ unary_node <- R6::R6Class(
     },
     stringify_error_line = function(indent = "") {
       self$stringify()
+    },
+    print = function() {
+      cat("Id: ", self$id, "\n", self$stringify(), "\n")
     }
   )
 )
@@ -381,6 +428,7 @@ unary_node <- R6::R6Class(
 nullary_node <- R6::R6Class(
   "nullary_node",
   public = list(
+    id = NULL,
     operator = NULL,
     error = NULL,
     context = NULL,
@@ -407,6 +455,9 @@ nullary_node <- R6::R6Class(
     },
     stringify_error_line = function(indent = "") {
       self$stringify()
+    },
+    print = function() {
+      cat("Id: ", self$id, "\n", self$stringify(), "\n")
     }
   )
 )
@@ -415,6 +466,7 @@ nullary_node <- R6::R6Class(
 function_node <- R6::R6Class(
   "function_node",
   public = list(
+    id = NULL,
     operator = NULL,
     error = NULL,
     context = NULL,
@@ -455,20 +507,25 @@ function_node <- R6::R6Class(
     },
     stringify_error_line = function(indent = "") {
       self$stringify()
+    },
+    print = function() {
+      cat("Id: ", self$id, "\n", self$stringify(), "\n")
     }
   )
 )
 
-handle_if <- function(code, i_node, r_fct, operator, branch_depth) {
-  i_node$condition <- code[[2]] |> process(operator, r_fct, branch_depth)
-  branch_depth$branch_depth <- branch_depth$branch_depth + 1
-  i_node$true_node <- code[[3]] |> process(operator, r_fct, branch_depth)
+handle_if <- function(code, context, r_fct, env, i_node) {
+  i_node$condition <- code[[2]] |> process(context, r_fct, env)
+  i_node$true_node <- code[[3]] |> process(context, r_fct, env)
   if (length(code) == 4) {
     s <- code[[4]]
     while (is.call(s) && deparse(s[[1]]) == "if") {
       else_i_node <- if_node$new()
-      else_i_node$condition <- s[[2]] |> process(operator, r_fct, branch_depth)
-      else_i_node$true_node <- s[[3]] |> process(operator, r_fct, branch_depth)
+      env$id <- env$id + 1
+      env$all_nodes[[env$id]] <- else_i_node
+      else_i_node$id <- env$id
+      else_i_node$condition <- s[[2]] |> process(context, r_fct, env)
+      else_i_node$true_node <- s[[3]] |> process(context, r_fct, env)
       i_node$else_if_nodes[[
         length(i_node$else_if_nodes) + 1
         ]] <- else_i_node
@@ -481,29 +538,33 @@ handle_if <- function(code, i_node, r_fct, operator, branch_depth) {
     if (!is.null(s)) {
       if (deparse(s[[1]]) == "if") {
         else_i_node <- if_node$new()
-        else_i_node$condition <- s[[2]] |> process(operator, r_fct, branch_depth)
-        else_i_node$true_node <- s[[3]] |> process(operator, r_fct, branch_depth)
+        env$id <- env$id + 1
+        env$all_nodes[[env$id]] <- else_i_node
+        else_i_node$id <- env$id
+        else_i_node$condition <- s[[2]] |> process(context, r_fct, env)
+        else_i_node$true_node <- s[[3]] |> process(context, r_fct, env)
         i_node$else_if_nodes[[
           length(i_node$else_if_nodes) + 1
           ]] <- else_i_node
       } else {
-        i_node$false_node <- process(s, operator, r_fct, branch_depth)
+        i_node$false_node <- process(s, context, r_fct, env)
       }
     }
   }
-  branch_depth$branch_depth <- branch_depth$branch_depth -1
 }
 
 # Define the if_node class
 if_node <- R6::R6Class(
   "if_node",
   public = list(
+    id = NULL,
     condition = NULL,
     true_node = NULL,
     else_if_nodes = NULL,
     false_node = NULL,
     error = NULL,
     context = NULL,
+
     initialize = function() {},
     string_condition = function(indent) {
       return(self$condition$stringify(indent = paste0(indent, "")))
@@ -606,6 +667,10 @@ if_node <- R6::R6Class(
       if (false_error != "") {
         return(self$false_node$stringify_error_line())
       }
+    },
+    print = function() {
+      cat("Id:", self$id, "if\n")
+      print(self$old_assignments)
     }
   )
 )
@@ -614,6 +679,7 @@ if_node <- R6::R6Class(
 block_node <- R6::R6Class(
   "block_node",
   public = list(
+    id = NULL,
     block = NULL,
     error = NULL,
     context = NULL,
@@ -664,6 +730,9 @@ block_node <- R6::R6Class(
 
       res <- combine_strings(res[idx])
       return(res)
+    },
+    print = function() {
+      cat("{\n")
     }
   )
 )
@@ -684,6 +753,7 @@ error_node <- R6::R6Class(
 for_node <- R6::R6Class(
   "for_node",
   public = list(
+    id = NULL,
     error = NULL,
     i = NULL,
     seq = NULL,
@@ -736,6 +806,9 @@ for_node <- R6::R6Class(
       if (block_err != "") {
         return(self$block$stringify_error_line())
       }
+    },
+    print = function() {
+      cat(self$stringify(), "\n")
     }
   )
 )

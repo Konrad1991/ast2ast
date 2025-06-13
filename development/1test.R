@@ -1,18 +1,27 @@
 files <- list.files("./R/", full.names = TRUE)
 trash <- lapply(files, source)
 
-testall <- function(a) {
-  if (a == 0) {
-    print("test1")
-  } else if (a == 1) {
-    print("test2")
-  } else if (a == 2) {
-    print("test3")
-  } else {
-    if (a == 3) {
-      print("bla")
+f <- function(a, b) {
+  c <- a + b
+  r  <- 2
+  pi <- 3.14
+  if (c == 2) {
+    if (c == 3) {
+      r <- 4
+    } else {
+      r <- 5
     }
-    print("test4")
   }
+  a <- r*pi*pi
 }
-res <- translate(testall, verbose = TRUE, getsource = TRUE)
+
+env <- new.env(parent = emptyenv())
+env$id <- 3 # 1 is function argument & 2 is mock
+env$last_assignment <- create_last_assignment_list(f)
+env$all_nodes <- list()
+env$in_if_node <- FALSE
+ast <- process(body(f), "Start", TRUE, env)
+edges <- extract_edges(env$all_nodes)
+sorted_ids <- topo_sort(edges)
+env$all_nodes[sorted_ids]
+env$all_nodes
