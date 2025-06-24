@@ -1,76 +1,66 @@
 # Function to process the code and create the AST
 # ========================================================================
-process <- function(code, context, r_fct, env) {
+process <- function(code, context, r_fct, type_infer) {
   if (!is.symbol(code) && is.call(code)) {
-    return(create_ast(code, context, r_fct, env))
+    return(create_ast(code, context, r_fct, type_infer))
   }
-  var <- handle_var(code, context, env)
+  var <- handle_var(code, context, type_infer)
   return(var)
 }
 
 # Translates R Code into AST representation
 # ========================================================================
-create_ast <- function(code, context, r_fct, env) {
+create_ast <- function(code, context, r_fct, type_infer) {
   code <- as.list(code)
   operator <- deparse(code[[1]])
 
   # NOTE: create nodes
   if (operator == "if") {
-    env$in_if_node <- TRUE
     i_node <- if_node$new()
-    env$id <- env$id + 1
-    i_node$id <- env$id
     i_node$context <- context
-    env$all_nodes[[env$id]] <- i_node
-    handle_if(code, operator, r_fct, env, i_node)
-    gather_assignments(i_node, env)
-    env$in_if_node <- FALSE
+    type_infer$assign(i_node)
+    type_infer$in_if_node <- TRUE
+    before_if_last_assignment <- type_infer$last_assignment
+    handle_if(code, operator, r_fct, type_infer, i_node)
+    gather_assignments(i_node, type_infer, before_if_last_assignment)
+    type_infer$in_if_node <- FALSE
     return(i_node)
   } else if (operator == "{") {
     b_node <- block_node$new()
-    env$id <- env$id + 1
-    b_node$id <- env$id
-    env$all_nodes[[env$id]] <- b_node
+    type_infer$assign(b_node)
     b_node$block <- lapply(code[-1], function(line) {
-      process(line, operator, r_fct, env)
+      process(line, operator, r_fct, type_infer)
     })
     b_node$context <- context
     return(b_node)
   } else if (operator == "for") {
     fn <- for_node$new()
-    env$id <- env$id + 1
-    fn$id <- env$id
-    env$all_nodes[[env$id]] <- fn
-    fn$i <- code[[2]] |> process(operator, r_fct, env)
-    fn$seq <- code[[3]] |> process(operator, r_fct, env)
-    fn$block <- code[[4]] |> process(operator, r_fct, env)
+    type_infer$assign(fn)
+    fn$i <- code[[2]] |> process(operator, r_fct, type_infer)
+    fn$seq <- code[[3]] |> process(operator, r_fct, type_infer)
+    fn$block <- code[[4]] |> process(operator, r_fct, type_infer)
     fn$context <- context
     return(fn)
   } else if (function_registry_global$is_group_functions(operator)) {
     fn <- function_node$new()
-    env$id <- env$id + 1
-    fn$id <- env$id
     fn$operator <- operator
     fn$args_names <- names(code[-1])
-    env$all_nodes[[env$id]] <- fn
+    type_infer$assign(fn)
     fn$args <- lapply(code[-1], function(x) {
-      process(x, operator, r_fct, env)
+      process(x, operator, r_fct, type_infer)
     })
     fn$context <- context
     return(fn)
   } else if (length(code) == 3) { # NOTE: Binary operators
     if (operator == "type") {
       t <- type_node$new(as.call(code), FALSE, r_fct)
-      env$id <- env$id + 1
-      t$id <- env$id
       t$init()
       t$check()
+      type_infer$assign(t)
       bn <- binary_node$new()
-      env$id <- env$id + 1
-      env$all_nodes[[env$id]] <- bn
-      bn$id <- env$id
+      type_infer$assign(bn)
       bn$operator <- operator
-      bn$left_node <- code[[2]] |> process(operator, r_fct, env)
+      bn$left_node <- code[[2]] |> process(operator, r_fct, type_infer)
       bn$right_node <- t
       bn$context <- context
       bn$left_node_name <- names(code)[2]
@@ -78,32 +68,26 @@ create_ast <- function(code, context, r_fct, env) {
       return(bn)
     }
     bn <- binary_node$new()
-    env$id <- env$id + 1
-    env$all_nodes[[env$id]] <- bn
-    bn$id <- env$id
+    type_infer$assign(bn)
     bn$operator <- operator
-    bn$right_node <- code[[3]] |> process(operator, r_fct, env)
-    bn$left_node <- code[[2]] |> process(operator, r_fct, env)
+    bn$right_node <- code[[3]] |> process(operator, r_fct, type_infer)
+    bn$left_node <- code[[2]] |> process(operator, r_fct, type_infer)
     bn$context <- context
     bn$left_node_name <- names(code)[2]
     bn$right_node_name <- names(code)[3]
-    gather_assignments(bn, env)
+    gather_assignments(bn, type_infer)
     return(bn)
   } else if (length(code) == 2) { # NOTE: Unary operators
     un <- unary_node$new()
-    env$id <- env$id + 1
-    env$all_nodes[[env$id]] <- un
-    un$id <- env$id
+    type_infer$assign(un)
     un$operator <- operator
-    un$obj <- code[[2]] |> process(operator, r_fct, env)
+    un$obj <- code[[2]] |> process(operator, r_fct, type_infer)
     un$context <- context
     un$obj_name <- names(code)[2]
     return(un)
   } else if (length(code) == 1) { # NOTE: Nullary operators
     nn <- nullary_node$new()
-    env$id <- env$id + 1
-    env$all_nodes[[env$id]] <- nn
-    nn$id <- env$id
+    type_infer$assign(nn)
     nn$operator <- operator
     nn$context <- context
     return(nn)
