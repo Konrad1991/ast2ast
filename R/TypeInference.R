@@ -35,12 +35,28 @@ fct_arg_node <- R6::R6Class(
     }
   )
 )
+lhs_node <- R6::R6Class(
+  "lhs_node",
+  public = list(
+    lhs = NULL,
+    initialize = function(node) {
+      self$lhs <- node
+    },
+    print = function() {
+      cat(
+        "Id:", self$lhs$id, "LHS Variable:", deparse(self$lhs$name),
+        "Last assignment: ", self$lhs$last_assignment
+      )
+    }
+  )
+)
 type_inference <- R6::R6Class(
   "type_inference",
   public = list(
     last_assignment = list(),
     all_nodes = NULL,
     in_if_node = FALSE,
+    in_lhs_node = FALSE,
     counter = 3,
     initialize = function(f) {
       if (is.null(f)) { # for if nodes
@@ -56,6 +72,13 @@ type_inference <- R6::R6Class(
         if (inherits(node, "merge_node")) {
           self$all_nodes[[self$counter]] <- node
         }
+        self$counter <- self$counter + 1
+        return()
+      }
+      if (self$in_lhs_node) {
+        node$id <- self$counter
+        var_lhs <- lhs_node$new(node)
+        self$all_nodes[[self$counter]] <- var_lhs
         self$counter <- self$counter + 1
         return()
       }
@@ -99,6 +122,12 @@ gather_in_if <- function(node, type_infer_in_if, before_if_last_assignment) {
       varname <- node$left_node$left_node$name
       type_infer_in_if$last_assignment[[varname]] <- node$id
     }
+  } else if (inherits(node, "if_node")) {
+    print("test")
+    str(node$true_node$block[[1]]$stringify())
+    temp <- node$false_node$block[[1]]
+    if(!is.null(temp)) str(temp$stringify())
+    gather_assignments(node, type_infer_in_if, type_infer_in_if$before_if_last_assignment)
   }
   type_infer_in_if$assign(node)
 }
@@ -113,12 +142,31 @@ gather_assignments <- function(node, type_infer, before_if_last_assignment) {
       type_infer$last_assignment[[varname]] <- node$id
     }
   } else if (inherits(node, "if_node")) {
+    # build a list for each block (if, else ifs, and else) and gather all assignments for each block.
+    # Than determine a common type for each block.
+    # Next, find a common type of the common types.
+    # Subsequently, find the common type of the common type and the type for the variable before the if node
+    # TODO: replace the type_infer_in_if with the flatted assignment list
+    # Or create a type infer for each block and later recursivly call type inference --> Deep recursion...
     type_infer_in_if <- type_inference$new(NULL)
     type_infer_in_if$last_assignment <- before_if_last_assignment
     type_infer_in_if$counter <- type_infer$counter
-    traverse_ast(node$true_node, function(x, tif, bila) { # TODO: add false node and if_else nodes
+    traverse_ast(node$true_node, function(x, tif, bila) {
       gather_in_if(x, tif, bila)
     }, type_infer_in_if, type_infer_in_if$last_assignment)
+    if (!is.null(node$else_if_nodes)) {
+      # Else if nodes are a list of if nodes containing only a true node
+      lapply(node$else_if_nodes, function(n) {
+        traverse_ast(n$true_node, function(x, tif, bila) {
+          gather_in_if(x, tif, bila)
+        }, type_infer_in_if, type_infer_in_if$last_assignment)
+      })
+    }
+    if (!is.null(node$false_node)) {
+      traverse_ast(node$false_node, function(x, tif, bila) {
+        gather_in_if(x, tif, bila)
+      }, type_infer_in_if, type_infer_in_if$last_assignment)
+    }
     vars <- names(type_infer$last_assignment)
     vars_in_if <- vars[which(before_if_last_assignment != type_infer_in_if$last_assignment)]
     for (i in seq_along(vars_in_if)) {
@@ -134,10 +182,30 @@ gather_assignments <- function(node, type_infer, before_if_last_assignment) {
 
 # Extract edges from graph
 # ========================================================================
+get_variables_action <- function(node, env) {
+  if (inherits(node, "variable_node")) env$vars <- c(env$vars, node)
+}
 extract_edges <- function(all_nodes) {
   edges <- list()
   for (node in all_nodes) {
-    if (inherits(node, "variable_node")) {
+    if (inherits(node, "binary_node") && node$operator %in% c("<-", "=")) {
+      env_rhs <- new.env(parent = emptyenv())
+      env_rhs$vars <- list()
+      traverse_ast(node$right_node, get_variables_action, env_rhs)
+      rhs_vars <- env_rhs$vars
+      if (is.null(rhs_vars) || identical(rhs_vars, list())) {
+        edges[[length(edges) + 1]] <- c(2, node$id)
+      }
+      for (rhs in rhs_vars) {
+        from <- rhs$last_assignment
+        to <- node$id
+        edges[[length(edges) + 1]] <- c(from, to)
+
+        from <- rhs$id
+        to <- node$id
+        edges[[length(edges) + 1]] <- c(from, to)
+      }
+    } else if (inherits(node, "variable_node")) {
       from <- node$last_assignment
       to <- node$id
       edges[[length(edges) + 1]] <- c(from, to)

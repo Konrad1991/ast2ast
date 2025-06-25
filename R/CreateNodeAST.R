@@ -60,7 +60,9 @@ create_ast <- function(code, context, r_fct, type_infer) {
       bn <- binary_node$new()
       type_infer$assign(bn)
       bn$operator <- operator
+      type_infer$in_lhs_node <- TRUE
       bn$left_node <- code[[2]] |> process(operator, r_fct, type_infer)
+      type_infer$in_lhs_node <- FALSE
       bn$right_node <- t
       bn$context <- context
       bn$left_node_name <- names(code)[2]
@@ -71,7 +73,9 @@ create_ast <- function(code, context, r_fct, type_infer) {
     type_infer$assign(bn)
     bn$operator <- operator
     bn$right_node <- code[[3]] |> process(operator, r_fct, type_infer)
+    if (operator %in% c("<-", "=")) type_infer$in_lhs_node <- TRUE
     bn$left_node <- code[[2]] |> process(operator, r_fct, type_infer)
+    if (operator %in% c("<-", "=")) type_infer$in_lhs_node <- FALSE
     bn$context <- context
     bn$left_node_name <- names(code)[2]
     bn$right_node_name <- names(code)[3]
