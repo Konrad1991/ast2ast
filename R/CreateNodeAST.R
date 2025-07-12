@@ -1,5 +1,44 @@
-# Function to process the code and create the AST
-# ========================================================================
+get_variables_action <- function(node, env) {
+  if (inherits(node, "variable_node")) env$vars <- c(env$vars, node)
+}
+
+is_assign <- function(node) {
+  inherits(node, "binary_node") && (node$operator == "=" || node$operator == "<-")
+}
+
+get_lhs_variables_action <- function(node, env) {
+   if (is_assign(node)) {
+	if (inherits(node$left_node, "binary_node")) {
+	   env$vars <- c(env$vars, node$left_node$left_node$name)
+	} else {
+	   env$vars <- c(env$vars, node$left_node$name)
+	}
+   }
+}
+
+create_last_assignment_list <- function(f) {
+  arguments <- formals(f) |>
+    names() |>
+    as.character()
+  args_list <- setNames(rep(1, length(arguments)), arguments)
+  vars <- all.vars(body(f))
+  vars <- setdiff(vars, arguments)
+  vars_list <- setNames(rep(2, length(vars)), vars)
+  c(args_list, vars_list)
+}
+
+gather_assignments <- function(node, type_infer) {
+  if (is_assign(node) && inherits(node$left_node, "variable_node")) {
+    varname <- node$left_node$name
+    type_infer$last_assignment[[varname]] <- node$id
+  } else if (is_assign(node) && inherits(node$left_node, "binary_node")) {
+    if (node$left_node$operator == "type") {
+      varname <- node$left_node$left_node$name
+      type_infer$last_assignment[[varname]] <- node$id
+    }
+  }
+}
+
 process <- function(code, context, r_fct, type_infer) {
   if (!is.symbol(code) && is.call(code)) {
     return(create_ast(code, context, r_fct, type_infer))
@@ -8,8 +47,6 @@ process <- function(code, context, r_fct, type_infer) {
   return(var)
 }
 
-# Translates R Code into AST representation
-# ========================================================================
 create_ast <- function(code, context, r_fct, type_infer) {
   code <- as.list(code)
   operator <- deparse(code[[1]])
@@ -18,12 +55,27 @@ create_ast <- function(code, context, r_fct, type_infer) {
   if (operator == "if") {
     i_node <- if_node$new()
     i_node$context <- context
-    type_infer$assign(i_node)
-    type_infer$in_if_node <- TRUE
-    before_if_last_assignment <- type_infer$last_assignment
-    handle_if(code, operator, r_fct, type_infer, i_node)
-    gather_assignments(i_node, type_infer, before_if_last_assignment)
-    type_infer$in_if_node <- FALSE
+
+    # TODO: this will not work if else-if and/or else blocks exist
+    f <- function() {}
+    code_s <- as.call(code)
+    body(f) <- as.call(c(quote(`{`), code_s))
+    type_infer_in_if <- type_inference$new(f)
+
+    handle_if(code, operator, r_fct, type_infer_in_if, i_node)
+    m_node <- merge_node$new(i_node, type_infer_in_if)
+
+    env_vars_in_if <- new.env(parent = emptyenv())
+    env_vars_in_if$vars <- list()
+    traverse_ast(i_node, get_lhs_variables_action, env_vars_in_if)
+    lapply(env_vars_in_if$vars, function(name) {
+    	m_node$last_assignment_before_if[[name]]  <- type_infer$last_assignment[[name]]
+    })
+    type_infer$assign(m_node)
+    lapply(env_vars_in_if$vars, function(name) {
+	type_infer$last_assignment[[name]] <- m_node$id
+    })
+
     return(i_node)
   } else if (operator == "{") {
     b_node <- block_node$new()

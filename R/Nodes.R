@@ -1,3 +1,82 @@
+root_node <- R6::R6Class(
+  "root_node",
+  public = list(
+    id = 2,
+    last_assignment = NULL,
+    print = function() {
+      cat("Id:", self$id, "Root")
+    }
+  )
+)
+fct_arg_node <- R6::R6Class(
+  "fct_arg_node",
+  public = list(
+    id = 1,
+    last_assignment = NULL,
+    print = function() {
+      cat("Id:", self$id, "Function argument")
+    }
+  )
+)
+lhs_node <- R6::R6Class(
+  "lhs_node",
+  public = list(
+    lhs = NULL,
+    initialize = function(node) {
+      self$lhs <- node
+    },
+    print = function() {
+      cat(
+        "Id:", self$lhs$id, "LHS Variable:", deparse(self$lhs$name),
+        "Last assignment: ", self$lhs$last_assignment
+      )
+    }
+  )
+)
+type_inference <- R6::R6Class(
+  "type_inference",
+  public = list(
+    last_assignment = list(),
+    all_nodes = NULL,
+    in_lhs_node = FALSE,
+    counter = 3,
+    initialize = function(f) {
+      self$last_assignment <- create_last_assignment_list(f)
+      self$all_nodes <- list(fct_arg_node$new(), root_node$new())
+    },
+    assign = function(node) {
+      if (self$in_lhs_node) {
+        node$id <- self$counter
+        var_lhs <- lhs_node$new(node)
+        self$all_nodes[[self$counter]] <- var_lhs
+        self$counter <- self$counter + 1
+        return()
+      }
+      self$all_nodes[[self$counter]] <- node
+      node$id <- self$counter
+      self$counter <- self$counter + 1
+    }
+  )
+)
+merge_node <- R6::R6Class(
+  "merge_node",
+  public = list(
+    id = NULL,
+    if_node = NULL,
+    type_infer_in_if = NULL,
+    last_assignment_before_if = list(),
+    initialize = function(if_node, type_infer_in_if) {
+      self$if_node <- if_node
+      self$type_infer_in_if <- type_infer_in_if
+    },
+    phi = function() {},
+    print = function() {
+      print(self$type_infer_in_if)
+      # print(self$type_infer_in_if$all_nodes)
+    }
+  )
+)
+
 variable_node <- R6::R6Class(
   "variable_node",
   public = list(
