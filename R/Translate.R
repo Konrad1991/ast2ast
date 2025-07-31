@@ -11,9 +11,6 @@ translate <- function(f, args_f = NULL,
   r_fct <- TRUE
   if (output == "XPtr") r_fct <- FALSE
 
-  # Check args_f / arguments
-  vars <- variables$new(f, args_f, r_fct)
-
   # Get name of f
   name_f <- substitute(f)
   if (!is.name(name_f)) {
@@ -21,7 +18,7 @@ translate <- function(f, args_f = NULL,
   }
 
   # Call translate_internally
-  cpp_code <- translate_internally(f, vars, name_f, r_fct)
+  cpp_code <- translate_internally(f, args_f, name_f, r_fct)
   if (getsource) return(cpp_code)
 
   # Compile the code

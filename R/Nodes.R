@@ -1,93 +1,11 @@
-root_node <- R6::R6Class(
-  "root_node",
-  public = list(
-    id = 2,
-    last_assignment = NULL,
-    print = function() {
-      cat("Id:", self$id, "Root")
-    }
-  )
-)
-fct_arg_node <- R6::R6Class(
-  "fct_arg_node",
-  public = list(
-    id = 1,
-    last_assignment = NULL,
-    print = function() {
-      cat("Id:", self$id, "Function argument")
-    }
-  )
-)
-lhs_node <- R6::R6Class(
-  "lhs_node",
-  public = list(
-    lhs = NULL,
-    initialize = function(node) {
-      self$lhs <- node
-    },
-    print = function() {
-      cat(
-        "Id:", self$lhs$id, "LHS Variable:", deparse(self$lhs$name),
-        "Last assignment: ", self$lhs$last_assignment
-      )
-    }
-  )
-)
-type_inference <- R6::R6Class(
-  "type_inference",
-  public = list(
-    last_assignment = list(),
-    all_nodes = NULL,
-    in_lhs_node = FALSE,
-    counter = 3,
-    initialize = function(f) {
-      self$last_assignment <- create_last_assignment_list(f)
-      self$all_nodes <- list(fct_arg_node$new(), root_node$new())
-    },
-    assign = function(node) {
-      if (self$in_lhs_node) {
-        node$id <- self$counter
-        var_lhs <- lhs_node$new(node)
-        self$all_nodes[[self$counter]] <- var_lhs
-        self$counter <- self$counter + 1
-        return()
-      }
-      self$all_nodes[[self$counter]] <- node
-      node$id <- self$counter
-      self$counter <- self$counter + 1
-    }
-  )
-)
-merge_node <- R6::R6Class(
-  "merge_node",
-  public = list(
-    id = NULL,
-    if_node = NULL,
-    type_infer_in_if = NULL,
-    last_assignment_before_if = list(),
-    initialize = function(if_node, type_infer_in_if) {
-      self$if_node <- if_node
-      self$type_infer_in_if <- type_infer_in_if
-    },
-    phi = function() {},
-    print = function() {
-      print(self$type_infer_in_if)
-      # print(self$type_infer_in_if$all_nodes)
-    }
-  )
-)
-
 variable_node <- R6::R6Class(
   "variable_node",
   public = list(
     id = NULL,
     name = NULL,
-    type = NULL,
     error = NULL,
     context = NULL,
-    declared = FALSE,
     initialized = FALSE,
-    last_assignment = NULL,
     initialize = function(obj) {
       self$name <- obj
     },
@@ -134,13 +52,12 @@ literal_node <- R6::R6Class(
   )
 )
 
-handle_var <- function(code, context, type_infer) {
+handle_var <- function(code, context) {
   if (rlang::is_symbol(code)) {
     if (context == "[" && deparse(code) == "") {
       # NOTE: empty indexing --> change all entries
       ln <- literal_node$new(TRUE)
       ln$context <- context
-      type_infer$assign(ln)
       return(ln)
     }
     # NOTE: dont know why but short forms T and F
@@ -148,23 +65,18 @@ handle_var <- function(code, context, type_infer) {
     if (deparse(code) == "T") {
       ln <- literal_node$new(TRUE)
       ln$context <- context
-      type_infer$assign(ln)
       return(ln)
     } else if (deparse(code) == "F") {
       ln <- literal_node$new(FALSE)
       ln$context <- context
-      type_infer$assign(ln)
       return(ln)
     }
     vn <- variable_node$new(code)
-    vn$last_assignment <- type_infer$last_assignment[[vn$name]] %||% NA
     vn$context <- context
-    type_infer$assign(vn)
     return(vn)
   }
   ln <- literal_node$new(code)
   ln$context <- context
-  type_infer$assign(ln)
   return(ln)
 }
 
@@ -174,9 +86,7 @@ binary_node <- R6::R6Class(
     id = NULL,
     operator = NULL,
     left_node = NULL,
-    left_node_name = NULL,
     right_node = NULL,
-    right_node_name = NULL,
     error = NULL,
     context = NULL,
     remove_type_decl = FALSE,
@@ -267,7 +177,6 @@ unary_node <- R6::R6Class(
     id = NULL,
     operator = NULL,
     obj = NULL,
-    obj_name = NULL, # TODO: is this used?
     error = NULL,
     context = NULL,
     handle_return = FALSE,
@@ -372,7 +281,6 @@ function_node <- R6::R6Class(
     error = NULL,
     context = NULL,
     args = list(),
-    args_names = list(),
     initialize = function() {},
     stringify = function(indent = "") {
       args_string <- lapply(self$args, function(arg) {
@@ -414,41 +322,6 @@ function_node <- R6::R6Class(
     }
   )
 )
-
-handle_if <- function(code, context, r_fct, type_infer, i_node) {
-  i_node$condition <- code[[2]] |> process(context, r_fct, type_infer)
-  i_node$true_node <- code[[3]] |> process(context, r_fct, type_infer)
-  if (length(code) == 4) {
-    s <- code[[4]]
-    while (is.call(s) && deparse(s[[1]]) == "if") {
-      else_i_node <- if_node$new()
-      type_infer$assign(else_i_node)
-      else_i_node$condition <- s[[2]] |> process(context, r_fct, type_infer)
-      else_i_node$true_node <- s[[3]] |> process(context, r_fct, type_infer)
-      i_node$else_if_nodes[[
-        length(i_node$else_if_nodes) + 1
-        ]] <- else_i_node
-      if (length(s) == 4) {
-        s <- s[[4]]
-      } else {
-        return()
-      }
-    }
-    if (!is.null(s)) {
-      if (deparse(s[[1]]) == "if") {
-        else_i_node <- if_node$new()
-        type_infer$assign(else_i_node)
-        else_i_node$condition <- s[[2]] |> process(context, r_fct, type_infer)
-        else_i_node$true_node <- s[[3]] |> process(context, r_fct, type_infer)
-        i_node$else_if_nodes[[
-          length(i_node$else_if_nodes) + 1
-          ]] <- else_i_node
-      } else {
-        i_node$false_node <- process(s, context, r_fct, type_infer)
-      }
-    }
-  }
-}
 
 # Define the if_node class
 if_node <- R6::R6Class(
@@ -570,6 +443,39 @@ if_node <- R6::R6Class(
     }
   )
 )
+
+handle_if <- function(code, context, r_fct, i_node) {
+  i_node$condition <- code[[2]] |> process(context, r_fct)
+  i_node$true_node <- code[[3]] |> process(context, r_fct)
+  if (length(code) == 4) {
+    s <- code[[4]]
+    while (is.call(s) && deparse(s[[1]]) == "if") {
+      else_i_node <- if_node$new()
+      else_i_node$condition <- s[[2]] |> process(context, r_fct)
+      else_i_node$true_node <- s[[3]] |> process(context, r_fct)
+      i_node$else_if_nodes[[
+        length(i_node$else_if_nodes) + 1
+        ]] <- else_i_node
+      if (length(s) == 4) {
+        s <- s[[4]]
+      } else {
+        return()
+      }
+    }
+    if (!is.null(s)) {
+      if (deparse(s[[1]]) == "if") {
+        else_i_node <- if_node$new()
+        else_i_node$condition <- s[[2]] |> process(context, r_fct)
+        else_i_node$true_node <- s[[3]] |> process(context, r_fct)
+        i_node$else_if_nodes[[
+          length(i_node$else_if_nodes) + 1
+          ]] <- else_i_node
+      } else {
+        i_node$false_node <- process(s, context, r_fct)
+      }
+    }
+  }
+}
 
 # Define the block_node class
 block_node <- R6::R6Class(
@@ -865,6 +771,7 @@ type_node <- R6::R6Class(
 
     print = function() {
       print("Type:")
+      print(self$name)
       print(self$base_type)
       print(self$data_struct)
       print(self$const_or_mut)

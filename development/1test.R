@@ -3,6 +3,7 @@ f1 <- function() {
   x <- 1L
   y <- 2.0
   z <- x + y
+  z <- TRUE
 }
 # Test case 2: reassignment (SSA)
 f2 <- function() {
@@ -55,7 +56,14 @@ f8 <- function(a, b) {
 
 files <- list.files("~/Documents/ast2ast/R/", full.names = TRUE)
 trash <- lapply(files, source)
-library(rlang) # for %||%
-ast <- create_ast_f(f7)
-graph_creation(ast)
+f1 <- function() {
+  x <- c(1, 2)
+  x[1] <- 2
+  return(x)
+  y <- matrix(3, 2, 2)
+  return(y)
+}
 
+fcpp <- translate(f1, verbose = TRUE)
+fcpp()
+.traceback()
