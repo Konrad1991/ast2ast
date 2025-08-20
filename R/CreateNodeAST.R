@@ -7,10 +7,10 @@ process <- function(code, context, r_fct) {
 }
 
 create_ast <- function(code, context, r_fct) {
+  old_code <- code
   code <- as.list(code)
   operator <- deparse(code[[1]])
 
-  # NOTE: create nodes
   if (operator == "if") {
     i_node <- if_node$new()
     i_node$context <- context
@@ -30,7 +30,8 @@ create_ast <- function(code, context, r_fct) {
     fn$block <- code[[4]] |> process(operator, r_fct)
     fn$context <- context
     return(fn)
-  } else if (function_registry_global$is_group_functions(operator)) {
+  } else if (function_registry_global$is_group_functions(operator) || length(code) > 3) {
+    # by adding length(code) > 3 also wrong fcts are added to the AST
     fn <- function_node$new()
     fn$operator <- operator
     fn$args <- lapply(code[-1], function(x) {
@@ -38,7 +39,7 @@ create_ast <- function(code, context, r_fct) {
     })
     fn$context <- context
     return(fn)
-  } else if (length(code) == 3) { # NOTE: Binary operators
+  } else if (length(code) == 3) {
     if (operator == "type") {
       t <- type_node$new(as.call(code), FALSE, r_fct)
       t$init()
@@ -56,51 +57,36 @@ create_ast <- function(code, context, r_fct) {
     bn$left_node <- code[[2]] |> process(operator, r_fct)
     bn$context <- context
     return(bn)
-  } else if (length(code) == 2) { # NOTE: Unary operators
+  } else if (length(code) == 2) {
     un <- unary_node$new()
     un$operator <- operator
     un$obj <- code[[2]] |> process(operator, r_fct)
     un$context <- context
     return(un)
-  } else if (length(code) == 1) { # NOTE: Nullary operators
+  } else if (length(code) == 1) {
     nn <- nullary_node$new()
     nn$operator <- operator
     nn$context <- context
     return(nn)
   } else {
-    return(
-      error_node$new(
-        error_message = paste0(
-          "error: Unknown operator: ", operator
-        )
-      )
-    )
+    stop("Unexpected error during AST creation. Please create an issue on https://github.com/Konrad1991/ast2ast")
   }
 }
 
 # create AST of body
 # ========================================================================
 parse_body <- function(b, r_fct) {
-  # Create ast
-  error_found <- FALSE
   ast <- try({
     process(b, "Start", r_fct)
   })
   if (inherits(ast, "try-error")) {
-    error_found <- TRUE
+    error_string <- ast |> as.character()
+    stop(sprintf("Could not translate the function due to %s", error_string))
   }
-  if (inherits(ast, "error_node")) {
-    error_found <- TRUE
-    pe(ast$error_message)
-    break
-  }
-  return(
-    list(error_found = error_found, ast = ast)
-  )
+  return(ast)
 }
 
-# Run checks on:
-# operators, valid variables, and type declarations
+# Run checks on: operators, valid variables, and type declarations
 # ========================================================================
 run_checks <- function(ast, r_fct) {
   error_found <- FALSE
@@ -120,14 +106,11 @@ run_checks <- function(ast, r_fct) {
     error_found <- TRUE
     line <- ast$stringify_error_line()
     cat(line, "\n")
-    pe(errors)
   }
   return(error_found)
 }
 
-# Sort the arguments
-# Example: vector(length = 10, "logical")
-# becomes: vector("logical", 10)
+# Sort the arguments Example: vector(length = 10, "logical") --> vector("logical", 10)
 # ========================================================================
 sort_args <- function(ast) {
   error_found <- FALSE
@@ -301,7 +284,7 @@ translate_to_cpp_code <- function(ast) {
 
 # Assembles function (includes, signature, declarations, body)
 # ========================================================================
-assemble <- function(name_f, vars_types_list, return_type, body, r_fct) {
+assemble <- function(name_fct, vars_types_list, return_type, body, r_fct) {
   arguments <- lapply(vars_types_list, function(x) {
     x$stringify_signature(r_fct)
   })
@@ -313,7 +296,7 @@ assemble <- function(name_f, vars_types_list, return_type, body, r_fct) {
   ret_type <- return_type$generate_type("")
   body <- paste0(body, "\n")
   if (r_fct) {
-    signature <- paste0("SEXP ", name_f, "(", paste(arguments, collapse = ", "), ") {")
+    signature <- paste0("SEXP ", name_fct, "(", paste(arguments, collapse = ", "), ") {")
     declarations <- combine_strings(declarations, "\n")
     includes <- r_fct_sig()
     return(
@@ -329,14 +312,14 @@ assemble <- function(name_f, vars_types_list, return_type, body, r_fct) {
     )
   } else {
     includes <- xptr_sig()
-    signature <- paste0(ret_type, " ", name_f, "(", paste(arguments, collapse = ", "), ") {")
+    signature <- paste0(ret_type, " ", name_fct, "(", paste(arguments, collapse = ", "), ") {")
     declarations <- combine_strings(declarations, "\n")
     def_get_xptr <- "SEXP getXPtr() {\n"
     typedef_line <- paste0(
       "   typedef ", ret_type, "(*fct_ptr) (",
       paste(arguments, collapse = ", "), ");"
     )
-    rest <- sprintf("   return Rcpp::XPtr<fct_ptr>(new fct_ptr(&  %s ));\n }", deparse(name_f))
+    rest <- sprintf("   return Rcpp::XPtr<fct_ptr>(new fct_ptr(&  %s ));\n }", deparse(name_fct))
 
     return(
       paste0(
@@ -354,7 +337,7 @@ assemble <- function(name_f, vars_types_list, return_type, body, r_fct) {
   }
 }
 
-translate_internally <- function(fct, args_f, name_f, r_fct) {
+translate_internally <- function(fct, args_fct, name_fct, r_fct) {
   b <- body(fct)
   if (b[[1]] != "{") {
     stop("Please place the body of your function f within curly brackets")
@@ -365,19 +348,15 @@ translate_internally <- function(fct, args_f, name_f, r_fct) {
   code_string <- list()
   error_found <- FALSE
 
-  # Create ast list
-  res <- parse_body(body(fct), r_fct)
-  error_found <- res$error_found
-  AST <- res$ast
-  if (error_found) {
-    stop()
-  }
+  # Create AST
+  AST <- parse_body(body(fct), r_fct)
 
   # Run checks
   error_found <- run_checks(AST, r_fct)
   if (error_found) {
     stop()
   }
+  stop("Until here testing")
 
   # Sort the arguments
   res <- sort_args(AST)
@@ -388,7 +367,7 @@ translate_internally <- function(fct, args_f, name_f, r_fct) {
   }
 
   # Infer the types
-  res <- infer_types(AST, fct, args_f, r_fct)
+  res <- infer_types(AST, fct, args_fct, r_fct)
   error_found <- res$error_found
   if (error_found) {
     stop()
@@ -418,7 +397,7 @@ translate_internally <- function(fct, args_f, name_f, r_fct) {
   }
 
   # Create function signature & variable declarations
-  code <- assemble(name_f, vars_types_list, return_type, code_string, r_fct)
+  code <- assemble(name_fct, vars_types_list, return_type, code_string, r_fct)
   code <- remove_blank_lines(code)
   return(code)
 }

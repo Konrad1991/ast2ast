@@ -1,3 +1,4 @@
+# TODO: remove this class
 error <- R6::R6Class(
   "error",
   public = list(

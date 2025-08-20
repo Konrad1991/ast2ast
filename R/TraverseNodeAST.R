@@ -46,104 +46,101 @@ traverse_ast <- function(node, action, ...) {
 
 # For debugging
 action_print <- function(node) {
-  # print(node)
   str(node)
 }
 
-# Checks for the function operator.
-# - Function operators are part of:
-#   nullary_node, unary_node, binary_node and function_node.
-# - First it is checked whether the function is allowed.
-# - Afterwards, it is checked whether the number of arguments is correct.
-#   This is in contrast to the normal behavior of R, where missing arguments
-#   are filled with the default values if available.
-# - Next, check whether the names of the named arguments are correct.
+# Checks which have to be fulfilled:
+# - Function operators are part of: nullary_node, unary_node, binary_node and function_node.
+# - Correct arity. In contrast to R there are no default arguments supported.
+# - Correct names used.
 #   For example: vector(mode = "logical", length = 10) is correct.
 #   But: vector(type = "logical", length = 10) is not correct.
-# - Next check that if an operation is found at the left side of an assignment
-#   it only can be a subsetting operation.
-# - Subsequently, check that no literal is at the left side of an assignment.
-# --> All these checks are done in the function check_operator.
+# - Operations at left side of an assignment can only be subsets or type definitions
+# - No literal at left side of assignment
 # ========================================================================
-# Function to check if the given function is allowed
-check_function <- function(node) {
-  if (is.null(node$operator)) return(TRUE)
-  fct <- node$operator
-  fct %in% function_registry_global$permitted_fcts()
+action_error <- function(node, r_fct) {
+  check_operator(node)
+  check_variable_names(node)
+  check_type_declaration(node, r_fct)
 }
 
-# Function to check if the number of arguments is correct
-check_args_function <- function(node) {
-  fct <- node$operator
-  if (is.null(fct)) return(TRUE)
-  args_length <- NULL
-  if (inherits(node, "nullary_node")) {
-    args_length <- 0
-  } else if (inherits(node, "unary_node")) {
-    args_length <- 1
-  } else if (inherits(node, "binary_node")) {
-    args_length <- 2
-  } else if (inherits(node, "function_node")) {
-    args_length <- node$args |> length()
-  } else {
-    stop("Something went wrong. Sorry for that.")
+check_operator <- function(node) {
+  if (!inherits(node, "nullary_node") &&
+    !inherits(node, "unary_node") &&
+    !inherits(node, "binary_node") &&
+    !inherits(node, "function_node")) {
+    return()
   }
-  expected_args <- function_registry_global$expected_n_args(fct)
-  if (is.na(expected_args)) { # TODO: why this check?
-    return(TRUE)
-  }
-  any(args_length == expected_args[[1]])
-}
 
-# Function to check that the named args are correct
-check_named_args <- function(node) {
-  fct <- node$operator
-  if (is.null(fct)) return(TRUE)
-  named_args <- named_args()
-  if (inherits(node, "function_node")) {
-    if (fct == "vector" || fct == "matrix") {
-      args_names <- node$args_names
-      args_names <- args_names[args_names != ""]
-      expected_args <- named_args[[fct]]
-      for (i in seq_along(args_names)) {
-        if (!(args_names[[i]] %in% expected_args)) {
-          return(FALSE)
-        }
-      }
+  check_function <- function(node) {
+    fct <- node$operator
+    fct %in% function_registry_global$permitted_fcts()
+  }
+
+  check_arity <- function(node) {
+    fct <- node$operator
+    args_length <- NULL
+    if (inherits(node, "nullary_node")) {
+      args_length <- 0
+    } else if (inherits(node, "unary_node")) {
+      args_length <- 1
+    } else if (inherits(node, "binary_node")) {
+      args_length <- 2
+    } else if (inherits(node, "function_node")) {
+      args_length <- node$args |> length()
     } else {
+      stop("Something went wrong. Sorry for that.")
+    }
+    expected_args <- function_registry_global$expected_n_args(fct)
+    if (is.na(expected_args)) { # for c, if, etc.
       return(TRUE)
     }
+    args_length %in% expected_args # %in% because return (0 | 1) and - (1 | 2)
   }
-  return(TRUE)
-}
 
-# Function to check that the first operator
-# found at lhs has to be a subsetting operation
-check_lhs_operation <- function(node) {
-  if (inherits(node, "binary_node")) {
-    if (node$operator == "<-" || node$operator == "=") {
-      if (inherits(node$left_node, "variable_node")) {
+  check_named_args <- function(node) {
+    fct <- node$operator
+    named_args <- named_args()
+    if (inherits(node, "function_node")) {
+      if (fct == "vector" || fct == "matrix") {
+        args_names <- node$args_names
+        args_names <- args_names[args_names != ""]
+        expected_args <- named_args[[fct]]
+        for (i in seq_along(args_names)) {
+          if (!(args_names[[i]] %in% expected_args)) {
+            return(FALSE)
+          }
+        }
+      } else {
         return(TRUE)
       }
-      if (inherits(node$left_node, "binary_node")) {
-        op_left <- node$left_node$operator
-        if (!(op_left %in% c("type", "[", "[[", "at"))) {
-          return(FALSE)
-        } else {
+    }
+    return(TRUE)
+  }
+
+  check_lhs_operation <- function(node) {
+    if (inherits(node, "binary_node")) {
+      if (node$operator == "<-" || node$operator == "=") {
+        if (inherits(node$left_node, "variable_node")) {
           return(TRUE)
         }
+        if (inherits(node$left_node, "binary_node")) {
+          op_left <- node$left_node$operator
+          if (!(op_left %in% c("type", "[", "[[", "at"))) {
+            return(FALSE)
+          } else {
+            return(TRUE)
+          }
+        }
+        return(FALSE)
       }
-      return(FALSE)
     }
+    return(TRUE)
   }
-  return(TRUE)
-}
 
-# Function to check the operator
-check_operator <- function(node) {
   list_check_fcts <- c(
     check_function,
-    check_args_function,
+    check_arity,
     check_named_args,
     check_lhs_operation
   )
@@ -165,49 +162,46 @@ check_operator <- function(node) {
   return()
 }
 
-# Name should not contain unallowed signs
-unallowed_signs <- function(name) {
-  unallowed <- c(
-    # NOTE: SEXP cannot be part of the name. Thereby, one can easily create argument names nameSEXP and assign it to name
-    # - the types of ast2ast: logical, integer, double, int cannot be used as names. Thereby, all.vars can directly be used to find all variables
-    "\\.", "SEXP", "getXPtr", "fct_ptr"
-  )
-
-  sign_found <- 0
-  for (i in seq_along(unallowed)) {
-    if (grepl(unallowed[[i]], name)) {
-      sign_found <- i
-      break
-    }
-  }
-  if (sign_found > 0) {
-    invalid_char <- gsub("\\\\", "", unallowed[sign_found])
-    return(paste0(
-      "Invalid variable name: contains forbidden character --> ",
-      invalid_char
-    ))
-  }
-
-  if (name %in% permitted_base_types()) {
-    return(paste0(
-      "Invalid variable name (reserved internally)",
-      name
-    ))
-  }
-
-  return(NULL)
-}
-
-# Name not C++ keyword
-not_cpp_keyword <- function(name) {
-  name %in% cpp_keywords()
-}
-
-# Function to check allowed variable names
 check_variable_names <- function(node) {
   if (!inherits(node, "variable_node")) {
     return()
   }
+
+  unallowed_signs <- function(name) {
+    unallowed <- c(
+      # NOTE: SEXP cannot be part of the name.
+      # Thereby, one can easily create argument names nameSEXP and assign it to name
+      # - the types of ast2ast: logical, integer, double, int cannot be used as names.
+      # Thereby, all.vars can directly be used to find all variables
+      "\\.", "SEXP", "getXPtr", "fct_ptr"
+    )
+    sign_found <- 0
+    for (i in seq_along(unallowed)) {
+      if (grepl(unallowed[[i]], name)) {
+        sign_found <- i
+        break
+      }
+    }
+    if (sign_found > 0) {
+      invalid_char <- gsub("\\\\", "", unallowed[sign_found])
+      return(paste0(
+        "Invalid variable name: contains forbidden character --> ",
+        invalid_char
+      ))
+    }
+    if (name %in% permitted_base_types()) {
+      return(paste0(
+        "Invalid variable name (reserved internally)",
+        name
+      ))
+    }
+    return(NULL)
+  }
+
+  not_cpp_keyword <- function(name) {
+    name %in% cpp_keywords()
+  }
+
   name <- node$name |> deparse()
   if (name %in% permitted_base_types()) {
     return()
@@ -227,7 +221,6 @@ check_variable_names <- function(node) {
   return()
 }
 
-# Check type declaration
 check_type_declaration <- function(node, r_fct) {
   if (!inherits(node, "binary_node")) {
     return()
@@ -246,7 +239,6 @@ check_type_declaration <- function(node, r_fct) {
     )
     return()
   }
-
   if (!inherits(node$right_node, "type_node")) {
     node$error <- error$new(
       error_message =
@@ -272,13 +264,6 @@ check_type_declaration <- function(node, r_fct) {
     return()
   }
   return()
-}
-
-# error checking action
-action_error <- function(node, r_fct) {
-  check_operator(node)
-  check_variable_names(node)
-  check_type_declaration(node, r_fct)
 }
 
 # Sort arguments

@@ -129,3 +129,11 @@ xptr_sig <- function() {
     "\n"
   )
 }
+
+remove_empty_strings <- function(l) {
+  l <- lapply(l, function(e) {
+    if (e == "") return(NULL)
+    e
+  })
+  Filter(Negate(is.null), l)
+}

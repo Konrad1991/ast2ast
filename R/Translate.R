@@ -24,5 +24,3 @@ translate <- function(f, args_f = NULL,
   # Compile the code
   compile(cpp_code, r_fct, verbose, as.character(name_f))
 }
-
-

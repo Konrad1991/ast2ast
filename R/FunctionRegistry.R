@@ -42,6 +42,27 @@ Functions <- R6::R6Class(
         return(FALSE)
       }
       self$groups[which(self$function_names == name)] == "function_node"
+    },
+    is_binary = function(name) {
+      idx <- which(self$function_names == name)
+      if (identical(idx, integer())) {
+        return(FALSE)
+      }
+      self$groups[which(self$function_names == name)] == "binary_node"
+    },
+    is_unary = function(name) {
+      idx <- which(self$function_names == name)
+      if (identical(idx, integer())) {
+        return(FALSE)
+      }
+      self$groups[which(self$function_names == name)] == "unary_node"
+    },
+    is_nullary = function(name) {
+      idx <- which(self$function_names == name)
+      if (identical(idx, integer())) {
+        return(FALSE)
+      }
+      self$groups[which(self$function_names == name)] == "nullary_node"
     }
   )
 )

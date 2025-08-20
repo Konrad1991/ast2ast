@@ -15,17 +15,8 @@ variable_node <- R6::R6Class(
     stringify_error = function(indent = "") {
       return(paste0(indent, self$error$error_message))
     },
-    stringify_signature = function(r_fct) {
-      self$type$stringify_signature(r_fct)
-    },
-    stringify_declaration = function(indent = "", r_fct) {
-      self$type$stringify_declaration(indent, r_fct)
-    },
     print = function() {
-      cat(
-        "Id:", self$id, "Variable:", deparse(self$name),
-        "Last assignment: ", self$last_assignment
-      )
+      cat("Id:", self$id, "Variable:", deparse(self$name), "\n")
     }
   )
 )
@@ -360,9 +351,9 @@ if_node <- R6::R6Class(
       )
       result <- paste0(
         result,
-        self$string_true(paste0(indent, "\t")),
+        self$string_true(paste0(indent, " ")),
         "\n",
-        indent, "\t",
+        indent,
         "}"
       )
       result <- combine_strings(result)
@@ -422,21 +413,23 @@ if_node <- R6::R6Class(
       return(ret)
     },
     stringify_error_line = function(indent = "") {
-      condition_error <- self$stringify_condition_error()
-      if (condition_error != "") {
-        return(paste0(
+      condition <- self$stringify_condition_error() |> combine_strings("\n")
+      if (condition != "") {
+        condition <- paste0(
           indent, "if (",
-          self$string_condition(""), ") {"
-        ))
+          self$string_condition(""), ") {\n",
+          condition
+        )
       }
-      true_error <- self$stringify_true_node_error()
-      if (true_error != "") {
-        return(self$true_node$stringify_error_line())
+      true_block <- self$true_node$stringify_error_line()
+      else_if_blocks <- lapply(self$else_if_nodes, \(b) {
+        b$stringify_error_line()
+      }) |> combine_strings("\n")
+      false_block <- ""
+      if (!is.null(self$false_node)) {
+        false_block <- self$false_node$stringify_error_line()
       }
-      false_error <- self$stringify_false_node_error()
-      if (false_error != "") {
-        return(self$false_node$stringify_error_line())
-      }
+      combine_strings(list(condition, true_block, else_if_blocks, false_block), "\n")
     },
     print = function() {
       cat("Id:", self$id, "if")
@@ -491,7 +484,7 @@ block_node <- R6::R6Class(
       for (stmt in self$block) {
         result[[length(result) + 1]] <-
           paste0(
-            stmt$stringify(indent = paste0(indent, "\t")), ";"
+            stmt$stringify(indent = paste0(indent, "")), ";"
           )
       }
       result <- combine_strings(result)
@@ -503,50 +496,29 @@ block_node <- R6::R6Class(
       }
       res <- lapply(self$block, function(elem) {
         return(elem$stringify_error())
-      })
-      for (i in seq_along(res)) {
-        if (!is.null(res[[i]]) && res[[i]] != "") {
-          return(res[[i]])
-        }
-      }
-      return("")
+      }) |> remove_empty_strings() |> combine_strings("\n")
+      return(res)
     },
     stringify_error_line = function(indent = "") {
       if (!inherits(self$block, "list")) {
         return("")
       }
-      # In which line is the error
-      error_lines <- lapply(self$block, function(elem) {
-        return(elem$stringify_error())
-      })
-      idx <- c()
-      for (i in seq_along(error_lines)) {
-        if (!is.null(error_lines[[i]]) && error_lines[[i]] != "") {
-          idx <- c(idx, i)
-        }
-      }
-      # Stringify the error line(s)
       res <- lapply(self$block, function(elem) {
-        return(elem$stringify())
+        if (class(elem)[[1]] %in% c("for_node", "if_node", "block_node")) {
+          return(elem$stringify_error_line(indent))
+        }
+        error <- elem$stringify_error() |> combine_strings("\n")
+        if (!is.null(error) && error != "") {
+         line <- elem$stringify_error_line(indent)
+         return(combine_strings(list(line, error), "\n"))
+        }
+        return(NULL)
       })
-
-      res <- combine_strings(res[idx])
-      return(res)
+      res <- Filter(Negate(is.null), res)
+      return(combine_strings(res, "\n\n"))
     },
     print = function() {
       cat("Id:", self$id, "{")
-    }
-  )
-)
-
-# Define the error_node class
-error_node <- R6::R6Class(
-  "error_node",
-  public = list(
-    error_message = NULL,
-    context = NULL,
-    initialize = function(error_message) {
-      self$error_message <- error_message
     }
   )
 )
@@ -565,12 +537,12 @@ for_node <- R6::R6Class(
     stringify = function(indent = "") {
       idx <- self$i$stringify(indent)
       sequence <- self$seq$stringify(indent)
-      b <- self$block$stringify(paste0(indent, "\t"))
+      b <- self$block$stringify(paste0(indent, " "))
       return(paste0(
         indent,
         "for(const auto& ", idx, " : ", sequence, ") {\n",
         b, "\n",
-        "\t", "}\n"
+        "}\n"
       ))
     },
     stringify_error = function(indent = "") {
@@ -579,35 +551,36 @@ for_node <- R6::R6Class(
       seq_err <- self$seq$stringify_error()
       res <- c(i_err, seq_err, block_err)
       res <- res[res != ""]
-      e <- paste0(i_err, seq_err, block_err, collapse = "")
+      e <- combine_strings(list(res), "\n")
       if (e != "") {
-        return(
-          combine_strings(c(i_err, seq_err, block_err))
-        )
+        return(e)
       }
       return("")
     },
     stringify_error_line = function(indent = "") {
       i_err <- self$i$stringify_error()
-      if (i_err != "") {
-        # NOTE: const can be used as assignment to index variable is not allowed
-        # Even though this is a resitriction
-        return(paste0(
-          indent, "for (const auto&",
-          self$i$stringify(""), " : ", self$seq$stringify(""), ") {"
-        ))
-      }
       seq_err <- self$seq$stringify_error()
-      if (seq_err != "") {
-        return(paste0(
-          indent, "for (",
-          self$i$stringify(""), " in ", self$seq$stringify(""), ") {"
-        ))
+      i_seq_line <- (paste0(
+        "for (", self$i$stringify(""), " in ", self$seq$stringify(""), ") {"
+      ))
+      if (i_err != "" && seq_err != "") {
+        i_seq_line <- paste0(i_seq_line, "\n", i_err, "\n", seq_err)
+      } else if (i_err == "" && seq_err != "") {
+        i_seq_line <- paste0(i_seq_line, "\n", seq_err)
+      } else if (i_err != "" && seq_err == "") {
+        i_seq_line <- paste0(i_seq_line, "\n", i_err)
+      } else {
+        i_seq_line <- ""
       }
-      block_err <- self$block$stringify_error()
-      if (block_err != "") {
-        return(self$block$stringify_error_line())
+      block_res <- self$block$stringify_error_line(paste0(indent, "  "))
+      if (i_seq_line == "" && block_res == "") {
+        return("")
+      } else if (i_seq_line != "" && block_res == "") {
+        return(i_seq_line)
+      } else if (i_seq_line == "" && block_res != "") {
+        return(block_res)
       }
+      return(combine_strings(list(i_seq_line, block_res), "\n\n"))
     },
     print = function() {
       cat(self$stringify(), "\n")
@@ -728,7 +701,7 @@ type_node <- R6::R6Class(
       }
     },
 
-    check = function() { # TODO: is this run? and isnt that the same test as in check_type_declaration
+    check = function() {
       self$check_allowed_base_types()
       self$check_allowed_data_structs()
     },
