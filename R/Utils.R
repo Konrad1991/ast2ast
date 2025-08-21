@@ -1,3 +1,57 @@
+# Print error with ascii art
+pe <- function(error_message) {
+  if (is.null(error_message)) {
+    return()
+  }
+  if (error_message == "") {
+    return()
+  }
+  error_message <- paste0(error_message, "\n")
+  cat(crayon::red$bold(error_message), file = stderr())
+}
+
+assert <- function(...) {
+  expr <- c(...)
+  message <- names(expr)
+  if (!is.null(message)) {
+    if (!expr) {
+      pe(paste0("Error: ", message))
+      stop()
+    }
+  } else {
+    if (length(expr) >= 1) {
+      if (!expr) {
+        pe(paste0(
+          "Error: ",
+          deparse(expr), " is not TRUE"
+        ))
+        stop()
+      }
+    }
+  }
+}
+
+# This is for gathering the output of a function
+# during running of tests
+capture_output <- function(expr) {
+  out_con <- textConnection("output", "w", local = TRUE)
+  err_con <- textConnection("error_output", "w", local = TRUE)
+  sink(out_con, type = "output")
+  sink(err_con, type = "message")
+  e <- try(
+    {
+      res <- expr
+      cat(res, "\n")
+    },
+    silent = TRUE
+  )
+  sink(NULL, type = "output")
+  sink(NULL, type = "message")
+  close(out_con)
+  close(err_con)
+  return(list(stdout = output, stderr = error_output))
+}
+
 # List of C++ keywords
 cpp_keywords <- function() {
   c(

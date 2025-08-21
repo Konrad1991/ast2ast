@@ -1,6 +1,7 @@
 files <- list.files("~/Documents/ast2ast/R/", full.names = TRUE)
 trash <- lapply(files, source)
 f <- function() {
+  a <- -b
   a <- bla1() + foo()
   a <- bla2() + 1
   a <- 1
@@ -16,6 +17,13 @@ f <- function() {
   } else {
     blub()
   }
+  a |> type(doubleass)
+}
+f <- function() {
+  # a <- 1
+  # a <- c(1, 2)
+  a <- TRUE
+  b <- matrix(0, 2, 2)
 }
 translate(f)
 .traceback()

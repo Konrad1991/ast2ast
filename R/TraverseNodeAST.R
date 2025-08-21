@@ -79,6 +79,7 @@ check_operator <- function(node) {
 
   check_arity <- function(node) {
     fct <- node$operator
+    expected_args <- function_registry_global$expected_n_args(fct)
     args_length <- NULL
     if (inherits(node, "nullary_node")) {
       args_length <- 0
@@ -91,7 +92,6 @@ check_operator <- function(node) {
     } else {
       stop("Something went wrong. Sorry for that.")
     }
-    expected_args <- function_registry_global$expected_n_args(fct)
     if (is.na(expected_args)) { # for c, if, etc.
       return(TRUE)
     }
@@ -149,12 +149,11 @@ check_operator <- function(node) {
     "Found wrong named argument for: ",
     "Found invalid expression at left side of assignment: "
   )
-  err <- NULL
+  err <- ""
   for (i in seq_along(list_check_fcts)) {
     fct <- list_check_fcts[[i]]
     if (!fct(node)) {
-      error_message <- paste0(messages[i], node$operator)
-      err <- error$new(error_message = error_message)
+      err <- paste0(messages[i], node$operator)
       break
     }
   }
@@ -208,15 +207,15 @@ check_variable_names <- function(node) {
   }
   unallowed <- unallowed_signs(name)
   if (!is.null(unallowed)) {
-    node$error <- error$new(error_message = paste0(
+    node$error <- paste0(
       unallowed, " found in ",
       name
-    ))
+    )
   } else if (not_cpp_keyword(name)) {
-    node$error <- error$new(error_message = paste0(
+    node$error <- paste0(
       "Invalid variable name: is a C++ keyword --> ",
       name
-    ))
+    )
   }
   return()
 }
@@ -230,37 +229,31 @@ check_type_declaration <- function(node, r_fct) {
     return()
   }
   if (!inherits(node$left_node, "variable_node")) {
-    node$error <- error$new(
-      error_message =
-        paste0(
+    node$error <- paste0(
           "Invalid type declaration for: ",
           node$left_node$stringify()
         )
-    )
     return()
   }
   if (!inherits(node$right_node, "type_node")) {
-    node$error <- error$new(
-      error_message =
-        paste0(
+    node$error <- paste0(
           "Invalid type declaration: ",
           node$right_node$stringify()
         )
-    )
     return()
   }
   if (!(node$right_node$base_type %in% permitted_base_types())) {
-    node$error <- error$new(error_message = paste0(
+    node$error <- paste0(
       "Invalid type declaration: ",
       node$right_node$base_type, " for variable ", node$left_node$name
-    ))
+    )
     return()
   }
   if (!(node$right_node$data_struct %in% permitted_data_structs(r_fct))) {
-    node$error <- error$new(error_message = paste0(
+    node$error <- paste0(
       "Invalid type declaration: ",
       node$right_node$data_struct, " for variable ", node$left_node$name
-    ))
+    )
     return()
   }
   return()
@@ -309,7 +302,7 @@ action_check_type_of_args <- function(node, variables) {
     return()
   }
   type_check_fct <- function_registry_global$check_fct(node$operator)
-  type_check_fct[[1]](node, variables)
+  type_check_fct(node, variables)
 }
 
 # The actual translation of the AST to C++
@@ -337,8 +330,7 @@ action_translate <- function(node) {
   }
   op <- function_registry_global$get_cpp_name(node$operator)
   if (is.null(op)) {
-    node$error <- error$new(error_message = paste0("Unknown operator: ", node$operator))
+    node$error <- paste0("Unknown operator: ", node$operator)
   }
   node$operator <- op
 }
-

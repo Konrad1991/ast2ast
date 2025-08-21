@@ -13,7 +13,7 @@ variable_node <- R6::R6Class(
       return(paste0(indent, self$name))
     },
     stringify_error = function(indent = "") {
-      return(paste0(indent, self$error$error_message))
+      return(paste0(indent, self$error))
     },
     print = function() {
       cat("Id:", self$id, "Variable:", deparse(self$name), "\n")
@@ -35,7 +35,7 @@ literal_node <- R6::R6Class(
       t_literal(self$context, self$name, indent)
     },
     stringify_error = function(indent = "") {
-      return(paste0(indent, self$error$error_message))
+      return(paste0(indent, self$error))
     },
     print = function() {
       cat("Id:", self$id, self$stringify())
@@ -142,7 +142,7 @@ binary_node <- R6::R6Class(
     stringify_error = function(indent = "") {
       left_error <- self$stringerror_left()
       right_error <- self$stringerror_right()
-      op_error <- self$error$error_message
+      op_error <- self$error
       errors <- c(left_error, right_error, op_error)
       errors <- errors[errors != ""]
       errors <- combine_strings(errors)
@@ -207,7 +207,7 @@ unary_node <- R6::R6Class(
     },
     stringify_error = function(indent = "") {
       obj_error <- self$obj$stringify_error()
-      op_error <- self$error$error_message
+      op_error <- self$error
       errors <- c(obj_error, op_error)
       errors <- errors[errors != ""]
       errors <- combine_strings(errors)
@@ -252,7 +252,7 @@ nullary_node <- R6::R6Class(
       return(ret)
     },
     stringify_error = function(indent = "") {
-      return(paste0(indent, self$error$error_message))
+      return(paste0(indent, self$error))
     },
     stringify_error_line = function(indent = "") {
       self$stringify()
@@ -296,7 +296,7 @@ function_node <- R6::R6Class(
       }) |>
         unlist() |>
         c()
-      errors <- c(self$error$error_message, args_errors)
+      errors <- c(self$error, args_errors)
       errors <- errors[errors != ""]
       errors <- combine_strings(errors)
       ret <- paste0(

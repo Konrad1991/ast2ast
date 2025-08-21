@@ -91,20 +91,13 @@ parse_body <- function(b, r_fct) {
 run_checks <- function(ast, r_fct) {
   error_found <- FALSE
   traverse_ast(ast, action_error, r_fct)
-  errors <- try(
-    {
-      ast$stringify_error()
-    },
-    silent = TRUE
-  )
-  if (inherits(errors, "try-error")) {
+  line <- try( { ast$stringify_error_line() }, silent = TRUE)
+  if (inherits(line, "try-error")) {
     error_found <- TRUE
     pe("error: Could not stringify the AST")
-    break
   }
-  if (!is.null(errors) && errors != "") {
+  if (!is.null(line) && line != "") {
     error_found <- TRUE
-    line <- ast$stringify_error_line()
     cat(line, "\n")
   }
   return(error_found)
@@ -120,12 +113,11 @@ sort_args <- function(ast) {
   if (inherits(e, "try-error")) {
     error_found <- TRUE
     pe("error: Could not sort the arguments")
-    break
   }
   return(
     list(
       error_found = error_found,
-      ast_list = ast
+      ast = ast
     )
   )
 }
@@ -143,23 +135,17 @@ infer_types <- function(ast, f, f_args = NULL, r_fct = TRUE) {
     error_found <- TRUE
     pe("Error: Could not infer the types")
   }
-  errors <- try(
-    {
-      ast$stringify_error()
-    },
-    silent = TRUE
-  )
-  if (inherits(errors, "try-error")) {
+  line <- try( { ast$stringify_error_line() }, silent = TRUE)
+  if (inherits(line, "try-error")) {
     error_found <- TRUE
     pe("error: Could not stringify the AST")
-    break
   }
-  if (!is.null(errors) && errors != "") {
+  if (!is.null(line) && line != "") {
     error_found <- TRUE
-    line <- ast$stringify_error_line()
     cat(line, "\n")
-    pe(errors)
   }
+
+  print(env$vars_list)
   return(
     list(
       error_found = error_found,
@@ -179,7 +165,6 @@ type_checking <- function(ast, vars_types_list) {
   if (inherits(e, "try-error")) {
     error_found <- TRUE
     pe("Could not check the type of the arguments to functions")
-    break
   }
   errors <- try(
     {
@@ -190,7 +175,6 @@ type_checking <- function(ast, vars_types_list) {
   if (inherits(errors, "try-error")) {
     error_found <- TRUE
     pe("error: Could not stringify the AST")
-    break
   }
   if (!is.null(errors) && errors != "") {
     error_found <- TRUE
@@ -224,7 +208,6 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct) {
   if (inherits(errors, "try-error")) {
     error_found <- TRUE
     pe("error: Could not stringify the AST")
-    break
   }
   if (!is.null(errors) && errors != "") {
     error_found <- TRUE
@@ -356,7 +339,6 @@ translate_internally <- function(fct, args_fct, name_fct, r_fct) {
   if (error_found) {
     stop()
   }
-  stop("Until here testing")
 
   # Sort the arguments
   res <- sort_args(AST)
@@ -373,6 +355,7 @@ translate_internally <- function(fct, args_fct, name_fct, r_fct) {
     stop()
   }
   vars_types_list <- res$vars_types_list
+  stop("Until here testing")
 
   # Check the types of the arguments at least where possible
   error_found <- type_checking(AST, vars_types_list)
