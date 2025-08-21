@@ -93,8 +93,11 @@ infer <- function(node, vars_list, r_fct) {
       name <- deparse(node$name)
     }
     return(vars_list[[name]])
-  } else if (inherits(node, c("unary_node", "binary_node", "function_node", "for_node"))) {
+  } else if (inherits(node, c("unary_node", "binary_node", "function_node"))) {
     ifct <- function_registry_global$infer_fct(node$operator)
+    return(ifct(node, vars_list, r_fct))
+  } else if (inherits(node, "for_node")) {
+    ifct <- function_registry_global$infer_fct("for")
     return(ifct(node, vars_list, r_fct))
   } else {
     return(sprintf("Cannot determine the type for: %s", node$stringify()))
@@ -110,6 +113,12 @@ find_var_lhs <- function(node) {
 }
 
 common_type <- function(type_old, type_new) {
+  if (is.null(type_old$base_type) && type_new$iterator) {
+    return(type_new)
+  } else if (!is.null(type_old$base_type) && type_new$iterator) {
+    return("You defined an iterator variable but used a variable with the same name outside of a loop")
+  }
+
   if (is.null(type_old$base_type) && is.null(type_old$data_struct)) {
     type_old$base_type <- type_new$base_type
     type_old$data_struct <- type_new$data_struct
@@ -149,9 +158,24 @@ type_infer_action <- function(node, env) {
       variable <- find_var_lhs(node)
       env$vars_list[[variable]] <- common_type(env$vars_list[[variable]], type) |> flatten_type()
     }
+  } else if (inherits(node, "for_node")) {
+    type <- infer(node, env$vars_list, env$r_fct)
+    if (is.character(type)) {
+      node$error <- type
+    } else {
+      variable <- deparse(node$i$name)
+      type <- common_type(env$vars_list[[variable]], type)
+      if (is.character(type)) {
+        node$i$error <- type
+      } else {
+        env$vars_list[[variable]] <- type |> flatten_type()
+      }
+    }
   }
 }
 type_infer_return_action <- function(node, env) {
+  # TODO: handle return()
+  # TODO: dont allow to return iterator variables
   if (inherits(node, "unary_node") && node$operator == "return") {
     type <- infer(node$obj, env$vars_list, env$r_fct)
     if (is.character(type)) {

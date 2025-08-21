@@ -293,12 +293,10 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "for", num_args = 3,
-  infer_fct = function(node, vars_types, r_fct) {
-    type_seq <- infer(node$seq, vars_list, r_fct)
-    type_seq <- flatten_type(type_seq)
+  infer_fct = function(node, vars_list, r_fct) {
     t <- type_node$new(NA, FALSE, r_fct)
-    t$base_type <- type_seq$base_type
     t$data_struct <- "iterator"
+    t$iterator <- TRUE
     return(t)
   },
   check_fct = function(node, vars_types_list) {
@@ -311,25 +309,25 @@ function_registry_global$add(
 # TODO: is while supported well or does it require a own node
 function_registry_global$add(
   name = "while", num_args = 2,
-  infer_fct = function(node, vars_types, r_fct) {},
+  infer_fct = function(node, vars_list, r_fct) {},
   check_fct = mock, is_infix = FALSE,
   group = "function_node", cpp_name = "while"
 )
 function_registry_global$add(
   name = "next", num_args = 0,
-  infer_fct = function(node, vars_types, r_fct) {},
+  infer_fct = function(node, vars_list, r_fct) {},
   check_fct = mock, is_infix = FALSE,
   group = "nullary_node", cpp_name = "continue"
 )
 function_registry_global$add(
   name = "break", num_args = 0,
-  infer_fct = function(node, vars_types, r_fct) {},
+  infer_fct = function(node, vars_list, r_fct) {},
   check_fct = mock, is_infix = FALSE,
   group = "nullary_node", cpp_name = "break"
 )
 function_registry_global$add(
   name = "c", num_args = NA,
-  infer_fct = function(node, vars_types, r_fct) {
+  infer_fct = function(node, vars_list, r_fct) {
     types_of_args <- lapply(node$args, function(x) {
       temp <- infer(x, vars_list, r_fct)
       flatten_type(temp)
@@ -358,7 +356,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = ":", num_args = 2,
-  infer_fct = function(node, vars_types, r_fct) {
+  infer_fct = function(node, vars_list, r_fct) {
     left_type <- infer(node$left_node, vars_list, r_fct)
     right_type <- infer(node$right_node, vars_list, r_fct)
     left_type <- flatten_type(left_type)

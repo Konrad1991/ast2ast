@@ -89,135 +89,90 @@ parse_body <- function(b, r_fct) {
 # Run checks on: operators, valid variables, and type declarations
 # ========================================================================
 run_checks <- function(ast, r_fct) {
-  error_found <- FALSE
-  traverse_ast(ast, action_error, r_fct)
+  e <- try(traverse_ast(ast, action_error, r_fct), silent = TRUE)
+  if (inherits(e, "try-error")) {
+    stop("error: Could not run checks on AST")
+  }
   line <- try( { ast$stringify_error_line() }, silent = TRUE)
   if (inherits(line, "try-error")) {
-    error_found <- TRUE
-    pe("error: Could not stringify the AST")
+    stop("error: Could not stringify the AST")
   }
-  if (!is.null(line) && line != "") {
-    error_found <- TRUE
-    cat(line, "\n")
+  if (err_found(line)) {
+    stop(paste0("\n", line))
   }
-  return(error_found)
 }
 
 # Sort the arguments Example: vector(length = 10, "logical") --> vector("logical", 10)
 # ========================================================================
 sort_args <- function(ast) {
-  error_found <- FALSE
   e <- try(
     traverse_ast(ast, action_sort_args)
   )
   if (inherits(e, "try-error")) {
-    error_found <- TRUE
-    pe("error: Could not sort the arguments")
+    stop("error: Could not sort the arguments")
   }
-  return(
-    list(
-      error_found = error_found,
-      ast = ast
-    )
-  )
+  return(ast)
 }
 
 # Infer types
 # ========================================================================
 infer_types <- function(ast, f, f_args = NULL, r_fct = TRUE) {
-  error_found <- FALSE
   vars_list <- create_vars_types_list(f, f_args, r_fct)
   env <- new.env(parent = emptyenv())
   env$vars_list <- vars_list
   env$r_fct <- r_fct
   e <- try(traverse_ast(ast, type_infer_action, env))
   if (inherits(e, "try-error")) {
-    error_found <- TRUE
-    pe("Error: Could not infer the types")
+    stop("Error: Could not infer the types")
   }
   line <- try( { ast$stringify_error_line() }, silent = TRUE)
   if (inherits(line, "try-error")) {
-    error_found <- TRUE
-    pe("error: Could not stringify the AST")
+    stop("error: Could not stringify the AST")
   }
-  if (!is.null(line) && line != "") {
-    error_found <- TRUE
-    cat(line, "\n")
+  if (err_found(line)) {
+    stop(line)
   }
-
-  print(env$vars_list)
-  return(
-    list(
-      error_found = error_found,
-      vars_types_list = env$vars_list
-    )
-  )
+  return(env$vars_list)
 }
 
 # Check the types of the functions
 # calls the check function defined in function_registry_global
 # ========================================================================
 type_checking <- function(ast, vars_types_list) {
-  error_found <- FALSE
   e <- try(
     traverse_ast(ast, action_check_type_of_args, vars_types_list)
   )
   if (inherits(e, "try-error")) {
-    error_found <- TRUE
-    pe("Could not check the type of the arguments to functions")
+    stop("Could not check the type of the arguments to functions")
   }
-  errors <- try(
-    {
-      ast$stringify_error()
-    },
-    silent = TRUE
-  )
-  if (inherits(errors, "try-error")) {
-    error_found <- TRUE
-    pe("error: Could not stringify the AST")
+  line <- try( { ast$stringify_error_line() }, silent = TRUE)
+  if (inherits(line, "try-error")) {
+    stop("error: Could not stringify the AST")
   }
-  if (!is.null(errors) && errors != "") {
-    error_found <- TRUE
-    line <- ast$stringify_error_line()
-    cat(line, "\n")
-    pe(errors)
+  if (err_found(line)) {
+    stop(line)
   }
-  return(error_found)
 }
 
 # Determine the type of each return Expression
 # ========================================================================
 determine_types_of_returns <- function(ast, vars_types_list, r_fct) {
-  error_found <- FALSE
   type <- NULL
   env <- new.env(parent = emptyenv())
   env$vars_list <- vars_types_list
   env$return_list <- list()
   env$r_fct <- r_fct
-  e <- try(traverse_ast(ast, type_infer_return_action, env))
+  e <- try(traverse_ast(ast, type_infer_return_action, env), silent = TRUE)
   if (inherits(e, "try-error")) {
-    error_found <- TRUE
-    pe("Error: Could not infer the return type")
+    stop("Error: Could not infer the return type")
   }
-  errors <- try(
-    {
-      ast$stringify_error()
-    },
-    silent = TRUE
-  )
-  if (inherits(errors, "try-error")) {
-    error_found <- TRUE
-    pe("error: Could not stringify the AST")
-  }
-  if (!is.null(errors) && errors != "") {
-    error_found <- TRUE
-    line <- ast$stringify_error_line()
-    cat(line, "\n")
-    pe(errors)
+  line <- try( { ast$stringify_error_line() }, silent = TRUE)
+  if (inherits(line, "try-error")) {
+    stop("error: Could not stringify the AST")
   }
   if (length(env$return_list) == 0) {
     type <- "void"
-    if (r_fct) type<- "R_NilValue"
+    if (r_fct) type <- "R_NilValue"
   } else if (length(env$return_list) == 1) {
     type <- env$return_list[[1]]
   } else {
@@ -225,45 +180,22 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct) {
         type <- common_type(env$return_list[[i]], env$return_list[[i + 1]]) |> flatten_type()
     }
   }
-  return(
-    list(
-      error_found = error_found,
-      return_type = type
-    )
-  )
+  return(type)
 }
 
 # Translates the AST representation into C++ code
 # ========================================================================
 translate_to_cpp_code <- function(ast) {
-  error_found <- FALSE
   code_string <- NULL
   traverse_ast(ast, action_set_true)
   traverse_ast(ast, action_translate)
   # Stringify ast
-  if (!error_found) {
-    e <- try(
-      {
-        code_string <- ast$stringify()
-      },
-      silent = TRUE
-    )
-    if (inherits(e, "error")) {
-      error_found <- TRUE
-      pe("error: Could not stringify the AST")
-      return()
-    }
+  e <- try({code_string <- ast$stringify()}, silent = TRUE)
+  if (inherits(e, "error")) {
+    stop("error: Could not stringify the AST")
   }
-
-  code_string <- c(code_string, "\n")
-  return(
-    list(
-      error_found = error_found,
-      code_string = code_string
-    )
-  )
+  c(code_string, "\n")
 }
-
 
 # Assembles function (includes, signature, declarations, body)
 # ========================================================================
@@ -329,55 +261,28 @@ translate_internally <- function(fct, args_fct, name_fct, r_fct) {
     stop("f seems to be empty")
   }
   code_string <- list()
-  error_found <- FALSE
 
   # Create AST
   AST <- parse_body(body(fct), r_fct)
 
   # Run checks
-  error_found <- run_checks(AST, r_fct)
-  if (error_found) {
-    stop()
-  }
+  run_checks(AST, r_fct)
 
   # Sort the arguments
-  res <- sort_args(AST)
-  error_found <- res$error_found
-  AST <- res$ast
-  if (error_found) {
-    stop()
-  }
+  AST <- sort_args(AST)
 
   # Infer the types
-  res <- infer_types(AST, fct, args_fct, r_fct)
-  error_found <- res$error_found
-  if (error_found) {
-    stop()
-  }
-  vars_types_list <- res$vars_types_list
-  stop("Until here testing")
+  vars_types_list <- infer_types(AST, fct, args_fct, r_fct)
 
   # Check the types of the arguments at least where possible
-  error_found <- type_checking(AST, vars_types_list)
-  if (error_found) {
-    stop()
-  }
+  type_checking(AST, vars_types_list)
 
-  # Determine types
-  res <- determine_types_of_returns(AST, vars_types_list, r_fct)
-  error_found <- res$error_found
-  if (error_found) {
-    stop()
-  }
-  return_type <- res$return_type
+  # Determine return type
+  return_type <- determine_types_of_returns(AST, vars_types_list, r_fct)
 
   # Translate
-  res <- translate_to_cpp_code(AST)
-  error_found <- res$error_found
-  code_string <- res$code_string
-  if (error_found) {
-    stop()
-  }
+  code_string <- translate_to_cpp_code(AST)
+  cat(code_string)
 
   # Create function signature & variable declarations
   code <- assemble(name_fct, vars_types_list, return_type, code_string, r_fct)

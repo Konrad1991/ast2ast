@@ -1,13 +1,7 @@
-# Print error with ascii art
-pe <- function(error_message) {
-  if (is.null(error_message)) {
-    return()
-  }
-  if (error_message == "") {
-    return()
-  }
-  error_message <- paste0(error_message, "\n")
-  cat(crayon::red$bold(error_message), file = stderr())
+err_found <- function(string) {
+  if (is.null(string)) return(FALSE)
+  string <- gsub("\n|\t| ", "", string)
+  string != ""
 }
 
 assert <- function(...) {
@@ -15,17 +9,15 @@ assert <- function(...) {
   message <- names(expr)
   if (!is.null(message)) {
     if (!expr) {
-      pe(paste0("Error: ", message))
-      stop()
+      stop(paste0("Error: ", message))
     }
   } else {
     if (length(expr) >= 1) {
       if (!expr) {
-        pe(paste0(
+        stop(paste0(
           "Error: ",
           deparse(expr), " is not TRUE"
         ))
-        stop()
       }
     }
   }

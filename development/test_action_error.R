@@ -20,10 +20,18 @@ f <- function() {
   a |> type(doubleass)
 }
 f <- function() {
-  # a <- 1
-  # a <- c(1, 2)
+  a <- 1
+  a <- c(1, 2)
   a <- TRUE
   b <- matrix(0, 2, 2)
+  for (i in 1:10) {
+    print(i)
+  }
+  for (i in 1:10) {
+    print(i)
+  }
+  return(a)
 }
-translate(f)
+fcpp <- translate(f)
+fcpp()
 .traceback()

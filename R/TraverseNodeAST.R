@@ -95,7 +95,7 @@ check_operator <- function(node) {
     if (is.na(expected_args)) { # for c, if, etc.
       return(TRUE)
     }
-    args_length %in% expected_args # %in% because return (0 | 1) and - (1 | 2)
+    args_length %in% expected_args[[1]] # %in% because return (0 | 1) and - (1 | 2)
   }
 
   check_named_args <- function(node) {
