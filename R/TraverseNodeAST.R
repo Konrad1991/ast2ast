@@ -103,7 +103,7 @@ check_operator <- function(node) {
     named_args <- named_args()
     if (inherits(node, "function_node")) {
       if (fct == "vector" || fct == "matrix") {
-        args_names <- node$args_names
+        args_names <- names(node$args)
         args_names <- args_names[args_names != ""]
         expected_args <- named_args[[fct]]
         for (i in seq_along(args_names)) {
@@ -268,7 +268,7 @@ action_sort_args <- function(node) {
   fct <- node$operator
   named_args <- named_args()
   if (fct == "vector" || fct == "matrix") {
-    args_names <- node$args_names
+    args_names <- names(node$args)
     expected_args <- named_args[[fct]]
     unnamed_args <- which(!(args_names %in% expected_args))
     counter <- 1
@@ -307,11 +307,9 @@ action_check_type_of_args <- function(node, variables) {
 
 # The actual translation of the AST to C++
 # ========================================================================
-action_set_true <- function(node) {
+action_set_true <- function(node, r_fct) {
   # set true to remove type declaration and add Cast to return
-  if (!inherits(node, "binary_node") &&
-    !inherits(node, "unary_node") &&
-    !inherits(node, "nullary_node")) {
+  if (!inherits(node, c("nullary_node", "unary_node", "binary_node", "function_node"))) {
     return()
   }
   if (node$operator == "type") {
@@ -319,6 +317,10 @@ action_set_true <- function(node) {
   }
   if (node$operator == "return") {
     node$handle_return <- TRUE
+    node$output_is_r_fct <- r_fct
+  }
+  if (node$operator == "vector") {
+    node$handle_vector <- TRUE
   }
 }
 action_translate <- function(node) {

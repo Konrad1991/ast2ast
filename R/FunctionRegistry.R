@@ -74,21 +74,33 @@ Functions <- R6::R6Class(
 function_registry_global <- Functions$new()
 mock <- function(node, vars_types_list) {}
 
-is_char <- function(node, vars_types_list) {
+is_type <- function(node, vars_types_list, check_type) {
   if (inherits(node, "variable_node")) {
     type <- vars_types_list[[node$name]]
-    if (type$base_type == "character") {
+    if (type$base_type == check_type) {
       return(TRUE)
     }
   }
   if (inherits(node, "literal_node")) {
     type <- determine_literal_type(node$name)
-    if (type == "character") {
+    if (type == check_type) {
       return(TRUE)
     }
   }
   FALSE
 }
+
+is_char <- function(node, vars_types_list) {
+  # Is it possible that a variable is of type character. Add stop for that.
+  is_type(node, vars_types_list, "character")
+}
+is_int <- function(node, vars_types_list) {
+  is_type(node, vars_types_list, "integer")
+}
+is_num <- function(node, vars_types_list) {
+  is_type(node, vars_types_list, "numeric")
+}
+
 is_vec_or_mat <- function(var_name, vars_types_list) {
   type <- vars_types_list[[var_name]]
   if (type$data_struct %in% c("matrix", "vector", "vec", "mat")) {
@@ -716,6 +728,13 @@ function_registry_global$add(
   check_fct = function(node, vars_types_list) {
     if (!is_char(node$args[[1]], vars_types_list)) {
       node$error <- "mode of vector has to be of type character"
+    }
+    s <- remove_double_quotes(node$args[[1]]$name)
+    if (!(s %in% c("logical", "integer", "numeric"))) {
+      node$error <- sprintf("Found unallowed mode %s in vector", s)
+    }
+    if (!is_int(node$args[[2]]) && !is_num(node$args[[2]])) {
+      node$error <- "Found unallowed length type in vector"
     }
   },
   is_infix = FALSE, group = "function_node", cpp_name = "etr::vector"

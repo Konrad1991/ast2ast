@@ -171,11 +171,13 @@ unary_node <- R6::R6Class(
     error = NULL,
     context = NULL,
     handle_return = FALSE,
+    output_is_r_fct = TRUE,
     initialize = function() {},
     string_obj = function() {
       return(self$obj$stringify())
     },
     stringify = function(indent = "") {
+      ret <- NULL
       if (self$operator == "-") { # NOTE: for unary -
         ret <- paste0(
           indent, self$operator, "",
@@ -188,11 +190,17 @@ unary_node <- R6::R6Class(
         )
       } else {
         if (self$handle_return) {
-          ret <- paste0(
-            indent, self$operator, "(etr::Cast(",
-            # This either cast to SEXP and/or evals expressions which are not variables or literals
-            self$string_obj(), "))"
-          )
+          if (self$output_is_r_fct) {
+            ret <- paste0(
+              indent, self$operator, "(etr::Cast(",
+              # This cast to SEXP and evals expressions which are not variables or literals
+              self$string_obj(), "))"
+            )
+          } else {
+            ret <- paste0(
+              indent, self$operator, "(etr::Evaluate(", self$string_obj(), "))"
+            )
+          }
         } else {
           ret <- paste0(
             indent, self$operator, "(",
@@ -234,6 +242,7 @@ nullary_node <- R6::R6Class(
     error = NULL,
     context = NULL,
     handle_return = FALSE,
+    output_is_r_fct = TRUE,
     initialize = function() {},
     stringify = function(indent = "") {
       if (self$operator == "next" || self$operator == "break") {
@@ -242,7 +251,11 @@ nullary_node <- R6::R6Class(
       ret <- NULL
       if (self$operator == "return") {
         # Handles void stuff
-        ret <- paste0(indent, self$operator, "(etr::Cast())")
+        if (self$output_is_r_fct) {
+          ret <- paste0(indent, self$operator, "(etr::Cast())")
+        } else {
+          ret <- paste0(indent, self$operator, "(etr::Evaluate())")
+        }
       } else {
         ret <- paste0(indent, self$operator, "()")
       }
@@ -272,8 +285,16 @@ function_node <- R6::R6Class(
     error = NULL,
     context = NULL,
     args = list(),
+    handle_vector = FALSE,
     initialize = function() {},
     stringify = function(indent = "") {
+      if (self$handle_vector) {
+        s <- self$args[[1]]$stringify() |> remove_double_quotes()
+        s <- paste0("etr::", s)
+        self$operator <- s
+        self$args[[1]] <- NULL
+        self$args <- Filter(Negate(is.null), self$args)
+      }
       args_string <- lapply(self$args, function(arg) {
         return(arg$stringify())
       }) |>

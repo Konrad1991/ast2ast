@@ -173,6 +173,10 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct) {
   if (length(env$return_list) == 0) {
     type <- "void"
     if (r_fct) type <- "R_NilValue"
+    nn <- nullary_node$new()
+    nn$operator <- "return"
+    nn$context <- "{"
+    ast$block[[length(ast$block) + 1]] <- nn
   } else if (length(env$return_list) == 1) {
     type <- env$return_list[[1]]
   } else {
@@ -185,12 +189,12 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct) {
 
 # Translates the AST representation into C++ code
 # ========================================================================
-translate_to_cpp_code <- function(ast) {
+translate_to_cpp_code <- function(ast, r_fct) {
   code_string <- NULL
-  traverse_ast(ast, action_set_true)
+  traverse_ast(ast, action_set_true, r_fct)
   traverse_ast(ast, action_translate)
   # Stringify ast
-  e <- try({code_string <- ast$stringify()}, silent = TRUE)
+  e <- try({code_string <- ast$stringify("  ")}, silent = TRUE)
   if (inherits(e, "error")) {
     stop("error: Could not stringify the AST")
   }
@@ -205,10 +209,16 @@ assemble <- function(name_fct, vars_types_list, return_type, body, r_fct) {
   })
   arguments <- arguments[arguments != ""]
   declarations <- lapply(vars_types_list, function(x) {
-    x$stringify_declaration(indent = "    ", r_fct)
+    x$stringify_declaration(indent = " ", r_fct)
   })
   declarations <- declarations[declarations != ""]
-  ret_type <- return_type$generate_type("")
+  ret_type <- ""
+  if (inherits(return_type, "R6")) {
+    ret_type <- return_type$generate_type("")
+  } else if (is.character(return_type)) {
+    ret_type <- return_type
+  }
+
   body <- paste0(body, "\n")
   if (r_fct) {
     signature <- paste0("SEXP ", name_fct, "(", paste(arguments, collapse = ", "), ") {")
@@ -281,8 +291,7 @@ translate_internally <- function(fct, args_fct, name_fct, r_fct) {
   return_type <- determine_types_of_returns(AST, vars_types_list, r_fct)
 
   # Translate
-  code_string <- translate_to_cpp_code(AST)
-  cat(code_string)
+  code_string <- translate_to_cpp_code(AST, r_fct)
 
   # Create function signature & variable declarations
   code <- assemble(name_fct, vars_types_list, return_type, code_string, r_fct)
