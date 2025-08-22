@@ -18,6 +18,9 @@ inline auto Evaluate(T && obj) {
     return std::forward<decltype(obj)>(obj);
   }
 }
+inline auto Evaluate() {
+  return;
+}
 
 #ifdef STANDALONE_ETR
 #else
