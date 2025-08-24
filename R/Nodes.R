@@ -161,7 +161,6 @@ binary_node <- R6::R6Class(
   )
 )
 
-# Define the unary_node class
 unary_node <- R6::R6Class(
   "unary_node",
   public = list(
@@ -268,7 +267,10 @@ nullary_node <- R6::R6Class(
       return(paste0(indent, self$error))
     },
     stringify_error_line = function(indent = "") {
-      self$stringify()
+      if (self$error != "") {
+        return(paste0(self$stringify(), "\n", self$error))
+      }
+      return("")
     },
     print = function() {
       cat("Id: ", self$id, "\n", self$stringify(), "\n")
@@ -335,7 +337,6 @@ function_node <- R6::R6Class(
   )
 )
 
-# Define the if_node class
 if_node <- R6::R6Class(
   "if_node",
   public = list(
@@ -491,7 +492,6 @@ handle_if <- function(code, context, r_fct, i_node) {
   }
 }
 
-# Define the block_node class
 block_node <- R6::R6Class(
   "block_node",
   public = list(
@@ -525,7 +525,7 @@ block_node <- R6::R6Class(
         return("")
       }
       res <- lapply(self$block, function(elem) {
-        if (class(elem)[[1]] %in% c("for_node", "if_node", "block_node")) {
+        if (class(elem)[[1]] %in% c("for_node", "if_node", "block_node", "while_node", "repeat_node")) {
           return(elem$stringify_error_line(indent))
         }
         error <- elem$stringify_error() |> combine_strings("\n")
@@ -544,7 +544,6 @@ block_node <- R6::R6Class(
   )
 )
 
-# Define the for loop node
 for_node <- R6::R6Class(
   "for_node",
   public = list(
@@ -608,6 +607,99 @@ for_node <- R6::R6Class(
     }
   )
 )
+
+while_node <- R6::R6Class(
+  "while_node",
+  public = list(
+    id = NULL,
+    error = NULL,
+    condition = NULL,
+    block = NULL,
+    context = NULL,
+    initialize = function() {},
+    stringify = function(indent = "") {
+      cond <- self$condition$stringify(indent)
+      b <- self$block$stringify(paste0(indent, " "))
+      return(paste0(
+        indent,
+        "while(", cond, ") {\n",
+        b, "\n",
+        "}\n"
+      ))
+    },
+    stringify_error = function(indent = "") {
+      block_err <- self$block$stringify_error()
+      cond_err <- self$condition$stringify_error()
+      res <- c(cond_err, block_err)
+      res <- res[res != ""]
+      e <- combine_strings(list(res), "\n")
+      if (e != "") {
+        return(e)
+      }
+      return("")
+    },
+    stringify_error_line = function(indent = "") {
+      block_res <- self$block$stringify_error_line(paste0(indent, "  "))
+      cond_err <- self$condition$stringify_error()
+      res <- ""
+      if (block_res == "" && cond_err == "") {
+        return("")
+      }
+      if (cond_err != "" && block_res == "") {
+        cond <- self$condition$stringify(indent)
+        return(paste0(cond, "\n", cond_err))
+      }
+      if (cond_err == "" && block_res != "") {
+        return(block_res)
+      }
+      res <- combine_strings(list(res, block_res), "\n\n")
+      return(res)
+    },
+    print = function() {
+      cat(self$stringify(), "\n")
+    }
+  )
+)
+
+repeat_node <- R6::R6Class(
+  "repeat_node",
+  public = list(
+    id = NULL,
+    error = NULL,
+    block = NULL,
+    context = NULL,
+    initialize = function() {},
+    stringify = function(indent = "") {
+      b <- self$block$stringify(paste0(indent, " "))
+      return(paste0(
+        indent,
+        "while(true) {\n",
+        b, "\n",
+        "}\n"
+      ))
+    },
+    stringify_error = function(indent = "") {
+      block_err <- self$block$stringify_error()
+      block_err <- block_err[block_err != ""]
+      e <- combine_strings(list(block_err), "\n")
+      if (e != "") {
+        return(e)
+      }
+      return("")
+    },
+    stringify_error_line = function(indent = "") {
+      block_res <- self$block$stringify_error_line(paste0(indent, "  "))
+      if (block_res == "") {
+        return("")
+      }
+      return(block_res)
+    },
+    print = function() {
+      cat(self$stringify(), "\n")
+    }
+  )
+)
+
 type_node <- R6::R6Class(
   "type_node",
   public = list(

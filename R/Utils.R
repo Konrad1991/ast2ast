@@ -4,25 +4,6 @@ err_found <- function(string) {
   string != ""
 }
 
-assert <- function(...) {
-  expr <- c(...)
-  message <- names(expr)
-  if (!is.null(message)) {
-    if (!expr) {
-      stop(paste0("Error: ", message))
-    }
-  } else {
-    if (length(expr) >= 1) {
-      if (!expr) {
-        stop(paste0(
-          "Error: ",
-          deparse(expr), " is not TRUE"
-        ))
-      }
-    }
-  }
-}
-
 cpp_keywords <- function() {
   c(
     "alignas", "alignof", "and", "and_eq", "asm",
@@ -45,14 +26,6 @@ cpp_keywords <- function() {
     "this", "thread_local", "throw", "true", "try", "typedef",
     "typeid", "typename", "union", "unsigned", "using",
     "virtual", "void", "volatile", "wchar_t", "while", "xor", "xor_eq"
-  )
-}
-
-# TODO: add this also into function_registry_global
-named_args <- function() {
-  list(
-    "vector" = c("mode", "length"),
-    "matrix" = c("data", "nrow", "ncol")
   )
 }
 
@@ -84,6 +57,7 @@ convert_base_type <- function(r_type) {
     "void" = "void",
     "R_NilValue" = "R_NilValue",
     "logical" = "bool",
+    "bool" = "bool",
     "integer" = "int", "int" = "int",
     "double" = "double")[r_type]
 }
@@ -162,4 +136,55 @@ remove_empty_strings <- function(l) {
 
 remove_double_quotes <- function(s) {
   gsub('"', "", s)
+}
+
+compile <- function(fct_code, r_fct,
+                         verbose, name_f) {
+  fct <- fct_code
+  fct_ret <- NULL
+
+  if (!r_fct) {
+    tryCatch(
+      expr = {
+        if (verbose == TRUE) {
+          cat(fct)
+        }
+        env <- new.env()
+        Rcpp::sourceCpp(code = fct, verbose = verbose, env = env)
+        fct_ret <- env$getXPtr()
+        attributes(fct_ret) <- list(class = "XPtr")
+      },
+      error = function(e) {
+        print(e)
+        stop("Sorry compilation failed!")
+      }
+    )
+  } else {
+    # -fsanitize=alignment,bool,bounds,builtin,enum,integer-divide-by-zero,
+    # nonnull-attribute,null,object-size,pointer-overflow,return,
+    # returns-nonnull-attribute,shift,signed-integer-overflow,
+    # unreachable,vla-bound,vptr
+    # Sys.setenv("PKG_CXXFLAGS" = "-DRFCT -Wall -Wpedantic")
+    # -fsanitize=address --param=max-vartrack-size=9000000 -fno-omit-frame-pointer
+
+    tryCatch(
+      expr = {
+        env <- new.env()
+        res <- Rcpp::sourceCpp(code = fct, verbose = verbose, env = env)
+        fct_ret <- env[[name_f]]
+      },
+      error = function(e) {
+        print(e)
+        stop("Sorry compilation failed!")
+      }
+    )
+
+    Sys.unsetenv("PKG_CXXFLAGS")
+
+    if (verbose == TRUE) {
+      cat(fct)
+    }
+  }
+
+  return(fct_ret)
 }

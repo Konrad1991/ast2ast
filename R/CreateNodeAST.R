@@ -23,6 +23,17 @@ create_ast <- function(code, context, r_fct) {
     })
     b_node$context <- context
     return(b_node)
+  } else if (operator == "repeat") {
+    rn <- repeat_node$new()
+    rn$block <- code[[2]] |> process(operator, r_fct)
+    rn$context <- context
+    return(rn)
+  } else if (operator == "while") {
+    wn <- while_node$new()
+    wn$condition <- code[[2]] |> process(operator, r_fct)
+    wn$block <- code[[3]] |> process(operator, r_fct)
+    wn$context <- context
+    return(wn)
   } else if (operator == "for") {
     fn <- for_node$new()
     fn$i <- code[[2]] |> process(operator, r_fct)

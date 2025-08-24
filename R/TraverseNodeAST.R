@@ -34,6 +34,13 @@ traverse_ast <- function(node, action, ...) {
     traverse_ast(node$i, action, ...)
     traverse_ast(node$seq, action, ...)
     traverse_ast(node$block, action, ...)
+  } else if (inherits(node, "while_node")) {
+    action(node, ...)
+    traverse_ast(node$condition, action, ...)
+    traverse_ast(node$block, action, ...)
+  } else if (inherits(node, "repeat_node")) {
+    action(node, ...)
+    traverse_ast(node$block, action, ...)
   } else if (inherits(node, "function_node")) {
     action(node, ...)
     lapply(node$args, function(arg) traverse_ast(arg, action, ...))
@@ -100,12 +107,11 @@ check_operator <- function(node) {
 
   check_named_args <- function(node) {
     fct <- node$operator
-    named_args <- named_args()
+    expected_args <- function_registry_global$expected_arg_names(fct)
     if (inherits(node, "function_node")) {
-      if (fct == "vector" || fct == "matrix") {
+      if (!all(is.na(expected_args))) {
         args_names <- names(node$args)
         args_names <- args_names[args_names != ""]
-        expected_args <- named_args[[fct]]
         for (i in seq_along(args_names)) {
           if (!(args_names[[i]] %in% expected_args)) {
             return(FALSE)
@@ -266,10 +272,9 @@ action_sort_args <- function(node) {
     return()
   }
   fct <- node$operator
-  named_args <- named_args()
-  if (fct == "vector" || fct == "matrix") {
+  expected_args <- function_registry_global$expected_arg_names(fct)
+  if (!all(is.na(expected_args))) {
     args_names <- names(node$args)
-    expected_args <- named_args[[fct]]
     unnamed_args <- which(!(args_names %in% expected_args))
     counter <- 1
     args <- list()

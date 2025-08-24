@@ -1,24 +1,38 @@
 files <- list.files("~/Documents/ast2ast/R/", full.names = TRUE)
 trash <- lapply(files, source)
 library(tinytest)
-f <- function() {
-  a <- vector(mode = "integer", length = 1L)
-  print(a)
+f <- function(c) {
+  b <- vector(mode = "logical", length = 2)
+  a <- 0
+  while(a < 2) {
+    print(a)
+    a <- a + 1
+  }
+
+  repeat {
+    print(a)
+    a <- a + 1
+    if (a > 5) break
+  }
 }
-fcpp <- translate(f, output = "XPtr", verbose = TRUE)
-fcpp
-fcpp <- translate(f, output = "R", verbose = TRUE)
-fcpp()
+args_f <- function(c) {
+  c |> type(vec(int))
+}
+fcpp <- translate(f, args_f, output = "R", verbose = TRUE)
+c <- 1
+fcpp(c)
+c
+.traceback()
 
 e <- try(translate(f), silent = TRUE)
 e()
 
 f <- function() {
-  bla()
+  a <- bla()
 }
 e <- try(translate(f), silent = TRUE)
 expect_equal(as.character(e),
-  "Error in run_checks(AST, r_fct) : \nbla()\nInvalid function bla\n",
+  "Error in run_checks(AST, r_fct) : \na <- bla()\nInvalid function bla\n",
   info = "Only supported functions"
 )
 
@@ -65,9 +79,8 @@ f <- function() {
  a <- vector(mode = "integer", length = "Invalid")
 }
 e <- try(translate(f), silent = TRUE)
-e
 expect_equal(
    as.character(e),
-  "Error in type_checking(AST, vars_types_list) : a <- vector(\"int\", 2.0)\nFound unallowed length type in vector\n",
+  "Error in type_checking(AST, vars_types_list) : \n  a <- vector(\"integer\", \"Invalid\")\nFound unallowed length type in vector\n",
   info = "Types of arguments: length in vector"
 )

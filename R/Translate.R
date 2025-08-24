@@ -1,12 +1,12 @@
 translate <- function(f, args_f = NULL,
                       output = "R",
                       verbose = FALSE, getsource = FALSE) {
-  assert("f is not a function" = is.function(f))
-  assert("args_f is not a function" = is.function(args_f) || is.null(args_f))
-  assert("output is not of type character" = is.character(output))
-  assert("Output is neither 'R' nor 'XPtr'" = output %in% c("R", "XPtr"))
-  assert("verbose is not of type logical" = is.logical(verbose))
-  assert("getsource is not of type logical" = is.logical(getsource))
+  stopifnot("f is not a function" = is.function(f))
+  stopifnot("args_f is not a function" = is.function(args_f) || is.null(args_f))
+  stopifnot("output is not of type character" = is.character(output))
+  stopifnot("Output is neither 'R' nor 'XPtr'" = output %in% c("R", "XPtr"))
+  stopifnot("verbose is not of type logical" = is.logical(verbose))
+  stopifnot("getsource is not of type logical" = is.logical(getsource))
 
   r_fct <- TRUE
   if (output == "XPtr") r_fct <- FALSE
