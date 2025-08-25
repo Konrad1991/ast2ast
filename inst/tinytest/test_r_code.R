@@ -2,20 +2,15 @@ files <- list.files("~/Documents/ast2ast/R/", full.names = TRUE)
 trash <- lapply(files, source)
 library(tinytest)
 f <- function(c) {
-  c[[1]] <- 2
-  a <- c(1)
-  b <- a[[1]]
-  test <- c & c
-  return(test)
+  a <- 1L
+  a |> type(veci(int))
 }
-args_f <- function(c) {
-  c |> type(vec(double)) |> ref()
-}
+args_f <- NULL
 verbose <- TRUE
 getsource <- FALSE
 fcpp <- translate(f, args_f, output = "R", verbose = verbose, getsource = getsource)
 cat(fcpp)
-c <- 1
+c <- c(1, 2)
 fcpp(c)
 c
 .traceback()
@@ -23,6 +18,15 @@ c
 e <- try(translate(f), silent = TRUE)
 e()
 
+
+expect_equal(determine_literal_type(1), "numeric")
+expect_equal(determine_literal_type(1.2), "numeric")
+expect_equal(determine_literal_type(1e10), "scientific")
+expect_equal(determine_literal_type(1L), "integer")
+expect_equal(determine_literal_type(TRUE), "logical")
+expect_equal(determine_literal_type(NA), "NA")
+expect_equal(determine_literal_type(NaN), "NaN")
+expect_equal(determine_literal_type(Inf), "Inf")
 
 f <- function() print("Hello world")
 e <- try(translate(f), silent = TRUE)
@@ -114,6 +118,7 @@ expect_equal(
   "Error in type_checking(AST, vars_types_list) : a <- vector(\"int\", 2.0)\nFound unallowed mode int in vector\n",
   info = "Types of arguments: mode in vector"
 )
+
 f <- function() {
  a <- vector(mode = 1L, length = 2)
 }

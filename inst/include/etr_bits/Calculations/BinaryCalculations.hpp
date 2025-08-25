@@ -223,6 +223,16 @@ template <typename L, typename R> auto operator<=(L &&l, R &&r) {
       std::forward<L>(l), std::forward<R>(r));
 }
 
+template <typename L, typename R> auto operator&(L &&l, R &&r) {
+  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, AndTrait>(
+      std::forward<L>(l), std::forward<R>(r));
+}
+
+template <typename L, typename R> auto operator|(L &&l, R &&r) {
+  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, OrTrait>(
+      std::forward<L>(l), std::forward<R>(r));
+}
+
 } // namespace etr
 
 #endif

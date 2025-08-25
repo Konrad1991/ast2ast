@@ -123,6 +123,19 @@ struct UnEqualTrait {
   }
 };
 
+struct AndTrait {
+  template <typename L, typename R>
+  static bool f(L a, R b) {
+    return a && b;
+  }
+};
+struct OrTrait {
+  template <typename L, typename R>
+  static bool f(L a, R b) {
+    return a || b;
+  }
+};
+
 struct SinusTrait {
   template <typename L> static inline auto f(L a) { return sin(a); }
 };

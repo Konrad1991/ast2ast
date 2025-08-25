@@ -81,7 +81,7 @@ flatten_type <- function(type) {
 
 infer <- function(node, vars_list, r_fct) {
   if (inherits(node, "literal_node")) {
-    type <- determine_literal_type(node$name)
+    type <- node$literal_type
     if (type == "character") {
       node$error <- "Characters are not supported"
     }
@@ -104,6 +104,12 @@ infer <- function(node, vars_list, r_fct) {
   } else if (inherits(node, "for_node")) {
     ifct <- function_registry_global$infer_fct("for")
     return(ifct(node, vars_list, r_fct))
+  } else if (inherits(node, "while_node")) {
+    ifct <- function_registry_global$infer_fct("while")
+    return(ifct(node, vars_list, r_fct))
+  } else if (inherits(node, "repeat_node")) {
+    ifct <- function_registry_global$infer_fct("repeat")
+    return(ifct(node, vars_list, r_fct))
   } else {
     return(sprintf("Cannot determine the type for: %s", node$stringify()))
   }
@@ -124,6 +130,10 @@ common_type <- function(type_old, type_new) {
     return("You defined an iterator variable but used a variable with the same name outside of a loop")
   }
 
+  if (type_old$fct_input) {
+    return(type_old)
+  }
+
   if (is.null(type_old$base_type) && is.null(type_old$data_struct)) {
     type_old$base_type <- type_new$base_type
     type_old$data_struct <- type_new$data_struct
@@ -135,7 +145,7 @@ common_type <- function(type_old, type_new) {
   }
   common_base_type <- NULL
   common_data_struct <- NULL
-  precedence_base_type <- list(double = 3, integer = 2, logical = 1, int = 2, bool = 1)
+  precedence_base_type <- list(double = 3, integer = 2, logical = 1, int = 2, bool = 1, "Inf" = 0, "NA" = -1, "NaN" = -2)
   precedence_base_type_old <- precedence_base_type[[type_old$base_type]]
   precedence_base_type_new <- precedence_base_type[[type_new$base_type]]
   if (precedence_base_type_old >= precedence_base_type_new) {
@@ -143,8 +153,10 @@ common_type <- function(type_old, type_new) {
   } else {
     common_base_type <- type_new$base_type
   }
-
-  precedence_data_struct <- list(matrix = 3, vector = 2, scalar = 1, vec = 2, mat = 2)
+  precedence_data_struct <- list(
+    matrix = 3, vector = 2, scalar = 1, vec = 2,
+    mat = 2, borrow_vec = 2, borrow_vector = 2, borrow_mat = 3, borrow_matrix = 3
+  )
   precedence_data_struct_old <- precedence_data_struct[[type_old$data_struct]]
   precedence_data_struct_new <- precedence_data_struct[[type_new$data_struct]]
   if (precedence_data_struct_old >= precedence_data_struct_new) {
@@ -159,13 +171,25 @@ common_type <- function(type_old, type_new) {
 }
 
 type_infer_action <- function(node, env) {
+  if (inherits(node, "binary_node") && node$operator == "type") {
+    type <- node$right_node
+    variable <- type$name
+    env$vars_list[[variable]] <- type
+  }
   if (inherits(node, "binary_node") && node$operator %in% c("=", "<-")) {
+    if (inherits(node$left_node, "binary_node") && node$left_node$operator == "type") {
+      type <- node$left_node$right_node
+      variable <- type$name
+      env$vars_list[[variable]] <- type
+    }
     type <- infer(node$right_node, env$vars_list, env$r_fct)
     if (is.character(type)) {
       node$error <- type
     } else {
       variable <- find_var_lhs(node)
-      env$vars_list[[variable]] <- common_type(env$vars_list[[variable]], type) |> flatten_type()
+      if (!env$vars_list[[variable]]$type_dcl) {
+        env$vars_list[[variable]] <- common_type(env$vars_list[[variable]], type) |> flatten_type()
+      }
     }
   } else if (inherits(node, "for_node")) {
     type <- infer(node, env$vars_list, env$r_fct)
@@ -177,7 +201,9 @@ type_infer_action <- function(node, env) {
       if (is.character(type)) {
         node$i$error <- type
       } else {
-        env$vars_list[[variable]] <- type |> flatten_type()
+        if (!env$vars_list[[variable]]$type_dcl) {
+          env$vars_list[[variable]] <- type |> flatten_type()
+        }
       }
     }
   }
@@ -191,4 +217,18 @@ type_infer_return_action <- function(node, env) {
       env$return_list[[length(env$return_list) + 1]] <- type
     }
   }
+}
+
+are_vars_init <- function(type) {
+  if (is.null(type$base_type) || is.null(type$data_struct)) {
+    stop(sprintf("Found uninitialzed variable: %s", type$name))
+  }
+}
+
+type_list_checks <- function(l) {
+  lapply(l, function(var) {
+    if (any(var$base_type == c("NA", "NaN", "Inf"))) {
+      stop(sprintf("Found unallowed base type %s, for the variable %s", var$base_type, var$name))
+    }
+  })
 }

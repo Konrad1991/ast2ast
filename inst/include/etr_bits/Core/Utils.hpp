@@ -44,6 +44,7 @@ using F = BoolConstant<false>;
 
 // TODO: check how r values behave here
 const double NA = std::numeric_limits<double>::quiet_NaN();
+const double NaN = std::numeric_limits<double>::quiet_NaN();
 const double Inf = std::numeric_limits<double>::infinity();
 
 inline int d2i(double inp) { return static_cast<int>(inp); }
