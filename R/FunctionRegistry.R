@@ -87,7 +87,7 @@ is_type <- function(node, vars_types_list, check_type) {
     }
   }
   if (inherits(node, "literal_node")) {
-    type <- determine_literal_type(node$name)
+    type <- node$literal_type
     if (type == check_type) {
       return(TRUE)
     }
@@ -125,6 +125,7 @@ infer_subsetting <- function(node, vars_list, r_fct) {
   if (inherits(node, "binary_node")) {
     left_type_node <- infer(node$left_node, vars_list, r_fct)
     left_type_node <- flatten_type(left_type_node)
+    are_vars_init(left_type_node)
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- left_type_node
     t$data_struct <- "vector"
@@ -136,6 +137,7 @@ infer_subsetting <- function(node, vars_list, r_fct) {
     first_arg <- node$args[[1]]
     type_first_arg <- infer(first_arg, vars_list, r_fct)
     type_first_arg <- flatten_type(type_first_arg)
+    are_vars_init(type_first_arg)
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- type_first_arg
     t$data_struct <- "matrix"
@@ -151,6 +153,7 @@ infer_subsetting <- function(node, vars_list, r_fct) {
 infer_unary_math <- function(node, vars_list, r_fct) {
   inner_type <- infer(node$obj, vars_list, r_fct)
   inner_type <- flatten_type(inner_type)
+  are_vars_init(inner_type)
   t <- type_node$new(NA, FALSE, r_fct)
   t$base_type <- "double"
   t$data_struct <- inner_type$data_struct
@@ -160,6 +163,7 @@ infer_unary_math <- function(node, vars_list, r_fct) {
 infer_unary_minus <- function(node, vars_list, r_fct) {
   inner_type <- infer(node$obj, vars_list, r_fct)
   inner_type <- flatten_type(inner_type)
+  are_vars_init(inner_type)
   base_type <- inner_type$base_type
   if (base_type == "logical") base_type <- "int"
   t <- type_node$new(NA, FALSE, r_fct)
@@ -173,6 +177,8 @@ infer_binary_math <- function(node, vars_list, r_fct) {
   right_type <- infer(node$right_node, vars_list, r_fct)
   left_type <- flatten_type(left_type)
   right_type <- flatten_type(right_type)
+  are_vars_init(left_type)
+  are_vars_init(right_type)
   if (left_type$base_type == "logical") left_type$base_type <- "integer"
   if (right_type$base_type == "logical") right_type$base_type <- "integer"
   common_t <- common_type(left_type, right_type)
@@ -190,6 +196,7 @@ infer_minus <- function(node, vars_list, r_fct) {
 infer_check_type <- function(node, vars_list, r_fct) {
   inner_type <- infer(node$obj, vars_list, r_fct)
   inner_type <- flatten_type(inner_type)
+  are_vars_init(inner_type)
   t <- type_node$new(NA, FALSE, r_fct)
   t$base_type <- "logical"
   t$data_struct <- inner_type$data_struct
@@ -201,6 +208,8 @@ infer_comparison <- function(node, vars_list, r_fct) {
   right_type <- infer(node$right_node, vars_list, r_fct)
   left_type <- flatten_type(left_type)
   right_type <- flatten_type(right_type)
+  are_vars_init(left_type)
+  are_vars_init(right_type)
   common_type <- "logical"
   common_data_struct <- "scalar"
   if (any(c(left_type$data_struct, right_type$data_struct) %in% "vector")) {
@@ -220,6 +229,8 @@ infer_and_or_scalar <- function(node, vars_list, r_fct) {
   right_type <- infer(node$right_node, vars_list, r_fct)
   left_type <- flatten_type(left_type)
   right_type <- flatten_type(right_type)
+  are_vars_init(left_type)
+  are_vars_init(right_type)
   common_type <- "logical"
   common_data_struct <- "scalar"
   t <- type_node$new(NA, FALSE, r_fct)
@@ -233,6 +244,8 @@ infer_and_or_vector <- function(node, vars_list, r_fct) {
   right_type <- infer(node$right_node, vars_list, r_fct)
   left_type <- flatten_type(left_type)
   right_type <- flatten_type(right_type)
+  are_vars_init(left_type)
+  are_vars_init(right_type)
   common_type <- "logical"
   common_data_struct <- "vector"
   if (any(c(left_type$data_struct, right_type$data_struct) %in% "matrix")) {
@@ -247,6 +260,7 @@ infer_and_or_vector <- function(node, vars_list, r_fct) {
 infer_num_int_log <- function(node, vars_list, r_fct) {
   inner_type <- infer(node$obj, vars_list, r_fct)
   inner_type <- flatten_type(inner_type)
+  are_vars_init(inner_type)
   t <- type_node$new(NA, FALSE, r_fct)
   t$base_type <- c(numeric = "double", integer = "int", logical = "bool")[node$operator]
   t$data_struct <- "vector"
@@ -259,7 +273,7 @@ function_registry_global$add(
   check_fct = function(node, vars_types_list) {
     if (!(inherits(node$left_node, "variable_node") &&
       !(inherits(node$right_node, "variable_node")) || inherits(node$right_node, "binary_node"))) {
-      node$error <- "the type function expects a variable as first argument and either a symbol or a function such as vec(double)"
+      node$error <- "the type function expects a variable as first argument and either a symbol or a function such as double or vec(double) respectivly"
     }
   },
   is_infix = FALSE, group = "binary_node", cpp_name = "type" # the removement of the type is handled in the node itself
@@ -301,7 +315,7 @@ function_registry_global$add(
   group = "binary_node", cpp_name = "="
 )
 function_registry_global$add(
-  name = "[", num_args = c(2, 3), arg_names = c(NA, NA, NA),
+  name = "[", num_args = c(1, 2, 3), arg_names = c(NA, NA, NA),
   infer_fct = infer_subsetting,
   check_fct = function(node, vars_types_list) {
     if (!is_vec_or_mat(find_var_lhs(node), vars_types_list)) {
@@ -343,6 +357,7 @@ function_registry_global$add(
   name = "for", num_args = 3, arg_names = c(NA, NA, NA),
   infer_fct = function(node, vars_list, r_fct) {
     temp <- infer(node$seq, vars_list, r_fct) |> flatten_type()
+    are_vars_init(temp)
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- temp$base_type
     t$data_struct <- "scalar" # TODO: is this correct?
@@ -385,7 +400,8 @@ function_registry_global$add(
   infer_fct = function(node, vars_list, r_fct) {
     types_of_args <- lapply(node$args, function(x) {
       temp <- infer(x, vars_list, r_fct)
-      flatten_type(temp)
+      temp <- flatten_type(temp)
+      are_vars_init(temp)
     })
     types_of_args <- sapply(types_of_args, \(x) x$base_type)
     common_type <- "logical"
@@ -416,6 +432,8 @@ function_registry_global$add(
     right_type <- infer(node$right_node, vars_list, r_fct)
     left_type <- flatten_type(left_type)
     right_type <- flatten_type(right_type)
+    are_vars_init(left_type)
+    are_vars_init(right_type)
     left_base_type <- left_type$base_type
     right_base_type <- right_type$base_type
     if (left_base_type == "logical") left_base_type <- "integer"
@@ -639,6 +657,7 @@ function_registry_global$add(
   infer_fct = function(node, vars_list, r_fct) {
     inner_type <- infer(node$obj, vars_list, r_fct)
     inner_type <- flatten_type(inner_type)
+    are_vars_init(inner_type)
     return(inner_type)
   },
   check_fct = mock, is_infix = FALSE, group = "unary_node", cpp_name = "("
@@ -829,6 +848,7 @@ function_registry_global$add(
     first_arg <- node$args[[1]]
     type_first_arg <- infer(first_arg, vars_list, r_fct)
     type_first_arg <- flatten_type(type_first_arg)
+    are_vars_init(type_first_arg)
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- type_first_arg
     t$data_struct <- "matrix"
