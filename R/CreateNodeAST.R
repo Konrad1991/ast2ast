@@ -55,6 +55,7 @@ create_ast <- function(code, context, r_fct) {
       t <- type_node$new(as.call(code), FALSE, r_fct)
       t$init()
       t$check()
+      t$type_dcl <- TRUE
       bn <- binary_node$new()
       bn$operator <- operator
       bn$left_node <- code[[2]] |> process(operator, r_fct)
@@ -163,6 +164,7 @@ type_checking <- function(ast, vars_types_list) {
   if (err_found(line)) {
     stop(line)
   }
+  type_list_checks(vars_types_list)
 }
 
 # Determine the type of each return Expression

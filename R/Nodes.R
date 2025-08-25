@@ -26,13 +26,15 @@ literal_node <- R6::R6Class(
   public = list(
     id = NULL,
     name = NULL,
+    literal_type = NULL,
     error = NULL,
     context = NULL,
     initialize = function(obj) {
+      self$literal_type <- determine_literal_type(obj)
       self$name <- deparse(obj)
     },
     stringify = function(indent = "") {
-      t_literal(self$context, self$name, indent)
+      t_literal(self$context, self$name, indent, self$literal_type)
     },
     stringify_error = function(indent = "") {
       return(paste0(indent, self$error))
@@ -712,6 +714,7 @@ type_node <- R6::R6Class(
     const_or_mut = "mutable",
     copy_or_ref = "copy",
     fct_input = FALSE,
+    type_dcl = FALSE,
     iterator = FALSE,
     r_fct = TRUE,
 

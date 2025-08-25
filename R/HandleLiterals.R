@@ -1,38 +1,41 @@
-numeric_char <- function(obj) {
-  !is.na(suppressWarnings(as.numeric(obj)))
-}
-
 scientific_notated <- function(obj) {
   grepl("E", obj) || grepl("e", obj)
 }
 
-integer_char <- function(obj) {
-  obj <- gsub("\\L", "", obj)
-  !is.na(suppressWarnings(as.integer(obj)))
-}
-
-logical_char <- function(obj) {
-  !is.na(suppressWarnings(as.logical(obj)))
-}
-
 determine_literal_type <- function(obj) {
-  if (numeric_char(obj)) {
-    if (scientific_notated(obj)) {
+  if (is.infinite(obj)) {
+    return("Inf")
+  }
+  if (is.na(obj) && !is.nan(obj)) {
+    return("NA")
+  }
+  if (is.nan(obj)) {
+    return("NaN")
+  }
+  if (is.logical(obj)) {
+    return("logical")
+  }
+  if (is.integer(obj)) {
+    return("integer")
+  }
+  if (is.double(obj)) {
+    if (scientific_notated(deparse(obj))) {
       return("scientific")
     }
     return("numeric")
-  } else if (integer_char(obj)) {
-    return("integer")
-  } else if (logical_char(obj)) {
-    return("logical")
-  } else {
-    return("character")
   }
+  return("character")
 }
 
-t_literal <- function(context, obj, indent) {
-  dont_change_number <- c("print", ":", "[", "at")
-  type <- determine_literal_type(obj)
+t_literal <- function(context, obj, indent, type) {
+  if (type == "NA") {
+    return("etr::NA")
+  } else if (type == "NaN") {
+    return("etr::NaN")
+  } else if (type == "Inf") {
+    return("etr::Inf")
+  }
+  dont_change_number <- c("print", ":", "[", "[[", "at")
   if (type == "logical") {
     obj <- tolower(obj)
     if (obj == "t") {
