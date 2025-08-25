@@ -96,6 +96,7 @@ template <typename T, typename BorrowTrait> struct Borrow {
       sz = static_cast<std::size_t>(Rf_length(s));
       capacity = static_cast<std::size_t>(sz);
       p = REAL(s);
+      allocated = true;
       if (Rf_isMatrix(s)) {
         set_matrix(Rf_nrows(s), Rf_ncols(s));
       }

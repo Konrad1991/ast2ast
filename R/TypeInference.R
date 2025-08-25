@@ -60,6 +60,8 @@ non_fct_args <- function(f, r_fct) {
 create_vars_types_list <- function(f, f_args, r_fct) {
   l <- c(parse_input_args(f, f_args, r_fct), non_fct_args(f, r_fct))
   names(l) <- sapply(l, function(x) x$name)
+  l <- l[setdiff(names(l), permitted_base_types())]
+  l <- l[setdiff(names(l), permitted_data_structs(r_fct))]
   l
 }
 
@@ -80,6 +82,9 @@ flatten_type <- function(type) {
 infer <- function(node, vars_list, r_fct) {
   if (inherits(node, "literal_node")) {
     type <- determine_literal_type(node$name)
+    if (type == "character") {
+      node$error <- "Characters are not supported"
+    }
     if (type %in% c("scientific", "numeric")) {
       type <- "double"
     }
@@ -124,9 +129,13 @@ common_type <- function(type_old, type_new) {
     type_old$data_struct <- type_new$data_struct
     return(type_old)
   }
+
+  if (type_old$base_type == "character" || type_new$base_type == "character") {
+    return("")
+  }
   common_base_type <- NULL
   common_data_struct <- NULL
-  precedence_base_type <- list(double = 3, integer = 2, logical = 1)
+  precedence_base_type <- list(double = 3, integer = 2, logical = 1, int = 2, bool = 1)
   precedence_base_type_old <- precedence_base_type[[type_old$base_type]]
   precedence_base_type_new <- precedence_base_type[[type_new$base_type]]
   if (precedence_base_type_old >= precedence_base_type_new) {
@@ -135,7 +144,7 @@ common_type <- function(type_old, type_new) {
     common_base_type <- type_new$base_type
   }
 
-  precedence_data_struct <- list(matrix = 3, vector = 2, scalar = 1)
+  precedence_data_struct <- list(matrix = 3, vector = 2, scalar = 1, vec = 2, mat = 2)
   precedence_data_struct_old <- precedence_data_struct[[type_old$data_struct]]
   precedence_data_struct_new <- precedence_data_struct[[type_new$data_struct]]
   if (precedence_data_struct_old >= precedence_data_struct_new) {
@@ -174,8 +183,6 @@ type_infer_action <- function(node, env) {
   }
 }
 type_infer_return_action <- function(node, env) {
-  # TODO: handle return()
-  # TODO: dont allow to return iterator variables
   if (inherits(node, "unary_node") && node$operator == "return") {
     type <- infer(node$obj, env$vars_list, env$r_fct)
     if (is.character(type)) {

@@ -2,23 +2,19 @@ files <- list.files("~/Documents/ast2ast/R/", full.names = TRUE)
 trash <- lapply(files, source)
 library(tinytest)
 f <- function(c) {
-  b <- vector(mode = "logical", length = 2)
-  a <- 0
-  while(a < 2) {
-    print(a)
-    a <- a + 1
-  }
-
-  repeat {
-    print(a)
-    a <- a + 1
-    if (a > 5) break
-  }
+  c[[1]] <- 2
+  a <- c(1)
+  b <- a[[1]]
+  test <- c & c
+  return(test)
 }
 args_f <- function(c) {
-  c |> type(vec(int))
+  c |> type(vec(double)) |> ref()
 }
-fcpp <- translate(f, args_f, output = "R", verbose = TRUE)
+verbose <- TRUE
+getsource <- FALSE
+fcpp <- translate(f, args_f, output = "R", verbose = verbose, getsource = getsource)
+cat(fcpp)
 c <- 1
 fcpp(c)
 c
@@ -26,6 +22,59 @@ c
 
 e <- try(translate(f), silent = TRUE)
 e()
+
+
+f <- function() print("Hello world")
+e <- try(translate(f), silent = TRUE)
+expect_equal(as.character(e),
+  "Error in translate_internally(f, args_f, name_f, r_fct) : \n  Please place the body of your function f within curly brackets\n",
+  info = "Assignment to an iterator variable"
+)
+
+f <- function() {}
+e <- try(translate(f), silent = TRUE)
+expect_equal(as.character(e),
+  "Error in translate_internally(f, args_f, name_f, r_fct) : \n  f seems to be empty\n",
+  info = "Assignment to an iterator variable"
+)
+
+f <- function() {
+  for (i in 1:10) {
+    i <- 3
+  }
+}
+e <- try(translate(f), silent = TRUE)
+expect_equal(as.character(e),
+  "Error in type_checking(AST, vars_types_list) : i <- 3.0\nYou cannot assign to an index variable\n",
+  info = "Assignment to an iterator variable"
+)
+
+f <- function() {
+  bla <- "bla"
+}
+e <- try(translate(f), silent = TRUE)
+expect_equal(as.character(e),
+  "Error in infer_types(AST, fct, args_fct, r_fct) : bla <- \"bla\"\nCharacters are not supported\n",
+  info = "Assignment of characters"
+)
+
+f <- function() {
+  bla <- "bla" + 1.0
+}
+e <- try(translate(f), silent = TRUE)
+expect_equal(as.character(e),
+  "Error in infer_types(AST, fct, args_fct, r_fct) : bla <- \"bla\" + 1.0\nCharacters are not supported\n",
+  info = "Misusuage of character literal"
+)
+
+f <- function() {
+  bla <- print("bla")
+}
+e <- try(translate(f), silent = TRUE)
+expect_equal(as.character(e),
+  "Error in infer_types(AST, fct, args_fct, r_fct) : bla <- print(\"bla\")\nFound print within an expression: print(\"bla\")\n",
+  info = "print wihtin other statement"
+)
 
 f <- function() {
   a <- bla()

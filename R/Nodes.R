@@ -846,7 +846,11 @@ type_node <- R6::R6Class(
       if (self$iterator) return("")
       if (!r_fct && self$fct_input) return("")
       if (r_fct && self$fct_input) {
-        type <- convert_types_to_etr_types(self$base_type, self$data_struct, self$r_fct, indent)
+        data_struct <- self$data_struct
+        if(self$copy_or_ref != "copy") {
+          data_struct <- paste0("borrow_", self$data_struct)
+        }
+        type <- convert_types_to_etr_types(self$base_type, data_struct, self$r_fct, indent)
         return(
           paste0(indent, type, " ", self$name, " = ", paste0(self$name, "SEXP;"))
         )

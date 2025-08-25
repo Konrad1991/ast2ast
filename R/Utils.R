@@ -65,15 +65,15 @@ convert_base_type <- function(r_type) {
 convert_types_to_etr_types <- function(base_type, data_struct, r_fct, indent = "") {
   if (data_struct == "scalar") {
     convert_base_type(base_type)
-  } else if (data_struct %in% c("vector", "matrix", "vec", "mat")) {
+  } else if (any(data_struct == c("vector", "matrix", "vec", "mat"))) {
     data_struct <- c(vector = "etr::Vec", vec = "etr::Vec", matrix = "etr::Mat", mat = "etr::Mat")[data_struct]
     return(paste0(indent, data_struct, "<", convert_base_type(base_type), ">"))
-  } else if (data_struct %in% c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat") && !r_fct) {
-    data_struct <- c(borrow_vector = "etr::Vec", borrow_vec = "etr::Vec",  borrow_mattrix = "etr::Mat", borrow_mat = "etr::Mat")[data_struct]
+  } else if (any(data_struct == c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat")) && !r_fct) {
+    data_struct <- c(borrow_vector = "etr::Vec", borrow_vec = "etr::Vec",  borrow_matrix = "etr::Mat", borrow_mat = "etr::Mat")[data_struct]
     return(paste0(indent, data_struct, "<", convert_base_type(base_type), ", etr::Borrow<", convert_base_type(base_type), ">>"))
-  } else if (data_struct %in% c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat") && !r_fct) {
-    data_struct <- c(vector = "etr::Vec", vec = "etr::Vec", matrix = "etr::Mat", mat = "etr::Mat")[data_struct]
-    return(paste0(indent, data_struct, "<", convert_base_type(base_type), ", etr::BorrowSEXP<", convert_base_type(base_type), ">>"))
+  } else if (any(data_struct == c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat")) && r_fct) {
+    data_struct <- c(borrow_vector = "etr::Vec", borrow_vec = "etr::Vec", borrow_matrix = "etr::Mat", borrow_mat = "etr::Mat")[data_struct]
+    return(paste0(indent, data_struct, "<", convert_base_type(base_type), ", etr::Borrow<", convert_base_type(base_type), ">>"))
   }
 }
 

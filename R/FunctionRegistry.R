@@ -123,21 +123,25 @@ is_vec <- function(var_name, vars_types_list) {
 
 infer_subsetting <- function(node, vars_list, r_fct) {
   if (inherits(node, "binary_node")) {
-    # This is due to number of args vector subsetting
     left_type_node <- infer(node$left_node, vars_list, r_fct)
     left_type_node <- flatten_type(left_type_node)
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- left_type_node
     t$data_struct <- "vector"
+    if (any(node$operator == c("[[", "at"))) {
+      t$data_struct <- "scalar"
+    }
     return(flatten_type(t))
   } else if (inherits(node, "function_node")) {
-    # This is due to number of args matrix subsetting
     first_arg <- node$args[[1]]
     type_first_arg <- infer(first_arg, vars_list, r_fct)
     type_first_arg <- flatten_type(type_first_arg)
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- type_first_arg
     t$data_struct <- "matrix"
+    if (any(node$operator == c("[[", "at"))) {
+      t$data_struct <- "scalar"
+    }
     return(t)
   } else {
     return(sprintf("Found unsupported subsetting: %s", node$stringify()))
@@ -211,6 +215,35 @@ infer_comparison <- function(node, vars_list, r_fct) {
   return(t)
 }
 
+infer_and_or_scalar <- function(node, vars_list, r_fct) {
+  left_type <- infer(node$left_node, vars_list, r_fct)
+  right_type <- infer(node$right_node, vars_list, r_fct)
+  left_type <- flatten_type(left_type)
+  right_type <- flatten_type(right_type)
+  common_type <- "logical"
+  common_data_struct <- "scalar"
+  t <- type_node$new(NA, FALSE, r_fct)
+  t$base_type <- common_type
+  t$data_struct <- common_data_struct
+  return(t)
+}
+
+infer_and_or_vector <- function(node, vars_list, r_fct) {
+  left_type <- infer(node$left_node, vars_list, r_fct)
+  right_type <- infer(node$right_node, vars_list, r_fct)
+  left_type <- flatten_type(left_type)
+  right_type <- flatten_type(right_type)
+  common_type <- "logical"
+  common_data_struct <- "vector"
+  if (any(c(left_type$data_struct, right_type$data_struct) %in% "matrix")) {
+    common_data_struct <- "matrix"
+  }
+  t <- type_node$new(NA, FALSE, r_fct)
+  t$base_type <- common_type
+  t$data_struct <- common_data_struct
+  return(t)
+}
+
 infer_num_int_log <- function(node, vars_list, r_fct) {
   inner_type <- infer(node$obj, vars_list, r_fct)
   inner_type <- flatten_type(inner_type)
@@ -240,6 +273,11 @@ function_registry_global$add(
     if (!(node$context %in% c("<-", "=", "{"))) {
       node$error <- "assignments cannot be done within another function"
     }
+    var_name <- find_var_lhs(node)
+    type <- vars_types_list[[var_name]]
+    if (type$iterator) {
+      node$error <- "You cannot assign to an index variable"
+    }
   },
   is_infix = TRUE,
   group = "binary_node", cpp_name = "="
@@ -252,6 +290,11 @@ function_registry_global$add(
   check_fct = function(node, vars_types_list) {
     if (!(node$context %in% c("<-", "=", "{"))) {
       node$error <- "assignments cannot be done within another function"
+    }
+    var_name <- find_var_lhs(node)
+    type <- vars_types_list[[var_name]]
+    if (type$iterator) {
+      node$error <- "You cannot assign to an index variable"
     }
   },
   is_infix = TRUE,
@@ -299,8 +342,10 @@ function_registry_global$add(
 function_registry_global$add(
   name = "for", num_args = 3, arg_names = c(NA, NA, NA),
   infer_fct = function(node, vars_list, r_fct) {
+    temp <- infer(node$seq, vars_list, r_fct) |> flatten_type()
     t <- type_node$new(NA, FALSE, r_fct)
-    t$data_struct <- "iterator"
+    t$base_type <- temp$base_type
+    t$data_struct <- "scalar" # TODO: is this correct?
     t$iterator <- TRUE
     return(t)
   },
@@ -678,7 +723,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "&&", num_args = 2, arg_names = c(NA, NA),
-  infer_fct = infer_comparison,
+  infer_fct = infer_and_or_scalar,
   check_fct = function(node, vars_types_list) {
     if (is_char(node$left_node, vars_types_list)) {
       node$error <- sprintf("You cannot use character entries in %s", node$operator)
@@ -691,7 +736,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "||", num_args = 2, arg_names = c(NA, NA),
-  infer_fct = infer_comparison,
+  infer_fct = infer_and_or_scalar,
   check_fct = function(node, vars_types_list) {
     if (is_char(node$left_node, vars_types_list)) {
       node$error <- sprintf("You cannot use character entries in %s", node$operator)
@@ -701,6 +746,32 @@ function_registry_global$add(
     }
   },
   is_infix = TRUE, group = "binary_node", cpp_name = "||"
+)
+function_registry_global$add(
+  name = "&", num_args = 2, arg_names = c(NA, NA),
+  infer_fct = infer_and_or_vector,
+  check_fct = function(node, vars_types_list) {
+    if (is_char(node$left_node, vars_types_list)) {
+      node$error <- sprintf("You cannot use character entries in %s", node$operator)
+    }
+    if (is_char(node$right_node, vars_types_list)) {
+      node$error <- sprintf("You cannot use character entries in %s", node$operator)
+    }
+  },
+  is_infix = TRUE, group = "binary_node", cpp_name = "&"
+)
+function_registry_global$add(
+  name = "|", num_args = 2, arg_names = c(NA, NA),
+  infer_fct = infer_and_or_vector,
+  check_fct = function(node, vars_types_list) {
+    if (is_char(node$left_node, vars_types_list)) {
+      node$error <- sprintf("You cannot use character entries in %s", node$operator)
+    }
+    if (is_char(node$right_node, vars_types_list)) {
+      node$error <- sprintf("You cannot use character entries in %s", node$operator)
+    }
+  },
+  is_infix = TRUE, group = "binary_node", cpp_name = "|"
 )
 function_registry_global$add(
   name = "print", num_args = 1, arg_names = NA,
