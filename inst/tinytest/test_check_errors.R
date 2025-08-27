@@ -1,32 +1,6 @@
 files <- list.files("~/Documents/ast2ast/R/", full.names = TRUE)
 trash <- lapply(files, source)
 library(tinytest)
-f <- function(c) {
-  a <- 1L
-  a |> type(veci(int))
-}
-args_f <- NULL
-verbose <- TRUE
-getsource <- FALSE
-fcpp <- translate(f, args_f, output = "R", verbose = verbose, getsource = getsource)
-cat(fcpp)
-c <- c(1, 2)
-fcpp(c)
-c
-.traceback()
-
-e <- try(translate(f), silent = TRUE)
-e()
-
-
-expect_equal(determine_literal_type(1), "numeric")
-expect_equal(determine_literal_type(1.2), "numeric")
-expect_equal(determine_literal_type(1e10), "scientific")
-expect_equal(determine_literal_type(1L), "integer")
-expect_equal(determine_literal_type(TRUE), "logical")
-expect_equal(determine_literal_type(NA), "NA")
-expect_equal(determine_literal_type(NaN), "NaN")
-expect_equal(determine_literal_type(Inf), "Inf")
 
 f <- function() print("Hello world")
 e <- try(translate(f), silent = TRUE)
@@ -110,7 +84,7 @@ expect_equal(
 )
 
 f <- function() {
- a <- vector(mode = "int", length = 2)
+ a <- vector(mode = "iasdfagd", length = 2)
 }
 e <- try(translate(f), silent = TRUE)
 expect_equal(

@@ -67,6 +67,14 @@ template <typename T, typename R> struct Mat {
   template <typename U = R>
     requires IS<U, Borrow<T>>
   explicit Mat(SEXP inp) : d(inp) {}
+
+  template <typename U = R>
+    requires (!IS<U, Borrow<T>>)
+  Mat(SEXP &&inp) = delete;
+
+  template <typename U = R>
+    requires (!IS<U, Borrow<T>>)
+  Mat(SEXP inp) : d(inp) {}
 #endif
 
   // NOTE: Subset lazy
@@ -239,6 +247,14 @@ template <typename T, typename R> struct Mat {
   // copy assignment
   // defined to handle the case where the type of *this and other_obj is the same
   Mat& operator=(const Mat& other_obj) {
+    assign(std::forward<decltype(other_obj)>(other_obj));
+    return *this;
+  }
+
+  // copy assignment
+  // defined to handle the case where the type of *this and other_obj is the same but its a Vec
+  template<typename T2>
+  Mat& operator=(const T2& other_obj) {
     assign(std::forward<decltype(other_obj)>(other_obj));
     return *this;
   }

@@ -1,3 +1,10 @@
+`%within%` <- function(elem, v) {
+  for (i in seq_along(v)) {
+    if (elem == v[i]) return(TRUE)
+  }
+  return(FALSE)
+}
+
 err_found <- function(string) {
   if (is.null(string)) return(FALSE)
   string <- gsub("\n|\t| ", "", string)
@@ -79,20 +86,6 @@ convert_types_to_etr_types <- function(base_type, data_struct, r_fct, indent = "
 
 combine_strings <- function(string_list, collapse = "\n") {
   paste0(string_list, collapse = collapse)
-}
-generate_new_names <- function(names, extension, all_vars) {
-  sapply(names, function(x) {
-    new_x <- paste0(x, extension)
-    counter <- 1
-    while(new_x %in% all_vars) {
-      new_x <- paste0(x, extension)
-      counter <- counter + 1
-      if (counter == 10) {
-        stop("Cannot generate a new name")
-      }
-    }
-    return(new_x)
-  })
 }
 
 remove_blank_lines <- function(chars) {

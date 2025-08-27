@@ -53,7 +53,7 @@ create_ast <- function(code, context, r_fct) {
   } else if (length(code) == 3) {
     if (operator == "type") {
       t <- type_node$new(as.call(code), FALSE, r_fct)
-      t$init()
+      t$init_within_fct()
       t$check()
       t$type_dcl <- TRUE
       bn <- binary_node$new()
@@ -133,9 +133,9 @@ infer_types <- function(ast, f, f_args = NULL, r_fct = TRUE) {
   env <- new.env(parent = emptyenv())
   env$vars_list <- vars_list
   env$r_fct <- r_fct
-  e <- try(traverse_ast(ast, type_infer_action, env))
+  e <- try(traverse_ast(ast, type_infer_action, env), silent = TRUE)
   if (inherits(e, "try-error")) {
-    stop("Error: Could not infer the types")
+    stop(sprintf("Error: Could not infer the types, caused by %s", as.character(e)))
   }
   line <- try( { ast$stringify_error_line() }, silent = TRUE)
   if (inherits(line, "try-error")) {
@@ -151,9 +151,8 @@ infer_types <- function(ast, f, f_args = NULL, r_fct = TRUE) {
 # calls the check function defined in function_registry_global
 # ========================================================================
 type_checking <- function(ast, vars_types_list) {
-  e <- try(
-    traverse_ast(ast, action_check_type_of_args, vars_types_list)
-  )
+  type_list_checks(vars_types_list)
+  e <- try(traverse_ast(ast, action_check_type_of_args, vars_types_list))
   if (inherits(e, "try-error")) {
     stop("Could not check the type of the arguments to functions")
   }
@@ -164,7 +163,6 @@ type_checking <- function(ast, vars_types_list) {
   if (err_found(line)) {
     stop(line)
   }
-  type_list_checks(vars_types_list)
 }
 
 # Determine the type of each return Expression

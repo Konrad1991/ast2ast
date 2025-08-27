@@ -44,7 +44,7 @@ t_literal <- function(context, obj, indent, type) {
       obj <- "false"
     }
   }
-  if (context %in% dont_change_number) {
+  if (context %within% dont_change_number) {
     return(paste0(indent, obj))
   }
 

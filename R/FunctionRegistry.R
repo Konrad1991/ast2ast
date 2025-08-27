@@ -108,14 +108,15 @@ is_num <- function(node, vars_types_list) {
 
 is_vec_or_mat <- function(var_name, vars_types_list) {
   type <- vars_types_list[[var_name]]
-  if (type$data_struct %in% c("matrix", "vector", "vec", "mat")) {
+  if (type$data_struct %within% c("matrix", "vector", "vec", "mat",
+    "borrow_vec", "borrow_vector", "borrow_mat", "borrow_matrix")) {
     return(TRUE)
   }
   FALSE
 }
 is_vec <- function(var_name, vars_types_list) {
   type <- vars_types_list[[var_name]]
-  if (type$data_struct %in% c("vector", "vec")) {
+  if (type$data_struct %within% c("vector", "vec", "borrow_vector", "borrow_vec")) {
     return(TRUE)
   }
   FALSE
@@ -127,7 +128,7 @@ infer_subsetting <- function(node, vars_list, r_fct) {
     left_type_node <- flatten_type(left_type_node)
     are_vars_init(left_type_node)
     t <- type_node$new(NA, FALSE, r_fct)
-    t$base_type <- left_type_node
+    t$base_type <- left_type_node$base_type
     t$data_struct <- "vector"
     if (any(node$operator == c("[[", "at"))) {
       t$data_struct <- "scalar"
@@ -139,7 +140,7 @@ infer_subsetting <- function(node, vars_list, r_fct) {
     type_first_arg <- flatten_type(type_first_arg)
     are_vars_init(type_first_arg)
     t <- type_node$new(NA, FALSE, r_fct)
-    t$base_type <- type_first_arg
+    t$base_type <- type_first_arg$base_type
     t$data_struct <- "matrix"
     if (any(node$operator == c("[[", "at"))) {
       t$data_struct <- "scalar"
@@ -179,9 +180,15 @@ infer_binary_math <- function(node, vars_list, r_fct) {
   right_type <- flatten_type(right_type)
   are_vars_init(left_type)
   are_vars_init(right_type)
-  if (left_type$base_type == "logical") left_type$base_type <- "integer"
-  if (right_type$base_type == "logical") right_type$base_type <- "integer"
-  common_t <- common_type(left_type, right_type)
+  l_type <- left_type$clone(deep = TRUE)
+  r_type <- right_type$clone(deep = TRUE)
+  if (l_type$base_type == "logical") l_type$base_type <- "integer"
+  if (r_type$base_type == "logical") r_type$base_type <- "integer"
+  if (node$operator %within% c("/", "^")) {
+    l_type$base_type <- "double"
+    r_type$base_type <- "double"
+  }
+  common_t <- common_type(l_type, r_type)
   return(common_t)
 }
 
@@ -212,10 +219,10 @@ infer_comparison <- function(node, vars_list, r_fct) {
   are_vars_init(right_type)
   common_type <- "logical"
   common_data_struct <- "scalar"
-  if (any(c(left_type$data_struct, right_type$data_struct) %in% "vector")) {
+  if ("vector" %within% c(left_type$data_struct, right_type$data_struct)) {
     common_data_struct <- "vector"
   }
-  if (any(c(left_type$data_struct, right_type$data_struct) %in% "matrix")) {
+  if ("matrix" %within% c(left_type$data_struct, right_type$data_struct)) {
     common_data_struct <- "matrix"
   }
   t <- type_node$new(NA, FALSE, r_fct)
@@ -248,7 +255,7 @@ infer_and_or_vector <- function(node, vars_list, r_fct) {
   are_vars_init(right_type)
   common_type <- "logical"
   common_data_struct <- "vector"
-  if (any(c(left_type$data_struct, right_type$data_struct) %in% "matrix")) {
+  if ("matrix" %within% c(left_type$data_struct, right_type$data_struct)) {
     common_data_struct <- "matrix"
   }
   t <- type_node$new(NA, FALSE, r_fct)
@@ -262,7 +269,7 @@ infer_num_int_log <- function(node, vars_list, r_fct) {
   inner_type <- flatten_type(inner_type)
   are_vars_init(inner_type)
   t <- type_node$new(NA, FALSE, r_fct)
-  t$base_type <- c(numeric = "double", integer = "int", logical = "bool")[node$operator]
+  t$base_type <- c(numeric = "double", integer = "integer", logical = "logical")[node$operator]
   t$data_struct <- "vector"
   return(t)
 }
@@ -284,7 +291,7 @@ function_registry_global$add(
     return(sprintf("Found assignment within an expression: %s", node$stringify()))
   },
   check_fct = function(node, vars_types_list) {
-    if (!(node$context %in% c("<-", "=", "{"))) {
+    if (!(node$context %within% c("<-", "=", "{"))) {
       node$error <- "assignments cannot be done within another function"
     }
     var_name <- find_var_lhs(node)
@@ -302,7 +309,7 @@ function_registry_global$add(
     return(sprintf("Found assignment within an expression: %s", node$stringify()))
   },
   check_fct = function(node, vars_types_list) {
-    if (!(node$context %in% c("<-", "=", "{"))) {
+    if (!(node$context %within% c("<-", "=", "{"))) {
       node$error <- "assignments cannot be done within another function"
     }
     var_name <- find_var_lhs(node)
@@ -402,12 +409,14 @@ function_registry_global$add(
       temp <- infer(x, vars_list, r_fct)
       temp <- flatten_type(temp)
       are_vars_init(temp)
+      return(temp)
     })
     types_of_args <- sapply(types_of_args, \(x) x$base_type)
     common_type <- "logical"
     if (any(types_of_args %in% c("int", "integer"))) {
       common_type <- "integer"
-    } else if (any(types_of_args == "double")) {
+    }
+    if (any(types_of_args %in% c("double", "numeric"))) {
       common_type <- "double"
     }
     t <- type_node$new(NA, FALSE, r_fct)
@@ -456,6 +465,27 @@ function_registry_global$add(
     }
   },
   is_infix = FALSE, group = "binary_node", cpp_name = "etr::colon"
+)
+function_registry_global$add(
+  name = "rep", num_args = 2, arg_names = c(NA, NA),
+  infer_fct = function(node, vars_list, r_fct) {
+    left_type <- infer(node$left_node, vars_list, r_fct)
+    left_type <- flatten_type(left_type)
+    are_vars_init(left_type)
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- left_type$base_type
+    t$data_struct <- "vector"
+    return(t)
+  },
+  check_fct = function(node, vars_types_list) {
+    if (is_char(node$left_node, vars_types_list)) {
+      node$error <- "You cannot use character entries in rep"
+    }
+    if (is_char(node$right_node, vars_types_list)) {
+      node$error <- "You cannot use character entries in rep"
+    }
+  },
+  is_infix = FALSE, group = "binary_node", cpp_name = "etr::rep"
 )
 function_registry_global$add(
   name = "sin", num_args = 1, arg_names = NA,
@@ -809,7 +839,11 @@ function_registry_global$add(
   infer_fct = function(node, vars_list, r_fct) {
     mode <- node$args[[1]]
     t <- type_node$new(NA, FALSE, r_fct)
-    t$base_type <- c(numeric = "double", logical = "bool", integer = "int")[str2lang(mode$name)]
+    name <- str2lang(mode$name)
+    if (!(name %within% c("numeric", "logical", "integer"))) {
+      return(sprintf("Found invalid mode in vector: %s", name))
+    }
+    t$base_type <- c(numeric = "double", logical = "logical", integer = "integer")[name]
     t$data_struct <- "vector"
     return(t)
   },
@@ -818,7 +852,7 @@ function_registry_global$add(
       node$error <- "mode of vector has to be of type character"
     }
     s <- remove_double_quotes(node$args[[1]]$name)
-    if (!(s %in% c("logical", "integer", "numeric"))) {
+    if (!(s %within% c("logical", "integer", "numeric"))) {
       node$error <- sprintf("Found unallowed mode %s in vector", s)
     }
     if (!is_int(node$args[[2]]) && !is_num(node$args[[2]])) {
@@ -870,7 +904,7 @@ function_registry_global$add(
     return(t)
   },
   check_fct = function(node, vars_types_list) {
-    if (!is_vec_or_mat(node$obj, vars_types_list)) {
+    if (!is_vec_or_mat(find_var_lhs(node$obj), vars_types_list)) {
       node$error <- "You can only call length on variables of type matrix or vector"
     }
   },
@@ -885,7 +919,7 @@ function_registry_global$add(
     return(t)
   },
   check_fct = function(node, vars_types_list) {
-    if (!is_vec_or_mat(node$obj, vars_types_list)) {
+    if (!is_vec_or_mat(find_var_lhs(node$obj), vars_types_list)) {
       node$error <- "You can only call dim on variables of type matrix or vector"
     }
   },
@@ -907,8 +941,8 @@ function_registry_global$add(
   name = "is.infinite", num_args = 1, arg_names = NA,
   infer_fct = infer_check_type,
   check_fct = function(node, vars_types_list) {
-    if (!is_vec_or_mat(node$obj, vars_types_list)) {
-      node$error <- "You can only call is.infinte on variables of type matrix or vector"
+    if (!is_vec_or_mat(find_var_lhs(node$obj), vars_types_list)) {
+      node$error <- "You can only call is.infinite on variables of type matrix or vector"
     }
   },
   is_infix = FALSE, group = "unary_node", cpp_name = "etr::isInfinite"
@@ -917,7 +951,7 @@ function_registry_global$add(
   name = "is.finite", num_args = 1, arg_names = NA,
   infer_fct = infer_check_type,
   check_fct = function(node, vars_types_list) {
-    if (!is_vec_or_mat(node$obj, vars_types_list)) {
+    if (!is_vec_or_mat(find_var_lhs(node$obj), vars_types_list)) {
       node$error <- "You can only call is.finite on variables of type matrix or vector"
     }
   },
@@ -939,13 +973,13 @@ function_registry_global$add(
       node$error <- "The third argument to cmr has to be a vector"
     }
     if (inherits(node, "variable_node")) {
-      type <- vars_types_list$variable_type_list[[str2lang(node$args[[2]]$name)]]$type
+      type <- variable_type_list[[str2lang(node$args[[2]]$name)]]
       if (type$base_type != "double") {
         node$error <- "Vectors of second argument to cmr does not contain doubles"
       }
     }
     if (inherits(node, "variable_node")) {
-      type <- vars_types_list$variable_type_list[[str2lang(node$args[[3]]$name)]]$type
+      type <- variable_type_list[[str2lang(node$args[[3]]$name)]]
       if (type$base_type != "double") {
         node$error <- "Vectors of third argument to cmr does not contain doubles"
       }

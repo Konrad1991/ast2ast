@@ -81,7 +81,7 @@ check_operator <- function(node) {
 
   check_function <- function(node) {
     fct <- node$operator
-    fct %in% function_registry_global$permitted_fcts()
+    fct %within% function_registry_global$permitted_fcts()
   }
 
   check_arity <- function(node) {
@@ -102,7 +102,7 @@ check_operator <- function(node) {
     if (is.na(expected_args)) { # for c, if, etc.
       return(TRUE)
     }
-    args_length %in% expected_args[[1]] # %in% because return (0 | 1) and - (1 | 2)
+    args_length %within% expected_args[[1]] # %within% because return (0 | 1) and - (1 | 2)
   }
 
   check_named_args <- function(node) {
@@ -113,7 +113,7 @@ check_operator <- function(node) {
         args_names <- names(node$args)
         args_names <- args_names[args_names != ""]
         for (i in seq_along(args_names)) {
-          if (!(args_names[[i]] %in% expected_args)) {
+          if (!(args_names[[i]] %within% expected_args)) {
             return(FALSE)
           }
         }
@@ -130,9 +130,9 @@ check_operator <- function(node) {
         if (inherits(node$left_node, "variable_node")) {
           return(TRUE)
         }
-        if (inherits(node$left_node, "binary_node")) {
+        if (inherits(node$left_node, c("binary_node", "function_node"))) {
           op_left <- node$left_node$operator
-          if (!(op_left %in% c("type", "[", "[[", "at"))) {
+          if (!(op_left %within% c("type", "[", "[[", "at"))) {
             return(FALSE)
           } else {
             return(TRUE)
@@ -194,7 +194,7 @@ check_variable_names <- function(node) {
         invalid_char
       ))
     }
-    if (name %in% permitted_base_types()) {
+    if (name %within% permitted_base_types()) {
       return(paste0(
         "Invalid variable name (reserved internally)",
         name
@@ -204,11 +204,11 @@ check_variable_names <- function(node) {
   }
 
   not_cpp_keyword <- function(name) {
-    name %in% cpp_keywords()
+    name %within% cpp_keywords()
   }
 
   name <- node$name |> deparse()
-  if (name %in% permitted_base_types()) {
+  if (name %within% permitted_base_types()) {
     return()
   }
   unallowed <- unallowed_signs(name)
@@ -248,14 +248,14 @@ check_type_declaration <- function(node, r_fct) {
         )
     return()
   }
-  if (!(node$right_node$base_type %in% permitted_base_types())) {
+  if (!(node$right_node$base_type %within% permitted_base_types())) {
     node$error <- paste0(
       "Invalid type declaration: ",
       node$right_node$base_type, " for variable ", node$left_node$name
     )
     return()
   }
-  if (!(node$right_node$data_struct %in% permitted_data_structs(r_fct))) {
+  if (!(node$right_node$data_struct %within% permitted_data_structs(r_fct))) {
     node$error <- paste0(
       "Invalid type declaration: ",
       node$right_node$data_struct, " for variable ", node$left_node$name

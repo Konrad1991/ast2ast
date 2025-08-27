@@ -527,7 +527,7 @@ block_node <- R6::R6Class(
         return("")
       }
       res <- lapply(self$block, function(elem) {
-        if (class(elem)[[1]] %in% c("for_node", "if_node", "block_node", "while_node", "repeat_node")) {
+        if (class(elem)[[1]] %within% c("for_node", "if_node", "block_node", "while_node", "repeat_node")) {
           return(elem$stringify_error_line(indent))
         }
         error <- elem$stringify_error() |> combine_strings("\n")
@@ -768,9 +768,25 @@ type_node <- R6::R6Class(
       } else if (fct == "const") {
         self$handle_const(fct, tree[-1])
         self$within_type_call <- FALSE
-      } else if (fct %in% c("copy", "ref", "reference")) {
+      } else if (fct %within% c("copy", "ref", "reference")) {
         self$handle_copy_or_ref(fct, tree[-1])
         self$within_type_call <- FALSE
+      } else if (!self$within_type_call) {
+        self$error <- c(self$error, sprintf("Found unsupported function: %s", fct))
+        self$within_type_call <- FALSE
+      }
+      lapply(tree, self$traverse)
+    },
+
+    traverse_within_fct = function(tree) {
+      if (!is.call(tree)) {
+        return(tree)
+      }
+      tree <- as.list(tree)
+      fct <- deparse(tree[[1]])
+      if (fct == "type") {
+        self$within_type_call <- TRUE
+        self$handle_type(tree[-1])
       } else if (!self$within_type_call) {
         self$error <- c(self$error, sprintf("Found unsupported function: %s", fct))
         self$within_type_call <- FALSE
@@ -781,7 +797,7 @@ type_node <- R6::R6Class(
     get_variable_from_arg = function() {
       types <- c(permitted_base_types(), permitted_data_structs(self$r_fct))
       av <- all.vars(self$tree)
-      av <- av[!(av %in% types)]
+      av <- av[!(av %within% types)]
       if (length(av) == 0) {
         self$error <- c(self$error,
           sprintf("Didn't found a variable within: %s", deparse(self$tree))
@@ -805,14 +821,24 @@ type_node <- R6::R6Class(
       }
     },
 
+    init_within_fct = function() {
+      self$traverse_within_fct(self$tree)
+      # Set default values
+      if (is.null(self$base_type)) self$base_type <- "double"
+      if (is.null(self$data_struct)) self$data_struct <- "vector"
+      if (is.null(self$name)) {
+        self$name <- self$get_variable_from_arg()
+      }
+    },
+
     check_allowed_base_types = function() {
-      if (!self$base_type %in% permitted_base_types()) {
+      if (!self$base_type %within% permitted_base_types()) {
         self$error <- c(self$error, sprintf("Found unsupported base type: %s", self$base_type))
       }
     },
 
     check_allowed_data_structs = function() {
-      if (!(self$data_struct %in% permitted_data_structs(self$r_fct))) {
+      if (!(self$data_struct %within% permitted_data_structs(self$r_fct))) {
         self$error <- c(self$error, sprintf("Found unsupported data structure: %s", self$data_struct))
       }
     },
@@ -842,7 +868,7 @@ type_node <- R6::R6Class(
       }
       type <- convert_types_to_etr_types(self$base_type, self$data_struct, self$r_fct, "")
       if (self$const_or_mut == "const") type <- paste0("const ", type)
-      if (self$copy_or_ref %in% c("ref", "reference")) type <- paste0(type, "&")
+      if (self$copy_or_ref %within% c("ref", "reference")) type <- paste0(type, "&")
       paste0(type, " ", self$name)
     },
     stringify_declaration = function(indent = "", r_fct) {

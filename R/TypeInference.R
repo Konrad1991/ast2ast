@@ -68,6 +68,9 @@ create_vars_types_list <- function(f, f_args, r_fct) {
 # Infer types of expressions
 # ========================================================================
 flatten_type <- function(type) {
+  if (!inherits(type, "R6")) {
+    print(type)
+  }
   if (inherits(type$base_type, "type_node")) {
     type$base_type <- type$base_type$base_type
     type <- flatten_type(type)
@@ -85,7 +88,7 @@ infer <- function(node, vars_list, r_fct) {
     if (type == "character") {
       node$error <- "Characters are not supported"
     }
-    if (type %in% c("scientific", "numeric")) {
+    if (type %within% c("scientific", "numeric")) {
       type <- "double"
     }
     t <- type_node$new(str2lang(node$name), FALSE, r_fct)
@@ -115,22 +118,25 @@ infer <- function(node, vars_list, r_fct) {
   }
 }
 
+# TODO: handle also the other nodes
 find_var_lhs <- function(node) {
-  if (inherits(node$left_node, "variable_node")) {
-    return(deparse(node$left_node$name))
-  } else if (inherits(node$left_node, "binary_node")) { # is recursive to handle multiple subsetting
+  if (inherits(node, "variable_node")) {
+    return(deparse(node$name))
+  } else if (inherits(node, "unary_node")) {
+    return(find_var_lhs(node$obj))
+  } else if (inherits(node, "binary_node")) { # is recursive to handle multiple subsetting
     return(find_var_lhs(node$left_node))
+  } else if (inherits(node, "function_node")) { # is recursive to handle multiple subsetting
+    return(find_var_lhs(node$args[[1]]))
   }
 }
 
 common_type <- function(type_old, type_new) {
   if (is.null(type_old$base_type) && type_new$iterator) {
     return(type_new)
+  } else if (type_old$iterator && type_new$iterator) {
+    return(type_new)
   } else if (!is.null(type_old$base_type) && type_new$iterator) {
-    return("You defined an iterator variable but used a variable with the same name outside of a loop")
-  }
-
-  if (type_old$fct_input) {
     return(type_old)
   }
 
@@ -160,9 +166,21 @@ common_type <- function(type_old, type_new) {
   precedence_data_struct_old <- precedence_data_struct[[type_old$data_struct]]
   precedence_data_struct_new <- precedence_data_struct[[type_new$data_struct]]
   if (precedence_data_struct_old >= precedence_data_struct_new) {
-    common_data_struct <- type_old$data_struct
+    if (type_old$data_struct %within% c("borrow_vec", "borrow_vector")) {
+      common_data_struct <- "vector"
+    } else if (type_old$data_struct %within% c("borrow_mat", "borrow_matrix")) {
+      common_data_struct <- "matrix"
+    } else {
+      common_data_struct <- type_old$data_struct
+    }
   } else {
-    common_data_struct <- type_new$data_struct
+    if (type_new$data_struct %within% c("borrow_vec", "borrow_vector")) {
+      common_data_struct <- "vector"
+    } else if (type_new$data_struct %within% c("borrow_mat", "borrow_matrix")) {
+      common_data_struct <- "matrix"
+    } else {
+      common_data_struct <- type_new$data_struct
+    }
   }
 
   type_old$base_type <- common_base_type
@@ -170,18 +188,28 @@ common_type <- function(type_old, type_new) {
   return(type_old)
 }
 
-type_infer_action <- function(node, env) {
+handle_type_dcl <- function(node, env) {
   if (inherits(node, "binary_node") && node$operator == "type") {
     type <- node$right_node
     variable <- type$name
     env$vars_list[[variable]] <- type
   }
-  if (inherits(node, "binary_node") && node$operator %in% c("=", "<-")) {
-    if (inherits(node$left_node, "binary_node") && node$left_node$operator == "type") {
-      type <- node$left_node$right_node
-      variable <- type$name
-      env$vars_list[[variable]] <- type
-    }
+}
+
+handle_type_dcl_in_assign <- function(node, env) {
+  if (inherits(node$left_node, "binary_node") && node$left_node$operator == "type") {
+    type <- node$left_node$right_node
+    variable <- type$name
+    env$vars_list[[variable]] <- type
+  }
+}
+
+# TODO: infer also the left_node of a binary node. Because when subsetted only left then its still a vec or mat
+type_infer_action <- function(node, env) {
+  handle_type_dcl(node, env)
+  if (inherits(node, "binary_node") && node$operator %within% c("=", "<-")) {
+    handle_type_dcl_in_assign(node, env)
+    # RHS:
     type <- infer(node$right_node, env$vars_list, env$r_fct)
     if (is.character(type)) {
       node$error <- type
@@ -189,6 +217,18 @@ type_infer_action <- function(node, env) {
       variable <- find_var_lhs(node)
       if (!env$vars_list[[variable]]$type_dcl) {
         env$vars_list[[variable]] <- common_type(env$vars_list[[variable]], type) |> flatten_type()
+      }
+    }
+    # LHS:
+    if (inherits(node$left_node, c("binary_node", "function_node"))) {
+      type_lhs <- infer(node$left_node, env$vars_list, env$r_fct)
+      if (is.character(type_lhs)) {
+        node$error <- type_lhs
+      } else {
+        variable <- find_var_lhs(node)
+        if (!env$vars_list[[variable]]$type_dcl) {
+          env$vars_list[[variable]] <- common_type(env$vars_list[[variable]], type_lhs) |> flatten_type()
+        }
       }
     }
   } else if (inherits(node, "for_node")) {
@@ -202,7 +242,27 @@ type_infer_action <- function(node, env) {
         node$i$error <- type
       } else {
         if (!env$vars_list[[variable]]$type_dcl) {
-          env$vars_list[[variable]] <- type |> flatten_type()
+          type <- type |> flatten_type()
+          type$name <- variable
+          env$vars_list[[variable]] <- type
+        }
+      }
+    }
+  } else if (inherits(node, c("while_node", "if_node"))) {
+    variable <- find_var_lhs(node$condition)
+    if (!is.null(variable)) { # e.g. while(TRUE)
+      type <- infer(node$condition, env$vars_list, env$r_fct)
+      if (is.character(type)) {
+        node$error <- type
+      } else {
+        type <- common_type(env$vars_list[[variable]], type)
+        if (is.character(type)) {
+          node$i$error <- type
+        } else {
+          if (!env$vars_list[[variable]]$type_dcl) {
+            type <- type |> flatten_type()
+            env$vars_list[[variable]] <- type
+          }
         }
       }
     }
