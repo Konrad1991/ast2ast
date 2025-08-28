@@ -7,9 +7,6 @@ get_types <- function(f, r_fct = TRUE) {
   infer_types(ast, f, NULL, r_fct)
 }
 
-# borrow stuff
-# function input arguments
-
 # --- function input R ----------------------------------------------------
 get_types_with_f_args <- function(f, f_args, r_fct = FALSE) {
   ast <- parse_body(body(f), r_fct)
@@ -642,7 +639,6 @@ expect_true(types$h$base_type == "double")
 expect_true(types$h$data_struct == "vector")
 expect_true(types$i$base_type == "double")
 expect_true(types$i$data_struct == "matrix")
-
 
 # --- type ---------------------------------------------------------------
 f <- function() {

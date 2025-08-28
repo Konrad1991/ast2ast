@@ -1,5 +1,4 @@
-files <- list.files("~/Documents/ast2ast/R/", full.names = TRUE)
-trash <- lapply(files, source)
+library(ast2ast)
 library(tinytest)
 
 f <- function() print("Hello world")

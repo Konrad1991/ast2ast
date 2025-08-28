@@ -35,7 +35,9 @@ t_literal <- function(context, obj, indent, type) {
   } else if (type == "Inf") {
     return("etr::Inf")
   }
-  dont_change_number <- c("print", ":", "[", "[[", "at")
+  dont_change_number <- c("print", ":", "[", "[[", "at", "vector", "logical", "integer", "numeric")
+  # Matrix is difficult. As only the 2. and 3. argument shouldnt be changed.
+  # Not easy to do with the current design.
   if (type == "logical") {
     obj <- tolower(obj)
     if (obj == "t") {
