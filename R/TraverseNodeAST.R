@@ -194,9 +194,10 @@ check_variable_names <- function(node) {
         invalid_char
       ))
     }
-    if (name %within% permitted_base_types()) {
+    if (name %within%
+            c(permitted_base_types(), permitted_data_structs(FALSE))) {
       return(paste0(
-        "Invalid variable name (reserved internally)",
+        "Invalid variable name (reserved internally) ",
         name
       ))
     }
@@ -208,9 +209,6 @@ check_variable_names <- function(node) {
   }
 
   name <- node$name |> deparse()
-  if (name %within% permitted_base_types()) {
-    return()
-  }
   unallowed <- unallowed_signs(name)
   if (!is.null(unallowed)) {
     node$error <- paste0(

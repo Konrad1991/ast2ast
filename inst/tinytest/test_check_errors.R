@@ -1,113 +1,271 @@
-library(ast2ast)
+files <- list.files("~/Documents/ast2ast/R/", full.names = TRUE)
+trash <- lapply(files, source)
 library(tinytest)
 
-f <- function() print("Hello world")
-e <- try(translate(f), silent = TRUE)
-expect_equal(as.character(e),
-  "Error in translate_internally(f, args_f, name_f, r_fct) : \n  Please place the body of your function f within curly brackets\n",
-  info = "Assignment to an iterator variable"
+# --- helpers ---------------------------------------------------------------
+get_checks <- function(f, r_fct = TRUE) {
+  ast <- parse_body(body(f), r_fct)
+  run_checks(ast, r_fct)
+}
+test_action_error <- function(f, error_message, r_fct = TRUE) {
+  e <- try(get_checks(f), silent = TRUE)
+  expect_equal(as.character(e), error_message)
+}
+
+# --- type declarations -----------------------------------------------------
+f <- function() {
+  type(1, int)
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \ntype(1.0, int)\nInvalid type declaration for: 1.0\n"
+)
+f <- function() {
+  type(a, 3.14)
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \ntype(a, 3.14)\nFound unsupported base type: 3.14\nInvalid type declaration: 3.14 for variable a\n"
+)
+f <- function() {
+  type(a, integr)
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \ntype(a, integr)\nFound unsupported base type: integr\nInvalid type declaration: integr for variable a\n"
+)
+f <- function() {
+  type(a, vec(integr))
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \ntype(a, vec(integr))\nFound unsupported base type: integr\nInvalid type declaration: integr for variable a\n"
+)
+f <- function() {
+  type(a, vectr(integr))
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \ntype(a, vectr(integr))\nFound unsupported base type: integr\nFound unsupported data structure: vectr\nInvalid type declaration: integr for variable a\n"
+)
+f <- function() {
+  type(a, vectr(int))
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \ntype(a, vectr(int))\nFound unsupported data structure: vectr\nInvalid type declaration: vectr for variable a\n"
 )
 
-f <- function() {}
-e <- try(translate(f), silent = TRUE)
-expect_equal(as.character(e),
-  "Error in translate_internally(f, args_f, name_f, r_fct) : \n  f seems to be empty\n",
-  info = "Assignment to an iterator variable"
+# --- variable names --------------------------------------------------------
+f <- function() {
+  int <- 2
+  a |> type(int) <- 3L
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nint <- 2.0\nInvalid variable name (reserved internally) int found in int\n"
+)
+f <- function() {
+  vec <- 2
+  a |> type(int) <- 3L
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nvec <- 2.0\nInvalid variable name (reserved internally) vec found in vec\n"
+)
+f <- function() {
+  class <- 3
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nclass <- 3.0\nInvalid variable name: is a C++ keyword --> class\n"
 )
 
 f <- function() {
-  for (i in 1:10) {
-    i <- 3
-  }
+  a.b <- 2
 }
-e <- try(translate(f), silent = TRUE)
-expect_equal(as.character(e),
-  "Error in type_checking(AST, vars_types_list) : i <- 3.0\nYou cannot assign to an index variable\n",
-  info = "Assignment to an iterator variable"
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \na.b <- 2.0\nInvalid variable name: contains forbidden character --> . found in a.b\n"
 )
-
 f <- function() {
-  bla <- "bla"
+  .a <- 2
 }
-e <- try(translate(f), silent = TRUE)
-expect_equal(as.character(e),
-  "Error in infer_types(AST, fct, args_fct, r_fct) : bla <- \"bla\"\nCharacters are not supported\n",
-  info = "Assignment of characters"
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \n.a <- 2.0\nInvalid variable name: contains forbidden character --> . found in .a\n"
 )
-
 f <- function() {
-  bla <- "bla" + 1.0
+  aSEXP <- 2
 }
-e <- try(translate(f), silent = TRUE)
-expect_equal(as.character(e),
-  "Error in infer_types(AST, fct, args_fct, r_fct) : bla <- \"bla\" + 1.0\nCharacters are not supported\n",
-  info = "Misusuage of character literal"
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \naSEXP <- 2.0\nInvalid variable name: contains forbidden character --> SEXP found in aSEXP\n"
 )
-
 f <- function() {
-  bla <- print("bla")
+  SEXP <- 2
 }
-e <- try(translate(f), silent = TRUE)
-expect_equal(as.character(e),
-  "Error in infer_types(AST, fct, args_fct, r_fct) : bla <- print(\"bla\")\nFound print within an expression: print(\"bla\")\n",
-  info = "print wihtin other statement"
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nSEXP <- 2.0\nInvalid variable name: contains forbidden character --> SEXP found in SEXP\n"
+)
+f <- function() {
+  agetXPtr <- 2
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nagetXPtr <- 2.0\nInvalid variable name: contains forbidden character --> getXPtr found in agetXPtr\n"
+)
+f <- function() {
+  a_fct_ptr <- 3
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \na_fct_ptr <- 3.0\nInvalid variable name: contains forbidden character --> fct_ptr found in a_fct_ptr\n"
 )
 
+# --- ops at lhs ------------------------------------------------------------
+f <- function() {
+  m <- matrix(0, 2, 3)
+  m[1] <- 3
+  m[1, 1] <- 4
+  m[[1]] <- 5
+  at(m, 5, 6) <- 10
+  g |> type(double) <- 314
+  print(m) <- 1
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nprint(m) <- 1.0\nFound invalid expression at left side of assignment: <-\n"
+)
+
+# --- only permitted functions ----------------------------------------------
 f <- function() {
   a <- bla()
 }
-e <- try(translate(f), silent = TRUE)
-expect_equal(as.character(e),
-  "Error in run_checks(AST, r_fct) : \na <- bla()\nInvalid function bla\n",
-  info = "Only supported functions"
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \na <- bla()\nInvalid function bla\n"
 )
 
 f <- function() {
-  a <- matrix(0)
+  return(bla())
 }
-e <- try(translate(f), silent = TRUE)
-expect_equal(
-   as.character(e),
-  "Error in run_checks(AST, r_fct) : \na <- matrix(0.0)\nWrong number of arguments for: matrix\n",
-  info = "Arity check"
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nreturn(bla())\nInvalid function bla\n"
 )
 
 f <- function() {
- a <- vector(foo = "integer", bar = 2)
+  a %+% b
 }
-e <- try(translate(f), silent = TRUE)
-expect_equal(
-   as.character(e),
-  "Error in run_checks(AST, r_fct) : \na <- vector(\"integer\", 2.0)\nFound wrong named argument for: vector\n",
-  info = "Names of arguments"
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \na %+% b\nInvalid function %+%\n"
 )
 
 f <- function() {
- a <- vector(mode = "iasdfagd", length = 2)
+  a <- cmr(1, 2, 3, 4)
 }
-e <- try(translate(f), silent = TRUE)
-expect_equal(
-   as.character(e),
-  "Error in type_checking(AST, vars_types_list) : a <- vector(\"int\", 2.0)\nFound unallowed mode int in vector\n",
-  info = "Types of arguments: mode in vector"
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \na <- cmr(1.0, 2.0, 3.0, 4.0)\nWrong number of arguments for: cmr\n"
+)
+
+# --- arity ----------------------------------------------------------------
+f <- function() {
+  return(1, 2)
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nreturn(1.0, 2.0)\nWrong number of arguments for: return\n"
 )
 
 f <- function() {
- a <- vector(mode = 1L, length = 2)
+  `+`(1, 2, 3)
 }
-e <- try(translate(f), silent = TRUE)
-expect_equal(
-   as.character(e),
-  "Error in type_checking(AST, vars_types_list) : a <- vector(1, 2.0)\nFound unallowed mode 1L in vector\n",
-  info = "Types of arguments: mode in vector"
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \n+(1.0, 2.0, 3.0)\nWrong number of arguments for: +\n"
 )
 
 f <- function() {
- a <- vector(mode = "integer", length = "Invalid")
+  a <- cmr(1, 2, 3, 4)
 }
-e <- try(translate(f), silent = TRUE)
-expect_equal(
-   as.character(e),
-  "Error in type_checking(AST, vars_types_list) : \n  a <- vector(\"integer\", \"Invalid\")\nFound unallowed length type in vector\n",
-  info = "Types of arguments: length in vector"
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \na <- cmr(1.0, 2.0, 3.0, 4.0)\nWrong number of arguments for: cmr\n"
+)
+
+# --- named args -----------------------------------------------------------
+f <- function() {
+  vector(mod = "integer", 2)
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nvector(\"integer\", 2)\nFound wrong named argument for: vector\n"
+)
+f <- function() {
+  vector(mode = "integer", lengt = 2)
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nvector(\"integer\", 2)\nFound wrong named argument for: vector\n"
+)
+f <- function() {
+  vector(mde = "integer", lengt = 2)
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nvector(\"integer\", 2)\nFound wrong named argument for: vector\n"
+)
+
+f <- function() {
+  matrix(dat = 3, nrow = 2, ncol = 2)
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nmatrix(3.0, 2.0, 2.0)\nFound wrong named argument for: matrix\n"
+)
+f <- function() {
+  matrix(data = 3, now = 2, ncol = 2)
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nmatrix(3.0, 2.0, 2.0)\nFound wrong named argument for: matrix\n"
+)
+f <- function() {
+  matrix(dta = 3, nrw = 2, ncol = 2)
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nmatrix(3.0, 2.0, 2.0)\nFound wrong named argument for: matrix\n"
+)
+f <- function() {
+  matrix(data = 3, nrow = 2, ncl = 2)
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nmatrix(3.0, 2.0, 2.0)\nFound wrong named argument for: matrix\n"
+)
+f <- function() {
+  matrix(dta = 3, nrow = 2, ncl = 2)
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nmatrix(3.0, 2.0, 2.0)\nFound wrong named argument for: matrix\n"
+)
+f <- function() {
+  matrix(data = 3, now = 2, ncl = 2)
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nmatrix(3.0, 2.0, 2.0)\nFound wrong named argument for: matrix\n"
+)
+f <- function() {
+  matrix(daa = 3, now = 2, ncl = 2)
+}
+test_action_error(
+  f,
+  "Error in run_checks(ast, r_fct) : \nmatrix(3.0, 2.0, 2.0)\nFound wrong named argument for: matrix\n"
 )

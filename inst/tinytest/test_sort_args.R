@@ -1,10 +1,9 @@
-files <- list.files("~/Documents/ast2ast/R/", full.names = TRUE)
-trash <- lapply(files, source)
 library(tinytest)
+library(ast2ast)
 
 get_sorted_ast <- function(f, r_fct = TRUE) {
-  ast <- parse_body(body(f), r_fct)
-  sort_args(ast)
+  ast <- ast2ast:::parse_body(body(f), r_fct)
+  ast2ast:::sort_args(ast)
 }
 
 # --- vector sorting ----------------------------------------------------
