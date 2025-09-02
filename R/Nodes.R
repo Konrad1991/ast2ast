@@ -5,6 +5,7 @@ variable_node <- R6::R6Class(
     name = NULL,
     error = NULL,
     context = NULL,
+    internal_type = NULL,
     initialized = FALSE,
     initialize = function(obj) {
       self$name <- obj
@@ -29,6 +30,7 @@ literal_node <- R6::R6Class(
     literal_type = NULL,
     error = NULL,
     context = NULL,
+    internal_type = NULL,
     initialize = function(obj) {
       self$literal_type <- determine_literal_type(obj)
       self$name <- deparse(obj)
@@ -82,6 +84,7 @@ binary_node <- R6::R6Class(
     right_node = NULL,
     error = NULL,
     context = NULL,
+    internal_type = NULL,
     remove_type_decl = FALSE,
     type = NULL,
     initialize = function() {},
@@ -171,6 +174,7 @@ unary_node <- R6::R6Class(
     obj = NULL,
     error = NULL,
     context = NULL,
+    internal_type = NULL,
     handle_return = FALSE,
     output_is_r_fct = TRUE,
     initialize = function() {},
@@ -242,6 +246,7 @@ nullary_node <- R6::R6Class(
     operator = NULL,
     error = NULL,
     context = NULL,
+    internal_type = NULL,
     handle_return = FALSE,
     output_is_r_fct = TRUE,
     initialize = function() {},
@@ -288,6 +293,7 @@ function_node <- R6::R6Class(
     operator = NULL,
     error = NULL,
     context = NULL,
+    internal_type = NULL,
     args = list(),
     handle_vector = FALSE,
     initialize = function() {},
@@ -349,6 +355,7 @@ if_node <- R6::R6Class(
     false_node = NULL,
     error = NULL,
     context = NULL,
+    internal_type = NULL,
 
     initialize = function() {},
     string_condition = function(indent) {
@@ -501,6 +508,7 @@ block_node <- R6::R6Class(
     block = NULL,
     error = NULL,
     context = NULL,
+    internal_type = NULL,
     initialize = function() {},
     stringify = function(indent = "") {
       result <- list()
@@ -555,6 +563,7 @@ for_node <- R6::R6Class(
     seq = NULL,
     block = NULL,
     context = NULL,
+    internal_type = NULL,
     initialize = function() {},
     stringify = function(indent = "") {
       idx <- self$i$stringify(indent)
@@ -618,6 +627,7 @@ while_node <- R6::R6Class(
     condition = NULL,
     block = NULL,
     context = NULL,
+    internal_type = NULL,
     initialize = function() {},
     stringify = function(indent = "") {
       cond <- self$condition$stringify(indent)
@@ -670,6 +680,7 @@ repeat_node <- R6::R6Class(
     error = NULL,
     block = NULL,
     context = NULL,
+    internal_type = NULL,
     initialize = function() {},
     stringify = function(indent = "") {
       b <- self$block$stringify(paste0(indent, " "))

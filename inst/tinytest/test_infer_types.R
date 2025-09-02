@@ -216,7 +216,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   as.character(e),
-  "Error in infer_types(ast, f, NULL, r_fct) : \n  Error: Could not infer the types, caused by Error in are_vars_init(left_type) : Found uninitialzed variable: b\n\n"
+  "Error in infer_types(ast, f, NULL, r_fct) : \n  Error: Could not infer the types, caused by Error in are_vars_init(t) : Found uninitialzed variable: b\n\n"
 )
 
 # --- print --------------------------------------------------------------
@@ -228,6 +228,7 @@ expect_equal(
   as.character(e),
   "Error in infer_types(ast, f, NULL, r_fct) : a <- print(\"Hello\")\nFound print within an expression: print(\"Hello\")\n"
 )
+
 # --- utils --------------------------------------------------------------
 f <- function() {
   a <- 1L
@@ -854,7 +855,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   as.character(e),
-  "Error in infer_types(ast, f, NULL, r_fct) : a <- vector(\"double\", 2.0)\nFound invalid mode in vector: double\n"
+  "Error in infer_types(ast, f, NULL, r_fct) : a <- vector(\"double\", 2)\nFound invalid mode in vector: double\n"
 )
 
 f <- function() {

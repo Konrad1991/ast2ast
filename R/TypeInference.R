@@ -69,7 +69,7 @@ create_vars_types_list <- function(f, f_args, r_fct) {
 # ========================================================================
 flatten_type <- function(type) {
   if (!inherits(type, "R6")) {
-    print(type)
+    return(type)
   }
   if (inherits(type$base_type, "type_node")) {
     type$base_type <- type$base_type$base_type
@@ -85,34 +85,52 @@ flatten_type <- function(type) {
 infer <- function(node, vars_list, r_fct) {
   if (inherits(node, "literal_node")) {
     type <- node$literal_type
-    if (type == "character") {
-      node$error <- "Characters are not supported"
-    }
     if (type %within% c("scientific", "numeric")) {
       type <- "double"
     }
     t <- type_node$new(str2lang(node$name), FALSE, r_fct)
     t$base_type <- type
     t$data_struct <- "scalar"
+    node$internal_type <- t
     return(t)
   } else if (inherits(node, "variable_node")) {
     name <- node$name
     if (is.symbol(node$name)) {
       name <- deparse(node$name)
     }
-    return(vars_list[[name]])
+    t <- vars_list[[name]]
+    t <- flatten_type(t)
+    are_vars_init(t)
+    node$internal_type <- t
+    return(t)
   } else if (inherits(node, c("unary_node", "binary_node", "function_node"))) {
     ifct <- function_registry_global$infer_fct(node$operator)
-    return(ifct(node, vars_list, r_fct))
+    t <- ifct(node, vars_list, r_fct)
+    t <- flatten_type(t)
+    are_vars_init(t)
+    node$internal_type <- t
+    return(t)
   } else if (inherits(node, "for_node")) {
     ifct <- function_registry_global$infer_fct("for")
-    return(ifct(node, vars_list, r_fct))
+    t <- ifct(node, vars_list, r_fct)
+    t <- flatten_type(t)
+    are_vars_init(t)
+    node$internal_type <- t
+    return(t)
   } else if (inherits(node, "while_node")) {
     ifct <- function_registry_global$infer_fct("while")
-    return(ifct(node, vars_list, r_fct))
+    t <- ifct(node, vars_list, r_fct)
+    t <- flatten_type(t)
+    are_vars_init(t)
+    node$internal_type <- t
+    return(t)
   } else if (inherits(node, "repeat_node")) {
     ifct <- function_registry_global$infer_fct("repeat")
-    return(ifct(node, vars_list, r_fct))
+    t <- ifct(node, vars_list, r_fct)
+    t <- flatten_type(t)
+    are_vars_init(t)
+    node$internal_type <- t
+    return(t)
   } else {
     return(sprintf("Cannot determine the type for: %s", node$stringify()))
   }
@@ -204,10 +222,10 @@ handle_type_dcl_in_assign <- function(node, env) {
   }
 }
 
-# TODO: infer also the left_node of a binary node. Because when subsetted only left then its still a vec or mat
 type_infer_action <- function(node, env) {
   handle_type_dcl(node, env)
   if (inherits(node, "binary_node") && node$operator %within% c("=", "<-")) {
+    infer(node, env$vars_list, env$r_fct)
     handle_type_dcl_in_assign(node, env)
     # RHS:
     type <- infer(node$right_node, env$vars_list, env$r_fct)
@@ -266,6 +284,20 @@ type_infer_action <- function(node, env) {
         }
       }
     }
+  } else if (inherits(node, "binary_node") && !(node$operator %within% c("=", "<-"))) {
+    infer(node, env$vars_list, env$r_fct)
+    infer(node$left_node, env$vars_list, env$r_fct)
+    infer(node$right_node, env$vars_list, env$r_fct)
+  } else if (inherits(node, "unary_node")) {
+    infer(node, env$vars_list, env$r_fct)
+    infer(node$obj, env$vars_list, env$r_fct)
+  } else if (inherits(node, "nullary_node")) {
+    infer(node, env$vars_list, env$r_fct)
+  } else if (inherits(node, "function_node")) {
+    infer(node, env$vars_list, env$r_fct)
+    lapply(node$args, function(arg) {
+      infer(arg, env$vars_list, env$r_fct)
+    })
   }
 }
 type_infer_return_action <- function(node, env) {
@@ -280,6 +312,9 @@ type_infer_return_action <- function(node, env) {
 }
 
 are_vars_init <- function(type) {
+  if (!inherits(type, "R6")) {
+    return()
+  }
   if (is.null(type$base_type) || is.null(type$data_struct)) {
     stop(sprintf("Found uninitialzed variable: %s", type$name))
   }

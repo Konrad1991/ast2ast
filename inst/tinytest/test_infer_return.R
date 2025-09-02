@@ -1,0 +1,108 @@
+files <- list.files("~/Documents/ast2ast/R/", full.names = TRUE)
+trash <- lapply(files, source)
+library(tinytest)
+
+get_ret_type <- function(fct, fct_args, r_fct = FALSE) {
+  AST <- parse_body(body(fct), r_fct)
+  AST <- sort_args(AST)
+  vars_types_list <- infer_types(AST, fct, fct_args, r_fct)
+  type_checking(AST, vars_types_list, r_fct)
+  determine_types_of_returns(AST, vars_types_list, r_fct)
+}
+check_type_f_arg <- function(type, bt, ds, const_or_mut, copy_or_ref, fct_input = TRUE) {
+  check <- logical(5)
+  check[1] <- type$base_type == bt
+  check[2] <- type$data_struct == ds
+  check[3] <- type$fct_input == fct_input
+  check[4] <- type$const_or_mut == const_or_mut
+  check[5] <- type$copy_or_ref == copy_or_ref
+  expect_true(all(check))
+}
+# --- function input R ----------------------------------------------------
+f <- function() {
+  return()
+}
+f_args <- function() {}
+ret_type <- get_ret_type(f, f_args)
+expect_equal(ret_type, "void")
+
+f <- function() {
+  a <- 1
+}
+f_args <- function() {}
+ret_type <- get_ret_type(f, f_args)
+expect_equal(ret_type, "void")
+
+f <- function() {
+  return()
+}
+f_args <- function() {}
+ret_type <- get_ret_type(f, f_args, TRUE)
+expect_equal(ret_type, "R_NilValue")
+
+f <- function() {
+  a <- 1
+}
+f_args <- function() {}
+ret_type <- get_ret_type(f, f_args, TRUE)
+expect_equal(ret_type, "R_NilValue")
+
+f <- function() {
+  a <- TRUE
+  return(a)
+}
+f_args <- function() {}
+ret_type <- get_ret_type(f, f_args, TRUE)
+check_type_f_arg(ret_type, "logical", "scalar", "mutable", "copy", FALSE)
+
+
+f <- function(a) {
+  a <- TRUE
+  return(a)
+}
+f_args <- function(a) {
+  a |> type(vec(double))
+}
+ret_type <- get_ret_type(f, f_args, TRUE)
+check_type_f_arg(ret_type, "double", "vec", "mutable", "copy", TRUE)
+
+f <- function(a) {
+  return(1L)
+}
+f_args <- function(a) {
+  a |> type(vec(double))
+}
+ret_type <- get_ret_type(f, f_args, TRUE)
+check_type_f_arg(ret_type, "integer", "scalar", "mutable", "copy", FALSE)
+
+f <- function(a) {
+  return(matrix(1.1, 2, 2))
+}
+f_args <- function(a) {
+  a |> type(vec(double))
+}
+ret_type <- get_ret_type(f, f_args, TRUE)
+check_type_f_arg(ret_type, "double", "matrix", "mutable", "copy", FALSE)
+
+f <- function(a) {
+  if (a == 1) {
+    return(TRUE)
+  } else if(a == 2) {
+    return(1L)
+  } else if(a == 3) {
+    return(3.14)
+  } else if (a == 4) {
+    return(c(TRUE, FALSE))
+  } else if (a == 5) {
+    return(c(1L, 2L))
+  } else if (a == 6) {
+    return(c(3.14, 3.14))
+  } else if (a == 7) {
+    return(matrix(3.14, 5, 5))
+  }
+}
+f_args <- function(a) {
+  a |> type(vec(double))
+}
+ret_type <- get_ret_type(f, f_args, TRUE)
+check_type_f_arg(ret_type, "double", "matrix", "mutable", "copy", FALSE)
