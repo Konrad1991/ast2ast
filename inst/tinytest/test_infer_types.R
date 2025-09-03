@@ -1,16 +1,14 @@
-files <- list.files("~/Documents/ast2ast/R/", full.names = TRUE)
-trash <- lapply(files, source)
 library(tinytest)
 
 get_types <- function(f, r_fct = TRUE) {
-  ast <- parse_body(body(f), r_fct)
-  infer_types(ast, f, NULL, r_fct)
+  ast <- ast2ast:::parse_body(body(f), r_fct)
+  ast2ast:::infer_types(ast, f, NULL, r_fct)
 }
 
 # --- function input R ----------------------------------------------------
 get_types_with_f_args <- function(f, f_args, r_fct = FALSE) {
-  ast <- parse_body(body(f), r_fct)
-  infer_types(ast, f, f_args, r_fct)
+  ast <- ast2ast:::parse_body(body(f), r_fct)
+  ast2ast:::infer_types(ast, f, f_args, r_fct)
 }
 check_type_f_arg <- function(type, bt, ds, const_or_mut, copy_or_ref, fct_input = TRUE) {
   check <- logical(5)
@@ -120,8 +118,8 @@ check_type_f_arg(types$i, "double", "mat", "const", "ref")
 
 # --- function input R ----------------------------------------------------
 get_types_with_f_args <- function(f, f_args, r_fct = TRUE) {
-  ast <- parse_body(body(f), r_fct)
-  infer_types(ast, f, f_args, r_fct)
+  ast <- ast2ast:::parse_body(body(f), r_fct)
+  ast2ast:::infer_types(ast, f, f_args, r_fct)
 }
 check_type_f_arg <- function(type, bt, ds, const_or_mut, copy_or_ref) {
   check <- logical(5)
@@ -216,7 +214,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   as.character(e),
-  "Error in infer_types(ast, f, NULL, r_fct) : \n  Error: Could not infer the types, caused by Error in are_vars_init(t) : Found uninitialzed variable: b\n\n"
+"Error in ast2ast:::infer_types(ast, f, NULL, r_fct) : \n  Error: Could not infer the types, caused by Error in are_vars_init(t) : Found uninitialzed variable: b\n\n"
 )
 
 # --- print --------------------------------------------------------------
@@ -226,7 +224,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   as.character(e),
-  "Error in infer_types(ast, f, NULL, r_fct) : a <- print(\"Hello\")\nFound print within an expression: print(\"Hello\")\n"
+"Error in ast2ast:::infer_types(ast, f, NULL, r_fct) : a <- print(\"Hello\")\nFound print within an expression: print(\"Hello\")\n"
 )
 
 # --- utils --------------------------------------------------------------
@@ -718,28 +716,30 @@ f <- function() {
 }
 e <- try(get_types(f), silent = TRUE)
 expect_equal(as.character(e),
-  "Error in infer_types(ast, f, NULL, r_fct) : type(a, invalid)\nFound unsupported base type: invalid\n")
-
+  "Error in ast2ast:::infer_types(ast, f, NULL, r_fct) : type(a, invalid)\nFound unsupported base type: invalid\n"
+)
 f <- function() {
   a |> type(vector(invalid))
 }
 e <- try(get_types(f), silent = TRUE)
 expect_equal(as.character(e),
-"Error in infer_types(ast, f, NULL, r_fct) : type(a, vector(invalid))\nFound unsupported base type: invalid\n")
+  "Error in ast2ast:::infer_types(ast, f, NULL, r_fct) : \n  type(a, vector(invalid))\nFound unsupported base type: invalid\n")
 
 f <- function() {
   a |> type(invalid(double))
 }
 e <- try(get_types(f), silent = TRUE)
 expect_equal(as.character(e),
-"Error in infer_types(ast, f, NULL, r_fct) : type(a, invalid(double))\nFound unsupported data structure: invalid\n")
+  "Error in ast2ast:::infer_types(ast, f, NULL, r_fct) : \n  type(a, invalid(double))\nFound unsupported data structure: invalid\n"
+)
 
 f <- function() {
   a |> type(invalid(invalid2))
 }
 e <- try(get_types(f), silent = TRUE)
 expect_equal(as.character(e),
-"Error in infer_types(ast, f, NULL, r_fct) : type(a, invalid(invalid2))\nFound unsupported base type: invalid2\nFound unsupported data structure: invalid\n")
+  "Error in ast2ast:::infer_types(ast, f, NULL, r_fct) : \n  type(a, invalid(invalid2))\nFound unsupported base type: invalid2\nFound unsupported data structure: invalid\n"
+)
 
 # --- literals ---------------------------------------------------------------
 f <- function() {
@@ -855,7 +855,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   as.character(e),
-  "Error in infer_types(ast, f, NULL, r_fct) : a <- vector(\"double\", 2)\nFound invalid mode in vector: double\n"
+"Error in ast2ast:::infer_types(ast, f, NULL, r_fct) : \n  a <- vector(\"double\", 2)\nFound invalid mode in vector: double\n"
 )
 
 f <- function() {

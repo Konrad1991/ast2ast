@@ -48,7 +48,7 @@ literal_node <- R6::R6Class(
 )
 
 handle_var <- function(code, context) {
-  if (rlang::is_symbol(code)) {
+  if (is_symbol(code)) {
     if (context == "[" && deparse(code) == "") {
       # NOTE: empty indexing --> change all entries
       ln <- literal_node$new(TRUE)

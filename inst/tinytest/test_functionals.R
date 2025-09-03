@@ -1,6 +1,5 @@
-files <- list.files("~/Documents/ast2ast/R/", full.names = TRUE)
-trash <- lapply(files, source)
 library(tinytest)
+library(ast2ast)
 
 f_args <- function(a, b, n, type_test) {
   a |> type(vec(double))
@@ -82,7 +81,7 @@ functional_tests <- function(a, b, n, type_test) {
 
 }
 
-fcpp <- translate(functional_tests, f_args, getsource = FALSE, verbose = TRUE)
+fcpp <- translate(functional_tests, f_args, getsource = FALSE, verbose = FALSE)
 a <- runif(10)
 set.seed(42)
 b <- rnorm(10000)

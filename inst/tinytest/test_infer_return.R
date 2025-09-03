@@ -1,13 +1,11 @@
-files <- list.files("~/Documents/ast2ast/R/", full.names = TRUE)
-trash <- lapply(files, source)
 library(tinytest)
 
 get_ret_type <- function(fct, fct_args, r_fct = FALSE) {
-  AST <- parse_body(body(fct), r_fct)
-  AST <- sort_args(AST)
-  vars_types_list <- infer_types(AST, fct, fct_args, r_fct)
-  type_checking(AST, vars_types_list, r_fct)
-  determine_types_of_returns(AST, vars_types_list, r_fct)
+  AST <- ast2ast:::parse_body(body(fct), r_fct)
+  AST <- ast2ast:::sort_args(AST)
+  vars_types_list <- ast2ast:::infer_types(AST, fct, fct_args, r_fct)
+  ast2ast:::type_checking(AST, vars_types_list, r_fct)
+  ast2ast:::determine_types_of_returns(AST, vars_types_list, r_fct)
 }
 check_type_f_arg <- function(type, bt, ds, const_or_mut, copy_or_ref, fct_input = TRUE) {
   check <- logical(5)

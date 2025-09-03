@@ -1,20 +1,18 @@
-files <- list.files("~/Documents/ast2ast/R/", full.names = TRUE)
-trash <- lapply(files, source)
 library(tinytest)
 
 # --- Checks for translate_internally ---------------------------------------
 f <- function() print("Hello world")
 expect_error(
-  translate_internally(f, NULL, "f", TRUE)
+  ast2ast:::translate_internally(f, NULL, "f", TRUE)
 )
 f <- function() {}
 expect_error(
-  translate_internally(f, NULL, "f", TRUE)
+  ast2ast:::translate_internally(f, NULL, "f", TRUE)
 )
 
 # --- helpers ---------------------------------------------------------------
 ast_of <- function(f, r_fct = TRUE) {
-  parse_body(body(f), r_fct)
+  ast2ast:::parse_body(body(f), r_fct)
 }
 
 expect_node <- function(node, cls, operator = NULL, context = NULL) {
@@ -54,7 +52,7 @@ gather <- function(AST) {
       env$variables <- c(env$variables, node$name)
     }
   }
-  traverse_ast(AST, gatherer, env)
+  ast2ast:::traverse_ast(AST, gatherer, env)
   return(list(env$functions, env$variables, env$literals))
 }
 expected_to_find <- function(AST, fcts_expected, literals_expected, vars_expected) {

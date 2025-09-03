@@ -21,4 +21,3 @@ ast2ast:::test_bool()
 ast2ast:::test_vector()
 arg <- c(7, 8, 9)
 ast2ast:::test_borrow_r(arg)
-arg

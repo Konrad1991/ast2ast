@@ -1,3 +1,10 @@
+is_symbol <- function (x) {
+  if (typeof(x) != "symbol") {
+    return(FALSE)
+  }
+  return(TRUE)
+}
+
 `%within%` <- function(elem, v) {
   for (i in seq_along(v)) {
     if (elem == v[i]) return(TRUE)
