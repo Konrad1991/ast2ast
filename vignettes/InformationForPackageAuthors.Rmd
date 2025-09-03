@@ -31,13 +31,6 @@ p:first-of-type {
 }
 ``` 
 
-- [Guidance for Package Authors](#guidance-for-package-authors)
-- [Naming rationalization ast2ast](#naming-rationalization-ast2ast)
-- [Comparison of R and ETR code](#comparison-of-r-and-etr-code)
-- [The XPtr interface](#the-xptr-interface)
-- [Internals of ETR](#internals-of-etr)
-
-
 ## Guidance for Package Authors
 
 This section of the documentation describes how the external pointers to C++ function that are produced by *ast2ast* can be used in other packages.
@@ -89,24 +82,22 @@ bubbleSort <- function(a) {
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins(cpp2a)]]
 #include "etr.hpp"
-
 // [[Rcpp::export]]
 SEXP bubbleSort(SEXP aSEXP) {
-	etr::Vec<double> size;
-	etr::Vec<double> temp;
-	etr::Vec<double> a; a = aSEXP;
-
-	 size = etr::length(a);
-	 for (auto&i:  etr::colon(etr::i2d(1), size)) {
-	     for (auto&j:  etr::colon(etr::i2d(1), (size - etr::i2d(1)))) {
-	         if (etr::subset(a, j) > etr::subset(a, j + etr::i2d(1))) {
-	             temp = etr::subset(a, j);
-	             etr::subset(a, j) = etr::subset(a, j + etr::i2d(1));
-	             etr::subset(a, j + etr::i2d(1)) = temp;
-	         }
-	     }
-	 }
-	 return(etr::cpp2R(a));
+  etr::Vec<double> a = aSEXP;
+  int size;
+  etr::Vec<double> temp;
+  size = etr::length(a);
+  for(const auto& i : etr::colon(1, size)) {
+   for(const auto& j : etr::colon(1, (size - 1.0))) {
+    if (etr::subset(a, j) > etr::subset(a, j + 1.0)) {
+       temp = etr::subset(a, j);
+       etr::subset(a, j) = etr::subset(a, j + 1.0);
+       etr::subset(a, j + 1.0) = temp;
+    };
+   }
+  }
+  return(etr::Cast(a));
 }
 ```
 
@@ -122,13 +113,11 @@ f <- function(a, b) {
   c <- a + b
   return(c)
 }
-fcpp <- ast2ast::translate(f,
-  output = "XPtr",
-  types_of_args = c("double", "double"),
-  data_structures = c("vector", "scalar"),
-  handle_inputs = c("", ""),
-  references = c(TRUE, TRUE)
-)
+f_args <- function(a, b) {
+  a |> type(vec(double)) |> ref()
+  b |> type(vec(double)) |> ref()
+}
+fcpp <- ast2ast::translate(f, f_args, output = "XPtr")
 ```
 
 #### Afterwards the external pointer is used in an R package
@@ -147,8 +136,8 @@ void call_xptr(Rcpp::XPtr<FP> ep) {
   etr::Vec<double> a;
   etr::Vec<double> b;
   etr::Vec<double> c;
-  a = etr::coca(1, 2, 3);
-  b = etr::coca(4, 5, 6);
+  a = etr::c(1, 2, 3);
+  b = etr::c(4, 5, 6);
   c = f(a, b);
   etr::print(c);
 }
@@ -159,9 +148,6 @@ void call_xptr(Rcpp::XPtr<FP> ep) {
 ```{r, eval = TRUE, echo = TRUE}
 call_xptr(fcpp)
 ```
-
-
-
 
 ## Internals of ETR
 
@@ -188,8 +174,5 @@ The class *Vec* is thread safe in the sense that no memory is associated with fu
 An exception are the methods used for comparison. Notably, these comparison methods (*==*, *<=*, *>=*, *<*, *>* and *!=*) except two doubles (by copy) as arguments and return a bool.
 Thus, it is still possible to use instances of the class in parallel. However, the user has to take care that only one thread edits an object at a time.
 
-### Conversions 
-
-A *sexp* can be converted to Rcpp::NumericVectors, Rcpp::NumericMatrices, arma::vec or to a arma::mat. 
 
 
