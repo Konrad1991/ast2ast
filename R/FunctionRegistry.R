@@ -702,7 +702,7 @@ function_registry_global$add(
     if (!(s %within% c("logical", "integer", "numeric"))) {
       node$error <- sprintf("Found unallowed mode %s in vector", s)
     }
-    if (!is_int(node$args[[2]]) && !is_num(node$args[[2]])) {
+    if (!is_int(node$args[[2]], vars_types_list) && !is_num(node$args[[2]], vars_types_list)) {
       node$error <- "Found unallowed length type in vector"
     }
   },

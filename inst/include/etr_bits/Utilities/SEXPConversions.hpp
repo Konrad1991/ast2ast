@@ -3,6 +3,42 @@
 
 namespace etr {
 
+// SEXP to scalar casts
+// -----------------------------------------------------------------------------------------------------------
+template<typename T>
+inline T SEXP2Scalar(SEXP s) {
+  ass<"Input has to be of type: logical, integer or double">(false);
+  return T{};
+}
+
+template<>
+inline bool SEXP2Scalar<bool>(SEXP s) {
+  ass<"R object is not of type logical">(Rf_isLogical(s));
+  const R_xlen_t sz = Rf_xlength(s);
+  ass<"Argument has length > 1">(sz == 1);
+  const bool b = LOGICAL(s)[0];
+  ass<"NA logical not allowed">(b != NA_LOGICAL);
+  return b != 0; // R bool is int
+}
+template<>
+inline int SEXP2Scalar<int>(SEXP s) {
+  ass<"R object is not of type integer">(Rf_isInteger(s));
+  const R_xlen_t sz = Rf_xlength(s);
+  ass<"Argument has length > 1">(sz == 1);
+  const int i = INTEGER(s)[0];
+  ass<"NA integer not allowed">(i != NA_INTEGER);
+  return i;
+}
+template<>
+inline double SEXP2Scalar<double>(SEXP s) {
+  ass<"R object is not of type integer">(Rf_isReal(s));
+  const R_xlen_t sz = Rf_xlength(s);
+  ass<"Argument has length > 1">(sz == 1);
+  const double d = REAL(s)[0];
+  ass<"NA/NaN double not allowed">(!ISNA(d) && !ISNAN(d));
+  return d;
+}
+
 // Evaluation: this is required as the lifetime for some objects does not survive the function itself
 // -----------------------------------------------------------------------------------------------------------
 template<typename T>

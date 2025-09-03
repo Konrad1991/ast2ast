@@ -566,14 +566,14 @@ for_node <- R6::R6Class(
     internal_type = NULL,
     initialize = function() {},
     stringify = function(indent = "") {
-      idx <- self$i$stringify(indent)
-      sequence <- self$seq$stringify(indent)
+      idx <- self$i$stringify("")
+      sequence <- self$seq$stringify("")
       b <- self$block$stringify(paste0(indent, " "))
       return(paste0(
         indent,
         "for(const auto& ", idx, " : ", sequence, ") {\n",
         b, "\n",
-        "}\n"
+        indent, "}\n"
       ))
     },
     stringify_error = function(indent = "") {
@@ -891,6 +891,15 @@ type_node <- R6::R6Class(
           data_struct <- paste0("borrow_", self$data_struct)
         }
         type <- convert_types_to_etr_types(self$base_type, data_struct, self$r_fct, indent)
+
+        if (data_struct == "scalar") {
+          conv_base_type <- convert_base_type(self$base_type)
+          return(
+            paste0(indent, type, " ", self$name, " = ",
+              paste0("etr::SEXP2Scalar<", conv_base_type, ">(", self$name, "SEXP);")
+            )
+          )
+        }
         return(
           paste0(indent, type, " ", self$name, " = ", paste0(self$name, "SEXP;"))
         )
