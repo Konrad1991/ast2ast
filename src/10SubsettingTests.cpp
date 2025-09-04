@@ -122,13 +122,10 @@ void test_vector_subsetting() {
   }
   // NOTE: double subsetting
   {
-    std::string s = "DoubleSubsetting: ";
+    std::string s = "DoubleSubsetting 1: ";
     try {
       subset(v, -1.0);
     } catch (Rcpp::exception &e) {
-      std::string expect = "invalid index argument";
-      std::cout << e.what() << std::endl;
-      std::cerr << e.what() << std::endl;
       ass(expect == e.what(), std::string(s) + "invalid index argument");
     }
 
@@ -151,13 +148,11 @@ void test_vector_subsetting() {
     ass(subset(v, d)[0] == 16, std::string(s) + "vec[16] == 16");
   }
   {
-    std::string s = "DoubleSubsetting: ";
+    std::string s = "DoubleSubsetting 2: ";
     try {
       subset(v,-1.0);
     } catch (Rcpp::exception &e) {
       std::string expect = "invalid index argument";
-      std::cout << e.what() << std::endl;
-      std::cerr << e.what() << std::endl;
       ass(expect == e.what(), std::string(s) + "invalid index argument");
     }
 
