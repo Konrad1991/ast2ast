@@ -50,6 +50,14 @@ template <typename T, typename BufferTrait> struct Buffer {
     ncol = ncol_;
   }
 
+  void reset() noexcept {
+    this -> allocated = false;
+    this -> p = nullptr;
+    this -> sz = 0;
+    this -> capacity = 0;
+    set_matrix_default();
+  }
+
   // empty constructor
   Buffer() {}
 
@@ -60,9 +68,9 @@ template <typename T, typename BufferTrait> struct Buffer {
     is_matrix(other.is_matrix), nrow(other.nrow), ncol(other.ncol) {
     if (other.allocated) {
       p = new T[capacity];
-      std::copy(other.p, other.p + capacity, p);
+      std::copy_n(other.p, sz, p);
     } else {
-      p = nullptr;
+      reset();
     }
   }
 
@@ -133,11 +141,12 @@ template <typename T, typename BufferTrait> struct Buffer {
     if (allocated) {
       ass<"try to delete nullptr">(p != nullptr);
       delete[] p;
-      this->p = nullptr;
+      reset();
     }
     if constexpr (is<RetType, double>) {
       ass<"R object is not of type numeric">(Rf_isReal(s));
       sz = static_cast<std::size_t>(Rf_length(s));
+      ass<"R object seems to be empty">(sz >= 1);
       capacity = static_cast<std::size_t>(sz);
       p = new T[capacity];
       for (int i = 0; i < sz; i++) {
@@ -150,6 +159,7 @@ template <typename T, typename BufferTrait> struct Buffer {
     } else if constexpr (is<RetType, int>) {
       ass<"R object is not of type integer">(Rf_isInteger(s));
       sz = static_cast<std::size_t>(Rf_length(s));
+      ass<"R object seems to be empty">(sz >= 1);
       capacity = static_cast<std::size_t>(sz);
       p = new T[capacity];
       for (int i = 0; i < sz; i++) {
@@ -162,6 +172,7 @@ template <typename T, typename BufferTrait> struct Buffer {
     } else if constexpr (is<RetType, bool>) {
       ass<"R object is not of type logical">(Rf_isLogical(s));
       sz = static_cast<std::size_t>(Rf_length(s));
+      ass<"R object seems to be empty">(sz >= 1);
       capacity = static_cast<std::size_t>(sz);
       p = new T[capacity];
       for (int i = 0; i < sz; i++) {
@@ -226,10 +237,7 @@ template <typename T, typename BufferTrait> struct Buffer {
     if (p != nullptr) {
       if (allocated) {
         delete[] p;
-        sz = 0;
-        capacity = 0;
-        p = nullptr;
-        allocated = false;
+        reset();
         set_matrix_default();
       }
     }
@@ -311,7 +319,10 @@ template <typename T, typename BufferTrait> struct Buffer {
 
   auto begin() const { return It<T>{p}; }
   auto end() const { return It<T>{p + sz}; }
-  T &back() { return p[sz]; }
+  T &back() {
+    ass<"Size is 0">(this->sz >= 1);
+    return p[sz - 1];
+  }
   T *data() const { return p; }
 
   void realloc(std::size_t new_size) {
