@@ -18,7 +18,7 @@ struct UnaryOpClassIterator {
     if constexpr (IsArithV<I>) {
       return Trait::f(obj.get());
     } else {
-      return Trait::f(obj.get()[index % obj.get().size()]);
+      return Trait::f(obj.get()[safe_modulo(index, obj.get().size())]);
     }
   }
 
@@ -69,7 +69,7 @@ template <typename I, typename UTrait> struct UnaryOperation {
     if constexpr (IsArithV<I>) {
       return Trait::f(obj);
     } else if constexpr (!IsArithV<I>) {
-      return Trait::f(obj[i % obj.size()]);
+      return Trait::f(obj[safe_modulo(i, obj.size())]);
     }
   }
   std::size_t size() const {

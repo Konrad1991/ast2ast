@@ -69,20 +69,20 @@ public:
         row_i = 0;
         ++col_i;
       }
-      return l.get()[idx % l.get().size()];
+      return l.get()[safe_modulo(idx, l.get().size())];
     } else if constexpr(IsArithV<rowT> && !IsArithV<colT>) {
       const size_t idx = (col[col_i] - 1) * l.get().nr() + row - 1;
       ++col_i;
-      return l.get()[idx % l.get().size()];
+      return l.get()[safe_modulo(idx, l.get().size())];
     } else if constexpr(!IsArithV<rowT> && IsArithV<colT>) {
       const size_t idx = (col - 1) * l.get().nr() + (row[row_i] - 1);
       if (++row_i == row.size()) {
         row_i = 0;
       }
-      return l.get()[idx % l.get().size()];
+      return l.get()[safe_modulo(idx, l.get().size())];
     } else if constexpr(IsArithV<rowT> && IsArithV<colT>) {
       const size_t idx = (col - 1) * l.get().nr() + (row - 1);
-      return l.get()[idx % l.get().size()];
+      return l.get()[safe_modulo(idx, l.get().size())];
     }
   }
   auto get_mat_const(size_t i) const {
@@ -95,42 +95,48 @@ public:
         row_i = 0;
         ++col_i;
       }
-      return l.get()[idx % l.get().size()];
+      return l.get()[safe_modulo(idx, l.get().size())];
     } else if constexpr(IsArithV<rowT> && !IsArithV<colT>) {
       const size_t idx = (col[col_i] - 1) * l.get().nr() + row - 1;
       ++col_i;
-      return l.get()[idx % l.get().size()];
+      return l.get()[safe_modulo(idx, l.get().size())];
     } else if constexpr(!IsArithV<rowT> && IsArithV<colT>) {
       const size_t idx = (col - 1) * l.get().nr() + (row[row_i] - 1);
       if (++row_i == row.size()) {
         row_i = 0;
       }
-      return l.get()[idx % l.get().size()];
+      return l.get()[safe_modulo(idx, l.get().size())];
     } else if constexpr(IsArithV<rowT> && IsArithV<colT>) {
       const size_t idx = (col - 1) * l.get().nr() + (row - 1);
-      return l.get()[idx % l.get().size()];
+      return l.get()[safe_modulo(idx, l.get().size())];
     }
   }
   auto operator[](size_t i) const {
     if constexpr (IsPair<R>) { // Matrix
       return get_mat_const(i);
     } else if constexpr (IsBool<R> && IsArithV<R>) {
-      return l.get()[i % l.get().size()];
+      return l.get()[safe_modulo(i, l.get().size())];
     } else if constexpr (IsArithV<R>) {
       return l.get()[r.get() - 1];
     } else {
-      return l.get()[((r.get()[i % r.get().size()]) - 1) % l.get().size() ];
+      return l.get()[safe_modulo(
+        ((r.get()[
+        safe_modulo(i, r.get().size())
+        ]) - 1), l.get().size()
+      )];
     }
   }
   auto& operator[](size_t i) {
     if constexpr (IsPair<R>) { // Matrix
       return get_mat(i);
     } else if constexpr (IsBool<R> && IsArithV<R>) {
-      return l.get()[i % l.get().size()];
+      return l.get()[safe_modulo(i, l.get().size())];
     } else if constexpr (IsArithV<R>) {
       return l.get()[r.get() - 1];
     } else {
-      return l.get()[((r.get()[i % r.get().size()]) - 1) % l.get().size() ];
+      return l.get()[safe_modulo(
+      ((r.get()[safe_modulo(i, r.get().size())]) - 1), l.get().size()
+      )];
     }
   }
 
@@ -249,7 +255,7 @@ inline void precalcVecInt(const V &vec, std::vector<std::size_t> &ind) {
   } else if constexpr (IsFloat<V>) {
     ind.resize(vec.size());
     for (std::size_t i = 0; i < ind.size(); ++i) {
-      ind[i] = static_cast<std::size_t>(std::floor(vec[i]));
+      ind[i] = safe_index_from_double(vec[i]);
     }
   }
 }
@@ -290,8 +296,6 @@ inline auto subset(L&& l, R&& r) {
     );
   } else if constexpr (IsFloat<RDecayed>) {
     const std::size_t rs = safe_index_from_double(r);
-    // const std::size_t rs = static_cast<std::size_t>(std::floor(r));
-    ass<"Negative indices are not supported">(rs >= 1);
     using RSType = decltype(rs);
     return SubsetVecType<RetType, LDecayed, RSType>(
       SubsetClass<LDecayed, RSType, SubsetClassTrait>(lf, std::forward<RSType>(rs))
@@ -352,7 +356,7 @@ inline auto ArithmeticHandler(const V& vec, const O& obj, bool is_row) {
   if constexpr(IsBool<DecayedO>) {
     return precalcVecAlongOneDim(vec, obj, is_row);
   } else if constexpr(IsFloat<DecayedO>) {
-    return static_cast<std::size_t>(std::floor(obj));
+    return safe_index_from_double(obj);
   } else {
     return obj;
   }

@@ -216,7 +216,7 @@ template <typename T, typename R> struct Vec {
       for (std::size_t i = 0; i < other_obj.size(); i++) d[i] = temp[i];
     } else if constexpr (IS<SubsetClassTrait, typename ReRef<R>::type::TypeTrait>) {
       ass<"number of items to replace is not a multiple of replacement length">(other_obj.size() == d.size());
-      for (std::size_t i = 0; i < d.size(); i++) d[i % d.size()] = temp[i];
+      for (std::size_t i = 0; i < d.size(); i++) d[safe_modulo(i, d.size())] = temp[i];
     } else if constexpr (IsRBuffer<R>) { // Sometimes in c() required
       d.moveit(temp);
     }

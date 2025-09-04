@@ -3,6 +3,28 @@
 
 namespace etr {
 
+// Evaluation: this is required as the lifetime for some objects does not survive the function itself
+// -----------------------------------------------------------------------------------------------------------
+template<typename T>
+inline auto Evaluate(T && obj) {
+  if constexpr(IsOperationVec<Decayed<T>> || IsSubsetVec<Decayed<T>> || IsSubsetMat<Decayed<T>>) {
+    using RetType = typename ReRef<decltype(obj)>::type::RetType;
+    Vec<RetType, Buffer<RetType, RBufferTrait>> res(SI{obj.size()});
+    for (size_t i = 0; i < res.size(); i++) {
+      res[i] = obj[i];
+    }
+    return res;
+  } else {
+    return std::forward<decltype(obj)>(obj);
+  }
+}
+inline auto Evaluate() {
+  return;
+}
+
+#ifdef STANDALONE_ETR
+#else
+
 // SEXP to scalar casts
 // -----------------------------------------------------------------------------------------------------------
 template<typename T>
@@ -39,27 +61,6 @@ inline double SEXP2Scalar<double>(SEXP s) {
   return d;
 }
 
-// Evaluation: this is required as the lifetime for some objects does not survive the function itself
-// -----------------------------------------------------------------------------------------------------------
-template<typename T>
-inline auto Evaluate(T && obj) {
-  if constexpr(IsOperationVec<Decayed<T>> || IsSubsetVec<Decayed<T>> || IsSubsetMat<Decayed<T>>) {
-    using RetType = typename ReRef<decltype(obj)>::type::RetType;
-    Vec<RetType, Buffer<RetType, RBufferTrait>> res(SI{obj.size()});
-    for (size_t i = 0; i < res.size(); i++) {
-      res[i] = obj[i];
-    }
-    return res;
-  } else {
-    return std::forward<decltype(obj)>(obj);
-  }
-}
-inline auto Evaluate() {
-  return;
-}
-
-#ifdef STANDALONE_ETR
-#else
 // Cast scalar elements to their SEXP equivalents
 // -----------------------------------------------------------------------------------------------------------
 inline SEXP Cast() { return R_NilValue; }

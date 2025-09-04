@@ -126,7 +126,7 @@ void test_vector_subsetting() {
     try {
       subset(v, -1.0);
     } catch (Rcpp::exception &e) {
-      std::string expect = "invalid index argument";
+      std::string expect = "Negative indices are not supported";
       ass(expect == e.what(), std::string(s) + "invalid index argument");
     }
 
@@ -153,7 +153,7 @@ void test_vector_subsetting() {
     try {
       subset(v,-1.0);
     } catch (Rcpp::exception &e) {
-      std::string expect = "invalid index argument";
+      std::string expect = "Negative indices are not supported";
       ass(expect == e.what(), std::string(s) + "invalid index argument");
     }
 

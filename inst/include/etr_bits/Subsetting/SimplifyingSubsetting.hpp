@@ -13,14 +13,14 @@ inline size_t ExtractIndex(const T& obj) {
     if constexpr (IsInteger<DecayedT>) {
       return obj;
     } else if constexpr(IsFloat<DecayedT>) {
-      return static_cast<std::size_t>(std::floor(obj));
+      return safe_index_from_double(obj);
     }
   } else {
     ass<"at accepts only vector of length 1">(obj.size() == 1);
     if constexpr (IsInteger<DecayedT>) {
       return obj[0];
     } else if constexpr(IsFloat<DecayedT>) {
-      return static_cast<std::size_t>(std::floor(obj[0]));
+      return safe_index_from_double(obj[0]);
     }
   }
 }

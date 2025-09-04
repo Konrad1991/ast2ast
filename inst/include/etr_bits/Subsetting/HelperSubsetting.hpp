@@ -6,7 +6,7 @@ namespace etr {
 inline std::size_t safe_index_from_double(double x) {
   ass<"invalid index argument">(std::isfinite(x));
   double t = std::trunc(x);
-  ass<"invalid index argument">(t >= 1.0);
+  ass<"Negative indices are not supported">(t >= 1);
   return static_cast<std::size_t>(t);
 }
 

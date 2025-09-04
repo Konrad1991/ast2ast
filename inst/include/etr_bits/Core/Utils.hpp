@@ -115,6 +115,10 @@ struct SI {
   SI(const long long sz_) : sz(static_cast<std::size_t>(sz_)) {}
 };
 
+inline std::size_t safe_modulo(std::size_t idx, std::size_t sz) {
+  return sz ? (idx % sz) : 0;  // no UB if n==0
+}
+
 } // namespace etr
 
 #endif

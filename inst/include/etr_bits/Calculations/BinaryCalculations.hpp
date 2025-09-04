@@ -14,11 +14,11 @@ struct BinaryOpClassIterator {
 
   auto operator*() const {
     if constexpr (!IsArithV<L> && IsArithV<R>) {
-      return Trait::f(l.get()[index % l.get().size()], r.get());
+      return Trait::f(l.get()[safe_modulo(index, l.get().size())], r.get());
     } else if constexpr (IsArithV<L> && !IsArithV<R>) {
-      return Trait::f(l.get(), r.get()[index % r.get().size()]);
+      return Trait::f(l.get(), r.get()[safe_modulo(index, r.get().size())]);
     } else if constexpr (!IsArithV<L> && !IsArithV<R>) {
-      return Trait::f(l.get()[index % l.get().size()], r.get()[index % r.get().size()]);
+      return Trait::f(l.get()[safe_modulo(index, l.get().size())], r.get()[safe_modulo(index, r.get().size())]);
     }
   }
 
@@ -62,11 +62,11 @@ template <typename L, typename R, typename BTrait> struct BinaryOperation {
   BinaryOperation(const L &l_, const R &r_) : l(l_), r(r_) {}
   auto operator[](std::size_t i) const {
     if constexpr (!IsArithV<L> && IsArithV<R>) {
-      return Trait::f(l[i % l.size()], r);
+      return Trait::f(l[safe_modulo(i, l.size())], r);
     } else if constexpr (IsArithV<L> && !IsArithV<R>) {
-      return Trait::f(l, r[i % r.size()]);
+      return Trait::f(l, r[safe_modulo(i, r.size())]);
     } else if constexpr (!IsArithV<L> && !IsArithV<R>) {
-      return Trait::f(l[i % l.size()], r[i % r.size()]);
+      return Trait::f(l[safe_modulo(i, l.size())], r[safe_modulo(i, r.size())]);
     }
   }
   std::size_t size() const {
