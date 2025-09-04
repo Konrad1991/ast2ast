@@ -127,6 +127,8 @@ void test_vector_subsetting() {
       subset(v, -1.0);
     } catch (Rcpp::exception &e) {
       std::string expect = "invalid index argument";
+      std::cout << e.what() << std::endl;
+      std::cerr << e.what() << std::endl;
       ass(expect == e.what(), std::string(s) + "invalid index argument");
     }
 
@@ -154,6 +156,8 @@ void test_vector_subsetting() {
       subset(v,-1.0);
     } catch (Rcpp::exception &e) {
       std::string expect = "invalid index argument";
+      std::cout << e.what() << std::endl;
+      std::cerr << e.what() << std::endl;
       ass(expect == e.what(), std::string(s) + "invalid index argument");
     }
 
