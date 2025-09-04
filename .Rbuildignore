@@ -29,7 +29,7 @@
 ^compile_commands.json
 ^\.cache
 ^\.docs
-^\development
-^\notes
+^\development$
+^\notes$
 ^index.html
 ^compile_flags.txt
