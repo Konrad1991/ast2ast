@@ -2,6 +2,7 @@
 #include "../Core/Traits.hpp"
 #include <optional>
 #include <type_traits>
+#include "HelperSubsetting.hpp"
 
 #ifndef SUBSETTING_PRESERVING_ETR_HPP
 #define SUBSETTING_PRESERVING_ETR_HPP
@@ -288,7 +289,8 @@ inline auto subset(L&& l, R&& r) {
       SubsetClass<LDecayed, RDecayed, SubsetClassTrait>(lf, std::forward<R>(r))
     );
   } else if constexpr (IsFloat<RDecayed>) {
-    const std::size_t rs = static_cast<std::size_t>(std::floor(r));
+    const std::size_t rs = safe_index_from_double(r);
+    // const std::size_t rs = static_cast<std::size_t>(std::floor(r));
     ass<"Negative indices are not supported">(rs >= 1);
     using RSType = decltype(rs);
     return SubsetVecType<RetType, LDecayed, RSType>(

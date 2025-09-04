@@ -1,3 +1,5 @@
+#include "HelperSubsetting.hpp"
+
 #ifndef SUBSETTING_SIMPLIFYING_ETR_HPP
 #define SUBSETTING_SIMPLIFYING_ETR_HPP
 
