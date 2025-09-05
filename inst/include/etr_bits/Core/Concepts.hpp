@@ -115,6 +115,7 @@ template <typename T, typename X, typename Y, typename Trait>
 struct is_vec_s<Vec<T, SubsetClass<X, Y, Trait>>> : std::bool_constant<std::is_same_v<Trait, SubsetClassTrait>> {};
 template <typename T> inline constexpr bool is_vec_s_v = is_vec_s<T>::value;
 template <typename T> concept IsSubsetVec = is_vec_s_v<T>;
+// TODO: remove the checkes which are done by hand in Vec and Mat
 
 template <typename T> concept IsUnaryVec = IsVec<T> && IsUnary<typename T::DType>;
 template <typename T> concept IsBinaryVec = IsVec<T> && IsBinary<typename T::DType>;
@@ -154,10 +155,14 @@ template <typename T> inline constexpr bool is_mat_b_v = is_mat_b<T>::value;
 template <typename T> concept IsBorrowMat = is_mat_b_v<T>;
 
 template <typename T> struct is_mat_s : std::false_type {};
-template <typename X, typename Y, typename Trait>
-struct is_mat_s<Mat<X, SubsetClass<X, Y, Trait>>> : std::bool_constant<std::is_same_v<Trait, SubsetClassTrait>> {};
-template <typename T> inline constexpr bool is_mat_s_v = is_vec_s<T>::value;
-template <typename T> concept IsSubsetMat = is_mat_s_v<T>;
+template <typename T, typename T2, typename InnerR, typename Y, typename Trait>
+struct is_mat_s< Mat<T, SubsetClass< Mat<T2, InnerR>, Y, Trait > > >
+  : std::bool_constant< std::is_same_v<Trait, SubsetClassTrait> > {};
+template <typename T>
+inline constexpr bool is_mat_s_v = is_mat_s<std::remove_cvref_t<T>>::value;
+template <typename T>
+concept IsSubsetMat = is_mat_s_v<T>;
+// TODO: remove the checkes which are done by hand in Vec and Mat
 
 // Array like (Vec or Mat)
 template <typename T>
@@ -175,8 +180,9 @@ concept IsRArrayLike = requires(T t) {
 // -----------------------------------------------------------------------------------------------------------
 template <typename T>
 concept IsSubsetClass = requires {
-  typename ReRef<T>::type::Trait;
-  requires IS<typename ReRef<T>::type::Trait, SubsetClassTrait>;
+  typename ReRef<T>::type::TypeTrait;
+  requires IS<typename ReRef<T>::type::TypeTrait, SubsetClassTrait>;
+  // TODO: remove the checkes which are done by hand in Vec and Mat
 };
 template <typename T>
 concept IsLBuffer = requires {

@@ -2,21 +2,6 @@
 #include <stdexcept>
 using namespace etr;
 
-/*
-// NOTE: compilation fails as desired
-void test_scalar_subsetting() {
-  bool b = true;
-  int i = 10;
-  double d = 3.14;
-  subset(b, 1);
-  subset(b, 1, 1);
-  subset(i, 1);
-  subset(i, 1, 1);
-  subset(d, 1);
-  subset(d, 1, 1);
-}
-*/
-
 // [[Rcpp::export]]
 void test_subset_with_scalar() {
   Vec<int> l; l = c(1, 2, 3, 4);
