@@ -11,6 +11,8 @@ template <typename T, typename R> struct Vec {
   using RetType = typename ReRef<decltype(d)>::type::RetType;
   using InnerTrait = typename ReRef<R>::type::TypeTrait;
 
+  // TODO: construct Vec from Mat
+
   // NOTE: define Vector with specific size
   explicit Vec(SI &sz) : d(sz.sz) {}
   explicit Vec(SI &&sz) : d(sz.sz) {}
@@ -27,9 +29,9 @@ template <typename T, typename R> struct Vec {
   }
   //  NOTE: Move other Vec
   //  e.g. vec = std::move(other_vec)
-  Vec(Vec&& other) noexcept {
-    d.moveit(other.d);
-  }
+  Vec(Vec&& other) noexcept(std::is_nothrow_move_constructible_v<R>)
+  : d(std::move(other.d)) {}
+
   // move: e.g. Vec<int> vec = c(1, 2, 3)
   template<typename T2, typename R2>
   requires(IS<T, T2> && IsLBuffer<R> && IsRArrayLike<Vec<T2, R2>>)
@@ -44,18 +46,18 @@ template <typename T, typename R> struct Vec {
   }
 
   // NOTE: Buffer
-  template <typename L2> explicit Vec(Buffer<L2> &&inp) : d(inp) { }
-  template <typename L2> explicit Vec(Buffer<L2> &inp) : d(inp) { }
+  template <typename L2> explicit Vec(Buffer<L2> &&inp) noexcept : d(std::move(inp)) {}
+  template <typename L2> explicit Vec(Buffer<L2> &inp) : d(inp) {}
   template <typename L2, typename TraitOther>
-  explicit Vec(const Buffer<L2, TraitOther> &inp) : d(inp) { }
+  explicit Vec(const Buffer<L2, TraitOther> &inp) : d(inp) {}
 
   // NOTE: Borrow
   template <typename U = R, typename T2>
     requires IS<U, Borrow<T>>
-  explicit Vec(Borrow<T2> &&borrowed) : d(borrowed) { }
+  explicit Vec(Borrow<T2> &&borrowed) : d(borrowed) {}
   template <typename U = R, typename T2>
     requires IS<U, Borrow<T>>
-  explicit Vec(Borrow<T2> &borrowed) : d(borrowed) { }
+  explicit Vec(Borrow<T2> &borrowed) : d(borrowed) {}
   template <typename U = R>
     requires IS<U, Borrow<T>>
   explicit Vec(T *ptr, std::size_t s) : d(ptr, s) {}
@@ -68,28 +70,28 @@ template <typename T, typename R> struct Vec {
   // NOTE: Subset lazy
   template <typename L2, typename R2, typename TraitL>
     requires IS<TraitL, SubsetClassTrait>
-  explicit Vec(SubsetClass<L2, R2, TraitL> &&inp) : d(std::move(inp)) { }
+  explicit Vec(SubsetClass<L2, R2, TraitL> &&inp) : d(std::move(inp)) {}
   template <typename L2, typename R2, typename TraitL>
     requires IS<TraitL, SubsetClassTrait>
   explicit Vec(SubsetClass<L2, R2, TraitL> &inp) : d(std::move(inp)) { }
 
   // NOTE: Binary operation
   template <typename L2, typename R2, typename OperationTrait>
-  explicit Vec(BinaryOperation<L2, R2, OperationTrait> &&inp) : d(inp) { }
+  explicit Vec(BinaryOperation<L2, R2, OperationTrait> &&inp) : d(inp) {}
   template <typename L2, typename R2, typename OperationTrait>
-  explicit Vec(BinaryOperation<L2, R2, OperationTrait> &inp) : d(inp) { }
+  explicit Vec(BinaryOperation<L2, R2, OperationTrait> &inp) : d(inp) {}
 
   // NOTE: Unary operation
   template <typename L2, typename OperationTrait>
-  explicit Vec(UnaryOperation<L2, OperationTrait> &&inp) : d(inp) { }
+  explicit Vec(UnaryOperation<L2, OperationTrait> &&inp) : d(inp) {}
   template <typename L2, typename OperationTrait>
-  explicit Vec(UnaryOperation<L2, OperationTrait> &inp) : d(inp) { }
+  explicit Vec(UnaryOperation<L2, OperationTrait> &inp) : d(inp) {}
 
   // NOTE: arithmetic constructors
-  explicit Vec(int sz) : d(1) { d[0] = static_cast<T>(sz); }
+  explicit Vec(int sz) : d(1) { d[0] = static_cast<T>(sz); } // TODO: why explicit.
   explicit Vec(std::size_t sz) : d(1) { d[0] = sz; }
-  Vec(double sz) : d(1) { d[0] = sz; }
-  Vec(bool b) : d(1) { d[0] = static_cast<T>(b); }
+  Vec(double sz) : d(1) { d[0] = sz;}
+  Vec(bool b) : d(1) { d[0] = static_cast<T>(b);}
 
   // NOTE: pointer constructor
   template<typename T2>
@@ -187,8 +189,20 @@ template <typename T, typename R> struct Vec {
   }
 
   void invalid_lhs() {
-    static_assert(!IsUnary<R>, "Cannot assign to unary calculation");
-    static_assert(!IsBinary<R>, "Cannot assign to binary calculation");
+    static_assert(
+    !IsUnary<R>,
+    "\n\n\n"
+    "[etr::assignment Error]\n"
+    "You tried to assign to a (unary) calculation."
+    "\n\n\n"
+  );
+    static_assert(
+    !IsBinary<R>,
+    "\n\n\n"
+    "[etr::assignment Error]\n"
+    "You tried to assign to a (binary) calculation."
+    "\n\n\n"
+  );
   }
   template <typename OtherObj, typename DataTypeOtherObj>
   void copyWithTemp(const OtherObj& other_obj) {
@@ -206,12 +220,11 @@ template <typename T, typename R> struct Vec {
   void assign(const T2& other_obj) {
     invalid_lhs();
     using DataTypeOtherVec = typename ReRef<decltype(other_obj.d)>::type::RetType;
-    copyWithTemp<T2, DataTypeOtherVec>(std::forward<decltype(other_obj)>(other_obj));
+    copyWithTemp<T2, DataTypeOtherVec>(other_obj);
     if constexpr (IsLBuffer<R>) {
       d.moveit(temp);
     } else if constexpr (IsBorrow<R>) {
       ass<"number of items to replace is not a multiple of replacement length">(other_obj.size() <= d.capacity);
-      ass<"size cannot be increased above the size of the borrowed object">(d.sz <= other_obj.size());
       d.sz = other_obj.size();
       for (std::size_t i = 0; i < other_obj.size(); i++) d[i] = temp[i];
     } else if constexpr (IS<SubsetClassTrait, typename ReRef<R>::type::TypeTrait>) {
@@ -229,14 +242,25 @@ template <typename T, typename R> struct Vec {
     !IsArithV<Decayed<T2>> && (!IsRArrayLike<T2>)
   )
   Vec &operator=(const T2 &other_obj) {
-    assign(std::forward<decltype(other_obj)>(other_obj));
+    assign(other_obj);
+    return *this;
+  }
+
+  // copy assignment
+  // Intendend for matrices
+  template<typename T2>
+  requires(
+    !IsArithV<Decayed<T2>> && IsMat<T2>
+  )
+  Vec &operator=(const T2& other_obj) {
+    assign(other_obj);
     return *this;
   }
 
   // copy assignment
   // defined to handle the case where the type of *this and other_obj is the same
   Vec& operator=(const Vec& other_obj) {
-    assign(std::forward<decltype(other_obj)>(other_obj));
+    assign(other_obj);
     return *this;
   }
 
@@ -294,7 +318,7 @@ template <typename T, typename R> struct Vec {
     return d.end();
   }
 
-  T &back() const { return d.p[this->size()]; }
+  T &back() const { return d.p[this->size()]; } // TODO: use the back function from R. Because not all classes have p
 
   void fill(T value) { d.fill(value); }
   void resize(std::size_t newSize) { d.resize(newSize); }

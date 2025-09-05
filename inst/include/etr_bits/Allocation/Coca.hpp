@@ -72,6 +72,9 @@ template <class F, class... Args> inline F forEachArg(F f, Args &&...args) {
 }
 
 template <typename... Args> inline auto c(Args &&...args) {
+  static_assert(sizeof...(Args) > 0,
+  "\n\n[etr::c Error]\nYou cannot use c() without any arguments\n");
+
   using cType = decltype(determine_type(args...));
   int size = 0;
 

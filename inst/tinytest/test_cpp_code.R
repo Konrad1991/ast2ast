@@ -1,6 +1,7 @@
 library(tinytest)
 ast2ast:::test_basestore()
-ast2ast:::test_arithmetic()
+ast2ast:::test_arithmetic_assign_to_buffer()
+ast2ast:::test_arithmetic_assign_to_borrow()
 ast2ast:::test_comparison()
 ast2ast:::test_borrow()
 ast2ast:::test_cmr()

@@ -22,11 +22,12 @@ void test_basestore() {
   // differ
   {
     std::string s = "BufferTestsAllocated: ";
-    int size = 100;
+    std::size_t size = 100;
     Buffer<double> bs(size);
     ass(bs.size() == size, std::string(s) + "size");
-    ass(bs.capacity == static_cast<int>(1.15 * size), std::string(s) + "capacity");
+    ass(bs.capacity == static_cast<std::size_t>(1.15 * size), std::string(s) + "capacity");
     bs.push_back(3.14);
+    ass(bs.capacity >= bs.size(), std::string(s) + "capacity >= size after push_back");
     ass(bs[bs.size() - 1] == 3.14, std::string(s) + "last element");
     ass(bs.size() == size + 1, std::string(s) + "size");
   }
@@ -35,10 +36,10 @@ void test_basestore() {
   //
   {
     std::string s = "BufferTestsAllocated: ";
-    int size = 3;
+    std::size_t size = 3;
     Buffer<double> bs(size);
     ass(bs.size() == size, std::string(s) + "size");
-    ass(bs.capacity == static_cast<int>(1.15 * size), std::string(s) + "capacity");
+    ass(bs.capacity == static_cast<std::size_t>(1.15 * size), std::string(s) + "capacity");
     bs.push_back(3.14);
     ass(bs[bs.size() - 1] == 3.14, std::string(s) + "last element");
     ass(bs.size() == size + 1, std::string(s) + "size");
@@ -65,7 +66,9 @@ void test_basestore() {
     v[v.sz - 1] = 4.5;
     ass(v[v.sz - 1] == 4.5, std::string(s) + "last element");
 
+    auto cap_before = v.capacity;
     v.resize(1000);
+    ass(v.capacity >= cap_before, std::string(s) + "capacity monotonic");
     ass(v.size() == 1000, std::string(s) + "size");
     v[v.sz - 1] = 400.5;
     ass(v[v.sz - 1] == 400.5, std::string(s) + "last element");
@@ -90,7 +93,9 @@ void test_basestore() {
     std::string s = "BufferFill: ";
     Buffer<double> v;
     v.resize(10);
+    auto n = v.size();
     v.fill(3.4);
+    ass(v.size() == n, std::string(s) + "size unchanged by fill");
     for (size_t i = 0; i < v.size(); i++) {
       ass(v[i] == 3.4, std::string(s) + "[" + std::to_string(i) + "]");
     }

@@ -15,12 +15,12 @@ void test_colon() {
     ass(vec1[4] == 3, "vec1[4] == 3");
 
     Vec<double> vec2; vec2 = colon(10, -2);
-    ass(vec2[0] == 10, "vec1[0] == 10");
-    ass(vec2[1] == 9, "vec1[1] == 9");
-    ass(vec2[2] == 8, "vec1[2] == 8");
-    ass(vec2[3] == 7, "vec1[3] == 7");
-    ass(vec2[11] == -1, "vec1[11] == -1");
-    ass(vec2[12] == -2, "vec1[12] == -2");
+    ass(vec2[0] == 10, "vec2[0] == 10");
+    ass(vec2[1] == 9, "vec2[1] == 9");
+    ass(vec2[2] == 8, "vec2[2] == 8");
+    ass(vec2[3] == 7, "vec2[3] == 7");
+    ass(vec2[11] == -1, "vec2[11] == -1");
+    ass(vec2[12] == -2, "vec2[12] == -2");
 
     etr::Vec<double> vec3; vec3 = etr::colon(10.25, -1.5);
     ass(vec3[0] == 10.25, "vec3[0] == 10.25");
@@ -46,6 +46,20 @@ void test_colon() {
     ass(vec6[1] == 2, "vec6[1] == 2");
     ass(vec6[2] == 3, "vec6[2] == 3");
     ass(vec6[3] == 4, "vec6[3] == 4");
+
+    ass(vec1.size() == 12, "vec1 size == 12");        // -1..10 inclusive
+    ass(vec2.size() == 13, "vec2 size == 13");        // 10..-2 inclusive
+    ass(vec3.size() == 12, "vec3 size == 12");        // 10.25, 9.25, ..., -0.75
+    ass(vec4.size() == 4, "vec4 size == 4");          // 1.25..4.25
+    ass(vec5.size() == 4, "vec5 size == 4");          // 1.25..4.25
+    ass(vec6.size() == 4, "vec6 size == 4");          // 1..4
+  }
+  {
+    Vec<double> v1; v1 = c(4);
+    Vec<double> v2; v2 = c(1);
+    Vec<double> r;  r = colon(v1, v2);
+    ass(r.size() == 4, "vv desc size");
+    ass(r[0]==4 && r[1]==3 && r[2]==2 && r[3]==1, "vv desc values");
   }
 
   // NOTE: vectors and arithmetics
@@ -98,6 +112,16 @@ void test_colon() {
       etr::Vec<double> v;
       etr::colon(10, v);
     } catch (Rcpp::exception &e) {
+      std::string expected = ": accepts only vector of length 1";
+      ass(e.what() == expected, "usage of empty vec");
+    }
+  }
+  {
+    try {
+      Vec<double> v; v = c(1,2);
+      (void)colon(10, v);
+      ass(false, "colon(10, vec>1) should throw");
+    } catch (const Rcpp::exception& e) {
       std::string expected = ": accepts only vector of length 1";
       ass(e.what() == expected, "usage of empty vec");
     }

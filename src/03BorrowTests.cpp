@@ -12,7 +12,7 @@ void test_borrow() {
     Borrow<double> bs;
     try {
       bs[0];
-    } catch (Rcpp::exception &e) {
+    } catch (const Rcpp::exception &e) {
       std::string expected = "No memory was allocated";
       ass(e.what() == expected, std::string(s) + "nothing allocated");
     }
@@ -27,7 +27,7 @@ void test_borrow() {
   // differ
   {
     std::string s = "BorrowTestsAllocated: ";
-    int size = 100;
+    std::size_t size = 100;
     double *ptr = new double[size];
     Borrow<double> bs(ptr, size);
     ass(bs.size() == size, std::string(s) + "size");
@@ -40,7 +40,7 @@ void test_borrow() {
   // not differ
   {
     std::string s = "BorrowTestsAllocated: ";
-    int size = 3;
+    std::size_t size = 3;
     double *ptr = new double[size];
     Borrow<double> bs(ptr, size);
     ass(bs.size() == size, std::string(s) + "size");
@@ -55,19 +55,22 @@ void test_borrow() {
     std::string s = "BorrowResizing: ";
     double *ptr = new double[10];
     Borrow<double> v(ptr, 10);
+    std::size_t cap0 = v.capacity;
     v.resize(5);
     ass(v.size() == 5, std::string(s) + "size");
+    ass(v.capacity == cap0, std::string(s) + "capacity unchanged");
     v[v.sz - 1] = 4.5;
     ass(v[v.sz - 1] == 4.5, std::string(s) + "last element");
 
     v.resize(7);
     ass(v.size() == 7, std::string(s) + "size");
+    ass(v.capacity == cap0, std::string(s) + "capacity unchanged");
     v[v.sz - 1] = 400.5;
     ass(v[v.sz - 1] == 400.5, std::string(s) + "last element");
 
     try {
       v.resize(1000);
-    } catch (Rcpp::exception &e) {
+    } catch (const Rcpp::exception &e) {
       std::string expected =
           "Cannot resize Borrow element above size of borrowed object";
       ass(e.what() == expected, std::string(s) + "resize above size of borrowed object");
@@ -112,9 +115,9 @@ void test_borrow() {
   }
   // NOTE: test Borrow with other functions
   {
-    // TODO: add more tests
     std::string s = "BorrowWithOtherFcts: ";
     double *ptr = new double[10];
+    for (std::size_t i = 0; i < 10; i++) ptr[i] = static_cast<double>(i + 1);
     Vec<double, Borrow<double>> bp(ptr, 10);
     Vec<double> res;
     res = c(1, 2, 3, bp);

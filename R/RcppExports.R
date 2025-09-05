@@ -13,8 +13,12 @@ test_borrow <- function() {
     invisible(.Call(`_ast2ast_test_borrow`))
 }
 
-test_arithmetic <- function() {
-    invisible(.Call(`_ast2ast_test_arithmetic`))
+test_arithmetic_assign_to_buffer <- function() {
+    invisible(.Call(`_ast2ast_test_arithmetic_assign_to_buffer`))
+}
+
+test_arithmetic_assign_to_borrow <- function() {
+    invisible(.Call(`_ast2ast_test_arithmetic_assign_to_borrow`))
 }
 
 test_comparison <- function() {

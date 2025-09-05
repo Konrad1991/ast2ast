@@ -40,12 +40,21 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// test_arithmetic
-void test_arithmetic();
-RcppExport SEXP _ast2ast_test_arithmetic() {
+// test_arithmetic_assign_to_buffer
+void test_arithmetic_assign_to_buffer();
+RcppExport SEXP _ast2ast_test_arithmetic_assign_to_buffer() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    test_arithmetic();
+    test_arithmetic_assign_to_buffer();
+    return R_NilValue;
+END_RCPP
+}
+// test_arithmetic_assign_to_borrow
+void test_arithmetic_assign_to_borrow();
+RcppExport SEXP _ast2ast_test_arithmetic_assign_to_borrow() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_arithmetic_assign_to_borrow();
     return R_NilValue;
 END_RCPP
 }
@@ -243,7 +252,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_basestore", (DL_FUNC) &_ast2ast_test_basestore, 0},
     {"_ast2ast_test_borrow_r", (DL_FUNC) &_ast2ast_test_borrow_r, 1},
     {"_ast2ast_test_borrow", (DL_FUNC) &_ast2ast_test_borrow, 0},
-    {"_ast2ast_test_arithmetic", (DL_FUNC) &_ast2ast_test_arithmetic, 0},
+    {"_ast2ast_test_arithmetic_assign_to_buffer", (DL_FUNC) &_ast2ast_test_arithmetic_assign_to_buffer, 0},
+    {"_ast2ast_test_arithmetic_assign_to_borrow", (DL_FUNC) &_ast2ast_test_arithmetic_assign_to_borrow, 0},
     {"_ast2ast_test_comparison", (DL_FUNC) &_ast2ast_test_comparison, 0},
     {"_ast2ast_test_cmr", (DL_FUNC) &_ast2ast_test_cmr, 0},
     {"_ast2ast_test_c", (DL_FUNC) &_ast2ast_test_c, 0},

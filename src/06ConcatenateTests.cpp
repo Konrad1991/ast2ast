@@ -55,7 +55,7 @@ void test_c() {
     ass(c(numeric(16), 4, 4, 4, 5).size() == 20, std::string(s) + "vector");
     ass(c(matrix(colon(1, 16), 4, 4), 4, 5, c(1, 2, 3), rep(1, 4))
                 .size() == 25,
-        std::string(s) + "mixed constructign");
+        std::string(s) + "mixed constructing");
     Vec<double> a; a = c(1, 2, 3);
     double d = 3.14;
     int i = 60;
@@ -63,5 +63,17 @@ void test_c() {
     ass(res1.size() == 5, std::string(s) + "l variables");
     auto res2 = c(a, 1, 2, a);
     ass(res2.size() == 8, std::string(s) + "mixed l and r variables");
+    {
+      double buf[3] = {7, 8, 9};
+      Vec<double, Borrow<double>> br(buf, 3);
+      auto out = c(br, 1, 2);
+      ass(out.size() == 5, "c(borrow, scalars) size");
+      ass(out[0] == 7 && out[1] == 8 && out[2] == 9, "c(borrow, ...) contents");
+      buf[0] = 100;
+      ass(out[0] == 7, "c result independent of borrow");
+    }
+    {
+      // Vec<double> v = c(); // Compilation fails as desired
+    }
   }
 }
