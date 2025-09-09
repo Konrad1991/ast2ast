@@ -547,7 +547,7 @@ function_registry_global$add(
   is_infix = FALSE, group = "unary_node", cpp_name = "etr::sqroot"
 )
 function_registry_global$add(
-  name = "expo", num_args = 1, arg_names = NA,
+  name = "exp", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
   is_infix = FALSE, group = "unary_node", cpp_name = "etr::expo"
