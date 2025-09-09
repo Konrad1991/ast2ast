@@ -16,11 +16,10 @@ template <typename T>
   requires isBID<T>
 inline void print(const T &inp) {
   if constexpr (IS<T, bool>) {
-    PRINT_STREAM << std::boolalpha << inp << " ";
+    PRINT_STREAM << std::boolalpha << inp << std::endl;
   } else {
     PRINT_STREAM << inp << std::endl;
   }
-  PRINT_STREAM << std::endl;
 }
 
 inline void print(const char *inp) {

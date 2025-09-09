@@ -41,13 +41,6 @@ void constructors_vector() {
     // template <typename L2> explicit Vec(Buffer<L2> &inp) : d(inp) { }
     Buffer<double> b1(30);
     Vec<double> v9(b1);
-
-    // Construct Vec from const L buffer.
-    // template <typename L2, typename TraitOther>
-    // explicit Vec(const Buffer<L2, TraitOther> &inp) : d(inp)
-    const Buffer<double> b2(5); // TODO: is this constructor required?
-    Vec<double> v10(b2);
-
     // NOTE: The base type of Buffer and Vector have to be the same!
   }
 
@@ -173,6 +166,15 @@ void constructors_vector() {
     Vec<double> v27;
   }
 
+  // Matrix
+  {
+    Mat<double> m(SI{2}, SI{3});
+    print(m);
+    std::cout << std::boolalpha << IsMat<decltype(m)> << std::endl;
+    Vec<double> v28(m);
+    print(v28);
+  }
+
 }
 
 void assignment_vector() {
@@ -277,7 +279,7 @@ int main() {
   One Allocation for: Vec<double> v26(true);
   Zero Allocation for: Vec<double> v27
   */
-  // constructors_vector();
+  constructors_vector();
 
   /*
   One Allocation for: Vec<bool> v1(SI{1}); v1 = true; lhs: buffer, same base type
@@ -292,5 +294,5 @@ int main() {
   Three Allocation for: Vec<double> v6(SI{2}); v6 = c(1.1) + c(1.1, 2.2); <-- One Allocation for temp, one for c(1.1) and one for c(1.1, 2.2)
   Three Allocation for: Vec<double> v6(SI{2}); v6 = matrix(0.0, 2, 2); One for constructor, one for matrix, and one for temp
   */
-  assignment_vector();
+  // assignment_vector();
 }

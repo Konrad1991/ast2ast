@@ -35,3 +35,8 @@ f <- function() {
 }
 - prevent usage of if, for, while and repeat within another expression.
   Similar approach as for <-/=
+
+## Cpp
+
+- adapt binary in the same way as unary
+- maybe subsetting requires also the same adaption?

@@ -547,10 +547,10 @@ function_registry_global$add(
   is_infix = FALSE, group = "unary_node", cpp_name = "etr::sqroot"
 )
 function_registry_global$add(
-  name = "exp", num_args = 1, arg_names = NA,
+  name = "expo", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::exp"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::expo"
 )
 function_registry_global$add(
   name = "^", num_args = 2, arg_names = c(NA, NA),
