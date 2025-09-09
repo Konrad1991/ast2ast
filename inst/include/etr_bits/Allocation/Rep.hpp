@@ -43,7 +43,7 @@ inline auto repInternal(const L &inp, const R& times) {
     return ret;
   } else if constexpr (!IsArithV<L>) {
     std::size_t length = ConvertTimesRep(times) * inp.size();
-    using DataType = typename ExtractDataType<Decayed<L>>::RetType;
+    using DataType = typename ExtractDataType<Decayed<L>>::value_type;
     Vec<DataType, Buffer<DataType, RBufferTrait>> ret(SI{length});
     std::size_t counter = 0;
     for (std::size_t i = 0; i < ret.size(); i++) {

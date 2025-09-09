@@ -55,9 +55,10 @@ inline double b2d(bool inp) { return static_cast<double>(inp); }
 
 template <typename T> struct It {
   T *p;
-  T &operator*() { return *p; }
-  bool operator!=(const It &rhs) { return p != rhs.p; }
-  void operator++() { ++p; }
+  T &operator*() const { return *p; }
+  bool operator!=(const It &rhs) const { return p != rhs.p; }
+  bool operator==(const It& rhs) const { return p == rhs.p; }
+  It& operator++() { ++p; return *this; }
 };
 
 inline void ass(bool inp, const std::string &message) {

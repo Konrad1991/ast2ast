@@ -63,7 +63,7 @@ inline auto matrix(const T& inp, const R& nrow, const C& ncol) {
     }
     return res;
   } else {
-    using DataType = typename ExtractDataType<Decayed<T>>::RetType;
+    using DataType = typename ExtractDataType<Decayed<T>>::value_type;
     auto res = createRMat<DataType>(nrow, ncol);
     ass<"Input for matrix does not match size (nrow * ncol)">(res.size() == (nrow * ncol));
     for (std::size_t i = 0; i < res.size(); i++) {

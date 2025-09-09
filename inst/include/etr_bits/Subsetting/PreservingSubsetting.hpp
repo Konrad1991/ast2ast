@@ -38,12 +38,13 @@ struct SubsetClassIterator {
 
 // The SubsetClass
 // -----------------------------------------------------------------------------------------------------------
-template <typename L, typename R, typename Trait>
+template <typename L, typename R, typename STrait>
 class SubsetClass {
 public:
-  using Type = typename ReRef<L>::type::RetType;
-  using RetType = typename ReRef<L>::type::RetType;
-  using TypeTrait = Trait;
+  using Type = typename ReRef<L>::type::value_type;
+  using value_type = typename ReRef<L>::type::value_type;
+  using TypeTrait = STrait;
+  using Trait = STrait;
   Holder<L> l;
   ConstHolder<R> r;
 
@@ -274,8 +275,8 @@ inline void precalcVecInt(const V &vec, std::vector<std::size_t> &ind) {
 
 // TODO: change all entries to auto&& and adapt the decltype and the creation of the pairs
 
-template <typename RetType, typename L, typename R>
-using SubsetVecType = Vec<RetType, SubsetClass<L, R, SubsetClassTrait>>;
+template <typename value_type, typename L, typename R>
+using SubsetVecType = Vec<value_type, SubsetClass<L, R, SubsetClassTrait>>;
 
 using IndType = std::vector<std::size_t>;
 
@@ -287,22 +288,22 @@ IsArithV<Decayed<R>>
 inline auto subset(L&& l, R&& r) {
   using RDecayed = std::decay_t<R>;
   using LDecayed = std::decay_t<L>;
-  using RetType = typename ExtractDataType<Decayed<L>>::RetType;
+  using value_type = typename ExtractDataType<Decayed<L>>::value_type;
 
   auto&& lf = std::forward<L>(l);
   if constexpr (IsBool<RDecayed>) {
-    return SubsetVecType<RetType, LDecayed, RDecayed>(
+    return SubsetVecType<value_type, LDecayed, RDecayed>(
       SubsetClass<LDecayed, RDecayed, SubsetClassTrait>(lf, std::forward<R>(r))
     );
   } else if constexpr (IsFloat<RDecayed>) {
     const std::size_t rs = safe_index_from_double(r);
     using RSType = decltype(rs);
-    return SubsetVecType<RetType, LDecayed, RSType>(
+    return SubsetVecType<value_type, LDecayed, RSType>(
       SubsetClass<LDecayed, RSType, SubsetClassTrait>(lf, std::forward<RSType>(rs))
     );
   } else if constexpr (IsInteger<RDecayed>) {
     ass<"Negative indices are not supported">(r >= 1);
-    return SubsetVecType<RetType, LDecayed, RDecayed>(
+    return SubsetVecType<value_type, LDecayed, RDecayed>(
       SubsetClass<LDecayed, RDecayed, SubsetClassTrait>(lf, std::forward<R>(r))
     );
   } else {
@@ -314,20 +315,20 @@ inline auto subset(L&& l, R&& r) {
 template <typename L, typename R>
 requires (!IsArithV<Decayed<R>> && IsArrayLike<Decayed<L>>)
 inline auto subset(L&& l, R&& r) {
-  using RetType = typename ExtractDataType<Decayed<L>>::RetType;
+  using value_type = typename ExtractDataType<Decayed<L>>::value_type;
   using RDecayed = std::decay_t<R>;
   using LDecayed = std::decay_t<L>;
   auto&& lf = std::forward<L>(l);
   if constexpr (IsBool<RDecayed> || IsFloat<RDecayed>) {
     std::vector<std::size_t> ind;
     precalcVecInt(r, ind);
-    return SubsetVecType<RetType, LDecayed, IndType>(
+    return SubsetVecType<value_type, LDecayed, IndType>(
       SubsetClass<LDecayed, IndType, SubsetClassTrait>(lf, std::forward<IndType>(ind))
     );
   } else {
     auto&& r_d = std::forward<R>(r).d;
     using RDType = decltype(r.d);
-    return SubsetVecType<RetType, LDecayed, RDType>(
+    return SubsetVecType<value_type, LDecayed, RDType>(
       SubsetClass<LDecayed, RDType, SubsetClassTrait>(lf, r_d)
     );
   }
@@ -376,8 +377,8 @@ inline auto ArithmeticHandler(const V& vec, const O& obj, bool is_row) {
 5  Mat                      VecIntOrDouble                VecIntOrDouble              Done
 */
 
-template <typename RetType, typename L, typename R>
-using SubsetMatType = Mat<RetType, SubsetClass<L, R, SubsetClassTrait>>;
+template <typename value_type, typename L, typename R>
+using SubsetMatType = Mat<value_type, SubsetClass<L, R, SubsetClassTrait>>;
 
 // NOTE: R and C are arithmetic values
 template <typename L, typename R, typename C>
@@ -385,13 +386,13 @@ requires(
   IsMat<Decayed<L>> && IsArithV<Decayed<R>> && IsArithV<Decayed<C>>
 )
 inline auto subset(L&& l, R&& row, C&& col) {
-  using RetType = typename ExtractDataType<Decayed<L>>::RetType;
+  using value_type = typename ExtractDataType<Decayed<L>>::value_type;
   using LDecayed = std::decay_t<L>;
   auto r = ArithmeticHandler(l, row, true);
   auto c = ArithmeticHandler(l, col, false);
   auto&& lf = std::forward<L>(l);
   using pair_type = std::pair<decltype(r), decltype(c)>;
-  return SubsetMatType<RetType, LDecayed, pair_type>(
+  return SubsetMatType<value_type, LDecayed, pair_type>(
     SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
       lf,
       std::pair<decltype(r), decltype(c)>{r, c}
@@ -404,7 +405,7 @@ requires(
   IsMat<Decayed<L>> && IsArithV<Decayed<R>> && IsArrayLike<Decayed<C>>
 )
 inline auto subset(L&& l, R&& row, C&& col) {
-  using RetType = typename ExtractDataType<Decayed<L>>::RetType;
+  using value_type = typename ExtractDataType<Decayed<L>>::value_type;
   using LDecayed = std::decay_t<L>;
   using CDecayed = std::decay_t<C>;
   auto r = ArithmeticHandler(l, row, true);
@@ -414,7 +415,7 @@ inline auto subset(L&& l, R&& row, C&& col) {
     std::vector<std::size_t> ind;
     precalcVecInt(col, ind);
     using pair_type = std::pair<decltype(r), IndType>;
-    return Mat<RetType, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
+    return Mat<value_type, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
       SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
         lf,
         std::pair<decltype(r), IndType>(std::forward<decltype(r)>(r), std::move(ind))
@@ -422,7 +423,7 @@ inline auto subset(L&& l, R&& row, C&& col) {
   } else {
     using CInner = decltype(col.d);
     using pair_type = std::pair<decltype(r), decltype(col_d)&>;
-    return Mat<RetType, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
+    return Mat<value_type, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
       SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
         lf,
         std::pair<decltype(r), decltype(col_d)&>{r, col_d}
@@ -436,7 +437,7 @@ requires(
 IsMat<Decayed<L>> && IsArrayLike<Decayed<R>> && IsArithV<Decayed<C>>
 )
 inline auto subset(L&& l, R&& row, C&& col) {
-  using RetType = typename ExtractDataType<Decayed<L>>::RetType;
+  using value_type = typename ExtractDataType<Decayed<L>>::value_type;
   using LDecayed = std::decay_t<L>;
   using RDecayed = std::decay_t<R>;
   auto c = ArithmeticHandler(l, col, true);
@@ -446,14 +447,14 @@ inline auto subset(L&& l, R&& row, C&& col) {
     std::vector<std::size_t> ind;
     precalcVecInt(row, ind);
     using pair_type = std::pair<IndType, decltype(c)>;
-    return Mat<RetType, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
+    return Mat<value_type, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
       SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
         lf,
         std::pair<IndType, decltype(c)>{std::move(ind), std::forward<decltype(c)>(c)}
       ));
   } else {
     using pair_type = std::pair<decltype(row_d)&, decltype(c)>;
-    return Mat<RetType, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
+    return Mat<value_type, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
       SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
         lf,
         std::pair<decltype(row_d)&, decltype(c)>{row_d, c}
@@ -467,7 +468,7 @@ requires(
   IsMat<Decayed<L>> && IsArrayLike<Decayed<R>> && IsArrayLike<Decayed<C>>
 )
 inline auto subset(L&& l, R&& row, C&& col) {
-  using RetType = typename ExtractDataType<Decayed<L>>::RetType;
+  using value_type = typename ExtractDataType<Decayed<L>>::value_type;
   using LDecayed = std::decay_t<L>;
   using RDecayed = std::decay_t<R>;
   using CDecayed = std::decay_t<C>;
@@ -478,7 +479,7 @@ inline auto subset(L&& l, R&& row, C&& col) {
     auto&& row_d = std::forward<R>(row).d;
     auto&& col_d = std::forward<C>(col).d;
     using pair_type = std::pair<decltype(row_d)&, decltype(col_d)&>;
-    return Mat<RetType, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
+    return Mat<value_type, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
       SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
         std::forward<L>(l),
         std::pair<decltype(row_d)&, decltype(col_d)&>{row_d, col_d}
@@ -490,7 +491,7 @@ inline auto subset(L&& l, R&& row, C&& col) {
     using IndR = decltype(ind);
     auto&& col_d = std::forward<C>(col).d;
     using pair_type = std::pair<IndR, decltype(col_d)&>;
-    return Mat<RetType, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
+    return Mat<value_type, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
       SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
         std::forward<L>(l),
         std::pair<IndR, decltype(col_d)&>{std::move(ind), col_d}
@@ -502,7 +503,7 @@ inline auto subset(L&& l, R&& row, C&& col) {
     using IndC = decltype(ind);
     auto&& row_d = std::forward<R>(row).d;
     using pair_type = std::pair<decltype(row_d)&, IndC>;
-    return Mat<RetType, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
+    return Mat<value_type, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
       SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
         std::forward<L>(l),
         std::pair<decltype(row_d)&, IndC>{row_d, std::move(ind)}
@@ -516,7 +517,7 @@ inline auto subset(L&& l, R&& row, C&& col) {
     using IndR = decltype(indR);
     using IndC = decltype(indC);
     using pair_type = std::pair<IndR, IndC>;
-    return Mat<RetType, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
+    return Mat<value_type, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
       SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
         std::forward<L>(l),
         std::pair<IndType, IndType>{std::move(indR), std::move(indC)}

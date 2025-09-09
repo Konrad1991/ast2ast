@@ -5,20 +5,19 @@ namespace etr {
 
 template <typename L, typename R, typename Trait>
 struct BinaryOpClassIterator {
-  ConstHolder<L> l;
-  ConstHolder<R> r;
+  const L& l;
+  const R& r;
   size_t index;
 
-  BinaryOpClassIterator(const L& l_, const R& r_, size_t index = 0)
-    : l(l_), r(r_), index(index) {}
+  BinaryOpClassIterator(const L& l_, const R& r_, size_t index = 0) : l(l_), r(r_), index(index) {}
 
   auto operator*() const {
     if constexpr (!IsArithV<L> && IsArithV<R>) {
-      return Trait::f(l.get()[safe_modulo(index, l.get().size())], r.get());
+      return Trait::f(l[safe_modulo(index, l.size())], r);
     } else if constexpr (IsArithV<L> && !IsArithV<R>) {
-      return Trait::f(l.get(), r.get()[safe_modulo(index, r.get().size())]);
+      return Trait::f(l, r[safe_modulo(index, r.size())]);
     } else if constexpr (!IsArithV<L> && !IsArithV<R>) {
-      return Trait::f(l.get()[safe_modulo(index, l.get().size())], r.get()[safe_modulo(index, r.get().size())]);
+      return Trait::f(l[safe_modulo(index, l.size())], r[safe_modulo(index, r.size())]);
     }
   }
 
@@ -26,79 +25,92 @@ struct BinaryOpClassIterator {
     ++index;
     return *this;
   }
-
-  bool operator!=(const BinaryOpClassIterator& other) const {
-    return index != other.index;
-  }
 };
+
+struct BinaryOpSentinel {
+  std::size_t n;
+};
+
+template<typename L, typename R, typename Trait>
+inline bool operator!=(const BinaryOpClassIterator<L, R, Trait>& it, const BinaryOpSentinel& s) {
+  return it.index < s.n;
+}
 
 template <typename L, typename R, typename BTrait>
 inline auto determine_type_binary_op() {
   if constexpr (IsComparisonTrait<BTrait>) {
     return bool{};
   } else if constexpr (IsClassV<L> && IsClassV<R>) {
-    using RetType =
-    std::common_type_t<typename L::RetType, typename R::RetType>;
-    return RetType{};
+    using value_type =
+    std::common_type_t<typename L::value_type, typename R::value_type>;
+    return value_type{};
   } else if constexpr (!IsClassV<L> && IsClassV<R>) {
-    using RetType = std::common_type_t<L, typename R::RetType>;
-    return RetType{};
+    using value_type = std::common_type_t<L, typename R::value_type>;
+    return value_type{};
   } else if constexpr (IsClassV<L> && !IsClassV<R>) {
-    using RetType = std::common_type_t<typename L::RetType, R>;
-    return RetType{};
+    using value_type = std::common_type_t<typename L::value_type, R>;
+    return value_type{};
   }
 }
 
 template <typename L, typename R, typename BTrait> struct BinaryOperation {
   using Trait = BTrait;
-  using RetType = decltype(determine_type_binary_op<L, R, BTrait>());
+  using value_type = decltype(determine_type_binary_op<L, R, BTrait>());
   using Type = decltype(determine_type_binary_op<L, R, BTrait>());
-  const L &l;
-  const R &r;
+  ConstHolder<L> l;
+  ConstHolder<R> r;
   using typeTraitL = L;
   using typeTraitR = R;
   using TypeTrait = BinaryTrait;
 
+  // l value & l value
   BinaryOperation(const L &l_, const R &r_) : l(l_), r(r_) {}
+  // l value & r value
+  BinaryOperation(const L &l_, R &&r_) : l(l_), r(std::move(r_)) {}
+  // r value & l value
+  BinaryOperation(L &&l_, const R &r_) : l(std::move(l_)), r(r_) {}
+  // r value & r value
+  BinaryOperation(L &&l_, R &&r_) : l(std::move(l_)), r(std::move(r_)) {}
+
   auto operator[](std::size_t i) const {
     if constexpr (!IsArithV<L> && IsArithV<R>) {
-      return Trait::f(l[safe_modulo(i, l.size())], r);
+      return Trait::f(l.get()[safe_modulo(i, l.get().size())], r.get());
     } else if constexpr (IsArithV<L> && !IsArithV<R>) {
-      return Trait::f(l, r[safe_modulo(i, r.size())]);
+      return Trait::f(l.get(), r.get()[safe_modulo(i, r.get().size())]);
     } else if constexpr (!IsArithV<L> && !IsArithV<R>) {
-      return Trait::f(l[safe_modulo(i, l.size())], r[safe_modulo(i, r.size())]);
+      return Trait::f(l.get()[safe_modulo(i, l.get().size())], r.get()[safe_modulo(i, r.get().size())]);
     }
   }
   std::size_t size() const {
     if constexpr (!IsArithV<L> && IsArithV<R>) {
-      return l.size();
+      return l.get().size();
     } else if constexpr (IsArithV<L> && !IsArithV<R>) {
-      return r.size();
+      return r.get().size();
     } else if constexpr (!IsArithV<L> && !IsArithV<R>) {
-      return l.size() > r.size() ? l.size() : r.size();
+      return l.get().size() > r.get().size() ? l.get().size() : r.get().size();
     }
   }
   bool im() const {
     if constexpr (IsArithV<L>) {
-      return r.im();
+      return r.get().im();
     } else if constexpr (IsArithV<R>) {
-      return l.im();
+      return l.get().im();
     } else {
-      return l.im() || r.im();
+      return l.get().im() || r.get().im();
     }
   }
   std::size_t nc() const {
     if constexpr (IsArithV<L>) {
-      return r.nc();
+      return r.get().nc();
     } else if constexpr (IsArithV<R>) {
-      return l.nc();
+      return l.get().nc();
     } else {
-      if (l.im() && r.im()) {
-        return (l.nc() > r.nc()) ? l.nc() : r.nc();
-      } else if (!l.im() && r.im()) {
-        return r.nc();
-      } else if (l.im() && !r.im()) {
-        return l.nc();
+      if (l.get().im() && r.get().im()) {
+        return (l.get().nc() > r.get().nc()) ? l.get().nc() : r.get().nc();
+      } else if (!l.get().im() && r.get().im()) {
+        return r.get().nc();
+      } else if (l.get().im() && !r.get().im()) {
+        return l.get().nc();
       } else {
         ass<"Matrix calculation failed!">(false);
         return false;
@@ -107,16 +119,16 @@ template <typename L, typename R, typename BTrait> struct BinaryOperation {
   }
   std::size_t nr() const {
     if constexpr (IsArithV<L>) {
-      return r.nr();
+      return r.get().nr();
     } else if constexpr (IsArithV<R>) {
-      return l.nr();
+      return l.get().nr();
     } else {
-      if (l.im() && r.im()) {
-        return (l.nr() > r.nr()) ? l.nr() : r.nr();
-      } else if (!l.im() && r.im()) {
-        return r.nr();
-      } else if (l.im() && !r.im()) {
-        return l.nr();
+      if (l.get().im() && r.get().im()) {
+        return (l.get().nr() > r.get().nr()) ? l.get().nr() : r.get().nr();
+      } else if (!l.get().im() && r.get().im()) {
+        return r.get().nr();
+      } else if (l.get().im() && !r.get().im()) {
+        return l.get().nr();
       } else {
         ass<"Matrix calculation failed!">(false);
         return false;
@@ -133,10 +145,8 @@ template <typename L, typename R, typename BTrait> struct BinaryOperation {
   // Move assignment
   BinaryOperation& operator=(BinaryOperation&& other) = delete;
 
-  auto begin() const { return BinaryOpClassIterator<L, R, BTrait>{l, r, 0}; }
-  auto end() const {
-    return BinaryOpClassIterator<L, R, BTrait>{l, r, this->size()};
-  }
+  auto begin() const { return BinaryOpClassIterator<L, R, BTrait>{l.get(), r.get(), 0}; }
+  auto end() const { return BinaryOpSentinel{this->size()}; }
 };
 
 template <typename L, typename R, typename Trait>
@@ -144,93 +154,119 @@ using BinaryOpResult = decltype(determine_type_binary_op<L, R, Trait>());
 
 template <typename L, typename R, typename Trait>
 using BinaryVec =
-    Vec<BinaryOpResult<L, R, Trait>, BinaryOperation<L, R, Trait>>;
+Vec<BinaryOpResult<L, R, Trait>, BinaryOperation<L, R, Trait>>;
 
 template <typename L, typename R, typename Trait>
-inline auto create_bin_vec(const L &l, const R &r) {
-  if constexpr (!IsArithV<L> && IsArithV<R>) {
-    return BinaryVec<decltype(l.d), R, Trait>(
-        BinaryOperation<decltype(l.d), R, Trait>(l.d, r));
-  } else if constexpr (IsArithV<L> && !IsArithV<R>) {
-    return BinaryVec<L, decltype(r.d), Trait>(
-        BinaryOperation<L, decltype(r.d), Trait>(l, r.d));
-  } else if constexpr (!IsArithV<L> && !IsArithV<R>) {
-    return BinaryVec<decltype(l.d), decltype(r.d), Trait>(
-        BinaryOperation<decltype(l.d), decltype(r.d), Trait>(l.d, r.d));
+inline auto create_bin_vec(L &&l,R &&r) {
+  using LD = std::decay_t<L>;
+  using RD = std::decay_t<R>;
+  if constexpr (!IsArithV<LD> && IsArithV<RD>) {
+    using Ld = std::decay_t<decltype(l.d)>;
+    if constexpr(IsRvalueV<L&&>) {
+      return BinaryVec<Ld, RD, Trait>(
+        BinaryOperation<Ld, RD, Trait>(std::move(l.d), std::forward<R>(r)));
+    } else {
+      return BinaryVec<Ld, RD, Trait>(
+        BinaryOperation<Ld, RD, Trait>(l.d, std::forward<R>(r)));
+    }
+  } else if constexpr (IsArithV<LD> && !IsArithV<RD>) {
+    using Rd = std::decay_t<decltype(r.d)>;
+    if constexpr(IsRvalueV<R&&>) {
+      return BinaryVec<LD, Rd, Trait>(
+        BinaryOperation<LD, Rd, Trait>(std::forward<L>(l), std::move(r.d)));
+    } else {
+      return BinaryVec<LD, Rd, Trait>(
+        BinaryOperation<LD, Rd, Trait>(std::forward<L>(l), r.d));
+    }
+  } else if constexpr (!IsArithV<LD> && !IsArithV<RD>) {
+    using Ld = std::decay_t<decltype(l.d)>;
+    using Rd = std::decay_t<decltype(r.d)>;
+    if constexpr(IsRvalueV<L&&> && IsRvalueV<R&&>) {
+      return BinaryVec<Ld, Rd, Trait>(
+        BinaryOperation<Ld, Rd, Trait>(std::move(l.d), std::move(r.d)));
+    } else if constexpr(!IsRvalueV<L&&> && IsRvalueV<R&&>) {
+      return BinaryVec<Ld, Rd, Trait>(
+        BinaryOperation<Ld, Rd, Trait>(l.d, std::move(r.d)));
+    } else if constexpr(IsRvalueV<L&&> && !IsRvalueV<R&&>) {
+      return BinaryVec<Ld, Rd, Trait>(
+        BinaryOperation<Ld, Rd, Trait>(std::move(l.d), r.d));
+    } else {
+      return BinaryVec<Ld, Rd, Trait>(
+        BinaryOperation<Ld, Rd, Trait>(l.d, r.d));
+    }
+
   } else {
     ass<"This case should not be reached. Contact author">(false);
   }
 }
 
-// TODO: does this work with R values? If not use either approach as in
-// LazySubsetting or change to const L&
 template <typename L, typename R> auto operator+(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, PlusTrait>(
-      std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<L, R, PlusTrait>(
+    std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto operator-(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, MinusTrait>(
-      std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<L, R, MinusTrait>(
+    std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto operator*(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, TimesTrait>(
-      std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<L, R, TimesTrait>(
+    std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto operator/(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, DivideTrait>(
-      std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<L, R, DivideTrait>(
+    std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto power(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, PowTrait>(
-      std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<L, R, PowTrait>(
+    std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R>
-  requires(IsVec<Decayed<L>> || IsVec<Decayed<R>>)
+requires(IsVec<Decayed<L>> || IsVec<Decayed<R>> || IsMat<Decayed<L>> || IsMat<Decayed<R>>)
 auto operator==(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, EqualTrait>(
-      std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<L, R, EqualTrait>(
+    std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R>
-  requires(IsVec<Decayed<L>> || IsVec<Decayed<R>>)
+requires(IsVec<Decayed<L>> || IsVec<Decayed<R>> || IsMat<Decayed<L>> || IsMat<Decayed<R>>)
 auto operator!=(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, UnEqualTrait>(
-      std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<L, R, UnEqualTrait>(
+    std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto operator>(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, LargerTrait>(
-      std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<L, R, LargerTrait>(
+    std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto operator>=(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, LargerEqualTrait>(
-      std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<L, R, LargerEqualTrait>(
+    std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto operator<(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, SmallerTrait>(
-      std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<L, R, SmallerTrait>(
+    std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto operator<=(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, SmallerEqualTrait>(
-      std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<L, R, SmallerEqualTrait>(
+    std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto operator&(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, AndTrait>(
-      std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<L, R, AndTrait>(
+    std::forward<L>(l), std::forward<R>(r));
 }
 
 template <typename L, typename R> auto operator|(L &&l, R &&r) {
-  return create_bin_vec<std::decay_t<L>, std::decay_t<R>, OrTrait>(
-      std::forward<L>(l), std::forward<R>(r));
+  return create_bin_vec<L, R, OrTrait>(
+    std::forward<L>(l), std::forward<R>(r));
 }
 
 } // namespace etr

@@ -1,9 +1,3 @@
-// TODO: add the iterator to each class: Buffer, Subset, Binary, Unary, Borrow, BorrowSEXP
-// Directly use the iterator methods begin, end etc. in Vec
-// Replace BaseStore with Buffer.
-// Each class has to possess RetType and Trait
-
-
 #ifndef TYPES_ETR_H
 #define TYPES_ETR_H
 
@@ -19,7 +13,7 @@ namespace etr {
 // -----------------------------------------------------------------------------------------------------------
 template <typename T, typename  BufferTrait = LBufferTrait> struct Buffer;
 template <typename T, typename BorrowTrait = BorrowTrait> struct Borrow;
-template <typename L, typename R, typename Trait> struct SubsetClass;
+template <typename L, typename R, typename STrait> struct SubsetClass;
 template <typename L, typename R, typename BTrait = BinaryTrait>
 struct BinaryOperation;
 template <typename I, typename UTrait = UnaryTrait>
@@ -38,13 +32,15 @@ Each inner data struct requires:
 - auto& operator[]
 - begin
 - end
+- Trait
+- value_type
+
 Classes                     Status
 Buffer                      Done
 Borrow                      Done
 BinaryOperation             Done
 UnaryOperation              Done
 SubsetClass                 Done
-
 */
 
 // Outer data structs
@@ -59,43 +55,43 @@ struct Mat;
 template <typename T> struct ExtractDataType;
 template <typename T, typename Trait>
 struct ExtractDataType<Buffer<T, Trait>> {
-  using RetType = T;
+  using value_type = T;
 };
 template <typename T, typename Trait>
 struct ExtractDataType<const Buffer<T, Trait>> {
-  using RetType = T;
+  using value_type = T;
 };
 template <typename T, typename Trait>
 struct ExtractDataType<Borrow<T, Trait>> {
-  using RetType = T;
+  using value_type = T;
 };
 template <typename T, typename Trait>
 struct ExtractDataType<const Borrow<T, Trait>> {
-  using RetType = T const;
+  using value_type = T const;
 };
 template <typename T, typename R, typename Trait>
 struct ExtractDataType<SubsetClass<T, R, Trait>> {
-  using RetType = T;
+  using value_type = T;
 };
 template <typename T, typename R, typename Trait>
 struct ExtractDataType<const SubsetClass<T, R, Trait>> {
-  using RetType = T;
+  using value_type = T;
 };
 template <typename T, typename Trait>
 struct ExtractDataType<UnaryOperation<T, Trait>> {
-  using RetType = T;
+  using value_type = T;
 };
 template <typename T, typename Trait>
 struct ExtractDataType<const UnaryOperation<T, Trait>> {
-  using RetType = T;
+  using value_type = T;
 };
 template <typename T, typename R, typename Trait>
 struct ExtractDataType<BinaryOperation<T, R, Trait>> {
-  using RetType = T;
+  using value_type = T;
 };
 template <typename T, typename R, typename Trait>
 struct ExtractDataType<const BinaryOperation<T, R, Trait>> {
-  using RetType = T;
+  using value_type = T;
 };
 
 // Extract data type from outer data structs
@@ -103,23 +99,23 @@ struct ExtractDataType<const BinaryOperation<T, R, Trait>> {
 template <typename T> struct ExtractDataType;
 template <typename T, typename R>
 struct ExtractDataType<Vec<T, R>> {
-  using RetType = T;
+  using value_type = T;
 };
 template <typename T, typename R>
 struct ExtractDataType<const Vec<T, R>> {
-  using RetType = T const;
+  using value_type = T const;
 };
 template <typename T, typename R>
 struct ExtractDataType<Mat<T, R>> {
-  using RetType = T;
+  using value_type = T;
 };
 template <typename T, typename R>
 struct ExtractDataType<const Mat<T, R>> {
-  using RetType = T const;
+  using value_type = T const;
 };
 
 template <typename T>
-using ExtractedTypeData = typename ExtractDataType<T>::RetType;
+using ExtractedTypeData = typename ExtractDataType<T>::value_type;
 
 // Extract inner data structs from outer data structs
 // -----------------------------------------------------------------------------------------------------------

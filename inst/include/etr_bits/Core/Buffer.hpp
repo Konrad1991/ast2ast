@@ -9,8 +9,7 @@
 namespace etr {
 template <typename T, typename BufferTrait> struct Buffer {
 
-  using RetType = T;
-  using Type = T;
+  using value_type = T;
   using Trait = BufferTrait;
   using TypeTrait = BufferTrait;
 
@@ -23,10 +22,12 @@ template <typename T, typename BufferTrait> struct Buffer {
   std::size_t nrow = 0;
   std::size_t ncol = 0;
 
-  std::size_t size() const {
+  std::size_t size() const noexcept{
     if (!allocated) return 0;
     return sz;
   }
+  bool empty() const noexcept{ return sz == 0; }
+
   std::size_t nr() const {
     ass<"No memory was allocated">(allocated);
     return nrow;
@@ -44,7 +45,7 @@ template <typename T, typename BufferTrait> struct Buffer {
     nrow = 0;
     ncol = 0;
   }
-  void set_matrix(std::size_t nrow_, std::size_t ncol_) {
+  void set_matrix(std::size_t nrow_, std::size_t ncol_) noexcept {
     is_matrix = true;
     nrow = nrow_;
     ncol = ncol_;
@@ -73,7 +74,6 @@ template <typename T, typename BufferTrait> struct Buffer {
       reset();
     }
   }
-
   // Move constructor
   Buffer(Buffer &&other) noexcept
     : p(std::exchange(other.p, nullptr)), sz(std::exchange(other.sz, 0)),
@@ -81,19 +81,18 @@ template <typename T, typename BufferTrait> struct Buffer {
     allocated(std::exchange(other.allocated, false)),
     is_matrix(std::exchange(other.is_matrix, false)),
     nrow(std::exchange(other.nrow, 0)), ncol(std::exchange(other.ncol, 0)) {}
-
   // copy assignment
-  Buffer &operator=(const Buffer<T> &other) {
+  Buffer &operator=(const Buffer &other) {
     if (this == &other)
       return *this;
-    if (other.size() > this->sz) {
+    if (other.size() > capacity) {
       if (allocated) {
-        std::size_t diff = other.size() - this->sz;
-        this->realloc(this->sz + diff);
+        realloc(other.size());
       } else {
         resize(other.size());
       }
     }
+    sz = other.size();
     if (other.is_matrix) {
       is_matrix = true;
       nrow = other.nrow;
@@ -101,33 +100,19 @@ template <typename T, typename BufferTrait> struct Buffer {
     } else {
       set_matrix_default();
     }
-    for (std::size_t i = 0; i < this->sz; i++) {
-      p[i] = other[i];
-    }
+    if (sz) std::copy_n(other.p, sz, p);
     return *this;
   }
-
   // move assignment
   Buffer &operator=(Buffer &&other) noexcept {
-    if (this != &other) {
-      delete[] p;
-      p = std::exchange(other.p, nullptr);
-      sz = std::exchange(other.sz, 0);
-      capacity = std::exchange(other.capacity, 0);
-      allocated = std::exchange(other.allocated, false);
-      is_matrix = std::exchange(other.is_matrix, false);
-      nrow = std::exchange(other.nrow, 0);
-      ncol = std::exchange(other.ncol, 0);
-    }
+    swap(other);
     return *this;
   }
-
   // Constructors for std::size_t
   Buffer(std::size_t sz_) {
     ass<"Size has to be larger than 0!">(sz_ > 0);
     init(sz_);
   }
-
   // Constructors for nrow, ncol
   Buffer(std::size_t nrow, std::size_t ncol) {
     ass<"Size has to be larger than 0!">((nrow*ncol) > 0);
@@ -143,7 +128,7 @@ template <typename T, typename BufferTrait> struct Buffer {
       delete[] p;
       reset();
     }
-    if constexpr (is<RetType, double>) {
+    if constexpr (is<value_type, double>) {
       ass<"R object is not of type numeric">(Rf_isReal(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       ass<"R object seems to be empty">(sz >= 1);
@@ -156,7 +141,7 @@ template <typename T, typename BufferTrait> struct Buffer {
       if (Rf_isMatrix(s)) {
         set_matrix(Rf_nrows(s), Rf_ncols(s));
       }
-    } else if constexpr (is<RetType, int>) {
+    } else if constexpr (is<value_type, int>) {
       ass<"R object is not of type integer">(Rf_isInteger(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       ass<"R object seems to be empty">(sz >= 1);
@@ -169,7 +154,7 @@ template <typename T, typename BufferTrait> struct Buffer {
       if (Rf_isMatrix(s)) {
         set_matrix(Rf_nrows(s), Rf_ncols(s));
       }
-    } else if constexpr (is<RetType, bool>) {
+    } else if constexpr (is<value_type, bool>) {
       ass<"R object is not of type logical">(Rf_isLogical(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       ass<"R object seems to be empty">(sz >= 1);
@@ -191,7 +176,6 @@ template <typename T, typename BufferTrait> struct Buffer {
   };
 #endif
 
-
   template <typename TInp>
   requires(IsArithV<Decayed<TInp>>)
   void fill(TInp &&val) {
@@ -207,7 +191,7 @@ template <typename T, typename BufferTrait> struct Buffer {
   requires(!IsArithV<Decayed<TInp>>)
   void fill(TInp &&inp) {
     ass<"cannot use fill with vectors of different lengths">(inp.size() == sz);
-    using DataType = typename ReRef<TInp>::type::RetType;
+    using DataType = typename ReRef<TInp>::type::value_type;
     if constexpr (IsVec<TInp>) {
       if constexpr (!is<DataType, T>) {
         for (std::size_t i = 0; i < sz; i++)
@@ -279,17 +263,15 @@ template <typename T, typename BufferTrait> struct Buffer {
     }
   }
 
-  RetType operator[](std::size_t idx) const {
+  const value_type& operator[](std::size_t idx) const {
     ass<"No memory was allocated">(allocated);
     // NOTE: negative idx leads to overflow and
     // is than the max possible value of std::size_t
     ass<"Error: out of boundaries">(idx < sz);
     return p[idx];
   }
-  RetType &operator[](std::size_t idx) {
+  value_type& operator[](std::size_t idx) {
     ass<"No memory was allocated">(allocated);
-    // NOTE: negative idx leads to overflow and
-    // is than the max possible value of std::size_t
     ass<"Error: out of boundaries">(idx < sz);
     return p[idx];
   }
@@ -317,8 +299,40 @@ template <typename T, typename BufferTrait> struct Buffer {
     allocated = true;
   }
 
-  auto begin() const { return It<T>{p}; }
-  auto end() const { return It<T>{p + sz}; }
+  void swap(Buffer &other) noexcept {
+    if (this != &other) {
+      T* temp_p = p;
+      std::size_t temp_sz = sz;
+      std::size_t temp_capacity = capacity;
+      bool temp_allocated = allocated;
+      bool temp_is_matrix = is_matrix;
+      std::size_t temp_nrow = nrow;
+      std::size_t temp_ncol = ncol;
+      p = other.p;
+      other.p = temp_p;
+      sz = other.sz;
+      other.sz = temp_sz;
+      capacity = other.capacity;
+      other.capacity = temp_capacity;
+      allocated = other.allocated;
+      other.allocated = temp_allocated;
+      is_matrix = other.is_matrix;
+      other.is_matrix = temp_is_matrix;
+      nrow = other.nrow;
+      other.nrow = temp_nrow;
+      ncol = other.ncol;
+      other.ncol = temp_ncol;
+    }
+  }
+  friend void swap(Buffer&a, Buffer& b) noexcept {
+    a.swap(b);
+  }
+
+  auto begin()       noexcept { return It<T>{p}; }
+  auto end()         noexcept { return It<T>{p + sz}; }
+  auto begin() const noexcept { return It<const T>{p}; }
+  auto end()   const noexcept { return It<const T>{p + sz}; }
+
   T &back() {
     ass<"Size is 0">(this->sz >= 1);
     return p[sz - 1];
@@ -361,10 +375,6 @@ template <typename T, typename BufferTrait> struct Buffer {
       sz++;
     }
   }
-};
-
-struct Indices : public Buffer<std::size_t> {
-  using RetType = std::size_t;
 };
 
 } // namespace etr

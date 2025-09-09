@@ -8,7 +8,7 @@ struct DoubleTrait {};
 struct IntTrait {};
 struct BoolTrait {};
 struct ComparisonTrait {
-  using RetType = bool;
+  using value_type = bool;
 };
 
 struct LBufferTrait {};

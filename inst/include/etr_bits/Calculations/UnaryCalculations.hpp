@@ -5,20 +5,17 @@ namespace etr {
 
 template <typename I, typename Trait>
 struct UnaryOpClassIterator {
-  ConstHolder<I> obj;
+  const I& obj;
   size_t index;
 
   UnaryOpClassIterator(const I& obj_, size_t index = 0)
   : obj(obj_), index(index) {}
 
-  UnaryOpClassIterator(I&& obj_, size_t index = 0)
-  : obj(std::move(obj_)), index(index) {}
-
   auto operator*() const {
     if constexpr (IsArithV<I>) {
-      return Trait::f(obj.get());
+      return Trait::f(obj);
     } else {
-      return Trait::f(obj.get()[safe_modulo(index, obj.get().size())]);
+      return Trait::f(obj[safe_modulo(index, obj.size())]);
     }
   }
 
@@ -30,7 +27,7 @@ struct UnaryOpClassIterator {
 };
 
 struct UnaryOpSentinel {
-  size_t n;
+  std::size_t n;
 };
 
 template<typename I, typename Trait>
@@ -40,8 +37,8 @@ inline bool operator!=(const UnaryOpClassIterator<I, Trait>& it, const UnaryOpSe
 
 template <typename I, typename UTrait> struct UnaryOperation {
   using Trait = UTrait;
-  using RetType = typename I::RetType;
-  using Type = typename I::RetType;
+  using value_type = typename I::value_type;
+  using Type = typename I::value_type;
   ConstHolder<I> obj;
   using typeTraitObj = I;
   using TypeTrait = UnaryTrait;
@@ -74,7 +71,7 @@ template <typename I, typename UTrait> struct UnaryOperation {
   // r value
   UnaryOperation(I &&obj_) : obj(std::move(obj_)) {}
 
-  RetType operator[](std::size_t i) const {
+  value_type operator[](std::size_t i) const {
     if constexpr (IsArithV<I>) {
       return Trait::f(obj.get());
     } else if constexpr (!IsArithV<I>) {
@@ -106,7 +103,7 @@ template <typename T>
 requires (!IsArithV<T>)
 auto operator-(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::RetType;
+  using E = typename ExtractDataType<I>::value_type;
   if constexpr(IsRvalueV<T&&>) {
     return Vec<E, UnaryOperation<I, MinusUnaryTrait>>(
       UnaryOperation<I, MinusUnaryTrait>(std::move(obj.d)));
@@ -120,7 +117,7 @@ template <typename T>
 requires (!IsArithV<T>)
 auto sinus(T &&obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::RetType;
+  using E = typename ExtractDataType<I>::value_type;
   if constexpr(IsRvalueV<T&&>) {
     return Vec<E, UnaryOperation<I, SinusTrait>>(
       UnaryOperation<I, SinusTrait>(std::move(obj.d)));
@@ -144,7 +141,7 @@ template <typename T>
 requires (!IsArithV<T>)
 auto sinush(T &&obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::RetType;
+  using E = typename ExtractDataType<I>::value_type;
   if constexpr(IsRvalueV<T&&>) {
     return Vec<E, UnaryOperation<I, SinusHTrait>>(
       UnaryOperation<I, SinusHTrait>(std::move(obj.d)));
@@ -168,7 +165,7 @@ template <typename T>
 requires (!IsArithV<T>)
 auto asinus(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::RetType;
+  using E = typename ExtractDataType<I>::value_type;
   if constexpr(IsRvalueV<T&&>) {
     return Vec<E, UnaryOperation<I, ASinusTrait>>(
       UnaryOperation<I, ASinusTrait>(std::move(obj.d)));
@@ -192,7 +189,7 @@ template <typename T>
 requires (!IsArithV<T>)
 auto cosinus(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::RetType;
+  using E = typename ExtractDataType<I>::value_type;
   if constexpr(IsRvalueV<T&&>) {
     return Vec<E, UnaryOperation<I, CosinusTrait>>(
       UnaryOperation<I, CosinusTrait>(std::move(obj.d)));
@@ -216,7 +213,7 @@ template <typename T>
 requires (!IsArithV<T>)
 auto cosinush(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::RetType;
+  using E = typename ExtractDataType<I>::value_type;
   if constexpr(IsRvalueV<T&&>) {
     return Vec<E, UnaryOperation<I, CosinusHTrait>>(
       UnaryOperation<I, CosinusHTrait>(std::move(obj.d)));
@@ -240,7 +237,7 @@ template <typename T>
 requires (!IsArithV<T>)
 auto acosinus(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::RetType;
+  using E = typename ExtractDataType<I>::value_type;
   if constexpr(IsRvalueV<T&&>) {
     return Vec<E, UnaryOperation<I, ACosinusTrait>>(
       UnaryOperation<I, ACosinusTrait>(std::move(obj.d)));
@@ -264,7 +261,7 @@ template <typename T>
 requires (!IsArithV<T>)
 auto tangens(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::RetType;
+  using E = typename ExtractDataType<I>::value_type;
   if constexpr(IsRvalueV<T&&>) {
     return Vec<E, UnaryOperation<I, TangensTrait>>(
       UnaryOperation<I, TangensTrait>(std::move(obj.d)));
@@ -288,7 +285,7 @@ template <typename T>
 requires (!IsArithV<T>)
 auto tangensh(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::RetType;
+  using E = typename ExtractDataType<I>::value_type;
   if constexpr(IsRvalueV<T&&>) {
     return Vec<E, UnaryOperation<I, TangensHTrait>>(
       UnaryOperation<I, TangensHTrait>(std::move(obj.d)));
@@ -312,7 +309,7 @@ template <typename T>
 requires (!IsArithV<T>)
 auto atangens(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::RetType;
+  using E = typename ExtractDataType<I>::value_type;
   if constexpr(IsRvalueV<T&&>) {
     return Vec<E, UnaryOperation<I, ATangensTrait>>(
       UnaryOperation<I, ATangensTrait>(std::move(obj.d)));
@@ -336,7 +333,7 @@ template <typename T>
 requires (!IsArithV<T>)
 auto ln(T&& obj) { // LogTrait
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::RetType;
+  using E = typename ExtractDataType<I>::value_type;
   if constexpr(IsRvalueV<T&&>) {
     return Vec<E, UnaryOperation<I, LogTrait>>(
       UnaryOperation<I, LogTrait>(std::move(obj.d)));
@@ -360,7 +357,7 @@ template <typename T>
 requires (!IsArithV<T>)
 auto sqroot(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::RetType;
+  using E = typename ExtractDataType<I>::value_type;
   if constexpr(IsRvalueV<T&&>) {
     return Vec<E, UnaryOperation<I, SquareRootTrait>>(
       UnaryOperation<I, SquareRootTrait>(std::move(obj.d)));
@@ -384,7 +381,7 @@ template <typename T>
 requires (!IsArithV<T>)
 auto expo(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::RetType;
+  using E = typename ExtractDataType<I>::value_type;
   if constexpr(IsRvalueV<T&&>) {
     return Vec<E, UnaryOperation<I, ExpTrait>>(
       UnaryOperation<I, ExpTrait>(std::move(obj.d)));

@@ -228,6 +228,7 @@ for (i in 1:13) {
     checks[i] <- message == as.character(e)
   }
 }
+checks
 expect_true(all(checks), info = "Test functions in function registry for unary math")
 # --- binary math--------------------------------------------------------------
 args_fct <- function() {}

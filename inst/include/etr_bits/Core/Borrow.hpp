@@ -5,10 +5,11 @@
 namespace etr {
 // Points to a Variable and stores size
 template <typename T, typename BorrowTrait> struct Borrow {
-  using RetType = T;
+  using value_type = T;
   using Type = T;
   using Trait = BorrowTrait;
   using TypeTrait = BorrowTrait;
+
   T *p = nullptr;
   std::size_t sz = 0;
   std::size_t capacity = 0;
@@ -91,7 +92,7 @@ template <typename T, typename BorrowTrait> struct Borrow {
 #ifdef STANDALONE_ETR
 #else
   void initSEXP(SEXP s) {
-    if constexpr (is<RetType, double>) {
+    if constexpr (is<value_type, double>) {
       ass<"R object is not of type numeric">(Rf_isReal(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       capacity = static_cast<std::size_t>(sz);
@@ -100,7 +101,7 @@ template <typename T, typename BorrowTrait> struct Borrow {
       if (Rf_isMatrix(s)) {
         set_matrix(Rf_nrows(s), Rf_ncols(s));
       }
-    } else if constexpr (is<RetType, int>) {
+    } else if constexpr (is<value_type, int>) {
       ass<"R object is not of type integer">(Rf_isInteger(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       capacity = static_cast<std::size_t>(sz);
@@ -109,7 +110,7 @@ template <typename T, typename BorrowTrait> struct Borrow {
       if (Rf_isMatrix(s)) {
         set_matrix(Rf_nrows(s), Rf_ncols(s));
       }
-    } else if constexpr (is<RetType, bool>) {
+    } else if constexpr (is<value_type, bool>) {
       ass<"R object is not of type logical">(Rf_isLogical(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       capacity = static_cast<std::size_t>(sz);
@@ -168,7 +169,7 @@ template <typename T, typename BorrowTrait> struct Borrow {
 
   template <typename TInp> void fill(const TInp &inp) {
     ass<"cannot use fill with vectors of different lengths">(inp.size() == sz);
-    using DataType = typename ExtractDataType<Decayed<TInp>>::RetType;
+    using DataType = typename ExtractDataType<Decayed<TInp>>::value_type;
     if constexpr (IsVec<TInp>) {
       if constexpr (!is<DataType, T>) {
         for (std::size_t i = 0; i < sz; i++)
@@ -211,7 +212,7 @@ template <typename T, typename BorrowTrait> struct Borrow {
     p[idx] = val;
   }
 
-  RetType operator[](std::size_t idx) const {
+  value_type operator[](std::size_t idx) const {
     ass<"No memory was allocated">(allocated);
     // NOTE: negative idx leads to overflow and
     // is than the max possible value of std::size_t
@@ -219,7 +220,7 @@ template <typename T, typename BorrowTrait> struct Borrow {
     return p[idx];
   }
 
-  RetType &operator[](std::size_t idx) {
+  value_type &operator[](std::size_t idx) {
     ass<"No memory was allocated">(allocated);
     // NOTE: negative idx leads to overflow and
     // is than the max possible value of std::size_t

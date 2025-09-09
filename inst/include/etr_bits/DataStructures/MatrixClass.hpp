@@ -8,7 +8,7 @@ template <typename T, typename R> struct Mat {
   R d;
   Buffer<T> temp;
   using DType = R;
-  using RetType = typename ReRef<decltype(d)>::type::RetType;
+  using value_type = typename ReRef<decltype(d)>::type::value_type;
 
   // NOTE: define Matrix with specific size
   explicit Mat(SI &&nrow, SI&& ncol) : d(nrow.sz, ncol.sz) {}
@@ -215,7 +215,7 @@ template <typename T, typename R> struct Mat {
   template<typename T2>
   void assign(const T2& other_obj) {
     invalid_lhs();
-    using DataTypeOtherVec = typename ReRef<decltype(other_obj.d)>::type::RetType;
+    using DataTypeOtherVec = typename ReRef<decltype(other_obj.d)>::type::value_type;
     copyWithTemp<T2, DataTypeOtherVec>(std::forward<decltype(other_obj)>(other_obj));
     if constexpr (IsLBuffer<R>) {
       d.moveit(temp);
@@ -289,11 +289,11 @@ template <typename T, typename R> struct Mat {
   }
 #endif
 
-  RetType &operator[](std::size_t idx) { return d[idx]; }
-  RetType operator[](std::size_t idx) const { return d[idx]; }
+  value_type &operator[](std::size_t idx) { return d[idx]; }
+  value_type operator[](std::size_t idx) const { return d[idx]; }
 
-  operator RetType() const {
-    if constexpr (IS<RetType, bool>) {
+  operator value_type() const {
+    if constexpr (IS<value_type, bool>) {
       warn<"Warning in if: the condition has length > 1">(this->size() == 1);
       // NOTE: otherwise subsetting does not work. Thus, warn instead of assert
       return d[0];

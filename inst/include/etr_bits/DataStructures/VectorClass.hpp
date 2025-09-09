@@ -8,7 +8,7 @@ template <typename T, typename R> struct Vec {
   R d;
   Buffer<T> temp;
   using DType = R;
-  using RetType = typename ReRef<decltype(d)>::type::RetType;
+  using value_type = typename ReRef<decltype(d)>::type::value_type;
   using InnerTrait = typename ReRef<R>::type::TypeTrait;
 
   // ======================= Constructors ===================================================
@@ -109,7 +109,7 @@ template <typename T, typename R> struct Vec {
         d.sz = other_obj.size();
       }
     }
-    using DataTypeOther = ExtractDataType<std::remove_reference_t<decltype(other_obj)>>::RetType;
+    using DataTypeOther = ExtractDataType<std::remove_reference_t<decltype(other_obj)>>::value_type;
     if constexpr (IS<T, DataTypeOther>) {
       for (std::size_t i = 0; i < d.size(); i++) {
         d[i] = other_obj[i];
@@ -173,7 +173,7 @@ template <typename T, typename R> struct Vec {
   template<typename T2>
   void assign(const T2& other_obj) {
     invalid_lhs();
-    using DataTypeOtherVec = typename ReRef<decltype(other_obj.d)>::type::RetType;
+    using DataTypeOtherVec = typename ReRef<decltype(other_obj.d)>::type::value_type;
     copyWithTemp<T2, DataTypeOtherVec>(other_obj);
     if constexpr (IsLBuffer<R>) {
       d.moveit(temp);
@@ -284,11 +284,11 @@ template <typename T, typename R> struct Vec {
   }
 #endif
 
-  RetType &operator[](std::size_t idx) { return d[idx]; }
-  RetType operator[](std::size_t idx) const { return d[idx]; }
+  value_type &operator[](std::size_t idx) { return d[idx]; }
+  value_type operator[](std::size_t idx) const { return d[idx]; }
 
-  operator RetType() const {
-    if constexpr (IS<RetType, bool>) {
+  operator value_type() const {
+    if constexpr (IS<value_type, bool>) {
       warn<"Warning in if: the condition has length > 1">(this->size() == 1);
       // NOTE: otherwise subsetting does not work. Thus, warn instead of assert
       return d[0];

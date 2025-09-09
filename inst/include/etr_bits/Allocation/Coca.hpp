@@ -10,7 +10,7 @@ inline auto determine_type(const auto &rest) {
     return typename ReRef<decltype(rest)>::type{};
   } else {
     using tD = ExtractedRType<restType>;
-    return typename ExtractDataType<tD>::RetType{};
+    return typename ExtractDataType<tD>::value_type{};
   }
 };
 
@@ -23,19 +23,19 @@ inline auto determine_type(const auto &first, const auto &rest) {
   } else if constexpr (!IsArithV<firstType> &&
                        IsArithV<restType>) {
     using tD = ExtractedRType<firstType>;
-    using firstInner = typename ExtractDataType<tD>::RetType;
+    using firstInner = typename ExtractDataType<tD>::value_type;
     return typename std::common_type<firstInner, restType>::type{};
   } else if constexpr (IsArithV<firstType> &&
                        !IsArithV<restType>) {
     using tD = ExtractedRType<restType>;
-    using restInner = typename ExtractDataType<tD>::RetType;
+    using restInner = typename ExtractDataType<tD>::value_type;
     return typename std::common_type<firstType, restInner>::type{};
   } else if constexpr (!IsArithV<firstType> &&
                        !IsArithV<restType>) {
     using tD1 = ExtractedRType<firstType>;
-    using firstInner = typename ExtractDataType<tD1>::RetType;
+    using firstInner = typename ExtractDataType<tD1>::value_type;
     using tD2 = ExtractedRType<restType>;
-    using restInner = typename ExtractDataType<tD2>::RetType;
+    using restInner = typename ExtractDataType<tD2>::value_type;
     return typename std::common_type<firstInner, restInner>::type{};
   }
 }
@@ -49,19 +49,19 @@ inline auto determine_type(const auto &first, const auto &...rest) {
   } else if constexpr (!IsArithV<firstType> &&
                        IsArithV<restType>) {
     using tD = ExtractedRType<firstType>;
-    using firstInner = typename ExtractDataType<tD>::RetType;
+    using firstInner = typename ExtractDataType<tD>::value_type;
     return typename std::common_type<firstInner, restType>::type{};
   } else if constexpr (IsArithV<firstType> &&
                        !IsArithV<restType>) {
     using tD = ExtractedRType<restType>;
-    using restInner = typename ExtractDataType<tD>::RetType;
+    using restInner = typename ExtractDataType<tD>::value_type;
     return typename std::common_type<firstType, restInner>::type{};
   } else if constexpr (!IsArithV<firstType> &&
                        !IsArithV<restType>) {
     using tD1 = ExtractedRType<firstType>;
-    using firstInner = typename ExtractDataType<tD1>::RetType;
+    using firstInner = typename ExtractDataType<tD1>::value_type;
     using tD2 = ExtractedRType<restType>;
-    using restInner = typename ExtractDataType<tD2>::RetType;
+    using restInner = typename ExtractDataType<tD2>::value_type;
     return typename std::common_type<firstInner, restInner>::type{};
   }
 }
@@ -103,7 +103,7 @@ template <typename... Args> inline auto c(Args &&...args) {
           }
           index++;
         } else {
-          using InnerType = typename ReRef<decltype(arg)>::type::RetType;
+          using InnerType = typename ReRef<decltype(arg)>::type::value_type;
           if constexpr (IS<InnerType, cType>) {
             for (int i = 0; i < arg.size(); i++) {
               ret[index + i] = arg[i];

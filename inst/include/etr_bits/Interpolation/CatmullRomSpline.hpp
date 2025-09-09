@@ -90,13 +90,13 @@ inline double cmr(const A &tInp, const B &timeVec, const C &parVec) {
                 "time vector has to be a vector");
   static_assert(IsVec<C>,
                 "parameter vector has to be a vector");
-  using DataTypeTime = typename ReRef<A>::type::RetType;
+  using DataTypeTime = typename ReRef<A>::type::value_type;
   static_assert(is<DataTypeTime, double>,
                 "time vector does not include doubles");
-  using DataTypeParams = typename ReRef<C>::type::RetType;
+  using DataTypeParams = typename ReRef<C>::type::value_type;
   static_assert(is<DataTypeParams, double>,
                 "parameter vector does not include doubles");
-  using DataTypeT = typename ReRef<A>::type::RetType;
+  using DataTypeT = typename ReRef<A>::type::value_type;
   static_assert(is<DataTypeT, double>,
                 "time is not of type double");
   warn<"time point has more than one element only the first one is used">(
@@ -111,10 +111,10 @@ inline double cmr(A tInp, const B &timeVec, const C &parVec) {
                 "time vector has to be a vector");
   static_assert(IsVec<C>,
                 "parameter vector has to be a vector");
-  using DataTypeTime = typename ExtractDataType<Decayed<B>>::RetType;
+  using DataTypeTime = typename ExtractDataType<Decayed<B>>::value_type;
   static_assert(is<DataTypeTime, double>,
                 "time vector does not include doubles");
-  using DataTypeParams = typename ReRef<C>::type::RetType;
+  using DataTypeParams = typename ReRef<C>::type::value_type;
   static_assert(is<DataTypeParams, double>,
                 "parameter vector does not include doubles");
   if constexpr (!is<A, double>) {

@@ -8,8 +8,8 @@ namespace etr {
 template<typename T>
 inline auto Evaluate(T && obj) {
   if constexpr(IsOperationVec<Decayed<T>> || IsSubsetVec<Decayed<T>> || IsSubsetMat<Decayed<T>>) {
-    using RetType = typename ReRef<decltype(obj)>::type::RetType;
-    Vec<RetType, Buffer<RetType, RBufferTrait>> res(SI{obj.size()});
+    using value_type = typename ReRef<decltype(obj)>::type::value_type;
+    Vec<value_type, Buffer<value_type, RBufferTrait>> res(SI{obj.size()});
     for (size_t i = 0; i < res.size(); i++) {
       res[i] = obj[i];
     }
