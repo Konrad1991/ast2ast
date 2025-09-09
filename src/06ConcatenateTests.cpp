@@ -8,31 +8,31 @@ void test_c() {
   // NOTE: type determination
   {
     using DataType1 = ExtractDataType<
-        std::remove_reference_t<decltype(c(1, 2, 3))>>::RetType;
+        std::remove_reference_t<decltype(c(1, 2, 3))>>::value_type;
     static_assert(is<DataType1, int>, "type of vec should be int");
     using DataType2 = ExtractDataType<
-        std::remove_reference_t<decltype(c(1.1, 2.1, 3.1))>>::RetType;
+        std::remove_reference_t<decltype(c(1.1, 2.1, 3.1))>>::value_type;
     static_assert(is<DataType2, double>, "type of vec should be double");
     using DataType3 = ExtractDataType<std::remove_reference_t<decltype(c(
-        false, true, false, false))>>::RetType;
+        false, true, false, false))>>::value_type;
     static_assert(is<DataType3, bool>, "type of vec should be bool");
     using DataType4 = ExtractDataType<
-        std::remove_reference_t<decltype(c(1.1, 2, 3, 4))>>::RetType;
+        std::remove_reference_t<decltype(c(1.1, 2, 3, 4))>>::value_type;
     static_assert(is<DataType4, double>, "type of vec should be double");
     using DataType5 = ExtractDataType<
-        std::remove_reference_t<decltype(c(1, 2, 3, 4, 5.5))>>::RetType;
+        std::remove_reference_t<decltype(c(1, 2, 3, 4, 5.5))>>::value_type;
     static_assert(is<DataType5, double>, "type of vec should be double");
     using DataType6 = ExtractDataType<
-        std::remove_reference_t<decltype(c(1, false, 2, true))>>::RetType;
+        std::remove_reference_t<decltype(c(1, false, 2, true))>>::value_type;
     static_assert(is<DataType6, int>, "type of vec should be int");
     using DataType7 = ExtractDataType<
-        std::remove_reference_t<decltype(c(1, false, 2.2, true))>>::RetType;
+        std::remove_reference_t<decltype(c(1, false, 2.2, true))>>::value_type;
     static_assert(is<DataType7, double>, "type of vec should be double");
     using DataType8 = ExtractDataType<std::remove_reference_t<decltype(c(
-        1, false, c(1.1, 2.2), true))>>::RetType;
+        1, false, c(1.1, 2.2), true))>>::value_type;
     static_assert(is<DataType8, double>, "type of vec should be double");
     using DataType9 = ExtractDataType<std::remove_reference_t<decltype(c(
-        c(1.1, 2.2), 1, true))>>::RetType;
+        c(1.1, 2.2), 1, true))>>::value_type;
     static_assert(is<DataType9, double>, "type of vec should be double");
   }
   // NOTE: constructing

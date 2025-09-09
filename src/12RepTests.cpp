@@ -11,13 +11,13 @@ void test_rep() {
     ass(rep(1, 2).size() == 2, std::string(s) + "1, 2");
     ass(rep(true, 2).size() == 2, std::string(s) + "true, 2");
     using DataType1 = ExtractDataType<
-        std::remove_reference_t<decltype(rep(true, 2))>>::RetType;
+        std::remove_reference_t<decltype(rep(true, 2))>>::value_type;
     static_assert(is<DataType1, bool>, "bool expected");
     using DataType2 =
-        ExtractDataType<std::remove_reference_t<decltype(rep(4, 2))>>::RetType;
+        ExtractDataType<std::remove_reference_t<decltype(rep(4, 2))>>::value_type;
     static_assert(is<DataType2, int>, "bool expected");
     using DataType3 = ExtractDataType<
-        std::remove_reference_t<decltype(rep(4.2, 2))>>::RetType;
+        std::remove_reference_t<decltype(rep(4.2, 2))>>::value_type;
     static_assert(is<DataType3, double>, "bool expected");
   }
   // NOTE: arithmetic + vector
