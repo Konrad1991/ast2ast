@@ -48,7 +48,7 @@ template <typename I, typename UTrait> struct UnaryOperation {
 
   bool im() const {
     if constexpr (!IsArithV<I>) {
-      return obj.im();
+      return obj.get().im();
     } else {
       return false;
     }
@@ -56,14 +56,14 @@ template <typename I, typename UTrait> struct UnaryOperation {
 
   std::size_t nc() const {
     if constexpr (!IsArithV<I>) {
-      return obj.nc();
+      return obj.get().nc();
     } else {
       return 0;
     }
   }
   std::size_t nr() const {
     if constexpr (!IsArithV<I>) {
-      return obj.nr();
+      return obj.get().nr();
     } else {
       return 0;
     }
@@ -102,39 +102,31 @@ template <typename I, typename UTrait> struct UnaryOperation {
   auto end() const { return UnaryOpSentinel{this->size()}; }
 };
 
-template <typename T> auto operator-(T&& obj) {
-  using TD = std::decay_t<T>;
-  if constexpr (!IsArithV<TD>) {
-    using I = std::decay_t<decltype(obj.d)>;
-    using E = typename ExtractDataType<I>::RetType;
-    if constexpr(IsRvalueV<T&&>) {
-      return Vec<E, UnaryOperation<I, MinusUnaryTrait>>(
-        UnaryOperation<I, MinusUnaryTrait>(std::move(obj.d)));
-    } else {
-      return Vec<E, UnaryOperation<I, MinusUnaryTrait>>(
-        UnaryOperation<I, MinusUnaryTrait>(obj.d));
-    }
+template <typename T>
+requires (!IsArithV<T>)
+auto operator-(T&& obj) {
+  using I = std::decay_t<decltype(obj.d)>;
+  using E = typename ExtractDataType<I>::RetType;
+  if constexpr(IsRvalueV<T&&>) {
+    return Vec<E, UnaryOperation<I, MinusUnaryTrait>>(
+      UnaryOperation<I, MinusUnaryTrait>(std::move(obj.d)));
   } else {
-    return Vec<T, UnaryOperation<T, MinusUnaryTrait>>(
-      UnaryOperation<T, MinusUnaryTrait>{obj});
+    return Vec<E, UnaryOperation<I, MinusUnaryTrait>>(
+      UnaryOperation<I, MinusUnaryTrait>(obj.d));
   }
 }
 
-template <typename T> auto sinus(T &&obj) {
-  using TD = std::decay_t<T>;
-  if constexpr (!IsArithV<TD>) {
-    using I = std::decay_t<decltype(obj.d)>;
-    using E = typename ExtractDataType<I>::RetType;
-    if constexpr(IsRvalueV<T&&>) {
-      return Vec<E, UnaryOperation<I, SinusTrait>>(
-        UnaryOperation<I, SinusTrait>(std::move(obj.d)));
-    } else {
-      return Vec<E, UnaryOperation<I, SinusTrait>>(
-        UnaryOperation<I, SinusTrait>(obj.d));
-    }
+template <typename T>
+requires (!IsArithV<T>)
+auto sinus(T &&obj) {
+  using I = std::decay_t<decltype(obj.d)>;
+  using E = typename ExtractDataType<I>::RetType;
+  if constexpr(IsRvalueV<T&&>) {
+    return Vec<E, UnaryOperation<I, SinusTrait>>(
+      UnaryOperation<I, SinusTrait>(std::move(obj.d)));
   } else {
-    return Vec<T, UnaryOperation<T, SinusTrait>>(
-      UnaryOperation<T, SinusTrait>{obj});
+    return Vec<E, UnaryOperation<I, SinusTrait>>(
+      UnaryOperation<I, SinusTrait>(obj.d));
   }
 }
 template <typename T>
@@ -143,263 +135,273 @@ auto sinus(const T &obj) -> double {
   if constexpr(IsFloat<T>) {
     return sin(obj);
   } else {
-    ass<"You can only apply sinus to numeric values">(false);
-    return 0.0; // please compiler
+    ass<"You can only apply sin to numeric values">(false);
+    return 0.0;
   }
 }
 
-template <typename T> auto sinush(T &&obj) {
-  using TD = std::decay_t<T>;
-  if constexpr (!IsArithV<TD>) {
-    using I = std::decay_t<decltype(obj.d)>;
-    using E = typename ExtractDataType<I>::RetType;
-    if constexpr(IsRvalueV<T&&>) {
-      return Vec<E, UnaryOperation<I, SinusHTrait>>(
-        UnaryOperation<I, SinusHTrait>(std::move(obj.d)));
-    } else {
-      return Vec<E, UnaryOperation<I, SinusHTrait>>(
-        UnaryOperation<I, SinusHTrait>(obj.d));
-    }
+template <typename T>
+requires (!IsArithV<T>)
+auto sinush(T &&obj) {
+  using I = std::decay_t<decltype(obj.d)>;
+  using E = typename ExtractDataType<I>::RetType;
+  if constexpr(IsRvalueV<T&&>) {
+    return Vec<E, UnaryOperation<I, SinusHTrait>>(
+      UnaryOperation<I, SinusHTrait>(std::move(obj.d)));
   } else {
-    return Vec<T, UnaryOperation<T, SinusHTrait>>(
-      UnaryOperation<T, SinusHTrait>{obj});
+    return Vec<E, UnaryOperation<I, SinusHTrait>>(
+      UnaryOperation<I, SinusHTrait>(obj.d));
   }
 }
 template <typename T>
 requires IsArithV<T>
-auto sinh(const T &obj) -> double {
-  return SinusH(obj);
+auto sinush(const T &obj) -> double {
+  if constexpr(IsFloat<T>) {
+    return sinh(obj);
+  } else {
+    ass<"You can only apply sinh to numeric values">(false);
+    return 0.0;
+  }
 }
 
-template <typename T> auto asinus(T&& obj) { // ASinusTrait
-  using TD = std::decay_t<T>;
-  if constexpr (!IsArithV<TD>) {
-    using I = std::decay_t<decltype(obj.d)>;
-    using E = typename ExtractDataType<I>::RetType;
-    if constexpr(IsRvalueV<T&&>) {
-      return Vec<E, UnaryOperation<I, ASinusTrait>>(
-        UnaryOperation<I, ASinusTrait>(std::move(obj.d)));
-    } else {
-      return Vec<E, UnaryOperation<I, ASinusTrait>>(
-        UnaryOperation<I, ASinusTrait>(obj.d));
-    }
+template <typename T>
+requires (!IsArithV<T>)
+auto asinus(T&& obj) {
+  using I = std::decay_t<decltype(obj.d)>;
+  using E = typename ExtractDataType<I>::RetType;
+  if constexpr(IsRvalueV<T&&>) {
+    return Vec<E, UnaryOperation<I, ASinusTrait>>(
+      UnaryOperation<I, ASinusTrait>(std::move(obj.d)));
   } else {
-    return Vec<T, UnaryOperation<T, ASinusTrait>>(
-      UnaryOperation<T, ASinusTrait>{obj});
+    return Vec<E, UnaryOperation<I, ASinusTrait>>(
+      UnaryOperation<I, ASinusTrait>(obj.d));
   }
 }
 template <typename T>
 requires IsArithV<T>
-auto asin(const T &obj) -> double {
-  return ASinus(obj);
+auto asinus(const T &obj) -> double {
+  if constexpr(IsFloat<T>) {
+    return asin(obj);
+  } else {
+    ass<"You can only apply asin to numeric values">(false);
+    return 0.0;
+  }
 }
 
-template <typename T> auto cosinus(T&& obj) { // CosinusTrait
-  using TD = std::decay_t<T>;
-  if constexpr (!IsArithV<TD>) {
-    using I = std::decay_t<decltype(obj.d)>;
-    using E = typename ExtractDataType<I>::RetType;
-    if constexpr(IsRvalueV<T&&>) {
-      return Vec<E, UnaryOperation<I, CosinusTrait>>(
-        UnaryOperation<I, CosinusTrait>(std::move(obj.d)));
-    } else {
-      return Vec<E, UnaryOperation<I, CosinusTrait>>(
-        UnaryOperation<I, CosinusTrait>(obj.d));
-    }
+template <typename T>
+requires (!IsArithV<T>)
+auto cosinus(T&& obj) {
+  using I = std::decay_t<decltype(obj.d)>;
+  using E = typename ExtractDataType<I>::RetType;
+  if constexpr(IsRvalueV<T&&>) {
+    return Vec<E, UnaryOperation<I, CosinusTrait>>(
+      UnaryOperation<I, CosinusTrait>(std::move(obj.d)));
   } else {
-    return Vec<T, UnaryOperation<T, CosinusTrait>>(
-      UnaryOperation<T, CosinusTrait>{obj});
+    return Vec<E, UnaryOperation<I, CosinusTrait>>(
+      UnaryOperation<I, CosinusTrait>(obj.d));
   }
 }
 template <typename T>
 requires IsArithV<T>
-auto cos(const T &obj) -> double {
-  return Cosinus(obj);
+auto cosinus(const T &obj) -> double {
+  if constexpr(IsFloat<T>) {
+    return cos(obj);
+  } else {
+    ass<"You can only apply cos to numeric values">(false);
+    return 0.0;
+  }
 }
 
-template <typename T> auto cosinush(T&& obj) { // CosinusHTrait
-  using TD = std::decay_t<T>;
-  if constexpr (!IsArithV<TD>) {
-    using I = std::decay_t<decltype(obj.d)>;
-    using E = typename ExtractDataType<I>::RetType;
-    if constexpr(IsRvalueV<T&&>) {
-      return Vec<E, UnaryOperation<I, CosinusHTrait>>(
-        UnaryOperation<I, CosinusHTrait>(std::move(obj.d)));
-    } else {
-      return Vec<E, UnaryOperation<I, CosinusHTrait>>(
-        UnaryOperation<I, CosinusHTrait>(obj.d));
-    }
+template <typename T>
+requires (!IsArithV<T>)
+auto cosinush(T&& obj) {
+  using I = std::decay_t<decltype(obj.d)>;
+  using E = typename ExtractDataType<I>::RetType;
+  if constexpr(IsRvalueV<T&&>) {
+    return Vec<E, UnaryOperation<I, CosinusHTrait>>(
+      UnaryOperation<I, CosinusHTrait>(std::move(obj.d)));
   } else {
-    return Vec<T, UnaryOperation<T, CosinusHTrait>>(
-      UnaryOperation<T, CosinusHTrait>{obj});
+    return Vec<E, UnaryOperation<I, CosinusHTrait>>(
+      UnaryOperation<I, CosinusHTrait>(obj.d));
   }
 }
 template <typename T>
 requires IsArithV<T>
-auto cosh(const T &obj) -> double {
-  return CosinusH(obj);
+auto cosinush(const T &obj) -> double {
+  if constexpr(IsFloat<T>) {
+    return cosh(obj);
+  } else {
+    ass<"You can only apply cosh to numeric values">(false);
+    return 0.0;
+  }
 }
 
-template <typename T> auto acosinus(T&& obj) { // ACosinusTrait
-  using TD = std::decay_t<T>;
-  if constexpr (!IsArithV<TD>) {
-    using I = std::decay_t<decltype(obj.d)>;
-    using E = typename ExtractDataType<I>::RetType;
-    if constexpr(IsRvalueV<T&&>) {
-      return Vec<E, UnaryOperation<I, ACosinusTrait>>(
-        UnaryOperation<I, ACosinusTrait>(std::move(obj.d)));
-    } else {
-      return Vec<E, UnaryOperation<I, ACosinusTrait>>(
-        UnaryOperation<I, ACosinusTrait>(obj.d));
-    }
+template <typename T>
+requires (!IsArithV<T>)
+auto acosinus(T&& obj) {
+  using I = std::decay_t<decltype(obj.d)>;
+  using E = typename ExtractDataType<I>::RetType;
+  if constexpr(IsRvalueV<T&&>) {
+    return Vec<E, UnaryOperation<I, ACosinusTrait>>(
+      UnaryOperation<I, ACosinusTrait>(std::move(obj.d)));
   } else {
-    return Vec<T, UnaryOperation<T, ACosinusTrait>>(
-      UnaryOperation<T, ACosinusTrait>{obj});
+    return Vec<E, UnaryOperation<I, ACosinusTrait>>(
+      UnaryOperation<I, ACosinusTrait>(obj.d));
   }
 }
 template <typename T>
 requires IsArithV<T>
-auto acos(const T &obj) -> double {
-  return ACosinus(obj);
+auto acosinus(const T &obj) -> double {
+  if constexpr(IsFloat<T>) {
+    return acos(obj);
+  } else {
+    ass<"You can only apply acos to numeric values">(false);
+    return 0.0;
+  }
 }
 
-template <typename T> auto tangens(T&& obj) { // TangensTrait
-  using TD = std::decay_t<T>;
-  if constexpr (!IsArithV<TD>) {
-    using I = std::decay_t<decltype(obj.d)>;
-    using E = typename ExtractDataType<I>::RetType;
-    if constexpr(IsRvalueV<T&&>) {
-      return Vec<E, UnaryOperation<I, TangensTrait>>(
-        UnaryOperation<I, TangensTrait>(std::move(obj.d)));
-    } else {
-      return Vec<E, UnaryOperation<I, TangensTrait>>(
-        UnaryOperation<I, TangensTrait>(obj.d));
-    }
+template <typename T>
+requires (!IsArithV<T>)
+auto tangens(T&& obj) {
+  using I = std::decay_t<decltype(obj.d)>;
+  using E = typename ExtractDataType<I>::RetType;
+  if constexpr(IsRvalueV<T&&>) {
+    return Vec<E, UnaryOperation<I, TangensTrait>>(
+      UnaryOperation<I, TangensTrait>(std::move(obj.d)));
   } else {
-    return Vec<T, UnaryOperation<T, TangensTrait>>(
-      UnaryOperation<T, TangensTrait>{obj});
+    return Vec<E, UnaryOperation<I, TangensTrait>>(
+      UnaryOperation<I, TangensTrait>(obj.d));
   }
 }
 template <typename T>
 requires IsArithV<T>
-auto tan(const T &obj) -> double {
-  return Tangens(obj);
+auto tangens(const T &obj) -> double {
+  if constexpr(IsFloat<T>) {
+    return tan(obj);
+  } else {
+    ass<"You can only apply tan to numeric values">(false);
+    return 0.0;
+  }
 }
 
-template <typename T> auto tangensh(T&& obj) { // TangensHTrait
-  using TD = std::decay_t<T>;
-  if constexpr (!IsArithV<TD>) {
-    using I = std::decay_t<decltype(obj.d)>;
-    using E = typename ExtractDataType<I>::RetType;
-    if constexpr(IsRvalueV<T&&>) {
-      return Vec<E, UnaryOperation<I, TangensHTrait>>(
-        UnaryOperation<I, TangensHTrait>(std::move(obj.d)));
-    } else {
-      return Vec<E, UnaryOperation<I, TangensHTrait>>(
-        UnaryOperation<I, TangensHTrait>(obj.d));
-    }
+template <typename T>
+requires (!IsArithV<T>)
+auto tangensh(T&& obj) {
+  using I = std::decay_t<decltype(obj.d)>;
+  using E = typename ExtractDataType<I>::RetType;
+  if constexpr(IsRvalueV<T&&>) {
+    return Vec<E, UnaryOperation<I, TangensHTrait>>(
+      UnaryOperation<I, TangensHTrait>(std::move(obj.d)));
   } else {
-    return Vec<T, UnaryOperation<T, TangensHTrait>>(
-      UnaryOperation<T, TangensHTrait>{obj});
+    return Vec<E, UnaryOperation<I, TangensHTrait>>(
+      UnaryOperation<I, TangensHTrait>(obj.d));
   }
 }
 template <typename T>
 requires IsArithV<T>
-auto tanh(const T &obj) -> double {
-  return TangensH(obj);
+auto tangensh(const T &obj) -> double {
+  if constexpr(IsFloat<T>) {
+    return tanh(obj);
+  } else {
+    ass<"You can only apply tanh to numeric values">(false);
+    return 0.0;
+  }
 }
 
-template <typename T> auto atangens(T&& obj) { // ATangensTrait
-  using TD = std::decay_t<T>;
-  if constexpr (!IsArithV<TD>) {
-    using I = std::decay_t<decltype(obj.d)>;
-    using E = typename ExtractDataType<I>::RetType;
-    if constexpr(IsRvalueV<T&&>) {
-      return Vec<E, UnaryOperation<I, ATangensTrait>>(
-        UnaryOperation<I, ATangensTrait>(std::move(obj.d)));
-    } else {
-      return Vec<E, UnaryOperation<I, ATangensTrait>>(
-        UnaryOperation<I, ATangensTrait>(obj.d));
-    }
+template <typename T>
+requires (!IsArithV<T>)
+auto atangens(T&& obj) {
+  using I = std::decay_t<decltype(obj.d)>;
+  using E = typename ExtractDataType<I>::RetType;
+  if constexpr(IsRvalueV<T&&>) {
+    return Vec<E, UnaryOperation<I, ATangensTrait>>(
+      UnaryOperation<I, ATangensTrait>(std::move(obj.d)));
   } else {
-    return Vec<T, UnaryOperation<T, ATangensTrait>>(
-      UnaryOperation<T, ATangensTrait>{obj});
+    return Vec<E, UnaryOperation<I, ATangensTrait>>(
+      UnaryOperation<I, ATangensTrait>(obj.d));
   }
 }
 template <typename T>
 requires IsArithV<T>
-auto atan(const T &obj) -> double {
-  return ATangens(obj);
+auto atangens(const T &obj) -> double {
+  if constexpr(IsFloat<T>) {
+    return atan(obj);
+  } else {
+    ass<"You can only apply atan to numeric values">(false);
+    return 0.0;
+  }
 }
 
-template <typename T> auto ln(T&& obj) { // LogTrait
-  using TD = std::decay_t<T>;
-  if constexpr (!IsArithV<TD>) {
-    using I = std::decay_t<decltype(obj.d)>;
-    using E = typename ExtractDataType<I>::RetType;
-    if constexpr(IsRvalueV<T&&>) {
-      return Vec<E, UnaryOperation<I, LogTrait>>(
-        UnaryOperation<I, LogTrait>(std::move(obj.d)));
-    } else {
-      return Vec<E, UnaryOperation<I, LogTrait>>(
-        UnaryOperation<I, LogTrait>(obj.d));
-    }
+template <typename T>
+requires (!IsArithV<T>)
+auto ln(T&& obj) { // LogTrait
+  using I = std::decay_t<decltype(obj.d)>;
+  using E = typename ExtractDataType<I>::RetType;
+  if constexpr(IsRvalueV<T&&>) {
+    return Vec<E, UnaryOperation<I, LogTrait>>(
+      UnaryOperation<I, LogTrait>(std::move(obj.d)));
   } else {
-    return Vec<T, UnaryOperation<T, LogTrait>>(
-      UnaryOperation<T, LogTrait>{obj});
+    return Vec<E, UnaryOperation<I, LogTrait>>(
+      UnaryOperation<I, LogTrait>(obj.d));
   }
 }
 template <typename T>
 requires IsArithV<T>
 auto ln(const T &obj) -> double {
-  return log(obj);
+  if constexpr(IsFloat<T>) {
+    return log(obj);
+  } else {
+    ass<"You can only apply log to numeric values">(false);
+    return 0.0;
+  }
 }
 
-template <typename T> auto sqroot(T&& obj) { // SquareRootTrait
-  using TD = std::decay_t<T>;
-  if constexpr (!IsArithV<TD>) {
-    using I = std::decay_t<decltype(obj.d)>;
-    using E = typename ExtractDataType<I>::RetType;
-    if constexpr(IsRvalueV<T&&>) {
-      return Vec<E, UnaryOperation<I, SquareRootTrait>>(
-        UnaryOperation<I, SquareRootTrait>(std::move(obj.d)));
-    } else {
-      return Vec<E, UnaryOperation<I, SquareRootTrait>>(
-        UnaryOperation<I, SquareRootTrait>(obj.d));
-    }
+template <typename T>
+requires (!IsArithV<T>)
+auto sqroot(T&& obj) {
+  using I = std::decay_t<decltype(obj.d)>;
+  using E = typename ExtractDataType<I>::RetType;
+  if constexpr(IsRvalueV<T&&>) {
+    return Vec<E, UnaryOperation<I, SquareRootTrait>>(
+      UnaryOperation<I, SquareRootTrait>(std::move(obj.d)));
   } else {
-    return Vec<T, UnaryOperation<T, SquareRootTrait>>(
-      UnaryOperation<T, SquareRootTrait>{obj});
+    return Vec<E, UnaryOperation<I, SquareRootTrait>>(
+      UnaryOperation<I, SquareRootTrait>(obj.d));
   }
 }
 template <typename T>
 requires IsArithV<T>
 auto sqroot(const T &obj) -> double {
-  return sqrt(obj);
+  if constexpr(IsFloat<T>) {
+    return sqrt(obj);
+  } else {
+    ass<"You can only apply sqrt to numeric values">(false);
+    return 0.0;
+  }
 }
 
 template <typename T>
-auto expo(T&& obj) { // ExpTrait
-  using TD = std::decay_t<T>;
-  if constexpr (!IsArithV<TD>) {
-    using I = std::decay_t<decltype(obj.d)>;
-    using E = typename ExtractDataType<I>::RetType;
-    if constexpr(IsRvalueV<T&&>) {
-      return Vec<E, UnaryOperation<I, ExpTrait>>(
-        UnaryOperation<I, ExpTrait>(std::move(obj.d)));
-    } else {
-      return Vec<E, UnaryOperation<I, ExpTrait>>(
-        UnaryOperation<I, ExpTrait>(obj.d));
-    }
+requires (!IsArithV<T>)
+auto expo(T&& obj) {
+  using I = std::decay_t<decltype(obj.d)>;
+  using E = typename ExtractDataType<I>::RetType;
+  if constexpr(IsRvalueV<T&&>) {
+    return Vec<E, UnaryOperation<I, ExpTrait>>(
+      UnaryOperation<I, ExpTrait>(std::move(obj.d)));
   } else {
-    return Vec<T, UnaryOperation<T, ExpTrait>>(
-      UnaryOperation<T, ExpTrait>{obj});
+    return Vec<E, UnaryOperation<I, ExpTrait>>(
+      UnaryOperation<I, ExpTrait>(obj.d));
   }
 }
 template <typename T>
 requires IsArithV<T>
-auto exp(const T &obj) -> double {
-  return exp(obj);
+auto expo(const T &obj) -> double {
+  if constexpr(IsFloat<T>) {
+    return exp(obj);
+  } else {
+    ass<"You can only apply exp to numeric values">(false);
+    return 0.0;
+  }
 }
 
 } // namespace etr
