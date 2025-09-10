@@ -12,11 +12,11 @@ template <typename T, typename R> struct Vec {
   using InnerTrait = typename ReRef<R>::type::TypeTrait;
 
   // ======================= Constructors ===================================================
-  // NOTE: define Vector with specific size
+  // define Vector with specific size
   explicit Vec(SI &sz) : d(sz.sz) {}
   explicit Vec(SI &&sz) : d(sz.sz) {}
 
-  //  NOTE: Copy other Vec
+  // Copy other Vec
   Vec(const Vec& other) {
     if constexpr (IsBorrow<R>) {
       d = other.d;
@@ -24,10 +24,15 @@ template <typename T, typename R> struct Vec {
       assign(other);
     }
   }
-  //  NOTE: Move other Vec e.g. vec = std::move(other_vec)
+  // Copy view vectors: e.g. Vec<double> a = sinus(c(1.1, 2.2));
+  template<typename T2, typename R2>
+  requires(IsUnary<R2> || IsBinary<R2> || IsComparison<R2> || IsSubsetClass<R2>)
+  Vec(const Vec<T2, R2>& other) {
+    assign(other);
+  }
+  // Move other Vec e.g. vec = std::move(other_vec)
   Vec(Vec&& other) noexcept(std::is_nothrow_move_constructible_v<R>)
   : d(std::move(other.d)) {}
-
   // move: e.g. Vec<int> vec = c(1, 2, 3)
   template<typename T2, typename R2>
   requires(IS<T, T2> && IsLBuffer<R> && IsRArrayLike<Vec<T2, R2>>)
@@ -41,11 +46,11 @@ template <typename T, typename R> struct Vec {
     assign(other);
   }
 
-  // NOTE: Buffer
+  // Buffer
   template <typename L2> explicit Vec(Buffer<L2> &&inp) noexcept : d(std::move(inp)) {}
   template <typename L2> explicit Vec(Buffer<L2> &inp) : d(inp) {}
 
-  // NOTE: Borrow
+  // Borrow
   template <typename U = R, typename T2>
     requires IS<U, Borrow<T>>
   explicit Vec(Borrow<T2> &&borrowed) : d(borrowed) {}
@@ -61,7 +66,7 @@ template <typename T, typename R> struct Vec {
   Vec(SEXP inp) : d(inp) {}
 #endif
 
-  // NOTE: Subset
+  // Subset
   template <typename L2, typename R2, typename TraitL>
     requires IS<TraitL, SubsetClassTrait>
   explicit Vec(SubsetClass<L2, R2, TraitL> &&inp) : d(std::move(inp)) {}
@@ -69,32 +74,32 @@ template <typename T, typename R> struct Vec {
     requires IS<TraitL, SubsetClassTrait>
   explicit Vec(SubsetClass<L2, R2, TraitL> &inp) : d(std::move(inp)) { }
 
-  // NOTE: Binary operation
+  // Binary operation
   template <typename L2, typename R2, typename OperationTrait>
   explicit Vec(BinaryOperation<L2, R2, OperationTrait> &&inp) : d(inp) {}
   template <typename L2, typename R2, typename OperationTrait>
   explicit Vec(BinaryOperation<L2, R2, OperationTrait> &inp) : d(inp) {}
 
-  // NOTE: Unary operation
+  // Unary operation
   template <typename L2, typename OperationTrait>
   explicit Vec(UnaryOperation<L2, OperationTrait> &&inp) : d(inp) {}
   template <typename L2, typename OperationTrait>
   explicit Vec(UnaryOperation<L2, OperationTrait> &inp) : d(inp) {}
 
-  // NOTE: matrix l object
+  // matrix object
   template <typename T2>
     requires IsMat<T2>
   Vec(const T2 &other_obj) {
     copyFromVec(other_obj);
   }
 
-  // NOTE: arithmetic constructors
+  // arithmetic constructors
   Vec(int sz) : d(1) { d[0] = static_cast<T>(sz);}
   explicit Vec(std::size_t sz) : d(1) { d[0] = sz;}
   Vec(double sz) : d(1) { d[0] = sz;}
   Vec(bool b) : d(1) { d[0] = static_cast<T>(b);}
 
-  // NOTE: empty vector
+  // empty vector
   explicit Vec() : d() {}
 
   template <typename OtherObj>
@@ -189,7 +194,7 @@ template <typename T, typename R> struct Vec {
     }
   }
 
-  // NOTE: assign scalar values
+  // assign scalar values
   template <typename TD>
     requires IsArithV<TD>
   Vec &operator=(const TD inp) {
@@ -230,7 +235,7 @@ template <typename T, typename R> struct Vec {
     }
   }
 
-  // NOTE: copy assignments: calculations, subsets, etc.
+  // copy assignments: calculations, subsets, etc.
   template <typename T2>
   requires (
     !IsArithV<Decayed<T2>> && (!IsRArrayLike<T2>)
@@ -240,7 +245,7 @@ template <typename T, typename R> struct Vec {
     return *this;
   }
 
-  // NOTE: copy assignment for matrices; as const Mat& cannot be used similar to const Vec&. e.g. v = matrix(0.0, 2, 2);
+  // copy assignment for matrices; as const Mat& cannot be used similar to const Vec&. e.g. v = matrix(0.0, 2, 2);
   template<typename T2>
   requires(
     !IsArithV<Decayed<T2>> && IsMat<T2>
@@ -250,14 +255,13 @@ template <typename T, typename R> struct Vec {
     return *this;
   }
 
-  // NOTE: copy assignment type of *this == type other_obj; e.g. const Vec<double> v1 = c(1.1, 2.2, 3.3); Vec<double> v2(SI{3}); v2 = v1;
-
+  // copy assignment type of *this == type other_obj; e.g. const Vec<double> v1 = c(1.1, 2.2, 3.3); Vec<double> v2(SI{3}); v2 = v1;
   Vec& operator=(const Vec& other_obj) {
     assign(other_obj);
     return *this;
   }
 
-  // NOTE: move assignment. Swap resources e.g. Vec<int> v; v = c(1, 2, 3)
+  // move assignment. Swap resources e.g. Vec<int> v; v = c(1, 2, 3)
   template<typename T2, typename R2>
   requires(
     IS<T, T2> && IsLBuffer<R> && IsRArrayLike<Vec<T2, R2>>
@@ -266,7 +270,7 @@ template <typename T, typename R> struct Vec {
     d.moveit(other_obj.d);
     return *this;
   }
-  // NOTE: Copy of Cpp-R-object as R is Borrow e.g Vec<int, Borrow<int>> v(ptr, size); v = c(1, 2, 3);
+  // Copy of Cpp-R-object as R is Borrow e.g Vec<int, Borrow<int>> v(ptr, size); v = c(1, 2, 3);
   template<typename T2, typename R2>
   requires(
   IsBorrow<R>
@@ -284,13 +288,13 @@ template <typename T, typename R> struct Vec {
   }
 #endif
 
-  value_type &operator[](std::size_t idx) { return d[idx]; }
-  value_type operator[](std::size_t idx) const { return d[idx]; }
+  decltype(auto) operator[](std::size_t idx) { return d[idx]; }
+  decltype(auto) operator[](std::size_t idx) const { return d[idx]; }
 
   operator value_type() const {
     if constexpr (IS<value_type, bool>) {
       warn<"Warning in if: the condition has length > 1">(this->size() == 1);
-      // NOTE: otherwise subsetting does not work. Thus, warn instead of assert
+      // otherwise subsetting does not work. Thus, warn instead of assert. Even though, R throws an error.
       return d[0];
     } else {
       return d[0];
@@ -309,7 +313,20 @@ template <typename T, typename R> struct Vec {
     return d.end();
   }
 
-  T &back() const {return d.p[this->size()];}
+  [[nodiscard]] decltype(auto) back() & {
+    ass<"Size is 0">(size() >= 1);
+    return d[size() - 1]; // lvalue: propagates T& for buffers, T for views
+  }
+
+  [[nodiscard]] decltype(auto) back() const & {
+    ass<"Size is 0">(size() >= 1);
+    return d[size() - 1];// const lvalue: const T& for buffers, T for views
+  }
+
+  [[nodiscard]] value_type back() && {
+    ass<"Size is 0">(size() >= 1);
+    return d[size() - 1]; // rvalue container: return by value
+  }
 
   void fill(T value) { d.fill(value); }
   void resize(std::size_t newSize) { d.resize(newSize); }

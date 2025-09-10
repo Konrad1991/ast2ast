@@ -74,7 +74,9 @@ concept IsComparison = requires {
                IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
                IS<typename ReRef<T>::type::Trait, LargerTrait> ||
                IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
-               IS<typename ReRef<T>::type::Trait, UnEqualTrait>;
+               IS<typename ReRef<T>::type::Trait, UnEqualTrait> ||
+               IS<typename ReRef<T>::type::Trait, AndTrait> ||
+               IS<typename ReRef<T>::type::Trait, OrTrait>;
 };
 template <typename T>
 concept IsComparisonTrait = requires(T t) { // required as in binary operation the trait is directly tested
@@ -84,7 +86,9 @@ concept IsComparisonTrait = requires(T t) { // required as in binary operation t
                IS<T, SmallerEqualTrait> ||
                IS<T, LargerTrait> ||
                IS<T, LargerEqualTrait> ||
-               IS<T, UnEqualTrait>;
+               IS<T, UnEqualTrait> ||
+               IS<T, AndTrait> ||
+               IS<T, OrTrait>;
 };
 
 // Input class (outer data structures)
