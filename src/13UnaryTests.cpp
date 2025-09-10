@@ -97,7 +97,7 @@ void test_arithmetic_unary() {
     auto u = cosinus(a);
     double s1 = 0.0, s2 = 0.0;
     for (auto x : u) s1 += x;
-    for (std::size_t i = 0; i < u.size(); ++i) s2 += u.d[i];
+    for (std::size_t i = 0; i < u.size(); ++i) s2 += u[i];
     ass(approx(s1, s2), "iteration sum equals index sum");
   }
 }
