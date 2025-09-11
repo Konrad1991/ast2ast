@@ -12,7 +12,9 @@ ast2ast:::test_isNA()
 ast2ast:::test_isFinite()
 ast2ast:::test_length()
 ast2ast:::test_dim()
+
 ast2ast:::test_matrices()
+
 ast2ast:::test_rep()
 ast2ast:::test_vector_subsetting()
 ast2ast:::test_arithmetic_unary()

@@ -313,21 +313,6 @@ template <typename T, typename R> struct Vec {
     return d.end();
   }
 
-  [[nodiscard]] decltype(auto) back() & {
-    ass<"Size is 0">(size() >= 1);
-    return d[size() - 1]; // lvalue: propagates T& for buffers, T for views
-  }
-
-  [[nodiscard]] decltype(auto) back() const & {
-    ass<"Size is 0">(size() >= 1);
-    return d[size() - 1];// const lvalue: const T& for buffers, T for views
-  }
-
-  [[nodiscard]] value_type back() && {
-    ass<"Size is 0">(size() >= 1);
-    return d[size() - 1]; // rvalue container: return by value
-  }
-
   void fill(T value) { d.fill(value); }
   void resize(std::size_t newSize) { d.resize(newSize); }
 };

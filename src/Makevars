@@ -2,3 +2,10 @@ CXX_STD=CXX20
 
 PKG_CPPFLAGS= -I../inst -I../inst/include
 PKG_CXXFLAGS=  -I../inst -I../inst/include
+
+# Enable sanitizers by running: SAN=1 R CMD INSTALL .
+ifeq ($(SAN),1)
+  PKG_CXXFLAGS += -fsanitize=address,undefined -fno-omit-frame-pointer -g -O1 -fno-lto
+  PKG_LIBS     += -fsanitize=address,undefined -fno-omit-frame-pointer -fno-lto
+  SHLIB_LDFLAGS += -fno-lto
+endif

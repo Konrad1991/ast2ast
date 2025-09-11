@@ -67,9 +67,10 @@ template <typename T, typename BufferTrait> struct Buffer {
   Buffer(const Buffer &other)
     : sz(other.sz), capacity(other.capacity), allocated(other.allocated),
     is_matrix(other.is_matrix), nrow(other.nrow), ncol(other.ncol) {
-    if (other.allocated) {
-      p = new T[capacity];
-      std::copy_n(other.p, sz, p);
+    if (allocated && sz) {
+      capacity = other.sz;
+      p = new T[other.sz];
+      for (std::size_t i = 0; i < sz; ++i) p[i] = other.p[i];
     } else {
       reset();
     }
@@ -114,10 +115,10 @@ template <typename T, typename BufferTrait> struct Buffer {
     init(sz_);
   }
   // Constructors for nrow, ncol
-  Buffer(std::size_t nrow, std::size_t ncol) {
-    ass<"Size has to be larger than 0!">((nrow*ncol) > 0);
-    init(nrow*ncol);
-    set_matrix(nrow, ncol);
+  Buffer(std::size_t nrow_, std::size_t ncol_) {
+    ass<"Size has to be larger than 0!">((nrow_*ncol_) > 0);
+    init(nrow_*ncol_);
+    set_matrix(nrow_, ncol_);
   }
 
 #ifdef STANDALONE_ETR
@@ -333,10 +334,6 @@ template <typename T, typename BufferTrait> struct Buffer {
   auto begin() const noexcept { return It<const T>{p}; }
   auto end()   const noexcept { return It<const T>{p + sz}; }
 
-  T &back() {
-    ass<"Size is 0">(this->sz >= 1);
-    return p[sz - 1];
-  }
   T *data() const { return p; }
 
   void realloc(std::size_t new_size) {

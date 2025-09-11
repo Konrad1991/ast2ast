@@ -231,7 +231,6 @@ template <typename T, typename BorrowTrait> struct Borrow {
   template <typename L2> void moveit(L2 &other) = delete;
   auto begin() const { return It<T>{p}; }
   auto end() const { return It<T>{p + sz}; }
-  T &back() { return p[sz]; }
   T *data() const { return p; }
   void realloc(int new_size) = delete;
   void push_back(T input) = delete;

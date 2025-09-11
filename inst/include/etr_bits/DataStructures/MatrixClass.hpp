@@ -30,7 +30,8 @@ template <typename T, typename R> struct Mat {
   }
   //  Move other Mat: mat = std::move(other_vec)
   Mat(Mat&& other) noexcept(std::is_nothrow_move_constructible_v<R>)
-  : d(std::move(other.d)) {}
+  : d(std::move(other.d)) {
+  }
   // move: e.g. Mat<int> m = c(1, 2, 3)
   template<typename T2, typename R2>
   requires(IS<T, T2> && IsLBuffer<R> && IsRArrayLike<Mat<T2, R2>>)
@@ -253,7 +254,6 @@ template <typename T, typename R> struct Mat {
   IS<T, T2> && IsLBuffer<R> && IsRArrayLike<Mat<T2, R2>>
   )
   Mat& operator=(Mat<T2, R2>&& other_obj) {
-    copy_matrix_dim(other_obj);
     d.moveit(other_obj.d);
     return *this;
   }
@@ -299,22 +299,6 @@ template <typename T, typename R> struct Mat {
   auto end() const {
     return d.end();
   }
-
-  [[nodiscard]] decltype(auto) back() & {
-    ass<"Size is 0">(size() >= 1);
-    return d[size() - 1]; // lvalue: propagates T& for buffers, T for views
-  }
-
-  [[nodiscard]] decltype(auto) back() const & {
-    ass<"Size is 0">(size() >= 1);
-    return d[size() - 1];// const lvalue: const T& for buffers, T for views
-  }
-
-  [[nodiscard]] value_type back() && {
-    ass<"Size is 0">(size() >= 1);
-    return d[size() - 1]; // rvalue container: return by value
-  }
-
 
   void fill(T value) { d.fill(value); }
   void resize(std::size_t newSize) { d.resize(newSize); }

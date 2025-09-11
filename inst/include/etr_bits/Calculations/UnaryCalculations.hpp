@@ -8,8 +8,8 @@ struct UnaryOpClassIterator {
   const I& obj;
   size_t index;
 
-  UnaryOpClassIterator(const I& obj_, size_t index = 0)
-  : obj(obj_), index(index) {}
+  UnaryOpClassIterator(const I& obj_, size_t index_ = 0)
+  : obj(obj_), index(index_) {}
 
   auto operator*() const {
     if constexpr (IsArithV<I>) {

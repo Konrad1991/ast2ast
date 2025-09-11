@@ -9,7 +9,7 @@ struct BinaryOpClassIterator {
   const R& r;
   size_t index;
 
-  BinaryOpClassIterator(const L& l_, const R& r_, size_t index = 0) : l(l_), r(r_), index(index) {}
+  BinaryOpClassIterator(const L& l_, const R& r_, size_t index_ = 0) : l(l_), r(r_), index(index_) {}
 
   auto operator*() const {
     if constexpr (!IsArithV<L> && IsArithV<R>) {

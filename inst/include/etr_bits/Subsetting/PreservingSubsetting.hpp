@@ -16,11 +16,11 @@ struct SubsetClassIterator {
   Holder<Subset> subset;
   size_t index;
 
-  SubsetClassIterator(Subset& subset, size_t index = 0)
-    : subset(subset), index(index) {}
+  SubsetClassIterator(Subset& subset_, size_t index_ = 0)
+    : subset(subset_), index(index_) {}
 
-  SubsetClassIterator(Subset&& subset, size_t index = 0)
-    : subset(std::move(subset)), index(index) {}
+  SubsetClassIterator(Subset&& subset_, size_t index_ = 0)
+    : subset(std::move(subset_)), index(index_) {}
 
   auto operator*() const {
     return subset.get()[index];
@@ -421,7 +421,6 @@ inline auto subset(L&& l, R&& row, C&& col) {
         std::pair<decltype(r), IndType>(std::forward<decltype(r)>(r), std::move(ind))
     ));
   } else {
-    using CInner = decltype(col.d);
     using pair_type = std::pair<decltype(r), decltype(col_d)&>;
     return Mat<value_type, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
       SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
@@ -472,8 +471,6 @@ inline auto subset(L&& l, R&& row, C&& col) {
   using LDecayed = std::decay_t<L>;
   using RDecayed = std::decay_t<R>;
   using CDecayed = std::decay_t<C>;
-  using RInner = decltype(row.d);
-  using CInner = decltype(col.d);
 
   if constexpr ((!IsFloat<RDecayed>) && (!IsFloat<CDecayed>) && (!IsBool<RDecayed>) && (!IsBool<CDecayed>)) {
     auto&& row_d = std::forward<R>(row).d;
