@@ -52,7 +52,7 @@ inline double cmrInternal(const A *tInp, const B *timeVec, const C *parVec) {
       y1 = (*parVec)[idx1];
       if (i == timeVec->size() - 1) {
         idx2 = 0;
-        t2 = (*timeVec)[idx2] + timeVec[timeVec.size() - 1];
+        t2 = (*timeVec)[idx2] + timeVec[timeVec->size() - 1];
       } else {
         idx2 = i + 1;
         t2 = (*timeVec)[idx2];
@@ -60,10 +60,10 @@ inline double cmrInternal(const A *tInp, const B *timeVec, const C *parVec) {
       y2 = (*parVec)[idx2];
       if (i == timeVec->size() - 2) {
         idx3 = 0;
-        t3 = (*timeVec)[idx3] + timeVec[timeVec.size() - 1];
+        t3 = (*timeVec)[idx3] + timeVec[timeVec->size() - 1];
       } else if (i == timeVec->size() - 1) {
         idx3 = 1;
-        t3 = (*timeVec)[idx3] + timeVec[timeVec.size() - 1];
+        t3 = (*timeVec)[idx3] + timeVec[timeVec->size() - 1];
       } else {
         idx3 = i + 2;
         t3 = (*timeVec)[idx3];
