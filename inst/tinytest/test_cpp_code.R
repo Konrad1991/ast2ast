@@ -1,11 +1,16 @@
 library(tinytest)
 ast2ast:::test_basestore()
+ast2ast:::test_vector_class()
+ast2ast:::test_matrix_class()
+
 ast2ast:::test_arithmetic_assign_to_buffer()
 ast2ast:::test_arithmetic_assign_to_borrow()
 ast2ast:::test_comparison()
 ast2ast:::test_borrow()
+
 ast2ast:::test_cmr()
 ast2ast:::test_c()
+
 ast2ast:::test_colon()
 ast2ast:::test_concepts()
 ast2ast:::test_isNA()

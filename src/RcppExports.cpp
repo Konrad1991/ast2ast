@@ -31,6 +31,24 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_vector_class
+void test_vector_class();
+RcppExport SEXP _ast2ast_test_vector_class() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_vector_class();
+    return R_NilValue;
+END_RCPP
+}
+// test_matrix_class
+void test_matrix_class();
+RcppExport SEXP _ast2ast_test_matrix_class() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_matrix_class();
+    return R_NilValue;
+END_RCPP
+}
 // test_borrow
 void test_borrow();
 RcppExport SEXP _ast2ast_test_borrow() {
@@ -251,6 +269,8 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_basestore", (DL_FUNC) &_ast2ast_test_basestore, 0},
     {"_ast2ast_test_borrow_r", (DL_FUNC) &_ast2ast_test_borrow_r, 1},
+    {"_ast2ast_test_vector_class", (DL_FUNC) &_ast2ast_test_vector_class, 0},
+    {"_ast2ast_test_matrix_class", (DL_FUNC) &_ast2ast_test_matrix_class, 0},
     {"_ast2ast_test_borrow", (DL_FUNC) &_ast2ast_test_borrow, 0},
     {"_ast2ast_test_arithmetic_assign_to_buffer", (DL_FUNC) &_ast2ast_test_arithmetic_assign_to_buffer, 0},
     {"_ast2ast_test_arithmetic_assign_to_borrow", (DL_FUNC) &_ast2ast_test_arithmetic_assign_to_borrow, 0},

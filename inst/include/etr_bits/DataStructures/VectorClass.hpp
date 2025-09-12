@@ -13,8 +13,7 @@ template <typename T, typename R> struct Vec {
 
   // ======================= Constructors ===================================================
   // define Vector with specific size
-  explicit Vec(SI &sz) : d(sz.sz) {}
-  explicit Vec(SI &&sz) : d(sz.sz) {}
+  explicit Vec(const SI &sz) : d(sz.sz) {}
 
   // Copy other Vec
   Vec(const Vec& other) {
@@ -24,7 +23,7 @@ template <typename T, typename R> struct Vec {
       assign(other);
     }
   }
-  // Copy view vectors: e.g. Vec<double> a = sinus(c(1.1, 2.2));
+  // Copy view vectors: e.g. Vec<double> a(sinus(c(1.1, 2.2)));
   template<typename T2, typename R2>
   requires(IsUnary<R2> || IsBinary<R2> || IsComparison<R2> || IsSubsetClass<R2>)
   Vec(const Vec<T2, R2>& other) {
@@ -52,13 +51,13 @@ template <typename T, typename R> struct Vec {
 
   // Borrow
   template <typename U = R, typename T2>
-    requires IS<U, Borrow<T>>
+  requires IS<U, Borrow<T>>
   explicit Vec(Borrow<T2> &&borrowed) : d(borrowed) {}
   template <typename U = R, typename T2>
-    requires IS<U, Borrow<T>>
+  requires IS<U, Borrow<T>>
   explicit Vec(Borrow<T2> &borrowed) : d(borrowed) {}
   template <typename U = R>
-    requires IS<U, Borrow<T>>
+  requires IS<U, Borrow<T>>
   explicit Vec(T *ptr, std::size_t s) : d(ptr, s) {}
 
 #ifdef STANDALONE_ETR
@@ -68,27 +67,27 @@ template <typename T, typename R> struct Vec {
 
   // Subset
   template <typename L2, typename R2, typename TraitL>
-    requires IS<TraitL, SubsetClassTrait>
+  requires IS<TraitL, SubsetClassTrait>
   explicit Vec(SubsetClass<L2, R2, TraitL> &&inp) : d(std::move(inp)) {}
   template <typename L2, typename R2, typename TraitL>
-    requires IS<TraitL, SubsetClassTrait>
-  explicit Vec(SubsetClass<L2, R2, TraitL> &inp) : d(std::move(inp)) { }
+  requires IS<TraitL, SubsetClassTrait>
+  explicit Vec(SubsetClass<L2, R2, TraitL> &inp) : d(inp) {}
 
   // Binary operation
   template <typename L2, typename R2, typename OperationTrait>
-  explicit Vec(BinaryOperation<L2, R2, OperationTrait> &&inp) : d(inp) {}
+  explicit Vec(BinaryOperation<L2, R2, OperationTrait> &&inp) : d(std::move(inp)) {}
   template <typename L2, typename R2, typename OperationTrait>
   explicit Vec(BinaryOperation<L2, R2, OperationTrait> &inp) : d(inp) {}
 
   // Unary operation
   template <typename L2, typename OperationTrait>
-  explicit Vec(UnaryOperation<L2, OperationTrait> &&inp) : d(inp) {}
+  explicit Vec(UnaryOperation<L2, OperationTrait> &&inp) : d(std::move(inp)) {}
   template <typename L2, typename OperationTrait>
   explicit Vec(UnaryOperation<L2, OperationTrait> &inp) : d(inp) {}
 
   // matrix object
   template <typename T2>
-    requires IsMat<T2>
+  requires IsMat<T2>
   Vec(const T2 &other_obj) {
     copyFromVec(other_obj);
   }
@@ -196,7 +195,7 @@ template <typename T, typename R> struct Vec {
 
   // assign scalar values
   template <typename TD>
-    requires IsArithV<TD>
+  requires IsArithV<TD>
   Vec &operator=(const TD inp) {
     invalid_lhs();
     // Same Type
@@ -238,8 +237,8 @@ template <typename T, typename R> struct Vec {
   // copy assignments: calculations, subsets, etc.
   template <typename T2>
   requires (
-    !IsArithV<Decayed<T2>> && (!IsRArrayLike<T2>)
-  )
+  !IsArithV<Decayed<T2>> && (!IsRArrayLike<T2>)
+)
   Vec &operator=(const T2 &other_obj) {
     assign(other_obj);
     return *this;
@@ -248,8 +247,8 @@ template <typename T, typename R> struct Vec {
   // copy assignment for matrices; as const Mat& cannot be used similar to const Vec&. e.g. v = matrix(0.0, 2, 2);
   template<typename T2>
   requires(
-    !IsArithV<Decayed<T2>> && IsMat<T2>
-  )
+  !IsArithV<Decayed<T2>> && IsMat<T2>
+)
   Vec &operator=(const T2& other_obj) {
     assign(other_obj);
     return *this;
@@ -264,8 +263,8 @@ template <typename T, typename R> struct Vec {
   // move assignment. Swap resources e.g. Vec<int> v; v = c(1, 2, 3)
   template<typename T2, typename R2>
   requires(
-    IS<T, T2> && IsLBuffer<R> && IsRArrayLike<Vec<T2, R2>>
-  )
+  IS<T, T2> && IsLBuffer<R> && IsRArrayLike<Vec<T2, R2>>
+)
   Vec& operator=(Vec<T2, R2>&& other_obj) {
     d.moveit(other_obj.d);
     return *this;
@@ -274,7 +273,7 @@ template <typename T, typename R> struct Vec {
   template<typename T2, typename R2>
   requires(
   IsBorrow<R>
-  )
+)
   Vec& operator=(Vec<T2, R2>&& other_obj) {
     assign(std::forward<decltype(other_obj)>(other_obj));
     return *this;

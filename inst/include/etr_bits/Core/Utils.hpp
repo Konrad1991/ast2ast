@@ -110,10 +110,32 @@ template <string_literal msg> inline void warn(bool inp) {
 }
 
 struct SI {
-  std::size_t sz = 0;
-  SI(const std::size_t sz_) : sz(sz_) {}
-  SI(const int sz_) : sz(static_cast<std::size_t>(sz_)) {}
-  SI(const long long sz_) : sz(static_cast<std::size_t>(sz_)) {}
+  std::size_t sz{0};
+
+  SI() = default;
+  explicit SI(std::size_t n) : sz(n) {
+    ass<"Size has to be larger than 0!">(sz >= 1);
+  }
+  // signed integers (e.g., int, long long)
+  template <std::signed_integral I>
+  explicit SI(I n) {
+    ass<"Size has to be larger than 0!">(n >= 1);
+    using U = std::make_unsigned_t<I>;
+    const U un = static_cast<U>(n);
+    ass<"Requested size too large">(un <= static_cast<U>(std::numeric_limits<std::size_t>::max()));
+    sz = static_cast<std::size_t>(un);
+  }
+
+  // floating point (floor, then validate)
+  template <std::floating_point F>
+  explicit SI(F n) {
+    ass<"Size is not finite">(std::isfinite(n));
+    const F f = std::floor(n);
+    ass<"Size has to be larger than 0!">(f >= static_cast<F>(1));
+    const long double ld = static_cast<long double>(f);
+    ass<"Requested size too large">(ld <= static_cast<long double>(std::numeric_limits<std::size_t>::max()));
+    sz = static_cast<std::size_t>(ld);
+  }
 };
 
 inline std::size_t safe_modulo(std::size_t idx, std::size_t sz) {

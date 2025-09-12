@@ -9,6 +9,14 @@ test_borrow_r <- function(nv) {
     invisible(.Call(`_ast2ast_test_borrow_r`, nv))
 }
 
+test_vector_class <- function() {
+    invisible(.Call(`_ast2ast_test_vector_class`))
+}
+
+test_matrix_class <- function() {
+    invisible(.Call(`_ast2ast_test_matrix_class`))
+}
+
 test_borrow <- function() {
     invisible(.Call(`_ast2ast_test_borrow`))
 }

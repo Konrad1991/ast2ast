@@ -12,11 +12,11 @@ template <typename T, typename R> struct Mat {
 
   // ======================= Constructors ===================================================
   // define Matrix with specific size
-  explicit Mat(SI &&nrow, SI&& ncol) : d(nrow.sz, ncol.sz) {}
+  explicit Mat(const SI &nrow, const SI& ncol) : d(nrow.sz, ncol.sz) {}
 
   //  Copy other Mat
   Mat(const Mat& other) {
-    if constexpr (IsBorrow<R>) {
+   if constexpr (IsBorrow<R>) {
       d = other.d;
     } else {
       assign(other);

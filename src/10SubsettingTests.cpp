@@ -191,7 +191,7 @@ void test_vector_subsetting() {
 
 // [[Rcpp::export]]
 void test_matrix_subsetting() {
-  Mat<double> m(4, 4); m = matrix(colon(1, 16), 4, 4);
+  Mat<double> m(SI{4}, SI{4}); m = matrix(colon(1, 16), 4, 4);
   // NOTE: matrix bool + bool|int|double
   {
     std::string s = "MatrixBoolScalarSubsetting: ";
@@ -331,7 +331,7 @@ void test_matrix_subsetting() {
 // [[Rcpp::export]]
 void test_at_subsetting() {
   Vec<double> v; v = colon(1, 16);
-  Mat<double> m(4, 4); m = matrix(colon(1, 16), 4, 4);
+  Mat<double> m(SI{4}, SI{4}); m = matrix(colon(1, 16), 4, 4);
   // NOTE: at testing
   {
     std::string s = "AtSubsetting: ";
