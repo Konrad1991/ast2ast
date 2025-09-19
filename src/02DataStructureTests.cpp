@@ -17,6 +17,7 @@ void test_vector_constructors() {
     try {
       const long long int size = 999999999999999999;
       Vec<double> v3(SI{size});
+      Rcpp::Rcout << "Size of v3: " << v3.d.size() << std::endl;
     } catch(...) {
       throws = true;
     }
@@ -58,6 +59,7 @@ void test_matrix_constructors() {
     try {
       const long long int size = 999999999999999999;
       Mat<double> m2(SI{size}, SI{size});
+      Rcpp::Rcout << "Size of m2: " << m2.d.size() << std::endl;
     } catch(...) {
       throws = true;
     }
