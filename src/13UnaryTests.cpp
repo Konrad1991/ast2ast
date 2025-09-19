@@ -89,7 +89,8 @@ void test_arithmetic_unary() {
       auto s = sinus(ai);
     }
     catch (const Rcpp::exception& e) {
-      ass(e.what() == "Error: sin on int vector values", "Sinus on int");
+      std::string expected = "Error: sin on int vector values";
+      ass(e.what() == std::string(expected), "Sinus on int");
     }
   }
   {
