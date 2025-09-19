@@ -10,13 +10,13 @@ template <typename T, typename BorrowTrait> struct Borrow {
   using Trait = BorrowTrait;
   using TypeTrait = BorrowTrait;
 
-  T *p = nullptr;
   std::size_t sz = 0;
   std::size_t capacity = 0;
   bool allocated = false;
   bool is_matrix = false;
   std::size_t nrow = 0;
   std::size_t ncol = 0;
+  T *p = nullptr;
 
   std::size_t size() const { return sz; }
   std::size_t nr() const { return nrow; }
