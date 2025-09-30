@@ -39,7 +39,7 @@ struct SubsetClassIterator {
 // The SubsetClass
 // -----------------------------------------------------------------------------------------------------------
 template <typename L, typename R, typename STrait>
-class SubsetClass {
+struct SubsetClass {
 public:
   using Type = typename ReRef<L>::type::value_type;
   using value_type = typename ReRef<L>::type::value_type;

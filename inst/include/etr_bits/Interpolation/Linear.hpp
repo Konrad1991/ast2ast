@@ -10,7 +10,7 @@ inline double li(const A &t_, const B &timeVec, const C &parVec) {
     ass<"timepoint input has to have length == 1">(t_.size() == 1);
     double t = t_[0];
     double t0, t1;
-    double y0, y1, deltaPar, deltaT, m;
+    double y0, y1, m;
     double ret;
     ass<"x and y differ in length">(timeVec.size() == parVec.size());
     // not in boundaries
@@ -37,7 +37,7 @@ inline double li(const A &t_, const B &timeVec, const C &parVec) {
   } else if constexpr (!IsVec<A> && IsVec<B> && IsVec<C>) {
     double t = static_cast<double>(t_);
     double t0, t1;
-    double y0, y1, deltaPar, deltaT, m;
+    double y0, y1, m;
     double ret;
     ass<"x and y differ in length">(timeVec.size() == parVec.size());
     // not in boundaries
@@ -55,8 +55,6 @@ inline double li(const A &t_, const B &timeVec, const C &parVec) {
         t1 = timeVec[i + 1];
         y0 = parVec[i];
         y1 = parVec[i + 1];
-        deltaPar = y1 - y0;
-        deltaT = t1 - t0;
         ret = m * (t - t0) + y0;
       }
     }

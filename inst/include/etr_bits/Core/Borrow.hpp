@@ -1,7 +1,6 @@
 #ifndef BORROW_ETR_H
 #define BORROW_ETR_H
 
-// TODO: add SEXP stuff and remove BorrowSEXP
 namespace etr {
 // Points to a Variable and stores size
 template <typename T, typename BorrowTrait> struct Borrow {
