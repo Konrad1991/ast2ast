@@ -233,7 +233,7 @@ type_infer_action <- function(node, env) {
       node$error <- type
     } else {
       variable <- find_var_lhs(node)
-      if (!env$vars_list[[variable]]$type_dcl) {
+      if (!env$vars_list[[variable]]$type_dcl && !env$vars_list[[variable]]$fct_input) {
         env$vars_list[[variable]] <- common_type(env$vars_list[[variable]], type) |> flatten_type()
       }
     }
@@ -244,7 +244,7 @@ type_infer_action <- function(node, env) {
         node$error <- type_lhs
       } else {
         variable <- find_var_lhs(node)
-        if (!env$vars_list[[variable]]$type_dcl) {
+        if (!env$vars_list[[variable]]$type_dcl && !env$vars_list[[variable]]$fct_input) {
           env$vars_list[[variable]] <- common_type(env$vars_list[[variable]], type_lhs) |> flatten_type()
         }
       }

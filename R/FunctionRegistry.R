@@ -556,7 +556,7 @@ function_registry_global$add(
   name = "^", num_args = 2, arg_names = c(NA, NA),
   infer_fct = infer_binary_math,
   check_fct = check_binary,
-  is_infix = TRUE, group = "binary_node", cpp_name = "etr::power"
+  is_infix = FALSE, group = "binary_node", cpp_name = "etr::power"
 )
 function_registry_global$add(
   name = "+", num_args = 2, arg_names = c(NA, NA),

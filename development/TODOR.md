@@ -5,9 +5,6 @@
 - maybe add a remove function in order to remove elements from vectors and matrices
 - add modulo
 
-## Tests:
-- Write tests. for every error which can be thrown.
-
 ## Nicer code emitted:
 - for loop
 - check that blank lines are always removed before combining error messages
@@ -26,17 +23,5 @@ f <- function() {
     if (a == 4) break
   }
 }
-- if a type scalar is determined or set by the user
-  * the case int a; a = aSEXP has to be handled
-f <- function() {
-  a <- 1
-  b <- 2
-  cmr(if (a == 1) b, c(1,2), c(1))
-}
 - prevent usage of if, for, while and repeat within another expression.
   Similar approach as for <-/=
-
-## Cpp
-
-- adapt binary in the same way as unary
-- maybe subsetting requires also the same adaption?

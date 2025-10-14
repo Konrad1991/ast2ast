@@ -18,8 +18,7 @@ void test_basestore() {
     }
     ass(bs.allocated == false, std::string(s) + "allocated");
   }
-  // NOTE: allocating something with a large size so that size and capacity
-  // differ
+  // NOTE: allocating something with a large size so that size and capacity differ
   {
     std::string s = "BufferTestsAllocated: ";
     std::size_t size = 100;
@@ -31,8 +30,7 @@ void test_basestore() {
     ass(bs[bs.size() - 1] == 3.14, std::string(s) + "last element");
     ass(bs.size() == size + 1, std::string(s) + "size");
   }
-  // NOTE: allocating something with a small size so that size and capacity do
-  // not differ
+  // NOTE: allocating something with a small size so that size and capacity do not differ
   //
   {
     std::string s = "BufferTestsAllocated: ";
