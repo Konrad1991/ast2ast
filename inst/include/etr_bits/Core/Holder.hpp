@@ -4,7 +4,6 @@
 namespace etr {
 // Handler which store reference to r for L values and otherwise copy the value to keep it alive
 // -----------------------------------------------------------------------------------------------------------
-// NOTE: SubsetClass is moved into Vec. As Holder is part of SubsetClass it also requires the copy/move constructors and assignment operators
 template <typename T>
 class ConstHolder {
   std::optional<T> val;

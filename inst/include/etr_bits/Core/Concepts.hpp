@@ -1,17 +1,10 @@
 #ifndef CONCEPTS_ETR_H
 #define CONCEPTS_ETR_H
 
-#include "Header.hpp"
-#include "Traits.hpp"
-#include <type_traits>
-
 namespace etr {
 
 // Determine type for scalars or the inner type in case of other data structures
 // -----------------------------------------------------------------------------------------------------------
-template <typename T>
-concept isBID =
-    requires { requires IS<T, bool> || IS<T, int> || IS<T, double>; };
 // Float
 template <typename T> struct is_float_type : std::is_floating_point<T> {};
 template <typename T> struct is_float_type_with_type : is_float_type<typename T::Type> {};
@@ -31,7 +24,7 @@ template <typename T, typename = void> struct is_bool_dispatch : is_bool_type<T>
 template <typename T> struct is_bool_dispatch<T, std::void_t<typename T::Type>> : is_bool_type_with_type<T> {};
 template <typename T> inline constexpr bool IsBool = is_bool_dispatch<T>::value;
 
-// Calculation
+// Calculation & Inner data structures
 // -----------------------------------------------------------------------------------------------------------
 template <typename T>
 concept IsUnary = requires {
@@ -47,8 +40,7 @@ concept IsUnary = requires {
                IS<typename ReRef<T>::type::Trait, TangensHTrait> ||
                IS<typename ReRef<T>::type::Trait, ExpTrait> ||
                IS<typename ReRef<T>::type::Trait, LogTrait> ||
-               IS<typename ReRef<T>::type::Trait,
-                  SquareRootTrait> ||
+               IS<typename ReRef<T>::type::Trait, SquareRootTrait> ||
                IS<typename ReRef<T>::type::Trait, MinusUnaryTrait>;
 };
 template <typename T>
@@ -91,102 +83,10 @@ concept IsComparisonTrait = requires(T t) { // required as in binary operation t
                IS<T, OrTrait>;
 };
 
-// Input class (outer data structures)
-// -----------------------------------------------------------------------------------------------------------
-// Vector
-template <typename T> struct is_any_vec : std::false_type {};
-template <typename T, typename R> struct is_any_vec<Vec<T, R>> : std::true_type {};
-template <typename T> inline constexpr bool is_any_vec_v = is_any_vec<T>::value;
-template <typename T> concept IsVec = is_any_vec_v<T>;
-
-template <typename T> struct is_vec : std::false_type {};
-template <typename T> struct is_vec<Vec<T>> : std::true_type {};
-template <typename T> inline constexpr bool is_vec_v = is_vec<T>::value;
-template <typename T> concept IsBufferVec = is_vec_v<T>;
-
-template <typename T> struct is_vec_r : std::false_type {};
-template <typename T> struct is_vec_r<Vec<T, Buffer<T, RBufferTrait>>> : std::true_type {};
-template <typename T> inline constexpr bool is_vec_r_v = is_vec_r<T>::value;
-template <typename T> concept IsRVec = is_vec_r_v<T>;
-
-template <typename T> struct is_vec_b : std::false_type {};
-template <typename T> struct is_vec_b<Vec<T, Borrow<T, BorrowTrait>>> : std::true_type {};
-template <typename T> inline constexpr bool is_vec_b_v = is_vec_b<T>::value;
-template <typename T> concept IsBorrowVec = is_vec_b_v<T>;
-
-template <typename T> struct is_vec_s : std::false_type {};
-template <typename T, typename X, typename Y, typename Trait>
-struct is_vec_s<Vec<T, SubsetClass<X, Y, Trait>>> : std::bool_constant<std::is_same_v<Trait, SubsetClassTrait>> {};
-template <typename T> inline constexpr bool is_vec_s_v = is_vec_s<T>::value;
-template <typename T> concept IsSubsetVec = is_vec_s_v<T>;
-// TODO: remove the checkes which are done by hand in Vec and Mat
-
-template <typename T> concept IsUnaryVec = IsVec<T> && IsUnary<typename T::DType>;
-template <typename T> concept IsBinaryVec = IsVec<T> && IsBinary<typename T::DType>;
-template <typename T> concept IsComparisonVec = IsVec<T> && IsComparison<typename T::DType>;
-
 template <typename T>
-concept IsOperationVec = requires(T t) {
-  typename T::DType;
-  requires IsUnary<typename T::DType> || IsBinary<typename T::DType> || IsComparison<typename T::DType>;
-};
-
-template <typename T>
-concept IsROrCalculationVec = requires(T t) {
-  typename T::DType;
-  requires IsOperationVec<T> || IsRVec<T>;
-};
-
-// Matrix
-template <typename T> struct is_any_mat : std::false_type {};
-template <typename T, typename R> struct is_any_mat<Mat<T, R>> : std::true_type {};
-template <typename T> inline constexpr bool is_any_mat_v = is_any_mat<T>::value;
-template <typename T> concept IsMat = is_any_mat_v<T>;
-
-template <typename T> struct is_mat : std::false_type {};
-template <typename T> struct is_mat<Mat<T>> : std::true_type {};
-template <typename T> inline constexpr bool is_mat_v = is_mat<T>::value;
-template <typename T> concept IsBufferMat = is_mat_v<T>;
-
-template <typename T> struct is_mat_r : std::false_type {};
-template <typename T> struct is_mat_r<Mat<T, Buffer<T, RBufferTrait>>> : std::true_type {};
-template <typename T> inline constexpr bool is_mat_r_v = is_mat_r<T>::value;
-template <typename T> concept IsRMat = is_mat_r_v<T>;
-
-template <typename T> struct is_mat_b : std::false_type {};
-template <typename T> struct is_mat_b<Mat<T, Borrow<T, BorrowTrait>>> : std::true_type {};
-template <typename T> inline constexpr bool is_mat_b_v = is_mat_b<T>::value;
-template <typename T> concept IsBorrowMat = is_mat_b_v<T>;
-
-template <typename T> struct is_mat_s : std::false_type {};
-template <typename T, typename T2, typename InnerR, typename Y, typename Trait>
-struct is_mat_s< Mat<T, SubsetClass< Mat<T2, InnerR>, Y, Trait > > >
-  : std::bool_constant< std::is_same_v<Trait, SubsetClassTrait> > {};
-template <typename T>
-inline constexpr bool is_mat_s_v = is_mat_s<std::remove_cvref_t<T>>::value;
-template <typename T>
-concept IsSubsetMat = is_mat_s_v<T>;
-// TODO: remove the checkes which are done by hand in Vec and Mat
-
-// Array like (Vec or Mat)
-template <typename T>
-concept IsArrayLike = requires(T t) {
-  typename T;
-  requires IsVec<T> || IsMat<T>;
-};
-template <typename T>
-concept IsRArrayLike = requires(T t) {
-  typename T;
-  requires IsRVec<T> || IsRMat<T>;
-};
-
-// Inner data structures
-// -----------------------------------------------------------------------------------------------------------
-template <typename T>
-concept IsSubsetClass = requires {
+concept IsSubsetView = requires {
   typename ReRef<T>::type::TypeTrait;
-  requires IS<typename ReRef<T>::type::TypeTrait, SubsetClassTrait>;
-  // TODO: remove the checkes which are done by hand in Vec and Mat
+  requires IS<typename ReRef<T>::type::TypeTrait, SubsetViewTrait>;
 };
 template <typename T>
 concept IsLBuffer = requires {
@@ -202,6 +102,53 @@ template <typename T>
 concept IsBorrow = requires {
   typename ReRef<T>::type::Trait;
   requires IS<typename ReRef<T>::type::Trait, BorrowTrait>;
+};
+
+// Input class (outer data structures)
+// -----------------------------------------------------------------------------------------------------------
+// Array
+template <typename T> struct is_any_array : std::false_type {};
+template <typename T, typename R> struct is_any_array<Array<T, R>> : std::true_type {};
+template <typename T> inline constexpr bool is_any_array_v = is_any_array<T>::value;
+template <typename T> concept IsArray = is_any_array_v<T>;
+
+template <typename T> struct is_array_l : std::false_type {};
+template <typename T> struct is_array_l<Array<T, Buffer<T, LBufferTrait>>> : std::true_type {};
+template <typename T> inline constexpr bool is_array_l_v = is_array_l<T>::value;
+template <typename T> concept IsLBufferArray = is_array_l_v<T>;
+
+template <typename T> struct is_array_r : std::false_type {};
+template <typename T> struct is_array_r<Array<T, Buffer<T, RBufferTrait>>> : std::true_type {};
+template <typename T> inline constexpr bool is_array_r_v = is_array_r<T>::value;
+template <typename T> concept IsRArray = is_array_r_v<T>;
+
+template <typename T> struct is_array_b : std::false_type {};
+template <typename T> struct is_array_b<Array<T, Borrow<T, BorrowTrait>>> : std::true_type {};
+template <typename T> inline constexpr bool is_array_b_v = is_array_b<T>::value;
+template <typename T> concept IsBorrowArray = is_array_b_v<T>;
+
+template <typename T> struct is_array_s : std::false_type {};
+template <typename T, typename X, typename Y, typename Trait>
+struct is_array_s<Array<T, SubsetView<X, Y, Trait>>> : std::bool_constant<std::is_same_v<Trait, SubsetViewTrait>> {};
+template <typename T> inline constexpr bool is_array_s_v = is_array_s<T>::value;
+template <typename T> concept IsSubsetArray = is_array_s_v<T>;
+
+template <typename T> concept IsUnaryArray = IsArray<T> && IsUnary<typename T::DType>;
+template <typename T> concept IsBinaryArray = IsArray<T> && IsBinary<typename T::DType>;
+template <typename T> concept IsComparisonArray = IsArray<T> && IsComparison<typename T::DType>;
+
+template <typename T>
+concept IsOperationArray =
+    IsArray<T> && (
+        IsUnary<typename T::DType> ||
+        IsBinary<typename T::DType> ||
+        IsComparison<typename T::DType> ||
+        IsSubsetView<typename T::DType>
+    );
+template <typename T>
+concept IsROrCalculationArray = requires(T t) {
+  typename T::DType;
+  requires IsOperationArray<T> || IsRArray<T>;
 };
 
 } // namespace etr

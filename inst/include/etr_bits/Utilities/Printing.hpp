@@ -13,7 +13,7 @@ namespace etr {
 inline void print() { PRINT_STREAM << std::endl; }
 
 template <typename T>
-  requires isBID<T>
+requires (IS<T, bool> || IS<T, int> || IS<T, double>)
 inline void print(const T &inp) {
   if constexpr (IS<T, bool>) {
     PRINT_STREAM << std::boolalpha << inp << std::endl;
@@ -38,15 +38,7 @@ inline void print(const Object& obj) {
     for (std::size_t i = 0; i < obj.size(); i++)
       PRINT_STREAM << obj[i] << " ";
     PRINT_STREAM << std::endl;
-  } else if constexpr(IsMat<Object>) {
-    using value_type = typename ExtractDataType<Decayed<Object>>::value_type;
-    Mat<value_type> res; res = obj;// copy/eval because of subsetted matrices
-    for (std::size_t r = 0; r < res.nr(); r++) {
-      for (std::size_t c = 0; c < res.nc(); c++) {
-        PRINT_STREAM << res[c* res.nr() + r] << " ";
-      }
-      PRINT_STREAM << std::endl;
-    }
+  } else if constexpr(IsArray<Object>) {
   } else {
     ass<"unsupported object in print">(false);
   }

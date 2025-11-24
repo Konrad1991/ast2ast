@@ -1,19 +1,12 @@
 #ifndef TRAITS_ETR_H
 #define TRAITS_ETR_H
 
-#include "Header.hpp"
-
 namespace etr {
-struct DoubleTrait {};
-struct IntTrait {};
-struct BoolTrait {};
-struct ComparisonTrait {
-  using value_type = bool;
-};
+struct ComparisonTrait { using value_type = bool; };
 
 struct LBufferTrait {};
 struct RBufferTrait {};
-struct SubsetClassTrait {};
+struct SubsetViewTrait {};
 struct BorrowTrait {};
 struct BinaryTrait {};
 struct UnaryTrait {};
@@ -24,7 +17,6 @@ struct PlusTrait {
     return l + r;
   }
 };
-
 struct MinusTrait {
   template <typename L, typename R>
   static inline typename std::common_type<L, R>::type f(L l, R r) {
@@ -122,7 +114,6 @@ struct UnEqualTrait {
     }
   }
 };
-
 struct AndTrait {
   template <typename L, typename R>
   static bool f(L a, R b) {

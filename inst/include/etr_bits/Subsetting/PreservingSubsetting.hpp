@@ -1,7 +1,3 @@
-#include "../Core.hpp"
-#include "../Core/Traits.hpp"
-#include <optional>
-#include <type_traits>
 #include "HelperSubsetting.hpp"
 
 #ifndef SUBSETTING_PRESERVING_ETR_HPP
@@ -12,34 +8,34 @@ namespace etr {
 // Iterators
 // -----------------------------------------------------------------------------------------------------------
 template <typename Subset>
-struct SubsetClassIterator {
+struct SubsetViewIterator {
   Holder<Subset> subset;
   size_t index;
 
-  SubsetClassIterator(Subset& subset_, size_t index_ = 0)
+  SubsetViewIterator(Subset& subset_, size_t index_ = 0)
     : subset(subset_), index(index_) {}
 
-  SubsetClassIterator(Subset&& subset_, size_t index_ = 0)
+  SubsetViewIterator(Subset&& subset_, size_t index_ = 0)
     : subset(std::move(subset_)), index(index_) {}
 
   auto operator*() const {
     return subset.get()[index];
   }
 
-  SubsetClassIterator& operator++() {
+  SubsetViewIterator& operator++() {
     ++index;
     return *this;
   }
 
-  bool operator!=(const SubsetClassIterator& other) const {
+  bool operator!=(const SubsetViewIterator& other) const {
     return index != other.index;
   }
 };
 
-// The SubsetClass
+// The SubsetView
 // -----------------------------------------------------------------------------------------------------------
 template <typename L, typename R, typename STrait>
-struct SubsetClass {
+struct SubsetView {
 public:
   using Type = typename ReRef<L>::type::value_type;
   using value_type = typename ReRef<L>::type::value_type;
@@ -48,77 +44,25 @@ public:
   Holder<L> l;
   ConstHolder<R> r;
 
-  mutable std::size_t row_i = 0;
-  mutable std::size_t col_i = 0;
-
   // L is l value & R is l value
-  SubsetClass(L& l_, const R& r_) : l(l_), r(r_) {}
+  SubsetView(L& l_, const R& r_) : l(l_), r(r_) {}
   // L is l value & R is r value
-  SubsetClass(L& l_, R&& r_) : l(l_), r(std::move(r_)) {}
+  SubsetView(L& l_, R&& r_) : l(l_), r(std::move(r_)) {}
   // L is r value & R is l value
-  SubsetClass(L&& l_, const R& r_) : l(std::move(l_)), r(r_) {}
+  SubsetView(L&& l_, const R& r_) : l(std::move(l_)), r(r_) {}
   // L is r value & R is r value
-  SubsetClass(L&& l_, R&& r_) : l(std::move(l_)), r(std::move(r_)) {}
+  SubsetView(L&& l_, R&& r_) : l(std::move(l_)), r(std::move(r_)) {}
 
-  auto& get_mat(size_t i) {
-    const auto& [row, col] = r.get();
-    using rowT = decltype(row);
-    using colT = decltype(col);
-    if constexpr (!IsArithV<rowT> && !IsArithV<colT>) {
-      const size_t idx = (col[col_i] - 1) * l.get().nr() + (row[row_i] - 1);
-      if (++row_i == row.size()) {
-        row_i = 0;
-        ++col_i;
-      }
-      return l.get()[safe_modulo(idx, l.get().size())];
-    } else if constexpr(IsArithV<rowT> && !IsArithV<colT>) {
-      const size_t idx = (col[col_i] - 1) * l.get().nr() + row - 1;
-      ++col_i;
-      return l.get()[safe_modulo(idx, l.get().size())];
-    } else if constexpr(!IsArithV<rowT> && IsArithV<colT>) {
-      const size_t idx = (col - 1) * l.get().nr() + (row[row_i] - 1);
-      if (++row_i == row.size()) {
-        row_i = 0;
-      }
-      return l.get()[safe_modulo(idx, l.get().size())];
-    } else if constexpr(IsArithV<rowT> && IsArithV<colT>) {
-      const size_t idx = (col - 1) * l.get().nr() + (row - 1);
-      return l.get()[safe_modulo(idx, l.get().size())];
-    }
-  }
-  auto get_mat_const(size_t i) const {
-    const auto& [row, col] = r.get();
-    using rowT = decltype(row);
-    using colT = decltype(col);
-    if constexpr (!IsArithV<rowT> && !IsArithV<colT>) {
-      const size_t idx = (col[col_i] - 1) * l.get().nr() + (row[row_i] - 1);
-      if (++row_i == row.size()) {
-        row_i = 0;
-        ++col_i;
-      }
-      return l.get()[safe_modulo(idx, l.get().size())];
-    } else if constexpr(IsArithV<rowT> && !IsArithV<colT>) {
-      const size_t idx = (col[col_i] - 1) * l.get().nr() + row - 1;
-      ++col_i;
-      return l.get()[safe_modulo(idx, l.get().size())];
-    } else if constexpr(!IsArithV<rowT> && IsArithV<colT>) {
-      const size_t idx = (col - 1) * l.get().nr() + (row[row_i] - 1);
-      if (++row_i == row.size()) {
-        row_i = 0;
-      }
-      return l.get()[safe_modulo(idx, l.get().size())];
-    } else if constexpr(IsArithV<rowT> && IsArithV<colT>) {
-      const size_t idx = (col - 1) * l.get().nr() + (row - 1);
-      return l.get()[safe_modulo(idx, l.get().size())];
-    }
-  }
   auto operator[](size_t i) const {
-    if constexpr (IsPair<R>) { // Matrix
-      return get_mat_const(i);
-    } else if constexpr (IsBool<R> && IsArithV<R>) {
+    if constexpr (IsBool<R> && IsArithV<R>) { // FIX: what if R is false?
       return l.get()[safe_modulo(i, l.get().size())];
     } else if constexpr (IsArithV<R>) {
       return l.get()[r.get() - 1];
+    } else if constexpr (IS<R, std::vector<std::size_t>> ){
+      return l.get()[safe_modulo(((r.get()[
+        safe_modulo(i, r.get().size())
+        ])), l.get().size()
+      )];
     } else {
       return l.get()[safe_modulo(
         ((r.get()[
@@ -128,37 +72,26 @@ public:
     }
   }
   auto& operator[](size_t i) {
-    if constexpr (IsPair<R>) { // Matrix
-      return get_mat(i);
-    } else if constexpr (IsBool<R> && IsArithV<R>) {
+    if constexpr (IsBool<R> && IsArithV<R>) { // FIX: what if R is false?
       return l.get()[safe_modulo(i, l.get().size())];
     } else if constexpr (IsArithV<R>) {
       return l.get()[r.get() - 1];
+    } else if constexpr (IS<R, std::vector<std::size_t>> ){
+      return l.get()[safe_modulo(((r.get()[
+        safe_modulo(i, r.get().size())
+        ])), l.get().size()
+      )];
     } else {
       return l.get()[safe_modulo(
-      ((r.get()[safe_modulo(i, r.get().size())]) - 1), l.get().size()
+        ((r.get()[
+        safe_modulo(i, r.get().size())
+        ]) - 1), l.get().size()
       )];
     }
   }
 
-  size_t size_mat() const {
-    const auto& [row, col] = r.get();
-    using rowT = decltype(row);
-    using colT = decltype(col);
-    if constexpr (!IsArithV<rowT> && !IsArithV<colT>) {
-      return row.size() * col.size();
-    } else if constexpr(IsArithV<rowT> && !IsArithV<colT>) {
-      return col.size();
-    } else if constexpr(!IsArithV<rowT> && IsArithV<colT>) {
-      return row.size();
-    } else if constexpr(IsArithV<rowT> && IsArithV<colT>) {
-      return 1;
-    }
-  }
   size_t size() const {
-    if constexpr (IsPair<R>) { // Matrix
-      return size_mat();
-    } else if constexpr (IsBool<R> && IsArithV<R>) {
+    if constexpr (IsBool<R> && IsArithV<R>) {
       return r.get() ? l.get().size() : 0;
     } else if constexpr (IsArithV<R>) {
       return 1;
@@ -166,79 +99,28 @@ public:
       return r.get().size();
     }
   }
-  bool im() const {
-    if constexpr (IsMat<L>) {
-      return l.get().im();
-    } else {
-      return false;
-    }
-  }
-  size_t nr_mat() const {
-    const auto& row = r.get().first;
-    using rowT = Decayed<decltype(row)>;
-    if constexpr (IsArithV<rowT>) {
-      return 1;
-    } else {
-      return row.size();
-    }
-  }
-  std::size_t nr() const {
-    if constexpr (IsPair<R>) {
-      return nr_mat();
-    } else if constexpr (IsMat<L>) {
-      return l.get().nr();
-    } else {
-      return false;
-    }
-  }
-  size_t nc_mat() const {
-    const auto& col = r.get().second;
-    using colT = Decayed<decltype(col)>;
-    if constexpr (IsArithV<colT>) {
-      return 1;
-    } else {
-      return col.size();
-    }
-  }
-  std::size_t nc() const {
-    if constexpr (IsPair<R>) {
-      return nc_mat();
-    } else if constexpr (IsMat<L>) {
-      return l.get().nc();
-    } else {
-      return false;
-    }
-  }
 
   // Copy constructor
-  SubsetClass(const SubsetClass& other) : l(other.l), r(other.r) {}
+  SubsetView(const SubsetView& other) : l(other.l), r(other.r) {}
   // Copy assignment
-  SubsetClass& operator=(const SubsetClass& other) {
+  SubsetView& operator=(const SubsetView& other) {
     l = other.l;
     r = other.r;
     return *this;
   };
   // Move constructor
-  SubsetClass(SubsetClass&& other) : l(std::move(other.l)), r(std::move(other.r)) {}
+  SubsetView(SubsetView&& other) : l(std::move(other.l)), r(std::move(other.r)) {}
   // Move assignment
-  SubsetClass& operator=(SubsetClass&& other) {
+  SubsetView& operator=(SubsetView&& other) {
     l = std::move(other.l);
     r = std::move(other.r);
     return *this;
   }
 
-  auto begin() {
-    return SubsetClassIterator<SubsetClass>{*this, 0};
-  }
-  auto end() {
-    return SubsetClassIterator<SubsetClass>{*this, this->size()};
-  }
-  auto begin() const {
-    return SubsetClassIterator<const SubsetClass>{*this, 0};
-  }
-  auto end() const {
-    return SubsetClassIterator<const SubsetClass>{*this, this->size()};
-  }
+  auto begin() { return SubsetViewIterator<SubsetView>{*this, 0}; }
+  auto end() { return SubsetViewIterator<SubsetView>{*this, this->size()}; }
+  auto begin() const { return SubsetViewIterator<const SubsetView>{*this, 0}; }
+  auto end() const { return SubsetViewIterator<const SubsetView>{*this, this->size()}; }
 
 };
 
@@ -276,7 +158,7 @@ inline void precalcVecInt(const V &vec, std::vector<std::size_t> &ind) {
 // TODO: change all entries to auto&& and adapt the decltype and the creation of the pairs
 
 template <typename value_type, typename L, typename R>
-using SubsetVecType = Vec<value_type, SubsetClass<L, R, SubsetClassTrait>>;
+using SubsetVecType = Vec<value_type, SubsetView<L, R, SubsetViewTrait>>;
 
 using IndType = std::vector<std::size_t>;
 
@@ -293,18 +175,18 @@ inline auto subset(L&& l, R&& r) {
   auto&& lf = std::forward<L>(l);
   if constexpr (IsBool<RDecayed>) {
     return SubsetVecType<value_type, LDecayed, RDecayed>(
-      SubsetClass<LDecayed, RDecayed, SubsetClassTrait>(lf, std::forward<R>(r))
+      SubsetView<LDecayed, RDecayed, SubsetViewTrait>(lf, std::forward<R>(r))
     );
   } else if constexpr (IsFloat<RDecayed>) {
     const std::size_t rs = safe_index_from_double(r);
     using RSType = decltype(rs);
     return SubsetVecType<value_type, LDecayed, RSType>(
-      SubsetClass<LDecayed, RSType, SubsetClassTrait>(lf, std::forward<RSType>(rs))
+      SubsetView<LDecayed, RSType, SubsetViewTrait>(lf, std::forward<RSType>(rs))
     );
   } else if constexpr (IsInteger<RDecayed>) {
     ass<"Negative indices are not supported">(r >= 1);
     return SubsetVecType<value_type, LDecayed, RDecayed>(
-      SubsetClass<LDecayed, RDecayed, SubsetClassTrait>(lf, std::forward<R>(r))
+      SubsetView<LDecayed, RDecayed, SubsetViewTrait>(lf, std::forward<R>(r))
     );
   } else {
     ass<"Found unsupported type in subsetting">(false);
@@ -323,13 +205,13 @@ inline auto subset(L&& l, R&& r) {
     std::vector<std::size_t> ind;
     precalcVecInt(r, ind);
     return SubsetVecType<value_type, LDecayed, IndType>(
-      SubsetClass<LDecayed, IndType, SubsetClassTrait>(lf, std::forward<IndType>(ind))
+      SubsetView<LDecayed, IndType, SubsetViewTrait>(lf, std::forward<IndType>(ind))
     );
   } else {
     auto&& r_d = std::forward<R>(r).d;
     using RDType = decltype(r.d);
     return SubsetVecType<value_type, LDecayed, RDType>(
-      SubsetClass<LDecayed, RDType, SubsetClassTrait>(lf, r_d)
+      SubsetView<LDecayed, RDType, SubsetViewTrait>(lf, r_d)
     );
   }
 }
@@ -378,7 +260,7 @@ inline auto ArithmeticHandler(const V& vec, const O& obj, bool is_row) {
 */
 
 template <typename value_type, typename L, typename R>
-using SubsetMatType = Mat<value_type, SubsetClass<L, R, SubsetClassTrait>>;
+using SubsetMatType = Mat<value_type, SubsetView<L, R, SubsetViewTrait>>;
 
 // NOTE: R and C are arithmetic values
 template <typename L, typename R, typename C>
@@ -393,7 +275,7 @@ inline auto subset(L&& l, R&& row, C&& col) {
   auto&& lf = std::forward<L>(l);
   using pair_type = std::pair<decltype(r), decltype(c)>;
   return SubsetMatType<value_type, LDecayed, pair_type>(
-    SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
+    SubsetView<LDecayed, pair_type, SubsetViewTrait>(
       lf,
       std::pair<decltype(r), decltype(c)>{r, c}
     )
@@ -415,15 +297,15 @@ inline auto subset(L&& l, R&& row, C&& col) {
     std::vector<std::size_t> ind;
     precalcVecInt(col, ind);
     using pair_type = std::pair<decltype(r), IndType>;
-    return Mat<value_type, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
-      SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
+    return Mat<value_type, SubsetView<LDecayed, pair_type, SubsetViewTrait>>(
+      SubsetView<LDecayed, pair_type, SubsetViewTrait>(
         lf,
         std::pair<decltype(r), IndType>(std::forward<decltype(r)>(r), std::move(ind))
     ));
   } else {
     using pair_type = std::pair<decltype(r), decltype(col_d)&>;
-    return Mat<value_type, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
-      SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
+    return Mat<value_type, SubsetView<LDecayed, pair_type, SubsetViewTrait>>(
+      SubsetView<LDecayed, pair_type, SubsetViewTrait>(
         lf,
         std::pair<decltype(r), decltype(col_d)&>{r, col_d}
       )
@@ -446,15 +328,15 @@ inline auto subset(L&& l, R&& row, C&& col) {
     std::vector<std::size_t> ind;
     precalcVecInt(row, ind);
     using pair_type = std::pair<IndType, decltype(c)>;
-    return Mat<value_type, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
-      SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
+    return Mat<value_type, SubsetView<LDecayed, pair_type, SubsetViewTrait>>(
+      SubsetView<LDecayed, pair_type, SubsetViewTrait>(
         lf,
         std::pair<IndType, decltype(c)>{std::move(ind), std::forward<decltype(c)>(c)}
       ));
   } else {
     using pair_type = std::pair<decltype(row_d)&, decltype(c)>;
-    return Mat<value_type, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
-      SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
+    return Mat<value_type, SubsetView<LDecayed, pair_type, SubsetViewTrait>>(
+      SubsetView<LDecayed, pair_type, SubsetViewTrait>(
         lf,
         std::pair<decltype(row_d)&, decltype(c)>{row_d, c}
       ));
@@ -476,8 +358,8 @@ inline auto subset(L&& l, R&& row, C&& col) {
     auto&& row_d = std::forward<R>(row).d;
     auto&& col_d = std::forward<C>(col).d;
     using pair_type = std::pair<decltype(row_d)&, decltype(col_d)&>;
-    return Mat<value_type, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
-      SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
+    return Mat<value_type, SubsetView<LDecayed, pair_type, SubsetViewTrait>>(
+      SubsetView<LDecayed, pair_type, SubsetViewTrait>(
         std::forward<L>(l),
         std::pair<decltype(row_d)&, decltype(col_d)&>{row_d, col_d}
       )
@@ -488,8 +370,8 @@ inline auto subset(L&& l, R&& row, C&& col) {
     using IndR = decltype(ind);
     auto&& col_d = std::forward<C>(col).d;
     using pair_type = std::pair<IndR, decltype(col_d)&>;
-    return Mat<value_type, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
-      SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
+    return Mat<value_type, SubsetView<LDecayed, pair_type, SubsetViewTrait>>(
+      SubsetView<LDecayed, pair_type, SubsetViewTrait>(
         std::forward<L>(l),
         std::pair<IndR, decltype(col_d)&>{std::move(ind), col_d}
       )
@@ -500,8 +382,8 @@ inline auto subset(L&& l, R&& row, C&& col) {
     using IndC = decltype(ind);
     auto&& row_d = std::forward<R>(row).d;
     using pair_type = std::pair<decltype(row_d)&, IndC>;
-    return Mat<value_type, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
-      SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
+    return Mat<value_type, SubsetView<LDecayed, pair_type, SubsetViewTrait>>(
+      SubsetView<LDecayed, pair_type, SubsetViewTrait>(
         std::forward<L>(l),
         std::pair<decltype(row_d)&, IndC>{row_d, std::move(ind)}
       )
@@ -514,8 +396,8 @@ inline auto subset(L&& l, R&& row, C&& col) {
     using IndR = decltype(indR);
     using IndC = decltype(indC);
     using pair_type = std::pair<IndR, IndC>;
-    return Mat<value_type, SubsetClass<LDecayed, pair_type, SubsetClassTrait>>(
-      SubsetClass<LDecayed, pair_type, SubsetClassTrait>(
+    return Mat<value_type, SubsetView<LDecayed, pair_type, SubsetViewTrait>>(
+      SubsetView<LDecayed, pair_type, SubsetViewTrait>(
         std::forward<L>(l),
         std::pair<IndType, IndType>{std::move(indR), std::move(indC)}
       )

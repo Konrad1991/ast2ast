@@ -1,23 +1,10 @@
 #ifndef TYPES_ETR_H
 #define TYPES_ETR_H
 
-#include "Header.hpp"
-#include "Traits.hpp"
-#include "Utils.hpp"
-#include <type_traits>
-
 namespace etr {
-
 
 // Inner data structs
 // -----------------------------------------------------------------------------------------------------------
-template <typename T, typename  BufferTrait = LBufferTrait> struct Buffer;
-template <typename T, typename BorrowTrait = BorrowTrait> struct Borrow;
-template <typename L, typename R, typename STrait> struct SubsetClass;
-template <typename L, typename R, typename BTrait = BinaryTrait>
-struct BinaryOperation;
-template <typename I, typename UTrait = UnaryTrait>
-struct UnaryOperation;
 /*
 Each inner data struct requires:
 - copy constructor
@@ -25,9 +12,6 @@ Each inner data struct requires:
 - move constructor
 - move assignment
 - size
-- im
-- nr
-- nc
 - const auto& operator[]
 - auto& operator[]
 - begin
@@ -38,17 +22,25 @@ Each inner data struct requires:
 Classes                     Status
 Buffer                      Done
 Borrow                      Done
-BinaryOperation             Done
 UnaryOperation              Done
-SubsetClass                 Done
+BinaryOperation             Done
+SubsetView                  Done
 */
+template <typename T, typename Trait = LBufferTrait> struct Buffer;
+template <typename T, typename Trait = BorrowTrait> struct Borrow;
+template <typename L, typename Trait = UnaryTrait> struct UnaryOperation;
+template <typename L, typename R, typename Trait = BinaryTrait> struct BinaryOperation;
+template <typename L, typename R, typename Trait = SubsetViewTrait> struct SubsetView;
 
 // Outer data structs
 // -----------------------------------------------------------------------------------------------------------
-template <typename T, typename R = Buffer<T>>
-struct Vec;
-template <typename T, typename R = Buffer<T>>
-struct Mat;
+template<typename T, typename R>
+struct Array { static_assert(sizeof(R) == 0, "No generic Array<T,R> implementation"); };
+template <typename T, typename Trait> struct Array<T, Buffer<T, Trait>>;
+template <typename T, typename Trait> struct Array<T, Borrow<T, Trait>>;
+template <typename T, typename I, typename Trait> struct Array<T, UnaryOperation<I, Trait>>;
+template <typename T, typename L, typename R, typename Trait> struct Array<T, BinaryOperation<L, R, Trait>>;
+template <typename T, typename L, typename R, typename Trait> struct Array<T, SubsetView<L, R, Trait>>;
 
 // Extract data type from inner data structs
 // -----------------------------------------------------------------------------------------------------------
@@ -61,6 +53,7 @@ template <typename T, typename Trait>
 struct ExtractDataType<const Buffer<T, Trait>> {
   using value_type = T;
 };
+
 template <typename T, typename Trait>
 struct ExtractDataType<Borrow<T, Trait>> {
   using value_type = T;
@@ -69,14 +62,16 @@ template <typename T, typename Trait>
 struct ExtractDataType<const Borrow<T, Trait>> {
   using value_type = T const;
 };
+
 template <typename T, typename R, typename Trait>
-struct ExtractDataType<SubsetClass<T, R, Trait>> {
+struct ExtractDataType<SubsetView<T, R, Trait>> {
   using value_type = T;
 };
 template <typename T, typename R, typename Trait>
-struct ExtractDataType<const SubsetClass<T, R, Trait>> {
+struct ExtractDataType<const SubsetView<T, R, Trait>> {
   using value_type = T;
 };
+
 template <typename T, typename Trait>
 struct ExtractDataType<UnaryOperation<T, Trait>> {
   using value_type = T;
@@ -85,6 +80,7 @@ template <typename T, typename Trait>
 struct ExtractDataType<const UnaryOperation<T, Trait>> {
   using value_type = T;
 };
+
 template <typename T, typename R, typename Trait>
 struct ExtractDataType<BinaryOperation<T, R, Trait>> {
   using value_type = T;
@@ -96,44 +92,25 @@ struct ExtractDataType<const BinaryOperation<T, R, Trait>> {
 
 // Extract data type from outer data structs
 // -----------------------------------------------------------------------------------------------------------
-template <typename T> struct ExtractDataType;
 template <typename T, typename R>
-struct ExtractDataType<Vec<T, R>> {
+struct ExtractDataType<Array<T, R>> {
   using value_type = T;
 };
 template <typename T, typename R>
-struct ExtractDataType<const Vec<T, R>> {
+struct ExtractDataType<const Array<T, R>> {
   using value_type = T const;
 };
-template <typename T, typename R>
-struct ExtractDataType<Mat<T, R>> {
-  using value_type = T;
-};
-template <typename T, typename R>
-struct ExtractDataType<const Mat<T, R>> {
-  using value_type = T const;
-};
-
-template <typename T>
-using ExtractedTypeData = typename ExtractDataType<T>::value_type;
+template <typename T> using ExtractedTypeData = typename ExtractDataType<T>::value_type;
 
 // Extract inner data structs from outer data structs
 // -----------------------------------------------------------------------------------------------------------
 template <typename T> struct ExtractRType;
 template <typename T, typename R>
-struct ExtractRType<Vec<T, R>> {
+struct ExtractRType<Array<T, R>> {
   using RType = R;
 };
 template <typename T, typename R>
-struct ExtractRType<const Vec<T, R>> {
-  using RType = R const;
-};
-template <typename T, typename R>
-struct ExtractRType<Mat<T, R>> {
-  using RType = R;
-};
-template <typename T, typename R>
-struct ExtractRType<const Mat<T, R>> {
+struct ExtractRType<const Array<T, R>> {
   using RType = R const;
 };
 template <typename T>

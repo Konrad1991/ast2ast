@@ -21,11 +21,6 @@ template <typename T> constexpr bool IsRvalueV = std::is_rvalue_reference_v<T>;
 template <typename T> using IsClass = std::is_class<T>;
 template <typename T> constexpr bool IsClassV = std::is_class_v<T>;
 
-template <typename T, typename U> constexpr bool is = IS<T, U>;
-
-template <typename LT, typename LU, typename RT, typename RU>
-constexpr bool isd = IS<LT, LU> && IS<RT, RU>;
-
 template <typename T>
 inline constexpr bool IsPair = false;
 template <typename A, typename B>
@@ -36,22 +31,15 @@ typename std::common_type<T1, T2>::type CommonType(T1 arg1, T2 arg2) {
   return arg1 + arg2; // Fake function just for getting the common type
 }
 
+// TODO: Shouldn't TRUE, T, FALSE, F, NA, NaN and Inf be in etr?
 template <bool B> using BoolConstant = std::integral_constant<bool, B>;
 using TRUE = BoolConstant<true>;
 using T = BoolConstant<true>;
 using FALSE = BoolConstant<false>;
 using F = BoolConstant<false>;
-
-// TODO: check how r values behave here
 const double NA = std::numeric_limits<double>::quiet_NaN();
 const double NaN = std::numeric_limits<double>::quiet_NaN();
 const double Inf = std::numeric_limits<double>::infinity();
-
-inline int d2i(double inp) { return static_cast<int>(inp); }
-inline double i2d(int inp) { return static_cast<double>(inp); }
-inline bool d2b(double inp) { return static_cast<bool>(inp); }
-inline bool i2b(double inp) { return static_cast<bool>(inp); }
-inline double b2d(bool inp) { return static_cast<double>(inp); }
 
 template <typename T> struct It {
   T *p;

@@ -1,0 +1,6 @@
+m <- matrix(0, 2, 2)
+a <- array(0, c(2, 2, 3))
+setwd("./development")
+Rcpp::sourceCpp("bla.cpp")
+test(m)
+test(a)

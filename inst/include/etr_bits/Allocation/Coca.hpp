@@ -1,4 +1,3 @@
-// TODO: creation of empty vec i.e. c(); is missing
 #ifndef CONCATENATE_ETR_HPP
 #define CONCATENATE_ETR_HPP
 
