@@ -124,4 +124,5 @@ struct SubsetView {
                                    )];
     }
   }
+  std::size_t size() const {return indices.get().size();}
 };

@@ -1,164 +1,115 @@
-template<typename ValueFn>
-inline void print_1d(ValueFn value, std::size_t n, int width) {
-  for (std::size_t i = 0; i < n; ++i)
-    std::cout << std::setw(width) << value(i);
-  std::cout << "\n";
-}
-template<typename ValueFn>
-inline void print_2d(ValueFn value,
-                     std::size_t rows,
-                     std::size_t cols,
-                     const std::array<std::size_t,2>& stride,
-                     int width) {
-  std::cout << "      ";
-  for (std::size_t c = 0; c < cols; ++c)
-    std::cout << std::setw(width) << ("[, " + std::to_string(c+1) + "]");
-  std::cout << "\n";
-
-  for (std::size_t r = 0; r < rows; ++r) {
-    std::cout << "[" << std::setw(2) << (r+1) << ",] ";
-    for (std::size_t c = 0; c < cols; ++c) {
-      std::size_t off = r * stride[0] + c * stride[1];
-      std::cout << std::setw(width) << value(off);
+template<typename P, typename T>
+inline void print_matrix(const P& pos, const T& obj,
+                         std::size_t rs, std::size_t cs, std::size_t offset) {
+  if (!pos.empty()) {
+    std::cout << ", , ";
+    for (std::size_t i = 0; i < pos.size(); i++) {
+      std::cout << pos[i] + 1;
+      if (i < (pos.size() - 1)) {
+        std::cout << ", ";
+      }
     }
-    std::cout << "\n";
+    std::cout << std::endl;
   }
-}
 
-template<std::size_t N, typename ValueFn>
-inline void print_nd(ValueFn value,
-                     const std::array<std::size_t,N>& dim,
-                     const std::array<std::size_t,N>& stride,
-                     int width) {
-    std::vector<std::size_t> outer(N - 2, 0);
-
-    auto print_slice = [&](const std::vector<std::size_t>& outer) {
-        const std::size_t rows = dim[0], cols = dim[1];
-
-        std::cout << "      ";
-        for (std::size_t c = 0; c < cols; ++c)
-            std::cout << std::setw(width) << ("[, " + std::to_string(c+1) + "]");
-        std::cout << "\n";
-
-        for (std::size_t r = 0; r < rows; ++r) {
-            std::cout << "[" << std::setw(2) << (r+1) << ",] ";
-            for (std::size_t c = 0; c < cols; ++c) {
-
-                std::size_t off = r * stride[0] + c * stride[1];
-                for (std::size_t t = 0; t + 2 < N; ++t)
-                    off += outer[t] * stride[t+2];
-
-                std::cout << std::setw(width) << value(off);
-            }
-            std::cout << "\n";
-        }
-    };
-
-    for (;;) {
-        std::cout << "\n, , ";
-        for (std::size_t t = 0; t < outer.size(); ++t) {
-            if (t) std::cout << ", ";
-            std::cout << (outer[t] + 1);
-        }
-        std::cout << "\n\n";
-
-        print_slice(outer);
-
-        std::size_t ax = 0;
-        for (;;) {
-            outer[ax] += 1;
-            if (outer[ax] < dim[ax + 2]) break;
-            outer[ax] = 0;
-            ++ax;
-            if (ax == outer.size()) return;
-        }
+  for (std::size_t r = 0; r < rs; r++) {
+    for (std::size_t c = 0; c < cs; c++) {
+      std::cout << obj[offset + c * rs + r] << "   ";
     }
+    std::cout << std::endl;
+  }
 }
 
 template <typename O, std::size_t N, typename Mode>
 inline void print(const SubsetView<O, N, Mode>& view) {
 
-  auto stride = make_strides<N>(view.dim);
-
-  int width = 1;
-  for (std::size_t i = 0; i < view.indices.get().size(); ++i) {
-    int w = std::to_string(view[i + 1]).size();
-    width = std::max(width, w);
-  }
-  width++;
-
-  if constexpr (N == 1) {
-    print_1d(
-      [&](std::size_t i){ return view[i + 1]; },
-      view.dim[0],
-      width
-    );
-    return;
+  if (view.dim.size() == 1) {
+    for (std::size_t i = 0; i < view.size(); i++) {
+      std::cout << view[i] << "\t";
+    }
+    std::cout << std::endl;
   }
 
-  if constexpr (N == 2) {
-    print_2d(
-      [&](std::size_t off){ return view[off + 1]; },
-      view.dim[0],
-      view.dim[1],
-      std::array<std::size_t,2>{ stride[0], stride[1] },
-      width
-    );
-    return;
+  if (view.dim.size() == 2) {
+    print_matrix(std::vector<std::size_t>{0, 0}, view, view.dim[0], view.dim[1], 0);
   }
 
-  print_nd<N>(
-    [&](std::size_t off){ return view[off + 1]; },
-    view.dim,
-    stride,
-    width
-  );
+  if (view.dim.size() > 2) {
+    auto strides_all = make_strides<N>(view.dim);
+    std::array<std::size_t, N - 2> strides;
+    for (std::size_t i = 0; i < strides.size(); i++) strides[i] = strides_all[i + 2];
+
+    std::array<std::size_t, N - 2> pos{};
+    std::array<std::size_t, N - 2> L;
+    for (std::size_t i = 0; i < L.size(); i++) L[i] = view.dim[i + 2];
+
+    std::size_t offset = 0;
+    std::size_t k = 0;
+    for (;;) {
+      offset = 1;
+      for (std::size_t k = 0; k < (N - 2); k++) {
+        offset += (pos[k]) * strides[k];
+      }
+      print_matrix(pos, view, view.dim[0], view.dim[1], offset - 1);
+      std::cout << std::endl;
+      k = 0;
+      for (;;) {
+        pos[k] += 1;
+        if (pos[k] < L[k]) break;
+        pos[k] = 0;
+        k++;
+        if (k == (N - 2)) {
+          return;
+        }
+      }
+    }
+  }
+
 }
 
-void print(const Array& arr) {
-  if (arr.dim.empty()) {
-    std::cout << "[]\n";
-    return;
+inline void print(const Array& arr) {
+
+  if (arr.dim.size() == 1) {
+    for (std::size_t i = 0; i < arr.size(); i++) {
+      std::cout << arr[i] << "\t";
+    }
+    std::cout << std::endl;
   }
 
-  switch (arr.dim.size()) {
-    case 1: {
-      int width = 1;
-      for (int v : arr.data)
-      width = std::max(width, int(std::to_string(v).size()));
-      width++;
+  if (arr.dim.size() == 2) {
+    print_matrix(std::vector<std::size_t>{0, 0}, arr, arr.dim[0], arr.dim[1], 0);
+  }
 
-      print_1d([&](size_t i){ return arr.data[i]; }, arr.dim[0], width);
-      break;
-    }
+  if (arr.dim.size() > 2) {
+    auto strides_all = make_strides_dyn(arr.dim);
+    std::size_t N = strides_all.size();
+    std::vector<std::size_t> strides(strides_all.size() - 2);
+    for (std::size_t i = 0; i < strides.size(); i++) strides[i] = strides_all[i + 2];
 
-    case 2: {
-      std::array<std::size_t,2> d2{arr.dim[0], arr.dim[1]};
-      auto stride = make_strides<2>(d2);
+    std::vector<std::size_t> pos(N - 2, 0);
+    std::vector<std::size_t> L(N - 2, 0);
+    for (std::size_t i = 0; i < L.size(); i++) L[i] = arr.dim[i + 2];
 
-      int width = 1;
-      for (int v : arr.data)
-      width = std::max(width, int(std::to_string(v).size()));
-      width++;
-
-      print_2d([&](size_t i){ return arr.data[i]; },
-               arr.dim[0], arr.dim[1], stride, width);
-      break;
-    }
-
-    default: {
-      constexpr std::size_t MAX = 16;
-      std::array<std::size_t,MAX> d{};
-      for (size_t i = 0; i < arr.dim.size(); ++i) d[i] = arr.dim[i];
-      auto stride = make_strides<MAX>(d);
-
-      int width = 1;
-      for (int v : arr.data)
-      width = std::max(width, int(std::to_string(v).size()));
-      width++;
-
-      print_nd<MAX>([&](size_t i){ return arr.data[i]; }, d, stride, width);
-      break;
+    std::size_t offset = 0;
+    std::size_t k = 0;
+    for (;;) {
+      offset = 1;
+      for (std::size_t k = 0; k < (N - 2); k++) {
+        offset += (pos[k]) * strides[k];
+      }
+      print_matrix(pos, arr, arr.dim[0], arr.dim[1], offset - 1);
+      std::cout << std::endl;
+      k = 0;
+      for (;;) {
+        pos[k] += 1;
+        if (pos[k] < L[k]) break;
+        pos[k] = 0;
+        k++;
+        if (k == (N - 2)) {
+          return;
+        }
+      }
     }
   }
+
 }

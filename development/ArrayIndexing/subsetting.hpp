@@ -118,7 +118,7 @@ inline auto subset_mixed(Array& arr, const Args&... args) -> SubsetView<Array, s
     for (std::size_t k = 0; k < N; k++) {
       offset += ((*index_lists[k])[pos[k]] - 1) * stride[k];
     }
-    out.push_back(arr.data[offset - 1]);
+    out.push_back(offset - 1);
 
     k = 0;
     for (;;) {

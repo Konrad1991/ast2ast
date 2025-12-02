@@ -42,3 +42,10 @@ inline std::array<std::size_t, N> make_strides_from_vec(const std::vector<std::s
   return stride;
 }
 
+inline std::vector<std::size_t> make_strides_dyn(const std::vector<std::size_t>& dim) {
+  std::vector<std::size_t> stride(dim.size(), 0);
+  stride[0] = 1;
+  for (std::size_t k = 1; k < stride.size(); k++) stride[k] = stride[k-1] * dim[k-1];
+  return stride;
+}
+
