@@ -88,6 +88,15 @@ concept IsSubsetView = requires {
   typename ReRef<T>::type::TypeTrait;
   requires IS<typename ReRef<T>::type::TypeTrait, SubsetViewTrait>;
 };
+// extract N from SubsetView
+template<typename T>
+struct subsetview_traits;
+
+template<typename O, std::size_t N, typename Trait>
+struct subsetview_traits<SubsetView<O, N, Trait>> {
+    static constexpr std::size_t value = N;
+};
+
 template <typename T>
 concept IsLBuffer = requires {
   typename ReRef<T>::type::Trait;
@@ -128,8 +137,8 @@ template <typename T> inline constexpr bool is_array_b_v = is_array_b<T>::value;
 template <typename T> concept IsBorrowArray = is_array_b_v<T>;
 
 template <typename T> struct is_array_s : std::false_type {};
-template <typename T, typename X, typename Y, typename Trait>
-struct is_array_s<Array<T, SubsetView<X, Y, Trait>>> : std::bool_constant<std::is_same_v<Trait, SubsetViewTrait>> {};
+template <typename T, typename O, std::size_t N, typename Trait>
+struct is_array_s<Array<T, SubsetView<O, N, Trait>>> : std::bool_constant<std::is_same_v<Trait, SubsetViewTrait>> {};
 template <typename T> inline constexpr bool is_array_s_v = is_array_s<T>::value;
 template <typename T> concept IsSubsetArray = is_array_s_v<T>;
 

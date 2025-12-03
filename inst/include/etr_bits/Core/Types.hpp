@@ -30,7 +30,7 @@ template <typename T, typename Trait = LBufferTrait> struct Buffer;
 template <typename T, typename Trait = BorrowTrait> struct Borrow;
 template <typename L, typename Trait = UnaryTrait> struct UnaryOperation;
 template <typename L, typename R, typename Trait = BinaryTrait> struct BinaryOperation;
-template <typename L, typename R, typename Trait = SubsetViewTrait> struct SubsetView;
+template<typename O, std::size_t N, typename Trait = SubsetViewTrait> struct SubsetView;
 
 // Outer data structs
 // -----------------------------------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ template <typename T, typename Trait> struct Array<T, Buffer<T, Trait>>;
 template <typename T, typename Trait> struct Array<T, Borrow<T, Trait>>;
 template <typename T, typename I, typename Trait> struct Array<T, UnaryOperation<I, Trait>>;
 template <typename T, typename L, typename R, typename Trait> struct Array<T, BinaryOperation<L, R, Trait>>;
-template <typename T, typename L, typename R, typename Trait> struct Array<T, SubsetView<L, R, Trait>>;
+template <typename T, typename O, std::size_t N, typename Trait> struct Array<T, SubsetView<O, N, Trait>>;
 
 // Extract data type from inner data structs
 // -----------------------------------------------------------------------------------------------------------
@@ -63,12 +63,14 @@ struct ExtractDataType<const Borrow<T, Trait>> {
   using value_type = T const;
 };
 
-template <typename T, typename R, typename Trait>
-struct ExtractDataType<SubsetView<T, R, Trait>> {
+// TODO: does this work for SubsetView, UnaryOperation and BinaryOperation
+// because here T is not a template parameter
+template <typename O, std::size_t N, typename Trait>
+struct ExtractDataType<SubsetView<O, N, Trait>> {
   using value_type = T;
 };
-template <typename T, typename R, typename Trait>
-struct ExtractDataType<const SubsetView<T, R, Trait>> {
+template <typename O, std::size_t N, typename Trait>
+struct ExtractDataType<const SubsetView<O, N, Trait>> {
   using value_type = T;
 };
 

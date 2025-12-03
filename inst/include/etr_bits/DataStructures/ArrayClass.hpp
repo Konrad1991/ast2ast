@@ -508,13 +508,13 @@ dim(a[1:2, 1, 1:3]) --> 2, 3
 a[1:3, 1:2, 1] <- a[1:2, 1, 1:3]
 Thus, only the size has to be the same, but not the dim?
 */
-template<typename T, typename L, typename R, typename Trait> struct Array<T, SubsetView<L, R, Trait>> {
+template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, SubsetView<O, N, Trait>> {
   using Type = T;
-  using DType = SubsetView<L, R, Trait>;
+  using DType = SubsetView<O, N, Trait>;
   using value_type = T;
-  SubsetView<L, R, Trait> d;
+  SubsetView<O, N, Trait> d;
   Buffer<T, LBufferTrait> temp;
-  ConstHolder<std::vector<std::size_t>> dim;
+  Holder<std::vector<std::size_t>> dim;
 
   // ======================= internal methods =================================================
   decltype(auto) operator[](std::size_t idx) { return d[idx]; }
@@ -557,10 +557,10 @@ template<typename T, typename L, typename R, typename Trait> struct Array<T, Sub
   }
 
   // ======================= Constructors ===================================================
-  template <typename L2, typename R2, typename TraitL>
-  explicit Array(SubsetView<L2, R2, TraitL> &&inp, std::vector<std::size_t>&& dim_) : d(std::move(inp)), dim(dim_) {}
-  template <typename L2, typename R2, typename TraitL>
-  explicit Array(SubsetView<L2, R2, TraitL> &inp, std::vector<std::size_t>& dim_) : d(inp), dim(dim_) {}
+  template <typename O2, std::size_t N2, typename Trait2>
+  explicit Array(SubsetView<O2, N2, Trait2> &&inp, std::vector<std::size_t>&& dim_) : d(std::move(inp)), dim(std::move(dim_)) {}
+  template <typename O2, std::size_t N2, typename Trait2>
+  explicit Array(SubsetView<O2, N2, Trait2> &inp, std::vector<std::size_t>&& dim_) : d(inp), dim(std::move(dim_)) {}
 
   template<typename...Args>
   Array(Args...) {
@@ -582,6 +582,7 @@ template<typename T, typename L, typename R, typename Trait> struct Array<T, Sub
         d[i] = val;
       }
     }
+    return *this;
   }
 
   // copy assignment for same type

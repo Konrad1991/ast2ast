@@ -130,6 +130,10 @@ inline std::size_t safe_modulo(std::size_t idx, std::size_t sz) {
   return sz ? (idx % sz) : 0;  // no UB if n==0
 }
 
+template <class F, class... Args> inline F forEachArg(F f, Args &&...args) {
+  (f(std::forward<Args>(args)), ...); return f;
+}
+
 } // namespace etr
 
 #endif
