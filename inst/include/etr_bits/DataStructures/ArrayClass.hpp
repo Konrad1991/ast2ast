@@ -226,6 +226,10 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
 
   // ======================= Constructors ===================================================
   explicit Array(const SI &sz) : d(sz.sz) {}
+
+  Array(Array&& other) noexcept(std::is_nothrow_move_constructible_v<decltype(d)>)
+  : d(std::move(other.d)), dim(std::move(other.dim)) {}
+
   template<typename...Args>
   Array(Args...) {
     ass<"Constructor not supported">(sizeof(T) == 0);

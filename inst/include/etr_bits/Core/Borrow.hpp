@@ -112,34 +112,6 @@ template <typename T, typename BorrowTrait> struct Borrow {
     }
   }
 
-  template <typename TInp> void fill(const TInp &inp) {
-    ass<"cannot use fill with vectors of different lengths">(inp.size() == sz);
-    using DataType = typename ExtractDataType<Decayed<TInp>>::value_type;
-    if constexpr (IsArray<TInp> && (!IsRArray<TInp>)) {
-      if constexpr (!IS<DataType, T>) {
-        for (std::size_t i = 0; i < sz; i++)
-          p[i] = static_cast<T>(inp[i]);
-      } else {
-        DataType *ptr = inp.getPtr();
-        std::copy(ptr, ptr + sz, p);
-      }
-    } else if constexpr (IsRArray<TInp> && IS<DataType, T>) {
-      delete[] p;
-      DataType *ptr = inp.getPtr();
-      inp.d.p = nullptr;
-      inp.d.allocated = false;
-      p = ptr;
-    } else {
-      if constexpr (IS<DataType, T>) {
-        for (std::size_t i = 0; i < sz; i++)
-          p[i] = inp[i];
-      } else {
-        for (std::size_t i = 0; i < sz; i++)
-          p[i] = static_cast<T>(inp[i]);
-      }
-    }
-  }
-
   ~Borrow() {}
 
   void init(std::size_t size) = delete;

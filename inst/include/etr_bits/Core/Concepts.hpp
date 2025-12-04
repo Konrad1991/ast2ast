@@ -3,6 +3,45 @@
 
 namespace etr {
 
+// Common type of scalar types
+// --------------------------------------------------------------------------------------------------
+template<typename T>
+using bare_t = std::remove_cv_t<std::remove_reference_t<T>>;
+// Primary template
+template<typename L, typename R>
+struct common_type_internal {
+  static_assert(!std::is_same_v<L,L>,
+                "No common_type_internal< L, R > specialization provided.");
+};
+// 1. Same type
+template<typename T>
+struct common_type_internal<T, T> { using type = T; };
+// 2. Bool with anything --> the other type
+template<typename R>
+struct common_type_internal<Bool, R> { using type = R; };
+
+template<typename L>
+struct common_type_internal<L, Bool> { using type = L; };
+// 3. Int & Double --> Double
+template<>
+struct common_type_internal<Int, Double> { using type = Double; };
+
+template<>
+struct common_type_internal<Double, Int> { using type = Double; };
+// Convenience alias
+template<typename L, typename R>
+struct common_type {
+  using type = typename common_type_internal<bare_t<L>, bare_t<R>>::type;
+};
+
+template<typename L, typename R>
+using common_type_t = typename common_type<L, R>::type;
+// Concept to detect scalars
+template<class T> concept ScalarType =
+    std::same_as<T, Bool> ||
+    std::same_as<T, Int> ||
+    std::same_as<T, Double>;
+
 // Determine type for scalars or the inner type in case of other data structures
 // -----------------------------------------------------------------------------------------------------------
 // Float

@@ -3,6 +3,21 @@
 
 namespace etr {
 
+// Scalar types
+// --------------------------------------------------------------------------------------------------
+struct Bool {
+  bool val;
+  Bool(bool v) : val(v) {}
+};
+struct Int {
+  int val;
+  Int(int v) : val(v) {}
+};
+struct Double {
+  double val;
+  Double(double v) : val(v) {}
+};
+
 // Inner data structs
 // -----------------------------------------------------------------------------------------------------------
 /*
@@ -14,17 +29,11 @@ Each inner data struct requires:
 - size
 - const auto& operator[]
 - auto& operator[]
-- begin
-- end
+- begin and end
 - Trait
-- value_type
+- value_type --> why?
 
-Classes                     Status
-Buffer                      Done
-Borrow                      Done
-UnaryOperation              Done
-BinaryOperation             Done
-SubsetView                  Done
+Classes Buffer, Borrow, UnaryOperation, BinaryOperation, SubsetView
 */
 template <typename T, typename Trait = LBufferTrait> struct Buffer;
 template <typename T, typename Trait = BorrowTrait> struct Borrow;
@@ -42,58 +51,10 @@ template <typename T, typename I, typename Trait> struct Array<T, UnaryOperation
 template <typename T, typename L, typename R, typename Trait> struct Array<T, BinaryOperation<L, R, Trait>>;
 template <typename T, typename O, std::size_t N, typename Trait> struct Array<T, SubsetView<O, N, Trait>>;
 
-// Extract data type from inner data structs
-// -----------------------------------------------------------------------------------------------------------
-template <typename T> struct ExtractDataType;
-template <typename T, typename Trait>
-struct ExtractDataType<Buffer<T, Trait>> {
-  using value_type = T;
-};
-template <typename T, typename Trait>
-struct ExtractDataType<const Buffer<T, Trait>> {
-  using value_type = T;
-};
-
-template <typename T, typename Trait>
-struct ExtractDataType<Borrow<T, Trait>> {
-  using value_type = T;
-};
-template <typename T, typename Trait>
-struct ExtractDataType<const Borrow<T, Trait>> {
-  using value_type = T const;
-};
-
-// TODO: does this work for SubsetView, UnaryOperation and BinaryOperation
-// because here T is not a template parameter
-template <typename O, std::size_t N, typename Trait>
-struct ExtractDataType<SubsetView<O, N, Trait>> {
-  using value_type = T;
-};
-template <typename O, std::size_t N, typename Trait>
-struct ExtractDataType<const SubsetView<O, N, Trait>> {
-  using value_type = T;
-};
-
-template <typename T, typename Trait>
-struct ExtractDataType<UnaryOperation<T, Trait>> {
-  using value_type = T;
-};
-template <typename T, typename Trait>
-struct ExtractDataType<const UnaryOperation<T, Trait>> {
-  using value_type = T;
-};
-
-template <typename T, typename R, typename Trait>
-struct ExtractDataType<BinaryOperation<T, R, Trait>> {
-  using value_type = T;
-};
-template <typename T, typename R, typename Trait>
-struct ExtractDataType<const BinaryOperation<T, R, Trait>> {
-  using value_type = T;
-};
-
 // Extract data type from outer data structs
 // -----------------------------------------------------------------------------------------------------------
+template <typename T> struct ExtractDataType;
+
 template <typename T, typename R>
 struct ExtractDataType<Array<T, R>> {
   using value_type = T;
@@ -103,20 +64,6 @@ struct ExtractDataType<const Array<T, R>> {
   using value_type = T const;
 };
 template <typename T> using ExtractedTypeData = typename ExtractDataType<T>::value_type;
-
-// Extract inner data structs from outer data structs
-// -----------------------------------------------------------------------------------------------------------
-template <typename T> struct ExtractRType;
-template <typename T, typename R>
-struct ExtractRType<Array<T, R>> {
-  using RType = R;
-};
-template <typename T, typename R>
-struct ExtractRType<const Array<T, R>> {
-  using RType = R const;
-};
-template <typename T>
-using ExtractedRType= typename ExtractRType<T>::RType;
 
 } // namespace etr
 

@@ -8,8 +8,7 @@ inline auto determine_type(const auto &rest) {
   if constexpr (IsArithV<restType>) {
     return typename ReRef<decltype(rest)>::type{};
   } else {
-    using tD = ExtractedRType<restType>;
-    return typename ExtractDataType<tD>::value_type{};
+    return typename ExtractDataType<restType>::value_type{};
   }
 };
 
@@ -21,20 +20,16 @@ inline auto determine_type(const auto &first, const auto &rest) {
     return typename std::common_type<firstType, restType>::type{};
   } else if constexpr (!IsArithV<firstType> &&
                        IsArithV<restType>) {
-    using tD = ExtractedRType<firstType>;
-    using firstInner = typename ExtractDataType<tD>::value_type;
+    using firstInner = typename ExtractDataType<firstType>::value_type;
     return typename std::common_type<firstInner, restType>::type{};
   } else if constexpr (IsArithV<firstType> &&
                        !IsArithV<restType>) {
-    using tD = ExtractedRType<restType>;
-    using restInner = typename ExtractDataType<tD>::value_type;
+    using restInner = typename ExtractDataType<restType>::value_type;
     return typename std::common_type<firstType, restInner>::type{};
   } else if constexpr (!IsArithV<firstType> &&
                        !IsArithV<restType>) {
-    using tD1 = ExtractedRType<firstType>;
-    using firstInner = typename ExtractDataType<tD1>::value_type;
-    using tD2 = ExtractedRType<restType>;
-    using restInner = typename ExtractDataType<tD2>::value_type;
+    using firstInner = typename ExtractDataType<firstType>::value_type;
+    using restInner = typename ExtractDataType<restType>::value_type;
     return typename std::common_type<firstInner, restInner>::type{};
   }
 }
@@ -47,27 +42,18 @@ inline auto determine_type(const auto &first, const auto &...rest) {
     return typename std::common_type<firstType, restType>::type{};
   } else if constexpr (!IsArithV<firstType> &&
                        IsArithV<restType>) {
-    using tD = ExtractedRType<firstType>;
-    using firstInner = typename ExtractDataType<tD>::value_type;
+    using firstInner = typename ExtractDataType<firstType>::value_type;
     return typename std::common_type<firstInner, restType>::type{};
   } else if constexpr (IsArithV<firstType> &&
                        !IsArithV<restType>) {
-    using tD = ExtractedRType<restType>;
-    using restInner = typename ExtractDataType<tD>::value_type;
+    using restInner = typename ExtractDataType<restType>::value_type;
     return typename std::common_type<firstType, restInner>::type{};
   } else if constexpr (!IsArithV<firstType> &&
                        !IsArithV<restType>) {
-    using tD1 = ExtractedRType<firstType>;
-    using firstInner = typename ExtractDataType<tD1>::value_type;
-    using tD2 = ExtractedRType<restType>;
-    using restInner = typename ExtractDataType<tD2>::value_type;
+    using firstInner = typename ExtractDataType<firstType>::value_type;
+    using restInner = typename ExtractDataType<restType>::value_type;
     return typename std::common_type<firstInner, restInner>::type{};
   }
-}
-
-template <class F, class... Args> inline F forEachArg(F f, Args &&...args) {
-  (f(std::forward<Args>(args)), ...);
-  return f;
 }
 
 template <typename... Args> inline auto c(Args &&...args) {
@@ -87,7 +73,7 @@ template <typename... Args> inline auto c(Args &&...args) {
       },
       args...);
 
-  Vec<cType, Buffer<cType, RBufferTrait>> ret(SI{size});
+  Array<cType, Buffer<cType, RBufferTrait>> ret(SI{size});
   std::size_t index = 0;
 
   forEachArg(
