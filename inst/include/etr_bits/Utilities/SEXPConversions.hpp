@@ -78,14 +78,14 @@ inline SEXP Cast(const T &res_) {
   auto res = Evaluate(res_);
   SEXP ret = R_NilValue;
   using DecayedT = Decayed<T>;
-  if constexpr (IsFloat<DecayedT>) {
+  if constexpr (IsCppFloat<DecayedT>) {
     ret = PROTECT(Rf_allocVector(REALSXP, res.size()));
     for (int i = 0; i < res.size(); i++) {
       REAL(ret)[i] = res[i];
     }
     UNPROTECT(1);
     return ret;
-  } else if constexpr (IsBool<DecayedT>) {
+  } else if constexpr (IsCppBool<DecayedT>) {
     SEXP ret = R_NilValue;
     ret = PROTECT(Rf_allocVector(LGLSXP, res.size()));
     for (int i = 0; i < res.size(); i++) {
@@ -93,7 +93,7 @@ inline SEXP Cast(const T &res_) {
     }
     UNPROTECT(1);
     return ret;
-  } else if constexpr (IsInteger<DecayedT>) {
+  } else if constexpr (IsCppInt<DecayedT>) {
     SEXP ret = R_NilValue;
     ret = PROTECT(Rf_allocVector(INTSXP, res.size()));
     for (int i = 0; i < res.size(); i++) {
@@ -115,7 +115,7 @@ inline SEXP Cast(const T &res_) {
   auto res = Evaluate(res_);
   SEXP ret = R_NilValue;
   using DecayedT = Decayed<T>;
-  if constexpr (IsFloat<DecayedT>) {
+  if constexpr (IsCppFloat<DecayedT>) {
     ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
     ret = PROTECT(Rf_allocMatrix(REALSXP, res.nr(), res.nc()));
     for (int i = 0; i < res.size(); i++) {
@@ -123,7 +123,7 @@ inline SEXP Cast(const T &res_) {
     }
     UNPROTECT(1);
     return ret;
-  } else if constexpr (IsBool<DecayedT>) {
+  } else if constexpr (IsCppBool<DecayedT>) {
     SEXP ret = R_NilValue;
     ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
     ret = PROTECT(Rf_allocMatrix(LGLSXP, res.nr(), res.nc()));
@@ -132,7 +132,7 @@ inline SEXP Cast(const T &res_) {
     }
     UNPROTECT(1);
     return ret;
-  } else if constexpr (IsInteger<DecayedT>) {
+  } else if constexpr (IsCppInt<DecayedT>) {
     SEXP ret = R_NilValue;
     ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
     ret = PROTECT(Rf_allocMatrix(INTSXP, res.nr(), res.nc()));

@@ -19,6 +19,11 @@ template <typename T> constexpr bool IsRvalueV = std::is_rvalue_reference_v<T>;
 template <typename T> using IsClass = std::is_class<T>;
 template <typename T> constexpr bool IsClassV = std::is_class_v<T>;
 
+// FIX: need a better soultion. maybe just use a define.
+// Logical l = TRUE does not work
+// Logical l(TRUE) works. But l has type: etr::Logical (std::integral_constant<bool, true>)
+// THerefore, IsScalar does not recognise it
+// Logical l = true has type: etr::Logical --> here IsScalar works
 template <bool B> using BoolConstant = std::integral_constant<bool, B>;
 using TRUE = BoolConstant<true>;
 using T = BoolConstant<true>;

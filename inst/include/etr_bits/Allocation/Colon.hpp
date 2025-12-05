@@ -26,7 +26,7 @@ inline auto ConvertValueColon(const T& obj) {
   using DecayedT = Decayed<T>;
 
   // TODO: adapt other static_assert messages in the same way
-  static_assert(!IsBool<DecayedT>,
+  static_assert(!IsCppBool<DecayedT>,
   "\n\n[etr::colon error]\n"
   "You passed a boolean value to the ':' operator.\n"
   "This is not allowed in R and not supported here.\n"

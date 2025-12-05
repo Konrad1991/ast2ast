@@ -72,7 +72,7 @@ inline auto create_unary(T&& obj) {
 }
 
 template <typename T>
-requires (!IsArithV<T>)
+requires (!IsArithV<T> && !IsScalar<T>)
 auto sinus(T &&obj) {
   using I = std::decay_t<decltype(obj.d)>;
   using E = typename ExtractDataType<I>::value_type;
@@ -80,8 +80,8 @@ auto sinus(T &&obj) {
 }
 template <typename T>
 requires IsArithV<T>
-auto sinus(const T &obj) -> double {
-  if constexpr(IsFloat<T>) {
+auto sinus(const T &obj) -> Double {
+  if constexpr(IsCppFloat<T>) {
     return sin(obj);
   } else {
     ass<"You can only apply sin to numeric values">(false);
@@ -91,7 +91,12 @@ auto sinus(const T &obj) -> double {
 template <typename T>
 requires IsScalar<T>
 auto sinus(const T &obj) -> Double {
-  return sin(obj.val);
+  if constexpr (IsDouble<T>) {
+    return sin(obj.val);
+  } else {
+    ass<"You can only apply sin to numeric values">(false);
+    return 0.0;
+  }
 }
 
 template <typename T>
@@ -112,7 +117,7 @@ auto sinush(T &&obj) {
 template <typename T>
 requires IsArithV<T>
 auto sinush(const T &obj) -> double {
-  if constexpr(IsFloat<T>) {
+  if constexpr(IsCppFloat<T>) {
     return sinh(obj);
   } else {
     ass<"You can only apply sinh to numeric values">(false);
@@ -130,7 +135,7 @@ auto asinus(T&& obj) {
 template <typename T>
 requires IsArithV<T>
 auto asinus(const T &obj) -> double {
-  if constexpr(IsFloat<T>) {
+  if constexpr(IsCppFloat<T>) {
     return asin(obj);
   } else {
     ass<"You can only apply asin to numeric values">(false);
@@ -148,7 +153,7 @@ auto cosinus(T&& obj) {
 template <typename T>
 requires IsArithV<T>
 auto cosinus(const T &obj) -> double {
-  if constexpr(IsFloat<T>) {
+  if constexpr(IsCppFloat<T>) {
     return cos(obj);
   } else {
     ass<"You can only apply cos to numeric values">(false);
@@ -166,7 +171,7 @@ auto cosinush(T&& obj) {
 template <typename T>
 requires IsArithV<T>
 auto cosinush(const T &obj) -> double {
-  if constexpr(IsFloat<T>) {
+  if constexpr(IsCppFloat<T>) {
     return cosh(obj);
   } else {
     ass<"You can only apply cosh to numeric values">(false);
@@ -184,7 +189,7 @@ auto acosinus(T&& obj) {
 template <typename T>
 requires IsArithV<T>
 auto acosinus(const T &obj) -> double {
-  if constexpr(IsFloat<T>) {
+  if constexpr(IsCppFloat<T>) {
     return acos(obj);
   } else {
     ass<"You can only apply acos to numeric values">(false);
@@ -202,7 +207,7 @@ auto tangens(T&& obj) {
 template <typename T>
 requires IsArithV<T>
 auto tangens(const T &obj) -> double {
-  if constexpr(IsFloat<T>) {
+  if constexpr(IsCppFloat<T>) {
     return tan(obj);
   } else {
     ass<"You can only apply tan to numeric values">(false);
@@ -220,7 +225,7 @@ auto tangensh(T&& obj) {
 template <typename T>
 requires IsArithV<T>
 auto tangensh(const T &obj) -> double {
-  if constexpr(IsFloat<T>) {
+  if constexpr(IsCppFloat<T>) {
     return tanh(obj);
   } else {
     ass<"You can only apply tanh to numeric values">(false);
@@ -238,7 +243,7 @@ auto atangens(T&& obj) {
 template <typename T>
 requires IsArithV<T>
 auto atangens(const T &obj) -> double {
-  if constexpr(IsFloat<T>) {
+  if constexpr(IsCppFloat<T>) {
     return atan(obj);
   } else {
     ass<"You can only apply atan to numeric values">(false);
@@ -256,7 +261,7 @@ auto ln(T&& obj) { // LogTrait
 template <typename T>
 requires IsArithV<T>
 auto ln(const T &obj) -> double {
-  if constexpr(IsFloat<T>) {
+  if constexpr(IsCppFloat<T>) {
     return log(obj);
   } else {
     ass<"You can only apply log to numeric values">(false);
@@ -274,7 +279,7 @@ auto sqroot(T&& obj) {
 template <typename T>
 requires IsArithV<T>
 auto sqroot(const T &obj) -> double {
-  if constexpr(IsFloat<T>) {
+  if constexpr(IsCppFloat<T>) {
     return sqrt(obj);
   } else {
     ass<"You can only apply sqrt to numeric values">(false);
@@ -292,7 +297,7 @@ auto expo(T&& obj) {
 template <typename T>
 requires IsArithV<T>
 auto expo(const T &obj) -> double {
-  if constexpr(IsFloat<T>) {
+  if constexpr(IsCppFloat<T>) {
     return exp(obj);
   } else {
     ass<"You can only apply exp to numeric values">(false);

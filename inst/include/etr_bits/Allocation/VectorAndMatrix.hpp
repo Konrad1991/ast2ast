@@ -6,10 +6,10 @@ namespace etr {
 template<typename T>
 inline std::size_t ConvertSizeVec(const T& s) {
   using DecayedT = Decayed<T>;
-  static_assert(IsFloat<DecayedT> || IsInteger<DecayedT>,
+  static_assert(IsCppFloat<DecayedT> || IsCppInt<DecayedT>,
   "size argument of vector/logical/integer/numeric has to be of type integer or double");
   if constexpr(IsArithV<DecayedT>) {
-    if constexpr (IsInteger<DecayedT>) {
+    if constexpr (IsCppInt<DecayedT>) {
       ass<"size in fct vector/logical/integer/numeric has to be a positive integer">(s >= 1);
       return static_cast<std::size_t>(s);
     } else {
@@ -20,7 +20,7 @@ inline std::size_t ConvertSizeVec(const T& s) {
   } else {
     using Elem = typename ExtractDataType<DecayedT>::value_type;
     ass<"size in vector/logical/integer/numeric has to be a vector of length 1">(s.size() == 1);
-    if constexpr (IsInteger<Elem>) {
+    if constexpr (IsCppInt<Elem>) {
       ass<"size ... must be a positive integer">(s[0] >= 1);
       return static_cast<std::size_t>(s[0]);
     } else {

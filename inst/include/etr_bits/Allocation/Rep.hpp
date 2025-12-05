@@ -9,10 +9,10 @@ namespace etr {
 template<typename T>
 inline std::size_t ConvertTimesRep(const T& times) {
   using DecayedT = Decayed<T>;
-  static_assert(IsFloat<DecayedT> || IsInteger<DecayedT>,
+  static_assert(IsCppFloat<DecayedT> || IsCppInt<DecayedT>,
   "times argument of rep can only handle integer or double values");
   if constexpr(IsArithV<DecayedT>) {
-    if constexpr (IsInteger<DecayedT>) {
+    if constexpr (IsCppInt<DecayedT>) {
       ass<"times in fct rep has to be a positive integer">(times >= 1);
       return times;
     } else {
@@ -22,7 +22,7 @@ inline std::size_t ConvertTimesRep(const T& times) {
     }
   } else {
     ass<"times in rep has to be a vector of length 1">(times.size() == 1);
-    if constexpr (IsInteger<DecayedT>) {
+    if constexpr (IsCppInt<DecayedT>) {
       std::size_t times_ = times[0];
       ass<"times in fct rep has to be a positive integer">(times_ >= 1);
       return times_;

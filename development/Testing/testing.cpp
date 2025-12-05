@@ -32,4 +32,10 @@ int main() {
   subset(a, true, cols, d3) = 3.14;
   print(a);
 
+  Double d = 3.14;
+  auto ds = sinus(d);
+  Logical l = true;
+  // sinus(l);
+  auto bla = sinus(3.14);
+  printT<decltype(bla)>();
 }

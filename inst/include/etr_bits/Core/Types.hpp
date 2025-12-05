@@ -5,13 +5,13 @@ namespace etr {
 
 // Scalar types
 // --------------------------------------------------------------------------------------------------
-struct Bool {
+struct Logical {
   bool val;
-  Bool(bool v) : val(v) {}
+  Logical(bool v) : val(v) {}
 };
-struct Int {
+struct Integer {
   int val;
-  Int(int v) : val(v) {}
+  Integer(int v) : val(v) {}
 };
 struct Double {
   double val;
