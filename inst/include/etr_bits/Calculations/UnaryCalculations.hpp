@@ -88,6 +88,11 @@ auto sinus(const T &obj) -> double {
     return 0.0;
   }
 }
+template <typename T>
+requires IsScalar<T>
+auto sinus(const T &obj) -> Double {
+  return sin(obj.val);
+}
 
 template <typename T>
 requires (!IsArithV<T>)

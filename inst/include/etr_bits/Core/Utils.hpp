@@ -1,9 +1,6 @@
 #ifndef UTILS_ETR_H
 #define UTILS_ETR_H
 
-#include "Header.hpp"
-
-
 namespace etr {
 
 // Helper
@@ -13,6 +10,7 @@ inline constexpr bool IS = std::is_same_v<T, U>;
 
 template <typename T> using IsArith = std::is_arithmetic<T>;
 template <typename T> constexpr bool IsArithV = std::is_arithmetic_v<T>;
+
 template <typename T> using Decayed = std::decay_t<T>;
 
 template <typename T> using ReRef = std::remove_reference<T>;
@@ -21,17 +19,6 @@ template <typename T> constexpr bool IsRvalueV = std::is_rvalue_reference_v<T>;
 template <typename T> using IsClass = std::is_class<T>;
 template <typename T> constexpr bool IsClassV = std::is_class_v<T>;
 
-template <typename T>
-inline constexpr bool IsPair = false;
-template <typename A, typename B>
-inline constexpr bool IsPair<std::pair<A, B>> = true;
-
-template <typename T1, typename T2>
-typename std::common_type<T1, T2>::type CommonType(T1 arg1, T2 arg2) {
-  return arg1 + arg2; // Fake function just for getting the common type
-}
-
-// TODO: Shouldn't TRUE, T, FALSE, F, NA, NaN and Inf be in etr?
 template <bool B> using BoolConstant = std::integral_constant<bool, B>;
 using TRUE = BoolConstant<true>;
 using T = BoolConstant<true>;

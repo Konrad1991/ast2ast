@@ -37,12 +37,12 @@ struct common_type {
 template<typename L, typename R>
 using common_type_t = typename common_type<L, R>::type;
 // Concept to detect scalars
-template<class T> concept ScalarType =
+template<class T> concept IsScalar =
     std::same_as<T, Bool> ||
     std::same_as<T, Int> ||
     std::same_as<T, Double>;
 
-// Determine type for scalars or the inner type in case of other data structures
+// Determine type for literal bools, ints or doubles
 // -----------------------------------------------------------------------------------------------------------
 // Float
 template <typename T> struct is_float_type : std::is_floating_point<T> {};
