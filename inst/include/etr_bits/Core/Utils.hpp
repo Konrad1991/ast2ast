@@ -24,6 +24,14 @@ template <typename T> constexpr bool IsClassV = std::is_class_v<T>;
 // Logical l(TRUE) works. But l has type: etr::Logical (std::integral_constant<bool, true>)
 // THerefore, IsScalar does not recognise it
 // Logical l = true has type: etr::Logical --> here IsScalar works
+
+// FIX: Moreover, the R code translates TRUE to true, and FALSE to false
+// However, the R code does not handle T and F correctly.
+
+// TODO: Furthermore, NaN has to be removed
+
+// TODO: handle NA and Inf in each algorithm explicitly
+
 template <bool B> using BoolConstant = std::integral_constant<bool, B>;
 using TRUE = BoolConstant<true>;
 using T = BoolConstant<true>;
