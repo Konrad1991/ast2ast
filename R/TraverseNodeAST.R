@@ -195,7 +195,8 @@ check_variable_names <- function(node) {
       ))
     }
     if (name %within%
-            c(permitted_base_types(), permitted_data_structs(FALSE))) {
+            c(permitted_base_types(), permitted_data_structs(FALSE), "T", "F")) {
+        # NOTE: added T and F to prevent usage of T and F as variable.
       return(paste0(
         "Invalid variable name (reserved internally) ",
         name

@@ -50,6 +50,7 @@ non_fct_args <- function(f, r_fct) {
     as.character()
   vars <- all.vars(body(f))
   vars <- setdiff(vars, arguments)
+  vars <- setdiff(vars, c("T", "F"))
   lapply(seq_along(vars), function(v) {
     t <- type_node$new(NULL, FALSE, r_fct)
     t$name <- vars[v]
