@@ -96,7 +96,7 @@ is_Inf <- function(node, vars_types_list) {
   is_type(node, vars_types_list, "Inf")
 }
 is_NaN <- function(node, vars_types_list) {
-  is_type(node, vars_types_list, "NaN")
+  is_type(node, vars_types_list, "NaN") # TODO: remove NaN not required
 }
 is_NA <- function(node, vars_types_list) {
   is_type(node, vars_types_list, "NA")

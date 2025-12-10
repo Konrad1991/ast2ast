@@ -10,10 +10,10 @@ struct UnaryOpClassIterator {
   UnaryOpClassIterator(const I& obj_, size_t index_ = 0)
   : obj(obj_), index(index_) {}
   auto operator*() const {
-    if constexpr (IsArithV<I>) {
+    if constexpr (IsCppArithV<I>) {
       return Trait::f(obj);
     } else {
-      return Trait::f(obj[safe_modulo(index, obj.size())]);
+      return Trait::f(obj[index]);
     }
   }
   UnaryOpClassIterator& operator++() {
@@ -32,7 +32,6 @@ inline bool operator!=(const UnaryOpClassIterator<I, Trait>& it, const UnaryOpSe
 
 template <typename I, typename UTrait> struct UnaryOperation {
   using Trait = UTrait;
-  using value_type = typename I::value_type;
   using Type = typename I::value_type;
   ConstHolder<I> obj;
   using typeTraitObj = I;
@@ -43,8 +42,8 @@ template <typename I, typename UTrait> struct UnaryOperation {
   // r value
   UnaryOperation(I &&obj_) : obj(std::move(obj_)) {}
 
-  value_type operator[](std::size_t i) const {
-    return Trait::f(obj.get()[safe_modulo(i, obj.get().size())]);
+  auto operator[](std::size_t i) const {
+    return Trait::f(obj.get()[i]);
   }
   std::size_t size() const {
     return obj.get().size();
@@ -71,238 +70,95 @@ inline auto create_unary(T&& obj) {
   }
 }
 
-template <typename T>
-requires (!IsArithV<T> && !IsScalar<T>)
-auto sinus(T &&obj) {
+template <typename T> requires IsArray<Decayed<T>>
+inline auto sinus(T &&obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::value_type;
+  using E = typename ExtractDataType<Decayed<T>>::value_type;
   return create_unary<T,E, I, SinusTrait>(std::forward<T>(obj));
 }
-template <typename T>
-requires IsArithV<T>
-auto sinus(const T &obj) -> Double {
-  if constexpr(IsCppFloat<T>) {
-    return sin(obj);
-  } else {
-    ass<"You can only apply sin to numeric values">(false);
-    return 0.0;
-  }
-}
-template <typename T>
-requires IsScalar<T>
-auto sinus(const T &obj) -> Double {
-  if constexpr (IsDouble<T>) {
-    return sin(obj.val);
-  } else {
-    ass<"You can only apply sin to numeric values">(false);
-    return 0.0;
-  }
-}
 
-template <typename T>
-requires (!IsArithV<T>)
-auto operator-(T&& obj) {
+template <typename T> requires IsArray<Decayed<T>>
+inline auto operator-(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::value_type;
+  using E = typename ExtractDataType<Decayed<T>>::value_type;
   return create_unary<T,E, I, MinusUnaryTrait>(std::forward<T>(obj));
 }
 
-template <typename T>
-requires (!IsArithV<T>)
-auto sinush(T &&obj) {
+template <typename T> requires IsArray<Decayed<T>>
+inline auto sinush(T &&obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::value_type;
+  using E = typename ExtractDataType<Decayed<T>>::value_type;
   return create_unary<T,E, I, SinusHTrait>(std::forward<T>(obj));
 }
-template <typename T>
-requires IsArithV<T>
-auto sinush(const T &obj) -> double {
-  if constexpr(IsCppFloat<T>) {
-    return sinh(obj);
-  } else {
-    ass<"You can only apply sinh to numeric values">(false);
-    return 0.0;
-  }
-}
 
-template <typename T>
-requires (!IsArithV<T>)
-auto asinus(T&& obj) {
+template <typename T> requires IsArray<Decayed<T>>
+inline auto asinus(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::value_type;
+  using E = typename ExtractDataType<Decayed<T>>::value_type;
   return create_unary<T,E, I, ASinusTrait>(std::forward<T>(obj));
 }
-template <typename T>
-requires IsArithV<T>
-auto asinus(const T &obj) -> double {
-  if constexpr(IsCppFloat<T>) {
-    return asin(obj);
-  } else {
-    ass<"You can only apply asin to numeric values">(false);
-    return 0.0;
-  }
-}
 
-template <typename T>
-requires (!IsArithV<T>)
-auto cosinus(T&& obj) {
+template <typename T> requires IsArray<Decayed<T>>
+inline auto cosinus(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::value_type;
+  using E = typename ExtractDataType<Decayed<T>>::value_type;
   return create_unary<T,E, I, CosinusTrait>(std::forward<T>(obj));
 }
-template <typename T>
-requires IsArithV<T>
-auto cosinus(const T &obj) -> double {
-  if constexpr(IsCppFloat<T>) {
-    return cos(obj);
-  } else {
-    ass<"You can only apply cos to numeric values">(false);
-    return 0.0;
-  }
-}
 
-template <typename T>
-requires (!IsArithV<T>)
-auto cosinush(T&& obj) {
+template <typename T> requires IsArray<Decayed<T>>
+inline auto cosinush(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::value_type;
+  using E = typename ExtractDataType<Decayed<T>>::value_type;
   return create_unary<T,E, I, CosinusHTrait>(std::forward<T>(obj));
 }
-template <typename T>
-requires IsArithV<T>
-auto cosinush(const T &obj) -> double {
-  if constexpr(IsCppFloat<T>) {
-    return cosh(obj);
-  } else {
-    ass<"You can only apply cosh to numeric values">(false);
-    return 0.0;
-  }
-}
 
-template <typename T>
-requires (!IsArithV<T>)
-auto acosinus(T&& obj) {
+template <typename T> requires IsArray<Decayed<T>>
+inline auto acosinus(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::value_type;
+  using E = typename ExtractDataType<Decayed<T>>::value_type;
   return create_unary<T,E, I, ACosinusTrait>(std::forward<T>(obj));
 }
-template <typename T>
-requires IsArithV<T>
-auto acosinus(const T &obj) -> double {
-  if constexpr(IsCppFloat<T>) {
-    return acos(obj);
-  } else {
-    ass<"You can only apply acos to numeric values">(false);
-    return 0.0;
-  }
-}
 
-template <typename T>
-requires (!IsArithV<T>)
-auto tangens(T&& obj) {
+template <typename T> requires IsArray<Decayed<T>>
+inline auto tangens(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::value_type;
+  using E = typename ExtractDataType<Decayed<T>>::value_type;
   return create_unary<T,E, I, TangensTrait>(std::forward<T>(obj));
 }
-template <typename T>
-requires IsArithV<T>
-auto tangens(const T &obj) -> double {
-  if constexpr(IsCppFloat<T>) {
-    return tan(obj);
-  } else {
-    ass<"You can only apply tan to numeric values">(false);
-    return 0.0;
-  }
-}
 
-template <typename T>
-requires (!IsArithV<T>)
-auto tangensh(T&& obj) {
+template <typename T> requires IsArray<Decayed<T>>
+inline auto tangensh(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::value_type;
+  using E = typename ExtractDataType<Decayed<T>>::value_type;
   return create_unary<T,E, I, TangensHTrait>(std::forward<T>(obj));
 }
-template <typename T>
-requires IsArithV<T>
-auto tangensh(const T &obj) -> double {
-  if constexpr(IsCppFloat<T>) {
-    return tanh(obj);
-  } else {
-    ass<"You can only apply tanh to numeric values">(false);
-    return 0.0;
-  }
-}
 
-template <typename T>
-requires (!IsArithV<T>)
-auto atangens(T&& obj) {
+template <typename T> requires IsArray<Decayed<T>>
+inline auto atangens(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::value_type;
+  using E = typename ExtractDataType<Decayed<T>>::value_type;
   return create_unary<T,E, I, ATangensTrait>(std::forward<T>(obj));
 }
-template <typename T>
-requires IsArithV<T>
-auto atangens(const T &obj) -> double {
-  if constexpr(IsCppFloat<T>) {
-    return atan(obj);
-  } else {
-    ass<"You can only apply atan to numeric values">(false);
-    return 0.0;
-  }
-}
 
-template <typename T>
-requires (!IsArithV<T>)
-auto ln(T&& obj) { // LogTrait
+template <typename T> requires IsArray<Decayed<T>>
+inline auto ln(T&& obj) { // LogTrait
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::value_type;
+  using E = typename ExtractDataType<Decayed<T>>::value_type;
   return create_unary<T,E, I, LogTrait>(std::forward<T>(obj));
 }
-template <typename T>
-requires IsArithV<T>
-auto ln(const T &obj) -> double {
-  if constexpr(IsCppFloat<T>) {
-    return log(obj);
-  } else {
-    ass<"You can only apply log to numeric values">(false);
-    return 0.0;
-  }
-}
 
-template <typename T>
-requires (!IsArithV<T>)
-auto sqroot(T&& obj) {
+template <typename T> requires IsArray<Decayed<T>>
+inline auto sqroot(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::value_type;
+  using E = typename ExtractDataType<Decayed<T>>::value_type;
   return create_unary<T,E, I, SquareRootTrait>(std::forward<T>(obj));
 }
-template <typename T>
-requires IsArithV<T>
-auto sqroot(const T &obj) -> double {
-  if constexpr(IsCppFloat<T>) {
-    return sqrt(obj);
-  } else {
-    ass<"You can only apply sqrt to numeric values">(false);
-    return 0.0;
-  }
-}
 
-template <typename T>
-requires (!IsArithV<T>)
-auto expo(T&& obj) {
+template <typename T> requires IsArray<Decayed<T>>
+inline auto expo(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<I>::value_type;
+  using E = typename ExtractDataType<Decayed<T>>::value_type;
   return create_unary<T,E, I, ExpTrait>(std::forward<T>(obj));
-}
-template <typename T>
-requires IsArithV<T>
-auto expo(const T &obj) -> double {
-  if constexpr(IsCppFloat<T>) {
-    return exp(obj);
-  } else {
-    ass<"You can only apply exp to numeric values">(false);
-    return 0.0;
-  }
 }
 
 } // namespace etr

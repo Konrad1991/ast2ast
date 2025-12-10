@@ -26,13 +26,13 @@ inline auto ConvertValueColon(const T& obj) {
   using DecayedT = Decayed<T>;
 
   // TODO: adapt other static_assert messages in the same way
-  static_assert(!IsCppBool<DecayedT>,
+  static_assert(!IsCppLogical<DecayedT>,
   "\n\n[etr::colon error]\n"
   "You passed a boolean value to the ':' operator.\n"
   "This is not allowed in R and not supported here.\n"
   "Please use integer or double values only.\n\n");
 
-  if constexpr(IsArithV<DecayedT>) {
+  if constexpr(IsCppArithV<DecayedT>) {
     return obj;
   } else {
     ass<": accepts only vector of length 1">(obj.size() == 1);

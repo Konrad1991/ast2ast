@@ -11,5 +11,6 @@
 #include "./Core/Concepts.hpp"
 #include "./Core/Buffer.hpp"
 #include "./Core/Borrow.hpp"
+#include "./Core/AutomaticDifferentiation.hpp"
 
 #endif

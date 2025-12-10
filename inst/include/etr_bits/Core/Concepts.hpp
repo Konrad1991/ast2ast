@@ -15,18 +15,42 @@ struct common_type_internal {
 // 1. Same type
 template<typename T>
 struct common_type_internal<T, T> { using type = T; };
-// 2.1 Logical with anything --> the other type
-template<typename R>
-struct common_type_internal<Logical, R> { using type = R; };
-// 2.2 Logical with anything --> the other type
-template<typename L>
-struct common_type_internal<L, Logical> { using type = L; };
+
+// 2.1 Logical with anything
+template<>
+struct common_type_internal<Logical, bool> { using type = Logical; };
+template<>
+struct common_type_internal<Logical, int> { using type = Integer; };
+template<>
+struct common_type_internal<Logical, Integer> { using type = Integer; };
+template<>
+struct common_type_internal<Logical, double> { using type = Double; };
+template<>
+struct common_type_internal<Logical, Double> { using type = Double; };
+
+// 2.2 Logical with anything
+template<>
+struct common_type_internal<bool, Logical> { using type = Logical; };
+template<>
+struct common_type_internal<int, Logical> { using type = Integer; };
+template<>
+struct common_type_internal<Integer, Logical> { using type = Integer; };
+template<>
+struct common_type_internal<double, Logical> { using type = Double; };
+template<>
+struct common_type_internal<Double, Logical> { using type = Double; };
+
 // 3.1 Int & Double --> Double
 template<>
 struct common_type_internal<Integer, Double> { using type = Double; };
+template<>
+struct common_type_internal<Integer, double> { using type = Double; };
 // 3.2 Int & Double --> Double
 template<>
 struct common_type_internal<Double, Integer> { using type = Double; };
+template<>
+struct common_type_internal<double, Integer> { using type = Double; };
+
 // Convenience alias
 template<typename L, typename R>
 struct common_type {
@@ -36,10 +60,11 @@ struct common_type {
 template<typename L, typename R>
 using common_type_t = typename common_type<L, R>::type;
 // Concept to detect scalars
-template<typename T> concept IsScalar =
+template<typename T> concept IsArith =
     std::same_as<bare_t<T>, Logical> ||
     std::same_as<bare_t<T>, Integer> ||
     std::same_as<bare_t<T>, Double>;
+template <typename T> constexpr bool IsArithV = IsArith<T>;
 
 template<typename T> concept IsDouble = std::same_as<T, Double>;
 template<typename T> concept IsInteger = std::same_as<T, Integer>;
@@ -52,19 +77,19 @@ template <typename T> struct is_float_type : std::is_floating_point<T> {};
 template <typename T> struct is_float_type_with_type : is_float_type<typename T::Type> {};
 template <typename T, typename = void> struct is_float_dispatch : is_float_type<T> {};
 template <typename T> struct is_float_dispatch<T, std::void_t<typename T::Type>> : is_float_type_with_type<T> {};
-template <typename T> inline constexpr bool IsCppFloat = is_float_dispatch<T>::value;
+template <typename T> inline constexpr bool IsCppDouble = is_float_dispatch<T>::value;
 // Integer
 template <typename T> struct is_integer_type : std::is_integral<T> {};
 template <typename T> struct is_integer_type_with_type : is_integer_type<typename T::Type> {};
 template <typename T, typename = void> struct is_integer_dispatch : is_integer_type<T> {};
 template <typename T> struct is_integer_dispatch<T, std::void_t<typename T::Type>> : is_integer_type_with_type<T> {};
-template <typename T> inline constexpr bool IsCppInt = is_integer_dispatch<T>::value;
+template <typename T> inline constexpr bool IsCppInteger = is_integer_dispatch<T>::value;
 // Bool (exactly bool, not all integrals)
 template <typename T> struct is_bool_type : std::is_same<T, bool> {};
 template <typename T> struct is_bool_type_with_type : is_bool_type<typename T::Type> {};
 template <typename T, typename = void> struct is_bool_dispatch : is_bool_type<T> {};
 template <typename T> struct is_bool_dispatch<T, std::void_t<typename T::Type>> : is_bool_type_with_type<T> {};
-template <typename T> inline constexpr bool IsCppBool = is_bool_dispatch<T>::value;
+template <typename T> inline constexpr bool IsCppLogical = is_bool_dispatch<T>::value;
 
 // Calculation & Inner data structures
 // -----------------------------------------------------------------------------------------------------------

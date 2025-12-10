@@ -8,8 +8,8 @@ namespace etr {
 template <typename T, typename U>
 inline constexpr bool IS = std::is_same_v<T, U>;
 
-template <typename T> using IsArith = std::is_arithmetic<T>;
-template <typename T> constexpr bool IsArithV = std::is_arithmetic_v<T>;
+template <typename T> using IsCppArith = std::is_arithmetic<T>;
+template <typename T> constexpr bool IsCppArithV = std::is_arithmetic_v<T>;
 
 template <typename T> using Decayed = std::decay_t<T>;
 
@@ -19,26 +19,10 @@ template <typename T> constexpr bool IsRvalueV = std::is_rvalue_reference_v<T>;
 template <typename T> using IsClass = std::is_class<T>;
 template <typename T> constexpr bool IsClassV = std::is_class_v<T>;
 
-// FIX: need a better soultion. maybe just use a define.
-// Logical l = TRUE does not work
-// Logical l(TRUE) works. But l has type: etr::Logical (std::integral_constant<bool, true>)
-// THerefore, IsScalar does not recognise it
-// Logical l = true has type: etr::Logical --> here IsScalar works
-
-// FIX: Moreover, the R code translates TRUE to true, and FALSE to false
-// However, the R code does not handle T and F correctly.
-
-// TODO: Furthermore, NaN has to be removed
-
 // TODO: handle NA and Inf in each algorithm explicitly
-
 template <bool B> using BoolConstant = std::integral_constant<bool, B>;
-using TRUE = BoolConstant<true>;
-using T = BoolConstant<true>;
-using FALSE = BoolConstant<false>;
-using F = BoolConstant<false>;
 const double NA = std::numeric_limits<double>::quiet_NaN();
-const double NaN = std::numeric_limits<double>::quiet_NaN();
+const double NaN = std::numeric_limits<double>::quiet_NaN(); // TODO: remove
 const double Inf = std::numeric_limits<double>::infinity();
 
 template <typename T> struct It {

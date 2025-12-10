@@ -7,15 +7,27 @@ namespace etr {
 // --------------------------------------------------------------------------------------------------
 struct Logical {
   bool val;
+  Logical() : val(false) {}
   Logical(bool v) : val(v) {}
+  friend std::ostream& operator<<(std::ostream& os, const Logical& x) {
+    return os << x.val;
+  }
 };
 struct Integer {
   int val;
+  Integer() : val(0) {}
   Integer(int v) : val(v) {}
+  friend std::ostream& operator<<(std::ostream& os, const Integer& x) {
+    return os << x.val;
+  }
 };
 struct Double {
   double val;
+  Double() : val(0.0) {}
   Double(double v) : val(v) {}
+  friend std::ostream& operator<<(std::ostream& os, const Double& x) {
+    return os << x.val;
+  }
 };
 
 // Inner data structs
@@ -31,7 +43,7 @@ Each inner data struct requires:
 - auto& operator[]
 - begin and end
 - Trait
-- value_type --> why?
+- value_type --> FIX: has to be removed in all inner data structs. the outer Array should possess it
 
 Classes Buffer, Borrow, UnaryOperation, BinaryOperation, SubsetView
 */

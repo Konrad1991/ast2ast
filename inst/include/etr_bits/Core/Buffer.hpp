@@ -119,12 +119,22 @@ template <typename T, typename BufferTrait> struct Buffer {
 #endif
 
   template <typename TInp>
-  requires(IsArithV<Decayed<TInp>>)
+  requires(IsCppArithV<Decayed<TInp>>)
   void fill(TInp &&val) {
     if constexpr (IS<T, TInp>) {
       std::fill(p, p + sz, val);
     } else {
       auto temp = static_cast<T>(val);
+      std::fill(p, p + sz, temp);
+    }
+  }
+  template <typename TInp>
+  requires(IsArithV<Decayed<TInp>>)
+  void fill(TInp &&val) {
+    if constexpr (IS<T, TInp>) {
+      std::fill(p, p + sz, val.val);
+    } else {
+      auto temp = static_cast<T>(val.val);
       std::fill(p, p + sz, temp);
     }
   }

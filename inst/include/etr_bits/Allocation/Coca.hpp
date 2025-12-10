@@ -5,7 +5,7 @@ namespace etr {
 
 inline auto determine_type(const auto &rest) {
   using restType = typename ReRef<decltype(rest)>::type;
-  if constexpr (IsArithV<restType>) {
+  if constexpr (IsCppArithV<restType>) {
     return typename ReRef<decltype(rest)>::type{};
   } else {
     return typename ExtractDataType<restType>::value_type{};
@@ -15,19 +15,19 @@ inline auto determine_type(const auto &rest) {
 inline auto determine_type(const auto &first, const auto &rest) {
   using firstType = typename ReRef<decltype(first)>::type;
   using restType = typename ReRef<decltype(rest)>::type;
-  if constexpr (IsArithV<firstType> &&
-                IsArithV<restType>) {
+  if constexpr (IsCppArithV<firstType> &&
+                IsCppArithV<restType>) {
     return typename std::common_type<firstType, restType>::type{};
-  } else if constexpr (!IsArithV<firstType> &&
-                       IsArithV<restType>) {
+  } else if constexpr (!IsCppArithV<firstType> &&
+                       IsCppArithV<restType>) {
     using firstInner = typename ExtractDataType<firstType>::value_type;
     return typename std::common_type<firstInner, restType>::type{};
-  } else if constexpr (IsArithV<firstType> &&
-                       !IsArithV<restType>) {
+  } else if constexpr (IsCppArithV<firstType> &&
+                       !IsCppArithV<restType>) {
     using restInner = typename ExtractDataType<restType>::value_type;
     return typename std::common_type<firstType, restInner>::type{};
-  } else if constexpr (!IsArithV<firstType> &&
-                       !IsArithV<restType>) {
+  } else if constexpr (!IsCppArithV<firstType> &&
+                       !IsCppArithV<restType>) {
     using firstInner = typename ExtractDataType<firstType>::value_type;
     using restInner = typename ExtractDataType<restType>::value_type;
     return typename std::common_type<firstInner, restInner>::type{};
@@ -37,19 +37,19 @@ inline auto determine_type(const auto &first, const auto &rest) {
 inline auto determine_type(const auto &first, const auto &...rest) {
   using firstType = typename ReRef<decltype(first)>::type;
   using restType = decltype(determine_type(rest...));
-  if constexpr (IsArithV<firstType> &&
-                IsArithV<restType>) {
+  if constexpr (IsCppArithV<firstType> &&
+                IsCppArithV<restType>) {
     return typename std::common_type<firstType, restType>::type{};
-  } else if constexpr (!IsArithV<firstType> &&
-                       IsArithV<restType>) {
+  } else if constexpr (!IsCppArithV<firstType> &&
+                       IsCppArithV<restType>) {
     using firstInner = typename ExtractDataType<firstType>::value_type;
     return typename std::common_type<firstInner, restType>::type{};
-  } else if constexpr (IsArithV<firstType> &&
-                       !IsArithV<restType>) {
+  } else if constexpr (IsCppArithV<firstType> &&
+                       !IsCppArithV<restType>) {
     using restInner = typename ExtractDataType<restType>::value_type;
     return typename std::common_type<firstType, restInner>::type{};
-  } else if constexpr (!IsArithV<firstType> &&
-                       !IsArithV<restType>) {
+  } else if constexpr (!IsCppArithV<firstType> &&
+                       !IsCppArithV<restType>) {
     using firstInner = typename ExtractDataType<firstType>::value_type;
     using restInner = typename ExtractDataType<restType>::value_type;
     return typename std::common_type<firstInner, restInner>::type{};
@@ -65,7 +65,7 @@ template <typename... Args> inline auto c(Args &&...args) {
 
   forEachArg(
       [&](auto arg) {
-        if constexpr (IsArithV<decltype(arg)>) {
+        if constexpr (IsCppArithV<decltype(arg)>) {
           size++;
         } else {
           size += arg.size();
@@ -80,7 +80,7 @@ template <typename... Args> inline auto c(Args &&...args) {
       [&](const auto &arg) {
         using testType =
             std::remove_const_t<ReRef<decltype(arg)>>;
-        if constexpr (IsArithV<Decayed<decltype(arg)>>) {
+        if constexpr (IsCppArithV<Decayed<decltype(arg)>>) {
           if constexpr (IS<testType, cType>) {
             ret[index] = arg;
           } else {

@@ -323,7 +323,7 @@ are_vars_init <- function(type) {
 
 type_list_checks <- function(l) {
   lapply(l, function(var) {
-    if (any(var$base_type == c("NA", "NaN", "Inf"))) {
+    if (any(var$base_type == c("NA", "NaN", "Inf"))) { # TODO: NaN should be removed.
       stop(sprintf("Found unallowed base type %s, for the variable %s", var$base_type, var$name))
     }
   })

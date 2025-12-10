@@ -6,7 +6,7 @@ namespace etr {
 // is.na
 // -----------------------------------------------------------------------------------------------------------
 template <typename T>
-  requires IsArithV<T>
+  requires IsCppArithV<T>
 inline bool isNA(T inp) {
   return std::isnan(inp);
 }
@@ -23,7 +23,7 @@ inline auto isNA(const T &&inp) {
 // is.inf
 // -----------------------------------------------------------------------------------------------------------
 template <typename T>
-  requires IsArithV<T>
+  requires IsCppArithV<T>
 inline bool isInfinite(T inp) {
   return std::isinf(inp) && (!std::isnan(inp));
 }
@@ -40,7 +40,7 @@ inline auto isInfinite(T &inp) {
 // is.inf
 // -----------------------------------------------------------------------------------------------------------
 template <typename T>
-  requires IsArithV<T>
+  requires IsCppArithV<T>
 inline bool isFinite(T inp) {
   return !std::isinf(inp) && (!std::isnan(inp));
 }
@@ -57,12 +57,12 @@ inline auto isFinite(T &inp) {
 // length
 // -----------------------------------------------------------------------------------------------------------
 template <typename T>
-  requires IsArithV<T>
+  requires IsCppArithV<T>
 inline std::size_t length(T inp) {
   return 1;
 }
 template <typename T>
-  requires (!IsArithV<T>)
+  requires (!IsCppArithV<T>)
 inline int length(const T &inp) {
   return inp.size();
 }
@@ -70,7 +70,7 @@ inline int length(const T &inp) {
 // dim
 // -----------------------------------------------------------------------------------------------------------
 template <typename T>
-  requires IsArithV<T>
+  requires IsCppArithV<T>
 inline auto dim(T inp) {
   ass<"dim can only be called with matrix">(false);
 }

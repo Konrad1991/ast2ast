@@ -8,18 +8,18 @@ namespace etr {
 template<typename T>
 inline size_t ExtractIndex(const T& obj) {
   using DecayedT = Decayed<T>;
-  static_assert(IsCppFloat<DecayedT> || IsCppInt<DecayedT>, "at can only handle integer or double values");
-  if constexpr(IsArithV<DecayedT>) {
-    if constexpr (IsCppInt<DecayedT>) {
+  static_assert(IsCppDouble<DecayedT> || IsCppInteger<DecayedT>, "at can only handle integer or double values");
+  if constexpr(IsCppArithV<DecayedT>) {
+    if constexpr (IsCppInteger<DecayedT>) {
       return obj;
-    } else if constexpr(IsCppFloat<DecayedT>) {
+    } else if constexpr(IsCppDouble<DecayedT>) {
       return safe_index_from_double(obj);
     }
   } else {
     ass<"at accepts only vector of length 1">(obj.size() == 1);
-    if constexpr (IsCppInt<DecayedT>) {
+    if constexpr (IsCppInteger<DecayedT>) {
       return obj[0];
-    } else if constexpr(IsCppFloat<DecayedT>) {
+    } else if constexpr(IsCppDouble<DecayedT>) {
       return safe_index_from_double(obj[0]);
     }
   }

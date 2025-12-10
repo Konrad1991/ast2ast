@@ -23,12 +23,7 @@ inline void print(const T &inp) {
 }
 
 inline void print(const char *inp) {
-  if constexpr (IS<T, bool>) {
-    PRINT_STREAM << inp << " ";
-  } else {
-    PRINT_STREAM << inp << std::endl;
-  }
-  PRINT_STREAM << std::endl;
+  PRINT_STREAM << inp << std::endl;
 }
 
 template<typename P, typename T>

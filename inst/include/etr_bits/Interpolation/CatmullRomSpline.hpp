@@ -105,7 +105,7 @@ inline double cmr(const A &tInp, const B &timeVec, const C &parVec) {
 }
 
 template <typename A, typename B, typename C>
-  requires IsArithV<A>
+  requires IsCppArithV<A>
 inline double cmr(A tInp, const B &timeVec, const C &parVec) {
   static_assert(IsVec<B>,
                 "time vector has to be a vector");

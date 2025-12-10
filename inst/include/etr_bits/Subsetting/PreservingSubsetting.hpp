@@ -98,60 +98,78 @@ inline std::vector<std::size_t> make_strides_dyn(const std::vector<std::size_t>&
   return stride;
 }
 
+template<typename T, typename O, std::size_t N>
+inline void fill_scalars_in_index_lists(
+                             const T& arr, std::array<Buffer<Integer>, N>& converted_double_arrays,
+                             std::array<Buffer<Integer>, N>& converted_bool_arrays,
+                             std::array<const Buffer<Integer>*, N>& index_lists, O&& arg,
+                             std::size_t& counter, std::size_t& counter_converted_double, std::size_t& counter_converted_bool) {
+  using A = std::decay_t<decltype(arg)>;
+  if constexpr (IsCppDouble<A>) {
+    auto& v = converted_double_arrays[counter_converted_double++];
+    v.push_back(safe_index_from_double(arg));
+    index_lists[counter++] = &v;
+  } else if constexpr(IsCppLogical<A> && IsCppInteger<A>) {
+    auto& v = converted_bool_arrays[counter_converted_bool++];
+    if (arg) {
+      const std::size_t len = arr.dim[counter];
+      v.resize(len);
+      for (std::size_t i = 0; i < len; ++i) {
+        v[i] = static_cast<int>(i) + 1;
+      }
+    } else {
+      ass<"Bool subsetting is only with TRUE possible">(false);
+    }
+    index_lists[counter++] = &v;
+  } else if constexpr(!IsCppLogical<A> && IsCppInteger<A>) {
+    auto& v = converted_double_arrays[counter_converted_double++];
+    v.push_back(arg);
+    index_lists[counter++] = &v;
+  }
+}
+
 template<typename ValType, std::size_t N, typename T, typename... Args>
-inline void fill_index_lists(const T& arr, std::array<Buffer<int>, N>& converted_double_arrays,
-                             std::array<Buffer<int>, N>& converted_bool_arrays,
-                             std::array<const Buffer<int>*, N>& index_lists, Args&&... args) {
+inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& converted_double_arrays,
+                             std::array<Buffer<Integer>, N>& converted_bool_arrays,
+                             std::array<const Buffer<Integer>*, N>& index_lists, Args&&... args) {
   std::size_t counter = 0;
   std::size_t counter_converted_double = 0;
   std::size_t counter_converted_bool = 0;
   forEachArg(
     [&](const auto& arg) {
       using A = std::decay_t<decltype(arg)>;
-      // --- Case 1: vector<int>
-      if constexpr (IsArray<A> && IS<ValType, int>) {
+      // --- Case 1: Array<Integer>
+      if constexpr (IsArray<A> && IsInteger<ValType>) {
         index_lists[counter++] = &arg;
       }
-      // --- Case 2: vector<double>
-      else if constexpr (IsArray<A> && IS<ValType, double>) {
+      // --- Case 2: Array<Double>
+      else if constexpr (IsArray<A> && IsDouble<ValType>) {
         auto& v = converted_double_arrays[counter_converted_double++];
         v.resize(arg.size());
         for (std::size_t i = 0; i < arg.size(); i++) {
-          v[i] = safe_index_from_double(arg[i]);
+          v[i] = safe_index_from_double(arg[i].val);
         }
         index_lists[counter++] = &v;
       }
-      // --- Case 3: vector<bool>
-      else if constexpr (std::is_same_v<A, std::vector<bool>>) {
+      // --- Case 3: Array<Logical>
+      else if constexpr (IsArray<A> && IsLogical<ValType>) {
         auto& v = converted_bool_arrays[counter_converted_bool++];
         for (std::size_t b = 0; b < arg.size(); b++) {
           if (arg[b]) v.push_back(b + 1);
         }
         index_lists[counter++] = &v;
       }
-      // --- Case 4: scalars
-      else if constexpr (std::is_arithmetic_v<A>) {
-        if constexpr (std::is_floating_point_v<A>) {
-          auto& v = converted_double_arrays[counter_converted_double++];
-          v.push_back(safe_index_from_double(arg));
-          index_lists[counter++] = &v;
-        } else if constexpr(std::is_integral_v<A> && std::is_same_v<A, bool>) {
-          auto& v = converted_bool_arrays[counter_converted_bool++];
-          if (arg) {
-            const std::size_t len = arr.dim[counter];
-            v.resize(len);
-            for (std::size_t i = 0; i < len; ++i) {
-              v[i] = static_cast<int>(i) + 1;
-            }
-          } else {
-            ass<"Bool subsetting is only with TRUE possible">(false);
-          }
-          index_lists[counter++] = &v;
-        } else if constexpr(std::is_integral_v<A> && !std::is_same_v<A, bool>) {
-          auto& v = converted_double_arrays[counter_converted_double++];
-          v.push_back(arg);
-          index_lists[counter++] = &v;
-        }
+      // --- Case 4: C++ scalars
+      else if constexpr (IsCppArithV<A>) {
+        fill_scalars_in_index_lists<T, decltype(arg), N>(arr, converted_double_arrays, converted_bool_arrays,
+                                    index_lists, arg,
+                                    counter, counter_converted_double, counter_converted_bool);
+      }
+      // --- Case 5: Scalars
+      else if constexpr (IsArith<A>) {
+        fill_scalars_in_index_lists<T, decltype(arg), N>(arr, converted_double_arrays, converted_bool_arrays,
+                                    index_lists, arg.val,
+                                    counter, counter_converted_double, counter_converted_bool);
       }
       else {
         static_assert(!sizeof(A*), "Unsupported index type");
@@ -172,9 +190,9 @@ inline auto subset(ArrayType& arr, const Args&... args) {
     ass<"Too less index arguments for array rank">(false);
   }
 
-  std::array<Buffer<int>, N> converted_double_arrays;
-  std::array<Buffer<int>, N> converted_bool_arrays;
-  std::array<const Buffer<int>*, N> index_lists{};
+  std::array<Buffer<Integer>, N> converted_double_arrays;
+  std::array<Buffer<Integer>, N> converted_bool_arrays;
+  std::array<const Buffer<Integer>*, N> index_lists{};
 
   fill_index_lists<E, N>(
     arr,
@@ -207,7 +225,7 @@ inline auto subset(ArrayType& arr, const Args&... args) {
   for (;;) {
     offset = 1;
     for (std::size_t k = 0; k < N; k++) {
-      offset += ((*index_lists[k])[pos[k]] - 1) * stride[k];
+      offset += ((*index_lists[k])[pos[k]].val - 1) * stride[k];
     }
     out[counter++] = offset - 1;
 

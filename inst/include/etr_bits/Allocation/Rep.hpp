@@ -9,10 +9,10 @@ namespace etr {
 template<typename T>
 inline std::size_t ConvertTimesRep(const T& times) {
   using DecayedT = Decayed<T>;
-  static_assert(IsCppFloat<DecayedT> || IsCppInt<DecayedT>,
+  static_assert(IsCppDouble<DecayedT> || IsCppInteger<DecayedT>,
   "times argument of rep can only handle integer or double values");
-  if constexpr(IsArithV<DecayedT>) {
-    if constexpr (IsCppInt<DecayedT>) {
+  if constexpr(IsCppArithV<DecayedT>) {
+    if constexpr (IsCppInteger<DecayedT>) {
       ass<"times in fct rep has to be a positive integer">(times >= 1);
       return times;
     } else {
@@ -22,7 +22,7 @@ inline std::size_t ConvertTimesRep(const T& times) {
     }
   } else {
     ass<"times in rep has to be a vector of length 1">(times.size() == 1);
-    if constexpr (IsCppInt<DecayedT>) {
+    if constexpr (IsCppInteger<DecayedT>) {
       std::size_t times_ = times[0];
       ass<"times in fct rep has to be a positive integer">(times_ >= 1);
       return times_;
@@ -36,12 +36,12 @@ inline std::size_t ConvertTimesRep(const T& times) {
 
 template <typename L, typename R>
 inline auto repInternal(const L &inp, const R& times) {
-  if constexpr (IsArithV<L>) {
+  if constexpr (IsCppArithV<L>) {
     std::size_t length = ConvertTimesRep(times);
     Vec<L, Buffer<L, RBufferTrait>> ret(SI{length});
     ret.fill(inp);
     return ret;
-  } else if constexpr (!IsArithV<L>) {
+  } else if constexpr (!IsCppArithV<L>) {
     std::size_t length = ConvertTimesRep(times) * inp.size();
     using DataType = typename ExtractDataType<Decayed<L>>::value_type;
     Vec<DataType, Buffer<DataType, RBufferTrait>> ret(SI{length});

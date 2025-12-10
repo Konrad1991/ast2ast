@@ -40,7 +40,7 @@ struct DivideTrait {
     } else if constexpr (!std::is_integral_v<L> && std::is_integral_v<R>) {
       return l / static_cast<double>(r);
     } else {
-      static_assert(IsArithV<L> && IsArithV<R>,
+      static_assert(IsCppArithV<L> && IsCppArithV<R>,
                     "Type not supported by operation /");
       return l / r;
     }
