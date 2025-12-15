@@ -28,6 +28,7 @@ determine_literal_type <- function(obj) {
 }
 
 t_literal <- function(context, obj, indent, type) {
+  print(type)
   if (type == "NA") {
     return("etr::NA")
   } else if (type == "NaN") {

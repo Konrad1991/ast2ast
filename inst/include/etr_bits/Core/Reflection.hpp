@@ -1,8 +1,6 @@
 #ifndef REFLECTION_H
 #define REFLECTION_H
 
-#include "Header.hpp"
-
 namespace etr {
 
 #ifdef STANDALONE_ETR

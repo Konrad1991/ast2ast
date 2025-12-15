@@ -30,12 +30,11 @@ template <typename T, typename BufferTrait> struct Buffer {
 
   // Constructors for other Buffers
   // Copy constructor
-  Buffer(const Buffer &other)
-    : sz(other.sz), capacity(other.capacity), allocated(other.allocated) {
-    if (allocated && sz) {
-      capacity = other.sz;
-      p = new T[other.sz];
-      for (std::size_t i = 0; i < sz; ++i) p[i] = other.p[i];
+  Buffer(const Buffer& other)
+  : sz(other.sz), capacity(other.capacity), allocated(other.allocated) {
+    if (allocated && capacity) {
+      p = new T[capacity];
+      std::copy_n(other.p, sz, p);
     } else {
       reset();
     }
@@ -50,11 +49,7 @@ template <typename T, typename BufferTrait> struct Buffer {
     if (this == &other)
       return *this;
     if (other.size() > capacity) {
-      if (allocated) {
-        realloc(other.size());
-      } else {
-        resize(other.size());
-      }
+      resize(other.size());
     }
     sz = other.size();
     if (sz) std::copy_n(other.p, sz, p);
@@ -183,15 +178,15 @@ template <typename T, typename BufferTrait> struct Buffer {
     }
   }
 
-  const value_type& operator[](std::size_t idx) const {
+  const value_type& get(std::size_t idx) const {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
     return p[idx];
   }
-  value_type& operator[](std::size_t idx) {
+  void set(std::size_t idx, const value_type& val) {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
-    return p[idx];
+    p[idx] = val;
   }
 
   template <typename L2> void moveit(L2 &other) {
@@ -229,8 +224,6 @@ template <typename T, typename BufferTrait> struct Buffer {
   auto end()         noexcept { return It<T>{p + sz}; }
   auto begin() const noexcept { return It<const T>{p}; }
   auto end()   const noexcept { return It<const T>{p + sz}; }
-
-  T *data() const { return p; }
 
   void realloc(std::size_t new_size) {
     T *temp;

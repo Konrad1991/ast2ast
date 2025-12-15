@@ -19,16 +19,16 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   std::vector<std::size_t> dim;
 
   // ======================= internal methods =================================================
-  decltype(auto) operator[](std::size_t idx) { return d[idx]; }
-  decltype(auto) operator[](std::size_t idx) const { return d[idx]; }
+  decltype(auto) get(std::size_t idx) const { return d.get(idx); }
+  void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
   operator value_type() const {
     if constexpr (IS<value_type, bool>) {
       warn<"Warning in if: the condition has length > 1">(this->size() == 1);
       // otherwise subsetting does not work. Thus, warn instead of assert. Even though, R throws an error.
-      return d[0];
+      return d.get(0);
     } else {
-      return d[0];
+      return d.get(0);
     }
   }
 
@@ -44,15 +44,15 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
     temp.resize(other_obj.size());
     for (std::size_t i = 0; i < other_obj.size(); i++) {
       if constexpr (IS<DataTypeOtherObj, T>) {
-        temp[i] = other_obj[i];
+          temp.set(i, other_obj.get(i));
       } else {
-        temp[i] = static_cast<T>(other_obj[i]);
+          temp.set(i, static_cast<T>(other_obj.get(i)));
       }
     }
   }
   template<typename T2>
   void assign(const T2& other_obj) {
-    using DataTypeOtherArray = typename ReRef<decltype(other_obj.d)>::type::value_type;
+    using DataTypeOtherArray = typename ReRef<decltype(other_obj)>::type::value_type;
     copy_with_temp<T2, DataTypeOtherArray>(other_obj);
     d.moveit(temp);
   }
@@ -63,9 +63,9 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
 
   // arithmetic constructors
   Array(int sz) : d(1), temp(1), dim(1, 1) { d[0] = static_cast<T>(sz);}
-  explicit Array(std::size_t sz) : d(1), temp(1), dim(1, 1) { d[0] = sz;}
-  Array(double sz) : d(1), temp(1), dim(1, 1) { d[0] = sz;}
-  Array(bool b) : d(1), temp(1), dim(1, 1) { d[0] = static_cast<T>(b);}
+  explicit Array(std::size_t sz) : d(1), temp(1), dim(1, 1) { d.set(0, sz);}
+  Array(double sz) : d(1), temp(1), dim(1, 1) { d.set(0, sz);}
+  Array(bool b) : d(1), temp(1), dim(1, 1) { d.set(0, static_cast<T>(b));}
 
   // define Arraytor with specific size
   explicit Array(const SI &sz) : d(sz.sz), temp(sz.sz), dim(1, sz.sz) {}
@@ -144,13 +144,13 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   Array &operator=(const TD inp) {
     if constexpr (IS<TD, T>) {
       d.resize(1);
-      d[0] = inp;
+      d.set(0, inp);
       dim.resize(1);
       dim[0] = d.size();
       return *this;
     } else {
       d.resize(1);
-      d[0] = static_cast<T>(inp);
+      d.set(0, static_cast<T>(inp));
       dim.resize(1);
       dim[0] = d.size();
       return *this;
@@ -206,16 +206,16 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
   std::vector<std::size_t> dim;
 
   // ======================= internal methods =================================================
-  decltype(auto) operator[](std::size_t idx) { return d[idx]; }
-  decltype(auto) operator[](std::size_t idx) const { return d[idx]; }
+  void set(std::size_t idx, const T& val) { d.set(idx, val); }
+  decltype(auto) get(std::size_t idx) const { return d[idx]; }
 
   operator value_type() const {
     if constexpr (IS<value_type, bool>) {
       warn<"Warning in if: the condition has length > 1">(this->size() == 1);
       // otherwise subsetting does not work. Thus, warn instead of assert. Even though, R throws an error.
-      return d[0];
+      return d.get(0);
     } else {
-      return d[0];
+      return d.get(0);
     }
   }
 
@@ -258,7 +258,7 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
 ---------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------
 */
-template<typename T> struct Array<T, Borrow<T, BorrowTrait>> {
+template<typename T> requires (IsCppArithV<T>) struct Array<T, Borrow<T, BorrowTrait>> {
   using Type = T;
   using DType = Borrow<T, BorrowTrait>;
   using value_type = T;
@@ -267,16 +267,16 @@ template<typename T> struct Array<T, Borrow<T, BorrowTrait>> {
   std::vector<std::size_t> dim;
 
   // ======================= internal methods =================================================
-  decltype(auto) operator[](std::size_t idx) { return d[idx]; }
-  decltype(auto) operator[](std::size_t idx) const { return d[idx]; }
+  decltype(auto) get(std::size_t idx) const { return d.get(idx); }
+  void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
   operator value_type() const {
     if constexpr (IS<value_type, bool>) {
       warn<"Warning in if: the condition has length > 1">(this->size() == 1);
       // otherwise subsetting does not work. Thus, warn instead of assert. Even though, R throws an error.
-      return d[0];
+      return d.get(0);
     } else {
-      return d[0];
+      return d.get(0);
     }
   }
 
@@ -292,21 +292,21 @@ template<typename T> struct Array<T, Borrow<T, BorrowTrait>> {
     temp.resize(other_obj.size());
     for (std::size_t i = 0; i < other_obj.size(); i++) {
       if constexpr (IS<DataTypeOtherObj, T>) {
-        temp[i] = other_obj[i];
+          temp.set(i, other_obj.get(i));
       } else {
-        temp[i] = static_cast<T>(other_obj[i]);
+          temp.set(i, static_cast<T>(other_obj.get(i)));
       }
     }
   }
   template<typename T2>
   void assign(const T2& other_obj) {
-    using DataTypeOtherArray = typename ReRef<decltype(other_obj.d)>::type::value_type;
+    using DataTypeOtherArray = typename ReRef<decltype(other_obj)>::type::value_type;
     copy_with_temp<T2, DataTypeOtherArray>(other_obj);
     ass<"the borrowed region is too small for this assignment.">(other_obj.size() <= d.capacity);
     ass<"number of items to replace is not a multiple of replacement length">(other_obj.size() == d.size());
     d.sz = other_obj.size();
     for (std::size_t i = 0; i < other_obj.size(); i++) {
-      d[i] = temp[i];
+      d.set(i, temp.get(i));
     }
   }
 
@@ -325,13 +325,13 @@ template<typename T> struct Array<T, Borrow<T, BorrowTrait>> {
     ass<"number of items to replace is not a multiple of replacement length">(1 <= d.capacity);
     if constexpr (IS<TD, T>) {
       d.resize(1);
-      d[0] = inp;
+      d.set(0, inp);
       dim.resize(1);
       dim[0] = d.size();
       return *this;
     } else {
       d.resize(1);
-      d[0] = static_cast<T>(inp);
+      d.set(0, static_cast<T>(inp));
       dim.resize(1);
       dim[0] = d.size();
       return *this;
@@ -402,16 +402,16 @@ template<typename T, typename I, typename Trait> struct Array<T, UnaryOperation<
   ConstHolder<std::vector<std::size_t>> dim;
 
   // ======================= internal methods =================================================
-  decltype(auto) operator[](std::size_t idx) { return d[idx]; }
-  decltype(auto) operator[](std::size_t idx) const { return d[idx]; }
+  decltype(auto) get(std::size_t idx) const { return d.get(idx); }
+  void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
   operator value_type() const {
     if constexpr (IS<value_type, bool>) {
       warn<"Warning in if: the condition has length > 1">(this->size() == 1);
       // otherwise subsetting does not work. Thus, warn instead of assert. Even though, R throws an error.
-      return d[0];
+      return d.get(0);
     } else {
-      return d[0];
+      return d.get(0);
     }
   }
 
@@ -459,16 +459,16 @@ template<typename T, typename L, typename R, typename Trait> struct Array<T, Bin
   ConstHolder<std::vector<std::size_t>> dim;
 
   // ======================= internal methods =================================================
-  decltype(auto) operator[](std::size_t idx) { return d[idx]; }
-  decltype(auto) operator[](std::size_t idx) const { return d[idx]; }
+  decltype(auto) get(std::size_t idx) const { return d.get(idx); }
+  void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
   operator value_type() const {
     if constexpr (IS<value_type, bool>) {
       warn<"Warning in if: the condition has length > 1">(this->size() == 1);
       // otherwise subsetting does not work. Thus, warn instead of assert. Even though, R throws an error.
-      return d[0];
+      return d.get(0);
     } else {
-      return d[0];
+      return d.get(0);
     }
   }
 
@@ -522,16 +522,16 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   Holder<std::vector<std::size_t>> dim;
 
   // ======================= internal methods =================================================
-  decltype(auto) operator[](std::size_t idx) { return d[idx]; }
-  decltype(auto) operator[](std::size_t idx) const { return d[idx]; }
+  decltype(auto) get(std::size_t idx) const { return d.get(idx); }
+  void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
   operator value_type() const {
     if constexpr (IS<value_type, bool>) {
       warn<"Warning in if: the condition has length > 1">(this->size() == 1);
       // otherwise subsetting does not work. Thus, warn instead of assert. Even though, R throws an error.
-      return d[0];
+      return d.get(0);
     } else {
-      return d[0];
+      return d.get(0);
     }
   }
 
@@ -547,18 +547,21 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
     temp.resize(other_obj.size());
     for (std::size_t i = 0; i < other_obj.size(); i++) {
       if constexpr (IS<DataTypeOtherObj, T>) {
-        temp[i] = other_obj[i];
+          temp.set(i, other_obj.get(i));
       } else {
-        temp[i] = static_cast<T>(other_obj[i]);
+          temp.set(i, static_cast<T>(other_obj.get(i)));
       }
     }
   }
   template<typename T2>
   void assign(const T2& other_obj) {
-    using DataTypeOtherArray = typename ReRef<decltype(other_obj.d)>::type::value_type;
+    using DataTypeOtherArray = typename ReRef<decltype(other_obj)>::type::value_type;
     copy_with_temp<T2, DataTypeOtherArray>(other_obj);
     ass<"number of items to replace is not a multiple of replacement length">(other_obj.size() == d.size());
-    d.moveit(temp);
+    // TODO: can I safely move temp and d?
+    for (std::size_t i = 0; i < other_obj.size(); i++) {
+      d.set(i, temp.get(i));
+    }
   }
 
   // ======================= Constructors ===================================================
@@ -579,12 +582,12 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   Array &operator=(const TD inp) {
     if constexpr (IS<TD, T>) {
       for (std::size_t i = 0; i < d.size(); ++i) {
-        d[i] = inp;
+        d.set(i, inp);
       }
     } else {
       T val = static_cast<T>(inp);
       for (std::size_t i = 0; i < d.size(); ++i) {
-        d[i] = val;
+        d.set(i, val);
       }
     }
     return *this;

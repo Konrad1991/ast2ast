@@ -5,21 +5,26 @@ namespace etr {
 
 template <typename I, typename Trait>
 struct UnaryOpClassIterator {
-  const I& obj;
-  size_t index;
-  UnaryOpClassIterator(const I& obj_, size_t index_ = 0)
-  : obj(obj_), index(index_) {}
-  auto operator*() const {
-    if constexpr (IsCppArithV<I>) {
-      return Trait::f(obj);
-    } else {
-      return Trait::f(obj[index]);
+    const I& obj;
+    size_t index;
+
+    UnaryOpClassIterator(const I& obj_, size_t index_ = 0)
+        : obj(obj_), index(index_) {}
+
+    auto operator*() const {
+        if constexpr (IsCppArithV<I> || IsArith<I>) {
+            // Scalar input
+            return Trait::f(obj);
+        } else {
+            // Array input
+            return Trait::f(obj[index]);
+        }
     }
-  }
-  UnaryOpClassIterator& operator++() {
-    ++index;
-    return *this;
-  }
+
+    UnaryOpClassIterator& operator++() {
+        ++index;
+        return *this;
+    }
 };
 
 struct UnaryOpSentinel {
@@ -32,7 +37,6 @@ inline bool operator!=(const UnaryOpClassIterator<I, Trait>& it, const UnaryOpSe
 
 template <typename I, typename UTrait> struct UnaryOperation {
   using Trait = UTrait;
-  using Type = typename I::value_type;
   ConstHolder<I> obj;
   using typeTraitObj = I;
   using TypeTrait = UnaryTrait;
@@ -42,9 +46,11 @@ template <typename I, typename UTrait> struct UnaryOperation {
   // r value
   UnaryOperation(I &&obj_) : obj(std::move(obj_)) {}
 
-  auto operator[](std::size_t i) const {
+  auto get(std::size_t i) const {
     return Trait::f(obj.get()[i]);
   }
+  template<typename V> void set(std::size_t i, const V& val) = delete;
+
   std::size_t size() const {
     return obj.get().size();
   }
@@ -61,8 +67,13 @@ template <typename I, typename UTrait> struct UnaryOperation {
   auto end() const { return UnaryOpSentinel{this->size()}; }
 };
 
-template<typename T, typename E, typename I, typename Trait>
+template<typename Scalar, typename Trait>
+using unary_result_t = decltype( Trait::f( std::declval<Scalar>() ) );
+
+template<typename T, typename I, typename Trait>
 inline auto create_unary(T&& obj) {
+  using InScalar  = typename ExtractDataType<Decayed<T>>::value_type;
+  using E = unary_result_t<InScalar, Trait>;
   if constexpr (IsRvalueV<T&&>) {
     return Array<E, UnaryOperation<I, Trait>>(UnaryOperation<I, Trait>(std::move(obj.d)), obj.get_dim());
   } else {
@@ -73,92 +84,79 @@ inline auto create_unary(T&& obj) {
 template <typename T> requires IsArray<Decayed<T>>
 inline auto sinus(T &&obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<Decayed<T>>::value_type;
-  return create_unary<T,E, I, SinusTrait>(std::forward<T>(obj));
+  return create_unary<T, I, SinusTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
 inline auto operator-(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<Decayed<T>>::value_type;
-  return create_unary<T,E, I, MinusUnaryTrait>(std::forward<T>(obj));
+  return create_unary<T, I, MinusUnaryTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
 inline auto sinush(T &&obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<Decayed<T>>::value_type;
-  return create_unary<T,E, I, SinusHTrait>(std::forward<T>(obj));
+  return create_unary<T, I, SinusHTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
 inline auto asinus(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<Decayed<T>>::value_type;
-  return create_unary<T,E, I, ASinusTrait>(std::forward<T>(obj));
+  return create_unary<T, I, ASinusTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
 inline auto cosinus(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<Decayed<T>>::value_type;
-  return create_unary<T,E, I, CosinusTrait>(std::forward<T>(obj));
+  return create_unary<T, I, CosinusTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
 inline auto cosinush(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<Decayed<T>>::value_type;
-  return create_unary<T,E, I, CosinusHTrait>(std::forward<T>(obj));
+  return create_unary<T, I, CosinusHTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
 inline auto acosinus(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<Decayed<T>>::value_type;
-  return create_unary<T,E, I, ACosinusTrait>(std::forward<T>(obj));
+  return create_unary<T, I, ACosinusTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
 inline auto tangens(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<Decayed<T>>::value_type;
-  return create_unary<T,E, I, TangensTrait>(std::forward<T>(obj));
+  return create_unary<T, I, TangensTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
 inline auto tangensh(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<Decayed<T>>::value_type;
-  return create_unary<T,E, I, TangensHTrait>(std::forward<T>(obj));
+  return create_unary<T, I, TangensHTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
 inline auto atangens(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<Decayed<T>>::value_type;
-  return create_unary<T,E, I, ATangensTrait>(std::forward<T>(obj));
+  return create_unary<T, I, ATangensTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
 inline auto ln(T&& obj) { // LogTrait
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<Decayed<T>>::value_type;
-  return create_unary<T,E, I, LogTrait>(std::forward<T>(obj));
+  return create_unary<T, I, LogTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
 inline auto sqroot(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<Decayed<T>>::value_type;
-  return create_unary<T,E, I, SquareRootTrait>(std::forward<T>(obj));
+  return create_unary<T, I, SquareRootTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
 inline auto expo(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
-  using E = typename ExtractDataType<Decayed<T>>::value_type;
-  return create_unary<T,E, I, ExpTrait>(std::forward<T>(obj));
+  return create_unary<T, I, ExpTrait>(std::forward<T>(obj));
 }
 
 } // namespace etr

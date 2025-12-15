@@ -1,8 +1,6 @@
 #ifndef PRINT_ETR_HPP
 #define PRINT_ETR_HPP
 
-// TODO: fix the printing if NA and Inf
-
 namespace etr {
 #ifdef STANDALONE_ETR
 #define PRINT_STREAM std::cout
@@ -103,31 +101,41 @@ inline void print(const T& obj) {
   }
 }
 
+template<typename Dim>
+auto&& dim_view(Dim& d) {
+  if constexpr (requires { d.get(); }) {
+    return d.get();
+  } else {
+    return d;
+  }
+}
+
 // Print array
 template<typename T>
 requires (!IsSubsetArray<T> && IsArray<T>)
 inline void print(const T& arr) {
 
-  if (arr.dim.size() == 1) {
+  const auto& dim = dim_view(arr.dim);
+  if (dim.size() == 1) {
     for (std::size_t i = 0; i < arr.size(); i++) {
-      std::cout << arr[i] << "\t";
+      PRINT_STREAM << arr[i] << "\t";
     }
-    std::cout << std::endl;
+    PRINT_STREAM << std::endl;
   }
 
-  if (arr.dim.size() == 2) {
-    print_matrix(std::vector<std::size_t>{0, 0}, arr, arr.dim[0], arr.dim[1], 0);
+  if (dim.size() == 2) {
+    print_matrix(std::vector<std::size_t>{0, 0}, arr, dim[0], dim[1], 0);
   }
 
-  if (arr.dim.size() > 2) {
-    auto strides_all = make_strides_dyn(arr.dim);
+  if (dim.size() > 2) {
+    auto strides_all = make_strides_dyn(dim);
     std::size_t N = strides_all.size();
     std::vector<std::size_t> strides(strides_all.size() - 2);
     for (std::size_t i = 0; i < strides.size(); i++) strides[i] = strides_all[i + 2];
 
     std::vector<std::size_t> pos(N - 2, 0);
     std::vector<std::size_t> L(N - 2, 0);
-    for (std::size_t i = 0; i < L.size(); i++) L[i] = arr.dim[i + 2];
+    for (std::size_t i = 0; i < L.size(); i++) L[i] = dim[i + 2];
 
     std::size_t offset = 0;
     std::size_t k = 0;
@@ -136,8 +144,8 @@ inline void print(const T& arr) {
       for (std::size_t k = 0; k < (N - 2); k++) {
         offset += (pos[k]) * strides[k];
       }
-      print_matrix(pos, arr, arr.dim[0], arr.dim[1], offset - 1);
-      std::cout << std::endl;
+      print_matrix(pos, arr, dim[0], dim[1], offset - 1);
+      PRINT_STREAM << std::endl;
       k = 0;
       for (;;) {
         pos[k] += 1;
@@ -151,7 +159,6 @@ inline void print(const T& arr) {
     }
   }
 }
-
 
 } // namespace etr
 

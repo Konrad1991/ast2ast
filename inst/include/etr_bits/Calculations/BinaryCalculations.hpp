@@ -5,26 +5,23 @@ namespace etr {
 
 template <typename L, typename R, typename Trait>
 struct BinaryOpClassIterator {
-  const L& l;
-  const R& r;
-  size_t index;
+    const L& l;
+    const R& r;
+    size_t index;
 
-  BinaryOpClassIterator(const L& l_, const R& r_, size_t index_ = 0) : l(l_), r(r_), index(index_) {}
+    BinaryOpClassIterator(const L& l_, const R& r_, size_t index_ = 0)
+        : l(l_), r(r_), index(index_) {}
 
-  auto operator*() const {
-    if constexpr (!IsCppArithV<L> && IsCppArithV<R>) {
-      return Trait::f(l[index], r);
-    } else if constexpr (IsCppArithV<L> && !IsCppArithV<R>) {
-      return Trait::f(l, r[index]);
-    } else if constexpr (!IsCppArithV<L> && !IsCppArithV<R>) {
-      return Trait::f(l[index], r[index]);
+    auto operator*() const {
+        const auto& left = (IsCppArithV<L> || IsArith<L>) ? l : l[index];
+        const auto& right = (IsCppArithV<R> || IsArith<R>) ? r : r[index];
+        return Trait::f(left, right);
     }
-  }
 
-  BinaryOpClassIterator& operator++() {
-    ++index;
-    return *this;
-  }
+    BinaryOpClassIterator& operator++() {
+        ++index;
+        return *this;
+    }
 };
 
 struct BinaryOpSentinel {
@@ -39,15 +36,15 @@ inline bool operator!=(const BinaryOpClassIterator<L, R, Trait>& it, const Binar
 template <typename L, typename R, typename BTrait>
 inline auto determine_type_binary_op() {
   if constexpr (IsComparisonTrait<BTrait>) {
-    return bool{};
+    return Logical{};
   } else if constexpr (IsArray<L> && IsArray<R>) {
-    using value_type = std::common_type_t<typename L::value_type, typename R::value_type>;
+    using value_type = common_type_t<typename L::value_type, typename R::value_type>;
     return value_type{};
   } else if constexpr (!IsArray<L> && IsArray<R>) {
-    using value_type = std::common_type_t<L, typename R::value_type>;
+    using value_type = common_type_t<L, typename R::value_type>;
     return value_type{};
   } else if constexpr (IsArray<L> && !IsArray<R>) {
-    using value_type = std::common_type_t<typename L::value_type, R>;
+    using value_type = common_type_t<typename L::value_type, R>;
     return value_type{};
   }
 }
@@ -70,19 +67,21 @@ template <typename L, typename R, typename BTrait> struct BinaryOperation {
   // r value & r value
   BinaryOperation(L &&l_, R &&r_) : l(std::move(l_)), r(std::move(r_)) {}
 
-  auto operator[](std::size_t i) const {
+  auto get(std::size_t i) const {
     constexpr bool is_scalar_l = IsCppArithV<L> || IsArith<L>;
     constexpr bool is_scalar_r = IsCppArithV<R> || IsArith<R>;
     if constexpr (!is_scalar_l && is_scalar_r) {
-      return Trait::f(l.get()[i], r.get());
+      return Trait::f(l.get().get(i), r.get());
     } else if constexpr (is_scalar_l && !is_scalar_r) {
-      return Trait::f(l.get(), r.get()[i]);
+      return Trait::f(l.get(), r.get().get(i));
     } else if constexpr (!is_scalar_l && !is_scalar_r) {
-      return Trait::f(l.get()[i], r.get()[i]);
+      return Trait::f(l.get().get(i), r.get().get(i));
     } else if constexpr (is_scalar_l && is_scalar_r) {
       return Trait::f(l.get(), r.get());
     }
   }
+  template<typename V> void set(std::size_t i, const V& val) = delete;
+
   std::size_t size() const {
     constexpr bool is_scalar_l = IsCppArithV<L> || IsArith<L>;
     constexpr bool is_scalar_r = IsCppArithV<R> || IsArith<R>;
@@ -258,6 +257,20 @@ inline auto operator&(L &&l, R &&r) {
 template <typename L, typename R>
 requires(IsArray<Decayed<L>> || IsArray<Decayed<R>>)
 auto operator|(L &&l, R &&r) {
+  return create_bin_vec<L, R, OrTrait>(
+    std::forward<L>(l), std::forward<R>(r));
+}
+
+template <typename L, typename R>
+requires(IsArray<Decayed<L>> || IsArray<Decayed<R>>)
+inline auto operator&&(L &&l, R &&r) {
+  return create_bin_vec<L, R, AndTrait>(
+    std::forward<L>(l), std::forward<R>(r));
+}
+
+template <typename L, typename R>
+requires(IsArray<Decayed<L>> || IsArray<Decayed<R>>)
+inline auto operator||(L &&l, R &&r) {
   return create_bin_vec<L, R, OrTrait>(
     std::forward<L>(l), std::forward<R>(r));
 }

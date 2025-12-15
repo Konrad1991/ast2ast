@@ -46,17 +46,42 @@ public:
   SubsetView(O&& obj_, Buffer<int>&& indices_) :
     obj(obj_), indices(std::move(indices_)) {}
 
-  auto operator[](std::size_t i) const {
-    return obj.get()[safe_modulo(((indices.get()[
-                                 safe_modulo(i, indices.get().size())
-                                 ])), obj.get().size()
-                                 )];
+  auto get(std::size_t i) const {
+    return obj.get().get(
+      safe_modulo(
+        indices.get().get(
+          safe_modulo(i, indices.get().size())
+        )
+        ,
+        obj.get().size()
+      )
+    );
   }
-  auto& operator[](std::size_t i) {
-    return obj.get()[safe_modulo(((indices.get()[
-                                 safe_modulo(i, indices.get().size())
-                                 ])), obj.get().size()
-                                 )];
+  template<typename Val>
+  void set(std::size_t i, const Val& v) const {
+    if constexpr (IS<Decayed<Val>, value_type>) {
+      return obj.get().set(
+        safe_modulo(
+          indices.get().get(
+            safe_modulo(i, indices.get().size())
+          )
+          ,
+          obj.get().size()
+        ),
+        v
+      );
+    } else {
+      return obj.get().set(
+        safe_modulo(
+          indices.get().get(
+            safe_modulo(i, indices.get().size())
+          )
+          ,
+          obj.get().size()
+        ),
+        static_cast<value_type>(v)
+      );
+    }
   }
   std::size_t size() const {return indices.get().size();}
 
@@ -225,9 +250,9 @@ inline auto subset(ArrayType& arr, const Args&... args) {
   for (;;) {
     offset = 1;
     for (std::size_t k = 0; k < N; k++) {
-      offset += ((*index_lists[k])[pos[k]].val - 1) * stride[k];
+      offset += ((*index_lists[k]).get(pos[k]).val - 1) * stride[k];
     }
-    out[counter++] = offset - 1;
+    out.set(counter++, offset - 1);
 
     k = 0;
     for (;;) {

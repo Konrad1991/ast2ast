@@ -1,6 +1,34 @@
 #ifndef UTILS_ETR_H
 #define UTILS_ETR_H
 
+#include <cmath>
+#include <limits>
+
+// TODO: guard the next two includes
+#include "stddef.h"
+#include <cxxabi.h>
+
+#ifdef STANDALONE_ETR
+#else
+// [[Rcpp::depends(Rcpp)]]
+#include <Rcpp.h>
+#endif
+
+#include <algorithm>
+#include <array>
+#include <ios>
+#include <iostream>
+#include <iterator>
+#include <math.h>
+#include <memory>
+#include <optional>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <vector>
+#include <functional>
+#include <numeric>
+
 namespace etr {
 
 // Helper
@@ -19,10 +47,9 @@ template <typename T> constexpr bool IsRvalueV = std::is_rvalue_reference_v<T>;
 template <typename T> using IsClass = std::is_class<T>;
 template <typename T> constexpr bool IsClassV = std::is_class_v<T>;
 
-// TODO: handle NA and Inf in each algorithm explicitly
 template <bool B> using BoolConstant = std::integral_constant<bool, B>;
 const double NA = std::numeric_limits<double>::quiet_NaN();
-const double NaN = std::numeric_limits<double>::quiet_NaN(); // TODO: remove
+const double NaN = std::numeric_limits<double>::quiet_NaN();
 const double Inf = std::numeric_limits<double>::infinity();
 
 template <typename T> struct It {
