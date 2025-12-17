@@ -22,10 +22,13 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   decltype(auto) get(std::size_t idx) const { return d.get(idx); }
   void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
-  operator value_type() const {
+  explicit operator bool() const {
+    ass<"Error in if: the condition has length > 1">(this->size() == 1);
+    return static_cast<bool>(d.get(0).val);
+  }
+  explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
       warn<"Warning in if: the condition has length > 1">(this->size() == 1);
-      // otherwise subsetting does not work. Thus, warn instead of assert. Even though, R throws an error.
       return d.get(0);
     } else {
       return d.get(0);
@@ -36,8 +39,6 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   const std::vector<std::size_t>& get_dim() const { return dim; }
   auto begin() const { return d.begin(); }
   auto end() const { return d.end(); }
-  auto begin() { return d.begin(); }
-  auto end() { return d.end(); }
 
   template <typename OtherObj, typename DataTypeOtherObj>
   void copy_with_temp(const OtherObj& other_obj) {
@@ -61,11 +62,11 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   // empty array
   explicit Array() : d(), temp(), dim() {}
 
-  // arithmetic constructors
-  Array(int sz) : d(1), temp(1), dim(1, 1) { d[0] = static_cast<T>(sz);}
-  explicit Array(std::size_t sz) : d(1), temp(1), dim(1, 1) { d.set(0, sz);}
-  Array(double sz) : d(1), temp(1), dim(1, 1) { d.set(0, sz);}
-  Array(bool b) : d(1), temp(1), dim(1, 1) { d.set(0, static_cast<T>(b));}
+  // Scalar constructors
+  Array(Logical b) : d(1), temp(1), dim(1, 1) { d.set(0, static_cast<T>(b));}
+  Array(Integer sz) : d(1), temp(1), dim(1, 1) { d.set(0, static_cast<T>(sz));}
+  Array(Double sz) : d(1), temp(1), dim(1, 1) { d.set(0, sz.val);}
+  Array(Dual sz) : d(1), temp(1), dim(1, 1) { d.set(0, static_cast<T>(sz));}
 
   // define Arraytor with specific size
   explicit Array(const SI &sz) : d(sz.sz), temp(sz.sz), dim(1, sz.sz) {}
@@ -87,14 +88,14 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
     dim = other.get_dim();
   }
 
-  // move: e.g. Array<int> arr = array(1.2, c(1, 2, 3))
+  // Example: Array<Double, Buffer<Double>> a(Array<Double, Buffer<Double, RBufferTrait>>(SI{3}));
   template<typename T2, typename R2>
   requires(IS<T, T2> && IsRArray<Array<T2, R2>>)
   Array(Array<T2, R2>&& other) {
     d.moveit(other.d);
     dim = std::move(other.dim);
   }
-  // move: e.g. Array<int> arr = array(0, c(1, 2, 3))
+  // Example: Array<Double, Buffer<Double>> a(Array<Integer, Buffer<Integer, RBufferTrait>>(SI{3}));
   template<typename T2, typename R2>
   requires((!IS<T, T2>) && IsRArray<Array<T2, R2>>)
   Array(Array<T2, R2>&& other) {
@@ -140,7 +141,7 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   // ======================= assignments =================================================
   // assign scalar values
   template <typename TD>
-  requires IsCppArithV<TD>
+  requires IsArithV<TD>
   Array &operator=(const TD inp) {
     if constexpr (IS<TD, T>) {
       d.resize(1);
@@ -166,7 +167,7 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
 
   // copy assignment LArrays and expressions
   template<typename T2>
-  requires(!IsCppArithV<Decayed<T2>> && IsArray<Decayed<T2>>)
+  requires(!IsArithV<Decayed<T2>> && IsArray<Decayed<T2>>)
   Array &operator=(const T2& other_obj) {
     assign(other_obj);
     dim = other_obj.get_dim();
@@ -207,12 +208,15 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
 
   // ======================= internal methods =================================================
   void set(std::size_t idx, const T& val) { d.set(idx, val); }
-  decltype(auto) get(std::size_t idx) const { return d[idx]; }
+  decltype(auto) get(std::size_t idx) const { return d.get(idx); }
 
-  operator value_type() const {
+  explicit operator bool() const {
+    ass<"Error in if: the condition has length > 1">(this->size() == 1);
+    return static_cast<bool>(d.get(0).val);
+  }
+  explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
       warn<"Warning in if: the condition has length > 1">(this->size() == 1);
-      // otherwise subsetting does not work. Thus, warn instead of assert. Even though, R throws an error.
       return d.get(0);
     } else {
       return d.get(0);
@@ -258,7 +262,7 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
 ---------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------
 */
-template<typename T> requires (IsCppArithV<T>) struct Array<T, Borrow<T, BorrowTrait>> {
+template<typename T> requires (IsArithV<T>) struct Array<T, Borrow<T, BorrowTrait>> {
   using Type = T;
   using DType = Borrow<T, BorrowTrait>;
   using value_type = T;
@@ -270,10 +274,13 @@ template<typename T> requires (IsCppArithV<T>) struct Array<T, Borrow<T, BorrowT
   decltype(auto) get(std::size_t idx) const { return d.get(idx); }
   void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
-  operator value_type() const {
+  explicit operator bool() const {
+    ass<"Error in if: the condition has length > 1">(this->size() == 1);
+    return static_cast<bool>(d.get(0).val);
+  }
+  explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
       warn<"Warning in if: the condition has length > 1">(this->size() == 1);
-      // otherwise subsetting does not work. Thus, warn instead of assert. Even though, R throws an error.
       return d.get(0);
     } else {
       return d.get(0);
@@ -284,8 +291,6 @@ template<typename T> requires (IsCppArithV<T>) struct Array<T, Borrow<T, BorrowT
   const std::vector<std::size_t>& get_dim() const { return dim; }
   auto begin() const { return d.begin(); }
   auto end() const { return d.end(); }
-  auto begin() { return d.begin(); }
-  auto end() { return d.end(); }
 
   template <typename OtherObj, typename DataTypeOtherObj>
   void copy_with_temp(const OtherObj& other_obj) {
@@ -303,15 +308,15 @@ template<typename T> requires (IsCppArithV<T>) struct Array<T, Borrow<T, BorrowT
     using DataTypeOtherArray = typename ReRef<decltype(other_obj)>::type::value_type;
     copy_with_temp<T2, DataTypeOtherArray>(other_obj);
     ass<"the borrowed region is too small for this assignment.">(other_obj.size() <= d.capacity);
-    ass<"number of items to replace is not a multiple of replacement length">(other_obj.size() == d.size());
-    d.sz = other_obj.size();
+    d.resize(other_obj.size());
     for (std::size_t i = 0; i < other_obj.size(); i++) {
       d.set(i, temp.get(i));
     }
   }
 
   // ======================= Constructors ===================================================
-  explicit Array(T *ptr, std::size_t s, const std::vector<std::size_t>& dim_) : d(ptr, s), dim(dim_) {}
+  template<typename T2>
+  explicit Array(T2 *ptr, std::size_t s, const std::vector<std::size_t>& dim_) : d(ptr, s), dim(dim_) {}
 
   template<typename...Args>
   Array(Args...) {
@@ -320,7 +325,7 @@ template<typename T> requires (IsCppArithV<T>) struct Array<T, Borrow<T, BorrowT
   // ======================= assignments =================================================
   // assign scalar values
   template <typename TD>
-  requires IsCppArithV<TD>
+  requires IsArithV<TD>
   Array &operator=(const TD inp) {
     ass<"number of items to replace is not a multiple of replacement length">(1 <= d.capacity);
     if constexpr (IS<TD, T>) {
@@ -347,13 +352,13 @@ template<typename T> requires (IsCppArithV<T>) struct Array<T, Borrow<T, BorrowT
 
   // copy assignment LArrays and expressions
   template<typename T2>
-  requires(!IsCppArithV<Decayed<T2>> && IsArray<Decayed<T2>>)
+  requires(!IsArithV<Decayed<T2>> && IsArray<Decayed<T2>>)
   Array &operator=(const T2& other_obj) {
     assign(other_obj);
     dim = other_obj.get_dim();
     return *this;
   }
-  // move assignment. but one has to still has to copy --> due to Borrow
+  // move assignment. but one has to copy --> due to Borrow
   template<typename T2, typename R2>
   requires(IS<T, T2> && IsRArray<Array<T2, R2>>)
   Array& operator=(Array<T2, R2>&& other_obj) {
@@ -405,10 +410,13 @@ template<typename T, typename I, typename Trait> struct Array<T, UnaryOperation<
   decltype(auto) get(std::size_t idx) const { return d.get(idx); }
   void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
-  operator value_type() const {
+  explicit operator bool() const {
+    ass<"Error in if: the condition has length > 1">(this->size() == 1);
+    return static_cast<bool>(d.get(0).val);
+  }
+  explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
       warn<"Warning in if: the condition has length > 1">(this->size() == 1);
-      // otherwise subsetting does not work. Thus, warn instead of assert. Even though, R throws an error.
       return d.get(0);
     } else {
       return d.get(0);
@@ -462,10 +470,13 @@ template<typename T, typename L, typename R, typename Trait> struct Array<T, Bin
   decltype(auto) get(std::size_t idx) const { return d.get(idx); }
   void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
-  operator value_type() const {
+  explicit operator bool() const {
+    ass<"Error in if: the condition has length > 1">(this->size() == 1);
+    return static_cast<bool>(d.get(0).val);
+  }
+  explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
       warn<"Warning in if: the condition has length > 1">(this->size() == 1);
-      // otherwise subsetting does not work. Thus, warn instead of assert. Even though, R throws an error.
       return d.get(0);
     } else {
       return d.get(0);
@@ -525,10 +536,13 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   decltype(auto) get(std::size_t idx) const { return d.get(idx); }
   void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
-  operator value_type() const {
+  explicit operator bool() const {
+    ass<"Error in if: the condition has length > 1">(this->size() == 1);
+    return static_cast<bool>(d.get(0).val);
+  }
+  explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
       warn<"Warning in if: the condition has length > 1">(this->size() == 1);
-      // otherwise subsetting does not work. Thus, warn instead of assert. Even though, R throws an error.
       return d.get(0);
     } else {
       return d.get(0);
@@ -539,8 +553,6 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   const std::vector<std::size_t>& get_dim() const { return dim.get(); }
   auto begin() const { return d.begin(); }
   auto end() const { return d.end(); }
-  auto begin() { return d.begin(); }
-  auto end() { return d.end(); }
 
   template <typename OtherObj, typename DataTypeOtherObj>
   void copy_with_temp(const OtherObj& other_obj) {
@@ -578,7 +590,7 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   // ======================= assignments =================================================
   // assign scalar values
   template <typename TD>
-  requires IsCppArithV<TD>
+  requires IsArithV<TD>
   Array &operator=(const TD inp) {
     if constexpr (IS<TD, T>) {
       for (std::size_t i = 0; i < d.size(); ++i) {
@@ -601,7 +613,7 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
 
   // copy assignment LArrays and expressions
   template<typename T2>
-  requires(!IsCppArithV<Decayed<T2>> && IsArray<Decayed<T2>>)
+  requires(!IsArithV<Decayed<T2>> && IsArray<Decayed<T2>>)
   Array &operator=(const T2& other_obj) {
     assign(other_obj);
     return *this;
@@ -613,6 +625,69 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
     assign(other_obj);
     return *this;
   }
+};
+
+/*
+---------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------
+----------------------------------ConstSubsetView  ------------------------------------------
+---------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------
+*/
+template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, ConstSubsetView<O, N, Trait>> {
+  using Type = T;
+  using DType = ConstSubsetView<O, N, Trait>;
+  using value_type = T;
+  ConstSubsetView<O, N, Trait> d;
+  Buffer<T, LBufferTrait> temp;
+  Holder<std::vector<std::size_t>> dim;
+
+  // ======================= internal methods =================================================
+  decltype(auto) get(std::size_t idx) const { return d.get(idx); }
+  void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
+
+  explicit operator bool() const {
+    ass<"Error in if: the condition has length > 1">(this->size() == 1);
+    return static_cast<bool>(d.get(0).val);
+  }
+  explicit operator value_type() const {
+    if constexpr (IS<value_type, bool>) {
+      warn<"Warning in if: the condition has length > 1">(this->size() == 1);
+      return d.get(0);
+    } else {
+      return d.get(0);
+    }
+  }
+
+  std::size_t size() const { return d.size(); }
+  const std::vector<std::size_t>& get_dim() const { return dim.get(); }
+  auto begin() const { return d.begin(); }
+  auto end() const { return d.end(); }
+
+  // ======================= Constructors ===================================================
+  template <typename O2, std::size_t N2, typename Trait2>
+  explicit Array(ConstSubsetView<O2, N2, Trait2> &&inp, std::vector<std::size_t>&& dim_) : d(std::move(inp)), dim(std::move(dim_)) {}
+  template <typename O2, std::size_t N2, typename Trait2>
+  explicit Array(ConstSubsetView<O2, N2, Trait2> &inp, std::vector<std::size_t>&& dim_) : d(inp), dim(std::move(dim_)) {}
+
+  template<typename...Args>
+  Array(Args...) {
+    ass<"Constructor not supported">(sizeof(T) == 0);
+  }
+  // ======================= assignments =================================================
+  template<typename Arg>
+  Array& operator=(const Arg& a) {
+    static_assert(
+    sizeof(T) == 0,
+    "\n\n\n"
+    "[etr::assignment Error]\n"
+    "You tried to assign something to a subset of a temporary unnamed object"
+    "Expressions like: c(1, 2, 3)[1] <- 5 are illegal"
+    "\n\n\n"
+  );
+  }
+  Array& operator=(const Array&) = delete;
+  Array& operator=(Array&&) = delete;
 };
 
 } // namespace etr

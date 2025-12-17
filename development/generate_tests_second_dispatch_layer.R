@@ -145,3 +145,10 @@ for (i in binary_operations) {
   cat(paste(temp, collapse = "\n"))
   cat("\n")
 }
+
+# Test common type
+types <- c(
+  "bool", "int", "double",
+  "Logical", "Integer", "Double", "Dual"
+)
+expand.grid(types, types)

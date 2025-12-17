@@ -3,6 +3,114 @@
 
 namespace etr {
 
+// Helper
+// -----------------------------------------------------------------------------------------------------------
+template <typename T, typename U>
+inline constexpr bool IS = std::is_same_v<T, U>;
+
+template <typename T> using IsCppArith = std::is_arithmetic<T>;
+template <typename T> constexpr bool IsCppArithV = std::is_arithmetic_v<T>;
+
+template <typename T> using Decayed = std::decay_t<T>;
+
+template <typename T> using ReRef = std::remove_reference<T>;
+template <typename T> constexpr bool IsRvalueV = std::is_rvalue_reference_v<T>;
+
+template <typename T> using IsClass = std::is_class<T>;
+template <typename T> constexpr bool IsClassV = std::is_class_v<T>;
+
+template <typename T> struct It {
+  T *p;
+  T &operator*() const { return *p; }
+  bool operator!=(const It &rhs) const { return p != rhs.p; }
+  bool operator==(const It& rhs) const { return p == rhs.p; }
+  It& operator++() { ++p; return *this; }
+};
+
+inline void ass(bool inp, const std::string &message) {
+#ifdef STANDALONE_ETR
+  if (!inp)
+    throw std::runtime_error(message);
+#else
+  if (!inp)
+    Rcpp::stop(message);
+#endif
+}
+
+// https://ctrpeach.io/posts/cpp20-string-literal-template-parameters/
+template <std::size_t N> struct string_literal {
+  constexpr string_literal(const char (&str)[N]) {
+    std::copy_n(str, N, value.begin());
+  }
+  std::array<char, N> value;
+};
+
+template <string_literal msg> inline void ass(bool inp) {
+#ifdef STANDALONE_ETR
+  if (!inp)
+    throw std::runtime_error(msg.value.data());
+#else
+  if (!inp)
+    Rcpp::stop(msg.value.data());
+#endif
+}
+
+inline void warn(bool inp, std::string message) {
+#ifdef STANDALONE_ETR
+  if (!inp)
+    std::cerr << "Warning: " + message << std::endl;
+#else
+  if (!inp)
+    Rcpp::warning("Warning: " + message);
+#endif
+}
+
+template <string_literal msg> inline void warn(bool inp) {
+#ifdef STANDALONE_ETR
+  if (!inp)
+    std::cerr << msg.value.data() << std::endl;
+#else
+  if (!inp)
+    Rcpp::warning(msg.value.data());
+#endif
+}
+
+struct SI {
+  std::size_t sz{0};
+
+  SI() = default;
+  explicit SI(std::size_t n) : sz(n) {
+    ass<"Size has to be larger than 0!">(sz >= 1);
+  }
+  // signed integers (e.g., int, long long)
+  template <std::signed_integral I>
+  explicit SI(I n) {
+    ass<"Size has to be larger than 0!">(n >= 1);
+    using U = std::make_unsigned_t<I>;
+    const U un = static_cast<U>(n);
+    ass<"Requested size too large">(un <= static_cast<U>(std::numeric_limits<std::size_t>::max()));
+    sz = static_cast<std::size_t>(un);
+  }
+
+  // floating point (floor, then validate)
+  template <std::floating_point F>
+  explicit SI(F n) {
+    ass<"Size is not finite">(std::isfinite(n));
+    const F f = std::floor(n);
+    ass<"Size has to be larger than 0!">(f >= static_cast<F>(1));
+    const long double ld = static_cast<long double>(f);
+    ass<"Requested size too large">(ld <= static_cast<long double>(std::numeric_limits<std::size_t>::max()));
+    sz = static_cast<std::size_t>(ld);
+  }
+};
+
+inline std::size_t safe_modulo(std::size_t idx, std::size_t sz) {
+  return sz ? (idx % sz) : 0;  // no UB if n==0
+}
+template <class F, class... Args> inline F forEachArg(F f, Args &&...args) {
+  (f(std::forward<Args>(args)), ...); return f;
+}
+
 // Scalar types (First dispatch layer)
 // --------------------------------------------------------------------------------------------------
 struct Logical;
@@ -12,6 +120,7 @@ struct Dual;
 
 struct Logical {
   bool val;
+  bool is_na{false};
   Logical();
   Logical(bool v);
   Logical(Integer v);
@@ -44,10 +153,15 @@ struct Logical {
   Double sqrt() const;
   Integer operator-() const;
   friend std::ostream& operator<<(std::ostream&, const Logical&);
+  static Logical NA() { Logical x; x.is_na = true; return x; }
+  bool isNA() const noexcept {
+    return is_na;
+  }
 };
 
 struct Integer {
   int val;
+  bool is_na{false};
   Integer();
   Integer(int v);
   Integer(Logical v);
@@ -80,10 +194,15 @@ struct Integer {
   Double sqrt() const;
   Integer operator-() const;
   friend std::ostream& operator<<(std::ostream&, const Integer&);
+  static Integer NA() { Integer x; x.is_na = true; return x; }
+  bool isNA() const noexcept {
+    return is_na;
+  }
 };
 
 struct Double {
   double val;
+  bool is_na;
   Double();
   Double(double v);
   Double(Logical v);
@@ -116,10 +235,32 @@ struct Double {
   Double sqrt() const;
   Double operator-() const;
   friend std::ostream& operator<<(std::ostream&, const Double&);
+  static Double NA() {
+    Double x(std::numeric_limits<double>::quiet_NaN());
+    x.is_na = true;
+    return x;
+  }
+  static Double NaN() {
+    return Double(std::numeric_limits<double>::quiet_NaN());
+  }
+  static Double Inf() {
+    return Double(std::numeric_limits<double>::infinity());
+  }
+  bool isNA() const noexcept {
+    return is_na;
+  }
+  bool isNaN() const noexcept {
+    return !is_na && std::isnan(val);
+  }
+  bool isFinite() const noexcept {
+    return !is_na && std::isfinite(val);
+  }
 };
 
 struct Dual {
   double val, dot;
+  bool is_na;
+  bool is_na_dot;
   Dual();
   Dual(double v, double d);
   Dual(Logical v);
@@ -154,186 +295,584 @@ struct Dual {
   Dual sqrt() const;
   Dual operator-() const;
   friend std::ostream& operator<<(std::ostream&, const Dual&);
+  static Dual NA() {
+    Dual x(std::numeric_limits<double>::quiet_NaN(),
+           std::numeric_limits<double>::quiet_NaN());
+    x.is_na = true;
+    x.is_na_dot = true;
+    return x;
+  }
+  static Dual NaN() {
+    return Dual (std::numeric_limits<double>::quiet_NaN(),
+           std::numeric_limits<double>::quiet_NaN());
+  }
+  static Dual Inf() {
+    return Dual(std::numeric_limits<double>::infinity(),
+                std::numeric_limits<double>::infinity());
+  }
+  bool isNA() const noexcept {
+    return is_na;
+  }
+  bool isNADot() const noexcept {
+    return is_na_dot;
+  }
+  bool isNaN() const noexcept {
+    return !is_na && std::isnan(val);
+  }
+  bool isNaNDot() const noexcept {
+    return !is_na_dot && std::isnan(dot);
+  }
+  bool isFinite() const noexcept {
+    return !is_na && std::isfinite(val);
+  }
+  bool isFiniteDot() const noexcept {
+    return !is_na_dot && std::isfinite(dot);
+  }
 };
 
-Logical::Logical() : val(false) {}
-Logical::Logical(bool v) : val(v) {}
-Logical::Logical(Integer v) : val(static_cast<bool>(v.val)) {}
-Logical::Logical(Double v)  : val(static_cast<bool>(v.val)) {}
-Logical::Logical(Dual v)    : val(static_cast<bool>(v.val)) {}
+Logical::Logical() : val(false), is_na(false) {}
+Logical::Logical(bool v) : val(v), is_na(false) {}
+Logical::Logical(Integer v) : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
+Logical::Logical(Double v)  : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
+Logical::Logical(Dual v)    : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
 
-Integer::Integer() : val(0) {}
-Integer::Integer(int v) : val(v) {}
-Integer::Integer(Logical v) : val(static_cast<int>(v.val)) {}
-Integer::Integer(Double v)  : val(static_cast<int>(v.val)) {}
-Integer::Integer(Dual v)    : val(static_cast<int>(v.val)) {}
+Integer::Integer() : val(0), is_na(false) {}
+Integer::Integer(int v) : val(v), is_na(false) {}
+Integer::Integer(Logical v) : val(static_cast<int>(v.val)), is_na(v.is_na) {}
+Integer::Integer(Double v)  : val(static_cast<int>(v.val)), is_na(v.is_na) {}
+Integer::Integer(Dual v)    : val(static_cast<int>(v.val)), is_na(v.is_na) {}
 
-Double::Double() : val(0.0) {}
-Double::Double(double v) : val(v) {}
-Double::Double(Logical v) : val(static_cast<double>(v.val)) {}
-Double::Double(Integer v) : val(static_cast<double>(v.val)) {}
-Double::Double(Dual v)    : val(v.val) {}
+Double::Double() : val(0.0), is_na(false) {}
+Double::Double(double v) : val(v), is_na(false) {}
+Double::Double(Logical v) : val(static_cast<double>(v.val)), is_na(v.is_na) {}
+Double::Double(Integer v) : val(static_cast<double>(v.val)), is_na(v.is_na) {}
+Double::Double(Dual v)    : val(v.val), is_na(v.is_na) {}
 
-Dual::Dual() : val(0.0), dot(0.0) {}
-Dual::Dual(double v, double d) : val(v), dot(d) {}
-Dual::Dual(Logical v) : val(static_cast<double>(v.val)), dot(0.0) {}
-Dual::Dual(Integer v) : val(static_cast<double>(v.val)), dot(0.0) {}
-Dual::Dual(Double v)    : val(v.val), dot(0.0) {}
+Dual::Dual() : val(0.0), dot(0.0), is_na(false), is_na_dot(false) {}
+Dual::Dual(double v, double d) : val(v), dot(d), is_na(false), is_na_dot(false) {}
+Dual::Dual(Logical v) : val(static_cast<double>(v.val)), dot(0.0), is_na(v.is_na), is_na_dot(false) {}
+Dual::Dual(Integer v) : val(static_cast<double>(v.val)), dot(0.0), is_na(v.is_na), is_na_dot(false) {}
+Dual::Dual(Double v)    : val(v.val), dot(0.0), is_na(v.is_na), is_na_dot(false) {}
 template<typename T> requires std::is_arithmetic_v<T>
-Dual::Dual(T v)    : val(static_cast<double>(v)), dot(0.0) {}
+Dual::Dual(T v)    : val(static_cast<double>(v)), dot(0.0), is_na(std::isnan(v)), is_na_dot(false) {}
 
-std::ostream& operator<<(std::ostream& os, const Logical& x) { return os << x.val; }
-std::ostream& operator<<(std::ostream& os, const Integer& x) { return os << x.val; }
-std::ostream& operator<<(std::ostream& os, const Double& x) { return os << x.val; }
-std::ostream& operator<<(std::ostream& os, const Dual& x) { return os << x.val << " " << x.dot; }
-
-Integer Logical::operator+(const Logical& other) const { return Integer(val + other.val); }
-Integer Integer::operator+(const Integer& other) const { return Integer(val + other.val); }
-Double Double::operator+(const Double& other) const { return Double(val + other.val); }
-Dual Dual::operator+(const Dual& other) const { return Dual(val + other.val, dot + other.dot); }
-
-Integer Logical::operator-(const Logical& other) const { return Integer(val - other.val); }
-Integer Integer::operator-(const Integer& other) const { return Integer(val - other.val); }
-Double Double::operator-(const Double& other) const { return Double(val - other.val); }
-Dual Dual::operator-(const Dual& other) const { return Dual(val - other.val, dot - other.dot); }
-
-Integer Logical::operator*(const Logical& other) const { return Integer(val * other.val); }
-Integer Integer::operator*(const Integer& other) const { return Integer(val * other.val); }
-Double Double::operator*(const Double& other) const { return Double(val * other.val); }
-Dual Dual::operator*(const Dual& other) const { return Dual(val * other.val, val*other.dot + dot*other.val); }
-
-Double Logical::operator/(const Logical& other) const { return Double(static_cast<double>(val) / static_cast<double>(other.val)); }
-Double Integer::operator/(const Integer& other) const { return Double(static_cast<double>(val) / static_cast<double>(other.val)); }
-Double Double::operator/(const Double& other) const { return Double(val / other.val); }
-Dual Dual::operator/(const Dual& other) const {
-  const double inv = 1.0 / other.val;
-  return Dual(val * inv, (dot * other.val - val * other.dot) * (inv*inv));
+std::ostream& operator<<(std::ostream& os, const Logical& x) {
+  if (x.isNA()) return os << "NA";
+  if (x.val) return os << "TRUE"; else return os << "FALSE";
+}
+std::ostream& operator<<(std::ostream& os, const Integer& x) {
+  if (x.isNA()) return os << "NA";
+  return os << x.val;
+}
+std::ostream& operator<<(std::ostream& os, const Double& x) {
+  if (x.isNA()) return os << "NA";
+  if (x.isNaN()) return os << "NaN";
+  if (!x.isFinite())   return os << (x.val > 0 ? "Inf" : "-Inf");
+  return os << x.val;
+}
+std::ostream& operator<<(std::ostream& os, const Dual& x) {
+  auto print_scalar = [&](double v, bool is_na) -> std::ostream& {
+    if (is_na) return os << "NA";
+    if (std::isnan(v)) return os << "NaN";
+    if (!std::isfinite(v)) return os << (v > 0 ? "Inf" : "-Inf");
+    return os << v;
+  };
+  print_scalar(x.val, x.isNA());
+  os << " ";
+  print_scalar(x.dot, x.isNADot());
+  return os;
 }
 
-Double Logical::pow(const Logical& other) const { return Double(std::pow(static_cast<double>(val), static_cast<double>(other.val))); }
-Double Integer::pow(const Integer& other) const { return Double(std::pow(static_cast<double>(val), static_cast<double>(other.val))); }
-Double Double::pow(const Double& other) const { return Double(std::pow(val, other.val)); }
+Integer Logical::operator+(const Logical& other) const {
+  if (is_na || other.is_na) return Integer::NA();
+  return Integer(val + other.val);
+}
+Integer Integer::operator+(const Integer& other) const {
+  if (is_na || other.is_na) return Integer::NA();
+  return Integer(val + other.val);
+}
+Double Double::operator+(const Double& other) const {
+  if (is_na || other.is_na) return Double::NA();
+  return Double(val + other.val);
+}
+Dual Dual::operator+(const Dual& other) const {
+  if (is_na || other.is_na) return Dual::NA();
+  const double v = val + other.val;
+  if (is_na_dot || other.is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  return Dual(v, dot + other.dot);
+}
+
+Integer Logical::operator-(const Logical& other) const {
+  if (is_na || other.is_na) return Integer::NA();
+  return Integer(val - other.val);
+}
+Integer Integer::operator-(const Integer& other) const {
+  if (is_na || other.is_na) return Integer::NA();
+  return Integer(val - other.val);
+}
+Double Double::operator-(const Double& other) const {
+  if (is_na || other.is_na) return Double::NA();
+  return Double(val - other.val);
+}
+Dual Dual::operator-(const Dual& other) const {
+  if (is_na || other.is_na) return Dual::NA();
+  const double v = val - other.val;
+  if (is_na_dot || other.is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  return Dual(v, dot - other.dot);
+}
+
+Integer Logical::operator*(const Logical& other) const {
+  if (is_na || other.is_na) return Integer::NA();
+  return Integer(val * other.val);
+}
+Integer Integer::operator*(const Integer& other) const {
+  if (is_na || other.is_na) return Integer::NA();
+  return Integer(val * other.val);
+}
+Double Double::operator*(const Double& other) const {
+  if (is_na || other.is_na) return Double::NA();
+  return Double(val * other.val);
+}
+Dual Dual::operator*(const Dual& other) const {
+  if (is_na || other.is_na) return Dual::NA();
+  const double v = val * other.val;
+  if (is_na_dot || other.is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  return Dual(v, dot * other.val + val * other.dot);
+}
+
+Double Logical::operator/(const Logical& other) const {
+  if (is_na || other.is_na) return Double::NA();
+  return Double(static_cast<double>(val) / static_cast<double>(other.val));
+}
+Double Integer::operator/(const Integer& other) const {
+  if (is_na || other.is_na) return Double::NA();
+  return Double(static_cast<double>(val) / static_cast<double>(other.val));
+}
+Double Double::operator/(const Double& other) const {
+  if (is_na || other.is_na) return Double::NA();
+  return Double(val / other.val);
+}
+Dual Dual::operator/(const Dual& other) const {
+  if (is_na || other.is_na) return Dual::NA();
+  const double v = val / other.val;
+  if (is_na_dot || other.is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  return Dual(v, (dot * other.val - val * other.dot) / (other.val * other.val));
+}
+
+Double Logical::pow(const Logical& other) const {
+  if (is_na || other.is_na) return Double::NA();
+  return Double(std::pow(static_cast<double>(val), static_cast<double>(other.val)));
+}
+Double Integer::pow(const Integer& other) const {
+  if (is_na || other.is_na) return Double::NA();
+  return Double(std::pow(static_cast<double>(val), static_cast<double>(other.val)));
+}
+Double Double::pow(const Double& other) const {
+  if (is_na || other.is_na) return Double::NA();
+  return Double(std::pow(val, other.val));
+}
 Dual Dual::pow(const Dual& other) const {
-  double f = std::pow(val, other.val);
-  double d = f * (other.dot * std::log(val) + other.val * dot / val);
+  if (is_na || other.is_na) return Dual::NA();
+  const double f = std::pow(val, other.val);
+  if (!std::isfinite(f) || is_na_dot || other.is_na_dot) return Dual(f, std::numeric_limits<double>::quiet_NaN());
+  const double d = f * (other.dot * std::log(val) + other.val * dot / val);
   return Dual(f, d);
 }
 
-Logical Logical::operator==(const Logical& other) const { return Logical(val == other.val); }
-Logical Integer::operator==(const Integer& other) const { return Logical(val == other.val); }
-Logical Double::operator==(const Double& other) const { return Logical(val == other.val); }
-Logical Dual::operator==(const Dual& other) const { return Logical(val == other.val); }
+Logical Logical::operator==(const Logical& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val == other.val);
+}
+Logical Integer::operator==(const Integer& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val == other.val);
+}
+Logical Double::operator==(const Double& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val == other.val);
+}
+Logical Dual::operator==(const Dual& other) const {
+  if ( is_na || other.is_na) return Logical::NA();
+  return Logical(val == other.val);
+}
 
-Logical Logical::operator<(const Logical& other) const { return Logical(val < other.val); }
-Logical Integer::operator<(const Integer& other) const { return Logical(val < other.val); }
-Logical Double::operator<(const Double& other) const { return Logical(val < other.val); }
-Logical Dual::operator<(const Dual& other) const { return Logical(val < other.val); }
+Logical Logical::operator<(const Logical& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val < other.val);
+}
+Logical Integer::operator<(const Integer& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val < other.val);
+}
+Logical Double::operator<(const Double& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val < other.val);
+}
+Logical Dual::operator<(const Dual& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val < other.val);
+}
 
-Logical Logical::operator<=(const Logical& other) const { return Logical(val <= other.val); }
-Logical Integer::operator<=(const Integer& other) const { return Logical(val <= other.val); }
-Logical Double::operator<=(const Double& other) const { return Logical(val <= other.val); }
-Logical Dual::operator<=(const Dual& other) const { return Logical(val <= other.val); }
+Logical Logical::operator<=(const Logical& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val <= other.val);
+}
+Logical Integer::operator<=(const Integer& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val <= other.val);
+}
+Logical Double::operator<=(const Double& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val <= other.val);
+}
+Logical Dual::operator<=(const Dual& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val <= other.val);
+}
 
-Logical Logical::operator>(const Logical& other) const { return Logical(val > other.val); }
-Logical Integer::operator>(const Integer& other) const { return Logical(val > other.val); }
-Logical Double::operator>(const Double& other) const { return Logical(val > other.val); }
-Logical Dual::operator>(const Dual& other) const { return Logical(val > other.val); }
+Logical Logical::operator>(const Logical& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val > other.val);
+}
+Logical Integer::operator>(const Integer& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val > other.val);
+}
+Logical Double::operator>(const Double& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val > other.val);
+}
+Logical Dual::operator>(const Dual& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val > other.val);
+}
 
-Logical Logical::operator>=(const Logical& other) const { return Logical(val >= other.val); }
-Logical Integer::operator>=(const Integer& other) const { return Logical(val >= other.val); }
-Logical Double::operator>=(const Double& other) const { return Logical(val >= other.val); }
-Logical Dual::operator>=(const Dual& other) const { return Logical(val >= other.val); }
+Logical Logical::operator>=(const Logical& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val >= other.val);
+}
+Logical Integer::operator>=(const Integer& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val >= other.val);
+}
+Logical Double::operator>=(const Double& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val >= other.val);
+}
+Logical Dual::operator>=(const Dual& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val >= other.val);
+}
 
-Logical Logical::operator!=(const Logical& other) const { return Logical(val != other.val); }
-Logical Integer::operator!=(const Integer& other) const { return Logical(val != other.val); }
-Logical Double::operator!=(const Double& other) const { return Logical(val != other.val); }
-Logical Dual::operator!=(const Dual& other) const { return Logical(val != other.val); }
+Logical Logical::operator!=(const Logical& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val != other.val);
+}
+Logical Integer::operator!=(const Integer& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val != other.val);
+}
+Logical Double::operator!=(const Double& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val != other.val);
+}
+Logical Dual::operator!=(const Dual& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val != other.val);
+}
 
-Logical Logical::operator&&(const Logical& other) const { return Logical(val && other.val); }
-Logical Integer::operator&&(const Integer& other) const { return Logical(val && other.val); }
-Logical Double::operator&&(const Double& other) const { return Logical(val && other.val); }
-Logical Dual::operator&&(const Dual& other) const { return Logical(val && other.val); }
+Logical Logical::operator&&(const Logical& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val && other.val);
+}
+Logical Integer::operator&&(const Integer& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val && other.val);
+}
+Logical Double::operator&&(const Double& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val && other.val);
+}
+Logical Dual::operator&&(const Dual& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val && other.val);
+}
 
-Logical Logical::operator||(const Logical& other) const { return Logical(val || other.val); }
-Logical Integer::operator||(const Integer& other) const { return Logical(val || other.val); }
-Logical Double::operator||(const Double& other) const { return Logical(val || other.val); }
-Logical Dual::operator||(const Dual& other) const { return Logical(val || other.val); }
+Logical Logical::operator||(const Logical& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val || other.val);
+}
+Logical Integer::operator||(const Integer& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val || other.val);
+}
+Logical Double::operator||(const Double& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val || other.val);
+}
+Logical Dual::operator||(const Dual& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val || other.val);
+}
 
-Double Logical::sin() const { return Double(std::sin(static_cast<double>(val))); }
-Double Integer::sin() const { return Double(std::sin(static_cast<double>(val))); }
-Double Double::sin() const { return Double(std::sin(val)); }
-Dual Dual::sin() const { return Dual(std::sin(val), std::cos(val)); }
+Double Logical::sin() const {
+  if (is_na) return Double::NA();
+  return Double(std::sin(static_cast<double>(val)));
+}
+Double Integer::sin() const {
+  if (is_na) return Double::NA();
+  return Double(std::sin(static_cast<double>(val)));
+}
+Double Double::sin() const {
+  if (is_na) return Double::NA();
+  return Double(std::sin(val));
+}
+Dual Dual::sin() const {
+  if (is_na) return Dual::NA();
+  const double v = std::sin(val);
+  if (is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  return Dual(v, std::cos(val));
+}
 
-Double Logical::sinh() const { return Double(std::sinh(static_cast<double>(val))); }
-Double Integer::sinh() const { return Double(std::sinh(static_cast<double>(val))); }
-Double Double::sinh() const { return Double(std::sinh(val)); }
-Dual Dual::sinh() const { return Dual(std::sinh(val), std::cosh(val)); }
+Double Logical::sinh() const {
+  if (is_na) return Double::NA();
+  return Double(std::sinh(static_cast<double>(val)));
+}
+Double Integer::sinh() const {
+  if (is_na) return Double::NA();
+  return Double(std::sinh(static_cast<double>(val)));
+}
+Double Double::sinh() const {
+  if (is_na) return Double::NA();
+  return Double(std::sinh(val));
+}
+Dual Dual::sinh() const {
+  if (is_na) return Dual::NA();
+  const double v = std::sinh(val);
+  if (is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  return Dual(v, std::cosh(val));
+}
 
-Double Logical::asin() const { return Double(std::asin(static_cast<double>(val))); }
-Double Integer::asin() const { return Double(std::asin(static_cast<double>(val))); }
-Double Double::asin() const { return Double(std::asin(val)); }
+Double Logical::asin() const {
+  if (is_na) return Double::NA();
+  return Double(std::asin(static_cast<double>(val)));
+}
+Double Integer::asin() const {
+  if (is_na) return Double::NA();
+  return Double(std::asin(static_cast<double>(val)));
+}
+Double Double::asin() const {
+  if (is_na) return Double::NA();
+  return Double(std::asin(val));
+}
 Dual Dual::asin() const {
-    return Dual(std::asin(val), 1.0 / std::sqrt(1.0 - val * val));
+  if (is_na) return Dual::NA();
+  const double v = std::asin(val);
+  if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  return Dual(v, 1.0 / std::sqrt(1.0 - val * val));
 }
 
-Double Logical::cos() const { return Double(std::cos(static_cast<double>(val))); }
-Double Integer::cos() const { return Double(std::cos(static_cast<double>(val))); }
-Double Double::cos() const { return Double(std::cos(val)); }
-Dual Dual::cos() const { return Dual(std::cos(val), -std::sin(val)); }
+Double Logical::cos() const {
+  if (is_na) return Double::NA();
+  return Double(std::cos(static_cast<double>(val)));
+}
+Double Integer::cos() const {
+  if (is_na) return Double::NA();
+  return Double(std::cos(static_cast<double>(val)));
+}
+Double Double::cos() const {
+  if (is_na) return Double::NA();
+  return Double(std::cos(val));
+}
+Dual Dual::cos() const {
+  if (is_na) return Dual::NA();
+  const double v = std::cos(val);
+  if (is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  return Dual(v, -std::sin(val));
+}
 
-Double Logical::cosh() const { return Double(std::cosh(static_cast<double>(val))); }
-Double Integer::cosh() const { return Double(std::cosh(static_cast<double>(val))); }
-Double Double::cosh() const { return Double(std::cosh(val)); }
-Dual Dual::cosh() const { return Dual(std::cosh(val), std::sinh(val)); }
+Double Logical::cosh() const {
+  if (is_na) return Double::NA();
+  return Double(std::cosh(static_cast<double>(val)));
+}
+Double Integer::cosh() const {
+  if (is_na) return Double::NA();
+  return Double(std::cosh(static_cast<double>(val)));
+}
+Double Double::cosh() const {
+  if (is_na) return Double::NA();
+  return Double(std::cosh(val));
+}
+Dual Dual::cosh() const {
+  if (is_na) return Dual::NA();
+  const double v = std::cosh(val);
+  if (is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  return Dual(v, std::sinh(val));
+}
 
-Double Logical::acos() const { return Double(std::acos(static_cast<double>(val))); }
-Double Integer::acos() const { return Double(std::acos(static_cast<double>(val))); }
-Double Double::acos() const { return Double(std::acos(val)); }
+Double Logical::acos() const {
+  if (is_na) return Double::NA();
+  return Double(std::acos(static_cast<double>(val)));
+}
+Double Integer::acos() const {
+  if (is_na) return Double::NA();
+  return Double(std::acos(static_cast<double>(val)));
+}
+Double Double::acos() const {
+  if (is_na) return Double::NA();
+  return Double(std::acos(val));
+}
 Dual Dual::acos() const {
-    return Dual(std::acos(val), -1.0 / std::sqrt(1.0 - val * val));
+  if (is_na) return Dual::NA();
+  const double v = std::acos(val);
+  if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  return Dual(v, -1.0 / std::sqrt(1.0 - val * val));
 }
 
-Double Logical::tan() const { return Double(std::tan(static_cast<double>(val))); }
-Double Integer::tan() const { return Double(std::tan(static_cast<double>(val))); }
-Double Double::tan() const { return Double(std::tan(val)); }
+Double Logical::tan() const {
+  if (is_na) return Double::NA();
+  return Double(std::tan(static_cast<double>(val)));
+}
+Double Integer::tan() const {
+  if (is_na) return Double::NA();
+  return Double(std::tan(static_cast<double>(val)));
+}
+Double Double::tan() const {
+  if (is_na) return Double::NA();
+  return Double(std::tan(val));
+}
 Dual Dual::tan() const {
-    return Dual(std::tan(val), 1.0 / (std::cos(val) * std::cos(val))); // sec^2(x)
+  if (is_na) return Dual::NA();
+  const double v = std::tan(val);
+  if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  return Dual(v, 1.0 / (std::cos(val) * std::cos(val)));
 }
 
-Double Logical::tanh() const { return Double(std::tanh(static_cast<double>(val))); }
-Double Integer::tanh() const { return Double(std::tanh(static_cast<double>(val))); }
-Double Double::tanh() const { return Double(std::tanh(val)); }
+Double Logical::tanh() const {
+  if (is_na) return Double::NA();
+  return Double(std::tanh(static_cast<double>(val)));
+}
+Double Integer::tanh() const {
+  if (is_na) return Double::NA();
+  return Double(std::tanh(static_cast<double>(val)));
+}
+Double Double::tanh() const {
+  if (is_na) return Double::NA();
+  return Double(std::tanh(val));
+}
 Dual Dual::tanh() const {
-    double t = std::tanh(val);
-    return Dual(t, 1.0 - t * t);
+  if (is_na) return Dual::NA();
+  const double t = std::tanh(val);
+  if (is_na_dot) return Dual(t, std::numeric_limits<double>::quiet_NaN());
+  return Dual(t, 1.0 - t * t);
 }
 
-Double Logical::atan() const { return Double(std::atan(static_cast<double>(val))); }
-Double Integer::atan() const { return Double(std::atan(static_cast<double>(val))); }
-Double Double::atan() const { return Double(std::atan(val)); }
-Dual Dual::atan() const { return Dual(std::atan(val), 1.0 / (1.0 + val * val)); }
+Double Logical::atan() const {
+  if (is_na) return Double::NA();
+  return Double(std::atan(static_cast<double>(val)));
+}
+Double Integer::atan() const {
+  if (is_na) return Double::NA();
+  return Double(std::atan(static_cast<double>(val)));
+}
+Double Double::atan() const {
+  if (is_na) return Double::NA();
+  return Double(std::atan(val));
+}
+Dual Dual::atan() const {
+  if (is_na) return Dual::NA();
+  const double v = std::atan(val);
+  if (is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  return Dual(v, 1.0 / (1.0 + val * val));
+}
 
-Double Logical::exp() const { return Double(std::exp(static_cast<double>(val))); }
-Double Integer::exp() const { return Double(std::exp(static_cast<double>(val))); }
-Double Double::exp() const { return Double(std::exp(val)); }
-Dual Dual::exp() const { return Dual(std::exp(val), std::exp(val)); }
+Double Logical::exp() const {
+  if (is_na) return Double::NA();
+  return Double(std::exp(static_cast<double>(val)));
+}
+Double Integer::exp() const {
+  if (is_na) return Double::NA();
+  return Double(std::exp(static_cast<double>(val)));
+}
+Double Double::exp() const {
+  if (is_na) return Double::NA();
+  return Double(std::exp(val));
+}
+Dual Dual::exp() const {
+  if (is_na) return Dual::NA();
+  const double v = std::exp(val);
+  if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  return Dual(v, v);
+}
 
-Double Logical::log() const { return Double(std::log(static_cast<double>(val))); }
-Double Integer::log() const { return Double(std::log(static_cast<double>(val))); }
-Double Double::log() const { return Double(std::log(val)); }
-Dual Dual::log() const { return Dual(std::log(val), 1.0 / val); }
+Double Logical::log() const {
+  if (is_na) return Double::NA();
+  return Double(std::log(static_cast<double>(val)));
+}
+Double Integer::log() const {
+  if (is_na) return Double::NA();
+  return Double(std::log(static_cast<double>(val)));
+}
+Double Double::log() const {
+  if (is_na) return Double::NA();
+  return Double(std::log(val));
+}
+Dual Dual::log() const {
+  if (is_na) return Dual::NA();
+  const double v = std::log(val);
+  if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  return Dual(v, 1.0 / val);
+}
 
-Double Logical::sqrt() const { return Double(std::sqrt(static_cast<double>(val))); }
-Double Integer::sqrt() const { return Double(std::sqrt(static_cast<double>(val))); }
-Double Double::sqrt() const { return Double(std::sqrt(val)); }
-Dual Dual::sqrt() const { return Dual(std::sqrt(val), 0.5 / std::sqrt(val)); }
+Double Logical::sqrt() const {
+  if (is_na) return Double::NA();
+  return Double(std::sqrt(static_cast<double>(val)));
+}
+Double Integer::sqrt() const {
+  if (is_na) return Double::NA();
+  return Double(std::sqrt(static_cast<double>(val)));
+}
+Double Double::sqrt() const {
+  if (is_na) return Double::NA();
+  return Double(std::sqrt(val));
+}
+Dual Dual::sqrt() const {
+  if (is_na) return Dual::NA();
+  const double v = std::sqrt(val);
+  if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  return Dual(v, 0.5 / v);
+}
 
-Integer Logical::operator-() const { return Integer(-static_cast<int>(val)); }
-Integer Integer::operator-() const { return Integer(-val); }
-Double Double::operator-() const { return Double(-val); }
-Dual Dual::operator-() const { return Dual(-val, -dot); }
+Integer Logical::operator-() const {
+  if (is_na) return Integer::NA();
+  return Integer(-static_cast<int>(val));
+}
+Integer Integer::operator-() const {
+  if (is_na) return Integer::NA();
+  return Integer(-val);
+}
+Double Double::operator-() const {
+  if (is_na) return Double::NA();
+  return Double(-val);
+}
+Dual Dual::operator-() const {
+  if (is_na) return Dual::NA();
+  if (is_na_dot) return Dual(-val, std::numeric_limits<double>::quiet_NaN());
+  return Dual(-val, -dot);
+}
+
 // Concepts for scalar
 // --------------------------------------------------------------------------------------------------
+template<typename T>
+struct from_ast_scalar {
+  using type = T;
+};
+template<> struct from_ast_scalar<Double>  { using type = double;  };
+template<> struct from_ast_scalar<Integer>     { using type = int; };
+template<> struct from_ast_scalar<Logical>    { using type = bool; };
+template<typename T>
+using from_ast_scalar_t = typename from_ast_scalar<T>::type;
+
 template<typename T>
 struct to_ast_scalar {
   using type = T;
@@ -352,7 +891,11 @@ using bare_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
 enum class ScalarRank { Logical, Integer, Double, Dual };
 
-template<typename T> struct scalar_rank;
+// template<typename T> struct scalar_rank;
+template <class T>
+struct scalar_rank {
+  static constexpr int value = -1;
+};
 
 template<> struct scalar_rank<Logical> { static constexpr auto value = ScalarRank::Logical; };
 template<> struct scalar_rank<Integer> { static constexpr auto value = ScalarRank::Integer; };
@@ -376,16 +919,21 @@ struct common_type {
 
 template<typename L, typename R>
 using common_type_t = typename common_type<L, R>::type;
+
+template <class T>
+concept ScalarLike = (scalar_rank<std::remove_cvref_t<T>>::value >= 0);
 // Concept to detect scalars
 template<typename T> concept IsArith =
 std::same_as<bare_t<T>, Logical> ||
 std::same_as<bare_t<T>, Integer> ||
-std::same_as<bare_t<T>, Double>;
+std::same_as<bare_t<T>, Double> ||
+std::same_as<bare_t<T>, Dual>;
 template <typename T> constexpr bool IsArithV = IsArith<T>;
 
 template<typename T> concept IsDouble = std::same_as<T, Double>;
 template<typename T> concept IsInteger = std::same_as<T, Integer>;
 template<typename T> concept IsLogical = std::same_as<T, Logical>;
+template<typename T> concept IsDual = std::same_as<T, Dual>;
 
 // Traits (third dispatch layer)
 // --------------------------------------------------------------------------------------------------
@@ -394,6 +942,7 @@ struct ComparisonTrait { using value_type = bool; };
 struct LBufferTrait {};
 struct RBufferTrait {};
 struct SubsetViewTrait {};
+struct ConstSubsetViewTrait {};
 struct BorrowTrait {};
 struct BinaryTrait {};
 struct UnaryTrait {};
@@ -539,6 +1088,7 @@ template <typename T, typename Trait = BorrowTrait> struct Borrow;
 template <typename L, typename Trait = UnaryTrait> struct UnaryOperation;
 template <typename L, typename R, typename Trait = BinaryTrait> struct BinaryOperation;
 template<typename O, std::size_t N, typename Trait = SubsetViewTrait> struct SubsetView;
+template<typename O, std::size_t N, typename Trait = ConstSubsetViewTrait> struct ConstSubsetView;
 
 // Outer data structs
 // -----------------------------------------------------------------------------------------------------------
@@ -549,6 +1099,7 @@ template <typename T, typename Trait> struct Array<T, Borrow<T, Trait>>;
 template <typename T, typename I, typename Trait> struct Array<T, UnaryOperation<I, Trait>>;
 template <typename T, typename L, typename R, typename Trait> struct Array<T, BinaryOperation<L, R, Trait>>;
 template <typename T, typename O, std::size_t N, typename Trait> struct Array<T, SubsetView<O, N, Trait>>;
+template <typename T, typename O, std::size_t N, typename Trait> struct Array<T, ConstSubsetView<O, N, Trait>>;
 
 // Extract data type from outer data structs
 // -----------------------------------------------------------------------------------------------------------
@@ -563,6 +1114,359 @@ struct ExtractDataType<const Array<T, R>> {
   using value_type = T const;
 };
 template <typename T> using ExtractedTypeData = typename ExtractDataType<T>::value_type;
+
+// Concepts
+// -----------------------------------------------------------------------------------------------------------
+// Determine type for literal bools, ints or doubles
+// -----------------------------------------------------------------------------------------------------------
+// Float
+template <typename T> struct is_float_type : std::is_floating_point<T> {};
+template <typename T> struct is_float_type_with_type : is_float_type<typename T::Type> {};
+template <typename T, typename = void> struct is_float_dispatch : is_float_type<T> {};
+template <typename T> struct is_float_dispatch<T, std::void_t<typename T::Type>> : is_float_type_with_type<T> {};
+template <typename T> inline constexpr bool IsCppDouble = is_float_dispatch<T>::value;
+// Integer
+template <typename T> struct is_integer_type : std::is_integral<T> {};
+template <typename T> struct is_integer_type_with_type : is_integer_type<typename T::Type> {};
+template <typename T, typename = void> struct is_integer_dispatch : is_integer_type<T> {};
+template <typename T> struct is_integer_dispatch<T, std::void_t<typename T::Type>> : is_integer_type_with_type<T> {};
+template <typename T> inline constexpr bool IsCppInteger = is_integer_dispatch<T>::value;
+// Bool (exactly bool, not all integrals)
+template <typename T> struct is_bool_type : std::is_same<T, bool> {};
+template <typename T> struct is_bool_type_with_type : is_bool_type<typename T::Type> {};
+template <typename T, typename = void> struct is_bool_dispatch : is_bool_type<T> {};
+template <typename T> struct is_bool_dispatch<T, std::void_t<typename T::Type>> : is_bool_type_with_type<T> {};
+template <typename T> inline constexpr bool IsCppLogical = is_bool_dispatch<T>::value;
+
+// Calculation & Inner data structures
+// -----------------------------------------------------------------------------------------------------------
+template <typename T>
+concept IsUnary = requires {
+  typename ReRef<T>::type::Trait;
+  requires IS<typename ReRef<T>::type::Trait, SinusTrait> ||
+               IS<typename ReRef<T>::type::Trait, ASinusTrait> ||
+               IS<typename ReRef<T>::type::Trait, SinusHTrait> ||
+               IS<typename ReRef<T>::type::Trait, CosinusTrait> ||
+               IS<typename ReRef<T>::type::Trait, ACosinusTrait> ||
+               IS<typename ReRef<T>::type::Trait, CosinusHTrait> ||
+               IS<typename ReRef<T>::type::Trait, TangensTrait> ||
+               IS<typename ReRef<T>::type::Trait, ATangensTrait> ||
+               IS<typename ReRef<T>::type::Trait, TangensHTrait> ||
+               IS<typename ReRef<T>::type::Trait, ExpTrait> ||
+               IS<typename ReRef<T>::type::Trait, LogTrait> ||
+               IS<typename ReRef<T>::type::Trait, SquareRootTrait> ||
+               IS<typename ReRef<T>::type::Trait, MinusUnaryTrait>;
+};
+template <typename T>
+concept IsBinary = requires {
+  typename ReRef<T>::type::Trait;
+  requires IS<typename ReRef<T>::type::Trait, PlusTrait> ||
+               IS<typename ReRef<T>::type::Trait, MinusTrait> ||
+               IS<typename ReRef<T>::type::Trait, TimesTrait> ||
+               IS<typename ReRef<T>::type::Trait, DivideTrait> ||
+               IS<typename ReRef<T>::type::Trait, PowTrait> ||
+               IS<typename ReRef<T>::type::Trait, EqualTrait> ||
+               IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
+               IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
+               IS<typename ReRef<T>::type::Trait, LargerTrait> ||
+               IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
+               IS<typename ReRef<T>::type::Trait, UnEqualTrait>;
+};
+template <typename T>
+concept IsComparison = requires {
+  typename ReRef<T>::type::Trait;
+  requires IS<typename ReRef<T>::type::Trait, EqualTrait> ||
+               IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
+               IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
+               IS<typename ReRef<T>::type::Trait, LargerTrait> ||
+               IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
+               IS<typename ReRef<T>::type::Trait, UnEqualTrait> ||
+               IS<typename ReRef<T>::type::Trait, AndTrait> ||
+               IS<typename ReRef<T>::type::Trait, OrTrait>;
+};
+template <typename T>
+concept IsComparisonTrait = requires(T t) { // required as in binary operation the trait is directly tested
+  typename T;
+  requires IS<T, EqualTrait> ||
+               IS<T, SmallerTrait> ||
+               IS<T, SmallerEqualTrait> ||
+               IS<T, LargerTrait> ||
+               IS<T, LargerEqualTrait> ||
+               IS<T, UnEqualTrait> ||
+               IS<T, AndTrait> ||
+               IS<T, OrTrait>;
+};
+
+// Mutable subset view
+// -------------------------------------------------------------------
+template <typename T>
+concept IsSubsetView = requires {
+  typename ReRef<T>::type::TypeTrait;
+  requires IS<typename ReRef<T>::type::TypeTrait, SubsetViewTrait>;
+};
+// extract N from SubsetView
+template<typename T>
+struct subsetview_traits;
+
+template<typename O, std::size_t N, typename Trait>
+struct subsetview_traits<SubsetView<O, N, Trait>> {
+    static constexpr std::size_t value = N;
+};
+
+// Const subset view
+// -------------------------------------------------------------------
+template <typename T>
+concept IsConstSubsetView = requires {
+  typename ReRef<T>::type::TypeTrait;
+  requires IS<typename ReRef<T>::type::TypeTrait, ConstSubsetViewTrait>;
+};
+// extract N from ConstSubsetView
+template<typename T>
+struct const_subsetview_traits;
+
+template<typename O, std::size_t N, typename Trait>
+struct const_subsetview_traits<ConstSubsetView<O, N, Trait>> {
+    static constexpr std::size_t value = N;
+};
+
+template <typename T>
+concept IsLBuffer = requires {
+  typename ReRef<T>::type::Trait;
+  requires IS<typename ReRef<T>::type::Trait, LBufferTrait>;
+};
+template <typename T>
+concept IsRBuffer = requires {
+  typename ReRef<T>::type::Trait;
+  requires IS<typename ReRef<T>::type::Trait, RBufferTrait>;
+};
+template <typename T>
+concept IsBorrow = requires {
+  typename ReRef<T>::type::Trait;
+  requires IS<typename ReRef<T>::type::Trait, BorrowTrait>;
+};
+
+// Input class (outer data structures)
+// -----------------------------------------------------------------------------------------------------------
+// Array
+template <typename T> struct is_any_array : std::false_type {};
+template <typename T, typename R> struct is_any_array<Array<T, R>> : std::true_type {};
+template <typename T> inline constexpr bool is_any_array_v = is_any_array<T>::value;
+template <typename T> concept IsArray = is_any_array_v<T>;
+
+template <typename T> struct is_array_l : std::false_type {};
+template <typename T> struct is_array_l<Array<T, Buffer<T, LBufferTrait>>> : std::true_type {};
+template <typename T> inline constexpr bool is_array_l_v = is_array_l<T>::value;
+template <typename T> concept IsLBufferArray = is_array_l_v<T>;
+
+template <typename T> struct is_array_r : std::false_type {};
+template <typename T> struct is_array_r<Array<T, Buffer<T, RBufferTrait>>> : std::true_type {};
+template <typename T> inline constexpr bool is_array_r_v = is_array_r<T>::value;
+template <typename T> concept IsRArray = is_array_r_v<T>;
+
+template <typename T> struct is_array_b : std::false_type {};
+template <typename T> struct is_array_b<Array<T, Borrow<T, BorrowTrait>>> : std::true_type {};
+template <typename T> inline constexpr bool is_array_b_v = is_array_b<T>::value;
+template <typename T> concept IsBorrowArray = is_array_b_v<T>;
+
+template <typename T> struct is_array_s : std::false_type {};
+template <typename T, typename O, std::size_t N, typename Trait>
+struct is_array_s<Array<T, SubsetView<O, N, Trait>>> : std::bool_constant<std::is_same_v<Trait, SubsetViewTrait>> {};
+template <typename T> inline constexpr bool is_array_s_v = is_array_s<T>::value;
+template <typename T> concept IsSubsetArray = is_array_s_v<T>;
+
+template <typename T> struct is_array_const_s : std::false_type {};
+template <typename T, typename O, std::size_t N, typename Trait>
+struct is_array_const_s<Array<T, ConstSubsetView<O, N, Trait>>> : std::bool_constant<std::is_same_v<Trait, ConstSubsetViewTrait>> {};
+template <typename T> inline constexpr bool is_array_const_s_v = is_array_s<T>::value;
+template <typename T> concept IsConstSubsetArray = is_array_const_s_v<T>;
+
+template <typename T> concept IsUnaryArray = IsArray<T> && IsUnary<typename T::DType>;
+template <typename T> concept IsBinaryArray = IsArray<T> && IsBinary<typename T::DType>;
+template <typename T> concept IsComparisonArray = IsArray<T> && IsComparison<typename T::DType>;
+
+template <typename T>
+concept IsOperationArray =
+    IsArray<T> && (
+        IsUnary<typename T::DType> ||
+        IsBinary<typename T::DType> ||
+        IsComparison<typename T::DType> ||
+        IsSubsetView<typename T::DType> ||
+        IsConstSubsetView<typename T::DType>
+    );
+template <typename T>
+concept IsROrCalculationArray = requires(T t) {
+  typename T::DType;
+  requires IsOperationArray<T> || IsRArray<T>;
+};
+
+// Second dispatch layer
+// --------------------------------------------------------------------------------------------------
+// unary - ================================================
+template<typename O>
+requires (!IsArray<O>)
+inline auto operator-(const O& o) -> decltype(o.operator-()) {
+  return o.operator-();
+}
+// sqrt ===================================================
+template<typename O>
+requires (!IsArray<O>)
+inline auto sqrt(const O& o) -> decltype(o.sqrt()) {
+  return o.sqrt();
+}
+// exp ===================================================
+template<typename O>
+requires (!IsArray<O>)
+inline auto exp(const O& o) -> decltype(o.exp()) {
+  return o.exp();
+}
+// log ===================================================
+template<typename O>
+requires (!IsArray<O>)
+inline auto log(const O& o) -> decltype(o.log()) {
+  return o.log();
+}
+// tan/atan/tanh =========================================
+template<typename O>
+requires (!IsArray<O>)
+inline auto tan(const O& o) -> decltype(o.tan()) {
+  return o.tan();
+}
+template<typename O>
+requires (!IsArray<O>)
+inline auto atan(const O& o) -> decltype(o.atan()) {
+  return o.atan();
+}
+template<typename O>
+requires (!IsArray<O>)
+inline auto tanh(const O& o) -> decltype(o.tanh()) {
+  return o.tanh();
+}
+// cos/acos/cosh =========================================
+template<typename O>
+requires (!IsArray<O>)
+inline auto cos(const O& o) -> decltype(o.cos()) {
+  return o.cos();
+}
+template<typename O>
+requires (!IsArray<O>)
+inline auto acos(const O& o) -> decltype(o.acos()) {
+  return o.acos();
+}
+template<typename O>
+requires (!IsArray<O>)
+inline auto cosh(const O& o) -> decltype(o.cosh()) {
+  return o.cosh();
+}
+// sin/asin/sinh =========================================
+template<typename O>
+requires (!IsArray<O>)
+inline auto sin(const O& o) -> decltype(o.sin()) {
+  return o.sin();
+}
+template<typename O>
+requires (!IsArray<O>)
+inline auto asin(const O& o) -> decltype(o.asin()) {
+  return o.asin();
+}
+template<typename O>
+requires (!IsArray<O>)
+inline auto sinh(const O& o) -> decltype(o.sinh()) {
+  return o.sinh();
+}
+
+// && ===================================================
+template<typename L, typename R>
+requires (!IsArray<L> && !IsArray<R>)
+inline auto operator&&(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator&&( common_type_t<L,R>(r) ) ) {
+  using CT = common_type_t<L, R>;
+  return CT(l).operator&&( CT(r) );
+}
+
+// || ===================================================
+template<typename L, typename R>
+requires (!IsArray<L> && !IsArray<R>)
+inline auto operator||(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator||( common_type_t<L,R>(r) ) ) {
+  using CT = common_type_t<L, R>;
+  return CT(l).operator||( CT(r) );
+}
+
+// != ===================================================
+template<typename L, typename R>
+requires (!IsArray<L> && !IsArray<R> && (IsArithV<L> || IsCppArithV<L>) && (IsArithV<R> || IsCppArithV<R>) )
+inline auto operator!=(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator!=( common_type_t<L,R>(r) ) ){
+  using CT = common_type_t<L, R>;
+  return CT(l).operator!=( CT(r) );
+}
+// >= ===================================================
+template<typename L, typename R>
+requires (!IsArray<L> && !IsArray<R>)
+inline auto operator>=(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator>=( common_type_t<L,R>(r) ) ){
+  using CT = common_type_t<L, R>;
+  return CT(l).operator>=( CT(r) );
+}
+// > ===================================================
+template<typename L, typename R>
+requires (!IsArray<L> && !IsArray<R>)
+inline auto operator>(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator>( common_type_t<L,R>(r) ) ){
+  using CT = common_type_t<L, R>;
+  return CT(l).operator>( CT(r) );
+}
+// <= ===================================================
+template<typename L, typename R>
+requires (!IsArray<L> && !IsArray<R>)
+inline auto operator<=(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator<=( common_type_t<L,R>(r) ) ){
+  using CT = common_type_t<L, R>;
+  return CT(l).operator<=( CT(r) );
+}
+// < =====================================================
+template<typename L, typename R>
+requires (!IsArray<L> && !IsArray<R>)
+inline auto operator<(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator<( common_type_t<L,R>(r) ) ){
+  using CT = common_type_t<L, R>;
+  return CT(l).operator<( CT(r) );
+}
+// == ===================================================
+template<typename L, typename R>
+requires (!IsArray<L> && !IsArray<R>)
+inline auto operator==(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator==( common_type_t<L,R>(r) ) ){
+  using CT = common_type_t<L, R>;
+  return CT(l).operator==( CT(r) );
+}
+// pow ===================================================
+template<typename L, typename R>
+requires (!IsArray<L> && !IsArray<R>)
+inline auto pow(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).pow( common_type_t<L,R>(r) ) ){
+  using CT = common_type_t<L, R>;
+  return CT(l).pow( CT(r) );
+}
+// / ===================================================
+template<typename L, typename R>
+requires (!IsArray<L> && !IsArray<R>)
+inline auto operator/(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator/( common_type_t<L,R>(r) ) ){
+  using CT = common_type_t<L, R>;
+  return CT(l).operator/( CT(r) );
+}
+// + ===================================================
+template<typename L, typename R>
+requires (!IsArray<L> && !IsArray<R>)
+inline auto operator+(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator+( common_type_t<L,R>(r) ) ){
+  using CT = common_type_t<L, R>;
+  return CT(l).operator+( CT(r) );
+}
+// - ===================================================
+template<typename L, typename R>
+requires (!IsArray<L> && !IsArray<R>)
+inline auto operator-(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator-( common_type_t<L,R>(r) ) ){
+  using CT = common_type_t<L, R>;
+  return CT(l).operator-( CT(r) );
+}
+// * ===================================================
+template<typename L, typename R>
+requires (!IsArray<L> && !IsArray<R>)
+inline auto operator*(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator*( common_type_t<L,R>(r) ) ){
+  using CT = common_type_t<L, R>;
+  return CT(l).operator*( CT(r) );
+}
 
 } // namespace etr
 

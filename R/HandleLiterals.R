@@ -28,7 +28,6 @@ determine_literal_type <- function(obj) {
 }
 
 t_literal <- function(context, obj, indent, type) {
-  print(type)
   if (type == "NA") {
     return("etr::NA")
   } else if (type == "NaN") {
@@ -36,9 +35,6 @@ t_literal <- function(context, obj, indent, type) {
   } else if (type == "Inf") {
     return("etr::Inf")
   }
-  dont_change_number <- c("print", ":", "[", "[[", "at", "vector", "logical", "integer", "numeric")
-  # Matrix is difficult. As only the 2. and 3. argument shouldnt be changed.
-  # Not easy to do with the current design.
   if (type == "logical") {
     obj <- tolower(obj)
     if (obj == "t") {
@@ -47,25 +43,18 @@ t_literal <- function(context, obj, indent, type) {
       obj <- "false"
     }
   }
-  if (context %within% dont_change_number) {
-    return(paste0(indent, obj))
-  }
 
   if (type == "numeric") {
     if (!grepl("\\.", obj)) {
-      return(paste0(obj, ".0"))
+      obj <- paste0(obj, ".0")
     }
-    return(paste0(indent, obj))
+    return(paste0(indent, "Double(", obj, ")"))
   } else if (type == "scientific") {
-    return(paste0(indent, obj))
+    return(paste0(indent, "Double(", obj, ")"))
   } else if (type == "integer") {
-    return(
-      paste0(
-        indent, gsub("L", "", obj)
-      )
-    )
+    return(paste0( indent, "Integer(", gsub("L", "", obj), ")"))
   } else if (type == "logical") {
-    return(paste0(indent, obj))
+    return(paste0(indent, "Logical(", obj, ")"))
   } else {
     return(paste0(indent, obj))
   }

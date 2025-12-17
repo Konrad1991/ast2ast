@@ -152,9 +152,9 @@ void test_scalar_methods() {
     ass<"true * true = 1">( (l.operator*(l)).val == 1);
     ass<"false * false = 0">( (r.operator*(r)).val == 0);
 
-    ass<"true / false = Inf">( (l.operator/(r)).val == Inf);
+    ass<"true / false = Inf">( !(l.operator/(r)).isFinite() );
     ass<"true / true = 1">( (l.operator/(l)).val == 1);
-    ass<"false / false = NaN">(std::isnan((r.operator/(r)).val));
+    ass<"false / false = NaN">( (r.operator/(r)).isNaN() );
 
     ass<"true ^ false = 1">( (l.pow(r)).val == 1);
     ass<"true ^ true = 1">( (l.pow(l)).val == 1);
@@ -221,7 +221,7 @@ void test_scalar_methods() {
     ass<"exp(true)">( compare(l.exp().val, std::exp(1.0)));
     ass<"exp(false)">( compare(r.exp().val, std::exp(0.0)));
     ass<"log(true)">( compare(l.log().val, std::log(1.0)));
-    ass<"log(false)">(r.log().val == -Inf);
+    ass<"log(false)">( (r.log() == -Double::Inf()).val );
     ass<"sqrt(true)">( compare(l.sqrt().val, std::sqrt(1.0)));
     ass<"sqrt(false)">( compare(r.sqrt().val, std::sqrt(0.0)));
     ass<"-true">( l.operator-().val == -1);
@@ -252,13 +252,13 @@ void test_scalar_methods() {
     ass<"sin(1)">( compare(l.sin().val, std::sin(1.0)));
     ass<"sin(2)">( compare(r.sin().val, std::sin(2.0)));
     ass<"asin(1)">( compare(l.asin().val, std::asin(1.0)));
-    ass<"asin(2)">( std::isnan(r.asin().val));
+    ass<"asin(2)">( r.asin().isNaN() );
     ass<"sinh(1)">( compare(l.sinh().val, std::sinh(1.0)));
     ass<"sinh(2)">( compare(r.sinh().val, std::sinh(2.0)));
     ass<"cos(1)">( compare(l.cos().val, std::cos(1.0)));
     ass<"cos(2)">( compare(r.cos().val, std::cos(2.0)));
     ass<"acos(1)">( compare(l.acos().val, std::acos(1.0)));
-    ass<"acos(2)">( std::isnan(r.acos().val));
+    ass<"acos(2)">( r.acos().isNaN() );
     ass<"cosh(1)">( compare(l.cosh().val, std::cosh(1.0)));
     ass<"cosh(2)">( compare(r.cosh().val, std::cosh(2.0)));
     ass<"tan(1)">( compare(l.tan().val, std::tan(1.0)));
@@ -270,7 +270,7 @@ void test_scalar_methods() {
     ass<"exp(1)">( compare(l.exp().val, std::exp(1.0)));
     ass<"exp(2)">( compare(r.exp().val, std::exp(2.0)));
     ass<"log(1)">( compare(l.log().val, std::log(1.0)));
-    ass<"log(0)">(z.log().val == -Inf);
+    ass<"log(0)">( (z.log() == -Double::Inf()).val);
     ass<"sqrt(1)">( compare(l.sqrt().val, std::sqrt(1.0)));
     ass<"sqrt(2)">( compare(r.sqrt().val, std::sqrt(2.0)));
     ass<"-2">( r.operator-().val == -2);
@@ -301,13 +301,13 @@ void test_scalar_methods() {
     ass<"sin(2.2)">( compare(r.sin().val, std::sin(2.2)));
     Double valid = 0.5;
     ass<"asin(0.5)">( compare(valid.asin().val, std::asin(0.5)));
-    ass<"asin(2.2)">( std::isnan(r.asin().val));
+    ass<"asin(2.2)">( r.asin().isNaN());
     ass<"sinh(1.1)">( compare(l.sinh().val, std::sinh(1.1)));
     ass<"sinh(2.2)">( compare(r.sinh().val, std::sinh(2.2)));
     ass<"cos(1.1)">( compare(l.cos().val, std::cos(1.1)));
     ass<"cos(2.2)">( compare(r.cos().val, std::cos(2.2)));
     ass<"acos(0.5)">( compare(valid.acos().val, std::acos(0.5)));
-    ass<"acos(2.2)">( std::isnan(r.acos().val));
+    ass<"acos(2.2)">( r.acos().isNaN() );
     ass<"cosh(1.1)">( compare(l.cosh().val, std::cosh(1.1)));
     ass<"cosh(2.2)">( compare(r.cosh().val, std::cosh(2.2)));
     ass<"tan(1.1)">( compare(l.tan().val, std::tan(1.1)));
@@ -319,7 +319,7 @@ void test_scalar_methods() {
     ass<"exp(1.1)">( compare(l.exp().val, std::exp(1.1)));
     ass<"exp(2.2)">( compare(r.exp().val, std::exp(2.2)));
     ass<"log(1.1)">( compare(l.log().val, std::log(1.1)));
-    ass<"log(0.0)">(z.log().val == -Inf);
+    ass<"log(0.0)">( (z.log() == -Double::Inf()).val );
     ass<"sqrt(1.1)">( compare(l.sqrt().val, std::sqrt(1.1)));
     ass<"sqrt(2.2)">( compare(r.sqrt().val, std::sqrt(2.2)));
     ass<"-2.2">( compare(r.operator-().val, -2.2));
@@ -366,7 +366,7 @@ void test_scalar_methods() {
     ass<"asin(0.5)">( compare(valid.asin().val, std::asin(0.5)));
     ass<"deriv: asin(0.5) = 1 / sqrt(1 - x^2)">( compare(valid.asin().dot,
                                                  1.0 / std::sqrt(1.0 - 0.5*0.5)) );
-    ass<"asin(2.2)">( std::isnan(r.asin().val));
+    ass<"asin(2.2)">( (r.asin().val));
 
     ass<"sinh(1.1)">( compare(l.sinh().val, std::sinh(1.1)));
     ass<"deriv: sinh(1.1) = cosh(1.1)">( compare(l.sinh().dot, std::cosh(1.1)));
@@ -377,7 +377,7 @@ void test_scalar_methods() {
     ass<"acos(0.5)">( compare(valid.acos().val, std::acos(0.5)));
     ass<"deriv: acos(0.5) = -1 / sqrt(1 - x^2)">( compare(valid.acos().dot,
                                                  -1.0 / std::sqrt(1.0 - 0.5*0.5)) );
-    ass<"acos(2.2)">( std::isnan(r.acos().val));
+    ass<"acos(2.2)">( (r.acos().val));
 
     ass<"cosh(1.1)">( compare(l.cosh().val, std::cosh(1.1)));
     ass<"deriv: cosh(1.1) = sinh(1.1)">( compare(l.cosh().dot, std::sinh(1.1)));
@@ -396,14 +396,22 @@ void test_scalar_methods() {
 
     ass<"log(1.1)">( compare(l.log().val, std::log(1.1)));
     ass<"deriv: log(1.1) = 1/1.1">( compare(l.log().dot, 1.0 / 1.1) );
-    ass<"log(0.0)">(z.log().val == -Inf);
-    ass<"log(0.0)">(z.log().dot == Inf);
+    ass<"log(0.0)">( z.log().val == -Double::Inf().val );
+    ass<"log(0.0)">( std::isnan(z.log().dot) );
+    ass<"log(0.0)">( z.log().isNaNDot() );
+    ass<"log(0.0)">( !(z.log().isFinite()));
 
     ass<"sqrt(1.1)">( compare(l.sqrt().val, std::sqrt(1.1)));
     ass<"deriv: sqrt(1.1) = 1 / (2*sqrt(1.1))">( compare(l.sqrt().dot, 1.0 / (2.0*std::sqrt(1.1))) );
 
     ass<"-1.1">( compare(l.operator-().val, -1.1));
     ass<"deriv: -1.1 = -1.0">( compare(l.operator-().dot, -1.0));
+  }
+  // NA
+  {
+    ass<"NA + TRUE = NA">( (Logical::NA() + Logical(true)).isNA() );
+    ass<"NA * 2L = NA">( (Integer::NA() *Integer(2)).isNA() );
+    ass<"sin(NA) = NA">( (Double::NA().sin()).isNA() );
   }
 }
 

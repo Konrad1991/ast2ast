@@ -17,7 +17,7 @@ struct UnaryOpClassIterator {
             return Trait::f(obj);
         } else {
             // Array input
-            return Trait::f(obj[index]);
+            return Trait::f(obj.get(index));
         }
     }
 
@@ -47,7 +47,7 @@ template <typename I, typename UTrait> struct UnaryOperation {
   UnaryOperation(I &&obj_) : obj(std::move(obj_)) {}
 
   auto get(std::size_t i) const {
-    return Trait::f(obj.get()[i]);
+    return Trait::f(obj.get().get(i));
   }
   template<typename V> void set(std::size_t i, const V& val) = delete;
 

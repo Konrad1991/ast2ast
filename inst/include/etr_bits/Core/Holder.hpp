@@ -1,6 +1,32 @@
 #ifndef HOLDER_ETR_HPP
 #define HOLDER_ETR_HPP
 
+#include <cmath>
+#include <limits>
+
+#ifdef STANDALONE_ETR
+#include "stddef.h"
+#include <cxxabi.h>
+#else
+// [[Rcpp::depends(Rcpp)]]
+#include <Rcpp.h>
+#endif
+
+#include <algorithm>
+#include <array>
+#include <ios>
+#include <iostream>
+#include <iterator>
+#include <math.h>
+#include <memory>
+#include <optional>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <vector>
+#include <functional>
+#include <numeric>
+
 namespace etr {
 // Handler which store reference to r for L values and otherwise copy the value to keep it alive
 // -----------------------------------------------------------------------------------------------------------

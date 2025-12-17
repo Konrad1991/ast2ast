@@ -2,13 +2,11 @@
 #define CORE_ETR_HPP
 
 // this is sorted by clang format be careful
-#include "./Core/Utils.hpp"
 #include "./Core/Holder.hpp"
 #include "./Core/Reflection.hpp"
 #include "./Core/Types.hpp"
-#include "./Core/Concepts.hpp"
 #include "./Core/Buffer.hpp"
 #include "./Core/Borrow.hpp"
-#include "./Core/ScalarOperations.hpp"
+#include "./Core/ArrayClass.hpp"
 
 #endif

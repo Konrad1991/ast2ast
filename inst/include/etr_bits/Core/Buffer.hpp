@@ -1,6 +1,27 @@
 #ifndef BUFFER_ETR_H
 #define BUFFER_ETR_H
 
+template <typename Scalar>
+struct BufferIt {
+  const Scalar* ptr;
+
+  using value_type = Scalar;
+  using reference  = Scalar;
+  using difference_type = std::ptrdiff_t;
+  using iterator_category = std::forward_iterator_tag;
+
+  reference operator*() const { return *ptr; }
+
+  BufferIt& operator++() {
+    ++ptr;
+    return *this;
+  }
+
+  bool operator!=(const BufferIt& other) const {
+    return ptr != other.ptr;
+  }
+};
+
 namespace etr {
 template <typename T, typename BufferTrait> struct Buffer {
 
@@ -220,10 +241,14 @@ template <typename T, typename BufferTrait> struct Buffer {
     }
   }
 
-  auto begin()       noexcept { return It<T>{p}; }
-  auto end()         noexcept { return It<T>{p + sz}; }
-  auto begin() const noexcept { return It<const T>{p}; }
-  auto end()   const noexcept { return It<const T>{p + sz}; }
+  auto begin() const {
+    ass<"No memory was allocated">(allocated);
+    return BufferIt<T>{ p };
+  }
+  auto end() const {
+    ass<"No memory was allocated">(allocated);
+    return BufferIt<T>{ p + sz };
+  }
 
   void realloc(std::size_t new_size) {
     T *temp;

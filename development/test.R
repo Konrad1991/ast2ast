@@ -1,8 +1,9 @@
 devtools::load_all(".")
 
 f <- function() {
-  a <- T + T + F
-  Tdfwgs <- 3.14
+  a <- T
+  b <- 2L
+  c <- 3.14
 }
 code <- ast2ast::translate(
   f, getsource = TRUE

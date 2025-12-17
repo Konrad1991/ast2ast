@@ -2,6 +2,28 @@
 #define BORROW_ETR_H
 
 namespace etr {
+
+template <typename Scalar>
+struct BorrowIt {
+  const Scalar* ptr;
+
+  using value_type = Scalar;
+  using reference  = Scalar;
+  using difference_type = std::ptrdiff_t;
+  using iterator_category = std::forward_iterator_tag;
+
+  reference operator*() const { return *ptr; }
+
+  BorrowIt& operator++() {
+    ++ptr;
+    return *this;
+  }
+
+  bool operator!=(const BorrowIt& other) const {
+    return ptr != other.ptr;
+  }
+};
+
 // Points to a Variable and stores size
 template <typename T, typename BorrowTrait> struct Borrow {
   using value_type = T;
@@ -12,7 +34,9 @@ template <typename T, typename BorrowTrait> struct Borrow {
   std::size_t sz = 0;
   std::size_t capacity = 0;
   bool allocated = false;
-  T *p = nullptr;
+  // T can thus be only Logical, Integer or Double!
+  // But a raw C pointer is borrowed of bool*, int* or double*
+  from_ast_scalar_t<T> *p = nullptr;
 
   std::size_t size() const noexcept { return allocated ? sz : 0; }
 
@@ -43,14 +67,14 @@ template <typename T, typename BorrowTrait> struct Borrow {
 #ifdef STANDALONE_ETR
 #else
   void initSEXP(SEXP s) {
-    if constexpr (IS<value_type, double>) {
+    if constexpr (IS<value_type, Double>) {
       ass<"R object is not of type numeric">(Rf_isReal(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       ass<"R object seems to be empty">(sz >= 1);
       capacity = static_cast<std::size_t>(sz);
       p = REAL(s);
       allocated = true;
-    } else if constexpr (IS<value_type, int>) {
+    } else if constexpr (IS<value_type, Integer>) {
       ass<"R object is not of type integer">(Rf_isInteger(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       ass<"R object seems to be empty">(sz >= 1);
@@ -66,17 +90,24 @@ template <typename T, typename BorrowTrait> struct Borrow {
   };
 #endif
 
-  void init(T *p_, std::size_t sz_) {
+  // Raw C++ pointer
+  template<typename T2>
+  requires IS<to_ast_scalar_t<T2>, T>
+  void init(T2 *p_, std::size_t sz_) {
     ass<"null pointer with positive size">(p_ != nullptr || sz_ == 0);
     this->p = p_;
     this->sz = sz_;
     capacity = sz;
     this->allocated = true;
   }
-  Borrow(T *p_, std::size_t sz_) {
+  template<typename T2>
+  requires IS<to_ast_scalar_t<T2>, T>
+  Borrow(T2 *p_, std::size_t sz_) {
     init(p_, sz_);
   }
-  Borrow(T *p_, int sz_) {
+  template<typename T2>
+  requires IS<to_ast_scalar_t<T2>, T>
+  Borrow(T2 *p_, int sz_) {
     init(p_, sz_);
   }
 
@@ -88,21 +119,32 @@ template <typename T, typename BorrowTrait> struct Borrow {
     sz = newSize;
   }
 
+  static value_type load(from_ast_scalar_t<T> x) {
+    return value_type(x);
+  }
+  static from_ast_scalar_t<T> store(const value_type& x) {
+    return x.val;
+  }
   value_type get(std::size_t idx) const {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
-    return p[idx];
+    return load(p[idx]);
   }
-
   void set(std::size_t idx, const value_type& val) {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
-    p[idx] = val;
+    p[idx] = store(val);
   }
 
   template <typename L2> void moveit(L2 &other) = delete;
-  auto begin() const { return It<const T>{p}; }
-  auto end() const { return It<const T>{p + sz}; }
+  auto begin() const {
+    ass<"No memory was allocated">(allocated);
+    return BorrowIt<from_ast_scalar_t<T>>{ p };
+  }
+  auto end() const {
+    ass<"No memory was allocated">(allocated);
+    return BorrowIt<from_ast_scalar_t<T>>{ p + sz };
+  }
   void realloc(int new_size) = delete;
   void push_back(T input) = delete;
 };
@@ -209,8 +251,14 @@ template <typename BorrowTrait> struct Borrow<Dual, BorrowTrait> {
     bool operator!=(const Iterator& other) const { return idx != other.idx; }
   };
 
-  Iterator begin() const { return Iterator{ p_val, p_dot, 0 }; }
-  Iterator end()   const { return Iterator{ p_val, p_dot, sz }; }
+  Iterator begin() const {
+    ass<"No memory was allocated">(allocated);
+    return Iterator{ p_val, p_dot, 0 };
+  }
+  Iterator end() const {
+    ass<"No memory was allocated">(allocated);
+    return Iterator{ p_val, p_dot, sz };
+  }
   template <typename L2> void moveit(L2 &other) = delete;
 
   void realloc(int new_size) = delete;

@@ -70,10 +70,10 @@ convert_base_type <- function(r_type) {
   list(
     "void" = "void",
     "R_NilValue" = "R_NilValue",
-    "logical" = "bool",
-    "bool" = "bool",
-    "integer" = "int", "int" = "int",
-    "double" = "double")[r_type]
+    "logical" = "Logical",
+    "bool" = "Logical",
+    "integer" = "Integer", "int" = "Integer",
+    "double" = "Double")[r_type]
 }
 
 convert_types_to_etr_types <- function(base_type, data_struct, r_fct, indent = "") {

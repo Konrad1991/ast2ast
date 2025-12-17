@@ -5,23 +5,31 @@ namespace etr {
 
 template <typename L, typename R, typename Trait>
 struct BinaryOpClassIterator {
-    const L& l;
-    const R& r;
-    size_t index;
+  const L& l;
+  const R& r;
+  size_t index;
 
-    BinaryOpClassIterator(const L& l_, const R& r_, size_t index_ = 0)
-        : l(l_), r(r_), index(index_) {}
+  BinaryOpClassIterator(const L& l_, const R& r_, size_t index_ = 0)
+  : l(l_), r(r_), index(index_) {}
 
-    auto operator*() const {
-        const auto& left = (IsCppArithV<L> || IsArith<L>) ? l : l[index];
-        const auto& right = (IsCppArithV<R> || IsArith<R>) ? r : r[index];
-        return Trait::f(left, right);
+  auto operator*() const {
+    constexpr bool is_scalar_l = IsCppArithV<L> || IsArith<L>;
+    constexpr bool is_scalar_r = IsCppArithV<R> || IsArith<R>;
+    if constexpr (!is_scalar_l && is_scalar_r) {
+      return Trait::f(l.get(index), r);
+    } else if constexpr (is_scalar_l && !is_scalar_r) {
+      return Trait::f(l, r.get(index));
+    } else if constexpr (!is_scalar_l && !is_scalar_r) {
+      return Trait::f(l.get(index), r.get(index));
+    } else if constexpr (is_scalar_l && is_scalar_r) {
+      return Trait::f(l, r);
     }
+  }
 
-    BinaryOpClassIterator& operator++() {
-        ++index;
-        return *this;
-    }
+  BinaryOpClassIterator& operator++() {
+    ++index;
+    return *this;
+  }
 };
 
 struct BinaryOpSentinel {
