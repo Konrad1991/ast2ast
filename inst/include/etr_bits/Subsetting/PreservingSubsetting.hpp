@@ -40,7 +40,7 @@ public:
   using TypeTrait = Trait;
   using value_type = typename ReRef<O>::type::value_type;
   Holder<O> obj;
-  ConstHolder<Buffer<int>> indices;
+  Buffer<int> indices;
 
   SubsetView(O& obj_, Buffer<int>&& indices_) :
     obj(obj_), indices(std::move(indices_)) {}
@@ -50,8 +50,8 @@ public:
   auto get(std::size_t i) const {
     return obj.get().get(
       safe_modulo(
-        indices.get().get(
-          safe_modulo(i, indices.get().size())
+        indices.get(
+          safe_modulo(i, indices.size())
         )
         ,
         obj.get().size()
@@ -63,8 +63,8 @@ public:
     if constexpr (IS<Decayed<Val>, value_type>) {
       return obj.get().set(
         safe_modulo(
-          indices.get().get(
-            safe_modulo(i, indices.get().size())
+          indices.get(
+            safe_modulo(i, indices.size())
           )
           ,
           obj.get().size()
@@ -74,8 +74,8 @@ public:
     } else {
       return obj.get().set(
         safe_modulo(
-          indices.get().get(
-            safe_modulo(i, indices.get().size())
+          indices.get(
+            safe_modulo(i, indices.size())
           )
           ,
           obj.get().size()
@@ -84,7 +84,7 @@ public:
       );
     }
   }
-  std::size_t size() const {return indices.get().size();}
+  std::size_t size() const {return indices.size();}
 
   // Copy constructor
   SubsetView(const SubsetView& other) : obj(other.obj), indices(other.indices) {}
@@ -179,6 +179,7 @@ inline void fill_scalars_in_index_lists(
                              std::array<Buffer<Integer>, N>& converted_bool_arrays,
                              std::array<const Buffer<Integer>*, N>& index_lists, O&& arg,
                              std::size_t& counter, std::size_t& counter_converted_double, std::size_t& counter_converted_bool) {
+  const auto& dim = dim_view(arr.dim);
   using A = std::decay_t<decltype(arg)>;
   if constexpr (IsCppDouble<A>) {
     auto& v = converted_double_arrays[counter_converted_double++];
@@ -187,7 +188,7 @@ inline void fill_scalars_in_index_lists(
   } else if constexpr(IsCppLogical<A> && IsCppInteger<A>) {
     auto& v = converted_bool_arrays[counter_converted_bool++];
     if (arg) {
-      const std::size_t len = arr.dim[counter];
+      const std::size_t len = dim[counter];
       v.resize(len);
       for (std::size_t i = 0; i < len; ++i) {
         v.set(i, static_cast<int>(i) + 1);
@@ -213,26 +214,29 @@ inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& conve
   forEachArg(
     [&](const auto& arg) {
       using A = std::decay_t<decltype(arg)>;
-      // --- Case 1: Array<Integer>
-      if constexpr (IsArray<A> && IsInteger<ValType>) {
-        index_lists[counter++] = &arg;
-      }
-      // --- Case 2: Array<Double> || Array<Dual>
-      else if constexpr (IsArray<A> && (IsDouble<ValType> || IsDual<ValType>)) {
-        auto& v = converted_double_arrays[counter_converted_double++];
-        v.resize(arg.size());
-        for (std::size_t i = 0; i < arg.size(); i++) {
-          v.set(i, safe_index_from_double(arg.get(i).val));
+      if constexpr (IsArray<A>) {
+        using arg_val_type = typename ExtractDataType<A>::value_type;
+        // --- Case 1: Array<Integer>
+        if constexpr (IsArray<A> && IsLBufferArray<A> && IsInteger<arg_val_type>) {
+          index_lists[counter++] = &arg.d;
         }
-        index_lists[counter++] = &v;
-      }
-      // --- Case 3: Array<Logical>
-      else if constexpr (IsArray<A> && IsLogical<ValType>) {
-        auto& v = converted_bool_arrays[counter_converted_bool++];
-        for (std::size_t b = 0; b < arg.size(); b++) {
-          if (arg.get(b)) v.push_back(b + 1);
+        // --- Case 2: Array<Logical>
+        else if constexpr (IsArray<A> && IsLogical<arg_val_type>) {
+          auto& v = converted_bool_arrays[counter_converted_bool++];
+          for (std::size_t b = 0; b < arg.size(); b++) {
+            if (arg.get(b).val) v.push_back(b + 1);
+          }
+          index_lists[counter++] = &v;
         }
-        index_lists[counter++] = &v;
+        // --- Case 3: Array except LBuffer Integer or LBuffer Logical
+        else if constexpr (IsArray<A>) {
+          auto& v = converted_double_arrays[counter_converted_double++];
+          v.resize(arg.size());
+          for (std::size_t i = 0; i < arg.size(); i++) {
+            v.set(i, safe_index_from_double(arg.get(i).val));
+          }
+          index_lists[counter++] = &v;
+        }
       }
       // --- Case 4: C++ scalars
       else if constexpr (IsCppArithV<A>) {
@@ -322,17 +326,19 @@ inline auto subset(ArrayType& arr, const Args&... args) {
   }
 }
 
-// Create constant subset
+// Create subset of subset
 // ------------------------------------------------------------------
 template <typename ArrayType, typename... Args>
+requires IsSubsetArray<ArrayType>
 inline auto subset(ArrayType&& arr, const Args&... args) {
 
   using E = typename ExtractDataType<ArrayType>::value_type;
   constexpr std::size_t N = sizeof...(Args);
-  if (N > arr.dim.size()) {
+  const auto& dim = dim_view(arr.dim);
+  if (N > dim.size()) {
     ass<"Too many index arguments for array rank">(false);
   }
-  if (N < arr.dim.size()) {
+  if (N < dim.size()) {
     ass<"Too less index arguments for array rank">(false);
   }
 
@@ -356,7 +362,80 @@ inline auto subset(ArrayType&& arr, const Args&... args) {
     L[k] = index_lists[k]->size();
   }
 
-  auto stride = make_strides_from_vec<N>(arr.dim);
+  auto stride = make_strides_from_vec<N>(dim);
+
+  std::size_t S = 1;
+  for (std::size_t k = 0; k < N; k++) S *= L[k];
+
+  Buffer<int> out(S);
+
+  std::array<std::size_t, N> pos{};
+
+  std::size_t offset = 0;
+  std::size_t k = 0;
+  std::size_t counter = 0;
+  for (;;) {
+    offset = 1;
+    for (std::size_t k = 0; k < N; k++) {
+      offset += ((*index_lists[k]).get(pos[k]).val - 1) * stride[k];
+    }
+    out.set(counter++, offset - 1);
+
+    k = 0;
+    for (;;) {
+      pos[k] += 1;
+      if (pos[k] < L[k]) break;
+      pos[k] = 0;
+      k++;
+      if (k == N) {
+        return Array<E, SubsetView<ArrayType, N, SubsetViewTrait>>(
+          SubsetView<ArrayType, N, SubsetViewTrait>{
+            std::forward<ArrayType>(arr), std::move(out)},
+          std::move(L)
+        );
+      }
+    }
+  }
+}
+
+
+// Create constant subset
+// ------------------------------------------------------------------
+template <typename ArrayType, typename... Args>
+requires (!IsSubsetArray<ArrayType>)
+inline auto subset(ArrayType&& arr, const Args&... args) {
+
+  using E = typename ExtractDataType<ArrayType>::value_type;
+  constexpr std::size_t N = sizeof...(Args);
+  const auto& dim = dim_view(arr.dim);
+  if (N > dim.size()) {
+    ass<"Too many index arguments for array rank">(false);
+  }
+  if (N < dim.size()) {
+    ass<"Too less index arguments for array rank">(false);
+  }
+
+  std::array<Buffer<Integer>, N> converted_double_arrays;
+  std::array<Buffer<Integer>, N> converted_bool_arrays;
+  std::array<const Buffer<Integer>*, N> index_lists{};
+
+  fill_index_lists<E, N>(
+    arr,
+    converted_double_arrays,
+    converted_bool_arrays,
+    index_lists,
+    args...
+  );
+
+  std::vector<std::size_t> L(N, 0);
+  for (std::size_t k = 0; k < N; k++) {
+    if (!index_lists[k] || (index_lists[k]->size() == 0)) {
+      ass<"Empty index for at least one dimension">(false);
+    }
+    L[k] = index_lists[k]->size();
+  }
+
+  auto stride = make_strides_from_vec<N>(dim);
 
   std::size_t S = 1;
   for (std::size_t k = 0; k < N; k++) S *= L[k];

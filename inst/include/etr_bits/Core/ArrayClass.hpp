@@ -318,6 +318,10 @@ template<typename T> requires (IsArithV<T>) struct Array<T, Borrow<T, BorrowTrai
   template<typename T2>
   explicit Array(T2 *ptr, std::size_t s, const std::vector<std::size_t>& dim_) : d(ptr, s), dim(dim_) {}
 
+  template<typename T2>
+  requires IsDual<T>
+  explicit Array(T2 *ptr_val, T2* ptr_dot, std::size_t s, const std::vector<std::size_t>& dim_) : d(ptr_val, ptr_dot, s), dim(dim_) {}
+
   template<typename...Args>
   Array(Args...) {
     ass<"Constructor not supported">(sizeof(T) == 0);

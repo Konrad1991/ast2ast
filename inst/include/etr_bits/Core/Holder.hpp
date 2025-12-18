@@ -30,72 +30,23 @@
 namespace etr {
 // Handler which store reference to r for L values and otherwise copy the value to keep it alive
 // -----------------------------------------------------------------------------------------------------------
-template <typename T>
+template <class T>
 class ConstHolder {
-  std::optional<T> val;
+  std::shared_ptr<T> owned; // used only when constructed from rvalue
   const T* ptr = nullptr;
 
 public:
-  // Construct from lvalue
   ConstHolder(const T& ref) : ptr(&ref) {}
 
-  // Construct from rvalue
-  ConstHolder(T&& r) {
-    val.emplace(std::move(r));
-    ptr = &val.value();
-  }
+  ConstHolder(T&& r)
+    : owned(std::make_shared<T>(std::move(r))), ptr(owned.get()) {}
 
-  // Copy constructor
-  ConstHolder(const ConstHolder& other) {
-    if (other.val.has_value()) {
-      val.emplace(*other.val);
-      ptr = &val.value();
-    } else {
-      ptr = other.ptr;
-    }
-  }
+  ConstHolder(const ConstHolder&) = default;
+  ConstHolder(ConstHolder&&) noexcept = default;
+  ConstHolder& operator=(const ConstHolder&) = default;
+  ConstHolder& operator=(ConstHolder&&) noexcept = default;
 
-  // Copy assignment
-  ConstHolder& operator=(const ConstHolder& other) {
-    if (this != &other) {
-      if (other.val.has_value()) {
-        val.emplace(std::move(*other.val));  // avoid operator=
-        ptr = &val.value();
-      } else {
-        val.reset();
-        ptr = other.ptr;
-      }
-    }
-    return *this;
-  }
-
-  // Move constructor
-  ConstHolder(ConstHolder&& other) noexcept {
-    if (other.val.has_value()) {
-      val.emplace(std::move(*other.val));
-      ptr = &val.value();
-    } else {
-      ptr = other.ptr;
-    }
-  }
-
-  // Move assignment
-  ConstHolder& operator=(ConstHolder&& other) noexcept {
-    if (this != &other) {
-      if (other.val.has_value()) {
-        val.emplace(std::move(*other.val));  // avoid operator=
-        ptr = &val.value();
-      } else {
-        val.reset();
-        ptr = other.ptr;
-      }
-    }
-    return *this;
-  }
-
-  const T& get() const {
-    return *ptr;
-  }
+  const T& get() const { return *ptr; }
 };
 
 

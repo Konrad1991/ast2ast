@@ -108,7 +108,7 @@ int main() {
   static_assert(!IsConstSubsetArray<decltype(unary)>,"Is not const Subset Array: unary");
   static_assert(!IsConstSubsetArray<decltype(binary)>,"Is not const Subset Array: binary");
   static_assert(!IsConstSubsetArray<decltype(comparison)>,"Is not const Subset Array: comparison");
-  static_assert(!IsSConstubsetArray<decltype(sub)>,"Is const Subset Array: subset");
+  static_assert(!IsConstSubsetArray<decltype(sub)>,"Is not const Subset Array: subset");
   static_assert(!IsConstSubsetArray<decltype(a_borrow)>,"Is not const Subset Array: borrow");
   static_assert(!IsConstSubsetArray<decltype(a_rbuf)>,"Is not const Subset Array: RBuffer");
   static_assert(IsConstSubsetArray<decltype(const_sub)>,"Is const Subset Array: const subset");
@@ -156,5 +156,5 @@ int main() {
   static_assert(IsROrCalculationArray<decltype(sub)>,"Is ROrCalculation Array: subset");
   static_assert(!IsROrCalculationArray<decltype(a_borrow)>,"Is not ROrCalculation Array: borrow");
   static_assert(IsROrCalculationArray<decltype(a_rbuf)>,"Is ROrCalculation Array: RBuffer");
-  static_assert(IsROrCalculationArray<decltype(const_sub)>,"Is IsROrCalculation Array: const subset");
+  static_assert(IsOperationArray<decltype(const_sub)>,"Is Operation Array: const subset");
 }

@@ -82,7 +82,7 @@ inline auto create_unary(T&& obj) {
 }
 
 template <typename T> requires IsArray<Decayed<T>>
-inline auto sinus(T &&obj) {
+inline auto sin(T &&obj) {
   using I = std::decay_t<decltype(obj.d)>;
   return create_unary<T, I, SinusTrait>(std::forward<T>(obj));
 }
@@ -94,67 +94,67 @@ inline auto operator-(T&& obj) {
 }
 
 template <typename T> requires IsArray<Decayed<T>>
-inline auto sinush(T &&obj) {
+inline auto sinh(T &&obj) {
   using I = std::decay_t<decltype(obj.d)>;
   return create_unary<T, I, SinusHTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
-inline auto asinus(T&& obj) {
+inline auto asin(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
   return create_unary<T, I, ASinusTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
-inline auto cosinus(T&& obj) {
+inline auto cos(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
   return create_unary<T, I, CosinusTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
-inline auto cosinush(T&& obj) {
+inline auto cosh(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
   return create_unary<T, I, CosinusHTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
-inline auto acosinus(T&& obj) {
+inline auto acos(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
   return create_unary<T, I, ACosinusTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
-inline auto tangens(T&& obj) {
+inline auto tan(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
   return create_unary<T, I, TangensTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
-inline auto tangensh(T&& obj) {
+inline auto tanh(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
   return create_unary<T, I, TangensHTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
-inline auto atangens(T&& obj) {
+inline auto atan(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
   return create_unary<T, I, ATangensTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
-inline auto ln(T&& obj) { // LogTrait
+inline auto log(T&& obj) { // LogTrait
   using I = std::decay_t<decltype(obj.d)>;
   return create_unary<T, I, LogTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
-inline auto sqroot(T&& obj) {
+inline auto sqrt(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
   return create_unary<T, I, SquareRootTrait>(std::forward<T>(obj));
 }
 
 template <typename T> requires IsArray<Decayed<T>>
-inline auto expo(T&& obj) {
+inline auto exp(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;
   return create_unary<T, I, ExpTrait>(std::forward<T>(obj));
 }

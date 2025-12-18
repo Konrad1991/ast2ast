@@ -101,15 +101,6 @@ inline void print(const T& obj) {
   }
 }
 
-template<typename Dim>
-auto&& dim_view(Dim& d) {
-  if constexpr (requires { d.get(); }) {
-    return d.get();
-  } else {
-    return d;
-  }
-}
-
 // Print array
 template<typename T>
 requires (!IsSubsetArray<T> && IsArray<T>)

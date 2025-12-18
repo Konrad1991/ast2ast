@@ -484,73 +484,73 @@ function_registry_global$add(
   name = "sin", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sinus"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sin"
 )
 function_registry_global$add(
   name = "asin", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::asinus"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::asin"
 )
 function_registry_global$add(
   name = "sinh", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sinush"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sinh"
 )
 function_registry_global$add(
   name = "cos", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::cosinus"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::cos"
 )
 function_registry_global$add(
   name = "acos", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::acosinus"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::acos"
 )
 function_registry_global$add(
   name = "cosh", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::cosinush"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::cosh"
 )
 function_registry_global$add(
   name = "tan", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::tangens"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::tan"
 )
 function_registry_global$add(
   name = "atan", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::atangens"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::atan"
 )
 function_registry_global$add(
   name = "tanh", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::tangensh"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::tanh"
 )
 function_registry_global$add(
   name = "log", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::ln"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::log"
 )
 function_registry_global$add(
   name = "sqrt", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sqroot"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sqrt"
 )
 function_registry_global$add(
   name = "exp", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::expo"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::exp"
 )
 function_registry_global$add(
   name = "^", num_args = 2, arg_names = c(NA, NA),

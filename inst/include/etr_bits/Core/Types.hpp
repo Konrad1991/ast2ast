@@ -110,6 +110,14 @@ inline std::size_t safe_modulo(std::size_t idx, std::size_t sz) {
 template <class F, class... Args> inline F forEachArg(F f, Args &&...args) {
   (f(std::forward<Args>(args)), ...); return f;
 }
+template<typename Dim>
+auto&& dim_view(Dim& d) {
+  if constexpr (requires { d.get(); }) {
+    return d.get();
+  } else {
+    return d;
+  }
+}
 
 // Scalar types (First dispatch layer)
 // --------------------------------------------------------------------------------------------------
@@ -1277,7 +1285,7 @@ template <typename T> concept IsSubsetArray = is_array_s_v<T>;
 template <typename T> struct is_array_const_s : std::false_type {};
 template <typename T, typename O, std::size_t N, typename Trait>
 struct is_array_const_s<Array<T, ConstSubsetView<O, N, Trait>>> : std::bool_constant<std::is_same_v<Trait, ConstSubsetViewTrait>> {};
-template <typename T> inline constexpr bool is_array_const_s_v = is_array_s<T>::value;
+template <typename T> inline constexpr bool is_array_const_s_v = is_array_const_s<T>::value;
 template <typename T> concept IsConstSubsetArray = is_array_const_s_v<T>;
 
 template <typename T> concept IsUnaryArray = IsArray<T> && IsUnary<typename T::DType>;
