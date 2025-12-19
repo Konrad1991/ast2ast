@@ -534,7 +534,7 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   using value_type = T;
   SubsetView<O, N, Trait> d;
   Buffer<T, LBufferTrait> temp;
-  Holder<std::vector<std::size_t>> dim;
+  std::vector<std::size_t> dim;
 
   // ======================= internal methods =================================================
   decltype(auto) get(std::size_t idx) const { return d.get(idx); }
@@ -554,7 +554,7 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   }
 
   std::size_t size() const { return d.size(); }
-  const std::vector<std::size_t>& get_dim() const { return dim.get(); }
+  const std::vector<std::size_t>& get_dim() const { return dim; }
   auto begin() const { return d.begin(); }
   auto end() const { return d.end(); }
 

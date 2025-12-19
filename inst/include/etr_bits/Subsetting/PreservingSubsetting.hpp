@@ -48,40 +48,14 @@ public:
     obj(obj_), indices(std::move(indices_)) {}
 
   auto get(std::size_t i) const {
-    return obj.get().get(
-      safe_modulo(
-        indices.get(
-          safe_modulo(i, indices.size())
-        )
-        ,
-        obj.get().size()
-      )
-    );
+    return obj.get().get(indices.get(i));
   }
   template<typename Val>
   void set(std::size_t i, const Val& v) const {
     if constexpr (IS<Decayed<Val>, value_type>) {
-      return obj.get().set(
-        safe_modulo(
-          indices.get(
-            safe_modulo(i, indices.size())
-          )
-          ,
-          obj.get().size()
-        ),
-        v
-      );
+      obj.get().set(indices.get(i), v);
     } else {
-      return obj.get().set(
-        safe_modulo(
-          indices.get(
-            safe_modulo(i, indices.size())
-          )
-          ,
-          obj.get().size()
-        ),
-        static_cast<value_type>(v)
-      );
+      obj.get().set(indices.get(i), static_cast<value_type>(v));
     }
   }
   std::size_t size() const {return indices.size();}
@@ -103,8 +77,6 @@ public:
     return *this;
   }
 
-  auto begin() { return SubsetViewIterator<SubsetView>{*this, 0}; }
-  auto end() { return SubsetViewIterator<SubsetView>{*this, this->size()}; }
   auto begin() const { return SubsetViewIterator<const SubsetView>{*this, 0}; }
   auto end() const { return SubsetViewIterator<const SubsetView>{*this, this->size()}; }
 };
@@ -125,15 +97,7 @@ public:
     obj(obj_), indices(std::move(indices_)) {}
 
   auto get(std::size_t i) const {
-    return obj.get().get(
-      safe_modulo(
-        indices.get().get(
-          safe_modulo(i, indices.get().size())
-        )
-        ,
-        obj.get().size()
-      )
-    );
+    return obj.get().get(indices.get().get(i));
   }
   std::size_t size() const {return indices.get().size();}
 
@@ -160,7 +124,6 @@ public:
 
 template<std::size_t N>
 inline std::array<std::size_t, N> make_strides_from_vec(const std::vector<std::size_t>& dim) {
-  ass<"Dimension mismatch in make strides">(dim.size() == N);
   std::array<std::size_t, N> stride{};
   stride[0] = 1;
   for (std::size_t k = 1; k < N; k++) stride[k] = stride[k-1] * dim[k-1];
@@ -175,18 +138,17 @@ inline std::vector<std::size_t> make_strides_dyn(const std::vector<std::size_t>&
 
 template<std::size_t N,typename T, typename O>
 inline void fill_scalars_in_index_lists(
-                             const T& arr, std::array<Buffer<Integer>, N>& converted_double_arrays,
-                             std::array<Buffer<Integer>, N>& converted_bool_arrays,
+                             const T& arr, std::array<Buffer<Integer>, N>& converted_arrays,
                              std::array<const Buffer<Integer>*, N>& index_lists, O&& arg,
-                             std::size_t& counter, std::size_t& counter_converted_double, std::size_t& counter_converted_bool) {
+                             std::size_t& counter, std::size_t& counter_converted) {
   const auto& dim = dim_view(arr.dim);
   using A = std::decay_t<decltype(arg)>;
   if constexpr (IsCppDouble<A>) {
-    auto& v = converted_double_arrays[counter_converted_double++];
+    auto& v = converted_arrays[counter_converted++];
     v.push_back(safe_index_from_double(arg));
     index_lists[counter++] = &v;
-  } else if constexpr(IsCppLogical<A> && IsCppInteger<A>) {
-    auto& v = converted_bool_arrays[counter_converted_bool++];
+  } else if constexpr(IsCppLogical<A>) {
+    auto& v = converted_arrays[counter_converted++];
     if (arg) {
       const std::size_t len = dim[counter];
       v.resize(len);
@@ -197,42 +159,57 @@ inline void fill_scalars_in_index_lists(
       ass<"Bool subsetting is only with TRUE possible">(false);
     }
     index_lists[counter++] = &v;
-  } else if constexpr(!IsCppLogical<A> && IsCppInteger<A>) {
-    auto& v = converted_double_arrays[counter_converted_double++];
+  } else if constexpr(IsCppInteger<A>) {
+    auto& v = converted_arrays[counter_converted++];
     v.push_back(arg);
     index_lists[counter++] = &v;
   }
 }
 
-template<typename ValType, std::size_t N, typename T, typename... Args>
-inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& converted_double_arrays,
-                             std::array<Buffer<Integer>, N>& converted_bool_arrays,
+template<std::size_t N, typename T, typename... Args>
+inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& converted_arrays,
                              std::array<const Buffer<Integer>*, N>& index_lists, Args&&... args) {
   std::size_t counter = 0;
-  std::size_t counter_converted_double = 0;
-  std::size_t counter_converted_bool = 0;
+  std::size_t counter_converted = 0;
+  const auto& dim = dim_view(arr.dim);
   forEachArg(
     [&](const auto& arg) {
       using A = std::decay_t<decltype(arg)>;
       if constexpr (IsArray<A>) {
+        ass<"Too many index arguments for at least one dimension">(dim[counter] >= arg.size());
+
         using arg_val_type = typename ExtractDataType<A>::value_type;
         // --- Case 1: Array<Integer>
         if constexpr (IsArray<A> && IsLBufferArray<A> && IsInteger<arg_val_type>) {
-          index_lists[counter++] = &arg.d;
+          const std::size_t n = arg.size();
+          if (dim[counter] == arg.size()) {
+            index_lists[counter++] = &arg.d;
+          } else {
+            auto& v = converted_arrays[counter_converted++];
+            v.resize(n);
+            for (std::size_t i = 0; i < n; i++) {
+              v.set(i, arg.get(i).val);
+            }
+            index_lists[counter++] = &v;
+          }
         }
         // --- Case 2: Array<Logical>
         else if constexpr (IsArray<A> && IsLogical<arg_val_type>) {
-          auto& v = converted_bool_arrays[counter_converted_bool++];
-          for (std::size_t b = 0; b < arg.size(); b++) {
-            if (arg.get(b).val) v.push_back(b + 1);
+          const std::size_t n = dim[counter];
+          auto& v = converted_arrays[counter_converted++];
+          for (std::size_t b = 0; b < n; b++) {
+            if (arg.get(safe_modulo(b, arg.size())).val) {
+              v.push_back(b + 1);
+            }
           }
           index_lists[counter++] = &v;
         }
         // --- Case 3: Array except LBuffer Integer or LBuffer Logical
         else if constexpr (IsArray<A>) {
-          auto& v = converted_double_arrays[counter_converted_double++];
-          v.resize(arg.size());
-          for (std::size_t i = 0; i < arg.size(); i++) {
+          const std::size_t n = arg.size();
+          auto& v = converted_arrays[counter_converted++];
+          v.resize(n);
+          for (std::size_t i = 0; i < n; i++) {
             v.set(i, safe_index_from_double(arg.get(i).val));
           }
           index_lists[counter++] = &v;
@@ -240,15 +217,15 @@ inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& conve
       }
       // --- Case 4: C++ scalars
       else if constexpr (IsCppArithV<A>) {
-        fill_scalars_in_index_lists<N>(arr, converted_double_arrays, converted_bool_arrays,
-                                    index_lists, arg,
-                                    counter, counter_converted_double, counter_converted_bool);
+        fill_scalars_in_index_lists<N>(arr, converted_arrays,
+                                       index_lists, arg,
+                                       counter, counter_converted);
       }
       // --- Case 5: Scalars
       else if constexpr (IsArithV<A>) {
-        fill_scalars_in_index_lists<N>(arr, converted_double_arrays, converted_bool_arrays,
-                                    index_lists, arg.val,
-                                    counter, counter_converted_double, counter_converted_bool);
+        fill_scalars_in_index_lists<N>(arr, converted_arrays,
+                                       index_lists, arg.val,
+                                       counter, counter_converted);
       }
       else {
         static_assert(!sizeof(A*), "Unsupported index type");
@@ -258,27 +235,28 @@ inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& conve
   );
 }
 
-// Create mutable subset
-template <typename ArrayType, typename... Args>
-inline auto subset(ArrayType& arr, const Args&... args) {
+struct out_L {
+  Buffer<int> out;
+  std::vector<std::size_t> L;
+};
 
-  using E = typename ExtractDataType<ArrayType>::value_type;
+template <typename ArrayType, typename... Args>
+inline out_L create_indices(const ArrayType& arr, const Args&... args) {
   constexpr std::size_t N = sizeof...(Args);
-  if (N > arr.dim.size()) {
+  const auto& dim = dim_view(arr.dim);
+  if (N > dim.size()) {
     ass<"Too many index arguments for array rank">(false);
   }
-  if (N < arr.dim.size()) {
+  if (N < dim.size()) {
     ass<"Too less index arguments for array rank">(false);
   }
 
-  std::array<Buffer<Integer>, N> converted_double_arrays;
-  std::array<Buffer<Integer>, N> converted_bool_arrays;
+  std::array<Buffer<Integer>, N> converted_arrays;
   std::array<const Buffer<Integer>*, N> index_lists{};
 
-  fill_index_lists<E, N>(
+  fill_index_lists<N>(
     arr,
-    converted_double_arrays,
-    converted_bool_arrays,
+    converted_arrays,
     index_lists,
     args...
   );
@@ -291,7 +269,7 @@ inline auto subset(ArrayType& arr, const Args&... args) {
     L[k] = index_lists[k]->size();
   }
 
-  auto stride = make_strides_from_vec<N>(arr.dim);
+  auto stride = make_strides_from_vec<N>(dim);
 
   std::size_t S = 1;
   for (std::size_t k = 0; k < N; k++) S *= L[k];
@@ -317,13 +295,24 @@ inline auto subset(ArrayType& arr, const Args&... args) {
       pos[k] = 0;
       k++;
       if (k == N) {
-        return Array<E, SubsetView<ArrayType, N, SubsetViewTrait>>(
-          SubsetView<ArrayType, N, SubsetViewTrait>{arr, std::move(out)},
-          std::move(L)
-        );
+        return out_L{out, L};
       }
     }
   }
+}
+
+// Create mutable subset
+template <typename ArrayType, typename... Args>
+inline auto subset(ArrayType& arr, const Args&... args) {
+
+  using E = typename ExtractDataType<ArrayType>::value_type;
+  constexpr std::size_t N = sizeof...(Args);
+
+  auto ol = create_indices(arr, args...);
+  return Array<E, SubsetView<ArrayType, N, SubsetViewTrait>>(
+    SubsetView<ArrayType, N, SubsetViewTrait>{arr, std::move(ol.out)},
+    std::move(ol.L)
+  );
 }
 
 // Create subset of subset
@@ -331,143 +320,29 @@ inline auto subset(ArrayType& arr, const Args&... args) {
 template <typename ArrayType, typename... Args>
 requires IsSubsetArray<ArrayType>
 inline auto subset(ArrayType&& arr, const Args&... args) {
-
   using E = typename ExtractDataType<ArrayType>::value_type;
   constexpr std::size_t N = sizeof...(Args);
-  const auto& dim = dim_view(arr.dim);
-  if (N > dim.size()) {
-    ass<"Too many index arguments for array rank">(false);
-  }
-  if (N < dim.size()) {
-    ass<"Too less index arguments for array rank">(false);
-  }
 
-  std::array<Buffer<Integer>, N> converted_double_arrays;
-  std::array<Buffer<Integer>, N> converted_bool_arrays;
-  std::array<const Buffer<Integer>*, N> index_lists{};
-
-  fill_index_lists<E, N>(
-    arr,
-    converted_double_arrays,
-    converted_bool_arrays,
-    index_lists,
-    args...
+  auto ol = create_indices(arr, args...);
+  return Array<E, SubsetView<ArrayType, N, SubsetViewTrait>>(
+    SubsetView<ArrayType, N, SubsetViewTrait>{arr, std::move(ol.out)},
+    std::move(ol.L)
   );
-
-  std::vector<std::size_t> L(N, 0);
-  for (std::size_t k = 0; k < N; k++) {
-    if (!index_lists[k] || (index_lists[k]->size() == 0)) {
-      ass<"Empty index for at least one dimension">(false);
-    }
-    L[k] = index_lists[k]->size();
-  }
-
-  auto stride = make_strides_from_vec<N>(dim);
-
-  std::size_t S = 1;
-  for (std::size_t k = 0; k < N; k++) S *= L[k];
-
-  Buffer<int> out(S);
-
-  std::array<std::size_t, N> pos{};
-
-  std::size_t offset = 0;
-  std::size_t k = 0;
-  std::size_t counter = 0;
-  for (;;) {
-    offset = 1;
-    for (std::size_t k = 0; k < N; k++) {
-      offset += ((*index_lists[k]).get(pos[k]).val - 1) * stride[k];
-    }
-    out.set(counter++, offset - 1);
-
-    k = 0;
-    for (;;) {
-      pos[k] += 1;
-      if (pos[k] < L[k]) break;
-      pos[k] = 0;
-      k++;
-      if (k == N) {
-        return Array<E, SubsetView<ArrayType, N, SubsetViewTrait>>(
-          SubsetView<ArrayType, N, SubsetViewTrait>{
-            std::forward<ArrayType>(arr), std::move(out)},
-          std::move(L)
-        );
-      }
-    }
-  }
 }
-
 
 // Create constant subset
 // ------------------------------------------------------------------
 template <typename ArrayType, typename... Args>
 requires (!IsSubsetArray<ArrayType>)
 inline auto subset(ArrayType&& arr, const Args&... args) {
-
   using E = typename ExtractDataType<ArrayType>::value_type;
   constexpr std::size_t N = sizeof...(Args);
-  const auto& dim = dim_view(arr.dim);
-  if (N > dim.size()) {
-    ass<"Too many index arguments for array rank">(false);
-  }
-  if (N < dim.size()) {
-    ass<"Too less index arguments for array rank">(false);
-  }
 
-  std::array<Buffer<Integer>, N> converted_double_arrays;
-  std::array<Buffer<Integer>, N> converted_bool_arrays;
-  std::array<const Buffer<Integer>*, N> index_lists{};
-
-  fill_index_lists<E, N>(
-    arr,
-    converted_double_arrays,
-    converted_bool_arrays,
-    index_lists,
-    args...
+  auto ol = create_indices(arr, args...);
+  return Array<E, ConstSubsetView<ArrayType, N, ConstSubsetViewTrait>>(
+    ConstSubsetView<ArrayType, N, ConstSubsetViewTrait>{std::move(arr), std::move(ol.out)},
+    std::move(ol.L)
   );
-
-  std::vector<std::size_t> L(N, 0);
-  for (std::size_t k = 0; k < N; k++) {
-    if (!index_lists[k] || (index_lists[k]->size() == 0)) {
-      ass<"Empty index for at least one dimension">(false);
-    }
-    L[k] = index_lists[k]->size();
-  }
-
-  auto stride = make_strides_from_vec<N>(dim);
-
-  std::size_t S = 1;
-  for (std::size_t k = 0; k < N; k++) S *= L[k];
-
-  Buffer<int> out(S);
-
-  std::array<std::size_t, N> pos{};
-
-  std::size_t offset = 0;
-  std::size_t k = 0;
-  std::size_t counter = 0;
-  for (;;) {
-    offset = 1;
-    for (std::size_t k = 0; k < N; k++) {
-      offset += ((*index_lists[k]).get(pos[k]).val - 1) * stride[k];
-    }
-    out.set(counter++, offset - 1);
-
-    k = 0;
-    for (;;) {
-      pos[k] += 1;
-      if (pos[k] < L[k]) break;
-      pos[k] = 0;
-      k++;
-      if (k == N) {
-        return Array<E, ConstSubsetView<ArrayType, N, ConstSubsetViewTrait>>(
-          ConstSubsetView<ArrayType, N, ConstSubsetViewTrait>{std::move(arr), std::move(out)},
-          std::move(L)
-        );
-      }
-    }
-  }
 }
 
 } // namespace etr

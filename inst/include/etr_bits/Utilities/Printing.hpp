@@ -40,7 +40,7 @@ inline void print_matrix(const P& pos, const T& obj,
 
   for (std::size_t r = 0; r < rs; r++) {
     for (std::size_t c = 0; c < cs; c++) {
-      PRINT_STREAM << obj[offset + c * rs + r] << "   ";
+      PRINT_STREAM << obj.get(offset + c * rs + r) << "   ";
     }
     PRINT_STREAM << std::endl;
   }
@@ -48,13 +48,14 @@ inline void print_matrix(const P& pos, const T& obj,
 
 template<typename T, std::size_t N>
 inline void print_subsetted_arrays(const T& obj) {
-  auto strides_all = make_strides_from_vec<N>(obj.dim.get());
+  const auto& dim = dim_view(obj.dim);
+  auto strides_all = make_strides_from_vec<N>(dim);
   std::array<std::size_t, N - 2> strides;
   for (std::size_t i = 0; i < strides.size(); i++) strides[i] = strides_all[i + 2];
 
   std::array<std::size_t, N - 2> pos{};
   std::array<std::size_t, N - 2> L;
-  for (std::size_t i = 0; i < L.size(); i++) L[i] = obj.dim.get()[i + 2];
+  for (std::size_t i = 0; i < L.size(); i++) L[i] = dim[i + 2];
 
   std::size_t offset = 0;
   std::size_t k = 0;
@@ -63,7 +64,7 @@ inline void print_subsetted_arrays(const T& obj) {
     for (std::size_t k = 0; k < (N - 2); k++) {
       offset += (pos[k]) * strides[k];
     }
-    print_matrix(pos, obj, obj.dim.get()[0], obj.dim.get()[1], offset - 1);
+    print_matrix(pos, obj, dim[0], dim[1], offset - 1);
     PRINT_STREAM << std::endl;
     k = 0;
     for (;;) {
@@ -83,18 +84,19 @@ requires IsSubsetArray<T>
 inline void print(const T& obj) {
   constexpr std::size_t N = subsetview_traits<Decayed<decltype(obj.d)>>::value;
 
-  if (obj.dim.get().size() == 1) {
+  const auto& dim = dim_view(obj.dim);
+  if (dim.size() == 1) {
     for (std::size_t i = 0; i < obj.size(); i++) {
-      PRINT_STREAM << obj[i] << "\t";
+      PRINT_STREAM << obj.get(i) << "\t";
     }
     PRINT_STREAM << std::endl;
   }
 
-  if (obj.dim.get().size() == 2) {
-    print_matrix(std::vector<std::size_t>{0, 0}, obj, obj.dim.get()[0], obj.dim.get()[1], 0);
+  if (dim.size() == 2) {
+    print_matrix(std::vector<std::size_t>{0, 0}, obj, dim[0], dim[1], 0);
   }
 
-  if (obj.dim.get().size() > 2) {
+  if (dim.size() > 2) {
     if constexpr (N > 2) {
       print_subsetted_arrays<T, N>(obj);
     }
@@ -109,7 +111,7 @@ inline void print(const T& arr) {
   const auto& dim = dim_view(arr.dim);
   if (dim.size() == 1) {
     for (std::size_t i = 0; i < arr.size(); i++) {
-      PRINT_STREAM << arr[i] << "\t";
+      PRINT_STREAM << arr.get(i) << "\t";
     }
     PRINT_STREAM << std::endl;
   }
