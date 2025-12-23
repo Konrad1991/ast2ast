@@ -360,42 +360,7 @@ void test_indices_preserved_subsetting() {
     compare_result_ints(subset(What, Integer_dim1, Integer_dim2, Integer_dim3), expected, expected_dim);
     reset(What);
   }
-  // Integer arrays on each dimension
-  {
-    Array<Integer, Buffer<Integer, LBufferTrait>> Integer_dim1(SI{3});
-    Integer_dim1.set(0, 1);
-    Integer_dim1.set(1, 3);
-    Integer_dim1.set(2, 3);
-    Array<Integer, Buffer<Integer, LBufferTrait>> Integer_dim2(SI{4});
-    Integer_dim2.set(0, 1);
-    Integer_dim2.set(1, 3);
-    Integer_dim2.set(2, 3);
-    Integer_dim2.set(3, 2);
-    Array<Integer, Buffer<Integer, LBufferTrait>> Integer_dim3(SI{4});
-    Integer_dim3.set(0, 1);
-    Integer_dim3.set(1, 3);
-    Integer_dim3.set(2, 3);
-    Integer_dim3.set(3, 2);
-
-    Array<Logical, Buffer<Logical, LBufferTrait>> Logical_dim3(SI{4});
-    Logical_dim3.set(0, TRUE);
-    Logical_dim3.set(1, FALSE);
-    Logical_dim3.set(2, TRUE);
-    Logical_dim3.set(3, TRUE);
-    // Integer_dim3.set(4, 5);
-    print(subset(What, Integer_dim1, Integer_dim2, Logical_dim3));
-  }
-}
-
-int main() {
-  test_all_types_usuable_preserved_subsetting();
-  test_indices_preserved_subsetting();
-
-  auto reset = [&](Array<Integer, Buffer<Integer, LBufferTrait>>& vec) {
-    for (std::size_t i = 0; i < vec.size(); i++) {
-      vec.set(i, i + 1);
-    }
-  };
+  // Subsetting various combinations
   {
     const std::size_t N = 18;
     std::vector<std::size_t> dim{2, 3, 3};
@@ -669,6 +634,7 @@ int main() {
     std::vector<std::size_t> expected_dim31{2, 2, 1};
     compare_result_ints(subset(What, idx31_dim1, idx31_dim2, idx31_dim3), expected31, expected_dim31);
   }
+  // Subsetting + Assign various combinations
   {
     const std::size_t N = 18;
     std::vector<std::size_t> dim{2, 3, 3};
@@ -1066,5 +1032,178 @@ int main() {
     compare_result_ints(subset(What, idx31_dim1, idx31_dim2, idx31_dim3), expected31, expected_dim31);
 
     reset(What);
+  }
+}
+
+int main() {
+  test_all_types_usuable_preserved_subsetting();
+  test_indices_preserved_subsetting();
+
+  auto reset = [&](Array<Integer, Buffer<Integer, LBufferTrait>>& vec) {
+    for (std::size_t i = 0; i < vec.size(); i++) {
+      vec.set(i, i + 1);
+    }
+  };
+
+  // Handling NA
+  {
+    const std::size_t N = 18;
+    std::vector<std::size_t> dim{2, 3, 3};
+    Array<Integer, Buffer<Integer, LBufferTrait>> What(SI{N});
+    What.dim = dim;
+    reset(What);
+
+    Array<Logical, Buffer<Logical, LBufferTrait>> idx_dim1(SI{2});
+    idx_dim1.set(0, Logical(true));
+    idx_dim1.set(1, Logical(true));
+    Array<Integer, Buffer<Integer, LBufferTrait>> idx_dim2(SI{2});
+    idx_dim2.set(0, Integer(1));
+    idx_dim2.set(1, Integer(2));
+    Array<Double, Buffer<Double, LBufferTrait>> idx_dim3(SI{3});
+    idx_dim3.set(0, Double(1.0));
+    idx_dim3.set(1, Double(2.0));
+    idx_dim3.set(2, Double(3.0));
+    Array<Dual, Buffer<Dual, LBufferTrait>> idx_dim4(SI{3});
+    idx_dim4.set(0, Dual(1.0));
+    idx_dim4.set(1, Dual(2.0));
+    idx_dim4.set(2, Dual(3.0));
+
+    std::string NA_in_log;
+    std::string NA_in_int;
+    std::string NA_in_double;
+    std::string NA_in_dual;
+
+    // NA in logical
+    try {
+      idx_dim1.set(1, Logical::NA());
+      subset(What, idx_dim1, idx_dim2, idx_dim3);
+    } catch (const std::exception& e) {
+      NA_in_log = e.what();
+    }
+    idx_dim1.set(1, Logical(true));
+    ass<"NA in Logical">(std::strcmp(NA_in_log.c_str(), "Found NA value in subsetting (within a logical object)") == 0);
+    // NA in scalar logical
+    try {
+      subset(What, Logical::NA(), idx_dim2, idx_dim3);
+    } catch (const std::exception& e) {
+      NA_in_log = e.what();
+    }
+    ass<"NA in scalar Logical">(std::strcmp(NA_in_log.c_str(), "Bool subsetting is only with TRUE possible") == 0);
+
+    // NA in integer
+    try {
+      idx_dim2.set(1, Integer::NA());
+      subset(What, idx_dim1, idx_dim2, idx_dim3);
+    } catch (const std::exception& e) {
+      NA_in_int = e.what();
+    }
+    idx_dim2.set(1, 2);
+    ass<"NA in Integer">(std::strcmp(NA_in_int.c_str(), "Found NA value in subsetting (within an integer object)") == 0);
+    // NA in scalar integer
+    try {
+      subset(What, idx_dim1, Integer::NA(), idx_dim3);
+    } catch (const std::exception& e) {
+      NA_in_int = e.what();
+    }
+    ass<"NA in scalar Integer">(std::strcmp(NA_in_int.c_str(), "Found NA value in subsetting (within an integer object)") == 0);
+
+    // NA in double
+    try {
+      idx_dim3.set(1, Double::NA());
+      subset(What, idx_dim1, idx_dim2, idx_dim3);
+    } catch (const std::exception& e) {
+      NA_in_double = e.what();
+    }
+    idx_dim3.set(1, 2.0);
+    ass<"NA in Double">(std::strcmp(NA_in_double.c_str(), "Found NA value in subsetting (within a double object)") == 0);
+    // NaN in double
+    try {
+      idx_dim3.set(1, Double::NaN());
+      subset(What, idx_dim1, idx_dim2, idx_dim3);
+    } catch (const std::exception& e) {
+      NA_in_double = e.what();
+    }
+    idx_dim3.set(1, 2.0);
+    ass<"NaN in Double">(std::strcmp(NA_in_double.c_str(), "invalid index argument") == 0);
+    // NaN in double
+    try {
+      idx_dim3.set(1, Double::Inf());
+      subset(What, idx_dim1, idx_dim2, idx_dim3);
+    } catch (const std::exception& e) {
+      NA_in_double = e.what();
+    }
+    idx_dim3.set(1, 2.0);
+    ass<"Inf in Double">(std::strcmp(NA_in_double.c_str(), "invalid index argument") == 0);
+    // NA in scalar double
+    try {
+      subset(What, idx_dim1, idx_dim2, Double::NA());
+    } catch (const std::exception& e) {
+      NA_in_double = e.what();
+    }
+    ass<"NA in scalar Double">(std::strcmp(NA_in_double.c_str(), "invalid index argument") == 0);
+    // NaN in scalar double
+    try {
+      subset(What, idx_dim1, idx_dim2, Double::NaN());
+    } catch (const std::exception& e) {
+      NA_in_double = e.what();
+    }
+    ass<"NaN in scalar Double">(std::strcmp(NA_in_double.c_str(), "invalid index argument") == 0);
+    // Inf in scalar double
+    try {
+      subset(What, idx_dim1, idx_dim2, Double::Inf());
+    } catch (const std::exception& e) {
+      NA_in_double = e.what();
+    }
+    ass<"Inf in scalar Double">(std::strcmp(NA_in_double.c_str(), "invalid index argument") == 0);
+
+    // NA in dual
+    try {
+      idx_dim4.set(1, Dual::NA());
+      subset(What, idx_dim1, idx_dim2, idx_dim4);
+    } catch (const std::exception& e) {
+      NA_in_dual = e.what();
+    }
+    idx_dim4.set(1, 2.0);
+    ass<"NA in dual">(std::strcmp(NA_in_dual.c_str(), "Found NA value in subsetting (within a double object)") == 0);
+    // NaN in dual
+    try {
+      idx_dim4.set(1, Dual::NaN());
+      subset(What, idx_dim1, idx_dim2, idx_dim4);
+    } catch (const std::exception& e) {
+      NA_in_dual = e.what();
+    }
+    idx_dim4.set(1, 2.0);
+    ass<"NaN in dual">(std::strcmp(NA_in_dual.c_str(), "invalid index argument") == 0);
+    // NaN in dual
+    try {
+      idx_dim4.set(1, Dual::Inf());
+      subset(What, idx_dim1, idx_dim2, idx_dim4);
+    } catch (const std::exception& e) {
+      NA_in_dual = e.what();
+    }
+    idx_dim4.set(1, 2.0);
+    ass<"Inf in dual">(std::strcmp(NA_in_dual.c_str(), "invalid index argument") == 0);
+    // NA in scalar dual
+    try {
+      subset(What, idx_dim1, idx_dim2, Dual::NA());
+    } catch (const std::exception& e) {
+      NA_in_dual = e.what();
+    }
+    ass<"NA in scalar dual">(std::strcmp(NA_in_dual.c_str(), "invalid index argument") == 0);
+    // NaN in scalar dual
+    try {
+      subset(What, idx_dim1, idx_dim2, Dual::NaN());
+    } catch (const std::exception& e) {
+      NA_in_dual = e.what();
+    }
+    ass<"NaN in scalar dual">(std::strcmp(NA_in_dual.c_str(), "invalid index argument") == 0);
+    // Inf in scalar dual
+    try {
+      subset(What, idx_dim1, idx_dim2, Dual::Inf());
+    } catch (const std::exception& e) {
+      NA_in_dual = e.what();
+    }
+    ass<"Inf in scalar dual">(std::strcmp(NA_in_dual.c_str(), "invalid index argument") == 0);
+
   }
 }

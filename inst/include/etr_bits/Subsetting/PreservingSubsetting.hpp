@@ -179,7 +179,7 @@ inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& conve
         ass<"Too many index arguments for at least one dimension">(dim[counter] >= arg.size());
 
         using arg_val_type = typename ExtractDataType<A>::value_type;
-        // --- Case 1: Array<Integer>
+        // --- Case 1.1: Array<Integer> (L value)
         if constexpr (IsArray<A> && IsLBufferArray<A> && IsInteger<arg_val_type>) {
           const std::size_t n = arg.size();
           if (dim[counter] == arg.size()) {
@@ -188,7 +188,9 @@ inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& conve
             auto& v = converted_arrays[counter_converted++];
             v.resize(n);
             for (std::size_t i = 0; i < n; i++) {
-              v.set(i, arg.get(i).val);
+              const auto i_val = arg.get(i);
+              ass<"Found NA value in subsetting (within an integer object)">(!i_val.isNA());
+              v.set(i, i_val.val);
             }
             index_lists[counter++] = &v;
           }
@@ -198,7 +200,9 @@ inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& conve
           const std::size_t n = dim[counter];
           auto& v = converted_arrays[counter_converted++];
           for (std::size_t b = 0; b < n; b++) {
-            if (arg.get(safe_modulo(b, arg.size())).val) {
+            const auto b_val = arg.get(safe_modulo(b, arg.size()));
+            ass<"Found NA value in subsetting (within a logical object)">(!b_val.isNA());
+            if (b_val.val) {
               v.push_back(b + 1);
             }
           }
@@ -210,7 +214,9 @@ inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& conve
           auto& v = converted_arrays[counter_converted++];
           v.resize(n);
           for (std::size_t i = 0; i < n; i++) {
-            v.set(i, safe_index_from_double(arg.get(i).val));
+            const auto d_val = arg.get(i);
+            ass<"Found NA value in subsetting (within a double object)">(!d_val.isNA());
+            v.set(i, safe_index_from_double(d_val.val));
           }
           index_lists[counter++] = &v;
         }
@@ -284,7 +290,9 @@ inline out_L create_indices(const ArrayType& arr, const Args&... args) {
   for (;;) {
     offset = 1;
     for (std::size_t k = 0; k < N; k++) {
-      offset += ((*index_lists[k]).get(pos[k]).val - 1) * stride[k];
+      const auto val = (*index_lists[k]).get(pos[k]);
+      ass<"Found NA value in subsetting">(!val.isNA());
+      offset += (val.val - 1) * stride[k];
     }
     out.set(counter++, offset - 1);
 
