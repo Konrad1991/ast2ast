@@ -29,6 +29,15 @@ Documentation for the function [translate](https://konrad1991.github.io/ast2ast/
 If you want a detailed documentation please read this vignette: https://konrad1991.github.io/ast2ast/DetailedDocumentation.html
 In case you are interested on using ast2ast in your R package please refer to: https://konrad1991.github.io/ast2ast/InformationForPackageAuthors.html
 
+### automatic differentiation
+
+The reverse-mode automatic differentiation engine is adapted and refactored from the open-source autodiff library by Allan Leal (MIT license).
+The original implementation was modified to:
+* integrate with ast2ast’s scalar type system (Logical, Integer, Double, Dual)
+* support expression-level dispatch alongside value-level dispatch
+* enable interoperability with generated C++20 code and R bindings
+* align error handling and memory semantics with the ast2ast runtime
+
 ## Contribution
 
 

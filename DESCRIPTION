@@ -3,10 +3,16 @@ Type: Package
 Title: Translates an R Function to a C++ Function
 Version: 0.5
 Date: 2025-09-03
-Authors@R: person(given = "Krämer",
+
+Authors@R:
+  c(
+  person(given = "Krämer",
     family = "Konrad",
     role = c("aut", "cre"),
     email = "konrad_kraemer@yahoo.de")
+  person("Allan", "Leal", role = "ctb",
+      comment = "Reverse-mode automatic differentiation code adapted and refactored from the autodiff library")
+  )
 Maintainer: Krämer Konrad <konrad_kraemer@yahoo.de>
 BugReports: https://github.com/Konrad1991/ast2ast/issues
 URL: https://github.com/Konrad1991/ast2ast
