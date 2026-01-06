@@ -221,6 +221,13 @@ auto&& dim_view(Dim& d) {
   }
 }
 
+inline std::size_t safe_index_from_double(double x) {
+  ass<"invalid index argument">(std::isfinite(x));
+  double t = std::trunc(x);
+  ass<"Negative indices are not supported">(t >= 1);
+  return static_cast<std::size_t>(t);
+}
+
 // Scalar types (First dispatch layer)
 // --------------------------------------------------------------------------------------------------
 struct Logical;

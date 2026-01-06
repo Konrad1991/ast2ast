@@ -1,5 +1,3 @@
-#include "HelperSubsetting.hpp"
-
 #ifndef SUBSETTING_PRESERVING_ETR_HPP
 #define SUBSETTING_PRESERVING_ETR_HPP
 
