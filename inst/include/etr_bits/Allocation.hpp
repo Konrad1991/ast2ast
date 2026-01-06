@@ -132,7 +132,9 @@ inline auto ConvertValueColon(const T& obj) {
   }
 }
 
-template <typename DataType, typename S, typename E> inline auto colonInternal(S& start, E& end) {
+template <typename DataType, typename S, typename E> inline auto colonInternal(S& startScalar, E& endScalar) {
+  auto start = get_val(startScalar);
+  const auto end = get_val(endScalar);
   if (start < end) {
     std::size_t length = static_cast<std::size_t>(end - start + 1);
     ass<"invalid start or end values as argument to colon(:)">(length >= 1);
@@ -176,13 +178,13 @@ inline std::size_t ConvertTimesRep(const T& times) {
   using DecayedT = Decayed<T>;
   constexpr bool is_scalar = IsArithV<DecayedT> || IsADType<DecayedT>;
   if constexpr(is_scalar) {
-    const auto v = get_scalar_val(times);
+    const auto v = get_val(times);
     std::size_t res = static_cast<std::size_t>(v);
     ass<"times in fct rep has to be a positive integer">(res >= 1);
     return res;
   } else {
     ass<"times in rep has to be a vector of length 1">(times.size() == 1);
-    const auto v = get_scalar_val(times.get(0));
+    const auto v = get_val(times.get(0));
     std::size_t res = static_cast<std::size_t>(v);
     ass<"times in fct rep has to be a positive integer">(res >= 1);
     return res;
@@ -224,13 +226,13 @@ inline std::size_t ConvertSizeVec(const T& s) {
   using DecayedT = Decayed<T>;
   constexpr bool is_scalar = IsArithV<DecayedT> || IsADType<DecayedT>;
   if constexpr(is_scalar) {
-    const auto v = get_scalar_val(s);
+    const auto v = get_val(s);
     std::size_t res = static_cast<std::size_t>(v);
     ass<"size in fct vector/logical/integer/numeric has to be a positive integer">(res >= 1);
     return res;
   } else {
     ass<"size in vector/logical/integer/numeric has to be a vector of length 1">(s.size() == 1);
-    const auto v = get_scalar_val(s.get(0));
+    const auto v = get_val(s.get(0));
     std::size_t res = static_cast<std::size_t>(v);
     ass<"size in fct vector/logical/integer/numeric has to be a positive integer">(res >= 1);
     return res;
@@ -280,12 +282,54 @@ inline auto matrix(const T& inp, const R& nrow, const C& ncol) {
   } else {
     using DataType = typename ExtractDataType<Decayed<T>>::value_type;
     auto res = createRMat<DataType>(nrow, ncol);
-    ass<"Input for matrix does not match size (nrow * ncol)">(res.size() == (nr * nc));
+    ass<"Input for matrix does not match size (nrow * ncol)">(inp.size() == (nr * nc));
     for (std::size_t i = 0; i < res.size(); i++) {
       res.set(i, inp.get(i));
     }
     return res;
   }
+}
+
+template<typename Dim>
+inline auto calc_dim(const Dim& dim) {
+  using DecayedDim = Decayed<Dim>;
+  constexpr bool is_scalar_dim = IsArithV<DecayedDim> || IsADType<DecayedDim>;
+  if constexpr (is_scalar_dim) {
+    std::size_t size = ConvertSizeVec(dim);
+    return std::vector<std::size_t>{size};
+  } else {
+    std::vector<std::size_t> dim_vec(dim.size());
+    for (std::size_t i = 0; i < dim_vec.size(); i++) {
+      dim_vec[i] = ConvertSizeVec(dim.get(i));
+    }
+    return dim_vec;
+  }
+}
+
+template<typename T, typename Dim>
+inline auto array(const T& inp, const Dim& dim_inp) {
+  const auto dim = calc_dim(dim_inp);
+  const std::size_t size = 0; for (std::size_t i = 0; i < dim.size(); i++) size *= dim[i];
+  using DecayedT = Decayed<T>;
+  constexpr bool is_scalar = IsArithV<DecayedT> || IsADType<DecayedT>;
+  if constexpr (is_scalar) {
+    ass<"invalid length argument">(size > 0);
+    Array<DecayedT, Buffer<DecayedT, RBufferTrait>> res(SI{size});
+    for (std::size_t i = 0; i < res.size(); i++) {
+      res.set(i, inp);
+    }
+    return res;
+  } else {
+    using DataType = typename ExtractDataType<Decayed<T>>::value_type;
+    ass<"invalid length argument">(size > 0);
+    Array<DecayedT, Buffer<DecayedT, RBufferTrait>> res(SI{size});
+    ass<"Input for matrix does not match size (nrow * ncol)">(inp.size() == size);
+    for (std::size_t i = 0; i < res.size(); i++) {
+      res.set(i, inp.get(i));
+    }
+    return res;
+  }
+
 }
 
 } // namespace etr
