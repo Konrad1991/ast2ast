@@ -24,7 +24,7 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
 
   explicit operator bool() const {
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(d.get(0).val);
+    return static_cast<bool>(get_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -65,8 +65,9 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   // Scalar constructors
   Array(Logical b) : d(1), temp(1), dim(1, 1) { d.set(0, static_cast<T>(b));}
   Array(Integer sz) : d(1), temp(1), dim(1, 1) { d.set(0, static_cast<T>(sz));}
-  Array(Double sz) : d(1), temp(1), dim(1, 1) { d.set(0, sz.val);}
+  Array(Double sz) : d(1), temp(1), dim(1, 1) { d.set(0, get_val(sz)); }
   Array(Dual sz) : d(1), temp(1), dim(1, 1) { d.set(0, static_cast<T>(sz));}
+  Array(Variable<T> sz) : d(1), temp(1), dim(1, 1) { d.set(0, sz); }
 
   // define Arraytor with specific size
   explicit Array(const SI &sz) : d(sz.sz), temp(sz.sz), dim(1, sz.sz) {}
@@ -141,7 +142,7 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   // ======================= assignments =================================================
   // assign scalar values
   template <typename TD>
-  requires IsArithV<TD>
+  requires (IsArithV<TD> || IsADType<TD>)
   Array &operator=(const TD inp) {
     if constexpr (IS<TD, T>) {
       d.resize(1);
@@ -212,7 +213,7 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
 
   explicit operator bool() const {
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(d.get(0).val);
+    return static_cast<bool>(get_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -262,7 +263,7 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
 ---------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------
 */
-template<typename T> requires (IsArithV<T>) struct Array<T, Borrow<T, BorrowTrait>> {
+template<typename T> requires (IsArithV<T> || IsVariable<T>) struct Array<T, Borrow<T, BorrowTrait>> {
   using Type = T;
   using DType = Borrow<T, BorrowTrait>;
   using value_type = T;
@@ -276,7 +277,7 @@ template<typename T> requires (IsArithV<T>) struct Array<T, Borrow<T, BorrowTrai
 
   explicit operator bool() const {
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(d.get(0).val);
+    return static_cast<bool>(get_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -329,7 +330,7 @@ template<typename T> requires (IsArithV<T>) struct Array<T, Borrow<T, BorrowTrai
   // ======================= assignments =================================================
   // assign scalar values
   template <typename TD>
-  requires IsArithV<TD>
+  requires (IsArithV<TD> || IsADType<TD>)
   Array &operator=(const TD inp) {
     ass<"number of items to replace is not a multiple of replacement length">(1 <= d.capacity);
     if constexpr (IS<TD, T>) {
@@ -416,7 +417,7 @@ template<typename T, typename I, typename Trait> struct Array<T, UnaryOperation<
 
   explicit operator bool() const {
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(d.get(0).val);
+    return static_cast<bool>(get_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -476,7 +477,7 @@ template<typename T, typename L, typename R, typename Trait> struct Array<T, Bin
 
   explicit operator bool() const {
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(d.get(0).val);
+    return static_cast<bool>(get_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -542,7 +543,7 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
 
   explicit operator bool() const {
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(d.get(0).val);
+    return static_cast<bool>(get_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -594,7 +595,7 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   // ======================= assignments =================================================
   // assign scalar values
   template <typename TD>
-  requires IsArithV<TD>
+  requires (IsArithV<TD> || IsADType<TD>)
   Array &operator=(const TD inp) {
     if constexpr (IS<TD, T>) {
       for (std::size_t i = 0; i < d.size(); ++i) {
@@ -652,7 +653,7 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
 
   explicit operator bool() const {
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(d.get(0).val);
+    return static_cast<bool>(get_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {

@@ -6,8 +6,11 @@
 #include "../../inst/include/etr_bits/Core/Types.hpp"
 #include "../../inst/include/etr_bits/Core/Reflection.hpp"
 #include "../../inst/include/etr_bits/Core/ReverseAutomaticDifferentiation.hpp"
+#include "../../inst/include/etr_bits/Core/Buffer.hpp"
+#include "../../inst/include/etr_bits/Core/Borrow.hpp"
+#include "../../inst/include/etr_bits/Core/ArrayClass.hpp"
 
-using etr::var;
+using namespace etr;
 
 var f(var x, var y, var z) {
   return x + y + z*x + x* var(etr::Integer(3));
@@ -51,6 +54,15 @@ int main() {
   etr::derivatives(var(bla), wrt(x));
 
   x == etr::Integer(3);
+
+  {
+    var a(Double(3.0));
+    var b(Double(4.0));
+    auto test = a || b;
+    // auto test = Variable<Double>(Double(3.14)) || Variable<Double>(Double(3.14));
+    printTAST<decltype(std::declval<Variable<Double>>() || std::declval<Variable<Double>>())>();
+    // static_assert(IS<decltype(std::declval<Variable<Double>>() || std::declval<Variable<Double>>()), Logical>, "std::declval<Variable<Double>>() || std::declval<Variable<Double>>() -> Logical");
+  }
 
 }
 

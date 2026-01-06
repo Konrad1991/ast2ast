@@ -55,17 +55,14 @@ template <typename T>
 class Holder {
   std::optional<T> val;
   T* ptr = nullptr;
-
 public:
   // Construct from lvalue
   Holder(T& ref) : ptr(&ref) {}
-
   // Construct from rvalue
   Holder(T&& r) {
     val.emplace(std::move(r));
     ptr = &val.value();
   }
-
   // Copy constructor
   Holder(const Holder& other) {
     if (other.val.has_value()) {
@@ -75,7 +72,6 @@ public:
       ptr = other.ptr;
     }
   }
-
   // Copy assignment
   Holder& operator=(const Holder& other) {
     if (this != &other) {
@@ -89,7 +85,6 @@ public:
     }
     return *this;
   }
-
   // Move constructor
   Holder(Holder&& other) noexcept {
     if (other.val.has_value()) {
@@ -99,7 +94,6 @@ public:
       ptr = other.ptr;
     }
   }
-
   // Move assignment
   Holder& operator=(Holder&& other) noexcept {
     if (this != &other) {
@@ -113,7 +107,6 @@ public:
     }
     return *this;
   }
-
   T& get() const {
     return *ptr;
   }
@@ -163,31 +156,25 @@ template <std::size_t N> struct string_literal {
 
 template <string_literal msg> inline void ass(bool inp) {
 #ifdef STANDALONE_ETR
-  if (!inp)
-    throw std::runtime_error(msg.value.data());
+  if (!inp) throw std::runtime_error(msg.value.data());
 #else
-  if (!inp)
-    Rcpp::stop(msg.value.data());
+  if (!inp) Rcpp::stop(msg.value.data());
 #endif
 }
 
 inline void warn(bool inp, std::string message) {
 #ifdef STANDALONE_ETR
-  if (!inp)
-    std::cerr << "Warning: " + message << std::endl;
+  if (!inp) std::cerr << "Warning: " + message << std::endl;
 #else
-  if (!inp)
-    Rcpp::warning("Warning: " + message);
+  if (!inp) Rcpp::warning("Warning: " + message);
 #endif
 }
 
 template <string_literal msg> inline void warn(bool inp) {
 #ifdef STANDALONE_ETR
-  if (!inp)
-    std::cerr << msg.value.data() << std::endl;
+  if (!inp) std::cerr << msg.value.data() << std::endl;
 #else
-  if (!inp)
-    Rcpp::warning(msg.value.data());
+  if (!inp) Rcpp::warning(msg.value.data());
 #endif
 }
 
@@ -240,6 +227,10 @@ struct Logical;
 struct Integer;
 struct Double;
 struct Dual;
+template<typename T> struct Variable;
+template<typename T> struct Expr;
+template<typename T> using ExprPtr = std::shared_ptr<Expr<T>>;
+struct BooleanExpr;
 
 struct Logical {
   bool val;
@@ -249,6 +240,7 @@ struct Logical {
   Logical(Integer v);
   Logical(Double v);
   Logical(Dual v);
+  template<typename T> Logical(Variable<T> v);
   Integer operator+(const Logical&) const;
   Integer operator-(const Logical&) const;
   Integer operator*(const Logical&) const;
@@ -290,6 +282,7 @@ struct Integer {
   Integer(Logical v);
   Integer(Double v);
   Integer(Dual v);
+  template<typename T> Integer(Variable<T> v);
   Integer operator+(const Integer&) const;
   Integer operator-(const Integer&) const;
   Integer operator*(const Integer&) const;
@@ -389,6 +382,7 @@ struct Dual {
   Dual(Logical v);
   Dual(Integer v);
   Dual(Double v);
+  // Does not require a ctr for Variable. Forward and reverse mode AD cannot be mixed!
   template<typename T> requires std::is_arithmetic_v<T>
   Dual(T v);
   Dual operator+(const Dual&) const;
@@ -993,6 +987,7 @@ struct from_ast_scalar {
 template<> struct from_ast_scalar<Double>  { using type = double;  };
 template<> struct from_ast_scalar<Integer>     { using type = int; };
 template<> struct from_ast_scalar<Logical>    { using type = bool; };
+template<> struct from_ast_scalar<Variable<Double>> { using type = double; };
 template<typename T>
 using from_ast_scalar_t = typename from_ast_scalar<T>::type;
 
@@ -1012,7 +1007,7 @@ using to_ast_scalar_t = typename to_ast_scalar<T>::type;
 template<typename T>
 using bare_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
-enum class ScalarRank { Logical, Integer, Double, Dual };
+enum class ScalarRank { Logical, Integer, Double, Dual, Variable };
 
 // template<typename T> struct scalar_rank;
 template <class T>
@@ -1023,7 +1018,8 @@ struct scalar_rank {
 template<> struct scalar_rank<Logical> { static constexpr auto value = ScalarRank::Logical; };
 template<> struct scalar_rank<Integer> { static constexpr auto value = ScalarRank::Integer; };
 template<> struct scalar_rank<Double>  { static constexpr auto value = ScalarRank::Double; };
-template<> struct scalar_rank<Dual>    { static constexpr auto value = ScalarRank::Dual; }; // highest
+template<> struct scalar_rank<Dual>    { static constexpr auto value = ScalarRank::Dual; };
+template<> struct scalar_rank<Variable<Double>>    { static constexpr auto value = ScalarRank::Variable; }; // highest
 
 template<typename L, typename R>
 using common_scalar = std::conditional_t<
@@ -1420,6 +1416,23 @@ template <typename T>
 concept IsROrCalculationArray = requires(T t) {
   typename T::DType;
   requires IsOperationArray<T> || IsRArray<T>;
+};
+
+// reverse ad
+template <typename T> struct is_any_variable : std::false_type {};
+template <typename T> struct is_any_variable<Variable<T>> : std::true_type {};
+template <typename T> inline constexpr bool is_any_variable_v = is_any_variable<T>::value;
+template <typename T> concept IsVariable = is_any_variable_v<T>;
+
+template <typename T> struct is_any_expr : std::false_type {};
+template <typename T> struct is_any_expr<ExprPtr<T>> : std::true_type {};
+template <typename T> inline constexpr bool is_any_expr_v = is_any_expr<T>::value;
+template <typename T> concept IsExpr = is_any_expr_v<T>;
+
+template <typename T>
+concept IsADType = requires(T t) {
+  typename T;
+  requires IsVariable<T> || IsExpr<T> || IS<T, BooleanExpr>;
 };
 
 // Second dispatch layer

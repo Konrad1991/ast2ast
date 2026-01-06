@@ -3,28 +3,9 @@
 
 namespace etr {
 
-template <typename Scalar>
-struct BorrowIt {
-  const Scalar* ptr;
-
-  using value_type = Scalar;
-  using reference  = Scalar;
-  using difference_type = std::ptrdiff_t;
-  using iterator_category = std::forward_iterator_tag;
-
-  reference operator*() const { return *ptr; }
-
-  BorrowIt& operator++() {
-    ++ptr;
-    return *this;
-  }
-
-  bool operator!=(const BorrowIt& other) const {
-    return ptr != other.ptr;
-  }
-};
-
+//------------------------------------------------------------------------------
 // Points to a Variable and stores size
+//------------------------------------------------------------------------------
 template <typename T, typename BorrowTrait> struct Borrow {
   using value_type = T;
   using Type = T;
@@ -92,7 +73,6 @@ template <typename T, typename BorrowTrait> struct Borrow {
 
   // Raw C++ pointer
   template<typename T2>
-  requires IS<to_ast_scalar_t<T2>, T>
   void init(T2 *p_, std::size_t sz_) {
     ass<"null pointer with positive size">(p_ != nullptr || sz_ == 0);
     this->p = p_;
@@ -100,13 +80,21 @@ template <typename T, typename BorrowTrait> struct Borrow {
     capacity = sz;
     this->allocated = true;
   }
-  template<typename T2>
-  requires IS<to_ast_scalar_t<T2>, T>
+  // T is Scalar Type
+  template<typename T2> requires (IS<to_ast_scalar_t<T2>, T> && IsArithV<T>)
   Borrow(T2 *p_, std::size_t sz_) {
     init(p_, sz_);
   }
-  template<typename T2>
-  requires IS<to_ast_scalar_t<T2>, T>
+  template<typename T2> requires (IS<to_ast_scalar_t<T2>, T> && IsArithV<T>)
+  Borrow(T2 *p_, int sz_) {
+    init(p_, sz_);
+  }
+  // T is Variable<ScalarType>
+  template<typename T2> requires (IS<to_ast_scalar_t<T2>, ExtractedTypeFromVariableData<T>>)
+  Borrow(T2 *p_, std::size_t sz_) {
+    init(p_, sz_);
+  }
+  template<typename T2> requires (IS<to_ast_scalar_t<T2>, ExtractedTypeFromVariableData<T>>)
   Borrow(T2 *p_, int sz_) {
     init(p_, sz_);
   }
@@ -123,7 +111,7 @@ template <typename T, typename BorrowTrait> struct Borrow {
     return value_type(x);
   }
   static from_ast_scalar_t<T> store(const value_type& x) {
-    return x.val;
+    return get_val(x);
   }
   value_type get(std::size_t idx) const {
     ass<"No memory was allocated">(allocated);
@@ -136,19 +124,43 @@ template <typename T, typename BorrowTrait> struct Borrow {
     p[idx] = store(val);
   }
 
+  template <typename Raw, typename Scalar>
+  struct BorrowIt {
+    const Raw* ptr;
+
+    using value_type = Scalar;
+    using reference  = Scalar;
+    using difference_type = std::ptrdiff_t;
+    using iterator_category = std::forward_iterator_tag;
+
+    reference operator*() const { return Scalar(*ptr); }
+
+    BorrowIt& operator++() {
+      ++ptr;
+      return *this;
+    }
+
+    bool operator!=(const BorrowIt& other) const {
+      return ptr != other.ptr;
+    }
+  };
+
   template <typename L2> void moveit(L2 &other) = delete;
   auto begin() const {
     ass<"No memory was allocated">(allocated);
-    return BorrowIt<from_ast_scalar_t<T>>{ p };
+    return BorrowIt<from_ast_scalar_t<T>, T>{ p };
   }
   auto end() const {
     ass<"No memory was allocated">(allocated);
-    return BorrowIt<from_ast_scalar_t<T>>{ p + sz };
+    return BorrowIt<from_ast_scalar_t<T>, T>{ p + sz };
   }
   void realloc(int new_size) = delete;
   void push_back(T input) = delete;
 };
 
+//------------------------------------------------------------------------------
+// Borrow specialisation for Dual
+//------------------------------------------------------------------------------
 template <typename BorrowTrait> struct Borrow<Dual, BorrowTrait> {
   using value_type = Dual;
   using Type = Dual;

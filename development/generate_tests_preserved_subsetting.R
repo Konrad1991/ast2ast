@@ -19,11 +19,11 @@ Double_arr3 <- array(c(1.0, 2.0, 3.0), 3L)
 
 # Combinations for binary operations
 values <- list(
-  logical_etr = TRUE, integer_etr = 10L, double_etr = 3.14, dual_etr = 3.14,
-  Logical_arr = Logical_arr, Integer_arr = Integer_arr, Double_arr = Double_arr, Dual_arr = Dual_arr,
+  logical_etr = TRUE, integer_etr = 10L, double_etr = 3.14, dual_etr = 3.14, rev_ad_etr = 3.14,
+  Logical_arr = Logical_arr, Integer_arr = Integer_arr, Double_arr = Double_arr, Dual_arr = Dual_arr, rev_ad_arr = Double_arr,
 
   Logical_r_arr = Logical_arr, Integer_r_arr = Integer_arr,
-  Double_r_arr = Double_arr3, Dual_r_arr = Dual_arr,
+  Double_r_arr = Double_arr3, Dual_r_arr = Dual_arr, rev_ad_r_arr = Double_arr3,
 
   Logical_borrowed_arr = Logical_arr, Integer_borrowed_arr = Integer_arr,
   Double_borrowed_arr = Double_arr3, Dual_borrowed_arr = Dual_arr,
@@ -90,7 +90,7 @@ sub2 <- function(what, what_name, idx) {
     result, what_cpp_string, paste0("expected", idx)
   )
 }
-values_without_scalar <- values[5:21]
+values_without_scalar <- values[6:21]
 n_args <- length(values_without_scalar)
 what <- lapply(seq_len(n_args), \(x) Double_arr)
 string <- Map(

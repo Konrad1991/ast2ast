@@ -8,66 +8,147 @@ namespace etr {
 template<typename T>
 inline size_t ExtractIndex(const T& obj) {
   using DecayedT = Decayed<T>;
-  static_assert(IsCppDouble<DecayedT> || IsCppInteger<DecayedT>, "at can only handle integer or double values");
-  if constexpr(IsCppArithV<DecayedT>) {
-    if constexpr (IsCppInteger<DecayedT>) {
-      return obj;
-    } else if constexpr(IsCppDouble<DecayedT>) {
-      return safe_index_from_double(obj);
+  if constexpr(IsArithV<DecayedT> || IsADType<DecayedT>) {
+    static_assert(IsDouble<DecayedT> || IsInteger<DecayedT> || IsDual<DecayedT> || IsVariable<DecayedT>, "simplified can only handle integer or double values");
+    constexpr bool is_double = IsDouble<DecayedT> || IsInteger<DecayedT> || IsDual<DecayedT>;
+    if constexpr (!is_double) {
+      return static_cast<std::size_t>(get_val(obj));
+    } else if constexpr(is_double) {
+      return safe_index_from_double(get_val(obj));
     }
-  } else {
+  } else if constexpr (IsArray<DecayedT>) {
+    using DataType = typename ExtractDataType<DecayedT>::value_type;
+    constexpr bool is_double = IsDouble<DecayedT> || IsInteger<DecayedT> || IsDual<DecayedT>;
     ass<"at accepts only vector of length 1">(obj.size() == 1);
-    if constexpr (IsCppInteger<DecayedT>) {
-      return obj[0];
-    } else if constexpr(IsCppDouble<DecayedT>) {
-      return safe_index_from_double(obj[0]);
+    if constexpr (!is_double) {
+      return static_cast<std::size_t>(get_val(obj.get(0)));
+    } else if constexpr(is_double) {
+      return safe_index_from_double(get_val(obj.get(0)));
     }
   }
 }
 
-// direct access vector memory if possible. R is arithmetic
+// Wrapper for borrow
 // -----------------------------------------------------------------------------------------------------------
-template <typename T, typename R>
-requires (
-!IsBufferVec<T> && !IsBorrowVec<T> && !IsBufferMat<T> && !IsBorrowMat<T>
-)
-inline const auto at(const T &inp, R i) {
-  return inp[ExtractIndex(i) - 1];
-}
-template <typename T, typename R>
-requires (
-IsBufferVec<T> || IsBorrowVec<T> || IsBufferMat<T> || IsBorrowMat<T>
-)
-inline auto &at(T &inp, R i) {
-  std::size_t idx = ExtractIndex(i);
-  idx--;
-  ass<"No memory was allocated">(inp.d.allocated);
-  ass<"Error: out of boundaries --> value below 1">(idx >= 0);
-  ass<"Error: out of boundaries">(idx < inp.size());
-  return inp.d.p[idx];
+struct LogicalRef {
+  bool* p;
+
+  // implicit read
+  operator Logical() const { return Logical(*p); }
+
+  // assignment from scalar
+  LogicalRef& operator=(const Logical& x) { *p = get_val(x); return *this; }
+  LogicalRef& operator=(bool x) { *p = x; return *this; }
+};
+struct IntegerRef {
+  int* p;
+
+  // implicit read
+  operator Integer() const { return Integer(*p); }
+
+  // assignment from scalar
+  IntegerRef& operator=(const Integer& x) { *p = get_val(x); return *this; }
+  IntegerRef& operator=(int x) { *p = x; return *this; }
+};
+struct DoubleRef {
+  double* p;
+
+  // implicit read
+  operator Double() const { return Double(*p); }
+
+  // assignment from scalar
+  DoubleRef& operator=(const Double& x) { *p = get_val(x); return *this; }
+  DoubleRef& operator=(double x) { *p = x; return *this; }
+};
+struct DualRef {
+  double* p_val;
+  double* p_dot;
+
+  // implicit read
+  operator Dual() const { return Dual(*p_val, *p_dot); }
+
+  // assignment from scalar
+  DualRef& operator=(const Dual& x) { *p_val = get_val(x); *p_dot = x.dot; return *this; }
+  DualRef& set(double x, double dot) {
+    *p_val = x;
+    *p_dot = dot;
+    return *this;
+  }
+};
+
+
+// direct access vector memory if possible.
+// -----------------------------------------------------------------------------------------------------------
+template <typename ArrayType, typename... Args>
+requires (IsLBufferArray<ArrayType> || IsBorrowArray<ArrayType>)
+inline decltype(auto) at(ArrayType& arr, const Args&... args) {
+  constexpr std::size_t N = sizeof...(Args);
+  const auto& dim = dim_view(arr.dim);
+  if (N > dim.size()) {
+    ass<"Too many index arguments for array rank">(false);
+  }
+  if (N < dim.size()) {
+    ass<"Too less index arguments for array rank">(false);
+  }
+
+  int counter = 0;
+  std::array<std::size_t, N> indices;
+  forEachArg(
+    [&](const auto& arg) {
+      indices[counter++] = ExtractIndex(arg) - 1;
+    },
+    args...
+  );
+  std::size_t idx = 0;
+  auto stride = make_strides_from_vec<N>(dim);
+  for (std::size_t i = 0; i < N; i++) {
+    idx += indices[i] * stride[i];
+  }
+  if constexpr (IsLBufferArray<ArrayType>) {
+    return arr.d.p[idx];
+  } else if constexpr (IsBorrowArray<ArrayType>){
+    using DataType = typename ExtractDataType<Decayed<ArrayType>>::value_type;
+    if constexpr (IsDouble<DataType>) {
+      return DoubleRef{ &arr.d.p[idx] };
+    } else if constexpr (IsInteger<DataType>) {
+      return IntegerRef{ &arr.d.p[idx] };
+    } else if constexpr (IsLogical<DataType>) {
+      return LogicalRef{ &arr.d.p[idx] };
+    } else if constexpr (IsDual<DataType>) {
+      return DualRef{ &arr.d.p_val[idx], &arr.d.p_dot[idx] };
+    } else {
+      ass<"Borrow at(): unsupported datatype">(false);
+      return DoubleRef{nullptr}; // unreachable, just to satisfy compilers sometimes
+    }
+  }
 }
 
-template <typename T, typename R, typename C>
-requires (
-!IsBufferVec<T> && !IsBorrowVec<T> && !IsBufferMat<T> && !IsBorrowMat<T>
-)
-inline const auto at(const T &inp, R row, C col) {
-  std::size_t c = ExtractIndex(row);
-  std::size_t r = ExtractIndex(col);
-  return inp[(c - 1) * inp.nr() + (r - 1)];
-}
-template <typename T, typename R, typename C>
-requires (
-IsBufferVec<T> || IsBorrowVec<T> || IsBufferMat<T> || IsBorrowMat<T>
-)
-inline auto &at(T &inp, R row, C col) {
-  std::size_t c = ExtractIndex(row);
-  std::size_t r = ExtractIndex(col);
-  std::size_t idx = (c - 1) * inp.nr() + (r - 1);
-  ass<"No memory was allocated">(inp.d.allocated);
-  ass<"Error: out of boundaries --> value below 1">(idx >= 0);
-  ass<"Error: out of boundaries">(idx < inp.size());
-  return inp.d.p[idx];
+template <typename ArrayType, typename... Args>
+requires (!IsLBufferArray<ArrayType> && !IsBorrowArray<ArrayType>)
+inline const auto at(const ArrayType& arr, const Args&... args) {
+  constexpr std::size_t N = sizeof...(Args);
+  const auto& dim = dim_view(arr.dim);
+  if (N > dim.size()) {
+    ass<"Too many index arguments for array rank">(false);
+  }
+  if (N < dim.size()) {
+    ass<"Too less index arguments for array rank">(false);
+  }
+
+  int counter = 0;
+  std::array<std::size_t, N> indices;
+  forEachArg(
+    [&](const auto& arg) {
+      indices[counter++] = ExtractIndex(arg) - 1;
+    },
+    args...
+  );
+  std::size_t idx = 0;
+  auto stride = make_strides_from_vec<N>(dim);
+  for (std::size_t i = 0; i < N; i++) {
+    idx += indices[i] * stride[i];
+  }
+  return arr.get(idx);
 }
 
 } // namespace etr

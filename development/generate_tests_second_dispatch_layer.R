@@ -5,45 +5,33 @@ unary_operations <- c(
 )
 ops <- data.frame(
   name = c(
-    "b_cpp", "i_cpp", "d_cpp",
     "b_etr", "i_etr", "d_etr",
-    "dua"
+    "dua", "var"
   ),
   expr = c(
-    "std::declval<bool>()",
-    "std::declval<int>()",
-    "std::declval<double>()",
     "std::declval<Logical>()",
     "std::declval<Integer>()",
     "std::declval<Double>()",
-    "std::declval<Dual>()"
+    "std::declval<Dual>()",
+    "std::declval<Variable<Double>>()"
   ),
   type = c(
-    "bool", "int", "double",
     "Logical", "Integer", "Double",
-    "Dual"
+    "Dual", "Variable<Double>"
   )
 )
 unary_promote <- function(obj, op) {
-  if (obj == "bool") {
-    if (op == "-") return("int")
-    return("double")
-  }
   if (obj == "Logical") {
     if (op == "-") return("Integer")
     return("Double")
-  }
-  if (obj == "int") {
-    if (op == "-") return("int")
-    return("double")
   }
   if (obj == "Integer") {
     if (op == "-") return("Integer")
     return("Double")
   }
-  if (obj == "double") return("double")
   if (obj == "Double") return("Double")
   if (obj == "Dual") return("Dual")
+  if (obj == "Variable<Double>") return("std::shared_ptr<Expr<Double>>")
 }
 for (i in unary_operations) {
   ops[[paste0("result", i)]] <- Map(unary_promote, ops$type, i)
@@ -55,11 +43,15 @@ emit <- function(obj, res, op) {
   )
 }
 
+string_res <- ""
 for (i in unary_operations) {
   temp <- Map(emit, ops$expr, ops[[paste0("result", i)]], i)
-  cat(paste(temp, collapse = "\n"))
-  cat("\n")
+  string_res <- c(string_res, paste(temp, collapse = "\n"))
 }
+pipe <- pipe("xclip -selection clipboard", "w")
+writeLines(string_res, pipe)
+close(pipe)
+
 
 
 # Generate binary operation tests
@@ -69,52 +61,30 @@ binary_operations <- c(
 )
 ops <- data.frame(
   name = c(
-    "b_cpp", "i_cpp", "d_cpp",
     "b_etr", "i_etr", "d_etr",
     "dua"
   ),
   expr = c(
-    "std::declval<bool>()",
-    "std::declval<int>()",
-    "std::declval<double>()",
     "std::declval<Logical>()",
     "std::declval<Integer>()",
     "std::declval<Double>()",
     "std::declval<Dual>()"
   ),
   type = c(
-    "bool", "int", "double",
     "Logical", "Integer", "Double",
     "Dual"
   )
 )
 grid <- merge(ops, ops, by = NULL, suffixes = c("_l", "_r"))
 
-binary_promote_cpp <- function(lhs, rhs, operation) {
-  if (operation %in% c("==", "<", "<=", ">", ">=", "!=", "&&", "||")) {
-    return("bool")
-  }
-  if (lhs %in% c("bool", "int") && rhs %in% c("bool", "int")) {
-    if (operation %in% c("+", "-", "*", "/")) return("int")
-    if (operation %in% c("pow")) return("double")
-  }
-  return("double")
-}
-
 binary_promote <- function(lhs, rhs, operation) {
-  etr <- c("Logical", "Integer", "Double")
-  cpp <- c("bool", "int", "double")
-
-  if ((lhs %in% cpp) && (rhs %in% cpp)) {
-    return(binary_promote_cpp(lhs, rhs, operation))
-  }
   if (operation %in% c("==", "<", "<=", ">", ">=", "!=", "&&", "||")) {
     return("Logical")
   }
   if (lhs == "Dual" || rhs == "Dual") {
     return("Dual")
   }
-  if (lhs %in% c("double", "Double") || rhs %in% c("double", "Double")) {
+  if (lhs == "Double" || rhs == "Double") {
     return("Double")
   }
   if (operation %in% c("pow", "/")) return("Double")
@@ -139,16 +109,61 @@ emit <- function(l, r, res, op) {
     )
   }
 }
-
+string_res <- ""
 for (i in binary_operations) {
   temp <- Map(emit, grid$expr_l, grid$expr_r, grid[[paste0("result", i)]], i)
-  cat(paste(temp, collapse = "\n"))
-  cat("\n")
+  string_res <- c(string_res, paste(temp, collapse = "\n"))
 }
+pipe <- pipe("xclip -selection clipboard", "w")
+writeLines(string_res, pipe)
+close(pipe)
 
-# Test common type
-types <- c(
-  "bool", "int", "double",
-  "Logical", "Integer", "Double", "Dual"
+# Generate binary operation tests for Variable<Double>
+ops <- data.frame(
+  name = c(
+    "b_etr", "i_etr", "d_etr",
+    "var"
+  ),
+  expr = c(
+    "std::declval<Logical>()",
+    "std::declval<Integer>()",
+    "std::declval<Double>()",
+    "std::declval<Variable<Double>>()"
+  ),
+  type = c(
+    "Logical", "Integer", "Double",
+    "Variable<Double>"
+  )
 )
-expand.grid(types, types)
+binary_promote <- function(lhs, rhs, operation) {
+  if (lhs == "Variable<Double>" || rhs == "Variable<Double>") {
+    if (operation %in% c("==", "<", "<=", ">", ">=", "!=", "&&", "||")) {
+      return("BooleanExpr")
+    }
+    return("std::shared_ptr<Expr<Double>>")
+  }
+  if (operation %in% c("==", "<", "<=", ">", ">=", "!=", "&&", "||")) {
+    return("Logical")
+  }
+  if (lhs == "Dual" || rhs == "Dual") {
+    return("Dual")
+  }
+  if (lhs == "Double" || rhs == "Double") {
+    return("Double")
+  }
+  if (operation %in% c("pow", "/")) return("Double")
+
+  return("Integer")
+}
+grid <- merge(ops, ops, by = NULL, suffixes = c("_l", "_r"))
+for (i in binary_operations) {
+  grid[[paste0("result", i)]] <- Map(binary_promote, grid$type_l, grid$type_r, i)
+}
+string_res <- ""
+for (i in binary_operations) {
+  temp <- Map(emit, grid$expr_l, grid$expr_r, grid[[paste0("result", i)]], i)
+  string_res <- c(string_res, paste(temp, collapse = "\n"))
+}
+pipe <- pipe("xclip -selection clipboard", "w")
+writeLines(string_res, pipe)
+close(pipe)

@@ -64,7 +64,6 @@ constexpr auto For(Function&& f) {
 //------------------------------------------------------------------------------
 // Nodes
 //------------------------------------------------------------------------------
-template<typename T> struct Expr;
 template<typename T> struct VariableExpr;
 template<typename T> struct IndependentVariableExpr;
 template<typename T> struct DependentVariableExpr;
@@ -91,8 +90,6 @@ template<typename T> struct LogExpr;
 template<typename T> struct PowExpr;
 template<typename T> struct SqrtExpr;
 template<typename T> struct Variable;
-
-template<typename T> using ExprPtr = std::shared_ptr<Expr<T>>;
 
 template<typename T>
 struct VariableValueTypeNotDefinedFor {};
@@ -615,9 +612,6 @@ template<typename Op> auto bool_expr_op(BooleanExpr& l, BooleanExpr& r, Op op) {
   });
 }
 
-inline auto operator && (BooleanExpr&& l, BooleanExpr&& r) { return bool_expr_op(l, r, std::logical_and<> {}); }
-inline auto operator || (BooleanExpr&& l, BooleanExpr&& r) { return bool_expr_op(l, r, std::logical_or<> {}); }
-
 /// Select between expression branches depending on a boolean expression
 template<typename T>
 struct ConditionalExpr : Expr<T> {
@@ -691,6 +685,7 @@ template<typename T, typename U> requires IsArithV<U> ExprPtr<T> pow(const ExprP
 /// The autodiff variable type used for detail mode automatic differentiation.
 template<typename T>
 struct Variable {
+  using value_type = T;
   /// The pointer to the expression tree of variable operations
   ExprPtr<T> expr;
   /// Construct a default Variable object
@@ -699,8 +694,10 @@ struct Variable {
   Variable(const Variable& other) : Variable(other.expr) {}
 
   /// Construct a Variable object with given Scalar values from ast2ast
-  template<typename U>
-  requires IsArithV<U>
+  template<typename U> requires IsArithV<U>
+  Variable(const U& val) : expr(std::make_shared<IndependentVariableExpr<T>>(val)) {}
+  /// Construct a Variable object with given native C++ scalar value
+  template<typename U> requires IsCppArithV<U>
   Variable(const U& val) : expr(std::make_shared<IndependentVariableExpr<T>>(val)) {}
 
   /// Construct a Variable object with given expression
@@ -738,7 +735,9 @@ struct Variable {
 
   explicit operator T() const { return expr->val; }
   template<typename U>
-  explicit operator U() const { return static_cast<U>(expr->val); }
+  explicit operator U() const {
+    return static_cast<U>(expr->val.val);
+  }
 };
 
 //------------------------------------------------------------------------------
@@ -785,6 +784,10 @@ template<typename T, typename U> requires is_binary_expr_v<T, U>
 auto operator < (const T& t, const U& u) { return comparison_operator<std::less<>>(t, u); }
 template<typename T, typename U> requires is_binary_expr_v<T, U>
 auto operator > (const T& t, const U& u) { return comparison_operator<std::greater<>>(t, u); }
+template<typename T, typename U> requires is_binary_expr_v<T, U>
+auto operator && (const T& t, const U& u) { return comparison_operator<std::logical_and<>>(t, u); }
+template<typename T, typename U> requires is_binary_expr_v<T, U>
+auto operator || (const T& t, const U& u) { return comparison_operator<std::logical_or<>>(t, u); }
 
 //------------------------------------------------------------------------------
 // ARITHMETIC OPERATORS (DEFINED FOR ARGUMENTS OF TYPE Variable)
@@ -903,20 +906,36 @@ std::ostream& operator<<(std::ostream& out, const ExprPtr<T>& x) {
   return out;
 }
 
-// Retrieve val --> TODO: replace everywhere .val with get_val
-// TODO: add isNA, etc. to the Variable class
+// Retrieve val
 // --------------------------------------------------------------------------------------------------
-template<typename T> inline auto get_val(const T& t) {
-  if constexpr (IsLogical<T> || IsInteger<T> || IsDouble<T> || IsDual<T>) {
-    return t.val;
-  } else if constexpr (IS<T, Variable<Double>>){
-    return t.expr->val;
-  } else if constexpr (IS<T, BooleanExpr>){
-    return t.val;
-  } else {
-    return t->val;
-  }
-}
+template<typename T> requires IsArithV<T> inline auto get_scalar_val(const T& t) { return t; }
+template<typename T> inline auto get_scalar_val(const ExprPtr<T>& t) { return t->val; }
+template<typename T> inline auto get_scalar_val(const Variable<T>& t) { return t.expr->val; }
+template<typename T> inline auto get_scalar_val(const BooleanExpr& t) { return t.val; }
+
+template<typename T> requires std::is_arithmetic_v<T> inline T get_val(const T& t) { return t; }
+template<typename T> requires IsArithV<T> inline auto get_val(const T& t) { return t.val; }
+template<typename T> inline auto get_val(const ExprPtr<T>& t) { return t->val.val; }
+template<typename T> inline auto get_val(const Variable<T>& t) { return t.expr->val.val; }
+template<typename T> inline auto get_val(const BooleanExpr& t) { return t.val.val; }
 
 using var = Variable<etr::Double>;
+
+// Conversion to Scalars
+// --------------------------------------------------------------------------------------------------
+template<typename T> Logical::Logical(Variable<T> v)    : val(static_cast<bool>(get_val(v))), is_na(get_scalar_val(v).is_na) {}
+template<typename T> Integer::Integer(Variable<T> v)    : val(static_cast<int>(get_val(v))), is_na(get_scalar_val(v).is_na) {}
+
+// Get Inner Data Type of Variable
+// --------------------------------------------------------------------------------------------------
+template <typename T> struct ExtractDataTypeFromVariable;
+
+template <typename T> struct ExtractDataTypeFromVariable<Variable<T>> {
+  using value_type = T;
+};
+template <typename T> struct ExtractDataTypeFromVariable<const Variable<T>> {
+  using value_type = T const;
+};
+template <typename T> using ExtractedTypeFromVariableData = typename ExtractDataTypeFromVariable<T>::value_type;
+
 }

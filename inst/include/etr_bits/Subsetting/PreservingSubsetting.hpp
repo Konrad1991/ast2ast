@@ -188,7 +188,7 @@ inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& conve
             auto& v = converted_arrays[counter_converted++];
             v.resize(n);
             for (std::size_t i = 0; i < n; i++) {
-              const auto i_val = arg.get(i);
+              const auto i_val = get_scalar_val(arg.get(i));
               ass<"Found NA value in subsetting (within an integer object)">(!i_val.isNA());
               v.set(i, i_val.val);
             }
@@ -200,7 +200,7 @@ inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& conve
           const std::size_t n = dim[counter];
           auto& v = converted_arrays[counter_converted++];
           for (std::size_t b = 0; b < n; b++) {
-            const auto b_val = arg.get(safe_modulo(b, arg.size()));
+            const auto b_val = get_scalar_val(arg.get(safe_modulo(b, arg.size())));
             ass<"Found NA value in subsetting (within a logical object)">(!b_val.isNA());
             if (b_val.val) {
               v.push_back(b + 1);
@@ -214,7 +214,7 @@ inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& conve
           auto& v = converted_arrays[counter_converted++];
           v.resize(n);
           for (std::size_t i = 0; i < n; i++) {
-            const auto d_val = arg.get(i);
+            const auto d_val = get_scalar_val(arg.get(i));
             ass<"Found NA value in subsetting (within a double object)">(!d_val.isNA());
             v.set(i, safe_index_from_double(d_val.val));
           }
@@ -231,6 +231,13 @@ inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& conve
       else if constexpr (IsArithV<A>) {
         fill_scalars_in_index_lists<N>(arr, converted_arrays,
                                        index_lists, arg.val,
+                                       counter, counter_converted);
+      }
+
+      // --- Case 6: rev ad
+      else if constexpr (IsADType<A>) {
+        fill_scalars_in_index_lists<N>(arr, converted_arrays,
+                                       index_lists, get_val(arg),
                                        counter, counter_converted);
       }
       else {

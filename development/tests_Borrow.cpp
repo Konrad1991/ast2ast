@@ -37,7 +37,7 @@ void test_borrow_dual() {
     ass<"Borrow<Dual> capacity">(b.capacity == 3);
 
     Dual d = b.get(1);
-    ass<"get returns correct val">(compare(d.val, 2.0));
+    ass<"get returns correct val">(compare(get_val(d), 2.0));
     ass<"get returns correct dot">(compare(d.dot, 0.2));
   }
   // set / get
@@ -150,7 +150,7 @@ void test_borrow_dual() {
   }
 }
 
-void test_borrow() {
+template<typename RealType> void test_borrow() {
   auto compare = [](auto l, auto r) {
     double TOL = 1E-03;
     return std::abs(l - r) < TOL;
@@ -158,7 +158,7 @@ void test_borrow() {
 
   // Empty Borrow
   {
-    Borrow<Double> b;
+    Borrow<RealType> b;
     ass<"Empty buffer size = 0">(b.size() == 0);
     ass<"Empty buffer capacity = 0">(b.capacity == 0);
     try {
@@ -179,58 +179,58 @@ void test_borrow() {
   // Copy constructor
   {
     std::vector<double> owner(10, 0.0);
-    Borrow<Double> b1(owner.data(), owner.size());
+    Borrow<RealType> b1(owner.data(), owner.size());
     b1.set(0, Double(1.1));
     b1.set(1, Double(2.2));
-    Borrow<Double> b2 = b1;
+    Borrow<RealType> b2 = b1;
     ass<"copy ctor size">(b2.size() == 10);
-    ass<"copy ctor deep copy">(compare(b2.get(0).val, 1.1));
+    ass<"copy ctor deep copy">(compare(get_val(b2.get(0)), 1.1));
   }
   // Copy assignment
   {
     std::vector<double> owner(10, 0.0);
-    Borrow<Double> b1(owner.data(), owner.size());
-    Borrow<Double> b2;
+    Borrow<RealType> b1(owner.data(), owner.size());
+    Borrow<RealType> b2;
     b1.set(0, Double(1.1));
     b1.set(1, Double(2.2));
     b2 = b1;
     ass<"copy assign size">(b2.size() == 10);
-    ass<"copy assign content">(compare(b2.get(1).val, 2.2));
+    ass<"copy assign content">(compare(get_val(b2.get(1)), 2.2));
   }
   // Move constructor --> copy
   {
     std::vector<double> owner(10, 0.0);
-    Borrow<Double> b1(owner.data(), owner.size());
+    Borrow<RealType> b1(owner.data(), owner.size());
     b1.set(0, Double(1.1));
     b1.set(1, Double(2.2));
-    Borrow<Double> b2(std::move(b1));
+    Borrow<RealType> b2(std::move(b1));
     ass<"move ctor copies in case of borrow; size">(b2.size() == 10 && b1.size() == 10);
-    ass<"move ctor value">(compare(b2.get(0).val, 1.1) && compare(b1.get(0).val, 1.1));
+    ass<"move ctor value">(compare(get_val(b2.get(0)), 1.1) && compare(get_val(b1.get(0)), 1.1));
   }
   // Move constructor
   {
     std::vector<double> owner(10, 0.0);
-    Borrow<Double> b1(owner.data(), owner.size());
+    Borrow<RealType> b1(owner.data(), owner.size());
     b1.set(0, Double(1.1));
     b1.set(1, Double(2.2));
-    Borrow<Double> b2;
+    Borrow<RealType> b2;
     b2 = std::move(b1);
     ass<"move ctor copies in case of borrow; size">(b2.size() == 10 && b1.size() == 10);
-    ass<"move ctor value">(compare(b2.get(0).val, 1.1) && compare(b1.get(0).val, 1.1));
+    ass<"move ctor value">(compare(get_val(b2.get(0)), 1.1) && compare(get_val(b1.get(0)), 1.1));
   }
   // Self assignment
   {
     std::vector<double> owner(10, 0.0);
-    Borrow<Double> b(owner.data(), owner.size());
+    Borrow<RealType> b(owner.data(), owner.size());
     b.set(0, Double(1.1));
     b.set(1, Double(2.2));
     b = b;
-    ass<"self assign safe">(compare(b.get(1).val, 2.2));
+    ass<"self assign safe">(compare(get_val(b.get(1)), 2.2));
   }
   // resize
   {
     std::vector<double> owner(10, 0.0);
-    Borrow<Double> b(owner.data(), owner.size());
+    Borrow<RealType> b(owner.data(), owner.size());
     b.set(0, Double(1.1));
     b.set(1, Double(2.2));
     b.resize(5);
@@ -244,9 +244,9 @@ void test_borrow() {
   }
   // set and get
   {
-    Borrow<Double> empty_borrow;
+    Borrow<RealType> empty_borrow;
     std::vector<double> owner(10, 0.0);
-    Borrow<Double> b(owner.data(), owner.size());
+    Borrow<RealType> b(owner.data(), owner.size());
     try {
       const auto test = empty_borrow.get(0);
     } catch (const std::exception& e) {
@@ -263,8 +263,8 @@ void test_borrow() {
     b.set(0, Double(1.1));
     b.set(1, Double(2.2));
     ass<"set and get work as expected">(
-      compare(b.get(0).val, 1.1) &&
-      compare(b.get(1).val, 2.2)
+      compare(get_val(b.get(0)), 1.1) &&
+      compare(get_val(b.get(1)), 2.2)
     );
     try {
       const auto test = b.get(-1);
@@ -307,7 +307,7 @@ void test_borrow() {
   // resize then bound
   {
     std::vector<double> owner(10, 0.0);
-    Borrow<Double> b(owner.data(), owner.size());
+    Borrow<RealType> b(owner.data(), owner.size());
     b.resize(2);
     try {
       b.get(2);
@@ -318,7 +318,7 @@ void test_borrow() {
   // zero but allocated
   {
     double* p = nullptr;
-    Borrow<Double> b(p, 0);
+    Borrow<RealType> b(p, 0);
     ass<"borrow size 0">(b.size() == 0);
     try {
       b.get(0);
@@ -330,15 +330,15 @@ void test_borrow() {
   // Iteration
   {
     std::vector<double> owner{1.0, 2.0, 3.0};
-    Borrow<Double> b(owner.data(), owner.size());
-    Double sum = 0.0;
+    Borrow<RealType> b(owner.data(), owner.size());
+    RealType sum = 0.0;
     for (const auto it: b) sum = sum + it;
-    ass<"iteration visits all elements">(compare(sum.val, 6.0));
+    ass<"iteration visits all elements">(compare(get_val(sum), 6.0));
   }
   // Raw storage modified
   {
     std::vector<double> owner(2, 0.0);
-    Borrow<Double> b(owner.data(), owner.size());
+    Borrow<RealType> b(owner.data(), owner.size());
     b.set(0, Double(9.5));
     ass<"store writes raw scalar">(compare(owner[0], 9.5));
   }
@@ -346,5 +346,6 @@ void test_borrow() {
 
 int main() {
   test_borrow_dual();
-  test_borrow();
+  test_borrow<Double>();
+  test_borrow<Variable<Double>>();
 }
