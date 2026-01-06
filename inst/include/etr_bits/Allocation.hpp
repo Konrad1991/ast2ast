@@ -219,7 +219,7 @@ template <typename L, typename R> inline auto rep(L &&inp, R &&times) {
 }
 
 // ---------------------------------------------------------------------
-// matrix --------------------------------------------------------------
+// vector, matrix and array --------------------------------------------
 // ---------------------------------------------------------------------
 template<typename T>
 inline std::size_t ConvertSizeVec(const T& s) {
@@ -227,14 +227,14 @@ inline std::size_t ConvertSizeVec(const T& s) {
   constexpr bool is_scalar = IsArithV<DecayedT> || IsADType<DecayedT>;
   if constexpr(is_scalar) {
     const auto v = get_val(s);
+    ass<"size in fct vector/logical/integer/numeric/matrix/array has to be a positive integer">(v >= 1);
     std::size_t res = static_cast<std::size_t>(v);
-    ass<"size in fct vector/logical/integer/numeric has to be a positive integer">(res >= 1);
     return res;
   } else {
-    ass<"size in vector/logical/integer/numeric has to be a vector of length 1">(s.size() == 1);
+    ass<"size in fct vector/logical/integer/numeric/matrix/array has to be a vector of length 1">(s.size() == 1);
     const auto v = get_val(s.get(0));
+    ass<"size in fct vector/logical/integer/numeric/matrix/array has to be a positive integer">(v >= 1);
     std::size_t res = static_cast<std::size_t>(v);
-    ass<"size in fct vector/logical/integer/numeric has to be a positive integer">(res >= 1);
     return res;
   }
 }
@@ -249,13 +249,19 @@ template <typename Type, typename T> inline auto createRVec(T s) {
 }
 
 template <typename T> inline auto logical(const T &inp) {
-  return createRVec<bool>(inp);
+  return createRVec<Logical>(inp);
 }
 template <typename T> inline auto integer(const T &inp) {
-  return createRVec<int>(inp);
+  return createRVec<Integer>(inp);
 }
 template <typename T> inline auto numeric(const T &inp) {
-  return createRVec<double>(inp);
+  return createRVec<Double>(inp);
+}
+template <typename T> inline auto numeric_dual(const T &inp) {
+  return createRVec<Dual>(inp);
+}
+template <typename T> inline auto numeric_rev_ad(const T &inp) {
+  return createRVec<Variable<Double>>(inp);
 }
 
 template <typename Type, typename R, typename C> inline auto createRMat(const R& nrow, const C& ncol) {
@@ -309,7 +315,9 @@ inline auto calc_dim(const Dim& dim) {
 template<typename T, typename Dim>
 inline auto array(const T& inp, const Dim& dim_inp) {
   const auto dim = calc_dim(dim_inp);
-  const std::size_t size = 0; for (std::size_t i = 0; i < dim.size(); i++) size *= dim[i];
+  std::size_t size = 1; for (std::size_t i = 0; i < dim.size(); i++) {
+    size *= dim[i];
+  }
   using DecayedT = Decayed<T>;
   constexpr bool is_scalar = IsArithV<DecayedT> || IsADType<DecayedT>;
   if constexpr (is_scalar) {
@@ -318,15 +326,17 @@ inline auto array(const T& inp, const Dim& dim_inp) {
     for (std::size_t i = 0; i < res.size(); i++) {
       res.set(i, inp);
     }
+    res.dim = std::move(dim);
     return res;
   } else {
     using DataType = typename ExtractDataType<Decayed<T>>::value_type;
     ass<"invalid length argument">(size > 0);
-    Array<DecayedT, Buffer<DecayedT, RBufferTrait>> res(SI{size});
-    ass<"Input for matrix does not match size (nrow * ncol)">(inp.size() == size);
+    Array<DataType, Buffer<DataType, RBufferTrait>> res(SI{size});
+    ass<"Input for array does not match size (prod(dims))">(inp.size() == size);
     for (std::size_t i = 0; i < res.size(); i++) {
       res.set(i, inp.get(i));
     }
+    res.dim = std::move(dim);
     return res;
   }
 
