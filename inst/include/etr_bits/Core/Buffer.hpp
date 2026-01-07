@@ -204,10 +204,22 @@ template <typename T, typename BufferTrait> struct Buffer {
     ass<"Error: out of boundaries">(idx < sz);
     return p[idx];
   }
+  template<typename> requires IS<T, Dual>
+  const Double& get_dot(std::size_t idx) const {
+    ass<"No memory was allocated">(allocated);
+    ass<"Error: out of boundaries">(idx < sz);
+    return Double(p[idx].dot);
+  }
   void set(std::size_t idx, const value_type& val) {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
     p[idx] = val;
+  }
+  template<typename> requires IS<T, Dual>
+  void set_dot(std::size_t idx, const double& val_dot) {
+    ass<"No memory was allocated">(allocated);
+    ass<"Error: out of boundaries">(idx < sz);
+    p[idx].dot = val_dot;
   }
 
   template <typename L2> void moveit(L2 &other) {

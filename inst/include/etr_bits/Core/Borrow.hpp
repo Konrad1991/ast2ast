@@ -247,11 +247,21 @@ template <typename BorrowTrait> struct Borrow<Dual, BorrowTrait> {
     ass<"Error: out of boundaries">(idx < sz);
     return Dual{ p_val[idx], p_dot[idx] };
   }
+  Double get_dot(std::size_t idx) const {
+    ass<"No memory was allocated">(allocated);
+    ass<"Error: out of boundaries">(idx < sz);
+    return Double(p_dot[idx]);
+  }
   void set(std::size_t idx, const Dual& d) {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
     p_val[idx] = d.val;
     p_dot[idx] = d.dot;
+  }
+  void set_dot(std::size_t idx, const double& d) {
+    ass<"No memory was allocated">(allocated);
+    ass<"Error: out of boundaries">(idx < sz);
+    p_dot[idx] = d;
   }
 
   struct Iterator {
