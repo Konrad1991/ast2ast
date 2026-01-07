@@ -242,6 +242,7 @@ struct BooleanExpr;
 struct Logical {
   bool val;
   bool is_na{false};
+  operator bool() const { return val; }
   Logical();
   Logical(bool v);
   Logical(Integer v);
@@ -378,6 +379,9 @@ struct Double {
   bool isFinite() const noexcept {
     return !is_na && std::isfinite(val);
   }
+  bool isInfinite() const noexcept {
+    return !is_na && !isNaN() && !std::isfinite(val);
+  }
 };
 
 struct Dual {
@@ -449,8 +453,14 @@ struct Dual {
   bool isFinite() const noexcept {
     return !is_na && std::isfinite(val);
   }
+  bool isInfinite() const noexcept {
+    return !is_na && !isNaN() && !std::isfinite(val);
+  }
   bool isFiniteDot() const noexcept {
     return !is_na_dot && std::isfinite(dot);
+  }
+  bool isInfiniteDot() const noexcept {
+    return !is_na_dot && !isNaNDot() && !std::isfinite(dot);
   }
 };
 

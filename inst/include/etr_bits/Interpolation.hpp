@@ -11,8 +11,7 @@ inline Double cmrInternal(const double& t, const B& timeVec, const C& parVec) {
 
   const std::size_t n = timeVec.size();
 
-  // Optional safety: strictly increasing time
-  // (recommended; otherwise division by zero / negative intervals)
+  // strictly increasing time
   for (std::size_t i = 0; i + 1 < n; ++i) {
     ass<"timeVec must be strictly increasing">(
       get_val(timeVec.get(i + 1)) > get_val(timeVec.get(i))
@@ -28,7 +27,7 @@ inline Double cmrInternal(const double& t, const B& timeVec, const C& parVec) {
 
   // Find segment i such that time[i] <= t < time[i+1], with i in [0, n-2]
   std::size_t i_seg = 0;
-  for (std::size_t i = 0; i + 1 < n; ++i) {
+  for (std::size_t i = 0; i + 1 < n; i++) {
     const double ti  = get_val(timeVec.get(i));
     const double tip = get_val(timeVec.get(i + 1));
     if (t >= ti && t < tip) { i_seg = i; break; }
@@ -44,7 +43,7 @@ inline Double cmrInternal(const double& t, const B& timeVec, const C& parVec) {
   const double t2 = get_val(timeVec.get(idx2));
   const double y2 = get_val(parVec.get(idx2));
 
-  // Endpoint handling (non-periodic): use "ghost" points via linear extrapolation
+  // Endpoint handling (non-periodic): "ghost" points via linear extrapolation
   double t0, y0, t3, y3;
 
   if (idx1 == 0) {

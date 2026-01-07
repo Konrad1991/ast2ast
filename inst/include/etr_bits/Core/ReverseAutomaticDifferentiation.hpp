@@ -911,7 +911,7 @@ std::ostream& operator<<(std::ostream& out, const ExprPtr<T>& x) {
 template<typename T> requires IsArithV<T> inline auto get_scalar_val(const T& t) { return t; }
 template<typename T> inline auto get_scalar_val(const ExprPtr<T>& t) { return t->val; }
 template<typename T> inline auto get_scalar_val(const Variable<T>& t) { return t.expr->val; }
-template<typename T> inline auto get_scalar_val(const BooleanExpr& t) { return t.val; }
+template<typename T> requires IS<T, BooleanExpr> inline auto get_scalar_val(const T& t) { return t.val; }
 
 template<typename T> requires std::is_arithmetic_v<T> inline T get_val(const T& t) { return t; }
 template<typename T> requires IsArithV<T> inline auto get_val(const T& t) { return t.val; }

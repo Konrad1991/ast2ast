@@ -796,6 +796,12 @@ function_registry_global$add(
   is_infix = FALSE, group = "unary_node", cpp_name = "etr::isNA"
 )
 function_registry_global$add(
+  name = "is.nan", num_args = 1, arg_names = NA,
+  infer_fct = infer_check_type,
+  check_fct = mock,
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::isNaN"
+)
+function_registry_global$add(
   name = "is.infinite", num_args = 1, arg_names = NA,
   infer_fct = infer_check_type,
   check_fct = mock,
