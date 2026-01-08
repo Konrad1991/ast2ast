@@ -1,16 +1,9 @@
-#define STANDALONE_ETR
-#include "../inst/include/etr_bits/Core.hpp"
-#include "../inst/include/etr_bits/Calculations/BinaryCalculations.hpp"
-#include "../inst/include/etr_bits/Calculations/UnaryCalculations.hpp"
-#include "../inst/include/etr_bits/Subsetting.hpp"
-#include "../inst/include/etr_bits/Allocation.hpp"
-#include "../inst/include/etr_bits/Utilities/Printing.hpp"
-#include "../inst/include/etr_bits/Interpolation.hpp"
-#include "../inst/include/etr_bits/Utilities/Helper.hpp"
+#include "../inst/include/etr.hpp"
 using namespace etr;
 #include <cstring>
 
-int main() {
+// [[Rcpp::export]]
+void test_utilities() {
   // is.na
   {
     Array<Double, Buffer<Double>> a;

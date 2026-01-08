@@ -1,9 +1,4 @@
-#define STANDALONE_ETR
-#include "../inst/include/etr_bits/Core.hpp"
-#include "../inst/include/etr_bits/Calculations/BinaryCalculations.hpp"
-#include "../inst/include/etr_bits/Calculations/UnaryCalculations.hpp"
-#include "../inst/include/etr_bits/Subsetting/PreservingSubsetting.hpp"
-#include "../inst/include/etr_bits/Utilities/Printing.hpp"
+#include "../inst/include/etr.hpp"
 using namespace etr;
 #include <cstring>
 
@@ -1061,7 +1056,8 @@ void test_indices_preserved_subsetting() {
   }
 }
 
-int main() {
+// [[Rcpp::export]]
+void test_preserved_subsetting() {
   test_all_types_usuable_preserved_subsetting();
   test_indices_preserved_subsetting();
 

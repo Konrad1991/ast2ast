@@ -15,7 +15,6 @@ inline size_t ExtractIndex(const T& obj) {
       return safe_index_from_double(get_val(obj));
     }
   } else if constexpr (IsArray<DecayedT>) {
-    using DataType = typename ExtractDataType<DecayedT>::value_type;
     constexpr bool is_double = IsDouble<DecayedT> || IsInteger<DecayedT> || IsDual<DecayedT>;
     ass<"at accepts only vector of length 1">(obj.size() == 1);
     if constexpr (!is_double) {
@@ -36,7 +35,6 @@ struct LogicalRef {
 
   // assignment from scalar
   LogicalRef& operator=(const Logical& x) { *p = get_val(x); return *this; }
-  LogicalRef& operator=(bool x) { *p = x; return *this; }
 };
 struct IntegerRef {
   int* p;
@@ -46,7 +44,6 @@ struct IntegerRef {
 
   // assignment from scalar
   IntegerRef& operator=(const Integer& x) { *p = get_val(x); return *this; }
-  IntegerRef& operator=(int x) { *p = x; return *this; }
 };
 struct DoubleRef {
   double* p;
@@ -56,7 +53,6 @@ struct DoubleRef {
 
   // assignment from scalar
   DoubleRef& operator=(const Double& x) { *p = get_val(x); return *this; }
-  DoubleRef& operator=(double x) { *p = x; return *this; }
 };
 struct DualRef {
   double* p_val;
@@ -67,11 +63,6 @@ struct DualRef {
 
   // assignment from scalar
   DualRef& operator=(const Dual& x) { *p_val = get_val(x); *p_dot = x.dot; return *this; }
-  DualRef& set(double x, double dot) {
-    *p_val = x;
-    *p_dot = dot;
-    return *this;
-  }
 };
 
 
@@ -122,7 +113,6 @@ inline decltype(auto) at(ArrayType& arr, const Args&... args) {
 }
 
 template <typename ArrayType, typename... Args>
-requires (!IsLBufferArray<ArrayType> && !IsBorrowArray<ArrayType>)
 inline const auto at(const ArrayType& arr, const Args&... args) {
   constexpr std::size_t N = sizeof...(Args);
   const auto& dim = dim_view(arr.dim);

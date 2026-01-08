@@ -1,6 +1,6 @@
-#define STANDALONE_ETR
-#include "../inst/include/etr_bits/Core.hpp"
+#include "../inst/include/etr.hpp"
 using namespace etr;
+#include <cstring>
 
 void test_scalar_return_types() {
   // Test correct types returned by methods defined in Logical
@@ -415,7 +415,8 @@ void test_scalar_methods() {
   }
 }
 
-int main() {
+// [[Rcpp::export]]
+void test_first_dispatch_layer() {
   test_scalar_return_types();
   test_scalar_methods();
 }

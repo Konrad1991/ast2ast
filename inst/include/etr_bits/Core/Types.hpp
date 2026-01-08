@@ -242,42 +242,42 @@ struct BooleanExpr;
 struct Logical {
   bool val;
   bool is_na{false};
-  operator bool() const { return val; }
-  Logical();
-  Logical(bool v);
-  Logical(Integer v);
-  Logical(Double v);
-  Logical(Dual v);
+  inline operator bool() const { return val; }
+  inline Logical();
+  inline Logical(bool v);
+  inline Logical(Integer v);
+  inline Logical(Double v);
+  inline Logical(Dual v);
   template<typename T> Logical(Variable<T> v);
-  Integer operator+(const Logical&) const;
-  Integer operator-(const Logical&) const;
-  Integer operator*(const Logical&) const;
-  Double operator/(const Logical&) const;
-  Double pow(const Logical&) const;
-  Logical operator==(const Logical&) const;
-  Logical operator<(const Logical&) const;
-  Logical operator<=(const Logical&) const;
-  Logical operator>(const Logical&) const;
-  Logical operator>=(const Logical&) const;
-  Logical operator!=(const Logical&) const;
-  Logical operator&&(const Logical&) const;
-  Logical operator||(const Logical&) const;
-  Double sin() const;
-  Double asin() const;
-  Double sinh() const;
-  Double cos() const;
-  Double acos() const;
-  Double cosh() const;
-  Double tan() const;
-  Double atan() const;
-  Double tanh() const;
-  Double exp() const;
-  Double log() const;
-  Double sqrt() const;
-  Integer operator-() const;
-  friend std::ostream& operator<<(std::ostream&, const Logical&);
-  static Logical NA() { Logical x; x.is_na = true; return x; }
-  bool isNA() const noexcept {
+  inline Integer operator+(const Logical&) const;
+  inline Integer operator-(const Logical&) const;
+  inline Integer operator*(const Logical&) const;
+  inline Double operator/(const Logical&) const;
+  inline Double pow(const Logical&) const;
+  inline Logical operator==(const Logical&) const;
+  inline Logical operator<(const Logical&) const;
+  inline Logical operator<=(const Logical&) const;
+  inline Logical operator>(const Logical&) const;
+  inline Logical operator>=(const Logical&) const;
+  inline Logical operator!=(const Logical&) const;
+  inline Logical operator&&(const Logical&) const;
+  inline Logical operator||(const Logical&) const;
+  inline Double sin() const;
+  inline Double asin() const;
+  inline Double sinh() const;
+  inline Double cos() const;
+  inline Double acos() const;
+  inline Double cosh() const;
+  inline Double tan() const;
+  inline Double atan() const;
+  inline Double tanh() const;
+  inline Double exp() const;
+  inline Double log() const;
+  inline Double sqrt() const;
+  inline Integer operator-() const;
+  inline friend std::ostream& operator<<(std::ostream&, const Logical&);
+  inline static Logical NA() { Logical x; x.is_na = true; return x; }
+  inline bool isNA() const noexcept {
     return is_na;
   }
 };
@@ -285,41 +285,41 @@ struct Logical {
 struct Integer {
   int val;
   bool is_na{false};
-  Integer();
-  Integer(int v);
-  Integer(Logical v);
-  Integer(Double v);
-  Integer(Dual v);
+  inline Integer();
+  inline Integer(int v);
+  inline Integer(Logical v);
+  inline Integer(Double v);
+  inline Integer(Dual v);
   template<typename T> Integer(Variable<T> v);
-  Integer operator+(const Integer&) const;
-  Integer operator-(const Integer&) const;
-  Integer operator*(const Integer&) const;
-  Double operator/(const Integer&) const;
-  Double pow(const Integer&) const;
-  Logical operator==(const Integer&) const;
-  Logical operator<(const Integer&) const;
-  Logical operator<=(const Integer&) const;
-  Logical operator>(const Integer&) const;
-  Logical operator>=(const Integer&) const;
-  Logical operator!=(const Integer&) const;
-  Logical operator&&(const Integer&) const;
-  Logical operator||(const Integer&) const;
-  Double sin() const;
-  Double asin() const;
-  Double sinh() const;
-  Double cos() const;
-  Double acos() const;
-  Double cosh() const;
-  Double tan() const;
-  Double atan() const;
-  Double tanh() const;
-  Double exp() const;
-  Double log() const;
-  Double sqrt() const;
-  Integer operator-() const;
-  friend std::ostream& operator<<(std::ostream&, const Integer&);
-  static Integer NA() { Integer x; x.is_na = true; return x; }
-  bool isNA() const noexcept {
+  inline Integer operator+(const Integer&) const;
+  inline Integer operator-(const Integer&) const;
+  inline Integer operator*(const Integer&) const;
+  inline Double operator/(const Integer&) const;
+  inline Double pow(const Integer&) const;
+  inline Logical operator==(const Integer&) const;
+  inline Logical operator<(const Integer&) const;
+  inline Logical operator<=(const Integer&) const;
+  inline Logical operator>(const Integer&) const;
+  inline Logical operator>=(const Integer&) const;
+  inline Logical operator!=(const Integer&) const;
+  inline Logical operator&&(const Integer&) const;
+  inline Logical operator||(const Integer&) const;
+  inline Double sin() const;
+  inline Double asin() const;
+  inline Double sinh() const;
+  inline Double cos() const;
+  inline Double acos() const;
+  inline Double cosh() const;
+  inline Double tan() const;
+  inline Double atan() const;
+  inline Double tanh() const;
+  inline Double exp() const;
+  inline Double log() const;
+  inline Double sqrt() const;
+  inline Integer operator-() const;
+  inline friend std::ostream& operator<<(std::ostream&, const Integer&);
+  inline static Integer NA() { Integer x; x.is_na = true; return x; }
+  inline bool isNA() const noexcept {
     return is_na;
   }
 };
@@ -327,59 +327,59 @@ struct Integer {
 struct Double {
   double val;
   bool is_na;
-  Double();
-  Double(double v);
-  Double(Logical v);
-  Double(Integer v);
-  Double(Dual v);
-  Double operator+(const Double&) const;
-  Double operator-(const Double&) const;
-  Double operator*(const Double&) const;
-  Double operator/(const Double&) const;
-  Double pow(const Double&) const;
-  Logical operator==(const Double&) const;
-  Logical operator<(const Double&) const;
-  Logical operator<=(const Double&) const;
-  Logical operator>(const Double&) const;
-  Logical operator>=(const Double&) const;
-  Logical operator!=(const Double&) const;
-  Logical operator&&(const Double&) const;
-  Logical operator||(const Double&) const;
-  Double sin() const;
-  Double asin() const;
-  Double sinh() const;
-  Double cos() const;
-  Double acos() const;
-  Double cosh() const;
-  Double tan() const;
-  Double atan() const;
-  Double tanh() const;
-  Double exp() const;
-  Double log() const;
-  Double sqrt() const;
-  Double operator-() const;
-  friend std::ostream& operator<<(std::ostream&, const Double&);
-  static Double NA() {
+  inline Double();
+  inline Double(double v);
+  inline Double(Logical v);
+  inline Double(Integer v);
+  inline Double(Dual v);
+  inline Double operator+(const Double&) const;
+  inline Double operator-(const Double&) const;
+  inline Double operator*(const Double&) const;
+  inline Double operator/(const Double&) const;
+  inline Double pow(const Double&) const;
+  inline Logical operator==(const Double&) const;
+  inline Logical operator<(const Double&) const;
+  inline Logical operator<=(const Double&) const;
+  inline Logical operator>(const Double&) const;
+  inline Logical operator>=(const Double&) const;
+  inline Logical operator!=(const Double&) const;
+  inline Logical operator&&(const Double&) const;
+  inline Logical operator||(const Double&) const;
+  inline Double sin() const;
+  inline Double asin() const;
+  inline Double sinh() const;
+  inline Double cos() const;
+  inline Double acos() const;
+  inline Double cosh() const;
+  inline Double tan() const;
+  inline Double atan() const;
+  inline Double tanh() const;
+  inline Double exp() const;
+  inline Double log() const;
+  inline Double sqrt() const;
+  inline Double operator-() const;
+  inline friend std::ostream& operator<<(std::ostream&, const Double&);
+  inline static Double NA() {
     Double x(std::numeric_limits<double>::quiet_NaN());
     x.is_na = true;
     return x;
   }
-  static Double NaN() {
+  inline static Double NaN() {
     return Double(std::numeric_limits<double>::quiet_NaN());
   }
-  static Double Inf() {
+  inline static Double Inf() {
     return Double(std::numeric_limits<double>::infinity());
   }
-  bool isNA() const noexcept {
+  inline bool isNA() const noexcept {
     return is_na;
   }
-  bool isNaN() const noexcept {
+  inline bool isNaN() const noexcept {
     return !is_na && std::isnan(val);
   }
-  bool isFinite() const noexcept {
+  inline bool isFinite() const noexcept {
     return !is_na && std::isfinite(val);
   }
-  bool isInfinite() const noexcept {
+  inline bool isInfinite() const noexcept {
     return !is_na && !isNaN() && !std::isfinite(val);
   }
 };
@@ -388,123 +388,123 @@ struct Dual {
   double val, dot;
   bool is_na;
   bool is_na_dot;
-  Dual();
-  Dual(double v, double d);
-  Dual(Logical v);
-  Dual(Integer v);
-  Dual(Double v);
+  inline Dual();
+  inline Dual(double v, double d);
+  inline Dual(Logical v);
+  inline Dual(Integer v);
+  inline Dual(Double v);
   // Does not require a ctr for Variable. Forward and reverse mode AD cannot be mixed!
   template<typename T> requires std::is_arithmetic_v<T>
   Dual(T v);
-  Dual operator+(const Dual&) const;
-  Dual operator-(const Dual&) const;
-  Dual operator*(const Dual&) const;
-  Dual operator/(const Dual&) const;
-  Dual pow(const Dual&) const;
-  Logical operator==(const Dual&) const;
-  Logical operator<(const Dual&) const;
-  Logical operator<=(const Dual&) const;
-  Logical operator>(const Dual&) const;
-  Logical operator>=(const Dual&) const;
-  Logical operator!=(const Dual&) const;
-  Logical operator&&(const Dual&) const;
-  Logical operator||(const Dual&) const;
-  Dual sin() const;
-  Dual asin() const;
-  Dual sinh() const;
-  Dual cos() const;
-  Dual acos() const;
-  Dual cosh() const;
-  Dual tan() const;
-  Dual atan() const;
-  Dual tanh() const;
-  Dual exp() const;
-  Dual log() const;
-  Dual sqrt() const;
-  Dual operator-() const;
-  friend std::ostream& operator<<(std::ostream&, const Dual&);
-  static Dual NA() {
+  inline Dual operator+(const Dual&) const;
+  inline Dual operator-(const Dual&) const;
+  inline Dual operator*(const Dual&) const;
+  inline Dual operator/(const Dual&) const;
+  inline Dual pow(const Dual&) const;
+  inline Logical operator==(const Dual&) const;
+  inline Logical operator<(const Dual&) const;
+  inline Logical operator<=(const Dual&) const;
+  inline Logical operator>(const Dual&) const;
+  inline Logical operator>=(const Dual&) const;
+  inline Logical operator!=(const Dual&) const;
+  inline Logical operator&&(const Dual&) const;
+  inline Logical operator||(const Dual&) const;
+  inline Dual sin() const;
+  inline Dual asin() const;
+  inline Dual sinh() const;
+  inline Dual cos() const;
+  inline Dual acos() const;
+  inline Dual cosh() const;
+  inline Dual tan() const;
+  inline Dual atan() const;
+  inline Dual tanh() const;
+  inline Dual exp() const;
+  inline Dual log() const;
+  inline Dual sqrt() const;
+  inline Dual operator-() const;
+  inline friend std::ostream& operator<<(std::ostream&, const Dual&);
+  inline static Dual NA() {
     Dual x(std::numeric_limits<double>::quiet_NaN(),
            std::numeric_limits<double>::quiet_NaN());
     x.is_na = true;
     x.is_na_dot = true;
     return x;
   }
-  static Dual NaN() {
+  inline static Dual NaN() {
     return Dual (std::numeric_limits<double>::quiet_NaN(),
            std::numeric_limits<double>::quiet_NaN());
   }
-  static Dual Inf() {
+  inline static Dual Inf() {
     return Dual(std::numeric_limits<double>::infinity(),
                 std::numeric_limits<double>::infinity());
   }
-  bool isNA() const noexcept {
+  inline bool isNA() const noexcept {
     return is_na;
   }
-  bool isNADot() const noexcept {
+  inline bool isNADot() const noexcept {
     return is_na_dot;
   }
-  bool isNaN() const noexcept {
+  inline bool isNaN() const noexcept {
     return !is_na && std::isnan(val);
   }
-  bool isNaNDot() const noexcept {
+  inline bool isNaNDot() const noexcept {
     return !is_na_dot && std::isnan(dot);
   }
-  bool isFinite() const noexcept {
+  inline bool isFinite() const noexcept {
     return !is_na && std::isfinite(val);
   }
-  bool isInfinite() const noexcept {
+  inline bool isInfinite() const noexcept {
     return !is_na && !isNaN() && !std::isfinite(val);
   }
-  bool isFiniteDot() const noexcept {
+  inline bool isFiniteDot() const noexcept {
     return !is_na_dot && std::isfinite(dot);
   }
-  bool isInfiniteDot() const noexcept {
+  inline bool isInfiniteDot() const noexcept {
     return !is_na_dot && !isNaNDot() && !std::isfinite(dot);
   }
 };
 
-Logical::Logical() : val(false), is_na(false) {}
-Logical::Logical(bool v) : val(v), is_na(false) {}
-Logical::Logical(Integer v) : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
-Logical::Logical(Double v)  : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
-Logical::Logical(Dual v)    : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
+inline Logical::Logical() : val(false), is_na(false) {}
+inline Logical::Logical(bool v) : val(v), is_na(false) {}
+inline Logical::Logical(Integer v) : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
+inline Logical::Logical(Double v)  : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
+inline Logical::Logical(Dual v)    : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
 
-Integer::Integer() : val(0), is_na(false) {}
-Integer::Integer(int v) : val(v), is_na(false) {}
-Integer::Integer(Logical v) : val(static_cast<int>(v.val)), is_na(v.is_na) {}
-Integer::Integer(Double v)  : val(static_cast<int>(v.val)), is_na(v.is_na) {}
-Integer::Integer(Dual v)    : val(static_cast<int>(v.val)), is_na(v.is_na) {}
+inline Integer::Integer() : val(0), is_na(false) {}
+inline Integer::Integer(int v) : val(v), is_na(false) {}
+inline Integer::Integer(Logical v) : val(static_cast<int>(v.val)), is_na(v.is_na) {}
+inline Integer::Integer(Double v)  : val(static_cast<int>(v.val)), is_na(v.is_na) {}
+inline Integer::Integer(Dual v)    : val(static_cast<int>(v.val)), is_na(v.is_na) {}
 
-Double::Double() : val(0.0), is_na(false) {}
-Double::Double(double v) : val(v), is_na(false) {}
-Double::Double(Logical v) : val(static_cast<double>(v.val)), is_na(v.is_na) {}
-Double::Double(Integer v) : val(static_cast<double>(v.val)), is_na(v.is_na) {}
-Double::Double(Dual v)    : val(v.val), is_na(v.is_na) {}
+inline Double::Double() : val(0.0), is_na(false) {}
+inline Double::Double(double v) : val(v), is_na(false) {}
+inline Double::Double(Logical v) : val(static_cast<double>(v.val)), is_na(v.is_na) {}
+inline Double::Double(Integer v) : val(static_cast<double>(v.val)), is_na(v.is_na) {}
+inline Double::Double(Dual v)    : val(v.val), is_na(v.is_na) {}
 
-Dual::Dual() : val(0.0), dot(0.0), is_na(false), is_na_dot(false) {}
-Dual::Dual(double v, double d) : val(v), dot(d), is_na(false), is_na_dot(false) {}
-Dual::Dual(Logical v) : val(static_cast<double>(v.val)), dot(0.0), is_na(v.is_na), is_na_dot(false) {}
-Dual::Dual(Integer v) : val(static_cast<double>(v.val)), dot(0.0), is_na(v.is_na), is_na_dot(false) {}
-Dual::Dual(Double v)    : val(v.val), dot(0.0), is_na(v.is_na), is_na_dot(false) {}
+inline Dual::Dual() : val(0.0), dot(0.0), is_na(false), is_na_dot(false) {}
+inline Dual::Dual(double v, double d) : val(v), dot(d), is_na(false), is_na_dot(false) {}
+inline Dual::Dual(Logical v) : val(static_cast<double>(v.val)), dot(0.0), is_na(v.is_na), is_na_dot(false) {}
+inline Dual::Dual(Integer v) : val(static_cast<double>(v.val)), dot(0.0), is_na(v.is_na), is_na_dot(false) {}
+inline Dual::Dual(Double v)    : val(v.val), dot(0.0), is_na(v.is_na), is_na_dot(false) {}
 template<typename T> requires std::is_arithmetic_v<T>
-Dual::Dual(T v)    : val(static_cast<double>(v)), dot(0.0), is_na(std::isnan(v)), is_na_dot(false) {}
+inline Dual::Dual(T v)    : val(static_cast<double>(v)), dot(0.0), is_na(std::isnan(v)), is_na_dot(false) {}
 
-std::ostream& operator<<(std::ostream& os, const Logical& x) {
+inline std::ostream& operator<<(std::ostream& os, const Logical& x) {
   if (x.isNA()) return os << "NA";
   if (x.val) return os << "TRUE"; else return os << "FALSE";
 }
-std::ostream& operator<<(std::ostream& os, const Integer& x) {
+inline std::ostream& operator<<(std::ostream& os, const Integer& x) {
   if (x.isNA()) return os << "NA";
   return os << x.val;
 }
-std::ostream& operator<<(std::ostream& os, const Double& x) {
+inline std::ostream& operator<<(std::ostream& os, const Double& x) {
   if (x.isNA()) return os << "NA";
   if (x.isNaN()) return os << "NaN";
   if (!x.isFinite())   return os << (x.val > 0 ? "Inf" : "-Inf");
   return os << x.val;
 }
-std::ostream& operator<<(std::ostream& os, const Dual& x) {
+inline std::ostream& operator<<(std::ostream& os, const Dual& x) {
   auto print_scalar = [&](double v, bool is_na) -> std::ostream& {
     if (is_na) return os << "NA";
     if (std::isnan(v)) return os << "NaN";
@@ -517,95 +517,95 @@ std::ostream& operator<<(std::ostream& os, const Dual& x) {
   return os;
 }
 
-Integer Logical::operator+(const Logical& other) const {
+inline Integer Logical::operator+(const Logical& other) const {
   if (is_na || other.is_na) return Integer::NA();
   return Integer(val + other.val);
 }
-Integer Integer::operator+(const Integer& other) const {
+inline Integer Integer::operator+(const Integer& other) const {
   if (is_na || other.is_na) return Integer::NA();
   return Integer(val + other.val);
 }
-Double Double::operator+(const Double& other) const {
+inline Double Double::operator+(const Double& other) const {
   if (is_na || other.is_na) return Double::NA();
   return Double(val + other.val);
 }
-Dual Dual::operator+(const Dual& other) const {
+inline Dual Dual::operator+(const Dual& other) const {
   if (is_na || other.is_na) return Dual::NA();
   const double v = val + other.val;
   if (is_na_dot || other.is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
   return Dual(v, dot + other.dot);
 }
 
-Integer Logical::operator-(const Logical& other) const {
+inline Integer Logical::operator-(const Logical& other) const {
   if (is_na || other.is_na) return Integer::NA();
   return Integer(val - other.val);
 }
-Integer Integer::operator-(const Integer& other) const {
+inline Integer Integer::operator-(const Integer& other) const {
   if (is_na || other.is_na) return Integer::NA();
   return Integer(val - other.val);
 }
-Double Double::operator-(const Double& other) const {
+inline Double Double::operator-(const Double& other) const {
   if (is_na || other.is_na) return Double::NA();
   return Double(val - other.val);
 }
-Dual Dual::operator-(const Dual& other) const {
+inline Dual Dual::operator-(const Dual& other) const {
   if (is_na || other.is_na) return Dual::NA();
   const double v = val - other.val;
   if (is_na_dot || other.is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
   return Dual(v, dot - other.dot);
 }
 
-Integer Logical::operator*(const Logical& other) const {
+inline Integer Logical::operator*(const Logical& other) const {
   if (is_na || other.is_na) return Integer::NA();
   return Integer(val * other.val);
 }
-Integer Integer::operator*(const Integer& other) const {
+inline Integer Integer::operator*(const Integer& other) const {
   if (is_na || other.is_na) return Integer::NA();
   return Integer(val * other.val);
 }
-Double Double::operator*(const Double& other) const {
+inline Double Double::operator*(const Double& other) const {
   if (is_na || other.is_na) return Double::NA();
   return Double(val * other.val);
 }
-Dual Dual::operator*(const Dual& other) const {
+inline Dual Dual::operator*(const Dual& other) const {
   if (is_na || other.is_na) return Dual::NA();
   const double v = val * other.val;
   if (is_na_dot || other.is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
   return Dual(v, dot * other.val + val * other.dot);
 }
 
-Double Logical::operator/(const Logical& other) const {
+inline Double Logical::operator/(const Logical& other) const {
   if (is_na || other.is_na) return Double::NA();
   return Double(static_cast<double>(val) / static_cast<double>(other.val));
 }
-Double Integer::operator/(const Integer& other) const {
+inline Double Integer::operator/(const Integer& other) const {
   if (is_na || other.is_na) return Double::NA();
   return Double(static_cast<double>(val) / static_cast<double>(other.val));
 }
-Double Double::operator/(const Double& other) const {
+inline Double Double::operator/(const Double& other) const {
   if (is_na || other.is_na) return Double::NA();
   return Double(val / other.val);
 }
-Dual Dual::operator/(const Dual& other) const {
+inline Dual Dual::operator/(const Dual& other) const {
   if (is_na || other.is_na) return Dual::NA();
   const double v = val / other.val;
   if (is_na_dot || other.is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
   return Dual(v, (dot * other.val - val * other.dot) / (other.val * other.val));
 }
 
-Double Logical::pow(const Logical& other) const {
+inline Double Logical::pow(const Logical& other) const {
   if (is_na || other.is_na) return Double::NA();
   return Double(std::pow(static_cast<double>(val), static_cast<double>(other.val)));
 }
-Double Integer::pow(const Integer& other) const {
+inline Double Integer::pow(const Integer& other) const {
   if (is_na || other.is_na) return Double::NA();
   return Double(std::pow(static_cast<double>(val), static_cast<double>(other.val)));
 }
-Double Double::pow(const Double& other) const {
+inline Double Double::pow(const Double& other) const {
   if (is_na || other.is_na) return Double::NA();
   return Double(std::pow(val, other.val));
 }
-Dual Dual::pow(const Dual& other) const {
+inline Dual Dual::pow(const Dual& other) const {
   if (is_na || other.is_na) return Dual::NA();
   const double f = std::pow(val, other.val);
   if (!std::isfinite(f) || is_na_dot || other.is_na_dot) return Dual(f, std::numeric_limits<double>::quiet_NaN());
@@ -613,383 +613,383 @@ Dual Dual::pow(const Dual& other) const {
   return Dual(f, d);
 }
 
-Logical Logical::operator==(const Logical& other) const {
+inline Logical Logical::operator==(const Logical& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val == other.val);
 }
-Logical Integer::operator==(const Integer& other) const {
+inline Logical Integer::operator==(const Integer& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val == other.val);
 }
-Logical Double::operator==(const Double& other) const {
+inline Logical Double::operator==(const Double& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val == other.val);
 }
-Logical Dual::operator==(const Dual& other) const {
+inline Logical Dual::operator==(const Dual& other) const {
   if ( is_na || other.is_na) return Logical::NA();
   return Logical(val == other.val);
 }
 
-Logical Logical::operator<(const Logical& other) const {
+inline Logical Logical::operator<(const Logical& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val < other.val);
 }
-Logical Integer::operator<(const Integer& other) const {
+inline Logical Integer::operator<(const Integer& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val < other.val);
 }
-Logical Double::operator<(const Double& other) const {
+inline Logical Double::operator<(const Double& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val < other.val);
 }
-Logical Dual::operator<(const Dual& other) const {
+inline Logical Dual::operator<(const Dual& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val < other.val);
 }
 
-Logical Logical::operator<=(const Logical& other) const {
+inline Logical Logical::operator<=(const Logical& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val <= other.val);
 }
-Logical Integer::operator<=(const Integer& other) const {
+inline Logical Integer::operator<=(const Integer& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val <= other.val);
 }
-Logical Double::operator<=(const Double& other) const {
+inline Logical Double::operator<=(const Double& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val <= other.val);
 }
-Logical Dual::operator<=(const Dual& other) const {
+inline Logical Dual::operator<=(const Dual& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val <= other.val);
 }
 
-Logical Logical::operator>(const Logical& other) const {
+inline Logical Logical::operator>(const Logical& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val > other.val);
 }
-Logical Integer::operator>(const Integer& other) const {
+inline Logical Integer::operator>(const Integer& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val > other.val);
 }
-Logical Double::operator>(const Double& other) const {
+inline Logical Double::operator>(const Double& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val > other.val);
 }
-Logical Dual::operator>(const Dual& other) const {
+inline Logical Dual::operator>(const Dual& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val > other.val);
 }
 
-Logical Logical::operator>=(const Logical& other) const {
+inline Logical Logical::operator>=(const Logical& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val >= other.val);
 }
-Logical Integer::operator>=(const Integer& other) const {
+inline Logical Integer::operator>=(const Integer& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val >= other.val);
 }
-Logical Double::operator>=(const Double& other) const {
+inline Logical Double::operator>=(const Double& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val >= other.val);
 }
-Logical Dual::operator>=(const Dual& other) const {
+inline Logical Dual::operator>=(const Dual& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val >= other.val);
 }
 
-Logical Logical::operator!=(const Logical& other) const {
+inline Logical Logical::operator!=(const Logical& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val != other.val);
 }
-Logical Integer::operator!=(const Integer& other) const {
+inline Logical Integer::operator!=(const Integer& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val != other.val);
 }
-Logical Double::operator!=(const Double& other) const {
+inline Logical Double::operator!=(const Double& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val != other.val);
 }
-Logical Dual::operator!=(const Dual& other) const {
+inline Logical Dual::operator!=(const Dual& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val != other.val);
 }
 
-Logical Logical::operator&&(const Logical& other) const {
+inline Logical Logical::operator&&(const Logical& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val && other.val);
 }
-Logical Integer::operator&&(const Integer& other) const {
+inline Logical Integer::operator&&(const Integer& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val && other.val);
 }
-Logical Double::operator&&(const Double& other) const {
+inline Logical Double::operator&&(const Double& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val && other.val);
 }
-Logical Dual::operator&&(const Dual& other) const {
+inline Logical Dual::operator&&(const Dual& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val && other.val);
 }
 
-Logical Logical::operator||(const Logical& other) const {
+inline Logical Logical::operator||(const Logical& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val || other.val);
 }
-Logical Integer::operator||(const Integer& other) const {
+inline Logical Integer::operator||(const Integer& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val || other.val);
 }
-Logical Double::operator||(const Double& other) const {
+inline Logical Double::operator||(const Double& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val || other.val);
 }
-Logical Dual::operator||(const Dual& other) const {
+inline Logical Dual::operator||(const Dual& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val || other.val);
 }
 
-Double Logical::sin() const {
+inline Double Logical::sin() const {
   if (is_na) return Double::NA();
   return Double(std::sin(static_cast<double>(val)));
 }
-Double Integer::sin() const {
+inline Double Integer::sin() const {
   if (is_na) return Double::NA();
   return Double(std::sin(static_cast<double>(val)));
 }
-Double Double::sin() const {
+inline Double Double::sin() const {
   if (is_na) return Double::NA();
   return Double(std::sin(val));
 }
-Dual Dual::sin() const {
+inline Dual Dual::sin() const {
   if (is_na) return Dual::NA();
   const double v = std::sin(val);
   if (is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
   return Dual(v, std::cos(val));
 }
 
-Double Logical::sinh() const {
+inline Double Logical::sinh() const {
   if (is_na) return Double::NA();
   return Double(std::sinh(static_cast<double>(val)));
 }
-Double Integer::sinh() const {
+inline Double Integer::sinh() const {
   if (is_na) return Double::NA();
   return Double(std::sinh(static_cast<double>(val)));
 }
-Double Double::sinh() const {
+inline Double Double::sinh() const {
   if (is_na) return Double::NA();
   return Double(std::sinh(val));
 }
-Dual Dual::sinh() const {
+inline Dual Dual::sinh() const {
   if (is_na) return Dual::NA();
   const double v = std::sinh(val);
   if (is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
   return Dual(v, std::cosh(val));
 }
 
-Double Logical::asin() const {
+inline Double Logical::asin() const {
   if (is_na) return Double::NA();
   return Double(std::asin(static_cast<double>(val)));
 }
-Double Integer::asin() const {
+inline Double Integer::asin() const {
   if (is_na) return Double::NA();
   return Double(std::asin(static_cast<double>(val)));
 }
-Double Double::asin() const {
+inline Double Double::asin() const {
   if (is_na) return Double::NA();
   return Double(std::asin(val));
 }
-Dual Dual::asin() const {
+inline Dual Dual::asin() const {
   if (is_na) return Dual::NA();
   const double v = std::asin(val);
   if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
   return Dual(v, 1.0 / std::sqrt(1.0 - val * val));
 }
 
-Double Logical::cos() const {
+inline Double Logical::cos() const {
   if (is_na) return Double::NA();
   return Double(std::cos(static_cast<double>(val)));
 }
-Double Integer::cos() const {
+inline Double Integer::cos() const {
   if (is_na) return Double::NA();
   return Double(std::cos(static_cast<double>(val)));
 }
-Double Double::cos() const {
+inline Double Double::cos() const {
   if (is_na) return Double::NA();
   return Double(std::cos(val));
 }
-Dual Dual::cos() const {
+inline Dual Dual::cos() const {
   if (is_na) return Dual::NA();
   const double v = std::cos(val);
   if (is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
   return Dual(v, -std::sin(val));
 }
 
-Double Logical::cosh() const {
+inline Double Logical::cosh() const {
   if (is_na) return Double::NA();
   return Double(std::cosh(static_cast<double>(val)));
 }
-Double Integer::cosh() const {
+inline Double Integer::cosh() const {
   if (is_na) return Double::NA();
   return Double(std::cosh(static_cast<double>(val)));
 }
-Double Double::cosh() const {
+inline Double Double::cosh() const {
   if (is_na) return Double::NA();
   return Double(std::cosh(val));
 }
-Dual Dual::cosh() const {
+inline Dual Dual::cosh() const {
   if (is_na) return Dual::NA();
   const double v = std::cosh(val);
   if (is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
   return Dual(v, std::sinh(val));
 }
 
-Double Logical::acos() const {
+inline Double Logical::acos() const {
   if (is_na) return Double::NA();
   return Double(std::acos(static_cast<double>(val)));
 }
-Double Integer::acos() const {
+inline Double Integer::acos() const {
   if (is_na) return Double::NA();
   return Double(std::acos(static_cast<double>(val)));
 }
-Double Double::acos() const {
+inline Double Double::acos() const {
   if (is_na) return Double::NA();
   return Double(std::acos(val));
 }
-Dual Dual::acos() const {
+inline Dual Dual::acos() const {
   if (is_na) return Dual::NA();
   const double v = std::acos(val);
   if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
   return Dual(v, -1.0 / std::sqrt(1.0 - val * val));
 }
 
-Double Logical::tan() const {
+inline Double Logical::tan() const {
   if (is_na) return Double::NA();
   return Double(std::tan(static_cast<double>(val)));
 }
-Double Integer::tan() const {
+inline Double Integer::tan() const {
   if (is_na) return Double::NA();
   return Double(std::tan(static_cast<double>(val)));
 }
-Double Double::tan() const {
+inline Double Double::tan() const {
   if (is_na) return Double::NA();
   return Double(std::tan(val));
 }
-Dual Dual::tan() const {
+inline Dual Dual::tan() const {
   if (is_na) return Dual::NA();
   const double v = std::tan(val);
   if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
   return Dual(v, 1.0 / (std::cos(val) * std::cos(val)));
 }
 
-Double Logical::tanh() const {
+inline Double Logical::tanh() const {
   if (is_na) return Double::NA();
   return Double(std::tanh(static_cast<double>(val)));
 }
-Double Integer::tanh() const {
+inline Double Integer::tanh() const {
   if (is_na) return Double::NA();
   return Double(std::tanh(static_cast<double>(val)));
 }
-Double Double::tanh() const {
+inline Double Double::tanh() const {
   if (is_na) return Double::NA();
   return Double(std::tanh(val));
 }
-Dual Dual::tanh() const {
+inline Dual Dual::tanh() const {
   if (is_na) return Dual::NA();
   const double t = std::tanh(val);
   if (is_na_dot) return Dual(t, std::numeric_limits<double>::quiet_NaN());
   return Dual(t, 1.0 - t * t);
 }
 
-Double Logical::atan() const {
+inline Double Logical::atan() const {
   if (is_na) return Double::NA();
   return Double(std::atan(static_cast<double>(val)));
 }
-Double Integer::atan() const {
+inline Double Integer::atan() const {
   if (is_na) return Double::NA();
   return Double(std::atan(static_cast<double>(val)));
 }
-Double Double::atan() const {
+inline Double Double::atan() const {
   if (is_na) return Double::NA();
   return Double(std::atan(val));
 }
-Dual Dual::atan() const {
+inline Dual Dual::atan() const {
   if (is_na) return Dual::NA();
   const double v = std::atan(val);
   if (is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
   return Dual(v, 1.0 / (1.0 + val * val));
 }
 
-Double Logical::exp() const {
+inline Double Logical::exp() const {
   if (is_na) return Double::NA();
   return Double(std::exp(static_cast<double>(val)));
 }
-Double Integer::exp() const {
+inline Double Integer::exp() const {
   if (is_na) return Double::NA();
   return Double(std::exp(static_cast<double>(val)));
 }
-Double Double::exp() const {
+inline Double Double::exp() const {
   if (is_na) return Double::NA();
   return Double(std::exp(val));
 }
-Dual Dual::exp() const {
+inline Dual Dual::exp() const {
   if (is_na) return Dual::NA();
   const double v = std::exp(val);
   if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
   return Dual(v, v);
 }
 
-Double Logical::log() const {
+inline Double Logical::log() const {
   if (is_na) return Double::NA();
   return Double(std::log(static_cast<double>(val)));
 }
-Double Integer::log() const {
+inline Double Integer::log() const {
   if (is_na) return Double::NA();
   return Double(std::log(static_cast<double>(val)));
 }
-Double Double::log() const {
+inline Double Double::log() const {
   if (is_na) return Double::NA();
   return Double(std::log(val));
 }
-Dual Dual::log() const {
+inline Dual Dual::log() const {
   if (is_na) return Dual::NA();
   const double v = std::log(val);
   if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
   return Dual(v, 1.0 / val);
 }
 
-Double Logical::sqrt() const {
+inline Double Logical::sqrt() const {
   if (is_na) return Double::NA();
   return Double(std::sqrt(static_cast<double>(val)));
 }
-Double Integer::sqrt() const {
+inline Double Integer::sqrt() const {
   if (is_na) return Double::NA();
   return Double(std::sqrt(static_cast<double>(val)));
 }
-Double Double::sqrt() const {
+inline Double Double::sqrt() const {
   if (is_na) return Double::NA();
   return Double(std::sqrt(val));
 }
-Dual Dual::sqrt() const {
+inline Dual Dual::sqrt() const {
   if (is_na) return Dual::NA();
   const double v = std::sqrt(val);
   if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
   return Dual(v, 0.5 / v);
 }
 
-Integer Logical::operator-() const {
+inline Integer Logical::operator-() const {
   if (is_na) return Integer::NA();
   return Integer(-static_cast<int>(val));
 }
-Integer Integer::operator-() const {
+inline Integer Integer::operator-() const {
   if (is_na) return Integer::NA();
   return Integer(-val);
 }
-Double Double::operator-() const {
+inline Double Double::operator-() const {
   if (is_na) return Double::NA();
   return Double(-val);
 }
-Dual Dual::operator-() const {
+inline Dual Dual::operator-() const {
   if (is_na) return Dual::NA();
   if (is_na_dot) return Dual(-val, std::numeric_limits<double>::quiet_NaN());
   return Dual(-val, -dot);

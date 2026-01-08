@@ -855,7 +855,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   as.character(e),
-"Error in ast2ast:::infer_types(ast, f, NULL, r_fct) : \n  a <- vector(\"double\", 2)\nFound invalid mode in vector: double\n"
+"Error in ast2ast:::infer_types(ast, f, NULL, r_fct) : \n  a <- vector(\"double\", etr::Double(2.0))\nFound invalid mode in vector: double\n"
 )
 
 f <- function() {

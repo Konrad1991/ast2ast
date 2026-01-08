@@ -1,12 +1,9 @@
-#define STANDALONE_ETR
-#include "../inst/include/etr_bits/Core.hpp"
-#include "../inst/include/etr_bits/Calculations/BinaryCalculations.hpp"
-#include "../inst/include/etr_bits/Calculations/UnaryCalculations.hpp"
-#include "../inst/include/etr_bits/Subsetting.hpp"
-
+#include "../inst/include/etr.hpp"
 using namespace etr;
+#include <cstring>
 
-int main() {
+// [[Rcpp::export]]
+void test_simplified_subsetting() {
   auto compare = [](double l, double r) {
     double TOL = 1e-9;
     return std::abs(l - r) < TOL;
@@ -197,5 +194,4 @@ int main() {
     expect_double_at(a_borrow, 4, 9.0);
   }
 
-  return 0;
 }

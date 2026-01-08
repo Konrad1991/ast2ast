@@ -1,5 +1,4 @@
-#define STANDALONE_ETR
-#include "../inst/include/etr_bits/Core.hpp"
+#include "../inst/include/etr.hpp"
 using namespace etr;
 #include <cstring>
 
@@ -344,7 +343,8 @@ template<typename RealType> void test_borrow() {
   }
 }
 
-int main() {
+// [[Rcpp::export]]
+void test_Borrow() {
   test_borrow_dual();
   test_borrow<Double>();
   test_borrow<Variable<Double>>();

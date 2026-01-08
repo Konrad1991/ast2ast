@@ -29,11 +29,11 @@ determine_literal_type <- function(obj) {
 
 t_literal <- function(context, obj, indent, type) {
   if (type == "NA") {
-    return("etr::NA")
+    return("etr::Double::NA()")
   } else if (type == "NaN") {
-    return("etr::NaN")
+    return("etr::Double::NaN()")
   } else if (type == "Inf") {
-    return("etr::Inf")
+    return("etr::Double::Inf()")
   }
   if (type == "logical") {
     obj <- tolower(obj)
@@ -48,13 +48,13 @@ t_literal <- function(context, obj, indent, type) {
     if (!grepl("\\.", obj)) {
       obj <- paste0(obj, ".0")
     }
-    return(paste0(indent, "Double(", obj, ")"))
+    return(paste0(indent, "etr::Double(", obj, ")"))
   } else if (type == "scientific") {
-    return(paste0(indent, "Double(", obj, ")"))
+    return(paste0(indent, "etr::Double(", obj, ")"))
   } else if (type == "integer") {
-    return(paste0( indent, "Integer(", gsub("L", "", obj), ")"))
+    return(paste0( indent, "etr::Integer(", gsub("L", "", obj), ")"))
   } else if (type == "logical") {
-    return(paste0(indent, "Logical(", obj, ")"))
+    return(paste0(indent, "etr::Logical(", obj, ")"))
   } else {
     return(paste0(indent, obj))
   }

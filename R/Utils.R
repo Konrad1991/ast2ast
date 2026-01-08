@@ -70,23 +70,26 @@ convert_base_type <- function(r_type) {
   list(
     "void" = "void",
     "R_NilValue" = "R_NilValue",
-    "logical" = "Logical",
-    "bool" = "Logical",
-    "integer" = "Integer", "int" = "Integer",
-    "double" = "Double")[r_type]
+    "logical" = "etr::Logical",
+    "bool" = "etr::Logical",
+    "integer" = "etr::Integer", "int" = "etr::Integer",
+    "double" = "etr::Double")[r_type]
 }
 
 convert_types_to_etr_types <- function(base_type, data_struct, r_fct, indent = "") {
   if (data_struct == "scalar") {
     convert_base_type(base_type)
-  } else if (any(data_struct == c("vector", "matrix", "vec", "mat"))) {
-    data_struct <- c(vector = "etr::Vec", vec = "etr::Vec", matrix = "etr::Mat", mat = "etr::Mat")[data_struct]
-    return(paste0(indent, data_struct, "<", convert_base_type(base_type), ">"))
-  } else if (any(data_struct == c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat")) && !r_fct) {
-    data_struct <- c(borrow_vector = "etr::Vec", borrow_vec = "etr::Vec",  borrow_matrix = "etr::Mat", borrow_mat = "etr::Mat")[data_struct]
+  }
+  else if (any(data_struct == c("vector", "matrix", "vec", "mat"))) {
+    data_struct <- c(vector = "etr::Array", vec = "etr::Array", matrix = "etr::Array", mat = "etr::Array")[data_struct]
+    return(paste0(indent, data_struct, "<", convert_base_type(base_type), ", etr::Buffer<", convert_base_type(base_type), ">>"))
+  }
+  else if (any(data_struct == c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat")) && !r_fct) {
+    data_struct <- c(borrow_vector = "etr::Array", borrow_vec = "etr::Array",  borrow_matrix = "etr::Array", borrow_mat = "etr::Array")[data_struct]
     return(paste0(indent, data_struct, "<", convert_base_type(base_type), ", etr::Borrow<", convert_base_type(base_type), ">>"))
-  } else if (any(data_struct == c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat")) && r_fct) {
-    data_struct <- c(borrow_vector = "etr::Vec", borrow_vec = "etr::Vec", borrow_matrix = "etr::Mat", borrow_mat = "etr::Mat")[data_struct]
+  }
+  else if (any(data_struct == c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat")) && r_fct) {
+    data_struct <- c(borrow_vector = "etr::Array", borrow_vec = "etr::Array", borrow_matrix = "etr::Array", borrow_mat = "etr::Array")[data_struct]
     return(paste0(indent, data_struct, "<", convert_base_type(base_type), ", etr::Borrow<", convert_base_type(base_type), ">>"))
   }
 }
@@ -106,7 +109,6 @@ remove_blank_lines <- function(chars) {
 r_fct_sig <- function() {
   combine_strings(
     c("// [[Rcpp::depends(ast2ast)]]",
-      "// [[Rcpp::depends(RcppArmadillo)]]",
       "// [[Rcpp::plugins(cpp2a)]]",
       '#include "etr.hpp"\n',
       "// [[Rcpp::export]]\n"), "\n"
@@ -116,7 +118,6 @@ xptr_sig <- function() {
   combine_strings(
     c(
       "// [[Rcpp::depends(ast2ast)]]",
-      "// [[Rcpp::depends(RcppArmadillo)]]",
       "// [[Rcpp::plugins(cpp2a)]]",
       '#include "etr.hpp"\n',
       "// [[Rcpp::export]]",

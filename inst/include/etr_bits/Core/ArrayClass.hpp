@@ -323,6 +323,29 @@ template<typename T> requires (IsArithV<T> || IsVariable<T>) struct Array<T, Bor
   requires IsDual<T>
   explicit Array(T2 *ptr_val, T2* ptr_dot, std::size_t s, const std::vector<std::size_t>& dim_) : d(ptr_val, ptr_dot, s), dim(dim_) {}
 
+#ifdef STANDALONE_ETR
+#else
+  std::vector<std::size_t> get_dims_from_sexp(SEXP s) {
+    SEXP dim = Rf_getAttrib(s, R_DimSymbol);
+    if (dim == R_NilValue) {
+      return std::vector<std::size_t>{
+        static_cast<std::size_t>(Rf_length(s))
+      };
+    }
+    int n = Rf_length(dim);
+    int* p = INTEGER(dim);
+
+    std::vector<std::size_t> dims(n);
+    for (int i = 0; i < n; ++i) {
+      dims[i] = static_cast<std::size_t>(p[i]);
+    }
+    return dims;
+  }
+  Array(SEXP inp) : d(inp) {
+    dim = std::move(get_dims_from_sexp(inp));
+  }
+#endif
+
   template<typename...Args>
   Array(Args...) {
     ass<"Constructor not supported">(sizeof(T) == 0);
@@ -374,22 +397,6 @@ template<typename T> requires (IsArithV<T> || IsVariable<T>) struct Array<T, Bor
 
 #ifdef STANDALONE_ETR
 #else
-  std::vector<std::size_t> get_dims_from_sexp(SEXP s) {
-    SEXP dim = Rf_getAttrib(s, R_DimSymbol);
-    if (dim == R_NilValue) {
-      return std::vector<std::size_t>{
-        static_cast<std::size_t>(Rf_length(s))
-      };
-    }
-    int n = Rf_length(dim);
-    int* p = INTEGER(dim);
-
-    std::vector<std::size_t> dims(n);
-    for (int i = 0; i < n; ++i) {
-      dims[i] = static_cast<std::size_t>(p[i]);
-    }
-    return dims;
-  }
   Array &operator=(SEXP s) {
     d.initSEXP(s);
     dim = get_dims_from_sexp(s);

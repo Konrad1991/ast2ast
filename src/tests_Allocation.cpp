@@ -1,14 +1,9 @@
-#define STANDALONE_ETR
-#include "../inst/include/etr_bits/Core.hpp"
-#include "../inst/include/etr_bits/Calculations/BinaryCalculations.hpp"
-#include "../inst/include/etr_bits/Calculations/UnaryCalculations.hpp"
-#include "../inst/include/etr_bits/Subsetting.hpp"
-#include "../inst/include/etr_bits/Allocation.hpp"
-#include "../inst/include/etr_bits/Utilities/Printing.hpp"
+#include "../inst/include/etr.hpp"
 using namespace etr;
 #include <cstring>
 
-int main() {
+// [[Rcpp::export]]
+void tests_allocation() {
   auto compare = [](double l, double r) {
     double TOL = 1e-12;
     return std::abs(l - r) < TOL;

@@ -1,12 +1,9 @@
-#define STANDALONE_ETR
-#include "../inst/include/etr_bits/Core.hpp"
-#include "../inst/include/etr_bits/Calculations/BinaryCalculations.hpp"
-#include "../inst/include/etr_bits/Calculations/UnaryCalculations.hpp"
-#include "../inst/include/etr_bits/Subsetting/PreservingSubsetting.hpp"
+#include "../inst/include/etr.hpp"
 using namespace etr;
 #include <cstring>
 
-int main() {
+// [[Rcpp::export]]
+void test_concepts() {
   static_assert(IsCppDouble<decltype(3.14)>, "C++ double");
   static_assert(IsCppInteger<decltype(14)>, "C++ int");
   static_assert(IsCppLogical<decltype(true)>, "C++ bool");
@@ -16,6 +13,7 @@ int main() {
   b.set(1, 2.1);
   b.set(2, 3.1);
   Array<Double, Buffer<Double>> a(b);
+  a.dim = std::vector<std::size_t>{3};
   auto unary = -a;
   static_assert(IsUnary<decltype(unary.d)>, "Is unary");
   auto binary = a + a;

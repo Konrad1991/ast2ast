@@ -1,14 +1,8 @@
-#define STANDALONE_ETR
-#include "../inst/include/etr_bits/Core.hpp"
-#include "../inst/include/etr_bits/Calculations/BinaryCalculations.hpp"
-#include "../inst/include/etr_bits/Calculations/UnaryCalculations.hpp"
-#include "../inst/include/etr_bits/Subsetting.hpp"
-#include "../inst/include/etr_bits/Allocation.hpp"
-#include "../inst/include/etr_bits/Utilities/Printing.hpp"
-#include "../inst/include/etr_bits/Interpolation.hpp"
+#include "../inst/include/etr.hpp"
 using namespace etr;
 #include <cstring>
 
+// [[Rcpp::export]]
 void test_cmr() {
   auto compare = [](double l, double r) {
     double TOL = 1e-3;
@@ -234,8 +228,4 @@ void test_cmr() {
     }
   }
 
-}
-
-int main() {
-  test_cmr();
 }

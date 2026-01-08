@@ -18,11 +18,11 @@ ast <- get_sorted_ast(f)
 res <- lapply(ast$block, function(node) {
   node$right_node$stringify("")
 })
-expect_equal(res[[1]], "vector(\"logical\", 2)")
-expect_equal(res[[2]], "vector(\"integer\", 3)")
-expect_equal(res[[3]], "vector(\"numeric\", 4)")
-expect_equal(res[[4]], "vector(\"numeric\", 5)")
-expect_equal(res[[5]], "vector(\"logical\", 4)")
+expect_equal(res[[1]], "vector(\"logical\", etr::Double(2.0))")
+expect_equal(res[[2]], "vector(\"integer\", etr::Double(3.0))")
+expect_equal(res[[3]], "vector(\"numeric\", etr::Double(4.0))")
+expect_equal(res[[4]], "vector(\"numeric\", etr::Double(5.0))")
+expect_equal(res[[5]], "vector(\"logical\", etr::Double(4.0))")
 
 
 # --- matrix sorting ----------------------------------------------------
@@ -43,7 +43,7 @@ res <- lapply(ast$block, function(node) {
 checks <- logical(8)
 for (i in 1:8) {
   idx <- paste0(i, ".0")
-  expected <- sprintf("matrix(%s, %s, %s)", idx, idx, idx)
+  expected <- sprintf("matrix(etr::Double(%s), etr::Double(%s), etr::Double(%s))", idx, idx, idx)
   checks[i] <- expected == res[[i]]
 }
 expect_true(all(checks))

@@ -53,11 +53,13 @@ template <typename T, typename BufferTrait> struct Buffer {
   // Copy constructor
   Buffer(const Buffer& other)
   : sz(other.sz), capacity(other.capacity), allocated(other.allocated) {
-    if (allocated && capacity) {
-      p = new T[capacity];
-      std::copy_n(other.p, sz, p);
-    } else {
-      reset();
+    if (!allocated || capacity == 0) { reset(); return; }
+    if (sz > capacity) {
+      ass<"Buffer invariant violated: sz > capacity">(sz > capacity);
+    }
+    p = new T[capacity];
+    for (std::size_t i = 0; i < sz; i++) {
+      p[i] = other.p[i];
     }
   }
   // Move constructor
@@ -95,7 +97,7 @@ template <typename T, typename BufferTrait> struct Buffer {
       delete[] p;
       reset();
     }
-    if constexpr (IS<value_type, double>) {
+    if constexpr (IS<value_type, Double>) {
       ass<"R object is not of type numeric">(Rf_isReal(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       ass<"R object seems to be empty">(sz >= 1);
@@ -105,7 +107,7 @@ template <typename T, typename BufferTrait> struct Buffer {
         p[i] = REAL(s)[i];
       }
       allocated = true;
-    } else if constexpr (IS<value_type, int>) {
+    } else if constexpr (IS<value_type, Integer>) {
       ass<"R object is not of type integer">(Rf_isInteger(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       ass<"R object seems to be empty">(sz >= 1);
@@ -115,18 +117,18 @@ template <typename T, typename BufferTrait> struct Buffer {
         p[i] = INTEGER(s)[i];
       }
       allocated = true;
-    } else if constexpr (IS<value_type, bool>) {
+    } else if constexpr (IS<value_type, Logical>) {
       ass<"R object is not of type logical">(Rf_isLogical(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       ass<"R object seems to be empty">(sz >= 1);
       capacity = static_cast<std::size_t>(sz);
       p = new T[capacity];
       for (int i = 0; i < sz; i++) {
-        p[i] = LOGICAL(s)[i];
+        p[i] = static_cast<bool>(LOGICAL(s)[i]);
       }
       allocated = true;
     } else {
-      static_assert(sizeof(T) == 0, "Unsupported type found");
+      ass<"Unsupported type found">(false);
     }
   }
   Buffer(SEXP s) {

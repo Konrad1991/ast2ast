@@ -1,6 +1,6 @@
-#define STANDALONE_ETR
-#include "../inst/include/etr_bits/Core.hpp"
+#include "../inst/include/etr.hpp"
 using namespace etr;
+#include <cstring>
 
 void test_scalar_operations_return_types() {
   static_assert(IS<decltype(sin(std::declval<Logical>())), Double>, "sin(std::declval<Logical>()) -> Double");
@@ -601,7 +601,8 @@ void test_reverse_ad() {
   static_assert(IS<decltype(std::declval<Variable<Double>>() || std::declval<Variable<Double>>()), BooleanExpr>, "std::declval<Variable<Double>>() || std::declval<Variable<Double>>() -> BooleanExpr");
 }
 
-int main() {
+// [[Rcpp::export]]
+void test_second_dispatch_layer() {
   test_scalar_operations_return_types();
   test_common_type();
   test_reverse_ad();

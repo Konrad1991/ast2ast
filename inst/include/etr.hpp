@@ -23,11 +23,11 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #define ETR_HPP
 
 #include "etr_bits/Core.hpp"
-#include "etr_bits/DataStructures.hpp"
 #include "etr_bits/Allocation.hpp"
 #include "etr_bits/Calculations.hpp"
 #include "etr_bits/Interpolation.hpp"
 #include "etr_bits/Subsetting.hpp"
 #include "etr_bits/Utilities.hpp"
+#include "etr_bits/Derivatives.hpp"
 
 #endif

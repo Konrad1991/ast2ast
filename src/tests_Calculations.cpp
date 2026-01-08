@@ -1,8 +1,4 @@
-#define STANDALONE_ETR
-#include "../inst/include/etr_bits/Core.hpp"
-#include "../inst/include/etr_bits/Calculations/BinaryCalculations.hpp"
-#include "../inst/include/etr_bits/Calculations/UnaryCalculations.hpp"
-#include "../inst/include/etr_bits/Subsetting/PreservingSubsetting.hpp"
+#include "../inst/include/etr.hpp"
 using namespace etr;
 #include <cstring>
 
@@ -178,11 +174,8 @@ auto compare_result_reverse_ad_binary(const T1& etr1, const T2& etr2, const T3& 
   }
 }
 
-int main() {
-  auto compare = [](double l, double r) {
-    double TOL = 1e-12;
-    return std::abs(l - r) < TOL;
-  };
+// [[Rcpp::export]]
+void test_calculation() {
   auto create_r_array = []() {
     Array<Double, Buffer<Double, RBufferTrait>> a_r(SI{60});
     for (std::size_t i = 0; i <a_r.size(); i++) {
@@ -245,12 +238,7 @@ int main() {
   const std::vector<std::size_t> dim{3, 4, 5};
   //BinaryOperation, SubsetView, ConstSubsetView
 
-  // 3 C++ scalar types
-  bool logical_cpp = true;
-  int integer_cpp = 101;
-  double double_cpp = 3.14;
-
-  // 4 Scalar types
+  // 3 Scalar types
   Logical logical_etr = true;
   Integer integer_etr = 101;
   Double double_etr = 3.14;

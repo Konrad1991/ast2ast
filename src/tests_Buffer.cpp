@@ -1,5 +1,4 @@
-#define STANDALONE_ETR
-#include "../inst/include/etr_bits/Core.hpp"
+#include "../inst/include/etr.hpp"
 using namespace etr;
 #include <cstring>
 
@@ -271,7 +270,8 @@ void test_buffer() {
   }
 }
 
-int main() {
+// [[Rcpp::export]]
+void test_buffer() {
   test_buffer<Double>();
   test_buffer<Variable<Double>>();
 }

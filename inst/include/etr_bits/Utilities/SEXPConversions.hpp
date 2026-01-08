@@ -7,11 +7,11 @@ namespace etr {
 // -----------------------------------------------------------------------------------------------------------
 template<typename T>
 inline auto Evaluate(T && obj) {
-  if constexpr(IsOperationVec<Decayed<T>> || IsSubsetVec<Decayed<T>> || IsSubsetMat<Decayed<T>>) {
-    using value_type = typename ReRef<decltype(obj)>::type::value_type;
-    Vec<value_type, Buffer<value_type, RBufferTrait>> res(SI{obj.size()});
+  if constexpr(IsOperationArray<Decayed<T>>) {
+    using vtype = typename ExtractDataType<Decayed<T>>::value_type;
+    Array<vtype, Buffer<vtype, RBufferTrait>> res(SI{obj.size()});
     for (size_t i = 0; i < res.size(); i++) {
-      res[i] = obj[i];
+      res.set(i, obj.get(i));
     }
     return res;
   } else {
@@ -34,31 +34,31 @@ inline T SEXP2Scalar(SEXP s) {
 }
 
 template<>
-inline bool SEXP2Scalar<bool>(SEXP s) {
+inline Logical SEXP2Scalar<Logical>(SEXP s) {
   ass<"R object is not of type logical">(Rf_isLogical(s));
   const R_xlen_t sz = Rf_xlength(s);
   ass<"Argument has length > 1">(sz == 1);
   const bool b = LOGICAL(s)[0];
   ass<"NA logical not allowed">(b != NA_LOGICAL);
-  return b != 0; // R bool is int
+  return Logical(b != 0); // R bool is int
 }
 template<>
-inline int SEXP2Scalar<int>(SEXP s) {
+inline Integer SEXP2Scalar<Integer>(SEXP s) {
   ass<"R object is not of type integer">(Rf_isInteger(s));
   const R_xlen_t sz = Rf_xlength(s);
   ass<"Argument has length > 1">(sz == 1);
   const int i = INTEGER(s)[0];
   ass<"NA integer not allowed">(i != NA_INTEGER);
-  return i;
+  return Integer(i);
 }
 template<>
-inline double SEXP2Scalar<double>(SEXP s) {
+inline Double SEXP2Scalar<Double>(SEXP s) {
   ass<"R object is not of type integer">(Rf_isReal(s));
   const R_xlen_t sz = Rf_xlength(s);
   ass<"Argument has length > 1">(sz == 1);
   const double d = REAL(s)[0];
   ass<"NA/NaN double not allowed">(!ISNA(d) && !ISNAN(d));
-  return d;
+  return Double(d);
 }
 
 // Cast scalar elements to their SEXP equivalents
@@ -70,74 +70,34 @@ inline SEXP Cast(double res) { return Rf_ScalarReal(res); }
 inline SEXP Cast(std::string &res) { return Rf_mkString(res.data()); }
 inline SEXP Cast(const char *res) { return Rf_mkString(res); }
 
-// Cast vectors
+// Cast Array
 // -----------------------------------------------------------------------------------------------------------
 template <typename T>
-requires IsVec<Decayed<T>>
+requires IsArray<Decayed<T>>
 inline SEXP Cast(const T &res_) {
   auto res = Evaluate(res_);
   SEXP ret = R_NilValue;
-  using DecayedT = Decayed<T>;
-  if constexpr (IsCppDouble<DecayedT>) {
+  using vtype = typename ExtractDataType<Decayed<T>>::value_type;
+  if constexpr (IsDouble<vtype>) {
     ret = PROTECT(Rf_allocVector(REALSXP, res.size()));
     for (int i = 0; i < res.size(); i++) {
-      REAL(ret)[i] = res[i];
+      REAL(ret)[i] = get_val(res.get(i));
     }
     UNPROTECT(1);
     return ret;
-  } else if constexpr (IsCppLogical<DecayedT>) {
+  } else if constexpr (IsLogical<vtype>) {
     SEXP ret = R_NilValue;
     ret = PROTECT(Rf_allocVector(LGLSXP, res.size()));
     for (int i = 0; i < res.size(); i++) {
-      LOGICAL(ret)[i] = res[i];
+      LOGICAL(ret)[i] = static_cast<int>(get_val(res.get(i))); // R stores bools as ints
     }
     UNPROTECT(1);
     return ret;
-  } else if constexpr (IsCppInteger<DecayedT>) {
+  } else if constexpr (IsInteger<vtype>) {
     SEXP ret = R_NilValue;
     ret = PROTECT(Rf_allocVector(INTSXP, res.size()));
     for (int i = 0; i < res.size(); i++) {
-      INTEGER(ret)[i] = res[i];
-    }
-    UNPROTECT(1);
-    return ret;
-  } else {
-    ass<"Couldn't convert the object to an R object">(false);
-    return ret;
-  }
-}
-
-// Cast matrices
-// -----------------------------------------------------------------------------------------------------------
-template <typename T>
-requires IsMat<Decayed<T>>
-inline SEXP Cast(const T &res_) {
-  auto res = Evaluate(res_);
-  SEXP ret = R_NilValue;
-  using DecayedT = Decayed<T>;
-  if constexpr (IsCppDouble<DecayedT>) {
-    ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
-    ret = PROTECT(Rf_allocMatrix(REALSXP, res.nr(), res.nc()));
-    for (int i = 0; i < res.size(); i++) {
-      REAL(ret)[i] = res[i];
-    }
-    UNPROTECT(1);
-    return ret;
-  } else if constexpr (IsCppLogical<DecayedT>) {
-    SEXP ret = R_NilValue;
-    ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
-    ret = PROTECT(Rf_allocMatrix(LGLSXP, res.nr(), res.nc()));
-    for (int i = 0; i < res.size(); i++) {
-      LOGICAL(ret)[i] = res[i];
-    }
-    UNPROTECT(1);
-    return ret;
-  } else if constexpr (IsCppInteger<DecayedT>) {
-    SEXP ret = R_NilValue;
-    ass<"size does not match ncol*nrow">(res.size() == res.nr() * res.nc());
-    ret = PROTECT(Rf_allocMatrix(INTSXP, res.nr(), res.nc()));
-    for (int i = 0; i < res.size(); i++) {
-      INTEGER(ret)[i] = res[i];
+      INTEGER(ret)[i] = get_val(res.get(i));
     }
     UNPROTECT(1);
     return ret;

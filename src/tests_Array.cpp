@@ -1,8 +1,4 @@
-#define STANDALONE_ETR
-#include "../inst/include/etr_bits/Core.hpp"
-#include "../inst/include/etr_bits/Calculations/BinaryCalculations.hpp"
-#include "../inst/include/etr_bits/Calculations/UnaryCalculations.hpp"
-#include "../inst/include/etr_bits/Subsetting/PreservingSubsetting.hpp"
+#include "../inst/include/etr.hpp"
 using namespace etr;
 #include <cstring>
 
@@ -326,7 +322,6 @@ template<typename RealType> void test_array_r_buffer() {
 }
 
 template<typename RealType> void test_array_borrow() {
-  using AB = Array<RealType, Borrow<RealType, BorrowTrait>>;
   auto compare = [](double l, double r) {
     double TOL = 1e-12;
     return std::abs(l - r) < TOL;
@@ -811,7 +806,8 @@ template<typename RealType> void test_array_subset() {
   }
 }
 
-int main() {
+// [[Rcpp::export]]
+void test_allocation() {
   test_array_buffer<Double>();
   test_array_buffer<Variable<Double>>();
   test_array_r_buffer<Double>();
