@@ -273,54 +273,12 @@ assemble <- function(name_fct, vars_types_list, return_type, body, r_fct) {
   }
 }
 
-derivative_state <- R6::R6Class(
-  "derivative_state",
-  public = list(
-    type = NULL,
-    mode = NULL,
-    of = NULL,
-    wrt = NULL,
-    of_idx = -1L,
-    wrt_idx = -1L,
-    real_type = "etr::Double",
-    initialize = function(input, f, f_args, r_fct) {
-
-      if (is.null(input)) return()
-      vars_list <- create_vars_types_list(f, f_args, r_fct)
-      expected_names <- c("type", "mode", "of", "wrt")
-
-      stopifnot("Names of derivative are not correct" = all(names(input) == expected_names))
-      input <- lapply(input, deparse)
-      stopifnot("type is not Jacobian" = input$type == "Jacobian")
-      stopifnot("mode is neither forward or reverse" = input$mode %in% c("forward", "reverse"))
-
-      self$type <- input$type
-      self$mode <- input$mode
-      self$of <- input$of
-      self$wrt <- input$wrt
-      if (self$mode == "forward") {
-        self$real_type <- "etr::Dual"
-      } else if (self$mode == "reverse") {
-        self$real_type <- "etr::Variable<etr::Double>"
-      }
-
-      self$check(vars_list, self$wrt, self$of)
-      self$set_indices(vars_list)
-
-    },
-    set_indices = function(vars_list) {
-      self$of_idx <- which(self$of == names(vars_list))
-      self$wrt_idx <- which(self$wrt == names(vars_list))
-    },
-    check = function(vars_list, wrt, of) {
-      stopifnot("wrt variable has to be an argument of your function" = wrt %in% names(vars_list))
-      stopifnot("wrt type has to be double" = vars_list[[wrt]]$base_type == "double")
-      stopifnot("of variable has to be an argument of your function" = of %in% names(vars_list))
-      stopifnot("of type has to be double" = vars_list[[of]]$base_type == "double")
-
-    }
-  )
-)
+resolve_derivative <- function(derivative) {
+  if (is.null(derivative)) return("etr::Double")
+  stopifnot("derivative is neither forward nor reverse" = derivative %in% c("forward", "reverse"))
+  if (derivative == "forward") return("etr::Dual")
+  if (derivative == "reverse") return("etr::Variable<etr::Double>")
+}
 
 translate_internally <- function(fct, args_fct, derivative, name_fct, r_fct) {
   b <- body(fct)
@@ -331,7 +289,7 @@ translate_internally <- function(fct, args_fct, derivative, name_fct, r_fct) {
     stop("f seems to be empty")
   }
   code_string <- list()
-  deriv_state <- derivative_state$new(derivative, fct, args_fct, r_fct)
+  real_type <- resolve_derivative(derivative)
 
   # Create AST
   AST <- parse_body(body(fct), r_fct)
@@ -352,9 +310,9 @@ translate_internally <- function(fct, args_fct, derivative, name_fct, r_fct) {
   return_type <- determine_types_of_returns(AST, vars_types_list, r_fct)
 
   # Translate
-  code_string <- translate_to_cpp_code(AST, r_fct, deriv_state$real_type)
+  code_string <- translate_to_cpp_code(AST, r_fct, real_type)
   for (i in seq_along(vars_types_list)) {
-    vars_types_list[[i]]$real_type <- deriv_state$real_type
+    vars_types_list[[i]]$real_type <- real_type
   }
 
   # Create function signature & variable declarations

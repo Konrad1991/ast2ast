@@ -1,39 +1,46 @@
-devtools::load_all(".")
-
 system('find -name "*.o" | xargs rm')
 system('find -name "*.so" | xargs rm')
 Rcpp::compileAttributes()
 install.packages(".", types = "source", repo = NULL,)
 
-files <- list.files("./R", full.names = TRUE)
-trash <- lapply(files, source)
-f <- function(a) {
-  b <- 2
-  a <- a + 2
-  a <- NA
-  return(a)
+# f:
+# --> f1 = x1 * x2
+# --> f2 = x1 + x2*x2
+#
+# Jacobian:
+# df1/dx1 = x2    df2/dx2 = x1
+# df2/dx1 = 1     df2/dx2 = 2*x2
+#
+# with x1 = 2 and x2 = 3
+# f1 = 6
+# f2 = 11
+#
+# df1/dfx = 3     df2/dx2 = 2
+# df2/dx1 = 1     df2/dx2 = 6
+f <- function(y, x) {
+  y[[1L]] <- x[[1L]] * x[[2L]]
+  y[[2L]] <- x[[1L]] + x[[2L]]*x[[2L]]
+  jac <- deriv(y, x)
+  return(jac)
 }
-translate(f,
-  derivative = list(type = Jacobian, mode = reverse, of = a, wrt = a),
-  getsource = TRUE) |> cat("\n")
-.traceback()
+fcpp <- ast2ast::translate(f, derivative = "reverse", verbose = TRUE)
+y <- c(0, 0)
+x <- c(2, 3)
+fcpp(y, x)
 
-res <- ast2ast::translate(f,
-  derivative = list(type = Jacobian, mode = reverse, of = a, wrt = a),
-  verbose = TRUE)
-res(1)
-
-f_args <- function(a, b) {
-  a |> type(borrow_vec(double))
-  b |> type(scalar(double))
+f <- function(y, x) {
+  jac <- matrix(0.0, length(y), length(x))
+  for (i in 1L:length(x)) {
+    seed(x, i)
+    y[[1L]] <- x[[1L]] * x[[2L]]
+    y[[2L]] <- x[[1L]] + x[[2L]]*x[[2L]]
+    d <- get_dot(y)
+    jac[TRUE, i] <- d
+    unseed(x, i)
+  }
+  return(jac)
 }
-f <- function(a, b) {
-  a <- c(4, 5, 6)
-  return(a + b)
-}
-res <- ast2ast::translate(f, args_f = f_args, verbose = TRUE)
-a <- c(1, 2, 3)
-b <- 3.0
-res(a, b)
-
-tinytest::test_package("ast2ast")
+fcpp <- ast2ast::translate(f, derivative = "forward", verbose = TRUE)
+y <- c(0, 0)
+x <- c(2, 3)
+fcpp(y, x)

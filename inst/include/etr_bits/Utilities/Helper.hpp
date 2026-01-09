@@ -104,6 +104,7 @@ template <typename T> requires IsArray<T> inline auto dim(const T &inp) {
   for (std::size_t i = 0; i < res.size(); i++) {
     res.set(i, Integer(static_cast<int>(d[i])));
   }
+  res.dim = std::vector<std::size_t>{2};
   return res;
 }
 

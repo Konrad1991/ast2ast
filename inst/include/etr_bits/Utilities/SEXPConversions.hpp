@@ -7,7 +7,7 @@ namespace etr {
 // -----------------------------------------------------------------------------------------------------------
 template<typename T>
 inline auto Evaluate(T && obj) {
-  if constexpr(IsOperationArray<Decayed<T>>) {
+  if constexpr(!IsLBufferArray<Decayed<T>>) {
     using vtype = typename ExtractDataType<Decayed<T>>::value_type;
     Array<vtype, Buffer<vtype, RBufferTrait>> res(SI{obj.size()});
     for (size_t i = 0; i < res.size(); i++) {
@@ -74,10 +74,28 @@ inline SEXP Cast(const char *res) { return Rf_mkString(res); }
 
 // Cast Array
 // -----------------------------------------------------------------------------------------------------------
+inline void set_dim_attrib(SEXP x, const std::vector<std::size_t>& dim) {
+  if (dim.empty()) return;           // no dim => plain vector
+  SEXP dimS = PROTECT(Rf_allocVector(INTSXP, dim.size()));
+  for (R_xlen_t i = 0; i < (R_xlen_t)dim.size(); ++i) {
+    // be safe: R stores dims as int
+    if (dim[i] > (std::size_t)std::numeric_limits<int>::max())
+      Rf_error("Dimension too large for R integer dim.");
+    INTEGER(dimS)[i] = static_cast<int>(dim[i]);
+  }
+  Rf_setAttrib(x, R_DimSymbol, dimS);
+  UNPROTECT(1);
+}
+
+// optional
+inline void set_dimnames_attrib(SEXP x, SEXP dimnames /* must be a VECSXP of length ndims */) {
+  Rf_setAttrib(x, R_DimNamesSymbol, dimnames);
+}
 template <typename T>
 requires IsArray<Decayed<T>>
 inline SEXP Cast(const T &res_) {
   auto res = Evaluate(res_);
+  const auto dim = dim_view(res.dim);
   SEXP ret = R_NilValue;
   using vtype = typename ExtractDataType<Decayed<T>>::value_type;
   if constexpr (IsDouble<vtype> || IsDual<vtype> || IS<Variable<Double>, vtype>) {
@@ -85,6 +103,7 @@ inline SEXP Cast(const T &res_) {
     for (int i = 0; i < res.size(); i++) {
       REAL(ret)[i] = get_val(res.get(i));
     }
+    set_dim_attrib(ret, dim);
     UNPROTECT(1);
     return ret;
   } else if constexpr (IsLogical<vtype>) {
@@ -93,6 +112,7 @@ inline SEXP Cast(const T &res_) {
     for (int i = 0; i < res.size(); i++) {
       LOGICAL(ret)[i] = static_cast<int>(get_val(res.get(i))); // R stores bools as ints
     }
+    set_dim_attrib(ret, dim);
     UNPROTECT(1);
     return ret;
   } else if constexpr (IsInteger<vtype>) {
@@ -101,6 +121,7 @@ inline SEXP Cast(const T &res_) {
     for (int i = 0; i < res.size(); i++) {
       INTEGER(ret)[i] = get_val(res.get(i));
     }
+    set_dim_attrib(ret, dim);
     UNPROTECT(1);
     return ret;
   } else {
