@@ -66,31 +66,32 @@ permitted_data_structs <- function(r_fct) {
   }
 }
 
-convert_base_type <- function(r_type) {
-  list(
+convert_base_type <- function(r_type, real_type) {
+  type_list <- list(
     "void" = "void",
     "R_NilValue" = "R_NilValue",
     "logical" = "etr::Logical",
     "bool" = "etr::Logical",
     "integer" = "etr::Integer", "int" = "etr::Integer",
-    "double" = "etr::Double")[r_type]
+    "double" = real_type)
+  type_list[r_type]
 }
 
-convert_types_to_etr_types <- function(base_type, data_struct, r_fct, indent = "") {
+convert_types_to_etr_types <- function(base_type, data_struct, r_fct, real_type, indent = "") {
   if (data_struct == "scalar") {
-    convert_base_type(base_type)
+    convert_base_type(base_type, real_type)
   }
   else if (any(data_struct == c("vector", "matrix", "vec", "mat"))) {
     data_struct <- c(vector = "etr::Array", vec = "etr::Array", matrix = "etr::Array", mat = "etr::Array")[data_struct]
-    return(paste0(indent, data_struct, "<", convert_base_type(base_type), ", etr::Buffer<", convert_base_type(base_type), ">>"))
+    return(paste0(indent, data_struct, "<", convert_base_type(base_type, real_type), ", etr::Buffer<", convert_base_type(base_type, real_type), ">>"))
   }
   else if (any(data_struct == c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat")) && !r_fct) {
     data_struct <- c(borrow_vector = "etr::Array", borrow_vec = "etr::Array",  borrow_matrix = "etr::Array", borrow_mat = "etr::Array")[data_struct]
-    return(paste0(indent, data_struct, "<", convert_base_type(base_type), ", etr::Borrow<", convert_base_type(base_type), ">>"))
+    return(paste0(indent, data_struct, "<", convert_base_type(base_type, real_type), ", etr::Borrow<", convert_base_type(base_type, real_type), ">>"))
   }
   else if (any(data_struct == c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat")) && r_fct) {
     data_struct <- c(borrow_vector = "etr::Array", borrow_vec = "etr::Array", borrow_matrix = "etr::Array", borrow_mat = "etr::Array")[data_struct]
-    return(paste0(indent, data_struct, "<", convert_base_type(base_type), ", etr::Borrow<", convert_base_type(base_type), ">>"))
+    return(paste0(indent, data_struct, "<", convert_base_type(base_type, real_type), ", etr::Borrow<", convert_base_type(base_type, real_type), ">>"))
   }
 }
 

@@ -97,7 +97,7 @@ template <typename T, typename BufferTrait> struct Buffer {
       delete[] p;
       reset();
     }
-    if constexpr (IS<value_type, Double>) {
+    if constexpr (IS<value_type, Double> || IS<value_type, Dual> || IS<value_type, Variable<Double>>) {
       ass<"R object is not of type numeric">(Rf_isReal(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       ass<"R object seems to be empty">(sz >= 1);

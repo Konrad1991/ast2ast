@@ -316,8 +316,12 @@ action_check_type_of_args <- function(node, variables, r_fct) {
 
 # The actual translation of the AST to C++
 # ========================================================================
-action_set_true <- function(node, r_fct) {
+action_set_true <- function(node, r_fct, real_type) {
   # set true to remove type declaration and add Cast to return
+  if (inherits(node, "literal_node")) {
+    node$wrap <- TRUE
+    node$real_type <- real_type
+  }
   if (!inherits(node, c("nullary_node", "unary_node", "binary_node", "function_node"))) {
     return()
   }

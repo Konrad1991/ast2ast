@@ -3,7 +3,7 @@
 
 namespace etr {
 
-// Evaluation: this is required as the lifetime for some objects does not survive the function itself
+// Evaluation: this is required as the lifetime for some objects do not survive the function itself
 // -----------------------------------------------------------------------------------------------------------
 template<typename T>
 inline auto Evaluate(T && obj) {
@@ -64,9 +64,11 @@ inline Double SEXP2Scalar<Double>(SEXP s) {
 // Cast scalar elements to their SEXP equivalents
 // -----------------------------------------------------------------------------------------------------------
 inline SEXP Cast() { return R_NilValue; }
-inline SEXP Cast(int res) { return Rf_ScalarInteger(res); }
-inline SEXP Cast(bool res) { return Rf_ScalarLogical(res); }
-inline SEXP Cast(double res) { return Rf_ScalarReal(res); }
+inline SEXP Cast(Integer res) { return Rf_ScalarInteger(get_val(res)); }
+inline SEXP Cast(Logical res) { return Rf_ScalarLogical(get_val(res)); }
+inline SEXP Cast(Double res) { return Rf_ScalarReal(get_val(res)); }
+inline SEXP Cast(Dual res) { return Rf_ScalarReal(get_val(res)); }
+inline SEXP Cast(Variable<Double> res) { return Rf_ScalarReal(get_val(res)); }
 inline SEXP Cast(std::string &res) { return Rf_mkString(res.data()); }
 inline SEXP Cast(const char *res) { return Rf_mkString(res); }
 
@@ -78,7 +80,7 @@ inline SEXP Cast(const T &res_) {
   auto res = Evaluate(res_);
   SEXP ret = R_NilValue;
   using vtype = typename ExtractDataType<Decayed<T>>::value_type;
-  if constexpr (IsDouble<vtype>) {
+  if constexpr (IsDouble<vtype> || IsDual<vtype> || IS<Variable<Double>, vtype>) {
     ret = PROTECT(Rf_allocVector(REALSXP, res.size()));
     for (int i = 0; i < res.size(); i++) {
       REAL(ret)[i] = get_val(res.get(i));

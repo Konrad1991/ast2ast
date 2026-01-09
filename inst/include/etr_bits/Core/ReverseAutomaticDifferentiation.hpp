@@ -738,6 +738,17 @@ struct Variable {
   explicit operator U() const {
     return static_cast<U>(expr->val.val);
   }
+  inline static Double NA() {
+    Double x(std::numeric_limits<double>::quiet_NaN());
+    x.is_na = true;
+    return x;
+  }
+  inline static Double NaN() {
+    return Double(std::numeric_limits<double>::quiet_NaN());
+  }
+  inline static Double Inf() {
+    return Double(std::numeric_limits<double>::infinity());
+  }
 };
 
 //------------------------------------------------------------------------------

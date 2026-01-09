@@ -27,13 +27,13 @@ determine_literal_type <- function(obj) {
   return("character")
 }
 
-t_literal <- function(context, obj, indent, type) {
+t_literal <- function(context, obj, indent, type, wrap, real_type) {
   if (type == "NA") {
-    return("etr::Double::NA()")
+    if (!wrap) return("NA") else return(paste0(real_type, "::NA()"))
   } else if (type == "NaN") {
-    return("etr::Double::NaN()")
+    if (!wrap) return ("NaN") else return(paste0(real_type, "::NaN()"))
   } else if (type == "Inf") {
-    return("etr::Double::Inf()")
+    if (!wrap) return("Inf") else return(paste0(real_type, "::Inf()"))
   }
   if (type == "logical") {
     obj <- tolower(obj)
@@ -48,12 +48,16 @@ t_literal <- function(context, obj, indent, type) {
     if (!grepl("\\.", obj)) {
       obj <- paste0(obj, ".0")
     }
-    return(paste0(indent, "etr::Double(", obj, ")"))
+    if (!wrap) return(obj)
+    return(paste0(indent, real_type, "(", obj, ")"))
   } else if (type == "scientific") {
-    return(paste0(indent, "etr::Double(", obj, ")"))
+    if (!wrap) return(obj)
+    return(paste0(indent, real_type, "(", obj, ")"))
   } else if (type == "integer") {
+    if (!wrap) return(obj)
     return(paste0( indent, "etr::Integer(", gsub("L", "", obj), ")"))
   } else if (type == "logical") {
+    if (!wrap) return(obj)
     return(paste0(indent, "etr::Logical(", obj, ")"))
   } else {
     return(paste0(indent, obj))

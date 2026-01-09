@@ -1,6 +1,11 @@
-translate <- function(f, args_f = NULL,
+translate <- function(f,
+                      args_f = NULL,
                       output = "R",
-                      verbose = FALSE, getsource = FALSE) {
+                      derivative = NULL,
+                      verbose = FALSE,
+                      getsource = FALSE
+                      )
+{
   stopifnot("f is not a function" = is.function(f))
   stopifnot("args_f is not a function" = is.function(args_f) || is.null(args_f))
   stopifnot("output is not of type character" = is.character(output))
@@ -16,7 +21,9 @@ translate <- function(f, args_f = NULL,
     name_f <- "lambda_fct"
   }
 
-  cpp_code <- translate_internally(f, args_f, name_f, r_fct)
+  derivative <- substitute(derivative)
+  derivative <- as.list(derivative[-1])
+  cpp_code <- translate_internally(f, args_f, derivative, name_f, r_fct)
   if (getsource) return(cpp_code)
 
   compile(cpp_code, r_fct, verbose, as.character(name_f))
