@@ -7,7 +7,7 @@ namespace etr {
 // -----------------------------------------------------------------------------------------------------------
 template<typename T>
 inline auto Evaluate(T && obj) {
-  if constexpr(!IsLBufferArray<Decayed<T>>) {
+  if constexpr((!IsLBufferArray<Decayed<T>> && !IsBorrowArray<Decayed<T>>)) {
     using vtype = typename ExtractDataType<Decayed<T>>::value_type;
     Array<vtype, Buffer<vtype, RBufferTrait>> res(SI{obj.size()});
     for (size_t i = 0; i < res.size(); i++) {
