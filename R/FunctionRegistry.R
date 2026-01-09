@@ -384,7 +384,7 @@ function_registry_global$add(
     return(t)
   },
   check_fct = function(node, vars_types_list, r_fct) {
-    if (is_charNANaNInf(node$seq, vars_list)) {
+    if (is_charNANaNInf(node$seq, vars_types_list)) {
       node$seq$error <- "You cannot sequence over characters/NA/NaN/Inf"
     }
   },

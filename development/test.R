@@ -44,3 +44,14 @@ fcpp <- ast2ast::translate(f, derivative = "forward", verbose = TRUE)
 y <- c(0, 0)
 x <- c(2, 3)
 fcpp(y, x)
+
+
+files <- list.files("./R", full.names = TRUE)
+trash <- lapply(files, source)
+f <- function() {
+  a <- c(1, 2, 3)
+  for (i in a) {
+    print(i)
+  }
+}
+translate(f)
