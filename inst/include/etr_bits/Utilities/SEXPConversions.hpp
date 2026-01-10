@@ -60,6 +60,24 @@ inline Double SEXP2Scalar<Double>(SEXP s) {
   ass<"NA/NaN double not allowed">(!ISNA(d) && !ISNAN(d));
   return Double(d);
 }
+template<>
+inline Dual SEXP2Scalar<Dual>(SEXP s) {
+  ass<"R object is not of type integer">(Rf_isReal(s));
+  const R_xlen_t sz = Rf_xlength(s);
+  ass<"Argument has length > 1">(sz == 1);
+  const double d = REAL(s)[0];
+  ass<"NA/NaN double not allowed">(!ISNA(d) && !ISNAN(d));
+  return Dual(d, 0.0);
+}
+template<>
+inline Variable<Double> SEXP2Scalar<Variable<Double>>(SEXP s) {
+  ass<"R object is not of type integer">(Rf_isReal(s));
+  const R_xlen_t sz = Rf_xlength(s);
+  ass<"Argument has length > 1">(sz == 1);
+  const double d = REAL(s)[0];
+  ass<"NA/NaN double not allowed">(!ISNA(d) && !ISNAN(d));
+  return Variable<Double>(d);
+}
 
 // Cast scalar elements to their SEXP equivalents
 // -----------------------------------------------------------------------------------------------------------

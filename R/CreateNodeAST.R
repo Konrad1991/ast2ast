@@ -150,9 +150,9 @@ infer_types <- function(ast, f, f_args = NULL, r_fct = TRUE) {
 # Check the types of the functions
 # calls the check function defined in function_registry_global
 # ========================================================================
-type_checking <- function(ast, vars_types_list, r_fct) {
+type_checking <- function(ast, vars_types_list, r_fct, real_type) {
   type_list_checks(vars_types_list)
-  e <- try(traverse_ast(ast, action_check_type_of_args, vars_types_list, r_fct))
+  e <- try(traverse_ast(ast, action_check_type_of_args, vars_types_list, r_fct, real_type))
   if (inherits(e, "try-error")) {
     stop("Could not check the type of the arguments to functions")
   }
@@ -304,7 +304,7 @@ translate_internally <- function(fct, args_fct, derivative, name_fct, r_fct) {
   vars_types_list <- infer_types(AST, fct, args_fct, r_fct)
 
   # Check the types of the arguments at least where possible
-  type_checking(AST, vars_types_list, r_fct)
+  type_checking(AST, vars_types_list, r_fct, real_type)
 
   # Determine return type
   return_type <- determine_types_of_returns(AST, vars_types_list, r_fct)

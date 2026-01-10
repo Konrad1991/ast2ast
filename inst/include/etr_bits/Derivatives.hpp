@@ -128,7 +128,7 @@ template<typename Of, typename Wrt> inline auto deriv(const Of& of, const Wrt& w
   }
   else if constexpr (IsADType<DecayedOf> && IsArray<DecayedWrt>) {
     using DataTypeWrt = typename ExtractDataType<DecayedWrt>::value_type;
-    static_assert(IsADType<DecayedWrt>, "data type of wrt has to be Variable<Double>");
+    static_assert(IsADType<DataTypeWrt>, "data type of wrt has to be Variable<Double>");
     Array<Double, Buffer<Double, RBufferTrait>> res(SI{w_inp.size()});
     for (std::size_t i = 0; i < res.size(); i++) {
       const auto w = wrt(w_inp.get(i));

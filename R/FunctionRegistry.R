@@ -77,7 +77,7 @@ Functions <- R6::R6Class(
   )
 )
 function_registry_global <- Functions$new()
-mock <- function(node, vars_types_list, r_fct) {}
+mock <- function(node, vars_types_list, r_fct, real_type) {}
 
 is_type <- function(node, vars_types_list, check_type) {
   if (inherits(node, "variable_node")) {
@@ -96,7 +96,7 @@ is_Inf <- function(node, vars_types_list) {
   is_type(node, vars_types_list, "Inf")
 }
 is_NaN <- function(node, vars_types_list) {
-  is_type(node, vars_types_list, "NaN") # TODO: remove NaN not required
+  is_type(node, vars_types_list, "NaN")
 }
 is_NA <- function(node, vars_types_list) {
   is_type(node, vars_types_list, "NA")
@@ -143,12 +143,12 @@ is_mat <- function(node, vars_types_list) {
     c("matrix", "mat", "borrow_matrix", "borrow_mat"))
 }
 
-check_unary <- function(node, vars_types_list, r_fct) {
+check_unary <- function(node, vars_types_list, r_fct, real_type) {
   if (is_charNANaNInf(node$obj, vars_types_list)) {
     node$error <- sprintf("You cannot use character/NA/NaN/Inf entries in %s", node$operator)
   }
 }
-check_binary <- function(node, vars_types_list, r_fct) {
+check_binary <- function(node, vars_types_list, r_fct, real_type) {
   if (is_charNANaNInf(node$left_node, vars_types_list)) {
     node$error <- sprintf("You cannot use character/NA/NaN/Inf entries in %s", node$operator)
   }
@@ -156,9 +156,9 @@ check_binary <- function(node, vars_types_list, r_fct) {
     node$error <- sprintf("You cannot use character/NA/NaN/Inf entries in %s", node$operator)
   }
 }
-check_subsetting <- function(node, vars_types_list, r_fct) {
+check_subsetting <- function(node, vars_types_list, r_fct, real_type) {
   if (inherits(node, "binary_node")) {
-    if (!is_vec_or_mat(node, vars_types_list)) {
+    if (!is_vec_or_mat(node$left_node, vars_types_list)) {
       node$error <- "You can only subset variables of type matrix or vector"
     }
     if (is_charNANaNInf(node$right_node, vars_types_list)) {
@@ -308,7 +308,7 @@ infer_num_int_log <- function(node, vars_list, r_fct) {
 function_registry_global$add(
   name = "type", num_args = 2, arg_names = c(NA, NA),
   infer_fct = function(node, vars_list, r_fct) { },
-  check_fct = function(node, vars_types_list, r_fct) {
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
     # Actually this is all be already tested before type inference. Thus, never called
     if (!(inherits(node$left_node, "variable_node") &&
       !(inherits(node$right_node, "variable_node")) || inherits(node$right_node, "binary_node"))) {
@@ -322,7 +322,7 @@ function_registry_global$add(
   infer_fct = function(node, vars_list, r_fct) {
     return(sprintf("Found assignment within an expression: %s", node$stringify()))
   },
-  check_fct = function(node, vars_types_list, r_fct) {
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
     if (!(node$context %within% c("<-", "=", "{"))) {
       node$error <- "assignments cannot be done within another function"
     }
@@ -340,7 +340,7 @@ function_registry_global$add(
   infer_fct = function(node, vars_list, r_fct) {
     return(sprintf("Found assignment within an expression: %s", node$stringify()))
   },
-  check_fct = function(node, vars_types_list, r_fct) {
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
     if (!(node$context %within% c("<-", "=", "{"))) {
       node$error <- "assignments cannot be done within another function"
     }
@@ -372,7 +372,6 @@ function_registry_global$add(
   is_infix = FALSE, group = "binary_node", cpp_name = "etr::at"
 )
 function_registry_global$add(
-  # TODO: for (i in x) does not work
   name = "for", num_args = 3, arg_names = c(NA, NA, NA),
   infer_fct = function(node, vars_list, r_fct) {
     temp <- infer(node$seq, vars_list, r_fct)
@@ -383,7 +382,7 @@ function_registry_global$add(
     node$i$internal_type <- t
     return(t)
   },
-  check_fct = function(node, vars_types_list, r_fct) {
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
     if (is_charNANaNInf(node$seq, vars_types_list)) {
       node$seq$error <- "You cannot sequence over characters/NA/NaN/Inf"
     }
@@ -435,7 +434,7 @@ function_registry_global$add(
     node$internal_type <- t
     return(t)
   },
-  check_fct = function(node, vars_types_list, r_fct) {
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
     for (i in seq_along(node$args)) {
       if (is_char(node$args[[i]], vars_types_list)) {
         node$error <- "You cannot use character entries in c"
@@ -568,7 +567,7 @@ function_registry_global$add(
 function_registry_global$add(
   name = "-", num_args = c(1, 2), arg_names = c(NA, NA),
   infer_fct = infer_minus,
-  check_fct = function(node, vars_types_list, r_fct) {
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
     if (inherits(node, "unary_node")) {
       check_unary(node, vars_types_list, r_fct)
     } else if (inherits(node, "binary_node")) {
@@ -695,7 +694,7 @@ function_registry_global$add(
     node$internal_type <- t
     return(t)
   },
-  check_fct = function(node, vars_types_list, r_fct) {
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
     if (!is_char(node$args[[1]], vars_types_list)) {
       node$error <- "mode of vector has to be of type character"
     }
@@ -737,7 +736,7 @@ function_registry_global$add(
     node$internal_type <- t
     return(t)
   },
-  check_fct = function(node, vars_types_list, r_fct) {
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
     if (is_char(node$args[[1]], vars_types_list)) {
      node$error <- "You cannot fill a matrix with character entries"
     }
@@ -760,7 +759,7 @@ function_registry_global$add(
     node$internal_type <- t
     return(t)
   },
-  check_fct = function(node, vars_types_list, r_fct) {
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
     if (!is_vec_or_mat(node$obj, vars_types_list)) {
       node$error <- "You can only call length on variables of type matrix or vector"
     }
@@ -777,7 +776,7 @@ function_registry_global$add(
     node$internal_type <- t
     return(t)
   },
-  check_fct = function(node, vars_types_list, r_fct) {
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
     if (!is_mat(node$obj, vars_types_list)) {
       node$error <- "You can only call dim on variables of type matrix"
     }
@@ -826,7 +825,7 @@ function_registry_global$add(
     node$internal_type <- t
     return(t)
   },
-  check_fct = function(node, vars_types_list, r_fct) {
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
     types <- list()
     for (i in 1:3) {
       arg <- node$args[[i]]
@@ -860,8 +859,10 @@ function_registry_global$add(
   infer_fct = function(node, vars_list, r_fct) {
     return(sprintf("Found seed within an expression: %s", node$stringify()))
   },
-  check_fct = function(node, vars_list, r_fct) {
-    # TODO: requires check that forward mode is used
+  check_fct = function(node, vars_list, r_fct, real_type) {
+    if (real_type != "etr::Dual") {
+      node$error <- "seed can be only used when derivative is set to forward"
+    }
     left_type_node <- infer(node$left_node, vars_list, r_fct)
     right_type_node <- infer(node$right_node, vars_list, r_fct)
     if (!(left_type_node$base_type %in% c("int", "integer", "double"))) {
@@ -878,8 +879,10 @@ function_registry_global$add(
   infer_fct = function(node, vars_list, r_fct) {
     return(sprintf("Found seed within an expression: %s", node$stringify()))
   },
-  check_fct = function(node, vars_list, r_fct) {
-    # TODO: requires check that forward mode is used
+  check_fct = function(node, vars_list, r_fct, real_type) {
+    if (real_type != "etr::Dual") {
+      node$error <- "unseed can be only used when derivative is set to forward"
+    }
     left_type_node <- infer(node$left_node, vars_list, r_fct)
     right_type_node <- infer(node$right_node, vars_list, r_fct)
     if (!(left_type_node$base_type %in% c("int", "integer", "double"))) {
@@ -901,7 +904,10 @@ function_registry_global$add(
     node$internal_type <- t
     return(t)
   },
-  check_fct = function(node, vars_list, r_fct) {
+  check_fct = function(node, vars_list, r_fct, real_type) {
+    if (real_type != "etr::Dual") {
+      node$error <- "get_dot can be only used when derivative is set to forward"
+    }
     type <- infer(node$obj, vars_list, r_fct)
     if (type$base_type != "double") {
       node$error <- "The argument of get_dot has to have the base type double"
@@ -912,17 +918,16 @@ function_registry_global$add(
 function_registry_global$add(
   name = "deriv", num_args = 2, arg_names = c(NA, NA),
   infer_fct = function(node, vars_list, r_fct) {
-    # TODO: can also be scalar, or a matrix
     lds <- infer(node$left_node, vars_list, r_fct)$data_struct
     rds <- infer(node$right_node, vars_list, r_fct)$data_struct
     ds <- "scalar"
-    if (lds == "vector" && rds == "scalar") {
+    if (lds != "scalar" && rds == "scalar") {
       ds <- "vector"
     }
-    if (rds == "vector" && lds == "scalar") {
+    if (rds != "scalar" && lds == "scalar") {
       ds <- "vector"
     }
-    if (lds == "vector" && rds == "vector") {
+    if (lds != "scalar" && rds != "scalar") {
       ds <- "matrix"
     }
     t <- type_node$new(NA, FALSE, r_fct)
@@ -931,8 +936,10 @@ function_registry_global$add(
     node$internal_type <- t
     return(t)
   },
-  check_fct = function(node, vars_list, r_fct) {
-    # TODO: requires check that reverse mode is used
+  check_fct = function(node, vars_list, r_fct, real_type) {
+    if (real_type != "etr::Variable<etr::Double>") {
+      node$error <- "deriv can be only used when derivative is set to reverse"
+    }
     left_type_node <- infer(node$left_node, vars_list, r_fct)
     right_type_node <- infer(node$right_node, vars_list, r_fct)
     if (left_type_node$base_type != "double") {

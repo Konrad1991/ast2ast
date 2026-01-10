@@ -299,7 +299,7 @@ action_sort_args <- function(node) {
 # error checking round
 # Check that the types of the arguments are correct
 # ========================================================================
-action_check_type_of_args <- function(node, variables, r_fct) {
+action_check_type_of_args <- function(node, variables, r_fct, real_type) {
   if (!inherits(node, "unary_node") &&
     !inherits(node, "binary_node") &&
     !inherits(node, "function_node") &&
@@ -311,7 +311,7 @@ action_check_type_of_args <- function(node, variables, r_fct) {
     operator <- "for"
   }
   type_check_fct <- function_registry_global$check_fct(operator)
-  type_check_fct(node, variables, r_fct)
+  type_check_fct(node, variables, r_fct, real_type)
 }
 
 # The actual translation of the AST to C++
