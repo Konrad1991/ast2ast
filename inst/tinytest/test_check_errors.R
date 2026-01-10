@@ -197,25 +197,25 @@ test_action_error(
 
 # --- named args -----------------------------------------------------------
 f <- function() {
-  vector(mod = "integer", 2)
+  vector(mod = "integer", 2L)
 }
 test_action_error(
   f,
-  "Error in ast2ast:::run_checks(ast, r_fct) : \nvector(\"integer\", 2)\nFound wrong named argument for: vector\n"
+  "Error in ast2ast:::run_checks(ast, r_fct) : \nvector(\"integer\", 2L)\nFound wrong named argument for: vector\n"
 )
 f <- function() {
-  vector(mode = "integer", lengt = 2)
+  vector(mode = "integer", lengt = 2L)
 }
 test_action_error(
   f,
-  "Error in ast2ast:::run_checks(ast, r_fct) : \nvector(\"integer\", 2)\nFound wrong named argument for: vector\n"
+  "Error in ast2ast:::run_checks(ast, r_fct) : \nvector(\"integer\", 2L)\nFound wrong named argument for: vector\n"
 )
 f <- function() {
-  vector(mde = "integer", lengt = 2)
+  vector(mde = "integer", lengt = 2L)
 }
 test_action_error(
   f,
-  "Error in ast2ast:::run_checks(ast, r_fct) : \nvector(\"integer\", 2)\nFound wrong named argument for: vector\n"
+  "Error in ast2ast:::run_checks(ast, r_fct) : \nvector(\"integer\", 2L)\nFound wrong named argument for: vector\n"
 )
 
 f <- function() {

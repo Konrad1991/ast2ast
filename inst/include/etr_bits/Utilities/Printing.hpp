@@ -1,8 +1,6 @@
 #ifndef PRINT_ETR_HPP
 #define PRINT_ETR_HPP
 
-// TODO: fix the printing if NA and Inf
-
 namespace etr {
 #ifdef STANDALONE_ETR
 #define PRINT_STREAM std::cout
@@ -13,7 +11,7 @@ namespace etr {
 inline void print() { PRINT_STREAM << std::endl; }
 
 template <typename T>
-  requires isBID<T>
+requires (IsArithV<T> || IsADType<T>)
 inline void print(const T &inp) {
   if constexpr (IS<T, bool>) {
     PRINT_STREAM << std::boolalpha << inp << std::endl;
@@ -23,34 +21,136 @@ inline void print(const T &inp) {
 }
 
 inline void print(const char *inp) {
-  if constexpr (IS<T, bool>) {
-    PRINT_STREAM << inp << " ";
-  } else {
-    PRINT_STREAM << inp << std::endl;
-  }
-  PRINT_STREAM << std::endl;
+  PRINT_STREAM << inp << std::endl;
 }
 
-template <typename Object>
-inline void print(const Object& obj) {
-  PRINT_STREAM << std::boolalpha;
-  if constexpr (IsVec<Object>) {
-    for (std::size_t i = 0; i < obj.size(); i++)
-      PRINT_STREAM << obj[i] << " ";
-    PRINT_STREAM << std::endl;
-  } else if constexpr(IsMat<Object>) {
-    using value_type = typename ExtractDataType<Decayed<Object>>::value_type;
-    Mat<value_type> res; res = obj;// copy/eval because of subsetted matrices
-    for (std::size_t r = 0; r < res.nr(); r++) {
-      for (std::size_t c = 0; c < res.nc(); c++) {
-        PRINT_STREAM << res[c* res.nr() + r] << " ";
+template<typename P, typename T>
+inline void print_matrix(const P& pos, const T& obj,
+                         std::size_t rs, std::size_t cs, std::size_t offset) {
+  if (!pos.empty()) {
+    PRINT_STREAM << ", , ";
+    for (std::size_t i = 0; i < pos.size(); i++) {
+      PRINT_STREAM << pos[i] + 1;
+      if (i < (pos.size() - 1)) {
+        PRINT_STREAM << ", ";
       }
-      PRINT_STREAM << std::endl;
     }
-  } else {
-    ass<"unsupported object in print">(false);
+    PRINT_STREAM << std::endl;
   }
 
+  for (std::size_t r = 0; r < rs; r++) {
+    for (std::size_t c = 0; c < cs; c++) {
+      PRINT_STREAM << obj.get(offset + c * rs + r) << "   ";
+    }
+    PRINT_STREAM << std::endl;
+  }
+}
+
+template<typename T, std::size_t N>
+inline void print_subsetted_arrays(const T& obj) {
+  const auto& dim = dim_view(obj.dim);
+  auto strides_all = make_strides_from_vec<N>(dim);
+  std::array<std::size_t, N - 2> strides;
+  for (std::size_t i = 0; i < strides.size(); i++) strides[i] = strides_all[i + 2];
+
+  std::array<std::size_t, N - 2> pos{};
+  std::array<std::size_t, N - 2> L;
+  for (std::size_t i = 0; i < L.size(); i++) L[i] = dim[i + 2];
+
+  std::size_t offset = 0;
+  std::size_t k = 0;
+  for (;;) {
+    offset = 1;
+    for (std::size_t k = 0; k < (N - 2); k++) {
+      offset += (pos[k]) * strides[k];
+    }
+    print_matrix(pos, obj, dim[0], dim[1], offset - 1);
+    PRINT_STREAM << std::endl;
+    k = 0;
+    for (;;) {
+      pos[k] += 1;
+      if (pos[k] < L[k]) break;
+      pos[k] = 0;
+      k++;
+      if (k == (N - 2)) {
+        return;
+      }
+    }
+  }
+}
+
+template<typename T>
+requires IsSubsetArray<T>
+inline void print(const T& obj) {
+  constexpr std::size_t N = subsetview_traits<Decayed<decltype(obj.d)>>::value;
+
+  const auto& dim = dim_view(obj.dim);
+  if (dim.size() == 1) {
+    for (std::size_t i = 0; i < obj.size(); i++) {
+      PRINT_STREAM << obj.get(i) << "\t";
+    }
+    PRINT_STREAM << std::endl;
+  }
+
+  if (dim.size() == 2) {
+    print_matrix(std::vector<std::size_t>{0, 0}, obj, dim[0], dim[1], 0);
+  }
+
+  if (dim.size() > 2) {
+    if constexpr (N > 2) {
+      print_subsetted_arrays<T, N>(obj);
+    }
+  }
+}
+
+// Print array
+template<typename T>
+requires (!IsSubsetArray<T> && IsArray<T>)
+inline void print(const T& arr) {
+
+  const auto& dim = dim_view(arr.dim);
+  if (dim.size() == 1) {
+    for (std::size_t i = 0; i < arr.size(); i++) {
+      PRINT_STREAM << arr.get(i) << "\t";
+    }
+    PRINT_STREAM << std::endl;
+  }
+
+  if (dim.size() == 2) {
+    print_matrix(std::vector<std::size_t>{0, 0}, arr, dim[0], dim[1], 0);
+  }
+
+  if (dim.size() > 2) {
+    auto strides_all = make_strides_dyn(dim);
+    std::size_t N = strides_all.size();
+    std::vector<std::size_t> strides(strides_all.size() - 2);
+    for (std::size_t i = 0; i < strides.size(); i++) strides[i] = strides_all[i + 2];
+
+    std::vector<std::size_t> pos(N - 2, 0);
+    std::vector<std::size_t> L(N - 2, 0);
+    for (std::size_t i = 0; i < L.size(); i++) L[i] = dim[i + 2];
+
+    std::size_t offset = 0;
+    std::size_t k = 0;
+    for (;;) {
+      offset = 1;
+      for (std::size_t k = 0; k < (N - 2); k++) {
+        offset += (pos[k]) * strides[k];
+      }
+      print_matrix(pos, arr, dim[0], dim[1], offset - 1);
+      PRINT_STREAM << std::endl;
+      k = 0;
+      for (;;) {
+        pos[k] += 1;
+        if (pos[k] < L[k]) break;
+        pos[k] = 0;
+        k++;
+        if (k == (N - 2)) {
+          return;
+        }
+      }
+    }
+  }
 }
 
 } // namespace etr

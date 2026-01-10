@@ -2,7 +2,6 @@
 // Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #include "../inst/include/ast2ast_types.h"
-#include <RcppArmadillo.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;
@@ -12,76 +11,39 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// test_basestore
-void test_basestore();
-RcppExport SEXP _ast2ast_test_basestore() {
+// tests_allocation
+void tests_allocation();
+RcppExport SEXP _ast2ast_tests_allocation() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    test_basestore();
+    tests_allocation();
     return R_NilValue;
 END_RCPP
 }
-// test_borrow_r
-void test_borrow_r(Rcpp::NumericVector nv);
-RcppExport SEXP _ast2ast_test_borrow_r(SEXP nvSEXP) {
+// test_allocation
+void test_allocation();
+RcppExport SEXP _ast2ast_test_allocation() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type nv(nvSEXP);
-    test_borrow_r(nv);
+    test_allocation();
     return R_NilValue;
 END_RCPP
 }
-// test_vector_class
-void test_vector_class();
-RcppExport SEXP _ast2ast_test_vector_class() {
+// test_Borrow
+void test_Borrow();
+RcppExport SEXP _ast2ast_test_Borrow() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    test_vector_class();
+    test_Borrow();
     return R_NilValue;
 END_RCPP
 }
-// test_matrix_class
-void test_matrix_class();
-RcppExport SEXP _ast2ast_test_matrix_class() {
+// test_buffer
+void test_buffer();
+RcppExport SEXP _ast2ast_test_buffer() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    test_matrix_class();
-    return R_NilValue;
-END_RCPP
-}
-// test_borrow
-void test_borrow();
-RcppExport SEXP _ast2ast_test_borrow() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_borrow();
-    return R_NilValue;
-END_RCPP
-}
-// test_arithmetic_assign_to_buffer
-void test_arithmetic_assign_to_buffer();
-RcppExport SEXP _ast2ast_test_arithmetic_assign_to_buffer() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_arithmetic_assign_to_buffer();
-    return R_NilValue;
-END_RCPP
-}
-// test_arithmetic_assign_to_borrow
-void test_arithmetic_assign_to_borrow();
-RcppExport SEXP _ast2ast_test_arithmetic_assign_to_borrow() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_arithmetic_assign_to_borrow();
-    return R_NilValue;
-END_RCPP
-}
-// test_comparison
-void test_comparison();
-RcppExport SEXP _ast2ast_test_comparison() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_comparison();
+    test_buffer();
     return R_NilValue;
 END_RCPP
 }
@@ -94,21 +56,12 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// test_c
-void test_c();
-RcppExport SEXP _ast2ast_test_c() {
+// test_calculation
+void test_calculation();
+RcppExport SEXP _ast2ast_test_calculation() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    test_c();
-    return R_NilValue;
-END_RCPP
-}
-// test_colon
-void test_colon();
-RcppExport SEXP _ast2ast_test_colon() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_colon();
+    test_calculation();
     return R_NilValue;
 END_RCPP
 }
@@ -121,180 +74,75 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// test_isNA
-void test_isNA();
-RcppExport SEXP _ast2ast_test_isNA() {
+// test_first_dispatch_layer
+void test_first_dispatch_layer();
+RcppExport SEXP _ast2ast_test_first_dispatch_layer() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    test_isNA();
+    test_first_dispatch_layer();
     return R_NilValue;
 END_RCPP
 }
-// test_isFinite
-void test_isFinite();
-RcppExport SEXP _ast2ast_test_isFinite() {
+// test_jacobian
+void test_jacobian();
+RcppExport SEXP _ast2ast_test_jacobian() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    test_isFinite();
+    test_jacobian();
     return R_NilValue;
 END_RCPP
 }
-// test_isInfinite
-void test_isInfinite();
-RcppExport SEXP _ast2ast_test_isInfinite() {
+// test_preserved_subsetting
+void test_preserved_subsetting();
+RcppExport SEXP _ast2ast_test_preserved_subsetting() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    test_isInfinite();
+    test_preserved_subsetting();
     return R_NilValue;
 END_RCPP
 }
-// test_length
-void test_length();
-RcppExport SEXP _ast2ast_test_length() {
+// test_second_dispatch_layer
+void test_second_dispatch_layer();
+RcppExport SEXP _ast2ast_test_second_dispatch_layer() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    test_length();
+    test_second_dispatch_layer();
     return R_NilValue;
 END_RCPP
 }
-// test_dim
-void test_dim();
-RcppExport SEXP _ast2ast_test_dim() {
+// test_simplified_subsetting
+void test_simplified_subsetting();
+RcppExport SEXP _ast2ast_test_simplified_subsetting() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    test_dim();
+    test_simplified_subsetting();
     return R_NilValue;
 END_RCPP
 }
-// test_subset_with_scalar
-void test_subset_with_scalar();
-RcppExport SEXP _ast2ast_test_subset_with_scalar() {
+// test_utilities
+void test_utilities();
+RcppExport SEXP _ast2ast_test_utilities() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    test_subset_with_scalar();
-    return R_NilValue;
-END_RCPP
-}
-// test_vector_subsetting
-void test_vector_subsetting();
-RcppExport SEXP _ast2ast_test_vector_subsetting() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_vector_subsetting();
-    return R_NilValue;
-END_RCPP
-}
-// test_matrix_subsetting
-void test_matrix_subsetting();
-RcppExport SEXP _ast2ast_test_matrix_subsetting() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_matrix_subsetting();
-    return R_NilValue;
-END_RCPP
-}
-// test_at_subsetting
-void test_at_subsetting();
-RcppExport SEXP _ast2ast_test_at_subsetting() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_at_subsetting();
-    return R_NilValue;
-END_RCPP
-}
-// test_matrices
-void test_matrices();
-RcppExport SEXP _ast2ast_test_matrices() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_matrices();
-    return R_NilValue;
-END_RCPP
-}
-// test_rep
-void test_rep();
-RcppExport SEXP _ast2ast_test_rep() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_rep();
-    return R_NilValue;
-END_RCPP
-}
-// test_arithmetic_unary
-void test_arithmetic_unary();
-RcppExport SEXP _ast2ast_test_arithmetic_unary() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_arithmetic_unary();
-    return R_NilValue;
-END_RCPP
-}
-// test_numeric
-void test_numeric();
-RcppExport SEXP _ast2ast_test_numeric() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_numeric();
-    return R_NilValue;
-END_RCPP
-}
-// test_int
-void test_int();
-RcppExport SEXP _ast2ast_test_int() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_int();
-    return R_NilValue;
-END_RCPP
-}
-// test_bool
-void test_bool();
-RcppExport SEXP _ast2ast_test_bool() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_bool();
-    return R_NilValue;
-END_RCPP
-}
-// test_vector
-void test_vector();
-RcppExport SEXP _ast2ast_test_vector() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_vector();
+    test_utilities();
     return R_NilValue;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_ast2ast_test_basestore", (DL_FUNC) &_ast2ast_test_basestore, 0},
-    {"_ast2ast_test_borrow_r", (DL_FUNC) &_ast2ast_test_borrow_r, 1},
-    {"_ast2ast_test_vector_class", (DL_FUNC) &_ast2ast_test_vector_class, 0},
-    {"_ast2ast_test_matrix_class", (DL_FUNC) &_ast2ast_test_matrix_class, 0},
-    {"_ast2ast_test_borrow", (DL_FUNC) &_ast2ast_test_borrow, 0},
-    {"_ast2ast_test_arithmetic_assign_to_buffer", (DL_FUNC) &_ast2ast_test_arithmetic_assign_to_buffer, 0},
-    {"_ast2ast_test_arithmetic_assign_to_borrow", (DL_FUNC) &_ast2ast_test_arithmetic_assign_to_borrow, 0},
-    {"_ast2ast_test_comparison", (DL_FUNC) &_ast2ast_test_comparison, 0},
+    {"_ast2ast_tests_allocation", (DL_FUNC) &_ast2ast_tests_allocation, 0},
+    {"_ast2ast_test_allocation", (DL_FUNC) &_ast2ast_test_allocation, 0},
+    {"_ast2ast_test_Borrow", (DL_FUNC) &_ast2ast_test_Borrow, 0},
+    {"_ast2ast_test_buffer", (DL_FUNC) &_ast2ast_test_buffer, 0},
     {"_ast2ast_test_cmr", (DL_FUNC) &_ast2ast_test_cmr, 0},
-    {"_ast2ast_test_c", (DL_FUNC) &_ast2ast_test_c, 0},
-    {"_ast2ast_test_colon", (DL_FUNC) &_ast2ast_test_colon, 0},
+    {"_ast2ast_test_calculation", (DL_FUNC) &_ast2ast_test_calculation, 0},
     {"_ast2ast_test_concepts", (DL_FUNC) &_ast2ast_test_concepts, 0},
-    {"_ast2ast_test_isNA", (DL_FUNC) &_ast2ast_test_isNA, 0},
-    {"_ast2ast_test_isFinite", (DL_FUNC) &_ast2ast_test_isFinite, 0},
-    {"_ast2ast_test_isInfinite", (DL_FUNC) &_ast2ast_test_isInfinite, 0},
-    {"_ast2ast_test_length", (DL_FUNC) &_ast2ast_test_length, 0},
-    {"_ast2ast_test_dim", (DL_FUNC) &_ast2ast_test_dim, 0},
-    {"_ast2ast_test_subset_with_scalar", (DL_FUNC) &_ast2ast_test_subset_with_scalar, 0},
-    {"_ast2ast_test_vector_subsetting", (DL_FUNC) &_ast2ast_test_vector_subsetting, 0},
-    {"_ast2ast_test_matrix_subsetting", (DL_FUNC) &_ast2ast_test_matrix_subsetting, 0},
-    {"_ast2ast_test_at_subsetting", (DL_FUNC) &_ast2ast_test_at_subsetting, 0},
-    {"_ast2ast_test_matrices", (DL_FUNC) &_ast2ast_test_matrices, 0},
-    {"_ast2ast_test_rep", (DL_FUNC) &_ast2ast_test_rep, 0},
-    {"_ast2ast_test_arithmetic_unary", (DL_FUNC) &_ast2ast_test_arithmetic_unary, 0},
-    {"_ast2ast_test_numeric", (DL_FUNC) &_ast2ast_test_numeric, 0},
-    {"_ast2ast_test_int", (DL_FUNC) &_ast2ast_test_int, 0},
-    {"_ast2ast_test_bool", (DL_FUNC) &_ast2ast_test_bool, 0},
-    {"_ast2ast_test_vector", (DL_FUNC) &_ast2ast_test_vector, 0},
+    {"_ast2ast_test_first_dispatch_layer", (DL_FUNC) &_ast2ast_test_first_dispatch_layer, 0},
+    {"_ast2ast_test_jacobian", (DL_FUNC) &_ast2ast_test_jacobian, 0},
+    {"_ast2ast_test_preserved_subsetting", (DL_FUNC) &_ast2ast_test_preserved_subsetting, 0},
+    {"_ast2ast_test_second_dispatch_layer", (DL_FUNC) &_ast2ast_test_second_dispatch_layer, 0},
+    {"_ast2ast_test_simplified_subsetting", (DL_FUNC) &_ast2ast_test_simplified_subsetting, 0},
+    {"_ast2ast_test_utilities", (DL_FUNC) &_ast2ast_test_utilities, 0},
     {NULL, NULL, 0}
 };
 

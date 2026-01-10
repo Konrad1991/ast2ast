@@ -192,7 +192,7 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct) {
     type <- env$return_list[[1]]
   } else {
     for (i in seq_along(1:(length(env$return_list) - 1))) {
-        type <- common_type(env$return_list[[i]], env$return_list[[i + 1]]) |> flatten_type()
+      type <- common_type(env$return_list[[i]], env$return_list[[i + 1]]) |> flatten_type()
     }
   }
   return(type)
@@ -200,9 +200,9 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct) {
 
 # Translates the AST representation into C++ code
 # ========================================================================
-translate_to_cpp_code <- function(ast, r_fct) {
+translate_to_cpp_code <- function(ast, r_fct, real_type) {
   code_string <- NULL
-  traverse_ast(ast, action_set_true, r_fct)
+  traverse_ast(ast, action_set_true, r_fct, real_type)
   traverse_ast(ast, action_translate)
   # Stringify ast
   e <- try({code_string <- ast$stringify("  ")}, silent = TRUE)
@@ -273,7 +273,14 @@ assemble <- function(name_fct, vars_types_list, return_type, body, r_fct) {
   }
 }
 
-translate_internally <- function(fct, args_fct, name_fct, r_fct) {
+resolve_derivative <- function(derivative) {
+  if (is.null(derivative)) return("etr::Double")
+  stopifnot("derivative is neither forward nor reverse" = derivative %in% c("forward", "reverse"))
+  if (derivative == "forward") return("etr::Dual")
+  if (derivative == "reverse") return("etr::Variable<etr::Double>")
+}
+
+translate_internally <- function(fct, args_fct, derivative, name_fct, r_fct) {
   b <- body(fct)
   if (b[[1]] != "{") {
     stop("Please place the body of your function f within curly brackets")
@@ -282,6 +289,7 @@ translate_internally <- function(fct, args_fct, name_fct, r_fct) {
     stop("f seems to be empty")
   }
   code_string <- list()
+  real_type <- resolve_derivative(derivative)
 
   # Create AST
   AST <- parse_body(body(fct), r_fct)
@@ -302,7 +310,10 @@ translate_internally <- function(fct, args_fct, name_fct, r_fct) {
   return_type <- determine_types_of_returns(AST, vars_types_list, r_fct)
 
   # Translate
-  code_string <- translate_to_cpp_code(AST, r_fct)
+  code_string <- translate_to_cpp_code(AST, r_fct, real_type)
+  for (i in seq_along(vars_types_list)) {
+    vars_types_list[[i]]$real_type <- real_type
+  }
 
   # Create function signature & variable declarations
   code <- assemble(name_fct, vars_types_list, return_type, code_string, r_fct)

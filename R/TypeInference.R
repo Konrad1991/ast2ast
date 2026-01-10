@@ -50,6 +50,7 @@ non_fct_args <- function(f, r_fct) {
     as.character()
   vars <- all.vars(body(f))
   vars <- setdiff(vars, arguments)
+  vars <- setdiff(vars, c("T", "F"))
   lapply(seq_along(vars), function(v) {
     t <- type_node$new(NULL, FALSE, r_fct)
     t$name <- vars[v]
@@ -322,7 +323,7 @@ are_vars_init <- function(type) {
 
 type_list_checks <- function(l) {
   lapply(l, function(var) {
-    if (any(var$base_type == c("NA", "NaN", "Inf"))) {
+    if (any(var$base_type == c("NA", "NaN", "Inf"))) { # TODO: NaN should be removed.
       stop(sprintf("Found unallowed base type %s, for the variable %s", var$base_type, var$name))
     }
   })

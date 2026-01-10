@@ -96,7 +96,7 @@ is_Inf <- function(node, vars_types_list) {
   is_type(node, vars_types_list, "Inf")
 }
 is_NaN <- function(node, vars_types_list) {
-  is_type(node, vars_types_list, "NaN")
+  is_type(node, vars_types_list, "NaN") # TODO: remove NaN not required
 }
 is_NA <- function(node, vars_types_list) {
   is_type(node, vars_types_list, "NA")
@@ -372,6 +372,7 @@ function_registry_global$add(
   is_infix = FALSE, group = "binary_node", cpp_name = "etr::at"
 )
 function_registry_global$add(
+  # TODO: for (i in x) does not work
   name = "for", num_args = 3, arg_names = c(NA, NA, NA),
   infer_fct = function(node, vars_list, r_fct) {
     temp <- infer(node$seq, vars_list, r_fct)
@@ -383,7 +384,7 @@ function_registry_global$add(
     return(t)
   },
   check_fct = function(node, vars_types_list, r_fct) {
-    if (is_charNANaNInf(node$seq)) {
+    if (is_charNANaNInf(node$seq, vars_types_list)) {
       node$seq$error <- "You cannot sequence over characters/NA/NaN/Inf"
     }
   },
@@ -484,73 +485,73 @@ function_registry_global$add(
   name = "sin", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sinus"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sin"
 )
 function_registry_global$add(
   name = "asin", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::asinus"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::asin"
 )
 function_registry_global$add(
   name = "sinh", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sinush"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sinh"
 )
 function_registry_global$add(
   name = "cos", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::cosinus"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::cos"
 )
 function_registry_global$add(
   name = "acos", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::acosinus"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::acos"
 )
 function_registry_global$add(
   name = "cosh", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::cosinush"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::cosh"
 )
 function_registry_global$add(
   name = "tan", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::tangens"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::tan"
 )
 function_registry_global$add(
   name = "atan", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::atangens"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::atan"
 )
 function_registry_global$add(
   name = "tanh", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::tangensh"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::tanh"
 )
 function_registry_global$add(
   name = "log", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::ln"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::log"
 )
 function_registry_global$add(
   name = "sqrt", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sqroot"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sqrt"
 )
 function_registry_global$add(
   name = "exp", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::expo"
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::exp"
 )
 function_registry_global$add(
   name = "^", num_args = 2, arg_names = c(NA, NA),
@@ -796,6 +797,12 @@ function_registry_global$add(
   is_infix = FALSE, group = "unary_node", cpp_name = "etr::isNA"
 )
 function_registry_global$add(
+  name = "is.nan", num_args = 1, arg_names = NA,
+  infer_fct = infer_check_type,
+  check_fct = mock,
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::isNaN"
+)
+function_registry_global$add(
   name = "is.infinite", num_args = 1, arg_names = NA,
   infer_fct = infer_check_type,
   check_fct = mock,
@@ -846,4 +853,94 @@ function_registry_global$add(
     }
   },
   is_infix = FALSE, group = "function_node", cpp_name = "etr::cmr"
+)
+
+function_registry_global$add(
+  name = "seed", num_args = 2, arg_names = c(NA, NA),
+  infer_fct = function(node, vars_list, r_fct) {
+    return(sprintf("Found seed within an expression: %s", node$stringify()))
+  },
+  check_fct = function(node, vars_list, r_fct) {
+    # TODO: requires check that forward mode is used
+    left_type_node <- infer(node$left_node, vars_list, r_fct)
+    right_type_node <- infer(node$right_node, vars_list, r_fct)
+    if (!(left_type_node$base_type %in% c("int", "integer", "double"))) {
+      node$error <- "The first argument of seed has to have the base type double"
+    }
+    if (!(right_type_node$base_type %in% c("int", "integer", "double"))) {
+      node$error <- "The second argument of seed has to have the base type integer or double"
+    }
+  },
+  is_infix = FALSE, group = "binary_node", cpp_name = "etr::seed"
+)
+function_registry_global$add(
+  name = "unseed", num_args = 2, arg_names = c(NA, NA),
+  infer_fct = function(node, vars_list, r_fct) {
+    return(sprintf("Found seed within an expression: %s", node$stringify()))
+  },
+  check_fct = function(node, vars_list, r_fct) {
+    # TODO: requires check that forward mode is used
+    left_type_node <- infer(node$left_node, vars_list, r_fct)
+    right_type_node <- infer(node$right_node, vars_list, r_fct)
+    if (!(left_type_node$base_type %in% c("int", "integer", "double"))) {
+      node$error <- "The first argument of seed has to have the base type double"
+    }
+    if (!(right_type_node$base_type %in% c("int", "integer", "double"))) {
+      node$error <- "The second argument of seed has to have the base type integer or double"
+    }
+  },
+  is_infix = FALSE, group = "binary_node", cpp_name = "etr::unseed"
+)
+function_registry_global$add(
+  name = "get_dot", num_args = 1, arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct) {
+    infer(node$obj, vars_list, r_fct)
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "double"
+    t$data_struct <- "vector"
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_list, r_fct) {
+    type <- infer(node$obj, vars_list, r_fct)
+    if (type$base_type != "double") {
+      node$error <- "The argument of get_dot has to have the base type double"
+    }
+  },
+  is_infix = FALSE, group = "unary_node", cpp_name = "etr::get_dot"
+)
+function_registry_global$add(
+  name = "deriv", num_args = 2, arg_names = c(NA, NA),
+  infer_fct = function(node, vars_list, r_fct) {
+    # TODO: can also be scalar, or a matrix
+    lds <- infer(node$left_node, vars_list, r_fct)$data_struct
+    rds <- infer(node$right_node, vars_list, r_fct)$data_struct
+    ds <- "scalar"
+    if (lds == "vector" && rds == "scalar") {
+      ds <- "vector"
+    }
+    if (rds == "vector" && lds == "scalar") {
+      ds <- "vector"
+    }
+    if (lds == "vector" && rds == "vector") {
+      ds <- "matrix"
+    }
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "double"
+    t$data_struct <- ds
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_list, r_fct) {
+    # TODO: requires check that reverse mode is used
+    left_type_node <- infer(node$left_node, vars_list, r_fct)
+    right_type_node <- infer(node$right_node, vars_list, r_fct)
+    if (left_type_node$base_type != "double") {
+      node$error <- "The first argument of deriv has to have the base type double"
+    }
+    if (right_type_node$base_type != "double") {
+      node$error <- "The second argument of deriv has to have the base type integer or double"
+    }
+  },
+  is_infix = FALSE, group = "binary_node", cpp_name = "etr::deriv"
 )

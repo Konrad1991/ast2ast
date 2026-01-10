@@ -41,7 +41,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  [(matrix(0.0, 2.0, 2.0), etr::NA, etr::NA)\nYou cannot use character/NA/NaN/Inf entries for subsetting\n"
+  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  [(matrix(0.0, 2.0, 2.0), NA, NA)\nYou cannot use character/NA/NaN/Inf entries for subsetting\n"
 )
 f <- function() {
   matrix(0, 2, 2)[NA]
@@ -49,7 +49,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  matrix(0.0, 2.0, 2.0) [ etr::NA\nYou cannot use character/NA/NaN/Inf entries for subsetting\n"
+  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  matrix(0.0, 2.0, 2.0) [ NA\nYou cannot use character/NA/NaN/Inf entries for subsetting\n"
 )
 f <- function() {
   a <- matrix(0, 5, 5)
@@ -58,7 +58,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print([(a, etr::NA, etr::NA))\nYou cannot use character/NA/NaN/Inf entries for subsetting\n"
+  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print([(a, NA, NA))\nYou cannot use character/NA/NaN/Inf entries for subsetting\n"
 )
 f <- function() {
   a <- matrix(0, 5, 5)
@@ -67,7 +67,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print([(a, etr::NA, 2))\nYou cannot use character/NA/NaN/Inf entries for subsetting\n"
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print([(a, NA, 2.0))\nYou cannot use character/NA/NaN/Inf entries for subsetting\n"
 )
 f <- function() {
   a <- matrix(0, 5, 5)
@@ -76,7 +76,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print([(a, 2, etr::NA))\nYou cannot use character/NA/NaN/Inf entries for subsetting\n"
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print([(a, 2.0, NA))\nYou cannot use character/NA/NaN/Inf entries for subsetting\n"
 )
 
 # --- subsetting vector ----------------------------------------------------------
@@ -86,7 +86,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  c(1.0, 2.0, 3.0) [ etr::NA\nYou cannot use character/NA/NaN/Inf entries for subsetting\n"
+  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  c(1.0, 2.0, 3.0) [ NA\nYou cannot use character/NA/NaN/Inf entries for subsetting\n"
 )
 f <- function() {
   a |> type(int) <- 1L
@@ -95,7 +95,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print([(a, 1, 1))\nYou can only subset variables of type matrix or vector\n"
+  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print([(a, 1.0, 1.0))\nYou can only subset variables of type matrix or vector\n"
 )
 f <- function() {
   a |> type(int) <- 1L
@@ -104,7 +104,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print(a [ 1)\nYou can only subset variables of type matrix or vector\n"
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print(a [ 1.0)\nYou can only subset variables of type matrix or vector\n"
 )
 f <- function() {
   a |> type(int) <- 1L
@@ -113,7 +113,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print(a [[ 1)\nYou can only subset variables of type matrix or vector\n"
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print(a [[ 1.0)\nYou can only subset variables of type matrix or vector\n"
 )
 f <- function() {
   a |> type(int) <- 1L
@@ -122,7 +122,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print(a at 1)\nYou can only subset variables of type matrix or vector\n"
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print(a at 1.0)\nYou can only subset variables of type matrix or vector\n"
 )
 f <- function() {
   a <- numeric(10)
@@ -228,7 +228,6 @@ for (i in 1:13) {
     checks[i] <- message == as.character(e)
   }
 }
-checks
 expect_true(all(checks), info = "Test functions in function registry for unary math")
 # --- binary math--------------------------------------------------------------
 args_fct <- function() {}
@@ -237,7 +236,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  1.0 ^ etr::Inf\nYou cannot use character/NA/NaN/Inf entries in ^\n"
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : 1.0 ^ Inf\nYou cannot use character/NA/NaN/Inf entries in ^\n"
 )
 args_fct <- function() {}
 f <- function() {
@@ -246,7 +245,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  c <- a + etr::NA\nYou cannot use character/NA/NaN/Inf entries in +\n"
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  c <- a + NA\nYou cannot use character/NA/NaN/Inf entries in +\n"
 )
 args_fct <- function() {}
 f <- function() {
@@ -255,7 +254,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  c <- a - etr::NA\nYou cannot use character/NA/NaN/Inf entries in -\n"
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  c <- a - NA\nYou cannot use character/NA/NaN/Inf entries in -\n"
 )
 args_fct <- function() {}
 f <- function() {
@@ -264,7 +263,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  c <- a * etr::NA\nYou cannot use character/NA/NaN/Inf entries in *\n"
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  c <- a * NA\nYou cannot use character/NA/NaN/Inf entries in *\n"
 )
 args_fct <- function() {}
 f <- function() {
@@ -273,7 +272,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  c <- a / etr::NA\nYou cannot use character/NA/NaN/Inf entries in /\n"
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  c <- a / NA\nYou cannot use character/NA/NaN/Inf entries in /\n"
 )
 args_fct <- function() {}
 f <- function() {
@@ -292,21 +291,21 @@ f <- function() {
 e <- try(run_fr_checks(f, args_fct, TRUE), silent = TRUE)
 got <- strsplit(e, "\n")[[1]] |> as.list()
 expected <- list(
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : ",
-"  a == etr::NA"                                                     ,"You cannot use character/NA/NaN/Inf entries in =="                  ,"",
-"a != etr::NA"                                                       ,"You cannot use character/NA/NaN/Inf entries in !="                  ,"",
-"a > etr::NA"                                                        ,"You cannot use character/NA/NaN/Inf entries in >"                   ,"",
-"a >= etr::NA"                                                       ,"You cannot use character/NA/NaN/Inf entries in >="                  ,"",
-"a < etr::NA"                                                        ,"You cannot use character/NA/NaN/Inf entries in <"                   ,"",
-"a <= etr::NA"                                                       ,"You cannot use character/NA/NaN/Inf entries in <="                  ,"",
-"etr::NA && a"                                                       ,"You cannot use character/NA/NaN/Inf entries in &&"                  ,"",
-"etr::NA || a"                                                       ,"You cannot use character/NA/NaN/Inf entries in ||"                  ,"",
-"etr::NA & a"                                                        ,"You cannot use character/NA/NaN/Inf entries in &"                   ,"",
-"etr::NA | a"                                                        ,"You cannot use character/NA/NaN/Inf entries in |"
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : a == NA", "You cannot use character/NA/NaN/Inf entries in =="                  ,"",
+"a != NA"                                                       ,"You cannot use character/NA/NaN/Inf entries in !="                  ,"",
+"a > NA"                                                        ,"You cannot use character/NA/NaN/Inf entries in >"                   ,"",
+"a >= NA"                                                       ,"You cannot use character/NA/NaN/Inf entries in >="                  ,"",
+"a < NA"                                                        ,"You cannot use character/NA/NaN/Inf entries in <"                   ,"",
+"a <= NA"                                                       ,"You cannot use character/NA/NaN/Inf entries in <="                  ,"",
+"NA && a"                                                       ,"You cannot use character/NA/NaN/Inf entries in &&"                  ,"",
+"NA || a"                                                       ,"You cannot use character/NA/NaN/Inf entries in ||"                  ,"",
+"NA & a"                                                        ,"You cannot use character/NA/NaN/Inf entries in &"                   ,"",
+"NA | a"                                                        ,"You cannot use character/NA/NaN/Inf entries in |"
 )
 checks <- Map(function(g, e) {
   g == e
 }, got, expected) |> unlist()
+checks
 expect_true(all(checks), info = "check functions for comparison and logical functions")
 
 # --- vector/logical/integer/numeric & matrix --------------------------------------------------------
@@ -316,7 +315,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  a <- logical(etr::NA)\nYou cannot use character/NA/NaN/Inf entries in logical\n"
+  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  a <- logical(NA)\nYou cannot use character/NA/NaN/Inf entries in logical\n"
 )
 f <- function() {
   a <- integer(NA)
@@ -324,7 +323,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  a <- integer(etr::NA)\nYou cannot use character/NA/NaN/Inf entries in integer\n"
+  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  a <- integer(NA)\nYou cannot use character/NA/NaN/Inf entries in integer\n"
 )
 f <- function() {
   a <- numeric(NA)
@@ -332,7 +331,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  a <- numeric(etr::NA)\nYou cannot use character/NA/NaN/Inf entries in numeric\n"
+  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  a <- numeric(NA)\nYou cannot use character/NA/NaN/Inf entries in numeric\n"
 )
 f <- function() {
   a <- vector("integer", "Bla")
@@ -405,7 +404,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  g <- cmr(1.0, 2, c(1.0, 2.0, 3.0))\nThe second argument of cmr has to be a vector\n"
+  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  g <- cmr(1.0, 2L, c(1.0, 2.0, 3.0))\nThe second argument of cmr has to be a vector\n"
 )
 f <- function() {
   g <- cmr(1, c(1), TRUE)

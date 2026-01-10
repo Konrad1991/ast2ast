@@ -31,12 +31,14 @@ literal_node <- R6::R6Class(
     error = NULL,
     context = NULL,
     internal_type = NULL,
+    wrap = FALSE,
+    real_type = NULL,
     initialize = function(obj) {
       self$literal_type <- determine_literal_type(obj)
       self$name <- deparse(obj)
     },
     stringify = function(indent = "") {
-      t_literal(self$context, self$name, indent, self$literal_type)
+      t_literal(self$context, self$name, indent, self$literal_type, self$wrap, self$real_type)
     },
     stringify_error = function(indent = "") {
       return(paste0(indent, self$error))
@@ -728,6 +730,7 @@ type_node <- R6::R6Class(
     type_dcl = FALSE,
     iterator = FALSE,
     r_fct = TRUE,
+    real_type = "etr::Double",
 
     within_type_call = FALSE,
 
@@ -870,14 +873,14 @@ type_node <- R6::R6Class(
     },
 
     generate_type = function(indent = "") {
-      convert_types_to_etr_types(self$base_type, self$data_struct, self$r_fct, indent)
+      convert_types_to_etr_types(self$base_type, self$data_struct, self$r_fct, self$real_type, indent)
     },
     stringify_signature = function(r_fct) {
       if (!self$fct_input) return("")
       if (r_fct) {
         return(paste0("SEXP ", self$name, "SEXP"))
       }
-      type <- convert_types_to_etr_types(self$base_type, self$data_struct, self$r_fct, "")
+      type <- convert_types_to_etr_types(self$base_type, self$data_struct, self$r_fct, self$real_type, "")
       if (self$const_or_mut == "const") type <- paste0("const ", type)
       if (self$copy_or_ref %within% c("ref", "reference")) type <- paste0(type, "&")
       paste0(type, " ", self$name)
@@ -890,10 +893,10 @@ type_node <- R6::R6Class(
         if(self$copy_or_ref != "copy") {
           data_struct <- paste0("borrow_", self$data_struct)
         }
-        type <- convert_types_to_etr_types(self$base_type, data_struct, self$r_fct, indent)
+        type <- convert_types_to_etr_types(self$base_type, data_struct, self$r_fct, self$real_type, indent)
 
         if (data_struct == "scalar") {
-          conv_base_type <- convert_base_type(self$base_type)
+          conv_base_type <- convert_base_type(self$base_type, self$real_type)
           return(
             paste0(indent, type, " ", self$name, " = ",
               paste0("etr::SEXP2Scalar<", conv_base_type, ">(", self$name, "SEXP);")
@@ -904,7 +907,7 @@ type_node <- R6::R6Class(
           paste0(indent, type, " ", self$name, " = ", paste0(self$name, "SEXP;"))
         )
       }
-      type <- convert_types_to_etr_types(self$base_type, self$data_struct, self$r_fct, indent)
+      type <- convert_types_to_etr_types(self$base_type, self$data_struct, self$r_fct, self$real_type, indent)
       paste0(indent, type, " ", self$name, ";")
     },
 

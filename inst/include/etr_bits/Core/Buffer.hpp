@@ -1,10 +1,26 @@
 #ifndef BUFFER_ETR_H
 #define BUFFER_ETR_H
 
-#include "Header.hpp"
-#include "Reflection.hpp"
-#include "Types.hpp"
-#include "Utils.hpp"
+template <typename Scalar>
+struct BufferIt {
+  const Scalar* ptr;
+
+  using value_type = Scalar;
+  using reference  = Scalar;
+  using difference_type = std::ptrdiff_t;
+  using iterator_category = std::forward_iterator_tag;
+
+  reference operator*() const { return *ptr; }
+
+  BufferIt& operator++() {
+    ++ptr;
+    return *this;
+  }
+
+  bool operator!=(const BufferIt& other) const {
+    return ptr != other.ptr;
+  }
+};
 
 namespace etr {
 template <typename T, typename BufferTrait> struct Buffer {
@@ -18,37 +34,9 @@ template <typename T, typename BufferTrait> struct Buffer {
   std::size_t capacity = 0;
   bool allocated = false;
 
-  bool is_matrix = false;
-  std::size_t nrow = 0;
-  std::size_t ncol = 0;
-
   std::size_t size() const noexcept{
     if (!allocated) return 0;
     return sz;
-  }
-  bool empty() const noexcept{ return sz == 0; }
-
-  std::size_t nr() const {
-    ass<"No memory was allocated">(allocated);
-    return nrow;
-  }
-  std::size_t nc() const {
-    ass<"No memory was allocated">(allocated);
-    return ncol;
-  }
-  bool im() const {
-    ass<"No memory was allocated">(allocated);
-    return is_matrix;
-  }
-  void set_matrix_default() noexcept {
-    is_matrix = false;
-    nrow = 0;
-    ncol = 0;
-  }
-  void set_matrix(std::size_t nrow_, std::size_t ncol_) noexcept {
-    is_matrix = true;
-    nrow = nrow_;
-    ncol = ncol_;
   }
 
   void reset() noexcept {
@@ -56,7 +44,6 @@ template <typename T, typename BufferTrait> struct Buffer {
     this -> p = nullptr;
     this -> sz = 0;
     this -> capacity = 0;
-    set_matrix_default();
   }
 
   // empty constructor
@@ -64,43 +51,30 @@ template <typename T, typename BufferTrait> struct Buffer {
 
   // Constructors for other Buffers
   // Copy constructor
-  Buffer(const Buffer &other)
-    : sz(other.sz), capacity(other.capacity), allocated(other.allocated),
-    is_matrix(other.is_matrix), nrow(other.nrow), ncol(other.ncol) {
-    if (allocated && sz) {
-      capacity = other.sz;
-      p = new T[other.sz];
-      for (std::size_t i = 0; i < sz; ++i) p[i] = other.p[i];
-    } else {
-      reset();
+  Buffer(const Buffer& other)
+  : sz(other.sz), capacity(other.capacity), allocated(other.allocated) {
+    if (!allocated || capacity == 0) { reset(); return; }
+    if (sz > capacity) {
+      ass<"Buffer invariant violated: sz > capacity">(sz > capacity);
+    }
+    p = new T[capacity];
+    for (std::size_t i = 0; i < sz; i++) {
+      p[i] = other.p[i];
     }
   }
   // Move constructor
   Buffer(Buffer &&other) noexcept
     : p(std::exchange(other.p, nullptr)), sz(std::exchange(other.sz, 0)),
     capacity(std::exchange(other.capacity, 0)),
-    allocated(std::exchange(other.allocated, false)),
-    is_matrix(std::exchange(other.is_matrix, false)),
-    nrow(std::exchange(other.nrow, 0)), ncol(std::exchange(other.ncol, 0)) {}
+    allocated(std::exchange(other.allocated, false)) {}
   // copy assignment
   Buffer &operator=(const Buffer &other) {
     if (this == &other)
       return *this;
     if (other.size() > capacity) {
-      if (allocated) {
-        realloc(other.size());
-      } else {
-        resize(other.size());
-      }
+      resize(other.size());
     }
     sz = other.size();
-    if (other.is_matrix) {
-      is_matrix = true;
-      nrow = other.nrow;
-      ncol = other.ncol;
-    } else {
-      set_matrix_default();
-    }
     if (sz) std::copy_n(other.p, sz, p);
     return *this;
   }
@@ -114,12 +88,6 @@ template <typename T, typename BufferTrait> struct Buffer {
     ass<"Size has to be larger than 0!">(sz_ > 0);
     init(sz_);
   }
-  // Constructors for nrow, ncol
-  Buffer(std::size_t nrow_, std::size_t ncol_) {
-    ass<"Size has to be larger than 0!">((nrow_*ncol_) > 0);
-    init(nrow_*ncol_);
-    set_matrix(nrow_, ncol_);
-  }
 
 #ifdef STANDALONE_ETR
 #else
@@ -129,7 +97,7 @@ template <typename T, typename BufferTrait> struct Buffer {
       delete[] p;
       reset();
     }
-    if constexpr (is<value_type, double>) {
+    if constexpr (IS<value_type, Double> || IS<value_type, Dual> || IS<value_type, Variable<Double>>) {
       ass<"R object is not of type numeric">(Rf_isReal(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       ass<"R object seems to be empty">(sz >= 1);
@@ -139,10 +107,7 @@ template <typename T, typename BufferTrait> struct Buffer {
         p[i] = REAL(s)[i];
       }
       allocated = true;
-      if (Rf_isMatrix(s)) {
-        set_matrix(Rf_nrows(s), Rf_ncols(s));
-      }
-    } else if constexpr (is<value_type, int>) {
+    } else if constexpr (IS<value_type, Integer>) {
       ass<"R object is not of type integer">(Rf_isInteger(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       ass<"R object seems to be empty">(sz >= 1);
@@ -152,24 +117,18 @@ template <typename T, typename BufferTrait> struct Buffer {
         p[i] = INTEGER(s)[i];
       }
       allocated = true;
-      if (Rf_isMatrix(s)) {
-        set_matrix(Rf_nrows(s), Rf_ncols(s));
-      }
-    } else if constexpr (is<value_type, bool>) {
+    } else if constexpr (IS<value_type, Logical>) {
       ass<"R object is not of type logical">(Rf_isLogical(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       ass<"R object seems to be empty">(sz >= 1);
       capacity = static_cast<std::size_t>(sz);
       p = new T[capacity];
       for (int i = 0; i < sz; i++) {
-        p[i] = LOGICAL(s)[i];
+        p[i] = static_cast<bool>(LOGICAL(s)[i]);
       }
       allocated = true;
-      if (Rf_isMatrix(s)) {
-        set_matrix(Rf_nrows(s), Rf_ncols(s));
-      }
     } else {
-      static_assert(sizeof(T) == 0, "Unsupported type found");
+      ass<"Unsupported type found">(false);
     }
   }
   Buffer(SEXP s) {
@@ -178,7 +137,7 @@ template <typename T, typename BufferTrait> struct Buffer {
 #endif
 
   template <typename TInp>
-  requires(IsArithV<Decayed<TInp>>)
+  requires(IsCppArithV<Decayed<TInp>>)
   void fill(TInp &&val) {
     if constexpr (IS<T, TInp>) {
       std::fill(p, p + sz, val);
@@ -187,34 +146,14 @@ template <typename T, typename BufferTrait> struct Buffer {
       std::fill(p, p + sz, temp);
     }
   }
-
   template <typename TInp>
-  requires(!IsArithV<Decayed<TInp>>)
-  void fill(TInp &&inp) {
-    ass<"cannot use fill with vectors of different lengths">(inp.size() == sz);
-    using DataType = typename ReRef<TInp>::type::value_type;
-    if constexpr (IsVec<TInp>) {
-      if constexpr (!is<DataType, T>) {
-        for (std::size_t i = 0; i < sz; i++)
-          p[i] = static_cast<T>(inp[i]);
-      } else {
-        DataType *ptr = inp.getPtr();
-        std::copy(ptr, ptr + sz, p);
-      }
-    } else if constexpr (IsRVec<TInp> && is<DataType, T>) {
-      delete[] p;
-      DataType *ptr = inp.getPtr();
-      inp.d.p = nullptr;
-      inp.d.allocated = false;
-      p = ptr;
+  requires(IS<TInp, Variable<Double>> || IsArithV<Decayed<TInp>>)
+  void fill(TInp &&val) {
+    if constexpr (IS<T, Double>) {
+      std::fill(p, p + sz, get_val(val));
     } else {
-      if constexpr (is<DataType, T>) {
-        for (std::size_t i = 0; i < sz; i++)
-          p[i] = inp[i];
-      } else {
-        for (std::size_t i = 0; i < sz; i++)
-          p[i] = static_cast<T>(inp[i]);
-      }
+      auto temp = static_cast<T>(get_val(val));
+      std::fill(p, p + sz, temp);
     }
   }
 
@@ -223,7 +162,6 @@ template <typename T, typename BufferTrait> struct Buffer {
       if (allocated) {
         delete[] p;
         reset();
-        set_matrix_default();
       }
     }
   }
@@ -239,7 +177,6 @@ template <typename T, typename BufferTrait> struct Buffer {
     p = new T[capacity];
     fill(T());
     allocated = true;
-    set_matrix_default();
   }
   void resize(std::size_t newSize) {
     ass<"Size has to be larger than 0!">(newSize > 0);
@@ -264,39 +201,40 @@ template <typename T, typename BufferTrait> struct Buffer {
     }
   }
 
-  const value_type& operator[](std::size_t idx) const {
+  const value_type& get(std::size_t idx) const {
     ass<"No memory was allocated">(allocated);
-    // NOTE: negative idx leads to overflow and
-    // is than the max possible value of std::size_t
     ass<"Error: out of boundaries">(idx < sz);
     return p[idx];
   }
-  value_type& operator[](std::size_t idx) {
+  const Double get_dot(std::size_t idx) const {
+    static_assert(IS<Decayed<T>, Dual>, "data type has to be Dual");
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
-    return p[idx];
+    return Double(p[idx].dot);
+  }
+  void set(std::size_t idx, const value_type& val) {
+    ass<"No memory was allocated">(allocated);
+    ass<"Error: out of boundaries">(idx < sz);
+    p[idx] = val;
+  }
+  void set_dot(std::size_t idx, const double& val_dot) {
+    static_assert(IS<Decayed<T>, Dual>, "data type has to be Dual");
+    ass<"No memory was allocated">(allocated);
+    ass<"Error: out of boundaries">(idx < sz);
+    p[idx].dot = val_dot;
   }
 
   template <typename L2> void moveit(L2 &other) {
     T *temporary = other.p;
     std::size_t tempSize = other.sz;
     std::size_t tempCapacity = other.capacity;
-    bool tempIsMatrix = other.is_matrix;
-    std::size_t tempNRow = other.nrow;
-    std::size_t tempNCol = other.ncol;
     other.p = this->p;
     other.sz = this->sz;
     other.capacity = this->capacity;
     other.allocated = this->allocated;
-    other.is_matrix = this->is_matrix;
-    other.nrow = this->nrow;
-    other.ncol = this->ncol;
     this->p = temporary;
     this->sz = tempSize;
     this->capacity = tempCapacity;
-    this->is_matrix = tempIsMatrix;
-    this->nrow = tempNRow;
-    this->ncol = tempNCol;
     allocated = true;
   }
 
@@ -306,9 +244,6 @@ template <typename T, typename BufferTrait> struct Buffer {
       std::size_t temp_sz = sz;
       std::size_t temp_capacity = capacity;
       bool temp_allocated = allocated;
-      bool temp_is_matrix = is_matrix;
-      std::size_t temp_nrow = nrow;
-      std::size_t temp_ncol = ncol;
       p = other.p;
       other.p = temp_p;
       sz = other.sz;
@@ -317,24 +252,17 @@ template <typename T, typename BufferTrait> struct Buffer {
       other.capacity = temp_capacity;
       allocated = other.allocated;
       other.allocated = temp_allocated;
-      is_matrix = other.is_matrix;
-      other.is_matrix = temp_is_matrix;
-      nrow = other.nrow;
-      other.nrow = temp_nrow;
-      ncol = other.ncol;
-      other.ncol = temp_ncol;
     }
   }
-  friend void swap(Buffer&a, Buffer& b) noexcept {
-    a.swap(b);
+
+  auto begin() const {
+    ass<"No memory was allocated">(allocated);
+    return BufferIt<T>{ p };
   }
-
-  auto begin()       noexcept { return It<T>{p}; }
-  auto end()         noexcept { return It<T>{p + sz}; }
-  auto begin() const noexcept { return It<const T>{p}; }
-  auto end()   const noexcept { return It<const T>{p + sz}; }
-
-  T *data() const { return p; }
+  auto end() const {
+    ass<"No memory was allocated">(allocated);
+    return BufferIt<T>{ p + sz };
+  }
 
   void realloc(std::size_t new_size) {
     T *temp;

@@ -1,10 +1,3 @@
-<!-- badges: start -->
-[![](http://cranlogs.r-pkg.org/badges/last-month/ast2ast?color=green)](https://cran.r-project.org/package=ast2ast)
-[![](https://www.r-pkg.org/badges/version/ast2ast?color=green)](https://cran.r-project.org/package=ast2ast)
-[![License: GPL2](https://img.shields.io/badge/license-GPL2-blue.svg)](https://cran.r-project.org/web/licenses/GPL-2)
-<!-- badges: end -->
-
-
 # R package ast2ast
 
 ## News
@@ -29,8 +22,16 @@ Documentation for the function [translate](https://konrad1991.github.io/ast2ast/
 If you want a detailed documentation please read this vignette: https://konrad1991.github.io/ast2ast/DetailedDocumentation.html
 In case you are interested on using ast2ast in your R package please refer to: https://konrad1991.github.io/ast2ast/InformationForPackageAuthors.html
 
-## Contribution
+### automatic differentiation
 
+The reverse-mode automatic differentiation engine is adapted and refactored from the open-source autodiff library by Allan Leal (MIT license).
+The original implementation was modified to:
+* integrate with ast2ast’s scalar type system (Logical, Integer, Double, Dual)
+* support expression-level dispatch alongside value-level dispatch
+* enable interoperability with generated C++20 code and R bindings
+* align error handling and memory semantics with the ast2ast runtime
+
+## Contribution
 
 Contribution would be warmly appreciated (See Code of Conduct).
 

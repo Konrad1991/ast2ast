@@ -18,11 +18,11 @@ ast <- get_sorted_ast(f)
 res <- lapply(ast$block, function(node) {
   node$right_node$stringify("")
 })
-expect_equal(res[[1]], "vector(\"logical\", 2)")
-expect_equal(res[[2]], "vector(\"integer\", 3)")
-expect_equal(res[[3]], "vector(\"numeric\", 4)")
-expect_equal(res[[4]], "vector(\"numeric\", 5)")
-expect_equal(res[[5]], "vector(\"logical\", 4)")
+expect_equal(res[[1]], "vector(\"logical\", 2.0)")
+expect_equal(res[[2]], "vector(\"integer\", 3.0)")
+expect_equal(res[[3]], "vector(\"numeric\", 4.0)")
+expect_equal(res[[4]], "vector(\"numeric\", 5.0)")
+expect_equal(res[[5]], "vector(\"logical\", 4.0)")
 
 
 # --- matrix sorting ----------------------------------------------------
