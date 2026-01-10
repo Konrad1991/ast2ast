@@ -1,9 +1,9 @@
-<!DOCTYPE html><html><head><title>R: Translates an R function into a C++ function.</title>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+<!DOCTYPE html><html><head><title>R: Translate an R function into C++</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css">
-<script type="text/javascript">
-const macros = { "\\R": "\\textsf{R}", "\\code": "\\texttt"};
+<script>
+const macros = { "\\R": "\\textsf{R}", "\\mbox": "\\text", "\\code": "\\texttt"};
 function processMathHTML() {
     var l = document.getElementsByClassName('reqn');
     for (let e of l) { katex.render(e.textContent, e, { throwOnError: false, macros }); }
@@ -11,107 +11,83 @@ function processMathHTML() {
 }</script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js"
     onload="processMathHTML();"></script>
-<link rel="stylesheet" type="text/css" href="R.css" />
+<link rel="stylesheet" type="text/css" href="R.css">
 </head><body><div class="container"><main>
 
 <table style="width: 100%;"><tr><td>translate</td><td style="text-align: right;">R Documentation</td></tr></table>
 
-<h2>Translates an R function into a C++ function.</h2>
+<h2>Translate an R function into C++</h2>
 
 <h3>Description</h3>
 
-<p>An R function is translated to C++ source
-code and afterwards the code is compiled. <br />
-The result can be an external pointer (<em>XPtr</em>) or an <em>R</em> function. <br />
-The default value is an R function. <br />
-Further information can be found in the vignette: <em>Detailed Documentation</em>. <br />
+<p><code>translate()</code> compiles an R function into C++ code using the
+<em>ast2ast</em> expression template library. The result can be called
+directly from R (default) or returned as an external pointer. The C++
+source code can also be retrieved without compilation.
 </p>
 
 
 <h3>Usage</h3>
 
-<pre><code class='language-R'>  translate(
-    f,
-    output = "R",
-    types_of_args = "double",
-    data_structures = "vector",
-    handle_inputs = "copy",
-    references = FALSE,
-    verbose = FALSE,
-    getsource = FALSE
-  )
+<pre><code class='language-R'>translate(
+  f,
+  args_f = NULL,
+  output = "R",
+  derivative = NULL,
+  verbose = FALSE,
+  getsource = FALSE
+)
 </code></pre>
 
 
 <h3>Arguments</h3>
 
-<table>
+<table role = "presentation">
 <tr><td><code id="f">f</code></td>
 <td>
-<p>The function which should be translated from R to C++.</p>
+<p>An R function to be translated into C++.</p>
+</td></tr>
+<tr><td><code id="args_f">args_f</code></td>
+<td>
+<p>A helper function that defines the types of the arguments of <code>f</code>.
+Optional; defaults to <code>NULL</code>. See the Details section.</p>
 </td></tr>
 <tr><td><code id="output">output</code></td>
 <td>
-<p>If set to 'R' an R function wrapping the C++ code is returned. <br />
-If output is set to  'XPtr' an external pointer object
-pointing to the C++ code is returned. <br />
-The default value is 'R'.</p>
-</td></tr>
-<tr><td><code id="types_of_args">types_of_args</code></td>
-<td>
-<p>define the types of the arguments passed
-to the function as an character vector. <br /> 
-The character vector should be either of length 1
-or has the same length as the number of arguments to the function.<br />
-In case the output is set to 'R' 'logical', 'int' or 'double' are available. <br />
-If the 'XPtr' interface is used additionally 'const logical',
-'const int' and 'const double' can be chosen. <br />
-For more information see below for details and
-check the vignette <em>InformationForPackageAuthors</em>.<br /></p>
-</td></tr>
-<tr><td><code id="data_structures">data_structures</code></td>
-<td>
-<p>defines the data structures of the
-arguments passed to the function (as an character vector). <br />
-The character vector should be either of length 1
-or has the same length as the number of arguments to the function.<br />
-In case the output is set to 'R' one can chose between 
-'scalar' and 'vector'. <br /> If the output is set to 'XPtr'
-one can set a data structure to 'scalar', 'vector' or 'borrow.<br />
+<p>Controls what is returned:
 </p>
-</td></tr>
-<tr><td><code id="handle_inputs">handle_inputs</code></td>
-<td>
-<p>defines how the arguments to the function 
-should be handled as character vector. <br />
-The character vector should be either of length 1
-or has the same length as the number of arguments to the function.<br />
-In case the output is an R function
-the arguments can be either copied ('copy') or borrowed ('borrow'). <br />
-<strong>If you chose borrow R objects which are passed to the function 
-are modified. <br /> This is in contrast to the usual behaviour of R.</strong> <br /> 
-If the output is an XPtr the arguments can be only borrowed ('borrow'). <br />
-In case only part of the arguments should be borrowed than an empty string
-(&quot;&quot;) can be used to indicate this.<br />
+
+<ul>
+<li> <p><code>"R"</code> (default): an R function wrapping the compiled C++.
 </p>
-</td></tr>
-<tr><td><code id="references">references</code></td>
-<td>
-<p>defines whether the arguments are passed by reference
-or whether they are copied. This is indicated by a logical vector. <br />
-The logical vector should be either of length 1
-or has the same length as the number of arguments to the function.<br />
-If set to TRUE the arguments are passed by reference otherwise not.
-This option can be only used when the output is set to 'XPtr'
+</li>
+<li> <p><code>"XPtr"</code>: an external pointer to the compiled C++ function.
 </p>
+</li></ul>
+</td></tr>
+<tr><td><code id="derivative">derivative</code></td>
+<td>
+<p>When derivatives are required one can set here the mode of the automatic differentiation:
+</p>
+
+<ul>
+<li> <p><code>NULL</code> (default): You don't require any derivatives.
+</p>
+</li>
+<li> <p><code>"forward"</code> Determine the derivatives via forward automatic differentiation.
+</p>
+</li>
+<li> <p><code>"reverse"</code> Determine the derivatives via reverse automatic differentiation.
+</p>
+</li></ul>
 </td></tr>
 <tr><td><code id="verbose">verbose</code></td>
 <td>
-<p>If set to TRUE the output of the compilation process is printed.</p>
+<p>Logical. If <code>TRUE</code>, prints output from the compilation process.</p>
 </td></tr>
 <tr><td><code id="getsource">getsource</code></td>
 <td>
-<p>If set to TRUE the function is not compiled and instead the C++ source code itself is returned.</p>
+<p>Logical. If <code>TRUE</code>, returns the generated C++ source code as a string instead of compiling it.</p>
 </td></tr>
 </table>
 
@@ -120,348 +96,314 @@ This option can be only used when the output is set to 'XPtr'
 
 
 
-<h4>Type system</h4>
+<h4>Supported functions</h4>
 
-<p>Each variable has a fixed type in a C++ program. <br />
-In <em>ast2ast</em> the default type for each variable is a data structure called 'vector'. <br />
-Each object in 'vector' is as default of type 'double'. 
-Notably, it is defined at runtime <br />
-whether a variable is a 'vector' in the sense of on R vector or it is a matrix.<br />
-</p>
-
-
-
-<h4>Types of arguments to function</h4>
-
-<p>The types of the arguments to the function are set together of:
+<p>The following R constructs are currently supported:
 </p>
 
 <ol>
-<li><p> types_of_args; c(&quot;int&quot;, &quot;int&quot;)
+<li><p> Assignment: <code>=</code> and <code>&lt;-</code>
 </p>
 </li>
-<li><p> data_structures; c(&quot;vector&quot;, &quot;scalar&quot;)
+<li><p> Allocation: <code>vector</code>, <code>matrix</code>, <code>rep</code>, <code>logical</code>, <code>integer</code>, <code>numeric</code>
 </p>
 </li>
-<li><p> handle_inputs; c(&quot;borrow&quot;, &quot;&quot;)
+<li><p> Object info: <code>length</code>, <code>dim</code>
 </p>
 </li>
-<li><p> references; c(TRUE, TRUE)
+<li><p> Arithmetic: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>
+</p>
+</li>
+<li><p> Indexing: <code>[]</code> and <code>[[]]</code>
+</p>
+</li>
+<li><p> Math: <code>sin</code>, <code>asin</code>, <code>sinh</code>, <code>cos</code>, <code>acos</code>, <code>cosh</code>,
+<code>tan</code>, <code>atan</code>, <code>tanh</code>, <code>sqrt</code>, <code>log</code>, <code>^</code>, <code>exp</code>
+</p>
+</li>
+<li><p> Concatenation: <code>c</code>
+</p>
+</li>
+<li><p> Control flow: <code>for</code>, <code>while</code>, <code>repeat</code>, <code>next</code>, <code>break</code>,
+<code>if</code>, <code>else if</code>, <code>else</code>
+</p>
+</li>
+<li><p> Comparison: <code>==</code>, <code>!=</code>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>
+</p>
+</li>
+<li><p> Logical ops: <code>&amp;&amp;</code>, <code>||</code>, <code>&amp;</code>, <code>|</code>
+</p>
+</li>
+<li><p> Printing: <code>print</code>
+</p>
+</li>
+<li><p> Return: <code>return</code>
+</p>
+</li>
+<li><p> Catmull–Rom spline: <code>cmr</code>
+</p>
+</li>
+<li><p> Sequence operator: <code>:</code>
+</p>
+</li>
+<li><p> Helpers: <code>is.na</code>, <code>is.finite</code>, <code>is.infinite</code>
+</p>
+</li>
+<li><p> Explicit typing: <code>type()</code>
+</p>
+</li>
+<li><p> Derivative functions in forward mode: <code>seed</code>, <code>unseed</code>, and <code>get_dot</code>
+</p>
+</li>
+<li><p> Derivative functions in reverse mode: <code>deriv</code>
 </p>
 </li></ol>
 
-<p>In this example this results in: 
-<code style="white-space: pre;">&#8288;
-      f(etr::Vec&lt;int&gt;&amp; argumentNr1Input, int&amp; argumentNr2) {
-        etr::Vec&lt;int, etr::Borrow&lt;int&gt;&gt; argumentNr1(argumentNr1Input.d.p,
-                                                    argumentNr1Input.size());
-        ... rest of function code
+<p>Types are static in C++ and cannot be changed within the function. Each type consists of a base data type and a data structure:
+</p>
+
+<ul>
+<li><p> Base types: <code>logical</code>, <code>integer</code> (or <code>int</code>), <code>double</code>
+</p>
+</li>
+<li><p> Structures: <code>scalar</code>, <code>vector</code> (or <code>vec</code>), <code>matrix</code> (or <code>mat</code>)
+</p>
+</li></ul>
+
+<p>Types are usually inferred automatically. Users may annotate explicitly, for example:
+</p>
+<pre>
+      a |&gt; type(logical)      # scalar logical
+      b |&gt; type(vec(int))     # integer vector
+      c |&gt; type(mat(double))  # double matrix
+    </pre>
+<p>Scalars in ast2ast differ from R: in R, scalars are length-1 vectors, but in C++ they are true scalars and cannot be subset.
+</p>
+
+
+
+<h4>Argument types</h4>
+
+<p>Arguments default to <code>matrix(double)</code> if <code>args_f</code> is <code>NULL</code>.
+To override, supply a function that annotates each argument:
+</p>
+<pre>
+      f_args &lt;- function(a, b, c) {
+        a |&gt; type(borrow_vec(double)) |&gt; ref()
+        b |&gt; type(borrow_mat(double)) |&gt; ref() |&gt; const()
+        c |&gt; type(double) |&gt; ref()
       }
-    &#8288;</code>
-</p>
-
-
-
-<h4>Types within the function</h4>
-
-<p>As mentioned above the default type is a 'vector' containing 'doubles' <br />
-Additionally, it is possible to set specific types for a variable. <br />
-However, the type cannot be changed if once defined.
-It is possible to define the following types:
-</p>
-
-<ol>
-<li><p> logical
-</p>
-</li>
-<li><p> int
-</p>
-</li>
-<li><p> double
-</p>
-</li>
-<li><p> logical_vector
-</p>
-</li>
-<li><p> int_vector
-</p>
-</li>
-<li><p> double_vector
-</p>
-</li></ol>
- 
-<p>The first three mentioned types are scalar types. <br />
-These types cannot be resized. 
-Meaning that the behave like a vector of length 1, <br />
-which cannot be extended to have more elements.
-Notably, the scalar values cannot be subsetted. <br />
-The advantage is that scalar values need less memory.
-</p>
-
-
-<h5>declare variable with type</h5>
-
-<p>The variables are declared with the type by using the <br />
-'::' operator. Here are some examples:
-<code style="white-space: pre;">&#8288;
-       f &lt;- function() {
-         d::double &lt;- 3.14
-         l::logical &lt;- TRUE
-         dv::int_vector &lt;- vector(mode = "integer", length = 2)
-       }
-     &#8288;</code>
-</p>
-
-
-
-<h5>Borrowing</h5>
-
-<p>As mentioned above it is possible to borrow arguments to a function. <br />
-Thus, R objects can be modified within the function. <br />
-Please be aware that it is not possible to resize the borrowed variable, <br />
-Therefore, the code below throws an error.
-Here an example:
-<code style="white-space: pre;">&#8288;
-       f &lt;- function(a, b, c) { 
-         a[c(1, 2, 3)] &lt;- 1 
-         b &lt;- vector(length = 10) 
-         c &lt;- vector(length = 1)
-       } 
-       fcpp &lt;- ast2ast::translate(f, handle_inputs = "borrow") 
-       a &lt;- b &lt;- c &lt;- c(1, 2, 3) 
-       fcpp(a, b,c) 
-     &#8288;</code>
-</p>
-
-
-
-<h5>Derivatives</h5>
-
-<p>One can use the function <em>set_deriv</em> and <em>get_deriv</em> in order to <br />
-calculate the derivative with respect to the variable which is currently set. <br />
-The derivatives can be extracted by using the function 'get_deriv'. <br />
-<code style="white-space: pre;">&#8288;
-      set_deriv(x)
-      y = x*x
-      dydx = get_deriv(y)
-    &#8288;</code>
-</p>
-
-
-
-<h5>The following functions are supported:</h5>
-
-
-<ol>
-<li><p> assignment: = and &lt;-
-</p>
-</li>
-<li><p> allocation: vector, matrix and rep
-</p>
-</li>
-<li><p> information about objects: length and dim
-</p>
-</li>
-<li><p> Basic operations: +, -, *, /
-</p>
-</li>
-<li><p> Indices: <em>'[]'</em> and at
-</p>
-</li>
-<li><p> mathematical functions: sin, asin, sinh, cos, acos, cosh, tan, atan, tanh, sqrt, log, ^ and exp
-</p>
-</li>
-<li><p> concatenate objects: c
-</p>
-</li>
-<li><p> control flow: for, if, else if, else
-</p>
-</li>
-<li><p> comparison: ==, !=, &gt;, &lt;, &gt;= and &lt;=
-</p>
-</li>
-<li><p> printing: print
-</p>
-</li>
-<li><p> returning objects: return
-</p>
-</li>
-<li><p> catmull-rome spline: cmr
-</p>
-</li>
-<li><p> to get a range of numbers the ':' function can be used
-</p>
-</li>
-<li><p> is.na and is.infinite can be used to test for NA and Inf.
-</p>
-</li></ol>
-
-
-
-<h5>Some details about the implemented functions</h5>
-
-
-<ul>
-<li><p> For indices squared brackets <em>'[]'</em> can be used as common in R. Beyond that the function 'at' exists
-which accepts as first argument a variable and as the second argument you pass the desired index.
-The caveat of using 'at' is that only <strong>one</strong> entry can be accessed. The function <em>'[]'</em> can return more then one element. <br />
-<strong>The <em>at</em>-function returns a reference to the vector entry.
-Therefore variable[index] can behave differently then <em>at(variable, index)</em>.
-If only integers are found within <em>'[]'</em> the function <em>at</em> is used at the right side of an assignment operator (<em>=</em>).
-The <em>at</em>-function can also be used on the left side of an assignment operator. 
-However, in this case only <em>at</em> should be used at the right side. Otherwise the results are wrong.
-</strong>  <br />
-Here is a small example presented how to use the subset functions:
-<code style="white-space: pre;">&#8288;
-        f &lt;- function() {
-          a &lt;- c(1, 2, 3)
-          print(at(a, 1))
-          print(a[1:2])
-        }
-        fcpp &lt;- ast2ast::translate(f)
-        fcpp()
-      &#8288;</code>
-</p>
-</li>
-<li><p> For- and while-loops can be written as common in R
+    </pre>
+<p>Supported extensions for arguments:
 </p>
 
 <ul>
-<li><p> Nr.1 <br />
-for(index in variable){ <br />
-# do whatever <br />
-} <br />
+<li> <p><code>borrow_vec</code>, <code>borrow_mat</code>: pass inputs by reference, modifying them in place.
 </p>
 </li>
-<li><p> Nr.2 <br />
-for(index in 1:length(variable){ <br />
-# do whatever <br />
-} <br />
-</p>
-</li></ul>
-
-</li>
-<li><p> The print function accepts either a scalar, vector, matrix, string, bool or nothing (empty line).
+<li> <p><code>const()</code>: disallow modification of inputs.
 </p>
 </li>
-<li><p> In order to return an object use the <em>return</em> function (<strong>The last object is not returned automatically as in R</strong>).
-</p>
-</li>
-<li><p> In order to interpolate values the <em>cmr</em> function can be used. The function needs three arguments.
-</p>
-
-<ol>
-<li><p> the first argument is the point of the independent variable (<strong>x</strong>) for which the dependent variable should be calculated (<strong>y</strong>). This has to be a vector of length one.
-</p>
-</li>
-<li><p> the second argument is a vector defining the points of the independent variable (<strong>x</strong>). This has to be a vector of at least length four.
-</p>
-</li>
-<li><p> the third argument is a vector defining the points of the dependent variable (<strong>y</strong>). This has to be a vector of at least length four.
-</p>
-</li></ol>
-
-<p><strong>Be aware that the R code is translated to ETR an expression template library which tries to mimic R. <br />
-However, it does not behave exactly like R! Please check your compiled function before using it in a serious project. <br />
-If you want to see how <em>ast2ast</em> differs from R in detail check the vignette: <em>Detailed Documentation</em>. <br />
-In case you want to know how <em>ast2ast</em> works in detail check the vignette:   <em>InformationForPackageAuthors</em>. <br />
-</strong>
+<li> <p><code>ref()</code>: pass by reference (only valid when <code>output = "XPtr"</code>).
 </p>
 </li></ul>
 
 
 
+
+<h4>Derivatives</h4>
+
+<p><code>ast2ast</code> supports automatic differentiation (AD) in two modes: forward
+and reverse. The mode is selected via the <code>derivative</code> argument of
+<code>translate()</code>.
+</p>
+
+<ul>
+<li> <p><code>derivative = "forward"</code> enables forward-mode AD.
+</p>
+</li>
+<li> <p><code>derivative = "reverse"</code> enables reverse-mode AD.
+</p>
+</li></ul>
+
+<p>The AD system is intentionally low-level and explicit. Rather than providing
+high-level wrappers (such as a built-in <code>jacobian()</code>), users are expected
+to assemble derivative computations themselves using a small set of primitive
+building blocks. This keeps the interface flexible, transparent, and close
+to the generated C++ code.
+</p>
+
+
+<h5>Forward mode</h5>
+
+<p>In forward mode, derivatives are propagated alongside values. The following
+functions are available:
+</p>
+
+<ul>
+<li> <p><code>seed(x, i)</code>: marks the <code>i</code>-th component of <code>x</code> as the
+active direction (sets its derivative to 1).
+</p>
+</li>
+<li> <p><code>unseed(x, i)</code>: resets the derivative state of the <code>i</code>-th
+component.
+</p>
+</li>
+<li> <p><code>get_dot(y)</code>: extracts the derivative (dot) values of <code>y</code>.
+</p>
+</li></ul>
+
+<p>A typical pattern is to loop over input dimensions, seed one component at a
+time, evaluate the function, extract derivatives using <code>get_dot()</code>, and
+assemble the Jacobian manually.
+</p>
+
+
+
+<h5>Reverse mode</h5>
+
+<p>In reverse mode, derivatives are accumulated by backpropagation from outputs
+to inputs. The function
+</p>
+
+<ul>
+<li> <p><code>deriv(y, x)</code>
+</p>
+</li></ul>
+
+<p>computes the Jacobian of <code>y</code> with respect to <code>x</code>. This call must
+appear explicitly in the translated function. Reverse mode is particularly
+efficient when the number of outputs is small relative to the number of inputs.
+</p>
+
+
+
+<h5>Design philosophy</h5>
+
+<p>Derivative computation in <code>ast2ast</code> is explicit by design. The full control
+flow (including loops, seeding, unseeding, and accumulation) is visible in the
+user code and translated directly into C++. This makes the generated code easy
+to inspect, reason about, and modify, and avoids hidden performance costs.
+<strong>Important:</strong> The <code>derivative</code> argument only enables the AD
+infrastructure. It does not automatically differentiate your function. You
+must explicitly call <code>seed()</code>, <code>unseed()</code>, <code>get_dot()</code>, or
+<code>deriv()</code> inside your function, depending on the chosen mode.
+</p>
+
+
+<p><strong>Note:</strong> The generated C++ mimics R semantics closely but not exactly.
+Always validate compiled functions against the original R implementation before
+using in production. See the vignette <em>Detailed Documentation</em> for a
+full comparison, and <em>InformationForPackageAuthors</em> for internals.
+</p>
 
 
 <h3>Value</h3>
 
-<p>If output is set to <em>R</em> an R function is returned.
-Thus, the C++ code can directly be called within R. <br />
-In contrast a function which returns an external pointer
-is generated if the output is set to <em>XPtr</em>. <br />
+<p>Depending on <code>output</code>:
 </p>
+
+<ul>
+<li> <p><em>R</em>: an R function that directly calls the compiled C++ code.
+</p>
+</li>
+<li> <p><em>XPtr</em>: a function that returns an external pointer to the compiled C++ code.
+</p>
+</li></ul>
+
 
 
 <h3>Examples</h3>
 
-<pre><code class='language-R'> # Further examples can be found in the vignettes. 
-    ## Not run: 
-      f &lt;- function() {
-        print("Hello World!")
+<pre><code class='language-R'>## Not run: 
+# Hello World
+# ----------------------------------------------------------------
+f &lt;- function() {
+  print("Hello World!")
+}
+f_cpp &lt;- ast2ast::translate(f)
+f_cpp()
+
+# Derivatives
+# ----------------------------------------------------------------
+f &lt;- function(y, x) {
+  y[[1L]] &lt;- x[[1L]] * x[[2L]]
+  y[[2L]] &lt;- x[[1L]] + x[[2L]]*x[[2L]]
+  jac &lt;- deriv(y, x)
+  return(jac)
+}
+fcpp_reverse &lt;- ast2ast::translate(f, derivative = "reverse")
+y &lt;- c(0, 0)
+x &lt;- c(2, 3)
+fcpp_reverse(y, x)
+
+f &lt;- function(y, x) {
+  jac &lt;- matrix(0.0, length(y), length(x))
+  for (i in 1L:length(x)) {
+    seed(x, i)
+    y[[1L]] &lt;- x[[1L]] * x[[2L]]
+    y[[2L]] &lt;- x[[1L]] + x[[2L]]*x[[2L]]
+    d &lt;- get_dot(y)
+    jac[TRUE, i] &lt;- d
+    unseed(x, i)
+  }
+  return(jac)
+}
+fcpp_forward &lt;- ast2ast::translate(f, derivative = "forward")
+fcpp_forward(y, x)
+
+# Bubble sort (using [[ for scalars)
+# ----------------------------------------------------------------
+bubble &lt;- function(a) {
+  size &lt;- length(a)
+  for (i in 1:size) {
+    for (j in 1:(size - 1)) {
+      if (a[[j]] &gt; a[[j + 1]]) {
+        temp &lt;- a[[j]]
+        a[[j]] &lt;- a[[j + 1]]
+        a[[j + 1]] &lt;- temp
       }
-      fcpp &lt;- ast2ast::translate(f)
-      fcpp()
+    }
+  }
+  return(a)
+}
+bubble_cpp &lt;- ast2ast::translate(bubble)
+bubble_cpp(runif(10))
 
-      # Translating to external pointer
-      # --------------------------------------------------------------------------
-      f &lt;- function() {
-        print("Hello World!")
-      }
-      pointer_to_f_cpp &lt;- ast2ast::translate(f,
-                                             output = "XPtr", verbose = TRUE
-      )
+# Fibonacci sequence
+# ----------------------------------------------------------------
+fib &lt;- function(n = 10) {
+  f &lt;- integer(n)
+  f[[1L]] &lt;- 1L
+  f[[2L]] &lt;- 1L
+  for (i in 3L:n) {
+    f[i] &lt;- f[i-1L] + f[i-2L]
+  }
+  return(f)
+}
+fib_cpp &lt;- ast2ast::translate(fib)
+fib_cpp(10)
 
-      Rcpp::sourceCpp(code = "
-                      #include &lt;Rcpp.h&gt;
-                      typedef void (*fp)();
+# External pointer interface
+# ----------------------------------------------------------------
+f &lt;- function() {
+  print("Hello World from C++")
+}
+ptr &lt;- ast2ast::translate(f, output = "XPtr")
 
-                      // [[Rcpp::export]]
-                      void call_fct(Rcpp::XPtr&lt;fp&gt; inp) {
-                        fp f = *inp;
-                        f(); } ")
-
-      call_fct(pointer_to_f_cpp)
-
-      # Run sum example:
-      # ==========================================================================
-
-      # R version of run sum
-      # --------------------------------------------------------------------------
-      run_sum &lt;- function(x, n) {
-        sz &lt;- length(x)
-
-        ov &lt;- vector(mode = "numeric", length = sz)
-
-        ov[n] &lt;- sum(x[1:n])
-        for (i in (n + 1):sz) {
-          ov[i] &lt;- ov[i - 1] + x[i] - x[i - n]
-        }
-
-        ov[1:(n - 1)] &lt;- NA
-
-        return(ov)
-      }
-
-      # translated Version of R function
-      # --------------------------------------------------------------------------
-      run_sum_fast &lt;- function(x, n) {
-        sz &lt;- length(x)
-        ov &lt;- vector(mode = "numeric", length = sz)
-
-        sum_db &lt;- 0
-        for (i in 1:n) {
-          sum_db &lt;- sum_db + at(x, i)
-        }
-        ov[n] &lt;- sum_db
-
-        for (i in (n + 1):sz) {
-          ov[i] &lt;- at(ov, i - 1) + at(x, i) - at(x, i - at(n, 1))
-        }
-
-        ov[1:(n - 1)] &lt;- NA
-
-        return(ov)
-      }
-      run_sum_cpp &lt;- ast2ast::translate(run_sum_fast, verbose = FALSE)
-      set.seed(42)
-      x &lt;- rnorm(10000)
-      n &lt;- 500
-      one &lt;- run_sum(x, n)
-      two &lt;- run_sum_cpp(x, n)
+# Call from C++ side
+Rcpp::sourceCpp(code = "
+  #include &lt;Rcpp.h&gt;
+  typedef void (*fp)();
+  // [[Rcpp::export]]
+  void call_fct(Rcpp::XPtr&lt;fp&gt; inp) {
+    fp f = *inp;
+    f();
+  }")
+call_fct(ptr)
 
 
-## End(Not run)
-</code></pre>
+## End(Not run)</code></pre>
 
 </main>
 

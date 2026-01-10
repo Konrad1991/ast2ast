@@ -355,22 +355,12 @@ display: none;
 </div>
 
 
-<ul>
-<li><a href="#overview">Overview</a></li>
-<li><a href="#function-arguments">Function arguments</a></li>
-<li><a href="#variable-declaration">Variable declaration</a></li>
-<li><a href="#derivatives">Derivatives</a></li>
-<li><a href="#subsetting">Subsetting</a></li>
-<li><a href="#printing">Printing</a></li>
-<li><a href="#math-functions">Math functions</a></li>
-<li><a href="#interpolation">Interpolation</a></li>
-</ul>
 <style>
 body {
 text-align: justify}
 </style>
-<div id="overview" class="section level3">
-<h3>Overview</h3>
+<div id="overview" class="section level2">
+<h2>Overview</h2>
 <p>The <em>ast2ast</em> package translates R functions into C++
 functions, returning either an external pointer (XPtr) or an R function.
 This package is particularly useful for tasks requiring frequent
@@ -390,295 +380,217 @@ enhance performance, as shown in the benchmark below.</p>
 <p>Supported functions:</p>
 <ul>
 <li>assignment: = and &lt;-</li>
-<li>allocation: vector, rep and matrix</li>
-<li>information about objects: length and dim</li>
-<li>Basic operations: +, -, *, /</li>
-<li>Indices: [] and at</li>
-<li>mathematical functions: sin, asin, sinh, cos, acos, cosh, tan, atan,
-tanh, log, ^ and exp</li>
-<li>concatenate objects: c</li>
-<li>control flow: for, if, else if, else</li>
-<li>comparison: ==, !=, &gt;, &lt;, &gt;= and &lt;=</li>
-<li>printing: print</li>
-<li>returning objects: return</li>
-<li>is.na and is.infinite can be used to test for NA and Inf.</li>
+<li>allocation: <code>vector</code>, <code>logical</code>,
+<code>integer</code>, <code>numeric</code>, <code>:</code>,
+<code>c</code>, <code>rep</code>, and <code>matrix</code></li>
+<li>some helpers: <code>length</code>, <code>dim</code>,
+<code>is.na</code>, <code>is.nan</code>, <code>is.finite</code>,
+<code>is.infinte</code>, and <code>print</code></li>
+<li>Math functions: <code>+</code>, <code>-</code>, <code>*</code>,
+<code>/</code>, <code>sin</code>, <code>asin</code>, <code>sinh</code>,
+<code>cos</code>, <code>acos</code>, <code>cosh</code>,
+<code>tan</code>, <code>atan</code>, <code>tanh</code>,
+<code>log</code>, <code>^</code>, and <code>exp</code></li>
+<li>Subsetting: <code>[]</code> and <code>[[]]</code></li>
+<li>control flow: <code>for</code>, <code>while</code>,
+<code>repeat</code>, <code>if</code>, <code>else if</code>, and
+<code>else</code></li>
+<li>comparison: <code>==</code>, <code>!=</code>, <code>&gt;</code>,
+<code>&lt;</code>, <code>&gt;=</code>, and <code>&lt;=</code></li>
+<li>derivative: <code>seed</code>, <code>unseed</code>,
+<code>get_dot</code>, <code>deriv</code></li>
 </ul>
+<div id="type-system-in-ast2ast" class="section level3">
+<h3>Type system in ast2ast</h3>
 </div>
-<div id="function-arguments" class="section level3">
-<h3>Function arguments</h3>
-<div id="types-of-arguments" class="section level4">
-<h4>Types of arguments</h4>
-<p>You can define the argument types for the generated functions. When
-generating an R function, you can use the following types:</p>
+<div id="overview-1" class="section level3">
+<h3>Overview</h3>
+<p>R is dynamically typed, while C++ is statically typed. When
+translating an R function, <strong>ast2ast</strong> must decide static
+C++ types for:</p>
+<ol style="list-style-type: decimal">
+<li>the <strong>arguments</strong> of <code>f</code>, and</li>
+<li>the <strong>variables created inside</strong> <code>f</code>.</li>
+</ol>
+<p>In <strong>ast2ast</strong>, every type is a combination of:</p>
 <ul>
-<li>Types: <em>logical</em>, <em>integer</em>, <em>double</em></li>
-<li>When creating an XPtr, additional types are available: <em>const
-logical</em>, <em>const integer</em>, <em>const double</em></li>
+<li>a <strong>base type</strong>: <code>logical</code>,
+<code>integer</code> (or <code>int</code>), <code>double</code></li>
+<li>a <strong>structure</strong>: <code>scalar</code>,
+<code>vector</code> / <code>vec</code>, <code>matrix</code> /
+<code>mat</code></li>
 </ul>
+<p>Typical types are therefore:</p>
+<ul>
+<li><code>double</code> (scalar double)</li>
+<li><code>vec(double)</code> / <code>vector(double)</code> (double
+vector)</li>
+<li><code>mat(double)</code> / <code>matrix(double)</code> (double
+matrix)</li>
+</ul>
+<p>A key difference to R: <strong>ast2ast scalars are true
+scalars</strong>, not length-1 vectors. Scalars cannot be subset using
+<code>[]</code> or <code>[[ ]]</code>.</p>
+<hr />
 </div>
-<div id="data-structurs-of-the-arguments" class="section level4">
-<h4>Data structurs of the arguments</h4>
-<ul>
-<li>Data structures: <em>scalar</em>, <em>vector</em></li>
-<li>In case a XPtr is created one can also use <em>borrow</em> as a data
-structure</li>
-</ul>
 </div>
-<div id="memory-handling" class="section level4">
-<h4>Memory handling</h4>
-<ul>
-<li>Borrowing memory from a vector allows the R object to be modified
-within the function. Be cautious, as this is contrary to typical R
-behavior.
-<ul>
-<li>This can be done by specifying <em>borrow</em>. If borrowing is not
-desired use <em>copy</em> instead.</li>
-</ul></li>
-<li>In case a XPtr is created one can only chose between <em>““</em> and
-<em>“borrow”</em> as copying does not make sense here. Moreover, one can
-pass the arguments by reference which is indicated by a logical input
-(TRUE means arguments passed by reference).</li>
-</ul>
-<pre class="r"><code>f &lt;- function(a, b, c, d, e, f) {
-  print(a) # logical scalar
-  print(b) # integer scalar
-  print(c) # double  scalar
-  print(d) # logical vector
-  print(e) # integer vector
-  print(f) # double  vector
+<div id="setting-types-for-function-arguments" class="section level2">
+<h2>Setting types for function arguments</h2>
+<div id="default-behavior" class="section level3">
+<h3>Default behavior</h3>
+<p>If <code>args_f = NULL</code>, all arguments default to:
+<code>matrix(double)</code>, as this is most convinient for numeric
+code.</p>
+<hr />
+</div>
+<div id="using-args_f" class="section level3">
+<h3>Using <code>args_f</code></h3>
+<p>To control argument types, provide a helper function via
+<code>args_f</code>. It has the same argument list as <code>f</code> and
+assigns types using <code>type()</code>:</p>
+<pre class="r"><code>f_args &lt;- function(a, b, c) {
+  a |&gt; type(vec(double))
+  b |&gt; type(mat(double))
+  c |&gt; type(double)
 }
-library(ast2ast)
-fcpp &lt;- translate(f,
-  types_of_args = c(&quot;logical&quot;, &quot;int&quot;, &quot;double&quot;, &quot;logical&quot;, &quot;int&quot;, &quot;double&quot;),
-  data_structures = c(&quot;scalar&quot;, &quot;scalar&quot;, &quot;scalar&quot;, &quot;vector&quot;, &quot;vector&quot;, &quot;vector&quot;),
-  handle_inputs = c(&quot;copy&quot;, &quot;copy&quot;, &quot;copy&quot;, &quot;borrow&quot;, &quot;borrow&quot;, &quot;borrow&quot;),
-  verbose = FALSE
-)
-
-fcpp(TRUE, 1L, 1.5, c(TRUE, FALSE), c(1L, 2L), c(3.14, 3.14))</code></pre>
+f_cpp &lt;- ast2ast::translate(f, args_f = f_args)</code></pre>
+<hr />
 </div>
-</div>
-<div id="variable-declaration" class="section level3">
-<h3>Variable declaration</h3>
-<p>If you declare a variable in C++ the type is attached to it and
-cannot be changed anymore. The default type is a vector holding doubles.
-This vector can either be a matrix or a vector. Whether it is a vector
-or a matrix can be changed within the function.<br />
-</p>
-<p>Additionally, other types can be defined for a variable. This is
-possible by using <em>::</em> followed by a type during the definition
-of a variable. You can only do this once. The possible type words
-are:</p>
+<div id="borrowing-constness-and-references" class="section level3">
+<h3>Borrowing, constness, and references</h3>
+<p>For arguments, you can additionally control how values are
+passed:</p>
 <ul>
-<li>logical</li>
-<li>integer</li>
-<li>double</li>
-<li>logical_vector</li>
-<li>integer_vector</li>
-<li>double_vector</li>
+<li><code>borrow_vec(...)</code>, <code>borrow_mat(...)</code>: borrow
+memory (no copy)</li>
+<li><code>const()</code>: disallow modification</li>
+<li><code>ref()</code>: pass by reference (only valid when
+<code>output = &quot;XPtr&quot;</code>)</li>
 </ul>
-<pre class="r"><code>f &lt;- function() {
-  a::logical &lt;- TRUE
-  b::integer &lt;- 1
-  c::double &lt;- 3.14
-  d::logical_vector &lt;- c(TRUE, FALSE)
-  e::integer_vector &lt;- c(1L, 2L, 3L)
-  f::double_vector &lt;- c(3.14, 3.5)
-}
-library(ast2ast)
-fcpp &lt;- translate(f)</code></pre>
-</div>
-<div id="derivatives" class="section level3">
-<h3>Derivatives</h3>
-<p>The first derivative from each variable with respect to another
-variable can be calculated. Three requirements have to be met in order
-to enable this.</p>
+<p>Example:</p>
+<pre class="r"><code>f_args &lt;- function(a, b, c) {
+  a |&gt; type(borrow_vec(double)) |&gt; ref()           # mutable, passed by reference
+  b |&gt; type(borrow_mat(double)) |&gt; ref() |&gt; const()# read-only matrix reference
+  c |&gt; type(double) |&gt; ref()                       # scalar reference (XPtr only)
+}</code></pre>
+<p>Notes:</p>
 <ul>
-<li>the independent and the dependent variable have to be of data
-structure <em>vector</em> or <em>borrow</em></li>
-<li>the underlying data type of the independent and dependent variable
-is of type <em>double</em></li>
-<li>the variables which are part of expression from which derivatives
-should be calculated should have the data type <em>double</em>.</li>
+<li>Borrowed arguments are useful for avoiding allocations and modifying
+inputs in place.</li>
+<li><code>const()</code> produces a compile-time error in C++ if
+mutation is attempted.</li>
+<li><code>ref()</code> is primarily intended for the external pointer
+interface.</li>
 </ul>
-<p>In order to define the current independent variable one uses the
-function <em>set_indep</em>. The function requires one argument and does
-not return anything. Afterwards, one defines the function code. At the
-end one can get the derivative by using the function <em>get_deriv</em>.
-If several independent variables should be used one has to use
-<em>unset_indep</em> to remove the old independent variable.</p>
+<hr />
+</div>
+<div id="setting-types-for-variables-inside-the-function" class="section level3">
+<h3>Setting types for variables inside the function</h3>
+<p>Types inside <code>f</code> are often inferred automatically
+from:</p>
+<ul>
+<li>the first assignment, and/or</li>
+<li>the constructor used (<code>numeric()</code>, <code>matrix()</code>,
+<code>integer()</code>, etc.)</li>
+</ul>
+<p>You can override inference using explicit annotations.</p>
+<hr />
+</div>
+<div id="immutability-of-types" class="section level3">
+<h3>Immutability of types</h3>
+<p>Once a variable has a type, it cannot change its base type or
+structure. This follows C++ rules. For example, you cannot first treat a
+variable as <code>scalar(double)</code> and later assign a scalar
+<code>double</code> to it. If you need a different type or structure,
+create a new variable with a new name.</p>
+</div>
+</div>
+<div id="derivatives" class="section level2">
+<h2>Derivatives</h2>
+<p>The ast2ast package provides built-in support for automatic
+differentiation (AD) in both forward mode and reverse mode. Derivative
+support is enabled when translating a function via the derivative
+argument:</p>
+<pre class="r"><code>fcpp &lt;- ast2ast::translate(f, derivative = &quot;forward&quot;)
+fcpp &lt;- ast2ast::translate(f, derivative = &quot;reverse&quot;)</code></pre>
+<p>Unlike many high-level AD frameworks, ast2ast intentionally exposes a
+low-level and explicit interface. Rather than automatically
+differentiating a function or providing a single jacobian() wrapper,
+users explicitly assemble derivative computations using a small set of
+primitive operations. This design keeps the behavior transparent,
+predictable, and close to the generated C++ code.</p>
+<div id="forward-mode" class="section level3">
+<h3>Forward mode</h3>
+<p>In forward mode, derivatives are propagated alongside values.
+Internally, each scalar carries both its value and its directional
+derivative (also called its dot value). The following functions are
+available:</p>
+<ul>
+<li>seed(x, i): Activates the i-th component of x as the differentiation
+direction (sets its derivative to 1).</li>
+<li>unseed(x, i): Resets the derivative state of the i-th
+component.</li>
+<li>get_dot(y): Extracts the directional derivatives of y.</li>
+</ul>
+<p>A typical pattern is to compute Jacobians column-by-column by looping
+over the input variables:</p>
 <pre class="r"><code>f &lt;- function(y, x) {
-  jac &lt;- matrix(0, length(y), length(x))
-  for (i in 1:length(x)) {
-    set_indep(x[i])
-    y[1] &lt;- (x[1]^2) * x[2]
-    y[2] &lt;- 5 * x[1] + sin(x[2])
-    unset_indep(x[i])
-    jac[, i] &lt;- get_deriv(y)
+  jac &lt;- matrix(0.0, length(y), length(x))
+  for (i in 1L:length(x)) {
+    seed(x, i)
+
+    y[[1L]] &lt;- x[[1L]] * x[[2L]]
+    y[[2L]] &lt;- x[[1L]] + x[[2L]] * x[[2L]]
+
+    d &lt;- get_dot(y)
+    jac[TRUE, i] &lt;- d
+
+    unseed(x, i)
   }
   return(jac)
-}</code></pre>
-</div>
-<div id="subsetting" class="section level3">
-<h3>Subsetting</h3>
-<p>If you want to subset a vector or a matrix object you can use either
-<em>[]</em> or the <em>at</em> function. The <em>[]</em> is slower than
-<em>at</em> but more powerful.</p>
-<p>The following objects can be passed to <em>[]</em> when using a
-vector or matrix:</p>
-<pre class="r"><code>f &lt;- function() {
-  print(&quot;pass nothing&quot;)
-  a &lt;- 1:8
-  print(a)
-  a[] &lt;- 100
-  print(a)
-  print()
-
-  print(&quot;pass logical&quot;)
-  a &lt;- 1:8
-  print(a)
-  a[TRUE] &lt;- 100
-  print(a)
-  print()
-
-  print(&quot;pass scalar&quot;)
-  a &lt;- 1:8
-  print(a)
-  a[1] &lt;- 100
-  print(a)
-  print()
-
-
-  print(&quot;pass vector&quot;)
-  a &lt;- 1:8
-  b &lt;- 2:5
-  print(a)
-  a[b] &lt;- 100
-  print(a)
-  print()
-
-  print(&quot;pass result of ==&quot;)
-  a &lt;- 1:8
-  a[a &lt; 5] &lt;- 100
-  print(a)
-  print()
-
-
-  print(&quot;pass result of !=&quot;)
-  a &lt;- 1:8
-  b &lt;- c(1, 2, 3, 0, 0, 0, 0, 8)
-  a[a != b] &lt;- 100
-  print(a)
-  print()
-
-
-  print(&quot;pass result of &lt;=&quot;)
-  a &lt;- 1:8
-  b &lt;- c(1, 2, 3, 0, 0, 0, 0, 8)
-  a[a &lt;= b] &lt;- 100
-  print(a)
-  print()
-
-
-  print(&quot;pass result of &gt;=&quot;)
-  a &lt;- 1:8
-  b &lt;- c(1, 2, 3, 0, 0, 0, 0, 9)
-  a[a &gt;= b] &lt;- 100
-  print(a)
-  print()
-
-
-  print(&quot;pass result of &gt;&quot;)
-  a &lt;- 1:8
-  b &lt;- c(0, 2, 3, 0, 0, 0, 0, 9)
-  a[a &gt; b] &lt;- 100
-  print(a)
-  print()
-
-
-  print(&quot;pass result of &lt;&quot;)
-  a &lt;- 1:8
-  b &lt;- c(0, 2, 3, 0, 0, 0, 0, 9)
-  a[a &lt; b] &lt;- 100
-  print(a)
-  print()
-
-
-  print(&quot;pass scalar, scalar&quot;)
-  a &lt;- matrix(3, 4, 4)
-  a[1, 1] &lt;- 100
-  print(a)
-  print()
-
-
-  print(&quot;pass vector, vector&quot;)
-  a &lt;- matrix(3, 4, 4)
-  b &lt;- c(1, 3)
-  c &lt;- c(2, 4)
-  a[b, c] &lt;- 100
-  print(a)
-  print()
-
-
-  print(&quot;pass ==, &gt;=&quot;)
-  a &lt;- matrix(1:16, 4, 4)
-  b &lt;- 1:4
-  c &lt;- c(1, 8, 3, 8)
-  a[b == c, b &gt;= c] &lt;- 100
-  print(a)
-  print()
-
-
-  print(&quot;at&quot;)
-  a &lt;- 1:16
-  at(a, 2) &lt;- 100
-  print(a)
-  print()
-
-
-  print(&quot;at&quot;)
-  a &lt;- matrix(1:16, 4, 4)
-  at(a, 1, 4) &lt;- 100
-  print(a)
-  print()
 }
 
-library(ast2ast)
-fetr &lt;- translate(f)
-fetr()</code></pre>
+fcpp_forward &lt;- ast2ast::translate(f, derivative = &quot;forward&quot;)</code></pre>
+<p>Forward mode is most efficient when the number of inputs is small
+relative to the number of outputs.</p>
 </div>
-<div id="printing" class="section level3">
-<h3>Printing</h3>
-<p>Using the function print as common in R.</p>
+<div id="reverse-mode" class="section level3">
+<h3>Reverse mode</h3>
+<p>In reverse mode, derivatives are accumulated by propagating
+sensitivities backward from the outputs to the inputs. This is
+particularly efficient when the number of outputs is small relative to
+the number of inputs.</p>
+<p>Reverse mode provides the function:</p>
 <ul>
-<li>print() is different to R</li>
-<li>print(“string”)</li>
-<li>print(logical)</li>
-<li>print(scalar)</li>
-<li>print(vector)</li>
-<li>print(matrix)</li>
+<li>deriv(y, x): Computes the Jacobian of y with respect to x.</li>
 </ul>
+<p>Example:</p>
+<pre class="r"><code>f &lt;- function(y, x) {
+  y[[1L]] &lt;- x[[1L]] * x[[2L]]
+  y[[2L]] &lt;- x[[1L]] + x[[2L]] * x[[2L]]
+  jac &lt;- deriv(y, x)
+  return(jac)
+}
+
+fcpp_reverse &lt;- ast2ast::translate(f, derivative = &quot;reverse&quot;)</code></pre>
+<p>The call to deriv() must appear explicitly in your function body. No
+automatic differentiation is performed unless requested.</p>
 </div>
-<div id="math-functions" class="section level3">
-<h3>Math functions</h3>
-<p>Following mathematical functions are available.</p>
-<ul>
-<li>sin</li>
-<li>asin</li>
-<li>sinh</li>
-<li>cos</li>
-<li>acos</li>
-<li>cosh</li>
-<li>tan</li>
-<li>atan</li>
-<li>tanh</li>
-<li>sqrt</li>
-<li>log</li>
-<li>^ and exp</li>
-</ul>
+<div id="design-philosophy" class="section level3">
+<h3>Design philosophy</h3>
+<p>Derivative computation in ast2ast is explicit by design. The full
+control flow—loops, seeding, unseeding, derivative extraction, and
+accumulation—is written directly in R and translated into C++.</p>
+<p>This approach: * avoids hidden performance costs, * makes derivative
+logic easy to inspect and debug, * gives full control over memory and
+evaluation order, * maps naturally to high-performance C++ code.</p>
+<p>Rather than hiding differentiation behind abstractions, ast2ast
+treats derivatives as first-class values that can be manipulated like
+any other object.</p>
 </div>
-<div id="interpolation" class="section level3">
-<h3>Interpolation</h3>
+</div>
+<div id="interpolation" class="section level2">
+<h2>Interpolation</h2>
 <p>To interpolate values, the ‘cmr’ function can be used. The function
 needs three arguments.</p>
 <ul>

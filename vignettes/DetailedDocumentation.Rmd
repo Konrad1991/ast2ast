@@ -29,21 +29,12 @@ p:first-of-type {
 }
 ```
 
-* [Overview](#overview)
-* [Function arguments](#function-arguments)
-* [Variable declaration](#variable-declaration)
-* [Derivatives](#derivatives)
-* [Subsetting](#subsetting)
-* [Printing](#printing)
-* [Math functions](#math-functions)
-* [Interpolation](#interpolation)
-
 <style>
 body {
 text-align: justify}
 </style>
 
-### Overview
+## Overview
 
 The *ast2ast* package translates R functions into C++ functions,
 returning either an external pointer (XPtr) or an R function.
@@ -63,285 +54,189 @@ Supported objects:
 Supported functions:
 
 *  assignment: = and <-
-*  allocation: vector, rep and matrix
-*  information about objects: length and dim
-*  Basic operations: +, -, *, /
-*  Indices: [] and at
-*  mathematical functions: sin, asin, sinh, cos, acos, cosh, tan, atan, tanh, log, ^ and exp
-*  concatenate objects: c
-*  control flow: for, if, else if, else
-*  comparison: ==, !=, >, <, >= and <=
-*  printing: print
-*  returning objects: return
-*  is.na and is.infinite can be used to test for NA and Inf.
+*  allocation: `vector`, `logical`, `integer`, `numeric`, `:`, `c`, `rep`, and `matrix`
+*  some helpers: `length`, `dim`, `is.na`, `is.nan`, `is.finite`, `is.infinte`, and `print`
+*  Math functions: `+`, `-`, `*`, `/`, `sin`, `asin`, `sinh`, `cos`, `acos`, `cosh`, `tan`, `atan`, `tanh`, `log`, `^`, and `exp`
+*  Subsetting: `[]` and `[[]]`
+*  control flow: `for`, `while`, `repeat`, `if`, `else if`, and `else`
+*  comparison: `==`, `!=`, `>`, `<`, `>=`, and `<=`
+* derivative: `seed`, `unseed`, `get_dot`, `deriv`
 
-### Function arguments
+### Type system in ast2ast
 
-#### Types of arguments
+### Overview
 
-You can define the argument types for the generated functions.
-When generating an R function, you can use the following types:
+R is dynamically typed, while C++ is statically typed. When translating an R function, **ast2ast** must decide static C++ types for:
 
-* Types: *logical*, *integer*, *double*
-* When creating an XPtr, additional types are available:
-  *const logical*, *const integer*, *const double*
+1. the **arguments** of `f`, and
+2. the **variables created inside** `f`.
 
-#### Data structurs of the arguments
+In **ast2ast**, every type is a combination of:
 
-* Data structures: *scalar*, *vector*
-* In case a XPtr is created one can also use *borrow* as a data structure
+- a **base type**: `logical`, `integer` (or `int`), `double`
+- a **structure**: `scalar`, `vector` / `vec`, `matrix` / `mat`
 
-#### Memory handling
+Typical types are therefore:
 
-* Borrowing memory from a vector allows the R object to be modified within the function.
-  Be cautious, as this is contrary to typical R behavior.
-  * This can be done by specifying *borrow*. If borrowing is not desired use *copy* instead.
-* In case a XPtr is created one can only chose between *""* and *"borrow"* as 
-  copying does not make sense here. Moreover, one can pass the arguments by reference 
-  which is indicated by a logical input (TRUE means arguments passed by reference).
+- `double` (scalar double)
+- `vec(double)` / `vector(double)` (double vector)
+- `mat(double)` / `matrix(double)` (double matrix)
 
+A key difference to R: **ast2ast scalars are true scalars**, not length-1 vectors. Scalars cannot be subset using `[]` or `[[ ]]`.
 
-```{r, eval = FALSE}
-f <- function(a, b, c, d, e, f) {
-  print(a) # logical scalar
-  print(b) # integer scalar
-  print(c) # double  scalar
-  print(d) # logical vector
-  print(e) # integer vector
-  print(f) # double  vector
-}
-library(ast2ast)
-fcpp <- translate(f,
-  types_of_args = c("logical", "int", "double", "logical", "int", "double"),
-  data_structures = c("scalar", "scalar", "scalar", "vector", "vector", "vector"),
-  handle_inputs = c("copy", "copy", "copy", "borrow", "borrow", "borrow"),
-  verbose = FALSE
-)
+---
 
-fcpp(TRUE, 1L, 1.5, c(TRUE, FALSE), c(1L, 2L), c(3.14, 3.14))
-```
+## Setting types for function arguments
 
-### Variable declaration
+### Default behavior
 
-If you declare a variable in C++ the type is attached to it and cannot be changed anymore. 
-The default type is a vector holding doubles. This vector can either be a matrix or a vector.
-Whether it is a vector or a matrix can be changed within the function. \
+If `args_f = NULL`, all arguments default to: `matrix(double)`, as this is most convinient for numeric code.
 
-Additionally, other types can be defined for a variable. This is possible by using *::* followed 
-by a type during the definition of a variable. You can only do this once.
-The possible type words are:
+---
 
-* logical
-* integer
-* double
-* logical_vector
-* integer_vector
-* double_vector
+### Using `args_f`
+
+To control argument types, provide a helper function via `args_f`. It has the same argument list as `f` and assigns types using `type()`:
 
 ```{r, eval = FALSE}
-f <- function() {
-  a::logical <- TRUE
-  b::integer <- 1
-  c::double <- 3.14
-  d::logical_vector <- c(TRUE, FALSE)
-  e::integer_vector <- c(1L, 2L, 3L)
-  f::double_vector <- c(3.14, 3.5)
+f_args <- function(a, b, c) {
+  a |> type(vec(double))
+  b |> type(mat(double))
+  c |> type(double)
 }
-library(ast2ast)
-fcpp <- translate(f)
+f_cpp <- ast2ast::translate(f, args_f = f_args)
 ```
 
+---
 
-### Derivatives
+### Borrowing, constness, and references
 
-The first derivative from each variable with respect to another variable
-can be calculated. Three requirements have to be met in order to enable this.
+For arguments, you can additionally control how values are passed:
 
-* the independent and the dependent variable have to be of data structure *vector* or *borrow*
-* the underlying data type of the independent and dependent variable is of type *double*
-* the variables which are part of expression from which derivatives should be calculated
-  should have the data type *double*. 
+- `borrow_vec(...)`, `borrow_mat(...)`: borrow memory (no copy)
+- `const()`: disallow modification
+- `ref()`: pass by reference (only valid when `output = "XPtr"`)
 
-In order to define the current independent variable one uses the function
-*set_indep*. The function requires one argument and does not return anything.
-Afterwards, one defines the function code. At the end one can get the derivative
-by using the function *get_deriv*. If several independent variables should be 
-used one has to use *unset_indep* to remove the old independent variable.
+Example:
 
+```{r, eval = FALSE}
+f_args <- function(a, b, c) {
+  a |> type(borrow_vec(double)) |> ref()           # mutable, passed by reference
+  b |> type(borrow_mat(double)) |> ref() |> const()# read-only matrix reference
+  c |> type(double) |> ref()                       # scalar reference (XPtr only)
+}
+```
+
+Notes:
+
+- Borrowed arguments are useful for avoiding allocations and modifying inputs in place.
+- `const()` produces a compile-time error in C++ if mutation is attempted.
+- `ref()` is primarily intended for the external pointer interface.
+
+---
+
+### Setting types for variables inside the function
+
+Types inside `f` are often inferred automatically from:
+
+- the first assignment, and/or
+- the constructor used (`numeric()`, `matrix()`, `integer()`, etc.)
+
+You can override inference using explicit annotations.
+
+---
+
+### Immutability of types
+
+Once a variable has a type, it cannot change its base type or structure. This follows C++ rules.
+For example, you cannot first treat a variable as `scalar(double)` and later assign a scalar `double` to it.
+If you need a different type or structure, create a new variable with a new name.
+
+## Derivatives
+
+The ast2ast package provides built-in support for automatic differentiation (AD) in both forward mode and reverse mode.
+Derivative support is enabled when translating a function via the derivative argument:
+
+```{r, eval = FALSE}
+fcpp <- ast2ast::translate(f, derivative = "forward")
+fcpp <- ast2ast::translate(f, derivative = "reverse")
+```
+
+Unlike many high-level AD frameworks, ast2ast intentionally exposes a low-level and explicit interface.
+Rather than automatically differentiating a function or providing a single jacobian() wrapper,
+users explicitly assemble derivative computations using a small set of primitive operations.
+This design keeps the behavior transparent, predictable, and close to the generated C++ code.
+
+### Forward mode
+
+In forward mode, derivatives are propagated alongside values. Internally, each scalar carries both its value and its directional derivative (also called its dot value).
+The following functions are available:
+
+* seed(x, i): Activates the i-th component of x as the differentiation direction (sets its derivative to 1).
+* unseed(x, i): Resets the derivative state of the i-th component.
+* get_dot(y): Extracts the directional derivatives of y.
+
+A typical pattern is to compute Jacobians column-by-column by looping over the input variables:
 
 ```{r, eval = FALSE}
 f <- function(y, x) {
-  jac <- matrix(0, length(y), length(x))
-  for (i in 1:length(x)) {
-    set_indep(x[i])
-    y[1] <- (x[1]^2) * x[2]
-    y[2] <- 5 * x[1] + sin(x[2])
-    unset_indep(x[i])
-    jac[, i] <- get_deriv(y)
+  jac <- matrix(0.0, length(y), length(x))
+  for (i in 1L:length(x)) {
+    seed(x, i)
+
+    y[[1L]] <- x[[1L]] * x[[2L]]
+    y[[2L]] <- x[[1L]] + x[[2L]] * x[[2L]]
+
+    d <- get_dot(y)
+    jac[TRUE, i] <- d
+
+    unseed(x, i)
   }
   return(jac)
 }
+
+fcpp_forward <- ast2ast::translate(f, derivative = "forward")
 ```
-### Subsetting
 
-If you want to subset a vector or a matrix object you can use either *[]* or the *at* function.
-The *[]* is slower than *at* but more powerful.
+Forward mode is most efficient when the number of inputs is small relative to the number of outputs.
 
-The following objects can be passed to *[]* when using a vector or matrix:
+### Reverse mode
 
+In reverse mode, derivatives are accumulated by propagating sensitivities backward from
+the outputs to the inputs. This is particularly efficient when the number of outputs is small relative to the number of inputs.
+
+Reverse mode provides the function:
+
+* deriv(y, x): Computes the Jacobian of y with respect to x.
+
+Example:
 
 ```{r, eval = FALSE}
-f <- function() {
-  print("pass nothing")
-  a <- 1:8
-  print(a)
-  a[] <- 100
-  print(a)
-  print()
-
-  print("pass logical")
-  a <- 1:8
-  print(a)
-  a[TRUE] <- 100
-  print(a)
-  print()
-
-  print("pass scalar")
-  a <- 1:8
-  print(a)
-  a[1] <- 100
-  print(a)
-  print()
-
-
-  print("pass vector")
-  a <- 1:8
-  b <- 2:5
-  print(a)
-  a[b] <- 100
-  print(a)
-  print()
-
-  print("pass result of ==")
-  a <- 1:8
-  a[a < 5] <- 100
-  print(a)
-  print()
-
-
-  print("pass result of !=")
-  a <- 1:8
-  b <- c(1, 2, 3, 0, 0, 0, 0, 8)
-  a[a != b] <- 100
-  print(a)
-  print()
-
-
-  print("pass result of <=")
-  a <- 1:8
-  b <- c(1, 2, 3, 0, 0, 0, 0, 8)
-  a[a <= b] <- 100
-  print(a)
-  print()
-
-
-  print("pass result of >=")
-  a <- 1:8
-  b <- c(1, 2, 3, 0, 0, 0, 0, 9)
-  a[a >= b] <- 100
-  print(a)
-  print()
-
-
-  print("pass result of >")
-  a <- 1:8
-  b <- c(0, 2, 3, 0, 0, 0, 0, 9)
-  a[a > b] <- 100
-  print(a)
-  print()
-
-
-  print("pass result of <")
-  a <- 1:8
-  b <- c(0, 2, 3, 0, 0, 0, 0, 9)
-  a[a < b] <- 100
-  print(a)
-  print()
-
-
-  print("pass scalar, scalar")
-  a <- matrix(3, 4, 4)
-  a[1, 1] <- 100
-  print(a)
-  print()
-
-
-  print("pass vector, vector")
-  a <- matrix(3, 4, 4)
-  b <- c(1, 3)
-  c <- c(2, 4)
-  a[b, c] <- 100
-  print(a)
-  print()
-
-
-  print("pass ==, >=")
-  a <- matrix(1:16, 4, 4)
-  b <- 1:4
-  c <- c(1, 8, 3, 8)
-  a[b == c, b >= c] <- 100
-  print(a)
-  print()
-
-
-  print("at")
-  a <- 1:16
-  at(a, 2) <- 100
-  print(a)
-  print()
-
-
-  print("at")
-  a <- matrix(1:16, 4, 4)
-  at(a, 1, 4) <- 100
-  print(a)
-  print()
+f <- function(y, x) {
+  y[[1L]] <- x[[1L]] * x[[2L]]
+  y[[2L]] <- x[[1L]] + x[[2L]] * x[[2L]]
+  jac <- deriv(y, x)
+  return(jac)
 }
 
-library(ast2ast)
-fetr <- translate(f)
-fetr()
+fcpp_reverse <- ast2ast::translate(f, derivative = "reverse")
 ```
+The call to deriv() must appear explicitly in your function body. No automatic differentiation is performed unless requested.
 
-### Printing
+### Design philosophy
 
-Using the function print as common in R. 
+Derivative computation in ast2ast is explicit by design.
+The full control flow—loops, seeding, unseeding, derivative extraction, and accumulation—is written directly in R and translated into C++.
 
-* print() is different to R
-* print("string")
-* print(logical)
-* print(scalar)
-* print(vector) 
-* print(matrix)
+This approach:
+* avoids hidden performance costs,
+* makes derivative logic easy to inspect and debug,
+* gives full control over memory and evaluation order,
+* maps naturally to high-performance C++ code.
 
-### Math functions
+Rather than hiding differentiation behind abstractions, ast2ast treats derivatives as first-class values that can be manipulated like any other object.
 
-Following mathematical functions are available.
-
-* sin
-* asin
-* sinh
-* cos
-* acos
-* cosh
-* tan
-* atan
-* tanh
-* sqrt
-* log
-* ^ and exp
-
-### Interpolation
+## Interpolation
 
 To interpolate values, the 'cmr' function can be used. The function needs three arguments.
 
@@ -362,7 +257,6 @@ f <- function() {
     print(cmr(i, indep, dep))
   }
 }
-
 ```
 
 

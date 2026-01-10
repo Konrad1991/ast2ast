@@ -359,16 +359,6 @@ display: none;
 body {
 text-align: justify}
 </style>
-<ul>
-<li><a href="#guidance-for-package-authors">Guidance for Package
-Authors</a></li>
-<li><a href="#naming-rationalization-ast2ast">Naming rationalization
-ast2ast</a></li>
-<li><a href="#comparison-of-r-and-etr-code">Comparison of R and ETR
-code</a></li>
-<li><a href="#the-xptr-interface">The XPtr interface</a></li>
-<li><a href="#internals-of-etr">Internals of ETR</a></li>
-</ul>
 <div id="guidance-for-package-authors" class="section level2">
 <h2>Guidance for Package Authors</h2>
 <p>This section of the documentation describes how the external pointers
@@ -411,8 +401,9 @@ be defined in C++ (at least not in the way they are used in R) therefore
 they are replaced by functions with new names e.g. <em>etr::colon</em>
 and <em>etr::subset</em>.<br />
 Additionally, C++ necessitates explicit declaration of variable types.
-Within this example for all variables the type <em>Vec<double></em> is
-used. A detailed explanation is deferred to the subsequent section.</p>
+Within this example for all variables the type <em>Array&lt;Double,
+Buffer<Double>&gt;</em> is used. A detailed explanation is deferred to
+the subsequent section.</p>
 <pre class="r numberLines"><code>bubbleSort &lt;- function(a) {
   size &lt;- length(a)
   for (i in 1:size) {
@@ -427,27 +418,24 @@ used. A detailed explanation is deferred to the subsequent section.</p>
   return(a)
 }</code></pre>
 <pre class="cpp numberLines"><code>// [[Rcpp::depends(ast2ast)]]
-// [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins(cpp2a)]]
 #include &quot;etr.hpp&quot;
-
 // [[Rcpp::export]]
 SEXP bubbleSort(SEXP aSEXP) {
-    etr::Vec&lt;double&gt; size;
-    etr::Vec&lt;double&gt; temp;
-    etr::Vec&lt;double&gt; a; a = aSEXP;
-
-     size = etr::length(a);
-     for (auto&amp;i:  etr::colon(etr::i2d(1), size)) {
-         for (auto&amp;j:  etr::colon(etr::i2d(1), (size - etr::i2d(1)))) {
-             if (etr::subset(a, j) &gt; etr::subset(a, j + etr::i2d(1))) {
-                 temp = etr::subset(a, j);
-                 etr::subset(a, j) = etr::subset(a, j + etr::i2d(1));
-                 etr::subset(a, j + etr::i2d(1)) = temp;
-             }
-         }
-     }
-     return(etr::cpp2R(a));
+etr::Aetr::Double, etr::Buffer&lt;etr::Double&gt;&gt; a = aSEXP;
+  int size;
+etr::Array&lt;etr::Double, etr::Buffer&lt;etr::Double&gt;&gt; temp;
+  size = etr::length(a);
+  for(const auto&amp; i : etr::colon(1, size)) {
+   for(const auto&amp; j : etr::colon(1, (size - 1.0))) {
+    if (etr::subset(a, j) &gt; etr::subset(a, j + 1.0)) {
+       temp = etr::subset(a, j);
+       etr::subset(a, j) = etr::subset(a, j + 1.0);
+       etr::subset(a, j + 1.0) = temp;
+    };
+   }
+  }
+  return(etr::Cast(a));
 }</code></pre>
 <div id="the-xptr-interface" class="section level3">
 <h3>The XPtr interface</h3>
@@ -459,29 +447,28 @@ other C++ programs.</p>
   c &lt;- a + b
   return(c)
 }
-fcpp &lt;- ast2ast::translate(f, output = &quot;XPtr&quot;, 
-                           types_of_args = c(&quot;double&quot;, &quot;double&quot;),
-                           data_structures = c(&quot;vector&quot;, &quot;scalar&quot;),
-                           handle_inputs = c(&quot;&quot;, &quot;&quot;),
-                           references = c(TRUE, TRUE))</code></pre>
+f_args &lt;- function(a, b) {
+  a |&gt; type(vec(double)) |&gt; ref()
+  b |&gt; type(vec(double)) |&gt; ref()
+}
+fcpp &lt;- ast2ast::translate(f, f_args, output = &quot;XPtr&quot;)</code></pre>
 </div>
 <div id="afterwards-the-external-pointer-is-used-in-an-r-package" class="section level4">
 <h4>Afterwards the external pointer is used in an R package</h4>
 <pre class="cpp"><code>// [[Rcpp::depends(ast2ast)]]
-// [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins(cpp2a)]]
 #include &quot;etr.hpp&quot;
 
-typedef etr::Vec&lt;double&gt; (*FP)(etr::Vec&lt;double&gt;&amp; a, etr::Vec&lt;double&gt;&amp; b);
+typedef etr::Array&lt;etr::Double, etr::Buffer&lt;etr::Double&gt;&gt; (*FP)(etr::Array&lt;etr::Double, etr::Buffer&lt;etr::Double&gt;&gt;&amp; a, etr::Array&lt;etr::Double, etr::Buffer&lt;etr::Double&gt;&gt;&amp; b);
 
 // [[Rcpp::export]]
 void call_xptr(Rcpp::XPtr&lt;FP&gt; ep) {
   FP f = *ep;
-  etr::Vec&lt;double&gt; a;
-  etr::Vec&lt;double&gt; b;
-  etr::Vec&lt;double&gt; c;
-  a = etr::coca(1, 2, 3);
-  b = etr::coca(4, 5, 6);
+  etr::Array&lt;etr::Double, etr::Buffer&lt;etr::Double&gt;&gt; a;
+  etr::Array&lt;etr::Double, etr::Buffer&lt;etr::Double&gt;&gt; b;
+  etr::Array&lt;etr::Double, etr::Buffer&lt;etr::Double&gt;&gt; c;
+a = etr::c(etr::Double(1), etr::Double(2), etr::Double(3));
+b = etr::c(etr::Double(4), etr::Double(5), etr::Double(6));
   c = f(a, b);
   etr::print(c);
 }</code></pre>
@@ -489,31 +476,31 @@ void call_xptr(Rcpp::XPtr&lt;FP&gt; ep) {
 <div id="call-the-function-from-the-r-package" class="section level4">
 <h4>call the function from the R package</h4>
 <pre class="r"><code>call_xptr(fcpp)</code></pre>
-<pre><code>## 1 2 3</code></pre>
+<pre><code>## 5    7   9   </code></pre>
 </div>
 </div>
 </div>
 <div id="internals-of-etr" class="section level2">
 <h2>Internals of ETR</h2>
-<div id="fundamental-type-in-expression-template-library-r-etr-vec-class" class="section level3">
-<h3>Fundamental Type in Expression Template Library R (ETR): Vec
+<div id="fundamental-type-in-expression-template-library-r-etr-array-class" class="section level3">
+<h3>Fundamental Type in Expression Template Library R (ETR): Array
 Class</h3>
 <p>The core type in the expression template library R (ETR) is a class
-called <em>Vec</em>. Presuming a foundational familiarity with classes
+called <em>Array</em>. Presuming a foundational familiarity with classes
 and templates in C++, we embark on a detailed exploration of the design
-inherent in this class. The Vec class incorporates three templates,
+inherent in this class. The Array class incorporates three templates,
 namely <em>T</em>, <em>R</em>, and <em>Trait</em>. In this context, the
 typename <em>T</em> signifies a fundamental data type, while <em>R</em>
 represents another class (more details forthcoming). The third template,
 <em>Trait</em>, plays a crucial role in endowing the class with
-identifiable properties as Vec during the compile-time phase. In the
+identifiable properties as Array during the compile-time phase. In the
 majority of instances, the template <em>T</em> is instantiated as a
 <em>double</em>, referred to as numeric in the context of R types. On
 certain occasions, <em>T</em> is a <em>bool</em>, denoted as
 <em>logical</em> in the realm of R types. The typename <em>R</em>
 represents another class this can be either: Buffer, BorrowSEXP, Borrow,
 Subset, UnaryOperation or BinaryOperation. Each of these classes
-contributes distinct functionalities and features to the <em>Vec</em>
+contributes distinct functionalities and features to the <em>Array</em>
 class. It is recommended to directly use only the classes Buffer,
 BorrowSEXP and Borrow. The Subset class is yielded by calls to the
 function subset. Whereas UnaryOperation or BinaryOperation are produced
@@ -527,8 +514,8 @@ by invoking functions like <em>sin</em>, <em>cos</em>, <em>+</em> and
 </div>
 <div id="thread-safety" class="section level3">
 <h3>Thread safety</h3>
-<p>The class <em>Vec</em> is thread safe in the sense that no memory is
-associated with functions or global variables. Moreover, almost no
+<p>The class <em>Array</em> is thread safe in the sense that no memory
+is associated with functions or global variables. Moreover, almost no
 static methods are defined. An exception are the methods used for
 comparison. Notably, these comparison methods (<em>==</em>,
 <em>&lt;=</em>, <em>&gt;=</em>, <em>&lt;</em>, <em>&gt;</em> and
@@ -536,11 +523,6 @@ comparison. Notably, these comparison methods (<em>==</em>,
 bool. Thus, it is still possible to use instances of the class in
 parallel. However, the user has to take care that only one thread edits
 an object at a time.</p>
-</div>
-<div id="conversions" class="section level3">
-<h3>Conversions</h3>
-<p>A <em>sexp</em> can be converted to Rcpp::NumericVectors,
-Rcpp::NumericMatrices, arma::vec or to a arma::mat.</p>
 </div>
 </div>
 

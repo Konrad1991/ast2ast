@@ -59,7 +59,7 @@ To mitigate potential conflicts, these calls are modified to explicitly referenc
 resulting in expressions like *etr::length*. Other functions as for example *`:`* and *`[`* cannot be defined in C++ (at least not in the way they are used in R)
 therefore they are replaced by functions with new names e.g. *etr::colon* and *etr::subset*. \
 Additionally, C++ necessitates explicit declaration of variable types. 
-Within this example for all variables the type *Vec<double>* is used. A detailed explanation is deferred to the subsequent section.
+Within this example for all variables the type *Array<Double, Buffer<Double>>* is used. A detailed explanation is deferred to the subsequent section.
 
 ```{r, eval = FALSE, echo = TRUE, attr.source='.numberLines'}
 bubbleSort <- function(a) {
@@ -79,14 +79,13 @@ bubbleSort <- function(a) {
 
 ```{Rcpp, eval = FALSE, echo = TRUE, attr.source='.numberLines'}
 // [[Rcpp::depends(ast2ast)]]
-// [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins(cpp2a)]]
 #include "etr.hpp"
 // [[Rcpp::export]]
 SEXP bubbleSort(SEXP aSEXP) {
-  etr::Vec<double> a = aSEXP;
+etr::Aetr::Double, etr::Buffer<etr::Double>> a = aSEXP;
   int size;
-  etr::Vec<double> temp;
+etr::Array<etr::Double, etr::Buffer<etr::Double>> temp;
   size = etr::length(a);
   for(const auto& i : etr::colon(1, size)) {
    for(const auto& j : etr::colon(1, (size - 1.0))) {
@@ -124,20 +123,19 @@ fcpp <- ast2ast::translate(f, f_args, output = "XPtr")
 
 ```{Rcpp, eval = TRUE, echo = TRUE}
 // [[Rcpp::depends(ast2ast)]]
-// [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins(cpp2a)]]
 #include "etr.hpp"
 
-typedef etr::Vec<double> (*FP)(etr::Vec<double>& a, etr::Vec<double>& b);
+typedef etr::Array<etr::Double, etr::Buffer<etr::Double>> (*FP)(etr::Array<etr::Double, etr::Buffer<etr::Double>>& a, etr::Array<etr::Double, etr::Buffer<etr::Double>>& b);
 
 // [[Rcpp::export]]
 void call_xptr(Rcpp::XPtr<FP> ep) {
   FP f = *ep;
-  etr::Vec<double> a;
-  etr::Vec<double> b;
-  etr::Vec<double> c;
-  a = etr::c(1, 2, 3);
-  b = etr::c(4, 5, 6);
+  etr::Array<etr::Double, etr::Buffer<etr::Double>> a;
+  etr::Array<etr::Double, etr::Buffer<etr::Double>> b;
+  etr::Array<etr::Double, etr::Buffer<etr::Double>> c;
+a = etr::c(etr::Double(1), etr::Double(2), etr::Double(3));
+b = etr::c(etr::Double(4), etr::Double(5), etr::Double(6));
   c = f(a, b);
   etr::print(c);
 }
@@ -151,17 +149,17 @@ call_xptr(fcpp)
 
 ## Internals of ETR
 
-### Fundamental Type in Expression Template Library R (ETR): Vec Class
+### Fundamental Type in Expression Template Library R (ETR): Array Class
 
-The core type in the expression template library R (ETR) is a class called *Vec*.
+The core type in the expression template library R (ETR) is a class called *Array*.
 Presuming a foundational familiarity with classes and templates in C++, we embark on a detailed exploration of the design inherent in this class.
-The Vec class incorporates three templates, namely *T*, *R*, and *Trait*.
+The Array class incorporates three templates, namely *T*, *R*, and *Trait*.
 In this context, the typename *T* signifies a fundamental data type, while *R* represents another class (more details forthcoming).
-The third template, *Trait*, plays a crucial role in endowing the class with identifiable properties as Vec during the compile-time phase. 
+The third template, *Trait*, plays a crucial role in endowing the class with identifiable properties as Array during the compile-time phase. 
 In the majority of instances, the template *T* is instantiated as a *double*, referred to as numeric in the context of R types.
 On certain occasions, *T* is a *bool*, denoted as *logical* in the realm of R types.
 The typename *R* represents another class this can be either: Buffer, BorrowSEXP, Borrow, Subset, UnaryOperation or BinaryOperation.
-Each of these classes contributes distinct functionalities and features to the *Vec* class.
+Each of these classes contributes distinct functionalities and features to the *Array* class.
 It is recommended to directly use only the classes Buffer, BorrowSEXP and Borrow.
 The Subset class is yielded by calls to the function subset.
 Whereas UnaryOperation or BinaryOperation are produced by invoking functions like *sin*, *cos*, *+* and *-*. \
@@ -170,9 +168,6 @@ Whereas UnaryOperation or BinaryOperation are produced by invoking functions lik
 
 ### Thread safety
 
-The class *Vec* is thread safe in the sense that no memory is associated with functions or global variables. Moreover, almost no static methods are defined.
+The class *Array* is thread safe in the sense that no memory is associated with functions or global variables. Moreover, almost no static methods are defined.
 An exception are the methods used for comparison. Notably, these comparison methods (*==*, *<=*, *>=*, *<*, *>* and *!=*) except two doubles (by copy) as arguments and return a bool.
 Thus, it is still possible to use instances of the class in parallel. However, the user has to take care that only one thread edits an object at a time.
-
-
-
