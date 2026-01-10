@@ -850,12 +850,12 @@ expect_true(types[[1]]$base_type == "double")
 expect_true(types[[1]]$data_struct == "vector")
 
 f <- function() {
-  a <- vector(mode = "double", length = 2)
+  a <- vector(mode = "double", length = 2L)
 }
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   as.character(e),
-"Error in ast2ast:::infer_types(ast, f, NULL, r_fct) : \n  a <- vector(\"double\", etr::Double(2.0))\nFound invalid mode in vector: double\n"
+"Error in ast2ast:::infer_types(ast, f, NULL, r_fct) : \n  a <- vector(\"double\", 2L)\nFound invalid mode in vector: double\n"
 )
 
 f <- function() {

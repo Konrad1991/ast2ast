@@ -1,8 +1,3 @@
-<!-- badges: start -->
-[![License: GPL2](https://img.shields.io/badge/license-GPL2-blue.svg)](https://cran.r-project.org/web/licenses/GPL-2)
-<!-- badges: end -->
-
-
 # R package ast2ast
 
 ## News
@@ -37,7 +32,6 @@ The original implementation was modified to:
 * align error handling and memory semantics with the ast2ast runtime
 
 ## Contribution
-
 
 Contribution would be warmly appreciated (See Code of Conduct).
 
