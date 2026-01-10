@@ -6,7 +6,7 @@ using namespace etr;
 void test_utilities() {
   // is.na
   {
-    Array<Double, Buffer<Double>> a;
+    Array<Variable<Double>, Buffer<Variable<Double>>> a;
     a = c(Double::NA(), Double::NaN(), Double::Inf(), Double(3.14),
           Integer::NA(), Integer(19),
           Logical::NA(), Logical(true),
