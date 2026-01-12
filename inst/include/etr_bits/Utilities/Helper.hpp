@@ -16,7 +16,7 @@ template <typename T> requires IsArray<T> inline auto isNA(const T &inp) {
   Array<Logical, Buffer<Logical, RBufferTrait>> res( SI{inp.size()});
   res.dim = std::vector<std::size_t>{inp.size()};
   for (std::size_t i = 0; i < res.size(); i++) {
-    res.set(i, inp.get(i).isNA());
+    res.set(i, get_scalar_val(inp.get(i)).isNA());
   }
   return res;
 }

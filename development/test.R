@@ -4,13 +4,23 @@ Rcpp::compileAttributes()
 install.packages(".", types = "source", repo = NULL,)
 tinytest::test_package("ast2ast")
 
-rmarkdown::render("vignettes/DetailedDocumentation.Rmd")
+files <- list.files("./R", full.names = TRUE)
+trash <- lapply(files, source)
 
-f <- function() {
-  a |> type(int)
-  a <- 3.14
-  return(a)
+args_fct <- function() {}
+run_fr_checks <- function(fct, args_fct, r_fct = TRUE, real_type) {
+  AST <- parse_body(body(fct), r_fct)
+  AST <- sort_args(AST)
+  vars_types_list <- infer_types(AST, fct, args_fct, r_fct)
+  type_checking(AST, vars_types_list, r_fct, real_type)
 }
-
-fcpp <- ast2ast::translate(f)
-fcpp()
+test_checks <- function(f, args_f, r_fct, real_type) {
+  e <- try(run_fr_checks(f, args_f, r_fct, real_type), silent = TRUE)
+  as.character(e)
+}
+fct <- function() {
+  x <- c(1, 2)
+  y <- c(3, 4)
+  y[[1]] <- x
+}
+test_checks(fct, args_fct, TRUE, "etr::Double")

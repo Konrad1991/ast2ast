@@ -8,8 +8,12 @@
 #include "stddef.h"
 #include <cxxabi.h>
 #else
-// [[Rcpp::depends(Rcpp)]]
-#include <Rcpp.h>
+/*
+ Actually Rcpp would be sufficent.
+ But when I include Rcpp.h I get the error in paropt that compilation fails
+*/
+// [[Rcpp::depends(RcppArmadillo)]]
+#include <RcppArmadillo.h>
 #endif
 
 #include <algorithm>

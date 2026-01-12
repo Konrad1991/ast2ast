@@ -25,7 +25,7 @@ inline size_t ExtractIndex(const T& obj) {
   }
 }
 
-// Wrapper for borrow
+// Wrapper forr borrow
 // -----------------------------------------------------------------------------------------------------------
 struct LogicalRef {
   bool* p;

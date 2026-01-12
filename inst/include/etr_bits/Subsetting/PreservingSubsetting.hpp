@@ -308,7 +308,7 @@ inline out_L create_indices(const ArrayType& arr, const Args&... args) {
       pos[k] = 0;
       k++;
       if (k == N) {
-        return out_L{out, L};
+        return out_L{std::move(out), L};
       }
     }
   }
@@ -317,7 +317,6 @@ inline out_L create_indices(const ArrayType& arr, const Args&... args) {
 // Create mutable subset
 template <typename ArrayType, typename... Args>
 inline auto subset(ArrayType& arr, const Args&... args) {
-
   using E = typename ExtractDataType<ArrayType>::value_type;
   constexpr std::size_t N = sizeof...(Args);
 
