@@ -2,27 +2,19 @@
 
 #include "../inst/include/etr.hpp"
 #include "../inst/include/etr_bits/Core/Reflection.hpp"
-
-auto f1() {
-  etr::Array<etr::Double, etr::Buffer<etr::Double>> a = etr::c(
-    etr::Double(3), etr::Double(4), etr::Double(1)
-  );
-  etr::Integer size;
-  etr::Array<etr::Double, etr::Buffer<etr::Double>> temp;
-  size = etr::length(a);
-  for(const auto& i : etr::colon(etr::Integer(1), size)) {
-    for(const auto& j : etr::colon(etr::Integer(1), (size - etr::Integer(1)))) {
-      if (etr::subset(a, j) > etr::subset(a, j + etr::Integer(1))) {
-        temp = etr::subset(a, j);
-        etr::subset(a, j) = etr::subset(a, j + etr::Integer(1));
-        etr::subset(a, j + etr::Integer(1)) = temp;
-      }
-    }
-  }
-  return(a);
-}
+using namespace etr;
 
 int main() {
-  const auto res = f1();
-  etr::print(res);
+  std::vector<double> owner{1, 2, 3, 4, 5};
+  std::vector<double> owner_dot(5, 0.0);
+  Array<Double, Buffer<Double>> a = colon(Double(1), Double(5));
+  Array<Dual, Borrow<Dual>> b(owner.data(), owner_dot.data(), owner.size(), std::vector<std::size_t>{5});
+
+  if (at(a, Integer(1)) > at(a, Integer(2))) {
+
+  }
+  // if (at(b, Integer(1)) > at(a, Integer(2))) {
+  //
+  // }
+  at(b, Integer(1)) + at(b, Integer(2));
 }

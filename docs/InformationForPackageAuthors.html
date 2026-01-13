@@ -455,7 +455,8 @@ fcpp &lt;- ast2ast::translate(f, f_args, output = &quot;XPtr&quot;)</code></pre>
 </div>
 <div id="afterwards-the-external-pointer-is-used-in-an-r-package" class="section level4">
 <h4>Afterwards the external pointer is used in an R package</h4>
-<pre class="cpp"><code>// [[Rcpp::depends(ast2ast)]]
+<pre class="cpp"><code>// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::depends(ast2ast)]]
 // [[Rcpp::plugins(cpp2a)]]
 #include &quot;etr.hpp&quot;
 

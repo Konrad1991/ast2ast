@@ -1,3 +1,4 @@
+setwd("./docs")
 tools::Rd2HTML("../man/translate.Rd",
   out = "translate.html"
 )

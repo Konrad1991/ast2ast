@@ -306,15 +306,23 @@ action_check_type_of_args <- function(node, variables, r_fct, real_type) {
     !inherits(node, "for_node")) {
     return()
   }
-  if (inherits(node, "binary_node") && node$operator %in% c("<-", "=")) {
-    if (!inherits(node$left_node, "variable_node")) {
-      tl <- node$left_node$internal_type$data_struct
-      tr <- node$right_node$internal_type$data_struct
-      if (tl == "scalar" && tr != "scalar") {
-        node$error <- "At the left hand side of the assignment a scalar is found, but not on the right hand side. You can only assign scalars to scalars"
-      }
-    }
-  }
+  # TODO: add tests for scalar <- !scalar assignments
+  # if (inherits(node, "binary_node") && node$operator %in% c("<-", "=")) {
+  #   if (inherits(node$left_node, "variable_node")) {
+  #     tl <- variables[node$left_node$name]
+  #   } else {
+  #     tl <- node$left_node$internal_type$data_struct
+  #   }
+  #   if (inherits(node$right_node, "variable_node")) {
+  #     tr <- variables[node$right_node$name]
+  #   } else {
+  #     tr <- node$right_node$internal_type$data_struct
+  #   }
+  #   if (tl == "scalar" && tr != "scalar") {
+  #     node$error <- "At the left hand side of the assignment a scalar is found, but not on the right hand side. You can only assign scalars to scalars"
+  #   }
+  # }
+
   operator <- node$operator
   if (inherits(node, "for_node")) {
     operator <- "for"

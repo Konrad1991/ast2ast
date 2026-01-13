@@ -122,6 +122,7 @@ fcpp <- ast2ast::translate(f, f_args, output = "XPtr")
 #### Afterwards the external pointer is used in an R package
 
 ```{Rcpp, eval = TRUE, echo = TRUE}
+// [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::depends(ast2ast)]]
 // [[Rcpp::plugins(cpp2a)]]
 #include "etr.hpp"

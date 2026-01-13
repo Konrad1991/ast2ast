@@ -327,6 +327,30 @@ inline auto subset(ArrayType& arr, const Args&... args) {
   );
 }
 
+// Fast path: subset(vec, Integer)
+template <typename ArrayType>
+inline auto subset(ArrayType& arr, const Integer& idx) {
+  using E = typename ExtractDataType<ArrayType>::value_type;
+
+  const auto& dim = dim_view(arr.dim);
+  ass<"subset(a, Integer) only valid for vectors">(dim.size() == 1);
+
+  const auto i = get_scalar_val(idx);
+  ass<"Found NA value in subsetting">(!i.isNA());
+
+  ass<"Index out of bounds">(i.val >= 1 && static_cast<std::size_t>(i.val) <= dim[0]);
+
+  Buffer<int> out(1);
+  out.set(0, i.val - 1);
+
+  std::vector<std::size_t> L{1};
+
+  return Array<E, SubsetView<ArrayType, 1, SubsetViewTrait>>(
+    SubsetView<ArrayType, 1, SubsetViewTrait>{arr, std::move(out)},
+    std::move(L)
+  );
+}
+
 // Create subset of subset
 // ------------------------------------------------------------------
 template <typename ArrayType, typename... Args>

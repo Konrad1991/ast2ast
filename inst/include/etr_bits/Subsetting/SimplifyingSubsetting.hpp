@@ -25,7 +25,7 @@ inline size_t ExtractIndex(const T& obj) {
   }
 }
 
-// Wrapper forr borrow
+// Wrapper for borrow
 // -----------------------------------------------------------------------------------------------------------
 struct LogicalRef {
   bool* p;
@@ -111,6 +111,12 @@ inline decltype(auto) at(ArrayType& arr, const Args&... args) {
     }
   }
 }
+
+// template <typename ArrayType, typename... Args>
+// requires IsBorrowArray<ArrayType>
+// inline auto at(ArrayType& arr, const Args&... args) {
+//   return subset(arr, args...);
+// }
 
 template <typename ArrayType, typename... Args>
 inline const auto at(const ArrayType& arr, const Args&... args) {
