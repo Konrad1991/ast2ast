@@ -937,20 +937,47 @@ using var = Variable<etr::Double>;
 template <class Out, class In>
 inline Out cast_preserve_na(const In& x) {
   using InD = Decayed<In>;
-  if constexpr (IsLogical<InD> || IsInteger<InD>) {
-    if (x.isNA()) return Out::NA(); else return Out(get_val(x));
-  } else {
-    const auto s = get_scalar_val(x);
-    if (s.isNA()) {
-      return Out::NA();
-    } else if (s.isNaN()) {
-      return Out::NaN();
-    } else if (s.isInfinite()) {
-      return Out::Inf();
-    } else {
-      return Out(get_val(s));
+  // Out Logical or Integer
+  if constexpr (IsLogical<Out> || IsInteger<Out>) {
+    // Inner type is logical or integer
+    if constexpr (IsLogical<InD> || IsInteger<InD>) {
+      if (x.isNA()) return Out::NA(); else return Out(get_val(x));
+    }
+    // Inner type is real
+    else {
+      const auto s = get_scalar_val(x);
+      if (s.isNA()) {
+        return Out::NA();
+      } else if (s.isNaN()) {
+        return Out::NA();
+      } else if (s.isInfinite()) {
+        return Out::NA();
+      } else {
+        return Out(get_val(s));
+      }
     }
   }
+  // Out is any real type
+  else {
+    // Inner type is logical or integer
+    if constexpr (IsLogical<InD> || IsInteger<InD>) {
+      if (x.isNA()) return Out::NA(); else return Out(get_val(x));
+    }
+    // Inner type is real
+    else {
+      const auto s = get_scalar_val(x);
+      if (s.isNA()) {
+        return Out::NA();
+      } else if (s.isNaN()) {
+        return Out::NaN();
+      } else if (s.isInfinite()) {
+        return Out::Inf();
+      } else {
+        return Out(get_val(s));
+      }
+    }
+  }
+
 }
 
 // Conversion to Scalars
