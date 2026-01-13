@@ -932,6 +932,27 @@ template<typename T> inline auto get_val(const BooleanExpr& t) { return t.val.va
 
 using var = Variable<etr::Double>;
 
+// preserve na cast
+// --------------------------------------------------------------------------------------------------
+template <class Out, class In>
+inline Out cast_preserve_na(const In& x) {
+  using InD = Decayed<In>;
+  if constexpr (IsLogical<InD> || IsInteger<InD>) {
+    if (x.isNA()) return Out::NA(); else return Out(get_val(x));
+  } else {
+    const auto s = get_scalar_val(x);
+    if (s.isNA()) {
+      return Out::NA();
+    } else if (s.isNaN()) {
+      return Out::NaN();
+    } else if (s.isInfinite()) {
+      return Out::Inf();
+    } else {
+      return Out(get_val(s));
+    }
+  }
+}
+
 // Conversion to Scalars
 // --------------------------------------------------------------------------------------------------
 template<typename T> Logical::Logical(Variable<T> v)    : val(static_cast<bool>(get_val(v))), is_na(get_scalar_val(v).is_na) {}

@@ -47,7 +47,7 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
       if constexpr (IS<DataTypeOtherObj, T>) {
           temp.set(i, other_obj.get(i));
       } else {
-          temp.set(i, T(get_val(other_obj.get(i))));
+        temp.set(i, cast_preserve_na<T>(other_obj.get(i)));
       }
     }
   }
@@ -300,7 +300,7 @@ template<typename T> requires (IsArithV<T> || IsVariable<T>) struct Array<T, Bor
       if constexpr (IS<DataTypeOtherObj, T>) {
           temp.set(i, other_obj.get(i));
       } else {
-          temp.set(i, T(get_val(other_obj.get(i))));
+        temp.set(i, cast_preserve_na<T>(other_obj.get(i)));
       }
     }
   }
@@ -573,7 +573,7 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
       if constexpr (IS<DataTypeOtherObj, T>) {
           temp.set(i, other_obj.get(i));
       } else {
-          temp.set(i, T(get_val(other_obj.get(i))));
+        temp.set(i, cast_preserve_na<T>(other_obj.get(i)));
       }
     }
   }
