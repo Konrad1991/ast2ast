@@ -934,8 +934,7 @@ using var = Variable<etr::Double>;
 
 // preserve na cast
 // --------------------------------------------------------------------------------------------------
-template <class Out, class In>
-inline Out cast_preserve_na(const In& x) {
+template <class Out, class In> inline Out cast_preserve_na(const In& x) {
   using InD = Decayed<In>;
   // Out Logical or Integer
   if constexpr (IsLogical<Out> || IsInteger<Out>) {

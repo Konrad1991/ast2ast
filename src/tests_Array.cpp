@@ -157,7 +157,16 @@ template<typename RealType> void test_array_buffer() {
     b.set(1, 2.1);
     b.set(2, 3.1);
     A a(b);
+#if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wself-assign-overloaded"
+#endif
+
     a = a;
+
+#if defined(__clang__)
+    #pragma clang diagnostic pop
+#endif
     ass<"self assign safe">(compare(get_val(a.get(1)), 2.1));
   }
   // Construct from expression
