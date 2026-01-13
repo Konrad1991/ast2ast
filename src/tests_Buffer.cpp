@@ -77,7 +77,18 @@ void test_buffer() {
     Buffer<RealType> b(2);
     b.set(0, Double(1.1));
     b.set(1, Double(2.2));
-    b = b;
+
+#if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wself-assign-overloaded"
+#endif
+
+b = b;
+
+#if defined(__clang__)
+    #pragma clang diagnostic pop
+#endif
+
     ass<"self assign safe">(compare(get_val(b.get(1)), 2.2));
   }
   // resize
