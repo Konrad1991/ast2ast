@@ -10,6 +10,7 @@ get_types_with_f_args <- function(f, f_args, r_fct = FALSE) {
   ast <- ast2ast:::parse_body(body(f), r_fct)
   ast2ast:::infer_types(ast, f, f_args, r_fct)
 }
+
 check_type_f_arg <- function(type, bt, ds, const_or_mut, copy_or_ref, fct_input = TRUE) {
   check <- logical(5)
   check[1] <- type$base_type == bt
@@ -575,19 +576,21 @@ f <- function() {
 }
 types <- get_types(f)
 expect_true(types$b$base_type == "double")
-expect_true(types$b$data_struct == "vector")
+expect_true(types$b$data_struct == "scalar")
 expect_true(types$c$base_type == "double")
 expect_true(types$c$data_struct == "scalar")
 expect_true(types$d$base_type == "double")
 expect_true(types$d$data_struct == "scalar")
+expect_true(types$e$base_type == "double")
+expect_true(types$e$data_struct == "matrix")
 expect_true(types$f$base_type == "double")
-expect_true(types$f$data_struct == "vector")
+expect_true(types$f$data_struct == "scalar")
 expect_true(types$g$base_type == "double")
 expect_true(types$g$data_struct == "scalar")
 expect_true(types$h$base_type == "double")
 expect_true(types$h$data_struct == "scalar")
 expect_true(types$i$base_type == "double")
-expect_true(types$i$data_struct == "matrix")
+expect_true(types$i$data_struct == "scalar")
 expect_true(types$j$base_type == "double")
 expect_true(types$j$data_struct == "scalar")
 expect_true(types$k$base_type == "double")
@@ -631,13 +634,39 @@ f <- function() {
 }
 types <- get_types(f)
 expect_true(types$d$base_type == "double")
-expect_true(types$d$data_struct == "vector")
+expect_true(types$d$data_struct == "scalar")
 expect_true(types$g$base_type == "double")
 expect_true(types$g$data_struct == "vector")
 expect_true(types$h$base_type == "double")
-expect_true(types$h$data_struct == "vector")
+expect_true(types$h$data_struct == "scalar")
 expect_true(types$i$base_type == "double")
 expect_true(types$i$data_struct == "matrix")
+
+# Fast path choosen
+f <- function() {
+  a <- c(1, 2, 3, 4)
+  b <- c(1L)
+  c <- 1L
+  d <- a[b]
+  e <- a[c]
+  for (i in 1:10) {
+    f <- a[i]
+    g <- a[i + i]
+  }
+  h <- matrix(1:4, 2, 2)
+  i <- h[1, c]
+}
+types <- get_types(f)
+expect_true(types$d$base_type == "double")
+expect_true(types$d$data_struct == "vector")
+expect_true(types$e$base_type == "double")
+expect_true(types$e$data_struct == "scalar")
+expect_true(types$f$base_type == "double")
+expect_true(types$f$data_struct == "scalar")
+expect_true(types$g$base_type == "double")
+expect_true(types$g$data_struct == "scalar")
+expect_true(types$i$base_type == "double")
+expect_true(types$i$data_struct == "scalar")
 
 # --- type ---------------------------------------------------------------
 f <- function() {

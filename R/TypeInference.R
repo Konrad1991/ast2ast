@@ -250,7 +250,8 @@ type_infer_action <- function(node, env) {
         }
       }
     }
-  } else if (inherits(node, "for_node")) {
+  }
+  else if (inherits(node, "for_node")) {
     type <- infer(node, env$vars_list, env$r_fct)
     if (is.character(type)) {
       node$error <- type
@@ -267,7 +268,8 @@ type_infer_action <- function(node, env) {
         }
       }
     }
-  } else if (inherits(node, c("while_node", "if_node"))) {
+  }
+  else if (inherits(node, c("while_node", "if_node"))) {
     variable <- find_var_lhs(node$condition)
     if (!is.null(variable)) { # e.g. while(TRUE)
       type <- infer(node$condition, env$vars_list, env$r_fct)
@@ -285,20 +287,44 @@ type_infer_action <- function(node, env) {
         }
       }
     }
-  } else if (inherits(node, "binary_node") && !(node$operator %within% c("=", "<-"))) {
+  }
+  else if (inherits(node, "binary_node") && !(node$operator %within% c("=", "<-"))) {
     infer(node, env$vars_list, env$r_fct)
     infer(node$left_node, env$vars_list, env$r_fct)
     infer(node$right_node, env$vars_list, env$r_fct)
-  } else if (inherits(node, "unary_node")) {
+    if (node$operator %in% c("[", "[[", "at")) {
+      variable <- find_var_lhs(node$left_node)
+      if (!is.null(variable) && variable != "") {
+        if (!env$vars_list[[variable]]$type_dcl && !env$vars_list[[variable]]$fct_input) {
+          if (env$vars_list[[variable]]$data_struct == "scalar") {
+            env$vars_list[[variable]]$data_struct <- "vector"
+          }
+        }
+      }
+    }
+  }
+  else if (inherits(node, "unary_node")) {
     infer(node, env$vars_list, env$r_fct)
     infer(node$obj, env$vars_list, env$r_fct)
-  } else if (inherits(node, "nullary_node")) {
+  }
+  else if (inherits(node, "nullary_node")) {
     infer(node, env$vars_list, env$r_fct)
-  } else if (inherits(node, "function_node")) {
+  }
+  else if (inherits(node, "function_node")) {
     infer(node, env$vars_list, env$r_fct)
     lapply(node$args, function(arg) {
       infer(arg, env$vars_list, env$r_fct)
     })
+    if (node$operator %in% c("[", "[[", "at")) {
+      variable <- find_var_lhs(node$args[[1L]])
+      if (!is.null(variable) && variable != "") {
+        if (!env$vars_list[[variable]]$type_dcl && !env$vars_list[[variable]]$fct_input) {
+          if (env$vars_list[[variable]]$data_struct %in% c("scalar", "vector")) {
+            env$vars_list[[variable]]$data_struct <- "matrix"
+          }
+        }
+      }
+    }
   }
 }
 type_infer_return_action <- function(node, env) {

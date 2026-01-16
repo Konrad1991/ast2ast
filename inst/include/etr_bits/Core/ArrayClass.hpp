@@ -45,7 +45,7 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
     temp.resize(other_obj.size());
     for (std::size_t i = 0; i < other_obj.size(); i++) {
       if constexpr (IS<DataTypeOtherObj, T>) {
-          temp.set(i, other_obj.get(i));
+        temp.set(i, other_obj.get(i));
       } else {
         temp.set(i, cast_preserve_na<T>(other_obj.get(i)));
       }
@@ -79,7 +79,7 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   }
   // Move other Array e.g. vec = std::move(other_vec)
   Array(Array&& other) noexcept(std::is_nothrow_move_constructible_v<decltype(d)>)
-  : d(std::move(other.d)), dim(std::move(other.dim)) {}
+  : d(std::move(other.d)), dim(std::move(other.get_dim())) {}
 
   // Copy view vectors: e.g. Array<double> a(sinus(c(1.1, 2.2)));
   template<typename T2, typename R2>
@@ -94,14 +94,14 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   requires(IS<T, T2> && IsRArray<Array<T2, R2>>)
   Array(Array<T2, R2>&& other) {
     d.moveit(other.d);
-    dim = std::move(other.dim);
+    dim = std::move(other.get_dim());
   }
   // Example: Array<Double, Buffer<Double>> a(Array<Integer, Buffer<Integer, RBufferTrait>>(SI{3}));
   template<typename T2, typename R2>
   requires((!IS<T, T2>) && IsRArray<Array<T2, R2>>)
   Array(Array<T2, R2>&& other) {
     assign(other);
-    dim = std::move(other.dim);
+    dim = std::move(other.get_dim());
   }
 
   // Buffer
@@ -179,7 +179,7 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   requires(IS<T, T2> && IsRArray<Array<T2, R2>>)
   Array& operator=(Array<T2, R2>&& other_obj) {
     d.moveit(other_obj.d);
-    dim = std::move(other_obj.dim);
+    dim = std::move(other_obj.get_dim());
     return *this;
   }
 
@@ -233,7 +233,7 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
   explicit Array(const SI &sz) : d(sz.sz) {}
 
   Array(Array&& other) noexcept(std::is_nothrow_move_constructible_v<decltype(d)>)
-  : d(std::move(other.d)), dim(std::move(other.dim)) {}
+  : d(std::move(other.d)), dim(std::move(other.get_dim())) {}
 
   template<typename...Args>
   Array(Args...) {
@@ -298,7 +298,7 @@ template<typename T> requires (IsArithV<T> || IsVariable<T>) struct Array<T, Bor
     temp.resize(other_obj.size());
     for (std::size_t i = 0; i < other_obj.size(); i++) {
       if constexpr (IS<DataTypeOtherObj, T>) {
-          temp.set(i, other_obj.get(i));
+        temp.set(i, other_obj.get(i));
       } else {
         temp.set(i, cast_preserve_na<T>(other_obj.get(i)));
       }
@@ -391,7 +391,7 @@ template<typename T> requires (IsArithV<T> || IsVariable<T>) struct Array<T, Bor
   requires(IS<T, T2> && IsRArray<Array<T2, R2>>)
   Array& operator=(Array<T2, R2>&& other_obj) {
     assign(other_obj);
-    dim = std::move(other_obj.dim);
+    dim = std::move(other_obj.get_dim());
     return *this;
   }
 
@@ -571,7 +571,7 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
     temp.resize(other_obj.size());
     for (std::size_t i = 0; i < other_obj.size(); i++) {
       if constexpr (IS<DataTypeOtherObj, T>) {
-          temp.set(i, other_obj.get(i));
+        temp.set(i, other_obj.get(i));
       } else {
         temp.set(i, cast_preserve_na<T>(other_obj.get(i)));
       }

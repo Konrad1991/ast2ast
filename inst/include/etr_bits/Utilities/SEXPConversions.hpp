@@ -113,7 +113,7 @@ template <typename T>
 requires IsArray<Decayed<T>>
 inline SEXP Cast(const T &res_) {
   auto res = Evaluate(res_);
-  const auto dim = dim_view(res.dim);
+  const auto dim = dim_view(res.get_dim());
   SEXP ret = R_NilValue;
   using vtype = typename ExtractDataType<Decayed<T>>::value_type;
   if constexpr (IsDouble<vtype> || IsDual<vtype> || IS<Variable<Double>, vtype>) {

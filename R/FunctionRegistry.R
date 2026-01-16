@@ -178,13 +178,32 @@ check_subsetting <- function(node, vars_types_list, r_fct, real_type) {
 }
 
 infer_subsetting <- function(node, vars_list, r_fct) {
+  choose_fast_path <- function(types) {
+    fulfilled <- function(t) {
+      if (t$data_struct != "scalar" || t$base_type == "logical") return(FALSE)
+      return(TRUE)
+    }
+    if (is.list(types)) {
+      for (t in types) {
+        if (!fulfilled(t)) return(FALSE)
+      }
+      return(TRUE)
+    } else {
+      if (!fulfilled(types)) return(FALSE)
+      return(TRUE)
+    }
+  }
   if (inherits(node, "binary_node")) {
     left_type_node <- infer(node$left_node, vars_list, r_fct)
-    infer(node$right_node, vars_list, r_fct)
+    right_type_node <- infer(node$right_node, vars_list, r_fct)
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- left_type_node$base_type
     t$data_struct <- "vector"
     if (any(node$operator == c("[[", "at"))) {
+      t$data_struct <- "scalar"
+    }
+    # Choosing the fast path
+    if (choose_fast_path(right_type_node)) {
       t$data_struct <- "scalar"
     }
     node$internal_type <- t
@@ -198,6 +217,9 @@ infer_subsetting <- function(node, vars_list, r_fct) {
     t$base_type <- type_first_arg$base_type
     t$data_struct <- "matrix"
     if (any(node$operator == c("[[", "at"))) {
+      t$data_struct <- "scalar"
+    }
+    if (choose_fast_path(all_types[-1])) {
       t$data_struct <- "scalar"
     }
     node$internal_type <- t

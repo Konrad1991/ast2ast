@@ -99,7 +99,7 @@ template <typename T> requires (!IsArray<T>) inline Integer dim(T inp) {
   return Integer(1);
 }
 template <typename T> requires IsArray<T> inline auto dim(const T &inp) {
-  const auto d = dim_view(inp.dim);
+  const auto d = dim_view(inp.get_dim());
   Array<Integer, Buffer<Integer, RBufferTrait>> res(SI{d.size()});
   for (std::size_t i = 0; i < res.size(); i++) {
     res.set(i, Integer(static_cast<int>(d[i])));

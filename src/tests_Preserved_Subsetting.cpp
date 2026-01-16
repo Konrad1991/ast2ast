@@ -8,11 +8,17 @@ auto compare_result(const T& etr, const std::vector<double>& expected) {
     double TOL = 1e-5;
     return std::abs(l - r) < TOL;
   };
-  if (etr.size() != expected.size()) return false;
-  for (std::size_t i = 0; i < etr.size(); i++) {
-    if(!compare(get_val(etr.get(i)), expected[i])) return false;
+  if constexpr (IsScalarLike<Decayed<T>>) {
+    if (expected.size() == 1) return false;
+    if(!compare(get_val(etr), expected[0])) return false;
+    return true;
+  } else {
+    if (etr.size() != expected.size()) return false;
+    for (std::size_t i = 0; i < etr.size(); i++) {
+      if(!compare(get_val(etr.get(i)), expected[i])) return false;
+    }
+    return true;
   }
-  return true;
 }
 
 template<typename T>

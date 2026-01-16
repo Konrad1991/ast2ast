@@ -111,7 +111,7 @@ template <typename ArrayType, typename... Args>
 requires (IsLBufferArray<ArrayType> || IsBorrowArray<ArrayType>)
 inline decltype(auto) at(ArrayType& arr, const Args&... args) {
   constexpr std::size_t N = sizeof...(Args);
-  const auto& dim = dim_view(arr.dim);
+  const auto& dim = dim_view(arr.get_dim());
   if (N > dim.size()) {
     ass<"Too many index arguments for array rank">(false);
   }
@@ -161,7 +161,7 @@ inline decltype(auto) at(ArrayType& arr, const Args&... args) {
 template <typename ArrayType, typename... Args>
 inline const auto at(const ArrayType& arr, const Args&... args) {
   constexpr std::size_t N = sizeof...(Args);
-  const auto& dim = dim_view(arr.dim);
+  const auto& dim = dim_view(arr.get_dim());
   if (N > dim.size()) {
     ass<"Too many index arguments for array rank">(false);
   }

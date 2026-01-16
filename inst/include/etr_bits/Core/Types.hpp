@@ -1411,11 +1411,6 @@ concept IsConstSubsetView = requires {
 template<typename T>
 struct const_subsetview_traits;
 
-template<typename O, std::size_t N, typename Trait>
-struct const_subsetview_traits<ConstSubsetView<O, N, Trait>> {
-    static constexpr std::size_t value = N;
-};
-
 template <typename T>
 concept IsLBuffer = requires {
   typename ReRef<T>::type::Trait;

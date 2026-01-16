@@ -120,6 +120,79 @@ public:
   auto end() const { return SubsetViewIterator<const ConstSubsetView>{*this, this->size()}; }
 };
 
+template <typename O, typename Trait> struct SubsetWithScalarView {
+  using TypeTrait = Trait;
+  using value_type = typename ReRef<O>::type::value_type;
+  Holder<O> obj;
+  int index;
+
+  SubsetWithScalarView(O& obj_, int index_) : obj(obj_), index(index_) {}
+  SubsetWithScalarView(O&& obj_, int index_) : obj(obj_), index(index_) {}
+
+  auto get(std::size_t i) const { return obj.get().get(index); }
+  template<typename Val> void set(std::size_t i, const Val& v) const {
+    if constexpr (IS<Decayed<Val>, value_type>) {
+      obj.get().set(index, v);
+    } else {
+      obj.get().set(index, static_cast<value_type>(v));
+    }
+  }
+  std::size_t size() const {return 1; }
+
+  // Copy constructor
+  SubsetWithScalarView(const SubsetWithScalarView& other) : obj(other.obj), index(other.index) {}
+  // Copy assignment
+  SubsetWithScalarView& operator=(const SubsetWithScalarView& other) {
+    obj = other.obj;
+    index = other.index;
+    return *this;
+  };
+  // Move constructor
+  SubsetWithScalarView(SubsetWithScalarView&& other) : obj(std::move(other.obj)), index(other.index) {}
+  // Move assignment
+  SubsetWithScalarView& operator=(SubsetWithScalarView&& other) {
+    obj = std::move(other.obj);
+    index = other.index;
+    return *this;
+  }
+
+  auto begin() const { return SubsetViewIterator<const SubsetWithScalarView>{*this, 0}; }
+  auto end() const { return SubsetViewIterator<const SubsetWithScalarView>{*this, this->size()}; }
+};
+template <typename O, typename Trait> struct ConstSubsetWithScalarView {
+  using TypeTrait = Trait;
+  using value_type = typename ReRef<O>::type::value_type;
+  ConstHolder<O> obj;
+  int index;
+
+  ConstSubsetWithScalarView(O& obj_, int index_) : obj(obj_), index(index_) {}
+  ConstSubsetWithScalarView(O&& obj_, int index_) : obj(obj_), index(index_) {}
+
+  auto get(std::size_t i) const { return obj.get().get(index); }
+  std::size_t size() const {return 1; }
+
+  // Copy constructor
+  ConstSubsetWithScalarView(const ConstSubsetWithScalarView& other) : obj(other.obj), index(other.index) {}
+  // Copy assignment
+  ConstSubsetWithScalarView& operator=(const ConstSubsetWithScalarView& other) {
+    obj = other.obj;
+    index = other.index;
+    return *this;
+  };
+  // Move constructor
+  ConstSubsetWithScalarView(ConstSubsetWithScalarView&& other) : obj(std::move(other.obj)), index(other.index) {}
+  // Move assignment
+  ConstSubsetWithScalarView& operator=(ConstSubsetWithScalarView&& other) {
+    obj = std::move(other.obj);
+    index = other.index;
+    return *this;
+  }
+
+  auto begin() const { return SubsetViewIterator<const ConstSubsetWithScalarView>{*this, 0}; }
+  auto end() const { return SubsetViewIterator<const ConstSubsetWithScalarView>{*this, this->size()}; }
+};
+
+// -----------------------------------------------------------------------------------------------------------
 template<std::size_t N>
 inline std::array<std::size_t, N> make_strides_from_vec(const std::vector<std::size_t>& dim) {
   std::array<std::size_t, N> stride{};
@@ -139,7 +212,7 @@ inline void fill_scalars_in_index_lists(
                              const T& arr, std::array<Buffer<Integer>, N>& converted_arrays,
                              std::array<const Buffer<Integer>*, N>& index_lists, O&& arg,
                              std::size_t& counter, std::size_t& counter_converted) {
-  const auto& dim = dim_view(arr.dim);
+  const auto& dim = dim_view(arr.get_dim());
   using A = std::decay_t<decltype(arg)>;
   if constexpr (IsCppDouble<A>) {
     auto& v = converted_arrays[counter_converted++];
@@ -169,7 +242,7 @@ inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& conve
                              std::array<const Buffer<Integer>*, N>& index_lists, Args&&... args) {
   std::size_t counter = 0;
   std::size_t counter_converted = 0;
-  const auto& dim = dim_view(arr.dim);
+  const auto& dim = dim_view(arr.get_dim());
   forEachArg(
     [&](const auto& arg) {
       using A = std::decay_t<decltype(arg)>;
@@ -247,7 +320,7 @@ struct out_L {
 template <typename ArrayType, typename... Args>
 inline out_L create_indices(const ArrayType& arr, const Args&... args) {
   constexpr std::size_t N = sizeof...(Args);
-  const auto& dim = dim_view(arr.dim);
+  const auto& dim = dim_view(arr.get_dim());
   if (N > dim.size()) {
     ass<"Too many index arguments for array rank">(false);
   }
@@ -320,28 +393,14 @@ inline auto subset(ArrayType& arr, const Args&... args) {
   );
 }
 
-// Fast path: subset(vec, Integer)
-template <typename ArrayType>
-inline auto subset(ArrayType& arr, const Integer& idx) {
-  using E = typename ExtractDataType<ArrayType>::value_type;
-
-  const auto& dim = dim_view(arr.dim);
-  ass<"subset(a, Integer) only valid for vectors">(dim.size() == 1);
-
-  const auto i = get_scalar_val(idx);
-  ass<"Found NA value in subsetting">(!i.isNA());
-
-  ass<"Index out of bounds">(i.val >= 1 && static_cast<std::size_t>(i.val) <= dim[0]);
-
-  Buffer<int> out(1);
-  out.set(0, i.val - 1);
-
-  std::vector<std::size_t> L{1};
-
-  return Array<E, SubsetView<ArrayType, 1, SubsetViewTrait>>(
-    SubsetView<ArrayType, 1, SubsetViewTrait>{arr, std::move(out)},
-    std::move(L)
-  );
+// Fast path: subset(vec, Scalar)
+template <typename ArrayType, typename I> requires(IsScalarLike<I> && !IsLogical<I> && !IsLogicalRef<I>)
+inline decltype(auto) subset(ArrayType& arr, const I& idx) {
+  return at(arr, idx);
+}
+template <typename ArrayType, typename I> requires(IsScalarLike<I> && !IsLogical<I> && !IsLogicalRef<I>)
+inline const auto subset(const ArrayType& arr, const I& idx) {
+  return at(arr, idx);
 }
 
 // Create subset of subset

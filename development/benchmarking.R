@@ -3,49 +3,51 @@
 # install.packages(".", types = "source", repo = NULL,)
 # tinytest::test_package("ast2ast")
 
-f1 <- function(a) {
-  size <- length(a)
-  for (i in 1L:size) {
-    for (j in 1L:(size - 1L)) {
-      if (a[j] > a[j + 1L]) {
-        temp <- a[j]
-        a[j] <- a[j + 1L]
-        a[j + 1L] <- temp
-      }
-    }
-  }
-  return(a)
-}
+# f1 <- function(a) {
+#   size <- length(a)
+#   for (i in 1L:size) {
+#     for (j in 1L:(size - 1L)) {
+#       if (a[j] > a[j + 1L]) {
+#         temp <- a[j]
+#         a[j] <- a[j + 1L]
+#         a[j + 1L] <- temp
+#       }
+#     }
+#   }
+#   return(a)
+# }
+#
+# f2 <- function(a) {
+#   size <- length(a)
+#   for (i in 1:size) {
+#     for (j in 1:(size - 1)) {
+#       if (a[[j]] > a[[j + 1]]) {
+#         temp <- a[[j]]
+#         a[[j]] <- a[[j + 1]]
+#         a[[j + 1]] <- temp
+#       }
+#     }
+#   }
+#   return(a)
+# }
+#
+# fcpp <- ast2ast::translate(f1, verbose = TRUE)
+# fcpp2 <- ast2ast::translate(f2)
+# a <- runif(100)
+# microbenchmark::microbenchmark(
+#   f1(a), f2(a), fcpp(a), fcpp2(a)
+# )
 
-f2 <- function(a) {
-  size <- length(a)
-  for (i in 1:size) {
-    for (j in 1:(size - 1)) {
-      if (a[[j]] > a[[j + 1]]) {
-        temp <- a[[j]]
-        a[[j]] <- a[[j + 1]]
-        a[[j + 1]] <- temp
-      }
-    }
-  }
-  return(a)
-}
-
-fcpp <- ast2ast::translate(f1, verbose = TRUE)
-fcpp2 <- ast2ast::translate(f2)
-a <- runif(100)
-microbenchmark::microbenchmark(
-  f1(a), f2(a), fcpp(a), fcpp2(a)
-)
 convolve <- function(a, b) {
   ab <- numeric(length(a) + length(b) - 1)
   for (i in 1L:length(a)) {
     for (j in 1L:length(b)) {
-      ab[[i+j-1]] <- ab[[i+j-1]] + a[[i]] * b[[j]]
+      ab[i+j-1] <- ab[i+j-1] + a[i] * b[j]
     }
   }
   return(ab)
 }
+convolve_cpp1 <- ast2ast::translate(convolve)
 convolve2 <- function(a, b) {
   ab <- numeric(length(a) + length(b) - 1)
   i |> type(int) <- 1L
@@ -60,7 +62,7 @@ convolve2 <- function(a, b) {
   }
   return(ab)
 }
-convolve_cpp <- ast2ast::translate(convolve2)
+convolve_cpp2 <- ast2ast::translate(convolve2)
 
 convolve_c <- inline::cfunction(
   sig = c(a = "SEXP", b = "SEXP"), body = r"({
@@ -84,10 +86,10 @@ convolve_c <- inline::cfunction(
 a <- runif (100000)
 b <- runif (100)
 microbenchmark::microbenchmark(
-  convolve(a, b), convolve_cpp(a, b), convolve_c(a, b),
+  convolve(a, b), convolve_cpp1(a, b), convolve_cpp2(a, b), convolve_c(a, b),
   times = 10
 )
 
 identical(
-  convolve(a, b), c(convolve_cpp(a, b)), convolve_c(a, b)
+  convolve(a, b), c(convolve_cpp1(a, b)), convolve_cpp2(a, b), convolve_c(a, b)
 )

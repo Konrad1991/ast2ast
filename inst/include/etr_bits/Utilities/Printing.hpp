@@ -44,7 +44,7 @@ inline void print_matrix(const P& pos, const T& obj,
 
 template<typename T, std::size_t N>
 inline void print_subsetted_arrays(const T& obj) {
-  const auto& dim = dim_view(obj.dim);
+  const auto& dim = dim_view(obj.get_dim());
   auto strides_all = make_strides_from_vec<N>(dim);
   std::array<std::size_t, N - 2> strides;
   for (std::size_t i = 0; i < strides.size(); i++) strides[i] = strides_all[i + 2];
@@ -80,7 +80,7 @@ requires IsSubsetArray<T>
 inline void print(const T& obj) {
   constexpr std::size_t N = subsetview_traits<Decayed<decltype(obj.d)>>::value;
 
-  const auto& dim = dim_view(obj.dim);
+  const auto& dim = dim_view(obj.get_dim());
   if (dim.size() == 1) {
     for (std::size_t i = 0; i < obj.size(); i++) {
       PRINT_STREAM << obj.get(i) << "\t";
@@ -104,7 +104,7 @@ template<typename T>
 requires (!IsSubsetArray<T> && IsArray<T>)
 inline void print(const T& arr) {
 
-  const auto& dim = dim_view(arr.dim);
+  const auto& dim = dim_view(arr.get_dim());
   if (dim.size() == 1) {
     for (std::size_t i = 0; i < arr.size(); i++) {
       PRINT_STREAM << arr.get(i) << "\t";
