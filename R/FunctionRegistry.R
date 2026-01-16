@@ -199,6 +199,10 @@ infer_subsetting <- function(node, vars_list, r_fct) {
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- left_type_node$base_type
     t$data_struct <- "vector"
+    # TODO: implement contigous_subset
+    # if (inherits(node$right_node, "binary_node") && node$right_node$operator == ":") {
+    #   node$operator <- "contigous_subset"
+    # }
     if (any(node$operator == c("[[", "at"))) {
       t$data_struct <- "scalar"
     }
@@ -393,6 +397,12 @@ function_registry_global$add(
   check_fct = check_subsetting,
   is_infix = FALSE, group = "binary_node", cpp_name = "etr::at"
 )
+# function_registry_global$add(
+#   name = "contigous_subset", num_args = c(2, 3), arg_names = c(NA, NA, NA),
+#   infer_fct = infer_subsetting,
+#   check_fct = check_subsetting,
+#   is_infix = FALSE, group = "binary_node", cpp_name = "etr::contigous_subset"
+# )
 function_registry_global$add(
   name = "for", num_args = 3, arg_names = c(NA, NA, NA),
   infer_fct = function(node, vars_list, r_fct) {
