@@ -58,6 +58,7 @@ subset_own <- function(arr, ...) {
   # offset + (args[[i]] - 1)*stride[i] = offset + (args[[i]] - 1) * (number_of_cols*number_of_rows*1)= offset
   # ....
   calc_offset <- function(args, pos, strides, n_args) {
+    print(pos + 1)
     offset <- 1L
     for (i in seq_len(n_args)) {
       offset <- offset + (args[[i]][pos[i] + 1L] - 1L) * strides[i]
@@ -96,7 +97,7 @@ subset_own <- function(arr, ...) {
 }
 
 a <- array(1:144, c(3, 4, 4, 3))
-res <- subset_own(a, c(1, 2), c(1, 2, 3), c(3, 2), c(1, 2))
+res <- subset_own(a, c(1, 2), c(1, 2, 3), c(3, 2), c(1, 2, 1, 2, 1))
 res
 a[c(1, 2), 1:3, c(3, 2), c(1, 2)]
 

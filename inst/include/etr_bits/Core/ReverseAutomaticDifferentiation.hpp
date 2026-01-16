@@ -98,7 +98,7 @@ template<typename T>
 struct VariableValueType;
 
 template<typename T>
-struct VariableValueType { using type = std::conditional_t<IsArithV<T>, T, VariableValueTypeNotDefinedFor<T>>; };
+struct VariableValueType { using type = std::conditional_t<IsScalarOrScalarRef<T>, T, VariableValueTypeNotDefinedFor<T>>; };
 
 template<typename T>
 struct VariableValueType<Variable<T>> { using type = typename VariableValueType<T>::type; };
@@ -653,15 +653,15 @@ template<typename T> ExprPtr<T> operator-(const ExprPtr<T>& l, const ExprPtr<T>&
 template<typename T> ExprPtr<T> operator*(const ExprPtr<T>& l, const ExprPtr<T>& r) { return std::make_shared<MulExpr<T>>(l->val * r->val, l, r); }
 template<typename T> ExprPtr<T> operator/(const ExprPtr<T>& l, const ExprPtr<T>& r) { return std::make_shared<DivExpr<T>>(l->val / r->val, l, r); }
 
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> operator+(const U& l, const ExprPtr<T>& r) { return constant<T>(l) + r; }
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> operator-(const U& l, const ExprPtr<T>& r) { return constant<T>(l) - r; }
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> operator*(const U& l, const ExprPtr<T>& r) { return constant<T>(l) * r; }
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> operator/(const U& l, const ExprPtr<T>& r) { return constant<T>(l) / r; }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> operator+(const U& l, const ExprPtr<T>& r) { return constant<T>(l) + r; }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> operator-(const U& l, const ExprPtr<T>& r) { return constant<T>(l) - r; }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> operator*(const U& l, const ExprPtr<T>& r) { return constant<T>(l) * r; }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> operator/(const U& l, const ExprPtr<T>& r) { return constant<T>(l) / r; }
 
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> operator+(const ExprPtr<T>& l, const U& r) { return l + constant<T>(r); }
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> operator-(const ExprPtr<T>& l, const U& r) { return l - constant<T>(r); }
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> operator*(const ExprPtr<T>& l, const U& r) { return l * constant<T>(r); }
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> operator/(const ExprPtr<T>& l, const U& r) { return l / constant<T>(r); }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> operator+(const ExprPtr<T>& l, const U& r) { return l + constant<T>(r); }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> operator-(const ExprPtr<T>& l, const U& r) { return l - constant<T>(r); }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> operator*(const ExprPtr<T>& l, const U& r) { return l * constant<T>(r); }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> operator/(const ExprPtr<T>& l, const U& r) { return l / constant<T>(r); }
 
 template<typename T> ExprPtr<T> sin(const ExprPtr<T>& x) { return std::make_shared<SinExpr<T>>(sin(x->val), x); }
 template<typename T> ExprPtr<T> cos(const ExprPtr<T>& x) { return std::make_shared<CosExpr<T>>(cos(x->val), x); }
@@ -676,8 +676,8 @@ template<typename T> ExprPtr<T> exp(const ExprPtr<T>& x) { return std::make_shar
 template<typename T> ExprPtr<T> log(const ExprPtr<T>& x) { return std::make_shared<LogExpr<T>>(log(x->val), x); }
 template<typename T> ExprPtr<T> sqrt(const ExprPtr<T>& x) { return std::make_shared<SqrtExpr<T>>(sqrt(x->val), x); }
 template<typename T> ExprPtr<T> pow(const ExprPtr<T>& l, const ExprPtr<T>& r) { return std::make_shared<PowExpr<T>>(pow(l->val, r->val), l, r); }
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> pow(const U& l, const ExprPtr<T>& r) { return std::make_shared<PowConstantLeftExpr<T>>(pow(l, r->val), constant<T>(l), r); }
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> pow(const ExprPtr<T>& l, const U& r) { return std::make_shared<PowConstantRightExpr<T>>(pow(l->val, r), l, constant<T>(r)); }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> pow(const U& l, const ExprPtr<T>& r) { return std::make_shared<PowConstantLeftExpr<T>>(pow(l, r->val), constant<T>(l), r); }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> pow(const ExprPtr<T>& l, const U& r) { return std::make_shared<PowConstantRightExpr<T>>(pow(l->val, r), l, constant<T>(r)); }
 
 //------------------------------------------------------------------------------
 // Variable
@@ -694,7 +694,7 @@ struct Variable {
   Variable(const Variable& other) : Variable(other.expr) {}
 
   /// Construct a Variable object with given Scalar values from ast2ast
-  template<typename U> requires IsArithV<U>
+  template<typename U> requires IsScalarOrScalarRef<U>
   Variable(const U& val) : expr(std::make_shared<IndependentVariableExpr<T>>(val)) {}
   /// Construct a Variable object with given native C++ scalar value
   template<typename U> requires IsCppArithV<U>
@@ -717,7 +717,7 @@ struct Variable {
   /// Implicitly convert this Variable object into an expression pointer.
   operator const ExprPtr<T>&() const { return expr; }
   /// Assign an arithmetic value to this variable.
-  template<typename U> requires IsArithV<U>
+  template<typename U> requires IsScalarOrScalarRef<U>
   auto operator=(const U& val) -> Variable& { *this = Variable(val); return *this; }
   /// Assign an expression to this variable.
   auto operator=(const ExprPtr<T>& x) -> Variable& { *this = Variable(x); return *this; }
@@ -728,10 +728,10 @@ struct Variable {
   Variable& operator/=(const ExprPtr<T>& x) { *this = Variable(expr / x); return *this; }
 
   // Assignment operators with arithmetic values
-  template<typename U> requires IsArithV<U> Variable& operator+=(const U& x) { *this = Variable(expr + x); return *this; }
-  template<typename U> requires IsArithV<U> Variable& operator-=(const U& x) { *this = Variable(expr - x); return *this; }
-  template<typename U> requires IsArithV<U> Variable& operator*=(const U& x) { *this = Variable(expr * x); return *this; }
-  template<typename U> requires IsArithV<U> Variable& operator/=(const U& x) { *this = Variable(expr / x); return *this; }
+  template<typename U> requires IsScalarOrScalarRef<U> Variable& operator+=(const U& x) { *this = Variable(expr + x); return *this; }
+  template<typename U> requires IsScalarOrScalarRef<U> Variable& operator-=(const U& x) { *this = Variable(expr - x); return *this; }
+  template<typename U> requires IsScalarOrScalarRef<U> Variable& operator*=(const U& x) { *this = Variable(expr * x); return *this; }
+  template<typename U> requires IsScalarOrScalarRef<U> Variable& operator/=(const U& x) { *this = Variable(expr / x); return *this; }
 
   explicit operator T() const { return expr->val; }
   template<typename U>
@@ -754,7 +754,7 @@ struct Variable {
 //------------------------------------------------------------------------------
 // EXPRESSION TRAITS
 //------------------------------------------------------------------------------
-template<typename T> requires IsArithV<T> T expr_value(const T& t) { return t; }
+template<typename T> requires IsScalarOrScalarRef<T> T expr_value(const T& t) { return t; }
 template<typename T> T expr_value(const ExprPtr<T>& t) { return t->val; }
 template<typename T> T expr_value(const Variable<T>& t) { return t.expr->val; }
 
@@ -767,11 +767,11 @@ template<typename T> static auto is_expr_test(long) -> std::false_type;
 template<typename T> struct is_expr : decltype(is_expr_test<T>(0)) {};
 template<typename T> constexpr bool is_expr_v = is_expr<T>::value;
 
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> coerce_expr(const U& u) { return constant<T>(u); }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> coerce_expr(const U& u) { return constant<T>(u); }
 template<typename T> ExprPtr<T> coerce_expr(const ExprPtr<T>& t) { return t; }
 template<typename T> ExprPtr<T> coerce_expr(const Variable<T>& t) { return t.expr; }
 
-template<typename T, typename U> struct is_binary_expr : std::conditional_t<!(IsArithV<T> && IsArithV<U>) && is_expr_v<T> && is_expr_v<U>, std::true_type, std::false_type> {};
+template<typename T, typename U> struct is_binary_expr : std::conditional_t<!(IsScalarOrScalarRef<T> && IsScalarOrScalarRef<U>) && is_expr_v<T> && is_expr_v<U>, std::true_type, std::false_type> {};
 template<typename T, typename U> constexpr bool is_binary_expr_v = is_binary_expr<T, U>::value;
 
 //------------------------------------------------------------------------------
@@ -820,15 +820,15 @@ template<typename T> ExprPtr<T> operator-(const Variable<T>& l, const ExprPtr<T>
 template<typename T> ExprPtr<T> operator*(const Variable<T>& l, const ExprPtr<T>& r) { return l.expr * r; }
 template<typename T> ExprPtr<T> operator/(const Variable<T>& l, const ExprPtr<T>& r) { return l.expr / r; }
 
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> operator+(const U& l, const Variable<T>& r) { return l + r.expr; }
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> operator-(const U& l, const Variable<T>& r) { return l - r.expr; }
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> operator*(const U& l, const Variable<T>& r) { return l * r.expr; }
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> operator/(const U& l, const Variable<T>& r) { return l / r.expr; }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> operator+(const U& l, const Variable<T>& r) { return l + r.expr; }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> operator-(const U& l, const Variable<T>& r) { return l - r.expr; }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> operator*(const U& l, const Variable<T>& r) { return l * r.expr; }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> operator/(const U& l, const Variable<T>& r) { return l / r.expr; }
 
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> operator+(const Variable<T>& l, const U& r) { return l.expr + r; }
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> operator-(const Variable<T>& l, const U& r) { return l.expr - r; }
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> operator*(const Variable<T>& l, const U& r) { return l.expr * r; }
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> operator/(const Variable<T>& l, const U& r) { return l.expr / r; }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> operator+(const Variable<T>& l, const U& r) { return l.expr + r; }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> operator-(const Variable<T>& l, const U& r) { return l.expr - r; }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> operator*(const Variable<T>& l, const U& r) { return l.expr * r; }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> operator/(const Variable<T>& l, const U& r) { return l.expr / r; }
 
 //------------------------------------------------------------------------------
 // TRIGONOMETRIC FUNCTIONS (DEFINED FOR ARGUMENTS OF TYPE Variable)
@@ -854,8 +854,8 @@ template<typename T> ExprPtr<T> log(const Variable<T>& x) { return log(x.expr); 
 //------------------------------------------------------------------------------
 template<typename T> ExprPtr<T> sqrt(const Variable<T>& x) { return sqrt(x.expr); }
 template<typename T> ExprPtr<T> pow(const Variable<T>& l, const Variable<T>& r) { return pow(l.expr, r.expr); }
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> pow(const U& l, const Variable<T>& r) { return pow(l, r.expr); }
-template<typename T, typename U> requires IsArithV<U> ExprPtr<T> pow(const Variable<T>& l, const U& r) { return pow(l.expr, r); }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> pow(const U& l, const Variable<T>& r) { return pow(l, r.expr); }
+template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> pow(const Variable<T>& l, const U& r) { return pow(l.expr, r); }
 
 //------------------------------------------------------------------------------
 // OTHER FUNCTIONS (DEFINED FOR ARGUMENTS OF TYPE Variable)
@@ -920,12 +920,18 @@ std::ostream& operator<<(std::ostream& out, const ExprPtr<T>& x) {
 // Retrieve val
 // --------------------------------------------------------------------------------------------------
 template<typename T> requires IsArithV<T> inline auto get_scalar_val(const T& t) { return t; }
+template<typename T> requires IsArithRefV<T> inline auto get_scalar_val(const T& t) {
+  using DecayedT = Decayed<T>;
+  using RetType = to_ast_scalar_t<DecayedT>;
+  return RetType(t);
+}
 template<typename T> inline auto get_scalar_val(const ExprPtr<T>& t) { return t->val; }
 template<typename T> inline auto get_scalar_val(const Variable<T>& t) { return t.expr->val; }
 template<typename T> requires IS<T, BooleanExpr> inline auto get_scalar_val(const T& t) { return t.val; }
 
 template<typename T> requires std::is_arithmetic_v<T> inline T get_val(const T& t) { return t; }
 template<typename T> requires IsArithV<T> inline auto get_val(const T& t) { return t.val; }
+template<typename T> requires IsArithRefV<T> inline auto get_val(const T& t) { return *(t.p_val); }
 template<typename T> inline auto get_val(const ExprPtr<T>& t) { return t->val.val; }
 template<typename T> inline auto get_val(const Variable<T>& t) { return t.expr->val.val; }
 template<typename T> inline auto get_val(const BooleanExpr& t) { return t.val.val; }

@@ -30,7 +30,7 @@ auto make_bound_call(F&& f, Args&&... args) {
 
 template<typename I> inline std::size_t calc_idx_seed(const I& idx) {
   using DecayedI = Decayed<I>;
-  if constexpr (IsArithV<DecayedI>) {
+  if constexpr (IsScalarLike<DecayedI>) {
     return static_cast<std::size_t>(get_val(idx)) - 1;
   } else if constexpr (IsArray<DecayedI>) {
     ass<"Size of idx in seed has to be 1L">(idx.size() == 1);

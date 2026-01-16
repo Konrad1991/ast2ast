@@ -12,7 +12,7 @@ struct UnaryOpClassIterator {
         : obj(obj_), index(index_) {}
 
     auto operator*() const {
-        if constexpr (IsCppArithV<I> || IsArith<I>) {
+        if constexpr (IsScalarLike<Decayed<I>>) {
             // Scalar input
             return Trait::f(obj);
         } else {

@@ -142,7 +142,7 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   // ======================= assignments =================================================
   // assign scalar values
   template <typename TD>
-  requires (IsArithV<TD> || IsADType<TD>)
+  requires IsScalarLike<TD>
   Array &operator=(const TD inp) {
     if constexpr (IS<TD, T>) {
       d.resize(1);
@@ -168,7 +168,7 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
 
   // copy assignment LArrays and expressions
   template<typename T2>
-  requires(!IsArithV<Decayed<T2>> && IsArray<Decayed<T2>>)
+  requires(!IsScalarLike<Decayed<T2>> && IsArray<Decayed<T2>>)
   Array &operator=(const T2& other_obj) {
     assign(other_obj);
     dim = other_obj.get_dim();
@@ -353,7 +353,7 @@ template<typename T> requires (IsArithV<T> || IsVariable<T>) struct Array<T, Bor
   // ======================= assignments =================================================
   // assign scalar values
   template <typename TD>
-  requires (IsArithV<TD> || IsADType<TD>)
+  requires IsScalarLike<TD>
   Array &operator=(const TD inp) {
     ass<"number of items to replace is not a multiple of replacement length">(1 <= d.capacity);
     if constexpr (IS<TD, T>) {
@@ -380,7 +380,7 @@ template<typename T> requires (IsArithV<T> || IsVariable<T>) struct Array<T, Bor
 
   // copy assignment LArrays and expressions
   template<typename T2>
-  requires(!IsArithV<Decayed<T2>> && IsArray<Decayed<T2>>)
+  requires(!IsScalarLike<Decayed<T2>> && IsArray<Decayed<T2>>)
   Array &operator=(const T2& other_obj) {
     assign(other_obj);
     dim = other_obj.get_dim();
@@ -602,7 +602,7 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   // ======================= assignments =================================================
   // assign scalar values
   template <typename TD>
-  requires (IsArithV<TD> || IsADType<TD>)
+  requires IsScalarLike<TD>
   Array &operator=(const TD inp) {
     if constexpr (IS<TD, T>) {
       for (std::size_t i = 0; i < d.size(); ++i) {
@@ -625,7 +625,7 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
 
   // copy assignment LArrays and expressions
   template<typename T2>
-  requires(!IsArithV<Decayed<T2>> && IsArray<Decayed<T2>>)
+  requires(!IsScalarLike<Decayed<T2>> && IsArray<Decayed<T2>>)
   Array &operator=(const T2& other_obj) {
     assign(other_obj);
     return *this;

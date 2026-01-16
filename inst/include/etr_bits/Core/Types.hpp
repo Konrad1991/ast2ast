@@ -238,6 +238,10 @@ struct Logical;
 struct Integer;
 struct Double;
 struct Dual;
+struct LogicalRef;
+struct IntegerRef;
+struct DoubleRef;
+struct DualRef;
 template<typename T> struct Variable;
 template<typename T> struct Expr;
 template<typename T> using ExprPtr = std::shared_ptr<Expr<T>>;
@@ -515,9 +519,11 @@ inline std::ostream& operator<<(std::ostream& os, const Dual& x) {
     if (!std::isfinite(v)) return os << (v > 0 ? "Inf" : "-Inf");
     return os << v;
   };
+  os << "(";
   print_scalar(x.val, x.isNA());
-  os << " ";
+  os << ", ";
   print_scalar(x.dot, x.isNADot());
+  os << ")";
   return os;
 }
 
@@ -1020,6 +1026,11 @@ template<> struct to_ast_scalar<double>  { using type = Double;  };
 template<> struct to_ast_scalar<int>     { using type = Integer; };
 template<> struct to_ast_scalar<bool>    { using type = Logical; };
 
+template<> struct to_ast_scalar<LogicalRef>  { using type = Logical; };
+template<> struct to_ast_scalar<IntegerRef>  { using type = Integer; };
+template<> struct to_ast_scalar<DoubleRef>   { using type = Double;  };
+template<> struct to_ast_scalar<DualRef>     { using type = Dual;    };
+
 template<typename T>
 using to_ast_scalar_t = typename to_ast_scalar<T>::type;
 
@@ -1060,8 +1071,6 @@ struct common_type {
 template<typename L, typename R>
 using common_type_t = typename common_type<L, R>::type;
 
-template <class T>
-concept ScalarLike = (scalar_rank<std::remove_cvref_t<T>>::value >= 0);
 // Concept to detect scalars
 template<typename T> concept IsArith =
 std::same_as<bare_t<T>, Logical> ||
@@ -1070,10 +1079,48 @@ std::same_as<bare_t<T>, Double> ||
 std::same_as<bare_t<T>, Dual>;
 template <typename T> constexpr bool IsArithV = IsArith<T>;
 
+// Concept to detect refs to scalars
+template<typename T> concept IsArithRef =
+std::same_as<bare_t<T>, LogicalRef> ||
+std::same_as<bare_t<T>, IntegerRef> ||
+std::same_as<bare_t<T>, DoubleRef> ||
+std::same_as<bare_t<T>, DualRef>;
+template <typename T> constexpr bool IsArithRefV = IsArithRef<T>;
+
 template<typename T> concept IsDouble = std::same_as<T, Double>;
 template<typename T> concept IsInteger = std::same_as<T, Integer>;
 template<typename T> concept IsLogical = std::same_as<T, Logical>;
 template<typename T> concept IsDual = std::same_as<T, Dual>;
+
+template<typename T> concept IsDoubleRef = std::same_as<T, DoubleRef>;
+template<typename T> concept IsIntegerRef = std::same_as<T, IntegerRef>;
+template<typename T> concept IsLogicalRef = std::same_as<T, LogicalRef>;
+template<typename T> concept IsDualRef = std::same_as<T, DualRef>;
+
+// reverse ad
+template <typename T> struct is_any_variable : std::false_type {};
+template <typename T> struct is_any_variable<Variable<T>> : std::true_type {};
+template <typename T> inline constexpr bool is_any_variable_v = is_any_variable<T>::value;
+template <typename T> concept IsVariable = is_any_variable_v<T>;
+
+template <typename T> struct is_any_expr : std::false_type {};
+template <typename T> struct is_any_expr<ExprPtr<T>> : std::true_type {};
+template <typename T> inline constexpr bool is_any_expr_v = is_any_expr<T>::value;
+template <typename T> concept IsExpr = is_any_expr_v<T>;
+
+template <typename T> concept IsADType = requires(T t) {
+  typename T;
+  requires IsVariable<T> || IsExpr<T> || IS<T, BooleanExpr>;
+};
+
+template <typename T> concept IsScalarLike = requires(T t) {
+  typename T;
+  requires IsArithV<T> || IsArithRefV<T> || IsADType<T>;
+};
+template <typename T> concept IsScalarOrScalarRef = requires(T t) {
+  typename T;
+  requires IsArithV<T> || IsArithRefV<T>;
+};
 
 // Traits (third dispatch layer)
 // --------------------------------------------------------------------------------------------------
@@ -1439,101 +1486,84 @@ concept IsROrCalculationArray = requires(T t) {
   requires IsOperationArray<T> || IsRArray<T>;
 };
 
-// reverse ad
-template <typename T> struct is_any_variable : std::false_type {};
-template <typename T> struct is_any_variable<Variable<T>> : std::true_type {};
-template <typename T> inline constexpr bool is_any_variable_v = is_any_variable<T>::value;
-template <typename T> concept IsVariable = is_any_variable_v<T>;
-
-template <typename T> struct is_any_expr : std::false_type {};
-template <typename T> struct is_any_expr<ExprPtr<T>> : std::true_type {};
-template <typename T> inline constexpr bool is_any_expr_v = is_any_expr<T>::value;
-template <typename T> concept IsExpr = is_any_expr_v<T>;
-
-template <typename T>
-concept IsADType = requires(T t) {
-  typename T;
-  requires IsVariable<T> || IsExpr<T> || IS<T, BooleanExpr>;
-};
-
 // Second dispatch layer
 // --------------------------------------------------------------------------------------------------
 // unary - ================================================
 template<typename O>
-requires (!IsArray<O> && IsArithV<O>)
+requires (!IsArray<O> && IsScalarOrScalarRef<O>)
 inline auto operator-(const O& o) -> decltype(o.operator-()) {
   return o.operator-();
 }
 // sqrt ===================================================
 template<typename O>
-requires (!IsArray<O> && IsArithV<O>)
+requires (!IsArray<O> && IsScalarOrScalarRef<O>)
 inline auto sqrt(const O& o) -> decltype(o.sqrt()) {
   return o.sqrt();
 }
 // exp ===================================================
 template<typename O>
-requires (!IsArray<O> && IsArithV<O>)
+requires (!IsArray<O> && IsScalarOrScalarRef<O>)
 inline auto exp(const O& o) -> decltype(o.exp()) {
   return o.exp();
 }
 // log ===================================================
 template<typename O>
-requires (!IsArray<O> && IsArithV<O>)
+requires (!IsArray<O> && IsScalarOrScalarRef<O>)
 inline auto log(const O& o) -> decltype(o.log()) {
   return o.log();
 }
 // tan/atan/tanh =========================================
 template<typename O>
-requires (!IsArray<O> && IsArithV<O>)
+requires (!IsArray<O> && IsScalarOrScalarRef<O>)
 inline auto tan(const O& o) -> decltype(o.tan()) {
   return o.tan();
 }
 template<typename O>
-requires (!IsArray<O> && IsArithV<O>)
+requires (!IsArray<O> && IsScalarOrScalarRef<O>)
 inline auto atan(const O& o) -> decltype(o.atan()) {
   return o.atan();
 }
 template<typename O>
-requires (!IsArray<O> && IsArithV<O>)
+requires (!IsArray<O> && IsScalarOrScalarRef<O>)
 inline auto tanh(const O& o) -> decltype(o.tanh()) {
   return o.tanh();
 }
 // cos/acos/cosh =========================================
 template<typename O>
-requires (!IsArray<O> && IsArithV<O>)
+requires (!IsArray<O> && IsScalarOrScalarRef<O>)
 inline auto cos(const O& o) -> decltype(o.cos()) {
   return o.cos();
 }
 template<typename O>
-requires (!IsArray<O> && IsArithV<O>)
+requires (!IsArray<O> && IsScalarOrScalarRef<O>)
 inline auto acos(const O& o) -> decltype(o.acos()) {
   return o.acos();
 }
 template<typename O>
-requires (!IsArray<O> && IsArithV<O>)
+requires (!IsArray<O> && IsScalarOrScalarRef<O>)
 inline auto cosh(const O& o) -> decltype(o.cosh()) {
   return o.cosh();
 }
 // sin/asin/sinh =========================================
 template<typename O>
-requires (!IsArray<O> && IsArithV<O>)
+requires (!IsArray<O> && IsScalarOrScalarRef<O>)
 inline auto sin(const O& o) -> decltype(o.sin()) {
   return o.sin();
 }
 template<typename O>
-requires (!IsArray<O> && IsArithV<O>)
+requires (!IsArray<O> && IsScalarOrScalarRef<O>)
 inline auto asin(const O& o) -> decltype(o.asin()) {
   return o.asin();
 }
 template<typename O>
-requires (!IsArray<O> && IsArithV<O>)
+requires (!IsArray<O> && IsScalarOrScalarRef<O>)
 inline auto sinh(const O& o) -> decltype(o.sinh()) {
   return o.sinh();
 }
 
 // && ===================================================
 template<typename L, typename R>
-requires (!IsArray<L> && !IsArray<R> && IsArithV<L> && IsArithV<R>)
+requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScalarRef<R>)
 inline auto operator&&(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator&&( common_type_t<L,R>(r) ) ) {
   using CT = common_type_t<L, R>;
   return CT(l).operator&&( CT(r) );
@@ -1541,7 +1571,7 @@ inline auto operator&&(const L& l, const R& r) -> decltype( common_type_t<L,R>(l
 
 // || ===================================================
 template<typename L, typename R>
-requires (!IsArray<L> && !IsArray<R> && IsArithV<L> && IsArithV<R>)
+requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScalarRef<R>)
 inline auto operator||(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator||( common_type_t<L,R>(r) ) ) {
   using CT = common_type_t<L, R>;
   return CT(l).operator||( CT(r) );
@@ -1549,77 +1579,77 @@ inline auto operator||(const L& l, const R& r) -> decltype( common_type_t<L,R>(l
 
 // != ===================================================
 template<typename L, typename R>
-requires (!IsArray<L> && !IsArray<R> && (IsArithV<L> || IsCppArithV<L>) && (IsArithV<R> || IsCppArithV<R>) )
+requires (!IsArray<L> && !IsArray<R> && (IsScalarOrScalarRef<L> || IsCppArithV<L>) && (IsScalarOrScalarRef<R> || IsCppArithV<R>) )
 inline auto operator!=(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator!=( common_type_t<L,R>(r) ) ){
   using CT = common_type_t<L, R>;
   return CT(l).operator!=( CT(r) );
 }
 // >= ===================================================
 template<typename L, typename R>
-requires (!IsArray<L> && !IsArray<R> && IsArithV<L> && IsArithV<R>)
+requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScalarRef<R>)
 inline auto operator>=(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator>=( common_type_t<L,R>(r) ) ){
   using CT = common_type_t<L, R>;
   return CT(l).operator>=( CT(r) );
 }
 // > ===================================================
 template<typename L, typename R>
-requires (!IsArray<L> && !IsArray<R> && IsArithV<L> && IsArithV<R>)
+requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScalarRef<R>)
 inline auto operator>(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator>( common_type_t<L,R>(r) ) ){
   using CT = common_type_t<L, R>;
   return CT(l).operator>( CT(r) );
 }
 // <= ===================================================
 template<typename L, typename R>
-requires (!IsArray<L> && !IsArray<R> && IsArithV<L> && IsArithV<R>)
+requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScalarRef<R>)
 inline auto operator<=(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator<=( common_type_t<L,R>(r) ) ){
   using CT = common_type_t<L, R>;
   return CT(l).operator<=( CT(r) );
 }
 // < =====================================================
 template<typename L, typename R>
-requires (!IsArray<L> && !IsArray<R> && IsArithV<L> && IsArithV<R>)
+requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScalarRef<R>)
 inline auto operator<(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator<( common_type_t<L,R>(r) ) ){
   using CT = common_type_t<L, R>;
   return CT(l).operator<( CT(r) );
 }
 // == ===================================================
 template<typename L, typename R>
-requires (!IsArray<L> && !IsArray<R> && IsArithV<L> && IsArithV<R>)
+requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScalarRef<R>)
 inline auto operator==(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator==( common_type_t<L,R>(r) ) ){
   using CT = common_type_t<L, R>;
   return CT(l).operator==( CT(r) );
 }
 // pow ===================================================
 template<typename L, typename R>
-requires (!IsArray<L> && !IsArray<R> && IsArithV<L> && IsArithV<R>)
+requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScalarRef<R>)
 inline auto pow(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).pow( common_type_t<L,R>(r) ) ){
   using CT = common_type_t<L, R>;
   return CT(l).pow( CT(r) );
 }
 // / ===================================================
 template<typename L, typename R>
-requires (!IsArray<L> && !IsArray<R> && IsArithV<L> && IsArithV<R>)
+requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScalarRef<R>)
 inline auto operator/(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator/( common_type_t<L,R>(r) ) ){
   using CT = common_type_t<L, R>;
   return CT(l).operator/( CT(r) );
 }
 // + ===================================================
 template<typename L, typename R>
-requires (!IsArray<L> && !IsArray<R> && IsArithV<L> && IsArithV<R>)
+requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScalarRef<R>)
 inline auto operator+(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator+( common_type_t<L,R>(r) ) ){
   using CT = common_type_t<L, R>;
   return CT(l).operator+( CT(r) );
 }
 // - ===================================================
 template<typename L, typename R>
-requires (!IsArray<L> && !IsArray<R> && IsArithV<L> && IsArithV<R>)
+requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScalarRef<R>)
 inline auto operator-(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator-( common_type_t<L,R>(r) ) ){
   using CT = common_type_t<L, R>;
   return CT(l).operator-( CT(r) );
 }
 // * ===================================================
 template<typename L, typename R>
-requires (!IsArray<L> && !IsArray<R> && IsArithV<L> && IsArithV<R>)
+requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScalarRef<R>)
 inline auto operator*(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator*( common_type_t<L,R>(r) ) ){
   using CT = common_type_t<L, R>;
   return CT(l).operator*( CT(r) );

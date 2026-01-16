@@ -11,13 +11,9 @@ namespace etr {
 inline void print() { PRINT_STREAM << std::endl; }
 
 template <typename T>
-requires (IsArithV<T> || IsADType<T>)
+requires IsScalarLike<T>
 inline void print(const T &inp) {
-  if constexpr (IS<T, bool>) {
-    PRINT_STREAM << std::boolalpha << inp << std::endl;
-  } else {
-    PRINT_STREAM << inp << std::endl;
-  }
+  PRINT_STREAM << inp << std::endl;
 }
 
 inline void print(const char *inp) {

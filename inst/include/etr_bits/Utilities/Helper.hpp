@@ -8,7 +8,7 @@ namespace etr {
 template <typename T> requires IsArithV<T> inline Logical isNA(const T inp) {
   return inp.isNA();
 }
-template <typename T> requires IsADType<T> inline Logical isNA(const T inp) {
+template <typename T> requires (IsADType<T> || IsArithRefV<T>) inline Logical isNA(const T inp) {
   const auto val = get_scalar_val(inp);
   return val.isNA();
 }
@@ -29,7 +29,7 @@ template <typename T> requires IsArithV<T> inline Logical isNaN(const T inp) {
     return inp.isNaN();
   }
 }
-template <typename T> requires IsADType<T> inline Logical isNaN(const T inp) {
+template <typename T> requires (IsADType<T> || IsArithRefV<T>) inline Logical isNaN(const T inp) {
   const auto val = get_scalar_val(inp);
   return val.isNaN();
 }
@@ -50,7 +50,7 @@ template <typename T> requires IsArithV<T> inline Logical isInfinite(const T inp
     return Logical(inp.isInfinite());
   }
 }
-template <typename T> requires IsADType<T> inline Logical isInfinite(const T inp) {
+template <typename T> requires (IsADType<T> || IsArithRefV<T>) inline Logical isInfinite(const T inp) {
   const auto val = get_scalar_val(inp);
   return Logical(val.isInfinite());
 }
@@ -72,7 +72,7 @@ template <typename T> requires IsArithV<T> inline Logical isFinite(const T inp) 
     return Logical(inp.isFinite());
   }
 }
-template <typename T> requires IsADType<T> inline Logical isFinite(const T inp) {
+template <typename T> requires (IsADType<T> || IsArithRefV<T>) inline Logical isFinite(const T inp) {
   const auto val = get_scalar_val(inp);
   return Logical(val.isFinite());
 }

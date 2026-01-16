@@ -226,14 +226,7 @@ inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& conve
                                        counter, counter_converted);
       }
       // --- Case 5: Scalars
-      else if constexpr (IsArithV<A>) {
-        fill_scalars_in_index_lists<N>(arr, converted_arrays,
-                                       index_lists, arg.val,
-                                       counter, counter_converted);
-      }
-
-      // --- Case 6: rev ad
-      else if constexpr (IsADType<A>) {
+      else if constexpr (IsScalarLike<A>) {
         fill_scalars_in_index_lists<N>(arr, converted_arrays,
                                        index_lists, get_val(arg),
                                        counter, counter_converted);

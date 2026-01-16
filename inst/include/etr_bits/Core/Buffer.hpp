@@ -147,7 +147,7 @@ template <typename T, typename BufferTrait> struct Buffer {
     }
   }
   template <typename TInp>
-  requires(IS<TInp, Variable<Double>> || IsArithV<Decayed<TInp>>)
+  requires(IS<TInp, Variable<Double>> || IsScalarOrScalarRef<Decayed<TInp>>)
   void fill(TInp &&val) {
     if constexpr (IS<T, Double>) {
       std::fill(p, p + sz, get_val(val));

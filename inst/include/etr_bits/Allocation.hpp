@@ -67,7 +67,7 @@ template <typename... Args> inline auto c(Args &&...args) {
   forEachArg(
     [&](auto arg) {
       using testType = Decayed<decltype(arg)>;
-      constexpr bool is_scalar = IsArithV<testType> || IsADType<testType>;
+      constexpr bool is_scalar = IsScalarLike<testType>;
       if constexpr (is_scalar) {
         size++;
       } else {
@@ -83,7 +83,7 @@ template <typename... Args> inline auto c(Args &&...args) {
   forEachArg(
     [&](const auto &arg) {
       using testType = Decayed<decltype(arg)>;
-      constexpr bool is_scalar = IsArithV<testType> || IsADType<testType>;
+      constexpr bool is_scalar = IsScalarLike<testType>;
       if constexpr (is_scalar) {
         if constexpr (IS<testType, cType>) {
           ret.set(index, arg);
@@ -122,7 +122,7 @@ inline auto ConvertValueColon(const T& obj) {
   "This is not allowed in R and not supported here.\n"
   "Please use integer or double values only.\n\n");
 
-  constexpr bool is_scalar = IsArithV<DecayedT> || IsADType<DecayedT>;
+  constexpr bool is_scalar = IsScalarLike<DecayedT>;
 
   if constexpr(is_scalar) {
     return obj;
@@ -176,7 +176,7 @@ inline auto colon(const A& start,const O& end) {
 template<typename T>
 inline std::size_t ConvertTimesRep(const T& times) {
   using DecayedT = Decayed<T>;
-  constexpr bool is_scalar = IsArithV<DecayedT> || IsADType<DecayedT>;
+  constexpr bool is_scalar = IsScalarLike<DecayedT>;
   if constexpr(is_scalar) {
     const auto v = get_val(times);
     std::size_t res = static_cast<std::size_t>(v);
@@ -224,7 +224,7 @@ template <typename L, typename R> inline auto rep(L &&inp, R &&times) {
 template<typename T>
 inline std::size_t ConvertSizeVec(const T& s) {
   using DecayedT = Decayed<T>;
-  constexpr bool is_scalar = IsArithV<DecayedT> || IsADType<DecayedT>;
+  constexpr bool is_scalar = IsScalarLike<DecayedT>;
   if constexpr(is_scalar) {
     const auto v = get_val(s);
     ass<"size in fct vector/logical/integer/numeric/matrix/array has to be a positive integer">(v >= 1);
@@ -278,7 +278,7 @@ inline auto matrix(const T& inp, const R& nrow, const C& ncol) {
   std::size_t nr = ConvertSizeVec(nrow);
   std::size_t nc = ConvertSizeVec(ncol);
   using DecayedT = Decayed<T>;
-  constexpr bool is_scalar = IsArithV<DecayedT> || IsADType<DecayedT>;
+  constexpr bool is_scalar = IsScalarLike<DecayedT>;
   if constexpr(is_scalar) {
     auto res = createRMat<Decayed<T>>(nrow, ncol);
     for (std::size_t i = 0; i < res.size(); i++) {
@@ -299,7 +299,7 @@ inline auto matrix(const T& inp, const R& nrow, const C& ncol) {
 template<typename Dim>
 inline auto calc_dim(const Dim& dim) {
   using DecayedDim = Decayed<Dim>;
-  constexpr bool is_scalar_dim = IsArithV<DecayedDim> || IsADType<DecayedDim>;
+  constexpr bool is_scalar_dim = IsScalarLike<DecayedDim>;
   if constexpr (is_scalar_dim) {
     std::size_t size = ConvertSizeVec(dim);
     return std::vector<std::size_t>{size};
@@ -319,7 +319,7 @@ inline auto array(const T& inp, const Dim& dim_inp) {
     size *= dim[i];
   }
   using DecayedT = Decayed<T>;
-  constexpr bool is_scalar = IsArithV<DecayedT> || IsADType<DecayedT>;
+  constexpr bool is_scalar = IsScalarLike<DecayedT>;
   if constexpr (is_scalar) {
     ass<"invalid length argument">(size > 0);
     Array<DecayedT, Buffer<DecayedT, RBufferTrait>> res(SI{size});

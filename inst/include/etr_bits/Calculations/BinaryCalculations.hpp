@@ -13,8 +13,8 @@ struct BinaryOpClassIterator {
   : l(l_), r(r_), index(index_) {}
 
   auto operator*() const {
-    constexpr bool is_scalar_l = IsCppArithV<L> || IsArith<L>;
-    constexpr bool is_scalar_r = IsCppArithV<R> || IsArith<R>;
+    constexpr bool is_scalar_l = IsScalarLike<L>;
+    constexpr bool is_scalar_r = IsScalarLike<R>;
     if constexpr (!is_scalar_l && is_scalar_r) {
       return Trait::f(l.get(index), r);
     } else if constexpr (is_scalar_l && !is_scalar_r) {
@@ -76,8 +76,8 @@ template <typename L, typename R, typename BTrait> struct BinaryOperation {
   BinaryOperation(L &&l_, R &&r_) : l(std::move(l_)), r(std::move(r_)) {}
 
   auto get(std::size_t i) const {
-    constexpr bool is_scalar_l = IsCppArithV<L> || IsArith<L> || IsADType<L>;
-    constexpr bool is_scalar_r = IsCppArithV<R> || IsArith<R> || IsADType<R>;
+    constexpr bool is_scalar_l = IsScalarLike<L>;
+    constexpr bool is_scalar_r = IsScalarLike<R>;
     if constexpr (!is_scalar_l && is_scalar_r) {
       return Trait::f(l.get().get(i), r.get());
     } else if constexpr (is_scalar_l && !is_scalar_r) {
@@ -91,8 +91,8 @@ template <typename L, typename R, typename BTrait> struct BinaryOperation {
   template<typename V> void set(std::size_t i, const V& val) = delete;
 
   std::size_t size() const {
-    constexpr bool is_scalar_l = IsCppArithV<L> || IsArith<L> || IsADType<L>;
-    constexpr bool is_scalar_r = IsCppArithV<R> || IsArith<R> || IsADType<R>;
+    constexpr bool is_scalar_l = IsScalarLike<L>;
+    constexpr bool is_scalar_r = IsScalarLike<R>;
     if constexpr (!is_scalar_l && is_scalar_r) {
       return l.get().size();
     } else if constexpr (is_scalar_l && !is_scalar_r) {
@@ -134,8 +134,8 @@ template <typename L, typename R, typename Trait>
 inline auto create_bin_vec(L &&l,R &&r) {
   using LD = std::decay_t<L>;
   using RD = std::decay_t<R>;
-  constexpr bool is_scalar_l = IsCppArithV<LD> || IsArith<LD> || IsADType<LD>;
-  constexpr bool is_scalar_r = IsCppArithV<RD> || IsArith<RD> || IsADType<RD>;
+  constexpr bool is_scalar_l = IsScalarLike<LD>;
+  constexpr bool is_scalar_r = IsScalarLike<RD>;
   using T = decltype(determine_type_binary_op<LD, RD, Trait>());
   if constexpr (!is_scalar_l && is_scalar_r) {
     using Ld = std::decay_t<decltype(l.d)>;
