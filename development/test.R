@@ -10,3 +10,6 @@ f <- function() {
   a[1:4]
 }
 cat(translate(f, getsource = TRUE), "\n")
+
+
+
