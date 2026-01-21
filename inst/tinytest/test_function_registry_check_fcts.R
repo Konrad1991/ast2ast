@@ -34,6 +34,23 @@ test_checks(
   "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : i = 3.0\nYou cannot assign to an index variable\n"
 )
 
+# --- subsetting array ----------------------------------------------------------
+f <- function() {
+  array(0, c(2, 2))[NA, NA]
+}
+args_fct <- function() {}
+test_checks(
+  f, args_fct, TRUE,
+  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  [(array(0.0, c(2.0, 2.0)), NA, NA)\nYou cannot use character/NA/NaN/Inf entries for subsetting\n"
+)
+f <- function() {
+  array(0, c(2, 2))[NA]
+}
+args_fct <- function() {}
+test_checks(
+  f, args_fct, TRUE,
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  array(0.0, c(2.0, 2.0)) [ NA\nYou cannot use character/NA/NaN/Inf entries for subsetting\n"
+)
 # --- subsetting matrix ----------------------------------------------------------
 f <- function() {
   matrix(0, 2, 2)[NA, NA]
@@ -356,6 +373,14 @@ args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
   "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  m <- matrix(1.0, \"nrow\", 1.0)\nFound unallowed nrow type in matrix\n"
+)
+f <- function() {
+  m <- array("invalid", c(2, 2))
+}
+args_fct <- function() {}
+test_checks(
+  f, args_fct, TRUE,
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  m <- array(\"invalid\", c(2.0, 2.0))\nYou cannot fill an array with character entries\n"
 )
 
 # --- length & dim ----------------------------------------------------------

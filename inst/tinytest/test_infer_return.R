@@ -83,6 +83,15 @@ ret_type <- get_ret_type(f, f_args, TRUE)
 check_type_f_arg(ret_type, "double", "matrix", "mutable", "copy", FALSE)
 
 f <- function(a) {
+  return(array(1.1, 2))
+}
+f_args <- function(a) {
+  a |> type(vec(double))
+}
+ret_type <- get_ret_type(f, f_args, TRUE)
+check_type_f_arg(ret_type, "double", "array", "mutable", "copy", FALSE)
+
+f <- function(a) {
   if (a == 1) {
     return(TRUE)
   } else if(a == 2) {
@@ -97,10 +106,12 @@ f <- function(a) {
     return(c(3.14, 3.14))
   } else if (a == 7) {
     return(matrix(3.14, 5, 5))
+  } else if (a == 8) {
+    return(array(3.14, c(2, 3, 4)))
   }
 }
 f_args <- function(a) {
   a |> type(vec(double))
 }
 ret_type <- get_ret_type(f, f_args, TRUE)
-check_type_f_arg(ret_type, "double", "matrix", "mutable", "copy", FALSE)
+check_type_f_arg(ret_type, "double", "array", "mutable", "copy", FALSE)

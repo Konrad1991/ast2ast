@@ -21,7 +21,7 @@ check_type_f_arg <- function(type, bt, ds, const_or_mut, copy_or_ref, fct_input 
   expect_true(all(check))
 }
 
-f <- function(a, b, c, d, e, f) {
+f <- function(a, b, c, d, e, f, g, h, i) {
   inner <- a + b
   return(a)
 }
@@ -32,6 +32,9 @@ f_args <- function(a, b, c, d, e, f) {
   d |> type(borrow_mat(logical)) |> ref()
   e |> type(borrow_mat(integer)) |> ref()
   f |> type(borrow_mat(double)) |> ref()
+  g |> type(borrow_array(logical)) |> ref()
+  h |> type(borrow_array(integer)) |> ref()
+  i |> type(borrow_array(double)) |> ref()
 }
 types <- get_types_with_f_args(f, f_args)
 check_type_f_arg(types$a, "logical", "borrow_vec", "mutable", "ref")
@@ -40,9 +43,12 @@ check_type_f_arg(types$c, "double", "borrow_vec", "mutable", "ref")
 check_type_f_arg(types$d, "logical", "borrow_mat", "mutable", "ref")
 check_type_f_arg(types$e, "integer", "borrow_mat", "mutable", "ref")
 check_type_f_arg(types$f, "double", "borrow_mat", "mutable", "ref")
+check_type_f_arg(types$g, "logical", "borrow_array", "mutable", "ref")
+check_type_f_arg(types$h, "integer", "borrow_array", "mutable", "ref")
+check_type_f_arg(types$i, "double", "borrow_array", "mutable", "ref")
 check_type_f_arg(types$inner, "integer", "vector", "mutable", "copy", FALSE)
 
-f <- function(a, b, c, d, e, f, g, h, i) {
+f <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
   return(a)
 }
 f_args <- function(a, b, c, d, e, f, g, h, i) {
@@ -55,6 +61,9 @@ f_args <- function(a, b, c, d, e, f, g, h, i) {
   g |> type(mat(logical))
   h |> type(mat(integer))
   i |> type(mat(double))
+  j |> type(array(logical))
+  k |> type(array(integer))
+  l |> type(array(double))
 }
 types <- get_types_with_f_args(f, f_args)
 check_type_f_arg(types$a, "logical", "scalar", "mutable", "copy")
@@ -66,11 +75,14 @@ check_type_f_arg(types$f, "double", "vec", "mutable", "copy")
 check_type_f_arg(types$g, "logical", "mat", "mutable", "copy")
 check_type_f_arg(types$h, "integer", "mat", "mutable", "copy")
 check_type_f_arg(types$i, "double", "mat", "mutable", "copy")
+check_type_f_arg(types$j, "logical", "array", "mutable", "copy")
+check_type_f_arg(types$k, "integer", "array", "mutable", "copy")
+check_type_f_arg(types$l, "double", "array", "mutable", "copy")
 
-f <- function(a, b, c, d, e, f, g, h, i) {
+f <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
   return(a)
 }
-f_args <- function(a, b, c, d, e, f, g, h, i) {
+f_args <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
   a |> type(logical) |> ref()
   b |> type(int) |> ref()
   c |> type(double) |> ref()
@@ -80,6 +92,9 @@ f_args <- function(a, b, c, d, e, f, g, h, i) {
   g |> type(mat(logical)) |> ref()
   h |> type(mat(integer)) |> ref()
   i |> type(mat(double)) |> ref()
+  j |> type(array(logical)) |> ref()
+  k |> type(array(integer)) |> ref()
+  l |> type(array(double)) |> ref()
 }
 types <- get_types_with_f_args(f, f_args)
 check_type_f_arg(types$a, "logical", "scalar", "mutable", "ref")
@@ -91,11 +106,14 @@ check_type_f_arg(types$f, "double", "vec", "mutable", "ref")
 check_type_f_arg(types$g, "logical", "mat", "mutable", "ref")
 check_type_f_arg(types$h, "integer", "mat", "mutable", "ref")
 check_type_f_arg(types$i, "double", "mat", "mutable", "ref")
+check_type_f_arg(types$j, "logical", "array", "mutable", "ref")
+check_type_f_arg(types$k, "integer", "array", "mutable", "ref")
+check_type_f_arg(types$l, "double", "array", "mutable", "ref")
 
-f <- function(a, b, c, d, e, f, g, h, i) {
+f <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
   return(a)
 }
-f_args <- function(a, b, c, d, e, f, g, h, i) {
+f_args <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
   a |> type(logical) |> ref() |> const()
   b |> type(int) |> ref() |> const()
   c |> type(double) |> ref() |> const()
@@ -105,6 +123,9 @@ f_args <- function(a, b, c, d, e, f, g, h, i) {
   g |> type(mat(logical)) |> ref() |> const()
   h |> type(mat(integer)) |> ref() |> const()
   i |> type(mat(double)) |> ref() |> const()
+  j |> type(array(logical)) |> ref() |> const()
+  k |> type(array(integer)) |> ref() |> const()
+  l |> type(array(double)) |> ref() |> const()
 }
 types <- get_types_with_f_args(f, f_args)
 check_type_f_arg(types$a, "logical", "scalar", "const", "ref")
@@ -116,6 +137,9 @@ check_type_f_arg(types$f, "double", "vec", "const", "ref")
 check_type_f_arg(types$g, "logical", "mat", "const", "ref")
 check_type_f_arg(types$h, "integer", "mat", "const", "ref")
 check_type_f_arg(types$i, "double", "mat", "const", "ref")
+check_type_f_arg(types$j, "logical", "array", "const", "ref")
+check_type_f_arg(types$k, "integer", "array", "const", "ref")
+check_type_f_arg(types$l, "double", "array", "const", "ref")
 
 # --- function input R ----------------------------------------------------
 get_types_with_f_args <- function(f, f_args, r_fct = TRUE) {
@@ -132,10 +156,10 @@ check_type_f_arg <- function(type, bt, ds, const_or_mut, copy_or_ref) {
   expect_true(all(check))
 }
 
-f <- function(a, b, c, d, e, f, g, h, i) {
+f <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
   return(a)
 }
-f_args <- function(a, b, c, d, e, f, g, h, i) {
+f_args <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
   a |> type(logical)
   b |> type(int)
   c |> type(double)
@@ -145,6 +169,9 @@ f_args <- function(a, b, c, d, e, f, g, h, i) {
   g |> type(mat(logical))
   h |> type(mat(integer))
   i |> type(mat(double))
+  j |> type(array(logical))
+  k |> type(array(integer))
+  l |> type(array(double))
 }
 types <- get_types_with_f_args(f, f_args)
 check_type_f_arg(types$a, "logical", "scalar", "mutable", "copy")
@@ -156,11 +183,14 @@ check_type_f_arg(types$f, "double", "vec", "mutable", "copy")
 check_type_f_arg(types$g, "logical", "mat", "mutable", "copy")
 check_type_f_arg(types$h, "integer", "mat", "mutable", "copy")
 check_type_f_arg(types$i, "double", "mat", "mutable", "copy")
+check_type_f_arg(types$j, "logical", "array", "mutable", "copy")
+check_type_f_arg(types$k, "integer", "array", "mutable", "copy")
+check_type_f_arg(types$l, "double", "array", "mutable", "copy")
 
-f <- function(a, b, c, d, e, f, g, h, i) {
+f <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
   return(a)
 }
-f_args <- function(a, b, c, d, e, f, g, h, i) {
+f_args <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
   a |> type(logical) |> ref()
   b |> type(int) |> ref()
   c |> type(double) |> ref()
@@ -170,6 +200,9 @@ f_args <- function(a, b, c, d, e, f, g, h, i) {
   g |> type(mat(logical)) |> ref()
   h |> type(mat(integer)) |> ref()
   i |> type(mat(double)) |> ref()
+  j |> type(array(logical)) |> ref()
+  k |> type(array(integer)) |> ref()
+  l |> type(array(double)) |> ref()
 }
 types <- get_types_with_f_args(f, f_args)
 check_type_f_arg(types$a, "logical", "scalar", "mutable", "ref")
@@ -181,11 +214,14 @@ check_type_f_arg(types$f, "double", "vec", "mutable", "ref")
 check_type_f_arg(types$g, "logical", "mat", "mutable", "ref")
 check_type_f_arg(types$h, "integer", "mat", "mutable", "ref")
 check_type_f_arg(types$i, "double", "mat", "mutable", "ref")
+check_type_f_arg(types$j, "logical", "array", "mutable", "ref")
+check_type_f_arg(types$k, "integer", "array", "mutable", "ref")
+check_type_f_arg(types$l, "double", "array", "mutable", "ref")
 
-f <- function(a, b, c, d, e, f, g, h, i) {
+f <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
   return(a)
 }
-f_args <- function(a, b, c, d, e, f, g, h, i) {
+f_args <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
   a |> type(logical) |> ref() |> const()
   b |> type(int) |> ref() |> const()
   c |> type(double) |> ref() |> const()
@@ -195,6 +231,9 @@ f_args <- function(a, b, c, d, e, f, g, h, i) {
   g |> type(mat(logical)) |> ref() |> const()
   h |> type(mat(integer)) |> ref() |> const()
   i |> type(mat(double)) |> ref() |> const()
+  j |> type(array(logical)) |> ref() |> const()
+  k |> type(array(integer)) |> ref() |> const()
+  l |> type(array(double)) |> ref() |> const()
 }
 types <- get_types_with_f_args(f, f_args)
 check_type_f_arg(types$a, "logical", "scalar", "const", "ref")
@@ -206,7 +245,9 @@ check_type_f_arg(types$f, "double", "vec", "const", "ref")
 check_type_f_arg(types$g, "logical", "mat", "const", "ref")
 check_type_f_arg(types$h, "integer", "mat", "const", "ref")
 check_type_f_arg(types$i, "double", "mat", "const", "ref")
-
+check_type_f_arg(types$j, "logical", "array", "const", "ref")
+check_type_f_arg(types$k, "integer", "array", "const", "ref")
+check_type_f_arg(types$l, "double", "array", "const", "ref")
 
 # --- undefined vars -----------------------------------------------------
 f <- function() {
@@ -251,8 +292,8 @@ f <- function() {
   s <- is.finite(a)
   t <- is.finite(b)
   u <- is.finite(c)
-
   v <- cmr(a, b, b)
+  w <- array(1:12, c(3, 4))
 }
 types <- get_types(f)
 expect_true(types$d$base_type == "integer")
@@ -299,6 +340,8 @@ expect_true(types$u$data_struct == "matrix")
 
 expect_true(types$v$base_type == "double")
 expect_true(types$v$data_struct == "scalar")
+expect_true(types$w$base_type == "double")
+expect_true(types$w$data_struct == "array")
 # --- logical operators --------------------------------------------------
 f <- function() {
   a <- 1:3
@@ -573,6 +616,11 @@ f <- function() {
   i <- e[1, 4]
   j <- e[[2, 3]]
   k <- at(e, 2, 3)
+  l <- array(1:24, c(3, 4, 2))
+  m <- l[c(1, 2), c(1, 2), c(1)]
+  n <- a[c(1, 2, 3)]
+  o <- e[c(1, 2, 3)]
+  p <- e[c(1), c(2)]
 }
 types <- get_types(f)
 expect_true(types$b$base_type == "double")
@@ -595,6 +643,16 @@ expect_true(types$j$base_type == "double")
 expect_true(types$j$data_struct == "scalar")
 expect_true(types$k$base_type == "double")
 expect_true(types$k$data_struct == "scalar")
+expect_true(types$l$base_type == "double")
+expect_true(types$l$data_struct == "array")
+expect_true(types$m$base_type == "double")
+expect_true(types$m$data_struct == "array")
+expect_true(types$n$base_type == "double")
+expect_true(types$n$data_struct == "vector")
+expect_true(types$o$base_type == "double")
+expect_true(types$o$data_struct == "vector")
+expect_true(types$p$base_type == "double")
+expect_true(types$p$data_struct == "matrix")
 
 f <- function() {
   a <- 1
@@ -608,6 +666,8 @@ f <- function() {
   d[1] <- 4 # Results in runtime error: no memory is allocated
   e <- 1
   e[d[[1]], b[a[1]]] <- 100
+  f <- 1
+  f[1, 1, 1] <- 300
 }
 types <- get_types(f)
 expect_true(types$a$base_type == "double", info = "Type promotion at LHS")
@@ -620,6 +680,8 @@ expect_true(types$d$base_type == "double", info = "Type promotion at LHS")
 expect_true(types$d$data_struct == "vector", info = "Type promotion at LHS")
 expect_true(types$e$base_type == "double", info = "Type promotion at LHS")
 expect_true(types$e$data_struct == "matrix", info = "Type promotion at LHS")
+expect_true(types$f$base_type == "double", info = "Type promotion at LHS")
+expect_true(types$f$data_struct == "array", info = "Type promotion at LHS")
 
 f <- function() {
   a <- c(1, 2, 3, 4)
@@ -631,6 +693,7 @@ f <- function() {
   g <- e[]
   h <- e[f[b[[c[1.1]]]]]
   i <- e[f[b[[c[1.1]]]], TRUE]
+  j <- e[c(1L), 1, 1]
 }
 types <- get_types(f)
 expect_true(types$d$base_type == "double")
@@ -641,6 +704,8 @@ expect_true(types$h$base_type == "double")
 expect_true(types$h$data_struct == "scalar")
 expect_true(types$i$base_type == "double")
 expect_true(types$i$data_struct == "matrix")
+expect_true(types$j$base_type == "double")
+expect_true(types$j$data_struct == "array")
 
 # Fast path choosen
 f <- function() {
@@ -655,6 +720,8 @@ f <- function() {
   }
   h <- matrix(1:4, 2, 2)
   i <- h[1, c]
+  j <- array(1:12, c(3, 4))
+  k <- j[5, 1, 1]
 }
 types <- get_types(f)
 expect_true(types$d$base_type == "double")
@@ -667,6 +734,8 @@ expect_true(types$g$base_type == "double")
 expect_true(types$g$data_struct == "scalar")
 expect_true(types$i$base_type == "double")
 expect_true(types$i$data_struct == "scalar")
+expect_true(types$k$base_type == "double")
+expect_true(types$k$data_struct == "scalar")
 
 # --- type ---------------------------------------------------------------
 f <- function() {
@@ -711,6 +780,13 @@ f <- function() {
 types <- get_types(f)
 expect_true(types[[1]]$base_type == "logical")
 expect_true(types[[1]]$data_struct == "matrix")
+
+f <- function() {
+  a |> type(array(logical))
+}
+types <- get_types(f)
+expect_true(types[[1]]$base_type == "logical")
+expect_true(types[[1]]$data_struct == "array")
 
 f <- function() {
   a |> type(mat(logical))
@@ -914,3 +990,31 @@ f <- function() {
 types <- get_types(f)
 expect_true(types[[1]]$base_type == "NA")
 expect_true(types[[1]]$data_struct == "matrix")
+
+f <- function() {
+  a <- array(TRUE, 2, 2)
+}
+types <- get_types(f)
+expect_true(types[[1]]$base_type == "logical")
+expect_true(types[[1]]$data_struct == "array")
+
+f <- function() {
+  a <- array(1L, 2, 2)
+}
+types <- get_types(f)
+expect_true(types[[1]]$base_type == "integer")
+expect_true(types[[1]]$data_struct == "array")
+
+f <- function() {
+  a <- array(0, 2, 2)
+}
+types <- get_types(f)
+expect_true(types[[1]]$base_type == "double")
+expect_true(types[[1]]$data_struct == "array")
+
+f <- function() {
+  a <- array(NA, 2, 2)
+}
+types <- get_types(f)
+expect_true(types[[1]]$base_type == "NA")
+expect_true(types[[1]]$data_struct == "array")

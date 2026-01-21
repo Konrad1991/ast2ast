@@ -792,7 +792,7 @@ function_registry_global$add(
   is_infix = FALSE, group = "function_node", cpp_name = "etr::matrix"
 )
 function_registry_global$add(
-  name = "array", num_args = 2L, arg_names = c(NA, NA),
+  name = "array", num_args = 2, arg_names = c(NA, NA),
   infer_fct = function(node, vars_list, r_fct) {
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, r_fct)
@@ -806,12 +806,7 @@ function_registry_global$add(
   },
   check_fct = function(node, vars_types_list, r_fct, real_type) {
     if (is_char(node$args[[1]], vars_types_list)) {
-     node$error <- "You cannot fill a matrix with character entries"
-    }
-    for (i in seq_along(2L:length(node$args))) {
-      if (is_charNANaNInf(node$args[[i]], vars_types_list)) {
-        node$error <- sprintf("Found unallowed type in entry %s, in function array", i)
-      }
+     node$error <- "You cannot fill an array with character entries"
     }
   },
   is_infix = FALSE, group = "function_node", cpp_name = "etr::array"
