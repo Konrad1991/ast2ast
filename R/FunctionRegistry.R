@@ -130,17 +130,26 @@ is_data_structs <- function(node, vars_types_list, data_structs) {
     node$internal_type$data_struct %within% data_structs
   }
 }
-is_vec_or_mat <- function(node, vars_types_list, data_structs) {
+is_vec_mat_or_array <- function(node, vars_types_list, data_structs) {
   is_data_structs(node, vars_types_list,
-    c("matrix", "vector", "vec", "mat", "borrow_vec", "borrow_vector", "borrow_mat", "borrow_matrix"))
+    c("matrix", "vector", "vec", "mat", "array",
+      "borrow_vec", "borrow_vector", "borrow_mat", "borrow_matrix", "borrow_array")
+  )
 }
 is_vec <- function(node, vars_types_list) {
   is_data_structs(node, vars_types_list,
-    c("vector", "vec", "borrow_vec", "borrow_vector"))
+    c("vector", "vec", "borrow_vec", "borrow_vector")
+  )
 }
 is_mat <- function(node, vars_types_list) {
   is_data_structs(node, vars_types_list,
-    c("matrix", "mat", "borrow_matrix", "borrow_mat"))
+    c("matrix", "mat", "borrow_matrix", "borrow_mat")
+  )
+}
+is_array <- function(node, vars_types_list) {
+  is_data_structs(node, vars_types_list,
+    c("array", "borrow_array")
+  )
 }
 
 check_unary <- function(node, vars_types_list, r_fct, real_type) {
@@ -158,21 +167,20 @@ check_binary <- function(node, vars_types_list, r_fct, real_type) {
 }
 check_subsetting <- function(node, vars_types_list, r_fct, real_type) {
   if (inherits(node, "binary_node")) {
-    if (!is_vec_or_mat(node$left_node, vars_types_list)) {
-      node$error <- "You can only subset variables of type matrix or vector"
+    if (!is_vec_mat_or_array(node$left_node, vars_types_list)) {
+      node$error <- "You can only subset variables of type array, matrix or vector"
     }
     if (is_charNANaNInf(node$right_node, vars_types_list)) {
       node$error <- "You cannot use character/NA/NaN/Inf entries for subsetting"
     }
   } else if (inherits(node, "function_node")) {
-    if (!is_vec_or_mat(node$args[[1]], vars_types_list)) {
-      node$error <- "You can only subset variables of type matrix or vector"
+    if (!is_vec_mat_or_array(node$args[[1]], vars_types_list)) {
+      node$error <- "You can only subset variables of type array, matrix or vector"
     }
-    if (is_charNANaNInf(node$args[[2]], vars_types_list)) {
-      node$error <- "You cannot use character/NA/NaN/Inf entries for subsetting"
-    }
-    if (is_charNANaNInf(node$args[[3]], vars_types_list)) {
-      node$error <- "You cannot use character/NA/NaN/Inf entries for subsetting"
+    for (i in 2L:length(node$args)) {
+      if (is_charNANaNInf(node$args[[i]], vars_types_list)) {
+        node$error <- "You cannot use character/NA/NaN/Inf entries for subsetting"
+      }
     }
   }
 }
@@ -199,7 +207,6 @@ infer_subsetting <- function(node, vars_list, r_fct) {
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- left_type_node$base_type
     t$data_struct <- "vector"
-    # TODO: implement contigous_subset
     # if (inherits(node$right_node, "binary_node") && node$right_node$operator == ":") {
     #   node$operator <- "contigous_subset"
     # }
@@ -220,6 +227,9 @@ infer_subsetting <- function(node, vars_list, r_fct) {
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- type_first_arg$base_type
     t$data_struct <- "matrix"
+    if (length(all_types) > 3L) {
+      t$data_struct <- "array"
+    }
     if (any(node$operator == c("[[", "at"))) {
       t$data_struct <- "scalar"
     }
@@ -380,19 +390,19 @@ function_registry_global$add(
   group = "binary_node", cpp_name = "="
 )
 function_registry_global$add(
-  name = "[", num_args = c(1, 2, 3), arg_names = c(NA, NA, NA),
+  name = "[", num_args = NA, arg_names = NA,
   infer_fct = infer_subsetting,
   check_fct = check_subsetting,
   is_infix = FALSE, group = "binary_node", cpp_name = "etr::subset"
 )
 function_registry_global$add(
-  name = "at", num_args = c(2, 3), arg_names = c(NA, NA, NA),
+  name = "at", num_args = NA, arg_names = NA,
   infer_fct = infer_subsetting,
   check_fct = check_subsetting,
   is_infix = FALSE, group = "binary_node", cpp_name = "etr::at"
 )
 function_registry_global$add(
-  name = "[[", num_args = c(2, 3), arg_names = c(NA, NA, NA),
+  name = "[[", num_args = NA, arg_names = NA,
   infer_fct = infer_subsetting,
   check_fct = check_subsetting,
   is_infix = FALSE, group = "binary_node", cpp_name = "etr::at"
@@ -772,14 +782,39 @@ function_registry_global$add(
     if (is_char(node$args[[1]], vars_types_list)) {
      node$error <- "You cannot fill a matrix with character entries"
     }
-    if (!is_int(node$args[[2]]) && !is_num(node$args[[2]])) {
+    if (!is_int(node$args[[2]], vars_types_list) && !is_num(node$args[[2]], vars_types_list)) {
       node$error <- "Found unallowed nrow type in matrix"
     }
-    if (!is_int(node$args[[3]]) && !is_num(node$args[[3]])) {
+    if (!is_int(node$args[[3]], vars_types_list) && !is_num(node$args[[3]], vars_types_list)) {
       node$error <- "Found unallowed ncol type in matrix"
     }
   },
   is_infix = FALSE, group = "function_node", cpp_name = "etr::matrix"
+)
+function_registry_global$add(
+  name = "array", num_args = 2L, arg_names = c(NA, NA),
+  infer_fct = function(node, vars_list, r_fct) {
+    all_types <- lapply(node$args, function(arg) {
+      infer(arg, vars_list, r_fct)
+    })
+    type_first_arg <- all_types[[1]]
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- type_first_arg
+    t$data_struct <- "array"
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
+    if (is_char(node$args[[1]], vars_types_list)) {
+     node$error <- "You cannot fill a matrix with character entries"
+    }
+    for (i in seq_along(2L:length(node$args))) {
+      if (is_charNANaNInf(node$args[[i]], vars_types_list)) {
+        node$error <- sprintf("Found unallowed type in entry %s, in function array", i)
+      }
+    }
+  },
+  is_infix = FALSE, group = "function_node", cpp_name = "etr::array"
 )
 function_registry_global$add(
   name = "length", num_args = 1, arg_names = NA,
@@ -792,8 +827,8 @@ function_registry_global$add(
     return(t)
   },
   check_fct = function(node, vars_types_list, r_fct, real_type) {
-    if (!is_vec_or_mat(node$obj, vars_types_list)) {
-      node$error <- "You can only call length on variables of type matrix or vector"
+    if (!is_vec_mat_or_array(node$obj, vars_types_list)) {
+      node$error <- "You can only call length on variables of type array, matrix or vector"
     }
   },
   is_infix = FALSE, group = "unary_node", cpp_name = "etr::length"
@@ -809,8 +844,8 @@ function_registry_global$add(
     return(t)
   },
   check_fct = function(node, vars_types_list, r_fct, real_type) {
-    if (!is_mat(node$obj, vars_types_list)) {
-      node$error <- "You can only call dim on variables of type matrix"
+    if (!is_mat(node$obj, vars_types_list) && !is_array(node$obj, vars_types_list)) {
+      node$error <- "You can only call dim on variables of type array or matrix"
     }
   },
   is_infix = FALSE, group = "unary_node", cpp_name = "etr::dim"

@@ -13,5 +13,6 @@ int main() {
   subset(a, i1) = Double(3.14);
   auto sub = subset(a, i1);
   print(sub);
-  // ass<"Subset modify Array">(compare(get_val(sub), 3.14));
+  numeric(Integer(5));
+  // a = numeric(Integer(5));
 }

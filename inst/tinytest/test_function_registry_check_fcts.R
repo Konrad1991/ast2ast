@@ -95,7 +95,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print([(a, 1.0, 1.0))\nYou can only subset variables of type matrix or vector\n"
+  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print([(a, 1.0, 1.0))\nYou can only subset variables of type array, matrix or vector\n"
 )
 f <- function() {
   a |> type(int) <- 1L
@@ -104,7 +104,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print(a [ 1.0)\nYou can only subset variables of type matrix or vector\n"
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print(a [ 1.0)\nYou can only subset variables of type array, matrix or vector\n"
 )
 f <- function() {
   a |> type(int) <- 1L
@@ -113,7 +113,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print(a [[ 1.0)\nYou can only subset variables of type matrix or vector\n"
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print(a [[ 1.0)\nYou can only subset variables of type array, matrix or vector\n"
 )
 f <- function() {
   a |> type(int) <- 1L
@@ -122,7 +122,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print(a at 1.0)\nYou can only subset variables of type matrix or vector\n"
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  print(a at 1.0)\nYou can only subset variables of type array, matrix or vector\n"
 )
 f <- function() {
   a <- numeric(10)
@@ -367,7 +367,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  d <- dim(a)\nYou can only call dim on variables of type matrix\n"
+  "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  d <- dim(a)\nYou can only call dim on variables of type array or matrix\n"
 )
 f <- function() {
   a <- 1L
@@ -377,7 +377,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  l <- length(a)\nYou can only call length on variables of type matrix or vector\n\nd <- dim(a)\nYou can only call dim on variables of type matrix\n"
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  l <- length(a)\nYou can only call length on variables of type array, matrix or vector\n\nd <- dim(a)\nYou can only call dim on variables of type array or matrix\n"
 )
 
 # --- cmr --------------------------------------------------------------------

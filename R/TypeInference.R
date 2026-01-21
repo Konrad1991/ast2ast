@@ -179,8 +179,10 @@ common_type <- function(type_old, type_new) {
     common_base_type <- type_new$base_type
   }
   precedence_data_struct <- list(
-    matrix = 3, vector = 2, scalar = 1, vec = 2,
-    mat = 2, borrow_vec = 2, borrow_vector = 2, borrow_mat = 3, borrow_matrix = 3
+    scalar = 1L,
+    vec = 2L, vector = 2L, borrow_vec = 2L, borrow_vector = 2L,
+    mat = 3L, matrix = 3L, borrow_mat = 3L, borrow_matrix = 3L,
+    array = 4L, borrow_array = 4L
   )
   precedence_data_struct_old <- precedence_data_struct[[type_old$data_struct]]
   precedence_data_struct_new <- precedence_data_struct[[type_new$data_struct]]
@@ -189,6 +191,8 @@ common_type <- function(type_old, type_new) {
       common_data_struct <- "vector"
     } else if (type_old$data_struct %within% c("borrow_mat", "borrow_matrix")) {
       common_data_struct <- "matrix"
+    } else if (type_old$data_struct %within% c("borrow_array")) {
+      common_data_struct <- "array"
     } else {
       common_data_struct <- type_old$data_struct
     }
@@ -197,6 +201,8 @@ common_type <- function(type_old, type_new) {
       common_data_struct <- "vector"
     } else if (type_new$data_struct %within% c("borrow_mat", "borrow_matrix")) {
       common_data_struct <- "matrix"
+    } else if (type_new$data_struct %within% c("borrow_array")) {
+      common_data_struct <- "array"
     } else {
       common_data_struct <- type_new$data_struct
     }
@@ -319,9 +325,15 @@ type_infer_action <- function(node, env) {
       variable <- find_var_lhs(node$args[[1L]])
       if (!is.null(variable) && variable != "") {
         if (!env$vars_list[[variable]]$type_dcl && !env$vars_list[[variable]]$fct_input) {
-          if (env$vars_list[[variable]]$data_struct %in% c("scalar", "vector")) {
-            env$vars_list[[variable]]$data_struct <- "matrix"
+
+          if (env$vars_list[[variable]]$data_struct %in% c("scalar", "vector", "matrix", "vec", "mat")) {
+            if (length(node$args) == 3L) {
+              env$vars_list[[variable]]$data_struct <- "matrix"
+            } else {
+              env$vars_list[[variable]]$data_struct <- "array"
+            }
           }
+
         }
       }
     }

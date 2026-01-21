@@ -1,3 +1,11 @@
+f <- function() {
+  x <- 1:10
+  # z <- x + "a"
+  x <- c(1, 2, NA)
+  return(x)
+}
+fcpp <- ast2ast::translate(f)
+fcpp()
 # Hello World
 # ----------------------------------------------------------------
 f <- function() {
@@ -75,6 +83,8 @@ call_fct(ptr)
 
 # Benchmark
 # ----------------------------------------------------------------
+a <- runif (100000)
+b <- runif (100)
 convolve <- function(a, b) {
   ab <- numeric(length(a) + length(b) - 1)
   for (i in 1L:length(a)) {
@@ -84,7 +94,18 @@ convolve <- function(a, b) {
   }
   return(ab)
 }
-convolve_cpp1 <- ast2ast::translate(convolve)
+convolve_cpp <- ast2ast::translate(convolve)
+benchmark <- microbenchmark::microbenchmark(
+  convolve(a, b), convolve_cpp(a, b),
+  times = 100
+)
+benchmark
+identical(convolve(a, b), convolve_cpp(a, b))
+res_cpp <- convolve_cpp(a, b)
+res_r <- convolve(a, b)
+all(res_r == res_cpp)
+ggplot2::autoplot(benchmark)
+
 convolve2 <- function(a, b) {
   ab <- numeric(length(a) + length(b) - 1)
   i |> type(int) <- 1L
@@ -120,8 +141,7 @@ convolve_c <- inline::cfunction(
     return ab;
 })")
 
-a <- runif (100000)
-b <- runif (100)
+
 res <- microbenchmark::microbenchmark(
   convolve(a, b), convolve_cpp1(a, b), convolve_cpp2(a, b), convolve_c(a, b),
   times = 10
