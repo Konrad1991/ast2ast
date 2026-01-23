@@ -3,19 +3,20 @@
 # install.packages(".", types = "source", repo = NULL,)
 # tinytest::test_package("ast2ast")
 
-# f1 <- function(a) {
-#   size <- length(a)
-#   for (i in 1L:size) {
-#     for (j in 1L:(size - 1L)) {
-#       if (a[j] > a[j + 1L]) {
-#         temp <- a[j]
-#         a[j] <- a[j + 1L]
-#         a[j + 1L] <- temp
-#       }
-#     }
-#   }
-#   return(a)
-# }
+f1 <- function(a) {
+  size <- length(a)
+  for (i in 1L:size) {
+    for (j in 1L:(size - 1L)) {
+      if (a[j] > a[j + 1L]) {
+        temp <- a[j]
+        a[j] <- a[j + 1L]
+        a[j + 1L] <- temp
+      }
+    }
+  }
+  return(a)
+}
+cat(ast2ast::translate(f1, getsource = TRUE))
 #
 # f2 <- function(a) {
 #   size <- length(a)

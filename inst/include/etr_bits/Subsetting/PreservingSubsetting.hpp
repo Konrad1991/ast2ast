@@ -374,7 +374,7 @@ inline out_L create_indices(const ArrayType& arr, const Args&... args) {
       pos[k] = 0;
       k++;
       if (k == N) {
-        return out_L{std::move(out), L};
+        return out_L{std::move(out), std::move(L)};
       }
     }
   }
