@@ -44,7 +44,7 @@ public:
   ConstHolder(const T& ref) : ptr(&ref) {}
 
   ConstHolder(T&& r)
-    : owned(std::make_shared<T>(std::move(r))), ptr(owned.get()) {}
+  : owned(std::make_shared<T>(std::move(r))), ptr(owned.get()) {}
 
   ConstHolder(const ConstHolder&) = default;
   ConstHolder(ConstHolder&&) noexcept = default;
@@ -231,6 +231,74 @@ inline std::size_t safe_index_from_double(double x) {
   ass<"Negative indices are not supported">(t >= 1);
   return static_cast<std::size_t>(t);
 }
+
+struct Dim {
+  std::size_t rank = 1;
+  std::size_t nrow = 1;
+  std::size_t ncol = 0;
+  std::unique_ptr<std::size_t[]> other_dims;
+
+  Dim() = default;
+  Dim(const Dim& other) { *this = other; }
+  Dim(Dim&& other) noexcept { *this = std::move(other); }
+  Dim& operator=(const Dim& other) {
+    if (this == &other) return *this;
+    rank = other.rank;
+    nrow = other.nrow;
+    ncol = (other.rank >= 2) ? other.ncol : 0;
+    if (rank > 2) {
+      other_dims = std::make_unique<std::size_t[]>(rank - 2);
+      std::copy_n(other.other_dims.get(), rank - 2, other_dims.get());
+    } else {
+      other_dims.reset();
+    }
+    return *this;
+  }
+
+  Dim& operator=(Dim&& other) noexcept {
+    if (this == &other) return *this;
+    rank = other.rank;
+    nrow = other.nrow;
+    ncol = other.ncol;
+    other_dims = std::move(other.other_dims);
+    other.rank = 1;
+    other.nrow = 1;
+    other.ncol = 0;
+    return *this;
+  }
+  std::size_t size() const noexcept { return rank; }
+
+  std::size_t dim(std::size_t k) const noexcept {
+    ass<"Invalid dim (out of bounds)">(k < rank);
+    if (k == 0) return nrow;
+    if (k == 1) return ncol;
+    return other_dims[k - 2];
+  }
+
+  void set_rank1(std::size_t n) {
+    rank = 1;
+    nrow = n;
+    ncol = 0;
+    other_dims.reset();
+  }
+  void set_rank2(std::size_t r, std::size_t c) {
+    rank = 2;
+    nrow = r;
+    ncol = c;
+    other_dims.reset();
+  }
+  void set_rankN(std::size_t rk, std::size_t r, std::size_t c, const std::size_t* tail) {
+    rank = rk;
+    nrow = r;
+    ncol = c;
+    if (rank > 2) {
+      other_dims = std::make_unique<std::size_t[]>(rank - 2);
+      std::copy_n(tail, rank - 2, other_dims.get());
+    } else {
+      other_dims.reset();
+    }
+  }
+};
 
 // Scalar types (First dispatch layer)
 // --------------------------------------------------------------------------------------------------
@@ -440,7 +508,7 @@ struct Dual {
   }
   inline static Dual NaN() {
     return Dual (std::numeric_limits<double>::quiet_NaN(),
-           std::numeric_limits<double>::quiet_NaN());
+                 std::numeric_limits<double>::quiet_NaN());
   }
   inline static Dual Inf() {
     return Dual(std::numeric_limits<double>::infinity(),
@@ -1055,9 +1123,9 @@ template<> struct scalar_rank<Variable<Double>>    { static constexpr auto value
 
 template<typename L, typename R>
 using common_scalar = std::conditional_t<
-    (static_cast<int>(scalar_rank<L>::value) >=
-     static_cast<int>(scalar_rank<R>::value)),
-    L, R
+(static_cast<int>(scalar_rank<L>::value) >=
+static_cast<int>(scalar_rank<R>::value)),
+L, R
 >;
 
 template<typename L, typename R>
@@ -1109,17 +1177,17 @@ template <typename T> inline constexpr bool is_any_expr_v = is_any_expr<T>::valu
 template <typename T> concept IsExpr = is_any_expr_v<T>;
 
 template <typename T> concept IsADType = requires(T t) {
-  typename T;
-  requires IsVariable<T> || IsExpr<T> || IS<T, BooleanExpr>;
+typename T;
+requires IsVariable<T> || IsExpr<T> || IS<T, BooleanExpr>;
 };
 
 template <typename T> concept IsScalarLike = requires(T t) {
-  typename T;
-  requires IsArithV<T> || IsArithRefV<T> || IsADType<T>;
+typename T;
+requires IsArithV<T> || IsArithRefV<T> || IsADType<T>;
 };
 template <typename T> concept IsScalarOrScalarRef = requires(T t) {
-  typename T;
-  requires IsArithV<T> || IsArithRefV<T>;
+typename T;
+requires IsArithV<T> || IsArithRefV<T>;
 };
 
 // Traits (third dispatch layer)
@@ -1329,67 +1397,67 @@ template <typename T> inline constexpr bool IsCppLogical = is_bool_dispatch<T>::
 // -----------------------------------------------------------------------------------------------------------
 template <typename T>
 concept IsUnary = requires {
-  typename ReRef<T>::type::Trait;
-  requires IS<typename ReRef<T>::type::Trait, SinusTrait> ||
-               IS<typename ReRef<T>::type::Trait, ASinusTrait> ||
-               IS<typename ReRef<T>::type::Trait, SinusHTrait> ||
-               IS<typename ReRef<T>::type::Trait, CosinusTrait> ||
-               IS<typename ReRef<T>::type::Trait, ACosinusTrait> ||
-               IS<typename ReRef<T>::type::Trait, CosinusHTrait> ||
-               IS<typename ReRef<T>::type::Trait, TangensTrait> ||
-               IS<typename ReRef<T>::type::Trait, ATangensTrait> ||
-               IS<typename ReRef<T>::type::Trait, TangensHTrait> ||
-               IS<typename ReRef<T>::type::Trait, ExpTrait> ||
-               IS<typename ReRef<T>::type::Trait, LogTrait> ||
-               IS<typename ReRef<T>::type::Trait, SquareRootTrait> ||
-               IS<typename ReRef<T>::type::Trait, MinusUnaryTrait>;
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, SinusTrait> ||
+IS<typename ReRef<T>::type::Trait, ASinusTrait> ||
+IS<typename ReRef<T>::type::Trait, SinusHTrait> ||
+IS<typename ReRef<T>::type::Trait, CosinusTrait> ||
+IS<typename ReRef<T>::type::Trait, ACosinusTrait> ||
+IS<typename ReRef<T>::type::Trait, CosinusHTrait> ||
+IS<typename ReRef<T>::type::Trait, TangensTrait> ||
+IS<typename ReRef<T>::type::Trait, ATangensTrait> ||
+IS<typename ReRef<T>::type::Trait, TangensHTrait> ||
+IS<typename ReRef<T>::type::Trait, ExpTrait> ||
+IS<typename ReRef<T>::type::Trait, LogTrait> ||
+IS<typename ReRef<T>::type::Trait, SquareRootTrait> ||
+IS<typename ReRef<T>::type::Trait, MinusUnaryTrait>;
 };
 template <typename T>
 concept IsBinary = requires {
-  typename ReRef<T>::type::Trait;
-  requires IS<typename ReRef<T>::type::Trait, PlusTrait> ||
-               IS<typename ReRef<T>::type::Trait, MinusTrait> ||
-               IS<typename ReRef<T>::type::Trait, TimesTrait> ||
-               IS<typename ReRef<T>::type::Trait, DivideTrait> ||
-               IS<typename ReRef<T>::type::Trait, PowTrait> ||
-               IS<typename ReRef<T>::type::Trait, EqualTrait> ||
-               IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
-               IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
-               IS<typename ReRef<T>::type::Trait, LargerTrait> ||
-               IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
-               IS<typename ReRef<T>::type::Trait, UnEqualTrait>;
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, PlusTrait> ||
+IS<typename ReRef<T>::type::Trait, MinusTrait> ||
+IS<typename ReRef<T>::type::Trait, TimesTrait> ||
+IS<typename ReRef<T>::type::Trait, DivideTrait> ||
+IS<typename ReRef<T>::type::Trait, PowTrait> ||
+IS<typename ReRef<T>::type::Trait, EqualTrait> ||
+IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
+IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
+IS<typename ReRef<T>::type::Trait, LargerTrait> ||
+IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
+IS<typename ReRef<T>::type::Trait, UnEqualTrait>;
 };
 template <typename T>
 concept IsComparison = requires {
-  typename ReRef<T>::type::Trait;
-  requires IS<typename ReRef<T>::type::Trait, EqualTrait> ||
-               IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
-               IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
-               IS<typename ReRef<T>::type::Trait, LargerTrait> ||
-               IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
-               IS<typename ReRef<T>::type::Trait, UnEqualTrait> ||
-               IS<typename ReRef<T>::type::Trait, AndTrait> ||
-               IS<typename ReRef<T>::type::Trait, OrTrait>;
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, EqualTrait> ||
+IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
+IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
+IS<typename ReRef<T>::type::Trait, LargerTrait> ||
+IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
+IS<typename ReRef<T>::type::Trait, UnEqualTrait> ||
+IS<typename ReRef<T>::type::Trait, AndTrait> ||
+IS<typename ReRef<T>::type::Trait, OrTrait>;
 };
 template <typename T>
 concept IsComparisonTrait = requires(T t) { // required as in binary operation the trait is directly tested
-  typename T;
-  requires IS<T, EqualTrait> ||
-               IS<T, SmallerTrait> ||
-               IS<T, SmallerEqualTrait> ||
-               IS<T, LargerTrait> ||
-               IS<T, LargerEqualTrait> ||
-               IS<T, UnEqualTrait> ||
-               IS<T, AndTrait> ||
-               IS<T, OrTrait>;
+typename T;
+requires IS<T, EqualTrait> ||
+IS<T, SmallerTrait> ||
+IS<T, SmallerEqualTrait> ||
+IS<T, LargerTrait> ||
+IS<T, LargerEqualTrait> ||
+IS<T, UnEqualTrait> ||
+IS<T, AndTrait> ||
+IS<T, OrTrait>;
 };
 
 // Mutable subset view
 // -------------------------------------------------------------------
 template <typename T>
 concept IsSubsetView = requires {
-  typename ReRef<T>::type::TypeTrait;
-  requires IS<typename ReRef<T>::type::TypeTrait, SubsetViewTrait>;
+typename ReRef<T>::type::TypeTrait;
+requires IS<typename ReRef<T>::type::TypeTrait, SubsetViewTrait>;
 };
 // extract N from SubsetView
 template<typename T>
@@ -1397,15 +1465,15 @@ struct subsetview_traits;
 
 template<typename O, std::size_t N, typename Trait>
 struct subsetview_traits<SubsetView<O, N, Trait>> {
-    static constexpr std::size_t value = N;
+  static constexpr std::size_t value = N;
 };
 
 // Const subset view
 // -------------------------------------------------------------------
 template <typename T>
 concept IsConstSubsetView = requires {
-  typename ReRef<T>::type::TypeTrait;
-  requires IS<typename ReRef<T>::type::TypeTrait, ConstSubsetViewTrait>;
+typename ReRef<T>::type::TypeTrait;
+requires IS<typename ReRef<T>::type::TypeTrait, ConstSubsetViewTrait>;
 };
 // extract N from ConstSubsetView
 template<typename T>
@@ -1413,18 +1481,18 @@ struct const_subsetview_traits;
 
 template <typename T>
 concept IsLBuffer = requires {
-  typename ReRef<T>::type::Trait;
-  requires IS<typename ReRef<T>::type::Trait, LBufferTrait>;
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, LBufferTrait>;
 };
 template <typename T>
 concept IsRBuffer = requires {
-  typename ReRef<T>::type::Trait;
-  requires IS<typename ReRef<T>::type::Trait, RBufferTrait>;
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, RBufferTrait>;
 };
 template <typename T>
 concept IsBorrow = requires {
-  typename ReRef<T>::type::Trait;
-  requires IS<typename ReRef<T>::type::Trait, BorrowTrait>;
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, BorrowTrait>;
 };
 
 // Input class (outer data structures)
@@ -1468,17 +1536,17 @@ template <typename T> concept IsComparisonArray = IsArray<T> && IsComparison<typ
 
 template <typename T>
 concept IsOperationArray =
-    IsArray<T> && (
-        IsUnary<typename T::DType> ||
-        IsBinary<typename T::DType> ||
-        IsComparison<typename T::DType> ||
-        IsSubsetView<typename T::DType> ||
-        IsConstSubsetView<typename T::DType>
+IsArray<T> && (
+IsUnary<typename T::DType> ||
+IsBinary<typename T::DType> ||
+IsComparison<typename T::DType> ||
+IsSubsetView<typename T::DType> ||
+IsConstSubsetView<typename T::DType>
     );
 template <typename T>
 concept IsROrCalculationArray = requires(T t) {
-  typename T::DType;
-  requires IsOperationArray<T> || IsRArray<T>;
+typename T::DType;
+requires IsOperationArray<T> || IsRArray<T>;
 };
 
 // Second dispatch layer

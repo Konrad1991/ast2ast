@@ -9,7 +9,7 @@ inline size_t ExtractIndex(const T& obj) {
 
   if constexpr(IsScalarLike<DecayedT>) {
     const auto s = get_scalar_val(obj);
-    using sType = decltype(s);
+    using sType = Decayed<decltype(s)>;
     static_assert(!IsLogical<sType>, "simplified cannot handle logical values");
     constexpr bool is_int = IsInteger<sType>;
     if constexpr (is_int) {
@@ -132,8 +132,9 @@ inline decltype(auto) at(ArrayType& arr, const Args&... args) {
   for (std::size_t i = 0; i < N; i++) {
     idx += indices[i] * stride[i];
   }
+  ass<"No memory was allocated">(arr.d.allocated);
+  ass<"Error: out of boundaries">( (idx < arr.d.sz) && (idx >= 0));
   if constexpr (IsLBufferArray<ArrayType>) {
-    // TODO: check idx in borders
     return arr.d.p[idx];
   } else if constexpr (IsBorrowArray<ArrayType>){
     using DataType = typename ExtractDataType<Decayed<ArrayType>>::value_type;
@@ -151,12 +152,6 @@ inline decltype(auto) at(ArrayType& arr, const Args&... args) {
     }
   }
 }
-
-// template <typename ArrayType, typename... Args>
-// requires IsBorrowArray<ArrayType>
-// inline auto at(ArrayType& arr, const Args&... args) {
-//   return subset(arr, args...);
-// }
 
 template <typename ArrayType, typename... Args>
 inline const auto at(const ArrayType& arr, const Args&... args) {

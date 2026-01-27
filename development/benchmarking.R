@@ -1,8 +1,3 @@
-# system('find -name "*.o" | xargs rm')
-# system('find -name "*.so" | xargs rm')
-# install.packages(".", types = "source", repo = NULL,)
-# tinytest::test_package("ast2ast")
-
 f1 <- function(a) {
   size <- length(a)
   for (i in 1L:size) {
@@ -16,28 +11,26 @@ f1 <- function(a) {
   }
   return(a)
 }
-cat(ast2ast::translate(f1, getsource = TRUE))
-#
-# f2 <- function(a) {
-#   size <- length(a)
-#   for (i in 1:size) {
-#     for (j in 1:(size - 1)) {
-#       if (a[[j]] > a[[j + 1]]) {
-#         temp <- a[[j]]
-#         a[[j]] <- a[[j + 1]]
-#         a[[j + 1]] <- temp
-#       }
-#     }
-#   }
-#   return(a)
-# }
-#
-# fcpp <- ast2ast::translate(f1, verbose = TRUE)
-# fcpp2 <- ast2ast::translate(f2)
-# a <- runif(100)
-# microbenchmark::microbenchmark(
-#   f1(a), f2(a), fcpp(a), fcpp2(a)
-# )
+ f2 <- function(a) {
+   size <- length(a)
+   for (i in 1:size) {
+     for (j in 1:(size - 1)) {
+       if (a[[j]] > a[[j + 1]]) {
+         temp <- a[[j]]
+         a[[j]] <- a[[j + 1]]
+         a[[j + 1]] <- temp
+       }
+     }
+   }
+   return(a)
+ }
+
+ fcpp <- ast2ast::translate(f1, verbose = TRUE)
+ fcpp2 <- ast2ast::translate(f2, verbose = TRUE)
+ a <- runif(100)
+ microbenchmark::microbenchmark(
+   f1(a), f2(a), fcpp(a), fcpp2(a)
+ )
 
 convolve <- function(a, b) {
   ab <- numeric(length(a) + length(b) - 1)
@@ -48,22 +41,22 @@ convolve <- function(a, b) {
   }
   return(ab)
 }
-convolve_cpp1 <- ast2ast::translate(convolve)
+convolve_cpp1 <- ast2ast::translate(convolve, verbose = TRUE)
 convolve2 <- function(a, b) {
-  ab <- numeric(length(a) + length(b) - 1)
+  ab <- numeric(length(a) + length(b) - 1L)
   i |> type(int) <- 1L
   j |> type(int) <- 1L
   while(i <= length(a)) {
     j <- 1L
     while(j <= length(b)) {
-      ab[[i+j-1]] <- ab[[i+j-1]] + a[[i]] * b[[j]]
+      ab[[i+j-1L]] <- ab[[i+j-1L]] + a[[i]] * b[[j]]
       j <- j + 1L
     }
     i <- i + 1L
   }
   return(ab)
 }
-convolve_cpp2 <- ast2ast::translate(convolve2)
+convolve_cpp2 <- ast2ast::translate(convolve2, verbose = TRUE)
 
 convolve_c <- inline::cfunction(
   sig = c(a = "SEXP", b = "SEXP"), body = r"({
@@ -82,7 +75,7 @@ convolve_c <- inline::cfunction(
             xab[i + j] += xa[i] * xb[j];
     UNPROTECT(3);
     return ab;
-})")
+})", verbose = TRUE)
 
 a <- runif (100000)
 b <- runif (100)
