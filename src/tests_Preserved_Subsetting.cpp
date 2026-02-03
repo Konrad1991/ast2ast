@@ -376,15 +376,15 @@ void test_indices_preserved_subsetting() {
     compare_result_ints(subset(What, TRUE, TRUE, TRUE), expected, expected_dim);
     reset(What);
   }
-  // Integer on each dimension
+  // Integer on each dimension --> fast path
   {
     Integer Integer_dim1 = 3;
     Integer Integer_dim2 = 4;
     Integer Integer_dim3 = 5;
     subset(What,Integer_dim1, Integer_dim2, Integer_dim3) = Integer(700);
-    std::vector<int> expected{700};
-    const std::vector<std::size_t> expected_dim{1, 1, 1};
-    compare_result_ints(subset(What, Integer_dim1, Integer_dim2, Integer_dim3), expected, expected_dim);
+    ass<"fast path arrays">(
+      get_val(subset(What, Integer_dim1, Integer_dim2, Integer_dim3) == Integer(700))
+    );
     reset(What);
   }
   // Subsetting various combinations

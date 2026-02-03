@@ -393,20 +393,21 @@ inline auto subset(ArrayType& arr, const Args&... args) {
   );
 }
 
-// Fast path: subset(vec, Scalar)
-template <typename ArrayType, typename I> requires(IsScalarLike<I> && !IsLogical<I> && !IsLogicalRef<I>)
-inline decltype(auto) subset(ArrayType& arr, const I& idx) {
-  return at(arr, idx);
+// Fast path: subset(array, Scalars...)
+template <typename ArrayType, typename... Args> requires AllScalarIndices<Args...>
+inline decltype(auto) subset(ArrayType& arr, const Args&... args) {
+  return at(arr, args...);
 }
-template <typename ArrayType, typename I> requires(IsScalarLike<I> && !IsLogical<I> && !IsLogicalRef<I>)
-inline const auto subset(const ArrayType& arr, const I& idx) {
-  return at(arr, idx);
+
+template <typename ArrayType, typename... Args> requires AllScalarIndices<Args...>
+inline decltype(auto) subset(ArrayType&& arr, const Args&... args) {
+  return at(std::forward<ArrayType>(arr), args...);
 }
 
 // Create subset of subset
 // ------------------------------------------------------------------
 template <typename ArrayType, typename... Args>
-requires IsSubsetArray<ArrayType>
+requires IsSubsetArray<ArrayType> && HasNonScalarIndex<Args...>
 inline auto subset(ArrayType&& arr, const Args&... args) {
   using E = typename ExtractDataType<ArrayType>::value_type;
   constexpr std::size_t N = sizeof...(Args);
@@ -420,8 +421,7 @@ inline auto subset(ArrayType&& arr, const Args&... args) {
 
 // Create constant subset
 // ------------------------------------------------------------------
-template <typename ArrayType, typename... Args>
-requires (!IsSubsetArray<ArrayType>)
+template <typename ArrayType, typename... Args> requires (!IsSubsetArray<std::remove_reference_t<ArrayType>>) && HasNonScalarIndex<Args...>
 inline auto subset(ArrayType&& arr, const Args&... args) {
   using E = typename ExtractDataType<ArrayType>::value_type;
   constexpr std::size_t N = sizeof...(Args);

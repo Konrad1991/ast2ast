@@ -1190,6 +1190,23 @@ typename T;
 requires IsArithV<T> || IsArithRefV<T>;
 };
 
+template <typename I>
+concept ScalarIndex =
+  IsScalarLike<I> &&
+  !IsLogical<I> &&
+  !IsLogicalRef<I>;
+
+template <typename... Args>
+concept NonEmpty = (sizeof...(Args) > 0);
+
+template <typename... Args>
+concept AllScalarIndices =
+  NonEmpty<Args...> &&
+  (ScalarIndex<Args> && ...);
+
+template <typename... Args>
+concept HasNonScalarIndex = (!ScalarIndex<Args> || ...);
+
 // Traits (third dispatch layer)
 // --------------------------------------------------------------------------------------------------
 struct ComparisonTrait { using value_type = bool; };
