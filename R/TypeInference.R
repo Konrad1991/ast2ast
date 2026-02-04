@@ -60,6 +60,15 @@ non_fct_args <- function(f, r_fct) {
 
 create_vars_types_list <- function(f, f_args, r_fct) {
   l <- c(parse_input_args(f, f_args, r_fct), non_fct_args(f, r_fct))
+  wrong_input <- FALSE
+  for (i in seq_len(length(l))) {
+    e <- l[[i]]$error
+    if (!is.null(e) && e != "") {
+      print(sprintf("%s, for variable: %s", l[[i]]$error, l[[i]]$name))
+      wrong_input <- TRUE
+    }
+  }
+  if (wrong_input) stop("Types for arguments are invalid")
   names(l) <- sapply(l, function(x) x$name)
   l <- l[setdiff(names(l), permitted_base_types())]
   l <- l[setdiff(names(l), permitted_data_structs(r_fct))]

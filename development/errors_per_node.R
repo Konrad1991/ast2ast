@@ -1,26 +1,12 @@
-install.packages(".", types = "source", repo = NULL)
 trash <- list.files("./R", full.names = TRUE) |> lapply(source)
 f <- function(a, b) {
-  res |> type(vec(int)) <- c(NA, NA)
-  return(res)
-  if (a) {
-    return(res)
-  } else if(!b) {
-    for (i in 1:10) print(i)
-    return(res)
-  } else {
-    if (a) {
-      if (b) {
-        print(TRUE)
-      } else {
-        print(FALSE)
-      }
-    }
-    print("blub")
-  }
-  return(res)
+  return(a)
 }
-translate(f, getsource = TRUE) |> cat("\n")
+f_args <- function(a, b) {
+  a |> type(vec(double))
+  b |> type(vec(double)) |> ref()
+}
+translate(f, f_args, getsource = TRUE) |> cat("\n")
 fcpp <- translate(f)
 fcpp(0.0,0.0)
 
