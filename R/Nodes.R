@@ -140,9 +140,9 @@ binary_node <- R6::R6Class(
         ret <- paste0(indent, self$string_left())
       } else if (self$operator %in% c("[", "[[")) {
         ret <- self$create_r_subsetting_string(indent)
-      } else if (self$is_infix && !(self$operator %in% c("etr::at", "etr::subset", "etr::colon"))) {
+      } else if (self$is_infix && !(self$operator %in% not_infix_in_cpp)) {
         ret <- self$create_infix_string(indent)
-      } else if (!self$is_infix || self$operator %in% c("etr::at", "etr::subset", "etr::colon")) {
+      } else if (!self$is_infix || self$operator %in% not_infix_in_cpp) {
         ret <- self$create_function_string(indent)
       } else {
         stop(paste0(
@@ -389,47 +389,32 @@ if_node <- R6::R6Class(
       return(self$condition$stringify(indent = paste0(indent, "")))
     },
     string_true = function(indent) {
-      return(self$true_node$stringify(indent = paste0(indent, "  ")))
+      return(self$true_node$stringify(indent = paste0(indent, "    ")))
     },
     string_else_if = function(indent) {
       l <- lapply(self$else_if_nodes, function(node) {
         return(node$stringify(indent = paste0(indent, "")))
       })
+      # Remove white space until if
+      l <- sub("^\\s*.*?(if\\s*\\()", "\\1", l)
       l <- paste0(" else ", l)
-      combine_strings(l, "")
+      return(l)
     },
     string_false = function(indent) {
-      return(self$false_node$stringify(indent = paste0(indent, "  ")))
+      l <- self$false_node$stringify(indent = paste0(indent, "    "))
+      return(l)
     },
     stringify = function(indent = "") {
       result <- ""
-      result <- paste0(
-        indent, "if (",
-        self$string_condition(""), ") {\n"
-      )
-      result <- paste0(
-        result,
-        self$string_true(paste0(indent, " ")),
-        "\n",
-        indent,
-        "}"
-      )
-      result <- combine_strings(result)
+      result <- paste0(indent, "if (", self$string_condition(""), ") {\n")
+      result <- paste0(result, self$string_true(indent), "\n", indent, "}")
       if (!is.null(self$else_if_nodes)) {
-        result <- paste0(
-          result,
-          self$string_else_if(indent)
-        )
+        result <- paste0(result, self$string_else_if(indent))
       }
       if (!is.null(self$false_node)) {
-        result <- paste0(result, indent, " else {\n")
-        result <- paste0(
-          result, self$false_node$stringify(
-            indent = paste0(indent, "  ")
-          ), indent, "\n}"
-        )
+        result <- paste0(result, " else {\n")
+        result <- paste0(result, self$string_false(indent), indent, "\n", indent, "}")
       }
-      result <- combine_strings(result, "")
       return(result)
     },
     stringify_condition_error = function(indent = "") {
@@ -471,23 +456,45 @@ if_node <- R6::R6Class(
       return(ret)
     },
     stringify_error_line = function(indent = "") {
+      s <- ""
+      # Check condition
       condition <- self$stringify_condition_error() |> combine_strings("\n")
       if (condition != "") {
-        condition <- paste0(
+        s <- paste0(
           indent, "if (",
           self$string_condition(""), ") {\n",
           condition
         )
       }
+      # Check true block
       true_block <- self$true_node$stringify_error_line()
+      if (s == "" && true_block != "") {
+        s <- true_block
+      } else if (s != "" && true_block != "") {
+        s <- sprintf("%s\n%s", s, true_block)
+      }
+      # Check the else if blocks
       else_if_blocks <- lapply(self$else_if_nodes, \(b) {
         b$stringify_error_line()
       }) |> combine_strings("\n")
+      if (s == "" &&  else_if_blocks != "") {
+        s <- else_if_blocks
+      } else if (s != "" &&  else_if_blocks != "") {
+        s <- sprintf("%s\n%s", s, else_if_blocks)
+      }
+
+      # Check the false block
       false_block <- ""
       if (!is.null(self$false_node)) {
         false_block <- self$false_node$stringify_error_line()
       }
-      combine_strings(list(condition, true_block, else_if_blocks, false_block), "\n")
+      if (s == "" &&  false_block != "") {
+        s <- false_block
+      } else if (s != "" &&  false_block != "") {
+        s <- sprintf("%s\n%s", s, false_block)
+      }
+
+      s
     },
     print = function() {
       cat("Id:", self$id, "if")
@@ -540,9 +547,13 @@ block_node <- R6::R6Class(
     stringify = function(indent = "") {
       result <- list()
       for (stmt in self$block) {
+        end <- ";"
+        if (inherits(stmt, c("if_node", "for_node", "while_node", "repeat_node"))) {
+        end <- ""
+        }
         result[[length(result) + 1]] <-
           paste0(
-            stmt$stringify(indent = paste0(indent, "")), ";"
+            stmt$stringify(indent = paste0(indent, "")), end
           )
       }
       result <- combine_strings(result)

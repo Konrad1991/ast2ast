@@ -33,6 +33,10 @@ infix_ops <- c(
   "[","[[", ":"
 )
 
+not_infix_in_cpp <- c(
+  "etr::at", "etr::subset", "etr::colon", "etr::power"
+)
+
 cpp_keywords <- function() {
   c(
     "alignas", "alignof", "and", "and_eq", "asm",
