@@ -106,10 +106,16 @@ convert_types_to_etr_types <- function(base_type, data_struct, r_fct, real_type,
     return(paste0(indent, data_struct, "<", convert_base_type(base_type, real_type), ", etr::Buffer<", convert_base_type(base_type, real_type), ">>"))
   }
   else if (any(data_struct == c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat", "borrow_array")) && !r_fct) {
+    if (real_type == "etr::Variable<etr::Double>") {
+      stop("You cannot use borrowed data structures in combination with reverse mode automatic differentiation")
+    }
     data_struct <- "etr::Array"
     return(paste0(indent, data_struct, "<", convert_base_type(base_type, real_type), ", etr::Borrow<", convert_base_type(base_type, real_type), ">>"))
   }
   else if (any(data_struct == c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat", "borrow_array")) && r_fct) {
+    if (real_type == "etr::Variable<etr::Double>") {
+      stop("You cannot use borrowed data structures in combination with reverse mode automatic differentiation")
+    }
     data_struct <- "etr::Array"
     return(paste0(indent, data_struct, "<", convert_base_type(base_type, real_type), ", etr::Borrow<", convert_base_type(base_type, real_type), ">>"))
   }

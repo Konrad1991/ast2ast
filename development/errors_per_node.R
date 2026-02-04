@@ -1,14 +1,21 @@
 trash <- list.files("./R", full.names = TRUE) |> lapply(source)
 f <- function(a, b) {
-  return(a)
+  seed(a, 1)
+  c <- a * b
+  return(get_dot(c))
+  unseed(a, 1)
 }
 f_args <- function(a, b) {
   a |> type(vec(double))
   b |> type(vec(double)) |> ref()
 }
-translate(f, f_args, getsource = TRUE) |> cat("\n")
-fcpp <- translate(f)
-fcpp(0.0,0.0)
+translate(f, f_args, getsource = TRUE, derivative = "forward") |> cat("\n")
+f <- function(a, b) {
+  c <- a * b
+  return(deriv(c, 1))
+}
+fcpp <- translate(f, f_args, derivative = "reverse")
+fcpp(5.0,2.0)
 
 f <- function(a, b) {
   braek # Nullary
