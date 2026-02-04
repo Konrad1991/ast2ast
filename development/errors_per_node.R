@@ -1,10 +1,13 @@
+install.packages(".", types = "source", repo = NULL)
 trash <- list.files("./R", full.names = TRUE) |> lapply(source)
 f <- function(a, b) {
+  res |> type(vec(int)) <- c(NA, NA)
+  return(res)
   if (a) {
-    return(b)
+    return(res)
   } else if(!b) {
     for (i in 1:10) print(i)
-    return(3.24)
+    return(res)
   } else {
     if (a) {
       if (b) {
@@ -15,8 +18,11 @@ f <- function(a, b) {
     }
     print("blub")
   }
+  return(res)
 }
 translate(f, getsource = TRUE) |> cat("\n")
+fcpp <- translate(f)
+fcpp(0.0,0.0)
 
 f <- function(a, b) {
   braek # Nullary
