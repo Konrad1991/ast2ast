@@ -26,6 +26,13 @@ wrap_in_block <- function(expr) {
   as.call(list(as.name("{"), expr))
 }
 
+infix_ops <- c(
+  "+","-","*","/","^",
+  "==","!=","<","<=",">",">=",
+  "&","&&","|","||","!","<-","=",
+  "[","[[", ":"
+)
+
 cpp_keywords <- function() {
   c(
     "alignas", "alignof", "and", "and_eq", "asm",

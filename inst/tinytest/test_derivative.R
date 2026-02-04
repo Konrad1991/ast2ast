@@ -20,7 +20,7 @@ fct <- function() {
   return(jac)
 }
 test_checks(fct, args_fct, TRUE, "etr::Double",
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct, real_type) : \n  jac <- y deriv x\nderiv can be only used when derivative is set to reverse\n"
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct, real_type) : \n  jac <- deriv(y, x)\nderiv can be only used when derivative is set to reverse\n"
 )
 fct <- function() {
   x <- c(1, 2)

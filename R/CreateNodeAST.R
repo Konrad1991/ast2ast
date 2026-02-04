@@ -61,6 +61,7 @@ create_ast <- function(code, context, r_fct) {
       bn$left_node <- code[[2]] |> process(operator, r_fct)
       bn$right_node <- t
       bn$context <- context
+      bn$is_infix <- operator %in% infix_ops
       return(bn)
     }
     bn <- binary_node$new()
@@ -68,6 +69,7 @@ create_ast <- function(code, context, r_fct) {
     bn$right_node <- code[[3]] |> process(operator, r_fct)
     bn$left_node <- code[[2]] |> process(operator, r_fct)
     bn$context <- context
+    bn$is_infix <- operator %in% infix_ops
     return(bn)
   } else if (length(code) == 2) {
     un <- unary_node$new()

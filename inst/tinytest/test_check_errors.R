@@ -159,7 +159,7 @@ f <- function() {
 }
 test_action_error(
   f,
-  "Error in ast2ast:::run_checks(ast, r_fct) : \na %+% b\nInvalid function %+%\n"
+  "Error in ast2ast:::run_checks(ast, r_fct) : \n%+%(a, b)\nInvalid function %+%\n"
 )
 
 f <- function() {

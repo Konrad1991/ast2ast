@@ -50,7 +50,14 @@ literal_node <- R6::R6Class(
 )
 
 handle_var <- function(code, context) {
-  if (is_symbol(code)) {
+  if (is_symbol(code) && context == "{") {
+    nn <- nullary_node$new()
+    operator <- deparse(code)
+    nn$operator <- operator
+    nn$context <- context
+    return(nn)
+  } else
+  if (is_symbol(code) && context != "{") {
     if (context == "[" && deparse(code) == "") {
       # NOTE: empty indexing --> change all entries
       ln <- literal_node$new(TRUE)
@@ -89,6 +96,7 @@ binary_node <- R6::R6Class(
     internal_type = NULL,
     remove_type_decl = FALSE,
     type = NULL,
+    is_infix = NULL,
     initialize = function() {},
     string_left = function() {
       return(self$left_node$stringify())
@@ -105,6 +113,13 @@ binary_node <- R6::R6Class(
         self$string_right(),
         ""
       )
+    },
+    create_r_subsetting_string = function(indent = "") {
+      if (self$operator == "[") {
+        sprintf("%s%s[%s]", indent, self$string_left(), self$string_right())
+      } else if (self$operator == "[[") {
+        sprintf("%s%s[[%s]]", indent, self$string_left(), self$string_right())
+      }
     },
     create_function_string = function(indent = "") {
       paste0(
@@ -123,9 +138,11 @@ binary_node <- R6::R6Class(
           return(ret)
         }
         ret <- paste0(indent, self$string_left())
-      } else if (function_registry_global$is_infix(self$operator)) {
+      } else if (self$operator %in% c("[", "[[")) {
+        ret <- self$create_r_subsetting_string(indent)
+      } else if (self$is_infix && !(self$operator %in% c("etr::at", "etr::subset", "etr::colon"))) {
         ret <- self$create_infix_string(indent)
-      } else if (!function_registry_global$is_infix(self$operator)) {
+      } else if (!self$is_infix || self$operator %in% c("etr::at", "etr::subset", "etr::colon")) {
         ret <- self$create_function_string(indent)
       } else {
         stop(paste0(
@@ -276,10 +293,7 @@ nullary_node <- R6::R6Class(
       return(paste0(indent, self$error))
     },
     stringify_error_line = function(indent = "") {
-      if (self$error != "") {
-        return(paste0(self$stringify(), "\n", self$error))
-      }
-      return("")
+      self$stringify()
     },
     print = function() {
       cat("Id: ", self$id, "\n", self$stringify(), "\n")
@@ -299,6 +313,13 @@ function_node <- R6::R6Class(
     args = list(),
     handle_vector = FALSE,
     initialize = function() {},
+    create_r_subsetting_string = function(indent = "", obj_string, args_string) {
+      if (self$operator == "[") {
+        sprintf("%s%s[%s]", indent, obj_string, args_string)
+      } else if (self$operator == "[[") {
+        sprintf("%s%s[[%s]]", indent, obj_string, args_string)
+      }
+    },
     stringify = function(indent = "") {
       if (self$handle_vector) {
         s <- self$args[[1]]$stringify() |> remove_double_quotes()
@@ -307,17 +328,21 @@ function_node <- R6::R6Class(
         self$args[[1]] <- NULL
         self$args <- Filter(Negate(is.null), self$args)
       }
-      args_string <- lapply(self$args, function(arg) {
-        return(arg$stringify())
-      }) |>
-        unlist() |>
-        c() |>
-        paste(collapse = ", ")
-      ret <- paste0(
-        indent, self$operator, "(",
-        args_string,
-        ")"
-      )
+      if (self$operator %in% c("[", "[[")) {
+        args_string <- lapply(self$args[-1], function(arg) {
+          return(arg$stringify())
+        }) |> unlist() |> c() |> paste(collapse = ", ")
+        ret <- self$create_r_subsetting_string(indent, self$args[[1]]$stringify(), args_string)
+      } else {
+        args_string <- lapply(self$args, function(arg) {
+          return(arg$stringify())
+        }) |> unlist() |> c() |> paste(collapse = ", ")
+        ret <- paste0(
+          indent, self$operator, "(",
+          args_string,
+          ")"
+        )
+      }
       if (self$context == "Start") {
         ret <- paste0(ret, ";")
       }

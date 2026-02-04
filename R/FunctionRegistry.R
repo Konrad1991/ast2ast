@@ -8,19 +8,17 @@ Functions <- R6::R6Class(
     arg_names = list(),
     type_infer_fcts = NULL,
     type_check_fcts = NULL,
-    is_infixs = NULL,
     groups = NULL,
     cpp_names = NULL,
 
     initialize = function() {},
     add = function(name, num_args, arg_names, infer_fct,
-                   check_fct, is_infix, group, cpp_name) {
+                   check_fct, group, cpp_name) {
       self$function_names <- c(self$function_names, name)
       self$number_of_args[[length(self$number_of_args) + 1]] <- num_args
       self$arg_names[[length(self$arg_names) + 1]] <- arg_names
       self$type_infer_fcts <- c(self$type_infer_fcts, infer_fct)
       self$type_check_fcts <- c(self$type_check_fcts, check_fct)
-      self$is_infixs <- c(self$is_infixs, is_infix)
       self$groups <- c(self$groups, group)
       self$cpp_names <- c(self$cpp_names, cpp_name)
     },
@@ -40,11 +38,6 @@ Functions <- R6::R6Class(
     },
     get_cpp_name = function(name) {
       self$cpp_names[which(self$function_names == name)]
-    },
-    is_infix = function(name) {
-      all(self$is_infixs[which(self$cpp_names == name)])
-      # cpp names have to be used as this is called after the translation.
-      # all is used due to duplicates in the cpp code (=)
     },
     is_group_functions = function(name) {
       idx <- which(self$function_names == name)
@@ -351,7 +344,7 @@ function_registry_global$add(
       node$error <- "the type function expects a variable as first argument and either a symbol or a function such as double or vec(double) respectivly"
     }
   },
-  is_infix = FALSE, group = "binary_node", cpp_name = "type" # the removement of the type is handled in the node itself
+  group = "binary_node", cpp_name = "type" # the removement of the type is handled in the node itself
 )
 function_registry_global$add(
   name = "=", num_args = 2, arg_names = c(NA, NA),
@@ -368,7 +361,6 @@ function_registry_global$add(
       node$error <- "You cannot assign to an index variable"
     }
   },
-  is_infix = TRUE,
   group = "binary_node", cpp_name = "="
 )
 function_registry_global$add(
@@ -386,32 +378,31 @@ function_registry_global$add(
       node$error <- "You cannot assign to an index variable"
     }
   },
-  is_infix = TRUE,
   group = "binary_node", cpp_name = "="
 )
 function_registry_global$add(
   name = "[", num_args = NA, arg_names = NA,
   infer_fct = infer_subsetting,
   check_fct = check_subsetting,
-  is_infix = FALSE, group = "binary_node", cpp_name = "etr::subset"
+  group = "binary_node", cpp_name = "etr::subset"
 )
 function_registry_global$add(
   name = "at", num_args = NA, arg_names = NA,
   infer_fct = infer_subsetting,
   check_fct = check_subsetting,
-  is_infix = FALSE, group = "binary_node", cpp_name = "etr::at"
+  group = "binary_node", cpp_name = "etr::at"
 )
 function_registry_global$add(
   name = "[[", num_args = NA, arg_names = NA,
   infer_fct = infer_subsetting,
   check_fct = check_subsetting,
-  is_infix = FALSE, group = "binary_node", cpp_name = "etr::at"
+  group = "binary_node", cpp_name = "etr::at"
 )
 # function_registry_global$add(
 #   name = "contigous_subset", num_args = c(2, 3), arg_names = c(NA, NA, NA),
 #   infer_fct = infer_subsetting,
 #   check_fct = check_subsetting,
-#   is_infix = FALSE, group = "binary_node", cpp_name = "etr::contigous_subset"
+#   group = "binary_node", cpp_name = "etr::contigous_subset"
 # )
 function_registry_global$add(
   name = "for", num_args = 3, arg_names = c(NA, NA, NA),
@@ -429,30 +420,30 @@ function_registry_global$add(
       node$seq$error <- "You cannot sequence over characters/NA/NaN/Inf"
     }
   },
-  is_infix = FALSE, group = "for_node", cpp_name = "for"
+  group = "for_node", cpp_name = "for"
 )
 function_registry_global$add(
   name = "while", num_args = 2, arg_names = c(NA, NA),
   infer_fct = function(node, vars_list, r_fct) {},
-  check_fct = mock, is_infix = FALSE,
+  check_fct = mock,
   group = "while_node", cpp_name = "while"
 )
 function_registry_global$add(
   name = "repeat", num_args = 1, arg_names = NA,
   infer_fct = function(node, vars_list, r_fct) {},
-  check_fct = mock, is_infix = FALSE,
+  check_fct = mock,
   group = "repeat_node", cpp_name = "while"
 )
 function_registry_global$add(
   name = "next", num_args = 0, arg_names = NA,
   infer_fct = function(node, vars_list, r_fct) {},
-  check_fct = mock, is_infix = FALSE,
+  check_fct = mock,
   group = "nullary_node", cpp_name = "continue"
 )
 function_registry_global$add(
   name = "break", num_args = 0, arg_names = NA,
   infer_fct = function(node, vars_list, r_fct) {},
-  check_fct = mock, is_infix = FALSE,
+  check_fct = mock,
   group = "nullary_node", cpp_name = "break"
 )
 function_registry_global$add(
@@ -484,7 +475,7 @@ function_registry_global$add(
       }
     }
   },
-  is_infix = FALSE, group = "function_node", cpp_name = "etr::c"
+  group = "function_node", cpp_name = "etr::c"
 )
 function_registry_global$add(
   name = ":", num_args = 2, arg_names = c(NA, NA),
@@ -506,7 +497,7 @@ function_registry_global$add(
     return(t)
   },
   check_fct = check_binary,
-  is_infix = FALSE, group = "binary_node", cpp_name = "etr::colon"
+  group = "binary_node", cpp_name = "etr::colon"
 )
 function_registry_global$add(
   name = "rep", num_args = 2, arg_names = c(NA, NA),
@@ -520,91 +511,91 @@ function_registry_global$add(
     return(t)
   },
   check_fct = check_binary,
-  is_infix = FALSE, group = "binary_node", cpp_name = "etr::rep"
+  group = "binary_node", cpp_name = "etr::rep"
 )
 function_registry_global$add(
   name = "sin", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sin"
+  group = "unary_node", cpp_name = "etr::sin"
 )
 function_registry_global$add(
   name = "asin", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::asin"
+  group = "unary_node", cpp_name = "etr::asin"
 )
 function_registry_global$add(
   name = "sinh", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sinh"
+  group = "unary_node", cpp_name = "etr::sinh"
 )
 function_registry_global$add(
   name = "cos", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::cos"
+  group = "unary_node", cpp_name = "etr::cos"
 )
 function_registry_global$add(
   name = "acos", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::acos"
+  group = "unary_node", cpp_name = "etr::acos"
 )
 function_registry_global$add(
   name = "cosh", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::cosh"
+  group = "unary_node", cpp_name = "etr::cosh"
 )
 function_registry_global$add(
   name = "tan", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::tan"
+  group = "unary_node", cpp_name = "etr::tan"
 )
 function_registry_global$add(
   name = "atan", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::atan"
+  group = "unary_node", cpp_name = "etr::atan"
 )
 function_registry_global$add(
   name = "tanh", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::tanh"
+  group = "unary_node", cpp_name = "etr::tanh"
 )
 function_registry_global$add(
   name = "log", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::log"
+  group = "unary_node", cpp_name = "etr::log"
 )
 function_registry_global$add(
   name = "sqrt", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::sqrt"
+  group = "unary_node", cpp_name = "etr::sqrt"
 )
 function_registry_global$add(
   name = "exp", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::exp"
+  group = "unary_node", cpp_name = "etr::exp"
 )
 function_registry_global$add(
   name = "^", num_args = 2, arg_names = c(NA, NA),
   infer_fct = infer_binary_math,
   check_fct = check_binary,
-  is_infix = FALSE, group = "binary_node", cpp_name = "etr::power"
+  group = "binary_node", cpp_name = "etr::power"
 )
 function_registry_global$add(
   name = "+", num_args = 2, arg_names = c(NA, NA),
   infer_fct = infer_binary_math,
   check_fct = check_binary,
-  is_infix = TRUE, group = "binary_node", cpp_name = "+"
+  group = "binary_node", cpp_name = "+"
 )
 function_registry_global$add(
   name = "-", num_args = c(1, 2), arg_names = c(NA, NA),
@@ -616,29 +607,29 @@ function_registry_global$add(
       check_binary(node, vars_types_list, r_fct)
     }
   },
-  is_infix = TRUE, group = "binary_node", cpp_name = "-"
+  group = "binary_node", cpp_name = "-"
 )
 function_registry_global$add(
   name = "*", num_args = 2, arg_names = c(NA, NA),
   infer_fct = infer_binary_math,
   check_fct = check_binary,
-  is_infix = TRUE, group = "binary_node", cpp_name = "*"
+  group = "binary_node", cpp_name = "*"
 )
 function_registry_global$add(
   name = "/", num_args = 2, arg_names = c(NA, NA),
   infer_fct = infer_binary_math,
   check_fct = check_binary,
-  is_infix = TRUE, group = "binary_node", cpp_name = "/"
+  group = "binary_node", cpp_name = "/"
 )
 function_registry_global$add(
   name = "if", num_args = NA, arg_names = NA,
   infer_fct = function(node, vars_list, r_fct) {},
-  check_fct = mock, is_infix = FALSE, group = "if_node", cpp_name = "if"
+  check_fct = mock, group = "if_node", cpp_name = "if"
 )
 function_registry_global$add(
   name = "{", num_args = 1, arg_names = NA,
   infer_fct = function(node, vars_list, r_fct) {},
-  check_fct = mock, is_infix = FALSE, group = "block_node", cpp_name = "{"
+  check_fct = mock, group = "block_node", cpp_name = "{"
 )
 function_registry_global$add(
   name = "(", num_args = 1, arg_names = NA,
@@ -646,79 +637,79 @@ function_registry_global$add(
     inner_type <- infer(node$obj, vars_list, r_fct)
     return(inner_type)
   },
-  check_fct = mock, is_infix = FALSE, group = "unary_node", cpp_name = "("
+  check_fct = mock, group = "unary_node", cpp_name = "("
 )
 function_registry_global$add(
   name = "==", num_args = 2, arg_names = c(NA, NA),
   infer_fct = infer_comparison,
   check_fct = check_binary,
-  is_infix = TRUE, group = "binary_node", cpp_name = "=="
+  group = "binary_node", cpp_name = "=="
 )
 function_registry_global$add(
   name = "!=", num_args = 2, arg_names = c(NA, NA),
   infer_fct = infer_comparison,
   check_fct = check_binary,
-  is_infix = TRUE, group = "binary_node", cpp_name = "!="
+  group = "binary_node", cpp_name = "!="
 )
 function_registry_global$add(
   name = ">", num_args = 2, arg_names = c(NA, NA),
   infer_fct = infer_comparison,
   check_fct = check_binary,
-  is_infix = TRUE, group = "binary_node", cpp_name = ">"
+  group = "binary_node", cpp_name = ">"
 )
 function_registry_global$add(
   name = ">=", num_args = 2, arg_names = c(NA, NA),
   infer_fct = infer_comparison,
   check_fct = check_binary,
-  is_infix = TRUE, group = "binary_node", cpp_name = ">="
+  group = "binary_node", cpp_name = ">="
 )
 function_registry_global$add(
   name = "<", num_args = 2, arg_names = c(NA, NA),
   infer_fct = infer_comparison,
   check_fct = check_binary,
-  is_infix = TRUE, group = "binary_node", cpp_name = "<"
+  group = "binary_node", cpp_name = "<"
 )
 function_registry_global$add(
   name = "<=", num_args = 2, arg_names = c(NA, NA),
   infer_fct = infer_comparison,
   check_fct = check_binary,
-  is_infix = TRUE, group = "binary_node", cpp_name = "<="
+  group = "binary_node", cpp_name = "<="
 )
 function_registry_global$add(
   name = "&&", num_args = 2, arg_names = c(NA, NA),
   infer_fct = infer_and_or_scalar,
   check_fct = check_binary,
-  is_infix = TRUE, group = "binary_node", cpp_name = "&&"
+  group = "binary_node", cpp_name = "&&"
 )
 function_registry_global$add(
   name = "||", num_args = 2, arg_names = c(NA, NA),
   infer_fct = infer_and_or_scalar,
   check_fct = check_binary,
-  is_infix = TRUE, group = "binary_node", cpp_name = "||"
+  group = "binary_node", cpp_name = "||"
 )
 function_registry_global$add(
   name = "&", num_args = 2, arg_names = c(NA, NA),
   infer_fct = infer_and_or_vector,
   check_fct = check_binary,
-  is_infix = TRUE, group = "binary_node", cpp_name = "&"
+  group = "binary_node", cpp_name = "&"
 )
 function_registry_global$add(
   name = "|", num_args = 2, arg_names = c(NA, NA),
   infer_fct = infer_and_or_vector,
   check_fct = check_binary,
-  is_infix = TRUE, group = "binary_node", cpp_name = "|"
+  group = "binary_node", cpp_name = "|"
 )
 function_registry_global$add(
   name = "print", num_args = 1, arg_names = NA,
   infer_fct = function(node, vars_list, r_fct) {
     return(sprintf("Found print within an expression: %s", node$stringify()))
   },
-  check_fct = mock, is_infix = FALSE, group = "unary_node", cpp_name = "etr::print"
+  check_fct = mock, group = "unary_node", cpp_name = "etr::print"
 )
 function_registry_global$add(
   name = "return", num_args = c(0, 1), arg_names = NA,
   infer_fct = function(node, vars_list, r_fct) {},
-  check_fct = mock, is_infix = FALSE, group = "unary_node", cpp_name = "return"
+  check_fct = mock, group = "unary_node", cpp_name = "return"
 )
 function_registry_global$add(
   name = "vector", num_args = 2, arg_names = c("mode", "length"),
@@ -748,22 +739,22 @@ function_registry_global$add(
       node$error <- "Found unallowed length type in vector"
     }
   },
-  is_infix = FALSE, group = "function_node", cpp_name = "etr::vector"
+  group = "function_node", cpp_name = "etr::vector"
 )
 function_registry_global$add(
   name = "numeric", num_args = 1, arg_names = NA,
   infer_fct = infer_num_int_log,
-  check_fct = check_unary, is_infix = FALSE, group = "unary_node", cpp_name = "etr::numeric"
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::numeric"
 )
 function_registry_global$add(
   name = "integer", num_args = 1, arg_names = NA,
   infer_fct = infer_num_int_log,
-  check_fct = check_unary, is_infix = FALSE, group = "unary_node", cpp_name = "etr::integer"
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::integer"
 )
 function_registry_global$add(
   name = "logical", num_args = 1, arg_names = NA,
   infer_fct = infer_num_int_log,
-  check_fct = check_unary, is_infix = FALSE, group = "unary_node", cpp_name = "etr::logical"
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::logical"
 )
 function_registry_global$add(
   name = "matrix", num_args = 3, arg_names = c("data", "nrow", "ncol"),
@@ -789,7 +780,7 @@ function_registry_global$add(
       node$error <- "Found unallowed ncol type in matrix"
     }
   },
-  is_infix = FALSE, group = "function_node", cpp_name = "etr::matrix"
+ group = "function_node", cpp_name = "etr::matrix"
 )
 function_registry_global$add(
   name = "array", num_args = 2, arg_names = c(NA, NA),
@@ -809,7 +800,7 @@ function_registry_global$add(
      node$error <- "You cannot fill an array with character entries"
     }
   },
-  is_infix = FALSE, group = "function_node", cpp_name = "etr::array"
+ group = "function_node", cpp_name = "etr::array"
 )
 function_registry_global$add(
   name = "length", num_args = 1, arg_names = NA,
@@ -826,7 +817,7 @@ function_registry_global$add(
       node$error <- "You can only call length on variables of type array, matrix or vector"
     }
   },
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::length"
+ group = "unary_node", cpp_name = "etr::length"
 )
 function_registry_global$add(
   name = "dim", num_args = 1, arg_names = NA,
@@ -843,37 +834,37 @@ function_registry_global$add(
       node$error <- "You can only call dim on variables of type array or matrix"
     }
   },
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::dim"
+ group = "unary_node", cpp_name = "etr::dim"
 )
 function_registry_global$add(
   name = "!", num_args = 1, arg_names = NA,
   infer_fct = infer_check_type,
   check_fct = mock,
-  is_infix = FALSE, group = "unary_node", cpp_name = "!"
+ group = "unary_node", cpp_name = "!"
 )
 function_registry_global$add(
   name = "is.na", num_args = 1, arg_names = NA,
   infer_fct = infer_check_type,
   check_fct = mock,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::isNA"
+ group = "unary_node", cpp_name = "etr::isNA"
 )
 function_registry_global$add(
   name = "is.nan", num_args = 1, arg_names = NA,
   infer_fct = infer_check_type,
   check_fct = mock,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::isNaN"
+ group = "unary_node", cpp_name = "etr::isNaN"
 )
 function_registry_global$add(
   name = "is.infinite", num_args = 1, arg_names = NA,
   infer_fct = infer_check_type,
   check_fct = mock,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::isInfinite"
+ group = "unary_node", cpp_name = "etr::isInfinite"
 )
 function_registry_global$add(
   name = "is.finite", num_args = 1, arg_names = NA,
   infer_fct = infer_check_type,
   check_fct = mock,
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::isFinite"
+ group = "unary_node", cpp_name = "etr::isFinite"
 )
 function_registry_global$add(
   name = "cmr", num_args = 3, arg_names = c(NA, NA, NA),
@@ -913,7 +904,7 @@ function_registry_global$add(
       node$error <- "The third argument of cmr has to be a vector"
     }
   },
-  is_infix = FALSE, group = "function_node", cpp_name = "etr::cmr"
+ group = "function_node", cpp_name = "etr::cmr"
 )
 
 function_registry_global$add(
@@ -934,7 +925,7 @@ function_registry_global$add(
       node$error <- "The second argument of seed has to have the base type integer or double"
     }
   },
-  is_infix = FALSE, group = "binary_node", cpp_name = "etr::seed"
+ group = "binary_node", cpp_name = "etr::seed"
 )
 function_registry_global$add(
   name = "unseed", num_args = 2, arg_names = c(NA, NA),
@@ -954,7 +945,7 @@ function_registry_global$add(
       node$error <- "The second argument of seed has to have the base type integer or double"
     }
   },
-  is_infix = FALSE, group = "binary_node", cpp_name = "etr::unseed"
+ group = "binary_node", cpp_name = "etr::unseed"
 )
 function_registry_global$add(
   name = "get_dot", num_args = 1, arg_names = NA,
@@ -975,7 +966,7 @@ function_registry_global$add(
       node$error <- "The argument of get_dot has to have the base type double"
     }
   },
-  is_infix = FALSE, group = "unary_node", cpp_name = "etr::get_dot"
+ group = "unary_node", cpp_name = "etr::get_dot"
 )
 function_registry_global$add(
   name = "deriv", num_args = 2, arg_names = c(NA, NA),
@@ -1011,5 +1002,5 @@ function_registry_global$add(
       node$error <- "The second argument of deriv has to have the base type integer or double"
     }
   },
-  is_infix = FALSE, group = "binary_node", cpp_name = "etr::deriv"
+ group = "binary_node", cpp_name = "etr::deriv"
 )
