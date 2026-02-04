@@ -25,20 +25,20 @@ create_ast <- function(code, context, r_fct) {
     return(b_node)
   } else if (operator == "repeat") {
     rn <- repeat_node$new()
-    rn$block <- code[[2]] |> process(operator, r_fct)
+    rn$block <- code[[2]] |> wrap_in_block() |> process(operator, r_fct)
     rn$context <- context
     return(rn)
   } else if (operator == "while") {
     wn <- while_node$new()
     wn$condition <- code[[2]] |> process(operator, r_fct)
-    wn$block <- code[[3]] |> process(operator, r_fct)
+    wn$block <- code[[3]] |> wrap_in_block() |> process(operator, r_fct)
     wn$context <- context
     return(wn)
   } else if (operator == "for") {
     fn <- for_node$new()
     fn$i <- code[[2]] |> process(operator, r_fct)
     fn$seq <- code[[3]] |> process(operator, r_fct)
-    fn$block <- code[[4]] |> process(operator, r_fct)
+    fn$block <- code[[4]] |> wrap_in_block() |> process(operator, r_fct)
     fn$context <- context
     return(fn)
   } else if (function_registry_global$is_group_functions(operator) || length(code) > 3) {
@@ -281,18 +281,12 @@ resolve_derivative <- function(derivative) {
 }
 
 translate_internally <- function(fct, args_fct, derivative, name_fct, r_fct) {
-  b <- body(fct)
-  if (b[[1]] != "{") {
-    stop("Please place the body of your function f within curly brackets")
-  }
-  if (length(b) == 1) {
-    stop("f seems to be empty")
-  }
+  b <- body(fct) |> wrap_in_block()
   code_string <- list()
   real_type <- resolve_derivative(derivative)
 
   # Create AST
-  AST <- parse_body(body(fct), r_fct)
+  AST <- parse_body(b, r_fct)
 
   # Run checks
   run_checks(AST, r_fct)

@@ -18,6 +18,14 @@ err_found <- function(string) {
   string != ""
 }
 
+wrap_in_block <- function(expr) {
+  if (is.null(expr)) return(expr)
+  if (is.call(expr) && identical(expr[[1]], as.name("{"))) {
+    return(expr)
+  }
+  as.call(list(as.name("{"), expr))
+}
+
 cpp_keywords <- function() {
   c(
     "alignas", "alignof", "and", "and_eq", "asm",

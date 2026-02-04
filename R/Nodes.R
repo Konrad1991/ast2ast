@@ -253,7 +253,7 @@ nullary_node <- R6::R6Class(
     output_is_r_fct = TRUE,
     initialize = function() {},
     stringify = function(indent = "") {
-      if (self$operator == "next" || self$operator == "break") {
+      if (self$operator == "next" || self$operator == "break" || self$operator == "continue") {
         return(paste0(indent, self$operator, ";"))
       }
       ret <- NULL
@@ -472,13 +472,13 @@ if_node <- R6::R6Class(
 
 handle_if <- function(code, context, r_fct, i_node) {
   i_node$condition <- code[[2]] |> process(context, r_fct)
-  i_node$true_node <- code[[3]] |> process(context, r_fct)
+  i_node$true_node <- code[[3]] |> wrap_in_block() |> process(context, r_fct)
   if (length(code) == 4) {
     s <- code[[4]]
     while (is.call(s) && deparse(s[[1]]) == "if") {
       else_i_node <- if_node$new()
       else_i_node$condition <- s[[2]] |> process(context, r_fct)
-      else_i_node$true_node <- s[[3]] |> process(context, r_fct)
+      else_i_node$true_node <- s[[3]] |> wrap_in_block() |> process(context, r_fct)
       i_node$else_if_nodes[[
         length(i_node$else_if_nodes) + 1
         ]] <- else_i_node
@@ -492,12 +492,12 @@ handle_if <- function(code, context, r_fct, i_node) {
       if (deparse(s[[1]]) == "if") {
         else_i_node <- if_node$new()
         else_i_node$condition <- s[[2]] |> process(context, r_fct)
-        else_i_node$true_node <- s[[3]] |> process(context, r_fct)
+        else_i_node$true_node <- s[[3]] |> wrap_in_block() |> process(context, r_fct)
         i_node$else_if_nodes[[
           length(i_node$else_if_nodes) + 1
           ]] <- else_i_node
       } else {
-        i_node$false_node <- process(s, context, r_fct)
+        i_node$false_node <- process(wrap_in_block(s), context, r_fct)
       }
     }
   }
