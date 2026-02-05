@@ -294,6 +294,9 @@ infer_comparison <- function(node, vars_list, r_fct) {
   if ("matrix" %within% c(left_type$data_struct, right_type$data_struct)) {
     common_data_struct <- "matrix"
   }
+  if ("array" %within% c(left_type$data_struct, right_type$data_struct)) {
+    common_data_struct <- "array"
+  }
   t <- type_node$new(NA, FALSE, r_fct)
   t$base_type <- common_type
   t$data_struct <- common_data_struct
@@ -318,6 +321,9 @@ infer_and_or_vector <- function(node, vars_list, r_fct) {
   common_data_struct <- "vector"
   if ("matrix" %within% c(left_type$data_struct, right_type$data_struct)) {
     common_data_struct <- "matrix"
+  }
+  if ("array" %within% c(left_type$data_struct, right_type$data_struct)) {
+    common_data_struct <- "array"
   }
   t <- type_node$new(NA, FALSE, r_fct)
   t$base_type <- common_type
@@ -930,7 +936,7 @@ function_registry_global$add(
 function_registry_global$add(
   name = "unseed", num_args = 2, arg_names = c(NA, NA),
   infer_fct = function(node, vars_list, r_fct) {
-    return(sprintf("Found seed within an expression: %s", node$stringify()))
+    return(sprintf("Found unseed within an expression: %s", node$stringify()))
   },
   check_fct = function(node, vars_list, r_fct, real_type) {
     if (real_type != "etr::Dual") {
