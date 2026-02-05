@@ -16,6 +16,17 @@ check_type_f_arg <- function(type, bt, ds, const_or_mut, copy_or_ref, fct_input 
   check[5] <- type$copy_or_ref == copy_or_ref
   expect_true(all(check))
 }
+# --- void + something else --> error -------------------------------------
+f <- function() {
+  return()
+  return(3.14)
+}
+f_args <- function() {}
+e <- try(get_ret_type(f, f_args), silent = TRUE)
+expect_equal(
+  as.character(e),
+  "Error in ast2ast:::determine_types_of_returns(AST, vars_types_list, r_fct) : \n  Found a return() and return(obj) statements. You can only use one of these at the same time\n"
+)
 # --- function input R ----------------------------------------------------
 f <- function() {
   return()
