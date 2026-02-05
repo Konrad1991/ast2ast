@@ -175,7 +175,12 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct) {
   env$vars_list <- vars_types_list
   env$return_list <- list()
   env$r_fct <- r_fct
+  env$found_void_return <- FALSE
+  env$found_non_void_return <- FALSE
   e <- try(traverse_ast(ast, type_infer_return_action, env), silent = TRUE)
+  if (env$found_non_void_return && env$found_void_return) {
+    stop("Found a return() and return(obj) statements. You can only use one of these at the same time")
+  }
   if (inherits(e, "try-error")) {
     stop("Error: Could not infer the return type")
   }

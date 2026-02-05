@@ -356,6 +356,10 @@ type_infer_return_action <- function(node, env) {
     } else {
       env$return_list[[length(env$return_list) + 1]] <- type
     }
+    env$found_non_void_return <- TRUE
+  } else if (inherits(node, "nullary_node") && node$operator == "return") {
+    env$return_list[[length(env$return_list) + 1]] <- if (env$r_fct) type <- "R_NilValue" else "void"
+    env$found_void_return <- TRUE
   }
 }
 
