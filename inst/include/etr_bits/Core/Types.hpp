@@ -338,6 +338,8 @@ struct Logical {
   inline Logical operator!=(const Logical&) const;
   inline Logical operator&&(const Logical&) const;
   inline Logical operator||(const Logical&) const;
+  inline Logical operator&(const Logical&) const;
+  inline Logical operator|(const Logical&) const;
   inline Double sin() const;
   inline Double asin() const;
   inline Double sinh() const;
@@ -356,6 +358,7 @@ struct Logical {
   inline bool isNA() const noexcept {
     return is_na;
   }
+
 };
 
 struct Integer {
@@ -380,6 +383,8 @@ struct Integer {
   inline Logical operator!=(const Integer&) const;
   inline Logical operator&&(const Integer&) const;
   inline Logical operator||(const Integer&) const;
+  inline Logical operator&(const Integer&) const;
+  inline Logical operator|(const Integer&) const;
   inline Double sin() const;
   inline Double asin() const;
   inline Double sinh() const;
@@ -421,6 +426,8 @@ struct Double {
   inline Logical operator!=(const Double&) const;
   inline Logical operator&&(const Double&) const;
   inline Logical operator||(const Double&) const;
+  inline Logical operator&(const Double&) const;
+  inline Logical operator|(const Double&) const;
   inline Double sin() const;
   inline Double asin() const;
   inline Double sinh() const;
@@ -485,6 +492,8 @@ struct Dual {
   inline Logical operator!=(const Dual&) const;
   inline Logical operator&&(const Dual&) const;
   inline Logical operator||(const Dual&) const;
+  inline Logical operator&(const Dual&) const;
+  inline Logical operator|(const Dual&) const;
   inline Dual sin() const;
   inline Dual asin() const;
   inline Dual sinh() const;
@@ -823,6 +832,40 @@ inline Logical Double::operator||(const Double& other) const {
   return Logical(val || other.val);
 }
 inline Logical Dual::operator||(const Dual& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val || other.val);
+}
+
+inline Logical Logical::operator&(const Logical& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val && other.val);
+}
+inline Logical Integer::operator&(const Integer& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val && other.val);
+}
+inline Logical Double::operator&(const Double& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val && other.val);
+}
+inline Logical Dual::operator&(const Dual& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val && other.val);
+}
+
+inline Logical Logical::operator|(const Logical& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val || other.val);
+}
+inline Logical Integer::operator|(const Integer& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val || other.val);
+}
+inline Logical Double::operator|(const Double& other) const {
+  if (is_na || other.is_na) return Logical::NA();
+  return Logical(val || other.val);
+}
+inline Logical Dual::operator|(const Dual& other) const {
   if (is_na || other.is_na) return Logical::NA();
   return Logical(val || other.val);
 }
