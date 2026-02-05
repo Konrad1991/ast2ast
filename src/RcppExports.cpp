@@ -129,6 +129,15 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_assign_array_to_scalar
+void test_assign_array_to_scalar();
+RcppExport SEXP _ast2ast_test_assign_array_to_scalar() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_assign_array_to_scalar();
+    return R_NilValue;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_tests_allocation", (DL_FUNC) &_ast2ast_tests_allocation, 0},
@@ -144,6 +153,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_second_dispatch_layer", (DL_FUNC) &_ast2ast_test_second_dispatch_layer, 0},
     {"_ast2ast_test_simplified_subsetting", (DL_FUNC) &_ast2ast_test_simplified_subsetting, 0},
     {"_ast2ast_test_utilities", (DL_FUNC) &_ast2ast_test_utilities, 0},
+    {"_ast2ast_test_assign_array_to_scalar", (DL_FUNC) &_ast2ast_test_assign_array_to_scalar, 0},
     {NULL, NULL, 0}
 };
 

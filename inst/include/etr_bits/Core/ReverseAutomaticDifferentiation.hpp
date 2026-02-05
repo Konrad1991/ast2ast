@@ -682,6 +682,28 @@ template<typename T, typename U> requires IsScalarOrScalarRef<U> ExprPtr<T> pow(
 //------------------------------------------------------------------------------
 // Variable
 //------------------------------------------------------------------------------
+// Retrieve val
+// --------------------------------------------------------------------------------------------------
+using var = Variable<etr::Double>;
+template<typename T> struct Variable;
+
+template<typename T> requires IsArithV<T> inline auto get_scalar_val(const T& t) { return t; }
+template<typename T> requires IsArithRefV<T> inline auto get_scalar_val(const T& t) {
+  using DecayedT = Decayed<T>;
+  using RetType = to_ast_scalar_t<DecayedT>;
+  return RetType(t);
+}
+template<typename T> inline auto get_scalar_val(const ExprPtr<T>& t) { return t->val; }
+template<typename T> inline auto get_scalar_val(const Variable<T>& t) { return t.expr->val; }
+template<typename T> requires IS<T, BooleanExpr> inline auto get_scalar_val(const T& t) { return t.val; }
+
+template<typename T> requires std::is_arithmetic_v<T> inline T get_val(const T& t) { return t; }
+template<typename T> requires IsArithV<T> inline auto get_val(const T& t) { return t.val; }
+template<typename T> requires IsArithRefV<T> inline auto get_val(const T& t) { return *(t.p_val); }
+template<typename T> inline auto get_val(const ExprPtr<T>& t) { return t->val.val; }
+template<typename T> inline auto get_val(const Variable<T>& t) { return t.expr->val.val; }
+template<typename T> inline auto get_val(const BooleanExpr& t) { return t.val.val; }
+
 /// The autodiff variable type used for detail mode automatic differentiation.
 template<typename T>
 struct Variable {
@@ -719,6 +741,14 @@ struct Variable {
   /// Assign an arithmetic value to this variable.
   template<typename U> requires IsScalarOrScalarRef<U>
   auto operator=(const U& val) -> Variable& { *this = Variable(val); return *this; }
+  /// Assign an array to this variable
+  template<typename U> requires IsArray<U>
+  auto operator=(const U& arr) -> Variable& {
+    using  inner = typename ExtractDataType<U>::value_type;
+    ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
+    const auto arr_val = get_scalar_val(arr.get(0));
+    *this = Variable(arr_val); return *this;
+  }
   /// Assign an expression to this variable.
   auto operator=(const ExprPtr<T>& x) -> Variable& { *this = Variable(x); return *this; }
   // Assignment operators
@@ -799,6 +829,11 @@ template<typename T, typename U> requires is_binary_expr_v<T, U>
 auto operator && (const T& t, const U& u) { return comparison_operator<std::logical_and<>>(t, u); }
 template<typename T, typename U> requires is_binary_expr_v<T, U>
 auto operator || (const T& t, const U& u) { return comparison_operator<std::logical_or<>>(t, u); }
+
+template<typename T, typename U> requires is_binary_expr_v<T, U>
+auto operator & (const T& t, const U& u) { return comparison_operator<std::logical_and<>>(t, u); }
+template<typename T, typename U> requires is_binary_expr_v<T, U>
+auto operator | (const T& t, const U& u) { return comparison_operator<std::logical_or<>>(t, u); }
 
 //------------------------------------------------------------------------------
 // ARITHMETIC OPERATORS (DEFINED FOR ARGUMENTS OF TYPE Variable)
@@ -916,27 +951,6 @@ std::ostream& operator<<(std::ostream& out, const ExprPtr<T>& x) {
   out << val(x);
   return out;
 }
-
-// Retrieve val
-// --------------------------------------------------------------------------------------------------
-template<typename T> requires IsArithV<T> inline auto get_scalar_val(const T& t) { return t; }
-template<typename T> requires IsArithRefV<T> inline auto get_scalar_val(const T& t) {
-  using DecayedT = Decayed<T>;
-  using RetType = to_ast_scalar_t<DecayedT>;
-  return RetType(t);
-}
-template<typename T> inline auto get_scalar_val(const ExprPtr<T>& t) { return t->val; }
-template<typename T> inline auto get_scalar_val(const Variable<T>& t) { return t.expr->val; }
-template<typename T> requires IS<T, BooleanExpr> inline auto get_scalar_val(const T& t) { return t.val; }
-
-template<typename T> requires std::is_arithmetic_v<T> inline T get_val(const T& t) { return t; }
-template<typename T> requires IsArithV<T> inline auto get_val(const T& t) { return t.val; }
-template<typename T> requires IsArithRefV<T> inline auto get_val(const T& t) { return *(t.p_val); }
-template<typename T> inline auto get_val(const ExprPtr<T>& t) { return t->val.val; }
-template<typename T> inline auto get_val(const Variable<T>& t) { return t.expr->val.val; }
-template<typename T> inline auto get_val(const BooleanExpr& t) { return t.val.val; }
-
-using var = Variable<etr::Double>;
 
 // preserve na cast
 // --------------------------------------------------------------------------------------------------

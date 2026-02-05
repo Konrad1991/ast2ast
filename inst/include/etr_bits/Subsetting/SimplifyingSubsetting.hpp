@@ -49,6 +49,13 @@ struct LogicalRef {
   explicit inline LogicalRef(bool* v);
   inline LogicalRef(Logical) = delete;
   inline LogicalRef(bool) = delete;
+
+  template<typename T> requires IsArray<Decayed<T>> inline LogicalRef& operator=(const T& arr) {
+    using  inner = typename ExtractDataType<T>::value_type;
+    ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
+    *this = arr.get(0);
+    return *this;
+  }
 };
 
 struct IntegerRef {
@@ -65,6 +72,13 @@ struct IntegerRef {
   explicit inline IntegerRef(int* v);
   inline IntegerRef(Integer) = delete;
   inline IntegerRef(int) = delete;
+
+  template<typename T> requires IsArray<Decayed<T>> inline IntegerRef& operator=(const T& arr) {
+    using  inner = typename ExtractDataType<T>::value_type;
+    ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
+    *this = arr.get(0);
+    return *this;
+  }
 };
 struct DoubleRef {
   double* p_val;
@@ -80,6 +94,12 @@ struct DoubleRef {
   explicit inline DoubleRef(double* v);
   inline DoubleRef(Double) = delete;
   inline DoubleRef(double) = delete;
+  template<typename T> requires IsArray<Decayed<T>> inline DoubleRef& operator=(const T& arr) {
+    using  inner = typename ExtractDataType<T>::value_type;
+    ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
+    *this = arr.get(0);
+    return *this;
+  }
 };
 
 struct DualRef {
@@ -98,6 +118,12 @@ struct DualRef {
   explicit inline DualRef(double* v, double* d);
   inline DualRef(Dual) = delete;
   inline DualRef(double, double) = delete;
+  template<typename T> requires IsArray<Decayed<T>> inline DualRef& operator=(const T& arr) {
+    using  inner = typename ExtractDataType<T>::value_type;
+    ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
+    *this = arr.get(0);
+    return *this;
+  }
 };
 
 inline LogicalRef::LogicalRef(bool* v): p_val(v) {}

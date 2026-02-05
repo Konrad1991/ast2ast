@@ -300,6 +300,366 @@ struct Dim {
   }
 };
 
+// Traits (third dispatch layer)
+// --------------------------------------------------------------------------------------------------
+struct ComparisonTrait { using value_type = bool; };
+
+struct LBufferTrait {};
+struct RBufferTrait {};
+struct SubsetViewTrait {};
+struct ConstSubsetViewTrait {};
+struct BorrowTrait {};
+struct BinaryTrait {};
+struct UnaryTrait {};
+
+struct PlusTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l + r;
+  }
+};
+struct MinusTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l - r;
+  }
+};
+struct TimesTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l * r;
+  }
+};
+struct DivideTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l / r;
+  }
+};
+struct PowTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return pow(l, r);
+  }
+};
+struct EqualTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l == r;
+  }
+};
+struct SmallerTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l < r;
+  }
+};
+struct SmallerEqualTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l <= r;
+  }
+};
+struct LargerTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l > r;
+  }
+};
+struct LargerEqualTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l >= r;
+  }
+};
+struct UnEqualTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l != r;
+  }
+};
+struct AndTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l && r;
+  }
+};
+struct OrTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l || r;
+  }
+};
+
+struct SinusTrait {
+  template <typename L> static inline auto f(L a) { return sin(a); }
+};
+struct ASinusTrait {
+  template <typename L> static inline auto f(L a) { return asin(a); }
+};
+struct SinusHTrait {
+  template <typename L> static inline auto f(L a) { return sinh(a); }
+};
+struct CosinusTrait {
+  template <typename L> static inline auto f(L a) { return cos(a); }
+};
+struct ACosinusTrait {
+  template <typename L> static inline auto f(L a) { return acos(a); }
+};
+struct CosinusHTrait {
+  template <typename L> static inline auto f(L a) { return cosh(a); }
+};
+struct TangensTrait {
+  template <typename L> static inline auto f(L a) { return tan(a); }
+};
+struct ATangensTrait {
+  template <typename L> static inline auto f(L a) { return atan(a); }
+};
+struct TangensHTrait {
+  template <typename L> static inline auto f(L a) { return tanh(a); }
+};
+struct ExpTrait {
+  template <typename L> static inline auto f(L a) { return exp(a); }
+};
+struct LogTrait {
+  template <typename L> static inline auto f(L a) { return log(a); }
+};
+struct SquareRootTrait {
+  template <typename L> static inline auto f(L a) { return sqrt(a); }
+};
+struct MinusUnaryTrait {
+  template <typename L> static inline auto f(L a) { return -a; }
+};
+
+
+// Inner data structs
+// -----------------------------------------------------------------------------------------------------------
+/*
+Each inner data struct requires:
+- copy constructor
+- copy assignment
+- move constructor
+- move assignment
+- size
+- const auto& operator[]
+- auto& operator[]
+- begin and end
+- Trait
+- value_type
+
+Classes Buffer, Borrow, UnaryOperation, BinaryOperation, SubsetView
+*/
+template <typename T, typename Trait = LBufferTrait> struct Buffer;
+template <typename T, typename Trait = BorrowTrait> struct Borrow;
+template <typename L, typename Trait = UnaryTrait> struct UnaryOperation;
+template <typename L, typename R, typename Trait = BinaryTrait> struct BinaryOperation;
+template<typename O, std::size_t N, typename Trait = SubsetViewTrait> struct SubsetView;
+template<typename O, std::size_t N, typename Trait = ConstSubsetViewTrait> struct ConstSubsetView;
+
+// Outer data structs
+// -----------------------------------------------------------------------------------------------------------
+template<typename T, typename R>
+struct Array { static_assert(sizeof(R) == 0, "No generic Array<T,R> implementation"); };
+template <typename T, typename Trait> struct Array<T, Buffer<T, Trait>>;
+template <typename T, typename Trait> struct Array<T, Borrow<T, Trait>>;
+template <typename T, typename I, typename Trait> struct Array<T, UnaryOperation<I, Trait>>;
+template <typename T, typename L, typename R, typename Trait> struct Array<T, BinaryOperation<L, R, Trait>>;
+template <typename T, typename O, std::size_t N, typename Trait> struct Array<T, SubsetView<O, N, Trait>>;
+template <typename T, typename O, std::size_t N, typename Trait> struct Array<T, ConstSubsetView<O, N, Trait>>;
+
+// Extract data type from outer data structs
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> struct ExtractDataType;
+
+template <typename T, typename R>
+struct ExtractDataType<Array<T, R>> {
+  using value_type = T;
+};
+template <typename T, typename R>
+struct ExtractDataType<const Array<T, R>> {
+  using value_type = T const;
+};
+template <typename T> using ExtractedTypeData = typename ExtractDataType<T>::value_type;
+
+// Concepts
+// -----------------------------------------------------------------------------------------------------------
+// Determine type for literal bools, ints or doubles
+// -----------------------------------------------------------------------------------------------------------
+// Float
+template <typename T> struct is_float_type : std::is_floating_point<T> {};
+template <typename T> struct is_float_type_with_type : is_float_type<typename T::Type> {};
+template <typename T, typename = void> struct is_float_dispatch : is_float_type<T> {};
+template <typename T> struct is_float_dispatch<T, std::void_t<typename T::Type>> : is_float_type_with_type<T> {};
+template <typename T> inline constexpr bool IsCppDouble = is_float_dispatch<T>::value;
+// Integer
+template <typename T> struct is_integer_type : std::is_integral<T> {};
+template <typename T> struct is_integer_type_with_type : is_integer_type<typename T::Type> {};
+template <typename T, typename = void> struct is_integer_dispatch : is_integer_type<T> {};
+template <typename T> struct is_integer_dispatch<T, std::void_t<typename T::Type>> : is_integer_type_with_type<T> {};
+template <typename T> inline constexpr bool IsCppInteger = is_integer_dispatch<T>::value;
+// Bool (exactly bool, not all integrals)
+template <typename T> struct is_bool_type : std::is_same<T, bool> {};
+template <typename T> struct is_bool_type_with_type : is_bool_type<typename T::Type> {};
+template <typename T, typename = void> struct is_bool_dispatch : is_bool_type<T> {};
+template <typename T> struct is_bool_dispatch<T, std::void_t<typename T::Type>> : is_bool_type_with_type<T> {};
+template <typename T> inline constexpr bool IsCppLogical = is_bool_dispatch<T>::value;
+
+// Calculation & Inner data structures
+// -----------------------------------------------------------------------------------------------------------
+template <typename T>
+concept IsUnary = requires {
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, SinusTrait> ||
+IS<typename ReRef<T>::type::Trait, ASinusTrait> ||
+IS<typename ReRef<T>::type::Trait, SinusHTrait> ||
+IS<typename ReRef<T>::type::Trait, CosinusTrait> ||
+IS<typename ReRef<T>::type::Trait, ACosinusTrait> ||
+IS<typename ReRef<T>::type::Trait, CosinusHTrait> ||
+IS<typename ReRef<T>::type::Trait, TangensTrait> ||
+IS<typename ReRef<T>::type::Trait, ATangensTrait> ||
+IS<typename ReRef<T>::type::Trait, TangensHTrait> ||
+IS<typename ReRef<T>::type::Trait, ExpTrait> ||
+IS<typename ReRef<T>::type::Trait, LogTrait> ||
+IS<typename ReRef<T>::type::Trait, SquareRootTrait> ||
+IS<typename ReRef<T>::type::Trait, MinusUnaryTrait>;
+};
+template <typename T>
+concept IsBinary = requires {
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, PlusTrait> ||
+IS<typename ReRef<T>::type::Trait, MinusTrait> ||
+IS<typename ReRef<T>::type::Trait, TimesTrait> ||
+IS<typename ReRef<T>::type::Trait, DivideTrait> ||
+IS<typename ReRef<T>::type::Trait, PowTrait> ||
+IS<typename ReRef<T>::type::Trait, EqualTrait> ||
+IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
+IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
+IS<typename ReRef<T>::type::Trait, LargerTrait> ||
+IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
+IS<typename ReRef<T>::type::Trait, UnEqualTrait>;
+};
+template <typename T>
+concept IsComparison = requires {
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, EqualTrait> ||
+IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
+IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
+IS<typename ReRef<T>::type::Trait, LargerTrait> ||
+IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
+IS<typename ReRef<T>::type::Trait, UnEqualTrait> ||
+IS<typename ReRef<T>::type::Trait, AndTrait> ||
+IS<typename ReRef<T>::type::Trait, OrTrait>;
+};
+template <typename T>
+concept IsComparisonTrait = requires(T t) { // required as in binary operation the trait is directly tested
+typename T;
+requires IS<T, EqualTrait> ||
+IS<T, SmallerTrait> ||
+IS<T, SmallerEqualTrait> ||
+IS<T, LargerTrait> ||
+IS<T, LargerEqualTrait> ||
+IS<T, UnEqualTrait> ||
+IS<T, AndTrait> ||
+IS<T, OrTrait>;
+};
+
+// Mutable subset view
+// -------------------------------------------------------------------
+template <typename T>
+concept IsSubsetView = requires {
+typename ReRef<T>::type::TypeTrait;
+requires IS<typename ReRef<T>::type::TypeTrait, SubsetViewTrait>;
+};
+// extract N from SubsetView
+template<typename T>
+struct subsetview_traits;
+
+template<typename O, std::size_t N, typename Trait>
+struct subsetview_traits<SubsetView<O, N, Trait>> {
+  static constexpr std::size_t value = N;
+};
+
+// Const subset view
+// -------------------------------------------------------------------
+template <typename T>
+concept IsConstSubsetView = requires {
+typename ReRef<T>::type::TypeTrait;
+requires IS<typename ReRef<T>::type::TypeTrait, ConstSubsetViewTrait>;
+};
+// extract N from ConstSubsetView
+template<typename T>
+struct const_subsetview_traits;
+
+template <typename T>
+concept IsLBuffer = requires {
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, LBufferTrait>;
+};
+template <typename T>
+concept IsRBuffer = requires {
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, RBufferTrait>;
+};
+template <typename T>
+concept IsBorrow = requires {
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, BorrowTrait>;
+};
+
+// Input class (outer data structures)
+// -----------------------------------------------------------------------------------------------------------
+// Array
+template <typename T> struct is_any_array : std::false_type {};
+template <typename T, typename R> struct is_any_array<Array<T, R>> : std::true_type {};
+template <typename T> inline constexpr bool is_any_array_v = is_any_array<T>::value;
+template <typename T> concept IsArray = is_any_array_v<T>;
+
+template <typename T> struct is_array_l : std::false_type {};
+template <typename T> struct is_array_l<Array<T, Buffer<T, LBufferTrait>>> : std::true_type {};
+template <typename T> inline constexpr bool is_array_l_v = is_array_l<T>::value;
+template <typename T> concept IsLBufferArray = is_array_l_v<T>;
+
+template <typename T> struct is_array_r : std::false_type {};
+template <typename T> struct is_array_r<Array<T, Buffer<T, RBufferTrait>>> : std::true_type {};
+template <typename T> inline constexpr bool is_array_r_v = is_array_r<T>::value;
+template <typename T> concept IsRArray = is_array_r_v<T>;
+
+template <typename T> struct is_array_b : std::false_type {};
+template <typename T> struct is_array_b<Array<T, Borrow<T, BorrowTrait>>> : std::true_type {};
+template <typename T> inline constexpr bool is_array_b_v = is_array_b<T>::value;
+template <typename T> concept IsBorrowArray = is_array_b_v<T>;
+
+template <typename T> struct is_array_s : std::false_type {};
+template <typename T, typename O, std::size_t N, typename Trait>
+struct is_array_s<Array<T, SubsetView<O, N, Trait>>> : std::bool_constant<std::is_same_v<Trait, SubsetViewTrait>> {};
+template <typename T> inline constexpr bool is_array_s_v = is_array_s<T>::value;
+template <typename T> concept IsSubsetArray = is_array_s_v<T>;
+
+template <typename T> struct is_array_const_s : std::false_type {};
+template <typename T, typename O, std::size_t N, typename Trait>
+struct is_array_const_s<Array<T, ConstSubsetView<O, N, Trait>>> : std::bool_constant<std::is_same_v<Trait, ConstSubsetViewTrait>> {};
+template <typename T> inline constexpr bool is_array_const_s_v = is_array_const_s<T>::value;
+template <typename T> concept IsConstSubsetArray = is_array_const_s_v<T>;
+
+template <typename T> concept IsUnaryArray = IsArray<T> && IsUnary<typename T::DType>;
+template <typename T> concept IsBinaryArray = IsArray<T> && IsBinary<typename T::DType>;
+template <typename T> concept IsComparisonArray = IsArray<T> && IsComparison<typename T::DType>;
+
+template <typename T>
+concept IsOperationArray =
+IsArray<T> && (
+IsUnary<typename T::DType> ||
+IsBinary<typename T::DType> ||
+IsComparison<typename T::DType> ||
+IsSubsetView<typename T::DType> ||
+IsConstSubsetView<typename T::DType>
+    );
+template <typename T>
+concept IsROrCalculationArray = requires(T t) {
+typename T::DType;
+requires IsOperationArray<T> || IsRArray<T>;
+};
+
 // Scalar types (First dispatch layer)
 // --------------------------------------------------------------------------------------------------
 struct Logical;
@@ -358,7 +718,19 @@ struct Logical {
   inline bool isNA() const noexcept {
     return is_na;
   }
-
+  template<typename T> requires IsArray<Decayed<T>> inline Logical& operator=(const T& arr) {
+    using  inner = typename ExtractDataType<T>::value_type;
+    ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
+    const auto arr_val = get_scalar_val(arr.get(0));
+    if constexpr(IS<inner, Logical>) {
+      val = arr_val.val;
+      is_na = arr_val.is_na;
+    } else {
+      val = static_cast<bool>(arr_val.val);
+      is_na = arr_val.is_na;
+    }
+    return *this;
+  }
 };
 
 struct Integer {
@@ -402,6 +774,19 @@ struct Integer {
   inline static Integer NA() { Integer x; x.is_na = true; return x; }
   inline bool isNA() const noexcept {
     return is_na;
+  }
+  template<typename T> requires IsArray<Decayed<T>> inline Integer& operator=(const T& arr) {
+    using  inner = typename ExtractDataType<T>::value_type;
+    ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
+    const auto arr_val = get_scalar_val(arr.get(0));
+    if constexpr(IS<inner, Integer>) {
+      val = arr_val.val;
+      is_na = arr_val.is_na;
+    } else {
+      val = static_cast<int>(arr_val.val);
+      is_na = arr_val.is_na;
+    }
+    return *this;
   }
 };
 
@@ -464,6 +849,19 @@ struct Double {
   }
   inline bool isInfinite() const noexcept {
     return !is_na && !isNaN() && !std::isfinite(val);
+  }
+  template<typename T> requires IsArray<Decayed<T>> inline Double& operator=(const T& arr) {
+    using  inner = typename ExtractDataType<T>::value_type;
+    ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
+    const auto arr_val = get_scalar_val(arr.get(0));
+    if constexpr(IS<inner, Double>) {
+      val = arr_val.val;
+      is_na = arr_val.is_na;
+    } else {
+      val = static_cast<double>(arr_val.val);
+      is_na = arr_val.is_na;
+    }
+    return *this;
   }
 };
 
@@ -546,6 +944,23 @@ struct Dual {
   }
   inline bool isInfiniteDot() const noexcept {
     return !is_na_dot && !isNaNDot() && !std::isfinite(dot);
+  }
+  template<typename T> requires IsArray<Decayed<T>> inline Dual& operator=(const T& arr) {
+    using  inner = typename ExtractDataType<T>::value_type;
+    ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
+    const auto arr_val = get_scalar_val(arr.get(0));
+    if constexpr(IS<inner, Dual>) {
+      val = arr_val.val;
+      is_na = arr_val.is_na;
+      dot = arr_val.dot;
+      is_na_dot = arr_val.is_na_dot;
+    } else {
+      val = static_cast<double>(arr_val.val);
+      is_na = arr_val.is_na;
+      dot = 0;
+      is_na_dot = false;
+    }
+    return *this;
   }
 };
 
@@ -1249,365 +1664,6 @@ concept AllScalarIndices =
 
 template <typename... Args>
 concept HasNonScalarIndex = (!ScalarIndex<Args> || ...);
-
-// Traits (third dispatch layer)
-// --------------------------------------------------------------------------------------------------
-struct ComparisonTrait { using value_type = bool; };
-
-struct LBufferTrait {};
-struct RBufferTrait {};
-struct SubsetViewTrait {};
-struct ConstSubsetViewTrait {};
-struct BorrowTrait {};
-struct BinaryTrait {};
-struct UnaryTrait {};
-
-struct PlusTrait {
-  template <typename L, typename R>
-  static inline auto f(const L& l, const R& r) {
-    return l + r;
-  }
-};
-struct MinusTrait {
-  template <typename L, typename R>
-  static inline auto f(const L& l, const R& r) {
-    return l - r;
-  }
-};
-struct TimesTrait {
-  template <typename L, typename R>
-  static inline auto f(const L& l, const R& r) {
-    return l * r;
-  }
-};
-struct DivideTrait {
-  template <typename L, typename R>
-  static inline auto f(const L& l, const R& r) {
-    return l / r;
-  }
-};
-struct PowTrait {
-  template <typename L, typename R>
-  static inline auto f(const L& l, const R& r) {
-    return pow(l, r);
-  }
-};
-struct EqualTrait {
-  template <typename L, typename R>
-  static inline auto f(const L& l, const R& r) {
-    return l == r;
-  }
-};
-struct SmallerTrait {
-  template <typename L, typename R>
-  static inline auto f(const L& l, const R& r) {
-    return l < r;
-  }
-};
-struct SmallerEqualTrait {
-  template <typename L, typename R>
-  static inline auto f(const L& l, const R& r) {
-    return l <= r;
-  }
-};
-struct LargerTrait {
-  template <typename L, typename R>
-  static inline auto f(const L& l, const R& r) {
-    return l > r;
-  }
-};
-struct LargerEqualTrait {
-  template <typename L, typename R>
-  static inline auto f(const L& l, const R& r) {
-    return l >= r;
-  }
-};
-struct UnEqualTrait {
-  template <typename L, typename R>
-  static inline auto f(const L& l, const R& r) {
-    return l != r;
-  }
-};
-struct AndTrait {
-  template <typename L, typename R>
-  static inline auto f(const L& l, const R& r) {
-    return l && r;
-  }
-};
-struct OrTrait {
-  template <typename L, typename R>
-  static inline auto f(const L& l, const R& r) {
-    return l || r;
-  }
-};
-
-struct SinusTrait {
-  template <typename L> static inline auto f(L a) { return sin(a); }
-};
-struct ASinusTrait {
-  template <typename L> static inline auto f(L a) { return asin(a); }
-};
-struct SinusHTrait {
-  template <typename L> static inline auto f(L a) { return sinh(a); }
-};
-struct CosinusTrait {
-  template <typename L> static inline auto f(L a) { return cos(a); }
-};
-struct ACosinusTrait {
-  template <typename L> static inline auto f(L a) { return acos(a); }
-};
-struct CosinusHTrait {
-  template <typename L> static inline auto f(L a) { return cosh(a); }
-};
-struct TangensTrait {
-  template <typename L> static inline auto f(L a) { return tan(a); }
-};
-struct ATangensTrait {
-  template <typename L> static inline auto f(L a) { return atan(a); }
-};
-struct TangensHTrait {
-  template <typename L> static inline auto f(L a) { return tanh(a); }
-};
-struct ExpTrait {
-  template <typename L> static inline auto f(L a) { return exp(a); }
-};
-struct LogTrait {
-  template <typename L> static inline auto f(L a) { return log(a); }
-};
-struct SquareRootTrait {
-  template <typename L> static inline auto f(L a) { return sqrt(a); }
-};
-struct MinusUnaryTrait {
-  template <typename L> static inline auto f(L a) { return -a; }
-};
-
-// Inner data structs
-// -----------------------------------------------------------------------------------------------------------
-/*
-Each inner data struct requires:
-- copy constructor
-- copy assignment
-- move constructor
-- move assignment
-- size
-- const auto& operator[]
-- auto& operator[]
-- begin and end
-- Trait
-- value_type
-
-Classes Buffer, Borrow, UnaryOperation, BinaryOperation, SubsetView
-*/
-template <typename T, typename Trait = LBufferTrait> struct Buffer;
-template <typename T, typename Trait = BorrowTrait> struct Borrow;
-template <typename L, typename Trait = UnaryTrait> struct UnaryOperation;
-template <typename L, typename R, typename Trait = BinaryTrait> struct BinaryOperation;
-template<typename O, std::size_t N, typename Trait = SubsetViewTrait> struct SubsetView;
-template<typename O, std::size_t N, typename Trait = ConstSubsetViewTrait> struct ConstSubsetView;
-
-// Outer data structs
-// -----------------------------------------------------------------------------------------------------------
-template<typename T, typename R>
-struct Array { static_assert(sizeof(R) == 0, "No generic Array<T,R> implementation"); };
-template <typename T, typename Trait> struct Array<T, Buffer<T, Trait>>;
-template <typename T, typename Trait> struct Array<T, Borrow<T, Trait>>;
-template <typename T, typename I, typename Trait> struct Array<T, UnaryOperation<I, Trait>>;
-template <typename T, typename L, typename R, typename Trait> struct Array<T, BinaryOperation<L, R, Trait>>;
-template <typename T, typename O, std::size_t N, typename Trait> struct Array<T, SubsetView<O, N, Trait>>;
-template <typename T, typename O, std::size_t N, typename Trait> struct Array<T, ConstSubsetView<O, N, Trait>>;
-
-// Extract data type from outer data structs
-// -----------------------------------------------------------------------------------------------------------
-template <typename T> struct ExtractDataType;
-
-template <typename T, typename R>
-struct ExtractDataType<Array<T, R>> {
-  using value_type = T;
-};
-template <typename T, typename R>
-struct ExtractDataType<const Array<T, R>> {
-  using value_type = T const;
-};
-template <typename T> using ExtractedTypeData = typename ExtractDataType<T>::value_type;
-
-// Concepts
-// -----------------------------------------------------------------------------------------------------------
-// Determine type for literal bools, ints or doubles
-// -----------------------------------------------------------------------------------------------------------
-// Float
-template <typename T> struct is_float_type : std::is_floating_point<T> {};
-template <typename T> struct is_float_type_with_type : is_float_type<typename T::Type> {};
-template <typename T, typename = void> struct is_float_dispatch : is_float_type<T> {};
-template <typename T> struct is_float_dispatch<T, std::void_t<typename T::Type>> : is_float_type_with_type<T> {};
-template <typename T> inline constexpr bool IsCppDouble = is_float_dispatch<T>::value;
-// Integer
-template <typename T> struct is_integer_type : std::is_integral<T> {};
-template <typename T> struct is_integer_type_with_type : is_integer_type<typename T::Type> {};
-template <typename T, typename = void> struct is_integer_dispatch : is_integer_type<T> {};
-template <typename T> struct is_integer_dispatch<T, std::void_t<typename T::Type>> : is_integer_type_with_type<T> {};
-template <typename T> inline constexpr bool IsCppInteger = is_integer_dispatch<T>::value;
-// Bool (exactly bool, not all integrals)
-template <typename T> struct is_bool_type : std::is_same<T, bool> {};
-template <typename T> struct is_bool_type_with_type : is_bool_type<typename T::Type> {};
-template <typename T, typename = void> struct is_bool_dispatch : is_bool_type<T> {};
-template <typename T> struct is_bool_dispatch<T, std::void_t<typename T::Type>> : is_bool_type_with_type<T> {};
-template <typename T> inline constexpr bool IsCppLogical = is_bool_dispatch<T>::value;
-
-// Calculation & Inner data structures
-// -----------------------------------------------------------------------------------------------------------
-template <typename T>
-concept IsUnary = requires {
-typename ReRef<T>::type::Trait;
-requires IS<typename ReRef<T>::type::Trait, SinusTrait> ||
-IS<typename ReRef<T>::type::Trait, ASinusTrait> ||
-IS<typename ReRef<T>::type::Trait, SinusHTrait> ||
-IS<typename ReRef<T>::type::Trait, CosinusTrait> ||
-IS<typename ReRef<T>::type::Trait, ACosinusTrait> ||
-IS<typename ReRef<T>::type::Trait, CosinusHTrait> ||
-IS<typename ReRef<T>::type::Trait, TangensTrait> ||
-IS<typename ReRef<T>::type::Trait, ATangensTrait> ||
-IS<typename ReRef<T>::type::Trait, TangensHTrait> ||
-IS<typename ReRef<T>::type::Trait, ExpTrait> ||
-IS<typename ReRef<T>::type::Trait, LogTrait> ||
-IS<typename ReRef<T>::type::Trait, SquareRootTrait> ||
-IS<typename ReRef<T>::type::Trait, MinusUnaryTrait>;
-};
-template <typename T>
-concept IsBinary = requires {
-typename ReRef<T>::type::Trait;
-requires IS<typename ReRef<T>::type::Trait, PlusTrait> ||
-IS<typename ReRef<T>::type::Trait, MinusTrait> ||
-IS<typename ReRef<T>::type::Trait, TimesTrait> ||
-IS<typename ReRef<T>::type::Trait, DivideTrait> ||
-IS<typename ReRef<T>::type::Trait, PowTrait> ||
-IS<typename ReRef<T>::type::Trait, EqualTrait> ||
-IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
-IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
-IS<typename ReRef<T>::type::Trait, LargerTrait> ||
-IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
-IS<typename ReRef<T>::type::Trait, UnEqualTrait>;
-};
-template <typename T>
-concept IsComparison = requires {
-typename ReRef<T>::type::Trait;
-requires IS<typename ReRef<T>::type::Trait, EqualTrait> ||
-IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
-IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
-IS<typename ReRef<T>::type::Trait, LargerTrait> ||
-IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
-IS<typename ReRef<T>::type::Trait, UnEqualTrait> ||
-IS<typename ReRef<T>::type::Trait, AndTrait> ||
-IS<typename ReRef<T>::type::Trait, OrTrait>;
-};
-template <typename T>
-concept IsComparisonTrait = requires(T t) { // required as in binary operation the trait is directly tested
-typename T;
-requires IS<T, EqualTrait> ||
-IS<T, SmallerTrait> ||
-IS<T, SmallerEqualTrait> ||
-IS<T, LargerTrait> ||
-IS<T, LargerEqualTrait> ||
-IS<T, UnEqualTrait> ||
-IS<T, AndTrait> ||
-IS<T, OrTrait>;
-};
-
-// Mutable subset view
-// -------------------------------------------------------------------
-template <typename T>
-concept IsSubsetView = requires {
-typename ReRef<T>::type::TypeTrait;
-requires IS<typename ReRef<T>::type::TypeTrait, SubsetViewTrait>;
-};
-// extract N from SubsetView
-template<typename T>
-struct subsetview_traits;
-
-template<typename O, std::size_t N, typename Trait>
-struct subsetview_traits<SubsetView<O, N, Trait>> {
-  static constexpr std::size_t value = N;
-};
-
-// Const subset view
-// -------------------------------------------------------------------
-template <typename T>
-concept IsConstSubsetView = requires {
-typename ReRef<T>::type::TypeTrait;
-requires IS<typename ReRef<T>::type::TypeTrait, ConstSubsetViewTrait>;
-};
-// extract N from ConstSubsetView
-template<typename T>
-struct const_subsetview_traits;
-
-template <typename T>
-concept IsLBuffer = requires {
-typename ReRef<T>::type::Trait;
-requires IS<typename ReRef<T>::type::Trait, LBufferTrait>;
-};
-template <typename T>
-concept IsRBuffer = requires {
-typename ReRef<T>::type::Trait;
-requires IS<typename ReRef<T>::type::Trait, RBufferTrait>;
-};
-template <typename T>
-concept IsBorrow = requires {
-typename ReRef<T>::type::Trait;
-requires IS<typename ReRef<T>::type::Trait, BorrowTrait>;
-};
-
-// Input class (outer data structures)
-// -----------------------------------------------------------------------------------------------------------
-// Array
-template <typename T> struct is_any_array : std::false_type {};
-template <typename T, typename R> struct is_any_array<Array<T, R>> : std::true_type {};
-template <typename T> inline constexpr bool is_any_array_v = is_any_array<T>::value;
-template <typename T> concept IsArray = is_any_array_v<T>;
-
-template <typename T> struct is_array_l : std::false_type {};
-template <typename T> struct is_array_l<Array<T, Buffer<T, LBufferTrait>>> : std::true_type {};
-template <typename T> inline constexpr bool is_array_l_v = is_array_l<T>::value;
-template <typename T> concept IsLBufferArray = is_array_l_v<T>;
-
-template <typename T> struct is_array_r : std::false_type {};
-template <typename T> struct is_array_r<Array<T, Buffer<T, RBufferTrait>>> : std::true_type {};
-template <typename T> inline constexpr bool is_array_r_v = is_array_r<T>::value;
-template <typename T> concept IsRArray = is_array_r_v<T>;
-
-template <typename T> struct is_array_b : std::false_type {};
-template <typename T> struct is_array_b<Array<T, Borrow<T, BorrowTrait>>> : std::true_type {};
-template <typename T> inline constexpr bool is_array_b_v = is_array_b<T>::value;
-template <typename T> concept IsBorrowArray = is_array_b_v<T>;
-
-template <typename T> struct is_array_s : std::false_type {};
-template <typename T, typename O, std::size_t N, typename Trait>
-struct is_array_s<Array<T, SubsetView<O, N, Trait>>> : std::bool_constant<std::is_same_v<Trait, SubsetViewTrait>> {};
-template <typename T> inline constexpr bool is_array_s_v = is_array_s<T>::value;
-template <typename T> concept IsSubsetArray = is_array_s_v<T>;
-
-template <typename T> struct is_array_const_s : std::false_type {};
-template <typename T, typename O, std::size_t N, typename Trait>
-struct is_array_const_s<Array<T, ConstSubsetView<O, N, Trait>>> : std::bool_constant<std::is_same_v<Trait, ConstSubsetViewTrait>> {};
-template <typename T> inline constexpr bool is_array_const_s_v = is_array_const_s<T>::value;
-template <typename T> concept IsConstSubsetArray = is_array_const_s_v<T>;
-
-template <typename T> concept IsUnaryArray = IsArray<T> && IsUnary<typename T::DType>;
-template <typename T> concept IsBinaryArray = IsArray<T> && IsBinary<typename T::DType>;
-template <typename T> concept IsComparisonArray = IsArray<T> && IsComparison<typename T::DType>;
-
-template <typename T>
-concept IsOperationArray =
-IsArray<T> && (
-IsUnary<typename T::DType> ||
-IsBinary<typename T::DType> ||
-IsComparison<typename T::DType> ||
-IsSubsetView<typename T::DType> ||
-IsConstSubsetView<typename T::DType>
-    );
-template <typename T>
-concept IsROrCalculationArray = requires(T t) {
-typename T::DType;
-requires IsOperationArray<T> || IsRArray<T>;
-};
 
 // Second dispatch layer
 // --------------------------------------------------------------------------------------------------

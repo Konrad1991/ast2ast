@@ -53,3 +53,7 @@ test_utilities <- function() {
     invisible(.Call(`_ast2ast_test_utilities`))
 }
 
+test_assign_array_to_scalar <- function() {
+    invisible(.Call(`_ast2ast_test_assign_array_to_scalar`))
+}
+
