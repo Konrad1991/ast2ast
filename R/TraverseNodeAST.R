@@ -167,46 +167,46 @@ check_operator <- function(node) {
   return()
 }
 
+unallowed_signs <- function(name) {
+  unallowed <- c(
+    # NOTE: SEXP cannot be part of the name.
+    # Thereby, one can easily create argument names nameSEXP and assign it to name
+    # - the types of ast2ast: logical, integer, double, int cannot be used as names.
+    # Thereby, all.vars can directly be used to find all variables
+    "\\.", "SEXP", "getXPtr", "fct_ptr"
+  )
+  sign_found <- 0
+  for (i in seq_along(unallowed)) {
+    if (grepl(unallowed[[i]], name)) {
+      sign_found <- i
+      break
+    }
+  }
+  if (sign_found > 0) {
+    invalid_char <- gsub("\\\\", "", unallowed[sign_found])
+    return(paste0(
+      "Invalid variable name: contains forbidden character --> ",
+      invalid_char
+    ))
+  }
+  if (name %within%
+    c(permitted_base_types(), permitted_data_structs(FALSE), "T", "F")) {
+    # NOTE: added T and F to prevent usage of T and F as variable.
+    return(paste0(
+      "Invalid variable name (reserved internally) ",
+      name
+    ))
+  }
+  return(NULL)
+}
+
+not_cpp_keyword <- function(name) {
+  name %within% cpp_keywords()
+}
+
 check_variable_names <- function(node) {
   if (!inherits(node, "variable_node")) {
     return()
-  }
-
-  unallowed_signs <- function(name) {
-    unallowed <- c(
-      # NOTE: SEXP cannot be part of the name.
-      # Thereby, one can easily create argument names nameSEXP and assign it to name
-      # - the types of ast2ast: logical, integer, double, int cannot be used as names.
-      # Thereby, all.vars can directly be used to find all variables
-      "\\.", "SEXP", "getXPtr", "fct_ptr"
-    )
-    sign_found <- 0
-    for (i in seq_along(unallowed)) {
-      if (grepl(unallowed[[i]], name)) {
-        sign_found <- i
-        break
-      }
-    }
-    if (sign_found > 0) {
-      invalid_char <- gsub("\\\\", "", unallowed[sign_found])
-      return(paste0(
-        "Invalid variable name: contains forbidden character --> ",
-        invalid_char
-      ))
-    }
-    if (name %within%
-            c(permitted_base_types(), permitted_data_structs(FALSE), "T", "F")) {
-        # NOTE: added T and F to prevent usage of T and F as variable.
-      return(paste0(
-        "Invalid variable name (reserved internally) ",
-        name
-      ))
-    }
-    return(NULL)
-  }
-
-  not_cpp_keyword <- function(name) {
-    name %within% cpp_keywords()
   }
 
   name <- node$name |> deparse()

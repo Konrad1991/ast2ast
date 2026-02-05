@@ -10,3 +10,8 @@ expect_error(ast2ast::translate(f, args_f = "Bla"))
 expect_error(ast2ast::translate(f, args_f = NULL, output = "Invalid"))
 expect_error(ast2ast::translate(f, args_f = NULL, output = "R", verbose = "Invalid"))
 expect_error(ast2ast::translate(f, args_f = NULL, output = "R", verbose = TRUE, getsource = "Invalid"))
+
+f.foo <- function() print("Hello")
+expect_error(ast2ast::translate(f.foo))
+class <- function() print("Hello")
+expect_error(ast2ast::translate(class))

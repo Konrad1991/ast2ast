@@ -22,6 +22,14 @@ translate <- function(f,
     name_f <- "lambda_fct"
   }
 
+  unallowed <- unallowed_signs(name_f)
+  if (!is.null(unallowed)) {
+    stop(sprintf("The function name is not valid as it contains: %s", unallowed))
+  }
+  if (not_cpp_keyword(name_f)) {
+    stop("The function name is not valid as it is a C++ keyword")
+  }
+
   cpp_code <- translate_internally(f, args_f, derivative, name_f, r_fct)
   if (getsource) return(cpp_code)
 
