@@ -232,6 +232,10 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
   // ======================= Constructors ===================================================
   explicit Array(const SI &sz) : d(sz.sz) {}
 
+  // Copy other Array with RBuffer
+  Array(const Array& other) noexcept(std::is_nothrow_move_constructible_v<decltype(d)>)
+  : d(std::move(other.d)), dim(std::move(other.get_dim())) {}
+
   Array(Array&& other) noexcept(std::is_nothrow_move_constructible_v<decltype(d)>)
   : d(std::move(other.d)), dim(std::move(other.get_dim())) {}
 
