@@ -170,6 +170,49 @@ inline auto colon(const A& start,const O& end) {
   return colonInternal<DataType>(s, e);
 }
 
+template<typename T>
+inline auto length_seq(const T& obj) {
+  using DecayedT = Decayed<T>;
+
+  constexpr bool is_scalar = IsScalarLike<DecayedT>;
+  if constexpr(is_scalar) {
+    using sType = Decayed<decltype(obj)>;
+    static_assert(!IsLogical<sType>, "seq_len cannot handle logical values");
+    ass<"seq_len requires integer arguments >= 1">(obj >= Integer(1));
+    constexpr bool is_int = IsInteger<sType>;
+    if constexpr (is_int) {
+      return obj;
+    } else if constexpr(!is_int) {
+      return Integer(safe_index_from_double(get_val(obj)));
+    }
+  } else {
+    ass<"seq_len accepts only vector of length 1">(obj.size() == 1);
+    ass<"seq_len requires integer arguments >= 1">(obj.get(0) >= 1);
+    using E = typename ExtractDataType<DecayedT>::value_type;
+    static_assert(!IsLogical<E>, "seq_len cannot handle logical values");
+    constexpr bool is_int = IsInteger<E>;
+    if constexpr (is_int) {
+      return obj.get(0);
+    } else if constexpr(!is_int) {
+      return Integer(safe_index_from_double(get_val(obj.get(0))));
+    }
+  }
+}
+template<typename A>
+inline auto seq_len(const A& length) {
+  return colon(Integer(1), length_seq(length));
+}
+template<typename A>
+inline auto seq_along(const A& obj) {
+  using DecayedT = Decayed<A>;
+  constexpr bool is_scalar = IsScalarLike<DecayedT>;
+  if constexpr(is_scalar) {
+    return seq_len(Integer(1));
+  } else {
+    return seq_len(length(obj));
+  }
+}
+
 // ---------------------------------------------------------------------
 // rep -----------------------------------------------------------------
 // ---------------------------------------------------------------------

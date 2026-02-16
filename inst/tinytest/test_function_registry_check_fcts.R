@@ -213,6 +213,24 @@ test_checks(
   f, args_fct, TRUE,
 "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  a <- rep(\"a\", \"b\")\nYou cannot use character/NA/NaN/Inf entries in rep\n"
 )
+# --- seq_len ----------------------------------------------------------------
+f <- function() {
+  a <- seq_len(TRUE)
+}
+args_fct <- function() {}
+test_checks(
+  f, args_fct, TRUE,
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  a <- seq_len(true)\nYou can only call seq_len on variables of type integer or double\n"
+)
+# --- seq_len ----------------------------------------------------------------
+f <- function() {
+  a <- seq_along("Bla")
+}
+args_fct <- function() {}
+test_checks(
+  f, args_fct, TRUE,
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  a <- seq_along(\"Bla\")\nYou cannot use character/NA/NaN/Inf entries in seq_along\n"
+)
 # --- unary math--------------------------------------------------------------
 args_fct <- function() {}
 fcts <- list()

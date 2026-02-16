@@ -510,7 +510,7 @@ expect_true(types$l$data_struct == "scalar")
 expect_true(types$m$base_type == "double")
 expect_true(types$m$data_struct == "scalar")
 
-# --- rep and : ----------------------------------------------------------
+# --- rep, :, and seq_len -------------------------------------------------
 f <- function() {
   a <- TRUE:TRUE
   b <- 1L:2L
@@ -518,6 +518,8 @@ f <- function() {
   d <- rep(TRUE, 3)
   e <- rep(1L, 3)
   f <- rep(3.14, 3)
+  g <- seq_len(1L)
+  h <- seq_along(c(1, 2, 10))
 }
 types <- get_types(f)
 expect_true(types$a$base_type == "integer")
@@ -532,6 +534,10 @@ expect_true(types$e$base_type == "integer")
 expect_true(types$e$data_struct == "vector")
 expect_true(types$f$base_type == "double")
 expect_true(types$f$data_struct == "vector")
+expect_true(types$g$base_type == "integer")
+expect_true(types$g$data_struct == "vector")
+expect_true(types$h$base_type == "integer")
+expect_true(types$h$data_struct == "vector")
 
 # --- if conditions ------------------------------------------------------
 f <- function() {

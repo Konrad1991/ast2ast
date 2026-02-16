@@ -14,5 +14,9 @@ int main() {
   Array<Double, Borrow<Double>> b(owner.data(), owner.size(), std::vector<std::size_t>{3});
   b = b + at(b, Integer(1));
   print(b);
-  print(nrow(b));
+  auto test = seq_len(Integer(1));
+  print(test);
+  for (Integer i = 1; i < length(b); i = i + Integer(1)) {
+    print(i);
+  }
 }

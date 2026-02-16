@@ -607,12 +607,24 @@ for_node <- R6::R6Class(
       idx <- self$i$stringify("")
       sequence <- self$seq$stringify("")
       b <- self$block$stringify(paste0(indent, " "))
-      return(paste0(
-        indent,
-        "for(const auto& ", idx, " : ", sequence, ") {\n",
-        b, "\n",
-        indent, "}\n"
-      ))
+      if (inherits(self$seq, "unary_node") && self$seq$operator %in% c("etr::seq_len", "etr::seq_along")) {
+        until <- paste0("etr::length_seq(", self$seq$obj$stringify(indent = ""))
+        if (self$seq$operator == "etr::seq_along") until <- paste0("etr::length(", self$seq$obj$stringify(indent = ""))
+        return(paste0(
+          indent,
+          "for(etr::Integer ", idx, " = 1; ",
+          idx, " <= ", until, "); ", idx, " = ", idx, " + etr::Integer(1)) {\n",
+          b, "\n",
+          indent, "}\n"
+        ))
+      } else {
+        return(paste0(
+          indent,
+          "for(const auto& ", idx, " : ", sequence, ") {\n",
+          b, "\n",
+          indent, "}\n"
+        ))
+      }
     },
     stringify_error = function(indent = "") {
       block_err <- self$block$stringify_error()

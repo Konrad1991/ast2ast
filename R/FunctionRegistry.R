@@ -506,6 +506,36 @@ function_registry_global$add(
   group = "binary_node", cpp_name = "etr::colon"
 )
 function_registry_global$add(
+  name = "seq_len", num_args = 1, arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct) {
+    infer(node$obj, vars_list, r_fct)
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "integer"
+    t$data_struct <- "vector"
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
+    if (!is_int(node$obj, vars_types_list) && !is_double(node$obj, vars_types_list)) {
+      node$error <- "You can only call seq_len on variables of type integer or double"
+    }
+  },
+ group = "unary_node", cpp_name = "etr::seq_len"
+)
+function_registry_global$add(
+  name = "seq_along", num_args = 1, arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct) {
+    infer(node$obj, vars_list, r_fct)
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "integer"
+    t$data_struct <- "vector"
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = check_unary,
+ group = "unary_node", cpp_name = "etr::seq_along"
+)
+function_registry_global$add(
   name = "rep", num_args = 2, arg_names = c(NA, NA),
   infer_fct = function(node, vars_list, r_fct) {
     left_type <- infer(node$left_node, vars_list, r_fct)
