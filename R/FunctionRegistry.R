@@ -843,6 +843,40 @@ function_registry_global$add(
  group = "unary_node", cpp_name = "etr::dim"
 )
 function_registry_global$add(
+  name = "nrow", num_args = 1, arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct) {
+    infer(node$obj, vars_list, r_fct)
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "integer"
+    t$data_struct <- "scalar"
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
+    if (!is_mat(node$obj, vars_types_list) && !is_array(node$obj, vars_types_list)) {
+      node$error <- "You can only call nrow on variables of type array or matrix"
+    }
+  },
+ group = "unary_node", cpp_name = "etr::nrow"
+)
+function_registry_global$add(
+  name = "ncol", num_args = 1, arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct) {
+    infer(node$obj, vars_list, r_fct)
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "integer"
+    t$data_struct <- "scalar"
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
+    if (!is_mat(node$obj, vars_types_list) && !is_array(node$obj, vars_types_list)) {
+      node$error <- "You can only call ncol on variables of type array or matrix"
+    }
+  },
+ group = "unary_node", cpp_name = "etr::ncol"
+)
+function_registry_global$add(
   name = "!", num_args = 1, arg_names = NA,
   infer_fct = infer_check_type,
   check_fct = mock,

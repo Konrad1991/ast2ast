@@ -10,8 +10,8 @@ using namespace etr;
 
 
 int main() {
-  Array<Double, Buffer<Double, LBufferTrait>> a = c(Double(3.4));
-  auto b = c(a, Integer(3));
+  std::vector<double> owner{1, 2, 3};
+  Array<Double, Borrow<Double>> b(owner.data(), owner.size(), std::vector<std::size_t>{3});
+  b = b + at(b, Integer(1));
   print(b);
-
 }

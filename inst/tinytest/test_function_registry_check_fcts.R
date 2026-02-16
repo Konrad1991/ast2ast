@@ -383,7 +383,7 @@ test_checks(
 "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  m <- array(\"invalid\", c(2.0, 2.0))\nYou cannot fill an array with character entries\n"
 )
 
-# --- length & dim ----------------------------------------------------------
+# --- length, dim, nrow and ncol ---------------------------------------------
 f <- function() {
   a <- vector("integer", 10)
   l <- length(a)
@@ -403,6 +403,24 @@ args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
 "Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  l <- length(a)\nYou can only call length on variables of type array, matrix or vector\n\nd <- dim(a)\nYou can only call dim on variables of type array or matrix\n"
+)
+f <- function() {
+  a <- 1L
+  l <- nrow(a)
+}
+args_fct <- function() {}
+test_checks(
+  f, args_fct, TRUE,
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  l <- nrow(a)\nYou can only call nrow on variables of type array or matrix\n"
+)
+f <- function() {
+  a <- 1L
+  l <- ncol(a)
+}
+args_fct <- function() {}
+test_checks(
+  f, args_fct, TRUE,
+"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct) : \n  l <- ncol(a)\nYou can only call ncol on variables of type array or matrix\n"
 )
 
 # --- cmr --------------------------------------------------------------------

@@ -107,6 +107,24 @@ template <typename T> requires IsArray<T> inline auto dim(const T &inp) {
   res.dim = std::vector<std::size_t>{2};
   return res;
 }
+// ncol & nrow
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires (!IsArray<T>) inline Integer nrow(T inp) {
+  return Integer(0);
+}
+template <typename T> requires (!IsArray<T>) inline Integer ncol(T inp) {
+  return Integer(0);
+}
+template <typename T> requires IsArray<T> inline Integer nrow(const T& inp) {
+  const auto d = dim_view(inp.get_dim());
+  if (d.size() < 1) return Integer(0);
+  return Integer(d[0]);
+}
+template <typename T> requires IsArray<T> inline Integer ncol(const T& inp) {
+  const auto d = dim_view(inp.get_dim());
+  if (d.size() < 2) return Integer(0);
+  return Integer(d[1]);
+}
 
 } // namespace etr
 #endif

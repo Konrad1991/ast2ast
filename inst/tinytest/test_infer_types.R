@@ -294,6 +294,8 @@ f <- function() {
   u <- is.finite(c)
   v <- cmr(a, b, b)
   w <- array(1:12, c(3, 4))
+  x <- nrow(matrix(1:10, 2, 5))
+  y <- ncol(matrix(1:10, 2, 5))
 }
 types <- get_types(f)
 expect_true(types$d$base_type == "integer")
@@ -342,6 +344,10 @@ expect_true(types$v$base_type == "double")
 expect_true(types$v$data_struct == "scalar")
 expect_true(types$w$base_type == "double")
 expect_true(types$w$data_struct == "array")
+expect_true(types$x$base_type == "integer")
+expect_true(types$x$data_struct == "scalar")
+expect_true(types$y$base_type == "integer")
+expect_true(types$y$data_struct == "scalar")
 # --- logical operators --------------------------------------------------
 f <- function() {
   a <- 1:3
