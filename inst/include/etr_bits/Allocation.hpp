@@ -16,8 +16,8 @@ inline auto determine_type(const auto &rest) {
 };
 
 inline auto determine_type(const auto &first, const auto &rest) {
-  using firstType = typename ReRef<decltype(first)>::type;
-  using restType = typename ReRef<decltype(rest)>::type;
+  using firstType = Decayed<decltype(first)>;
+  using restType = Decayed<decltype(rest)>;
   if constexpr (!IsArray<firstType> && !IsArray<restType>) {
     return typename common_type<firstType, restType>::type{};
   }
@@ -37,7 +37,7 @@ inline auto determine_type(const auto &first, const auto &rest) {
 }
 
 inline auto determine_type(const auto &first, const auto &...rest) {
-  using firstType = typename ReRef<decltype(first)>::type;
+  using firstType = Decayed<decltype(first)>;
   using restType = decltype(determine_type(rest...));
   if constexpr (!IsArray<firstType> && !IsArray<restType>) {
     return typename common_type<firstType, restType>::type{};
