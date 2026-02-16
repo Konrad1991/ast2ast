@@ -14,4 +14,5 @@ int main() {
   Array<Double, Borrow<Double>> b(owner.data(), owner.size(), std::vector<std::size_t>{3});
   b = b + at(b, Integer(1));
   print(b);
+  print(nrow(b));
 }
