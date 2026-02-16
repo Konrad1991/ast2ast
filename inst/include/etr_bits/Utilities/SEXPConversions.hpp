@@ -13,6 +13,7 @@ inline auto Evaluate(T && obj) {
     for (size_t i = 0; i < res.size(); i++) {
       res.set(i, obj.get(i));
     }
+    res.dim = std::move(obj.get_dim());
     return res;
   } else {
     return std::forward<decltype(obj)>(obj);

@@ -119,6 +119,7 @@ template<typename Of, typename Wrt> inline auto deriv(const Of& of, const Wrt& w
     using DataTypeOf = typename ExtractDataType<DecayedOf>::value_type;
     static_assert(IsADType<DataTypeOf>, "data type of of has to be Variable<Double>");
     Array<Double, Buffer<Double, RBufferTrait>> res(SI{of.size()});
+    res.dim = std::vector<std::size_t>{1};
     for (std::size_t i = 0; i < res.size(); i++) {
       const auto w = wrt(w_inp);
       const auto d = derivatives(of.get(i), w);
@@ -130,6 +131,7 @@ template<typename Of, typename Wrt> inline auto deriv(const Of& of, const Wrt& w
     using DataTypeWrt = typename ExtractDataType<DecayedWrt>::value_type;
     static_assert(IsADType<DataTypeWrt>, "data type of wrt has to be Variable<Double>");
     Array<Double, Buffer<Double, RBufferTrait>> res(SI{w_inp.size()});
+    res.dim = std::vector<std::size_t>{w_inp.size()};
     for (std::size_t i = 0; i < res.size(); i++) {
       const auto w = wrt(w_inp.get(i));
       const auto d = derivatives(of, w);

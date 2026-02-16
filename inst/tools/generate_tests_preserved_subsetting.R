@@ -86,7 +86,7 @@ sub2 <- function(what, what_name, idx) {
   what_cpp_string <- convert_string(what_name)
   result <- what[TRUE]
   result <- convert_res_to_str_vec(result, idx)
-  sprintf("  %s\n  compare_result(subset(%s, true), %s);",
+  sprintf("  %s\n  compare_result(subset(%s, etr::Integer(true)), %s);",
     result, what_cpp_string, paste0("expected", idx)
   )
 }
@@ -120,7 +120,7 @@ sub2 <- function(arg, arg_name, what, idx) {
   arg_cpp_string <- convert_string(arg_name)
   result <- what[TRUE][arg]
   result <- convert_res_to_str_vec(result, idx)
-  sprintf("  %s\n  compare_result(subset(subset(Double_arr, true), %s), %s);",
+  sprintf("  %s\n  compare_result(subset(subset(Double_arr, Logical(true)), etr::c(%s)), %s);",
     result, arg_cpp_string, paste0("expected", idx)
   )
 }
