@@ -124,7 +124,7 @@ fcpp_reverse <- ast2ast::translate(
 y <- 0.0
 x <- c(1.0, 2.0, 3.0, 4.0, 5.0)
 res <- fcpp_reverse(y, x)
-expect_equal(res, c(21, 3, 2, 5, 4))
+expect_equal(res, array(c(21, 3, 2, 5, 4), 5L))
 
 f <- function(y, x) {
   res <- numeric(length(x))

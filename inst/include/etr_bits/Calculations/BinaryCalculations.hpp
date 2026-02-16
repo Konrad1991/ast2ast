@@ -60,6 +60,7 @@ inline auto determine_type_binary_op() {
 template <typename L, typename R, typename BTrait> struct BinaryOperation {
   using Trait = BTrait;
   using Type = decltype(determine_type_binary_op<L, R, BTrait>());
+  using value_type = decltype(determine_type_binary_op<L, R, BTrait>());
   ConstHolder<L> l;
   ConstHolder<R> r;
   using typeTraitL = L;

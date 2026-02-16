@@ -179,51 +179,55 @@ inline decltype(auto) at(ArrayType& arr, const Args&... args) {
   }
 }
 
+template <typename Obj> inline decltype(auto) at_linear(Obj& obj, std::size_t idx) {
+  using ObjType = std::remove_cvref_t<Obj>;
+  if constexpr (IsSubsetView<ObjType>) {
+    const std::size_t parent_idx = obj.translate(idx);
+    auto& parent = obj.obj.get();
+    return at_linear(parent, parent_idx);
+
+  } else if constexpr (IsLBuffer<ObjType>) {
+    return obj.p[idx];
+  } else if constexpr (IsBorrow<ObjType>) {
+    using DataType = typename ExtractDataType<Decayed<ObjType>>::value_type;
+    if constexpr (IsDouble<DataType>)   return DoubleRef{ &obj.p[idx] };
+    if constexpr (IsInteger<DataType>)  return IntegerRef{ &obj.p[idx] };
+    if constexpr (IsLogical<DataType>)  return LogicalRef{ &obj.p[idx] };
+    if constexpr (IsDual<DataType>)     return DualRef{ &obj.p_val[idx], &obj.p_dot[idx] };
+    ass<"Borrow at(): unsupported datatype">(false);
+    return DoubleRef{nullptr}; // unreachable
+  } else {
+    ass<"at_linear(): unsupported storage type">(false);
+    return DoubleRef{nullptr}; // unreachable
+  }
+}
+
 template <typename ArrayType, typename... Args> requires IsSubsetArray<std::remove_reference_t<ArrayType>>
 inline decltype(auto) at(ArrayType&& arr, const Args&... args) {
   constexpr std::size_t N = sizeof...(Args);
   const auto& dim = dim_view(arr.get_dim());
-  if (N > dim.size()) {
-    ass<"Too many index arguments for array rank">(false);
-  }
-  if (N < dim.size()) {
-    ass<"Too less index arguments for array rank">(false);
+
+  if (N != dim.size()) {
+    if (N > dim.size()) ass<"Too many index arguments for array rank">(false);
+    else               ass<"Too less index arguments for array rank">(false);
   }
 
   int counter = 0;
-  std::array<std::size_t, N> indices;
-  forEachArg(
-    [&](const auto& arg) {
+  std::array<std::size_t, N> indices{};
+  forEachArg([&](const auto& arg) {
       indices[counter++] = ExtractIndex(arg) - 1;
-    },
-    args...
-  );
+    }, args...);
+
   std::size_t idx = 0;
   auto stride = make_strides_from_vec<N>(dim);
   for (std::size_t i = 0; i < N; i++) {
     idx += indices[i] * stride[i];
   }
-  ass<"Error: out of boundaries">( (idx < arr.d.size()) && (idx >= 0));
+
+  ass<"Error: out of boundaries">(idx < arr.d.size());
 
   auto& obj = arr.d.obj.get();
-  using ObjType = std::remove_cvref_t<decltype(obj)>;
-  if constexpr (IsLBufferArray<ObjType>) {
-    return obj.d.p[idx];
-  } else if constexpr (IsBorrowArray<ObjType>){
-    using DataType = typename ExtractDataType<Decayed<ObjType>>::value_type;
-    if constexpr (IsDouble<DataType>) {
-      return DoubleRef{ &obj.d.p[idx] };
-    } else if constexpr (IsInteger<DataType>) {
-      return IntegerRef{ &obj.d.p[idx] };
-    } else if constexpr (IsLogical<DataType>) {
-      return LogicalRef{ &obj.d.p[idx] };
-    } else if constexpr (IsDual<DataType>) {
-      return DualRef{ &obj.d.p_val[idx], &obj.d.p_dot[idx] };
-    } else {
-      ass<"Borrow at(): unsupported datatype">(false);
-      return DoubleRef{nullptr}; // unreachable, just to satisfy compilers sometimes
-    }
-  }
+  return at_linear(obj, idx);
 }
 
 template <typename ArrayType, typename... Args>

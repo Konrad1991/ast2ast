@@ -11,10 +11,10 @@ struct SubsetViewIterator {
   size_t index;
 
   SubsetViewIterator(Subset& subset_, size_t index_ = 0)
-    : subset(subset_), index(index_) {}
+  : subset(subset_), index(index_) {}
 
   SubsetViewIterator(Subset&& subset_, size_t index_ = 0)
-    : subset(std::move(subset_)), index(index_) {}
+  : subset(std::move(subset_)), index(index_) {}
 
   auto operator*() const {
     return subset.get().get(index);
@@ -43,7 +43,7 @@ public:
   SubsetView(O& obj_, Buffer<int>&& indices_) :
     obj(obj_), indices(std::move(indices_)) {}
   SubsetView(O&& obj_, Buffer<int>&& indices_) :
-    obj(obj_), indices(std::move(indices_)) {}
+    obj(std::move(obj_)), indices(std::move(indices_)) {}
 
   auto get(std::size_t i) const {
     return obj.get().get(indices.get(i));
@@ -57,6 +57,10 @@ public:
     }
   }
   std::size_t size() const {return indices.size();}
+
+  std::size_t translate(std::size_t i) const {
+    return static_cast<std::size_t>(indices.get(i));
+  }
 
   // Copy constructor
   SubsetView(const SubsetView& other) : obj(other.obj), indices(other.indices) {}
@@ -89,10 +93,8 @@ public:
   ConstHolder<O> obj;
   ConstHolder<Buffer<int>> indices;
 
-  ConstSubsetView(O& obj_, Buffer<int>&& indices_) :
-    obj(obj_), indices(std::move(indices_)) {}
-  ConstSubsetView(O&& obj_, Buffer<int>&& indices_) :
-    obj(obj_), indices(std::move(indices_)) {}
+  ConstSubsetView(O& obj_, Buffer<int>&& indices_) : obj(obj_), indices(std::move(indices_)) {}
+  ConstSubsetView(O&& obj_, Buffer<int>&& indices_) : obj(std::move(obj_)), indices(std::move(indices_)) {}
 
   auto get(std::size_t i) const {
     return obj.get().get(indices.get().get(i));
@@ -159,38 +161,6 @@ template <typename O, typename Trait> struct SubsetWithScalarView {
   auto begin() const { return SubsetViewIterator<const SubsetWithScalarView>{*this, 0}; }
   auto end() const { return SubsetViewIterator<const SubsetWithScalarView>{*this, this->size()}; }
 };
-template <typename O, typename Trait> struct ConstSubsetWithScalarView {
-  using TypeTrait = Trait;
-  using value_type = typename ReRef<O>::type::value_type;
-  ConstHolder<O> obj;
-  int index;
-
-  ConstSubsetWithScalarView(O& obj_, int index_) : obj(obj_), index(index_) {}
-  ConstSubsetWithScalarView(O&& obj_, int index_) : obj(obj_), index(index_) {}
-
-  auto get(std::size_t i) const { return obj.get().get(index); }
-  std::size_t size() const {return 1; }
-
-  // Copy constructor
-  ConstSubsetWithScalarView(const ConstSubsetWithScalarView& other) : obj(other.obj), index(other.index) {}
-  // Copy assignment
-  ConstSubsetWithScalarView& operator=(const ConstSubsetWithScalarView& other) {
-    obj = other.obj;
-    index = other.index;
-    return *this;
-  };
-  // Move constructor
-  ConstSubsetWithScalarView(ConstSubsetWithScalarView&& other) : obj(std::move(other.obj)), index(other.index) {}
-  // Move assignment
-  ConstSubsetWithScalarView& operator=(ConstSubsetWithScalarView&& other) {
-    obj = std::move(other.obj);
-    index = other.index;
-    return *this;
-  }
-
-  auto begin() const { return SubsetViewIterator<const ConstSubsetWithScalarView>{*this, 0}; }
-  auto end() const { return SubsetViewIterator<const ConstSubsetWithScalarView>{*this, this->size()}; }
-};
 
 // -----------------------------------------------------------------------------------------------------------
 template<std::size_t N>
@@ -209,9 +179,9 @@ inline std::vector<std::size_t> make_strides_dyn(const std::vector<std::size_t>&
 
 template<std::size_t N,typename T, typename O>
 inline void fill_scalars_in_index_lists(
-                             const T& arr, std::array<Buffer<Integer>, N>& converted_arrays,
-                             std::array<const Buffer<Integer>*, N>& index_lists, O&& arg,
-                             std::size_t& counter, std::size_t& counter_converted) {
+  const T& arr, std::array<Buffer<Integer>, N>& converted_arrays,
+  std::array<const Buffer<Integer>*, N>& index_lists, O&& arg,
+  std::size_t& counter, std::size_t& counter_converted) {
   const auto& dim = dim_view(arr.get_dim());
   using A = std::decay_t<decltype(arg)>;
   if constexpr (IsCppDouble<A>) {
@@ -384,11 +354,12 @@ inline out_L create_indices(const ArrayType& arr, const Args&... args) {
 template <typename ArrayType, typename... Args>
 inline auto subset(ArrayType& arr, const Args&... args) {
   using E = typename ExtractDataType<ArrayType>::value_type;
+  using DTYPE = Decayed<decltype(arr.d)>;
   constexpr std::size_t N = sizeof...(Args);
 
   auto ol = create_indices(arr, args...);
-  return Array<E, SubsetView<ArrayType, N, SubsetViewTrait>>(
-    SubsetView<ArrayType, N, SubsetViewTrait>{arr, std::move(ol.out)},
+  return Array<E, SubsetView<DTYPE, N, SubsetViewTrait>>(
+    SubsetView<DTYPE, N, SubsetViewTrait>{arr.d, std::move(ol.out)},
     std::move(ol.L)
   );
 }
@@ -410,11 +381,12 @@ template <typename ArrayType, typename... Args>
 requires IsSubsetArray<ArrayType> && HasNonScalarIndex<Args...>
 inline auto subset(ArrayType&& arr, const Args&... args) {
   using E = typename ExtractDataType<ArrayType>::value_type;
+  using DTYPE = Decayed<decltype(arr.d)>;
   constexpr std::size_t N = sizeof...(Args);
 
   auto ol = create_indices(arr, args...);
-  return Array<E, SubsetView<ArrayType, N, SubsetViewTrait>>(
-    SubsetView<ArrayType, N, SubsetViewTrait>{arr, std::move(ol.out)},
+  return Array<E, SubsetView<DTYPE, N, SubsetViewTrait>>(
+    SubsetView<DTYPE, N, SubsetViewTrait>{std::move(arr.d), std::move(ol.out)},
     std::move(ol.L)
   );
 }
@@ -424,11 +396,12 @@ inline auto subset(ArrayType&& arr, const Args&... args) {
 template <typename ArrayType, typename... Args> requires (!IsSubsetArray<std::remove_reference_t<ArrayType>>) && HasNonScalarIndex<Args...>
 inline auto subset(ArrayType&& arr, const Args&... args) {
   using E = typename ExtractDataType<ArrayType>::value_type;
+  using DTYPE = Decayed<decltype(arr.d)>;
   constexpr std::size_t N = sizeof...(Args);
 
   auto ol = create_indices(arr, args...);
-  return Array<E, ConstSubsetView<ArrayType, N, ConstSubsetViewTrait>>(
-    ConstSubsetView<ArrayType, N, ConstSubsetViewTrait>{std::move(arr), std::move(ol.out)},
+  return Array<E, ConstSubsetView<DTYPE, N, ConstSubsetViewTrait>>(
+    ConstSubsetView<DTYPE, N, ConstSubsetViewTrait>{std::move(arr.d), std::move(ol.out)},
     std::move(ol.L)
   );
 }

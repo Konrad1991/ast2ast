@@ -43,8 +43,7 @@ class ConstHolder {
 public:
   ConstHolder(const T& ref) : ptr(&ref) {}
 
-  ConstHolder(T&& r)
-  : owned(std::make_shared<T>(std::move(r))), ptr(owned.get()) {}
+  ConstHolder(T&& r) : owned(std::make_shared<T>(std::move(r))), ptr(owned.get()) {}
 
   ConstHolder(const ConstHolder&) = default;
   ConstHolder(ConstHolder&&) noexcept = default;
@@ -711,6 +710,7 @@ struct Logical {
   inline Double tanh() const;
   inline Double exp() const;
   inline Double log() const;
+  inline Double log10() const;
   inline Double sqrt() const;
   inline Integer operator-() const;
   inline friend std::ostream& operator<<(std::ostream&, const Logical&);
@@ -743,6 +743,9 @@ struct Integer {
   inline Integer(Dual v);
   template<typename T> Integer(Variable<T> v);
   inline Integer operator+(const Integer&) const;
+  inline Integer& operator+=(const Integer& r);
+  inline Integer& operator-=(const Integer& r);
+  inline Integer& operator*=(const Integer& r);
   inline Integer operator-(const Integer&) const;
   inline Integer operator*(const Integer&) const;
   inline Double operator/(const Integer&) const;
@@ -768,6 +771,7 @@ struct Integer {
   inline Double tanh() const;
   inline Double exp() const;
   inline Double log() const;
+  inline Double log10() const;
   inline Double sqrt() const;
   inline Integer operator-() const;
   inline friend std::ostream& operator<<(std::ostream&, const Integer&);
@@ -799,6 +803,10 @@ struct Double {
   inline Double(Integer v);
   inline Double(Dual v);
   inline Double operator+(const Double&) const;
+  inline Double& operator+=(const Double& r);
+  inline Double& operator-=(const Double& r);
+  inline Double& operator*=(const Double& r);
+  inline Double& operator/=(const Double& r);
   inline Double operator-(const Double&) const;
   inline Double operator*(const Double&) const;
   inline Double operator/(const Double&) const;
@@ -824,6 +832,7 @@ struct Double {
   inline Double tanh() const;
   inline Double exp() const;
   inline Double log() const;
+  inline Double log10() const;
   inline Double sqrt() const;
   inline Double operator-() const;
   inline friend std::ostream& operator<<(std::ostream&, const Double&);
@@ -878,6 +887,10 @@ struct Dual {
   template<typename T> requires std::is_arithmetic_v<T>
   Dual(T v);
   inline Dual operator+(const Dual&) const;
+  inline Dual& operator+=(const Dual& r);
+  inline Dual& operator-=(const Dual& r);
+  inline Dual& operator*=(const Dual& r);
+  inline Dual& operator/=(const Dual& r);
   inline Dual operator-(const Dual&) const;
   inline Dual operator*(const Dual&) const;
   inline Dual operator/(const Dual&) const;
@@ -903,6 +916,7 @@ struct Dual {
   inline Dual tanh() const;
   inline Dual exp() const;
   inline Dual log() const;
+  inline Dual log10() const;
   inline Dual sqrt() const;
   inline Dual operator-() const;
   inline friend std::ostream& operator<<(std::ostream&, const Dual&);
@@ -1036,6 +1050,70 @@ inline Dual Dual::operator+(const Dual& other) const {
   const double v = val + other.val;
   if (is_na_dot || other.is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
   return Dual(v, dot + other.dot);
+}
+
+inline Integer& Integer::operator+=(const Integer& r) {
+  if (is_na || r.is_na) return *this = Integer::NA();
+  val += r.val;
+  return *this;
+}
+inline Integer& Integer::operator-=(const Integer& r) {
+  if (is_na || r.is_na) return *this = Integer::NA();
+  val -= r.val;
+  return *this;
+}
+inline Integer& Integer::operator*=(const Integer& r) {
+  if (is_na || r.is_na) return *this = Integer::NA();
+  val *= r.val;
+  return *this;
+}
+inline Double& Double::operator+=(const Double& r) {
+  if (is_na || r.is_na) return *this = Double::NA();
+  val += r.val;
+  return *this;
+}
+inline Double& Double::operator-=(const Double& r) {
+  if (is_na || r.is_na) return *this = Double::NA();
+  val -= r.val;
+  return *this;
+}
+inline Double& Double::operator*=(const Double& r) {
+  if (is_na || r.is_na) return *this = Double::NA();
+  val *= r.val;
+  return *this;
+}
+inline Double& Double::operator/=(const Double& r) {
+  if (is_na || r.is_na) return *this = Double::NA();
+  val /= r.val;
+  return *this;
+}
+inline Dual& Dual::operator+=(const Dual& r) {
+  if (is_na || r.is_na) return *this = Dual::NA();
+  val += r.val;
+  if (is_na_dot || r.is_na_dot) return *this = Dual::NA();
+  dot += r.dot;
+  return *this;
+}
+inline Dual& Dual::operator-=(const Dual& r) {
+  if (is_na || r.is_na) return *this = Dual::NA();
+  val -= r.val;
+  if (is_na_dot || r.is_na_dot) return *this = Dual::NA();
+  dot -= r.dot;
+  return *this;
+}
+inline Dual& Dual::operator*=(const Dual& r) {
+  if (is_na || r.is_na) return *this = Dual::NA();
+  val *= r.val;
+  if (is_na_dot || r.is_na_dot) return *this = Dual::NA();
+  dot *= r.dot;
+  return *this;
+}
+inline Dual& Dual::operator/=(const Dual& r) {
+  if (is_na || r.is_na) return *this = Dual::NA();
+  val /= r.val;
+  if (is_na_dot || r.is_na_dot) return *this = Dual::NA();
+  dot /= r.dot;
+  return *this;
 }
 
 inline Integer Logical::operator-(const Logical& other) const {
@@ -1494,6 +1572,25 @@ inline Dual Dual::log() const {
   return Dual(v, 1.0 / val);
 }
 
+inline Double Logical::log10() const {
+  if (is_na) return Double::NA();
+  return Double(std::log10(static_cast<double>(val)));
+}
+inline Double Integer::log10() const {
+  if (is_na) return Double::NA();
+  return Double(std::log10(static_cast<double>(val)));
+}
+inline Double Double::log10() const {
+  if (is_na) return Double::NA();
+  return Double(std::log10(val));
+}
+inline Dual Dual::log10() const {
+  if (is_na) return Dual::NA();
+  const double v = std::log10(val);
+  if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  return Dual(v, 1.0 / val);
+}
+
 inline Double Logical::sqrt() const {
   if (is_na) return Double::NA();
   return Double(std::sqrt(static_cast<double>(val)));
@@ -1690,6 +1787,12 @@ template<typename O>
 requires (!IsArray<O> && IsScalarOrScalarRef<O>)
 inline auto log(const O& o) -> decltype(o.log()) {
   return o.log();
+}
+// log10 ===================================================
+template<typename O>
+requires (!IsArray<O> && IsScalarOrScalarRef<O>)
+inline auto log10(const O& o) -> decltype(o.log10()) {
+  return o.log10();
 }
 // tan/atan/tanh =========================================
 template<typename O>

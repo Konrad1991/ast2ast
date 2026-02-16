@@ -40,6 +40,7 @@ template <typename I, typename UTrait> struct UnaryOperation {
   ConstHolder<I> obj;
   using typeTraitObj = I;
   using TypeTrait = UnaryTrait;
+  using value_type = decltype(Trait::f(obj.get().get(0)));
 
   // l value
   UnaryOperation(const I &obj_) : obj(obj_) {}
