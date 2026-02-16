@@ -620,7 +620,7 @@ for_node <- R6::R6Class(
       } else {
         return(paste0(
           indent,
-          "for(const auto& ", idx, " : ", sequence, ") {\n",
+          "for(const auto ", idx, " : ", sequence, ") {\n",
           b, "\n",
           indent, "}\n"
         ))
