@@ -1838,6 +1838,14 @@ inline auto sinh(const O& o) -> decltype(o.sinh()) {
   return o.sinh();
 }
 
+// abs ===================================================
+// This is required for Eigen
+template<typename O>
+requires (!IsArray<O> && IsScalarOrScalarRef<O>)
+inline double abs(const O& o) {
+  return std::abs(static_cast<double>(get_val(o)));
+}
+
 // && ===================================================
 template<typename L, typename R>
 requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScalarRef<R>)

@@ -1,5 +1,4 @@
-// [[Rcpp::depends(RcppEigen)]]"
-#include <RcppEigen.h>
+#include <Rcpp.h>
 #include "../inst/include/etr.hpp"
 using namespace etr;
 

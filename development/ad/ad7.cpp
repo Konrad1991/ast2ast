@@ -1,7 +1,5 @@
 #define STANDALONE_ETR
 
-#include "../../inst/include/etr.hpp"
-
 #include <cmath>
 #include <cstdint>
 #include <limits>
