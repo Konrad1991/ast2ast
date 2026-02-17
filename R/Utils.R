@@ -135,7 +135,9 @@ remove_blank_lines <- function(chars) {
 
 r_fct_sig <- function() {
   combine_strings(
-    c("// [[Rcpp::depends(RcppArmadillo)]]",
+    c(
+      "// [[Rcpp::depends(RcppEigen)]]",
+      "#include <RcppEigen.h>",
       "// [[Rcpp::depends(ast2ast)]]",
       "// [[Rcpp::plugins(cpp2a)]]",
       '#include "etr.hpp"\n',
@@ -144,7 +146,9 @@ r_fct_sig <- function() {
 }
 xptr_sig <- function() {
   combine_strings(
-    c("// [[Rcpp::depends(RcppArmadillo)]]",
+    c(
+      "// [[Rcpp::depends(RcppEigen)]]",
+      "#include <RcppEigen.h>",
       "// [[Rcpp::depends(ast2ast)]]",
       "// [[Rcpp::plugins(cpp2a)]]",
       '#include "etr.hpp"\n',

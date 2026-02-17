@@ -1,3 +1,5 @@
+// [[Rcpp::depends(RcppEigen)]]"
+#include <RcppEigen.h>
 #include "../inst/include/etr.hpp"
 using namespace etr;
 #include <cstring>

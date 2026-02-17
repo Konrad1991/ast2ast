@@ -8,14 +8,9 @@
 #include "stddef.h"
 #include <cxxabi.h>
 #else
-/*
- Actually Rcpp would be sufficent.
- But when I include Rcpp.h I get the error in paropt that compilation fails
-*/
-// [[Rcpp::depends(RcppArmadillo)]]
-#include <RcppArmadillo.h>
 #endif
 
+#include <cstddef>
 #include <algorithm>
 #include <array>
 #include <ios>
