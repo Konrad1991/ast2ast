@@ -249,8 +249,13 @@ type_infer_action <- function(node, env) {
       node$error <- type
     } else {
       variable <- find_var_lhs(node)
-      if (!env$vars_list[[variable]]$type_dcl && !env$vars_list[[variable]]$fct_input) {
-        env$vars_list[[variable]] <- common_type(env$vars_list[[variable]], type) |> flatten_type()
+      if (!env$vars_list[[variable]]$type_dcl &&
+          !env$vars_list[[variable]]$fct_input && !env$vars_list[[variable]]$iterator) {
+        detected_type <- common_type(env$vars_list[[variable]], type) |> flatten_type()
+        detected_type <- detected_type$clone()
+        detected_type$iterator <- FALSE # Dont propagate iterator
+        detected_type$name <- variable
+        env$vars_list[[variable]] <- detected_type
       }
     }
     # LHS:
@@ -260,8 +265,10 @@ type_infer_action <- function(node, env) {
         node$error <- type_lhs
       } else {
         variable <- find_var_lhs(node)
-        if (!env$vars_list[[variable]]$type_dcl && !env$vars_list[[variable]]$fct_input) {
-          env$vars_list[[variable]] <- common_type(env$vars_list[[variable]], type_lhs) |> flatten_type()
+        if (!env$vars_list[[variable]]$type_dcl &&
+            !env$vars_list[[variable]]$fct_input && !env$vars_list[[variable]]$iterator) {
+          detected_type <- common_type(env$vars_list[[variable]], type_lhs) |> flatten_type()
+          env$vars_list[[variable]] <- detected_type
         }
       }
     }
