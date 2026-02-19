@@ -592,6 +592,30 @@ block_node <- R6::R6Class(
   )
 )
 
+fn_node <- R6::R6Class(
+  "fn_node",
+  public = list(
+    id = NULL,
+    error = NULL,
+    context = NULL,
+
+    args_f = NULL,
+    return_type = NULL,
+    AST = NULL,
+
+    real_type = NULL,
+    vars_types_list = NULL,
+    internal_type = NULL,
+    outermost = NULL,
+    function_registry = NULL,
+
+    initialize = function() {},
+    stringify = function(indent = "") {},
+    stringify_error = function(indent = "") {},
+    stringify_error_line = function(indent = "") {}
+  )
+)
+
 for_node <- R6::R6Class(
   "for_node",
   public = list(
@@ -779,6 +803,7 @@ type_node <- R6::R6Class(
     iterator = FALSE,
     r_fct = TRUE,
     real_type = "etr::Double",
+    is_function = FALSE,
 
     within_type_call = FALSE,
 
@@ -961,13 +986,16 @@ type_node <- R6::R6Class(
 
     print = function() {
       print("Type:")
-      print(self$name)
-      print(self$base_type)
-      print(self$data_struct)
-      print(self$const_or_mut)
-      print(self$copy_or_ref)
-      print(self$fct_input)
-      print(self$iterator)
+      cat(
+        "Name: ", self$name, "\n",
+        "base type: ", self$base_type, "\n",
+        "data struct: ", self$data_struct, "\n",
+        "const or mut", self$const_or_mut, "\n",
+        "copy or ref", self$copy_or_ref, "\n",
+        "fct input", self$fct_input, "\n",
+        "iterator", self$iterator, "\n",
+        "function", self$is_function, "\n"
+      )
     }
   )
 )

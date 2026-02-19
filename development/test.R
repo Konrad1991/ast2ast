@@ -1,45 +1,10 @@
-system('find -name "*.o" | xargs rm')
-system('find -name "*.so" | xargs rm')
-Rcpp::compileAttributes()
-install.packages(".", types = "source", repo = NULL)
-tinytest::test_package("ast2ast")
-tinytest::run_test_file("./inst/tinytest/test_infer_return.R")
-
-trash <- list.files("./R", full.names = TRUE) |> lapply(source)
-
-f <- function(a) {
-  for (i in seq_len(length(a))) {
-    b <- i
-    print(b)
-  }
-  for (j in a) {
-    print(j)
-  }
-  bla <- fn(
-    fct_args = function(a) {
-
-    },
-    return_value = type(int),
-    block = {
-
-    }
-  )
-}
-
-trash <- list.files("./R", full.names = TRUE) |> lapply(source)
-f <- function() {
-  return()
-  return(3.14)
-}
-fcpp_reverse <- translate(f, derivative = "reverse")
-.traceback()
-
 # --------------------------------------------------------------------------------------------------
 # ---------------- Inner functions -----------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
 #
-# ---------------- Preliminary work ----------------------------------------------------------------
-# - replace function_registry_global and pass it to all functions which are using it as argument
+# ---------------- Worksteps -----------------------------------------------------------------------
+# - [x] replace function_registry_global and pass it to all functions which are using it as argument
+# - [ ] define fn_node
 #
 # --------------- Assumptions and Constraints ------------------------------------------------------
 # - Recursion is not allwed
@@ -74,3 +39,50 @@ fcpp_reverse <- translate(f, derivative = "reverse")
 # 4. Stringify each function node.
 #    If it is not the outermost function it is declared as lambda function
 #    For instance: auto foo = [=](Integer a, Integer b) -> Integer
+system('find -name "*.o" | xargs rm')
+system('find -name "*.so" | xargs rm')
+Rcpp::compileAttributes()
+install.packages(".", types = "source", repo = NULL)
+tinytest::test_package("ast2ast")
+tinytest::run_test_file("./inst/tinytest/test_infer_return.R")
+
+trash <- list.files("./R", full.names = TRUE) |> lapply(source)
+fct <- function(a) {
+  bar <- fn(
+    args_f = function() {
+      a |> type(int)
+      v |> type(int)
+    },
+    return_value = type(int),
+    block = {
+      print(a)
+      print(a + 1)
+      
+      foo = fn(
+        args_f = function() {},
+        return_value = type(int),
+        block = {
+          return(5)
+        }
+      )
+
+      return(foo())
+    }
+  )
+  res <- bar(a, 1L)
+  return(res)
+}
+r_fct <- TRUE
+b <- body(fct) |> wrap_in_block()
+code_string <- list()
+real_type <- "etr::Double"
+function_registry <- function_registry_global$clone()
+AST <- parse_body(b, r_fct, function_registry)
+traverse_ast(AST, action_update_function_registry, function_registry)
+run_checks(AST, r_fct, function_registry)
+AST <- sort_args(AST, function_registry)
+vars_types_list <- infer_types(AST, fct, NULL, r_fct, function_registry)
+vars_types_list
+type_checking(AST, vars_types_list, r_fct, real_type, function_registry)
+return_type <- determine_types_of_returns(AST, vars_types_list, r_fct, function_registry)
+return_type

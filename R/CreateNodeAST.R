@@ -42,14 +42,31 @@ create_ast <- function(code, context, r_fct, function_registry) {
     fn$context <- context
     return(fn)
   } else if (function_registry$is_group_functions(operator) || length(code) > 3) {
-    # by adding length(code) > 3 also wrong fcts are added to the AST
-    fn <- function_node$new()
-    fn$operator <- operator
-    fn$args <- lapply(code[-1], function(x) {
-      process(x, operator, r_fct, function_registry)
-    })
-    fn$context <- context
-    return(fn)
+    if (operator == "fn") {
+      fn <- fn_node$new()
+      fn$function_registry <- function_registry$clone()
+      fn$args_f <- code[[2]][[3]] |> parse_input_args_for_fn_node(r_fct)
+
+      return_type <- deparse(code[[3]])
+      return_type <- paste0("RETURN_TYPE |> ", return_type)
+      return_type <- str2lang(return_type)
+      return_type <- type_node$new(return_type, FALSE, r_fct)
+      return_type$init_within_fct()
+      return_type$check()
+      fn$return_type <- return_type
+      fn$AST <- code[[4]] #|> wrap_in_block() |> process(operator, r_fct, function_registry)
+      fn$context <- context
+      return(fn)
+    } else {
+      # by adding length(code) > 3 also wrong fcts are added to the AST
+      fn <- function_node$new()
+      fn$operator <- operator
+      fn$args <- lapply(code[-1], function(x) {
+        process(x, operator, r_fct, function_registry)
+      })
+      fn$context <- context
+      return(fn)
+    }
   } else if (length(code) == 3) {
     if (operator == "type") {
       t <- type_node$new(as.call(code), FALSE, r_fct)
@@ -131,7 +148,7 @@ sort_args <- function(ast, function_registry) {
 # Infer types
 # ========================================================================
 infer_types <- function(ast, f, f_args = NULL, r_fct = TRUE, function_registry) {
-  vars_list <- create_vars_types_list(f, f_args, r_fct)
+  vars_list <- create_vars_types_list(ast, f, f_args, r_fct)
   env <- new.env(parent = emptyenv())
   env$vars_list <- vars_list
   env$r_fct <- r_fct

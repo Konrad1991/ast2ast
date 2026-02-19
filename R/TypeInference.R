@@ -44,11 +44,15 @@ parse_input_args <- function(f, f_args, r_fct) {
   l
 }
 
-non_fct_args <- function(f, r_fct) {
+non_fct_args <- function(ast, f, r_fct) {
   arguments <- formals(f) |>
     names() |>
     as.character()
-  vars <- all.vars(body(f))
+
+  env <- new.env(parent = emptyenv())
+  env$variable_list <- c()
+  traverse_ast(ast, action_find_variables, env)
+  vars <- env$variable_list
   vars <- setdiff(vars, arguments)
   vars <- setdiff(vars, c("T", "F"))
   lapply(seq_along(vars), function(v) {
@@ -58,8 +62,8 @@ non_fct_args <- function(f, r_fct) {
   })
 }
 
-create_vars_types_list <- function(f, f_args, r_fct) {
-  l <- c(parse_input_args(f, f_args, r_fct), non_fct_args(f, r_fct))
+create_vars_types_list <- function(ast, f, f_args, r_fct) {
+  l <- c(parse_input_args(f, f_args, r_fct), non_fct_args(ast, f, r_fct))
   wrong_input <- FALSE
   for (i in seq_len(length(l))) {
     e <- l[[i]]$error
@@ -72,6 +76,26 @@ create_vars_types_list <- function(f, f_args, r_fct) {
   names(l) <- sapply(l, function(x) x$name)
   l <- l[setdiff(names(l), permitted_base_types())]
   l <- l[setdiff(names(l), permitted_data_structs(r_fct))]
+  l
+}
+
+# Infer input f_args for fn node
+# ========================================================================
+parse_input_args_for_fn_node <- function(block, r_fct) {
+  if (deparse(block[[1]]) == "{") {
+    block <- block[-1]
+  }
+  args <- lapply(block, function(x) {
+    attributes(x) <- NULL
+    x
+  })
+  l <- lapply(args, function(obj) {
+    t <- type_node$new(obj, TRUE, r_fct)
+    t$init()
+    t$check()
+    t
+  })
+  check_input_args(l)
   l
 }
 
@@ -118,6 +142,11 @@ infer <- function(node, vars_list, r_fct, function_registry) {
     t <- ifct(node, vars_list, r_fct, function_registry)
     t <- flatten_type(t)
     are_vars_init(t)
+    node$internal_type <- t
+    return(t)
+  } else if (inherits(node, "fn_node")) {
+    t <- node$return_type$clone()
+    t$is_function <- TRUE
     node$internal_type <- t
     return(t)
   } else if (inherits(node, "for_node")) {
@@ -271,6 +300,9 @@ type_infer_action <- function(node, env) {
           env$vars_list[[variable]] <- detected_type
         }
       }
+    }
+    if (inherits(node$right_node, "fn_node")) {
+      env$vars_list[[variable]]$is_function <- TRUE
     }
   }
   else if (inherits(node, "for_node")) {
