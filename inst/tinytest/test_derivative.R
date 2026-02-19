@@ -4,13 +4,14 @@ library(tinytest)
 # =========================================================================
 args_fct <- function() {}
 run_fr_checks <- function(fct, args_fct, r_fct = TRUE, real_type) {
-  AST <- ast2ast:::parse_body(body(fct), r_fct)
-  AST <- ast2ast:::sort_args(AST)
-  vars_types_list <- ast2ast:::infer_types(AST, fct, args_fct, r_fct)
-  ast2ast:::type_checking(AST, vars_types_list, r_fct, real_type)
+  AST <- ast2ast:::parse_body(body(fct), r_fct, ast2ast:::function_registry_global)
+  AST <- ast2ast:::sort_args(AST, ast2ast:::function_registry_global)
+  vars_types_list <- ast2ast:::infer_types(AST, fct, args_fct, r_fct, ast2ast:::function_registry_global)
+  ast2ast:::type_checking(AST, vars_types_list, r_fct, real_type, ast2ast:::function_registry_global)
 }
 test_checks <- function(f, args_f, r_fct, real_type, error_message, info = "") {
   e <- try(run_fr_checks(f, args_f, r_fct, real_type), silent = TRUE)
+  e <- attributes(e)[["condition"]]$message
   expect_equal(as.character(e), error_message, info = info)
 }
 fct <- function() {
@@ -20,7 +21,7 @@ fct <- function() {
   return(jac)
 }
 test_checks(fct, args_fct, TRUE, "etr::Double",
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct, real_type) : \n  jac <- deriv(y, x)\nderiv can be only used when derivative is set to reverse\n"
+  "jac <- deriv(y, x)\nderiv can be only used when derivative is set to reverse"
 )
 fct <- function() {
   x <- c(1, 2)
@@ -29,7 +30,7 @@ fct <- function() {
   return(jac)
 }
 test_checks(fct, args_fct, TRUE, "etr::Double",
- "Error in ast2ast:::infer_types(AST, fct, args_fct, r_fct) : \n  Error: Could not infer the types, caused by Error in are_vars_init(t) : Found uninitialzed variable: jac\n\n"
+ "Error: Could not infer the types, caused by Error in are_vars_init(t) : Found uninitialzed variable: jac\n"
 )
 fct <- function() {
   x <- c(1, 2)
@@ -38,7 +39,7 @@ fct <- function() {
   return(jac)
 }
 test_checks(fct, args_fct, TRUE, "etr::Double",
- "Error in ast2ast:::infer_types(AST, fct, args_fct, r_fct) : \n  Error: Could not infer the types, caused by Error in are_vars_init(t) : Found uninitialzed variable: jac\n\n"
+ "Error: Could not infer the types, caused by Error in are_vars_init(t) : Found uninitialzed variable: jac\n"
 )
 fct <- function() {
   x <- c(1, 2)
@@ -46,7 +47,7 @@ fct <- function() {
   get_dot(y)
 }
 test_checks(fct, args_fct, TRUE, "etr::Double",
-"Error in ast2ast:::type_checking(AST, vars_types_list, r_fct, real_type) : \n  get_dot(y)\nget_dot can be only used when derivative is set to forward\n")
+"get_dot(y)\nget_dot can be only used when derivative is set to forward")
 
 
 # Example Nr. 1: quadratic jacobian

@@ -12,7 +12,7 @@ expect_error(
 
 # --- helpers ---------------------------------------------------------------
 ast_of <- function(f, r_fct = TRUE) {
-  ast2ast:::parse_body(body(f), r_fct)
+  ast2ast:::parse_body(body(f), r_fct, ast2ast:::function_registry_global)
 }
 
 expect_node <- function(node, cls, operator = NULL, context = NULL) {

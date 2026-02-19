@@ -92,7 +92,7 @@ flatten_type <- function(type) {
   return(type)
 }
 
-infer <- function(node, vars_list, r_fct) {
+infer <- function(node, vars_list, r_fct, function_registry) {
   if (inherits(node, "literal_node")) {
     type <- node$literal_type
     if (type %within% c("scientific", "numeric")) {
@@ -114,29 +114,29 @@ infer <- function(node, vars_list, r_fct) {
     node$internal_type <- t
     return(t)
   } else if (inherits(node, c("unary_node", "binary_node", "function_node"))) {
-    ifct <- function_registry_global$infer_fct(node$operator)
-    t <- ifct(node, vars_list, r_fct)
+    ifct <- function_registry$infer_fct(node$operator)
+    t <- ifct(node, vars_list, r_fct, function_registry)
     t <- flatten_type(t)
     are_vars_init(t)
     node$internal_type <- t
     return(t)
   } else if (inherits(node, "for_node")) {
-    ifct <- function_registry_global$infer_fct("for")
-    t <- ifct(node, vars_list, r_fct)
+    ifct <- function_registry$infer_fct("for")
+    t <- ifct(node, vars_list, r_fct, function_registry)
     t <- flatten_type(t)
     are_vars_init(t)
     node$internal_type <- t
     return(t)
   } else if (inherits(node, "while_node")) {
-    ifct <- function_registry_global$infer_fct("while")
-    t <- ifct(node, vars_list, r_fct)
+    ifct <- function_registry$infer_fct("while")
+    t <- ifct(node, vars_list, r_fct, function_registry)
     t <- flatten_type(t)
     are_vars_init(t)
     node$internal_type <- t
     return(t)
   } else if (inherits(node, "repeat_node")) {
-    ifct <- function_registry_global$infer_fct("repeat")
-    t <- ifct(node, vars_list, r_fct)
+    ifct <- function_registry$infer_fct("repeat")
+    t <- ifct(node, vars_list, r_fct, function_registry)
     t <- flatten_type(t)
     are_vars_init(t)
     node$internal_type <- t
@@ -241,10 +241,10 @@ handle_type_dcl_in_assign <- function(node, env) {
 type_infer_action <- function(node, env) {
   handle_type_dcl(node, env)
   if (inherits(node, "binary_node") && node$operator %within% c("=", "<-")) {
-    infer(node, env$vars_list, env$r_fct)
+    infer(node, env$vars_list, env$r_fct, env$function_registry)
     handle_type_dcl_in_assign(node, env)
     # RHS:
-    type <- infer(node$right_node, env$vars_list, env$r_fct)
+    type <- infer(node$right_node, env$vars_list, env$r_fct, env$function_registry)
     if (is.character(type)) {
       node$error <- type
     } else {
@@ -260,7 +260,7 @@ type_infer_action <- function(node, env) {
     }
     # LHS:
     if (inherits(node$left_node, c("binary_node", "function_node"))) {
-      type_lhs <- infer(node$left_node, env$vars_list, env$r_fct)
+      type_lhs <- infer(node$left_node, env$vars_list, env$r_fct, env$function_registry)
       if (is.character(type_lhs)) {
         node$error <- type_lhs
       } else {
@@ -274,7 +274,7 @@ type_infer_action <- function(node, env) {
     }
   }
   else if (inherits(node, "for_node")) {
-    type <- infer(node, env$vars_list, env$r_fct)
+    type <- infer(node, env$vars_list, env$r_fct, env$function_registry)
     if (is.character(type)) {
       node$error <- type
     } else {
@@ -294,7 +294,7 @@ type_infer_action <- function(node, env) {
   else if (inherits(node, c("while_node", "if_node"))) {
     variable <- find_var_lhs(node$condition)
     if (!is.null(variable)) { # e.g. while(TRUE)
-      type <- infer(node$condition, env$vars_list, env$r_fct)
+      type <- infer(node$condition, env$vars_list, env$r_fct, env$function_registry)
       if (is.character(type)) {
         node$error <- type
       } else {
@@ -311,9 +311,9 @@ type_infer_action <- function(node, env) {
     }
   }
   else if (inherits(node, "binary_node") && !(node$operator %within% c("=", "<-"))) {
-    infer(node, env$vars_list, env$r_fct)
-    infer(node$left_node, env$vars_list, env$r_fct)
-    infer(node$right_node, env$vars_list, env$r_fct)
+    infer(node, env$vars_list, env$r_fct, env$function_registry)
+    infer(node$left_node, env$vars_list, env$r_fct, env$function_registry)
+    infer(node$right_node, env$vars_list, env$r_fct, env$function_registry)
     if (node$operator %in% c("[", "[[", "at")) {
       variable <- find_var_lhs(node$left_node)
       if (!is.null(variable) && variable != "") {
@@ -326,16 +326,16 @@ type_infer_action <- function(node, env) {
     }
   }
   else if (inherits(node, "unary_node")) {
-    infer(node, env$vars_list, env$r_fct)
-    infer(node$obj, env$vars_list, env$r_fct)
+    infer(node, env$vars_list, env$r_fct, env$function_registry)
+    infer(node$obj, env$vars_list, env$r_fct, env$function_registry)
   }
   else if (inherits(node, "nullary_node")) {
-    infer(node, env$vars_list, env$r_fct)
+    infer(node, env$vars_list, env$r_fct, env$function_registry)
   }
   else if (inherits(node, "function_node")) {
-    infer(node, env$vars_list, env$r_fct)
+    infer(node, env$vars_list, env$r_fct, env$function_registry)
     lapply(node$args, function(arg) {
-      infer(arg, env$vars_list, env$r_fct)
+      infer(arg, env$vars_list, env$r_fct, env$function_registry)
     })
     if (node$operator %in% c("[", "[[", "at")) {
       variable <- find_var_lhs(node$args[[1L]])
@@ -357,7 +357,7 @@ type_infer_action <- function(node, env) {
 }
 type_infer_return_action <- function(node, env) {
   if (inherits(node, "unary_node") && node$operator == "return") {
-    type <- infer(node$obj, env$vars_list, env$r_fct)
+    type <- infer(node$obj, env$vars_list, env$r_fct, env$function_registry)
     if (is.character(type)) {
       node$error <- type
     } else {
@@ -381,7 +381,7 @@ are_vars_init <- function(type) {
 
 type_list_checks <- function(l) {
   lapply(l, function(var) {
-    if (any(var$base_type == c("NA", "NaN", "Inf"))) { # TODO: NaN should be removed.
+    if (any(var$base_type == c("NA", "NaN", "Inf"))) {
       stop(sprintf("Found unallowed base type %s, for the variable %s", var$base_type, var$name))
     }
   })

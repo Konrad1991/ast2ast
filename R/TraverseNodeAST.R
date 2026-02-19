@@ -65,13 +65,13 @@ action_print <- function(node) {
 # - Operations at left side of an assignment can only be subsets or type definitions
 # - No literal at left side of assignment
 # ========================================================================
-action_error <- function(node, r_fct) {
-  check_operator(node)
+action_error <- function(node, r_fct, function_registry) {
+  check_operator(node, function_registry)
   check_variable_names(node)
   check_type_declaration(node, r_fct)
 }
 
-check_operator <- function(node) {
+check_operator <- function(node, function_registry) {
   if (!inherits(node, "nullary_node") &&
     !inherits(node, "unary_node") &&
     !inherits(node, "binary_node") &&
@@ -79,14 +79,14 @@ check_operator <- function(node) {
     return()
   }
 
-  check_function <- function(node) {
+  check_function <- function(node, function_registry) {
     fct <- node$operator
-    fct %within% function_registry_global$permitted_fcts()
+    fct %within% function_registry$permitted_fcts()
   }
 
-  check_arity <- function(node) {
+  check_arity <- function(node, function_registry) {
     fct <- node$operator
-    expected_args <- function_registry_global$expected_n_args(fct)
+    expected_args <- function_registry$expected_n_args(fct)
     args_length <- NULL
     if (inherits(node, "nullary_node")) {
       args_length <- 0
@@ -105,9 +105,9 @@ check_operator <- function(node) {
     args_length %within% expected_args[[1]] # %within% because return (0 | 1) and - (1 | 2)
   }
 
-  check_named_args <- function(node) {
+  check_named_args <- function(node, function_registry) {
     fct <- node$operator
-    expected_args <- function_registry_global$expected_arg_names(fct)
+    expected_args <- function_registry$expected_arg_names(fct)
     if (inherits(node, "function_node")) {
       if (!all(is.na(expected_args))) {
         args_names <- names(node$args)
@@ -124,7 +124,7 @@ check_operator <- function(node) {
     return(TRUE)
   }
 
-  check_lhs_operation <- function(node) {
+  check_lhs_operation <- function(node, function_registry) {
     if (inherits(node, "binary_node")) {
       if (node$operator == "<-" || node$operator == "=") {
         if (inherits(node$left_node, "variable_node")) {
@@ -158,7 +158,7 @@ check_operator <- function(node) {
   err <- ""
   for (i in seq_along(list_check_fcts)) {
     fct <- list_check_fcts[[i]]
-    if (!fct(node)) {
+    if (!fct(node, function_registry)) {
       err <- paste0(messages[i], node$operator)
       break
     }
@@ -266,12 +266,12 @@ check_type_declaration <- function(node, r_fct) {
 
 # Sort arguments
 # ========================================================================
-action_sort_args <- function(node) {
+action_sort_args <- function(node, function_registry) {
   if (!inherits(node, "function_node")) {
     return()
   }
   fct <- node$operator
-  expected_args <- function_registry_global$expected_arg_names(fct)
+  expected_args <- function_registry$expected_arg_names(fct)
   if (!all(is.na(expected_args))) {
     args_names <- names(node$args)
     unnamed_args <- which(!(args_names %in% expected_args))
@@ -299,35 +299,18 @@ action_sort_args <- function(node) {
 # error checking round
 # Check that the types of the arguments are correct
 # ========================================================================
-action_check_type_of_args <- function(node, variables, r_fct, real_type) {
+action_check_type_of_args <- function(node, variables, r_fct, real_type, function_registry) {
   if (!inherits(node, "unary_node") &&
     !inherits(node, "binary_node") &&
     !inherits(node, "function_node") &&
     !inherits(node, "for_node")) {
     return()
   }
-  # TODO: add tests for scalar <- !scalar assignments
-  # if (inherits(node, "binary_node") && node$operator %in% c("<-", "=")) {
-  #   if (inherits(node$left_node, "variable_node")) {
-  #     tl <- variables[node$left_node$name]
-  #   } else {
-  #     tl <- node$left_node$internal_type$data_struct
-  #   }
-  #   if (inherits(node$right_node, "variable_node")) {
-  #     tr <- variables[node$right_node$name]
-  #   } else {
-  #     tr <- node$right_node$internal_type$data_struct
-  #   }
-  #   if (tl == "scalar" && tr != "scalar") {
-  #     node$error <- "At the left hand side of the assignment a scalar is found, but not on the right hand side. You can only assign scalars to scalars"
-  #   }
-  # }
-
   operator <- node$operator
   if (inherits(node, "for_node")) {
     operator <- "for"
   }
-  type_check_fct <- function_registry_global$check_fct(operator)
+  type_check_fct <- function_registry$check_fct(operator)
   type_check_fct(node, variables, r_fct, real_type)
 }
 
@@ -353,14 +336,14 @@ action_set_true <- function(node, r_fct, real_type) {
     node$handle_vector <- TRUE
   }
 }
-action_translate <- function(node) {
+action_translate <- function(node, function_registry) {
   if (!inherits(node, "binary_node") &&
     !inherits(node, "unary_node") &&
     !inherits(node, "nullary_node") &&
     !inherits(node, "function_node")) {
     return()
   }
-  op <- function_registry_global$get_cpp_name(node$operator)
+  op <- function_registry$get_cpp_name(node$operator)
   if (is.null(op)) {
     node$error <- paste0("Unknown operator: ", node$operator)
   }

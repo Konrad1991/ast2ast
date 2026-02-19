@@ -178,7 +178,7 @@ check_subsetting <- function(node, vars_types_list, r_fct, real_type) {
   }
 }
 
-infer_subsetting <- function(node, vars_list, r_fct) {
+infer_subsetting <- function(node, vars_list, r_fct, function_registry) {
   choose_fast_path <- function(types) {
     fulfilled <- function(t) {
       if (t$data_struct != "scalar" || t$base_type == "logical") return(FALSE)
@@ -195,8 +195,8 @@ infer_subsetting <- function(node, vars_list, r_fct) {
     }
   }
   if (inherits(node, "binary_node")) {
-    left_type_node <- infer(node$left_node, vars_list, r_fct)
-    right_type_node <- infer(node$right_node, vars_list, r_fct)
+    left_type_node <- infer(node$left_node, vars_list, r_fct, function_registry)
+    right_type_node <- infer(node$right_node, vars_list, r_fct, function_registry)
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- left_type_node$base_type
     t$data_struct <- "vector"
@@ -214,7 +214,7 @@ infer_subsetting <- function(node, vars_list, r_fct) {
     return(t)
   } else if (inherits(node, "function_node")) {
     all_types <- lapply(node$args, function(arg) {
-      infer(arg, vars_list, r_fct)
+      infer(arg, vars_list, r_fct, function_registry)
     })
     type_first_arg <- all_types[[1]]
     t <- type_node$new(NA, FALSE, r_fct)
@@ -235,16 +235,16 @@ infer_subsetting <- function(node, vars_list, r_fct) {
     return(sprintf("Found unsupported subsetting: %s", node$stringify()))
   }
 }
-infer_unary_math <- function(node, vars_list, r_fct) {
-  inner_type <- infer(node$obj, vars_list, r_fct)
+infer_unary_math <- function(node, vars_list, r_fct, function_registry) {
+  inner_type <- infer(node$obj, vars_list, r_fct, function_registry)
   t <- type_node$new(NA, FALSE, r_fct)
   t$base_type <- "double"
   t$data_struct <- inner_type$data_struct
   node$internal_type <- t
   return(t)
 }
-infer_unary_minus <- function(node, vars_list, r_fct) {
-  inner_type <- infer(node$obj, vars_list, r_fct)
+infer_unary_minus <- function(node, vars_list, r_fct, function_registry) {
+  inner_type <- infer(node$obj, vars_list, r_fct, function_registry)
   base_type <- inner_type$base_type
   if (base_type == "logical") base_type <- "int"
   t <- type_node$new(NA, FALSE, r_fct)
@@ -253,9 +253,9 @@ infer_unary_minus <- function(node, vars_list, r_fct) {
   node$internal_type <- t
   return(t)
 }
-infer_binary_math <- function(node, vars_list, r_fct) {
-  left_type <- infer(node$left_node, vars_list, r_fct)
-  right_type <- infer(node$right_node, vars_list, r_fct)
+infer_binary_math <- function(node, vars_list, r_fct, function_registry) {
+  left_type <- infer(node$left_node, vars_list, r_fct, function_registry)
+  right_type <- infer(node$right_node, vars_list, r_fct, function_registry)
   l_type <- left_type$clone(deep = TRUE)
   r_type <- right_type$clone(deep = TRUE)
   if (l_type$base_type == "logical") l_type$base_type <- "integer"
@@ -268,24 +268,24 @@ infer_binary_math <- function(node, vars_list, r_fct) {
   node$internal_type <- common_t
   return(common_t)
 }
-infer_minus <- function(node, vars_list, r_fct) {
+infer_minus <- function(node, vars_list, r_fct, function_registry) {
   if (inherits(node, "binary_node")) {
-    return(infer_binary_math(node, vars_list, r_fct))
+    return(infer_binary_math(node, vars_list, r_fct, function_registry))
   } else if (inherits(node, "unary_node")) {
-    return(infer_unary_minus(node, vars_list, r_fct))
+    return(infer_unary_minus(node, vars_list, r_fct, function_registry))
   }
 }
-infer_check_type <- function(node, vars_list, r_fct) {
-  inner_type <- infer(node$obj, vars_list, r_fct)
+infer_check_type <- function(node, vars_list, r_fct, function_registry) {
+  inner_type <- infer(node$obj, vars_list, r_fct, function_registry)
   t <- type_node$new(NA, FALSE, r_fct)
   t$base_type <- "logical"
   t$data_struct <- inner_type$data_struct
   node$internal_type <- t
   return(t)
 }
-infer_comparison <- function(node, vars_list, r_fct) {
-  left_type <- infer(node$left_node, vars_list, r_fct)
-  right_type <- infer(node$right_node, vars_list, r_fct)
+infer_comparison <- function(node, vars_list, r_fct, function_registry) {
+  left_type <- infer(node$left_node, vars_list, r_fct, function_registry)
+  right_type <- infer(node$right_node, vars_list, r_fct, function_registry)
   common_type <- "logical"
   common_data_struct <- "scalar"
   if ("vector" %within% c(left_type$data_struct, right_type$data_struct)) {
@@ -303,9 +303,9 @@ infer_comparison <- function(node, vars_list, r_fct) {
   node$internal_type <- t
   return(t)
 }
-infer_and_or_scalar <- function(node, vars_list, r_fct) {
-  left_type <- infer(node$left_node, vars_list, r_fct)
-  right_type <- infer(node$right_node, vars_list, r_fct)
+infer_and_or_scalar <- function(node, vars_list, r_fct, function_registry) {
+  left_type <- infer(node$left_node, vars_list, r_fct, function_registry)
+  right_type <- infer(node$right_node, vars_list, r_fct, function_registry)
   common_type <- "logical"
   common_data_struct <- "scalar"
   t <- type_node$new(NA, FALSE, r_fct)
@@ -314,9 +314,9 @@ infer_and_or_scalar <- function(node, vars_list, r_fct) {
   node$internal_type <- t
   return(t)
 }
-infer_and_or_vector <- function(node, vars_list, r_fct) {
-  left_type <- infer(node$left_node, vars_list, r_fct)
-  right_type <- infer(node$right_node, vars_list, r_fct)
+infer_and_or_vector <- function(node, vars_list, r_fct, function_registry) {
+  left_type <- infer(node$left_node, vars_list, r_fct, function_registry)
+  right_type <- infer(node$right_node, vars_list, r_fct, function_registry)
   common_type <- "logical"
   common_data_struct <- "vector"
   if ("matrix" %within% c(left_type$data_struct, right_type$data_struct)) {
@@ -331,8 +331,8 @@ infer_and_or_vector <- function(node, vars_list, r_fct) {
   node$internal_type <- t
   return(t)
 }
-infer_num_int_log <- function(node, vars_list, r_fct) {
-  inner_type <- infer(node$obj, vars_list, r_fct)
+infer_num_int_log <- function(node, vars_list, r_fct, function_registry) {
+  inner_type <- infer(node$obj, vars_list, r_fct, function_registry)
   t <- type_node$new(NA, FALSE, r_fct)
   t$base_type <- c(numeric = "double", integer = "integer", logical = "logical")[node$operator]
   t$data_struct <- "vector"
@@ -342,7 +342,7 @@ infer_num_int_log <- function(node, vars_list, r_fct) {
 
 function_registry_global$add(
   name = "type", num_args = 2, arg_names = c(NA, NA),
-  infer_fct = function(node, vars_list, r_fct) { },
+  infer_fct = function(node, vars_list, r_fct, function_registry) { },
   check_fct = function(node, vars_types_list, r_fct, real_type) {
     # Actually this is all be already tested before type inference. Thus, never called
     if (!(inherits(node$left_node, "variable_node") &&
@@ -354,7 +354,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "=", num_args = 2, arg_names = c(NA, NA),
-  infer_fct = function(node, vars_list, r_fct) {
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
     return(sprintf("Found assignment within an expression: %s", node$stringify()))
   },
   check_fct = function(node, vars_types_list, r_fct, real_type) {
@@ -371,7 +371,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "<-", num_args = 2, arg_names = c(NA, NA),
-  infer_fct = function(node, vars_list, r_fct) {
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
     return(sprintf("Found assignment within an expression: %s", node$stringify()))
   },
   check_fct = function(node, vars_types_list, r_fct, real_type) {
@@ -404,16 +404,10 @@ function_registry_global$add(
   check_fct = check_subsetting,
   group = "binary_node", cpp_name = "etr::at"
 )
-# function_registry_global$add(
-#   name = "contigous_subset", num_args = c(2, 3), arg_names = c(NA, NA, NA),
-#   infer_fct = infer_subsetting,
-#   check_fct = check_subsetting,
-#   group = "binary_node", cpp_name = "etr::contigous_subset"
-# )
 function_registry_global$add(
   name = "for", num_args = 3, arg_names = c(NA, NA, NA),
-  infer_fct = function(node, vars_list, r_fct) {
-    temp <- infer(node$seq, vars_list, r_fct)
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    temp <- infer(node$seq, vars_list, r_fct, function_registry)
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- temp$base_type
     t$data_struct <- "scalar"
@@ -430,33 +424,33 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "while", num_args = 2, arg_names = c(NA, NA),
-  infer_fct = function(node, vars_list, r_fct) {},
+  infer_fct = function(node, vars_list, r_fct, function_registry) {},
   check_fct = mock,
   group = "while_node", cpp_name = "while"
 )
 function_registry_global$add(
   name = "repeat", num_args = 1, arg_names = NA,
-  infer_fct = function(node, vars_list, r_fct) {},
+  infer_fct = function(node, vars_list, r_fct, function_registry) {},
   check_fct = mock,
   group = "repeat_node", cpp_name = "while"
 )
 function_registry_global$add(
   name = "next", num_args = 0, arg_names = NA,
-  infer_fct = function(node, vars_list, r_fct) {},
+  infer_fct = function(node, vars_list, r_fct, function_registry) {},
   check_fct = mock,
   group = "nullary_node", cpp_name = "continue"
 )
 function_registry_global$add(
   name = "break", num_args = 0, arg_names = NA,
-  infer_fct = function(node, vars_list, r_fct) {},
+  infer_fct = function(node, vars_list, r_fct, function_registry) {},
   check_fct = mock,
   group = "nullary_node", cpp_name = "break"
 )
 function_registry_global$add(
   name = "c", num_args = NA, arg_names = NA,
-  infer_fct = function(node, vars_list, r_fct) {
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
     types_of_args <- lapply(node$args, function(x) {
-      temp <- infer(x, vars_list, r_fct)
+      temp <- infer(x, vars_list, r_fct, function_registry)
       return(temp)
     })
     types_of_args <- sapply(types_of_args, \(x) x$base_type)
@@ -485,9 +479,9 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = ":", num_args = 2, arg_names = c(NA, NA),
-  infer_fct = function(node, vars_list, r_fct) {
-    left_type <- infer(node$left_node, vars_list, r_fct)
-    right_type <- infer(node$right_node, vars_list, r_fct)
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    left_type <- infer(node$left_node, vars_list, r_fct, function_registry)
+    right_type <- infer(node$right_node, vars_list, r_fct, function_registry)
     left_base_type <- left_type$base_type
     right_base_type <- right_type$base_type
     if (left_base_type == "logical") left_base_type <- "integer"
@@ -507,8 +501,8 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "seq_len", num_args = 1, arg_names = NA,
-  infer_fct = function(node, vars_list, r_fct) {
-    infer(node$obj, vars_list, r_fct)
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    infer(node$obj, vars_list, r_fct, function_registry)
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- "integer"
     t$data_struct <- "vector"
@@ -524,8 +518,8 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "seq_along", num_args = 1, arg_names = NA,
-  infer_fct = function(node, vars_list, r_fct) {
-    infer(node$obj, vars_list, r_fct)
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    infer(node$obj, vars_list, r_fct, function_registry)
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- "integer"
     t$data_struct <- "vector"
@@ -537,9 +531,9 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "rep", num_args = 2, arg_names = c(NA, NA),
-  infer_fct = function(node, vars_list, r_fct) {
-    left_type <- infer(node$left_node, vars_list, r_fct)
-    infer(node$right_node, vars_list, r_fct)
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    left_type <- infer(node$left_node, vars_list, r_fct, function_registry)
+    infer(node$right_node, vars_list, r_fct, function_registry)
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- left_type$base_type
     t$data_struct <- "vector"
@@ -669,8 +663,8 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "(", num_args = 1, arg_names = NA,
-  infer_fct = function(node, vars_list, r_fct) {
-    inner_type <- infer(node$obj, vars_list, r_fct)
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    inner_type <- infer(node$obj, vars_list, r_fct, function_registry)
     return(inner_type)
   },
   check_fct = mock, group = "unary_node", cpp_name = "("
@@ -737,21 +731,21 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "print", num_args = 1, arg_names = NA,
-  infer_fct = function(node, vars_list, r_fct) {
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
     return(sprintf("Found print within an expression: %s", node$stringify()))
   },
   check_fct = mock, group = "unary_node", cpp_name = "etr::print"
 )
 function_registry_global$add(
   name = "return", num_args = c(0, 1), arg_names = NA,
-  infer_fct = function(node, vars_list, r_fct) {},
+  infer_fct = function(node, vars_list, r_fct, function_registry) {},
   check_fct = mock, group = "unary_node", cpp_name = "return"
 )
 function_registry_global$add(
   name = "vector", num_args = 2, arg_names = c("mode", "length"),
-  infer_fct = function(node, vars_list, r_fct) {
-    infer(node$args[[1]], vars_list, r_fct)
-    infer(node$args[[2]], vars_list, r_fct)
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    infer(node$args[[1]], vars_list, r_fct, function_registry)
+    infer(node$args[[2]], vars_list, r_fct, function_registry)
     mode_type <- node$args[[1]]$name |> remove_double_quotes()
     t <- type_node$new(NA, FALSE, r_fct)
     if (!(mode_type %within% c("numeric", "logical", "integer"))) {
@@ -794,9 +788,9 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "matrix", num_args = 3, arg_names = c("data", "nrow", "ncol"),
-  infer_fct = function(node, vars_list, r_fct) {
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
     all_types <- lapply(node$args, function(arg) {
-      infer(arg, vars_list, r_fct)
+      infer(arg, vars_list, r_fct, function_registry)
     })
     type_first_arg <- all_types[[1]]
     t <- type_node$new(NA, FALSE, r_fct)
@@ -820,9 +814,9 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "array", num_args = 2, arg_names = c(NA, NA),
-  infer_fct = function(node, vars_list, r_fct) {
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
     all_types <- lapply(node$args, function(arg) {
-      infer(arg, vars_list, r_fct)
+      infer(arg, vars_list, r_fct, function_registry)
     })
     type_first_arg <- all_types[[1]]
     t <- type_node$new(NA, FALSE, r_fct)
@@ -840,8 +834,8 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "length", num_args = 1, arg_names = NA,
-  infer_fct = function(node, vars_list, r_fct) {
-    infer(node$obj, vars_list, r_fct)
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    infer(node$obj, vars_list, r_fct, function_registry)
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- "integer"
     t$data_struct <- "scalar"
@@ -857,8 +851,8 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "dim", num_args = 1, arg_names = NA,
-  infer_fct = function(node, vars_list, r_fct) {
-    infer(node$obj, vars_list, r_fct)
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    infer(node$obj, vars_list, r_fct, function_registry)
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- "integer"
     t$data_struct <- "vector"
@@ -874,8 +868,8 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "nrow", num_args = 1, arg_names = NA,
-  infer_fct = function(node, vars_list, r_fct) {
-    infer(node$obj, vars_list, r_fct)
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    infer(node$obj, vars_list, r_fct, function_registry)
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- "integer"
     t$data_struct <- "scalar"
@@ -891,8 +885,8 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "ncol", num_args = 1, arg_names = NA,
-  infer_fct = function(node, vars_list, r_fct) {
-    infer(node$obj, vars_list, r_fct)
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    infer(node$obj, vars_list, r_fct, function_registry)
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- "integer"
     t$data_struct <- "scalar"
@@ -938,9 +932,9 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "cmr", num_args = 3, arg_names = c(NA, NA, NA),
-  infer_fct = function(node, vars_list, r_fct) {
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
     lapply(node$args, function(arg) {
-      infer(arg, vars_list, r_fct)
+      infer(arg, vars_list, r_fct, function_registry)
     })
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- "double"
@@ -979,15 +973,15 @@ function_registry_global$add(
 
 function_registry_global$add(
   name = "seed", num_args = 2, arg_names = c(NA, NA),
-  infer_fct = function(node, vars_list, r_fct) {
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
     return(sprintf("Found seed within an expression: %s", node$stringify()))
   },
   check_fct = function(node, vars_list, r_fct, real_type) {
     if (real_type != "etr::Dual") {
       node$error <- "seed can be only used when derivative is set to forward"
     }
-    left_type_node <- infer(node$left_node, vars_list, r_fct)
-    right_type_node <- infer(node$right_node, vars_list, r_fct)
+    left_type_node <- infer(node$left_node, vars_list, r_fct, function_registry)
+    right_type_node <- infer(node$right_node, vars_list, r_fct, function_registry)
     if (!(left_type_node$base_type %in% c("int", "integer", "double"))) {
       node$error <- "The first argument of seed has to have the base type double"
     }
@@ -999,15 +993,15 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "unseed", num_args = 2, arg_names = c(NA, NA),
-  infer_fct = function(node, vars_list, r_fct) {
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
     return(sprintf("Found unseed within an expression: %s", node$stringify()))
   },
   check_fct = function(node, vars_list, r_fct, real_type) {
     if (real_type != "etr::Dual") {
       node$error <- "unseed can be only used when derivative is set to forward"
     }
-    left_type_node <- infer(node$left_node, vars_list, r_fct)
-    right_type_node <- infer(node$right_node, vars_list, r_fct)
+    left_type_node <- infer(node$left_node, vars_list, r_fct, function_registry)
+    right_type_node <- infer(node$right_node, vars_list, r_fct, function_registry)
     if (!(left_type_node$base_type %in% c("int", "integer", "double"))) {
       node$error <- "The first argument of seed has to have the base type double"
     }
@@ -1019,8 +1013,8 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "get_dot", num_args = 1, arg_names = NA,
-  infer_fct = function(node, vars_list, r_fct) {
-    infer(node$obj, vars_list, r_fct)
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    infer(node$obj, vars_list, r_fct, function_registry)
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- "double"
     t$data_struct <- "vector"
@@ -1031,7 +1025,7 @@ function_registry_global$add(
     if (real_type != "etr::Dual") {
       node$error <- "get_dot can be only used when derivative is set to forward"
     }
-    type <- infer(node$obj, vars_list, r_fct)
+    type <- infer(node$obj, vars_list, r_fct, function_registry)
     if (type$base_type != "double") {
       node$error <- "The argument of get_dot has to have the base type double"
     }
@@ -1040,9 +1034,9 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "deriv", num_args = 2, arg_names = c(NA, NA),
-  infer_fct = function(node, vars_list, r_fct) {
-    lds <- infer(node$left_node, vars_list, r_fct)$data_struct
-    rds <- infer(node$right_node, vars_list, r_fct)$data_struct
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    lds <- infer(node$left_node, vars_list, r_fct, function_registry)$data_struct
+    rds <- infer(node$right_node, vars_list, r_fct, function_registry)$data_struct
     ds <- "scalar"
     if (lds != "scalar" && rds == "scalar") {
       ds <- "vector"
@@ -1063,8 +1057,8 @@ function_registry_global$add(
     if (real_type != "etr::Variable<etr::Double>") {
       node$error <- "deriv can be only used when derivative is set to reverse"
     }
-    left_type_node <- infer(node$left_node, vars_list, r_fct)
-    right_type_node <- infer(node$right_node, vars_list, r_fct)
+    left_type_node <- infer(node$left_node, vars_list, r_fct, function_registry)
+    right_type_node <- infer(node$right_node, vars_list, r_fct, function_registry)
     if (left_type_node$base_type != "double") {
       node$error <- "The first argument of deriv has to have the base type double"
     }

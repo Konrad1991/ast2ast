@@ -2,8 +2,8 @@ library(tinytest)
 library(ast2ast)
 
 get_sorted_ast <- function(f, r_fct = TRUE) {
-  ast <- ast2ast:::parse_body(body(f), r_fct)
-  ast2ast:::sort_args(ast)
+  ast <- ast2ast:::parse_body(body(f), r_fct, ast2ast:::function_registry_global)
+  ast2ast:::sort_args(ast, ast2ast:::function_registry_global)
 }
 
 # --- vector sorting ----------------------------------------------------

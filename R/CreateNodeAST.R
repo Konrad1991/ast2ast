@@ -1,12 +1,12 @@
-process <- function(code, context, r_fct) {
+process <- function(code, context, r_fct, function_registry) {
   if (!is.symbol(code) && is.call(code)) {
-    return(create_ast(code, context, r_fct))
+    return(create_ast(code, context, r_fct, function_registry))
   }
   var <- handle_var(code, context)
   return(var)
 }
 
-create_ast <- function(code, context, r_fct) {
+create_ast <- function(code, context, r_fct, function_registry) {
   old_code <- code
   code <- as.list(code)
   operator <- deparse(code[[1]])
@@ -14,39 +14,39 @@ create_ast <- function(code, context, r_fct) {
   if (operator == "if") {
     i_node <- if_node$new()
     i_node$context <- context
-    handle_if(code, operator, r_fct, i_node)
+    handle_if(code, operator, r_fct, i_node, function_registry)
     return(i_node)
   } else if (operator == "{") {
     b_node <- block_node$new()
     b_node$block <- lapply(code[-1], function(line) {
-      process(line, operator, r_fct)
+      process(line, operator, r_fct, function_registry)
     })
     b_node$context <- context
     return(b_node)
   } else if (operator == "repeat") {
     rn <- repeat_node$new()
-    rn$block <- code[[2]] |> wrap_in_block() |> process(operator, r_fct)
+    rn$block <- code[[2]] |> wrap_in_block() |> process(operator, r_fct, function_registry)
     rn$context <- context
     return(rn)
   } else if (operator == "while") {
     wn <- while_node$new()
-    wn$condition <- code[[2]] |> process(operator, r_fct)
-    wn$block <- code[[3]] |> wrap_in_block() |> process(operator, r_fct)
+    wn$condition <- code[[2]] |> process(operator, r_fct, function_registry)
+    wn$block <- code[[3]] |> wrap_in_block() |> process(operator, r_fct, function_registry)
     wn$context <- context
     return(wn)
   } else if (operator == "for") {
     fn <- for_node$new()
-    fn$i <- code[[2]] |> process(operator, r_fct)
-    fn$seq <- code[[3]] |> process(operator, r_fct)
-    fn$block <- code[[4]] |> wrap_in_block() |> process(operator, r_fct)
+    fn$i <- code[[2]] |> process(operator, r_fct, function_registry)
+    fn$seq <- code[[3]] |> process(operator, r_fct, function_registry)
+    fn$block <- code[[4]] |> wrap_in_block() |> process(operator, r_fct, function_registry)
     fn$context <- context
     return(fn)
-  } else if (function_registry_global$is_group_functions(operator) || length(code) > 3) {
+  } else if (function_registry$is_group_functions(operator) || length(code) > 3) {
     # by adding length(code) > 3 also wrong fcts are added to the AST
     fn <- function_node$new()
     fn$operator <- operator
     fn$args <- lapply(code[-1], function(x) {
-      process(x, operator, r_fct)
+      process(x, operator, r_fct, function_registry)
     })
     fn$context <- context
     return(fn)
@@ -58,7 +58,7 @@ create_ast <- function(code, context, r_fct) {
       t$type_dcl <- TRUE
       bn <- binary_node$new()
       bn$operator <- operator
-      bn$left_node <- code[[2]] |> process(operator, r_fct)
+      bn$left_node <- code[[2]] |> process(operator, r_fct, function_registry)
       bn$right_node <- t
       bn$context <- context
       bn$is_infix <- operator %in% infix_ops
@@ -66,15 +66,15 @@ create_ast <- function(code, context, r_fct) {
     }
     bn <- binary_node$new()
     bn$operator <- operator
-    bn$right_node <- code[[3]] |> process(operator, r_fct)
-    bn$left_node <- code[[2]] |> process(operator, r_fct)
+    bn$right_node <- code[[3]] |> process(operator, r_fct, function_registry)
+    bn$left_node <- code[[2]] |> process(operator, r_fct, function_registry)
     bn$context <- context
     bn$is_infix <- operator %in% infix_ops
     return(bn)
   } else if (length(code) == 2) {
     un <- unary_node$new()
     un$operator <- operator
-    un$obj <- code[[2]] |> process(operator, r_fct)
+    un$obj <- code[[2]] |> process(operator, r_fct, function_registry)
     un$context <- context
     return(un)
   } else if (length(code) == 1) {
@@ -89,9 +89,9 @@ create_ast <- function(code, context, r_fct) {
 
 # create AST of body
 # ========================================================================
-parse_body <- function(b, r_fct) {
+parse_body <- function(b, r_fct, function_registry) {
   ast <- try({
-    process(b, "Start", r_fct)
+    process(b, "Start", r_fct, function_registry)
   })
   if (inherits(ast, "try-error")) {
     error_string <- ast |> as.character()
@@ -102,8 +102,8 @@ parse_body <- function(b, r_fct) {
 
 # Run checks on: operators, valid variables, and type declarations
 # ========================================================================
-run_checks <- function(ast, r_fct) {
-  e <- try(traverse_ast(ast, action_error, r_fct), silent = TRUE)
+run_checks <- function(ast, r_fct, function_registry) {
+  e <- try(traverse_ast(ast, action_error, r_fct, function_registry), silent = TRUE)
   if (inherits(e, "try-error")) {
     stop("error: Could not run checks on AST")
   }
@@ -118,9 +118,9 @@ run_checks <- function(ast, r_fct) {
 
 # Sort the arguments Example: vector(length = 10, "logical") --> vector("logical", 10)
 # ========================================================================
-sort_args <- function(ast) {
+sort_args <- function(ast, function_registry) {
   e <- try(
-    traverse_ast(ast, action_sort_args)
+    traverse_ast(ast, action_sort_args, function_registry)
   )
   if (inherits(e, "try-error")) {
     stop("error: Could not sort the arguments")
@@ -130,11 +130,12 @@ sort_args <- function(ast) {
 
 # Infer types
 # ========================================================================
-infer_types <- function(ast, f, f_args = NULL, r_fct = TRUE) {
+infer_types <- function(ast, f, f_args = NULL, r_fct = TRUE, function_registry) {
   vars_list <- create_vars_types_list(f, f_args, r_fct)
   env <- new.env(parent = emptyenv())
   env$vars_list <- vars_list
   env$r_fct <- r_fct
+  env$function_registry <- function_registry
   e <- try(traverse_ast(ast, type_infer_action, env), silent = TRUE)
   if (inherits(e, "try-error")) {
     stop(sprintf("Error: Could not infer the types, caused by %s", as.character(e)))
@@ -150,11 +151,11 @@ infer_types <- function(ast, f, f_args = NULL, r_fct = TRUE) {
 }
 
 # Check the types of the functions
-# calls the check function defined in function_registry_global
+# calls the check function defined in function_registry
 # ========================================================================
-type_checking <- function(ast, vars_types_list, r_fct, real_type) {
+type_checking <- function(ast, vars_types_list, r_fct, real_type, function_registry) {
   type_list_checks(vars_types_list)
-  e <- try(traverse_ast(ast, action_check_type_of_args, vars_types_list, r_fct, real_type))
+  e <- try(traverse_ast(ast, action_check_type_of_args, vars_types_list, r_fct, real_type, function_registry))
   if (inherits(e, "try-error")) {
     stop("Could not check the type of the arguments to functions")
   }
@@ -169,7 +170,7 @@ type_checking <- function(ast, vars_types_list, r_fct, real_type) {
 
 # Determine the type of each return Expression
 # ========================================================================
-determine_types_of_returns <- function(ast, vars_types_list, r_fct) {
+determine_types_of_returns <- function(ast, vars_types_list, r_fct, function_registry) {
   type <- NULL
   env <- new.env(parent = emptyenv())
   env$vars_list <- vars_types_list
@@ -177,6 +178,7 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct) {
   env$r_fct <- r_fct
   env$found_void_return <- FALSE
   env$found_non_void_return <- FALSE
+  env$function_registry <- function_registry
   e <- try(traverse_ast(ast, type_infer_return_action, env), silent = TRUE)
   if (env$found_non_void_return && env$found_void_return) {
     stop("Found a return() and return(obj) statements. You can only use one of these at the same time")
@@ -207,10 +209,10 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct) {
 
 # Translates the AST representation into C++ code
 # ========================================================================
-translate_to_cpp_code <- function(ast, r_fct, real_type) {
+translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry) {
   code_string <- NULL
   traverse_ast(ast, action_set_true, r_fct, real_type)
-  traverse_ast(ast, action_translate)
+  traverse_ast(ast, action_translate, function_registry)
   # Stringify ast
   e <- try({code_string <- ast$stringify("  ")}, silent = TRUE)
   if (inherits(e, "error")) {
@@ -291,27 +293,28 @@ translate_internally <- function(fct, args_fct, derivative, name_fct, r_fct) {
   b <- body(fct) |> wrap_in_block()
   code_string <- list()
   real_type <- resolve_derivative(derivative)
+  function_registry <- function_registry_global
 
   # Create AST
-  AST <- parse_body(b, r_fct)
+  AST <- parse_body(b, r_fct, function_registry)
 
   # Run checks
-  run_checks(AST, r_fct)
+  run_checks(AST, r_fct, function_registry)
 
   # Sort the arguments
-  AST <- sort_args(AST)
+  AST <- sort_args(AST, function_registry)
 
   # Infer the types
-  vars_types_list <- infer_types(AST, fct, args_fct, r_fct)
+  vars_types_list <- infer_types(AST, fct, args_fct, r_fct, function_registry)
 
   # Check the types of the arguments at least where possible
-  type_checking(AST, vars_types_list, r_fct, real_type)
+  type_checking(AST, vars_types_list, r_fct, real_type, function_registry)
 
   # Determine return type
-  return_type <- determine_types_of_returns(AST, vars_types_list, r_fct)
+  return_type <- determine_types_of_returns(AST, vars_types_list, r_fct, function_registry)
 
   # Translate
-  code_string <- translate_to_cpp_code(AST, r_fct, real_type)
+  code_string <- translate_to_cpp_code(AST, r_fct, real_type, function_registry)
   for (i in seq_along(vars_types_list)) {
     vars_types_list[[i]]$real_type <- real_type
   }

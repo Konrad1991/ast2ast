@@ -1,11 +1,11 @@
 library(tinytest)
 
 get_ret_type <- function(fct, fct_args, r_fct = FALSE) {
-  AST <- ast2ast:::parse_body(body(fct), r_fct)
-  AST <- ast2ast:::sort_args(AST)
-  vars_types_list <- ast2ast:::infer_types(AST, fct, fct_args, r_fct)
-  ast2ast:::type_checking(AST, vars_types_list, r_fct)
-  ast2ast:::determine_types_of_returns(AST, vars_types_list, r_fct)
+  AST <- ast2ast:::parse_body(body(fct), r_fct, ast2ast:::function_registry_global)
+  AST <- ast2ast:::sort_args(AST, ast2ast:::function_registry_global)
+  vars_types_list <- ast2ast:::infer_types(AST, fct, fct_args, r_fct, ast2ast:::function_registry_global)
+  ast2ast:::type_checking(AST, vars_types_list, r_fct, "etr::Double", ast2ast:::function_registry_global)
+  ast2ast:::determine_types_of_returns(AST, vars_types_list, r_fct, ast2ast:::function_registry_global)
 }
 check_type_f_arg <- function(type, bt, ds, const_or_mut, copy_or_ref, fct_input = TRUE) {
   check <- logical(5)
@@ -23,9 +23,9 @@ f <- function() {
 }
 f_args <- function() {}
 e <- try(get_ret_type(f, f_args), silent = TRUE)
+e <- attributes(e)[["condition"]]$message
 expect_equal(
-  as.character(e),
-  "Error in ast2ast:::determine_types_of_returns(AST, vars_types_list, r_fct) : \n  Found a return() and return(obj) statements. You can only use one of these at the same time\n"
+  e, "Found a return() and return(obj) statements. You can only use one of these at the same time"
 )
 # --- function input R ----------------------------------------------------
 f <- function() {
