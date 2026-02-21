@@ -136,14 +136,54 @@ action_update_function_registry <- function(node, function_registry) {
     node$internal_type <- ret_type
     return(ret_type)
   }
+  same_base_type <- function(is, should) {
+    if (is == "int") is <- "integer"
+    if (should == "int") should <- "integer"
+    should == is
+  }
+  same_data_struct <- function(is, should) {
+    correct <- function(ds) {
+      if (ds == "vec") return("vector")
+      if (ds == "borrow_vec") return("vector")
+      if (ds == "borrow_vector") return("vector")
+      if (ds == "mat") return("matrix")
+      if (ds == "borrow_mat") return("matrix")
+      if (ds == "borrow_matrix") return("matrix")
+      ds
+    }
+    is <- correct(is)
+    should <- correct(should)
+    should == is
+  }
+  check <- function(node, is_type, should_type) {
+    name <- node$operator
+    if (!same_base_type(is_type$base_type, should_type$base_type)) {
+      node$error <- sprintf("The argument to function %s has not the correct type. Found %s but %s is required", name, is_type$base_type, should_type$base_type)
+    }
+    if (!same_data_struct(is_type$data_struct, should_type$data_struct)) {
+      node$error <- sprintf("The argument to function %s has not the correct data structure. Found %s but %s is required", name, is_type$data_struct, should_type$data_struct)
+    }
+  }
   if (node_type == "nullary_node") {
     check_fct <- function(node, vars_types_list, r_fct, real_type) {}
-  } else if (node_type == "unary_node") {
-    check_fct <- function(node, vars_types_list, r_fct, real_type) {}
-  } else if (node_type == "binary_node") {
-    check_fct <- function(node, vars_types_list, r_fct, real_type) {}
-  } else if (node_type == "function_node") {
-    check_fct <- function(node, vars_types_list, r_fct, real_type) {}
+  }
+  else if (node_type == "unary_node") {
+    check_fct <- function(node, vars_types_list, r_fct, real_type) {
+      check(node, node$obj$internal_type, fn$args_f[[1]])
+    }
+  }
+  else if (node_type == "binary_node") {
+    check_fct <- function(node, vars_types_list, r_fct, real_type) {
+      check(node, node$left_node$internal_type, fn$args_f[[1]])
+      check(node, node$right_node$internal_type, fn$args_f[[2]])
+    }
+  }
+  else if (node_type == "function_node") {
+    check_fct <- function(node, vars_types_list, r_fct, real_type) {
+      for (i in seq_len(length(node$args))) {
+        check(node, node$args[[i]]$internal_type, fn$args_f[[i]])
+      }
+    }
   }
   function_registry$add(
     name = name, num_args = num_args, arg_names = arg_names,
