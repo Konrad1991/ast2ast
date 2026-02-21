@@ -60,7 +60,7 @@ action_print <- function(node) {
 
 # transpile inner function
 # ========================================================================
-action_transpile_inner_functions <- function(node) {
+action_transpile_inner_functions <- function(node, real_type) {
   if (!inherits(node, "fn_node")) {
     return()
   }
@@ -90,6 +90,7 @@ action_transpile_inner_functions <- function(node) {
   for (i in seq_along(AST$block)) {
     traverse_ast(AST$block[[i]], action_transpile_inner_functions)
   }
+  traverse_ast(AST, action_set_true, r_fct, real_type)
   node$AST <- AST
 }
 
@@ -144,11 +145,9 @@ action_update_function_registry <- function(node, function_registry) {
   same_data_struct <- function(is, should) {
     correct <- function(ds) {
       if (ds == "vec") return("vector")
-      if (ds == "borrow_vec") return("vector")
-      if (ds == "borrow_vector") return("vector")
+      if (ds == "borrow_vec") return("borrow_vector")
       if (ds == "mat") return("matrix")
-      if (ds == "borrow_mat") return("matrix")
-      if (ds == "borrow_matrix") return("matrix")
+      if (ds == "borrow_mat") return("borrow_matrix")
       ds
     }
     is <- correct(is)

@@ -1,36 +1,34 @@
-trash <- list.files("./R", full.names = TRUE) |> lapply(source)
-fct <- function(a) {
 
-  # Inner function bar:
-  mean <- fn(
-    args_f = function(obj) {
-      obj |> type(vec(double))
+# Tasks:
+# - allow borrow as data struct also for R functions.
+#   Otherwise, the user cannot pass the correct type into
+#   lambda functions.
+# - test_create_node_ast update
+# - test_function_registry_check_fcts update
+# - test_infer_types update
+# - test_infer_return update
+# - return statements in lambda functions have to be changed from:
+#   return(Whatever) to return(Evaluate(Whatever))
+# - parsing error in:
+#   * args_f = function(x) x |> type(vec(double)) |> ref()
+#   * c(1) becomes at top level c(Integer(1)) but not within lambda function
+
+trash <- list.files("./R", full.names = TRUE) |> lapply(source)
+f <- function(a) {
+  g <- fn(
+    args_f = function(x) {
+      x |> type(vec(double)) |> ref()
     },
-    return_value = type(double),
-    block = function(obj) {
-      # Inner function sum:
-      sum <- fn(
-        args_f = function(obj) {
-          obj |> type(vec(double))
-        },
-        return_value = type(double),
-        block = function(obj) {
-          s = 0.0
-          for (i in seq_len(length(obj))) {
-            s = s + obj[[i]]
-          }
-          return(s)
-        }
-      )
-      return(sum(obj) / length(obj))
+    return_value = type(vec(double)),
+    block = function(x) {
+      y <- c(1, 2, 3)
+      z <- c(4, 5, 5)
+      return(y + z)       # MUST Evaluate
     }
   )
-  return(mean(a))
+  bla = g(a)
+  return(bla)
+  return(g(a))
 }
-
-fcpp <- translate(fct, getsource = TRUE)
-# cat(fcpp, "\n")
-# fcpp <- translate(fct)
-# a <- runif(100)
-# mean(a)
-# fcpp(a)
+fcpp <- translate(f)
+fcpp(1.1)

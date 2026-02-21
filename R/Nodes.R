@@ -634,9 +634,10 @@ fn_node <- R6::R6Class(
       lambda_vars <- self$vars_types_list[sapply(self$vars_types_list, \(x) inherits(x, "fn_node"))]
       lambda_vars <- lapply(lambda_vars, function(x) {
         res <- x$stringify(paste0(indent1, "  "))
-        paste0(res, ";")
+        paste0(res, ";\n")
       }) |> unlist()
       if (length(lambda_vars) >= 1L) {
+        lambda_vars <- paste0(lambda_vars, collapse = "\n")
         declarations <- paste0(declarations, lambda_vars, "\n")
       }
       ret_type <- self$return_type$generate_type("")
@@ -646,13 +647,13 @@ fn_node <- R6::R6Class(
         indent2 <- paste0(indent1, "  ")
         body <- self$AST$stringify(indent = indent2)
       }
+      body <- paste0(body, collapse = "")
 
       paste0(
-        indent0, "auto ", name, " = [&]( ", paste0(args, collapse = ", "), " )",
-        " -> ", ret_type, " {\n",
-        declarations,
+        paste0(indent0, "auto ", name, " = [&]( ", paste0(args, collapse = ", "), " ) -> ", ret_type, " {\n"),
+        declarations, "\n",
         body, "\n",
-        indent0, "}"
+        paste0(indent0, "}")
       )
     },
 
@@ -679,7 +680,7 @@ fn_node <- R6::R6Class(
       }
       ret_type <- self$return_type$generate_type("")
       header <- paste0(
-        indent, "auto ", name, " = [=]( ", paste(args, collapse = ", "), " ) -> ",
+        indent, "auto ", name, " = [&]( ", paste(args, collapse = ", "), " ) -> ",
         ret_type, " { ... };"
       )
 

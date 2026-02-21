@@ -245,7 +245,7 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct, function_reg
 # ========================================================================
 translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry) {
   code_string <- NULL
-  traverse_ast(ast, action_transpile_inner_functions)
+  traverse_ast(ast, action_transpile_inner_functions, real_type)
   traverse_ast(ast, action_set_true, r_fct, real_type)
   traverse_ast(ast, action_translate, function_registry)
   # Stringify ast
