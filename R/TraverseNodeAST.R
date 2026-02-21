@@ -69,13 +69,21 @@ action_transpile_inner_functions <- function(node) {
   f <- eval(as.call(as.list(code)))
   function_registry <- node$function_registry
   args_f_raw <- eval(as.call(as.list(node$args_f_raw)))
-  AST <- parse_body(body(f), r_fct, function_registry)
-  trash <- traverse_ast(AST, action_update_function_registry, function_registry)
-  trash <- run_checks(AST, r_fct, function_registry)
+  AST <- try(parse_body(body(f), r_fct, function_registry), silent = TRUE)
+  if (inherits(AST, "try-error")) {
+    error_string <- AST |> as.character()
+    stop(sprintf("Could not translate the function due to %s", error_string))
+  }
+  e <- try(traverse_ast(AST, action_update_function_registry, function_registry), silent = TRUE)
+  if (inherits(e, "try-error")) {
+    error_string <- e |> as.character()
+    stop(sprintf("Could not update the function registrythe due to %s", error_string))
+  }
+  run_checks(AST, r_fct, function_registry)
   AST <- sort_args(AST, function_registry)
   node$vars_types_list <- infer_types(AST, f, args_f_raw, r_fct, function_registry)
   trash <- type_checking(AST, node$vars_types_list, r_fct, real_type, function_registry)
-  node$return_type <- determine_types_of_returns(AST, node$vars_types_list, r_fct, function_registry)
+  return_type <- determine_types_of_returns(AST, node$vars_types_list, r_fct, function_registry)
   if (return_type$base_type != node$return_type$base_type || return_type$data_struct != node$return_type$data_struct) {
     node$error <- "Specified return type does not match the detected return type"
   }

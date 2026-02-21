@@ -118,6 +118,22 @@ parse_body <- function(b, r_fct, function_registry) {
   return(ast)
 }
 
+# update function registry
+# ========================================================================
+update_function_registry <- function(ast, function_registry) {
+  e <- try(traverse_ast(ast, action_update_function_registry, function_registry), silent = TRUE)
+  if (inherits(e, "try-error")) {
+    stop("error: Could not update the function_registry")
+  }
+  line <- try( { ast$stringify_error_line() }, silent = TRUE)
+  if (inherits(line, "try-error")) {
+    stop("error: Could not stringify the AST")
+  }
+  if (err_found(line)) {
+    stop(paste0("\n", line))
+  }
+}
+
 # Run checks on: operators, valid variables, and type declarations
 # ========================================================================
 run_checks <- function(ast, r_fct, function_registry) {
@@ -229,6 +245,7 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct, function_reg
 # ========================================================================
 translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry) {
   code_string <- NULL
+  traverse_ast(ast, action_transpile_inner_functions)
   traverse_ast(ast, action_set_true, r_fct, real_type)
   traverse_ast(ast, action_translate, function_registry)
   # Stringify ast
@@ -242,14 +259,27 @@ translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry) {
 # Assembles function (includes, signature, declarations, body)
 # ========================================================================
 assemble <- function(name_fct, vars_types_list, return_type, body, r_fct) {
-  arguments <- lapply(vars_types_list, function(x) {
+
+  normal_vars <- vars_types_list[sapply(vars_types_list, \(x) inherits(x, "type_node"))]
+
+  arguments <- lapply(normal_vars, function(x) {
     x$stringify_signature(r_fct)
   })
   arguments <- arguments[arguments != ""]
-  declarations <- lapply(vars_types_list, function(x) {
-    x$stringify_declaration(indent = " ", r_fct)
-  })
+
+  declarations <- lapply(normal_vars, \(x) x$stringify_declaration(indent = "", r_fct)) |> unlist() |> c()
   declarations <- declarations[declarations != ""]
+  declarations <- paste0(declarations, collapse = "\n")
+
+  lambda_vars <- vars_types_list[sapply(vars_types_list, \(x) inherits(x, "fn_node"))]
+  lambda_vars <- lapply(lambda_vars, function(x) {
+    res <- x$stringify(paste0("  "))
+    paste0(res, ";")
+  }) |> unlist()
+  lambda_vars <- lambda_vars[!is.null(lambda_vars)]
+  lambda_vars <- paste0(lambda_vars, collapse = ";\n")
+  declarations <- paste0(declarations, "\n", lambda_vars, "\n")
+
   ret_type <- ""
   if (inherits(return_type, "R6")) {
     ret_type <- return_type$generate_type("")
@@ -262,17 +292,20 @@ assemble <- function(name_fct, vars_types_list, return_type, body, r_fct) {
     signature <- paste0("SEXP ", name_fct, "(", paste(arguments, collapse = ", "), ") {")
     declarations <- combine_strings(declarations, "\n")
     includes <- r_fct_sig()
-    return(
-      paste0(
-        c(
-          includes,
-          signature, "\n",
-          declarations, "\n",
-          body, "}\n"
-        ),
-        collapse = "\n\n"
-      )
+    res <- paste0(
+      c(
+        includes,
+        signature, "\n",
+        declarations, "\n",
+        body, "}\n"
+      ),
+      collapse = "\n\n"
     )
+    res <- strsplit(res, "\n")[[1]]
+    res <- res[res != "\n"]
+    res <- res[res != ";"]
+    res <- res[res != ""]
+    paste0(res, collapse = "\n")
   } else {
     includes <- xptr_sig()
     signature <- paste0(ret_type, " ", name_fct, "(", paste(arguments, collapse = ", "), ") {")
@@ -283,20 +316,22 @@ assemble <- function(name_fct, vars_types_list, return_type, body, r_fct) {
       paste(arguments, collapse = ", "), ");"
     )
     rest <- sprintf("   return Rcpp::XPtr<fct_ptr>(new fct_ptr(&  %s ));\n }", deparse(name_fct))
-
-    return(
-      paste0(
-        c(
-          includes, "\n",
-          signature, "\n",
-          declarations, "\n",
-          body, "}\n\n",
-          def_get_xptr,
-          typedef_line, "\n",
-          rest),
-        collapse = "\n"
-      )
+    res <- paste0(
+      c(
+        includes, "\n",
+        signature, "\n",
+        declarations, "\n",
+        body, "}\n\n",
+        def_get_xptr,
+        typedef_line, "\n",
+        rest),
+      collapse = "\n"
     )
+    res <- strsplit(res, "\n")[[1]]
+    res <- res[res != "\n"]
+    res <- res[res != ";"]
+    res <- res[res != ""]
+    paste0(res, collapse = "\n")
   }
 }
 
@@ -315,6 +350,9 @@ translate_internally <- function(fct, args_fct, derivative, name_fct, r_fct) {
 
   # Create AST
   AST <- parse_body(b, r_fct, function_registry)
+
+  # Update function_registry
+  update_function_registry(AST, function_registry)
 
   # Run checks
   run_checks(AST, r_fct, function_registry)
