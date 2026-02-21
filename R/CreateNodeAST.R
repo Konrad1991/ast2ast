@@ -44,8 +44,9 @@ create_ast <- function(code, context, r_fct, function_registry) {
   } else if (function_registry$is_group_functions(operator) || length(code) > 3) {
     if (operator == "fn") {
       fn <- fn_node$new()
-      fn$function_registry <- function_registry$clone()
+      fn$function_registry <- function_registry
       fn$args_f <- code[[2]][[3]] |> parse_input_args_for_fn_node(r_fct)
+      fn$args_f_raw <- code[[2]]
 
       return_type <- deparse(code[[3]])
       return_type <- paste0("RETURN_TYPE |> ", return_type)
@@ -54,7 +55,7 @@ create_ast <- function(code, context, r_fct, function_registry) {
       return_type$init_within_fct()
       return_type$check()
       fn$return_type <- return_type
-      fn$AST <- code[[4]] #|> wrap_in_block() |> process(operator, r_fct, function_registry)
+      fn$AST <- code[[4]] |> wrap_in_block()
       fn$context <- context
       return(fn)
     } else {
@@ -310,7 +311,7 @@ translate_internally <- function(fct, args_fct, derivative, name_fct, r_fct) {
   b <- body(fct) |> wrap_in_block()
   code_string <- list()
   real_type <- resolve_derivative(derivative)
-  function_registry <- function_registry_global
+  function_registry <- function_registry_global$clone()
 
   # Create AST
   AST <- parse_body(b, r_fct, function_registry)

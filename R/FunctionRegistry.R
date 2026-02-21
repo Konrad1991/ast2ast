@@ -76,8 +76,10 @@ is_type <- function(node, vars_types_list, check_type) {
   if (inherits(node, "variable_node")) {
     name <- ifelse(is.symbol(node$name), deparse(node$name), node$name)
     type <- vars_types_list[[name]]
-    if (type$base_type == check_type) {
-      return(TRUE)
+    if (inherits(type, "type_node")) {
+      if (type$base_type == check_type) {
+        return(TRUE)
+      }
     }
     return(FALSE)
   } else {
@@ -102,7 +104,7 @@ is_charNANaNInf <- function(node, vars_types_list) {
     is_NaN(node, vars_types_list) || is_Inf(node, vars_types_list)
 }
 is_int <- function(node, vars_types_list) {
-  is_type(node, vars_types_list, "integer")
+  is_type(node, vars_types_list, "integer") || is_type(node, vars_types_list, "int")
 }
 is_double <- function(node, vars_types_list) {
   is_type(node, vars_types_list, "double")
@@ -115,8 +117,10 @@ is_data_structs <- function(node, vars_types_list, data_structs) {
   var_name <- find_var_lhs(node)
   if (!is.null(var_name)) {
     type <- vars_types_list[[var_name]]
-    if (type$data_struct %within% data_structs) {
-      return(TRUE)
+    if (inherits(type, "type_node")) {
+      if (type$data_struct %within% data_structs) {
+        return(TRUE)
+      }
     }
     FALSE
   } else {
@@ -181,6 +185,7 @@ check_subsetting <- function(node, vars_types_list, r_fct, real_type) {
 infer_subsetting <- function(node, vars_list, r_fct, function_registry) {
   choose_fast_path <- function(types) {
     fulfilled <- function(t) {
+      if (!inherits(t, "type_node")) return(FALSE)
       if (t$data_struct != "scalar" || t$base_type == "logical") return(FALSE)
       return(TRUE)
     }
@@ -196,13 +201,19 @@ infer_subsetting <- function(node, vars_list, r_fct, function_registry) {
   }
   if (inherits(node, "binary_node")) {
     left_type_node <- infer(node$left_node, vars_list, r_fct, function_registry)
+    if (!inherits(left_type_node, "type_node")) {
+      return(sprintf("Found unsupported left type in: %s", node$stringify()))
+    }
     right_type_node <- infer(node$right_node, vars_list, r_fct, function_registry)
+    if (!inherits(right_type_node, "type_node")) {
+      return(sprintf("Found unsupported right type in: %s", node$stringify()))
+    }
     t <- type_node$new(NA, FALSE, r_fct)
+    if (!inherits(t, "type_node")) {
+      return(sprintf("Found unsupported subsetting: %s", node$stringify()))
+    }
     t$base_type <- left_type_node$base_type
     t$data_struct <- "vector"
-    # if (inherits(node$right_node, "binary_node") && node$right_node$operator == ":") {
-    #   node$operator <- "contigous_subset"
-    # }
     if (any(node$operator == c("[[", "at"))) {
       t$data_struct <- "scalar"
     }
@@ -217,6 +228,9 @@ infer_subsetting <- function(node, vars_list, r_fct, function_registry) {
       infer(arg, vars_list, r_fct, function_registry)
     })
     type_first_arg <- all_types[[1]]
+    if (!inherits(type_first_arg, "type_node")) {
+      return(sprintf("Found unsupported subsetting: %s", node$stringify()))
+    }
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- type_first_arg$base_type
     t$data_struct <- "matrix"
@@ -237,6 +251,9 @@ infer_subsetting <- function(node, vars_list, r_fct, function_registry) {
 }
 infer_unary_math <- function(node, vars_list, r_fct, function_registry) {
   inner_type <- infer(node$obj, vars_list, r_fct, function_registry)
+  if (!inherits(inner_type, "type_node")) {
+    return(sprintf("Found unsupported type in: %s", node$stringify()))
+  }
   t <- type_node$new(NA, FALSE, r_fct)
   t$base_type <- "double"
   t$data_struct <- inner_type$data_struct
@@ -245,6 +262,9 @@ infer_unary_math <- function(node, vars_list, r_fct, function_registry) {
 }
 infer_unary_minus <- function(node, vars_list, r_fct, function_registry) {
   inner_type <- infer(node$obj, vars_list, r_fct, function_registry)
+  if (!inherits(inner_type, "type_node")) {
+    return(sprintf("Found unsupported type in: %s", node$stringify()))
+  }
   base_type <- inner_type$base_type
   if (base_type == "logical") base_type <- "int"
   t <- type_node$new(NA, FALSE, r_fct)
@@ -255,7 +275,13 @@ infer_unary_minus <- function(node, vars_list, r_fct, function_registry) {
 }
 infer_binary_math <- function(node, vars_list, r_fct, function_registry) {
   left_type <- infer(node$left_node, vars_list, r_fct, function_registry)
+  if (!inherits(left_type, "type_node")) {
+    return(sprintf("Found unsupported left type in: %s", node$stringify()))
+  }
   right_type <- infer(node$right_node, vars_list, r_fct, function_registry)
+  if (!inherits(right_type, "type_node")) {
+    return(sprintf("Found unsupported right type in: %s", node$stringify()))
+  }
   l_type <- left_type$clone(deep = TRUE)
   r_type <- right_type$clone(deep = TRUE)
   if (l_type$base_type == "logical") l_type$base_type <- "integer"
@@ -277,6 +303,9 @@ infer_minus <- function(node, vars_list, r_fct, function_registry) {
 }
 infer_check_type <- function(node, vars_list, r_fct, function_registry) {
   inner_type <- infer(node$obj, vars_list, r_fct, function_registry)
+  if (!inherits(inner_type, "type_node")) {
+    return(sprintf("Found unsupported type in: %s", node$stringify()))
+  }
   t <- type_node$new(NA, FALSE, r_fct)
   t$base_type <- "logical"
   t$data_struct <- inner_type$data_struct
@@ -285,7 +314,13 @@ infer_check_type <- function(node, vars_list, r_fct, function_registry) {
 }
 infer_comparison <- function(node, vars_list, r_fct, function_registry) {
   left_type <- infer(node$left_node, vars_list, r_fct, function_registry)
+  if (!inherits(left_type, "type_node")) {
+    return(sprintf("Found unsupported left type in: %s", node$stringify()))
+  }
   right_type <- infer(node$right_node, vars_list, r_fct, function_registry)
+  if (!inherits(right_type, "type_node")) {
+    return(sprintf("Found unsupported right type in: %s", node$stringify()))
+  }
   common_type <- "logical"
   common_data_struct <- "scalar"
   if ("vector" %within% c(left_type$data_struct, right_type$data_struct)) {
@@ -305,7 +340,13 @@ infer_comparison <- function(node, vars_list, r_fct, function_registry) {
 }
 infer_and_or_scalar <- function(node, vars_list, r_fct, function_registry) {
   left_type <- infer(node$left_node, vars_list, r_fct, function_registry)
+  if (!inherits(left_type, "type_node")) {
+    return(sprintf("Found unsupported left type in: %s", node$stringify()))
+  }
   right_type <- infer(node$right_node, vars_list, r_fct, function_registry)
+  if (!inherits(right_type, "type_node")) {
+    return(sprintf("Found unsupported right type in: %s", node$stringify()))
+  }
   common_type <- "logical"
   common_data_struct <- "scalar"
   t <- type_node$new(NA, FALSE, r_fct)
@@ -316,7 +357,13 @@ infer_and_or_scalar <- function(node, vars_list, r_fct, function_registry) {
 }
 infer_and_or_vector <- function(node, vars_list, r_fct, function_registry) {
   left_type <- infer(node$left_node, vars_list, r_fct, function_registry)
+  if (!inherits(left_type, "type_node")) {
+    return(sprintf("Found unsupported left type in: %s", node$stringify()))
+  }
   right_type <- infer(node$right_node, vars_list, r_fct, function_registry)
+  if (!inherits(right_type, "type_node")) {
+    return(sprintf("Found unsupported right type in: %s", node$stringify()))
+  }
   common_type <- "logical"
   common_data_struct <- "vector"
   if ("matrix" %within% c(left_type$data_struct, right_type$data_struct)) {
@@ -333,6 +380,9 @@ infer_and_or_vector <- function(node, vars_list, r_fct, function_registry) {
 }
 infer_num_int_log <- function(node, vars_list, r_fct, function_registry) {
   inner_type <- infer(node$obj, vars_list, r_fct, function_registry)
+  if (!inherits(inner_type, "type_node")) {
+    return(sprintf("Found unsupported type in: %s", node$stringify()))
+  }
   t <- type_node$new(NA, FALSE, r_fct)
   t$base_type <- c(numeric = "double", integer = "integer", logical = "logical")[node$operator]
   t$data_struct <- "vector"
@@ -363,7 +413,7 @@ function_registry_global$add(
     }
     var_name <- find_var_lhs(node)
     type <- vars_types_list[[var_name]]
-    if (type$iterator) {
+    if (inherits(type, "type_node") && type$iterator) {
       node$error <- "You cannot assign to an index variable"
     }
   },
@@ -380,7 +430,7 @@ function_registry_global$add(
     }
     var_name <- find_var_lhs(node)
     type <- vars_types_list[[var_name]]
-    if (type$iterator) {
+    if (inherits(type, "type_node") && type$iterator) {
       node$error <- "You cannot assign to an index variable"
     }
   },
@@ -409,6 +459,9 @@ function_registry_global$add(
   infer_fct = function(node, vars_list, r_fct, function_registry) {
     temp <- infer(node$seq, vars_list, r_fct, function_registry)
     t <- type_node$new(NA, FALSE, r_fct)
+    if (!inherits(t, "type_node")) {
+      return(sprintf("Found unexpected type in %s: ", node$stringify()))
+    }
     t$base_type <- temp$base_type
     t$data_struct <- "scalar"
     t$iterator <- TRUE
@@ -453,6 +506,11 @@ function_registry_global$add(
       temp <- infer(x, vars_list, r_fct, function_registry)
       return(temp)
     })
+    for (i in seq_len(length(types_of_args))) {
+      if (!inherits(types_of_args[[i]], "type_node")) {
+        return(sprintf("Found unexpected type in: %s", node$stringify()))
+      }
+    }
     types_of_args <- sapply(types_of_args, \(x) x$base_type)
     common_type <- "logical"
     if (any(types_of_args %in% c("int", "integer"))) {
@@ -469,6 +527,13 @@ function_registry_global$add(
   },
   check_fct = function(node, vars_types_list, r_fct, real_type) {
     for (i in seq_along(node$args)) {
+      if (inherits(node$args[[i]], "variable_node")) {
+        t <- vars_types_list[[node$args[[i]]$name]]
+        if (!inherits(t, "type_node")) {
+          node$error <- sprintf("You cannot use entries of type %s in c", class(t))
+          return()
+        }
+      }
       if (is_char(node$args[[i]], vars_types_list)) {
         node$error <- "You cannot use character entries in c"
         return()
@@ -482,6 +547,12 @@ function_registry_global$add(
   infer_fct = function(node, vars_list, r_fct, function_registry) {
     left_type <- infer(node$left_node, vars_list, r_fct, function_registry)
     right_type <- infer(node$right_node, vars_list, r_fct, function_registry)
+    if (!inherits(left_type, "type_node")) {
+      return(sprintf("Found unsupported left type in: %s", node$stringify()))
+    }
+    if (!inherits(right_type, "type_node")) {
+      return(sprintf("Found unsupported right type in: %s", node$stringify()))
+    }
     left_base_type <- left_type$base_type
     right_base_type <- right_type$base_type
     if (left_base_type == "logical") left_base_type <- "integer"
@@ -533,7 +604,13 @@ function_registry_global$add(
   name = "rep", num_args = 2, arg_names = c(NA, NA),
   infer_fct = function(node, vars_list, r_fct, function_registry) {
     left_type <- infer(node$left_node, vars_list, r_fct, function_registry)
-    infer(node$right_node, vars_list, r_fct, function_registry)
+    right_type <- infer(node$right_node, vars_list, r_fct, function_registry)
+    if (!inherits(left_type, "type_node")) {
+      return(sprintf("Found unsupported left type in: %s", node$stringify()))
+    }
+    if (!inherits(right_type, "type_node")) {
+      return(sprintf("Found unsupported right type in: %s", node$stringify()))
+    }
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- left_type$base_type
     t$data_struct <- "vector"
@@ -744,8 +821,14 @@ function_registry_global$add(
 function_registry_global$add(
   name = "vector", num_args = 2, arg_names = c("mode", "length"),
   infer_fct = function(node, vars_list, r_fct, function_registry) {
-    infer(node$args[[1]], vars_list, r_fct, function_registry)
-    infer(node$args[[2]], vars_list, r_fct, function_registry)
+    left_type <- infer(node$args[[1]], vars_list, r_fct, function_registry)
+    right_type <- infer(node$args[[2]], vars_list, r_fct, function_registry)
+    if (!inherits(left_type, "type_node")) {
+      return(sprintf("Found unsupported left type in: %s", node$stringify()))
+    }
+    if (!inherits(right_type, "type_node")) {
+      return(sprintf("Found unsupported right type in: %s", node$stringify()))
+    }
     mode_type <- node$args[[1]]$name |> remove_double_quotes()
     t <- type_node$new(NA, FALSE, r_fct)
     if (!(mode_type %within% c("numeric", "logical", "integer"))) {
@@ -792,6 +875,11 @@ function_registry_global$add(
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, r_fct, function_registry)
     })
+    for (i in seq_len(length(all_types))) {
+      if (!inherits(all_types[[i]], "type_node")) {
+        return(sprintf("Found unallowed type in: %s", node$stringify()))
+      }
+    }
     type_first_arg <- all_types[[1]]
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- type_first_arg
@@ -818,6 +906,11 @@ function_registry_global$add(
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, r_fct, function_registry)
     })
+    for (i in seq_len(length(all_types))) {
+      if (!inherits(all_types[[i]], "type_node")) {
+        return(sprintf("Found unallowed type in: %s", node$stringify()))
+      }
+    }
     type_first_arg <- all_types[[1]]
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- type_first_arg
@@ -835,7 +928,10 @@ function_registry_global$add(
 function_registry_global$add(
   name = "length", num_args = 1, arg_names = NA,
   infer_fct = function(node, vars_list, r_fct, function_registry) {
-    infer(node$obj, vars_list, r_fct, function_registry)
+    inferred_type <- infer(node$obj, vars_list, r_fct, function_registry)
+    if (!inherits(inferred_type, "type_node")) {
+      return(sprintf("Found unallowed type in: %s", node$stringify()))
+    }
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- "integer"
     t$data_struct <- "scalar"
@@ -852,7 +948,10 @@ function_registry_global$add(
 function_registry_global$add(
   name = "dim", num_args = 1, arg_names = NA,
   infer_fct = function(node, vars_list, r_fct, function_registry) {
-    infer(node$obj, vars_list, r_fct, function_registry)
+    inferred_type <- infer(node$obj, vars_list, r_fct, function_registry)
+    if (!inherits(inferred_type, "type_node")) {
+      return(sprintf("Found unallowed type in: %s", node$stringify()))
+    }
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- "integer"
     t$data_struct <- "vector"
@@ -869,7 +968,10 @@ function_registry_global$add(
 function_registry_global$add(
   name = "nrow", num_args = 1, arg_names = NA,
   infer_fct = function(node, vars_list, r_fct, function_registry) {
-    infer(node$obj, vars_list, r_fct, function_registry)
+    inferred_type <- infer(node$obj, vars_list, r_fct, function_registry)
+    if (!inherits(inferred_type, "type_node")) {
+      return(sprintf("Found unallowed type in: %s", node$stringify()))
+    }
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- "integer"
     t$data_struct <- "scalar"
@@ -886,7 +988,10 @@ function_registry_global$add(
 function_registry_global$add(
   name = "ncol", num_args = 1, arg_names = NA,
   infer_fct = function(node, vars_list, r_fct, function_registry) {
-    infer(node$obj, vars_list, r_fct, function_registry)
+    inferred_type <- infer(node$obj, vars_list, r_fct, function_registry)
+    if (!inherits(inferred_type, "type_node")) {
+      return(sprintf("Found unallowed type in: %s", node$stringify()))
+    }
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- "integer"
     t$data_struct <- "scalar"
@@ -933,9 +1038,14 @@ function_registry_global$add(
 function_registry_global$add(
   name = "cmr", num_args = 3, arg_names = c(NA, NA, NA),
   infer_fct = function(node, vars_list, r_fct, function_registry) {
-    lapply(node$args, function(arg) {
+    all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, r_fct, function_registry)
     })
+    for (i in seq_len(length(all_types))) {
+      if (!inherits(all_types[[i]], "type_node")) {
+        return(sprintf("Found unallowed type in: %s", node$stringify()))
+      }
+    }
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- "double"
     t$data_struct <- "scalar"
@@ -950,6 +1060,11 @@ function_registry_global$add(
         types[[i]] <- node$args[[i]]$internal_type
       } else {
         types[[i]] <- vars_types_list[[deparse(arg$name)]]
+      }
+    }
+    for (i in seq_len(length(types))) {
+      if (!inherits(types[[i]], "type_node")) {
+        return(sprintf("Found unallowed type in: %s", node$stringify()))
       }
     }
     if (types[[1]]$base_type != "double") {
@@ -982,6 +1097,12 @@ function_registry_global$add(
     }
     left_type_node <- infer(node$left_node, vars_list, r_fct, function_registry)
     right_type_node <- infer(node$right_node, vars_list, r_fct, function_registry)
+    if (!inherits(left_type_node, "type_node")) {
+      return(sprintf("Found unsupported left type in: %s", node$stringify()))
+    }
+    if (!inherits(right_type_node, "type_node")) {
+      return(sprintf("Found unsupported right type in: %s", node$stringify()))
+    }
     if (!(left_type_node$base_type %in% c("int", "integer", "double"))) {
       node$error <- "The first argument of seed has to have the base type double"
     }
@@ -1002,6 +1123,12 @@ function_registry_global$add(
     }
     left_type_node <- infer(node$left_node, vars_list, r_fct, function_registry)
     right_type_node <- infer(node$right_node, vars_list, r_fct, function_registry)
+    if (!inherits(left_type_node, "type_node")) {
+      return(sprintf("Found unsupported left type in: %s", node$stringify()))
+    }
+    if (!inherits(right_type_node, "type_node")) {
+      return(sprintf("Found unsupported right type in: %s", node$stringify()))
+    }
     if (!(left_type_node$base_type %in% c("int", "integer", "double"))) {
       node$error <- "The first argument of seed has to have the base type double"
     }
@@ -1026,6 +1153,9 @@ function_registry_global$add(
       node$error <- "get_dot can be only used when derivative is set to forward"
     }
     type <- infer(node$obj, vars_list, r_fct, function_registry)
+    if (!inherits(type, "type_node")) {
+      return(sprintf("Found unsupported type in: %s", node$stringify()))
+    }
     if (type$base_type != "double") {
       node$error <- "The argument of get_dot has to have the base type double"
     }
@@ -1035,8 +1165,16 @@ function_registry_global$add(
 function_registry_global$add(
   name = "deriv", num_args = 2, arg_names = c(NA, NA),
   infer_fct = function(node, vars_list, r_fct, function_registry) {
-    lds <- infer(node$left_node, vars_list, r_fct, function_registry)$data_struct
-    rds <- infer(node$right_node, vars_list, r_fct, function_registry)$data_struct
+    left_type_node <- infer(node$left_node, vars_list, r_fct, function_registry)
+    right_type_node <- infer(node$right_node, vars_list, r_fct, function_registry)
+    if (!inherits(left_type_node, "type_node")) {
+      return(sprintf("Found unsupported left type in: %s", node$stringify()))
+    }
+    if (!inherits(right_type_node, "type_node")) {
+      return(sprintf("Found unsupported right type in: %s", node$stringify()))
+    }
+    lds <- left_type_node$data_struct
+    rds <- right_type_node$data_struct
     ds <- "scalar"
     if (lds != "scalar" && rds == "scalar") {
       ds <- "vector"
@@ -1059,6 +1197,12 @@ function_registry_global$add(
     }
     left_type_node <- infer(node$left_node, vars_list, r_fct, function_registry)
     right_type_node <- infer(node$right_node, vars_list, r_fct, function_registry)
+    if (!inherits(left_type_node, "type_node")) {
+      return(sprintf("Found unsupported left type in: %s", node$stringify()))
+    }
+    if (!inherits(right_type_node, "type_node")) {
+      return(sprintf("Found unsupported right type in: %s", node$stringify()))
+    }
     if (left_type_node$base_type != "double") {
       node$error <- "The first argument of deriv has to have the base type double"
     }
