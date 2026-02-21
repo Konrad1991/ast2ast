@@ -284,6 +284,9 @@ type_infer_assignment <- function(node, env) {
         }
         if (inherits(type, "type_node")) {
           type <- type$clone()
+          type$copy_or_ref <- "copy"
+          type$fct_input <- FALSE
+          type$const_or_mut <- "mutable"
           type$name <- variable
         }
         env$vars_list[[variable]] <- type

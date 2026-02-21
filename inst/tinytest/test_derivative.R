@@ -30,7 +30,7 @@ fct <- function() {
   return(jac)
 }
 test_checks(fct, args_fct, TRUE, "etr::Double",
- "Error: Could not infer the types, caused by Error in are_vars_init(t) : Found uninitialzed variable: jac\n"
+ "Error: Could not infer the types, caused by Error in are_vars_init(t, name) : Found uninitialzed variable: jac\n"
 )
 fct <- function() {
   x <- c(1, 2)
@@ -39,7 +39,7 @@ fct <- function() {
   return(jac)
 }
 test_checks(fct, args_fct, TRUE, "etr::Double",
- "Error: Could not infer the types, caused by Error in are_vars_init(t) : Found uninitialzed variable: jac\n"
+ "Error: Could not infer the types, caused by Error in are_vars_init(t, name) : Found uninitialzed variable: jac\n"
 )
 fct <- function() {
   x <- c(1, 2)

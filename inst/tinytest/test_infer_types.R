@@ -256,7 +256,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   attributes(e)[["condition"]]$message,
-"Error: Could not infer the types, caused by Error in are_vars_init(t) : Found uninitialzed variable: b\n"
+"Error: Could not infer the types, caused by Error in are_vars_init(t, name) : Found uninitialzed variable: b\n"
 )
 
 # --- print --------------------------------------------------------------

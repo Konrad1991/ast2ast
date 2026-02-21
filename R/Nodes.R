@@ -648,7 +648,7 @@ fn_node <- R6::R6Class(
       }
 
       paste0(
-        indent0, "auto ", name, " = []( ", paste0(args, collapse = ", "), " )",
+        indent0, "auto ", name, " = [&]( ", paste0(args, collapse = ", "), " )",
         " -> ", ret_type, " {\n",
         declarations,
         body, "\n",
@@ -679,7 +679,7 @@ fn_node <- R6::R6Class(
       }
       ret_type <- self$return_type$generate_type("")
       header <- paste0(
-        indent, "auto ", name, " = []( ", paste(args, collapse = ", "), " ) -> ",
+        indent, "auto ", name, " = [=]( ", paste(args, collapse = ", "), " ) -> ",
         ret_type, " { ... };"
       )
 
