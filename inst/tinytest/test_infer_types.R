@@ -1,16 +1,17 @@
 library(tinytest)
 
-get_types <- function(f, r_fct = TRUE) {
-  ast <- ast2ast:::parse_body(body(f), r_fct, ast2ast:::function_registry_global)
-  ast2ast:::infer_types(ast, f, NULL, r_fct, ast2ast:::function_registry_global)
+get_types <- function(f, r_fct = TRUE, real_type = "etr::Double") {
+  function_registry <- ast2ast:::function_registry_global$clone()
+  ast <- ast2ast:::parse_body(body(f), r_fct, function_registry)
+  ast2ast:::update_function_registry(ast, function_registry)
+  types <- ast2ast:::infer_types(ast, f, NULL, r_fct, function_registry)
+  ast2ast:::traverse_ast(ast, ast2ast:::action_transpile_inner_functions, real_type)
+  types
 }
-
-# --- function input R ----------------------------------------------------
 get_types_with_f_args <- function(f, f_args, r_fct = FALSE) {
   ast <- ast2ast:::parse_body(body(f), r_fct, ast2ast:::function_registry_global)
   ast2ast:::infer_types(ast, f, f_args, r_fct, ast2ast:::function_registry_global)
 }
-
 check_type_f_arg <- function(type, bt, ds, const_or_mut, copy_or_ref, fct_input = TRUE) {
   check <- logical(5)
   check[1] <- type$base_type == bt
@@ -21,6 +22,188 @@ check_type_f_arg <- function(type, bt, ds, const_or_mut, copy_or_ref, fct_input 
   expect_true(all(check))
 }
 
+check_error <- function(f, r_fct, real_type, error_message) {
+  e <- try(get_types(f, r_fct, real_type), silent = TRUE)
+  m <- attributes(e)[["condition"]]$message
+  expect_true(m == error_message)
+}
+
+# --- lambda functions ----------------------------------------------------
+# Multiple inner functions
+f <- function(a) {
+  b <- 1L
+  f1 <- fn(
+    args_f = function(a) {
+      a |> type(double)
+    },
+    return_value = type(double),
+    block = function(a) {
+      res <- f2(1.1)
+      return(res)
+    }
+  )
+  f2 <- fn(
+    args_f = function(a) {
+      a |> type(double)
+    },
+    return_value = type(double),
+    block = function(a) {
+      return(100 + a)
+    }
+  )
+  return(f1(a[[1L]]))
+}
+
+# Using inner functions
+f <- function(a) {
+  b <- fn(
+    args_f = function(a) {
+      a |> type(vec(double))
+    },
+    return_value = type(vector(int)),
+    block = function(a) {
+      result |> type(vector(int)) <- integer(length(a))
+      for (i in seq_len(a)) {
+        result[[i]] <- a[[i]]
+      }
+      return(result)
+    }
+  )
+  result <- b(a) + 100L
+}
+types <- get_types(f)
+expect_true(types$result$base_type == "int")
+expect_true(types$result$data_struct == "vector")
+
+# Use a function in assignment which returns void
+f <- function(a) {
+  b <- fn(
+    args_f = function() {
+    },
+    return_value = type(void),
+    block = function() {
+
+    }
+  )
+  result <- b()
+}
+check_error(f, TRUE, "etr::Double", "result <- b()\nCannot determine the type for: b()")
+
+# Void works
+f <- function(a) {
+  b <- fn(
+    args_f = function() {
+    },
+    return_value = type(void),
+    block = function() {
+
+    }
+  )
+}
+types <- get_types(f)
+check_type_f_arg(types$b$return_type, "void", "scalar", "mutable", "copy", FALSE)
+
+# Specified return type does not match the detected one
+f <- function(a) {
+  b <- fn(
+    args_f = function() {
+    },
+    return_value = type(logical),
+    block = function() {
+      return(1.1)
+    }
+  )
+}
+check_error(f, TRUE, "etr::Double",
+  "Specified return type does not match the detected return type for function b. Desired base type is double but found logical")
+
+# Overwritng a function with a function ==> Error
+f <- function(a) {
+  b <- fn(
+    args_f = function(x) {
+      x |> type(double)
+    },
+    return_value = type(double),
+    block = function(x) {
+      return(1.1)
+    }
+  )
+  b <- fn(
+    args_f = function(x) {
+      x |> type(double)
+    },
+    return_value = type(double),
+    block = function(x) {
+      return(1.1)
+    }
+  )
+}
+check_error(
+  f, TRUE, "etr::Double",
+  "\n\nThe name b is already in use by another function"
+)
+
+# Using a function as numeric variable results in error
+f <- function(a) {
+  b <- fn(
+    args_f = function(x) {
+      x |> type(double)
+    },
+    return_value = type(double),
+    block = function(x) {
+      return(1.1)
+    }
+  )
+  result <- b + 3.14
+}
+check_error(
+  f, TRUE, "etr::Double",
+  "result <- b + 3.14\nFound unsupported left type in: b + 3.14"
+)
+
+# Overwrite numeric variable with a function results in error
+f <- function(a) {
+  b <- 1.1
+  b <- fn(
+    args_f = function(x) {
+      x |> type(double)
+    },
+    return_value = type(double),
+    block = function(x) {
+      return(1.1)
+    }
+  )
+}
+check_error(
+  f, TRUE, "etr::Double",
+  "Error: Could not infer the types, caused by Error in type_infer_assignment(node, env) : \n  You cannot reassign a function to the variable b, that was previously declared as scalar of type double\n"
+)
+
+# Simple example of inner function
+f <- function(a) {
+  g <- fn(
+    args_f = function(x) {
+      x |> type(vec(double)) |> ref()
+    },
+    return_value = type(vec(double)),
+    block = function(x) {
+      y <- c(TRUE, TRUE, FALSE)
+      z <- c(4L, 5L, 5L)
+      return(y + z + x)
+    }
+  )
+  return(g(a))
+}
+types <- get_types(f)
+check_type_f_arg(types$a, "double", "vector", "mutable", "copy")
+check_type_f_arg(types$g$args_f[[1L]], "double", "vec", "mutable", "ref", TRUE)
+check_type_f_arg(types$g$return_type, "double", "vec", "mutable", "copy", FALSE)
+check_type_f_arg(types$g$vars_types_list$x, "double", "vec", "mutable", "ref", TRUE)
+check_type_f_arg(types$g$vars_types_list$y, "logical", "vector", "mutable", "copy", FALSE)
+check_type_f_arg(types$g$vars_types_list$z, "integer", "vector", "mutable", "copy", FALSE)
+expect_equal(types$g$fct_name, "g")
+
+# --- function input R ----------------------------------------------------
 f <- function(a, b, c, d, e, f, g, h, i) {
   inner <- a + b
   return(a)

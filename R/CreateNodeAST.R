@@ -44,7 +44,8 @@ create_ast <- function(code, context, r_fct, function_registry) {
   } else if (function_registry$is_group_functions(operator) || length(code) > 3) {
     if (operator == "fn") {
       fn <- fn_node$new()
-      fn$function_registry <- function_registry
+      fn$function_registry <- function_registry$clone(deep = TRUE)
+      fn$function_registry_outer <- function_registry
       fn$args_f <- code[[2]][[3]] |> parse_input_args_for_fn_node(r_fct)
       fn$args_f_raw <- code[[2]]
 
@@ -57,6 +58,9 @@ create_ast <- function(code, context, r_fct, function_registry) {
       fn$return_type <- return_type
       fn$AST <- code[[4]] |> wrap_in_block()
       fn$context <- context
+      if (!(context %in% c("<-", "="))) {
+        stop("You have to assign functions (fn) to variables")
+      }
       return(fn)
     } else {
       # by adding length(code) > 3 also wrong fcts are added to the AST
@@ -260,25 +264,17 @@ translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry) {
 # ========================================================================
 assemble <- function(name_fct, vars_types_list, return_type, body, r_fct) {
 
-  normal_vars <- vars_types_list[sapply(vars_types_list, \(x) inherits(x, "type_node"))]
-
-  arguments <- lapply(normal_vars, function(x) {
+  arguments <- lapply(vars_types_list, function(x) {
     x$stringify_signature(r_fct)
   })
   arguments <- arguments[arguments != ""]
 
-  declarations <- lapply(normal_vars, \(x) x$stringify_declaration(indent = "", r_fct)) |> unlist() |> c()
+  declarations <- lapply(vars_types_list, \(x) {
+    res <- x$stringify_declaration(indent = "", r_fct)
+    paste0("  ", res)
+  }) |> unlist() |> c()
   declarations <- declarations[declarations != ""]
   declarations <- paste0(declarations, collapse = "\n")
-
-  lambda_vars <- vars_types_list[sapply(vars_types_list, \(x) inherits(x, "fn_node"))]
-  lambda_vars <- lapply(lambda_vars, function(x) {
-    res <- x$stringify(paste0("  "))
-    paste0(res, ";")
-  }) |> unlist()
-  lambda_vars <- lambda_vars[!is.null(lambda_vars)]
-  lambda_vars <- paste0(lambda_vars, collapse = ";\n")
-  declarations <- paste0(declarations, "\n", lambda_vars, "\n")
 
   ret_type <- ""
   if (inherits(return_type, "R6")) {

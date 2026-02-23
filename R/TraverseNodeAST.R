@@ -75,20 +75,57 @@ action_transpile_inner_functions <- function(node, real_type) {
     stop(sprintf("Could not translate the function due to %s", error_string))
   }
   e <- try(traverse_ast(AST, action_update_function_registry, function_registry), silent = TRUE)
+
+  known_from_inner <- node$function_registry$permitted_fcts()
+  known_outer <- node$function_registry_outer$permitted_fcts()
+  diffs <- setdiff(known_outer, known_from_inner)
+  for (i in diffs) {
+    idx <- which(known_outer == i)
+    node$function_registry$function_names <- c(node$function_registry$function_names, node$function_registry_outer$function_names[[idx]])
+    node$function_registry$number_of_args[[length(node$function_registry$number_of_args) + 1]] <- node$function_registry_outer$number_of_args[[idx]]
+    node$function_registry$arg_names[[length(node$function_registry$arg_names) + 1]] <- node$function_registry_outer$arg_names[[idx]]
+    node$function_registry$type_infer_fcts <- c(node$function_registry$type_infer_fcts, node$function_registry_outer$type_infer_fcts[[idx]])
+    node$function_registry$type_check_fcts <- c(node$function_registry$type_check_fcts, node$function_registry_outer$type_check_fcts[[idx]])
+    node$function_registry$groups <- c(node$function_registry$groups, node$function_registry_outer$groups[[idx]])
+    node$function_registry$cpp_names <- c(node$function_registry$cpp_names, node$function_registry_outer$cpp_names[[idx]])
+  }
+
   if (inherits(e, "try-error")) {
     error_string <- e |> as.character()
-    stop(sprintf("Could not update the function registrythe due to %s", error_string))
+    stop(sprintf("Could not update the function registry due to: %s", error_string))
   }
-  run_checks(AST, r_fct, function_registry)
+  e <- try(run_checks(AST, r_fct, function_registry), silent = TRUE)
+  if (!is.null(e) && inherits(e, "try-error")) {
+    stop("error: Could not run checks on AST due to:", attributes(e)[["condition"]]$message)
+  }
+  line <- try( {AST$stringify_error_line() }, silent = TRUE)
+  if (inherits(line, "try-error")) {
+    stop("error: Could not stringify the AST")
+  }
+  if (err_found(line)) {
+    stop(paste0("\n", line))
+  }
   AST <- sort_args(AST, function_registry)
   node$vars_types_list <- infer_types(AST, f, args_f_raw, r_fct, function_registry)
   trash <- type_checking(AST, node$vars_types_list, r_fct, real_type, function_registry)
   return_type <- determine_types_of_returns(AST, node$vars_types_list, r_fct, function_registry)
-  if (return_type$base_type != node$return_type$base_type || return_type$data_struct != node$return_type$data_struct) {
-    node$error <- "Specified return type does not match the detected return type"
+  if (is.character(return_type) && return_type != "void") {
+    stop(sprintf("Found invalid return type %s in function %s", return_type, node$fct_name))
+  }
+  if (!is.character(return_type)) {
+    if (!same_base_type(return_type$base_type, node$return_type$base_type)) {
+      stop(sprintf(
+        "Specified return type does not match the detected return type for function %s. Desired base type is %s but found %s", node$fct_name, return_type$base_type, node$return_type$base_type
+      ))
+    }
+    if (!same_data_struct(return_type$data_struct, node$return_type$data_struct)) {
+      stop(sprintf(
+        "Specified return type does not match the detected return type for function %s. Desired data structure is %s but found %s", node$fct_name, return_type$data_struct, node$return_type$data_struct
+      ))
+    }
   }
   for (i in seq_along(AST$block)) {
-    traverse_ast(AST$block[[i]], action_transpile_inner_functions)
+    traverse_ast(AST$block[[i]], action_transpile_inner_functions, real_type)
   }
   traverse_ast(AST, action_set_true, r_fct, real_type)
   node$AST <- AST
@@ -111,12 +148,9 @@ action_update_function_registry <- function(node, function_registry) {
     !inherits(node$right_node, "fn_node")) {
     return()
   }
-  if (!inherits(node$left_node, "variable_node")) {
-    node$error <- "You have to assign a function to a variable"
-  }
   name <- deparse(node$left_node$name)
   if (name %in% function_registry$permitted_fcts()) {
-    node$error <- sprintf("The name %s is already in use", node$left_node$name)
+    stop(sprintf("The name %s is already in use by another function", name))
   }
   fn <- node$right_node
   num_args <- length(fn$args_f)
@@ -136,23 +170,6 @@ action_update_function_registry <- function(node, function_registry) {
   infer_fct <- function(node, vars_list, r_fct, function_registry) {
     node$internal_type <- ret_type
     return(ret_type)
-  }
-  same_base_type <- function(is, should) {
-    if (is == "int") is <- "integer"
-    if (should == "int") should <- "integer"
-    should == is
-  }
-  same_data_struct <- function(is, should) {
-    correct <- function(ds) {
-      if (ds == "vec") return("vector")
-      if (ds == "borrow_vec") return("borrow_vector")
-      if (ds == "mat") return("matrix")
-      if (ds == "borrow_mat") return("borrow_matrix")
-      ds
-    }
-    is <- correct(is)
-    should <- correct(should)
-    should == is
   }
   check <- function(node, is_type, should_type) {
     name <- node$operator

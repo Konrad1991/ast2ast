@@ -1,34 +1,65 @@
-
-# Tasks:
-# - allow borrow as data struct also for R functions.
-#   Otherwise, the user cannot pass the correct type into
-#   lambda functions.
-# - test_create_node_ast update
-# - test_function_registry_check_fcts update
-# - test_infer_types update
-# - test_infer_return update
-# - return statements in lambda functions have to be changed from:
-#   return(Whatever) to return(Evaluate(Whatever))
-# - parsing error in:
-#   * args_f = function(x) x |> type(vec(double)) |> ref()
-#   * c(1) becomes at top level c(Integer(1)) but not within lambda function
-
 trash <- list.files("./R", full.names = TRUE) |> lapply(source)
 f <- function(a) {
-  g <- fn(
-    args_f = function(x) {
-      x |> type(vec(double)) |> ref()
+  # ---------- Function bla -------------------------
+  bla <- fn(
+    args_f = function(a) {
+      a |> type(vec(double))
     },
-    return_value = type(vec(double)),
-    block = function(x) {
-      y <- c(1, 2, 3)
-      z <- c(4, 5, 5)
-      return(y + z)       # MUST Evaluate
+    return_value = type(double),
+    block = function(a) {
+      return(3.14)
     }
   )
-  bla = g(a)
-  return(bla)
-  return(g(a))
+  # ---------- Function bar -------------------------
+  bar <- fn(
+    args_f = function(obj) {
+      obj |> type(double)
+    },
+    return_value = type(double),
+    block = function(obj) {
+      return(8)
+    }
+  )
+
+  # ---------- Function foo -------------------------
+  foo <- fn(
+    args_f = function(a) a |> type(double),
+    return_value = type(double),
+    block = function(a) {
+
+  # ---------- inner Function bar --------------------
+      bar <- fn(
+        args_f = function(obj) {
+          obj |> type(double)
+        },
+        return_value = type(double),
+        block = function(obj) {
+
+          inner_inner <- fn(
+            args_f = function(obj) {
+              obj |> type(logical)
+            },
+            return_value = type(vec(logical)),
+            block = function(obj) {
+              print(bla(c(1.1)))
+              return(c(TRUE, FALSE))
+            }
+          )
+
+          inner_inner(TRUE)
+          return(9)
+        }
+      )
+      print(bla(c(1.1)))
+      return(bar(1))
+
+    }
+  )
+
+  return(foo(a[[1L]]))
 }
+fcpp <- translate(f, getsource = TRUE)
+if (is.character(fcpp)) cat(fcpp, "\n")
 fcpp <- translate(f)
-fcpp(1.1)
+fcpp(c(1))
+# traceback()

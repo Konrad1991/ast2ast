@@ -23,7 +23,7 @@ parse_input_args <- function(f, f_args, r_fct) {
   if (is.null(f_args)) {
     f_args <- standard_args_f(f, r_fct)
   }
-  args <- body(f_args) |> as.list()
+  args <- body(f_args) |> wrap_in_block() |> as.list()
   if (deparse(args[[1]]) == "{") {
     args <- args[-1]
   }
@@ -84,6 +84,7 @@ create_vars_types_list <- function(ast, f, f_args, r_fct) {
 # Infer input f_args for fn node
 # ========================================================================
 parse_input_args_for_fn_node <- function(block, r_fct) {
+  block <- wrap_in_block(block)
   if (deparse(block[[1]]) == "{") {
     block <- block[-1]
   }
@@ -294,6 +295,10 @@ type_infer_assignment <- function(node, env) {
 
       else if (inherits(env$vars_list[[variable]], "type_node")) {
         if (!env$vars_list[[variable]]$type_dcl && !env$vars_list[[variable]]$fct_input && !env$vars_list[[variable]]$iterator) {
+          if (inherits(type, "fn_node")) {
+            old_type <- env$vars_list[[variable]]
+            stop(sprintf("You cannot reassign a function to the variable %s, that was previously declared as %s of type %s", old_type$name, old_type$data_struct, old_type$base_type))
+          }
           detected_type <- common_type(env$vars_list[[variable]], type) |> flatten_type()
           detected_type <- detected_type$clone()
           detected_type$iterator <- FALSE # Dont propagate iterator

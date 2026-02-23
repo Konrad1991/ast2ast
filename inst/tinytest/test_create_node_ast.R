@@ -194,3 +194,28 @@ expected_to_find(AST, c("<-", ">", "<-", "+"), c(1, 0, 1), c("a", "a", "a", "a")
 f <- function() { a <- 1 }
 AST <- ast_of(f)
 expect_equal(AST$stringify_error_line(), "")
+
+# --- lambda functions -----------------------------------------------------
+f <- function() {
+  g <- fn(
+    args_f = function() {},
+    return_value = type(vec(double)),
+    block = function() {
+      
+      h <- fn(
+        args_f = function() {},
+        return_value = type(vec(double)),
+        block = function() {
+          return(c(1.1, 2.2))
+        }
+      )
+
+      return(h())
+    }
+  )
+}
+AST <- ast_of(f)
+g <- AST$block[[1]]$right_node
+expect_true(inherits(g, "fn_node"))
+h <- AST$block[[1]]$right_node$AST
+expect_true(is.language(h)) # Not yet evaluated
