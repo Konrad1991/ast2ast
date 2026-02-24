@@ -29,6 +29,105 @@ check_error <- function(f, r_fct, real_type, error_message) {
 }
 
 # --- lambda functions ----------------------------------------------------
+# Update of function registry
+f <- function() {
+
+  # foo in outer block
+  foo <- fn(
+    args_f = function() {},
+    return_value = type(int),
+    block = function() {
+      return(2L)
+    }
+  )
+
+
+  bar <- fn(
+    args_f = function() {},
+    return_value = type(int),
+    block = function() {
+
+      bla <- fn(
+        args_f = function() {},
+        return_value = type(int),
+        block = function() {
+          return(3L)
+        }
+      )
+
+      # foo in bar block
+      foo <- fn(
+        args_f = function() {},
+        return_value = type(int),
+        block = function() {
+          return(3L)
+        }
+      )
+
+      return(1L)
+    }
+  )
+}
+types <- get_types(f)
+fr_foo_outer <- types$foo$function_registry$permitted_fcts()
+expect_equal(tail(fr_foo_outer, 2L), c("foo", "bar"))
+expect_true(!("bla" %in% fr_foo_outer))
+fr_bar_outer <- types$bar$function_registry$permitted_fcts()
+expect_equal(tail(fr_bar_outer, 3L), c("bla", "foo", "bar"))
+fr_bar_inner <- types$bar$vars_types_list
+expect_equal(names(fr_bar_inner), c("bla", "foo"))
+fr_bla <- fr_bar_inner$bla$function_registry$permitted_fcts()
+expect_equal(tail(fr_bar_outer, 3L), c("bla", "foo", "bar"))
+fr_foo_inner <- fr_bar_inner$foo$function_registry$permitted_fcts()
+expect_equal(tail(fr_foo_inner, 3L), c("bla", "foo", "bar"))
+
+# Specified return type does not match the detected one
+f <- function(a) {
+  b <- fn(
+    args_f = function() {},
+    return_value = type(array(double)),
+    block = function() {
+      return(matrix(1.1, 2, 2))
+    }
+  )
+}
+check_error(f, TRUE, "etr::Variable<etr::Double>",
+"Specified return type does not match the detected return type for function b. Desired data structure is array but found matrix")
+f <- function(a) {
+  b <- fn(
+    args_f = function() {},
+    return_value = type(logical),
+    block = function() {
+      return(1.1)
+    }
+  )
+}
+check_error(f, TRUE, "etr::Variable<etr::Double>",
+  "Specified return type does not match the detected return type for function b. Desired base type is logical but found double")
+f <- function() {
+  foo <- fn(
+    args_f = function(a) a |> type(int),
+    return_value = type(int),
+    block = function(a) {}
+  )
+}
+check_error(f, TRUE, "etr::Double",
+  "Specified return type does not match the detected return type for function foo. Desired base type is int but found void")
+
+# Recurion works
+f <- function() {
+  factorial <- fn(
+    args_f = function(a) a |> type(int),
+    return_value = type(int),
+    block = function(a) {
+      if (a == 1L) return(a) else return(a*factorial(a - 1L))
+    }
+  )
+  return(factorial(10L))
+}
+fcpp <- ast2ast::translate(f)
+expect_equal(fcpp(), factorial(10))
+
 # Multiple inner functions
 f <- function(a) {
   b <- 1L
@@ -103,20 +202,6 @@ f <- function(a) {
 types <- get_types(f)
 check_type_f_arg(types$b$return_type, "void", "scalar", "mutable", "copy", FALSE)
 
-# Specified return type does not match the detected one
-f <- function(a) {
-  b <- fn(
-    args_f = function() {
-    },
-    return_value = type(logical),
-    block = function() {
-      return(1.1)
-    }
-  )
-}
-check_error(f, TRUE, "etr::Double",
-  "Specified return type does not match the detected return type for function b. Desired base type is double but found logical")
-
 # Overwritng a function with a function ==> Error
 f <- function(a) {
   b <- fn(
@@ -140,7 +225,7 @@ f <- function(a) {
 }
 check_error(
   f, TRUE, "etr::Double",
-  "\n\nThe name b is already in use by another function"
+  "Could not update the function registry due to: Error in action(node, ...) : \n  The name b is already in use by another function\n"
 )
 
 # Using a function as numeric variable results in error
@@ -1017,7 +1102,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   attributes(e)[["condition"]]$message,
-  "type(a, invalid)\nFound unsupported base type: invalid"
+  "\ntype(a, invalid)\nFound unsupported base type: invalid"
 )
 f <- function() {
   a |> type(vector(invalid))
@@ -1025,7 +1110,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   attributes(e)[["condition"]]$message,
-  "type(a, vector(invalid))\nFound unsupported base type: invalid")
+  "\ntype(a, vector(invalid))\nFound unsupported base type: invalid")
 
 f <- function() {
   a |> type(invalid(double))
@@ -1033,7 +1118,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   attributes(e)[["condition"]]$message,
-  "type(a, invalid(double))\nFound unsupported data structure: invalid"
+  "\ntype(a, invalid(double))\nFound unsupported data structure: invalid"
 )
 
 f <- function() {
@@ -1042,7 +1127,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   attributes(e)[["condition"]]$message,
-  "type(a, invalid(invalid2))\nFound unsupported base type: invalid2\nFound unsupported data structure: invalid"
+  "\ntype(a, invalid(invalid2))\nFound unsupported base type: invalid2\nFound unsupported data structure: invalid"
 )
 
 # --- literals ---------------------------------------------------------------

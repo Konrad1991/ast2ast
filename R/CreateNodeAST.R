@@ -127,7 +127,8 @@ parse_body <- function(b, r_fct, function_registry) {
 update_function_registry <- function(ast, function_registry) {
   e <- try(traverse_ast(ast, action_update_function_registry, function_registry), silent = TRUE)
   if (inherits(e, "try-error")) {
-    stop("error: Could not update the function_registry")
+    error_string <- e |> as.character()
+    stop(sprintf("Could not update the function registry due to: %s", error_string))
   }
   line <- try( { ast$stringify_error_line() }, silent = TRUE)
   if (inherits(line, "try-error")) {

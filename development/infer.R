@@ -1,65 +1,33 @@
 trash <- list.files("./R", full.names = TRUE) |> lapply(source)
-f <- function(a) {
-  # ---------- Function bla -------------------------
-  bla <- fn(
-    args_f = function(a) {
-      a |> type(vec(double))
-    },
-    return_value = type(double),
-    block = function(a) {
-      return(3.14)
-    }
-  )
-  # ---------- Function bar -------------------------
-  bar <- fn(
-    args_f = function(obj) {
-      obj |> type(double)
-    },
-    return_value = type(double),
-    block = function(obj) {
-      return(8)
-    }
-  )
 
-  # ---------- Function foo -------------------------
-  foo <- fn(
-    args_f = function(a) a |> type(double),
-    return_value = type(double),
-    block = function(a) {
+library(tinytest)
 
-  # ---------- inner Function bar --------------------
-      bar <- fn(
-        args_f = function(obj) {
-          obj |> type(double)
-        },
-        return_value = type(double),
-        block = function(obj) {
-
-          inner_inner <- fn(
-            args_f = function(obj) {
-              obj |> type(logical)
-            },
-            return_value = type(vec(logical)),
-            block = function(obj) {
-              print(bla(c(1.1)))
-              return(c(TRUE, FALSE))
-            }
-          )
-
-          inner_inner(TRUE)
-          return(9)
-        }
-      )
-      print(bla(c(1.1)))
-      return(bar(1))
-
-    }
-  )
-
-  return(foo(a[[1L]]))
+get_types <- function(f, r_fct = TRUE, real_type = "etr::Double") {
+  function_registry <- function_registry_global$clone()
+  ast <- parse_body(body(f), r_fct, function_registry)
+  update_function_registry(ast, function_registry)
+  types <- infer_types(ast, f, NULL, r_fct, function_registry)
+  traverse_ast(ast, action_transpile_inner_functions, real_type)
+  types
 }
-fcpp <- translate(f, getsource = TRUE)
-if (is.character(fcpp)) cat(fcpp, "\n")
-fcpp <- translate(f)
-fcpp(c(1))
-# traceback()
+get_types_with_f_args <- function(f, f_args, r_fct = FALSE) {
+  ast <- parse_body(body(f), r_fct, function_registry_global)
+  infer_types(ast, f, f_args, r_fct, function_registry_global)
+}
+check_type_f_arg <- function(type, bt, ds, const_or_mut, copy_or_ref, fct_input = TRUE) {
+  check <- logical(5)
+  check[1] <- type$base_type == bt
+  check[2] <- type$data_struct == ds
+  check[3] <- type$fct_input == fct_input
+  check[4] <- type$const_or_mut == const_or_mut
+  check[5] <- type$copy_or_ref == copy_or_ref
+  expect_true(all(check))
+}
+
+check_error <- function(f, r_fct, real_type, error_message) {
+  e <- try(get_types(f, r_fct, real_type), silent = TRUE)
+  m <- attributes(e)[["condition"]]$message
+  expect_true(m == error_message)
+}
+
+

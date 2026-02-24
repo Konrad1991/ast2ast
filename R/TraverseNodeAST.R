@@ -75,6 +75,10 @@ action_transpile_inner_functions <- function(node, real_type) {
     stop(sprintf("Could not translate the function due to %s", error_string))
   }
   e <- try(traverse_ast(AST, action_update_function_registry, function_registry), silent = TRUE)
+  if (inherits(e, "try-error")) {
+    error_string <- e |> as.character()
+    stop(sprintf("Could not update the function registry due to: %s", error_string))
+  }
 
   known_from_inner <- node$function_registry$permitted_fcts()
   known_outer <- node$function_registry_outer$permitted_fcts()
@@ -90,10 +94,6 @@ action_transpile_inner_functions <- function(node, real_type) {
     node$function_registry$cpp_names <- c(node$function_registry$cpp_names, node$function_registry_outer$cpp_names[[idx]])
   }
 
-  if (inherits(e, "try-error")) {
-    error_string <- e |> as.character()
-    stop(sprintf("Could not update the function registry due to: %s", error_string))
-  }
   e <- try(run_checks(AST, r_fct, function_registry), silent = TRUE)
   if (!is.null(e) && inherits(e, "try-error")) {
     stop("error: Could not run checks on AST due to:", attributes(e)[["condition"]]$message)
@@ -109,21 +109,25 @@ action_transpile_inner_functions <- function(node, real_type) {
   node$vars_types_list <- infer_types(AST, f, args_f_raw, r_fct, function_registry)
   trash <- type_checking(AST, node$vars_types_list, r_fct, real_type, function_registry)
   return_type <- determine_types_of_returns(AST, node$vars_types_list, r_fct, function_registry)
-  if (is.character(return_type) && return_type != "void") {
-    stop(sprintf("Found invalid return type %s in function %s", return_type, node$fct_name))
-  }
-  if (!is.character(return_type)) {
-    if (!same_base_type(return_type$base_type, node$return_type$base_type)) {
-      stop(sprintf(
-        "Specified return type does not match the detected return type for function %s. Desired base type is %s but found %s", node$fct_name, return_type$base_type, node$return_type$base_type
-      ))
+  if (is.character(return_type)) {
+    if (return_type != "void") {
+      stop(sprintf("Found invalid return type %s in function %s", return_type, node$fct_name))
     }
-    if (!same_data_struct(return_type$data_struct, node$return_type$data_struct)) {
-      stop(sprintf(
-        "Specified return type does not match the detected return type for function %s. Desired data structure is %s but found %s", node$fct_name, return_type$data_struct, node$return_type$data_struct
-      ))
-    }
+    return_type <- type_node$new(NA, FALSE, r_fct)
+    return_type$base_type <- "void"
+    return_type$data_struct <- "scalar"
   }
+  if (!same_base_type(return_type$base_type, node$return_type$base_type)) {
+    stop(sprintf(
+      "Specified return type does not match the detected return type for function %s. Desired base type is %s but found %s", node$fct_name, node$return_type$base_type, return_type$base_type
+    ))
+  }
+  if (!same_data_struct(return_type$data_struct, node$return_type$data_struct)) {
+    stop(sprintf(
+      "Specified return type does not match the detected return type for function %s. Desired data structure is %s but found %s", node$fct_name, node$return_type$data_struct, return_type$data_struct
+    ))
+  }
+
   for (i in seq_along(AST$block)) {
     traverse_ast(AST$block[[i]], action_transpile_inner_functions, real_type)
   }
