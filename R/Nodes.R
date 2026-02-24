@@ -1014,7 +1014,8 @@ type_node <- R6::R6Class(
     },
 
     check_allowed_data_structs = function() {
-      if (!(self$data_struct %within% permitted_data_structs(self$r_fct))) {
+      # DOnt use self$r_fct as the user has to have the ability to use borrowed data structures for the inner functions
+      if (!(self$data_struct %within% permitted_data_structs(FALSE))) {
         self$error <- c(self$error, sprintf("Found unsupported data structure: %s", self$data_struct))
       }
     },
