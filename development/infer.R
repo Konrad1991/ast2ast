@@ -18,3 +18,11 @@ fcpp <- translate(f, f_args, verbose = TRUE)
 a <- c(1, 2, 3)
 fcpp(a)
 a
+
+rmarkdown::render("vignettes/DetailedDocumentation.Rmd",
+  output_format = "html_document", output_dir = "./development/"
+)
+
+rmarkdown::render("vignettes/InformationForPackageAuthors.Rmd",
+  output_format = "html_document", output_dir = "./development/"
+)
