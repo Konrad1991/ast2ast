@@ -26,6 +26,24 @@ wrap_in_block <- function(expr) {
   as.call(list(as.name("{"), expr))
 }
 
+same_base_type <- function(is, should) {
+  if (is == "int") is <- "integer"
+  if (should == "int") should <- "integer"
+  should == is
+}
+same_data_struct <- function(is, should) {
+  correct <- function(ds) {
+    if (ds == "vec") return("vector")
+    if (ds == "borrow_vec") return("borrow_vector")
+    if (ds == "mat") return("matrix")
+    if (ds == "borrow_mat") return("borrow_matrix")
+    ds
+  }
+  is <- correct(is)
+  should <- correct(should)
+  should == is
+}
+
 infix_ops <- c(
   "+","-","*","/","^",
   "==","!=","<","<=",">",">=",

@@ -138,6 +138,8 @@ binary_node <- R6::R6Class(
           return(ret)
         }
         ret <- paste0(indent, self$string_left())
+      } else if (self$operator %in% c("<-", "=") && inherits(self$right_node, "fn_node")) {
+        return(self$create_infix_string(indent))
       } else if (self$operator %in% c("[", "[[")) {
         ret <- self$create_r_subsetting_string(indent)
       } else if (self$is_infix && !(self$operator %in% not_infix_in_cpp)) {
@@ -502,15 +504,15 @@ if_node <- R6::R6Class(
   )
 )
 
-handle_if <- function(code, context, r_fct, i_node) {
-  i_node$condition <- code[[2]] |> process(context, r_fct)
-  i_node$true_node <- code[[3]] |> wrap_in_block() |> process(context, r_fct)
+handle_if <- function(code, context, r_fct, i_node, function_registry) {
+  i_node$condition <- code[[2]] |> process(context, r_fct, function_registry)
+  i_node$true_node <- code[[3]] |> wrap_in_block() |> process(context, r_fct, function_registry)
   if (length(code) == 4) {
     s <- code[[4]]
     while (is.call(s) && deparse(s[[1]]) == "if") {
       else_i_node <- if_node$new()
-      else_i_node$condition <- s[[2]] |> process(context, r_fct)
-      else_i_node$true_node <- s[[3]] |> wrap_in_block() |> process(context, r_fct)
+      else_i_node$condition <- s[[2]] |> process(context, r_fct, function_registry)
+      else_i_node$true_node <- s[[3]] |> wrap_in_block() |> process(context, r_fct, function_registry)
       i_node$else_if_nodes[[
         length(i_node$else_if_nodes) + 1
         ]] <- else_i_node
@@ -523,13 +525,13 @@ handle_if <- function(code, context, r_fct, i_node) {
     if (!is.null(s)) {
       if (deparse(s[[1]]) == "if") {
         else_i_node <- if_node$new()
-        else_i_node$condition <- s[[2]] |> process(context, r_fct)
-        else_i_node$true_node <- s[[3]] |> wrap_in_block() |> process(context, r_fct)
+        else_i_node$condition <- s[[2]] |> process(context, r_fct, function_registry)
+        else_i_node$true_node <- s[[3]] |> wrap_in_block() |> process(context, r_fct, function_registry)
         i_node$else_if_nodes[[
           length(i_node$else_if_nodes) + 1
           ]] <- else_i_node
       } else {
-        i_node$false_node <- process(wrap_in_block(s), context, r_fct)
+        i_node$false_node <- process(wrap_in_block(s), context, r_fct, function_registry)
       }
     }
   }
@@ -548,13 +550,11 @@ block_node <- R6::R6Class(
       result <- list()
       for (stmt in self$block) {
         end <- ";"
-        if (inherits(stmt, c("if_node", "for_node", "while_node", "repeat_node"))) {
-        end <- ""
+        if (inherits(stmt, c("if_node", "for_node", "while_node", "repeat_node", "fn_node"))) {
+          end <- ""
         }
-        result[[length(result) + 1]] <-
-          paste0(
-            stmt$stringify(indent = paste0(indent, "")), end
-          )
+        s <- stmt$stringify(indent = indent)
+        result[[length(result) + 1]] <- paste0(s, end)
       }
       result <- combine_strings(result)
       return(result)
@@ -578,8 +578,8 @@ block_node <- R6::R6Class(
         }
         error <- elem$stringify_error() |> combine_strings("\n")
         if (!is.null(error) && error != "") {
-         line <- elem$stringify_error_line(indent)
-         return(combine_strings(list(line, error), "\n"))
+          line <- elem$stringify_error_line(indent)
+          return(combine_strings(list(line, error), "\n"))
         }
         return(NULL)
       })
@@ -588,6 +588,115 @@ block_node <- R6::R6Class(
     },
     print = function() {
       cat("Id:", self$id, "{")
+    }
+  )
+)
+
+fn_node <- R6::R6Class(
+  "fn_node",
+  public = list(
+    id = NULL,
+    error = NULL,
+    context = NULL,
+
+    fct_name = NULL,
+    args_f = NULL,
+    args_f_raw = NULL,
+    return_type = NULL,
+    AST = NULL,
+    parsed_AST = NULL,
+
+    real_type = NULL,
+    vars_types_list = NULL,
+    internal_type = NULL,
+    outermost = NULL,
+    function_registry = NULL,
+    function_registry_outer = NULL,
+
+    initialize = function() {},
+
+    stringify_signature = function(r_fct = FALSE) {
+      return("")
+    },
+    stringify_declaration = function(indent = "", r_fct) {
+      if (length(self$vars_types_list) >= 1L) {
+        if (length(self$vars_types_list) >= 1L) {
+          args <- lapply(self$vars_types_list, \(x) x$stringify_signature(r_fct = FALSE)) |> unlist() |> c()
+          args <- args[args != ""]
+          args <- paste0(args, collapse = ", ")
+        } else {
+          args <- ""
+        }
+      }
+      ret_type <- self$return_type$generate_type("")
+      paste0(indent, sprintf("std::function<%s(%s)>%s;\n", ret_type, args, self$fct_name))
+    },
+
+    stringify = function(indent = "") {
+      name <- self$fct_name
+      indent0 <- indent
+
+      if (length(self$vars_types_list) >= 1L) {
+        args <- lapply(self$vars_types_list, \(x) x$stringify_signature(FALSE)) |> unlist() |> c()
+        args <- args[args != ""]
+      } else {
+        args <- ""
+      }
+      declarations <- lapply(self$vars_types_list, \(x) {
+        res <- x$stringify_declaration(indent = "", r_fct = FALSE)
+        paste0(indent, "     ", res)
+      }) |> unlist() |> c()
+      declarations <- declarations[declarations != ""]
+      declarations <- paste0(declarations, collapse = "\n")
+
+      ret_type <- self$return_type$generate_type("")
+
+      body <- ""
+      if (inherits(self$AST, "block_node")) {
+        body <- self$AST$stringify(indent = paste0(indent, "    "))
+      }
+      body <- paste0(body, collapse = "")
+      args <- paste0(args, collapse = ", ")
+
+      paste0(
+        paste0("[&]( ", args, " ) -> ", ret_type, " {\n"),
+        indent, declarations, "\n",
+        body, "\n",
+        paste0(indent, "  }")
+      )
+    },
+
+    stringify_error = function(indent = "") {
+      e <- self$error
+      if (is.null(e)) return("")
+      if (inherits(e, "list")) e <- unlist(e) |> c()
+      e <- e[e != ""]
+      if (length(e) == 0) return("")
+      combine_strings(e, "\n") |> paste0(indent, .)
+    },
+
+    stringify_error_line = function(indent = "") {
+      header <- ""
+      name <- self$fct_name
+      if (is.null(name) || name == "") name <- paste0("fn_", self$id)
+      args <- character()
+      if (!is.null(self$args_f) && inherits(self$args_f, "list")) {
+        normal_vars <- self$vars_types_list[sapply(self$vars_types_list, \(x) inherits(x, "type_node"))]
+        args <- lapply(normal_vars, function(x) {
+          x$stringify_signature(r_fct = FALSE)
+        }) |> unlist() |> c()
+        args <- args[args != ""]
+      }
+      ret_type <- self$return_type$generate_type("")
+      header <- paste0(
+        indent, "auto ", name, " = [&]( ", paste(args, collapse = ", "), " ) -> ",
+        ret_type, " { ... };"
+      )
+
+      err <- self$stringify_error(indent = "")
+      if (err == "") return("")
+
+      combine_strings(list(header, err), "\n")
     }
   )
 )
@@ -761,6 +870,11 @@ repeat_node <- R6::R6Class(
       cat(self$stringify(), "\n")
     }
   )
+)
+
+unknown_type <- R6::R6Class(
+  "unknown_type",
+  public = list()
 )
 
 type_node <- R6::R6Class(
@@ -961,13 +1075,15 @@ type_node <- R6::R6Class(
 
     print = function() {
       print("Type:")
-      print(self$name)
-      print(self$base_type)
-      print(self$data_struct)
-      print(self$const_or_mut)
-      print(self$copy_or_ref)
-      print(self$fct_input)
-      print(self$iterator)
+      cat(
+        "Name: ", self$name, "\n",
+        "base type: ", self$base_type, "\n",
+        "data struct: ", self$data_struct, "\n",
+        "const or mut", self$const_or_mut, "\n",
+        "copy or ref", self$copy_or_ref, "\n",
+        "fct input", self$fct_input, "\n",
+        "iterator", self$iterator, "\n"
+      )
     }
   )
 )

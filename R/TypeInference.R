@@ -23,7 +23,7 @@ parse_input_args <- function(f, f_args, r_fct) {
   if (is.null(f_args)) {
     f_args <- standard_args_f(f, r_fct)
   }
-  args <- body(f_args) |> as.list()
+  args <- body(f_args) |> wrap_in_block() |> as.list()
   if (deparse(args[[1]]) == "{") {
     args <- args[-1]
   }
@@ -41,37 +41,64 @@ parse_input_args <- function(f, f_args, r_fct) {
     t
   })
   check_input_args(l)
-  l
+  names <- vapply(l, \(e) e$name, character(1L))
+  setNames(l, names)
 }
 
-non_fct_args <- function(f, r_fct) {
+non_fct_args <- function(ast, f, r_fct) {
   arguments <- formals(f) |>
     names() |>
     as.character()
-  vars <- all.vars(body(f))
+
+  env <- new.env(parent = emptyenv())
+  env$variable_list <- c()
+  traverse_ast(ast, action_find_variables, env)
+  vars <- env$variable_list
   vars <- setdiff(vars, arguments)
   vars <- setdiff(vars, c("T", "F"))
-  lapply(seq_along(vars), function(v) {
-    t <- type_node$new(NULL, FALSE, r_fct)
-    t$name <- vars[v]
-    t
-  })
+
+  setNames(
+    lapply(seq_along(vars), function(v) {
+      unknown_type$new()
+    }),
+    vars
+  )
 }
 
-create_vars_types_list <- function(f, f_args, r_fct) {
-  l <- c(parse_input_args(f, f_args, r_fct), non_fct_args(f, r_fct))
+create_vars_types_list <- function(ast, f, f_args, r_fct) {
+  input_args <- parse_input_args(f, f_args, r_fct)
   wrong_input <- FALSE
-  for (i in seq_len(length(l))) {
-    e <- l[[i]]$error
+  for (i in seq_len(length(input_args))) {
+    e <- input_args[[i]]$error
     if (!is.null(e) && e != "") {
-      print(sprintf("%s, for variable: %s", l[[i]]$error, l[[i]]$name))
+      print(sprintf("%s, for variable: %s", input_args[[i]]$error, input_args[[i]]$name))
       wrong_input <- TRUE
     }
   }
   if (wrong_input) stop("Types for arguments are invalid")
-  names(l) <- sapply(l, function(x) x$name)
-  l <- l[setdiff(names(l), permitted_base_types())]
-  l <- l[setdiff(names(l), permitted_data_structs(r_fct))]
+
+  l <- c(input_args, non_fct_args(ast, f, r_fct))
+  return(l)
+}
+
+# Infer input f_args for fn node
+# ========================================================================
+parse_input_args_for_fn_node <- function(block, r_fct) {
+  block <- wrap_in_block(block)
+  if (deparse(block[[1]]) == "{") {
+    block <- block[-1]
+  }
+  args <- lapply(block, function(x) {
+    attributes(x) <- NULL
+    x
+  })
+  l <- lapply(args, function(obj) {
+    t <- type_node$new(obj, TRUE, r_fct)
+    t$init()
+    t$check()
+    t
+  })
+  check_input_args(l)
   l
 }
 
@@ -92,7 +119,7 @@ flatten_type <- function(type) {
   return(type)
 }
 
-infer <- function(node, vars_list, r_fct) {
+infer <- function(node, vars_list, r_fct, function_registry) {
   if (inherits(node, "literal_node")) {
     type <- node$literal_type
     if (type %within% c("scientific", "numeric")) {
@@ -110,33 +137,35 @@ infer <- function(node, vars_list, r_fct) {
     }
     t <- vars_list[[name]]
     t <- flatten_type(t)
-    are_vars_init(t)
+    are_vars_init(t, name)
     node$internal_type <- t
     return(t)
   } else if (inherits(node, c("unary_node", "binary_node", "function_node"))) {
-    ifct <- function_registry_global$infer_fct(node$operator)
-    t <- ifct(node, vars_list, r_fct)
+    ifct <- function_registry$infer_fct(node$operator)
+    t <- ifct(node, vars_list, r_fct, function_registry)
     t <- flatten_type(t)
     are_vars_init(t)
     node$internal_type <- t
     return(t)
+  } else if (inherits(node, "fn_node")) {
+    return(node)
   } else if (inherits(node, "for_node")) {
-    ifct <- function_registry_global$infer_fct("for")
-    t <- ifct(node, vars_list, r_fct)
+    ifct <- function_registry$infer_fct("for")
+    t <- ifct(node, vars_list, r_fct, function_registry)
     t <- flatten_type(t)
     are_vars_init(t)
     node$internal_type <- t
     return(t)
   } else if (inherits(node, "while_node")) {
-    ifct <- function_registry_global$infer_fct("while")
-    t <- ifct(node, vars_list, r_fct)
+    ifct <- function_registry$infer_fct("while")
+    t <- ifct(node, vars_list, r_fct, function_registry)
     t <- flatten_type(t)
     are_vars_init(t)
     node$internal_type <- t
     return(t)
   } else if (inherits(node, "repeat_node")) {
-    ifct <- function_registry_global$infer_fct("repeat")
-    t <- ifct(node, vars_list, r_fct)
+    ifct <- function_registry$infer_fct("repeat")
+    t <- ifct(node, vars_list, r_fct, function_registry)
     t <- flatten_type(t)
     are_vars_init(t)
     node$internal_type <- t
@@ -146,7 +175,6 @@ infer <- function(node, vars_list, r_fct) {
   }
 }
 
-# TODO: handle also the other nodes
 find_var_lhs <- function(node) {
   if (inherits(node, "variable_node")) {
     return(deparse(node$name))
@@ -238,110 +266,184 @@ handle_type_dcl_in_assign <- function(node, env) {
   }
 }
 
-type_infer_action <- function(node, env) {
-  handle_type_dcl(node, env)
+type_infer_assignment <- function(node, env) {
   if (inherits(node, "binary_node") && node$operator %within% c("=", "<-")) {
-    infer(node, env$vars_list, env$r_fct)
+    infer(node, env$vars_list, env$r_fct, env$function_registry)
     handle_type_dcl_in_assign(node, env)
-    # RHS:
-    type <- infer(node$right_node, env$vars_list, env$r_fct)
+
+    type <- infer(node$right_node, env$vars_list, env$r_fct, env$function_registry)
     if (is.character(type)) {
       node$error <- type
-    } else {
-      variable <- find_var_lhs(node)
-      if (!env$vars_list[[variable]]$type_dcl &&
-          !env$vars_list[[variable]]$fct_input && !env$vars_list[[variable]]$iterator) {
-        detected_type <- common_type(env$vars_list[[variable]], type) |> flatten_type()
-        detected_type <- detected_type$clone()
-        detected_type$iterator <- FALSE # Dont propagate iterator
-        detected_type$name <- variable
-        env$vars_list[[variable]] <- detected_type
-      }
     }
-    # LHS:
-    if (inherits(node$left_node, c("binary_node", "function_node"))) {
-      type_lhs <- infer(node$left_node, env$vars_list, env$r_fct)
-      if (is.character(type_lhs)) {
-        node$error <- type_lhs
-      } else {
-        variable <- find_var_lhs(node)
-        if (!env$vars_list[[variable]]$type_dcl &&
-            !env$vars_list[[variable]]$fct_input && !env$vars_list[[variable]]$iterator) {
-          detected_type <- common_type(env$vars_list[[variable]], type_lhs) |> flatten_type()
+    # RHS:
+    else {
+      variable <- find_var_lhs(node)
+
+      if (inherits(env$vars_list[[variable]], "unknown_type")) {
+        if (inherits(type, "fn_node")) {
+          type$fct_name <- variable
+        }
+        if (inherits(type, "type_node")) {
+          type <- type$clone()
+          type$copy_or_ref <- "copy"
+          type$fct_input <- FALSE
+          type$const_or_mut <- "mutable"
+          type$name <- variable
+        }
+        env$vars_list[[variable]] <- type
+      }
+
+      else if (inherits(env$vars_list[[variable]], "type_node")) {
+        if (!env$vars_list[[variable]]$type_dcl && !env$vars_list[[variable]]$fct_input && !env$vars_list[[variable]]$iterator) {
+          if (inherits(type, "fn_node")) {
+            old_type <- env$vars_list[[variable]]
+            stop(sprintf("You cannot reassign a function to the variable %s, that was previously declared as %s of type %s", old_type$name, old_type$data_struct, old_type$base_type))
+          }
+          detected_type <- common_type(env$vars_list[[variable]], type) |> flatten_type()
+          detected_type <- detected_type$clone()
+          detected_type$iterator <- FALSE # Dont propagate iterator
+          detected_type$name <- variable
           env$vars_list[[variable]] <- detected_type
         }
       }
+
+      else if (inherits(env$vars_list[[variable]], "fn_node")) {
+        node$error <- sprintf("Reassignment to variable %s to which is marked as function", variable)
+      }
+
+    }
+    # LHS:
+    if (inherits(node$left_node, c("binary_node", "function_node"))) {
+      type_lhs <- infer(node$left_node, env$vars_list, env$r_fct, env$function_registry)
+      if (is.character(type_lhs)) {
+        node$error <- type_lhs
+      }
+
+      else {
+        variable <- find_var_lhs(node)
+
+        if (inherits(env$vars_list[[variable]], "type_node")) {
+          if (!env$vars_list[[variable]]$type_dcl && !env$vars_list[[variable]]$fct_input && !env$vars_list[[variable]]$iterator) {
+            detected_type <- common_type(env$vars_list[[variable]], type_lhs) |> flatten_type()
+            detected_type$name <- variable
+            env$vars_list[[variable]] <- detected_type
+          }
+        } else {
+          node$error <- "Unexpected type at lhs of assignment"
+        }
+
+      }
+
     }
   }
-  else if (inherits(node, "for_node")) {
-    type <- infer(node, env$vars_list, env$r_fct)
+}
+
+type_infer_for_node <- function(node, env) {
+  if (inherits(node, "for_node")) {
+    type <- infer(node, env$vars_list, env$r_fct, env$function_registry)
     if (is.character(type)) {
       node$error <- type
-    } else {
-      variable <- deparse(node$i$name)
-      type <- common_type(env$vars_list[[variable]], type)
-      if (is.character(type)) {
-        node$i$error <- type
-      } else {
-        if (!env$vars_list[[variable]]$type_dcl) {
-          type <- type |> flatten_type()
-          type$name <- variable
-          env$vars_list[[variable]] <- type
-        }
-      }
     }
-  }
-  else if (inherits(node, c("while_node", "if_node"))) {
-    variable <- find_var_lhs(node$condition)
-    if (!is.null(variable)) { # e.g. while(TRUE)
-      type <- infer(node$condition, env$vars_list, env$r_fct)
-      if (is.character(type)) {
-        node$error <- type
-      } else {
+    else {
+
+      variable <- deparse(node$i$name)
+
+      if (inherits(env$vars_list[[variable]], "unknown_type")) {
+        env$vars_list[[variable]] <- type
+      }
+      else if (inherits(env$vars_list[[variable]], "type_node")) {
         type <- common_type(env$vars_list[[variable]], type)
         if (is.character(type)) {
           node$i$error <- type
         } else {
           if (!env$vars_list[[variable]]$type_dcl) {
             type <- type |> flatten_type()
+            type$name <- variable
             env$vars_list[[variable]] <- type
           }
         }
       }
+      else if (inherits(env$vars_list[[variable]], "fn_node")) {
+        node$i$error <- sprintf("The variable %s is marked as function and cannot be used as iterator", variable)
+      }
+
     }
+
   }
-  else if (inherits(node, "binary_node") && !(node$operator %within% c("=", "<-"))) {
-    infer(node, env$vars_list, env$r_fct)
-    infer(node$left_node, env$vars_list, env$r_fct)
-    infer(node$right_node, env$vars_list, env$r_fct)
+}
+
+type_infer_while_and_if <- function(node, env) {
+
+  if (inherits(node, c("while_node", "if_node"))) {
+    variable <- find_var_lhs(node$condition)
+
+    if (!is.null(variable)) { # e.g. while(TRUE)
+      type <- infer(node$condition, env$vars_list, env$r_fct, env$function_registry)
+      if (is.character(type)) {
+        node$error <- type
+      }
+      else {
+
+        if (inherits(env$vars_list[[variable]], "unknown_type")) {
+          env$vars_list[[variable]] <- type
+        }
+        else if (inherits(env$vars_list[[variable]], "type_node")) {
+          type <- common_type(env$vars_list[[variable]], type)
+          if (is.character(type)) {
+            node$error <- type
+          } else if (!env$vars_list[[variable]]$type_dcl) {
+            type <- type |> flatten_type()
+            env$vars_list[[variable]] <- type
+          }
+        }
+        else if (inherits(env$vars_list[[variable]], "fn_node")) {
+          node$error <- sprintf("The variable %s is marked as function and cannot be used in this context", variable)
+        }
+      }
+    }
+
+  }
+
+}
+
+type_infer_binary_node <- function(node, env) {
+  if (inherits(node, "binary_node") && !(node$operator %within% c("=", "<-"))) {
+    infer(node, env$vars_list, env$r_fct, env$function_registry)
+    infer(node$left_node, env$vars_list, env$r_fct, env$function_registry)
+    infer(node$right_node, env$vars_list, env$r_fct, env$function_registry)
     if (node$operator %in% c("[", "[[", "at")) {
       variable <- find_var_lhs(node$left_node)
       if (!is.null(variable) && variable != "") {
-        if (!env$vars_list[[variable]]$type_dcl && !env$vars_list[[variable]]$fct_input) {
-          if (env$vars_list[[variable]]$data_struct == "scalar") {
-            env$vars_list[[variable]]$data_struct <- "vector"
+
+        if (inherits(env$vars_list[[variable]], "unknown_type")) {
+          node$error <- sprintf("You tried to subset the uninitialzed variable %s", variable)
+        }
+        else if (inherits(env$vars_list[[variable]], "type_node")) {
+          if (!env$vars_list[[variable]]$type_dcl && !env$vars_list[[variable]]$fct_input) {
+            if (env$vars_list[[variable]]$data_struct == "scalar") {
+              env$vars_list[[variable]]$data_struct <- "vector"
+            }
           }
+        }
+        else if (inherits(env$vars_list[[variable]], "fn_node")) {
+          node$error <- sprintf("You tried to subset the function %s", variable)
         }
       }
     }
   }
-  else if (inherits(node, "unary_node")) {
-    infer(node, env$vars_list, env$r_fct)
-    infer(node$obj, env$vars_list, env$r_fct)
-  }
-  else if (inherits(node, "nullary_node")) {
-    infer(node, env$vars_list, env$r_fct)
-  }
-  else if (inherits(node, "function_node")) {
-    infer(node, env$vars_list, env$r_fct)
-    lapply(node$args, function(arg) {
-      infer(arg, env$vars_list, env$r_fct)
-    })
-    if (node$operator %in% c("[", "[[", "at")) {
-      variable <- find_var_lhs(node$args[[1L]])
-      if (!is.null(variable) && variable != "") {
-        if (!env$vars_list[[variable]]$type_dcl && !env$vars_list[[variable]]$fct_input) {
+}
 
+type_infer_function_subsetting <- function(node, env) {
+  if (node$operator %in% c("[", "[[", "at")) {
+    variable <- find_var_lhs(node$args[[1L]])
+
+    if (!is.null(variable) && variable != "") {
+
+      if (inherits(env$vars_list[[variable]], "unknown_type")) {
+        node$error <- sprintf("You tried to subset the uninitialzed variable %s", variable)
+      }
+      else if (inherits(env$vars_list[[variable]], "type_node")) {
+        if (!env$vars_list[[variable]]$type_dcl && !env$vars_list[[variable]]$fct_input) {
           if (env$vars_list[[variable]]$data_struct %in% c("scalar", "vector", "matrix", "vec", "mat")) {
             if (length(node$args) == 3L) {
               env$vars_list[[variable]]$data_struct <- "matrix"
@@ -349,15 +451,42 @@ type_infer_action <- function(node, env) {
               env$vars_list[[variable]]$data_struct <- "array"
             }
           }
-
         }
       }
+      else if (inherits(env$vars_list[[variable]], "fn_node")) {
+        node$error <- sprintf("You tried to subset the function %s", variable)
+      }
+
     }
   }
 }
+
+type_infer_action <- function(node, env) {
+  handle_type_dcl(node, env)
+  type_infer_assignment(node, env)
+  type_infer_for_node(node, env)
+  type_infer_while_and_if(node, env)
+  type_infer_binary_node(node, env)
+
+  if (inherits(node, "unary_node")) {
+    infer(node, env$vars_list, env$r_fct, env$function_registry)
+    infer(node$obj, env$vars_list, env$r_fct, env$function_registry)
+  }
+  else if (inherits(node, "nullary_node")) {
+    infer(node, env$vars_list, env$r_fct, env$function_registry)
+  }
+  else if (inherits(node, "function_node")) {
+    infer(node, env$vars_list, env$r_fct, env$function_registry)
+    lapply(node$args, function(arg) {
+      infer(arg, env$vars_list, env$r_fct, env$function_registry)
+    })
+    type_infer_function_subsetting(node, env)
+  }
+}
+
 type_infer_return_action <- function(node, env) {
   if (inherits(node, "unary_node") && node$operator == "return") {
-    type <- infer(node$obj, env$vars_list, env$r_fct)
+    type <- infer(node$obj, env$vars_list, env$r_fct, env$function_registry)
     if (is.character(type)) {
       node$error <- type
     } else {
@@ -370,18 +499,26 @@ type_infer_return_action <- function(node, env) {
   }
 }
 
-are_vars_init <- function(type) {
+are_vars_init <- function(type, name = "") {
   if (!inherits(type, "R6")) {
     return()
   }
-  if (is.null(type$base_type) || is.null(type$data_struct)) {
-    stop(sprintf("Found uninitialzed variable: %s", type$name))
+  if (inherits(type, "unknown_type")) {
+    stop(sprintf("Found uninitialzed variable: %s", name))
+  }
+  else if (inherits(type, "fn_node")) {
+    warning(sprintf("Found function %s used as 'normal' variable", name))
+  }
+  else if (inherits(type, "type_node")) {
+    if (is.null(type$base_type) || is.null(type$data_struct)) {
+      stop(sprintf("Found uninitialzed variable: %s", type$name))
+    }
   }
 }
 
 type_list_checks <- function(l) {
   lapply(l, function(var) {
-    if (any(var$base_type == c("NA", "NaN", "Inf"))) { # TODO: NaN should be removed.
+    if (any(var$base_type == c("NA", "NaN", "Inf"))) {
       stop(sprintf("Found unallowed base type %s, for the variable %s", var$base_type, var$name))
     }
   })
