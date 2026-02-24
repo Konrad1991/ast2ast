@@ -1,28 +1,29 @@
 trash <- list.files("./R", full.names = TRUE) |> lapply(source)
 
-f <- function(a) {
-  g <- fn(
-    f_args = function(obj) obj |> type(borrow_vec(double)) |> ref(),
-    return_value = type(int),
-    block = function(obj) {
-      obj <- c(4, 4, 4)
-      return(1L)
+f <- function() {
+  foo <- fn(
+    args_f = function(a) a |> type(int),
+    return_value = type(logical),
+    block = function(a) {
+      return(TRUE)
     }
   )
-return(g(a))
+  bar <- fn(
+    args_f = function(a) a |> type(int),
+    return_value = type(logical),
+    block = function(a) {
+      return(FALSE)
+    }
+  )
+  if (a[[1L]] == 1L) {
+    bar <- fn(
+      args_f = function(a) a |> type(vec(int)),
+      return_value = type(vec(int)),
+      block = function(a) {
+        return(a + a)
+      }
+    )
+  }
 }
-f_args <- function(a) {
-  a |> type(borrow_vec(double))
-}
-fcpp <- translate(f, f_args, verbose = TRUE)
-a <- c(1, 2, 3)
-fcpp(a)
-a
-
-rmarkdown::render("vignettes/DetailedDocumentation.Rmd",
-  output_format = "html_document", output_dir = "./development/"
-)
-
-rmarkdown::render("vignettes/InformationForPackageAuthors.Rmd",
-  output_format = "html_document", output_dir = "./development/"
-)
+fcpp <- translate(f, verbose = TRUE)
+fcpp()

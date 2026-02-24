@@ -29,6 +29,27 @@ check_error <- function(f, r_fct, real_type, error_message) {
 }
 
 # --- lambda functions ----------------------------------------------------
+# Mutual recursion
+f <- function() {
+  is_even <- fn(
+    args_f = function(a) a |> type(int),
+    return_value = type(logical),
+    block = function(a) {
+      if (a == 0L) return(TRUE) else return(is_odd(a - 1L))
+    }
+  )
+  is_odd <- fn(
+    args_f = function(a) a |> type(int),
+    return_value = type(logical),
+    block = function(a) {
+      if (a == 0L) return(FALSE) else return(is_even(a - 1L))
+    }
+  )
+  return(c(is_even(10L), is_odd(9L), is_even(3L), is_odd(4L)))
+}
+fcpp <- ast2ast::translate(f)
+expect_equal(c(fcpp()), c(TRUE, TRUE, FALSE, FALSE))
+
 # Update of function registry
 f <- function() {
 
