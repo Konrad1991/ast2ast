@@ -287,6 +287,7 @@ type_infer_assignment <- function(node, env) {
           type <- type$clone()
           type$copy_or_ref <- "copy"
           type$fct_input <- FALSE
+          type$iterator <- FALSE # Dont propagate iterator
           type$const_or_mut <- "mutable"
           type$name <- variable
         }
