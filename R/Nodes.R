@@ -620,13 +620,11 @@ fn_node <- R6::R6Class(
     },
     stringify_declaration = function(indent = "", r_fct) {
       if (length(self$vars_types_list) >= 1L) {
-        if (length(self$vars_types_list) >= 1L) {
-          args <- lapply(self$vars_types_list, \(x) x$stringify_signature(r_fct = FALSE)) |> unlist() |> c()
-          args <- args[args != ""]
-          args <- paste0(args, collapse = ", ")
-        } else {
-          args <- ""
-        }
+        args <- lapply(self$vars_types_list, \(x) x$stringify_signature(r_fct = FALSE)) |> unlist() |> c()
+        args <- args[args != ""]
+        args <- paste0(args, collapse = ", ")
+      } else {
+        args <- ""
       }
       ret_type <- self$return_type$generate_type("")
       paste0(indent, sprintf("std::function<%s(%s)>%s;\n", ret_type, args, self$fct_name))
@@ -672,7 +670,7 @@ fn_node <- R6::R6Class(
       if (inherits(e, "list")) e <- unlist(e) |> c()
       e <- e[e != ""]
       if (length(e) == 0) return("")
-      combine_strings(e, "\n") |> paste0(indent, .)
+      combine_strings(e, "\n")
     },
 
     stringify_error_line = function(indent = "") {

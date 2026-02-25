@@ -70,6 +70,49 @@ expected_to_find <- function(AST, fcts_expected, literals_expected, vars_expecte
   expect_true(all(checks))
 }
 
+# --- lambda functions -----------------------------------------------------
+# Wrong declared return value
+f <- function() {
+  fct <- fn(
+    args_f = function(a) {
+      a |> type(double)
+    },
+    return_value = type(invalid),
+    block = function(a) {}
+  )
+}
+error <- try(ast2ast::translate(f), silent = TRUE)
+expect_equal(
+  attributes(error)[["condition"]]$message,
+  "\nfct <- [&](  ) -> NULL {\n\n\n  }\nWrong return type: Found unsupported base type: invalid"
+)
+# lambda function not assigned to variable
+f <- function() {
+  fn(
+    args_f = function(a) {
+      a |> type(double)
+    },
+    return_value = type(void),
+    block = function(a) {}
+  )
+}
+error <- try(ast2ast::translate(f), silent = TRUE)
+expect_equal(
+  attributes(error)[["condition"]]$message,
+  "\nauto fn_ = [&](  ) -> void { ... };\nYou have to assign functions (fn) to variables\nYou have to assign functions (fn) to variables"
+)
+# Everything empty works
+f <- function() {
+  fct <- fn(
+    args_f = function() {},
+    return_value = type(void),
+    block = function() {}
+  )
+}
+AST <- ast_of(f)
+expect_node(AST$block[[1]], "binary_node", context = "{")
+expect_node(AST$block[[1]]$right_node, "fn_node", context = "<-")
+
 # --- smoke: empty & simple bodies -----------------------------------------
 f <- function() { a <- 1 }
 AST <- ast_of(f)

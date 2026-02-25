@@ -55,11 +55,14 @@ create_ast <- function(code, context, r_fct, function_registry) {
       return_type <- type_node$new(return_type, FALSE, r_fct)
       return_type$init_within_fct()
       return_type$check()
+      if (return_type$base_type != "void" && err_found(return_type$error)) {
+        fn$error <- sprintf("Wrong return type: %s", return_type$error)
+      }
       fn$return_type <- return_type
       fn$AST <- code[[4]] |> wrap_in_block()
       fn$context <- context
       if (!(context %in% c("<-", "="))) {
-        stop("You have to assign functions (fn) to variables")
+        fn$error <- "You have to assign functions (fn) to variables"
       }
       return(fn)
     } else {
