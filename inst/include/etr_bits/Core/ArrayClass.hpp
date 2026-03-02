@@ -351,7 +351,7 @@ template<typename T> requires (IsArithV<T> || IsVariable<T>) struct Array<T, Bor
 #endif
 
   template<typename...Args>
-  Array(Args...) {
+  Array(Args... args) {
     ass<"Constructor not supported">(sizeof(T) == 0);
   }
   // ======================= assignments =================================================

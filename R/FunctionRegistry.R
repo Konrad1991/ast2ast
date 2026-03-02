@@ -416,6 +416,9 @@ function_registry_global$add(
     if (inherits(type, "type_node") && type$iterator) {
       node$error <- "You cannot assign to an index variable"
     }
+    if (inherits(type, "type_node") && type$const_or_mut == "const") {
+      node$error <- "You cannot assign to a constant variable"
+    }
   },
   group = "binary_node", cpp_name = "="
 )
@@ -432,6 +435,9 @@ function_registry_global$add(
     type <- vars_types_list[[var_name]]
     if (inherits(type, "type_node") && type$iterator) {
       node$error <- "You cannot assign to an index variable"
+    }
+    if (inherits(type, "type_node") && type$const_or_mut == "const") {
+      node$error <- "You cannot assign to a constant variable"
     }
   },
   group = "binary_node", cpp_name = "="

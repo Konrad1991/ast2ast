@@ -338,7 +338,7 @@ check_operator <- function(node, function_registry) {
 
 unallowed_signs <- function(name) {
   unallowed <- c(
-    # NOTE: SEXP cannot be part of the name.
+    # SEXP cannot be part of the name.
     # Thereby, one can easily create argument names nameSEXP and assign it to name
     # - the types of ast2ast: logical, integer, double, int cannot be used as names.
     # Thereby, all.vars can directly be used to find all variables
@@ -360,7 +360,7 @@ unallowed_signs <- function(name) {
   }
   if (name %within%
     c(permitted_base_types(), permitted_data_structs(FALSE), "T", "F")) {
-    # NOTE: added T and F to prevent usage of T and F as variable.
+    # added T and F to prevent usage of T and F as variable.
     return(paste0(
       "Invalid variable name (reserved internally) ",
       name
