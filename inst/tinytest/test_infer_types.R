@@ -335,7 +335,7 @@ check_type_f_arg(types$f, "double", "borrow_mat", "mutable", "ref")
 check_type_f_arg(types$g, "logical", "borrow_array", "mutable", "ref")
 check_type_f_arg(types$h, "integer", "borrow_array", "mutable", "ref")
 check_type_f_arg(types$i, "double", "borrow_array", "mutable", "ref")
-check_type_f_arg(types$inner, "integer", "vector", "mutable", "copy", FALSE)
+check_type_f_arg(types$inner, "integer", "vec", "mutable", "copy", FALSE)
 
 f <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
   return(a)

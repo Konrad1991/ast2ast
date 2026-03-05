@@ -62,6 +62,8 @@ template <typename T, typename BorrowTrait> struct Borrow {
       capacity = static_cast<std::size_t>(sz);
       p = INTEGER(s);
       allocated = true;
+    } else if constexpr (IS<value_type, Logical>) {
+      ass<"You cannot borrow logical objects">(false);
     } else {
       static_assert(sizeof(T) == 0, "Unsupported type found");
     }

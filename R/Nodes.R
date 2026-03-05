@@ -1,7 +1,6 @@
 variable_node <- R6::R6Class(
   "variable_node",
   public = list(
-    id = NULL,
     name = NULL,
     error = NULL,
     context = NULL,
@@ -17,7 +16,7 @@ variable_node <- R6::R6Class(
       return(paste0(indent, self$error))
     },
     print = function() {
-      cat("Id:", self$id, "Variable:", deparse(self$name), "\n")
+      cat("Variable:", deparse(self$name), "\n")
     }
   )
 )
@@ -25,7 +24,6 @@ variable_node <- R6::R6Class(
 literal_node <- R6::R6Class(
   "literal_node",
   public = list(
-    id = NULL,
     name = NULL,
     literal_type = NULL,
     error = NULL,
@@ -44,7 +42,7 @@ literal_node <- R6::R6Class(
       return(paste0(indent, self$error))
     },
     print = function() {
-      cat("Id:", self$id, self$stringify())
+      cat(self$stringify())
     }
   )
 )
@@ -59,12 +57,12 @@ handle_var <- function(code, context) {
   } else
   if (is_symbol(code) && context != "{") {
     if (context == "[" && deparse(code) == "") {
-      # NOTE: empty indexing --> change all entries
+      # empty indexing --> change all entries
       ln <- literal_node$new(TRUE)
       ln$context <- context
       return(ln)
     }
-    # NOTE: dont know why but short forms T and F
+    # dont know why but short forms T and F
     # are returned as symbols and not as logicals
     if (deparse(code) == "T") {
       ln <- literal_node$new(TRUE)
@@ -87,7 +85,6 @@ handle_var <- function(code, context) {
 binary_node <- R6::R6Class(
   "binary_node",
   public = list(
-    id = NULL,
     operator = NULL,
     left_node = NULL,
     right_node = NULL,
@@ -182,7 +179,7 @@ binary_node <- R6::R6Class(
       self$stringify()
     },
     print = function() {
-      cat("Id:", self$id, self$stringify())
+      cat(self$stringify())
     }
   )
 )
@@ -190,7 +187,6 @@ binary_node <- R6::R6Class(
 unary_node <- R6::R6Class(
   "unary_node",
   public = list(
-    id = NULL,
     operator = NULL,
     obj = NULL,
     error = NULL,
@@ -255,7 +251,7 @@ unary_node <- R6::R6Class(
       self$stringify()
     },
     print = function() {
-      cat("Id: ", self$id, "\n", self$stringify(), "\n")
+      cat(self$stringify(), "\n")
     }
   )
 )
@@ -263,7 +259,6 @@ unary_node <- R6::R6Class(
 nullary_node <- R6::R6Class(
   "nullary_node",
   public = list(
-    id = NULL,
     operator = NULL,
     error = NULL,
     context = NULL,
@@ -298,7 +293,7 @@ nullary_node <- R6::R6Class(
       self$stringify()
     },
     print = function() {
-      cat("Id: ", self$id, "\n", self$stringify(), "\n")
+      cat(self$stringify(), "\n")
     }
   )
 )
@@ -307,7 +302,6 @@ nullary_node <- R6::R6Class(
 function_node <- R6::R6Class(
   "function_node",
   public = list(
-    id = NULL,
     operator = NULL,
     error = NULL,
     context = NULL,
@@ -369,7 +363,7 @@ function_node <- R6::R6Class(
       self$stringify()
     },
     print = function() {
-      cat("Id: ", self$id, "\n", self$stringify(), "\n")
+      cat(self$stringify(), "\n")
     }
   )
 )
@@ -377,7 +371,6 @@ function_node <- R6::R6Class(
 if_node <- R6::R6Class(
   "if_node",
   public = list(
-    id = NULL,
     condition = NULL,
     true_node = NULL,
     else_if_nodes = NULL,
@@ -499,7 +492,7 @@ if_node <- R6::R6Class(
       s
     },
     print = function() {
-      cat("Id:", self$id, "if")
+      cat("if")
     }
   )
 )
@@ -540,7 +533,6 @@ handle_if <- function(code, context, r_fct, i_node, function_registry) {
 block_node <- R6::R6Class(
   "block_node",
   public = list(
-    id = NULL,
     block = NULL,
     error = NULL,
     context = NULL,
@@ -587,7 +579,7 @@ block_node <- R6::R6Class(
       return(combine_strings(res, "\n\n"))
     },
     print = function() {
-      cat("Id:", self$id, "{")
+      cat("{")
     }
   )
 )
@@ -595,7 +587,6 @@ block_node <- R6::R6Class(
 for_node <- R6::R6Class(
   "for_node",
   public = list(
-    id = NULL,
     error = NULL,
     i = NULL,
     seq = NULL,
@@ -672,7 +663,6 @@ for_node <- R6::R6Class(
 while_node <- R6::R6Class(
   "while_node",
   public = list(
-    id = NULL,
     error = NULL,
     condition = NULL,
     block = NULL,
@@ -726,7 +716,6 @@ while_node <- R6::R6Class(
 repeat_node <- R6::R6Class(
   "repeat_node",
   public = list(
-    id = NULL,
     error = NULL,
     block = NULL,
     context = NULL,
@@ -765,13 +754,14 @@ repeat_node <- R6::R6Class(
 
 unknown_type <- R6::R6Class(
   "unknown_type",
-  public = list()
+  public = list(
+    initialize = function() {}
+  )
 )
 
 fn_node <- R6::R6Class(
   "fn_node",
   public = list(
-    id = NULL,
     error = NULL,
     context = NULL,
 
@@ -852,7 +842,6 @@ fn_node <- R6::R6Class(
     stringify_error_line = function(indent = "") {
       header <- ""
       name <- self$fct_name
-      if (is.null(name) || name == "") name <- paste0("fn_", self$id)
       args <- character()
       if (!is.null(self$args_f) && inherits(self$args_f, "list")) {
         normal_vars <- self$vars_types_list[sapply(self$vars_types_list, \(x) inherits(x, "type_node"))]
@@ -878,7 +867,6 @@ fn_node <- R6::R6Class(
 type_node <- R6::R6Class(
   "type_node",
   public = list(
-    id = NULL,
     name = NULL,
     tree = NULL,
     error = NULL,
@@ -1018,9 +1006,16 @@ type_node <- R6::R6Class(
       }
     },
 
+    check_borrow_ref = function() {
+      if (self$r_fct && grepl("borrow_", self$data_struct) && self$copy_or_ref != "ref") {
+        self$error <- c(self$error, "You have to add ref() to the type declaration if the R object should be borrowed")
+      }
+    },
+
     check = function() {
       self$check_allowed_base_types()
       self$check_allowed_data_structs()
+      self$check_borrow_ref()
     },
 
     stringify = function(indent = "") {
@@ -1055,6 +1050,9 @@ type_node <- R6::R6Class(
           data_struct <- paste0("borrow_", self$data_struct)
         }
         type <- convert_types_to_etr_types(self$base_type, data_struct, self$r_fct, self$real_type, indent)
+        if (self$const_or_mut == "const") {
+          type <- paste0("const ", type)
+        }
 
         if (data_struct == "scalar") {
           conv_base_type <- convert_base_type(self$base_type, self$real_type)

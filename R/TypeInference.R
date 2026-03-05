@@ -36,6 +36,7 @@ parse_input_args <- function(f, f_args, r_fct) {
   }
   l <- lapply(args, function(obj) {
     t <- type_node$new(obj, TRUE, r_fct)
+    t$type_dcl <- TRUE
     t$init()
     t$check()
     t
@@ -138,6 +139,12 @@ infer <- function(node, vars_list, r_fct, function_registry) {
     t <- vars_list[[name]]
     t <- flatten_type(t)
     are_vars_init(t, name)
+    if (inherits(t, "type_node")) {
+      if (grepl("borrow", t$data_struct)) { # Don't propagate borrow
+        t <- t$clone(deep = TRUE)
+        t$data_struct <- gsub("borrow_", "", t$data_struct)
+      }
+    }
     node$internal_type <- t
     return(t)
   } else if (inherits(node, c("unary_node", "binary_node", "function_node"))) {
@@ -188,6 +195,7 @@ find_var_lhs <- function(node) {
 }
 
 common_type <- function(type_old, type_new) {
+  type_old <- type_old$clone(deep = TRUE)
   if (is.null(type_old$base_type) && type_new$iterator) {
     return(type_new)
   } else if (type_old$iterator && type_new$iterator) {

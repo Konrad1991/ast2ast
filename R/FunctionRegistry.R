@@ -404,9 +404,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "=", num_args = 2, arg_names = c(NA, NA),
-  infer_fct = function(node, vars_list, r_fct, function_registry) {
-    return(sprintf("Found assignment within an expression: %s", node$stringify()))
-  },
+  infer_fct = function(node, vars_list, r_fct, function_registry) {},
   check_fct = function(node, vars_types_list, r_fct, real_type) {
     if (!(node$context %within% c("<-", "=", "{"))) {
       node$error <- "assignments cannot be done within another function"
@@ -424,9 +422,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "<-", num_args = 2, arg_names = c(NA, NA),
-  infer_fct = function(node, vars_list, r_fct, function_registry) {
-    return(sprintf("Found assignment within an expression: %s", node$stringify()))
-  },
+  infer_fct = function(node, vars_list, r_fct, function_registry) {},
   check_fct = function(node, vars_types_list, r_fct, real_type) {
     if (!(node$context %within% c("<-", "=", "{"))) {
       node$error <- "assignments cannot be done within another function"
