@@ -189,6 +189,7 @@ remove_double_quotes <- function(s) {
 
 compile <- function(fct_code, r_fct,
                          verbose, name_f) {
+
   fct <- fct_code
   fct_ret <- NULL
 

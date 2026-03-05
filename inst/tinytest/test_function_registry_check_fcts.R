@@ -35,6 +35,28 @@ test_checks(
   "i = 3.0\nYou cannot assign to an index variable"
 )
 
+f <- function(a) {
+  a <- 100
+}
+args_fct <- function(a) {
+  a |> type(int) |> const()
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a <- 100.0\nYou cannot assign to a constant variable"
+)
+
+f <- function(a) {
+  a = 100
+}
+args_fct <- function(a) {
+  a |> type(int) |> const()
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a = 100.0\nYou cannot assign to a constant variable"
+)
+
 # --- subsetting array ----------------------------------------------------------
 f <- function() {
   array(0, c(2, 2))[NA, NA]

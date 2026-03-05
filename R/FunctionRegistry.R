@@ -404,9 +404,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "=", num_args = 2, arg_names = c(NA, NA),
-  infer_fct = function(node, vars_list, r_fct, function_registry) {
-    return(sprintf("Found assignment within an expression: %s", node$stringify()))
-  },
+  infer_fct = function(node, vars_list, r_fct, function_registry) {},
   check_fct = function(node, vars_types_list, r_fct, real_type) {
     if (!(node$context %within% c("<-", "=", "{"))) {
       node$error <- "assignments cannot be done within another function"
@@ -415,15 +413,16 @@ function_registry_global$add(
     type <- vars_types_list[[var_name]]
     if (inherits(type, "type_node") && type$iterator) {
       node$error <- "You cannot assign to an index variable"
+    }
+    if (inherits(type, "type_node") && type$const_or_mut == "const") {
+      node$error <- "You cannot assign to a constant variable"
     }
   },
   group = "binary_node", cpp_name = "="
 )
 function_registry_global$add(
   name = "<-", num_args = 2, arg_names = c(NA, NA),
-  infer_fct = function(node, vars_list, r_fct, function_registry) {
-    return(sprintf("Found assignment within an expression: %s", node$stringify()))
-  },
+  infer_fct = function(node, vars_list, r_fct, function_registry) {},
   check_fct = function(node, vars_types_list, r_fct, real_type) {
     if (!(node$context %within% c("<-", "=", "{"))) {
       node$error <- "assignments cannot be done within another function"
@@ -432,6 +431,9 @@ function_registry_global$add(
     type <- vars_types_list[[var_name]]
     if (inherits(type, "type_node") && type$iterator) {
       node$error <- "You cannot assign to an index variable"
+    }
+    if (inherits(type, "type_node") && type$const_or_mut == "const") {
+      node$error <- "You cannot assign to a constant variable"
     }
   },
   group = "binary_node", cpp_name = "="

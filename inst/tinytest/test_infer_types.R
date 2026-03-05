@@ -32,14 +32,14 @@ check_error <- function(f, r_fct, real_type, error_message) {
 # Mutual recursion
 f <- function() {
   is_even <- fn(
-    args_f = function(a) a |> type(int),
+    args_f = function(a) a |> type(int) |> const(),
     return_value = type(logical),
     block = function(a) {
       if (a == 0L) return(TRUE) else return(is_odd(a - 1L))
     }
   )
   is_odd <- fn(
-    args_f = function(a) a |> type(int),
+    args_f = function(a) a |> type(int) |> const(),
     return_value = type(logical),
     block = function(a) {
       if (a == 0L) return(FALSE) else return(is_even(a - 1L))
@@ -138,7 +138,7 @@ check_error(f, TRUE, "etr::Double",
 # Recurion works
 f <- function() {
   factorial <- fn(
-    args_f = function(a) a |> type(int),
+    args_f = function(a) a |> type(int) |> const(),
     return_value = type(int),
     block = function(a) {
       if (a == 1L) return(a) else return(a*factorial(a - 1L))
@@ -335,7 +335,7 @@ check_type_f_arg(types$f, "double", "borrow_mat", "mutable", "ref")
 check_type_f_arg(types$g, "logical", "borrow_array", "mutable", "ref")
 check_type_f_arg(types$h, "integer", "borrow_array", "mutable", "ref")
 check_type_f_arg(types$i, "double", "borrow_array", "mutable", "ref")
-check_type_f_arg(types$inner, "integer", "vector", "mutable", "copy", FALSE)
+check_type_f_arg(types$inner, "integer", "vec", "mutable", "copy", FALSE)
 
 f <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
   return(a)

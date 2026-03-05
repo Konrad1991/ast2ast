@@ -175,13 +175,26 @@ action_update_function_registry <- function(node, function_registry) {
     node$internal_type <- ret_type
     return(ret_type)
   }
-  check <- function(node, is_type, should_type) {
-    name <- node$operator
+  check <- function(node, vars_types_list, is_type_node, should_type, index) {
+    is_type <- is_type_node$internal_type
+    if (inherits(is_type_node, "variable_node")) {
+      is_type <- vars_types_list[[is_type_node$name]]
+    }
     if (!same_base_type(is_type$base_type, should_type$base_type)) {
-      node$error <- sprintf("The argument to function %s has not the correct type. Found %s but %s is required", name, is_type$base_type, should_type$base_type)
+      node$error <- sprintf("The argument Nr. %s to function %s has not the correct type. Found %s but %s is required", index, name, is_type$base_type, should_type$base_type)
     }
     if (!same_data_struct(is_type$data_struct, should_type$data_struct)) {
-      node$error <- sprintf("The argument to function %s has not the correct data structure. Found %s but %s is required", name, is_type$data_struct, should_type$data_struct)
+      node$error <- sprintf("The argument Nr. %s to function %s has not the correct data structure. Found %s but %s is required", index, name, is_type$data_struct, should_type$data_struct)
+    }
+  }
+  const_or_mut_check <- function(node, should_type, index, name) {
+    is_variable <- inherits(node, "variable_node")
+    mut_arg <- should_type$const_or_mut == "mutable"
+    if (!is_variable && mut_arg) {
+      node$error <- sprintf(
+        "Argument Nr. %s to function %s accepts only variables. If you want to use an expression (e.g. variable + variable) you have to declare the argument as const",
+        index, name
+      )
     }
   }
   if (node_type == "nullary_node") {
@@ -189,19 +202,23 @@ action_update_function_registry <- function(node, function_registry) {
   }
   else if (node_type == "unary_node") {
     check_fct <- function(node, vars_types_list, r_fct, real_type) {
-      check(node, node$obj$internal_type, fn$args_f[[1]])
+      check(node, vars_types_list, node$obj, fn$args_f[[1]], 1L)
+      const_or_mut_check(node$obj, fn$args_f[[1]], 1L, node$operator)
     }
   }
   else if (node_type == "binary_node") {
     check_fct <- function(node, vars_types_list, r_fct, real_type) {
-      check(node, node$left_node$internal_type, fn$args_f[[1]])
-      check(node, node$right_node$internal_type, fn$args_f[[2]])
+      check(node, vars_types_list, node$left_node, fn$args_f[[1]], 1L)
+      check(node, vars_types_list, node$right_node, fn$args_f[[2]], 2L)
+      const_or_mut_check(node$left_node, fn$args_f[[1]], 1L, node$operator)
+      const_or_mut_check(node$right_node, fn$args_f[[2]], 2L, node$operator)
     }
   }
   else if (node_type == "function_node") {
     check_fct <- function(node, vars_types_list, r_fct, real_type) {
       for (i in seq_len(length(node$args))) {
-        check(node, node$args[[i]]$internal_type, fn$args_f[[i]])
+        check(node, vars_types_list, node$args[[i]], fn$args_f[[i]], i)
+        const_or_mut_check(node$args[[i]], fn$args_f[[i]], i, node$operator)
       }
     }
   }
@@ -325,7 +342,7 @@ check_operator <- function(node, function_registry) {
 
 unallowed_signs <- function(name) {
   unallowed <- c(
-    # NOTE: SEXP cannot be part of the name.
+    # SEXP cannot be part of the name.
     # Thereby, one can easily create argument names nameSEXP and assign it to name
     # - the types of ast2ast: logical, integer, double, int cannot be used as names.
     # Thereby, all.vars can directly be used to find all variables
@@ -347,7 +364,7 @@ unallowed_signs <- function(name) {
   }
   if (name %within%
     c(permitted_base_types(), permitted_data_structs(FALSE), "T", "F")) {
-    # NOTE: added T and F to prevent usage of T and F as variable.
+    # added T and F to prevent usage of T and F as variable.
     return(paste0(
       "Invalid variable name (reserved internally) ",
       name
