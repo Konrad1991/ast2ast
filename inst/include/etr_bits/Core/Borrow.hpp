@@ -18,6 +18,10 @@ template <typename T, typename BorrowTrait> struct Borrow {
   // T can thus be only Logical, Integer or Double!
   // But a raw C pointer is borrowed of bool*, int* or double*
   from_ast_scalar_t<T> *p = nullptr;
+  // Optional NA flags. Null when the borrowed memory has no parallel NA
+  // array (e.g. SEXP-backed Borrow, where R encodes NA via sentinel values
+  // inside `p` itself, not in a separate buffer).
+  bool *p_na = nullptr;
 
   std::size_t size() const noexcept { return allocated ? sz : 0; }
 
@@ -28,10 +32,12 @@ template <typename T, typename BorrowTrait> struct Borrow {
   Borrow(const Borrow<T> &other)
     : sz(other.sz), capacity(other.capacity), allocated(other.allocated) {
     p = other.p;
+    p_na = other.p_na;
   }
   // Copy assignment
   Borrow &operator=(const Borrow<T> &other) {
     p = other.p;
+    p_na = other.p_na;
     sz = other.sz;
     capacity = other.capacity;
     allocated = other.allocated;
@@ -75,30 +81,31 @@ template <typename T, typename BorrowTrait> struct Borrow {
 
   // Raw C++ pointer
   template<typename T2>
-  void init(T2 *p_, std::size_t sz_) {
+  void init(T2 *p_, std::size_t sz_, bool *na_p_ = nullptr) {
     ass<"null pointer with positive size">(p_ != nullptr || sz_ == 0);
-    this->p = p_;
+    this->p    = p_;
+    this->p_na = na_p_;
     this->sz = sz_;
     capacity = sz;
     this->allocated = true;
   }
   // T is Scalar Type
   template<typename T2> requires (IS<to_ast_scalar_t<T2>, T> && IsArithV<T>)
-  Borrow(T2 *p_, std::size_t sz_) {
-    init(p_, sz_);
+  Borrow(T2 *p_, std::size_t sz_, bool *na_p_ = nullptr) {
+    init(p_, sz_, na_p_);
   }
   template<typename T2> requires (IS<to_ast_scalar_t<T2>, T> && IsArithV<T>)
-  Borrow(T2 *p_, int sz_) {
-    init(p_, sz_);
+  Borrow(T2 *p_, int sz_, bool *na_p_ = nullptr) {
+    init(p_, sz_, na_p_);
   }
   // T is Variable<ScalarType>
   template<typename T2> requires (IS<to_ast_scalar_t<T2>, ExtractedTypeFromVariableData<T>>)
-  Borrow(T2 *p_, std::size_t sz_) {
-    init(p_, sz_);
+  Borrow(T2 *p_, std::size_t sz_, bool *na_p_ = nullptr) {
+    init(p_, sz_, na_p_);
   }
   template<typename T2> requires (IS<to_ast_scalar_t<T2>, ExtractedTypeFromVariableData<T>>)
-  Borrow(T2 *p_, int sz_) {
-    init(p_, sz_);
+  Borrow(T2 *p_, int sz_, bool *na_p_ = nullptr) {
+    init(p_, sz_, na_p_);
   }
 
   ~Borrow() {}
@@ -118,12 +125,19 @@ template <typename T, typename BorrowTrait> struct Borrow {
   value_type get(std::size_t idx) const {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
-    return load(p[idx]);
+    value_type out = load(p[idx]);
+    if constexpr (IsArithV<value_type>) {
+      if (p_na) out.is_na = p_na[idx];
+    }
+    return out;
   }
   void set(std::size_t idx, const value_type& val) {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
     p[idx] = store(val);
+    if constexpr (IsArithV<value_type>) {
+      if (p_na) p_na[idx] = val.is_na;
+    }
   }
 
   template <typename Raw, typename Scalar>
@@ -172,8 +186,10 @@ template <typename BorrowTrait> struct Borrow<Dual, BorrowTrait> {
   std::size_t sz = 0;
   std::size_t capacity = 0;
   bool allocated = false;
-  double *p_val = nullptr; // values
-  double *p_dot = nullptr; // derivatives
+  double *p_val    = nullptr; // values
+  double *p_dot    = nullptr; // derivatives
+  bool   *p_na     = nullptr; // optional NA flags for value
+  bool   *p_na_dot = nullptr; // optional NA flags for derivative
 
   std::size_t size() const noexcept { return allocated ? sz : 0; }
 
@@ -183,13 +199,17 @@ template <typename BorrowTrait> struct Borrow<Dual, BorrowTrait> {
   // Copy constructor
   Borrow(const Borrow<Dual> &other)
     : sz(other.sz), capacity(other.capacity), allocated(other.allocated) {
-    p_val = other.p_val;
-    p_dot = other.p_dot;
+    p_val    = other.p_val;
+    p_dot    = other.p_dot;
+    p_na     = other.p_na;
+    p_na_dot = other.p_na_dot;
   }
   // Copy assignment
   Borrow &operator=(const Borrow<Dual> &other) {
-    p_val = other.p_val;
-    p_dot = other.p_dot;
+    p_val    = other.p_val;
+    p_dot    = other.p_dot;
+    p_na     = other.p_na;
+    p_na_dot = other.p_na_dot;
     sz = other.sz;
     capacity = other.capacity;
     allocated = other.allocated;
@@ -221,19 +241,24 @@ template <typename BorrowTrait> struct Borrow<Dual, BorrowTrait> {
   };
 #endif
 
-  void init(double* val_p_, double* dot_p_, std::size_t sz_) {
+  void init(double* val_p_, double* dot_p_, std::size_t sz_,
+            bool* na_p_ = nullptr, bool* na_dot_p_ = nullptr) {
     ass<"null pointer with positive size">(val_p_ != nullptr || dot_p_ != nullptr || sz_ == 0);
-    p_val = val_p_;
-    p_dot = dot_p_;
+    p_val    = val_p_;
+    p_dot    = dot_p_;
+    p_na     = na_p_;
+    p_na_dot = na_dot_p_;
     sz = sz_;
     capacity = sz;
     allocated = true;
   }
-  Borrow(double *val_p_, double* dot_p_, std::size_t sz_) {
-    init(val_p_, dot_p_, sz_);
+  Borrow(double *val_p_, double* dot_p_, std::size_t sz_,
+         bool* na_p_ = nullptr, bool* na_dot_p_ = nullptr) {
+    init(val_p_, dot_p_, sz_, na_p_, na_dot_p_);
   }
-  Borrow(double *val_p_, double* dot_p_, int sz_) {
-    init(val_p_, dot_p_, sz_);
+  Borrow(double *val_p_, double* dot_p_, int sz_,
+         bool* na_p_ = nullptr, bool* na_dot_p_ = nullptr) {
+    init(val_p_, dot_p_, sz_, na_p_, na_dot_p_);
   }
 
   ~Borrow() {}
@@ -247,23 +272,31 @@ template <typename BorrowTrait> struct Borrow<Dual, BorrowTrait> {
   value_type get(std::size_t idx) const {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
-    return Dual{ p_val[idx], p_dot[idx] };
+    Dual out{ p_val[idx], p_dot[idx] };
+    if (p_na)     out.is_na     = p_na[idx];
+    if (p_na_dot) out.is_na_dot = p_na_dot[idx];
+    return out;
   }
   Double get_dot(std::size_t idx) const {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
-    return Double(p_dot[idx]);
+    Double out(p_dot[idx]);
+    if (p_na_dot) out.is_na = p_na_dot[idx];
+    return out;
   }
   void set(std::size_t idx, const Dual& d) {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
     p_val[idx] = d.val;
     p_dot[idx] = d.dot;
+    if (p_na)     p_na[idx]     = d.is_na;
+    if (p_na_dot) p_na_dot[idx] = d.is_na_dot;
   }
   void set_dot(std::size_t idx, const double& d) {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
     p_dot[idx] = d;
+    if (p_na_dot) p_na_dot[idx] = false;
   }
 
   struct Iterator {

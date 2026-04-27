@@ -355,9 +355,34 @@ b = b;
   }
 }
 
+void test_borrow_na_propagation() {
+  std::vector<double> owner(2, 0.0);
+  bool                owner_na[2] = {false, false};
+
+  Borrow<Double> b(owner.data(), owner.size(), owner_na);
+  b.set(0, Double::NA());
+  b.set(1, Double(3.0).asin());
+  ass<"owner_na[0] is set">(owner_na[0] == true);
+  ass<"owner[0] is NaN">(std::isnan(owner[0]));
+  Double d0 = b.get(0);
+  ass<"get(0).is_na is true">(d0.is_na == true);
+  ass<"get(0).isNA() is true">(d0.isNA());
+  ass<"get(0) does not report isNaN()">(!d0.isNaN()); // NA, not just NaN
+
+  ass<"owner_na[1] is clear">(owner_na[1] == false);
+  ass<"owner[1] is NaN">(std::isnan(owner[1]));
+  Double d1 = b.get(1);
+  ass<"get(1).is_na is false">(d1.is_na == false);
+  ass<"get(1).isNA() is false">(!d1.isNA());
+  ass<"get(1).isNaN() is true">(d1.isNaN());
+
+  ass<"NA and NaN distinguishable via owner_na">(owner_na[0] != owner_na[1]);
+}
+
 // [[Rcpp::export]]
 void test_Borrow() {
   test_borrow_dual();
   test_borrow<Double>();
   test_borrow<Variable<Double>>();
+  test_borrow_na_propagation();
 }

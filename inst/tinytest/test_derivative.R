@@ -133,7 +133,7 @@ f <- function(y, x) {
     seed(x, i)
     y <- x[[1L]] + x[[2L]]*x[[3L]] + x[[1L]]*x[[4L]]*x[[5L]]
     d <- get_dot(y)
-    res[[i]] <- d[[1]]
+    res[[i]] <- d
     unseed(x, i)
   }
   return(res)

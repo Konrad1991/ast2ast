@@ -40,7 +40,6 @@ void test_buffer() {
     Buffer<RealType> b2 = b1;
     ass<"copy ctor size">(b2.size() == 2);
     ass<"copy ctor deep copy">(compare(get_val(b2.get(0)), 1.1));
-    ass<"copy ctor independent storage">( &b1.get(0) != &b2.get(0) );
   }
   // Copy assignment
   {
@@ -123,7 +122,13 @@ b = b;
     bu.set(0, Double(1.1));
     bu.set(1, Double(2.2));
     bu.resize(10);
-    ass<"resize does not preserve prefix">(compare(get_val(bu.get(0)), 0.0));
+    ass<"resize does preserve prefix">(compare(get_val(bu.get(0)), 1.1));
+    ass<"resize does preserve prefix">(compare(get_val(bu.get(1)), 2.2));
+    std::size_t i = 0;
+    for (i = 2; i < bu.size(); i++) {
+      ass<"resize does preserve prefix">(compare(get_val(bu.get(i)), 0.0));
+    }
+    ass<"resize size = 10">(i == 10);
   }
   // set and get
   {

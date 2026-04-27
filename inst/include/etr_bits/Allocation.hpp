@@ -142,7 +142,7 @@ template <typename DataType, typename S, typename E> inline auto colonInternal(S
     ret.dim = std::vector<std::size_t>{length};
     std::size_t counter = 0;
     while (start <= end) {
-      ret.d.p[counter] = start;
+      ret.d.set(counter, DataType(start));
       start++;
       counter++;
     }
@@ -154,7 +154,7 @@ template <typename DataType, typename S, typename E> inline auto colonInternal(S
     ret.dim = std::vector<std::size_t>{length};
     std::size_t counter = 0;
     while (end <= start) {
-      ret.d.p[counter] = start;
+      ret.d.set(counter, DataType(start));
       start--;
       counter++;
     }

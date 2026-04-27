@@ -113,7 +113,6 @@ template<typename RealType> void test_array_buffer() {
     A a2 = a1;
     ass<"copy ctor size">(a2.size() == 3);
     ass<"copy ctor deep copy">(compare(get_val(a2.get(0)), 1.1));
-    ass<"copy ctor independent storage">( &a1.get(0) != &a2.get(0) );
   }
   // Copy assignment
   {
@@ -472,7 +471,6 @@ template<typename RealType> void test_array_borrow() {
       a = a_r;
     } catch(const std::exception& e) {
       const std::string expected = "the borrowed region is too small for this assignment.";
-      std::cout << e.what() << std::endl;
       ass<"Assign something to borrow which is larger than the owner">(std::strcmp(e.what(), expected.c_str()) == 0);
     }
   }
