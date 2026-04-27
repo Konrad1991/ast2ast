@@ -1194,7 +1194,7 @@ function_registry_global$add(
     return(t)
   },
   check_fct = function(node, vars_list, r_fct, real_type) {
-    if (real_type != "etr::Variable<etr::Double>") {
+    if (real_type != "etr::ReverseDouble") {
       node$error <- "deriv can be only used when derivative is set to reverse"
     }
     left_type_node <- infer(node$left_node, vars_list, r_fct, function_registry)

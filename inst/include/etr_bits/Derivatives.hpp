@@ -107,52 +107,68 @@ void jacobian_forward(J& jac, const Fun& fct, Args&&... args) {
   }
 }
 
+// deriv(of, wrt): reverse-mode Jacobian extraction from the live tape.
+// Each TAPE_INTERN.reverse(out_id) zeros all adjoints, seeds adj[out_id]=1,
+// and propagates — yielding one full row of the Jacobian (one output vs. all
+// inputs) per sweep. The tape itself is built during ordinary evaluation
+// before this call; deriv() does not push any new nodes.
+//
+// Required invariant: for an Array<ReverseDouble, ...> argument, .size() and
+// .get(i) must be pure reads of buffer state — they must not push new nodes
+// onto TAPE_INTERN. If they did, the tape would grow between successive
+// reverse() calls, which would (a) shift node indices the previously cached
+// .id values still refer to, and (b) make adj[] reads land in nodes that
+// were not part of the computation we're differentiating. Today
+// Buffer<ReverseDouble> uses the AoS fallback (get(i) returns p[idx], a
+// plain memory read), so the invariant holds. If a future Buffer
+// specialization for ReverseDouble lazily materializes nodes on access,
+// snapshot the ids into a local std::vector<int> before the reverse-sweep
+// loops below.
 template<typename Of, typename Wrt> inline auto deriv(const Of& of, const Wrt& w_inp) {
   using DecayedOf = Decayed<Of>;
   using DecayedWrt = Decayed<Wrt>;
   if constexpr (IsADType<DecayedOf> && IsADType<DecayedWrt>) {
-    const auto w = wrt(w_inp);
-    const auto d = derivatives(of, w);
-    return d[0];
+    Array<Double, Buffer<Double, RBufferTrait>> res(SI{1});
+    res.dim = std::vector<std::size_t>{1};
+    TAPE_INTERN.reverse(of.id);
+    res.set(0, Double(TAPE_INTERN.adj[static_cast<std::size_t>(w_inp.id)]));
+    return res;
   }
   else if constexpr (IsArray<DecayedOf> && IsADType<DecayedWrt>) {
     using DataTypeOf = typename ExtractDataType<DecayedOf>::value_type;
-    static_assert(IsADType<DataTypeOf>, "data type of of has to be Variable<Double>");
+    static_assert(IsADType<DataTypeOf>, "data type of of has to be ReverseDouble");
     Array<Double, Buffer<Double, RBufferTrait>> res(SI{of.size()});
-    res.dim = std::vector<std::size_t>{1};
-    for (std::size_t i = 0; i < res.size(); i++) {
-      const auto w = wrt(w_inp);
-      const auto d = derivatives(of.get(i), w);
-      res.set(i, d[0]);
+    res.dim = std::vector<std::size_t>{of.size()};
+    for (std::size_t j = 0; j < res.size(); j++) {
+      TAPE_INTERN.reverse(of.get(j).id);
+      res.set(j, Double(TAPE_INTERN.adj[static_cast<std::size_t>(w_inp.id)]));
     }
     return res;
   }
   else if constexpr (IsADType<DecayedOf> && IsArray<DecayedWrt>) {
     using DataTypeWrt = typename ExtractDataType<DecayedWrt>::value_type;
-    static_assert(IsADType<DataTypeWrt>, "data type of wrt has to be Variable<Double>");
+    static_assert(IsADType<DataTypeWrt>, "data type of wrt has to be ReverseDouble");
     Array<Double, Buffer<Double, RBufferTrait>> res(SI{w_inp.size()});
     res.dim = std::vector<std::size_t>{w_inp.size()};
+    TAPE_INTERN.reverse(of.id);
     for (std::size_t i = 0; i < res.size(); i++) {
-      const auto w = wrt(w_inp.get(i));
-      const auto d = derivatives(of, w);
-      res.set(i, d[0]);
+      res.set(i, Double(TAPE_INTERN.adj[static_cast<std::size_t>(w_inp.get(i).id)]));
     }
     return res;
   }
   else if constexpr (IsArray<DecayedOf> && IsArray<DecayedWrt>) {
     using DataTypeWrt = typename ExtractDataType<DecayedWrt>::value_type;
-    static_assert(IsADType<DataTypeWrt>, "data type of wrt has to be Variable<Double>");
+    static_assert(IsADType<DataTypeWrt>, "data type of wrt has to be ReverseDouble");
     using DataTypeOf = typename ExtractDataType<DecayedOf>::value_type;
-    static_assert(IsADType<DataTypeOf>, "data type of of has to be Variable<Double>");
+    static_assert(IsADType<DataTypeOf>, "data type of of has to be ReverseDouble");
 
     const std::size_t nrow = of.size();
     const std::size_t ncol = w_inp.size();
     Array<Double, Buffer<Double, RBufferTrait>> res = matrix(Double(0.0), Integer(static_cast<int>(nrow)), Integer(static_cast<int>(ncol)));
-    for (std::size_t i = 0; i < ncol; i++) {
-      const auto w = wrt(w_inp.get(i));
-      for (std::size_t j = 0; j < nrow; j++) {
-        const auto deriv = derivatives(of.get(j), w);
-        res.set(i * nrow + j, deriv[0]);
+    for (std::size_t j = 0; j < nrow; j++) {
+      TAPE_INTERN.reverse(of.get(j).id);
+      for (std::size_t i = 0; i < ncol; i++) {
+        res.set(i * nrow + j, Double(TAPE_INTERN.adj[static_cast<std::size_t>(w_inp.get(i).id)]));
       }
     }
     return res;
@@ -163,16 +179,14 @@ template<std::size_t YIdx, std::size_t XIdx, typename J, typename Fun, typename.
 void jacobian_backward(J& jac, const Fun& fct, Args&&... args) {
   auto bc = make_bound_call<YIdx, XIdx>(fct, args...);
   const auto x = bc.x().get();
-  const auto y = bc.y().get();
-  const std::size_t nrow = y.size();
+  auto res = bc();
+  const std::size_t nrow = res.size();
   const std::size_t ncol = x.size();
   jac = matrix(Double(0.0), Integer(static_cast<int>(nrow)), Integer(static_cast<int>(ncol)));
-  auto res = bc();
-  for (std::size_t i = 0; i < ncol; i++) {
-    const auto w = wrt(x.get(i));
-    for (std::size_t j = 0; j < nrow; j++) {
-      const auto deriv = derivatives(res.get(j), w);
-      jac.set(i * nrow + j, deriv[0]);
+  for (std::size_t j = 0; j < nrow; j++) {
+    TAPE_INTERN.reverse(res.get(j).id);
+    for (std::size_t i = 0; i < ncol; i++) {
+      jac.set(i * nrow + j, Double(TAPE_INTERN.adj[static_cast<std::size_t>(x.get(i).id)]));
     }
   }
 }

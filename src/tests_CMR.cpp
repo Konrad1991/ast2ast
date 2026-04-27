@@ -5,6 +5,7 @@ using namespace etr;
 
 // [[Rcpp::export]]
 void test_cmr() {
+  TAPE_INTERN.clear();
   auto compare = [](double l, double r) {
     double TOL = 1e-3;
     return std::abs(l - r) < TOL;
@@ -126,9 +127,9 @@ void test_cmr() {
     }
     // rev_ad
     {
-      Variable<Double> d = 4.0;
+      ReverseDouble d = 4.0;
       auto res = cmr(d, t, y);
-      ass<"Variable<Double> t works">(compare(get_val(res), get_val(y.get(4))));
+      ass<"ReverseDouble t works">(compare(get_val(res), get_val(y.get(4))));
     }
   }
   // tests cmr with Dual timeVec and param_vec
@@ -149,22 +150,22 @@ void test_cmr() {
       ass<"linear interpolation with Dual vecs">(compare(get_val(res), intercept + slope*q));
     }
   }
-  // tests cmr with Variable<Double> timeVec and param_vec
+  // tests cmr with ReverseDouble timeVec and param_vec
   {
-    Array<Variable<Double>, Buffer<Variable<Double>, LBufferTrait>> t(SI{5});
-    Array<Variable<Double>, Buffer<Variable<Double>, LBufferTrait>> y(SI{5});
+    Array<ReverseDouble, Buffer<ReverseDouble, LBufferTrait>> t(SI{5});
+    Array<ReverseDouble, Buffer<ReverseDouble, LBufferTrait>> y(SI{5});
     const double intercept = 3.0;
     const double slope = 0.4;
 
     for (int i = 0; i < 5; ++i) {
       double ti = double(i);
-      t.set(i, Variable<Double>(ti));
-      y.set(i, Variable<Double>(intercept + slope * ti));
+      t.set(i, ReverseDouble(ti));
+      y.set(i, ReverseDouble(intercept + slope * ti));
     }
     const double qs[] = {0.1, 0.5, 1.2, 1.9, 2.3, 3.7};
     for (double q : qs) {
-      auto res = cmr(Variable<Double>(q), t, y);
-      ass<"linear interpolation with Variable<Double> vecs">(compare(get_val(res), intercept + slope*q));
+      auto res = cmr(ReverseDouble(q), t, y);
+      ass<"linear interpolation with ReverseDouble vecs">(compare(get_val(res), intercept + slope*q));
     }
   }
   // exact equality clamping: t == first / last

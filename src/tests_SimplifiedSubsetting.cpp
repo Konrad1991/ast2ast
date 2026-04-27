@@ -24,8 +24,8 @@ void test_simplified_subsetting() {
     ass<"ExtractIndex(Double whole)">(ExtractIndex(Double(7.0)) == 7);
     ass<"ExtractIndex(Dual whole)">(ExtractIndex(Dual(7.0)) == 7);
     {
-      Variable<Double> v = Double(7.0);
-      ass<"ExtractIndex(Variable<Double>)">(ExtractIndex(v) == 7);
+      ReverseDouble v = Double(7.0);
+      ass<"ExtractIndex(ReverseDouble)">(ExtractIndex(v) == 7);
     }
   }
 
@@ -60,10 +60,10 @@ void test_simplified_subsetting() {
     ass<"at(a, Dual(12.0)) -> 11">(compare(get_val(at(a, Dual(12.0))), 11.0));
 
     {
-      Variable<Double> v1 = Double(1.0);
-      Variable<Double> v12 = Double(12.0);
-      ass<"at(a, Variable<Double>(1)) -> 0">(compare(get_val(at(a, v1)), 0.0));
-      ass<"at(a, Variable<Double>(12)) -> 11">(compare(get_val(at(a, v12)), 11.0));
+      ReverseDouble v1 = Double(1.0);
+      ReverseDouble v12 = Double(12.0);
+      ass<"at(a, ReverseDouble(1)) -> 0">(compare(get_val(at(a, v1)), 0.0));
+      ass<"at(a, ReverseDouble(12)) -> 11">(compare(get_val(at(a, v12)), 11.0));
     }
 
     // Array index (length 1)

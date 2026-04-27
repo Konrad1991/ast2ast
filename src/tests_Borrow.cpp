@@ -383,6 +383,7 @@ void test_borrow_na_propagation() {
 void test_Borrow() {
   test_borrow_dual();
   test_borrow<Double>();
-  test_borrow<Variable<Double>>();
+  TAPE_INTERN.clear();
+  test_borrow<ReverseDouble>();
   test_borrow_na_propagation();
 }

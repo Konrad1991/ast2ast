@@ -7,12 +7,12 @@ using namespace etr;
 void test_utilities() {
   // is.na
   {
-    Array<Variable<Double>, Buffer<Variable<Double>>> a;
+    Array<ReverseDouble, Buffer<ReverseDouble>> a;
     a = c(Double::NA(), Double::NaN(), Double::Inf(), Double(3.14),
           Integer::NA(), Integer(19),
           Logical::NA(), Logical(true),
           Dual::NA(), Dual::NaN(), Dual::Inf(), Dual(3.14, 0.0),
-          Variable<Double>(Double::NA()), Variable<Double>(Double(3.14))
+          ReverseDouble(Double::NA()), ReverseDouble(Double(3.14))
           );
     auto res = isNA(a);
     std::vector<bool> expected_is_na{
@@ -33,7 +33,7 @@ void test_utilities() {
           Integer::NA(), Integer(19),
           Logical::NA(), Logical(true),
           Dual::NA(), Dual::NaN(), Dual::Inf(), Dual(3.14, 0.0),
-          Variable<Double>(Double::NaN()), Variable<Double>(Double(3.14))
+          ReverseDouble(Double::NaN()), ReverseDouble(Double(3.14))
           );
     auto res = isNaN(a);
     std::vector<bool> expected_is_na{
@@ -54,7 +54,7 @@ void test_utilities() {
           Integer::NA(), Integer(19),
           Logical::NA(), Logical(true),
           Dual::NA(), Dual::NaN(), Dual::Inf(), Dual(3.14, 0.0),
-          Variable<Double>(Double::Inf()), Variable<Double>(Double(3.14))
+          ReverseDouble(Double::Inf()), ReverseDouble(Double(3.14))
           );
     auto res = isInfinite(a);
     std::vector<bool> expected_is_na{
@@ -75,7 +75,7 @@ void test_utilities() {
           Integer::NA(), Integer(19),
           Logical::NA(), Logical(true),
           Dual::NA(), Dual::NaN(), Dual::Inf(), Dual(3.14, 0.0),
-          Variable<Double>(Double::Inf()), Variable<Double>(Double(3.14))
+          ReverseDouble(Double::Inf()), ReverseDouble(Double(3.14))
           );
     auto res = isFinite(a);
     std::vector<bool> expected_is_na{

@@ -817,15 +817,21 @@ template<typename RealType> void test_array_subset() {
 // [[Rcpp::export]]
 void test_allocation() {
   test_array_buffer<Double>();
-  test_array_buffer<Variable<Double>>();
+  TAPE_INTERN.clear();
+  test_array_buffer<ReverseDouble>();
   test_array_r_buffer<Double>();
-  test_array_r_buffer<Variable<Double>>();
+  TAPE_INTERN.clear();
+  test_array_r_buffer<ReverseDouble>();
   test_array_borrow<Double>();
-  test_array_borrow<Variable<Double>>();
+  TAPE_INTERN.clear();
+  test_array_borrow<ReverseDouble>();
   test_array_unary<Double>();
-  test_array_unary<Variable<Double>>();
+  TAPE_INTERN.clear();
+  test_array_unary<ReverseDouble>();
   test_array_binary<Double>();
-  test_array_binary<Variable<Double>>();
+  TAPE_INTERN.clear();
+  test_array_binary<ReverseDouble>();
   test_array_subset<Double>();
-  test_array_subset<Variable<Double>>();
+  TAPE_INTERN.clear();
+  test_array_subset<ReverseDouble>();
 }

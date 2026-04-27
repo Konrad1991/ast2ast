@@ -3,7 +3,7 @@
 
 namespace etr {
 
-// Iterator for the AoS fallback Buffer (used for Variable<T>).
+// Iterator for the AoS fallback Buffer (used for ReverseDouble).
 template <typename Scalar>
 struct BufferIt {
   const Scalar* ptr;
@@ -27,9 +27,10 @@ struct BufferIt {
 
 //==============================================================================
 // Generic Buffer — AoS layout.
-// The split data/NA representation does not apply to Variable<T> (which stores
-// an expression tree, not a plain value), so Variable buffers use this
-// fallback. All other scalar types are handled by the specializations below.
+// ReverseDouble is a tape-id handle, not a numeric value, so the split
+// p_val/p_na layout (which exists to feed BLAS/SIMD kernels) buys nothing
+// for it. ReverseDouble buffers fall back to this packed AoS template.
+// All other scalar types are handled by the specializations below.
 //==============================================================================
 template <typename T, typename BufferTrait> struct Buffer {
 
@@ -98,9 +99,9 @@ template <typename T, typename BufferTrait> struct Buffer {
       delete[] p;
       reset();
     }
-    // The generic template is only instantiated for Variable<Double>; the
-    // scalar types have their own specializations. Keep the Variable path.
-    if constexpr (IS<value_type, Variable<Double>>) {
+    // The generic template is only instantiated for ReverseDouble; the
+    // simple scalar types have their own specializations.
+    if constexpr (IS<value_type, ReverseDouble>) {
       ass<"R object is not of type numeric">(Rf_isReal(s));
       sz = static_cast<std::size_t>(Rf_length(s));
       ass<"R object seems to be empty">(sz >= 1);
@@ -130,7 +131,7 @@ template <typename T, typename BufferTrait> struct Buffer {
     }
   }
   template <typename TInp>
-  requires(IS<TInp, Variable<Double>> || IsScalarOrScalarRef<Decayed<TInp>>)
+  requires(IS<TInp, ReverseDouble> || IsScalarOrScalarRef<Decayed<TInp>>)
   void fill(TInp &&val) {
     if constexpr (IS<T, Double>) {
       std::fill(p, p + sz, get_val(val));

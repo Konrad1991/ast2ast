@@ -37,6 +37,14 @@ test_jacobian <- function() {
     invisible(.Call(`_ast2ast_test_jacobian`))
 }
 
+test_deriv_scalar <- function() {
+    invisible(.Call(`_ast2ast_test_deriv_scalar`))
+}
+
+test_tape_reuse <- function() {
+    invisible(.Call(`_ast2ast_test_tape_reuse`))
+}
+
 test_preserved_subsetting <- function() {
     invisible(.Call(`_ast2ast_test_preserved_subsetting`))
 }

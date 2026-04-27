@@ -109,7 +109,7 @@ void test_all_types_usuable_preserved_subsetting() {
   Double_r_arr.set(1, 2.0);
   Double_r_arr.set(2, 3.0);
 
-  using RealType = Variable<Double>;
+  using RealType = ReverseDouble;
   Array<RealType, Buffer<RealType, LBufferTrait>> rev_ad_arr(SI{3});
   for (std::size_t i = 0; i < 3; i++) rev_ad_arr.set(i, Double(static_cast<double>(i) + 1.0));
   rev_ad_arr.dim = dim;
@@ -133,7 +133,7 @@ void test_all_types_usuable_preserved_subsetting() {
   Integer integer_etr = 10;
   Double double_etr = 3.14;
   Dual dual_etr(3.14, 0.0);
-  Variable<Double> rev_ad_etr = 3.14;
+  ReverseDouble rev_ad_etr = 3.14;
 
   auto unary = -Double_arr2;
   auto binary = Double_arr3 + Double_arr3;

@@ -25,15 +25,15 @@ void test_assign_array_to_scalar() {
 
   // Assign array to Variable
   {
-    etr::Variable<etr::Double> d;
+    etr::ReverseDouble d;
     d = etr::c(etr::Double(3));
     etr::ass<"Assign double array to Double">(compare(etr::get_val(d), 3.0));
   }
 
   // Assign array of Variables to Variable
   {
-    etr::Variable<etr::Double> d;
-    etr::Array<etr::Variable<etr::Double>, etr::Buffer<etr::Variable<etr::Double>>> a = etr::c(etr::Variable<etr::Double>(30));
+    etr::ReverseDouble d;
+    etr::Array<etr::ReverseDouble, etr::Buffer<etr::ReverseDouble>> a = etr::c(etr::ReverseDouble::Var(30));
     d = a;
     etr::ass<"Assign double array to Double">(compare(etr::get_val(d), 30.0));
   }

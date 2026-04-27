@@ -40,10 +40,10 @@ auto compare_result_reverse_ad(const T& etr, const T2& etr_expr,
   };
   if (etr.size() != expected_val.size()) return false;
   for (std::size_t i = 0; i < etr.size(); i++) {
-    var temp = etr_expr.get(i);
+    auto temp = etr_expr.get(i);
     if(!compare(get_val(temp), expected_val[i])) return false;
-    auto d = derivatives(temp, wrt(etr.get(i)));
-    if(!compare(get_val(d[0]), expected_dot[i])) return false;
+    auto d = deriv(temp, etr.get(i));
+    if(!compare(get_val(d.get(0)), expected_dot[i])) return false;
   }
   return true;
 }
@@ -72,29 +72,29 @@ auto compare_result_reverse_ad_binary(const T1& etr1, const T2& etr2, const T3& 
       // Case 1: AD scalar && IsArray<ADType>
       if constexpr (IsADType<T1> && IsADType<DataTypeR>) {
         for (std::size_t i = 0; i < etr_expr.size(); i++) {
-          var temp = etr_expr.get(i);
-          auto d1 = derivatives(temp, wrt(etr1));
-          auto d2 = derivatives(temp, wrt(etr2.get(i)));
-          if(!compare(get_val(d1[0]), expected_dot1[i])) return false;
-          if(!compare(get_val(d2[0]), expected_dot2[i])) return false;
+          auto temp = etr_expr.get(i);
+          auto d1 = deriv(temp, etr1);
+          auto d2 = deriv(temp, etr2.get(i));
+          if(!compare(get_val(d1.get(0)), expected_dot1[i])) return false;
+          if(!compare(get_val(d2.get(0)), expected_dot2[i])) return false;
         }
         return true;
       }
       // Case 2: AD scalar && IsArray<Other>
       else if constexpr (IsADType<T1> && !IsADType<DataTypeR>) {
         for (std::size_t i = 0; i < etr_expr.size(); i++) {
-          var temp = etr_expr.get(i);
-          auto d1 = derivatives(temp, wrt(etr1));
-          if(!compare(get_val(d1[0]), expected_dot1[i])) return false;
+          auto temp = etr_expr.get(i);
+          auto d1 = deriv(temp, etr1);
+          if(!compare(get_val(d1.get(0)), expected_dot1[i])) return false;
         }
         return true;
       }
       // Case 3: Other && IsArray<ADType>
       else if constexpr (!IsADType<T1> && IsADType<DataTypeR>) {
         for (std::size_t i = 0; i < etr_expr.size(); i++) {
-          var temp = etr_expr.get(i);
-          auto d2 = derivatives(temp, wrt(etr2.get(i)));
-          if(!compare(get_val(d2[0]), expected_dot2[i])) return false;
+          auto temp = etr_expr.get(i);
+          auto d2 = deriv(temp, etr2.get(i));
+          if(!compare(get_val(d2.get(0)), expected_dot2[i])) return false;
         }
         return true;
       }
@@ -104,29 +104,29 @@ auto compare_result_reverse_ad_binary(const T1& etr1, const T2& etr2, const T3& 
       // Case 4: IsArray<ADType> && AD scalar
       if constexpr (IsADType<DataTypeL> && IsADType<T2>) {
         for (std::size_t i = 0; i < etr_expr.size(); i++) {
-          var temp = etr_expr.get(i);
-          auto d1 = derivatives(temp, wrt(etr1.get(i)));
-          auto d2 = derivatives(temp, wrt(etr2));
-          if(!compare(get_val(d1[0]), expected_dot1[i])) return false;
-          if(!compare(get_val(d2[0]), expected_dot2[i])) return false;
+          auto temp = etr_expr.get(i);
+          auto d1 = deriv(temp, etr1.get(i));
+          auto d2 = deriv(temp, etr2);
+          if(!compare(get_val(d1.get(0)), expected_dot1[i])) return false;
+          if(!compare(get_val(d2.get(0)), expected_dot2[i])) return false;
         }
         return true;
       }
       // Case 5: IsArray<Other> && AD scalar
       if constexpr (!IsADType<DataTypeL> && IsADType<T2>) {
         for (std::size_t i = 0; i < etr_expr.size(); i++) {
-          var temp = etr_expr.get(i);
-          auto d2 = derivatives(temp, wrt(etr2));
-          if(!compare(get_val(d2[0]), expected_dot2[i])) return false;
+          auto temp = etr_expr.get(i);
+          auto d2 = deriv(temp, etr2);
+          if(!compare(get_val(d2.get(0)), expected_dot2[i])) return false;
         }
         return true;
       }
       // Case 6: IsArray<ADType> && Other
       if constexpr (IsADType<DataTypeL> && !IsADType<T2>) {
         for (std::size_t i = 0; i < etr_expr.size(); i++) {
-          var temp = etr_expr.get(i);
-          auto d1 = derivatives(temp, wrt(etr1.get(i)));
-          if(!compare(get_val(d1[0]), expected_dot1[i])) return false;
+          auto temp = etr_expr.get(i);
+          auto d1 = deriv(temp, etr1.get(i));
+          if(!compare(get_val(d1.get(0)), expected_dot1[i])) return false;
         }
         return true;
       }
@@ -141,11 +141,11 @@ auto compare_result_reverse_ad_binary(const T1& etr1, const T2& etr2, const T3& 
     // Case1: Array<AD> && Array<AD>
     if constexpr (IsADType<DataTypeL> && IsADType<DataTypeR>) {
       for (std::size_t i = 0; i < etr1.size(); i++) {
-        var temp = etr_expr.get(i);
-        auto d1 = derivatives(temp, wrt(etr1.get(i)));
-        auto d2 = derivatives(temp, wrt(etr2.get(i)));
-        if(!compare(get_val(d1[0]), expected_dot1[i])) return false;
-        if(!compare(get_val(d2[0]), expected_dot2[i])) return false;
+        auto temp = etr_expr.get(i);
+        auto d1 = deriv(temp, etr1.get(i));
+        auto d2 = deriv(temp, etr2.get(i));
+        if(!compare(get_val(d1.get(0)), expected_dot1[i])) return false;
+        if(!compare(get_val(d2.get(0)), expected_dot2[i])) return false;
       }
       return true;
     }
@@ -153,10 +153,10 @@ auto compare_result_reverse_ad_binary(const T1& etr1, const T2& etr2, const T3& 
     // Case2: Array<AD> && !Array<AD>
     else if constexpr (IsADType<DataTypeL> && !IsADType<DataTypeR>) {
       for (std::size_t i = 0; i < etr1.size(); i++) {
-        var temp = etr_expr.get(i);
+        auto temp = etr_expr.get(i);
         if(!compare(get_val(temp), expected_val[i])) return false;
-        auto d1 = derivatives(temp, wrt(etr1.get(i)));
-        if(!compare(get_val(d1[0]), expected_dot1[i])) return false;
+        auto d1 = deriv(temp, etr1.get(i));
+        if(!compare(get_val(d1.get(0)), expected_dot1[i])) return false;
       }
       return true;
     }
@@ -164,10 +164,10 @@ auto compare_result_reverse_ad_binary(const T1& etr1, const T2& etr2, const T3& 
     // Case3: !Array<AD> && Array<AD>
     else if constexpr (!IsADType<DataTypeL> && IsADType<DataTypeR>) {
       for (std::size_t i = 0; i < etr1.size(); i++) {
-        var temp = etr_expr.get(i);
+        auto temp = etr_expr.get(i);
         if(!compare(get_val(temp), expected_val[i])) return false;
-        auto d2 = derivatives(temp, wrt(etr2.get(i)));
-        if(!compare(get_val(d2[0]), expected_dot2[i])) return false;
+        auto d2 = deriv(temp, etr2.get(i));
+        if(!compare(get_val(d2.get(0)), expected_dot2[i])) return false;
       }
       return true;
     }
@@ -177,6 +177,7 @@ auto compare_result_reverse_ad_binary(const T1& etr1, const T2& etr2, const T3& 
 
 // [[Rcpp::export]]
 void test_calculation() {
+  TAPE_INTERN.clear();
   auto create_r_array = []() {
     Array<Double, Buffer<Double, RBufferTrait>> a_r(SI{60});
     for (std::size_t i = 0; i <a_r.size(); i++) {
@@ -244,7 +245,7 @@ void test_calculation() {
   Integer integer_etr = 101;
   Double double_etr = 3.14;
   Dual dual_etr(3.14, 2.0);
-  Variable<Double> rev_ad_etr = 3.14;
+  ReverseDouble rev_ad_etr = ReverseDouble::Var(3.14);
 
   // Buffers
   Array<Logical, Buffer<Logical, LBufferTrait>> Logical_arr(SI{N});
@@ -265,9 +266,9 @@ void test_calculation() {
   for (std::size_t i = 0; i < N; i++) Dual_arr.set(i, Dual(static_cast<double>(i) + 0.1, 2.0));
   Dual_arr.dim = dim;
 
-  using RealType = Variable<Double>;
+  using RealType = ReverseDouble;
   Array<RealType, Buffer<RealType, LBufferTrait>> rev_ad_arr(SI{N});
-  for (std::size_t i = 0; i < N; i++) rev_ad_arr.set(i, Double(static_cast<double>(i) + 0.1));
+  for (std::size_t i = 0; i < N; i++) rev_ad_arr.set(i, ReverseDouble::Var(static_cast<double>(i) + 0.1));
    rev_ad_arr.dim = dim;
 
   // R Buffers
@@ -290,7 +291,7 @@ void test_calculation() {
   Dual_r_arr.dim = dim;
 
   Array<RealType, Buffer<RealType, RBufferTrait>> rev_ad_r_arr(SI{N});
-  for (std::size_t i = 0; i < N; i++) rev_ad_r_arr.set(i, Double(static_cast<double>(i) + 0.1));
+  for (std::size_t i = 0; i < N; i++) rev_ad_r_arr.set(i, ReverseDouble::Var(static_cast<double>(i) + 0.1));
   rev_ad_r_arr.dim = dim;
 
   // Borrows

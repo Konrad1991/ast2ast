@@ -233,7 +233,7 @@ inline decltype(auto) at(ArrayType& arr, const Args&... args) {
   using ArrStorage = Decayed<decltype(arr.d)>;
   constexpr bool IsBuf = IsLBuffer<ArrStorage>;
 
-  if constexpr (IsVariable<DataType>) {
+  if constexpr (IsADType<DataType>) {
     return (arr.d.p[idx]);
   } else if constexpr (IsDouble<DataType>) {
     if constexpr (IsBuf) return DoubleRef{ &arr.d.p_val[idx], &arr.d.p_na[idx] };
@@ -271,7 +271,7 @@ inline decltype(auto) at_linear(Obj& obj, std::size_t idx) {
     using DataType = typename ObjType::value_type;
     constexpr bool IsBuf = IsLBuffer<ObjType>;
 
-    if constexpr (IsVariable<DataType>) {
+    if constexpr (IsADType<DataType>) {
       return (obj.p[idx]);
     } else if constexpr (IsDouble<DataType>) {
       if constexpr (IsBuf) return DoubleRef{ &obj.p_val[idx], &obj.p_na[idx] };

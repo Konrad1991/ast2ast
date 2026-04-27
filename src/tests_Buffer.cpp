@@ -290,5 +290,6 @@ b = b;
 // [[Rcpp::export]]
 void test_buffer() {
   test_buffer<Double>();
-  test_buffer<Variable<Double>>();
+  TAPE_INTERN.clear();
+  test_buffer<ReverseDouble>();
 }

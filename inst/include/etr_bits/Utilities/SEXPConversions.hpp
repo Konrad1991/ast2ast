@@ -72,13 +72,13 @@ inline Dual SEXP2Scalar<Dual>(SEXP s) {
   return Dual(d, 0.0);
 }
 template<>
-inline Variable<Double> SEXP2Scalar<Variable<Double>>(SEXP s) {
+inline ReverseDouble SEXP2Scalar<ReverseDouble>(SEXP s) {
   ass<"R object is not of type integer">(Rf_isReal(s));
   const R_xlen_t sz = Rf_xlength(s);
   ass<"Argument has length > 1">(sz == 1);
   const double d = REAL(s)[0];
   ass<"NA/NaN double not allowed">(!ISNA(d) && !ISNAN(d));
-  return Variable<Double>(d);
+  return ReverseDouble::Var(d);
 }
 
 // Cast scalar elements to their SEXP equivalents
@@ -87,14 +87,14 @@ inline int to_R(Integer x)  { return isNA(x) ? NA_INTEGER : get_val(x); }
 inline int to_R(Logical x)  { return isNA(x) ? NA_LOGICAL : (get_val(x) ? 1 : 0); }
 inline double to_R(Double x){ return isNA(x) ? NA_REAL : get_val(x); }
 inline double to_R(Dual x)  { return isNA(x) ? NA_REAL : get_val(x); }
-inline double to_R(Variable<Double> x){ return isNA(x) ? NA_REAL : get_val(x); }
+inline double to_R(ReverseDouble x){ return isNA(x) ? NA_REAL : get_val(x); }
 
 inline SEXP Cast() { return R_NilValue; }
 inline SEXP Cast(Integer res) { return Rf_ScalarInteger(to_R(res)); }
 inline SEXP Cast(Logical res) { return Rf_ScalarLogical(to_R(res)); }
 inline SEXP Cast(Double res) { return Rf_ScalarReal(to_R(res)); }
 inline SEXP Cast(Dual res) { return Rf_ScalarReal(to_R(res)); }
-inline SEXP Cast(Variable<Double> res) { return Rf_ScalarReal(to_R(res)); }
+inline SEXP Cast(ReverseDouble res) { return Rf_ScalarReal(to_R(res)); }
 inline SEXP Cast(std::string &res) { return Rf_mkString(res.data()); }
 inline SEXP Cast(const char *res) { return Rf_mkString(res); }
 
@@ -124,7 +124,7 @@ inline SEXP Cast(const T &res_) {
   const auto dim = dim_view(res.get_dim());
   SEXP ret = R_NilValue;
   using vtype = typename ExtractDataType<Decayed<T>>::value_type;
-  if constexpr (IsDouble<vtype> || IsDual<vtype> || IS<Variable<Double>, vtype>) {
+  if constexpr (IsDouble<vtype> || IsDual<vtype> || IsADType<vtype>) {
     ret = PROTECT(Rf_allocVector(REALSXP, res.size()));
     for (int i = 0; i < res.size(); i++) {
       REAL(ret)[i] = to_R(res.get(i));

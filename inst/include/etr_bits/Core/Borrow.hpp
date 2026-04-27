@@ -98,12 +98,12 @@ template <typename T, typename BorrowTrait> struct Borrow {
   Borrow(T2 *p_, int sz_, bool *na_p_ = nullptr) {
     init(p_, sz_, na_p_);
   }
-  // T is Variable<ScalarType>
-  template<typename T2> requires (IS<to_ast_scalar_t<T2>, ExtractedTypeFromVariableData<T>>)
+  // T is ReverseDouble — accept double-typed ast scalars (Double / DoubleRef).
+  template<typename T2> requires (IS<to_ast_scalar_t<T2>, Double> && IS<T, ReverseDouble>)
   Borrow(T2 *p_, std::size_t sz_, bool *na_p_ = nullptr) {
     init(p_, sz_, na_p_);
   }
-  template<typename T2> requires (IS<to_ast_scalar_t<T2>, ExtractedTypeFromVariableData<T>>)
+  template<typename T2> requires (IS<to_ast_scalar_t<T2>, Double> && IS<T, ReverseDouble>)
   Borrow(T2 *p_, int sz_, bool *na_p_ = nullptr) {
     init(p_, sz_, na_p_);
   }

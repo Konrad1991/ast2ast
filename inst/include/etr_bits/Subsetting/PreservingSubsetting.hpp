@@ -249,7 +249,19 @@ inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& conve
           }
           index_lists[counter++] = &v;
         }
-        // --- Case 3: Array except LBuffer Integer or LBuffer Logical
+        // --- Case 3: Array<IsReverseDouble>
+        else if constexpr (IsArray<A> && IsReverseDouble<arg_val_type>) {
+          const std::size_t n = arg.size();
+          auto& v = converted_arrays[counter_converted++];
+          v.resize(n);
+          for (std::size_t i = 0; i < n; i++) {
+            const auto d_val = get_scalar_val(arg.get(i));
+            ass<"Found NA value in subsetting (within a double object)">(!d_val.isNA());
+            v.set(i, safe_index_from_double(d_val.get_val_from_tape()));
+          }
+          index_lists[counter++] = &v;
+        }
+        // --- Case 4: Array except LBuffer Integer or LBuffer Logical
         else if constexpr (IsArray<A>) {
           const std::size_t n = arg.size();
           auto& v = converted_arrays[counter_converted++];

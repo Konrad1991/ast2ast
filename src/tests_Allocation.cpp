@@ -19,21 +19,22 @@ void tests_allocation() {
     ass<"c, with doubles 1">(compare(get_val(a.get(1)), 2.2));
     ass<"c, with doubles 2">(compare(get_val(a.get(2)), 3.3));
   }
-  // 2. Can I use Variable<Double> as type?
+  // 2. Can I use ReverseDouble as type?
   {
-    Array<Variable<Double>, Buffer<Variable<Double>>> a;
-    a = c(Double(1.1), Double(4.4), Variable<Double>(3.3));
-    ass<"c, with doubles-> size">(a.size() == 3);
-    ass<"c, with doubles 0">(compare(get_val(a.get(0)), 1.1));
-    ass<"c, with doubles 1">(compare(get_val(a.get(1)), 4.4));
-    ass<"c, with doubles 2">(compare(get_val(a.get(2)), 3.3));
-    var expr = a.get(0)*a.get(0);
-    Array<Variable<Double>, Buffer<Variable<Double>>> b;
+    TAPE_INTERN.clear();
+    Array<ReverseDouble, Buffer<ReverseDouble>> a;
+    a = c(ReverseDouble::Var(1.1), ReverseDouble::Var(4.4), ReverseDouble::Var(3.3));
+    ass<"c, with rev_ad-> size">(a.size() == 3);
+    ass<"c, with rev_ad 0">(compare(get_val(a.get(0)), 1.1));
+    ass<"c, with rev_ad 1">(compare(get_val(a.get(1)), 4.4));
+    ass<"c, with rev_ad 2">(compare(get_val(a.get(2)), 3.3));
+    auto expr = a.get(0) * a.get(0);
+    Array<ReverseDouble, Buffer<ReverseDouble>> b;
     // Does the deriv information get lost?
     b = c(expr);
-    var v = b.get(0);
-    auto d = derivatives(v, wrt(a.get(0)));
-    ass<"Deriv of vector">(compare(get_val(d[0]), 2.2));
+    auto v = b.get(0);
+    auto d = deriv(v, a.get(0));
+    ass<"Deriv of vector">(compare(get_val(d.get(0)), 2.2));
   }
   // 3. Usage of Dual
   {
@@ -131,13 +132,14 @@ void tests_allocation() {
 
   // 6. Vectors
   {
+    TAPE_INTERN.clear();
     // regualar vectors
     int size = 3;
     Array<Logical, Buffer<Logical>> l = logical(Integer(size));
     Array<Integer, Buffer<Integer>> i = integer(Integer(size));
     Array<Double, Buffer<Double>> d = numeric(Integer(size));
     Array<Dual, Buffer<Dual>> dua = numeric_dual(Integer(size));
-    Array<Variable<Double>, Buffer<Variable<Double>>> rev_ad = numeric_rev_ad(Integer(size));
+    Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_rev_ad(Integer(size));
     ass<"vector size logical vec">(l.size() == 3);
     ass<"vector size integer vec">(i.size() == 3);
     ass<"vector size double vec">(d.size() == 3);
@@ -167,12 +169,13 @@ void tests_allocation() {
 
     // vector with size argument of array
     {
+      TAPE_INTERN.clear();
       const Array<Integer, Buffer<Integer>> size = c(Integer(3));
       Array<Logical, Buffer<Logical>> l = logical(size);
       Array<Integer, Buffer<Integer>> i = integer(size);
       Array<Double, Buffer<Double>> d = numeric(size);
       Array<Dual, Buffer<Dual>> dua = numeric_dual(size);
-      Array<Variable<Double>, Buffer<Variable<Double>>> rev_ad = numeric_rev_ad(size);
+      Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_rev_ad(size);
       ass<"vector size logical vec">(l.size() == 3);
       ass<"vector size integer vec">(i.size() == 3);
       ass<"vector size double vec">(d.size() == 3);
@@ -180,12 +183,13 @@ void tests_allocation() {
       ass<"vector size rev_ad vec">(rev_ad.size() == 3);
       // DOuble as size
       {
+        TAPE_INTERN.clear();
         const Array<Double, Buffer<Double>> size = c(Double(3.5));
         Array<Logical, Buffer<Logical>> l = logical(size);
         Array<Integer, Buffer<Integer>> i = integer(size);
         Array<Double, Buffer<Double>> d = numeric(size);
         Array<Dual, Buffer<Dual>> dua = numeric_dual(size);
-        Array<Variable<Double>, Buffer<Variable<Double>>> rev_ad = numeric_rev_ad(size);
+        Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_rev_ad(size);
         ass<"vector size logical vec">(l.size() == 3);
         ass<"vector size integer vec">(i.size() == 3);
         ass<"vector size double vec">(d.size() == 3);
@@ -194,26 +198,28 @@ void tests_allocation() {
       }
       // Dual as size
       {
+        TAPE_INTERN.clear();
         const Array<Dual, Buffer<Dual>> size = c(Dual(3.5));
         Array<Logical, Buffer<Logical>> l = logical(size);
         Array<Integer, Buffer<Integer>> i = integer(size);
         Array<Double, Buffer<Double>> d = numeric(size);
         Array<Dual, Buffer<Dual>> dua = numeric_dual(size);
-        Array<Variable<Double>, Buffer<Variable<Double>>> rev_ad = numeric_rev_ad(size);
+        Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_rev_ad(size);
         ass<"vector size logical vec">(l.size() == 3);
         ass<"vector size integer vec">(i.size() == 3);
         ass<"vector size double vec">(d.size() == 3);
         ass<"vector size dual vec">(dua.size() == 3);
         ass<"vector size rev_ad vec">(rev_ad.size() == 3);
       }
-      // Variable<Double> as size
+      // ReverseDouble as size
       {
-        const Array<Variable<Double>, Buffer<Variable<Double>>> size = c(Variable<Double>(3.5));
+        TAPE_INTERN.clear();
+        const Array<ReverseDouble, Buffer<ReverseDouble>> size = c(ReverseDouble(3.5));
         Array<Logical, Buffer<Logical>> l = logical(size);
         Array<Integer, Buffer<Integer>> i = integer(size);
         Array<Double, Buffer<Double>> d = numeric(size);
         Array<Dual, Buffer<Dual>> dua = numeric_dual(size);
-        Array<Variable<Double>, Buffer<Variable<Double>>> rev_ad = numeric_rev_ad(size);
+        Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_rev_ad(size);
         ass<"vector size logical vec">(l.size() == 3);
         ass<"vector size integer vec">(i.size() == 3);
         ass<"vector size double vec">(d.size() == 3);
@@ -222,12 +228,13 @@ void tests_allocation() {
       }
       // Logical as size
       {
+        TAPE_INTERN.clear();
         const Array<Logical, Buffer<Logical>> size = c(Logical(true));
         Array<Logical, Buffer<Logical>> l = logical(size);
         Array<Integer, Buffer<Integer>> i = integer(size);
         Array<Double, Buffer<Double>> d = numeric(size);
         Array<Logical, Buffer<Logical>> dua = numeric_dual(size);
-        Array<Variable<Double>, Buffer<Variable<Double>>> rev_ad = numeric_rev_ad(size);
+        Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_rev_ad(size);
         ass<"vector size logical vec">(l.size() == 1);
         ass<"vector size integer vec">(i.size() == 1);
         ass<"vector size double vec">(d.size() == 1);

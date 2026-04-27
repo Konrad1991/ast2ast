@@ -339,7 +339,7 @@ resolve_derivative <- function(derivative) {
   if (is.null(derivative)) return("etr::Double")
   stopifnot("derivative is neither forward nor reverse" = derivative %in% c("forward", "reverse"))
   if (derivative == "forward") return("etr::Dual")
-  if (derivative == "reverse") return("etr::Variable<etr::Double>")
+  if (derivative == "reverse") return("etr::ReverseDouble")
 }
 
 translate_internally <- function(fct, args_fct, derivative, name_fct, r_fct) {

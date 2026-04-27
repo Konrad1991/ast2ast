@@ -1,7 +1,12 @@
-#include <Rcpp.h>
+#define STANDALONE_ETR
+#include <string>
+#include <iostream>
+#include <vector>
+#include "stddef.h"
+#include <cxxabi.h>
+#include "../inst/include/etr_bits/Core/Reflection.hpp"
 #include "../inst/include/etr.hpp"
 using namespace etr;
-#include <cstring>
 
 /*
 f:
@@ -140,3 +145,10 @@ void test_tape_reuse() {
   ass<"reuse jac_c[2]">(compare(get_val(jac_c.get(2)), 1.0));
   ass<"reuse jac_c[3]">(compare(get_val(jac_c.get(3)), 8.0));
 }
+
+int main() {
+  test_jacobian();
+  test_deriv_scalar();
+  test_tape_reuse();
+}
+

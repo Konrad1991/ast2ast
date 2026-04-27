@@ -11,6 +11,7 @@
 #endif
 
 #include <cstddef>
+#include <cstdint>
 #include <algorithm>
 #include <array>
 #include <ios>
@@ -114,6 +115,226 @@ public:
 // -----------------------------------------------------------------------------------------------------------
 template <typename T, typename U>
 inline constexpr bool IS = std::is_same_v<T, U>;
+
+// Reverse-mode AD tape (used by ReverseDouble, defined further down with the
+// other scalar types). The tape is self-contained: only primitive types,
+// std::vector, and <cmath>. One tape per thread; translated functions call
+// TAPE_INTERN.clear() at entry, which resets size without freeing capacity.
+enum class ROp : uint8_t {
+  Var, Const,
+  Add, Sub, Mul, Div, Neg,
+  Sin, Cos, Tan, Asin, Acos, Atan, Sinh, Cosh, Tanh,
+  Exp, Log, Log10, Sqrt, Pow
+};
+
+struct ReverseTape {
+  std::vector<ROp>     op;
+  std::vector<int>     a;
+  std::vector<int>     b;
+  std::vector<double>  val;
+  std::vector<double>  adj;
+  std::vector<uint8_t> is_na; // uint8_t on purpose — avoids vector<bool>.
+
+  inline std::size_t size() const noexcept { return op.size(); }
+
+  inline void clear() noexcept {
+    op.clear(); a.clear(); b.clear();
+    val.clear(); adj.clear(); is_na.clear();
+  }
+
+  inline void reserve(std::size_t n) {
+    op.reserve(n); a.reserve(n); b.reserve(n);
+    val.reserve(n); adj.reserve(n); is_na.reserve(n);
+  }
+
+  inline bool node_is_na(int i) const noexcept {
+    return is_na[static_cast<std::size_t>(i)] != 0;
+  }
+
+  inline int push_node(ROp op_i, int a_i, int b_i, double v_i, bool na_i) {
+    op.push_back(op_i);
+    a.push_back(a_i);
+    b.push_back(b_i);
+    val.push_back(v_i);
+    adj.push_back(0.0);
+    is_na.push_back(static_cast<uint8_t>(na_i));
+    return static_cast<int>(op.size() - 1);
+  }
+
+  inline int push_const(double v, bool na = false) {
+    if (na) v = std::numeric_limits<double>::quiet_NaN();
+    return push_node(ROp::Const, -1, -1, v, na);
+  }
+
+  inline int push_var(double v, bool na = false) {
+    if (na) v = std::numeric_limits<double>::quiet_NaN();
+    return push_node(ROp::Var, -1, -1, v, na);
+  }
+
+  int push_unary(ROp u, int ai) {
+    if (node_is_na(ai)) {
+      return push_node(u, ai, -1,
+                       std::numeric_limits<double>::quiet_NaN(),
+                       true);
+    }
+    const double x = val[static_cast<std::size_t>(ai)];
+    double outv = 0.0;
+    switch (u) {
+      case ROp::Neg:   outv = -x; break;
+      case ROp::Sin:   outv = std::sin(x); break;
+      case ROp::Cos:   outv = std::cos(x); break;
+      case ROp::Tan:   outv = std::tan(x); break;
+      case ROp::Asin:  outv = std::asin(x); break;
+      case ROp::Acos:  outv = std::acos(x); break;
+      case ROp::Atan:  outv = std::atan(x); break;
+      case ROp::Sinh:  outv = std::sinh(x); break;
+      case ROp::Cosh:  outv = std::cosh(x); break;
+      case ROp::Tanh:  outv = std::tanh(x); break;
+      case ROp::Exp:   outv = std::exp(x); break;
+      case ROp::Log:   outv = std::log(x); break;
+      case ROp::Log10: outv = std::log10(x); break;
+      case ROp::Sqrt:  outv = std::sqrt(x); break;
+      default:
+        throw std::runtime_error("push_unary: unsupported op");
+    }
+    return push_node(u, ai, -1, outv, false);
+  }
+
+  int push_binary(ROp bo, int ai, int bi) {
+    if (node_is_na(ai) || node_is_na(bi)) {
+      return push_node(bo, ai, bi,
+                       std::numeric_limits<double>::quiet_NaN(),
+                       true);
+    }
+    const double x = val[static_cast<std::size_t>(ai)];
+    const double y = val[static_cast<std::size_t>(bi)];
+    double outv = 0.0;
+    switch (bo) {
+      case ROp::Add: outv = x + y; break;
+      case ROp::Sub: outv = x - y; break;
+      case ROp::Mul: outv = x * y; break;
+      case ROp::Div: outv = x / y; break;
+      case ROp::Pow: outv = std::pow(x, y); break;
+      default:
+        throw std::runtime_error("push_binary: unsupported op");
+    }
+    return push_node(bo, ai, bi, outv, false);
+  }
+
+  void reverse(int out) {
+    std::fill(adj.begin(), adj.end(), 0.0);
+    adj[static_cast<std::size_t>(out)] = 1.0;
+    for (std::size_t ii = size(); ii-- > 0;) {
+      if (is_na[ii]) continue;
+      const double w = adj[ii];
+      const ROp   op_i = op[ii];
+      const int   ai   = a[ii];
+      const int   bi   = b[ii];
+      switch (op_i) {
+        case ROp::Add:
+          adj[static_cast<std::size_t>(ai)] += w;
+          adj[static_cast<std::size_t>(bi)] += w;
+          break;
+        case ROp::Sub:
+          adj[static_cast<std::size_t>(ai)] += w;
+          adj[static_cast<std::size_t>(bi)] -= w;
+          break;
+        case ROp::Mul:
+          adj[static_cast<std::size_t>(ai)] += w * val[static_cast<std::size_t>(bi)];
+          adj[static_cast<std::size_t>(bi)] += w * val[static_cast<std::size_t>(ai)];
+          break;
+        case ROp::Div: {
+          const double x = val[static_cast<std::size_t>(ai)];
+          const double y = val[static_cast<std::size_t>(bi)];
+          adj[static_cast<std::size_t>(ai)] += w / y;
+          adj[static_cast<std::size_t>(bi)] += w * (-x) / (y * y);
+          break;
+        }
+        case ROp::Neg:
+          adj[static_cast<std::size_t>(ai)] += -w;
+          break;
+        case ROp::Sin: {
+          const double x = val[static_cast<std::size_t>(ai)];
+          adj[static_cast<std::size_t>(ai)] += w * std::cos(x);
+          break;
+        }
+        case ROp::Cos: {
+          const double x = val[static_cast<std::size_t>(ai)];
+          adj[static_cast<std::size_t>(ai)] += w * (-std::sin(x));
+          break;
+        }
+        case ROp::Tan: {
+          const double x = val[static_cast<std::size_t>(ai)];
+          const double c = std::cos(x);
+          adj[static_cast<std::size_t>(ai)] += w * (1.0 / (c * c));
+          break;
+        }
+        case ROp::Asin: {
+          const double x = val[static_cast<std::size_t>(ai)];
+          adj[static_cast<std::size_t>(ai)] += w * (1.0 / std::sqrt(1.0 - x * x));
+          break;
+        }
+        case ROp::Acos: {
+          const double x = val[static_cast<std::size_t>(ai)];
+          adj[static_cast<std::size_t>(ai)] += w * (-1.0 / std::sqrt(1.0 - x * x));
+          break;
+        }
+        case ROp::Atan: {
+          const double x = val[static_cast<std::size_t>(ai)];
+          adj[static_cast<std::size_t>(ai)] += w * (1.0 / (1.0 + x * x));
+          break;
+        }
+        case ROp::Sinh: {
+          const double x = val[static_cast<std::size_t>(ai)];
+          adj[static_cast<std::size_t>(ai)] += w * std::cosh(x);
+          break;
+        }
+        case ROp::Cosh: {
+          const double x = val[static_cast<std::size_t>(ai)];
+          adj[static_cast<std::size_t>(ai)] += w * std::sinh(x);
+          break;
+        }
+        case ROp::Tanh: {
+          const double x = val[static_cast<std::size_t>(ai)];
+          const double t = std::tanh(x);
+          adj[static_cast<std::size_t>(ai)] += w * (1.0 - t * t);
+          break;
+        }
+        case ROp::Exp:
+          adj[static_cast<std::size_t>(ai)] += w * val[ii];
+          break;
+        case ROp::Log: {
+          const double x = val[static_cast<std::size_t>(ai)];
+          adj[static_cast<std::size_t>(ai)] += w * (1.0 / x);
+          break;
+        }
+        case ROp::Log10: {
+          const double x = val[static_cast<std::size_t>(ai)];
+          adj[static_cast<std::size_t>(ai)] += w * (1.0 / (x * std::log(10.0)));
+          break;
+        }
+        case ROp::Sqrt: {
+          const double y = val[ii];
+          adj[static_cast<std::size_t>(ai)] += w * (0.5 / y);
+          break;
+        }
+        case ROp::Pow: {
+          const double x = val[static_cast<std::size_t>(ai)];
+          const double y = val[static_cast<std::size_t>(bi)];
+          const double f = val[ii];
+          adj[static_cast<std::size_t>(ai)] += w * (y * f / x);
+          adj[static_cast<std::size_t>(bi)] += w * (f * std::log(x));
+          break;
+        }
+        default:
+          // Var / Const: no adjoint propagation
+          break;
+      }
+    }
+  }
+};
+
+inline thread_local ReverseTape TAPE_INTERN;
 
 template <typename T> using IsCppArith = std::is_arithmetic<T>;
 template <typename T> constexpr bool IsCppArithV = std::is_arithmetic_v<T>;
@@ -664,10 +885,7 @@ struct LogicalRef;
 struct IntegerRef;
 struct DoubleRef;
 struct DualRef;
-template<typename T> struct Variable;
-template<typename T> struct Expr;
-template<typename T> using ExprPtr = std::shared_ptr<Expr<T>>;
-struct BooleanExpr;
+struct ReverseDouble;
 
 struct Logical {
   bool val;
@@ -678,7 +896,7 @@ struct Logical {
   inline Logical(Integer v);
   inline Logical(Double v);
   inline Logical(Dual v);
-  template<typename T> Logical(Variable<T> v);
+  inline Logical(ReverseDouble v);
   inline Integer operator+(const Logical&) const;
   inline Integer operator-(const Logical&) const;
   inline Integer operator*(const Logical&) const;
@@ -736,7 +954,7 @@ struct Integer {
   inline Integer(Logical v);
   inline Integer(Double v);
   inline Integer(Dual v);
-  template<typename T> Integer(Variable<T> v);
+  inline Integer(ReverseDouble v);
   inline Integer operator+(const Integer&) const;
   inline Integer& operator+=(const Integer& r);
   inline Integer& operator-=(const Integer& r);
@@ -797,6 +1015,7 @@ struct Double {
   inline Double(Logical v);
   inline Double(Integer v);
   inline Double(Dual v);
+  inline Double(ReverseDouble v);
   inline Double operator+(const Double&) const;
   inline Double& operator+=(const Double& r);
   inline Double& operator-=(const Double& r);
@@ -878,6 +1097,7 @@ struct Dual {
   inline Dual(Logical v);
   inline Dual(Integer v);
   inline Dual(Double v);
+  inline Dual(ReverseDouble v);
   // Does not require a ctr for Variable. Forward and reverse mode AD cannot be mixed!
   template<typename T> requires std::is_arithmetic_v<T>
   Dual(T v);
@@ -973,23 +1193,215 @@ struct Dual {
   }
 };
 
+// Reverse-mode AD scalar. 8-byte handle into etr::TAPE_INTERN; the actual
+// value/adjoint live on the tape (val[id] / adj[id]).
+struct ReverseDouble {
+  int  id{-1};
+  bool is_na{false};
+
+  inline ReverseDouble() {
+    id = TAPE_INTERN.push_const(0.0, false);
+  }
+  inline ReverseDouble(double v) {
+    id = TAPE_INTERN.push_const(v, false);
+  }
+  inline ReverseDouble(int v)  : ReverseDouble(static_cast<double>(v)) {}
+  inline ReverseDouble(bool v) : ReverseDouble(v ? 1.0 : 0.0) {}
+
+  inline ReverseDouble(Logical v) { 
+    id = TAPE_INTERN.push_const(static_cast<double>(v.val), v.is_na);
+    is_na = v.is_na;
+  }
+  inline ReverseDouble(Integer v) {
+    id = TAPE_INTERN.push_const(static_cast<double>(v.val), v.is_na);
+    is_na = v.is_na;
+  }
+  inline ReverseDouble(Double v) {
+    id = TAPE_INTERN.push_const(static_cast<double>(v.val), v.is_na);
+    is_na = v.is_na;
+  }
+  inline ReverseDouble(Dual v) {
+    id = TAPE_INTERN.push_const(v.val, v.is_na);
+    is_na = v.is_na;
+  }
+
+  // An assignment `x = y` between two ReverseDouble values rebinds x.id to
+  // y.id (same R let-binding semantics). A subsequent `x = y + z` pushes a
+  // fresh node normally.
+  ReverseDouble(const ReverseDouble&)            = default;
+  ReverseDouble(ReverseDouble&&) noexcept        = default;
+  ReverseDouble& operator=(const ReverseDouble&) = default;
+  ReverseDouble& operator=(ReverseDouble&&)      = default;
+
+  static inline ReverseDouble Var(double v) {
+    ReverseDouble x;
+    x.is_na = false;
+    x.id = TAPE_INTERN.push_var(v, false);
+    return x;
+  }
+  static inline ReverseDouble NA() {
+    ReverseDouble x;
+    x.is_na = true;
+    x.id = TAPE_INTERN.push_const(std::numeric_limits<double>::quiet_NaN(), true);
+    return x;
+  }
+  static inline ReverseDouble NaN() {
+    ReverseDouble x;
+    x.is_na = false;
+    x.id = TAPE_INTERN.push_const(std::numeric_limits<double>::quiet_NaN(), false);
+    return x;
+  }
+  static inline ReverseDouble Inf() {
+    ReverseDouble x;
+    x.is_na = false;
+    x.id = TAPE_INTERN.push_const(std::numeric_limits<double>::infinity(), false);
+    return x;
+  }
+
+  inline double get_val_from_tape()  const { return TAPE_INTERN.val [static_cast<std::size_t>(id)]; }
+  inline double get_grad_from_tape() const { return TAPE_INTERN.adj [static_cast<std::size_t>(id)]; }
+
+  inline bool isNA()       const noexcept { return is_na; }
+  inline bool isNaN()      const noexcept { return !is_na && std::isnan(get_val_from_tape()); }
+  inline bool isFinite()   const noexcept { return !is_na && std::isfinite(get_val_from_tape()); }
+  inline bool isInfinite() const noexcept { return !is_na && !isNaN() && !std::isfinite(get_val_from_tape()); }
+
+  inline ReverseDouble unary_(ROp u) const {
+    if (is_na) return NA();
+    ReverseDouble out;
+    out.id = TAPE_INTERN.push_unary(u, id);
+    out.is_na = TAPE_INTERN.is_na[static_cast<std::size_t>(out.id)] != 0;
+    return out;
+  }
+  inline ReverseDouble binary_(ROp bo, const ReverseDouble& r) const {
+    if (is_na || r.is_na) return NA();
+    ReverseDouble out;
+    out.id = TAPE_INTERN.push_binary(bo, id, r.id);
+    out.is_na = TAPE_INTERN.is_na[static_cast<std::size_t>(out.id)] != 0;
+    return out;
+  }
+
+  inline ReverseDouble operator+(const ReverseDouble& r) const { return binary_(ROp::Add, r); }
+  inline ReverseDouble operator-(const ReverseDouble& r) const { return binary_(ROp::Sub, r); }
+  inline ReverseDouble operator*(const ReverseDouble& r) const { return binary_(ROp::Mul, r); }
+  inline ReverseDouble operator/(const ReverseDouble& r) const { return binary_(ROp::Div, r); }
+  inline ReverseDouble pow       (const ReverseDouble& r) const { return binary_(ROp::Pow, r); }
+
+  inline ReverseDouble& operator+=(const ReverseDouble& r) { return *this = (*this + r); }
+  inline ReverseDouble& operator-=(const ReverseDouble& r) { return *this = (*this - r); }
+  inline ReverseDouble& operator*=(const ReverseDouble& r) { return *this = (*this * r); }
+  inline ReverseDouble& operator/=(const ReverseDouble& r) { return *this = (*this / r); }
+
+  inline ReverseDouble operator-() const {
+    if (is_na) return NA();
+    ReverseDouble out;
+    out.id = TAPE_INTERN.push_unary(ROp::Neg, id);
+    out.is_na = TAPE_INTERN.is_na[static_cast<std::size_t>(out.id)] != 0;
+    return out;
+  }
+
+  inline Logical operator==(const ReverseDouble& r) const {
+    if (is_na || r.is_na) return Logical::NA();
+    return Logical{get_val_from_tape() == r.get_val_from_tape()};
+  }
+  inline Logical operator!=(const ReverseDouble& r) const {
+    if (is_na || r.is_na) return Logical::NA();
+    return Logical{get_val_from_tape() != r.get_val_from_tape()};
+  }
+  inline Logical operator< (const ReverseDouble& r) const {
+    if (is_na || r.is_na) return Logical::NA();
+    return Logical{get_val_from_tape() <  r.get_val_from_tape()};
+  }
+  inline Logical operator<=(const ReverseDouble& r) const {
+    if (is_na || r.is_na) return Logical::NA();
+    return Logical{get_val_from_tape() <= r.get_val_from_tape()};
+  }
+  inline Logical operator> (const ReverseDouble& r) const {
+    if (is_na || r.is_na) return Logical::NA();
+    return Logical{get_val_from_tape() >  r.get_val_from_tape()};
+  }
+  inline Logical operator>=(const ReverseDouble& r) const {
+    if (is_na || r.is_na) return Logical::NA();
+    return Logical{get_val_from_tape() >= r.get_val_from_tape()};
+  }
+
+  inline Logical operator&&(const ReverseDouble& r) const {
+    if (is_na || r.is_na) return Logical::NA();
+    return Logical{get_val_from_tape() != 0.0 && r.get_val_from_tape() != 0.0};
+  }
+  inline Logical operator||(const ReverseDouble& r) const {
+    if (is_na || r.is_na) return Logical::NA();
+    return Logical{get_val_from_tape() != 0.0 || r.get_val_from_tape() != 0.0};
+  }
+  inline Logical operator&(const ReverseDouble& r) const {
+    if (is_na || r.is_na) return Logical::NA();
+    return Logical{get_val_from_tape() != 0.0 && r.get_val_from_tape() != 0.0};
+  }
+  inline Logical operator|(const ReverseDouble& r) const {
+    if (is_na || r.is_na) return Logical::NA();
+    return Logical{get_val_from_tape() != 0.0 || r.get_val_from_tape() != 0.0};
+  }
+
+  inline ReverseDouble sin()   const { return unary_(ROp::Sin);   }
+  inline ReverseDouble cos()   const { return unary_(ROp::Cos);   }
+  inline ReverseDouble tan()   const { return unary_(ROp::Tan);   }
+  inline ReverseDouble asin()  const { return unary_(ROp::Asin);  }
+  inline ReverseDouble acos()  const { return unary_(ROp::Acos);  }
+  inline ReverseDouble atan()  const { return unary_(ROp::Atan);  }
+  inline ReverseDouble sinh()  const { return unary_(ROp::Sinh);  }
+  inline ReverseDouble cosh()  const { return unary_(ROp::Cosh);  }
+  inline ReverseDouble tanh()  const { return unary_(ROp::Tanh);  }
+  inline ReverseDouble exp()   const { return unary_(ROp::Exp);   }
+  inline ReverseDouble log()   const { return unary_(ROp::Log);   }
+  inline ReverseDouble log10() const { return unary_(ROp::Log10); }
+  inline ReverseDouble sqrt()  const { return unary_(ROp::Sqrt);  }
+
+  inline friend std::ostream& operator<<(std::ostream& os, const ReverseDouble& x) {
+    if (x.isNA()) return os << "NA";
+    const double v = x.get_val_from_tape();
+    if (std::isnan(v)) return os << "NaN";
+    if (!std::isfinite(v)) return os << (v > 0 ? "Inf" : "-Inf");
+    return os << v;
+  }
+  template<typename T> requires IsArray<Decayed<T>> inline ReverseDouble& operator=(const T& arr) {
+    using inner = typename ExtractDataType<T>::value_type;
+    ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
+    const auto arr_val = get_scalar_val(arr.get(0));
+    if constexpr (IS<inner, ReverseDouble>) {
+      // Rebind to the existing tape node — same semantics as the
+      // defaulted scalar operator=
+      id    = arr_val.id;
+      is_na = arr_val.is_na;
+    } else {
+      // Push a fresh constant for the converted value, then rebind.
+      ReverseDouble tmp(arr_val);
+      id    = tmp.id;
+      is_na = tmp.is_na;
+    }
+    return *this;
+  }
+};
+
 inline Logical::Logical() : val(false), is_na(false) {}
 inline Logical::Logical(bool v) : val(v), is_na(false) {}
 inline Logical::Logical(Integer v) : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
 inline Logical::Logical(Double v)  : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
 inline Logical::Logical(Dual v)    : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
+inline Logical::Logical(ReverseDouble v) : val(static_cast<bool>(v.get_val_from_tape())), is_na(v.is_na) {}
 
 inline Integer::Integer() : val(0), is_na(false) {}
 inline Integer::Integer(int v) : val(v), is_na(false) {}
 inline Integer::Integer(Logical v) : val(static_cast<int>(v.val)), is_na(v.is_na) {}
 inline Integer::Integer(Double v)  : val(static_cast<int>(v.val)), is_na(v.is_na) {}
 inline Integer::Integer(Dual v)    : val(static_cast<int>(v.val)), is_na(v.is_na) {}
+inline Integer::Integer(ReverseDouble v) : val(static_cast<int>(v.get_val_from_tape())), is_na(v.is_na) {}
 
 inline Double::Double() : val(0.0), is_na(false) {}
 inline Double::Double(double v) : val(v), is_na(false) {}
 inline Double::Double(Logical v) : val(static_cast<double>(v.val)), is_na(v.is_na) {}
 inline Double::Double(Integer v) : val(static_cast<double>(v.val)), is_na(v.is_na) {}
 inline Double::Double(Dual v)    : val(v.val), is_na(v.is_na) {}
+inline Double::Double(ReverseDouble v) : val(v.get_val_from_tape()), is_na(v.is_na) {}
 
 inline Dual::Dual() : val(0.0), dot(0.0), is_na(false), is_na_dot(false) {}
 inline Dual::Dual(double v, double d) : val(v), dot(d), is_na(false), is_na_dot(false) {}
@@ -1632,7 +2044,7 @@ struct from_ast_scalar {
 template<> struct from_ast_scalar<Double>  { using type = double;  };
 template<> struct from_ast_scalar<Integer>     { using type = int; };
 template<> struct from_ast_scalar<Logical>    { using type = bool; };
-template<> struct from_ast_scalar<Variable<Double>> { using type = double; };
+template<> struct from_ast_scalar<ReverseDouble> { using type = double; };
 template<typename T>
 using from_ast_scalar_t = typename from_ast_scalar<T>::type;
 
@@ -1648,6 +2060,7 @@ template<> struct to_ast_scalar<LogicalRef>  { using type = Logical; };
 template<> struct to_ast_scalar<IntegerRef>  { using type = Integer; };
 template<> struct to_ast_scalar<DoubleRef>   { using type = Double;  };
 template<> struct to_ast_scalar<DualRef>     { using type = Dual;    };
+template<> struct to_ast_scalar<ReverseDouble> { using type = ReverseDouble; };
 
 template<typename T>
 using to_ast_scalar_t = typename to_ast_scalar<T>::type;
@@ -1657,7 +2070,7 @@ using to_ast_scalar_t = typename to_ast_scalar<T>::type;
 template<typename T>
 using bare_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
-enum class ScalarRank { Logical, Integer, Double, Dual, Variable };
+enum class ScalarRank { Logical, Integer, Double, Dual, ReverseDouble };
 
 // template<typename T> struct scalar_rank;
 template <class T>
@@ -1669,7 +2082,7 @@ template<> struct scalar_rank<Logical> { static constexpr auto value = ScalarRan
 template<> struct scalar_rank<Integer> { static constexpr auto value = ScalarRank::Integer; };
 template<> struct scalar_rank<Double>  { static constexpr auto value = ScalarRank::Double; };
 template<> struct scalar_rank<Dual>    { static constexpr auto value = ScalarRank::Dual; };
-template<> struct scalar_rank<Variable<Double>>    { static constexpr auto value = ScalarRank::Variable; }; // highest
+template<> struct scalar_rank<ReverseDouble> { static constexpr auto value = ScalarRank::ReverseDouble; }; // highest
 
 template<typename L, typename R>
 using common_scalar = std::conditional_t<
@@ -1716,20 +2129,8 @@ template<typename T> concept IsLogicalRef = std::same_as<T, LogicalRef>;
 template<typename T> concept IsDualRef = std::same_as<T, DualRef>;
 
 // reverse ad
-template <typename T> struct is_any_variable : std::false_type {};
-template <typename T> struct is_any_variable<Variable<T>> : std::true_type {};
-template <typename T> inline constexpr bool is_any_variable_v = is_any_variable<T>::value;
-template <typename T> concept IsVariable = is_any_variable_v<T>;
-
-template <typename T> struct is_any_expr : std::false_type {};
-template <typename T> struct is_any_expr<ExprPtr<T>> : std::true_type {};
-template <typename T> inline constexpr bool is_any_expr_v = is_any_expr<T>::value;
-template <typename T> concept IsExpr = is_any_expr_v<T>;
-
-template <typename T> concept IsADType = requires(T t) {
-typename T;
-requires IsVariable<T> || IsExpr<T> || IS<T, BooleanExpr>;
-};
+template <typename T> concept IsReverseDouble = IS<T, ReverseDouble>;
+template <typename T> concept IsADType = IS<T, ReverseDouble>;
 
 template <typename T> concept IsScalarLike = requires(T t) {
 typename T;
@@ -1737,7 +2138,7 @@ requires IsArithV<T> || IsArithRefV<T> || IsADType<T>;
 };
 template <typename T> concept IsScalarOrScalarRef = requires(T t) {
 typename T;
-requires IsArithV<T> || IsArithRefV<T>;
+requires IsArithV<T> || IsArithRefV<T> || IsReverseDouble<T>;
 };
 
 template <typename I>
@@ -1938,6 +2339,68 @@ requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScal
 inline auto operator*(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator*( common_type_t<L,R>(r) ) ){
   using CT = common_type_t<L, R>;
   return CT(l).operator*( CT(r) );
+}
+
+// Retrieve scalar value
+// --------------------------------------------------------------------------------------------------
+template<typename T> requires IsArithV<T>    inline auto get_scalar_val(const T& t) { return t; }
+template<typename T> requires IsArithRefV<T> inline auto get_scalar_val(const T& t) {
+  using DecayedT = Decayed<T>;
+  using RetType  = to_ast_scalar_t<DecayedT>;
+  return RetType(t);
+}
+inline ReverseDouble get_scalar_val(const ReverseDouble& x) { return x; }
+
+template<typename T> requires std::is_arithmetic_v<T> inline T    get_val(const T& t) { return t; }
+template<typename T> requires IsArithV<T>             inline auto get_val(const T& t) { return t.val; }
+template<typename T> requires IsArithRefV<T>          inline auto get_val(const T& t) { return *(t.p_val); }
+inline double get_val(const ReverseDouble& x) { return x.get_val_from_tape(); }
+
+// preserve na cast
+// --------------------------------------------------------------------------------------------------
+template <class Out, class In> inline Out cast_preserve_na(const In& x) {
+  using InD = Decayed<In>;
+  // Out Logical or Integer
+  if constexpr (IsLogical<Out> || IsInteger<Out>) {
+    // Inner type is logical or integer
+    if constexpr (IsLogical<InD> || IsInteger<InD>) {
+      if (x.isNA()) return Out::NA(); else return Out(get_val(x));
+    }
+    // Inner type is real
+    else {
+      const auto s = get_scalar_val(x);
+      if (s.isNA()) {
+        return Out::NA();
+      } else if (s.isNaN()) {
+        return Out::NA();
+      } else if (s.isInfinite()) {
+        return Out::NA();
+      } else {
+        return Out(get_val(s));
+      }
+    }
+  }
+  // Out is any real type
+  else {
+    // Inner type is logical or integer
+    if constexpr (IsLogical<InD> || IsInteger<InD>) {
+      if (x.isNA()) return Out::NA(); else return Out(get_val(x));
+    }
+    // Inner type is real
+    else {
+      const auto s = get_scalar_val(x);
+      if (s.isNA()) {
+        return Out::NA();
+      } else if (s.isNaN()) {
+        return Out::NaN();
+      } else if (s.isInfinite()) {
+        return Out::Inf();
+      } else {
+        return Out(get_val(s));
+      }
+    }
+  }
+
 }
 
 } // namespace etr

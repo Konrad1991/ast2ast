@@ -304,7 +304,7 @@ template <typename T> inline auto numeric_dual(const T &inp) {
   return createRVec<Dual>(inp);
 }
 template <typename T> inline auto numeric_rev_ad(const T &inp) {
-  return createRVec<Variable<Double>>(inp);
+  return createRVec<ReverseDouble>(inp);
 }
 
 template <typename Type, typename R, typename C> inline auto createRMat(const R& nrow, const C& ncol) {

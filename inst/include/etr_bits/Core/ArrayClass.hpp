@@ -67,7 +67,7 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   Array(Integer sz) : d(1), temp(1), dim(1, 1) { d.set(0, static_cast<T>(sz));}
   Array(Double sz) : d(1), temp(1), dim(1, 1) { d.set(0, get_val(sz)); }
   Array(Dual sz) : d(1), temp(1), dim(1, 1) { d.set(0, static_cast<T>(sz));}
-  Array(Variable<T> sz) : d(1), temp(1), dim(1, 1) { d.set(0, sz); }
+  Array(ReverseDouble sz) : d(1), temp(1), dim(1, 1) { d.set(0, sz); }
 
   // define Arraytor with specific size
   explicit Array(const SI &sz) : d(sz.sz), temp(sz.sz), dim(1, sz.sz) {}
@@ -267,7 +267,7 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
 ---------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------
 */
-template<typename T> requires (IsArithV<T> || IsVariable<T>) struct Array<T, Borrow<T, BorrowTrait>> {
+template<typename T> requires (IsArithV<T> || IsADType<T>) struct Array<T, Borrow<T, BorrowTrait>> {
   using Type = T;
   using DType = Borrow<T, BorrowTrait>;
   using value_type = T;
