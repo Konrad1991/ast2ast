@@ -110,6 +110,24 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_mat_mul
+void test_mat_mul();
+RcppExport SEXP _ast2ast_test_mat_mul() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_mat_mul();
+    return R_NilValue;
+END_RCPP
+}
+// test_matmul_block
+void test_matmul_block();
+RcppExport SEXP _ast2ast_test_matmul_block() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_matmul_block();
+    return R_NilValue;
+END_RCPP
+}
 // test_preserved_subsetting
 void test_preserved_subsetting();
 RcppExport SEXP _ast2ast_test_preserved_subsetting() {
@@ -168,6 +186,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_jacobian", (DL_FUNC) &_ast2ast_test_jacobian, 0},
     {"_ast2ast_test_deriv_scalar", (DL_FUNC) &_ast2ast_test_deriv_scalar, 0},
     {"_ast2ast_test_tape_reuse", (DL_FUNC) &_ast2ast_test_tape_reuse, 0},
+    {"_ast2ast_test_mat_mul", (DL_FUNC) &_ast2ast_test_mat_mul, 0},
+    {"_ast2ast_test_matmul_block", (DL_FUNC) &_ast2ast_test_matmul_block, 0},
     {"_ast2ast_test_preserved_subsetting", (DL_FUNC) &_ast2ast_test_preserved_subsetting, 0},
     {"_ast2ast_test_second_dispatch_layer", (DL_FUNC) &_ast2ast_test_second_dispatch_layer, 0},
     {"_ast2ast_test_simplified_subsetting", (DL_FUNC) &_ast2ast_test_simplified_subsetting, 0},

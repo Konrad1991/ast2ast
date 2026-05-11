@@ -1,6 +1,8 @@
 #ifndef SEXPCONVERSION_ETR_HPP
 #define SEXPCONVERSION_ETR_HPP
 
+#include <cstring>
+
 namespace etr {
 
 // Evaluation: this is required as the lifetime for some objects do not survive the function itself
@@ -8,7 +10,14 @@ namespace etr {
 template<typename T>
 inline auto Evaluate(T && obj) {
   constexpr bool is_scalar = IsScalarLike<Decayed<T>>;
-  if constexpr(!is_scalar && (!IsLBufferArray<Decayed<T>> && !IsBorrowArray<Decayed<T>>)) {
+  // Materialize lazy expression views (BinaryOp, SubsetView, ...) into a
+  // concrete RBuffer. Concrete arrays — LBuffer, RBuffer, Borrow — already
+  // own contiguous storage and survive the call; forwarding them avoids an
+  // O(N) per-element copy on the way out to Cast / SEXP conversion.
+  if constexpr (!is_scalar &&
+                !IsLBufferArray<Decayed<T>> &&
+                !IsBorrowArray<Decayed<T>> &&
+                !IsRArray<Decayed<T>>) {
     using vtype = typename ExtractDataType<Decayed<T>>::value_type;
     Array<vtype, Buffer<vtype, RBufferTrait>> res(SI{obj.size()});
     for (size_t i = 0; i < res.size(); i++) {
@@ -117,42 +126,106 @@ inline void set_dim_attrib(SEXP x, const std::vector<std::size_t>& dim) {
 inline void set_dimnames_attrib(SEXP x, SEXP dimnames /* must be a VECSXP of length ndims */) {
   Rf_setAttrib(x, R_DimNamesSymbol, dimnames);
 }
+// Bulk-copy fast path — replaces the per-element `to_R(res.get(i))` loop with
+// a memcpy from the underlying buffer plus a separate NA-mask pass. The two
+// passes are each bandwidth-bound and auto-vectorize, so they're orders of
+// magnitude faster than the scalar loop for large arrays.
+//
+// Storage layout we exploit:
+//   Buffer<T,LBufferTrait> / Buffer<T,RBufferTrait>  → SoA: p_val, p_na
+//   Borrow<T,BorrowTrait>                            → p,     na_p
+//   Buffer<Dual,*>  is always SoA: p_val, p_dot, p_na, p_na_dot
+//   ReverseDouble has no contiguous double buffer (each handle's value lives
+//   on the tape), so it stays on the per-element path.
+template <typename A>
+inline auto cast_value_ptr(const A& a) {
+  if constexpr (IsBorrowArray<Decayed<A>>) return a.d.p;
+  else                                      return a.d.p_val;
+}
+template <typename A>
+inline auto cast_na_ptr(const A& a) {
+  if constexpr (IsBorrowArray<Decayed<A>>) return a.d.na_p;
+  else                                      return a.d.p_na;
+}
+
 template <typename T>
 requires IsArray<Decayed<T>>
 inline SEXP Cast(const T &res_) {
   auto res = Evaluate(res_);
   const auto dim = dim_view(res.get_dim());
-  SEXP ret = R_NilValue;
-  using vtype = typename ExtractDataType<Decayed<T>>::value_type;
-  if constexpr (IsDouble<vtype> || IsDual<vtype> || IsADType<vtype>) {
-    ret = PROTECT(Rf_allocVector(REALSXP, res.size()));
-    for (int i = 0; i < res.size(); i++) {
-      REAL(ret)[i] = to_R(res.get(i));
+  using vtype = typename ExtractDataType<Decayed<decltype(res)>>::value_type;
+  const R_xlen_t N = static_cast<R_xlen_t>(res.size());
+
+  if constexpr (IsDouble<vtype>) {
+    SEXP ret = PROTECT(Rf_allocVector(REALSXP, N));
+    double*       dst = REAL(ret);
+    const double* src = cast_value_ptr(res);
+    const bool*   na  = cast_na_ptr(res);
+    std::memcpy(dst, src, static_cast<std::size_t>(N) * sizeof(double));
+    if (na) {
+      for (R_xlen_t i = 0; i < N; ++i) if (na[i]) dst[i] = NA_REAL;
     }
     set_dim_attrib(ret, dim);
     UNPROTECT(1);
     return ret;
-  } else if constexpr (IsLogical<vtype>) {
-    SEXP ret = R_NilValue;
-    ret = PROTECT(Rf_allocVector(LGLSXP, res.size()));
-    for (int i = 0; i < res.size(); i++) {
-      LOGICAL(ret)[i] = static_cast<int>(to_R(res.get(i))); // R stores bools as ints
+  }
+  else if constexpr (IsDual<vtype>) {
+    // Dual is uniformly SoA across L/R/Borrow — only the val component is
+    // surfaced to R; dot is dropped (matches the original to_R(Dual) semantics).
+    SEXP ret = PROTECT(Rf_allocVector(REALSXP, N));
+    double*       dst = REAL(ret);
+    const double* src = res.d.p_val;
+    const bool*   na  = res.d.p_na;
+    std::memcpy(dst, src, static_cast<std::size_t>(N) * sizeof(double));
+    if (na) {
+      for (R_xlen_t i = 0; i < N; ++i) if (na[i]) dst[i] = NA_REAL;
     }
     set_dim_attrib(ret, dim);
     UNPROTECT(1);
     return ret;
-  } else if constexpr (IsInteger<vtype>) {
-    SEXP ret = R_NilValue;
-    ret = PROTECT(Rf_allocVector(INTSXP, res.size()));
-    for (int i = 0; i < res.size(); i++) {
-      INTEGER(ret)[i] = to_R(res.get(i));
+  }
+  else if constexpr (IsADType<vtype>) {
+    // ReverseDouble: each element is a tape handle, values live in
+    // TAPE_INTERN.val; no contiguous double buffer to memcpy from. Stay on
+    // the per-element path (one indirect read + NA branch per cell).
+    SEXP ret = PROTECT(Rf_allocVector(REALSXP, N));
+    double* dst = REAL(ret);
+    for (R_xlen_t i = 0; i < N; ++i) dst[i] = to_R(res.get(i));
+    set_dim_attrib(ret, dim);
+    UNPROTECT(1);
+    return ret;
+  }
+  else if constexpr (IsInteger<vtype>) {
+    SEXP ret = PROTECT(Rf_allocVector(INTSXP, N));
+    int*        dst = INTEGER(ret);
+    const int*  src = cast_value_ptr(res);
+    const bool* na  = cast_na_ptr(res);
+    std::memcpy(dst, src, static_cast<std::size_t>(N) * sizeof(int));
+    if (na) {
+      for (R_xlen_t i = 0; i < N; ++i) if (na[i]) dst[i] = NA_INTEGER;
     }
     set_dim_attrib(ret, dim);
     UNPROTECT(1);
     return ret;
-  } else {
+  }
+  else if constexpr (IsLogical<vtype>) {
+    // R stores logicals as int (LGLSXP is INTSXP under the hood). Source is
+    // bool*; widen with a tight loop the compiler will vectorize.
+    SEXP ret = PROTECT(Rf_allocVector(LGLSXP, N));
+    int*        dst = LOGICAL(ret);
+    const bool* src = cast_value_ptr(res);
+    const bool* na  = cast_na_ptr(res);
+    for (R_xlen_t i = 0; i < N; ++i) dst[i] = src[i] ? 1 : 0;
+    if (na) {
+      for (R_xlen_t i = 0; i < N; ++i) if (na[i]) dst[i] = NA_LOGICAL;
+    }
+    set_dim_attrib(ret, dim);
+    UNPROTECT(1);
+    return ret;
+  }
+  else {
     ass<"Couldn't convert the object to an R object">(false);
-    return ret;
+    return R_NilValue;
   }
 }
 

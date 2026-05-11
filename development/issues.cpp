@@ -8,15 +8,22 @@
 #include "../inst/include/etr.hpp"
 using namespace etr;
 
-
 int main() {
-  std::vector<double> owner{1, 2, 3};
-  Array<Double, Borrow<Double>> b(owner.data(), owner.size(), std::vector<std::size_t>{3});
-  b = b + at(b, Integer(1));
-  print(b);
-  auto test = seq_len(Integer(1));
-  print(test);
-  for (Integer i = 1; i < length(b); i = i + Integer(1)) {
-    print(i);
+  etr::TAPE_INTERN.clear();
+  Array<ReverseDouble, Buffer<ReverseDouble, LBufferTrait>> A;
+  Array<ReverseDouble, Buffer<ReverseDouble, LBufferTrait>> C;
+  A = matrix(
+    c(ReverseDouble(1), ReverseDouble(2), ReverseDouble(3), ReverseDouble(4), ReverseDouble(5), ReverseDouble(6)),
+    Integer(2), Integer(3)
+  );
+  {
+    C = mat_mul(
+      A,
+      matrix(
+        c(Double(1), Double(2), Double(3), Double(4), Double(5), Double(6)),
+        Integer(3), Integer(2)
+      ) + Double(0.0)
+    );
   }
+  print(C);
 }

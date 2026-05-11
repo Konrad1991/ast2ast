@@ -725,6 +725,12 @@ function_registry_global$add(
   group = "binary_node", cpp_name = "*"
 )
 function_registry_global$add(
+  name = "%*%", num_args = 2, arg_names = c(NA, NA),
+  infer_fct = infer_binary_math,
+  check_fct = check_binary,
+  group = "binary_node", cpp_name = "etr::mat_mul"
+)
+function_registry_global$add(
   name = "/", num_args = 2, arg_names = c(NA, NA),
   infer_fct = infer_binary_math,
   check_fct = check_binary,

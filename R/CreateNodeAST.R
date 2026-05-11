@@ -266,7 +266,7 @@ translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry) {
 
 # Assembles function (includes, signature, declarations, body)
 # ========================================================================
-assemble <- function(name_fct, vars_types_list, return_type, body, r_fct) {
+assemble <- function(name_fct, vars_types_list, return_type, body, real_type, r_fct) {
 
   arguments <- lapply(vars_types_list, function(x) {
     x$stringify_signature(r_fct)
@@ -287,6 +287,11 @@ assemble <- function(name_fct, vars_types_list, return_type, body, r_fct) {
     ret_type <- return_type
   }
 
+  tape_clear <- ""
+  if (real_type == "etr::ReverseDouble") {
+    tape_clear <- "  etr::TAPE_INTERN.clear();"
+  }
+
   body <- paste0(body, "\n")
   if (r_fct) {
     signature <- paste0("SEXP ", name_fct, "(", paste(arguments, collapse = ", "), ") {")
@@ -296,6 +301,7 @@ assemble <- function(name_fct, vars_types_list, return_type, body, r_fct) {
       c(
         includes,
         signature, "\n",
+        tape_clear, "\n",
         declarations, "\n",
         body, "}\n"
       ),
@@ -320,6 +326,7 @@ assemble <- function(name_fct, vars_types_list, return_type, body, r_fct) {
       c(
         includes, "\n",
         signature, "\n",
+        tape_clear, "\n",
         declarations, "\n",
         body, "}\n\n",
         def_get_xptr,
@@ -376,7 +383,7 @@ translate_internally <- function(fct, args_fct, derivative, name_fct, r_fct) {
   }
 
   # Create function signature & variable declarations
-  code <- assemble(name_fct, vars_types_list, return_type, code_string, r_fct)
+  code <- assemble(name_fct, vars_types_list, return_type, code_string, real_type, r_fct)
   code <- remove_blank_lines(code)
   return(code)
 }

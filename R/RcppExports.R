@@ -45,6 +45,14 @@ test_tape_reuse <- function() {
     invisible(.Call(`_ast2ast_test_tape_reuse`))
 }
 
+test_mat_mul <- function() {
+    invisible(.Call(`_ast2ast_test_mat_mul`))
+}
+
+test_matmul_block <- function() {
+    invisible(.Call(`_ast2ast_test_matmul_block`))
+}
+
 test_preserved_subsetting <- function() {
     invisible(.Call(`_ast2ast_test_preserved_subsetting`))
 }

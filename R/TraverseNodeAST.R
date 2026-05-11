@@ -107,6 +107,13 @@ action_transpile_inner_functions <- function(node, real_type) {
   }
   AST <- sort_args(AST, function_registry)
   node$vars_types_list <- infer_types(AST, f, args_f_raw, r_fct, function_registry)
+
+  # TODO: figure out why this loop is required
+  for(i in seq_len(length(node$vars_types_list))) {
+    node$vars_types_list[[i]]$real_type <- real_type
+  }
+  node$return_type$real_type <- real_type
+
   trash <- type_checking(AST, node$vars_types_list, r_fct, real_type, function_registry)
   return_type <- determine_types_of_returns(AST, node$vars_types_list, r_fct, function_registry)
   if (is.character(return_type)) {

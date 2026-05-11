@@ -7,5 +7,6 @@
 #include "./Core/Buffer.hpp"
 #include "./Core/Borrow.hpp"
 #include "./Core/ArrayClass.hpp"
+#include "./Core/MatMul.hpp"
 
 #endif

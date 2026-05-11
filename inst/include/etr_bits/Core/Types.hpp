@@ -7,7 +7,21 @@
 #ifdef STANDALONE_ETR
 #include "stddef.h"
 #include <cxxabi.h>
+// Standalone mode still uses BLAS for matmul; declare dgemm by hand and
+// shim F77_CALL/FCONE so the call sites can be uniform with the R build.
+extern "C" void dgemm_(const char* transa, const char* transb,
+                       const int* m, const int* n, const int* k,
+                       const double* alpha, const double* a, const int* lda,
+                       const double* b, const int* ldb,
+                       const double* beta, double* c, const int* ldc);
+#define F77_CALL(x) x##_
+#define FCONE
 #else
+#include <R_ext/BLAS.h>
+#include <R_ext/RS.h>
+#ifndef FCONE
+#define FCONE
+#endif
 #endif
 
 #include <cstddef>
@@ -28,6 +42,50 @@
 #include <numeric>
 
 namespace etr {
+
+// Messages/Warnings and Errors
+// -----------------------------------------------------------------------------------------------------------
+inline void ass(bool inp, const std::string &message) {
+#ifdef STANDALONE_ETR
+  if (!inp)
+    throw std::runtime_error(message);
+#else
+  if (!inp)
+    Rcpp::stop(message);
+#endif
+}
+
+// https://ctrpeach.io/posts/cpp20-string-literal-template-parameters/
+template <std::size_t N> struct string_literal {
+  constexpr string_literal(const char (&str)[N]) {
+    std::copy_n(str, N, value.begin());
+  }
+  std::array<char, N> value;
+};
+
+template <string_literal msg> inline void ass(bool inp) {
+#ifdef STANDALONE_ETR
+  if (!inp) throw std::runtime_error(msg.value.data());
+#else
+  if (!inp) Rcpp::stop(msg.value.data());
+#endif
+}
+
+inline void warn(bool inp, std::string message) {
+#ifdef STANDALONE_ETR
+  if (!inp) std::cerr << "Warning: " + message << std::endl;
+#else
+  if (!inp) Rcpp::warning("Warning: " + message);
+#endif
+}
+
+template <string_literal msg> inline void warn(bool inp) {
+#ifdef STANDALONE_ETR
+  if (!inp) std::cerr << msg.value.data() << std::endl;
+#else
+  if (!inp) Rcpp::warning(msg.value.data());
+#endif
+}
 
 // Handler which store reference to r for L values and otherwise copy the value to keep it alive
 // -----------------------------------------------------------------------------------------------------------
@@ -116,15 +174,38 @@ public:
 template <typename T, typename U>
 inline constexpr bool IS = std::is_same_v<T, U>;
 
-// Reverse-mode AD tape (used by ReverseDouble, defined further down with the
-// other scalar types). The tape is self-contained: only primitive types,
-// std::vector, and <cmath>. One tape per thread; translated functions call
-// TAPE_INTERN.clear() at entry, which resets size without freeing capacity.
+// Reverse-mode AD tape (used by ReverseDouble, defined further down with the other scalar types).
+// The tape is self-contained: only primitive types, std::vector, and <cmath>.
+// One tape per thread; translated functions call TAPE_INTERN.clear() at entry, which resets size without freeing capacity.
 enum class ROp : uint8_t {
   Var, Const,
   Add, Sub, Mul, Div, Neg,
   Sin, Cos, Tan, Asin, Acos, Atan, Sinh, Cosh, Tanh,
-  Exp, Log, Log10, Sqrt, Pow
+  Exp, Log, Log10, Sqrt, Pow,
+  // A MatMul produces M*N output cells. We push M*N consecutive tape nodes
+  // so downstream ops can reference any cell by tape id. The FIRST node is
+  // tagged MatMul and carries the whole block's backward pass; the other
+  // M*N-1 nodes are tagged BlockSlot and are no-ops in reverse(). Both
+  // node kinds store block_idx (index into ReverseTape::blocks) in a[],
+  // NOT a tape id.
+  MatMul, BlockSlot
+};
+
+struct BlockOp {
+  enum class Kind : uint8_t { MatMul };
+  Kind        kind;
+  std::size_t rows_a;
+  std::size_t cols_a;     // == rows_b
+  std::size_t cols_b;
+  // Per side, exactly one of {ids, vals} is populated. ids = ReverseDouble
+  // input (values pulled from tape at backward time). vals = r-value input
+  // (Double/Integer/Logical), copied here so backward survives the original
+  // memory going out of scope.
+  std::vector<int>    a_ids;
+  std::vector<double> a_vals;
+  std::vector<int>    b_ids;
+  std::vector<double> b_vals;
+  int         out_tape_id_first{-1};   // tape id of the head node; outputs occupy [out_tape_id_first, out_tape_id_first + rows_a*cols_b)
 };
 
 struct ReverseTape {
@@ -134,12 +215,14 @@ struct ReverseTape {
   std::vector<double>  val;
   std::vector<double>  adj;
   std::vector<uint8_t> is_na; // uint8_t on purpose — avoids vector<bool>.
+  std::vector<BlockOp> blocks;
 
   inline std::size_t size() const noexcept { return op.size(); }
 
   inline void clear() noexcept {
     op.clear(); a.clear(); b.clear();
     val.clear(); adj.clear(); is_na.clear();
+    blocks.clear();
   }
 
   inline void reserve(std::size_t n) {
@@ -221,11 +304,128 @@ struct ReverseTape {
     return push_node(bo, ai, bi, outv, false);
   }
 
+  // Block matrix multiply C = A * B, column-major (R convention).
+  // A is rows_a x cols_a, B is cols_a x cols_b, C is rows_a x cols_b.
+  // All three buffers laid out as A[m,k] = idx[k*rows_a + m], etc.
+  // Per side, exactly one of {ids, vals} must be non-empty (the other empty).
+  // Returns the head tape id; output cells occupy [head, head + rows_a*cols_b).
+  inline int push_matmul(std::size_t rows_a, std::size_t cols_a, std::size_t cols_b,
+                         std::vector<int>    a_ids,
+                         std::vector<double> a_vals,
+                         std::vector<int>    b_ids,
+                         std::vector<double> b_vals) {
+    ass<"push_matmul: A side requires exactly one of {ids, vals}">(a_ids.empty() != a_vals.empty());
+    ass<"push_matmul: B side requires exactly one of {ids, vals}">(b_ids.empty() != b_vals.empty());
+    const std::size_t a_size = a_ids.empty() ? a_vals.size() : a_ids.size();
+    const std::size_t b_size = b_ids.empty() ? b_vals.size() : b_ids.size();
+    ass<"push_matmul: A size mismatch">(a_size == rows_a * cols_a);
+    ass<"push_matmul: B size mismatch">(b_size == cols_a * cols_b);
+
+    const std::size_t out_size = rows_a * cols_b;
+    const int         block_idx = static_cast<int>(blocks.size());
+
+    // Pre-scan NA per row of A and per column of B. C[i,j] is NA iff
+    // any A[i,*] is NA OR any B[*,j] is NA — same poisoning rule as R's %*%.
+    // For ids inputs we read the authoritative is_na flag; for vals inputs
+    // we treat NaN as NA (the distinction was already lost upstream).
+    std::vector<uint8_t> a_row_na(rows_a, 0);
+    std::vector<uint8_t> b_col_na(cols_b, 0);
+    for (std::size_t i = 0; i < rows_a; ++i) {
+      for (std::size_t k = 0; k < cols_a; ++k) {
+        const std::size_t idx = k * rows_a + i;
+        const bool na_here = a_ids.empty()
+          ? std::isnan(a_vals[idx])
+          : (is_na[static_cast<std::size_t>(a_ids[idx])] != 0);
+        if (na_here) { a_row_na[i] = 1; break; }
+      }
+    }
+    for (std::size_t j = 0; j < cols_b; ++j) {
+      for (std::size_t k = 0; k < cols_a; ++k) {
+        const std::size_t idx = j * cols_a + k;
+        const bool na_here = b_ids.empty()
+          ? std::isnan(b_vals[idx])
+          : (is_na[static_cast<std::size_t>(b_ids[idx])] != 0);
+        if (na_here) { b_col_na[j] = 1; break; }
+      }
+    }
+
+    // Gather (or alias) inputs into contiguous double buffers for dgemm.
+    std::vector<double> a_buf, b_buf;
+    const double* a_ptr;
+    if (a_ids.empty()) {
+      a_ptr = a_vals.data();
+    } else {
+      a_buf.resize(rows_a * cols_a);
+      for (std::size_t k = 0; k < a_buf.size(); ++k) {
+        a_buf[k] = val[static_cast<std::size_t>(a_ids[k])];
+      }
+      a_ptr = a_buf.data();
+    }
+    const double* b_ptr;
+    if (b_ids.empty()) {
+      b_ptr = b_vals.data();
+    } else {
+      b_buf.resize(cols_a * cols_b);
+      for (std::size_t k = 0; k < b_buf.size(); ++k) {
+        b_buf[k] = val[static_cast<std::size_t>(b_ids[k])];
+      }
+      b_ptr = b_buf.data();
+    }
+
+    std::vector<double>  out_vals(out_size, 0.0);
+    std::vector<uint8_t> out_na(out_size, 0);
+    const int    Mi = static_cast<int>(rows_a);
+    const int    Ni = static_cast<int>(cols_b);
+    const int    Ki = static_cast<int>(cols_a);
+    const double alpha = 1.0, beta = 0.0;
+    F77_CALL(dgemm)("N", "N", &Mi, &Ni, &Ki, &alpha,
+                    a_ptr, &Mi, b_ptr, &Ki, &beta,
+                    out_vals.data(), &Mi FCONE FCONE);
+
+    // Apply NA mask: overwrite poisoned cells (BLAS may have produced finite
+    // garbage if the source NA was tracked only by the is_na flag).
+    for (std::size_t j = 0; j < cols_b; ++j) {
+      for (std::size_t i = 0; i < rows_a; ++i) {
+        if (a_row_na[i] || b_col_na[j]) {
+          const std::size_t out_idx = j * rows_a + i;
+          out_vals[out_idx] = std::numeric_limits<double>::quiet_NaN();
+          out_na[out_idx]   = 1;
+        }
+      }
+    }
+
+    // Push the M*N output tape nodes. The first is the MatMul head (carries
+    // the backward pass for the whole block); the rest are inert BlockSlot
+    // markers. Both store block_idx in a[] (NOT a tape id — reverse() looks
+    // it up in `blocks`).
+    const int head_id = push_node(ROp::MatMul, block_idx, -1, out_vals[0], out_na[0] != 0);
+    for (std::size_t k = 1; k < out_size; ++k) {
+      push_node(ROp::BlockSlot, block_idx, -1, out_vals[k], out_na[k] != 0);
+    }
+
+    BlockOp blk;
+    blk.kind         = BlockOp::Kind::MatMul;
+    blk.rows_a       = rows_a;
+    blk.cols_a       = cols_a;
+    blk.cols_b       = cols_b;
+    blk.a_ids        = std::move(a_ids);
+    blk.a_vals       = std::move(a_vals);
+    blk.b_ids        = std::move(b_ids);
+    blk.b_vals       = std::move(b_vals);
+    blk.out_tape_id_first = head_id;
+    blocks.push_back(std::move(blk));
+
+    return head_id;
+  }
+
   void reverse(int out) {
     std::fill(adj.begin(), adj.end(), 0.0);
     adj[static_cast<std::size_t>(out)] = 1.0;
     for (std::size_t ii = size(); ii-- > 0;) {
-      if (is_na[ii]) continue;
+      // MatMul head nodes must always fire — the head propagates adjoints
+      // for ALL output cells of the block, not just its own cell.
+      // Per-cell NA is handled inside the case by reading is_na per output id.
+      if (is_na[ii] && op[ii] != ROp::MatMul) continue;
       const double w = adj[ii];
       const ROp   op_i = op[ii];
       const int   ai   = a[ii];
@@ -326,6 +526,71 @@ struct ReverseTape {
           adj[static_cast<std::size_t>(bi)] += w * (f * std::log(x));
           break;
         }
+        case ROp::MatMul: {
+          // ai is the index into `blocks`, NOT a tape id.
+          const BlockOp& blk = blocks[static_cast<std::size_t>(ai)];
+          const std::size_t M = blk.rows_a;
+          const std::size_t K = blk.cols_a;
+          const std::size_t N = blk.cols_b;
+          const std::size_t out0 = static_cast<std::size_t>(blk.out_tape_id_first);
+
+          // dC: copy output adjoints, zeroing NA cells (NA outputs have no
+          // sensitivity to inputs).
+          std::vector<double> dC(M * N);
+          for (std::size_t k = 0; k < M * N; ++k) {
+            dC[k] = is_na[out0 + k] ? 0.0 : adj[out0 + k];
+          }
+
+          // Materialize A and B as contiguous column-major double buffers.
+          std::vector<double> a_buf, b_buf;
+          const double* A_ptr;
+          if (blk.a_ids.empty()) A_ptr = blk.a_vals.data();
+          else {
+            a_buf.resize(M * K);
+            for (std::size_t k = 0; k < a_buf.size(); ++k)
+              a_buf[k] = val[static_cast<std::size_t>(blk.a_ids[k])];
+            A_ptr = a_buf.data();
+          }
+          const double* B_ptr;
+          if (blk.b_ids.empty()) B_ptr = blk.b_vals.data();
+          else {
+            b_buf.resize(K * N);
+            for (std::size_t k = 0; k < b_buf.size(); ++k)
+              b_buf[k] = val[static_cast<std::size_t>(blk.b_ids[k])];
+            B_ptr = b_buf.data();
+          }
+
+          const int    Mi = static_cast<int>(M);
+          const int    Ni = static_cast<int>(N);
+          const int    Ki = static_cast<int>(K);
+          const double one = 1.0, zero = 0.0;
+
+          // dA = dC * Bᵀ ;   shape (M x K) = (M x N) * (N x K stored as K x N transposed)
+          if (!blk.a_ids.empty()) {
+            std::vector<double> dA(M * K, 0.0);
+            F77_CALL(dgemm)("N", "T", &Mi, &Ki, &Ni, &one,
+                            dC.data(), &Mi, B_ptr, &Ki, &zero,
+                            dA.data(), &Mi FCONE FCONE);
+            for (std::size_t k = 0; k < M * K; ++k) {
+              adj[static_cast<std::size_t>(blk.a_ids[k])] += dA[k];
+            }
+          }
+
+          // dB = Aᵀ * dC ;   shape (K x N) = (K x M stored as M x K transposed) * (M x N)
+          if (!blk.b_ids.empty()) {
+            std::vector<double> dB(K * N, 0.0);
+            F77_CALL(dgemm)("T", "N", &Ki, &Ni, &Mi, &one,
+                            A_ptr, &Mi, dC.data(), &Mi, &zero,
+                            dB.data(), &Ki FCONE FCONE);
+            for (std::size_t k = 0; k < K * N; ++k) {
+              adj[static_cast<std::size_t>(blk.b_ids[k])] += dB[k];
+            }
+          }
+          break;
+        }
+        case ROp::BlockSlot:
+          // No-op — the head handles all input adjoints in one pass.
+          break;
         default:
           // Var / Const: no adjoint propagation
           break;
@@ -354,48 +619,6 @@ template <typename T> struct It {
   bool operator==(const It& rhs) const { return p == rhs.p; }
   It& operator++() { ++p; return *this; }
 };
-
-inline void ass(bool inp, const std::string &message) {
-#ifdef STANDALONE_ETR
-  if (!inp)
-    throw std::runtime_error(message);
-#else
-  if (!inp)
-    Rcpp::stop(message);
-#endif
-}
-
-// https://ctrpeach.io/posts/cpp20-string-literal-template-parameters/
-template <std::size_t N> struct string_literal {
-  constexpr string_literal(const char (&str)[N]) {
-    std::copy_n(str, N, value.begin());
-  }
-  std::array<char, N> value;
-};
-
-template <string_literal msg> inline void ass(bool inp) {
-#ifdef STANDALONE_ETR
-  if (!inp) throw std::runtime_error(msg.value.data());
-#else
-  if (!inp) Rcpp::stop(msg.value.data());
-#endif
-}
-
-inline void warn(bool inp, std::string message) {
-#ifdef STANDALONE_ETR
-  if (!inp) std::cerr << "Warning: " + message << std::endl;
-#else
-  if (!inp) Rcpp::warning("Warning: " + message);
-#endif
-}
-
-template <string_literal msg> inline void warn(bool inp) {
-#ifdef STANDALONE_ETR
-  if (!inp) std::cerr << msg.value.data() << std::endl;
-#else
-  if (!inp) Rcpp::warning(msg.value.data());
-#endif
-}
 
 struct SI {
   std::size_t sz{0};
@@ -938,6 +1161,9 @@ struct Logical {
     if constexpr(IS<inner, Logical>) {
       val = arr_val.val;
       is_na = arr_val.is_na;
+    } else if constexpr(IS<inner, ReverseDouble>) {
+      val = static_cast<bool>(arr_val.get_val_from_tape());
+      is_na = arr_val.is_na;
     } else {
       val = static_cast<bool>(arr_val.val);
       is_na = arr_val.is_na;
@@ -998,6 +1224,9 @@ struct Integer {
     const auto arr_val = get_scalar_val(arr.get(0));
     if constexpr(IS<inner, Integer>) {
       val = arr_val.val;
+      is_na = arr_val.is_na;
+    } else if constexpr(IS<inner, ReverseDouble>) {
+      val = static_cast<int>(arr_val.get_val_from_tape());
       is_na = arr_val.is_na;
     } else {
       val = static_cast<int>(arr_val.val);
@@ -1079,6 +1308,9 @@ struct Double {
     const auto arr_val = get_scalar_val(arr.get(0));
     if constexpr(IS<inner, Double>) {
       val = arr_val.val;
+      is_na = arr_val.is_na;
+    } else if constexpr(IS<inner, ReverseDouble>) {
+      val = arr_val.get_val_from_tape();
       is_na = arr_val.is_na;
     } else {
       val = static_cast<double>(arr_val.val);
@@ -1183,6 +1415,11 @@ struct Dual {
       is_na = arr_val.is_na;
       dot = arr_val.dot;
       is_na_dot = arr_val.is_na_dot;
+    } else if constexpr(IS<inner, ReverseDouble>) {
+      val = arr_val.get_val_from_tape();
+      is_na = arr_val.is_na;
+      dot = 0;
+      is_na_dot = false;
     } else {
       val = static_cast<double>(arr_val.val);
       is_na = arr_val.is_na;
@@ -1205,6 +1442,11 @@ struct ReverseDouble {
   inline ReverseDouble(double v) {
     id = TAPE_INTERN.push_const(v, false);
   }
+  // Tag-based ctor for wrapping an existing tape id without pushing a new
+  // node (used by mat_mul and other block ops to materialize result handles).
+  struct from_tape_id_t {};
+  inline ReverseDouble(from_tape_id_t, int id_, bool is_na_) noexcept
+  : id(id_), is_na(is_na_) {}
   inline ReverseDouble(int v)  : ReverseDouble(static_cast<double>(v)) {}
   inline ReverseDouble(bool v) : ReverseDouble(v ? 1.0 : 0.0) {}
 
@@ -1408,6 +1650,7 @@ inline Dual::Dual(double v, double d) : val(v), dot(d), is_na(false), is_na_dot(
 inline Dual::Dual(Logical v) : val(static_cast<double>(v.val)), dot(0.0), is_na(v.is_na), is_na_dot(false) {}
 inline Dual::Dual(Integer v) : val(static_cast<double>(v.val)), dot(0.0), is_na(v.is_na), is_na_dot(false) {}
 inline Dual::Dual(Double v)    : val(v.val), dot(0.0), is_na(v.is_na), is_na_dot(false) {}
+inline Dual::Dual(ReverseDouble v) : val(v.get_val_from_tape()), dot(0.0), is_na(v.is_na), is_na_dot(false) {}
 template<typename T> requires std::is_arithmetic_v<T>
 inline Dual::Dual(T v)    : val(static_cast<double>(v)), dot(0.0), is_na(std::isnan(v)), is_na_dot(false) {}
 
@@ -2143,17 +2386,17 @@ requires IsArithV<T> || IsArithRefV<T> || IsReverseDouble<T>;
 
 template <typename I>
 concept ScalarIndex =
-  IsScalarLike<I> &&
-  !IsLogical<I> &&
-  !IsLogicalRef<I>;
+IsScalarLike<I> &&
+!IsLogical<I> &&
+!IsLogicalRef<I>;
 
 template <typename... Args>
 concept NonEmpty = (sizeof...(Args) > 0);
 
 template <typename... Args>
 concept AllScalarIndices =
-  NonEmpty<Args...> &&
-  (ScalarIndex<Args> && ...);
+NonEmpty<Args...> &&
+(ScalarIndex<Args> && ...);
 
 template <typename... Args>
 concept HasNonScalarIndex = (!ScalarIndex<Args> || ...);
