@@ -456,6 +456,148 @@ struct DoubleRef;
 struct DualRef;
 struct ReverseDoubleRef;
 
+/*
+--------------------------------------------------------------------------------------------------
+Casting scalar types
+- from_ast_scalar converts etr::Scalars to raw C++ scalars
+- to_ast_scalar converts double, int, and bool to Double, Integer, and Logical respectivly
+- to_ast_scalar converts LogicalRef, IntegerRef, DoubleRef, DualRef, and ReverseDoubleRef to 
+  Logical, Integer, Double, Dual and ReverseDouble
+--------------------------------------------------------------------------------------------------
+*/
+template<typename T>
+struct from_ast_scalar {
+  using type = T;
+};
+template<> struct from_ast_scalar<Double>  { using type = double;  };
+template<> struct from_ast_scalar<Integer>     { using type = int; };
+template<> struct from_ast_scalar<Logical>    { using type = bool; };
+template<> struct from_ast_scalar<ReverseDouble> { using type = double; };
+template<typename T>
+using from_ast_scalar_t = typename from_ast_scalar<T>::type;
+
+template<typename T>
+struct to_ast_scalar {
+  using type = T;
+};
+template<> struct to_ast_scalar<double>  { using type = Double;  };
+template<> struct to_ast_scalar<int>     { using type = Integer; };
+template<> struct to_ast_scalar<bool>    { using type = Logical; };
+
+template<> struct to_ast_scalar<LogicalRef>  { using type = Logical; };
+template<> struct to_ast_scalar<IntegerRef>  { using type = Integer; };
+template<> struct to_ast_scalar<DoubleRef>   { using type = Double;  };
+template<> struct to_ast_scalar<DualRef>     { using type = Dual;    };
+template<> struct to_ast_scalar<ReverseDoubleRef> { using type = ReverseDouble; };
+
+template<typename T>
+using to_ast_scalar_t = typename to_ast_scalar<T>::type;
+
+/*
+--------------------------------------------------------------------------------------------------
+Common type of scalar types
+determine the common type of two etr::Scalars
+--------------------------------------------------------------------------------------------------
+*/
+template<typename T>
+using bare_t = std::remove_cv_t<std::remove_reference_t<T>>;
+
+enum class ScalarRank { LogicalRef, IntegerRef, DoubleRef, DualRef, ReverseDoubleRef, Logical, Integer, Double, Dual, ReverseDouble };
+
+template <class T> struct scalar_rank {
+  static constexpr int value = -1;
+};
+
+template<> struct scalar_rank<Logical> { static constexpr auto value = ScalarRank::Logical; };
+template<> struct scalar_rank<Integer> { static constexpr auto value = ScalarRank::Integer; };
+template<> struct scalar_rank<Double>  { static constexpr auto value = ScalarRank::Double; };
+template<> struct scalar_rank<Dual>    { static constexpr auto value = ScalarRank::Dual; };
+template<> struct scalar_rank<ReverseDouble> { static constexpr auto value = ScalarRank::ReverseDouble; }; // highest
+
+template<typename L, typename R>
+using common_scalar = std::conditional_t<
+(static_cast<int>(scalar_rank<L>::value) >=
+static_cast<int>(scalar_rank<R>::value)), L, R>;
+
+template<typename L, typename R>
+struct common_type {
+  using type = common_scalar<
+  bare_t<to_ast_scalar_t<L>>,
+  bare_t<to_ast_scalar_t<R>>
+  >;
+};
+
+template<typename L, typename R>
+using common_type_t = typename common_type<L, R>::type;
+
+/*
+--------------------------------------------------------------------------------------------------
+Concepts for sclars
+- is it a scalar --> IsArith
+- is it a scalar reference --> IsArithRef
+- IsXY where XY can any scalar or scalar reference
+--------------------------------------------------------------------------------------------------
+*/
+template<typename T> concept IsArith =
+std::same_as<bare_t<T>, Logical> ||
+std::same_as<bare_t<T>, Integer> ||
+std::same_as<bare_t<T>, Double> ||
+std::same_as<bare_t<T>, ReverseDouble> ||
+std::same_as<bare_t<T>, Dual>;
+template <typename T> constexpr bool IsArithV = IsArith<T>;
+
+// Concept to detect refs to scalars
+template<typename T> concept IsArithRef =
+std::same_as<bare_t<T>, LogicalRef> ||
+std::same_as<bare_t<T>, IntegerRef> ||
+std::same_as<bare_t<T>, DoubleRef> ||
+std::same_as<bare_t<T>, ReverseDoubleRef> ||
+std::same_as<bare_t<T>, DualRef>;
+template <typename T> constexpr bool IsArithRefV = IsArithRef<T>;
+
+template<typename T> concept IsDouble = std::same_as<T, Double>;
+template<typename T> concept IsInteger = std::same_as<T, Integer>;
+template<typename T> concept IsLogical = std::same_as<T, Logical>;
+template<typename T> concept IsDual = std::same_as<T, Dual>;
+template<typename T> concept IsReverseDouble = std::same_as<T, ReverseDouble>;
+
+template<typename T> concept IsDoubleRef = std::same_as<T, DoubleRef>;
+template<typename T> concept IsIntegerRef = std::same_as<T, IntegerRef>;
+template<typename T> concept IsLogicalRef = std::same_as<T, LogicalRef>;
+template<typename T> concept IsDualRef = std::same_as<T, DualRef>;
+template<typename T> concept IsReverseDoubleRef = std::same_as<T, ReverseDoubleRef>;
+
+/*
+--------------------------------------------------------------------------------------------------
+Check for is scalars
+- is scalar like either scalar or a scalar reference
+--> basically AllScalarIndices and HasNonScalarIndex are required in preserved subsetting
+--------------------------------------------------------------------------------------------------
+*/
+template <typename T> concept IsScalarLike = requires(T t) {
+typename T;
+requires IsArithV<T> || IsArithRefV<T>;
+};
+template <typename T> concept IsScalarOrScalarRef = requires(T t) {
+typename T;
+requires IsArithV<T> || IsArithRefV<T>;
+};
+template <typename I>
+concept ScalarIndex =
+IsScalarLike<I> &&
+!IsLogical<I> &&
+!IsLogicalRef<I>;
+
+template <typename... Args>
+concept NonEmpty = (sizeof...(Args) > 0);
+
+template <typename... Args>
+concept AllScalarIndices = NonEmpty<Args...> && (ScalarIndex<Args> && ...);
+
+template <typename... Args>
+concept HasNonScalarIndex = (!ScalarIndex<Args> || ...);
+
+
 struct Logical {
   bool val;
   bool is_na{false};
@@ -1732,147 +1874,6 @@ inline ReverseDouble ReverseDouble::operator-() const {
 
 /*
 --------------------------------------------------------------------------------------------------
-Casting scalar types
-- from_ast_scalar converts etr::Scalars to raw C++ scalars
-- to_ast_scalar converts double, int, and bool to Double, Integer, and Logical respectivly
-- to_ast_scalar converts LogicalRef, IntegerRef, DoubleRef, DualRef, and ReverseDoubleRef to 
-  Logical, Integer, Double, Dual and ReverseDouble
---------------------------------------------------------------------------------------------------
-*/
-template<typename T>
-struct from_ast_scalar {
-  using type = T;
-};
-template<> struct from_ast_scalar<Double>  { using type = double;  };
-template<> struct from_ast_scalar<Integer>     { using type = int; };
-template<> struct from_ast_scalar<Logical>    { using type = bool; };
-template<> struct from_ast_scalar<ReverseDouble> { using type = double; };
-template<typename T>
-using from_ast_scalar_t = typename from_ast_scalar<T>::type;
-
-template<typename T>
-struct to_ast_scalar {
-  using type = T;
-};
-template<> struct to_ast_scalar<double>  { using type = Double;  };
-template<> struct to_ast_scalar<int>     { using type = Integer; };
-template<> struct to_ast_scalar<bool>    { using type = Logical; };
-
-template<> struct to_ast_scalar<LogicalRef>  { using type = Logical; };
-template<> struct to_ast_scalar<IntegerRef>  { using type = Integer; };
-template<> struct to_ast_scalar<DoubleRef>   { using type = Double;  };
-template<> struct to_ast_scalar<DualRef>     { using type = Dual;    };
-template<> struct to_ast_scalar<ReverseDoubleRef> { using type = ReverseDouble; };
-
-template<typename T>
-using to_ast_scalar_t = typename to_ast_scalar<T>::type;
-
-/*
---------------------------------------------------------------------------------------------------
-Common type of scalar types
-determine the common type of two etr::Scalars
---------------------------------------------------------------------------------------------------
-*/
-template<typename T>
-using bare_t = std::remove_cv_t<std::remove_reference_t<T>>;
-
-enum class ScalarRank { Logical, Integer, Double, Dual, ReverseDouble };
-
-template <class T> struct scalar_rank {
-  static constexpr int value = -1;
-};
-
-template<> struct scalar_rank<Logical> { static constexpr auto value = ScalarRank::Logical; };
-template<> struct scalar_rank<Integer> { static constexpr auto value = ScalarRank::Integer; };
-template<> struct scalar_rank<Double>  { static constexpr auto value = ScalarRank::Double; };
-template<> struct scalar_rank<Dual>    { static constexpr auto value = ScalarRank::Dual; };
-template<> struct scalar_rank<ReverseDouble> { static constexpr auto value = ScalarRank::ReverseDouble; }; // highest
-
-template<typename L, typename R>
-using common_scalar = std::conditional_t<
-(static_cast<int>(scalar_rank<L>::value) >=
-static_cast<int>(scalar_rank<R>::value)), L, R>;
-
-template<typename L, typename R>
-struct common_type {
-  using type = common_scalar<
-  bare_t<to_ast_scalar_t<L>>,
-  bare_t<to_ast_scalar_t<R>>
-  >;
-};
-
-template<typename L, typename R>
-using common_type_t = typename common_type<L, R>::type;
-
-/*
---------------------------------------------------------------------------------------------------
-Concepts for sclars
-- is it a scalar --> IsArith
-- is it a scalar reference --> IsArithRef
-- IsXY where XY can any scalar or scalar reference
---------------------------------------------------------------------------------------------------
-*/
-template<typename T> concept IsArith =
-std::same_as<bare_t<T>, Logical> ||
-std::same_as<bare_t<T>, Integer> ||
-std::same_as<bare_t<T>, Double> ||
-std::same_as<bare_t<T>, ReverseDouble> ||
-std::same_as<bare_t<T>, Dual>;
-template <typename T> constexpr bool IsArithV = IsArith<T>;
-
-// Concept to detect refs to scalars
-template<typename T> concept IsArithRef =
-std::same_as<bare_t<T>, LogicalRef> ||
-std::same_as<bare_t<T>, IntegerRef> ||
-std::same_as<bare_t<T>, DoubleRef> ||
-std::same_as<bare_t<T>, ReverseDoubleRef> ||
-std::same_as<bare_t<T>, DualRef>;
-template <typename T> constexpr bool IsArithRefV = IsArithRef<T>;
-
-template<typename T> concept IsDouble = std::same_as<T, Double>;
-template<typename T> concept IsInteger = std::same_as<T, Integer>;
-template<typename T> concept IsLogical = std::same_as<T, Logical>;
-template<typename T> concept IsDual = std::same_as<T, Dual>;
-template<typename T> concept IsReverseDouble = std::same_as<T, ReverseDouble>;
-
-template<typename T> concept IsDoubleRef = std::same_as<T, DoubleRef>;
-template<typename T> concept IsIntegerRef = std::same_as<T, IntegerRef>;
-template<typename T> concept IsLogicalRef = std::same_as<T, LogicalRef>;
-template<typename T> concept IsDualRef = std::same_as<T, DualRef>;
-template<typename T> concept IsReverseDoubleRef = std::same_as<T, ReverseDoubleRef>;
-
-/*
---------------------------------------------------------------------------------------------------
-Check for is scalars
-- is scalar like either scalar or a scalar reference
---> basically AllScalarIndices and HasNonScalarIndex are required in preserved subsetting
---------------------------------------------------------------------------------------------------
-*/
-template <typename T> concept IsScalarLike = requires(T t) {
-typename T;
-requires IsArithV<T> || IsArithRefV<T>;
-};
-template <typename T> concept IsScalarOrScalarRef = requires(T t) {
-typename T;
-requires IsArithV<T> || IsArithRefV<T>;
-};
-template <typename I>
-concept ScalarIndex =
-IsScalarLike<I> &&
-!IsLogical<I> &&
-!IsLogicalRef<I>;
-
-template <typename... Args>
-concept NonEmpty = (sizeof...(Args) > 0);
-
-template <typename... Args>
-concept AllScalarIndices = NonEmpty<Args...> && (ScalarIndex<Args> && ...);
-
-template <typename... Args>
-concept HasNonScalarIndex = (!ScalarIndex<Args> || ...);
-
-/*
---------------------------------------------------------------------------------------------------
 Second dispatch layer
 - these function overloads are used when no Arrays are involved in an operation
 --------------------------------------------------------------------------------------------------
@@ -2130,9 +2131,6 @@ basically the same as the normal scalars but storing a pointer to a value
 all the operations are not defined for these classes as they are passed through the second
 dispatch layer, as the second dispatch layer requires only that the objects are not arrays
 and that they are either sclars or scalar references.
-TODO: are ScalarRefs automatically casted to Scalars when unary operations are applied?
-
-- For binary operations common_type_t casts the scalar references to their scalar types
 --------------------------------------------------------------------------------------------------
 */
 struct LogicalRef {
@@ -2143,6 +2141,37 @@ struct LogicalRef {
     if (p_na) out.is_na = *p_na;
     return out;
   }
+  // Scalar operations, delegated to the referenced value via operator Logical().
+  inline Integer operator+(const Logical& o) const { return Logical(*this) + o; }
+  inline Integer operator-(const Logical& o) const { return Logical(*this) - o; }
+  inline Integer operator*(const Logical& o) const { return Logical(*this) * o; }
+  inline Double  operator/(const Logical& o) const { return Logical(*this) / o; }
+  inline Double  pow(const Logical& o) const { return Logical(*this).pow(o); }
+  inline Logical operator==(const Logical& o) const { return Logical(*this) == o; }
+  inline Logical operator< (const Logical& o) const { return Logical(*this) <  o; }
+  inline Logical operator<=(const Logical& o) const { return Logical(*this) <= o; }
+  inline Logical operator> (const Logical& o) const { return Logical(*this) >  o; }
+  inline Logical operator>=(const Logical& o) const { return Logical(*this) >= o; }
+  inline Logical operator!=(const Logical& o) const { return Logical(*this) != o; }
+  inline Logical operator&&(const Logical& o) const { return Logical(*this) && o; }
+  inline Logical operator||(const Logical& o) const { return Logical(*this) || o; }
+  inline Logical operator& (const Logical& o) const { return Logical(*this) &  o; }
+  inline Logical operator| (const Logical& o) const { return Logical(*this) |  o; }
+  inline Double sin()   const { return Logical(*this).sin(); }
+  inline Double asin()  const { return Logical(*this).asin(); }
+  inline Double sinh()  const { return Logical(*this).sinh(); }
+  inline Double cos()   const { return Logical(*this).cos(); }
+  inline Double acos()  const { return Logical(*this).acos(); }
+  inline Double cosh()  const { return Logical(*this).cosh(); }
+  inline Double tan()   const { return Logical(*this).tan(); }
+  inline Double atan()  const { return Logical(*this).atan(); }
+  inline Double tanh()  const { return Logical(*this).tanh(); }
+  inline Double exp()   const { return Logical(*this).exp(); }
+  inline Double log()   const { return Logical(*this).log(); }
+  inline Double log10() const { return Logical(*this).log10(); }
+  inline Double sqrt()  const { return Logical(*this).sqrt(); }
+  inline Integer operator-() const { return -Logical(*this); }
+  inline bool isNA() const noexcept { return Logical(*this).isNA(); }
   // Explicit copy-assign: write through the referenced slot, do not rebind.
   // Without this the compiler-generated copy-assign copies pointers and
   // statements like `at(a, i) = at(a, j)` silently become no-ops.
@@ -2162,7 +2191,7 @@ struct LogicalRef {
     if (p_na) *p_na = get_scalar_val(x).is_na;
     return *this;
   }
-  inline operator bool() const { return *p_val; }
+  explicit inline operator bool() const { return *p_val; }
   explicit inline LogicalRef(bool* v, bool* n = nullptr);
   inline LogicalRef(Logical) = delete;
   inline LogicalRef(bool) = delete;
@@ -2183,6 +2212,40 @@ struct IntegerRef {
     if (p_na) out.is_na = *p_na;
     return out;
   }
+  // Scalar operations, delegated to the referenced value via operator Integer().
+  inline Integer operator+(const Integer& o) const { return Integer(*this) + o; }
+  inline Integer operator-(const Integer& o) const { return Integer(*this) - o; }
+  inline Integer operator*(const Integer& o) const { return Integer(*this) * o; }
+  inline Double  operator/(const Integer& o) const { return Integer(*this) / o; }
+  inline Double  pow(const Integer& o) const { return Integer(*this).pow(o); }
+  inline IntegerRef& operator+=(const Integer& o) { *this = (Integer(*this) + o); return *this; }
+  inline IntegerRef& operator-=(const Integer& o) { *this = (Integer(*this) - o); return *this; }
+  inline IntegerRef& operator*=(const Integer& o) { *this = (Integer(*this) * o); return *this; }
+  inline Logical operator==(const Integer& o) const { return Integer(*this) == o; }
+  inline Logical operator< (const Integer& o) const { return Integer(*this) <  o; }
+  inline Logical operator<=(const Integer& o) const { return Integer(*this) <= o; }
+  inline Logical operator> (const Integer& o) const { return Integer(*this) >  o; }
+  inline Logical operator>=(const Integer& o) const { return Integer(*this) >= o; }
+  inline Logical operator!=(const Integer& o) const { return Integer(*this) != o; }
+  inline Logical operator&&(const Integer& o) const { return Integer(*this) && o; }
+  inline Logical operator||(const Integer& o) const { return Integer(*this) || o; }
+  inline Logical operator& (const Integer& o) const { return Integer(*this) &  o; }
+  inline Logical operator| (const Integer& o) const { return Integer(*this) |  o; }
+  inline Double sin()   const { return Integer(*this).sin(); }
+  inline Double asin()  const { return Integer(*this).asin(); }
+  inline Double sinh()  const { return Integer(*this).sinh(); }
+  inline Double cos()   const { return Integer(*this).cos(); }
+  inline Double acos()  const { return Integer(*this).acos(); }
+  inline Double cosh()  const { return Integer(*this).cosh(); }
+  inline Double tan()   const { return Integer(*this).tan(); }
+  inline Double atan()  const { return Integer(*this).atan(); }
+  inline Double tanh()  const { return Integer(*this).tanh(); }
+  inline Double exp()   const { return Integer(*this).exp(); }
+  inline Double log()   const { return Integer(*this).log(); }
+  inline Double log10() const { return Integer(*this).log10(); }
+  inline Double sqrt()  const { return Integer(*this).sqrt(); }
+  inline Integer operator-() const { return -Integer(*this); }
+  inline bool isNA() const noexcept { return Integer(*this).isNA(); }
   IntegerRef& operator=(const IntegerRef& other) {
     if (this == &other) return *this;
     *p_val = *other.p_val;
@@ -2218,6 +2281,44 @@ struct DoubleRef {
     if (p_na) out.is_na = *p_na;
     return out;
   }
+  // Scalar operations, delegated to the referenced value via operator Double().
+  inline Double operator+(const Double& o) const { return Double(*this) + o; }
+  inline Double operator-(const Double& o) const { return Double(*this) - o; }
+  inline Double operator*(const Double& o) const { return Double(*this) * o; }
+  inline Double operator/(const Double& o) const { return Double(*this) / o; }
+  inline Double pow(const Double& o) const { return Double(*this).pow(o); }
+  inline DoubleRef& operator+=(const Double& o) { *this = (Double(*this) + o); return *this; }
+  inline DoubleRef& operator-=(const Double& o) { *this = (Double(*this) - o); return *this; }
+  inline DoubleRef& operator*=(const Double& o) { *this = (Double(*this) * o); return *this; }
+  inline DoubleRef& operator/=(const Double& o) { *this = (Double(*this) / o); return *this; }
+  inline Logical operator==(const Double& o) const { return Double(*this) == o; }
+  inline Logical operator< (const Double& o) const { return Double(*this) <  o; }
+  inline Logical operator<=(const Double& o) const { return Double(*this) <= o; }
+  inline Logical operator> (const Double& o) const { return Double(*this) >  o; }
+  inline Logical operator>=(const Double& o) const { return Double(*this) >= o; }
+  inline Logical operator!=(const Double& o) const { return Double(*this) != o; }
+  inline Logical operator&&(const Double& o) const { return Double(*this) && o; }
+  inline Logical operator||(const Double& o) const { return Double(*this) || o; }
+  inline Logical operator& (const Double& o) const { return Double(*this) &  o; }
+  inline Logical operator| (const Double& o) const { return Double(*this) |  o; }
+  inline Double sin()   const { return Double(*this).sin(); }
+  inline Double asin()  const { return Double(*this).asin(); }
+  inline Double sinh()  const { return Double(*this).sinh(); }
+  inline Double cos()   const { return Double(*this).cos(); }
+  inline Double acos()  const { return Double(*this).acos(); }
+  inline Double cosh()  const { return Double(*this).cosh(); }
+  inline Double tan()   const { return Double(*this).tan(); }
+  inline Double atan()  const { return Double(*this).atan(); }
+  inline Double tanh()  const { return Double(*this).tanh(); }
+  inline Double exp()   const { return Double(*this).exp(); }
+  inline Double log()   const { return Double(*this).log(); }
+  inline Double log10() const { return Double(*this).log10(); }
+  inline Double sqrt()  const { return Double(*this).sqrt(); }
+  inline Double operator-() const { return -Double(*this); }
+  inline bool isNA()       const noexcept { return Double(*this).isNA(); }
+  inline bool isNaN()      const noexcept { return Double(*this).isNaN(); }
+  inline bool isFinite()   const noexcept { return Double(*this).isFinite(); }
+  inline bool isInfinite() const noexcept { return Double(*this).isInfinite(); }
   DoubleRef& operator=(const DoubleRef& other) {
     if (this == &other) return *this;
     *p_val = *other.p_val;
@@ -2256,6 +2357,48 @@ struct DualRef {
     if (p_na_dot) out.is_na_dot = *p_na_dot;
     return out;
   }
+  // Scalar operations, delegated to the referenced value via operator Dual().
+  inline Dual operator+(const Dual& o) const { return Dual(*this) + o; }
+  inline Dual operator-(const Dual& o) const { return Dual(*this) - o; }
+  inline Dual operator*(const Dual& o) const { return Dual(*this) * o; }
+  inline Dual operator/(const Dual& o) const { return Dual(*this) / o; }
+  inline Dual pow(const Dual& o) const { return Dual(*this).pow(o); }
+  inline DualRef& operator+=(const Dual& o) { *this = (Dual(*this) + o); return *this; }
+  inline DualRef& operator-=(const Dual& o) { *this = (Dual(*this) - o); return *this; }
+  inline DualRef& operator*=(const Dual& o) { *this = (Dual(*this) * o); return *this; }
+  inline DualRef& operator/=(const Dual& o) { *this = (Dual(*this) / o); return *this; }
+  inline Logical operator==(const Dual& o) const { return Dual(*this) == o; }
+  inline Logical operator< (const Dual& o) const { return Dual(*this) <  o; }
+  inline Logical operator<=(const Dual& o) const { return Dual(*this) <= o; }
+  inline Logical operator> (const Dual& o) const { return Dual(*this) >  o; }
+  inline Logical operator>=(const Dual& o) const { return Dual(*this) >= o; }
+  inline Logical operator!=(const Dual& o) const { return Dual(*this) != o; }
+  inline Logical operator&&(const Dual& o) const { return Dual(*this) && o; }
+  inline Logical operator||(const Dual& o) const { return Dual(*this) || o; }
+  inline Logical operator& (const Dual& o) const { return Dual(*this) &  o; }
+  inline Logical operator| (const Dual& o) const { return Dual(*this) |  o; }
+  inline Dual sin()   const { return Dual(*this).sin(); }
+  inline Dual asin()  const { return Dual(*this).asin(); }
+  inline Dual sinh()  const { return Dual(*this).sinh(); }
+  inline Dual cos()   const { return Dual(*this).cos(); }
+  inline Dual acos()  const { return Dual(*this).acos(); }
+  inline Dual cosh()  const { return Dual(*this).cosh(); }
+  inline Dual tan()   const { return Dual(*this).tan(); }
+  inline Dual atan()  const { return Dual(*this).atan(); }
+  inline Dual tanh()  const { return Dual(*this).tanh(); }
+  inline Dual exp()   const { return Dual(*this).exp(); }
+  inline Dual log()   const { return Dual(*this).log(); }
+  inline Dual log10() const { return Dual(*this).log10(); }
+  inline Dual sqrt()  const { return Dual(*this).sqrt(); }
+  inline Dual operator-() const { return -Dual(*this); }
+  inline bool isNA()          const noexcept { return Dual(*this).isNA(); }
+  inline bool isNADot()       const noexcept { return Dual(*this).isNADot(); }
+  inline bool isNaN()         const noexcept { return Dual(*this).isNaN(); }
+  inline bool isNaNDot()      const noexcept { return Dual(*this).isNaNDot(); }
+  inline bool isFinite()      const noexcept { return Dual(*this).isFinite(); }
+  inline bool isInfinite()    const noexcept { return Dual(*this).isInfinite(); }
+  inline bool isFiniteDot()   const noexcept { return Dual(*this).isFiniteDot(); }
+  inline bool isInfiniteDot() const noexcept { return Dual(*this).isInfiniteDot(); }
   DualRef& operator=(const DualRef& other) {
     if (this == &other) return *this;
     *p_val = *other.p_val;
@@ -2297,6 +2440,44 @@ struct ReverseDoubleRef {
     if (p_na) out.is_na = *p_na;
     return out;
   }
+  // Scalar operations, delegated to the referenced value via operator ReverseDouble().
+  inline ReverseDouble operator+(const ReverseDouble& o) const { return ReverseDouble(*this) + o; }
+  inline ReverseDouble operator-(const ReverseDouble& o) const { return ReverseDouble(*this) - o; }
+  inline ReverseDouble operator*(const ReverseDouble& o) const { return ReverseDouble(*this) * o; }
+  inline ReverseDouble operator/(const ReverseDouble& o) const { return ReverseDouble(*this) / o; }
+  inline ReverseDouble pow(const ReverseDouble& o) const { return ReverseDouble(*this).pow(o); }
+  inline ReverseDoubleRef& operator+=(const ReverseDouble& o) { *this = (ReverseDouble(*this) + o); return *this; }
+  inline ReverseDoubleRef& operator-=(const ReverseDouble& o) { *this = (ReverseDouble(*this) - o); return *this; }
+  inline ReverseDoubleRef& operator*=(const ReverseDouble& o) { *this = (ReverseDouble(*this) * o); return *this; }
+  inline ReverseDoubleRef& operator/=(const ReverseDouble& o) { *this = (ReverseDouble(*this) / o); return *this; }
+  inline Logical operator==(const ReverseDouble& o) const { return ReverseDouble(*this) == o; }
+  inline Logical operator< (const ReverseDouble& o) const { return ReverseDouble(*this) <  o; }
+  inline Logical operator<=(const ReverseDouble& o) const { return ReverseDouble(*this) <= o; }
+  inline Logical operator> (const ReverseDouble& o) const { return ReverseDouble(*this) >  o; }
+  inline Logical operator>=(const ReverseDouble& o) const { return ReverseDouble(*this) >= o; }
+  inline Logical operator!=(const ReverseDouble& o) const { return ReverseDouble(*this) != o; }
+  inline Logical operator&&(const ReverseDouble& o) const { return ReverseDouble(*this) && o; }
+  inline Logical operator||(const ReverseDouble& o) const { return ReverseDouble(*this) || o; }
+  inline Logical operator& (const ReverseDouble& o) const { return ReverseDouble(*this) &  o; }
+  inline Logical operator| (const ReverseDouble& o) const { return ReverseDouble(*this) |  o; }
+  inline ReverseDouble sin()   const { return ReverseDouble(*this).sin(); }
+  inline ReverseDouble sinh()  const { return ReverseDouble(*this).sinh(); }
+  inline ReverseDouble asin()  const { return ReverseDouble(*this).asin(); }
+  inline ReverseDouble cos()   const { return ReverseDouble(*this).cos(); }
+  inline ReverseDouble cosh()  const { return ReverseDouble(*this).cosh(); }
+  inline ReverseDouble acos()  const { return ReverseDouble(*this).acos(); }
+  inline ReverseDouble tan()   const { return ReverseDouble(*this).tan(); }
+  inline ReverseDouble tanh()  const { return ReverseDouble(*this).tanh(); }
+  inline ReverseDouble atan()  const { return ReverseDouble(*this).atan(); }
+  inline ReverseDouble exp()   const { return ReverseDouble(*this).exp(); }
+  inline ReverseDouble log()   const { return ReverseDouble(*this).log(); }
+  inline ReverseDouble log10() const { return ReverseDouble(*this).log10(); }
+  inline ReverseDouble sqrt()  const { return ReverseDouble(*this).sqrt(); }
+  inline ReverseDouble operator-() const { return -ReverseDouble(*this); }
+  inline bool isNA()       const noexcept { return ReverseDouble(*this).isNA(); }
+  inline bool isNaN()      const noexcept { return ReverseDouble(*this).isNaN(); }
+  inline bool isFinite()   const noexcept { return ReverseDouble(*this).isFinite(); }
+  inline bool isInfinite() const noexcept { return ReverseDouble(*this).isInfinite(); }
   ReverseDoubleRef& operator=(const ReverseDoubleRef& other) {
     if (this == &other) return *this;
     *p_val = *other.p_val;
@@ -2334,8 +2515,8 @@ struct ReverseDoubleRef {
 inline LogicalRef::LogicalRef(bool*   v, bool* n) : p_val(v), p_na(n) {}
 inline IntegerRef::IntegerRef(int*    v, bool* n) : p_val(v), p_na(n) {}
 inline DoubleRef ::DoubleRef (double* v, bool* n) : p_val(v), p_na(n) {}
-inline DualRef   ::DualRef   (double* v, double* d, bool* n, bool* nd)
-  : p_val(v), p_dot(d), p_na(n), p_na_dot(nd) {}
+inline DualRef   ::DualRef   (double* v, double* d, bool* n, bool* nd) : p_val(v), p_dot(d), p_na(n), p_na_dot(nd) {}
+
 
 } // namespace etr
 
