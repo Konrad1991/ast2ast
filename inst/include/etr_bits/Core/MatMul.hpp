@@ -171,7 +171,7 @@ template<typename A, typename B> inline auto matmul_reverse(const A& a, const B&
   for (std::size_t k = 0; k < M * N; ++k) {
     const int id = leader + static_cast<int>(k);
     const bool na = TAPE_INTERN.is_na[static_cast<std::size_t>(id)] != 0;
-    result.set(k, ReverseDouble(ReverseDouble::from_tape_id_t{}, id, na));
+    result.set(k, ReverseDouble(from_tape_id_t{}, id, na));
   }
   return result;
 }

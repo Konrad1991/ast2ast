@@ -32,171 +32,6 @@ inline size_t ExtractIndex(const T& obj) {
   }
 }
 
-// Wrapper for borrow
-// -----------------------------------------------------------------------------------------------------------
-// p_na is optional: Borrow-backed refs have no NA array, so they pass nullptr
-// and NA info is not tracked. Buffer-backed refs pass the real pointer so NA
-// survives through reads and writes.
-struct LogicalRef {
-  bool* p_val;
-  bool* p_na;
-  operator Logical() const {
-    Logical out(*p_val);
-    if (p_na) out.is_na = *p_na;
-    return out;
-  }
-  // Explicit copy-assign: write through the referenced slot, do not rebind.
-  // Without this the compiler-generated copy-assign copies pointers and
-  // statements like `at(a, i) = at(a, j)` silently become no-ops.
-  LogicalRef& operator=(const LogicalRef& other) {
-    if (this == &other) return *this;
-    *p_val = *other.p_val;
-    if (p_na) *p_na = other.p_na ? *other.p_na : false;
-    return *this;
-  }
-  LogicalRef& operator=(const Logical& x) {
-    *p_val = get_val(x);
-    if (p_na) *p_na = x.is_na;
-    return *this;
-  }
-  template<typename T> requires (IsArithV<T> || IsADType<T>) LogicalRef& operator=(const T& x) {
-    *p_val = static_cast<bool>(get_val(x));
-    if (p_na) *p_na = get_scalar_val(x).is_na;
-    return *this;
-  }
-  inline operator bool() const { return *p_val; }
-  explicit inline LogicalRef(bool* v, bool* n = nullptr);
-  inline LogicalRef(Logical) = delete;
-  inline LogicalRef(bool) = delete;
-
-  template<typename T> requires IsArray<Decayed<T>> inline LogicalRef& operator=(const T& arr) {
-    using  inner = typename ExtractDataType<T>::value_type;
-    ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
-    *this = arr.get(0);
-    return *this;
-  }
-};
-
-struct IntegerRef {
-  int* p_val;
-  bool* p_na;
-  operator Integer() const {
-    Integer out(*p_val);
-    if (p_na) out.is_na = *p_na;
-    return out;
-  }
-  IntegerRef& operator=(const IntegerRef& other) {
-    if (this == &other) return *this;
-    *p_val = *other.p_val;
-    if (p_na) *p_na = other.p_na ? *other.p_na : false;
-    return *this;
-  }
-  IntegerRef& operator=(const Integer& x) {
-    *p_val = get_val(x);
-    if (p_na) *p_na = x.is_na;
-    return *this;
-  }
-  template<typename T> requires (IsArithV<T> || IsADType<T>) IntegerRef& operator=(const T& x) {
-    *p_val = static_cast<int>(get_val(x));
-    if (p_na) *p_na = get_scalar_val(x).is_na;
-    return *this;
-  }
-  explicit inline IntegerRef(int* v, bool* n = nullptr);
-  inline IntegerRef(Integer) = delete;
-  inline IntegerRef(int) = delete;
-
-  template<typename T> requires IsArray<Decayed<T>> inline IntegerRef& operator=(const T& arr) {
-    using  inner = typename ExtractDataType<T>::value_type;
-    ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
-    *this = arr.get(0);
-    return *this;
-  }
-};
-struct DoubleRef {
-  double* p_val;
-  bool*   p_na;
-  operator Double() const {
-    Double out(*p_val);
-    if (p_na) out.is_na = *p_na;
-    return out;
-  }
-  DoubleRef& operator=(const DoubleRef& other) {
-    if (this == &other) return *this;
-    *p_val = *other.p_val;
-    if (p_na) *p_na = other.p_na ? *other.p_na : false;
-    return *this;
-  }
-  DoubleRef& operator=(const Double& x) {
-    *p_val = get_val(x);
-    if (p_na) *p_na = x.is_na;
-    return *this;
-  }
-  template<typename T> requires (IsArithV<T> || IsADType<T>) DoubleRef& operator=(const T& x) {
-    *p_val = static_cast<double>(get_val(x));
-    if (p_na) *p_na = get_scalar_val(x).is_na;
-    return *this;
-  }
-  explicit inline DoubleRef(double* v, bool* n = nullptr);
-  inline DoubleRef(Double) = delete;
-  inline DoubleRef(double) = delete;
-  template<typename T> requires IsArray<Decayed<T>> inline DoubleRef& operator=(const T& arr) {
-    using  inner = typename ExtractDataType<T>::value_type;
-    ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
-    *this = arr.get(0);
-    return *this;
-  }
-};
-
-struct DualRef {
-  double* p_val;
-  double* p_dot;
-  bool*   p_na;
-  bool*   p_na_dot;
-  operator Dual() const {
-    Dual out(*p_val, *p_dot);
-    if (p_na)     out.is_na     = *p_na;
-    if (p_na_dot) out.is_na_dot = *p_na_dot;
-    return out;
-  }
-  DualRef& operator=(const DualRef& other) {
-    if (this == &other) return *this;
-    *p_val = *other.p_val;
-    *p_dot = *other.p_dot;
-    if (p_na)     *p_na     = other.p_na     ? *other.p_na     : false;
-    if (p_na_dot) *p_na_dot = other.p_na_dot ? *other.p_na_dot : false;
-    return *this;
-  }
-  DualRef& operator=(const Dual& x) {
-    *p_val = get_val(x);
-    *p_dot = x.dot;
-    if (p_na)     *p_na     = x.is_na;
-    if (p_na_dot) *p_na_dot = x.is_na_dot;
-    return *this;
-  }
-  template<typename T> requires (IsArithV<T>) DualRef& operator=(const T& x) {
-    *p_val    = static_cast<double>(get_val(x));
-    *p_dot    = 0.0;
-    if (p_na)     *p_na     = x.is_na;
-    if (p_na_dot) *p_na_dot = false;
-    return *this;
-  }
-  explicit inline DualRef(double* v, double* d, bool* n = nullptr, bool* nd = nullptr);
-  inline DualRef(Dual) = delete;
-  inline DualRef(double, double) = delete;
-  template<typename T> requires IsArray<Decayed<T>> inline DualRef& operator=(const T& arr) {
-    using  inner = typename ExtractDataType<T>::value_type;
-    ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
-    *this = arr.get(0);
-    return *this;
-  }
-};
-
-inline LogicalRef::LogicalRef(bool*   v, bool* n) : p_val(v), p_na(n) {}
-inline IntegerRef::IntegerRef(int*    v, bool* n) : p_val(v), p_na(n) {}
-inline DoubleRef ::DoubleRef (double* v, bool* n) : p_val(v), p_na(n) {}
-inline DualRef   ::DualRef   (double* v, double* d, bool* n, bool* nd)
-  : p_val(v), p_dot(d), p_na(n), p_na_dot(nd) {}
-
 // direct access vector memory if possible.
 // -----------------------------------------------------------------------------------------------------------
 template <typename ArrayType, typename... Args>
@@ -233,8 +68,8 @@ inline decltype(auto) at(ArrayType& arr, const Args&... args) {
   using ArrStorage = Decayed<decltype(arr.d)>;
   constexpr bool IsBuf = IsLBuffer<ArrStorage>;
 
-  if constexpr (IsADType<DataType>) {
-    return (arr.d.p[idx]);
+  if constexpr (IsReverseDouble<DataType>) {
+    return (arr.d.get(idx));
   } else if constexpr (IsDouble<DataType>) {
     if constexpr (IsBuf) return DoubleRef{ &arr.d.p_val[idx], &arr.d.p_na[idx] };
     else                 return DoubleRef{ &arr.d.p[idx], arr.d.p_na ? &arr.d.p_na[idx] : nullptr };
@@ -271,7 +106,7 @@ inline decltype(auto) at_linear(Obj& obj, std::size_t idx) {
     using DataType = typename ObjType::value_type;
     constexpr bool IsBuf = IsLBuffer<ObjType>;
 
-    if constexpr (IsADType<DataType>) {
+    if constexpr (IsReverseDouble<DataType>) {
       return (obj.p[idx]);
     } else if constexpr (IsDouble<DataType>) {
       if constexpr (IsBuf) return DoubleRef{ &obj.p_val[idx], &obj.p_na[idx] };

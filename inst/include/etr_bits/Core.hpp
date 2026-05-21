@@ -3,6 +3,7 @@
 
 // this is sorted by clang format be careful
 #include "./Core/Types.hpp"
+#include "./Core/Scalars.hpp"
 // #include "./Core/Reflection.hpp"
 #include "./Core/Buffer.hpp"
 #include "./Core/Borrow.hpp"

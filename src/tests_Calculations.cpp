@@ -64,13 +64,13 @@ auto compare_result_reverse_ad_binary(const T1& etr1, const T2& etr2, const T3& 
   }
 
   // One is scalar
-  if constexpr (IsADType<T1> || IsADType<T2> || IsArithV<T1> || IsArithV<T2>) {
-    constexpr bool is_scalar_l = IsADType<T1> || IsArithV<T1>;
-    constexpr bool is_scalar_r = IsADType<T2> || IsArithV<T2>;
+  if constexpr (IsReverseDouble<T1> || IsReverseDouble<T2> || IsArithV<T1> || IsArithV<T2>) {
+    constexpr bool is_scalar_l = IsReverseDouble<T1> || IsArithV<T1>;
+    constexpr bool is_scalar_r = IsReverseDouble<T2> || IsArithV<T2>;
     if constexpr (is_scalar_l && !is_scalar_r) {
       using DataTypeR = typename ExtractDataType<Decayed<T2>>::value_type;
       // Case 1: AD scalar && IsArray<ADType>
-      if constexpr (IsADType<T1> && IsADType<DataTypeR>) {
+      if constexpr (IsReverseDouble<T1> && IsReverseDouble<DataTypeR>) {
         for (std::size_t i = 0; i < etr_expr.size(); i++) {
           auto temp = etr_expr.get(i);
           auto d1 = deriv(temp, etr1);
@@ -81,7 +81,7 @@ auto compare_result_reverse_ad_binary(const T1& etr1, const T2& etr2, const T3& 
         return true;
       }
       // Case 2: AD scalar && IsArray<Other>
-      else if constexpr (IsADType<T1> && !IsADType<DataTypeR>) {
+      else if constexpr (IsReverseDouble<T1> && !IsReverseDouble<DataTypeR>) {
         for (std::size_t i = 0; i < etr_expr.size(); i++) {
           auto temp = etr_expr.get(i);
           auto d1 = deriv(temp, etr1);
@@ -90,7 +90,7 @@ auto compare_result_reverse_ad_binary(const T1& etr1, const T2& etr2, const T3& 
         return true;
       }
       // Case 3: Other && IsArray<ADType>
-      else if constexpr (!IsADType<T1> && IsADType<DataTypeR>) {
+      else if constexpr (!IsReverseDouble<T1> && IsReverseDouble<DataTypeR>) {
         for (std::size_t i = 0; i < etr_expr.size(); i++) {
           auto temp = etr_expr.get(i);
           auto d2 = deriv(temp, etr2.get(i));
@@ -102,7 +102,7 @@ auto compare_result_reverse_ad_binary(const T1& etr1, const T2& etr2, const T3& 
     else if constexpr (!is_scalar_l && is_scalar_r) {
       using DataTypeL = typename ExtractDataType<Decayed<T1>>::value_type;
       // Case 4: IsArray<ADType> && AD scalar
-      if constexpr (IsADType<DataTypeL> && IsADType<T2>) {
+      if constexpr (IsReverseDouble<DataTypeL> && IsReverseDouble<T2>) {
         for (std::size_t i = 0; i < etr_expr.size(); i++) {
           auto temp = etr_expr.get(i);
           auto d1 = deriv(temp, etr1.get(i));
@@ -113,7 +113,7 @@ auto compare_result_reverse_ad_binary(const T1& etr1, const T2& etr2, const T3& 
         return true;
       }
       // Case 5: IsArray<Other> && AD scalar
-      if constexpr (!IsADType<DataTypeL> && IsADType<T2>) {
+      if constexpr (!IsReverseDouble<DataTypeL> && IsReverseDouble<T2>) {
         for (std::size_t i = 0; i < etr_expr.size(); i++) {
           auto temp = etr_expr.get(i);
           auto d2 = deriv(temp, etr2);
@@ -122,7 +122,7 @@ auto compare_result_reverse_ad_binary(const T1& etr1, const T2& etr2, const T3& 
         return true;
       }
       // Case 6: IsArray<ADType> && Other
-      if constexpr (IsADType<DataTypeL> && !IsADType<T2>) {
+      if constexpr (IsReverseDouble<DataTypeL> && !IsReverseDouble<T2>) {
         for (std::size_t i = 0; i < etr_expr.size(); i++) {
           auto temp = etr_expr.get(i);
           auto d1 = deriv(temp, etr1.get(i));
@@ -139,7 +139,7 @@ auto compare_result_reverse_ad_binary(const T1& etr1, const T2& etr2, const T3& 
     using DataTypeR = typename ExtractDataType<Decayed<T2>>::value_type;
 
     // Case1: Array<AD> && Array<AD>
-    if constexpr (IsADType<DataTypeL> && IsADType<DataTypeR>) {
+    if constexpr (IsReverseDouble<DataTypeL> && IsReverseDouble<DataTypeR>) {
       for (std::size_t i = 0; i < etr1.size(); i++) {
         auto temp = etr_expr.get(i);
         auto d1 = deriv(temp, etr1.get(i));
@@ -151,7 +151,7 @@ auto compare_result_reverse_ad_binary(const T1& etr1, const T2& etr2, const T3& 
     }
 
     // Case2: Array<AD> && !Array<AD>
-    else if constexpr (IsADType<DataTypeL> && !IsADType<DataTypeR>) {
+    else if constexpr (IsReverseDouble<DataTypeL> && !IsReverseDouble<DataTypeR>) {
       for (std::size_t i = 0; i < etr1.size(); i++) {
         auto temp = etr_expr.get(i);
         if(!compare(get_val(temp), expected_val[i])) return false;
@@ -162,7 +162,7 @@ auto compare_result_reverse_ad_binary(const T1& etr1, const T2& etr2, const T3& 
     }
 
     // Case3: !Array<AD> && Array<AD>
-    else if constexpr (!IsADType<DataTypeL> && IsADType<DataTypeR>) {
+    else if constexpr (!IsReverseDouble<DataTypeL> && IsReverseDouble<DataTypeR>) {
       for (std::size_t i = 0; i < etr1.size(); i++) {
         auto temp = etr_expr.get(i);
         if(!compare(get_val(temp), expected_val[i])) return false;

@@ -184,7 +184,7 @@ inline SEXP Cast(const T &res_) {
     UNPROTECT(1);
     return ret;
   }
-  else if constexpr (IsADType<vtype>) {
+  else if constexpr (IsReverseDouble<vtype>) {
     // ReverseDouble: each element is a tape handle, values live in
     // TAPE_INTERN.val; no contiguous double buffer to memcpy from. Stay on
     // the per-element path (one indirect read + NA branch per cell).

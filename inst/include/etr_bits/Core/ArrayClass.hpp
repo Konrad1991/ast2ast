@@ -267,7 +267,7 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
 ---------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------
 */
-template<typename T> requires (IsArithV<T> || IsADType<T>) struct Array<T, Borrow<T, BorrowTrait>> {
+template<typename T> requires (IsArithV<T> || IsReverseDouble<T>) struct Array<T, Borrow<T, BorrowTrait>> {
   using Type = T;
   using DType = Borrow<T, BorrowTrait>;
   using value_type = T;

@@ -127,16 +127,16 @@ void jacobian_forward(J& jac, const Fun& fct, Args&&... args) {
 template<typename Of, typename Wrt> inline auto deriv(const Of& of, const Wrt& w_inp) {
   using DecayedOf = Decayed<Of>;
   using DecayedWrt = Decayed<Wrt>;
-  if constexpr (IsADType<DecayedOf> && IsADType<DecayedWrt>) {
+  if constexpr (IsReverseDouble<DecayedOf> && IsReverseDouble<DecayedWrt>) {
     Array<Double, Buffer<Double, RBufferTrait>> res(SI{1});
     res.dim = std::vector<std::size_t>{1};
     TAPE_INTERN.reverse(of.id);
     res.set(0, Double(TAPE_INTERN.adj[static_cast<std::size_t>(w_inp.id)]));
     return res;
   }
-  else if constexpr (IsArray<DecayedOf> && IsADType<DecayedWrt>) {
+  else if constexpr (IsArray<DecayedOf> && IsReverseDouble<DecayedWrt>) {
     using DataTypeOf = typename ExtractDataType<DecayedOf>::value_type;
-    static_assert(IsADType<DataTypeOf>, "data type of of has to be ReverseDouble");
+    static_assert(IsReverseDouble<DataTypeOf>, "data type of of has to be ReverseDouble");
     Array<Double, Buffer<Double, RBufferTrait>> res(SI{of.size()});
     res.dim = std::vector<std::size_t>{of.size()};
     for (std::size_t j = 0; j < res.size(); j++) {
@@ -145,9 +145,9 @@ template<typename Of, typename Wrt> inline auto deriv(const Of& of, const Wrt& w
     }
     return res;
   }
-  else if constexpr (IsADType<DecayedOf> && IsArray<DecayedWrt>) {
+  else if constexpr (IsReverseDouble<DecayedOf> && IsArray<DecayedWrt>) {
     using DataTypeWrt = typename ExtractDataType<DecayedWrt>::value_type;
-    static_assert(IsADType<DataTypeWrt>, "data type of wrt has to be ReverseDouble");
+    static_assert(IsReverseDouble<DataTypeWrt>, "data type of wrt has to be ReverseDouble");
     Array<Double, Buffer<Double, RBufferTrait>> res(SI{w_inp.size()});
     res.dim = std::vector<std::size_t>{w_inp.size()};
     TAPE_INTERN.reverse(of.id);
@@ -158,9 +158,9 @@ template<typename Of, typename Wrt> inline auto deriv(const Of& of, const Wrt& w
   }
   else if constexpr (IsArray<DecayedOf> && IsArray<DecayedWrt>) {
     using DataTypeWrt = typename ExtractDataType<DecayedWrt>::value_type;
-    static_assert(IsADType<DataTypeWrt>, "data type of wrt has to be ReverseDouble");
+    static_assert(IsReverseDouble<DataTypeWrt>, "data type of wrt has to be ReverseDouble");
     using DataTypeOf = typename ExtractDataType<DecayedOf>::value_type;
-    static_assert(IsADType<DataTypeOf>, "data type of of has to be ReverseDouble");
+    static_assert(IsReverseDouble<DataTypeOf>, "data type of of has to be ReverseDouble");
 
     const std::size_t nrow = of.size();
     const std::size_t ncol = w_inp.size();
