@@ -6,9 +6,6 @@ namespace etr {
 // is.na
 // -----------------------------------------------------------------------------------------------------------
 template <typename T> requires IsArithV<T> inline Logical isNA(const T inp) {
-  return inp.isNA();
-}
-template <typename T> requires (IsReverseDouble<T> || IsArithRefV<T>) inline Logical isNA(const T inp) {
   const auto val = get_scalar_val(inp);
   return val.isNA();
 }

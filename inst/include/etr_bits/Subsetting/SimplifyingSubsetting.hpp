@@ -62,7 +62,7 @@ inline decltype(auto) at(ArrayType& arr, const Args&... args) {
   }
 
   ass<"No memory was allocated">(arr.d.allocated);
-  ass<"Error: out of boundaries">(idx < arr.d.sz);
+  ass<"Error: out of boundaries">(idx < arr.d.size());
 
   using DataType = typename ExtractDataType<Decayed<ArrayType>>::value_type;
   using ArrStorage = Decayed<decltype(arr.d)>;

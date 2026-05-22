@@ -1,12 +1,7 @@
-#define STANDALONE_ETR
-#include <string>
-#include <iostream>
-#include <vector>
-#include "stddef.h"
-#include <cxxabi.h>
-#include "../inst/include/etr_bits/Core/Reflection.hpp"
+#include <Rcpp.h>
 #include "../inst/include/etr.hpp"
 using namespace etr;
+#include <cstring>
 
 const double NaN = std::numeric_limits<double>::quiet_NaN();
 
@@ -84,7 +79,8 @@ template<typename L, typename R> void compare(const L& l, const R& r) {
   }
 }
 
-int main() {
+// [[Rcpp::export]]
+void test_scalars() {
   TAPE_INTERN.clear();
 
   Logical l1 = true;

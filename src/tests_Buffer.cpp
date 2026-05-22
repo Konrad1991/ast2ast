@@ -3,6 +3,10 @@
 using namespace etr;
 #include <cstring>
 
+// Buffer<ReverseDouble> is tape-backed and exposes no capacity member.
+template <typename T>
+concept HasCapacity = requires(const T& t) { t.capacity; };
+
 template<typename RealType>
 void test_buffer() {
   auto compare = [](auto l, auto r) {
@@ -14,7 +18,8 @@ void test_buffer() {
   {
     Buffer<RealType> b;
     ass<"Empty buffer size = 0">(b.size() == 0);
-    ass<"Empty buffer capacity = 0">(b.capacity == 0);
+    if constexpr (HasCapacity<Buffer<RealType>>)
+      ass<"Empty buffer capacity = 0">(b.capacity == 0);
 
     try {
       b.get(0);
@@ -100,22 +105,22 @@ b = b;
       const std::string expected = "Size has to be larger than 0!";
       ass<"Reisze with new size = 0">(std::strcmp(e.what(), expected.c_str()) == 0);
     }
-    const std::size_t old_capacity = b.capacity;
+    const std::size_t old_capacity = [&]() -> std::size_t {
+      if constexpr (HasCapacity<Buffer<RealType>>) return b.capacity;
+      else return 0;
+    }();
     b.resize(1);
-    ass<"resize with smaller size aka shrink">(
-      b.size() == 1 &&
-      b.capacity == old_capacity
-    );
+    ass<"resize with smaller size aka shrink">(b.size() == 1);
+    if constexpr (HasCapacity<Buffer<RealType>>)
+      ass<"shrink keeps capacity">(b.capacity == old_capacity);
     b.resize(10);
-    ass<"resize growing but smaller capacity">(
-      b.size() == 10 &&
-      b.capacity == old_capacity
-    );
+    ass<"resize growing but smaller capacity">(b.size() == 10);
+    if constexpr (HasCapacity<Buffer<RealType>>)
+      ass<"grow within capacity keeps capacity">(b.capacity == old_capacity);
     b.resize(1000);
-    ass<"resize growing larger capacity">(
-      b.size() == 1000 &&
-      b.capacity != old_capacity
-    );
+    ass<"resize growing larger capacity">(b.size() == 1000);
+    if constexpr (HasCapacity<Buffer<RealType>>)
+      ass<"grow beyond capacity changes capacity">(b.capacity != old_capacity);
 
     Buffer<RealType> bu(2);
     bu.resize(2);
@@ -236,10 +241,14 @@ b = b;
   {
     Buffer<RealType> b;
     b.realloc(1);
-    ass<"realloc(1) -> size = 1 and capacity = 1">(b.size() == 1 && b.capacity == 1);
+    ass<"realloc(1) -> size = 1">(b.size() == 1);
+    if constexpr (HasCapacity<Buffer<RealType>>)
+      ass<"realloc(1) -> capacity = 1">(b.capacity == 1);
     b.set(0, Double(3.14));
     b.realloc(2);
-    ass<"realloc(2) -> size = 2 and capacity = 2">(b.size() == 2 && b.capacity == 2);
+    ass<"realloc(2) -> size = 2">(b.size() == 2);
+    if constexpr (HasCapacity<Buffer<RealType>>)
+      ass<"realloc(2) -> capacity = 2">(b.capacity == 2);
     ass<"assert that after realloc first element is maintained">(compare(get_val(b.get(0)), 3.14));
     ass<"assert that after realloc new elements are initialised">(compare(get_val(b.get(1)), 0.0));
   }
@@ -259,7 +268,8 @@ b = b;
     b.push_back(Double(11));
     b.push_back(Double(12));
     ass<"Length b = 12 after 12 push backs">(b.size() == 12);
-    ass<"Capacity b = 16 after 16 push backs">(b.capacity == 16); // 1, 2, 4, 8, 16 ...
+    if constexpr (HasCapacity<Buffer<RealType>>)
+      ass<"Capacity b = 16 after 16 push backs">(b.capacity == 16); // 1, 2, 4, 8, 16 ...
 
     Buffer<RealType> bu;
     bu.realloc(5);
@@ -292,4 +302,5 @@ void test_buffer() {
   test_buffer<Double>();
   TAPE_INTERN.clear();
   test_buffer<ReverseDouble>();
+  test_buffer<Dual>();
 }
