@@ -454,15 +454,15 @@ struct LogicalRef;
 struct IntegerRef;
 struct DoubleRef;
 struct DualRef;
-struct ReverseDoubleRef;
 
 /*
 --------------------------------------------------------------------------------------------------
 Casting scalar types
 - from_ast_scalar converts etr::Scalars to raw C++ scalars
 - to_ast_scalar converts double, int, and bool to Double, Integer, and Logical respectivly
-- to_ast_scalar converts LogicalRef, IntegerRef, DoubleRef, DualRef, and ReverseDoubleRef to 
-  Logical, Integer, Double, Dual and ReverseDouble
+- to_ast_scalar converts LogicalRef, IntegerRef, DoubleRef, and DualRef to
+  Logical, Integer, Double, and Dual. ReverseDouble has no reference wrapper:
+  a ReverseDouble is already an 8-byte handle into the tape.
 --------------------------------------------------------------------------------------------------
 */
 template<typename T>
@@ -488,7 +488,6 @@ template<> struct to_ast_scalar<LogicalRef>  { using type = Logical; };
 template<> struct to_ast_scalar<IntegerRef>  { using type = Integer; };
 template<> struct to_ast_scalar<DoubleRef>   { using type = Double;  };
 template<> struct to_ast_scalar<DualRef>     { using type = Dual;    };
-template<> struct to_ast_scalar<ReverseDoubleRef> { using type = ReverseDouble; };
 
 template<typename T>
 using to_ast_scalar_t = typename to_ast_scalar<T>::type;
@@ -502,7 +501,7 @@ determine the common type of two etr::Scalars
 template<typename T>
 using bare_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
-enum class ScalarRank { LogicalRef, IntegerRef, DoubleRef, DualRef, ReverseDoubleRef, Logical, Integer, Double, Dual, ReverseDouble };
+enum class ScalarRank { LogicalRef, IntegerRef, DoubleRef, DualRef, Logical, Integer, Double, Dual, ReverseDouble };
 
 template <class T> struct scalar_rank {
   static constexpr int value = -1;
@@ -551,7 +550,6 @@ template<typename T> concept IsArithRef =
 std::same_as<bare_t<T>, LogicalRef> ||
 std::same_as<bare_t<T>, IntegerRef> ||
 std::same_as<bare_t<T>, DoubleRef> ||
-std::same_as<bare_t<T>, ReverseDoubleRef> ||
 std::same_as<bare_t<T>, DualRef>;
 template <typename T> constexpr bool IsArithRefV = IsArithRef<T>;
 
@@ -565,7 +563,6 @@ template<typename T> concept IsDoubleRef = std::same_as<T, DoubleRef>;
 template<typename T> concept IsIntegerRef = std::same_as<T, IntegerRef>;
 template<typename T> concept IsLogicalRef = std::same_as<T, LogicalRef>;
 template<typename T> concept IsDualRef = std::same_as<T, DualRef>;
-template<typename T> concept IsReverseDoubleRef = std::same_as<T, ReverseDoubleRef>;
 
 /*
 --------------------------------------------------------------------------------------------------
@@ -2426,86 +2423,6 @@ struct DualRef {
   inline DualRef(double, double) = delete;
   template<typename T> requires IsArray<Decayed<T>> inline DualRef& operator=(const T& arr) {
     using  inner = typename ExtractDataType<T>::value_type;
-    ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
-    *this = arr.get(0);
-    return *this;
-  }
-};
-
-struct ReverseDoubleRef {
-  double* p_val;
-  uint8_t * p_na;
-  operator ReverseDouble() const {
-    ReverseDouble out(*p_val);
-    if (p_na) out.is_na = *p_na;
-    return out;
-  }
-  // Scalar operations, delegated to the referenced value via operator ReverseDouble().
-  inline ReverseDouble operator+(const ReverseDouble& o) const { return ReverseDouble(*this) + o; }
-  inline ReverseDouble operator-(const ReverseDouble& o) const { return ReverseDouble(*this) - o; }
-  inline ReverseDouble operator*(const ReverseDouble& o) const { return ReverseDouble(*this) * o; }
-  inline ReverseDouble operator/(const ReverseDouble& o) const { return ReverseDouble(*this) / o; }
-  inline ReverseDouble pow(const ReverseDouble& o) const { return ReverseDouble(*this).pow(o); }
-  inline ReverseDoubleRef& operator+=(const ReverseDouble& o) { *this = (ReverseDouble(*this) + o); return *this; }
-  inline ReverseDoubleRef& operator-=(const ReverseDouble& o) { *this = (ReverseDouble(*this) - o); return *this; }
-  inline ReverseDoubleRef& operator*=(const ReverseDouble& o) { *this = (ReverseDouble(*this) * o); return *this; }
-  inline ReverseDoubleRef& operator/=(const ReverseDouble& o) { *this = (ReverseDouble(*this) / o); return *this; }
-  inline Logical operator==(const ReverseDouble& o) const { return ReverseDouble(*this) == o; }
-  inline Logical operator< (const ReverseDouble& o) const { return ReverseDouble(*this) <  o; }
-  inline Logical operator<=(const ReverseDouble& o) const { return ReverseDouble(*this) <= o; }
-  inline Logical operator> (const ReverseDouble& o) const { return ReverseDouble(*this) >  o; }
-  inline Logical operator>=(const ReverseDouble& o) const { return ReverseDouble(*this) >= o; }
-  inline Logical operator!=(const ReverseDouble& o) const { return ReverseDouble(*this) != o; }
-  inline Logical operator&&(const ReverseDouble& o) const { return ReverseDouble(*this) && o; }
-  inline Logical operator||(const ReverseDouble& o) const { return ReverseDouble(*this) || o; }
-  inline Logical operator& (const ReverseDouble& o) const { return ReverseDouble(*this) &  o; }
-  inline Logical operator| (const ReverseDouble& o) const { return ReverseDouble(*this) |  o; }
-  inline ReverseDouble sin()   const { return ReverseDouble(*this).sin(); }
-  inline ReverseDouble sinh()  const { return ReverseDouble(*this).sinh(); }
-  inline ReverseDouble asin()  const { return ReverseDouble(*this).asin(); }
-  inline ReverseDouble cos()   const { return ReverseDouble(*this).cos(); }
-  inline ReverseDouble cosh()  const { return ReverseDouble(*this).cosh(); }
-  inline ReverseDouble acos()  const { return ReverseDouble(*this).acos(); }
-  inline ReverseDouble tan()   const { return ReverseDouble(*this).tan(); }
-  inline ReverseDouble tanh()  const { return ReverseDouble(*this).tanh(); }
-  inline ReverseDouble atan()  const { return ReverseDouble(*this).atan(); }
-  inline ReverseDouble exp()   const { return ReverseDouble(*this).exp(); }
-  inline ReverseDouble log()   const { return ReverseDouble(*this).log(); }
-  inline ReverseDouble log10() const { return ReverseDouble(*this).log10(); }
-  inline ReverseDouble sqrt()  const { return ReverseDouble(*this).sqrt(); }
-  inline ReverseDouble operator-() const { return -ReverseDouble(*this); }
-  inline bool isNA()       const noexcept { return ReverseDouble(*this).isNA(); }
-  inline bool isNaN()      const noexcept { return ReverseDouble(*this).isNaN(); }
-  inline bool isFinite()   const noexcept { return ReverseDouble(*this).isFinite(); }
-  inline bool isInfinite() const noexcept { return ReverseDouble(*this).isInfinite(); }
-  ReverseDoubleRef& operator=(const ReverseDoubleRef& other) {
-    if (this == &other) return *this;
-    *p_val = *other.p_val;
-    if (p_na) {
-      *p_na = other.p_na ? *other.p_na : false;
-    }
-    return *this;
-  }
-  ReverseDoubleRef& operator=(const ReverseDouble& x) {
-    *p_val = get_val(x);
-    if (p_na) {
-      *p_na = x.is_na;
-    }
-    return *this;
-  }
-  template<typename T> requires (IsArithV<T> || IsReverseDouble<T>)
-  ReverseDoubleRef& operator=(const T& x) {
-    *p_val = static_cast<double>(get_val(x));
-    if (p_na) {
-      *p_na = get_scalar_val(x).is_na;
-    }
-    return *this;
-  }
-  explicit inline ReverseDoubleRef(double* v, uint8_t* n = nullptr) : p_val(v), p_na(n) {}
-  inline ReverseDoubleRef(ReverseDouble) = delete;
-  inline ReverseDoubleRef(double) = delete;
-  template<typename T> requires IsArray<Decayed<T>>
-  inline ReverseDoubleRef& operator=(const T& arr) {
     ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
     *this = arr.get(0);
     return *this;

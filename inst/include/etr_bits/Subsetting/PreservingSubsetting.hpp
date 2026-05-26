@@ -377,7 +377,12 @@ inline auto subset(ArrayType& arr, const Args&... args) {
 }
 
 // Fast path: subset(array, Scalars...)
-template <typename ArrayType, typename... Args> requires AllScalarIndices<Args...>
+// ReverseDouble is excluded: its element write must rebind the tape id via
+// Buffer::set, so it routes through the SubsetView overload above instead of
+// the by-value at() handle.
+template <typename ArrayType, typename... Args>
+requires AllScalarIndices<Args...> &&
+         (!IsReverseDouble<typename ExtractDataType<ArrayType>::value_type>)
 inline decltype(auto) subset(ArrayType& arr, const Args&... args) {
   return at(arr, args...);
 }

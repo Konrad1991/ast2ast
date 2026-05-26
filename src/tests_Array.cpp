@@ -628,7 +628,13 @@ template<typename RealType> void test_array_subset() {
     Integer i1 = 1;
     subset(a, i1) = RealType(3.14);
     auto sub = subset(a, i1);
-    ass<"Subset modify Array">(compare(get_val(sub), 3.14));
+    
+    if constexpr (IS<decltype(sub), DoubleRef>) {
+      ass<"Subset modify Array">(compare(get_val(sub), 3.14));
+    }
+    else if constexpr (IS<decltype(sub), ReverseDouble>) {
+      ass<"Subset modify Array">(compare(get_val(sub.get(0)), 3.14));
+    }
   }
   // Set and Get
   {

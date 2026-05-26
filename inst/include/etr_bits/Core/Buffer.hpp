@@ -25,54 +25,46 @@ struct BufferIt {
   }
 };
 
-// Buffer specialization for ReverseDouble
+// Generic tape-backed fallback buffer. Used for Buffer<int> (subset index
+// lists). ReverseDouble has its own specialization below.
 template <typename ReverseDouble, typename BufferTrait> struct Buffer {
 
   using value_type = ReverseDouble;
   using Trait = BufferTrait;
   using TypeTrait = BufferTrait;
 
-  std::vector<std::size_t> starts;
-  std::vector<std::size_t> sizes;
+  // One tape-node id per element. ids[i] is the index into TAPE_INTERN of
+  // element i. Element ids need not be contiguous, so a slot can be repointed
+  // at an arbitrary node.
+  std::vector<int> ids;
   bool allocated = false;
 
-  std::size_t size() const noexcept{
+  std::size_t size() const noexcept {
     if (!allocated) return 0;
-    std::size_t sz_temp = 0;
-    for (std::size_t i = 0; i < sizes.size(); i++) {
-      sz_temp += sizes[i];
-    }
-    return sz_temp;
+    return ids.size();
   }
 
   // default
   Buffer() {}
   // copy ctr
   Buffer(const Buffer& other)
-  : starts(other.starts), sizes(other.sizes), allocated(other.allocated) {}
+  : ids(other.ids), allocated(other.allocated) {}
   // move ctr
   Buffer(Buffer&& other)
-  : starts(std::move(other.starts)), sizes(std::move(other.sizes)),
-    allocated(other.allocated) {
+  : ids(std::move(other.ids)), allocated(other.allocated) {
     other.allocated = false;
   }
   // copy assignment
   Buffer &operator=(const Buffer &other) {
     if (this == &other) return *this;
-    sizes.resize(other.sizes.size());
-    starts.resize(other.starts.size());
-    for (std::size_t i = 0; i < sizes.size(); i++) {
-      sizes[i] = other.sizes[i];
-      starts[i] = other.starts[i];
-    }
+    ids = other.ids;
     allocated = other.allocated;
     return *this;
   }
   // move assignment
   Buffer &operator=(Buffer &&other) noexcept {
     if (this == &other) return *this;
-    starts = std::move(other.starts);
-    sizes = std::move(other.sizes);
+    ids = std::move(other.ids);
     allocated = other.allocated;
     other.allocated = false;
     return *this;
@@ -86,15 +78,9 @@ template <typename ReverseDouble, typename BufferTrait> struct Buffer {
       ass<"R object is not of type numeric">(Rf_isReal(s));
       std::size_t sz_ = static_cast<std::size_t>(Rf_length(s));
       ass<"R object seems to be empty">(sz_ >= 1);
-      starts.resize(1);
-      sizes.resize(1);
-      sizes[0] = sz_;
-      for (std::size_t i = 0; i < sizes[0]; i++) {
-        if (i == 0) {
-          starts[0] = TAPE_INTERN.push_const(REAL(s)[i], false);
-        } else {
-          TAPE_INTERN.push_const(REAL(s)[i], false);
-        }
+      ids.resize(sz_);
+      for (std::size_t i = 0; i < sz_; i++) {
+        ids[i] = TAPE_INTERN.push_const(REAL(s)[i], false);
       }
       allocated = true;
     } else {
@@ -108,67 +94,37 @@ template <typename ReverseDouble, typename BufferTrait> struct Buffer {
 
   template <typename TInp>
   requires IS<TInp, ReverseDouble> void fill(TInp &&val) {
-    starts.resize(1);
-    sizes.resize(1);
-    sizes[0] = size();
     const double v = get_val(val);
     bool na = false;
     if constexpr (IsReverseDouble<value_type>) na = val.is_na;
-    for (std::size_t i = 0; i < sizes[0]; i++) {
-      if (i == 0) {
-        starts[0] = TAPE_INTERN.push_const(v, na);
-      } else {
-        TAPE_INTERN.push_const(v, na);
-      }
+    const std::size_t n = size();
+    ids.resize(n);
+    for (std::size_t i = 0; i < n; i++) {
+      ids[i] = TAPE_INTERN.push_const(v, na);
     }
     allocated = true;
   }
 
   ~Buffer() {
-    sizes.clear();
-    starts.clear();
+    ids.clear();
   }
 
   void init(std::size_t size) {
     ass<"Size has to be larger than 0!">(size > 0);
-    starts.resize(1);
-    sizes.resize(1);
-    sizes[0] = size;
-    for (std::size_t i = 0; i < sizes[0]; i++) {
-      if (i == 0) {
-        starts[0] = TAPE_INTERN.push_const(0.0, false);
-      } else {
-        TAPE_INTERN.push_const(0.0, false);
-      }
+    ids.resize(size);
+    for (std::size_t i = 0; i < size; i++) {
+      ids[i] = TAPE_INTERN.push_const(0.0, false);
     }
     allocated = true;
   }
 
   void resize(std::size_t newSize) {
     if (newSize < size()) {
-      std::size_t temp_size1 = 0;
-      std::size_t temp_size2 = 0;
-      for (std::size_t i = 0; i < sizes.size(); i++) {
-        temp_size1 += sizes[i];
-        if (newSize == temp_size1) {
-          sizes.resize(i + 1);
-          break;
-        } else if (newSize < temp_size1) {
-          sizes[i] = newSize - temp_size2;
-          sizes.resize(i + 1);
-          break;
-        }
-        temp_size2 += sizes[i];
-      }
+      ids.resize(newSize);
     } else if (newSize > size()) {
-      std::size_t temp = newSize - size();
-      sizes.push_back(temp);
-      for (std::size_t i = 0; i < sizes.back(); i++) {
-        if (i == 0) {
-          starts.push_back(TAPE_INTERN.push_const(0.0, false));
-        } else {
-          TAPE_INTERN.push_const(0.0, false);
-        }
+      const std::size_t add = newSize - size();
+      for (std::size_t i = 0; i < add; i++) {
+        ids.push_back(TAPE_INTERN.push_const(0.0, false));
       }
     }
     allocated = true;
@@ -183,68 +139,37 @@ template <typename ReverseDouble, typename BufferTrait> struct Buffer {
     resize(new_size);
   }
 
-  const std::size_t calc_vec_entry(const std::size_t idx) const {
-    std::size_t temp1 = 0;
-    std::size_t temp2 = 0;
-    for (std::size_t i = 0; i < sizes.size(); i++) {
-      temp1 += sizes[i];
-      if (idx == temp2) {
-        return i;
-      } else if (idx < temp1 && idx > temp2) {
-        return i;
-      }
-      temp2 += sizes[i];
-    }
-    ass<"Invalid index">(false);
-    return 0;
-  }
-  const std::size_t calc_idx(const std::size_t sizes_idx, const std::size_t idx) const {
-    std::size_t pre_size = 0;
-    if (sizes_idx == 0) {
-      return idx;
-    }
-    for (std::size_t i = 0; i < sizes_idx; i++) {
-      pre_size += sizes[i];
-    }
-    return idx - pre_size;
-  }
-
   value_type get(std::size_t idx) const {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < size());
-    std::size_t vec_idx  = calc_vec_entry(idx);
-    std::size_t idx_temp = calc_idx(vec_idx, idx);
-    std::size_t real_idx = starts[vec_idx] + idx_temp;
+    const int real_idx = ids[idx];
     if constexpr (IsReverseDouble<value_type>) {
       // Reference the existing tape node; do not push a new const.
-      return value_type(from_tape_id_t{}, static_cast<int>(real_idx),
-                        TAPE_INTERN.is_na[real_idx]);
+      return value_type(from_tape_id_t{}, real_idx,
+                        TAPE_INTERN.is_na[static_cast<std::size_t>(real_idx)]);
     } else {
-      return value_type(TAPE_INTERN.val[real_idx]);
+      return value_type(TAPE_INTERN.val[static_cast<std::size_t>(real_idx)]);
     }
   }
   void set(std::size_t idx, const value_type& val) {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < size());
-    std::size_t vec_idx = calc_vec_entry(idx);
-    std::size_t idx_temp = calc_idx(vec_idx, idx);
-    std::size_t real_idx = starts[vec_idx] + idx_temp;
-    TAPE_INTERN.val[real_idx] = get_val(val);
     if constexpr (IsReverseDouble<value_type>) {
-      TAPE_INTERN.is_na[real_idx] = val.is_na;
+      // rebind to val's node so its tape edges survive (reverse-mode AD)
+      ids[idx] = val.id;
+    } else {
+      TAPE_INTERN.val[static_cast<std::size_t>(ids[idx])] = get_val(val);
     }
   }
 
   template <typename L2> void moveit(L2 &other) {
-    starts = std::move(other.starts);
-    sizes  = std::move(other.sizes);
-    allocated = other.allocated;
-    other.allocated = false;
+    ids.swap(other.ids);
+    std::swap(allocated, other.allocated);
+    allocated = true;
   }
 
   void swap(Buffer &other) noexcept {
-    starts.swap(other.starts);
-    sizes.swap(other.sizes);
+    ids.swap(other.ids);
     std::swap(allocated, other.allocated);
   }
 
@@ -271,23 +196,130 @@ template <typename ReverseDouble, typename BufferTrait> struct Buffer {
   }
 
   template <typename T> void push_back(T input) {
-    if (!allocated) {
-      starts.resize(1);
-      sizes.resize(1);
-      starts[0] = TAPE_INTERN.push_const(get_val(input), false);
-      sizes[0] = 1;
-      allocated = true;
-      return;
-    }
-    std::size_t new_idx = TAPE_INTERN.push_const(get_val(input), false);
-    // append to last chunk if contiguous
-    std::size_t last = starts.back() + sizes.back();
-    if (new_idx == last) {
-      sizes.back()++;
-    } else {
-      starts.push_back(new_idx);
-      sizes.push_back(1);
-    }
+    ids.push_back(TAPE_INTERN.push_const(get_val(input), false));
+    allocated = true;
+  }
+};
+
+//==============================================================================
+// Buffer<ReverseDouble>: one ReverseDouble handle (id + is_na, 8 bytes) per
+// element, like Stan's std::vector<var>. get() returns a reference so
+// `at(a, i) = expr` rebinds the stored handle's tape id via the defaulted
+// ReverseDouble::operator= — which is what reverse-mode AD needs.
+//==============================================================================
+template <typename BufferTrait> struct Buffer<ReverseDouble, BufferTrait> {
+  using value_type = ReverseDouble;
+  using Trait      = BufferTrait;
+  using TypeTrait  = BufferTrait;
+
+  std::vector<ReverseDouble> data;
+  bool allocated = false;
+
+  std::size_t size() const noexcept { return allocated ? data.size() : 0; }
+
+  Buffer() {}
+  Buffer(const Buffer& other) : data(other.data), allocated(other.allocated) {}
+  Buffer(Buffer&& other) noexcept
+  : data(std::move(other.data)), allocated(other.allocated) { other.allocated = false; }
+  Buffer& operator=(const Buffer& other) {
+    if (this == &other) return *this;
+    data = other.data;
+    allocated = other.allocated;
+    return *this;
+  }
+  Buffer& operator=(Buffer&& other) noexcept {
+    if (this == &other) return *this;
+    data = std::move(other.data);
+    allocated = other.allocated;
+    other.allocated = false;
+    return *this;
+  }
+  Buffer(std::size_t sz_) { init(sz_); }
+
+#ifdef STANDALONE_ETR
+#else
+  void initSEXP(SEXP s) {
+    ass<"R object is not of type numeric">(Rf_isReal(s));
+    std::size_t sz_ = static_cast<std::size_t>(Rf_length(s));
+    ass<"R object seems to be empty">(sz_ >= 1);
+    data.clear();
+    data.reserve(sz_);
+    for (std::size_t i = 0; i < sz_; i++) data.emplace_back(REAL(s)[i]);
+    allocated = true;
+  }
+  Buffer(SEXP s) { initSEXP(s); }
+#endif
+
+  template <typename TInp> requires IS<TInp, ReverseDouble>
+  void fill(TInp&& val) {
+    for (std::size_t i = 0; i < data.size(); i++) data[i] = val;
+    allocated = true;
+  }
+
+  ~Buffer() { data.clear(); }
+
+  // Each default-constructed ReverseDouble pushes its own const-0 node, so
+  // every element starts on an independent tape node.
+  void init(std::size_t size) {
+    ass<"Size has to be larger than 0!">(size > 0);
+    data.clear();
+    data.resize(size);   // resize value-inits each element separately -> own node
+    allocated = true;
+  }
+
+  void resize(std::size_t newSize) {
+    data.resize(newSize);
+    allocated = true;
+  }
+
+  void realloc(std::size_t new_size) {
+    ass<"realloc size has to be > 0">(new_size > 0);
+    if (!allocated) { init(new_size); return; }
+    resize(new_size);
+  }
+
+  ReverseDouble& get(std::size_t idx) {
+    ass<"No memory was allocated">(allocated);
+    ass<"Error: out of boundaries">(idx < size());
+    return data[idx];
+  }
+  const ReverseDouble& get(std::size_t idx) const {
+    ass<"No memory was allocated">(allocated);
+    ass<"Error: out of boundaries">(idx < size());
+    return data[idx];
+  }
+  // rebind: element idx now refers to val's tape node (edges preserved)
+  void set(std::size_t idx, const ReverseDouble& val) {
+    ass<"No memory was allocated">(allocated);
+    ass<"Error: out of boundaries">(idx < size());
+    data[idx] = val;
+  }
+
+  template <typename L2> void moveit(L2& other) {
+    data.swap(other.data);
+    std::swap(allocated, other.allocated);
+    allocated = true;
+  }
+
+  void swap(Buffer& other) noexcept {
+    data.swap(other.data);
+    std::swap(allocated, other.allocated);
+  }
+
+  struct iterator {
+    const Buffer* ptr = nullptr;
+    std::size_t idx = 0;
+    iterator(const Buffer* p, std::size_t i) : ptr(p), idx(i) {}
+    value_type operator*() const { return ptr->get(idx); }
+    iterator& operator++() { ++idx; return *this; }
+    bool operator!=(const iterator& other) const { return idx != other.idx; }
+  };
+  auto begin() const { return iterator(this, 0); }
+  auto end()   const { return iterator(this, size()); }
+
+  template <typename T> void push_back(T input) {
+    data.emplace_back(input);
+    allocated = true;
   }
 };
 

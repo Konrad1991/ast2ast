@@ -69,7 +69,7 @@ inline decltype(auto) at(ArrayType& arr, const Args&... args) {
   constexpr bool IsBuf = IsLBuffer<ArrStorage>;
 
   if constexpr (IsReverseDouble<DataType>) {
-    return (arr.d.get(idx));
+    return arr.d.get(idx);
   } else if constexpr (IsDouble<DataType>) {
     if constexpr (IsBuf) return DoubleRef{ &arr.d.p_val[idx], &arr.d.p_na[idx] };
     else                 return DoubleRef{ &arr.d.p[idx], arr.d.p_na ? &arr.d.p_na[idx] : nullptr };
@@ -107,7 +107,7 @@ inline decltype(auto) at_linear(Obj& obj, std::size_t idx) {
     constexpr bool IsBuf = IsLBuffer<ObjType>;
 
     if constexpr (IsReverseDouble<DataType>) {
-      return (obj.p[idx]);
+      return obj.get(idx);
     } else if constexpr (IsDouble<DataType>) {
       if constexpr (IsBuf) return DoubleRef{ &obj.p_val[idx], &obj.p_na[idx] };
       else                 return DoubleRef{ &obj.p[idx], obj.p_na ? &obj.p_na[idx] : nullptr };

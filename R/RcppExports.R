@@ -77,3 +77,7 @@ test_scalars <- function() {
     invisible(.Call(`_ast2ast_test_scalars`))
 }
 
+test_scalar_assignment <- function() {
+    invisible(.Call(`_ast2ast_test_scalar_assignment`))
+}
+

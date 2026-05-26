@@ -152,12 +152,9 @@ void test_scalars() {
   bool dualref_na_dot4 = false;
   DualRef duar_owned4(&dualref_val4, &dualref_dot4, &dualref_na4, &dualref_na_dot4);
 
-  double revdref_val1 = 9.0;
-  uint8_t revdref_na1 = 0;
-  ReverseDoubleRef revdr_owned1(&revdref_val1, &revdref_na1);
-  double revdref_val2 = 9.0;
-  uint8_t revdref_na2 = 1;
-  ReverseDoubleRef revdr_owned2(&revdref_val2, &revdref_na2);
+  // ReverseDouble has no reference wrapper; use plain ReverseDouble values.
+  ReverseDouble revdr_owned1 = create_reverse_double(9.0, false);
+  ReverseDouble revdr_owned2 = create_reverse_double(9.0, true);
   compare(sin(l1), Double(0.841470984807897));
   compare(sin(l2), Logical::NA());
   compare(sin(i1), Double(0.909297426825682));
@@ -782,4 +779,84 @@ void test_scalars() {
   compare(dr_owned2 * revdr_owned2, create_reverse_double(NaN, true));
   compare(revdr_owned1 * revdr_owned2, create_reverse_double(NaN, true));
   compare(revdr_owned2 * revdr_owned2, create_reverse_double(NaN, true));
+}
+
+// Assign source `s` (numeric value v, derivative dot, NA flag na) to every
+// scalar and scalar-reference target, then check the converted result.
+// dot is the expected derivative on Dual targets (source dot if s is a Dual,
+// 0 otherwise). When na is true compare() short-circuits on NA, so v/dot are
+// ignored for those cases.
+template<typename Src>
+void check_assign_all(const Src& s, double v, double dot, bool na) {
+  const int iv  = static_cast<int>(v);
+  const bool bv = static_cast<bool>(v);
+
+  // value targets: converting ctor + copy-assign
+  Logical       aL;  aL  = s; compare(aL,  create_logical(bv, na));
+  Integer       aI;  aI  = s; compare(aI,  create_integer(iv, na));
+  Double        aD;  aD  = s; compare(aD,  create_double(v, na));
+  Dual          aDu; aDu = s; compare(aDu, create_dual(v, dot, na, na));
+  ReverseDouble aRD; aRD = s; compare(aRD, create_reverse_double(v, na));
+
+  // reference targets: assignment writes through the referenced slot
+  bool lv = false, lna = false;
+  LogicalRef aLR(&lv, &lna); aLR = s; compare(Logical(aLR), create_logical(bv, na));
+
+  int iiv = 0; bool iina = false;
+  IntegerRef aIR(&iiv, &iina); aIR = s; compare(Integer(aIR), create_integer(iv, na));
+
+  double ddv = 0.0; bool ddna = false;
+  DoubleRef aDR(&ddv, &ddna); aDR = s; compare(Double(aDR), create_double(v, na));
+
+  double duv = 0.0, dudot = 0.0; bool duna = false, dunadot = false;
+  DualRef aDuR(&duv, &dudot, &duna, &dunadot); aDuR = s;
+  compare(Dual(aDuR), create_dual(v, dot, na, na));
+
+  // ReverseDouble has no reference wrapper
+  ReverseDouble aRDR; aRDR = s;
+  compare(aRDR, create_reverse_double(v, na));
+}
+
+// [[Rcpp::export]]
+void test_scalar_assignment() {
+  TAPE_INTERN.clear();
+
+  check_assign_all(Logical(true),      1.0, 0.0, false);
+  check_assign_all(Integer(4),         4.0, 0.0, false);
+  check_assign_all(Double(6.0),        6.0, 0.0, false);
+  check_assign_all(Dual(7.0, 2.0),     7.0, 2.0, false);
+  check_assign_all(ReverseDouble(8.0), 8.0, 0.0, false);
+
+  check_assign_all(Logical::NA(),       0.0, 0.0, true);
+  check_assign_all(Integer::NA(),       0.0, 0.0, true);
+  check_assign_all(Double::NA(),        0.0, 0.0, true);
+  check_assign_all(Dual::NA(),          0.0, 0.0, true);
+  check_assign_all(ReverseDouble::NA(), 0.0, 0.0, true);
+
+  {
+    bool sv = true, sna = false, dv = false, dna = true;
+    LogicalRef src(&sv, &sna), dst(&dv, &dna);
+    dst = src; compare(Logical(dst), create_logical(true, false));
+  }
+  {
+    int sv = 42; bool sna = false; int dv = 0; bool dna = true;
+    IntegerRef src(&sv, &sna), dst(&dv, &dna);
+    dst = src; compare(Integer(dst), create_integer(42, false));
+  }
+  {
+    double sv = 3.25; bool sna = false; double dv = 0.0; bool dna = true;
+    DoubleRef src(&sv, &sna), dst(&dv, &dna);
+    dst = src; compare(Double(dst), create_double(3.25, false));
+  }
+  {
+    double sv = 2.0, sdot = 5.0; bool sna = false, snd = false;
+    double dv = 0.0, ddot = 0.0; bool dna = true, dnd = true;
+    DualRef src(&sv, &sdot, &sna, &snd), dst(&dv, &ddot, &dna, &dnd);
+    dst = src; compare(Dual(dst), create_dual(2.0, 5.0, false, false));
+  }
+  {
+    ReverseDouble src = create_reverse_double(9.0, false);
+    ReverseDouble dst;
+    dst = src; compare(dst, create_reverse_double(9.0, false));
+  }
 }

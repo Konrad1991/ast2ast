@@ -119,11 +119,10 @@ void jacobian_forward(J& jac, const Fun& fct, Args&&... args) {
 // reverse() calls, which would (a) shift node indices the previously cached
 // .id values still refer to, and (b) make adj[] reads land in nodes that
 // were not part of the computation we're differentiating. Today
-// Buffer<ReverseDouble> uses the AoS fallback (get(i) returns p[idx], a
-// plain memory read), so the invariant holds. If a future Buffer
-// specialization for ReverseDouble lazily materializes nodes on access,
-// snapshot the ids into a local std::vector<int> before the reverse-sweep
-// loops below.
+// Buffer<ReverseDouble> stores std::vector<ReverseDouble> and get(i) returns a
+// reference to the stored handle (a plain read), so the invariant holds. If a
+// future Buffer specialization lazily materializes nodes on access, snapshot
+// the ids into a local std::vector<int> before the reverse-sweep loops below.
 template<typename Of, typename Wrt> inline auto deriv(const Of& of, const Wrt& w_inp) {
   using DecayedOf = Decayed<Of>;
   using DecayedWrt = Decayed<Wrt>;
