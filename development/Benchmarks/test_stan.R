@@ -80,11 +80,11 @@ f_for <- function(A, B) {
   }
   return(matrix(res, nrow(A), ncol(A)))
 }
-ff_cpp <- ast2ast::translate(f_for, fr_args, derivative = "forward", verbose = TRUE)
+ff_cpp <- ast2ast::translate(f_for, fr_args, derivative = "forward", verbose = FALSE)
 
 # Benchmark
 # ------------------------------------------------------------------------------
-check <- function(r_a, c_a, r_b, c_b) {
+check <- function(r_a, c_a, r_b, c_b, check_forward = TRUE) {
   max_finite_diff <- function(x, y) {
     finite <- is.finite(x) & is.finite(y)
     if (!any(finite)) return(0)
@@ -107,33 +107,40 @@ check <- function(r_a, c_a, r_b, c_b) {
   ref <- f_plain(A, B)
   d <- max_finite_diff(ref, fp_cpp(A, B))
   cat("Results of %*% are identical: ", d < TOL, "\n")
+
   rb <- microbenchmark::microbenchmark(f_plain(A, B), fp_cpp(A, B))
   print(rb)
   cat("=========================================================\n")
 
   ref <- fr_cpp(A, B)
-  d_stan <- max_finite_diff(ref, f_rev_stan(A, B))
-  d_stanmul <- max_finite_diff(ref, f_rev_stan_mul(A, B))
-  d_fwd <- max_finite_diff(ref, ff_cpp(A, B))
-  d_rev2 <- max_finite_diff(ref, fr_cpp2(A, B))
-  ok <- max(d_stan, d_stanmul, d_fwd, d_rev2) < TOL
+  checks <- c()
+  checks <- c(checks, max_finite_diff(ref, f_rev_stan_mul(A, B)))
+  if (check_forward) {
+    checks <- c(checks, max_finite_diff(ref, f_rev_stan(A, B)))
+    checks <- c(checks, max_finite_diff(ref, ff_cpp(A, B)))
+  }
+  checks <- c(checks, max_finite_diff(ref, fr_cpp2(A, B)))
+  ok <- max(checks) < TOL
   cat("Results of AD are identical: ", ok, "\n")
 
   res <- microbenchmark::microbenchmark(
     fr_cpp(A, B),
     f_rev_stan_mul(A, B),
-    times = 10L
+    times = 50L
   )
   print(res)
   cat("=========================================================\n")
-
-  cat("\n\n\n")
+  cat("\n\n")
   res
 }
 
-res <- check(2, 3, 3, 2)
-res <- check(5, 5, 5, 5)
-res <- check(25, 25, 25, 25)
-
-res <- check(150, 150, 150, 150)
-res <- check(180, 180, 180, 180)
+# res <- check(2, 3, 3, 2)
+# res <- check(5, 5, 5, 5)
+# res <- check(25, 25, 25, 25)
+#
+# res <- check(150, 150, 150, 150)
+res <- check(180, 180, 180, 180, FALSE)
+res <- check(250, 250, 250, 250, FALSE)
+res <- check(500, 500, 500, 500, FALSE)
+res <- check(750, 750, 750, 750, FALSE)
+res <- check(1000, 1000, 1000, 1000, FALSE)
