@@ -195,4 +195,20 @@ void test_simplified_subsetting() {
     expect_double_at(a_borrow, 4, 9.0);
   }
 
+  // Borrow-backed Dual array via at() -> DualRef (SimplifyingSubsetting.hpp 88-89).
+  // The Borrow<Double> path (line 75) is already exercised above via a_borrow;
+  // nothing else subsets a *borrowed Dual* array.
+  {
+    std::vector<double> val{1.0, 2.0, 3.0};
+    std::vector<double> dot{10.0, 20.0, 30.0};
+    std::vector<std::size_t> dim{3};
+    Array<Dual, Borrow<Dual>> a(val.data(), dot.data(), val.size(), dim);
+    Dual d1 = at(a, Integer(1));
+    Dual d3 = at(a, Integer(3));
+    ass<"borrow Dual at() value [1]">(compare(d1.val, 1.0));
+    ass<"borrow Dual at() dot [1]">(compare(d1.dot, 10.0));
+    ass<"borrow Dual at() value [3]">(compare(d3.val, 3.0));
+    ass<"borrow Dual at() dot [3]">(compare(d3.dot, 30.0));
+  }
+
 }

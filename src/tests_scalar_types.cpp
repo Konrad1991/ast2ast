@@ -79,6 +79,98 @@ template<typename L, typename R> void compare(const L& l, const R& r) {
   }
 }
 
+// Reverse-mode AD: for each unary op build y = f(x) from an independent
+// variable, run the backward pass, and check the adjoint equals the analytic
+// derivative f'(x). Exercises push_unary (forward) and reverse() (backward)
+// for every op, plus pow and a chain-rule composition.
+void test_reverse_ad_math() {
+  auto eq = [](double l, double r) { return std::abs(l - r) < 1E-9; };
+
+  auto grad = [](auto f, double x0) {
+    TAPE_INTERN.clear();
+    ReverseDouble x = ReverseDouble::Var(x0);
+    ReverseDouble y = f(x);
+    TAPE_INTERN.reverse(y.id);
+    return x.get_grad_from_tape();
+  };
+  auto value = [](auto f, double x0) {
+    TAPE_INTERN.clear();
+    ReverseDouble x = ReverseDouble::Var(x0);
+    return f(x).get_val_from_tape();
+  };
+
+  const double x = 0.7;  // in-domain for asin/acos/sqrt/log
+
+  ass<"d(-x)/dx = -1">(eq(grad([](ReverseDouble a){ return -a; }, x), -1.0));
+
+  ass<"d sin = cos">(eq(grad([](ReverseDouble a){ return a.sin(); }, x), std::cos(x)));
+  ass<"d cos = -sin">(eq(grad([](ReverseDouble a){ return a.cos(); }, x), -std::sin(x)));
+  ass<"d tan = sec^2">(eq(grad([](ReverseDouble a){ return a.tan(); }, x), 1.0/(std::cos(x)*std::cos(x))));
+
+  ass<"d asin">(eq(grad([](ReverseDouble a){ return a.asin(); }, x), 1.0/std::sqrt(1.0-x*x)));
+  ass<"d acos">(eq(grad([](ReverseDouble a){ return a.acos(); }, x), -1.0/std::sqrt(1.0-x*x)));
+  ass<"d atan">(eq(grad([](ReverseDouble a){ return a.atan(); }, x), 1.0/(1.0+x*x)));
+
+  ass<"d sinh = cosh">(eq(grad([](ReverseDouble a){ return a.sinh(); }, x), std::cosh(x)));
+  ass<"d cosh = sinh">(eq(grad([](ReverseDouble a){ return a.cosh(); }, x), std::sinh(x)));
+  ass<"d tanh">(eq(grad([](ReverseDouble a){ return a.tanh(); }, x), 1.0 - std::tanh(x)*std::tanh(x)));
+
+  ass<"d exp = exp">(eq(grad([](ReverseDouble a){ return a.exp(); }, x), std::exp(x)));
+  ass<"d log = 1/x">(eq(grad([](ReverseDouble a){ return a.log(); }, x), 1.0/x));
+  ass<"d log10">(eq(grad([](ReverseDouble a){ return a.log10(); }, x), 1.0/(x*std::log(10.0))));
+  ass<"d sqrt">(eq(grad([](ReverseDouble a){ return a.sqrt(); }, x), 0.5/std::sqrt(x)));
+
+  ass<"sin value">(eq(value([](ReverseDouble a){ return a.sin(); }, x), std::sin(x)));
+  ass<"exp value">(eq(value([](ReverseDouble a){ return a.exp(); }, x), std::exp(x)));
+
+  // pow with both base and exponent as variables: 2^3 = 8
+  {
+    TAPE_INTERN.clear();
+    ReverseDouble base = ReverseDouble::Var(2.0);
+    ReverseDouble ex   = ReverseDouble::Var(3.0);
+    ReverseDouble y    = base.pow(ex);
+    ass<"pow value">(eq(y.get_val_from_tape(), 8.0));
+    TAPE_INTERN.reverse(y.id);
+    ass<"d pow/d base = k*x^(k-1)">(eq(base.get_grad_from_tape(), 3.0 * std::pow(2.0, 2.0)));
+    ass<"d pow/d exp  = x^k*ln x">(eq(ex.get_grad_from_tape(),   std::pow(2.0, 3.0) * std::log(2.0)));
+  }
+
+  // chain rule through a composition: f = exp(x) * sin(x), f' = e^x(sin x + cos x)
+  {
+    TAPE_INTERN.clear();
+    ReverseDouble x2 = ReverseDouble::Var(0.5);
+    ReverseDouble y  = x2.exp() * x2.sin();
+    ass<"composition value">(eq(y.get_val_from_tape(), std::exp(0.5) * std::sin(0.5)));
+    TAPE_INTERN.reverse(y.id);
+    ass<"chain rule grad">(eq(x2.get_grad_from_tape(),
+                             std::exp(0.5) * (std::sin(0.5) + std::cos(0.5))));
+  }
+
+  // reverse-mode subtraction: d(a-b)/da = 1, d(a-b)/db = -1
+  {
+    TAPE_INTERN.clear();
+    ReverseDouble a = ReverseDouble::Var(3.0);
+    ReverseDouble b = ReverseDouble::Var(4.0);
+    ReverseDouble s = a - b;
+    ass<"a-b value">(eq(s.get_val_from_tape(), -1.0));
+    TAPE_INTERN.reverse(s.id);
+    ass<"d(a-b)/da = 1">(eq(a.get_grad_from_tape(), 1.0));
+    ass<"d(a-b)/db = -1">(eq(b.get_grad_from_tape(), -1.0));
+  }
+
+  // reverse-mode division: d(a/b)/da = 1/b, d(a/b)/db = -a/b^2
+  {
+    TAPE_INTERN.clear();
+    ReverseDouble a = ReverseDouble::Var(3.0);
+    ReverseDouble b = ReverseDouble::Var(4.0);
+    ReverseDouble q = a / b;
+    ass<"a/b value">(eq(q.get_val_from_tape(), 0.75));
+    TAPE_INTERN.reverse(q.id);
+    ass<"d(a/b)/da = 1/b">(eq(a.get_grad_from_tape(), 1.0 / 4.0));
+    ass<"d(a/b)/db = -a/b^2">(eq(b.get_grad_from_tape(), -3.0 / 16.0));
+  }
+}
+
 // [[Rcpp::export]]
 void test_scalars() {
   TAPE_INTERN.clear();
@@ -779,6 +871,8 @@ void test_scalars() {
   compare(dr_owned2 * revdr_owned2, create_reverse_double(NaN, true));
   compare(revdr_owned1 * revdr_owned2, create_reverse_double(NaN, true));
   compare(revdr_owned2 * revdr_owned2, create_reverse_double(NaN, true));
+
+  test_reverse_ad_math();
 }
 
 // Assign source `s` (numeric value v, derivative dot, NA flag na) to every

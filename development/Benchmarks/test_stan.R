@@ -3,7 +3,7 @@ SH <- system.file(ifelse(.Platform$OS.type == "windows", "libs", "lib"), .Platfo
                   package = "StanHeaders", mustWork = TRUE)
 Sys.setenv(PKG_LIBS = paste0(StanHeaders:::LdFlags(as_character = TRUE),
                              " -L", shQuote(SH), " -lStanHeaders"))
-Rcpp::sourceCpp("development/stan_ad.cpp")
+Rcpp::sourceCpp("/home/konrad/Documents/ast2ast/development/Benchmarks/stan_ad.cpp")
 
 # Plain function
 # ------------------------------------------------------------------------------
@@ -19,7 +19,7 @@ fp_args <- function(A, B) {
   A |> type(mat(double)) |> ref()
   B |> type(mat(double)) |> ref()
 }
-fp_cpp <- ast2ast::translate(f_plain, fp_args, verbose = TRUE)
+fp_cpp <- ast2ast::translate(f_plain, fp_args, verbose = FALSE)
 
 # Reverse AD
 # ------------------------------------------------------------------------------
@@ -36,7 +36,7 @@ fr_args <- function(A, B) {
   A |> type(mat(double))
   B |> type(mat(double))
 }
-fr_cpp <- ast2ast::translate(f_rev, fr_args, derivative = "reverse", verbose = TRUE)
+fr_cpp <- ast2ast::translate(f_rev, fr_args, derivative = "reverse", verbose = FALSE)
 
 f_rev <- function(A, B) {
   f <- fn(
@@ -62,7 +62,7 @@ fr_args <- function(A, B) {
   A |> type(mat(double))
   B |> type(mat(double))
 }
-fr_cpp2 <- ast2ast::translate(f_rev, fr_args, derivative = "reverse", verbose = TRUE)
+fr_cpp2 <- ast2ast::translate(f_rev, fr_args, derivative = "reverse", verbose = FALSE)
 
 # Forward AD
 # ------------------------------------------------------------------------------
@@ -94,16 +94,17 @@ check <- function(r_a, c_a, r_b, c_b) {
   A <- matrix(rnorm(r_a * c_a), r_a, c_a)
   B <- matrix(rnorm(r_b * c_b), r_b, c_b)
 
-  A[[1L]] <- NA
-  A[[2L]] <- NaN
-  A[[3L]] <- -Inf
-  A[[4L]] <- Inf
-  A[[5L]] <- 1e308
+  # A[[1L]] <- NA
+  # A[[2L]] <- NaN
+  # A[[3L]] <- -Inf
+  # A[[4L]] <- Inf
+  # A[[5L]] <- 1e308
 
   TOL <- 1e-6
 
-  ref <- f_plain(A, B)
+  cat("Dim(A): ", dim(A), " Dim(B): ", dim(B), "\n")
 
+  ref <- f_plain(A, B)
   d <- max_finite_diff(ref, fp_cpp(A, B))
   cat("Results of %*% are identical: ", d < TOL, "\n")
   rb <- microbenchmark::microbenchmark(f_plain(A, B), fp_cpp(A, B))
@@ -125,6 +126,8 @@ check <- function(r_a, c_a, r_b, c_b) {
   )
   print(res)
   cat("=========================================================\n")
+
+  cat("\n\n\n")
   res
 }
 

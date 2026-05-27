@@ -18,6 +18,11 @@ Meta
 .DS_Store
 .quarto
 /.cache/
+/development/Coverage/lib/
+/development/Coverage/coverage_missing.txt
+/development/Coverage/coverage_report.html
+/development/Coverage/coverage_summary.txt
+/development/Coverage/coverage_zero.txt
 /ast2ast.Rcheck/
 ast2ast_0.5.tar.gz
 a.out

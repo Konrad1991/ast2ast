@@ -2290,5 +2290,36 @@ void test_calculation() {
       
   std::vector<double> expected529{0.01, 1.21, 4.41, 9.61, 16.81, 26.01, 37.21, 50.41, 65.61, 82.81, 102.01, 123.21, 146.41, 171.61, 198.81, 228.01, 259.21, 292.41, 327.61, 364.81, 404.01, 445.21, 488.41, 533.61, 580.81, 630.01, 681.21, 734.41, 789.61, 846.81, 906.01, 967.21, 1030.41, 1095.61, 1162.81, 1232.01, 1303.21, 1376.41, 1451.61, 1528.81, 1608.01, 1689.21, 1772.41, 1857.61, 1944.81, 2034.01, 2125.21, 2218.41, 2313.61, 2410.81, 2510.01, 2611.21, 2714.41, 2819.61, 2926.81, 3036.01, 3147.21, 3260.41, 3375.61, 3492.81};
   ass<"create_r_array() * create_r_array()">(compare_result(create_r_array() * create_r_array(), expected529));
-      
+
+  // size() of an array (+) array expression: both operands non-scalar, so the
+  // BinaryOperation reports the (max) element count. Array::size() uses the dim
+  // vector and never routes here, so query the storage directly.
+  {
+    std::vector<double> oa{1.0, 2.0, 3.0};
+    std::vector<double> ob{4.0, 5.0, 6.0};
+    std::vector<std::size_t> d{3};
+    Array<Double, Borrow<Double, BorrowTrait>> a(oa.data(), oa.size(), d);
+    Array<Double, Borrow<Double, BorrowTrait>> b(ob.data(), ob.size(), d);
+    auto e = a + b;
+    ass<"array+array expression size">(e.d.size() == 3);
+  }
+
+  // Non-conformable arrays must raise the dimension-mismatch guard in match_dims
+  // (same number of dims, differing extent): 1-D length 3 vs length 4.
+  {
+    std::vector<double> oa{1.0, 2.0, 3.0};
+    std::vector<double> ob{4.0, 5.0, 6.0, 7.0};
+    std::vector<std::size_t> da{3};
+    std::vector<std::size_t> db{4};
+    Array<Double, Borrow<Double, BorrowTrait>> a(oa.data(), oa.size(), da);
+    Array<Double, Borrow<Double, BorrowTrait>> b(ob.data(), ob.size(), db);
+    bool threw = false;
+    try {
+      auto e = a + b;
+      (void)e.d.size();
+    } catch (const std::exception& ex) {
+      threw = (std::strcmp(ex.what(), "encountered non-conformable arrays") == 0);
+    }
+    ass<"non-conformable arrays throw">(threw);
+  }
 }
