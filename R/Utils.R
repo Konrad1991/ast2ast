@@ -193,6 +193,13 @@ compile <- function(fct_code, r_fct,
   fct <- fct_code
   fct_ret <- NULL
 
+  # link R's BLAS/LAPACK so dgemm_ resolves on all platforms (Windows is strict)
+  old_libs <- Sys.getenv("PKG_LIBS", unset = NA)
+  Sys.setenv(PKG_LIBS = "$(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)")
+  on.exit({
+    if (is.na(old_libs)) Sys.unsetenv("PKG_LIBS") else Sys.setenv(PKG_LIBS = old_libs)
+  }, add = TRUE)
+
   if (!r_fct) {
     tryCatch(
       expr = {
