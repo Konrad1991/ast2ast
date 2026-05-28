@@ -5,3 +5,7 @@
    Maybe it is possible to extract also the NA state from SEXP objects, which could be used to
    initialize bool* p_na.
    * In case no bool* p_na is passed. I could allocate it on the heap and manage lifetime.
+
+- remove the duplicated visit of variable_node in traverse_ast
+
+- in action_transpile_inner_functions check why the loop (marked with a TODO) is required

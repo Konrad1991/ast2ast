@@ -438,7 +438,7 @@ struct ReverseTape {
   }
 };
 
-// MinGW: namespace-scope `inline thread_local` collides across TUs
+// MinGW: namespace-scope `inline thread_local` collides across Translation units
 // (TLS init wrapper not weak). Hide in inline fn; macro keeps `.` syntax.
 inline ReverseTape& TAPE_INTERN_ref() {
   thread_local ReverseTape instance;
