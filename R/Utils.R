@@ -193,6 +193,19 @@ compile <- function(fct_code, r_fct,
   fct <- fct_code
   fct_ret <- NULL
 
+  # Windows needs Rtools; fail with a clear message before sourceCpp's noise
+  if (.Platform$OS.type == "windows" &&
+      requireNamespace("pkgbuild", quietly = TRUE) &&
+      !pkgbuild::has_build_tools(debug = FALSE)) {
+    stop(
+      "ast2ast needs a C++ toolchain to compile the generated code.\n",
+      "Install Rtools (matching your R version) from\n",
+      "  https://cran.r-project.org/bin/windows/Rtools/\n",
+      "and restart R.",
+      call. = FALSE
+    )
+  }
+
   # link R's BLAS/LAPACK so dgemm_ resolves on all platforms (Windows is strict)
   old_libs <- Sys.getenv("PKG_LIBS", unset = NA)
   Sys.setenv(PKG_LIBS = "$(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)")

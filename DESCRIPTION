@@ -17,6 +17,7 @@ License: GPL-3
 Imports: Rcpp (>= 1.0.4), R6, methods
 LinkingTo: Rcpp
 Depends:  R (>= 4.1.0)
+SystemRequirements: GNU make, C++20, Rtools (>= 4.5) on Windows
 NeedsCompilation: yes
 VignetteBuilder: knitr
 Suggests:
@@ -26,6 +27,6 @@ Suggests:
   tinytest,
   microbenchmark,
   ggplot2,
-  RcppXPtrUtils
+  RcppXPtrUtils,
+  pkgbuild
 Encoding: UTF-8
-RoxygenNote: 7.2.1
