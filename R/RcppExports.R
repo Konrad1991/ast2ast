@@ -73,11 +73,19 @@ test_assign_array_to_scalar <- function() {
     invisible(.Call(`_ast2ast_test_assign_array_to_scalar`))
 }
 
+test_diag <- function() {
+    invisible(.Call(`_ast2ast_test_diag`))
+}
+
 test_scalars <- function() {
     invisible(.Call(`_ast2ast_test_scalars`))
 }
 
 test_scalar_assignment <- function() {
     invisible(.Call(`_ast2ast_test_scalar_assignment`))
+}
+
+test_transpose <- function() {
+    invisible(.Call(`_ast2ast_test_transpose`))
 }
 

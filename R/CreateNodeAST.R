@@ -95,6 +95,7 @@ create_ast <- function(code, context, r_fct, function_registry) {
     bn$left_node <- code[[2]] |> process(operator, r_fct, function_registry)
     bn$context <- context
     bn$is_infix <- operator %in% infix_ops
+    bn$real_type <- 
     return(bn)
   } else if (length(code) == 2) {
     un <- unary_node$new()
@@ -255,7 +256,7 @@ translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry) {
   code_string <- NULL
   traverse_ast(ast, action_transpile_inner_functions, real_type)
   traverse_ast(ast, action_set_true, r_fct, real_type)
-  traverse_ast(ast, action_translate, function_registry)
+  traverse_ast(ast, action_translate, function_registry, real_type)
   # Stringify ast
   e <- try({code_string <- ast$stringify("  ")}, silent = TRUE)
   if (inherits(e, "error")) {

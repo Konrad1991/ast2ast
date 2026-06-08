@@ -303,7 +303,7 @@ template <typename T> inline auto numeric(const T &inp) {
 template <typename T> inline auto numeric_dual(const T &inp) {
   return createRVec<Dual>(inp);
 }
-template <typename T> inline auto numeric_rev_ad(const T &inp) {
+template <typename T> inline auto numeric_reverse_double(const T &inp) {
   return createRVec<ReverseDouble>(inp);
 }
 

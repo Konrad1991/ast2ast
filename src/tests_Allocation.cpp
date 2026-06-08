@@ -139,7 +139,7 @@ void tests_allocation() {
     Array<Integer, Buffer<Integer>> i = integer(Integer(size));
     Array<Double, Buffer<Double>> d = numeric(Integer(size));
     Array<Dual, Buffer<Dual>> dua = numeric_dual(Integer(size));
-    Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_rev_ad(Integer(size));
+    Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_reverse_double(Integer(size));
     ass<"vector size logical vec">(l.size() == 3);
     ass<"vector size integer vec">(i.size() == 3);
     ass<"vector size double vec">(d.size() == 3);
@@ -175,7 +175,7 @@ void tests_allocation() {
       Array<Integer, Buffer<Integer>> i = integer(size);
       Array<Double, Buffer<Double>> d = numeric(size);
       Array<Dual, Buffer<Dual>> dua = numeric_dual(size);
-      Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_rev_ad(size);
+      Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_reverse_double(size);
       ass<"vector size logical vec">(l.size() == 3);
       ass<"vector size integer vec">(i.size() == 3);
       ass<"vector size double vec">(d.size() == 3);
@@ -189,7 +189,7 @@ void tests_allocation() {
         Array<Integer, Buffer<Integer>> i = integer(size);
         Array<Double, Buffer<Double>> d = numeric(size);
         Array<Dual, Buffer<Dual>> dua = numeric_dual(size);
-        Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_rev_ad(size);
+        Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_reverse_double(size);
         ass<"vector size logical vec">(l.size() == 3);
         ass<"vector size integer vec">(i.size() == 3);
         ass<"vector size double vec">(d.size() == 3);
@@ -204,7 +204,7 @@ void tests_allocation() {
         Array<Integer, Buffer<Integer>> i = integer(size);
         Array<Double, Buffer<Double>> d = numeric(size);
         Array<Dual, Buffer<Dual>> dua = numeric_dual(size);
-        Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_rev_ad(size);
+        Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_reverse_double(size);
         ass<"vector size logical vec">(l.size() == 3);
         ass<"vector size integer vec">(i.size() == 3);
         ass<"vector size double vec">(d.size() == 3);
@@ -219,7 +219,7 @@ void tests_allocation() {
         Array<Integer, Buffer<Integer>> i = integer(size);
         Array<Double, Buffer<Double>> d = numeric(size);
         Array<Dual, Buffer<Dual>> dua = numeric_dual(size);
-        Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_rev_ad(size);
+        Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_reverse_double(size);
         ass<"vector size logical vec">(l.size() == 3);
         ass<"vector size integer vec">(i.size() == 3);
         ass<"vector size double vec">(d.size() == 3);
@@ -234,7 +234,7 @@ void tests_allocation() {
         Array<Integer, Buffer<Integer>> i = integer(size);
         Array<Double, Buffer<Double>> d = numeric(size);
         Array<Logical, Buffer<Logical>> dua = numeric_dual(size);
-        Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_rev_ad(size);
+        Array<ReverseDouble, Buffer<ReverseDouble>> rev_ad = numeric_reverse_double(size);
         ass<"vector size logical vec">(l.size() == 1);
         ass<"vector size integer vec">(i.size() == 1);
         ass<"vector size double vec">(d.size() == 1);

@@ -307,7 +307,6 @@ function_node <- R6::R6Class(
     context = NULL,
     internal_type = NULL,
     args = list(),
-    handle_vector = FALSE,
     initialize = function() {},
     create_r_subsetting_string = function(indent = "", obj_string, args_string) {
       if (self$operator == "[") {
@@ -317,13 +316,6 @@ function_node <- R6::R6Class(
       }
     },
     stringify = function(indent = "") {
-      if (self$handle_vector) {
-        s <- self$args[[1]]$stringify() |> remove_double_quotes()
-        s <- paste0("etr::", s)
-        self$operator <- s
-        self$args[[1]] <- NULL
-        self$args <- Filter(Negate(is.null), self$args)
-      }
       if (self$operator %in% c("[", "[[")) {
         args_string <- lapply(self$args[-1], function(arg) {
           return(arg$stringify())

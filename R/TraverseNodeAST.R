@@ -25,8 +25,6 @@ traverse_ast <- function(node, action, ...) {
   } else if (inherits(node, "block_node")) {
     action(node, ...)
     lapply(node$block, function(stmt) traverse_ast(stmt, action, ...))
-  } else if (inherits(node, "variable_node")) {
-    action(node, ...)
   } else if (inherits(node, "nullary_node")) {
     action(node, ...)
   } else if (inherits(node, "for_node")) {
@@ -512,11 +510,8 @@ action_set_true <- function(node, r_fct, real_type) {
     node$handle_return <- TRUE
     node$output_is_r_fct <- r_fct
   }
-  if (node$operator == "vector") {
-    node$handle_vector <- TRUE
-  }
 }
-action_translate <- function(node, function_registry) {
+action_translate <- function(node, function_registry, real_type) {
   if (!inherits(node, "binary_node") &&
     !inherits(node, "unary_node") &&
     !inherits(node, "nullary_node") &&
@@ -526,13 +521,40 @@ action_translate <- function(node, function_registry) {
   }
   if (inherits(node, "fn_node")) {
     for (i in seq_along(node$AST$block)) {
-      traverse_ast(node$AST$block[[i]], action_translate, node$function_registry)
+      traverse_ast(node$AST$block[[i]], action_translate, node$function_registry, real_type)
     }
   } else {
-    op <- function_registry$get_cpp_name(node$operator)
-    if (is.null(op)) {
-      node$error <- paste0("Unknown operator: ", node$operator)
+    if (inherits(node, "function_node") && node$operator == "vector") {
+      mode <- remove_double_quotes(node$args[[1L]]$name)
+      if (mode == "logical") {
+        node$operator <- "etr::logical"
+      } else if (mode == "integer") {
+        node$operator <- "etr::integer"
+      } else if (mode == "numeric") {
+        op <- list(
+          "etr::Double" = "etr::numeric",
+          "etr::Dual" = "etr::numeric_dual",
+          "etr::ReverseDouble" = "etr::numeric_reverse_double"
+        )[[real_type]]
+        node$operator <- op
+        node$args[[1]] <- NULL
+        node$args <- Filter(Negate(is.null), node$args)
+      }
     }
-    node$operator <- op
+    else if (inherits(node, "unary_node") && node$operator == "numeric") {
+      op <- list(
+        "etr::Double" = "etr::numeric",
+        "etr::Dual" = "etr::numeric_dual",
+        "etr::ReverseDouble" = "etr::numeric_reverse_double"
+      )[[real_type]]
+      node$operator <- op
+    }
+    else {
+      op <- function_registry$get_cpp_name(node$operator)
+      if (is.null(op)) {
+        node$error <- paste0("Unknown operator: ", node$operator)
+      }
+      node$operator <- op
+    }
   }
 }

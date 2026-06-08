@@ -1220,3 +1220,53 @@ function_registry_global$add(
   },
  group = "binary_node", cpp_name = "etr::deriv"
 )
+function_registry_global$add(
+  name = "t", num_args = 1, arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    infer(node$obj, vars_list, r_fct, function_registry)
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "double"
+    t$data_struct <- "matrix"
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_list, r_fct, real_type) {
+    type <- infer(node$obj, vars_list, r_fct, function_registry)
+    if (!inherits(type, "type_node")) {
+      return(sprintf("Found unsupported type in: %s", node$stringify()))
+    }
+  },
+ group = "unary_node", cpp_name = "etr::transpose"
+)
+function_registry_global$add(
+  name = "diag", num_args = c(1, 2), arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    all_types <- lapply(node$args, function(arg) {
+      infer(arg, vars_list, r_fct, function_registry)
+    })
+    for (i in seq_len(length(all_types))) {
+      if (!inherits(all_types[[i]], "type_node")) {
+        return(sprintf("Found unallowed type in: %s", node$stringify()))
+      }
+    }
+    ds <- "matrix"
+    if (length(all_types) == 1L &&
+        all_types[[1]]$data_struct %within% c("matrix", "mat", "borrow_matrix", "borrow_mat")) {
+      ds <- "vector"
+    }
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "double"
+    t$data_struct <- ds
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
+    for (i in seq_along(node$args)) {
+      if (is_charNANaNInf(node$args[[i]], vars_types_list)) {
+        node$error <- "You cannot use character/NA/NaN/Inf entries in diag"
+        return()
+      }
+    }
+  },
+ group = "function_node", cpp_name = "etr::diag"
+)
