@@ -102,3 +102,54 @@ for (i in 0L:4L) {
   }
 }
 expect_true(all(checks))
+
+# --- diag --------------------------------------------------------------------
+# ast2ast supports diag(x, nrow, ncol): an nrow x ncol matrix with x recycled
+# along the diagonal. Reference mirrors the C++ make_diag (column-major fill).
+diag_ref <- function(x, nrow, ncol) {
+  res <- numeric(nrow * ncol)
+  its <- min(nrow, ncol)
+  for (i in seq_len(its)) {
+    res[(i - 1) * nrow + i] <- x[((i - 1) %% length(x)) + 1]
+  }
+  matrix(res, nrow, ncol)
+}
+
+diag_args <- function(x, nr, nc) {
+  x |> type(vec(double))
+  nr |> type(integer)
+  nc |> type(integer)
+}
+
+diag_fct <- function(x, nr, nc) {
+  m <- diag(x, nr, nc)
+  return(m)
+}
+
+diag_cpp <- translate(diag_fct, diag_args, getsource = FALSE, verbose = FALSE)
+
+diag_cases <- list(
+  list(x = 2.0,           nr = 3L, nc = 3L), # scalar, square
+  list(x = c(1, 2, 3),    nr = 3L, nc = 3L), # exact length
+  list(x = c(1, 2),       nr = 3L, nc = 3L), # recycled
+  list(x = c(1, 2, 3, 4), nr = 2L, nc = 2L), # truncated
+  list(x = 5.0,           nr = 2L, nc = 3L), # nrow < ncol
+  list(x = 5.0,           nr = 3L, nc = 2L)  # nrow > ncol
+)
+diag_checks <- logical(length(diag_cases))
+for (i in seq_along(diag_cases)) {
+  ca <- diag_cases[[i]]
+  got <- diag_cpp(ca$x, ca$nr, ca$nc)
+  ref <- diag_ref(ca$x, ca$nr, ca$nc)
+  diag_checks[i] <- all(dim(got) == dim(ref)) && all(got == ref)
+}
+expect_true(all(diag_checks))
+
+# diag is templated on the real type during translation
+diag_src <- paste(translate(diag_fct, diag_args, getsource = TRUE), collapse = "\n")
+expect_true(grepl("etr::diag<etr::Double>", diag_src, fixed = TRUE))
+diag_src_rev <- paste(
+  translate(diag_fct, diag_args, getsource = TRUE, derivative = "reverse"),
+  collapse = "\n"
+)
+expect_true(grepl("etr::diag<etr::ReverseDouble>", diag_src_rev, fixed = TRUE))

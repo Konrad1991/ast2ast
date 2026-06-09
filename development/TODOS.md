@@ -13,6 +13,8 @@
     For example numeric can become numeric_dual. Next, the stringify method is called of the inner
     function node.
 
+- if scalars are passed to the function by reference they are not declared
+
 ## Safety
 - check that it is really not possible to Borrow in case realtype is Dual or ReverseDouble
 

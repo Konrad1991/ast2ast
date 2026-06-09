@@ -20,154 +20,102 @@ void test_diag() {
     }
   };
 
-  // Scalar
-  {
-    Array<Double, Buffer<Double>> a;
-    std::vector<double> expected = {1.0, 0.0, 0.0, 1.0};
-    a = diag(Integer(2));
-    check_dim(a, {2, 2});
-    double* p = a.d.data();
-    compare(p, expected);
-  }
-  // Vector of length 1
-  {
-    Array<Double, Buffer<Double>> a;
-    std::vector<double> expected = {1.0, 0.0, 0.0, 1.0};
-    a = diag(c(Integer(2)));
-    check_dim(a, {2, 2});
-    double* p = a.d.data();
-    compare(p, expected);
-  }
-  // Vector length > 1
-  {
-    Array<Double, Buffer<Double>> a;
-    std::vector<double> expected = {2.0, 0.0, 0.0, 3.0};
-    a = diag(c(Integer(2), Integer(3)));
-    check_dim(a, {2, 2});
-    double* p = a.d.data();
-    compare(p, expected);
-  }
-  // two scalars
+  // scalar x, square
   {
     Array<Double, Buffer<Double>> a;
     const double pi = 3.1415;
     std::vector<double> expected = {
       pi, 0.0, 0.0,
-      0.0 , pi, 0.0,
-      0.0 , 0.0, pi
+      0.0, pi, 0.0,
+      0.0, 0.0, pi
     };
-    a = diag(Double(pi), Integer(3));
+    a = diag<Double>(Double(pi), Integer(3), Integer(3));
     check_dim(a, {3, 3});
     double* p = a.d.data();
     compare(p, expected);
   }
-  // array & scalar
+  // scalar x, nrow < ncol -> diagonal of length nrow
   {
     Array<Double, Buffer<Double>> a;
-    Array<Double, Buffer<Double>> r = colon(Double(1.0), Double(12.0));
-    const std::size_t ncol = 15;
-    std::vector<double> expected(225);
-    std::vector<double> diagonal = {
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3
-    };
-    std::size_t counter = 0;
-    for (std::size_t c = 0; c < ncol; c++) {
-      for (std::size_t r = 0; r < ncol; r++) {
-        if (c == r) {
-          expected[c * ncol + r] = diagonal[counter];
-          counter++;
-        }
-      }
-    }
-    a = diag(r, Integer(15));
-    check_dim(a, {15, 15});
+    // column-major 2x3, diag entries at (0,0) and (1,1)
+    std::vector<double> expected = {2.0, 0.0, 0.0, 2.0, 0.0, 0.0};
+    a = diag<Double>(Double(2.0), Integer(2), Integer(3));
+    check_dim(a, {2, 3});
     double* p = a.d.data();
     compare(p, expected);
   }
-  // scalar & array
+  // scalar x, nrow > ncol -> diagonal of length ncol
   {
     Array<Double, Buffer<Double>> a;
-    const double pi = 3.1415;
+    // column-major 3x2, diag entries at (0,0) and (1,1)
+    std::vector<double> expected = {5.0, 0.0, 0.0, 0.0, 5.0, 0.0};
+    a = diag<Double>(Double(5.0), Integer(3), Integer(2));
+    check_dim(a, {3, 2});
+    double* p = a.d.data();
+    compare(p, expected);
+  }
+  // array x, length matches diagonal
+  {
+    Array<Double, Buffer<Double>> a;
     std::vector<double> expected = {
-      pi, 0.0, 0.0, 0.0,
-      0.0 , pi, 0.0, 0.0,
-      0.0 , 0.0, pi, 0.0,
-      0.0 , 0.0, 0.0, pi
+      1.0, 0.0, 0.0,
+      0.0, 2.0, 0.0,
+      0.0, 0.0, 3.0
     };
-    a = diag(Double(pi), c(Integer(4)));
+    a = diag<Double>(c(Double(1.0), Double(2.0), Double(3.0)), Integer(3), Integer(3));
+    check_dim(a, {3, 3});
+    double* p = a.d.data();
+    compare(p, expected);
+  }
+  // array x shorter than diagonal -> recycled
+  {
+    Array<Double, Buffer<Double>> a;
+    // x = {1, 2}; diagonal = x[0], x[1], x[0]
+    std::vector<double> expected = {
+      1.0, 0.0, 0.0,
+      0.0, 2.0, 0.0,
+      0.0, 0.0, 1.0
+    };
+    a = diag<Double>(c(Double(1.0), Double(2.0)), Integer(3), Integer(3));
+    check_dim(a, {3, 3});
+    double* p = a.d.data();
+    compare(p, expected);
+  }
+  // array x longer than diagonal -> truncated
+  {
+    Array<Double, Buffer<Double>> a;
+    // x = {1, 2, 3, 4}; diagonal = x[0], x[1]
+    std::vector<double> expected = {1.0, 0.0, 0.0, 2.0};
+    a = diag<Double>(c(Double(1.0), Double(2.0), Double(3.0), Double(4.0)), Integer(2), Integer(2));
+    check_dim(a, {2, 2});
+    double* p = a.d.data();
+    compare(p, expected);
+  }
+  // nrow / ncol given as length-1 vectors
+  {
+    Array<Double, Buffer<Double>> a;
+    std::vector<double> expected = {
+      7.0, 0.0, 0.0, 0.0,
+      0.0, 7.0, 0.0, 0.0,
+      0.0, 0.0, 7.0, 0.0,
+      0.0, 0.0, 0.0, 7.0
+    };
+    a = diag<Double>(Double(7.0), c(Integer(4)), c(Integer(4)));
     check_dim(a, {4, 4});
     double* p = a.d.data();
     compare(p, expected);
-
-    // array size > 1
+  }
+  // NA dimension -> throw
+  {
     bool catched = false;
     try {
-      a = diag(Double(pi), c(Integer(2), Integer(4)));
+      Array<Double, Buffer<Double>> a = diag<Double>(Double(1.0), Integer::NA(), Integer(3));
     }
     catch (const std::exception& e) {
       catched = true;
-      const std::string expected_message = "found invalid dimension argument to diag. Expected a vector with length 1L";
-      ass<"allocating diag with array size > 1">(std::strcmp(e.what(), expected_message.c_str()) == 0);
+      const std::string expected_message = "Found NA value in diag";
+      ass<"diag NA message">(std::strcmp(e.what(), expected_message.c_str()) == 0);
     }
     ass<"Did not throw">(catched);
-  }
-  // array & array
-  {
-    Array<Double, Buffer<Double>> a;
-    const double pi = 3.1415;
-    std::vector<double> expected = {
-      pi, 0.0, 0.0, 0.0,
-      0.0 , pi, 0.0, 0.0,
-      0.0 , 0.0, pi, 0.0,
-      0.0 , 0.0, 0.0, pi
-    };
-    a = diag(rep(Double(pi), Integer(4)), c(Integer(4)));
-    check_dim(a, {4, 4});
-    double* p = a.d.data();
-    compare(p, expected);
-
-    // array size > 1
-    bool catched = false;
-    try {
-      a = diag(c(Double(pi)), c(Integer(2), Integer(4)));
-    }
-    catch (const std::exception& e) {
-      catched = true;
-      const std::string expected_message = "found invalid dimension argument to diag. Expected a vector with length 1L";
-      ass<"allocating diag with array size > 1">(std::strcmp(e.what(), expected_message.c_str()) == 0);
-    }
-    ass<"Did not throw">(catched);
-  }
-  // matrix -> extract diagonal (square)
-  {
-    Array<Double, Buffer<Double>> a;
-    // column-major 3x3: [1 4 7 / 2 5 8 / 3 6 9], diagonal = 1, 5, 9
-    Array<Double, Buffer<Double>> m = matrix(colon(Double(1.0), Double(9.0)), Integer(3), Integer(3));
-    std::vector<double> expected = {1.0, 5.0, 9.0};
-    a = diag(m);
-    check_dim(a, {3});
-    double* p = a.d.data();
-    compare(p, expected);
-  }
-  // matrix -> extract diagonal (non-square, length = min(nrow, ncol))
-  {
-    Array<Double, Buffer<Double>> a;
-    // column-major 2x3: [1 3 5 / 2 4 6], diagonal = 1, 4
-    Array<Double, Buffer<Double>> m = matrix(colon(Double(1.0), Double(6.0)), Integer(2), Integer(3));
-    std::vector<double> expected = {1.0, 4.0};
-    a = diag(m);
-    check_dim(a, {2});
-    double* p = a.d.data();
-    compare(p, expected);
-  }
-  // matrix -> extract diagonal (1x1: a matrix, so extract -> length-1 vector, not identity)
-  {
-    Array<Double, Buffer<Double>> a;
-    Array<Double, Buffer<Double>> m = matrix(Double(3.1415), Integer(1), Integer(1));
-    std::vector<double> expected = {3.1415};
-    a = diag(m);
-    check_dim(a, {1});
-    double* p = a.d.data();
-    compare(p, expected);
   }
 }

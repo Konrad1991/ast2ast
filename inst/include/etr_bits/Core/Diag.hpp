@@ -4,83 +4,80 @@
 namespace etr {
 
 // calc dimension for diag.
-template<typename A> requires(IsScalarLike<Decayed<A>>) inline auto calc_ncol(const A& obj) {
-  if constexpr (IS<Decayed<A>, Integer>)  {
-    ass<"Found NA value in diag">(!obj.isNA());
-    return static_cast<std::size_t>(get_val(obj));
-  }
-  else {
-    ass<"Found NA value in diag">(!obj.isNA());
-    Integer i = obj;
+template<typename A> inline auto calc_ncol_or_nrow(const A& obj) {
+  if constexpr (IsArray<Decayed<A>>) {
+    Integer i = obj.get(0);
+    ass<"Found NA value in diag">(!i.isNA());
     return static_cast<std::size_t>(get_val(i));
+  } else {
+    if constexpr (IS<Decayed<A>, Integer>)  {
+      ass<"Found NA value in diag">(!obj.isNA());
+      return static_cast<std::size_t>(get_val(obj));
+    }
+    else {
+      ass<"Found NA value in diag">(!obj.isNA());
+      Integer i = obj;
+      return static_cast<std::size_t>(get_val(i));
+    }
   }
 }
 
 // ncol x ncol matrix, diagonal entry i set to value_at(i)
-template<typename F> inline auto make_diag(std::size_t ncol, F value_at) {
-  Array<Double, Buffer<Double, RBufferTrait>> res(SI{ncol * ncol});
-  res.dim = std::vector<std::size_t>{ncol, ncol};
-  for (std::size_t i = 0; i < ncol; i++) {
-    res.set(i * ncol + i, value_at(i));
-  }
-  return res;
-}
-
-// scalar -> dimension, diagonal filled with 1.0 (R: diag(5) -> 5x5 identity)
-template<typename A> requires(IsScalarLike<Decayed<A>>) inline auto diag(const A& scalar) {
-  const std::size_t ncol = calc_ncol(scalar);
-  return make_diag(ncol, [](std::size_t) { return Double(1.0); });
-}
-
-// single array. matrix -> extract diagonal (R: diag(M)); vector length 1 ->
-// dimension/identity (R footgun); vector length > 1 -> values on diagonal
-template<typename A> requires(IsArray<Decayed<A>>) inline auto diag(const A& arr) {
-  const auto& dim = dim_view(arr.get_dim());
-  if (dim.size() == 2) { // matrix: diagonal as a vector, column-major
-    const std::size_t nr = dim[0];
-    const std::size_t len = std::min(nr, dim[1]);
-    Array<Double, Buffer<Double, RBufferTrait>> res(SI{len});
-    res.dim = std::vector<std::size_t>{len};
-    for (std::size_t i = 0; i < len; i++) {
-      res.set(i, arr.get(i + i * nr));
+template<typename Type, typename F> inline auto make_diag(std::size_t nrow, std::size_t ncol, F value_at) {
+  if constexpr (!IS<Type, ReverseDouble>) {
+    Array<Type, Buffer<Type, RBufferTrait>> res(SI{nrow * ncol});
+    res.dim = std::vector<std::size_t>{nrow, ncol};
+    std::size_t iter = ncol < nrow ? ncol : nrow;
+    for (std::size_t i = 0; i < iter; i++) {
+      res.set(i * nrow + i, value_at(i));
+    }
+    return res;
+  } else {
+    Array<Type, Buffer<Type>> res(SI{nrow * ncol});
+    res.dim = std::vector<std::size_t>{nrow, ncol};
+    std::size_t iter = ncol < nrow ? ncol : nrow;
+    for (std::size_t i = 0; i < iter; i++) {
+      res.set(i * nrow + i, value_at(i));
     }
     return res;
   }
-  if (arr.size() == 1) {
-    const std::size_t ncol = calc_ncol(arr.get(0));
-    return make_diag(ncol, [](std::size_t) { return Double(1.0); });
+}
+
+// Double
+// x is scalar
+template<typename RealType, typename A, typename B, typename C> requires IsScalarLike<Decayed<A>>
+inline auto diag(const A& x, const B& nrow, const C& ncol) {
+  const std::size_t nrow_ = calc_ncol_or_nrow(nrow);
+  const std::size_t ncol_ = calc_ncol_or_nrow(ncol);
+  constexpr bool is_numeric = IS<Decayed<A>, Double> || IS<Decayed<A>, Dual> || IS<Decayed<A>, ReverseDouble>;
+  if constexpr (is_numeric) {
+    return make_diag<RealType>(nrow_, ncol_,
+                             [&](std::size_t i) { return x; }
+                             );
+  } else {
+    return make_diag<Decayed<A>>(nrow_, ncol_,
+                             [&](std::size_t i) { return x; }
+                             );
   }
-  return make_diag(arr.size(), [&](std::size_t i) { return arr.get(i); });
-}
 
-// two scalars: b defines the dimension, a is the value at the diagonal
-template<typename A, typename B> requires(IsScalarLike<Decayed<A>> && IsScalarLike<Decayed<B>>)
-inline auto diag(const A& scalar_a, const B& scalar_b) {
-  const std::size_t ncol = calc_ncol(scalar_b);
-  return make_diag(ncol, [&](std::size_t) { return scalar_a; });
 }
+// x is Array
+template<typename RealType, typename A, typename B, typename C> requires IsArray<Decayed<A>>
+inline auto diag(const A& x, const B& nrow, const C& ncol) {
+  const std::size_t nrow_ = calc_ncol_or_nrow(nrow);
+  const std::size_t ncol_ = calc_ncol_or_nrow(ncol);
 
-// array & scalar: scalar defines the dimension, array recycled along the diagonal
-template<typename A, typename B> requires(IsArray<Decayed<A>> && IsScalarLike<Decayed<B>>)
-inline auto diag(const A& arr, const B& scalar_b) {
-  const std::size_t ncol = calc_ncol(scalar_b);
-  return make_diag(ncol, [&](std::size_t i) { return arr.get(safe_modulo(i, arr.size())); });
-}
-
-// scalar & array: array (length 1) defines the dimension, scalar is the diagonal value
-template<typename A, typename B> requires(IsScalarLike<Decayed<A>> && IsArray<Decayed<B>>)
-inline auto diag(const A& scalar_a, const B& arr_b) {
-  ass<"found invalid dimension argument to diag. Expected a vector with length 1L">(arr_b.size() == 1);
-  const std::size_t ncol = calc_ncol(arr_b.get(0));
-  return make_diag(ncol, [&](std::size_t) { return scalar_a; });
-}
-
-// array & array: arr_b (length 1) defines the dimension, arr_a recycled along the diagonal
-template<typename A, typename B> requires(IsArray<Decayed<A>> && IsArray<Decayed<B>>)
-inline auto diag(const A& arr_a, const B& arr_b) {
-  ass<"found invalid dimension argument to diag. Expected a vector with length 1L">(arr_b.size() == 1);
-  const std::size_t ncol = calc_ncol(arr_b.get(0));
-  return make_diag(ncol, [&](std::size_t i) { return arr_a.get(safe_modulo(i, arr_a.size())); });
+  using T = typename ExtractDataType<Decayed<A>>::value_type;
+  constexpr bool is_numeric = IS<T, Double> || IS<T, Dual> || IS<T, ReverseDouble>;
+  if constexpr (is_numeric) {
+    return make_diag<RealType>(nrow_, ncol_,
+                             [&](std::size_t i) { return x.get(safe_modulo(i, x.size())); }
+                             );
+  } else {
+    return make_diag<T>(nrow_, ncol_,
+                        [&](std::size_t i) { return x.get(safe_modulo(i, x.size())); }
+                        );
+  }
 }
 
 } // namespace etr

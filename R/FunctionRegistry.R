@@ -1239,7 +1239,7 @@ function_registry_global$add(
  group = "unary_node", cpp_name = "etr::transpose"
 )
 function_registry_global$add(
-  name = "diag", num_args = c(1, 2), arg_names = NA,
+  name = "diag", num_args = 3L, arg_names = c("x", "nrow", "ncol"),
   infer_fct = function(node, vars_list, r_fct, function_registry) {
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, r_fct, function_registry)
@@ -1249,14 +1249,9 @@ function_registry_global$add(
         return(sprintf("Found unallowed type in: %s", node$stringify()))
       }
     }
-    ds <- "matrix"
-    if (length(all_types) == 1L &&
-        all_types[[1]]$data_struct %within% c("matrix", "mat", "borrow_matrix", "borrow_mat")) {
-      ds <- "vector"
-    }
     t <- type_node$new(NA, FALSE, r_fct)
     t$base_type <- "double"
-    t$data_struct <- ds
+    t$data_struct <- "matrix"
     node$internal_type <- t
     return(t)
   },
