@@ -614,3 +614,29 @@ for (i in seq_along(sp_fcts)) {
   sp_checks[i] <- message == e
 }
 expect_true(all(sp_checks), info = "Test check functions for sum/prod")
+
+# --- chol -------------------------------------------------------------------
+args_fct <- function() {}
+f <- function() {
+  a <- chol("a")
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a <- chol(\"a\")\nYou cannot use character/NA/NaN/Inf entries in chol"
+)
+f <- function() {
+  s <- 5.0
+  m <- chol(s)
+}
+test_checks(
+  f, args_fct, TRUE,
+  "m <- chol(s)\nYou can only call chol on a matrix"
+)
+f <- function() {
+  v <- c(1.0, 2.0, 3.0)
+  m <- chol(v)
+}
+test_checks(
+  f, args_fct, TRUE,
+  "m <- chol(v)\nYou can only call chol on a matrix"
+)

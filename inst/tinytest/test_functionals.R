@@ -99,6 +99,13 @@ functional_tests <- function(a, b, n, type_test) {
     return(b %/% 2.0)
   }
 
+  if (type_test == 10) { # cholesky of a constructed positive-definite matrix
+    X <- matrix(a[1L:9L], 3, 3)
+    A <- t(X) %*% X
+    A <- A + diag(3.0, 3, 3)
+    return(chol(A))
+  }
+
 }
 
 fcpp <- translate(functional_tests, f_args, getsource = FALSE, verbose = FALSE)
@@ -131,6 +138,7 @@ expect_true(all(abs(fcpp(a, b, n, 6L) - functional_tests(a, b, n, 6L)) < 1e-8))
 expect_true(all(abs(fcpp(a, b, n, 7L) - functional_tests(a, b, n, 7L)) < 1e-8))
 expect_true(all(fcpp(a, b, n, 8L) == functional_tests(a, b, n, 8L)))
 expect_true(all(abs(fcpp(a, b, n, 9L) - functional_tests(a, b, n, 9L)) < 1e-8))
+expect_true(all(abs(fcpp(a, b, n, 10L) - functional_tests(a, b, n, 10L)) < 1e-8))
 
 # --- diag --------------------------------------------------------------------
 # ast2ast supports diag(x, nrow, ncol): an nrow x ncol matrix with x recycled

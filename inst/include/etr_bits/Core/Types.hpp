@@ -13,10 +13,25 @@ extern "C" void dgemm_(const char* transa, const char* transb,
                        const double* alpha, const double* a, const int* lda,
                        const double* b, const int* ldb,
                        const double* beta, double* c, const int* ldc);
+// Cholesky factorisation (LAPACK); link to openblas/lapack required
+extern "C" void dpotrf_(const char* uplo, const int* n, double* a,
+                        const int* lda, int* info);
+// Triangular solve (BLAS), used by forward-mode chol
+extern "C" void dtrsm_(const char* side, const char* uplo, const char* transa,
+                       const char* diag, const int* m, const int* n,
+                       const double* alpha, const double* a, const int* lda,
+                       double* b, const int* ldb);
 #define F77_CALL(x) x##_
 #define FCONE
 #else
+// R's BLAS/LAPACK are Fortran: each char* flag (uplo/trans/side/diag) takes a
+// hidden trailing length arg. USE_FC_LEN_T makes the headers declare those and
+// FCONE (from RS.h) expand to `,(FC_LEN_T)1` so call sites pass them -- required
+// to match R's runtime ABI. Without it FCONE is empty and the lengths are read
+// from garbage; reference/OpenBLAS tolerate it, R's LAPACK does not.
+#define USE_FC_LEN_T
 #include <R_ext/BLAS.h>
+#include <R_ext/Lapack.h>
 #include <R_ext/RS.h>
 #ifndef FCONE
 #define FCONE

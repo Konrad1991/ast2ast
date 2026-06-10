@@ -1434,3 +1434,11 @@ expect_true(types$si$base_type == "integer" && types$si$data_struct == "scalar")
 expect_true(types$sl$base_type == "integer" && types$sl$data_struct == "scalar")
 expect_true(types$pd$base_type == "double" && types$pd$data_struct == "scalar")
 expect_true(types$pp$base_type == "double" && types$pp$data_struct == "scalar")
+
+# --- chol: returns a double matrix --------------------------------------------
+f <- function() {
+  m <- matrix(1.0, 2, 2)
+  r <- chol(m)
+}
+types <- get_types(f)
+expect_true(types$r$base_type == "double" && types$r$data_struct == "matrix")

@@ -1289,6 +1289,28 @@ function_registry_global$add(
  group = "unary_node", cpp_name = "etr::transpose"
 )
 function_registry_global$add(
+  name = "chol", num_args = 1, arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    inner <- infer(node$obj, vars_list, r_fct, function_registry)
+    if (!inherits(inner, "type_node")) {
+      return(sprintf("Found unallowed type in: %s", node$stringify()))
+    }
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "double"
+    t$data_struct <- "matrix"
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
+    if (is_charNANaNInf(node$obj, vars_types_list)) {
+      node$error <- "You cannot use character/NA/NaN/Inf entries in chol"
+    } else if (!is_mat(node$obj, vars_types_list)) {
+      node$error <- "You can only call chol on a matrix"
+    }
+  },
+  group = "unary_node", cpp_name = "etr::chol"
+)
+function_registry_global$add(
   name = "diag", num_args = 3L, arg_names = c("x", "nrow", "ncol"),
   infer_fct = function(node, vars_list, r_fct, function_registry) {
     all_types <- lapply(node$args, function(arg) {

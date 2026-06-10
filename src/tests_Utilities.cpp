@@ -428,4 +428,87 @@ void test_utilities() {
     ass<"prod rd grad[1]=x0*x2=8">(get_val(gp.get(1)) == 8.0);
     ass<"prod rd grad[2]=x0*x1=6">(get_val(gp.get(2)) == 6.0);
   }
+  // chol: A = [[4,2],[2,3]] -> upper R = [[2,1],[0,sqrt(2)]], A = t(R) %*% R
+  {
+    Array<Double, Buffer<Double>> a;
+    a = c(Double(4.0), Double(2.0), Double(2.0), Double(3.0));
+    a.dim = std::vector<std::size_t>{2, 2};
+    auto r = chol(a);
+    ass<"chol nrow">(nrow(r) == Integer(2));
+    ass<"chol ncol">(ncol(r) == Integer(2));
+    ass<"chol R[0,0]=2">(get_val(r.get(0)) == 2.0);
+    ass<"chol R[1,0]=0 (lower zeroed)">(get_val(r.get(1)) == 0.0);
+    ass<"chol R[0,1]=1">(get_val(r.get(2)) == 1.0);
+    ass<"chol R[1,1]=sqrt(2)">(std::abs(get_val(r.get(3)) - std::sqrt(2.0)) < 1e-9);
+    // non-positive-definite input errors
+    Array<Double, Buffer<Double>> b;
+    b = c(Double(1.0), Double(2.0), Double(2.0), Double(1.0));
+    b.dim = std::vector<std::size_t>{2, 2};
+    bool threw = false;
+    try { auto bad = chol(b); } catch (...) { threw = true; }
+    ass<"chol non-PD throws">(threw);
+    // integer matrix is cast to double; same factorization
+    Array<Integer, Buffer<Integer>> ai;
+    ai = c(Integer(4), Integer(2), Integer(2), Integer(3));
+    ai.dim = std::vector<std::size_t>{2, 2};
+    auto ri = chol(ai);
+    ass<"chol(int) R[0,0]=2">(get_val(ri.get(0)) == 2.0);
+    ass<"chol(int) R[0,1]=1">(get_val(ri.get(2)) == 1.0);
+    ass<"chol(int) R[1,1]=sqrt(2)">(std::abs(get_val(ri.get(3)) - std::sqrt(2.0)) < 1e-9);
+  }
+  // forward-mode chol (Dual): Rdot must match a central finite difference
+  {
+    const double Av[4] = {4.0, 2.0, 2.0, 3.0}; // [[4,2],[2,3]] column-major
+    const double Ad[4] = {1.0, 0.5, 0.5, 1.0}; // symmetric perturbation
+    Array<Dual, Buffer<Dual>> adual;
+    adual = c(Dual(Av[0], Ad[0]), Dual(Av[1], Ad[1]),
+              Dual(Av[2], Ad[2]), Dual(Av[3], Ad[3]));
+    adual.dim = std::vector<std::size_t>{2, 2};
+    auto rd = chol(adual);
+    ass<"chol dual value R[0,0]=2">(rd.get(0).val == 2.0);
+
+    auto chol_d = [](const double m[4]) {
+      Array<Double, Buffer<Double>> A;
+      A = c(Double(m[0]), Double(m[1]), Double(m[2]), Double(m[3]));
+      A.dim = std::vector<std::size_t>{2, 2};
+      return chol(A);
+    };
+    const double h = 1e-6;
+    double ap[4], am[4];
+    for (int k = 0; k < 4; ++k) { ap[k] = Av[k] + h * Ad[k]; am[k] = Av[k] - h * Ad[k]; }
+    auto rp = chol_d(ap);
+    auto rm = chol_d(am);
+    for (std::size_t k = 0; k < 4; ++k) {
+      const double fd = (get_val(rp.get(k)) - get_val(rm.get(k))) / (2.0 * h);
+      ass<"chol dual dot vs finite diff">(std::abs(rd.get(k).dot - fd) < 1e-5);
+    }
+  }
+  // reverse-mode chol (ReverseDouble): grad of sum(chol(A)) vs finite difference
+  {
+    const double Av[4] = {4.0, 2.0, 2.0, 3.0};
+    TAPE_INTERN.clear();
+    Array<ReverseDouble, Buffer<ReverseDouble>> A;
+    A = c(ReverseDouble::Var(Av[0]), ReverseDouble::Var(Av[1]),
+          ReverseDouble::Var(Av[2]), ReverseDouble::Var(Av[3]));
+    A.dim = std::vector<std::size_t>{2, 2};
+    auto R = chol(A);
+    ReverseDouble loss = R.get(0) + R.get(1) + R.get(2) + R.get(3);
+    auto g = deriv(loss, A);
+
+    auto loss_d = [](const double m[4]) {
+      Array<Double, Buffer<Double>> M;
+      M = c(Double(m[0]), Double(m[1]), Double(m[2]), Double(m[3]));
+      M.dim = std::vector<std::size_t>{2, 2};
+      auto rr = chol(M);
+      return get_val(rr.get(0)) + get_val(rr.get(1)) + get_val(rr.get(2)) + get_val(rr.get(3));
+    };
+    const double h = 1e-6;
+    for (std::size_t k = 0; k < 4; ++k) {
+      double mp[4], mm[4];
+      for (std::size_t j = 0; j < 4; ++j) { mp[j] = Av[j]; mm[j] = Av[j]; }
+      mp[k] += h; mm[k] -= h;
+      const double fd = (loss_d(mp) - loss_d(mm)) / (2.0 * h);
+      ass<"chol reverse grad vs finite diff">(std::abs(get_val(g.get(k)) - fd) < 1e-5);
+    }
+  }
 }

@@ -25,11 +25,11 @@ enum class ROp : uint8_t {
   // M*N-1 nodes are tagged BlockSlot and are no-ops in reverse(). Both
   // node kinds store block_idx (index into ReverseTape::blocks) in a[],
   // NOT a tape id.
-  MatMul, BlockSlot
+  MatMul, BlockSlot, Chol
 };
 
 struct BlockOp {
-  enum class Kind : uint8_t { MatMul };
+  enum class Kind : uint8_t { MatMul, Chol };
   Kind kind;
   std::size_t rows_a;
   std::size_t cols_a; // == rows_b
@@ -256,6 +256,58 @@ struct ReverseTape {
     return head_id;
   }
 
+  // Cholesky R = chol(A) (upper, A = R^T R) of an n x n matrix. Pushes n*n
+  // output nodes for R; the first is the Chol head (carries the block's
+  // backward), the rest are inert BlockSlot markers. Any NA in A poisons the
+  // whole result (a factorization with NA is undefined). Returns the head id.
+  inline int push_chol(std::size_t n, std::vector<int> a_ids, std::vector<double> a_vals) {
+    ass<"push_chol: requires exactly one of {ids, vals}">(a_ids.empty() != a_vals.empty());
+    const std::size_t sz = n * n;
+    ass<"push_chol: size mismatch">((a_ids.empty() ? a_vals.size() : a_ids.size()) == sz);
+
+    std::vector<double> A(sz);
+    bool any_na = false;
+    if (a_ids.empty()) {
+      for (std::size_t k = 0; k < sz; ++k) { A[k] = a_vals[k]; if (std::isnan(A[k])) any_na = true; }
+    } else {
+      for (std::size_t k = 0; k < sz; ++k) {
+        A[k] = val[static_cast<std::size_t>(a_ids[k])];
+        if (is_na[static_cast<std::size_t>(a_ids[k])]) any_na = true;
+      }
+    }
+
+    std::vector<double> R(sz);
+    std::vector<uint8_t> out_na(sz, 0);
+    if (any_na) {
+      for (std::size_t k = 0; k < sz; ++k) { R[k] = std::numeric_limits<double>::quiet_NaN(); out_na[k] = 1; }
+    } else {
+      R = A;
+      int ni = static_cast<int>(n);
+      int info = 0;
+      F77_CALL(dpotrf)("U", &ni, R.data(), &ni, &info FCONE);
+      ass<"chol: the matrix is not positive definite">(info == 0);
+      for (std::size_t c = 0; c < n; ++c)
+        for (std::size_t r = c + 1; r < n; ++r)
+          R[c * n + r] = 0.0;
+    }
+
+    const int block_idx = static_cast<int>(blocks.size());
+    const int head_id = push_node(ROp::Chol, block_idx, -1, R[0], out_na[0] != 0);
+    for (std::size_t k = 1; k < sz; ++k) {
+      push_node(ROp::BlockSlot, block_idx, -1, R[k], out_na[k] != 0);
+    }
+    BlockOp blk;
+    blk.kind = BlockOp::Kind::Chol;
+    blk.rows_a = n;
+    blk.cols_a = n;
+    blk.cols_b = n;
+    blk.a_ids = std::move(a_ids);
+    blk.a_vals = std::move(a_vals);
+    blk.out_tape_id_first = head_id;
+    blocks.push_back(std::move(blk));
+    return head_id;
+  }
+
   void reverse(int out) {
     std::fill(adj.begin(), adj.end(), 0.0);
     adj[static_cast<std::size_t>(out)] = 1.0;
@@ -423,6 +475,49 @@ struct ReverseTape {
                             dB.data(), &Ki FCONE FCONE);
             for (std::size_t k = 0; k < K * N; ++k) {
               adj[static_cast<std::size_t>(blk.b_ids[k])] += dB[k];
+            }
+          }
+          break;
+        }
+        case ROp::Chol: {
+          // ai is the index into `blocks`. R = chol(A) (upper), A = R^T R.
+          // Reverse: X = R^-1 Phi_U(Rbar R^T) R^-T, then the input adjoint is
+          // strictly-upper(X + X^T) + diag(X) (dpotrf reads only the upper
+          // triangle, so the lower input adjoints stay 0).
+          const BlockOp& blk = blocks[static_cast<std::size_t>(ai)];
+          if (blk.a_ids.empty()) break; // constant input: no gradient
+          const std::size_t n = blk.rows_a;
+          const std::size_t out0 = static_cast<std::size_t>(blk.out_tape_id_first);
+          const std::size_t sz = n * n;
+
+          std::vector<double> R(sz);
+          for (std::size_t k = 0; k < sz; ++k) R[k] = val[out0 + k];
+          // Rbar: upper triangle only (lower R is a structural zero)
+          std::vector<double> M(sz, 0.0);
+          for (std::size_t c = 0; c < n; ++c)
+            for (std::size_t r = 0; r <= c; ++r)
+              M[c * n + r] = is_na[out0 + c * n + r] ? 0.0 : adj[out0 + c * n + r];
+
+          const int ni = static_cast<int>(n);
+          const double one = 1.0, zero = 0.0;
+          // M <- Rbar R^T
+          std::vector<double> tmp(sz, 0.0);
+          F77_CALL(dgemm)("N", "T", &ni, &ni, &ni, &one, M.data(), &ni, R.data(), &ni, &zero, tmp.data(), &ni FCONE FCONE);
+          M.swap(tmp);
+          // Phi_U(M): strictly-lower -> 0, diagonal halved
+          for (std::size_t c = 0; c < n; ++c) {
+            M[c * n + c] *= 0.5;
+            for (std::size_t r = c + 1; r < n; ++r) M[c * n + r] = 0.0;
+          }
+          // M <- R^-1 M : solve R Y = M ; then M <- M R^-T : solve X R^T = Y
+          F77_CALL(dtrsm)("L", "U", "N", "N", &ni, &ni, &one, R.data(), &ni, M.data(), &ni FCONE FCONE FCONE FCONE);
+          F77_CALL(dtrsm)("R", "U", "T", "N", &ni, &ni, &one, R.data(), &ni, M.data(), &ni FCONE FCONE FCONE FCONE);
+          // Abar = strictly-upper(X + X^T) + diag(X); scatter into input adjoints
+          for (std::size_t c = 0; c < n; ++c) {
+            for (std::size_t r = 0; r <= c; ++r) {
+              const std::size_t idx = c * n + r;
+              const double g = (r == c) ? M[idx] : (M[idx] + M[r * n + c]);
+              if (g != 0.0) adj[static_cast<std::size_t>(blk.a_ids[idx])] += g;
             }
           }
           break;

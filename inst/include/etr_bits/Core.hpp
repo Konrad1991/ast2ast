@@ -9,6 +9,7 @@
 #include "./Core/Borrow.hpp"
 #include "./Core/ArrayClass.hpp"
 #include "./Core/MatMul.hpp"
+#include "./Core/Chol.hpp"
 #include "./Core/Transpose.hpp"
 #include "./Core/Diag.hpp"
 
