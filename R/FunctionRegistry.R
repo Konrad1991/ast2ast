@@ -389,6 +389,32 @@ infer_num_int_log <- function(node, vars_list, r_fct, function_registry) {
   node$internal_type <- t
   return(t)
 }
+# scalar reduction keeping the input base type (min, max)
+infer_reduce_keep_type <- function(node, vars_list, r_fct, function_registry) {
+  inner <- infer(node$obj, vars_list, r_fct, function_registry)
+  if (!inherits(inner, "type_node")) {
+    return(sprintf("Found unallowed type in: %s", node$stringify()))
+  }
+  t <- type_node$new(NA, FALSE, r_fct)
+  t$base_type <- inner$base_type
+  t$data_struct <- "scalar"
+  node$internal_type <- t
+  return(t)
+}
+# scalar reduction with a fixed base type (which.max/which.min -> integer, all/any -> logical)
+infer_reduce_fixed_type <- function(base) {
+  function(node, vars_list, r_fct, function_registry) {
+    inner <- infer(node$obj, vars_list, r_fct, function_registry)
+    if (!inherits(inner, "type_node")) {
+      return(sprintf("Found unallowed type in: %s", node$stringify()))
+    }
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- base
+    t$data_struct <- "scalar"
+    node$internal_type <- t
+    return(t)
+  }
+}
 
 function_registry_global$add(
   name = "type", num_args = 2, arg_names = c(NA, NA),
@@ -735,6 +761,12 @@ function_registry_global$add(
   infer_fct = infer_binary_math,
   check_fct = check_binary,
   group = "binary_node", cpp_name = "/"
+)
+function_registry_global$add(
+  name = "%%", num_args = 2, arg_names = c(NA, NA),
+  infer_fct = infer_binary_math,
+  check_fct = check_binary,
+  group = "binary_node", cpp_name = "%"
 )
 function_registry_global$add(
   name = "if", num_args = NA, arg_names = NA,
@@ -1264,4 +1296,56 @@ function_registry_global$add(
     }
   },
  group = "function_node", cpp_name = "etr::diag"
+)
+function_registry_global$add(
+  name = "max", num_args = 1, arg_names = NA,
+  infer_fct = infer_reduce_keep_type,
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::max"
+)
+function_registry_global$add(
+  name = "min", num_args = 1, arg_names = NA,
+  infer_fct = infer_reduce_keep_type,
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::min"
+)
+function_registry_global$add(
+  name = "which.max", num_args = 1, arg_names = NA,
+  infer_fct = infer_reduce_fixed_type("integer"),
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::which_max"
+)
+function_registry_global$add(
+  name = "which.min", num_args = 1, arg_names = NA,
+  infer_fct = infer_reduce_fixed_type("integer"),
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::which_min"
+)
+function_registry_global$add(
+  name = "all", num_args = 1, arg_names = NA,
+  infer_fct = infer_reduce_fixed_type("logical"),
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::all"
+)
+function_registry_global$add(
+  name = "any", num_args = 1, arg_names = NA,
+  infer_fct = infer_reduce_fixed_type("logical"),
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::any"
+)
+function_registry_global$add(
+  name = "stop", num_args = 1, arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    return(sprintf("Found stop within an expression: %s", node$stringify()))
+  },
+  check_fct = mock, group = "unary_node", cpp_name = "etr::stop"
+)
+function_registry_global$add(
+  name = "rev", num_args = 1, arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    data_type <- infer(node$obj, vars_list, r_fct, function_registry)
+    if (!inherits(data_type, "type_node")) {
+      return(sprintf("Found unallowed type in: %s", node$stringify()))
+    }
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- data_type$base_type
+    t$data_struct <- "vector"
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::rev"
 )

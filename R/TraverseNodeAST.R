@@ -51,6 +51,29 @@ traverse_ast <- function(node, action, ...) {
   }
 }
 
+# Collect the operators of every call in a subtree, descending into nested fn
+# bodies. Used to restrict a lambda's capture list to the functions it (or any
+# inner fn nested within it) actually references -- a nested lambda referencing
+# an outer fn forces all enclosing lambdas to capture it too.
+# ========================================================================
+collect_called_fcts <- function(node) {
+  if (is.null(node)) return(character(0))
+  switch(class(node)[[1]],
+    binary_node = c(node$operator, collect_called_fcts(node$left_node), collect_called_fcts(node$right_node)),
+    unary_node = c(node$operator, collect_called_fcts(node$obj)),
+    nullary_node = node$operator,
+    function_node = c(node$operator, unlist(lapply(node$args, collect_called_fcts))),
+    fn_node = collect_called_fcts(node$AST),
+    block_node = unlist(lapply(node$block, collect_called_fcts)),
+    if_node = c(collect_called_fcts(node$condition), collect_called_fcts(node$true_node),
+      collect_called_fcts(node$false_node), unlist(lapply(node$else_if_nodes, collect_called_fcts))),
+    for_node = c(collect_called_fcts(node$i), collect_called_fcts(node$seq), collect_called_fcts(node$block)),
+    while_node = c(collect_called_fcts(node$condition), collect_called_fcts(node$block)),
+    repeat_node = collect_called_fcts(node$block),
+    character(0)
+  )
+}
+
 # For debugging
 action_print <- function(node) {
   str(node)
@@ -81,6 +104,8 @@ action_transpile_inner_functions <- function(node, real_type) {
   known_from_inner <- node$function_registry$permitted_fcts()
   known_outer <- node$function_registry_outer$permitted_fcts()
   diffs <- setdiff(known_outer, known_from_inner)
+  node$known_fcts <- intersect(diffs, collect_called_fcts(AST))
+
   for (i in diffs) {
     idx <- which(known_outer == i)
     node$function_registry$function_names <- c(node$function_registry$function_names, node$function_registry_outer$function_names[[idx]])

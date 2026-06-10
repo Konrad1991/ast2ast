@@ -336,6 +336,15 @@ test_checks(
 args_fct <- function() {}
 f <- function() {
   a <- 1L
+  c <- a %% NA
+}
+test_checks(
+  f, args_fct, TRUE,
+"c <- a %% NA\nYou cannot use character/NA/NaN/Inf entries in %%"
+)
+args_fct <- function() {}
+f <- function() {
+  a <- 1L
   a == NA
   a != NA
   a > NA
@@ -520,3 +529,25 @@ test_checks(
   f, args_fct, TRUE,
 "g <- cmr(1.0, a, b)\nThe third argument of cmr has to have the base type double"
 )
+
+# --- reductions (min/max/which.max/which.min/all/any) -------------------------
+args_fct <- function() {}
+red_fcts <- list(
+  function() {a <- max("a")},
+  function() {a <- min("a")},
+  function() {a <- which.max("a")},
+  function() {a <- which.min("a")},
+  function() {a <- all("a")},
+  function() {a <- any("a")}
+)
+red_names <- c("max", "min", "which.max", "which.min", "all", "any")
+red_checks <- logical(length(red_fcts))
+for (i in seq_along(red_fcts)) {
+  message <- sprintf(
+    "a <- %s(\"a\")\nYou cannot use character/NA/NaN/Inf entries in %s",
+    red_names[i], red_names[i])
+  e <- try(run_fr_checks(red_fcts[[i]], args_fct, TRUE), silent = TRUE)
+  e <- attributes(e)[["condition"]]$message
+  red_checks[i] <- message == e
+}
+expect_true(all(red_checks), info = "Test check functions for reductions")

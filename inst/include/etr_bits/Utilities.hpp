@@ -3,6 +3,7 @@
 
 #include "./Utilities/Helper.hpp"
 #include "./Utilities/SEXPConversions.hpp"
+#include "./Utilities/Rev.hpp"
 #include "./Utilities/Printing.hpp"
 
 #endif

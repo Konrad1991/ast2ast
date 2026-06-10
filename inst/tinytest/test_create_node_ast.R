@@ -84,7 +84,7 @@ f <- function() {
 error <- try(ast2ast::translate(f), silent = TRUE)
 expect_equal(
   attributes(error)[["condition"]]$message,
-  "\nfct <- [&](  ) -> NULL {\n\n\n  }\nWrong return type: Found unsupported base type: invalid"
+  "\nfct <- [](  ) -> NULL {\n\n\n  }\nWrong return type: Found unsupported base type: invalid"
 )
 # lambda function not assigned to variable
 f <- function() {

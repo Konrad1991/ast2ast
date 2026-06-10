@@ -1323,3 +1323,47 @@ f <- function() {
 types <- get_types(f)
 expect_true(types[[1]]$base_type == "NA")
 expect_true(types[[1]]$data_struct == "array")
+
+# --- reductions: min/max keep base type, which.* -> integer, all/any -> logical
+f <- function() {
+  x <- c(1, 2, 3)
+  xi <- 1L:3L
+  mx <- max(x)
+  mn <- min(x)
+  mxi <- max(xi)
+  wmx <- which.max(x)
+  wmn <- which.min(x)
+  al <- all(x)
+  an <- any(x)
+}
+types <- get_types(f)
+expect_true(types$mx$base_type == "double" && types$mx$data_struct == "scalar")
+expect_true(types$mn$base_type == "double" && types$mn$data_struct == "scalar")
+expect_true(types$mxi$base_type == "integer" && types$mxi$data_struct == "scalar")
+expect_true(types$wmx$base_type == "integer" && types$wmx$data_struct == "scalar")
+expect_true(types$wmn$base_type == "integer" && types$wmn$data_struct == "scalar")
+expect_true(types$al$base_type == "logical" && types$al$data_struct == "scalar")
+expect_true(types$an$base_type == "logical" && types$an$data_struct == "scalar")
+
+# --- modulo (%%): keeps integer vs double base type ---------------------------
+f <- function() {
+  ai <- 5L
+  bi <- 2L
+  di <- ai %% bi
+  ad <- 5.0
+  dd <- ad %% 2.0
+  v <- c(5, 6, 7) %% 2
+}
+types <- get_types(f)
+expect_true(types$di$base_type == "integer" && types$di$data_struct == "scalar")
+expect_true(types$dd$base_type == "double" && types$dd$data_struct == "scalar")
+expect_true(types$v$base_type == "double" && types$v$data_struct == "vector")
+
+# --- rev: keeps base type, always returns a vector ----------------------------
+f <- function() {
+  rd <- rev(c(1, 2, 3))
+  ri <- rev(1L:3L)
+}
+types <- get_types(f)
+expect_true(types$rd$base_type == "double" && types$rd$data_struct == "vector")
+expect_true(types$ri$base_type == "integer" && types$ri$data_struct == "vector")

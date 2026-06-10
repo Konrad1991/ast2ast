@@ -113,4 +113,120 @@ void test_utilities() {
     ass<"dim[3] of array">(dim(a).get(2) == Integer(3));
     ass<"dim of array size == 3">(dim(a).size() == 3);
   }
+  // max & min
+  {
+    Array<Double, Buffer<Double>> a;
+    a = c(Double(3.0), Double(1.0), Double(5.0), Double(2.0));
+    ass<"max of vec">(get_val(max(a)) == 5.0);
+    ass<"min of vec">(get_val(min(a)) == 1.0);
+    ass<"max of scalar">(get_val(max(Double(7.0))) == 7.0);
+    ass<"min of scalar">(get_val(min(Double(7.0))) == 7.0);
+    Array<Double, Buffer<Double>> b;
+    b = c(Double(3.0), Double::NA(), Double(5.0));
+    ass<"max with NA -> NA">(max(b).isNA());
+    ass<"min with NA -> NA">(min(b).isNA());
+    Array<Integer, Buffer<Integer>> i;
+    i = c(Integer(3), Integer(9), Integer(1));
+    ass<"max keeps integer">(get_val(max(i)) == 9);
+    ass<"min keeps integer">(get_val(min(i)) == 1);
+  }
+  // which.max & which.min
+  {
+    Array<Double, Buffer<Double>> a;
+    a = c(Double(3.0), Double(1.0), Double(5.0), Double(5.0), Double(2.0));
+    ass<"which.max first extreme">(get_val(which_max(a)) == 3);
+    ass<"which.min">(get_val(which_min(a)) == 2);
+    Array<Double, Buffer<Double>> b;
+    b = c(Double::NA(), Double(4.0), Double(1.0));
+    ass<"which.max skips NA">(get_val(which_max(b)) == 2);
+    ass<"which.min skips NA">(get_val(which_min(b)) == 3);
+  }
+  // all & any
+  {
+    Array<Logical, Buffer<Logical>> t;
+    t = c(Logical(true), Logical(true), Logical(true));
+    ass<"all true">(get_val(all(t)) == true);
+    ass<"any true">(get_val(any(t)) == true);
+    Array<Logical, Buffer<Logical>> f;
+    f = c(Logical(true), Logical(false), Logical(true));
+    ass<"all with one false">(get_val(all(f)) == false);
+    ass<"any with one true">(get_val(any(f)) == true);
+    Array<Logical, Buffer<Logical>> ff;
+    ff = c(Logical(false), Logical(false));
+    ass<"any all false">(get_val(any(ff)) == false);
+    Array<Logical, Buffer<Logical>> na1;
+    na1 = c(Logical(true), Logical::NA());
+    ass<"all true+NA -> NA">(all(na1).isNA());
+    Array<Logical, Buffer<Logical>> na2;
+    na2 = c(Logical(false), Logical::NA());
+    ass<"all false+NA -> false">(get_val(all(na2)) == false);
+    Array<Logical, Buffer<Logical>> na3;
+    na3 = c(Logical(true), Logical::NA());
+    ass<"any true+NA -> true">(get_val(any(na3)) == true);
+    Array<Logical, Buffer<Logical>> na4;
+    na4 = c(Logical(false), Logical::NA());
+    ass<"any false+NA -> NA">(any(na4).isNA());
+  }
+  // stop
+  {
+    bool threw = false;
+    try {
+      stop("boom");
+    } catch (...) {
+      threw = true;
+    }
+    ass<"stop throws">(threw);
+  }
+  // modulo (%%): x - floor(x/y)*y, result sign follows the divisor
+  {
+    ass<"5 %% 3">(get_val(Double(5.0) % Double(3.0)) == 2.0);
+    ass<"-5 %% 3 -> 1">(get_val(Double(-5.0) % Double(3.0)) == 1.0);
+    ass<"5 %% -3 -> -1">(get_val(Double(5.0) % Double(-3.0)) == -1.0);
+    ass<"5L %% 2L -> 1">(get_val(Integer(5) % Integer(2)) == 1);
+    ass<"int mod by zero -> NA">((Integer(5) % Integer(0)).isNA());
+    ass<"NA %% 2 -> NA">((Double::NA() % Double(2.0)).isNA());
+    Array<Double, Buffer<Double>> a;
+    a = c(Double(5.0), Double(6.0), Double(7.0));
+    auto r = a % Double(3.0);
+    ass<"vec %% scalar [0]">(get_val(r.get(0)) == 2.0);
+    ass<"vec %% scalar [1]">(get_val(r.get(1)) == 0.0);
+    ass<"vec %% scalar [2]">(get_val(r.get(2)) == 1.0);
+  }
+  // modulo derivatives: d/dx = 1, d/dy = -floor(x/y)
+  {
+    Dual rx = Dual(5.0, 1.0) % Dual(3.0, 0.0);
+    ass<"dual mod value">(rx.val == 2.0);
+    ass<"dual mod d/dx = 1">(rx.dot == 1.0);
+    Dual ry = Dual(5.0, 0.0) % Dual(3.0, 1.0);
+    ass<"dual mod d/dy = -floor(x/y)">(ry.dot == -1.0);
+    // reverse mode: same gradients via Sub/Mul composition (no ROp::Mod)
+    TAPE_INTERN.clear();
+    ReverseDouble x = ReverseDouble::Var(5.0);
+    ReverseDouble y = ReverseDouble::Var(3.0);
+    ReverseDouble f = x % y;
+    ass<"rd mod value">(get_val(f) == 2.0);
+    auto df_dx = deriv(f, x);
+    auto df_dy = deriv(f, y);
+    ass<"rd mod df/dx = 1">(get_val(df_dx.get(0)) == 1.0);
+    ass<"rd mod df/dy = -floor(x/y)">(get_val(df_dy.get(0)) == -1.0);
+  }
+  // rev: reverse a vector (scalar unchanged, matrix flattens to a vector)
+  {
+    Array<Double, Buffer<Double>> a;
+    a = c(Double(1.0), Double(2.0), Double(3.0), Double(4.0));
+    auto r = rev(a);
+    ass<"rev size">(r.size() == 4);
+    ass<"rev is 1-D">(r.dim.size() == 1);
+    ass<"rev [0]">(get_val(r.get(0)) == 4.0);
+    ass<"rev [1]">(get_val(r.get(1)) == 3.0);
+    ass<"rev [2]">(get_val(r.get(2)) == 2.0);
+    ass<"rev [3]">(get_val(r.get(3)) == 1.0);
+    ass<"rev of scalar is unchanged">(get_val(rev(Double(7.0))) == 7.0);
+    Array<Double, Buffer<Double>> m;
+    m = matrix(Double(1.1), Integer(2), Integer(3));
+    ass<"matrix is 2-D before rev">(m.get_dim().size() == 2);
+    auto rm = rev(m);
+    ass<"rev flattens matrix to 1-D">(rm.dim.size() == 1);
+    ass<"rev preserves size">(rm.size() == 6);
+  }
 }

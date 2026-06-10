@@ -758,6 +758,7 @@ fn_node <- R6::R6Class(
     context = NULL,
 
     fct_name = NULL,
+    known_fcts = NULL,
     args_f = NULL,
     args_f_raw = NULL,
     return_type = NULL,
@@ -814,8 +815,11 @@ fn_node <- R6::R6Class(
       body <- paste0(body, collapse = "")
       args <- paste0(args, collapse = ", ")
 
+      bracket_args <- paste0("&", self$known_fcts, collapse = ", ")
+      if (bracket_args == "&") bracket_args <- ""
+
       paste0(
-        paste0("[&]( ", args, " ) -> ", ret_type, " {\n"),
+        paste0("[", bracket_args, "]( ", args, " ) -> ", ret_type, " {\n"),
         indent, declarations, "\n",
         body, "\n",
         paste0(indent, "  }")

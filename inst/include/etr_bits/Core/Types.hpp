@@ -366,6 +366,12 @@ struct PowTrait {
     return pow(l, r);
   }
 };
+struct ModTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l % r;
+  }
+};
 struct EqualTrait {
   template <typename L, typename R>
   static inline auto f(const L& l, const R& r) {

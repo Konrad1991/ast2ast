@@ -613,6 +613,7 @@ struct Logical {
   inline Logical(ReverseDouble v);
   inline Integer operator+(const Logical&) const;
   inline Integer operator-(const Logical&) const;
+  inline Integer operator%(const Logical&) const;
   inline Integer operator*(const Logical&) const;
   inline Double operator/(const Logical&) const;
   inline Double pow(const Logical&) const;
@@ -677,6 +678,7 @@ struct Integer {
   inline Integer& operator-=(const Integer& r);
   inline Integer& operator*=(const Integer& r);
   inline Integer operator-(const Integer&) const;
+  inline Integer operator%(const Integer&) const;
   inline Integer operator*(const Integer&) const;
   inline Double operator/(const Integer&) const;
   inline Double pow(const Integer&) const;
@@ -742,6 +744,7 @@ struct Double {
   inline Double& operator*=(const Double& r);
   inline Double& operator/=(const Double& r);
   inline Double operator-(const Double&) const;
+  inline Double operator%(const Double&) const;
   inline Double operator*(const Double&) const;
   inline Double operator/(const Double&) const;
   inline Double pow(const Double&) const;
@@ -830,6 +833,7 @@ struct Dual {
   inline Dual& operator*=(const Dual& r);
   inline Dual& operator/=(const Dual& r);
   inline Dual operator-(const Dual&) const;
+  inline Dual operator%(const Dual&) const;
   inline Dual operator*(const Dual&) const;
   inline Dual operator/(const Dual&) const;
   inline Dual pow(const Dual&) const;
@@ -1000,6 +1004,7 @@ struct ReverseDouble {
   inline ReverseDouble operator-(const ReverseDouble& r) const;
   inline ReverseDouble operator*(const ReverseDouble& r) const;
   inline ReverseDouble operator/(const ReverseDouble& r) const;
+  inline ReverseDouble operator%(const ReverseDouble& r) const;
   inline ReverseDouble pow (const ReverseDouble& r) const;
 
   inline ReverseDouble& operator+=(const ReverseDouble& r);
@@ -1273,6 +1278,36 @@ inline Dual Dual::operator-(const Dual& other) const {
 }
 inline ReverseDouble ReverseDouble::operator-(const ReverseDouble& r) const {
   return binary_(ROp::Sub, r);
+}
+
+// modulo: R's x %% y = x - floor(x/y) * y (result sign follows the divisor)
+inline Integer Logical::operator%(const Logical& other) const {
+  if (is_na || other.is_na || other.val == 0) return Integer::NA();
+  const double x = static_cast<double>(val), y = static_cast<double>(other.val);
+  return Integer(static_cast<int>(x - std::floor(x / y) * y));
+}
+inline Integer Integer::operator%(const Integer& other) const {
+  if (is_na || other.is_na || other.val == 0) return Integer::NA();
+  const double x = static_cast<double>(val), y = static_cast<double>(other.val);
+  return Integer(static_cast<int>(x - std::floor(x / y) * y));
+}
+inline Double Double::operator%(const Double& other) const {
+  if (is_na || other.is_na) return Double::NA();
+  return Double(val - std::floor(val / other.val) * other.val);
+}
+inline Dual Dual::operator%(const Dual& other) const {
+  if (is_na || other.is_na) return Dual::NA();
+  const double q = std::floor(val / other.val);
+  const double v = val - q * other.val;
+  if (is_na_dot || other.is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  return Dual(v, dot - q * other.dot);
+}
+// floor(x/y) is constant under differentiation, so x %% y = x - q*y composes
+// from the existing Sub/Mul tape ops -- no dedicated ROp needed.
+inline ReverseDouble ReverseDouble::operator%(const ReverseDouble& r) const {
+  if (is_na || r.is_na) return NA();
+  const double q = std::floor(get_val_from_tape() / r.get_val_from_tape());
+  return *this - ReverseDouble(q) * r;
 }
 
 inline Integer Logical::operator*(const Logical& other) const {
@@ -2061,6 +2096,13 @@ inline auto operator*(const L& l, const R& r) -> decltype( common_type_t<L,R>(l)
   using CT = common_type_t<L, R>;
   return CT(l).operator*( CT(r) );
 }
+// % ===================================================
+template<typename L, typename R>
+requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScalarRef<R>)
+inline auto operator%(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).operator%( common_type_t<L,R>(r) ) ){
+  using CT = common_type_t<L, R>;
+  return CT(l).operator%( CT(r) );
+}
 
 /*
 --------------------------------------------------------------------------------------------------
@@ -2147,6 +2189,7 @@ struct LogicalRef {
   // Scalar operations, delegated to the referenced value via operator Logical().
   inline Integer operator+(const Logical& o) const { return Logical(*this) + o; }
   inline Integer operator-(const Logical& o) const { return Logical(*this) - o; }
+  inline Integer operator%(const Logical& o) const { return Logical(*this) % o; }
   inline Integer operator*(const Logical& o) const { return Logical(*this) * o; }
   inline Double  operator/(const Logical& o) const { return Logical(*this) / o; }
   inline Double  pow(const Logical& o) const { return Logical(*this).pow(o); }
@@ -2218,6 +2261,7 @@ struct IntegerRef {
   // Scalar operations, delegated to the referenced value via operator Integer().
   inline Integer operator+(const Integer& o) const { return Integer(*this) + o; }
   inline Integer operator-(const Integer& o) const { return Integer(*this) - o; }
+  inline Integer operator%(const Integer& o) const { return Integer(*this) % o; }
   inline Integer operator*(const Integer& o) const { return Integer(*this) * o; }
   inline Double  operator/(const Integer& o) const { return Integer(*this) / o; }
   inline Double  pow(const Integer& o) const { return Integer(*this).pow(o); }
@@ -2287,6 +2331,7 @@ struct DoubleRef {
   // Scalar operations, delegated to the referenced value via operator Double().
   inline Double operator+(const Double& o) const { return Double(*this) + o; }
   inline Double operator-(const Double& o) const { return Double(*this) - o; }
+  inline Double operator%(const Double& o) const { return Double(*this) % o; }
   inline Double operator*(const Double& o) const { return Double(*this) * o; }
   inline Double operator/(const Double& o) const { return Double(*this) / o; }
   inline Double pow(const Double& o) const { return Double(*this).pow(o); }
@@ -2363,6 +2408,7 @@ struct DualRef {
   // Scalar operations, delegated to the referenced value via operator Dual().
   inline Dual operator+(const Dual& o) const { return Dual(*this) + o; }
   inline Dual operator-(const Dual& o) const { return Dual(*this) - o; }
+  inline Dual operator%(const Dual& o) const { return Dual(*this) % o; }
   inline Dual operator*(const Dual& o) const { return Dual(*this) * o; }
   inline Dual operator/(const Dual& o) const { return Dual(*this) / o; }
   inline Dual pow(const Dual& o) const { return Dual(*this).pow(o); }

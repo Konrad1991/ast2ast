@@ -215,6 +215,13 @@ inline auto power(L &&l, R &&r) {
 }
 
 template <typename L, typename R>
+requires (IsArray<std::decay_t<L>> || IsArray<std::decay_t<R>>)
+inline auto operator%(L &&l, R &&r) {
+  return create_bin_vec<L, R, ModTrait>(
+    std::forward<L>(l), std::forward<R>(r));
+}
+
+template <typename L, typename R>
 requires(IsArray<Decayed<L>> || IsArray<Decayed<R>>)
 inline auto operator==(L &&l, R &&r) {
   return create_bin_vec<L, R, EqualTrait>(
