@@ -1367,3 +1367,17 @@ f <- function() {
 types <- get_types(f)
 expect_true(types$rd$base_type == "double" && types$rd$data_struct == "vector")
 expect_true(types$ri$base_type == "integer" && types$ri$data_struct == "vector")
+
+# --- as.numeric / as.integer / as.logical: change base type, keep structure ---
+f <- function() {
+  vi <- 1:3
+  vd <- as.numeric(vi)
+  vl <- as.logical(vi)
+  vint <- as.integer(c(1.5, 2.5))
+  s <- as.numeric(5L)
+}
+types <- get_types(f)
+expect_true(types$vd$base_type == "double" && types$vd$data_struct == "vector")
+expect_true(types$vl$base_type == "logical" && types$vl$data_struct == "vector")
+expect_true(types$vint$base_type == "integer" && types$vint$data_struct == "vector")
+expect_true(types$s$base_type == "double" && types$s$data_struct == "scalar")

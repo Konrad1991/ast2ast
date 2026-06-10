@@ -1349,3 +1349,48 @@ function_registry_global$add(
   },
   check_fct = check_unary, group = "unary_node", cpp_name = "etr::rev"
 )
+function_registry_global$add(
+  name = "as.numeric", num_args = 1, arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    inferred_type <- infer(node$obj, vars_list, r_fct, function_registry)
+    if (!inherits(inferred_type, "type_node")) {
+      return(sprintf("Found unallowed type in: %s", node$stringify()))
+    }
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "double"
+    t$data_struct <- inferred_type$data_struct
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = mock, group = "unary_node", cpp_name = "etr::as_numeric"
+)
+function_registry_global$add(
+  name = "as.integer", num_args = 1, arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    inferred_type <- infer(node$obj, vars_list, r_fct, function_registry)
+    if (!inherits(inferred_type, "type_node")) {
+      return(sprintf("Found unallowed type in: %s", node$stringify()))
+    }
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "integer"
+    t$data_struct <- inferred_type$data_struct
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = mock, group = "unary_node", cpp_name = "etr::as_integer"
+)
+function_registry_global$add(
+  name = "as.logical", num_args = 1, arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    inferred_type <- infer(node$obj, vars_list, r_fct, function_registry)
+    if (!inherits(inferred_type, "type_node")) {
+      return(sprintf("Found unallowed type in: %s", node$stringify()))
+    }
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "logical"
+    t$data_struct <- inferred_type$data_struct
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = mock, group = "unary_node", cpp_name = "etr::as_logical"
+)

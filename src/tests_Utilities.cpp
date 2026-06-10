@@ -229,4 +229,29 @@ void test_utilities() {
     ass<"rev flattens matrix to 1-D">(rm.dim.size() == 1);
     ass<"rev preserves size">(rm.size() == 6);
   }
+  // as.numeric / as.integer / as.logical
+  {
+    // scalar casts
+    ass<"as.numeric(5L) -> 5.0">(get_val(as_numeric<Double>(Integer(5))) == 5.0);
+    ass<"as.integer(3.7) truncates -> 3">(get_val(as_integer(Double(3.7))) == 3);
+    ass<"as.integer(-3.7) truncates -> -3">(get_val(as_integer(Double(-3.7))) == -3);
+    ass<"as.logical(0) -> false">(get_val(as_logical(Double(0.0))) == false);
+    ass<"as.logical(2.5) -> true">(get_val(as_logical(Double(2.5))) == true);
+    ass<"as.numeric of same type unchanged">(get_val(as_numeric<Double>(Double(1.5))) == 1.5);
+    // vector cast preserves order and length (int vec -> double vec)
+    Array<Integer, Buffer<Integer>> a;
+    a = c(Integer(1), Integer(2), Integer(3));
+    auto d = as_numeric<Double>(a);
+    ass<"as.numeric vec size">(d.size() == 3);
+    ass<"as.numeric vec [0]">(get_val(d.get(0)) == 1.0);
+    ass<"as.numeric vec [1]">(get_val(d.get(1)) == 2.0);
+    ass<"as.numeric vec [2]">(get_val(d.get(2)) == 3.0);
+    // double vec -> integer vec (truncates, order preserved)
+    Array<Double, Buffer<Double>> b;
+    b = c(Double(1.9), Double(2.2), Double(3.8));
+    auto iv = as_integer(b);
+    ass<"as.integer vec [0]">(get_val(iv.get(0)) == 1);
+    ass<"as.integer vec [1]">(get_val(iv.get(1)) == 2);
+    ass<"as.integer vec [2]">(get_val(iv.get(2)) == 3);
+  }
 }

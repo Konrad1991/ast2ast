@@ -569,6 +569,9 @@ action_translate <- function(node, function_registry, real_type) {
     else if (inherits(node, "function_node") && node$operator == "diag") {
       node$operator <- paste0("etr::diag<", real_type, ">")
     }
+    else if (inherits(node, "unary_node") && node$operator == "as.numeric") {
+      node$operator <- paste0("etr::as_numeric<", real_type, ">")
+    }
     else if (inherits(node, "unary_node") && node$operator == "numeric") {
       op <- list(
         "etr::Double" = "etr::numeric",

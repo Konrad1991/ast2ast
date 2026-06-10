@@ -34,6 +34,4 @@ qr.solve, svd, tcrossprod,
 
 prod, sum,
 cbind, rbind,
-rev,
-as.double, as.integer, as.logical,
 ceiling, floor, trunc
