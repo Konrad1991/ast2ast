@@ -224,6 +224,62 @@ template <typename T> requires IsArray<T> inline Logical any(const T &inp) {
   return Logical(false);
 }
 
+// sum -- keeps base type (logical -> integer); NA propagates; empty -> 0
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsScalarLike<T> inline auto sum(const T inp) {
+  auto v = get_scalar_val(inp);
+  if constexpr (IS<Decayed<decltype(v)>, Logical>) {
+    return Integer(v); // R: sum of logical is integer
+  } else {
+    return v;
+  }
+}
+template <typename T> requires IsArray<T> inline auto sum(const T &inp) {
+  using Inner = typename ExtractDataType<Decayed<T>>::value_type;
+  if constexpr (IS<Inner, Logical>) {
+    Integer acc(0);
+    for (std::size_t i = 0; i < inp.size(); i++) {
+      acc = acc + inp.get(i);
+    }
+    return acc;
+  } else {
+    Inner acc(0);
+    for (std::size_t i = 0; i < inp.size(); i++) {
+      acc = acc + inp.get(i);
+    }
+    return acc;
+  }
+}
+
+// prod -- always double-family; NA propagates; empty -> 1. Built from scalar Mul
+// ops, so reverse-mode gradients use the chain rule (no division by zero)
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsScalarLike<T> inline auto prod(const T inp) {
+  auto v = get_scalar_val(inp);
+  using V = Decayed<decltype(v)>;
+  if constexpr (IS<V, Dual> || IS<V, ReverseDouble>) {
+    return v; // already the AD double type
+  } else {
+    return Double(v);
+  }
+}
+template <typename T> requires IsArray<T> inline auto prod(const T &inp) {
+  using Inner = typename ExtractDataType<Decayed<T>>::value_type;
+  if constexpr (IS<Inner, Dual> || IS<Inner, ReverseDouble>) {
+    Inner acc(1);
+    for (std::size_t i = 0; i < inp.size(); i++) {
+      acc = acc * inp.get(i);
+    }
+    return acc;
+  } else {
+    Double acc(1);
+    for (std::size_t i = 0; i < inp.size(); i++) {
+      acc = acc * inp.get(i);
+    }
+    return acc;
+  }
+}
+
 // stop -- abort with a message
 // -----------------------------------------------------------------------------------------------------------
 [[noreturn]] inline void stop(const char *msg) {

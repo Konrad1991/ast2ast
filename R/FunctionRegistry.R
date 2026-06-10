@@ -415,6 +415,18 @@ infer_reduce_fixed_type <- function(base) {
     return(t)
   }
 }
+# sum keeps the type, except logical -> integer (R semantics); double stays double
+infer_sum <- function(node, vars_list, r_fct, function_registry) {
+  inner <- infer(node$obj, vars_list, r_fct, function_registry)
+  if (!inherits(inner, "type_node")) {
+    return(sprintf("Found unallowed type in: %s", node$stringify()))
+  }
+  t <- type_node$new(NA, FALSE, r_fct)
+  t$base_type <- if (inner$base_type %in% c("double", "numeric")) "double" else "integer"
+  t$data_struct <- "scalar"
+  node$internal_type <- t
+  return(t)
+}
 
 function_registry_global$add(
   name = "type", num_args = 2, arg_names = c(NA, NA),
@@ -767,6 +779,12 @@ function_registry_global$add(
   infer_fct = infer_binary_math,
   check_fct = check_binary,
   group = "binary_node", cpp_name = "%"
+)
+function_registry_global$add(
+  name = "%/%", num_args = 2, arg_names = c(NA, NA),
+  infer_fct = infer_binary_math,
+  check_fct = check_binary,
+  group = "binary_node", cpp_name = "etr::idiv"
 )
 function_registry_global$add(
   name = "if", num_args = NA, arg_names = NA,
@@ -1494,4 +1512,14 @@ function_registry_global$add(
   name = "trunc", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary, group = "unary_node", cpp_name = "etr::trunc"
+)
+function_registry_global$add(
+  name = "sum", num_args = 1, arg_names = NA,
+  infer_fct = infer_sum,
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::sum"
+)
+function_registry_global$add(
+  name = "prod", num_args = 1, arg_names = NA,
+  infer_fct = infer_reduce_fixed_type("double"),
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::prod"
 )

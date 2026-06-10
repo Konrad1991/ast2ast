@@ -45,14 +45,14 @@ same_data_struct <- function(is, should) {
 }
 
 infix_ops <- c(
-  "+","-","*","/","^","%%",
+  "+","-","*","/","^","%%", "%/%",
   "==","!=","<","<=",">",">=",
   "&","&&","|","||","!","<-","=",
   "[","[[", ":"
 )
 
 not_infix_in_cpp <- c(
-  "etr::at", "etr::subset", "etr::colon", "etr::power"
+  "etr::at", "etr::subset", "etr::colon", "etr::power", "etr::idiv"
 )
 
 cpp_keywords <- function() {

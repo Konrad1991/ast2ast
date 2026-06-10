@@ -372,6 +372,12 @@ struct ModTrait {
     return l % r;
   }
 };
+struct IDivTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return idiv(l, r);
+  }
+};
 struct EqualTrait {
   template <typename L, typename R>
   static inline auto f(const L& l, const R& r) {

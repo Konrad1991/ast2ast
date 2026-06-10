@@ -18,7 +18,6 @@
 
 ## General
 - in action_transpile_inner_functions check why the loop (marked with a TODO) is required
-- add tests at R level tests for transpose and diag
 
 ## Linear algebra
 Motivated by loss_m2cov_vs_all_perm.
@@ -28,9 +27,6 @@ LAPACK info != 0 -> throw. Type dispatch (scalar/vector/matrix) handled by infer
 - det / determinant. via LU (dgetrf)
 - solve. LAPACK dgesv (general) / dpotrs (after chol)
 
-%/%, %o%, backsolve, chol,
+%o%, backsolve, chol,
 chol2inv, crossprod, forwardsolve, outer,
 qr.solve, svd, tcrossprod,
-
-prod, sum,
-ceiling, floor, trunc

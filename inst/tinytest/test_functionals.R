@@ -79,6 +79,26 @@ functional_tests <- function(a, b, n, type_test) {
     return(ov)
   }
 
+  if (type_test == 5) { # min / max / which.min / which.max
+    return(c(min(a), max(a), which.min(a), which.max(a)))
+  }
+
+  if (type_test == 6) { # modulo
+    return(b %% 2.0)
+  }
+
+  if (type_test == 7) { # sum / prod
+    return(c(sum(a), prod(a)))
+  }
+
+  if (type_test == 8) { # all / any / rev
+    return(c(all(a > 0.5), any(a > 0.5), rev(a)))
+  }
+
+  if (type_test == 9) { # integer division
+    return(b %/% 2.0)
+  }
+
 }
 
 fcpp <- translate(functional_tests, f_args, getsource = FALSE, verbose = FALSE)
@@ -102,6 +122,15 @@ for (i in 0L:4L) {
   }
 }
 expect_true(all(checks))
+
+# min/max/which (case 5) and all/any/rev (case 8) are exact (selection only);
+# modulo (6) and sum/prod (7) involve floating-point arithmetic, so compare with
+# a tolerance (R sum/prod use an extended-precision accumulator).
+expect_true(all(fcpp(a, b, n, 5L) == functional_tests(a, b, n, 5L)))
+expect_true(all(abs(fcpp(a, b, n, 6L) - functional_tests(a, b, n, 6L)) < 1e-8))
+expect_true(all(abs(fcpp(a, b, n, 7L) - functional_tests(a, b, n, 7L)) < 1e-8))
+expect_true(all(fcpp(a, b, n, 8L) == functional_tests(a, b, n, 8L)))
+expect_true(all(abs(fcpp(a, b, n, 9L) - functional_tests(a, b, n, 9L)) < 1e-8))
 
 # --- diag --------------------------------------------------------------------
 # ast2ast supports diag(x, nrow, ncol): an nrow x ncol matrix with x recycled

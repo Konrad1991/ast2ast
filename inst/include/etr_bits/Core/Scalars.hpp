@@ -614,6 +614,7 @@ struct Logical {
   inline Integer operator+(const Logical&) const;
   inline Integer operator-(const Logical&) const;
   inline Integer operator%(const Logical&) const;
+  inline Integer idiv(const Logical&) const;
   inline Integer operator*(const Logical&) const;
   inline Double operator/(const Logical&) const;
   inline Double pow(const Logical&) const;
@@ -679,6 +680,7 @@ struct Integer {
   inline Integer& operator*=(const Integer& r);
   inline Integer operator-(const Integer&) const;
   inline Integer operator%(const Integer&) const;
+  inline Integer idiv(const Integer&) const;
   inline Integer operator*(const Integer&) const;
   inline Double operator/(const Integer&) const;
   inline Double pow(const Integer&) const;
@@ -745,6 +747,7 @@ struct Double {
   inline Double& operator/=(const Double& r);
   inline Double operator-(const Double&) const;
   inline Double operator%(const Double&) const;
+  inline Double idiv(const Double&) const;
   inline Double operator*(const Double&) const;
   inline Double operator/(const Double&) const;
   inline Double pow(const Double&) const;
@@ -834,6 +837,7 @@ struct Dual {
   inline Dual& operator/=(const Dual& r);
   inline Dual operator-(const Dual&) const;
   inline Dual operator%(const Dual&) const;
+  inline Dual idiv(const Dual&) const;
   inline Dual operator*(const Dual&) const;
   inline Dual operator/(const Dual&) const;
   inline Dual pow(const Dual&) const;
@@ -1005,6 +1009,7 @@ struct ReverseDouble {
   inline ReverseDouble operator*(const ReverseDouble& r) const;
   inline ReverseDouble operator/(const ReverseDouble& r) const;
   inline ReverseDouble operator%(const ReverseDouble& r) const;
+  inline ReverseDouble idiv(const ReverseDouble& r) const;
   inline ReverseDouble pow (const ReverseDouble& r) const;
 
   inline ReverseDouble& operator+=(const ReverseDouble& r);
@@ -1308,6 +1313,31 @@ inline ReverseDouble ReverseDouble::operator%(const ReverseDouble& r) const {
   if (is_na || r.is_na) return NA();
   const double q = std::floor(get_val_from_tape() / r.get_val_from_tape());
   return *this - ReverseDouble(q) * r;
+}
+
+// integer division: R's x %/% y = floor(x / y). A step function, so its
+// derivative is 0 (Dual dot = 0, ReverseDouble emitted as a tape constant).
+inline Integer Logical::idiv(const Logical& other) const {
+  if (is_na || other.is_na || other.val == 0) return Integer::NA();
+  const double x = static_cast<double>(val), y = static_cast<double>(other.val);
+  return Integer(static_cast<int>(std::floor(x / y)));
+}
+inline Integer Integer::idiv(const Integer& other) const {
+  if (is_na || other.is_na || other.val == 0) return Integer::NA();
+  const double x = static_cast<double>(val), y = static_cast<double>(other.val);
+  return Integer(static_cast<int>(std::floor(x / y)));
+}
+inline Double Double::idiv(const Double& other) const {
+  if (is_na || other.is_na) return Double::NA();
+  return Double(std::floor(val / other.val));
+}
+inline Dual Dual::idiv(const Dual& other) const {
+  if (is_na || other.is_na) return Dual::NA();
+  return Dual(std::floor(val / other.val), 0.0);
+}
+inline ReverseDouble ReverseDouble::idiv(const ReverseDouble& r) const {
+  if (is_na || r.is_na) return NA();
+  return ReverseDouble(std::floor(get_val_from_tape() / r.get_val_from_tape()));
 }
 
 inline Integer Logical::operator*(const Logical& other) const {
@@ -2103,6 +2133,13 @@ inline auto operator%(const L& l, const R& r) -> decltype( common_type_t<L,R>(l)
   using CT = common_type_t<L, R>;
   return CT(l).operator%( CT(r) );
 }
+// %/% (integer division) ==============================
+template<typename L, typename R>
+requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScalarRef<R>)
+inline auto idiv(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).idiv( common_type_t<L,R>(r) ) ){
+  using CT = common_type_t<L, R>;
+  return CT(l).idiv( CT(r) );
+}
 
 /*
 --------------------------------------------------------------------------------------------------
@@ -2190,6 +2227,7 @@ struct LogicalRef {
   inline Integer operator+(const Logical& o) const { return Logical(*this) + o; }
   inline Integer operator-(const Logical& o) const { return Logical(*this) - o; }
   inline Integer operator%(const Logical& o) const { return Logical(*this) % o; }
+  inline Integer idiv(const Logical& o) const { return Logical(*this).idiv(o); }
   inline Integer operator*(const Logical& o) const { return Logical(*this) * o; }
   inline Double  operator/(const Logical& o) const { return Logical(*this) / o; }
   inline Double  pow(const Logical& o) const { return Logical(*this).pow(o); }
@@ -2262,6 +2300,7 @@ struct IntegerRef {
   inline Integer operator+(const Integer& o) const { return Integer(*this) + o; }
   inline Integer operator-(const Integer& o) const { return Integer(*this) - o; }
   inline Integer operator%(const Integer& o) const { return Integer(*this) % o; }
+  inline Integer idiv(const Integer& o) const { return Integer(*this).idiv(o); }
   inline Integer operator*(const Integer& o) const { return Integer(*this) * o; }
   inline Double  operator/(const Integer& o) const { return Integer(*this) / o; }
   inline Double  pow(const Integer& o) const { return Integer(*this).pow(o); }
@@ -2332,6 +2371,7 @@ struct DoubleRef {
   inline Double operator+(const Double& o) const { return Double(*this) + o; }
   inline Double operator-(const Double& o) const { return Double(*this) - o; }
   inline Double operator%(const Double& o) const { return Double(*this) % o; }
+  inline Double idiv(const Double& o) const { return Double(*this).idiv(o); }
   inline Double operator*(const Double& o) const { return Double(*this) * o; }
   inline Double operator/(const Double& o) const { return Double(*this) / o; }
   inline Double pow(const Double& o) const { return Double(*this).pow(o); }
@@ -2409,6 +2449,7 @@ struct DualRef {
   inline Dual operator+(const Dual& o) const { return Dual(*this) + o; }
   inline Dual operator-(const Dual& o) const { return Dual(*this) - o; }
   inline Dual operator%(const Dual& o) const { return Dual(*this) % o; }
+  inline Dual idiv(const Dual& o) const { return Dual(*this).idiv(o); }
   inline Dual operator*(const Dual& o) const { return Dual(*this) * o; }
   inline Dual operator/(const Dual& o) const { return Dual(*this) / o; }
   inline Dual pow(const Dual& o) const { return Dual(*this).pow(o); }

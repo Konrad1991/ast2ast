@@ -210,6 +210,39 @@ void test_utilities() {
     ass<"rd mod df/dx = 1">(get_val(df_dx.get(0)) == 1.0);
     ass<"rd mod df/dy = -floor(x/y)">(get_val(df_dy.get(0)) == -1.0);
   }
+  // integer division (%/%): floor(x/y); derivative 0 a.e.
+  {
+    ass<"7 %/% 2 -> 3">(get_val(idiv(Double(7.0), Double(2.0))) == 3.0);
+    ass<"-7 %/% 2 -> -4 floored">(get_val(idiv(Double(-7.0), Double(2.0))) == -4.0);
+    ass<"7 %/% -2 -> -4 floored">(get_val(idiv(Double(7.0), Double(-2.0))) == -4.0);
+    ass<"7L %/% 2L -> 3">(get_val(idiv(Integer(7), Integer(2))) == 3);
+    ass<"int idiv by zero -> NA">(idiv(Integer(5), Integer(0)).isNA());
+    ass<"NA %/% 2 -> NA">(idiv(Double::NA(), Double(2.0)).isNA());
+    // identity: (x %% y) + y * (x %/% y) == x
+    Double xx(7.0), yy(2.0);
+    ass<"x == (x%%y) + y*(x%/%y)">(get_val((xx % yy) + yy * idiv(xx, yy)) == 7.0);
+    // vector %/% scalar (lazy view)
+    Array<Double, Buffer<Double>> a;
+    a = c(Double(7.0), Double(8.0), Double(9.0));
+    auto r = idiv(a, Double(2.0));
+    ass<"vec %/% scalar [0]">(get_val(r.get(0)) == 3.0);
+    ass<"vec %/% scalar [1]">(get_val(r.get(1)) == 4.0);
+    ass<"vec %/% scalar [2]">(get_val(r.get(2)) == 4.0);
+    // forward AD: pure floor, derivative 0
+    Dual d = idiv(Dual(7.0, 1.0), Dual(2.0, 0.0));
+    ass<"idiv dual value">(d.val == 3.0);
+    ass<"idiv dual derivative 0">(d.dot == 0.0);
+    // reverse AD: both gradients 0 (value is a tape constant)
+    TAPE_INTERN.clear();
+    ReverseDouble rx = ReverseDouble::Var(7.0);
+    ReverseDouble ry = ReverseDouble::Var(2.0);
+    ReverseDouble fi = idiv(rx, ry);
+    ass<"idiv rd value">(get_val(fi) == 3.0);
+    auto gx = deriv(fi, rx);
+    auto gy = deriv(fi, ry);
+    ass<"idiv rd d/dx = 0">(get_val(gx.get(0)) == 0.0);
+    ass<"idiv rd d/dy = 0">(get_val(gy.get(0)) == 0.0);
+  }
   // rev: reverse a vector (scalar unchanged, matrix flattens to a vector)
   {
     Array<Double, Buffer<Double>> a;
@@ -346,5 +379,53 @@ void test_utilities() {
     ass<"floor rd value">(get_val(fx) == 2.0);
     auto g = deriv(fx, x);
     ass<"floor rd gradient 0">(get_val(g.get(0)) == 0.0);
+  }
+  // sum & prod
+  {
+    Array<Double, Buffer<Double>> a;
+    a = c(Double(1.0), Double(2.0), Double(3.0), Double(4.0));
+    ass<"sum vec">(get_val(sum(a)) == 10.0);
+    ass<"prod vec">(get_val(prod(a)) == 24.0);
+    ass<"sum scalar">(get_val(sum(Double(5.0))) == 5.0);
+    ass<"prod scalar">(get_val(prod(Double(5.0))) == 5.0);
+    // sum keeps integer, prod -> double
+    Array<Integer, Buffer<Integer>> ai;
+    ai = c(Integer(1), Integer(2), Integer(3));
+    ass<"sum integer stays integer">(get_val(sum(ai)) == 6);
+    ass<"prod integer -> double">(get_val(prod(ai)) == 6.0);
+    // NA propagates
+    Array<Double, Buffer<Double>> na;
+    na = c(Double(1.0), Double::NA(), Double(3.0));
+    ass<"sum with NA -> NA">(sum(na).isNA());
+    ass<"prod with NA -> NA">(prod(na).isNA());
+    // prod with a zero (chain rule, no division)
+    Array<Double, Buffer<Double>> z;
+    z = c(Double(2.0), Double(0.0), Double(5.0));
+    ass<"prod with zero -> 0">(get_val(prod(z)) == 0.0);
+    // forward AD: d(sum)/dx0 = 1, d(prod)/dx0 = product of the others
+    Dual sd = sum(c(Dual(2.0, 1.0), Dual(3.0, 0.0)));
+    ass<"sum dual value">(sd.val == 5.0);
+    ass<"sum dual d/dx0 = 1">(sd.dot == 1.0);
+    Dual pd = prod(c(Dual(2.0, 1.0), Dual(3.0, 0.0)));
+    ass<"prod dual value">(pd.val == 6.0);
+    ass<"prod dual d/dx0 = x1 = 3">(pd.dot == 3.0);
+    // reverse AD: sum gradient is 1 everywhere; prod gradient is product of others
+    TAPE_INTERN.clear();
+    Array<ReverseDouble, Buffer<ReverseDouble>> r;
+    r = c(ReverseDouble::Var(2.0), ReverseDouble::Var(3.0), ReverseDouble::Var(4.0));
+    ReverseDouble s = sum(r);
+    ass<"sum rd value">(get_val(s) == 9.0);
+    auto gs = deriv(s, r);
+    ass<"sum rd grad[0]=1">(get_val(gs.get(0)) == 1.0);
+    ass<"sum rd grad[2]=1">(get_val(gs.get(2)) == 1.0);
+    TAPE_INTERN.clear();
+    Array<ReverseDouble, Buffer<ReverseDouble>> rp;
+    rp = c(ReverseDouble::Var(2.0), ReverseDouble::Var(3.0), ReverseDouble::Var(4.0));
+    ReverseDouble p = prod(rp);
+    ass<"prod rd value">(get_val(p) == 24.0);
+    auto gp = deriv(p, rp);
+    ass<"prod rd grad[0]=x1*x2=12">(get_val(gp.get(0)) == 12.0);
+    ass<"prod rd grad[1]=x0*x2=8">(get_val(gp.get(1)) == 8.0);
+    ass<"prod rd grad[2]=x0*x1=6">(get_val(gp.get(2)) == 6.0);
   }
 }

@@ -345,6 +345,15 @@ test_checks(
 args_fct <- function() {}
 f <- function() {
   a <- 1L
+  c <- a %/% NA
+}
+test_checks(
+  f, args_fct, TRUE,
+"c <- a %/% NA\nYou cannot use character/NA/NaN/Inf entries in %/%"
+)
+args_fct <- function() {}
+f <- function() {
+  a <- 1L
   a == NA
   a != NA
   a > NA
@@ -587,3 +596,21 @@ for (i in seq_along(rt_fcts)) {
   rt_checks[i] <- message == e
 }
 expect_true(all(rt_checks), info = "Test check functions for floor/ceiling/trunc")
+
+# --- sum / prod -------------------------------------------------------------
+args_fct <- function() {}
+sp_fcts <- list(
+  function() {a <- sum("a")},
+  function() {a <- prod("a")}
+)
+sp_names <- c("sum", "prod")
+sp_checks <- logical(length(sp_fcts))
+for (i in seq_along(sp_fcts)) {
+  message <- sprintf(
+    "a <- %s(\"a\")\nYou cannot use character/NA/NaN/Inf entries in %s",
+    sp_names[i], sp_names[i])
+  e <- try(run_fr_checks(sp_fcts[[i]], args_fct, TRUE), silent = TRUE)
+  e <- attributes(e)[["condition"]]$message
+  sp_checks[i] <- message == e
+}
+expect_true(all(sp_checks), info = "Test check functions for sum/prod")

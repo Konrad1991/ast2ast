@@ -1359,6 +1359,20 @@ expect_true(types$di$base_type == "integer" && types$di$data_struct == "scalar")
 expect_true(types$dd$base_type == "double" && types$dd$data_struct == "scalar")
 expect_true(types$v$base_type == "double" && types$v$data_struct == "vector")
 
+# --- integer division (%/%): keeps integer vs double base type ----------------
+f <- function() {
+  ai <- 5L
+  bi <- 2L
+  di <- ai %/% bi
+  ad <- 5.0
+  dd <- ad %/% 2.0
+  v <- c(5, 6, 7) %/% 2
+}
+types <- get_types(f)
+expect_true(types$di$base_type == "integer" && types$di$data_struct == "scalar")
+expect_true(types$dd$base_type == "double" && types$dd$data_struct == "scalar")
+expect_true(types$v$base_type == "double" && types$v$data_struct == "vector")
+
 # --- rev: keeps base type, always returns a vector ----------------------------
 f <- function() {
   rd <- rev(c(1, 2, 3))
@@ -1405,3 +1419,18 @@ expect_true(types$s$base_type == "double" && types$s$data_struct == "scalar")
 expect_true(types$v$base_type == "double" && types$v$data_struct == "vector")
 expect_true(types$vi$base_type == "double" && types$vi$data_struct == "vector")
 expect_true(types$m$base_type == "double" && types$m$data_struct == "matrix")
+
+# --- sum / prod: sum keeps type (logical -> integer), prod is always double ----
+f <- function() {
+  sd <- sum(c(1.0, 2.0))
+  si <- sum(1L:3L)
+  sl <- sum(c(TRUE, FALSE))
+  pd <- prod(c(1.0, 2.0))
+  pp <- prod(1L:3L)
+}
+types <- get_types(f)
+expect_true(types$sd$base_type == "double" && types$sd$data_struct == "scalar")
+expect_true(types$si$base_type == "integer" && types$si$data_struct == "scalar")
+expect_true(types$sl$base_type == "integer" && types$sl$data_struct == "scalar")
+expect_true(types$pd$base_type == "double" && types$pd$data_struct == "scalar")
+expect_true(types$pp$base_type == "double" && types$pp$data_struct == "scalar")
