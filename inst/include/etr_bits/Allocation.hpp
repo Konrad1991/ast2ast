@@ -388,7 +388,131 @@ inline auto array(const T& inp, const Dim& dim_inp) {
 // ---------------------------------------------------------------------
 // rbind and cbind -----------------------------------------------------
 // ---------------------------------------------------------------------
+template <typename... Args> inline auto rbind(Args &&...args) {
+  constexpr std::size_t N = sizeof...(Args);
+  static_assert(N > 0,
+  "\n\n[etr::rbind Error]\nYou cannot use rbind() without any arguments\n");
 
+  using cType = decltype(determine_type(args...));
+  std::size_t ncols = 0;
+
+  forEachArg(
+    [&](auto arg) {
+      using testType = Decayed<decltype(arg)>;
+      constexpr bool is_scalar = IsScalarLike<testType>;
+      if constexpr (is_scalar) {
+        if (ncols < 1) {
+          ncols = 1;
+        }
+      } else {
+        if (ncols < arg.size()) {
+          ncols = arg.size();
+        }
+      }
+    },
+    args...);
+
+  // N rows, ncols columns; column-major so [row, col] sits at col*N + row
+  Array<cType, Buffer<cType, RBufferTrait>> ret(SI{N * ncols});
+  ret.dim = std::vector<std::size_t>{N, ncols};
+  std::size_t row = 0;
+
+  forEachArg(
+    [&](const auto &arg) {
+      using testType = Decayed<decltype(arg)>;
+      constexpr bool is_scalar = IsScalarLike<testType>;
+      if constexpr (is_scalar) {
+        if constexpr (IS<testType, cType>) {
+          for (int i = 0; i < ncols; i++) {
+            ret.set(i * N + row, arg);
+          }
+        } else {
+          for (int i = 0; i < ncols; i++) {
+            ret.set(i * N + row, static_cast<cType>(arg));
+          }
+        }
+        row++;
+      } else {
+        using InnerType = typename ReRef<decltype(arg)>::type::value_type;
+        if constexpr (IS<InnerType, cType>) {
+          for (int i = 0; i < ncols; i++) {
+            ret.set(i * N + row, arg.get(safe_modulo(i, arg.size())));
+          }
+        } else {
+          for (int i = 0; i < ncols; i++) {
+            ret.set(i * N + row, static_cast<cType>(arg.get(safe_modulo(i, arg.size()))));
+          }
+        }
+        row++;
+      }
+    },
+    args...);
+
+  return ret;
+}
+
+template <typename... Args> inline auto cbind(Args &&...args) {
+  constexpr std::size_t N = sizeof...(Args);
+  static_assert(N > 0,
+  "\n\n[etr::cbind Error]\nYou cannot use cbind() without any arguments\n");
+
+  using cType = decltype(determine_type(args...));
+  std::size_t nrows = 0;
+
+  forEachArg(
+    [&](auto arg) {
+      using testType = Decayed<decltype(arg)>;
+      constexpr bool is_scalar = IsScalarLike<testType>;
+      if constexpr (is_scalar) {
+        if (nrows < 1) {
+          nrows = 1;
+        }
+      } else {
+        if (nrows < arg.size()) {
+          nrows = arg.size();
+        }
+      }
+    },
+    args...);
+
+  // N cols, nrows rows; column-major so [row, col] sits at col*nrows + row
+  Array<cType, Buffer<cType, RBufferTrait>> ret(SI{N * nrows});
+  ret.dim = std::vector<std::size_t>{nrows, N};
+  std::size_t col = 0;
+
+  forEachArg(
+    [&](const auto &arg) {
+      using testType = Decayed<decltype(arg)>;
+      constexpr bool is_scalar = IsScalarLike<testType>;
+      if constexpr (is_scalar) {
+        if constexpr (IS<testType, cType>) {
+          for (int i = 0; i < nrows; i++) {
+            ret.set(col * nrows + i, arg);
+          }
+        } else {
+          for (int i = 0; i < nrows; i++) {
+            ret.set(col * nrows + i, static_cast<cType>(arg));
+          }
+        }
+        col++;
+      } else {
+        using InnerType = typename ReRef<decltype(arg)>::type::value_type;
+        if constexpr (IS<InnerType, cType>) {
+          for (int i = 0; i < nrows; i++) {
+            ret.set(col * nrows + i, arg.get(safe_modulo(i, arg.size())));
+          }
+        } else {
+          for (int i = 0; i < nrows; i++) {
+            ret.set(col * nrows + i, static_cast<cType>(arg.get(safe_modulo(i, arg.size()))));
+          }
+        }
+        col++;
+      }
+    },
+    args...);
+
+  return ret;
+}
 
 } // namespace etr
 #endif

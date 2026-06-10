@@ -551,3 +551,20 @@ for (i in seq_along(red_fcts)) {
   red_checks[i] <- message == e
 }
 expect_true(all(red_checks), info = "Test check functions for reductions")
+
+# --- rbind / cbind ----------------------------------------------------------
+args_fct <- function() {}
+f <- function() {
+  a <- rbind(1, 2, "Invalid")
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a <- rbind(1.0, 2.0, \"Invalid\")\nYou cannot use character entries in rbind"
+)
+f <- function() {
+  a <- cbind(1, 2, "Invalid")
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a <- cbind(1.0, 2.0, \"Invalid\")\nYou cannot use character entries in cbind"
+)

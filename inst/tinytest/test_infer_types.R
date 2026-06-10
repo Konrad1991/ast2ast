@@ -1381,3 +1381,14 @@ expect_true(types$vd$base_type == "double" && types$vd$data_struct == "vector")
 expect_true(types$vl$base_type == "logical" && types$vl$data_struct == "vector")
 expect_true(types$vint$base_type == "integer" && types$vint$data_struct == "vector")
 expect_true(types$s$base_type == "double" && types$s$data_struct == "scalar")
+
+# --- rbind / cbind: always a matrix, base type is the common type -------------
+f <- function() {
+  m1 <- rbind(c(1, 2, 3), c(4, 5, 6))
+  m2 <- cbind(1L, 2L)
+  m3 <- rbind(c(1, 2), 3L)
+}
+types <- get_types(f)
+expect_true(types$m1$base_type == "double" && types$m1$data_struct == "matrix")
+expect_true(types$m2$base_type == "integer" && types$m2$data_struct == "matrix")
+expect_true(types$m3$base_type == "double" && types$m3$data_struct == "matrix")

@@ -1394,3 +1394,89 @@ function_registry_global$add(
   },
   check_fct = mock, group = "unary_node", cpp_name = "etr::as_logical"
 )
+function_registry_global$add(
+  name = "rbind", num_args = NA, arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    types_of_args <- lapply(node$args, function(x) {
+      temp <- infer(x, vars_list, r_fct, function_registry)
+      return(temp)
+    })
+    for (i in seq_len(length(types_of_args))) {
+      if (!inherits(types_of_args[[i]], "type_node")) {
+        return(sprintf("Found unexpected type in: %s", node$stringify()))
+      }
+    }
+    types_of_args <- sapply(types_of_args, \(x) x$base_type)
+    common_type <- "logical"
+    if (any(types_of_args %in% c("int", "integer"))) {
+      common_type <- "integer"
+    }
+    if (any(types_of_args %in% c("double", "numeric"))) {
+      common_type <- "double"
+    }
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- common_type
+    t$data_struct <- "matrix"
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
+    for (i in seq_along(node$args)) {
+      if (inherits(node$args[[i]], "variable_node")) {
+        t <- vars_types_list[[node$args[[i]]$name]]
+        if (!inherits(t, "type_node")) {
+          node$error <- sprintf("You cannot use entries of type %s in rbind", class(t))
+          return()
+        }
+      }
+      if (is_char(node$args[[i]], vars_types_list)) {
+        node$error <- "You cannot use character entries in rbind"
+        return()
+      }
+    }
+  },
+  group = "function_node", cpp_name = "etr::rbind"
+)
+function_registry_global$add(
+  name = "cbind", num_args = NA, arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    types_of_args <- lapply(node$args, function(x) {
+      temp <- infer(x, vars_list, r_fct, function_registry)
+      return(temp)
+    })
+    for (i in seq_len(length(types_of_args))) {
+      if (!inherits(types_of_args[[i]], "type_node")) {
+        return(sprintf("Found unexpected type in: %s", node$stringify()))
+      }
+    }
+    types_of_args <- sapply(types_of_args, \(x) x$base_type)
+    common_type <- "logical"
+    if (any(types_of_args %in% c("int", "integer"))) {
+      common_type <- "integer"
+    }
+    if (any(types_of_args %in% c("double", "numeric"))) {
+      common_type <- "double"
+    }
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- common_type
+    t$data_struct <- "matrix"
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
+    for (i in seq_along(node$args)) {
+      if (inherits(node$args[[i]], "variable_node")) {
+        t <- vars_types_list[[node$args[[i]]$name]]
+        if (!inherits(t, "type_node")) {
+          node$error <- sprintf("You cannot use entries of type %s in cbind", class(t))
+          return()
+        }
+      }
+      if (is_char(node$args[[i]], vars_types_list)) {
+        node$error <- "You cannot use character entries in cbind"
+        return()
+      }
+    }
+  },
+  group = "function_node", cpp_name = "etr::cbind"
+)
