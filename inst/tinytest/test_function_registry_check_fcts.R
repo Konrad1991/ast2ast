@@ -568,3 +568,22 @@ test_checks(
   f, args_fct, TRUE,
   "a <- cbind(1.0, 2.0, \"Invalid\")\nYou cannot use character entries in cbind"
 )
+
+# --- floor / ceiling / trunc ------------------------------------------------
+args_fct <- function() {}
+rt_fcts <- list(
+  function() {a <- floor("a")},
+  function() {a <- ceiling("a")},
+  function() {a <- trunc("a")}
+)
+rt_names <- c("floor", "ceiling", "trunc")
+rt_checks <- logical(length(rt_fcts))
+for (i in seq_along(rt_fcts)) {
+  message <- sprintf(
+    "a <- %s(\"a\")\nYou cannot use character/NA/NaN/Inf entries in %s",
+    rt_names[i], rt_names[i])
+  e <- try(run_fr_checks(rt_fcts[[i]], args_fct, TRUE), silent = TRUE)
+  e <- attributes(e)[["condition"]]$message
+  rt_checks[i] <- message == e
+}
+expect_true(all(rt_checks), info = "Test check functions for floor/ceiling/trunc")

@@ -1480,3 +1480,18 @@ function_registry_global$add(
   },
   group = "function_node", cpp_name = "etr::cbind"
 )
+function_registry_global$add(
+  name = "floor", num_args = 1, arg_names = NA,
+  infer_fct = infer_unary_math,
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::floor"
+)
+function_registry_global$add(
+  name = "ceiling", num_args = 1, arg_names = NA,
+  infer_fct = infer_unary_math,
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::ceiling"
+)
+function_registry_global$add(
+  name = "trunc", num_args = 1, arg_names = NA,
+  infer_fct = infer_unary_math,
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::trunc"
+)

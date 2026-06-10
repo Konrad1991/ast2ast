@@ -33,5 +33,4 @@ chol2inv, crossprod, forwardsolve, outer,
 qr.solve, svd, tcrossprod,
 
 prod, sum,
-cbind, rbind,
 ceiling, floor, trunc

@@ -1392,3 +1392,16 @@ types <- get_types(f)
 expect_true(types$m1$base_type == "double" && types$m1$data_struct == "matrix")
 expect_true(types$m2$base_type == "integer" && types$m2$data_struct == "matrix")
 expect_true(types$m3$base_type == "double" && types$m3$data_struct == "matrix")
+
+# --- floor / ceiling / trunc: always double, shape preserved ------------------
+f <- function() {
+  s <- floor(2.7)
+  v <- ceiling(c(1.1, 2.2))
+  vi <- trunc(1:3)
+  m <- floor(matrix(1.5, 2, 2))
+}
+types <- get_types(f)
+expect_true(types$s$base_type == "double" && types$s$data_struct == "scalar")
+expect_true(types$v$base_type == "double" && types$v$data_struct == "vector")
+expect_true(types$vi$base_type == "double" && types$vi$data_struct == "vector")
+expect_true(types$m$base_type == "double" && types$m$data_struct == "matrix")

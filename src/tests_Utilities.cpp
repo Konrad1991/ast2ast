@@ -311,4 +311,40 @@ void test_utilities() {
     ass<"rbind short-first [0,2]=10 wraps">(get_val(r2.get(2 * 2 + 0)) == 10.0);
     ass<"rbind short-first [1,2]=3">(get_val(r2.get(2 * 2 + 1)) == 3.0);
   }
+  // floor / ceiling / trunc (always double; derivative 0 a.e.)
+  {
+    ass<"floor(2.7)">(get_val(floor(Double(2.7))) == 2.0);
+    ass<"floor(-2.3)">(get_val(floor(Double(-2.3))) == -3.0);
+    ass<"ceiling(2.1)">(get_val(ceiling(Double(2.1))) == 3.0);
+    ass<"ceiling(-2.7)">(get_val(ceiling(Double(-2.7))) == -2.0);
+    ass<"trunc(2.7)">(get_val(trunc(Double(2.7))) == 2.0);
+    ass<"trunc(-2.7)">(get_val(trunc(Double(-2.7))) == -2.0);
+    ass<"floor(5L) -> 5.0">(get_val(floor(Integer(5))) == 5.0);
+    ass<"floor(NA) -> NA">(floor(Double::NA()).isNA());
+    // vector: order preserved, shape kept
+    Array<Double, Buffer<Double>> a;
+    a = c(Double(1.2), Double(2.8), Double(3.5));
+    auto r = floor(a);
+    ass<"floor vec size">(r.size() == 3);
+    ass<"floor vec [0]">(get_val(r.get(0)) == 1.0);
+    ass<"floor vec [1]">(get_val(r.get(1)) == 2.0);
+    ass<"floor vec [2]">(get_val(r.get(2)) == 3.0);
+    Array<Double, Buffer<Double>> m;
+    m = matrix(Double(1.7), Integer(2), Integer(3));
+    auto rm = floor(m);
+    ass<"floor keeps matrix dim">(rm.dim.size() == 2);
+    ass<"floor matrix nrow">(nrow(rm) == Integer(2));
+    ass<"floor matrix ncol">(ncol(rm) == Integer(3));
+    // forward AD: value floored, derivative 0
+    Dual fd = floor(Dual(2.7, 1.0));
+    ass<"floor dual value">(fd.val == 2.0);
+    ass<"floor dual derivative 0">(fd.dot == 0.0);
+    // reverse AD: gradient is 0
+    TAPE_INTERN.clear();
+    ReverseDouble x = ReverseDouble::Var(2.7);
+    ReverseDouble fx = floor(x);
+    ass<"floor rd value">(get_val(fx) == 2.0);
+    auto g = deriv(fx, x);
+    ass<"floor rd gradient 0">(get_val(g.get(0)) == 0.0);
+  }
 }
