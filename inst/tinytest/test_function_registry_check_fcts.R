@@ -640,3 +640,21 @@ test_checks(
   f, args_fct, TRUE,
   "m <- chol(v)\nYou can only call chol on a matrix"
 )
+
+# --- solve ------------------------------------------------------------------
+# character argument is rejected in either position
+f <- function() {
+  a <- solve("a")
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a <- solve(\"a\")\nYou cannot use character entries in solve"
+)
+f <- function() {
+  m <- matrix(1.0, 2, 2)
+  x <- solve(m, "b")
+}
+test_checks(
+  f, args_fct, TRUE,
+  "x <- solve(m, \"b\")\nYou cannot use character entries in solve"
+)

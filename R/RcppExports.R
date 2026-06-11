@@ -85,6 +85,10 @@ test_scalar_assignment <- function() {
     invisible(.Call(`_ast2ast_test_scalar_assignment`))
 }
 
+test_solve <- function() {
+    invisible(.Call(`_ast2ast_test_solve`))
+}
+
 test_transpose <- function() {
     invisible(.Call(`_ast2ast_test_transpose`))
 }

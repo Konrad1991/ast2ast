@@ -22,11 +22,10 @@
 ## Linear algebra
 Motivated by loss_m2cov_vs_all_perm.
 LAPACK info != 0 -> throw. Type dispatch (scalar/vector/matrix) handled by inferred types.
-- chol. LAPACK dpotrf
 - backsolve / forwardsolve. LAPACK dtrsm (or dtrsv for single rhs)
 - det / determinant. via LU (dgetrf)
 - solve. LAPACK dgesv (general) / dpotrs (after chol)
 
-%o%, backsolve, chol,
+%o%, backsolve,
 chol2inv, crossprod, forwardsolve, outer,
 qr.solve, svd, tcrossprod,

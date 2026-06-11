@@ -106,6 +106,21 @@ functional_tests <- function(a, b, n, type_test) {
     return(chol(A))
   }
 
+  if (type_test == 11) { # solve(A, x): system solve, vector RHS -> vector
+    X <- matrix(a[1L:9L], 3, 3)
+    A <- t(X) %*% X
+    A <- A + diag(3.0, 3, 3)
+    rhs <- a[1L:3L]
+    return(solve(A, rhs))
+  }
+
+  if (type_test == 12) { # solve(A): matrix inverse -> matrix
+    X <- matrix(a[1L:9L], 3, 3)
+    A <- t(X) %*% X
+    A <- A + diag(3.0, 3, 3)
+    return(solve(A))
+  }
+
 }
 
 fcpp <- translate(functional_tests, f_args, getsource = FALSE, verbose = FALSE)
@@ -139,6 +154,9 @@ expect_true(all(abs(fcpp(a, b, n, 7L) - functional_tests(a, b, n, 7L)) < 1e-8))
 expect_true(all(fcpp(a, b, n, 8L) == functional_tests(a, b, n, 8L)))
 expect_true(all(abs(fcpp(a, b, n, 9L) - functional_tests(a, b, n, 9L)) < 1e-8))
 expect_true(all(abs(fcpp(a, b, n, 10L) - functional_tests(a, b, n, 10L)) < 1e-8))
+# solve: system solve (vector result, case 11) and matrix inverse (case 12)
+expect_true(all(abs(fcpp(a, b, n, 11L) - functional_tests(a, b, n, 11L)) < 1e-8))
+expect_true(all(abs(fcpp(a, b, n, 12L) - functional_tests(a, b, n, 12L)) < 1e-8))
 
 # --- diag --------------------------------------------------------------------
 # ast2ast supports diag(x, nrow, ncol): an nrow x ncol matrix with x recycled

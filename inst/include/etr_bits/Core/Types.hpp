@@ -21,6 +21,12 @@ extern "C" void dtrsm_(const char* side, const char* uplo, const char* transa,
                        const char* diag, const int* m, const int* n,
                        const double* alpha, const double* a, const int* lda,
                        double* b, const int* ldb);
+// LU factorisation + solve (LAPACK), used by solve()
+extern "C" void dgetrf_(const int* m, const int* n, double* a, const int* lda,
+                        int* ipiv, int* info);
+extern "C" void dgetrs_(const char* trans, const int* n, const int* nrhs,
+                        const double* a, const int* lda, const int* ipiv,
+                        double* b, const int* ldb, int* info);
 #define F77_CALL(x) x##_
 #define FCONE
 #else

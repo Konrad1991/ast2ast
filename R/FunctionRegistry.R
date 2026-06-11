@@ -1545,3 +1545,44 @@ function_registry_global$add(
   infer_fct = infer_reduce_fixed_type("double"),
   check_fct = check_unary, group = "unary_node", cpp_name = "etr::prod"
 )
+
+function_registry_global$add(
+  name = "solve", num_args = c(1, 2), arg_names = c(NA, NA),
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    all_types <- lapply(node$args, function(arg) {
+      infer(arg, vars_list, r_fct, function_registry)
+    })
+    for (i in seq_len(length(all_types))) {
+      if (!inherits(all_types[[i]], "type_node")) {
+        return(sprintf("Found unallowed type in: %s", node$stringify()))
+      }
+    }
+    ds <- ""
+    if (length(node$args) == 1L) {
+      ds <- "matrix" # solve(A)
+    } else if (length(node$args) == 2L) {
+      ds <- all_types[[2L]]$data_struct # solve(A, x) returns vector if x is vector. If x is matrix result is also a matrix
+    }
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "double"
+    t$data_struct <- ds
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
+    for (i in seq_along(node$args)) {
+      if (inherits(node$args[[i]], "variable_node")) {
+        t <- vars_types_list[[node$args[[i]]$name]]
+        if (!inherits(t, "type_node")) {
+          node$error <- sprintf("You cannot use entries of type %s in solve", class(t))
+          return()
+        }
+      }
+      if (is_char(node$args[[i]], vars_types_list)) {
+        node$error <- "You cannot use character entries in solve"
+        return()
+      }
+    }
+  },
+ group = "function_node", cpp_name = "etr::solve"
+)

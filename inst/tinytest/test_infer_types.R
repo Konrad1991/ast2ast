@@ -1442,3 +1442,27 @@ f <- function() {
 }
 types <- get_types(f)
 expect_true(types$r$base_type == "double" && types$r$data_struct == "matrix")
+
+# --- solve: inverse is a matrix; solve(A, x) inherits x's data structure ------
+f <- function() {
+  m <- matrix(1.0, 2, 2)
+  inv <- solve(m)
+}
+types <- get_types(f)
+expect_true(types$inv$base_type == "double" && types$inv$data_struct == "matrix")
+
+f <- function() {
+  m <- matrix(1.0, 2, 2)
+  v <- c(1.0, 2.0)
+  x <- solve(m, v)
+}
+types <- get_types(f)
+expect_true(types$x$base_type == "double" && types$x$data_struct == "vector")
+
+f <- function() {
+  m <- matrix(1.0, 2, 2)
+  b <- matrix(1.0, 2, 2)
+  x <- solve(m, b)
+}
+types <- get_types(f)
+expect_true(types$x$base_type == "double" && types$x$data_struct == "matrix")

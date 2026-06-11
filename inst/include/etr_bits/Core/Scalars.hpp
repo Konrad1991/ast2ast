@@ -25,11 +25,11 @@ enum class ROp : uint8_t {
   // M*N-1 nodes are tagged BlockSlot and are no-ops in reverse(). Both
   // node kinds store block_idx (index into ReverseTape::blocks) in a[],
   // NOT a tape id.
-  MatMul, BlockSlot, Chol
+  MatMul, BlockSlot, Chol, Solve
 };
 
 struct BlockOp {
-  enum class Kind : uint8_t { MatMul, Chol };
+  enum class Kind : uint8_t { MatMul, Chol, Solve };
   Kind kind;
   std::size_t rows_a;
   std::size_t cols_a; // == rows_b
@@ -42,6 +42,12 @@ struct BlockOp {
   std::vector<double> a_vals;
   std::vector<int> b_ids;
   std::vector<double> b_vals;
+  // Solve only: LU factors of A (column-major n x n) and pivots from the
+  // forward factorization, reused by the backward pass instead of refactoring.
+  // Empty for other block kinds (and for an NA-poisoned solve, which has no
+  // backward pass).
+  std::vector<double> lu;
+  std::vector<int> ipiv;
   int out_tape_id_first{-1}; // tape id of the head node; outputs occupy [out_tape_id_first, out_tape_id_first + rows_a*cols_b)
 };
 
@@ -308,6 +314,73 @@ struct ReverseTape {
     return head_id;
   }
 
+  // X = A^-1 B, A n x n, B n x k, X n x k (column-major). Pushes n*k output
+  // nodes for X; first is the Solve head (carries the block's backward), rest
+  // are inert BlockSlot markers. Any NA in A or B poisons the whole result
+  // (a solve with NA is undefined). Per side, exactly one of {ids, vals}.
+  // Returns the head id.
+  inline int push_solve(std::size_t n, std::size_t k,
+                        std::vector<int> a_ids, std::vector<double> a_vals,
+                        std::vector<int> b_ids, std::vector<double> b_vals) {
+    ass<"push_solve: A side requires exactly one of {ids, vals}">(a_ids.empty() != a_vals.empty());
+    ass<"push_solve: B side requires exactly one of {ids, vals}">(b_ids.empty() != b_vals.empty());
+    ass<"push_solve: A size mismatch">((a_ids.empty() ? a_vals.size() : a_ids.size()) == n * n);
+    ass<"push_solve: B size mismatch">((b_ids.empty() ? b_vals.size() : b_ids.size()) == n * k);
+    const std::size_t out_size = n * k;
+
+    std::vector<double> A(n * n);
+    std::vector<double> X(out_size); // RHS B, overwritten with the solution
+    bool any_na = false;
+    if (a_ids.empty()) {
+      for (std::size_t i = 0; i < n * n; ++i) { A[i] = a_vals[i]; if (std::isnan(A[i])) any_na = true; }
+    } else {
+      for (std::size_t i = 0; i < n * n; ++i) {
+        A[i] = val[static_cast<std::size_t>(a_ids[i])];
+        if (is_na[static_cast<std::size_t>(a_ids[i])]) any_na = true;
+      }
+    }
+    if (b_ids.empty()) {
+      for (std::size_t i = 0; i < out_size; ++i) { X[i] = b_vals[i]; if (std::isnan(X[i])) any_na = true; }
+    } else {
+      for (std::size_t i = 0; i < out_size; ++i) {
+        X[i] = val[static_cast<std::size_t>(b_ids[i])];
+        if (is_na[static_cast<std::size_t>(b_ids[i])]) any_na = true;
+      }
+    }
+
+    std::vector<uint8_t> out_na(out_size, 0);
+    std::vector<int> ipiv; // populated only when factorized (non-NA); cached for backward
+    if (any_na) {
+      for (std::size_t i = 0; i < out_size; ++i) { X[i] = std::numeric_limits<double>::quiet_NaN(); out_na[i] = 1; }
+    } else {
+      int ni = static_cast<int>(n), ki = static_cast<int>(k), info = 0;
+      ipiv.assign(n, 0);
+      F77_CALL(dgetrf)(&ni, &ni, A.data(), &ni, ipiv.data(), &info); // A overwritten with LU
+      ass<"solve: matrix is exactly singular">(info == 0);
+      F77_CALL(dgetrs)("N", &ni, &ki, A.data(), &ni, ipiv.data(), X.data(), &ni, &info FCONE);
+      ass<"solve: triangular solve failed">(info == 0);
+    }
+
+    const int block_idx = static_cast<int>(blocks.size());
+    const int head_id = push_node(ROp::Solve, block_idx, -1, X[0], out_na[0] != 0);
+    for (std::size_t i = 1; i < out_size; ++i) {
+      push_node(ROp::BlockSlot, block_idx, -1, X[i], out_na[i] != 0);
+    }
+    BlockOp blk;
+    blk.kind = BlockOp::Kind::Solve;
+    blk.rows_a = n;
+    blk.cols_a = n;
+    blk.cols_b = k;
+    blk.a_ids = std::move(a_ids);
+    blk.a_vals = std::move(a_vals);
+    blk.b_ids = std::move(b_ids);
+    blk.b_vals = std::move(b_vals);
+    if (!any_na) { blk.lu = std::move(A); blk.ipiv = std::move(ipiv); } // A now holds LU
+    blk.out_tape_id_first = head_id;
+    blocks.push_back(std::move(blk));
+    return head_id;
+  }
+
   void reverse(int out) {
     std::fill(adj.begin(), adj.end(), 0.0);
     adj[static_cast<std::size_t>(out)] = 1.0;
@@ -518,6 +591,50 @@ struct ReverseTape {
               const std::size_t idx = c * n + r;
               const double g = (r == c) ? M[idx] : (M[idx] + M[r * n + c]);
               if (g != 0.0) adj[static_cast<std::size_t>(blk.a_ids[idx])] += g;
+            }
+          }
+          break;
+        }
+        case ROp::Solve: {
+          // ai is the index into `blocks`. X = A^-1 B (A n x n, B/X n x k).
+          // Reverse: G = A^-T Xbar (solve A^T G = Xbar); then Bbar += G and
+          // Abar += -G X^T.
+          const BlockOp& blk = blocks[static_cast<std::size_t>(ai)];
+          const bool a_tracked = !blk.a_ids.empty();
+          const bool b_tracked = !blk.b_ids.empty();
+          if (!a_tracked && !b_tracked) break; // both constant: no gradient
+          const std::size_t n = blk.rows_a;
+          const std::size_t k = blk.cols_b;
+          const std::size_t out0 = static_cast<std::size_t>(blk.out_tape_id_first);
+
+          // X (solution) from the output tape values
+          std::vector<double> X(n * k);
+          for (std::size_t i = 0; i < n * k; ++i) X[i] = val[out0 + i];
+          // G starts as Xbar (output adjoints), zeroing NA cells
+          std::vector<double> G(n * k);
+          for (std::size_t i = 0; i < n * k; ++i) G[i] = is_na[out0 + i] ? 0.0 : adj[out0 + i];
+
+          // Reuse the LU factors cached at forward time (A values are fixed
+          // between forward and reverse) to solve A^T G = Xbar.
+          int ni = static_cast<int>(n), ki = static_cast<int>(k), info = 0;
+          F77_CALL(dgetrs)("T", &ni, &ki, blk.lu.data(), &ni, blk.ipiv.data(), G.data(), &ni, &info FCONE);
+          ass<"solve(backward): triangular solve failed">(info == 0);
+
+          // Bbar += G
+          if (b_tracked) {
+            for (std::size_t i = 0; i < n * k; ++i) {
+              adj[static_cast<std::size_t>(blk.b_ids[i])] += G[i];
+            }
+          }
+          // Abar += -G X^T   (n x n) = (n x k) * (n x k)^T
+          if (a_tracked) {
+            std::vector<double> Abar(n * n, 0.0);
+            const double neg_one = -1.0, zero = 0.0;
+            F77_CALL(dgemm)("N", "T", &ni, &ni, &ki, &neg_one,
+                            G.data(), &ni, X.data(), &ni, &zero,
+                            Abar.data(), &ni FCONE FCONE);
+            for (std::size_t i = 0; i < n * n; ++i) {
+              adj[static_cast<std::size_t>(blk.a_ids[i])] += Abar[i];
             }
           }
           break;

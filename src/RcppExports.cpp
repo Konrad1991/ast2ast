@@ -200,6 +200,15 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_solve
+void test_solve();
+RcppExport SEXP _ast2ast_test_solve() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_solve();
+    return R_NilValue;
+END_RCPP
+}
 // test_transpose
 void test_transpose();
 RcppExport SEXP _ast2ast_test_transpose() {
@@ -232,6 +241,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_diag", (DL_FUNC) &_ast2ast_test_diag, 0},
     {"_ast2ast_test_scalars", (DL_FUNC) &_ast2ast_test_scalars, 0},
     {"_ast2ast_test_scalar_assignment", (DL_FUNC) &_ast2ast_test_scalar_assignment, 0},
+    {"_ast2ast_test_solve", (DL_FUNC) &_ast2ast_test_solve, 0},
     {"_ast2ast_test_transpose", (DL_FUNC) &_ast2ast_test_transpose, 0},
     {NULL, NULL, 0}
 };
