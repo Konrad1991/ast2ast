@@ -25,11 +25,11 @@ enum class ROp : uint8_t {
   // M*N-1 nodes are tagged BlockSlot and are no-ops in reverse(). Both
   // node kinds store block_idx (index into ReverseTape::blocks) in a[],
   // NOT a tape id.
-  MatMul, BlockSlot, Chol, Solve
+  MatMul, BlockSlot, Chol, Solve, CrossProd, TriSolve
 };
 
 struct BlockOp {
-  enum class Kind : uint8_t { MatMul, Chol, Solve };
+  enum class Kind : uint8_t { MatMul, Chol, Solve, CrossProd, TCrossProd, BackSolve, ForwardSolve };
   Kind kind;
   std::size_t rows_a;
   std::size_t cols_a; // == rows_b
@@ -262,6 +262,84 @@ struct ReverseTape {
     return head_id;
   }
 
+  // X is m x n (column-major). transposed=false -> XᵀX (n x n);
+  // transposed=true -> XXᵀ (m x m). Single input, so only the a side is used.
+  // Pushes d*d output nodes (d = n or m); first is the CrossProd head (carries
+  // the block's backward), rest are inert BlockSlot markers. NA poisoning is
+  // per-cell like %*%: S[i,j] is NA iff the contracted line i or j has an NA
+  // (a column of X for crossprod, a row for tcrossprod). Returns the head id.
+  inline int push_crossprod(std::size_t m, std::size_t n,
+                            std::vector<int> a_ids, std::vector<double> a_vals,
+                            bool transposed) {
+    ass<"push_crossprod: requires exactly one of {ids, vals}">(a_ids.empty() != a_vals.empty());
+    ass<"push_crossprod: size mismatch">((a_ids.empty() ? a_vals.size() : a_ids.size()) == m * n);
+    const std::size_t d = transposed ? m : n; // output is d x d
+    const int block_idx = static_cast<int>(blocks.size());
+
+    // NA at flat (column-major) index of X.
+    auto x_na = [&](std::size_t idx) {
+      return a_ids.empty() ? std::isnan(a_vals[idx])
+                           : (is_na[static_cast<std::size_t>(a_ids[idx])] != 0);
+    };
+    // Per-line NA mask of length d. crossprod line l = column l (entries
+    // l*m + k); tcrossprod line l = row l (entries k*m + l).
+    std::vector<uint8_t> line_na(d, 0);
+    for (std::size_t l = 0; l < d; ++l) {
+      const std::size_t contract = transposed ? n : m;
+      for (std::size_t k = 0; k < contract; ++k) {
+        const std::size_t idx = transposed ? (k * m + l) : (l * m + k);
+        if (x_na(idx)) { line_na[l] = 1; break; }
+      }
+    }
+
+    // Materialize X (m x n) for the forward dgemm.
+    std::vector<double> x_buf;
+    const double* X;
+    if (a_ids.empty()) {
+      X = a_vals.data();
+    } else {
+      x_buf.resize(m * n);
+      for (std::size_t k = 0; k < x_buf.size(); ++k) x_buf[k] = val[static_cast<std::size_t>(a_ids[k])];
+      X = x_buf.data();
+    }
+
+    std::vector<double> out_vals(d * d, 0.0);
+    const int di = static_cast<int>(d);
+    const int mi = static_cast<int>(m);
+    const int ni = static_cast<int>(n);
+    const double alpha = 1.0, beta = 0.0;
+    if (!transposed) // C(n x n) = Xᵀ X ; contraction dim = m
+      F77_CALL(dgemm)("T", "N", &ni, &ni, &mi, &alpha, X, &mi, X, &mi, &beta, out_vals.data(), &ni FCONE FCONE);
+    else             // C(m x m) = X Xᵀ ; contraction dim = n
+      F77_CALL(dgemm)("N", "T", &mi, &mi, &ni, &alpha, X, &mi, X, &mi, &beta, out_vals.data(), &mi FCONE FCONE);
+
+    // Apply NA mask: S[i,j] NA iff line i or line j is NA.
+    std::vector<uint8_t> out_na(d * d, 0);
+    for (std::size_t j = 0; j < d; ++j) {
+      for (std::size_t i = 0; i < d; ++i) {
+        if (line_na[i] || line_na[j]) {
+          out_vals[j * d + i] = std::numeric_limits<double>::quiet_NaN();
+          out_na[j * d + i] = 1;
+        }
+      }
+    }
+
+    const int head_id = push_node(ROp::CrossProd, block_idx, -1, out_vals[0], out_na[0] != 0);
+    for (std::size_t k = 1; k < d * d; ++k) {
+      push_node(ROp::BlockSlot, block_idx, -1, out_vals[k], out_na[k] != 0);
+    }
+    BlockOp blk;
+    blk.kind = transposed ? BlockOp::Kind::TCrossProd : BlockOp::Kind::CrossProd;
+    blk.rows_a = m;
+    blk.cols_a = n;
+    blk.cols_b = 0;
+    blk.a_ids = std::move(a_ids);
+    blk.a_vals = std::move(a_vals);
+    blk.out_tape_id_first = head_id;
+    blocks.push_back(std::move(blk));
+    return head_id;
+  }
+
   // Cholesky R = chol(A) (upper, A = R^T R) of an n x n matrix. Pushes n*n
   // output nodes for R; the first is the Chol head (carries the block's
   // backward), the rest are inert BlockSlot markers. Any NA in A poisons the
@@ -381,6 +459,71 @@ struct ReverseTape {
     return head_id;
   }
 
+  // X = A^-1 B with A triangular n x n (upper=true -> backsolve, R x = b;
+  // upper=false -> forwardsolve, L x = b). B/X are n x k. No factorization: A
+  // is already the triangular factor and is reused unchanged in the backward
+  // pass. Triangularity is trusted (dtrsm ignores the other triangle), matching
+  // R. Any NA in A or B poisons the whole result. Pushes n*k output nodes; the
+  // first is the TriSolve head, the rest inert BlockSlot markers. Returns head id.
+  inline int push_trisolve(std::size_t n, std::size_t k,
+                           std::vector<int> a_ids, std::vector<double> a_vals,
+                           std::vector<int> b_ids, std::vector<double> b_vals,
+                           bool upper) {
+    ass<"push_trisolve: A side requires exactly one of {ids, vals}">(a_ids.empty() != a_vals.empty());
+    ass<"push_trisolve: B side requires exactly one of {ids, vals}">(b_ids.empty() != b_vals.empty());
+    ass<"push_trisolve: A size mismatch">((a_ids.empty() ? a_vals.size() : a_ids.size()) == n * n);
+    ass<"push_trisolve: B size mismatch">((b_ids.empty() ? b_vals.size() : b_ids.size()) == n * k);
+    const std::size_t out_size = n * k;
+
+    std::vector<double> A(n * n);
+    std::vector<double> X(out_size); // RHS B, overwritten with the solution
+    bool any_na = false;
+    if (a_ids.empty()) {
+      for (std::size_t i = 0; i < n * n; ++i) { A[i] = a_vals[i]; if (std::isnan(A[i])) any_na = true; }
+    } else {
+      for (std::size_t i = 0; i < n * n; ++i) {
+        A[i] = val[static_cast<std::size_t>(a_ids[i])];
+        if (is_na[static_cast<std::size_t>(a_ids[i])]) any_na = true;
+      }
+    }
+    if (b_ids.empty()) {
+      for (std::size_t i = 0; i < out_size; ++i) { X[i] = b_vals[i]; if (std::isnan(X[i])) any_na = true; }
+    } else {
+      for (std::size_t i = 0; i < out_size; ++i) {
+        X[i] = val[static_cast<std::size_t>(b_ids[i])];
+        if (is_na[static_cast<std::size_t>(b_ids[i])]) any_na = true;
+      }
+    }
+
+    std::vector<uint8_t> out_na(out_size, 0);
+    if (any_na) {
+      for (std::size_t i = 0; i < out_size; ++i) { X[i] = std::numeric_limits<double>::quiet_NaN(); out_na[i] = 1; }
+    } else {
+      int ni = static_cast<int>(n), ki = static_cast<int>(k);
+      const double one = 1.0;
+      F77_CALL(dtrsm)("L", upper ? "U" : "L", "N", "N", &ni, &ki, &one,
+                      A.data(), &ni, X.data(), &ni FCONE FCONE FCONE FCONE);
+    }
+
+    const int block_idx = static_cast<int>(blocks.size());
+    const int head_id = push_node(ROp::TriSolve, block_idx, -1, X[0], out_na[0] != 0);
+    for (std::size_t i = 1; i < out_size; ++i) {
+      push_node(ROp::BlockSlot, block_idx, -1, X[i], out_na[i] != 0);
+    }
+    BlockOp blk;
+    blk.kind = upper ? BlockOp::Kind::BackSolve : BlockOp::Kind::ForwardSolve;
+    blk.rows_a = n;
+    blk.cols_a = n;
+    blk.cols_b = k;
+    blk.a_ids = std::move(a_ids);
+    blk.a_vals = std::move(a_vals);
+    blk.b_ids = std::move(b_ids);
+    blk.b_vals = std::move(b_vals);
+    blk.out_tape_id_first = head_id;
+    blocks.push_back(std::move(blk));
+    return head_id;
+  }
+
   void reverse(int out) {
     std::fill(adj.begin(), adj.end(), 0.0);
     adj[static_cast<std::size_t>(out)] = 1.0;
@@ -388,7 +531,7 @@ struct ReverseTape {
       // MatMul head nodes must always fire — the head propagates adjoints
       // for ALL output cells of the block, not just its own cell.
       // Per-cell NA is handled inside the case by reading is_na per output id.
-      if (is_na[ii] && op[ii] != ROp::MatMul) continue;
+      if (is_na[ii] && op[ii] != ROp::MatMul && op[ii] != ROp::CrossProd) continue;
       const double w = adj[ii];
       const ROp op_i = op[ii];
       const int ai = a[ii];
@@ -552,6 +695,47 @@ struct ReverseTape {
           }
           break;
         }
+        case ROp::CrossProd: {
+          // ai is the index into `blocks`. S = XᵀX (crossprod) or XXᵀ
+          // (tcrossprod). Both have the same adjoint up to a transpose:
+          //   crossprod  : Xbar = X (Sbar + Sbarᵀ)
+          //   tcrossprod : Xbar = (Sbar + Sbarᵀ) X
+          // Sbar+Sbarᵀ (not 2 Sbar): the incoming adjoint need not be symmetric.
+          const BlockOp& blk = blocks[static_cast<std::size_t>(ai)];
+          if (blk.a_ids.empty()) break; // constant input: no gradient
+          const bool tr = (blk.kind == BlockOp::Kind::TCrossProd);
+          const std::size_t m = blk.rows_a;
+          const std::size_t n = blk.cols_a;
+          const std::size_t d = tr ? m : n; // output is d x d
+          const std::size_t out0 = static_cast<std::size_t>(blk.out_tape_id_first);
+
+          // W = Sbar + Sbarᵀ (d x d), zeroing NA cells.
+          std::vector<double> W(d * d);
+          for (std::size_t c = 0; c < d; ++c) {
+            for (std::size_t r = 0; r < d; ++r) {
+              const double s_rc = is_na[out0 + c * d + r] ? 0.0 : adj[out0 + c * d + r];
+              const double s_cr = is_na[out0 + r * d + c] ? 0.0 : adj[out0 + r * d + c];
+              W[c * d + r] = s_rc + s_cr;
+            }
+          }
+          // X (m x n) from tape values.
+          std::vector<double> X(m * n);
+          for (std::size_t k = 0; k < m * n; ++k) X[k] = val[static_cast<std::size_t>(blk.a_ids[k])];
+
+          std::vector<double> Xbar(m * n, 0.0);
+          const int mi = static_cast<int>(m);
+          const int ni = static_cast<int>(n);
+          const double one = 1.0, zero = 0.0;
+          if (!tr) // Xbar(m x n) = X(m x n) W(n x n)
+            F77_CALL(dgemm)("N", "N", &mi, &ni, &ni, &one, X.data(), &mi, W.data(), &ni, &zero, Xbar.data(), &mi FCONE FCONE);
+          else     // Xbar(m x n) = W(m x m) X(m x n)
+            F77_CALL(dgemm)("N", "N", &mi, &ni, &mi, &one, W.data(), &mi, X.data(), &mi, &zero, Xbar.data(), &mi FCONE FCONE);
+
+          for (std::size_t k = 0; k < m * n; ++k) {
+            adj[static_cast<std::size_t>(blk.a_ids[k])] += Xbar[k];
+          }
+          break;
+        }
         case ROp::Chol: {
           // ai is the index into `blocks`. R = chol(A) (upper), A = R^T R.
           // Reverse: X = R^-1 Phi_U(Rbar R^T) R^-T, then the input adjoint is
@@ -635,6 +819,58 @@ struct ReverseTape {
                             Abar.data(), &ni FCONE FCONE);
             for (std::size_t i = 0; i < n * n; ++i) {
               adj[static_cast<std::size_t>(blk.a_ids[i])] += Abar[i];
+            }
+          }
+          break;
+        }
+        case ROp::TriSolve: {
+          // ai is the index into `blocks`. X = A^-1 B with A triangular.
+          // Reverse: G = A^-T Xbar (triangular solve, same UPLO, TRANSA='T');
+          // then Bbar += G and Abar += triangle(-G X^T) — masked to the used
+          // triangle, since the other triangle of A is never read.
+          const BlockOp& blk = blocks[static_cast<std::size_t>(ai)];
+          const bool a_tracked = !blk.a_ids.empty();
+          const bool b_tracked = !blk.b_ids.empty();
+          if (!a_tracked && !b_tracked) break; // both constant: no gradient
+          const bool upper = (blk.kind == BlockOp::Kind::BackSolve);
+          const std::size_t n = blk.rows_a;
+          const std::size_t k = blk.cols_b;
+          const std::size_t out0 = static_cast<std::size_t>(blk.out_tape_id_first);
+
+          std::vector<double> X(n * k);
+          for (std::size_t i = 0; i < n * k; ++i) X[i] = val[out0 + i];
+          std::vector<double> G(n * k);
+          for (std::size_t i = 0; i < n * k; ++i) G[i] = is_na[out0 + i] ? 0.0 : adj[out0 + i];
+
+          // A (the triangular factor) from ids/vals — fixed forward->reverse.
+          std::vector<double> A(n * n);
+          if (blk.a_ids.empty()) A = blk.a_vals;
+          else for (std::size_t i = 0; i < n * n; ++i) A[i] = val[static_cast<std::size_t>(blk.a_ids[i])];
+
+          // G <- A^-T Xbar : solve A^T G = Xbar (same UPLO, transposed)
+          int ni = static_cast<int>(n), ki = static_cast<int>(k);
+          const double one = 1.0;
+          F77_CALL(dtrsm)("L", upper ? "U" : "L", "T", "N", &ni, &ki, &one,
+                          A.data(), &ni, G.data(), &ni FCONE FCONE FCONE FCONE);
+
+          // Bbar += G
+          if (b_tracked) {
+            for (std::size_t i = 0; i < n * k; ++i) {
+              adj[static_cast<std::size_t>(blk.b_ids[i])] += G[i];
+            }
+          }
+          // Abar += triangle(-G X^T)  (n x n) = (n x k) * (n x k)^T
+          if (a_tracked) {
+            std::vector<double> Abar(n * n, 0.0);
+            const double neg_one = -1.0, zero = 0.0;
+            F77_CALL(dgemm)("N", "T", &ni, &ni, &ki, &neg_one,
+                            G.data(), &ni, X.data(), &ni, &zero,
+                            Abar.data(), &ni FCONE FCONE);
+            for (std::size_t c = 0; c < n; ++c) {
+              for (std::size_t r = 0; r < n; ++r) {
+                const bool keep = upper ? (r <= c) : (r >= c);
+                if (keep) adj[static_cast<std::size_t>(blk.a_ids[c * n + r])] += Abar[c * n + r];
+              }
             }
           }
           break;

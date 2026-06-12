@@ -176,3 +176,119 @@ fcpp_reverse <- ast2ast::translate(f, args_f = args_f, derivative = "reverse")
 y <- c(0, 0)
 x <- c(2, 7, 8, 3)
 expect_equal(fcpp_reverse(y, x), matrix(c(3, 1, 0, 0, 0, 0, 2, 6), 2, 4))
+
+# Example Nr. 4: reverse-AD through crossprod (S = XᵀX)
+# =========================================================================
+# X = matrix(x, 2, 2) (column-major): col1 = (x1, x2), col2 = (x3, x4).
+#   S11 = x1^2 + x2^2          S12 = S21 = x1*x3 + x2*x4
+#   S22 = x3^2 + x4^2
+# Reading S[2,1] and S[1,2] separately exercises the Sbar + Sbarᵀ adjoint.
+# Outputs y = (S11, S21, S12, S22); Jacobian at x = (1,2,3,4):
+#   y1=S11 -> (2x1, 2x2, 0, 0)      = (2, 4, 0, 0)
+#   y2=S21 -> (x3, x4, x1, x2)      = (3, 4, 1, 2)
+#   y3=S12 -> (x3, x4, x1, x2)      = (3, 4, 1, 2)
+#   y4=S22 -> (0, 0, 2x3, 2x4)      = (0, 0, 6, 8)
+f <- function(y, x) {
+  S <- crossprod(matrix(x, 2, 2))
+  y[[1L]] <- S[1L, 1L]
+  y[[2L]] <- S[2L, 1L]
+  y[[3L]] <- S[1L, 2L]
+  y[[4L]] <- S[2L, 2L]
+  return(deriv(y, x))
+}
+args_f <- function(y, x) {
+  y |> type(vec(double))
+  x |> type(vec(double))
+}
+fcpp_reverse <- ast2ast::translate(f, args_f = args_f, derivative = "reverse")
+y <- c(0, 0, 0, 0)
+x <- c(1, 2, 3, 4)
+expect_equal(
+  fcpp_reverse(y, x),
+  matrix(c(2, 3, 3, 0,  4, 4, 4, 0,  0, 1, 1, 6,  0, 2, 2, 8), 4, 4)
+)
+
+# Example Nr. 5: reverse-AD through tcrossprod (S = XXᵀ)
+# =========================================================================
+# X = matrix(x, 2, 2): rows = (x1, x3) and (x2, x4).
+#   S11 = x1^2 + x3^2          S12 = S21 = x1*x2 + x3*x4
+#   S22 = x2^2 + x4^2
+# Outputs y = (S11, S21, S12, S22); Jacobian at x = (1,2,3,4):
+#   y1=S11 -> (2x1, 0, 2x3, 0)      = (2, 0, 6, 0)
+#   y2=S21 -> (x2, x1, x4, x3)      = (2, 1, 4, 3)
+#   y3=S12 -> (x2, x1, x4, x3)      = (2, 1, 4, 3)
+#   y4=S22 -> (0, 2x2, 0, 2x4)      = (0, 4, 0, 8)
+f <- function(y, x) {
+  S <- tcrossprod(matrix(x, 2, 2))
+  y[[1L]] <- S[1L, 1L]
+  y[[2L]] <- S[2L, 1L]
+  y[[3L]] <- S[1L, 2L]
+  y[[4L]] <- S[2L, 2L]
+  return(deriv(y, x))
+}
+args_f <- function(y, x) {
+  y |> type(vec(double))
+  x |> type(vec(double))
+}
+fcpp_reverse <- ast2ast::translate(f, args_f = args_f, derivative = "reverse")
+y <- c(0, 0, 0, 0)
+x <- c(1, 2, 3, 4)
+expect_equal(
+  fcpp_reverse(y, x),
+  matrix(c(2, 2, 2, 0,  0, 1, 1, 4,  6, 4, 4, 0,  0, 3, 3, 8), 4, 4)
+)
+
+# Example Nr. 6: reverse-AD through backsolve (R x = b, R upper-triangular)
+# =========================================================================
+# x packs R then b: R = matrix(x[1:4], 2, 2) read as UPPER -> [[x1, x3],
+#                                                              [ 0, x4]],
+# so x2 = R[2,1] is ignored and must get ZERO gradient (mask under test).
+# b = x[5:6]. Solving R y = b:
+#   y2 = b2/x4,  y1 = (b1 - x3*y2)/x1.
+# At x = (2, 99, 1, 4, 10, 8): y = (4, 2). Analytic Jacobian dy/dx (2x6):
+#   dy1 = (-2, 0, -1, 0.25, 0.5, -0.125)
+#   dy2 = ( 0, 0,  0, -0.5, 0,    0.25)
+f <- function(y, x) {
+  R <- matrix(x[1L:4L], 2, 2)
+  b <- x[5L:6L]
+  y <- backsolve(R, b)
+  return(deriv(y, x))
+}
+args_f <- function(y, x) {
+  y |> type(vec(double))
+  x |> type(vec(double))
+}
+fcpp_reverse <- ast2ast::translate(f, args_f = args_f, derivative = "reverse")
+y <- c(0, 0)
+x <- c(2, 99, 1, 4, 10, 8)
+expect_equal(
+  fcpp_reverse(y, x),
+  matrix(c(-2, 0,  0, 0,  -1, 0,  0.25, -0.5,  0.5, 0,  -0.125, 0.25), 2, 6)
+)
+
+# Example Nr. 7: reverse-AD through forwardsolve (L x = b, L lower-triangular)
+# =========================================================================
+# L = matrix(x[1:4], 2, 2) read as LOWER -> [[x1, 0 ],
+#                                            [x2, x4]],
+# so x3 = L[1,2] is ignored and must get ZERO gradient. b = x[5:6].
+# Solving L y = b:  y1 = b1/x1,  y2 = (b2 - x2*y1)/x4.
+# At x = (2, 1, 99, 4, 10, 8): y = (5, 0.75). Analytic Jacobian dy/dx (2x6):
+#   dy1 = (-2.5,  0,    0, 0,       0.5,   0  )
+#   dy2 = ( 0.625, -1.25, 0, -0.1875, -0.125, 0.25)
+f <- function(y, x) {
+  L <- matrix(x[1L:4L], 2, 2)
+  b <- x[5L:6L]
+  y <- forwardsolve(L, b)
+  return(deriv(y, x))
+}
+args_f <- function(y, x) {
+  y |> type(vec(double))
+  x |> type(vec(double))
+}
+fcpp_reverse <- ast2ast::translate(f, args_f = args_f, derivative = "reverse")
+y <- c(0, 0)
+x <- c(2, 1, 99, 4, 10, 8)
+expect_equal(
+  fcpp_reverse(y, x),
+  matrix(c(-2.5, 0.625,  0, -1.25,  0, 0,  0, -0.1875,  0.5, -0.125,  0, 0.25), 2, 6)
+)

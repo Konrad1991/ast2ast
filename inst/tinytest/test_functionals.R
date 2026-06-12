@@ -129,6 +129,34 @@ functional_tests <- function(a, b, n, type_test) {
     return(get_diag(X))
   }
 
+  if (type_test == 14) { # crossprod(X) = t(X) %*% X  (2x3 -> 3x3)
+    X <- matrix(a[1L:6L], 2, 3)
+    return(crossprod(X))
+  }
+
+  if (type_test == 15) { # tcrossprod(X) = X %*% t(X)  (2x3 -> 2x2)
+    X <- matrix(a[1L:6L], 2, 3)
+    return(tcrossprod(X))
+  }
+
+  if (type_test == 16) { # backsolve(R, b): R upper-triangular, solves R x = b
+    X <- matrix(a[1L:9L], 3, 3)
+    A <- t(X) %*% X
+    A <- A + diag(3.0, 3, 3)
+    R <- chol(A)
+    rhs <- a[1L:3L]
+    return(backsolve(R, rhs))
+  }
+
+   if (type_test == 17) { # forwardsolve(L, b): L lower-triangular, solves L x = b
+     X <- matrix(a[1L:9L], 3, 3)
+     A <- t(X) %*% X
+     A <- A + diag(3.0, 3, 3)
+     L <- t(chol(A))
+     rhs <- a[1L:3L]
+     return(forwardsolve(L, rhs))
+   }
+
 }
 
 fcpp <- translate(functional_tests, f_args, getsource = FALSE, verbose = FALSE)
@@ -167,6 +195,12 @@ expect_true(all(abs(fcpp(a, b, n, 11L) - functional_tests(a, b, n, 11L)) < 1e-8)
 expect_true(all(abs(fcpp(a, b, n, 12L) - functional_tests(a, b, n, 12L)) < 1e-8))
 # get_diag: extract the diagonal of a matrix (vector result)
 expect_true(all(abs(fcpp(a, b, n, 13L) - functional_tests(a, b, n, 13L)) < 1e-8))
+# crossprod / tcrossprod (non-square input exercises both m != n shapes)
+expect_true(all(abs(fcpp(a, b, n, 14L) - functional_tests(a, b, n, 14L)) < 1e-8))
+expect_true(all(abs(fcpp(a, b, n, 15L) - functional_tests(a, b, n, 15L)) < 1e-8))
+# backsolve / forwardsolve (triangular solve against the Cholesky factor)
+expect_true(all(abs(fcpp(a, b, n, 16L) - functional_tests(a, b, n, 16L)) < 1e-8))
+expect_true(all(abs(fcpp(a, b, n, 17L) - functional_tests(a, b, n, 17L)) < 1e-8))
 
 # --- diag --------------------------------------------------------------------
 # ast2ast supports diag(x, nrow, ncol): an nrow x ncol matrix with x recycled

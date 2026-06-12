@@ -173,6 +173,15 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_crossprod
+void test_crossprod();
+RcppExport SEXP _ast2ast_test_crossprod() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_crossprod();
+    return R_NilValue;
+END_RCPP
+}
 // test_diag
 void test_diag();
 RcppExport SEXP _ast2ast_test_diag() {
@@ -218,6 +227,15 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_trisolve
+void test_trisolve();
+RcppExport SEXP _ast2ast_test_trisolve() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_trisolve();
+    return R_NilValue;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_tests_allocation", (DL_FUNC) &_ast2ast_tests_allocation, 0},
@@ -238,11 +256,13 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_simplified_subsetting", (DL_FUNC) &_ast2ast_test_simplified_subsetting, 0},
     {"_ast2ast_test_utilities", (DL_FUNC) &_ast2ast_test_utilities, 0},
     {"_ast2ast_test_assign_array_to_scalar", (DL_FUNC) &_ast2ast_test_assign_array_to_scalar, 0},
+    {"_ast2ast_test_crossprod", (DL_FUNC) &_ast2ast_test_crossprod, 0},
     {"_ast2ast_test_diag", (DL_FUNC) &_ast2ast_test_diag, 0},
     {"_ast2ast_test_scalars", (DL_FUNC) &_ast2ast_test_scalars, 0},
     {"_ast2ast_test_scalar_assignment", (DL_FUNC) &_ast2ast_test_scalar_assignment, 0},
     {"_ast2ast_test_solve", (DL_FUNC) &_ast2ast_test_solve, 0},
     {"_ast2ast_test_transpose", (DL_FUNC) &_ast2ast_test_transpose, 0},
+    {"_ast2ast_test_trisolve", (DL_FUNC) &_ast2ast_test_trisolve, 0},
     {NULL, NULL, 0}
 };
 

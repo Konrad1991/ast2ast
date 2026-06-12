@@ -519,7 +519,7 @@ are_vars_init <- function(type, name = "") {
     stop(sprintf("Found uninitialzed variable: %s", name))
   }
   else if (inherits(type, "fn_node")) {
-    warning(sprintf("Found function %s used as 'normal' variable", name))
+    warning(sprintf("Found function %s used as 'normal' variable", name)) # TODO: why only warning?
   }
   else if (inherits(type, "type_node")) {
     if (is.null(type$base_type) || is.null(type$data_struct)) {

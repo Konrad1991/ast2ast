@@ -1284,10 +1284,11 @@ function_registry_global$add(
     node$internal_type <- t
     return(t)
   },
-  check_fct = function(node, vars_list, r_fct, real_type) {
-    type <- infer(node$obj, vars_list, r_fct, function_registry)
-    if (!inherits(type, "type_node")) {
-      return(sprintf("Found unsupported type in: %s", node$stringify()))
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
+    if (is_charNANaNInf(node$obj, vars_types_list)) {
+      node$error <- "You cannot use character/NA/NaN/Inf entries in t"
+    } else if (!is_mat(node$obj, vars_types_list)) {
+      node$error <- "You can only call t on a matrix"
     }
   },
  group = "unary_node", cpp_name = "etr::transpose"
@@ -1313,6 +1314,50 @@ function_registry_global$add(
     }
   },
   group = "unary_node", cpp_name = "etr::chol"
+)
+function_registry_global$add(
+  name = "crossprod", num_args = 1, arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    inner <- infer(node$obj, vars_list, r_fct, function_registry)
+    if (!inherits(inner, "type_node")) {
+      return(sprintf("Found unallowed type in: %s", node$stringify()))
+    }
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "double"
+    t$data_struct <- "matrix"
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
+    if (is_charNANaNInf(node$obj, vars_types_list)) {
+      node$error <- "You cannot use character/NA/NaN/Inf entries in crossprod"
+    } else if (!is_mat(node$obj, vars_types_list)) {
+      node$error <- "You can only call crossprod on a matrix"
+    }
+  },
+  group = "unary_node", cpp_name = "etr::crossprod"
+)
+function_registry_global$add(
+  name = "tcrossprod", num_args = 1, arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    inner <- infer(node$obj, vars_list, r_fct, function_registry)
+    if (!inherits(inner, "type_node")) {
+      return(sprintf("Found unallowed type in: %s", node$stringify()))
+    }
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "double"
+    t$data_struct <- "matrix"
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
+    if (is_charNANaNInf(node$obj, vars_types_list)) {
+      node$error <- "You cannot use character/NA/NaN/Inf entries in tcrossprod"
+    } else if (!is_mat(node$obj, vars_types_list)) {
+      node$error <- "You can only call tcrossprod on a matrix"
+    }
+  },
+  group = "unary_node", cpp_name = "etr::tcrossprod"
 )
 function_registry_global$add(
   name = "diag", num_args = 3L, arg_names = c("x", "nrow", "ncol"),
@@ -1611,4 +1656,58 @@ function_registry_global$add(
     }
   },
  group = "function_node", cpp_name = "etr::solve"
+)
+function_registry_global$add(
+  name = "backsolve", num_args = 2, arg_names = c(NA, NA),
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    all_types <- lapply(node$args, function(arg) {
+      infer(arg, vars_list, r_fct, function_registry)
+    })
+    for (i in seq_len(length(all_types))) {
+      if (!inherits(all_types[[i]], "type_node")) {
+        return(sprintf("Found unallowed type in: %s", node$stringify()))
+      }
+    }
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "double"
+    t$data_struct <- all_types[[2L]]$data_struct
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
+    for (i in seq_along(node$args)) {
+      if (is_char(node$args[[i]], vars_types_list)) {
+        node$error <- "You cannot use character entries in backsolve"
+        return()
+      }
+    }
+  },
+ group = "function_node", cpp_name = "etr::backsolve"
+)
+function_registry_global$add(
+  name = "forwardsolve", num_args = 2, arg_names = c(NA, NA),
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    all_types <- lapply(node$args, function(arg) {
+      infer(arg, vars_list, r_fct, function_registry)
+    })
+    for (i in seq_len(length(all_types))) {
+      if (!inherits(all_types[[i]], "type_node")) {
+        return(sprintf("Found unallowed type in: %s", node$stringify()))
+      }
+    }
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "double"
+    t$data_struct <- all_types[[2L]]$data_struct
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
+    for (i in seq_along(node$args)) {
+      if (is_char(node$args[[i]], vars_types_list)) {
+        node$error <- "You cannot use character entries in forwardsolve"
+        return()
+      }
+    }
+  },
+ group = "function_node", cpp_name = "etr::forwardsolve"
 )

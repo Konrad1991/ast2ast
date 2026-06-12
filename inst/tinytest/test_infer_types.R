@@ -1466,3 +1466,9 @@ f <- function() {
 }
 types <- get_types(f)
 expect_true(types$x$base_type == "double" && types$x$data_struct == "matrix")
+
+# --- character assignment is rejected --------------------------------------
+f <- function() {
+  a <- "bla"
+}
+check_error(f, TRUE, "etr::Double", "a <- \"bla\"\nYou cannot assign characters to variables")

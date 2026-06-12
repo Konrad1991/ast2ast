@@ -73,6 +73,10 @@ test_assign_array_to_scalar <- function() {
     invisible(.Call(`_ast2ast_test_assign_array_to_scalar`))
 }
 
+test_crossprod <- function() {
+    invisible(.Call(`_ast2ast_test_crossprod`))
+}
+
 test_diag <- function() {
     invisible(.Call(`_ast2ast_test_diag`))
 }
@@ -91,5 +95,9 @@ test_solve <- function() {
 
 test_transpose <- function() {
     invisible(.Call(`_ast2ast_test_transpose`))
+}
+
+test_trisolve <- function() {
+    invisible(.Call(`_ast2ast_test_trisolve`))
 }
 

@@ -112,6 +112,43 @@ ret_type <- get_ret_type(f, f_args, TRUE)
 check_type_f_arg(ret_type, "double", "vector", "mutable", "copy", FALSE)
 
 f <- function(a) {
+  return(crossprod(matrix(1.1, 2, 3)))
+}
+f_args <- function(a) {
+  a |> type(vec(double))
+}
+ret_type <- get_ret_type(f, f_args, TRUE)
+check_type_f_arg(ret_type, "double", "matrix", "mutable", "copy", FALSE)
+
+f <- function(a) {
+  return(tcrossprod(matrix(1.1, 2, 3)))
+}
+f_args <- function(a) {
+  a |> type(vec(double))
+}
+ret_type <- get_ret_type(f, f_args, TRUE)
+check_type_f_arg(ret_type, "double", "matrix", "mutable", "copy", FALSE)
+
+# backsolve/forwardsolve: result follows the RHS data structure (vector or matrix)
+f <- function(a) {
+  return(backsolve(matrix(1.1, 2, 2), c(1.0, 2.0)))
+}
+f_args <- function(a) {
+  a |> type(vec(double))
+}
+ret_type <- get_ret_type(f, f_args, TRUE)
+check_type_f_arg(ret_type, "double", "vector", "mutable", "copy", FALSE)
+
+f <- function(a) {
+  return(forwardsolve(matrix(1.1, 2, 2), matrix(1.0, 2, 2)))
+}
+f_args <- function(a) {
+  a |> type(vec(double))
+}
+ret_type <- get_ret_type(f, f_args, TRUE)
+check_type_f_arg(ret_type, "double", "matrix", "mutable", "copy", FALSE)
+
+f <- function(a) {
   if (a == 1) {
     return(TRUE)
   } else if(a == 2) {

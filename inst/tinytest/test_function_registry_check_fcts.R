@@ -666,6 +666,56 @@ test_checks(
   "m <- get_diag(v)\nYou can only call get_diag on a matrix"
 )
 
+# --- crossprod --------------------------------------------------------------
+f <- function() {
+  a <- crossprod("a")
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a <- crossprod(\"a\")\nYou cannot use character/NA/NaN/Inf entries in crossprod"
+)
+f <- function() {
+  s <- 5.0
+  m <- crossprod(s)
+}
+test_checks(
+  f, args_fct, TRUE,
+  "m <- crossprod(s)\nYou can only call crossprod on a matrix"
+)
+f <- function() {
+  v <- c(1.0, 2.0, 3.0)
+  m <- crossprod(v)
+}
+test_checks(
+  f, args_fct, TRUE,
+  "m <- crossprod(v)\nYou can only call crossprod on a matrix"
+)
+
+# --- tcrossprod -------------------------------------------------------------
+f <- function() {
+  a <- tcrossprod("a")
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a <- tcrossprod(\"a\")\nYou cannot use character/NA/NaN/Inf entries in tcrossprod"
+)
+f <- function() {
+  s <- 5.0
+  m <- tcrossprod(s)
+}
+test_checks(
+  f, args_fct, TRUE,
+  "m <- tcrossprod(s)\nYou can only call tcrossprod on a matrix"
+)
+f <- function() {
+  v <- c(1.0, 2.0, 3.0)
+  m <- tcrossprod(v)
+}
+test_checks(
+  f, args_fct, TRUE,
+  "m <- tcrossprod(v)\nYou can only call tcrossprod on a matrix"
+)
+
 # --- solve ------------------------------------------------------------------
 # character argument is rejected in either position
 f <- function() {
@@ -682,4 +732,22 @@ f <- function() {
 test_checks(
   f, args_fct, TRUE,
   "x <- solve(m, \"b\")\nYou cannot use character entries in solve"
+)
+
+# --- backsolve / forwardsolve -----------------------------------------------
+f <- function() {
+  m <- matrix(1.0, 2, 2)
+  x <- backsolve(m, "b")
+}
+test_checks(
+  f, args_fct, TRUE,
+  "x <- backsolve(m, \"b\")\nYou cannot use character entries in backsolve"
+)
+f <- function() {
+  m <- matrix(1.0, 2, 2)
+  x <- forwardsolve(m, "b")
+}
+test_checks(
+  f, args_fct, TRUE,
+  "x <- forwardsolve(m, \"b\")\nYou cannot use character entries in forwardsolve"
 )
