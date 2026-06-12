@@ -1,6 +1,9 @@
 library(tinytest)
 library(ast2ast)
 
+# R reference for the DSL get_diag (base R diag() extracts a matrix diagonal)
+get_diag <- function(m) diag(m)
+
 f_args <- function(a, b, n, type_test) {
   a |> type(vec(double))
   b |> type(vec(double))
@@ -121,6 +124,11 @@ functional_tests <- function(a, b, n, type_test) {
     return(solve(A))
   }
 
+  if (type_test == 13) { # get_diag: extract the diagonal of a matrix
+    X <- matrix(a[1L:9L], 3, 3)
+    return(get_diag(X))
+  }
+
 }
 
 fcpp <- translate(functional_tests, f_args, getsource = FALSE, verbose = FALSE)
@@ -157,6 +165,8 @@ expect_true(all(abs(fcpp(a, b, n, 10L) - functional_tests(a, b, n, 10L)) < 1e-8)
 # solve: system solve (vector result, case 11) and matrix inverse (case 12)
 expect_true(all(abs(fcpp(a, b, n, 11L) - functional_tests(a, b, n, 11L)) < 1e-8))
 expect_true(all(abs(fcpp(a, b, n, 12L) - functional_tests(a, b, n, 12L)) < 1e-8))
+# get_diag: extract the diagonal of a matrix (vector result)
+expect_true(all(abs(fcpp(a, b, n, 13L) - functional_tests(a, b, n, 13L)) < 1e-8))
 
 # --- diag --------------------------------------------------------------------
 # ast2ast supports diag(x, nrow, ncol): an nrow x ncol matrix with x recycled

@@ -283,6 +283,9 @@ type_infer_assignment <- function(node, env) {
     if (is.character(type)) {
       node$error <- type
     }
+    if (inherits(type, "type_node") && type$base_type == "character" && type$data_struct == "scalar" && inherits(node$right_node, "literal_node")) {
+      node$error <- "You cannot assign characters to variables"
+    }
     # RHS:
     else {
       variable <- find_var_lhs(node)

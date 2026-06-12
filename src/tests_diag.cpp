@@ -118,4 +118,49 @@ void test_diag() {
     }
     ass<"Did not throw">(catched);
   }
+
+  // --- get_diag: extract the diagonal of a matrix as a vector ---------------
+  // square 3x3: column-major [1 4 7 / 2 5 8 / 3 6 9]; diagonal -> {1, 5, 9}
+  {
+    Array<Double, Buffer<Double>> a;
+    Array<Double, Buffer<Double>> m = matrix(colon(Double(1.0), Double(9.0)), Integer(3), Integer(3));
+    std::vector<double> expected = {1.0, 5.0, 9.0};
+    a = get_diag(m);
+    check_dim(a, {3});
+    double* p = a.d.data();
+    compare(p, expected);
+  }
+  // nrow < ncol: 2x3 column-major [1 3 5 / 2 4 6]; diagonal length 2 -> {1, 4}
+  {
+    Array<Double, Buffer<Double>> a;
+    Array<Double, Buffer<Double>> m = matrix(colon(Double(1.0), Double(6.0)), Integer(2), Integer(3));
+    std::vector<double> expected = {1.0, 4.0};
+    a = get_diag(m);
+    check_dim(a, {2});
+    double* p = a.d.data();
+    compare(p, expected);
+  }
+  // nrow > ncol: 3x2 column-major [1 4 / 2 5 / 3 6]; diagonal length 2 -> {1, 5}
+  {
+    Array<Double, Buffer<Double>> a;
+    Array<Double, Buffer<Double>> m = matrix(colon(Double(1.0), Double(6.0)), Integer(3), Integer(2));
+    std::vector<double> expected = {1.0, 5.0};
+    a = get_diag(m);
+    check_dim(a, {2});
+    double* p = a.d.data();
+    compare(p, expected);
+  }
+  // scalar has no diagonal -> throw
+  {
+    bool catched = false;
+    try {
+      Array<Double, Buffer<Double>> a = get_diag(Double(3.0));
+    }
+    catch (const std::exception& e) {
+      catched = true;
+      const std::string expected_message = "You cannot extract a diagonal from a scalar";
+      ass<"get_diag scalar message">(std::strcmp(e.what(), expected_message.c_str()) == 0);
+    }
+    ass<"Did not throw">(catched);
+  }
 }

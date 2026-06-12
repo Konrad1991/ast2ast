@@ -30,7 +30,7 @@ fct <- function() {
   return(jac)
 }
 test_checks(fct, args_fct, TRUE, "etr::Double",
- "Error: Could not infer the types, caused by Error in are_vars_init(t, name) : Found uninitialzed variable: jac\n"
+"jac <- seed(y, x)\nFound seed within an expression: seed(y, x)"
 )
 fct <- function() {
   x <- c(1, 2)
@@ -39,7 +39,7 @@ fct <- function() {
   return(jac)
 }
 test_checks(fct, args_fct, TRUE, "etr::Double",
- "Error: Could not infer the types, caused by Error in are_vars_init(t, name) : Found uninitialzed variable: jac\n"
+"jac <- unseed(y, x)\nFound unseed within an expression: unseed(y, x)"
 )
 fct <- function() {
   x <- c(1, 2)
@@ -149,3 +149,30 @@ y <- 0.0
 x <- c(1.0, 2.0, 3.0, 4.0, 5.0)
 res <- fcpp_forward(y, x)
 expect_equal(res, array(c(21, 3, 2, 5, 4), dim = 5))
+
+# Example Nr. 3: reverse-AD through get_diag (diagonal extraction)
+# =========================================================================
+# matrix(x, 2, 2) is column-major, so the diagonal picks x1 and x4:
+#   d <- get_diag(matrix(x, 2, 2)) -> d1 = x1, d2 = x4
+#   y1 = d1 * d2       = x1 * x4
+#   y2 = d1 + d2 * d2  = x1 + x4*x4
+# The off-diagonal inputs x2, x3 must receive zero gradient.
+#
+# with x1 = 2 and x4 = 3:
+#   dy1/dx1 = x4 = 3   dy1/dx4 = x1 = 2
+#   dy2/dx1 = 1        dy2/dx4 = 2*x4 = 6
+f <- function(y, x) {
+  d <- get_diag(matrix(x, 2, 2))
+  y[[1L]] <- d[[1L]] * d[[2L]]
+  y[[2L]] <- d[[1L]] + d[[2L]] * d[[2L]]
+  jac <- deriv(y, x)
+  return(jac)
+}
+args_f <- function(y, x) {
+  y |> type(vec(double))
+  x |> type(vec(double))
+}
+fcpp_reverse <- ast2ast::translate(f, args_f = args_f, derivative = "reverse")
+y <- c(0, 0)
+x <- c(2, 7, 8, 3)
+expect_equal(fcpp_reverse(y, x), matrix(c(3, 1, 0, 0, 0, 0, 2, 6), 2, 4))

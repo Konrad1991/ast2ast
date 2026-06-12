@@ -134,16 +134,20 @@ is_vec_mat_or_array <- function(node, vars_types_list, data_structs) {
   )
 }
 is_vec <- function(node, vars_types_list) {
+  if (inherits(node, "unary_node") && node$operator %in% c("numeric", "integer", "logical")) return(TRUE)
+  if (inherits(node, "function_node") && node$operator == "vector") return(TRUE)
   is_data_structs(node, vars_types_list,
     c("vector", "vec", "borrow_vec", "borrow_vector")
   )
 }
 is_mat <- function(node, vars_types_list) {
+  if (inherits(node, "function_node") && node$operator == "matrix") return(TRUE)
   is_data_structs(node, vars_types_list,
     c("matrix", "mat", "borrow_matrix", "borrow_mat")
   )
 }
 is_array <- function(node, vars_types_list) {
+  if (inherits(node, "function_node") && node$operator == "array") return(TRUE)
   is_data_structs(node, vars_types_list,
     c("array", "borrow_array")
   )
@@ -1336,6 +1340,28 @@ function_registry_global$add(
     }
   },
  group = "function_node", cpp_name = "etr::diag"
+)
+function_registry_global$add(
+  name = "get_diag", num_args = 1, arg_names = NA,
+  infer_fct = function(node, vars_list, r_fct, function_registry) {
+    inner <- infer(node$obj, vars_list, r_fct, function_registry)
+    if (!inherits(inner, "type_node")) {
+      return(sprintf("Found unallowed type in: %s", node$stringify()))
+    }
+    t <- type_node$new(NA, FALSE, r_fct)
+    t$base_type <- "double"
+    t$data_struct <- "vector"
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_types_list, r_fct, real_type) {
+    if (is_charNANaNInf(node$obj, vars_types_list)) {
+      node$error <- "You cannot use character/NA/NaN/Inf entries in get_diag"
+    } else if (!is_mat(node$obj, vars_types_list)) {
+      node$error <- "You can only call get_diag on a matrix"
+    }
+  },
+  group = "unary_node", cpp_name = "etr::get_diag"
 )
 function_registry_global$add(
   name = "max", num_args = 1, arg_names = NA,

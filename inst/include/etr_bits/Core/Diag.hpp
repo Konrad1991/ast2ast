@@ -80,6 +80,36 @@ inline auto diag(const A& x, const B& nrow, const C& ncol) {
   }
 }
 
+// extract the diagonal of a matrix as a vector
+template<typename A> requires IsScalarLike<Decayed<A>>
+inline auto get_diag(const A& scalar) {
+  ass<"You cannot extract a diagonal from a scalar">(false);
+  Array<Decayed<A>, Buffer<Decayed<A>, RBufferTrait>> res; // please the compiler
+  return res;
+}
+
+template<typename A> requires IsArray<Decayed<A>>
+inline auto get_diag(const A& arr) {
+  using T = typename ExtractDataType<Decayed<A>>::value_type;
+  const auto& dim = dim_view(arr.get_dim());
+  ass<"Error in get_diag: argument is not a matrix">(dim.size() == 2);
+  const std::size_t nr = dim[0];
+  const std::size_t nc = dim[1];
+  const std::size_t n = nc < nr ? nc : nr;
+  if constexpr (!IS<T, ReverseDouble>) {
+    Array<T, Buffer<T, RBufferTrait>> res(SI{n});
+    res.dim = std::vector<std::size_t>{n};
+    for (std::size_t i = 0; i < n; i++) res.set(i, arr.get(i + i * nr));
+    return res;
+  } else {
+    // no RBufferTrait -> enforce copy; copied ReverseDouble aliases tape id, grad flows
+    Array<T, Buffer<T>> res(SI{n});
+    res.dim = std::vector<std::size_t>{n};
+    for (std::size_t i = 0; i < n; i++) res.set(i, arr.get(i + i * nr));
+    return res;
+  }
+}
+
 } // namespace etr
 
 #endif

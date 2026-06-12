@@ -103,6 +103,15 @@ ret_type <- get_ret_type(f, f_args, TRUE)
 check_type_f_arg(ret_type, "double", "array", "mutable", "copy", FALSE)
 
 f <- function(a) {
+  return(get_diag(matrix(1.1, 3, 3)))
+}
+f_args <- function(a) {
+  a |> type(vec(double))
+}
+ret_type <- get_ret_type(f, f_args, TRUE)
+check_type_f_arg(ret_type, "double", "vector", "mutable", "copy", FALSE)
+
+f <- function(a) {
   if (a == 1) {
     return(TRUE)
   } else if(a == 2) {

@@ -641,6 +641,31 @@ test_checks(
   "m <- chol(v)\nYou can only call chol on a matrix"
 )
 
+# --- get_diag ---------------------------------------------------------------
+f <- function() {
+  a <- get_diag("a")
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a <- get_diag(\"a\")\nYou cannot use character/NA/NaN/Inf entries in get_diag"
+)
+f <- function() {
+  s <- 5.0
+  m <- get_diag(s)
+}
+test_checks(
+  f, args_fct, TRUE,
+  "m <- get_diag(s)\nYou can only call get_diag on a matrix"
+)
+f <- function() {
+  v <- c(1.0, 2.0, 3.0)
+  m <- get_diag(v)
+}
+test_checks(
+  f, args_fct, TRUE,
+  "m <- get_diag(v)\nYou can only call get_diag on a matrix"
+)
+
 # --- solve ------------------------------------------------------------------
 # character argument is rejected in either position
 f <- function() {
