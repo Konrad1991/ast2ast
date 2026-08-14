@@ -1,4 +1,7 @@
+Rcpp::compileAttributes(".")
 install.packages(".", types = "source", repo = NULL)
+ast2ast:::test_nnls()
+
 files <- list.files("./R", full.names = TRUE)
 invisible(lapply(files, source))
 
@@ -12,18 +15,7 @@ f <- function(interval) {
       return(a^2 - 4)
     }
   )
-  res <- uniroot(g, c(interval), 1e-10, 100)
-
-  h <- fn(
-    f_args = function(a) {
-      a |> type(double)
-    },
-    return_value = type(uniroot_result),
-    block = function(a) {
-      r |> type(uniroot_result)
-      return(r)
-    }
-  )
+  res <- uniroot(g, c(interval), 1e-18, 10000)
   return(res)
 }
 fcpp <- ast2ast::translate(
@@ -35,5 +27,11 @@ fcpp(c(0, 10))
 g <- function(a) {
   return(a^2 - 4)
 }
-res <- uniroot(g, c(0, 10), tol = 1e-10, maxiter = 100)
+uniroot(g, c(0, 10), tol = 1e-18, maxiter = 10000)
+
+res <- microbenchmark::microbenchmark(
+  cpp = fcpp(c(0, 10)),
+  R = uniroot(g, c(0, 10), tol = 1e-18, maxiter = 10000)
+)
 res
+plot(res)

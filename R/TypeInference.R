@@ -119,6 +119,12 @@ infer <- function(node, vars_list, info_env, function_registry) {
     node$internal_type <- t
     return(t)
   } else if (inherits(node, c("unary_node", "binary_node", "function_node"))) {
+    if (!function_registry$deriv_possible(node$operator) && info_env$real_type != "etr::Double") {
+      return(sprintf(
+        "%s does not support automatic differentiation yet (forward/reverse) -- only plain double translations",
+        node$operator
+      ))
+    }
     ifct <- function_registry$infer_fct(node$operator)
     t <- ifct(node, vars_list, info_env, function_registry)
     t <- flatten_type(t)

@@ -23,12 +23,21 @@ namespace etr {
 // This is a plain rewrite of R_zeroin2 (R's own src/library/stats/src/zeroin.c,
 // the Forsythe/Malcolm/Moler netlib algorithm) -- not a call into R's
 // non-API symbol, a fresh port of the same formulas.
-inline Double uniroot_plain(
+//
+// The iteration itself is factored into uniroot_core, parameterized over
+// `eval` (how to compute f at a candidate point), so it's written once and
+// shared by both the plain f(h) form and the f(h, extra) form below --
+// fn() bodies in the DSL only see their own arguments and other fn()s, not
+// arbitrary outer locals, so an equation that needs more than the variable
+// being solved for has no closure to fall back on and has to receive that
+// extra data as a genuine second argument instead.
+template<typename Eval>
+inline Double uniroot_core(
   Double ax,
   Double bx,
   Double fa,
   Double fb,
-  const std::function<Double(Double)>& f,
+  Eval&& eval,
   Double& Tol,
   Integer& Maxit) {
 
@@ -124,7 +133,7 @@ inline Double uniroot_plain(
     a = b;
     fa = fb;
     b = b + new_step;
-    fb = f(b); // do step to a new approximation
+    fb = eval(b); // do step to a new approximation
 
     if ( (fb > Double(0.0) && fc > Double(0.0)) ||
          (fb < Double(0.0) && fc < Double(0.0)) ) {
@@ -139,6 +148,25 @@ inline Double uniroot_plain(
   Tol = abs(c - b);
   Maxit = Integer(-1);
   return b;
+}
+
+inline Double uniroot_plain(
+  Double ax, Double bx, Double fa, Double fb,
+  const std::function<Double(Double)>& f,
+  Double& Tol, Integer& Maxit) {
+  return uniroot_core(ax, bx, fa, fb, [&](Double x) { return f(x); }, Tol, Maxit);
+}
+
+// f: (h, extra) -> double. `extra` is unconstrained (scalar, vector,
+// matrix, or a new_type struct) -- FunctionRegistry.R only rejects a
+// function or a string there, nothing else is checked at the R level; a
+// mismatch against f's own second parameter type just fails to compile.
+template<typename T>
+inline Double uniroot_plain(
+  Double ax, Double bx, Double fa, Double fb,
+  const std::function<Double(Double, T)>& f, const T& extra,
+  Double& Tol, Integer& Maxit) {
+  return uniroot_core(ax, bx, fa, fb, [&](Double x) { return f(x, extra); }, Tol, Maxit);
 }
 
 struct uniroot_result{
@@ -183,10 +211,8 @@ struct uniroot_result{
   }
 };
 
-template<typename B>
-requires (IsArray<Decayed<B>>)
-inline uniroot_result uniroot(const std::function<Double(Double)>& f, const B& boundaries, 
-                      Double tol, Integer maxit) {
+template<typename B> requires (IsArray<Decayed<B>>)
+inline uniroot_result uniroot(const std::function<Double(Double)>& f, const B& boundaries, Double tol, Integer maxit) {
   uniroot_result res;
   // TODO: argument extendInt of uniroot
   Double lower = boundaries.get(0);
@@ -197,13 +223,45 @@ inline uniroot_result uniroot(const std::function<Double(Double)>& f, const B& b
   Double fa = f(lower);
   Double fb = f(upper);
   if (fa.isNA() || fb.isNA()) return uniroot_result::NA();
-  // same check as R's own uniroot(): only error if same strict sign -- a
-  // root exactly at one endpoint (product == 0) is fine, uniroot_plain
-  // returns it immediately itself.
-  ass<"uniroot: root not bracketed">(fa.val * fb.val <= 0.0);
+  // Same check as R's own uniroot(): only bad if same strict sign -- a root
+  // exactly at one endpoint (product == 0) is fine, uniroot_plain returns
+  // it immediately itself. Unlike R's uniroot() (which errors here, left to
+  // the caller's tryCatch), this returns NA gracefully instead of throwing
+  // -- callers doing a per-datapoint root search in a loop (e.g. profiling
+  // out a free-host concentration across a titration series) need a
+  // not-bracketed point to just poison that one result, not abort the
+  // whole translated function.
+  if (fa.val * fb.val > 0.0) return uniroot_result::NA();
 
   res.root = uniroot_plain(lower, upper, fa, fb, f, tol, maxit);
   res.f_root = f(res.root);
+  res.iter = maxit;
+  res.estim_prec = tol;
+  return res;
+}
+
+// Same as above, but f takes a second, arbitrarily-typed argument (see
+// uniroot_plain's T-overload) -- lets an equation depend on more than the
+// variable being solved for without a closure over reassigned outer
+// locals, which fn() bodies in the DSL don't support (they only see their
+// own arguments and other fn()s).
+template<typename T, typename B> requires (IsArray<Decayed<B>>)
+inline uniroot_result uniroot(const std::function<Double(Double, T)>& f, const B& boundaries,
+                               Double tol, Integer maxit, const T& extra) {
+  uniroot_result res;
+  // TODO: argument extendInt of uniroot
+  Double lower = boundaries.get(0);
+  Double upper = boundaries.get(1);
+
+  if (lower.isNA() || upper.isNA()) return uniroot_result::NA();
+
+  Double fa = f(lower, extra);
+  Double fb = f(upper, extra);
+  if (fa.isNA() || fb.isNA()) return uniroot_result::NA();
+  if (fa.val * fb.val > 0.0) return uniroot_result::NA();
+
+  res.root = uniroot_plain(lower, upper, fa, fb, f, extra, tol, maxit);
+  res.f_root = f(res.root, extra);
   res.iter = maxit;
   res.estim_prec = tol;
   return res;

@@ -85,6 +85,10 @@ test_diag <- function() {
     invisible(.Call(`_ast2ast_test_diag`))
 }
 
+test_nnls <- function() {
+    invisible(.Call(`_ast2ast_test_nnls`))
+}
+
 test_scalars <- function() {
     invisible(.Call(`_ast2ast_test_scalars`))
 }

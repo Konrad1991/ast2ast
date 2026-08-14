@@ -15,5 +15,6 @@
 #include "./Core/TriSolve.hpp"
 #include "./Core/Transpose.hpp"
 #include "./Core/Diag.hpp"
+#include "./Core/nnls.hpp"
 
 #endif

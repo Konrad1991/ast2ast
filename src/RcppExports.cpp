@@ -200,6 +200,15 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_nnls
+void test_nnls();
+RcppExport SEXP _ast2ast_test_nnls() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_nnls();
+    return R_NilValue;
+END_RCPP
+}
 // test_scalars
 void test_scalars();
 RcppExport SEXP _ast2ast_test_scalars() {
@@ -268,6 +277,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_assign_array_to_scalar", (DL_FUNC) &_ast2ast_test_assign_array_to_scalar, 0},
     {"_ast2ast_test_crossprod", (DL_FUNC) &_ast2ast_test_crossprod, 0},
     {"_ast2ast_test_diag", (DL_FUNC) &_ast2ast_test_diag, 0},
+    {"_ast2ast_test_nnls", (DL_FUNC) &_ast2ast_test_nnls, 0},
     {"_ast2ast_test_scalars", (DL_FUNC) &_ast2ast_test_scalars, 0},
     {"_ast2ast_test_scalar_assignment", (DL_FUNC) &_ast2ast_test_scalar_assignment, 0},
     {"_ast2ast_test_solve", (DL_FUNC) &_ast2ast_test_solve, 0},

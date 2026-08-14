@@ -10,10 +10,11 @@ Functions <- R6::R6Class(
     type_check_fcts = NULL,
     groups = NULL,
     cpp_names = NULL,
+    deriv_possibles = NULL,
 
     initialize = function() {},
     add = function(name, num_args, arg_names, infer_fct,
-                   check_fct, group, cpp_name) {
+                   check_fct, group, cpp_name, deriv_possible = TRUE) {
       self$function_names <- c(self$function_names, name)
       self$number_of_args[[length(self$number_of_args) + 1]] <- num_args
       self$arg_names[[length(self$arg_names) + 1]] <- arg_names
@@ -21,6 +22,7 @@ Functions <- R6::R6Class(
       self$type_check_fcts <- c(self$type_check_fcts, check_fct)
       self$groups <- c(self$groups, group)
       self$cpp_names <- c(self$cpp_names, cpp_name)
+      self$deriv_possibles <- c(self$deriv_possibles, deriv_possible)
     },
 
     permitted_fcts = function() self$function_names,
@@ -38,6 +40,13 @@ Functions <- R6::R6Class(
     },
     get_cpp_name = function(name) {
       self$cpp_names[which(self$function_names == name)]
+    },
+    deriv_possible = function(name) {
+      idx <- which(self$function_names == name)
+      if (identical(idx, integer())) {
+        return(TRUE)
+      }
+      self$deriv_possibles[idx]
     },
     is_group_functions = function(name) {
       idx <- which(self$function_names == name)
@@ -880,6 +889,15 @@ function_registry_global$add(
   group = "unary_node", cpp_name = "etr::sqrt"
 )
 function_registry_global$add(
+  # type-preserving like R's abs() (integer stays integer), unlike sin/cos/
+  # sqrt/etc. which always promote to double -- infer_unary_minus already
+  # has exactly that behavior (used by unary `-`), reused here.
+  name = "abs", num_args = 1, arg_names = NA,
+  infer_fct = infer_unary_minus,
+  check_fct = check_unary,
+  group = "unary_node", cpp_name = "etr::abs"
+)
+function_registry_global$add(
   name = "exp", num_args = 1, arg_names = NA,
   infer_fct = infer_unary_math,
   check_fct = check_unary,
@@ -1318,7 +1336,7 @@ function_registry_global$add(
       node$error <- "The third argument of cmr has to be a vector"
     }
   },
- group = "function_node", cpp_name = "etr::cmr"
+ group = "function_node", cpp_name = "etr::cmr", deriv_possible = FALSE
 )
 
 function_registry_global$add(
@@ -1915,13 +1933,13 @@ function_registry_global$add(
  group = "function_node", cpp_name = "etr::forwardsolve"
 )
 function_registry_global$add(
-  name = "uniroot", num_args = c(2, 3, 4), arg_names = c(NA, NA, NA, NA),
+  name = "uniroot", num_args = c(4, 5), arg_names = c(NA, NA, NA, NA, NA),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
     })
-    if (length(all_types) != 4L) {
-      return("uniroot expects 4 arguments")
+    if (!(length(all_types) %in% c(4L, 5L))) {
+      return("uniroot expects 4 or 5 arguments")
     }
     if (!inherits(all_types[[1L]], "fn_node")) {
       return("The first argument to uniroot has to be a function")
@@ -1936,21 +1954,30 @@ function_registry_global$add(
         return("The second argument to uniroot has to be a vector containing doubles")
       }
     }
-    if (length(node$args) >= 3L) {
-      tol_ok <- inherits(all_types[[3L]], "pre_type_node") &&
-        all_types[[3L]]$get_data_struct() == "scalar" &&
-        all_types[[3L]]$get_base_type() == "double"
-      if (!tol_ok) {
-        return("The third argument (tol) to uniroot has to be a scalar double")
-      }
+    tol_ok <- inherits(all_types[[3L]], "pre_type_node") &&
+      all_types[[3L]]$get_data_struct() == "scalar" &&
+      all_types[[3L]]$get_base_type() == "double"
+    if (!tol_ok) {
+      return("The third argument (tol) to uniroot has to be a scalar double")
     }
-    if (length(node$args) == 4L) {
-      maxiter_ok <- inherits(all_types[[4L]], "pre_type_node") &&
-        all_types[[4L]]$get_data_struct() == "scalar" &&
-        all_types[[4L]]$get_base_type() == "double"
-      if (!maxiter_ok) {
-        return("The fourth argument (maxiter) to uniroot has to be a scalar double")
+    maxiter_ok <- inherits(all_types[[4L]], "pre_type_node") &&
+      all_types[[4L]]$get_data_struct() == "scalar" &&
+      all_types[[4L]]$get_base_type() == "double"
+    if (!maxiter_ok) {
+      return("The fourth argument (maxiter) to uniroot has to be a scalar double")
+    }
+    if (length(node$args) == 5L) {
+      extra_type <- all_types[[5L]]
+      if (inherits(extra_type, "fn_node")) {
+        return("The fifth argument to uniroot (extra data passed to the function) cannot itself be a function")
       }
+      if (inherits(extra_type, "pre_type_node") && extra_type$get_base_type() == "character") {
+        return("The fifth argument to uniroot (extra data passed to the function) cannot be a character/string")
+      }
+      # Any other type (numeric/logical/integer scalar/vector/matrix, or a
+      # new_type_node struct) is allowed and not checked further here -- a
+      # mismatch against the function's own second parameter type will
+      # simply fail to compile in C++.
     }
     if (is.null(info_env$known_types[["uniroot_result"]])) {
       return("Did not found uniroot_result type which is required as return type for uniroot")
@@ -1961,8 +1988,14 @@ function_registry_global$add(
     f <- node$args[[1L]]$internal_type
     args_to_f <- f$args_f
     ret_from_f <- f$return_type
-    if (length(args_to_f) != 1L) {
-      node$error <- "the function passed to uniroot has to accept only one argument"
+    has_extra <- length(node$args) == 5L
+    expected_n_args <- if (has_extra) 2L else 1L
+    if (length(args_to_f) != expected_n_args) {
+      node$error <- sprintf(
+        "the function passed to uniroot has to accept exactly %d argument%s%s",
+        expected_n_args, if (expected_n_args == 1L) "" else "s",
+        if (has_extra) " (the value being solved for, then the extra data argument)" else ""
+      )
     } else if (inherits(args_to_f[[1L]], "pre_type_node")) {
       atf <- args_to_f[[1L]]
       if (atf$get_base_type() != "double") {
@@ -1983,5 +2016,39 @@ function_registry_global$add(
       }
     }
   },
- group = "function_node", cpp_name = "etr::uniroot"
+ group = "function_node", cpp_name = "etr::uniroot", deriv_possible = FALSE
+)
+function_registry_global$add(
+  name = "nnls", num_args = 2, arg_names = c(NA, NA),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    all_types <- lapply(node$args, function(arg) {
+      infer(arg, vars_list, info_env, function_registry)
+    })
+    if (length(all_types) != 2L) {
+      return("nnls expects 2 arguments")
+    }
+    for (i in seq_len(length(all_types))) {
+      if (inherits(all_types[[i]], c("new_type_node", "fn_node"))) {
+        return(sprintf("Found unallowed type in: %s", node$stringify()))
+      }
+      if (!inherits(all_types[[i]], "pre_type_node")) {
+        return(sprintf("Found unallowed type in: %s", node$stringify()))
+      }
+      if (all_types[[i]]$get_data_struct() == "collection") {
+        return(sprintf("Found unallowed type in: %s", node$stringify()))
+      }
+    }
+    t <- make_inferred_type("vector", "double", info_env$r_fct, info_env$real_type)
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_types_list, info_env) {
+    for (i in seq_along(node$args)) {
+      if (is_char(node$args[[i]], vars_types_list)) {
+        node$error <- "You cannot use character entries in nnls"
+        return()
+      }
+    }
+  },
+ group = "function_node", cpp_name = "etr::nnls", deriv_possible = FALSE
 )

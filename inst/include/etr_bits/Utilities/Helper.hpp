@@ -9,6 +9,10 @@ template <typename T> requires IsArithV<T> inline Logical isNA(const T inp) {
   const auto val = get_scalar_val(inp);
   return val.isNA();
 }
+template <typename T> requires IsArithRefV<T> inline Logical isNA(const T inp) {
+  const auto val = get_scalar_val(inp);
+  return val.isNA();
+}
 template <typename T> requires IsArray<T> inline auto isNA(const T &inp) {
   Array<Logical, Buffer<Logical, RBufferTrait>> res( SI{inp.size()});
   res.dim = std::vector<std::size_t>{inp.size()};
@@ -26,7 +30,7 @@ template <typename T> requires IsArithV<T> inline Logical isNaN(const T inp) {
     return inp.isNaN();
   }
 }
-template <typename T> requires (IsReverseDouble<T> || IsArithRefV<T>) inline Logical isNaN(const T inp) {
+template <typename T> requires IsArithRefV<T> inline Logical isNaN(const T inp) {
   const auto val = get_scalar_val(inp);
   return val.isNaN();
 }
@@ -47,7 +51,7 @@ template <typename T> requires IsArithV<T> inline Logical isInfinite(const T inp
     return Logical(inp.isInfinite());
   }
 }
-template <typename T> requires (IsReverseDouble<T> || IsArithRefV<T>) inline Logical isInfinite(const T inp) {
+template <typename T> requires IsArithRefV<T> inline Logical isInfinite(const T inp) {
   const auto val = get_scalar_val(inp);
   return Logical(val.isInfinite());
 }
@@ -69,7 +73,7 @@ template <typename T> requires IsArithV<T> inline Logical isFinite(const T inp) 
     return Logical(inp.isFinite());
   }
 }
-template <typename T> requires (IsReverseDouble<T> || IsArithRefV<T>) inline Logical isFinite(const T inp) {
+template <typename T> requires IsArithRefV<T> inline Logical isFinite(const T inp) {
   const auto val = get_scalar_val(inp);
   return Logical(val.isFinite());
 }
