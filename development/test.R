@@ -4,26 +4,34 @@ Rcpp::compileAttributes()
 install.packages(".", types = "source", repo = NULL)
 tinytest::test_package("ast2ast")
 
-f <- function() {
-  y <- TRUE
-  x <- y
-  y <- x + 1L
-  x <- 3.145
+files <- list.files("./R", full.names = TRUE)
+invisible(lapply(files, source))
+types_f_point <- function() {
+  new_type(
+    Point,
+    slots(
+      x |> type(double),
+      y |> type(double)
+    )
+  )
 }
-fcpp <- ast2ast::translate(f, getsource = TRUE)
-cat(fcpp, "\n")
-
-
 f <- function() {
-  x <- c(1.1, 2.2)
+  p |> type(Point)
   g <- fn(
-    args_f = function(v) v |> type(vec(double)) |> ref() |> const(),
-    return_value = type(double),
-    block = function(v) {
-      return(v[1])
+    f_args = function(a, b) {
+      a |> type(double)
+      b |> type(double)
+    },
+    return_value = type(int),
+    block = function(a, b) {
+      c <- as.integer(a + b)
+      return(c)
     }
   )
-  y <- g(x)
+  c <- vector("Point", 5L)
+  a <- c(3.14, dfg)
 }
-fcpp <- ast2ast::translate(f, getsource = TRUE)
-cat(fcpp, "\n")
+fcpp <- translate(
+  f,
+  types_f = types_f_point
+)

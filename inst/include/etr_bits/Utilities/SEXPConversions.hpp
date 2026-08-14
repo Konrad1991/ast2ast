@@ -107,6 +107,21 @@ inline SEXP Cast(ReverseDouble res) { return Rf_ScalarReal(to_R(res)); }
 inline SEXP Cast(std::string &res) { return Rf_mkString(res.data()); }
 inline SEXP Cast(const char *res) { return Rf_mkString(res); }
 
+// Validated list-element access for generated struct constructors: checks
+// the incoming SEXP's class and length before indexing it, so an
+// undersized/mistyped list is rejected here rather than read out of bounds.
+// -----------------------------------------------------------------------------------------------------------
+inline SEXP checked_elt(SEXP arg, int index, int expected_length, const char* expected_class) {
+  SEXP cls = Rf_getAttrib(arg, R_ClassSymbol);
+  if (cls == R_NilValue || std::strcmp(CHAR(STRING_ELT(cls, 0)), expected_class) != 0) {
+    Rf_error("Expected an object of class '%s'", expected_class);
+  }
+  if (Rf_length(arg) != expected_length) {
+    Rf_error("Expected an object of class '%s' with %d fields, but got %d", expected_class, expected_length, (int)Rf_length(arg));
+  }
+  return VECTOR_ELT(arg, index);
+}
+
 // Cast Array
 // -----------------------------------------------------------------------------------------------------------
 inline void set_dim_attrib(SEXP x, const std::vector<std::size_t>& dim) {

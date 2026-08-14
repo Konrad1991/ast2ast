@@ -6,6 +6,7 @@ variable_node <- R6::R6Class(
     context = NULL,
     internal_type = NULL,
     initialized = FALSE,
+    field_name = FALSE,
     initialize = function(obj) {
       self$name <- obj
     },
@@ -99,9 +100,15 @@ binary_node <- R6::R6Class(
       return(self$left_node$stringify())
     },
     string_right = function() {
+      if (inherits(self$right_node, "pre_type_node")) {
+        return(self$right_node$describe())
+      }
       return(self$right_node$stringify())
     },
     create_infix_string = function(indent = "") {
+      if (self$operator %in% c("$", ".")) {
+        return(paste0(indent, self$string_left(), self$operator, self$string_right()))
+      }
       paste0(
         indent,
         self$string_left(),
@@ -212,7 +219,17 @@ unary_node <- R6::R6Class(
         )
       } else {
         if (self$handle_return) {
-          if (self$output_is_r_fct) {
+          if (needs_to_SEXP_path(self$obj$internal_type) && self$output_is_r_fct) {
+            ret <- paste0(
+              indent, self$operator, "(",
+              self$string_obj(), ".to_SEXP())"
+            )
+          } else if (needs_to_SEXP_path(self$obj$internal_type)) {
+            ret <- paste0(
+              indent, self$operator, "(",
+              self$string_obj(), ")"
+            )
+          } else if (self$output_is_r_fct) {
             ret <- paste0(
               indent, self$operator, "(etr::Cast(",
               # This cast to SEXP and evals expressions which are not variables or literals
@@ -489,15 +506,15 @@ if_node <- R6::R6Class(
   )
 )
 
-handle_if <- function(code, context, r_fct, i_node, function_registry) {
-  i_node$condition <- code[[2]] |> process(context, r_fct, function_registry)
-  i_node$true_node <- code[[3]] |> wrap_in_block() |> process(context, r_fct, function_registry)
+handle_if <- function(code, context, env, i_node, function_registry) {
+  i_node$condition <- code[[2]] |> process(context, env, function_registry)
+  i_node$true_node <- code[[3]] |> wrap_in_block() |> process(context, env, function_registry)
   if (length(code) == 4) {
     s <- code[[4]]
     while (is.call(s) && deparse(s[[1]]) == "if") {
       else_i_node <- if_node$new()
-      else_i_node$condition <- s[[2]] |> process(context, r_fct, function_registry)
-      else_i_node$true_node <- s[[3]] |> wrap_in_block() |> process(context, r_fct, function_registry)
+      else_i_node$condition <- s[[2]] |> process(context, env, function_registry)
+      else_i_node$true_node <- s[[3]] |> wrap_in_block() |> process(context, env, function_registry)
       i_node$else_if_nodes[[
         length(i_node$else_if_nodes) + 1
         ]] <- else_i_node
@@ -510,13 +527,13 @@ handle_if <- function(code, context, r_fct, i_node, function_registry) {
     if (!is.null(s)) {
       if (deparse(s[[1]]) == "if") {
         else_i_node <- if_node$new()
-        else_i_node$condition <- s[[2]] |> process(context, r_fct, function_registry)
-        else_i_node$true_node <- s[[3]] |> wrap_in_block() |> process(context, r_fct, function_registry)
+        else_i_node$condition <- s[[2]] |> process(context, env, function_registry)
+        else_i_node$true_node <- s[[3]] |> wrap_in_block() |> process(context, env, function_registry)
         i_node$else_if_nodes[[
           length(i_node$else_if_nodes) + 1
           ]] <- else_i_node
       } else {
-        i_node$false_node <- process(wrap_in_block(s), context, r_fct, function_registry)
+        i_node$false_node <- process(wrap_in_block(s), context, env, function_registry)
       }
     }
   }
@@ -613,7 +630,8 @@ for_node <- R6::R6Class(
       block_err <- self$block$stringify_error()
       i_err <- self$i$stringify_error()
       seq_err <- self$seq$stringify_error()
-      res <- c(i_err, seq_err, block_err)
+      own_err <- self$error
+      res <- c(i_err, seq_err, own_err, block_err)
       res <- res[res != ""]
       e <- combine_strings(list(res), "\n")
       if (e != "") {
@@ -624,15 +642,14 @@ for_node <- R6::R6Class(
     stringify_error_line = function(indent = "") {
       i_err <- self$i$stringify_error()
       seq_err <- self$seq$stringify_error()
-      i_seq_line <- (paste0(
+      own_err <- self$error
+      all_errs <- c(i_err, seq_err, own_err)
+      all_errs <- all_errs[all_errs != ""]
+      i_seq_line <- paste0(
         "for (", self$i$stringify(""), " in ", self$seq$stringify(""), ") {"
-      ))
-      if (i_err != "" && seq_err != "") {
-        i_seq_line <- paste0(i_seq_line, "\n", i_err, "\n", seq_err)
-      } else if (i_err == "" && seq_err != "") {
-        i_seq_line <- paste0(i_seq_line, "\n", seq_err)
-      } else if (i_err != "" && seq_err == "") {
-        i_seq_line <- paste0(i_seq_line, "\n", i_err)
+      )
+      if (length(all_errs) > 0) {
+        i_seq_line <- paste0(i_seq_line, "\n", combine_strings(all_errs, "\n"))
       } else {
         i_seq_line <- ""
       }
@@ -771,21 +788,32 @@ fn_node <- R6::R6Class(
     outermost = NULL,
     function_registry = NULL,
     function_registry_outer = NULL,
+    known_types = NULL,
 
     initialize = function() {},
 
     stringify_signature = function(r_fct = FALSE) {
       return("")
     },
+    signature = function(indent = "") {
+      ""
+    },
+    declare = function(indent = "") {
+      self$stringify_declaration(indent = indent, r_fct = FALSE)
+    },
     stringify_declaration = function(indent = "", r_fct) {
       if (length(self$vars_types_list) >= 1L) {
-        args <- lapply(self$vars_types_list, \(x) x$stringify_signature(r_fct = FALSE)) |> unlist() |> c()
+        args <- lapply(self$vars_types_list, \(x) x$signature()) |> unlist() |> c()
         args <- args[args != ""]
         args <- paste0(args, collapse = ", ")
       } else {
         args <- ""
       }
-      ret_type <- self$return_type$generate_type("")
+      ret_type <- if (inherits(self$return_type, "new_type_node")) {
+        self$return_type$stringify("")
+      } else {
+        self$return_type$data_struct$stringify("")
+      }
       paste0(indent, sprintf("std::function<%s(%s)>%s;\n", ret_type, args, self$fct_name))
     },
 
@@ -794,19 +822,23 @@ fn_node <- R6::R6Class(
       indent0 <- indent
 
       if (length(self$vars_types_list) >= 1L) {
-        args <- lapply(self$vars_types_list, \(x) x$stringify_signature(FALSE)) |> unlist() |> c()
+        args <- lapply(self$vars_types_list, \(x) x$signature()) |> unlist() |> c()
         args <- args[args != ""]
       } else {
         args <- ""
       }
       declarations <- lapply(self$vars_types_list, \(x) {
-        res <- x$stringify_declaration(indent = "", r_fct = FALSE)
+        res <- x$declare(indent = "")
         paste0(indent, "     ", res)
       }) |> unlist() |> c()
       declarations <- declarations[declarations != ""]
       declarations <- paste0(declarations, collapse = "\n")
 
-      ret_type <- self$return_type$generate_type("")
+      ret_type <- if (inherits(self$return_type, "new_type_node")) {
+        self$return_type$stringify("")
+      } else {
+        self$return_type$data_struct$stringify("")
+      }
 
       body <- ""
       if (inherits(self$AST, "block_node")) {
@@ -840,13 +872,17 @@ fn_node <- R6::R6Class(
       name <- self$fct_name
       args <- character()
       if (!is.null(self$args_f) && inherits(self$args_f, "list")) {
-        normal_vars <- self$vars_types_list[sapply(self$vars_types_list, \(x) inherits(x, "type_node"))]
+        normal_vars <- self$vars_types_list[sapply(self$vars_types_list, \(x) inherits(x, c("pre_type_node", "new_type_node")))]
         args <- lapply(normal_vars, function(x) {
-          x$stringify_signature(r_fct = FALSE)
+          x$signature()
         }) |> unlist() |> c()
         args <- args[args != ""]
       }
-      ret_type <- self$return_type$generate_type("")
+      ret_type <- if (inherits(self$return_type, "new_type_node")) {
+        self$return_type$stringify("")
+      } else {
+        self$return_type$data_struct$stringify("")
+      }
       header <- paste0(
         indent, "auto ", name, " = [&]( ", paste(args, collapse = ", "), " ) -> ",
         ret_type, " { ... };"
@@ -860,223 +896,576 @@ fn_node <- R6::R6Class(
   )
 )
 
-type_node <- R6::R6Class(
-  "type_node",
+# =====================================================================
+# Type nodes
+# =====================================================================
+pre_type_node <- R6::R6Class(
+  "pre_type_node",
   public = list(
     name = NULL,
-    tree = NULL,
-    error = NULL,
-    base_type = NULL,
     data_struct = NULL,
     const_or_mut = "mutable",
     copy_or_ref = "copy",
-    fct_input = FALSE,
-    type_dcl = FALSE,
-    iterator = FALSE,
-    r_fct = TRUE,
-    real_type = "etr::Double",
-
-    within_type_call = FALSE,
-
-    initialize = function(tree, fct_input, r_fct) {
-      self$tree <- tree
+    r_fct = NULL,
+    real_type = NULL,
+    iterator = NULL,
+    type_decl = NULL,
+    fct_input = NULL,
+    error = NULL,
+    initialize = function(iterator, type_decl, fct_input, error) {
+      self$iterator <- iterator
+      self$type_decl <- type_decl
       self$fct_input <- fct_input
-      self$r_fct <- r_fct
+      self$error <- error
     },
-
-    handle_type = function(type) {
-      self$name <- deparse(type[[1]])
-      type <- as.list(type[[2]])
-      if (length(type) == 1) {
-        self$data_struct <- "scalar"
-        self$base_type <- deparse(type[[1]])
-      } else if (length(type) == 2) {
-        self$data_struct <- deparse(type[[1]])
-        self$base_type <- deparse(type[[2]])
-      } else {
-        self$error <- c(self$error, "Too many arguments to function type")
-      }
+    print = function() {
+      cat(paste0(self$name, ": "))
+      print(self$data_struct)
     },
-
-    handle_const = function(fct, const) {
-      if (length(const) > 1) {
-        self$error <- c(self$error, "Function const accept only one argument")
-      } else {
-        self$const_or_mut <- fct
-      }
-    },
-
-    handle_copy_or_ref = function(fct, copy_or_ref) {
-      if (length(copy_or_ref) > 1) {
-        self$error <- c(self$error, "Functions copy and ref accept only one argument")
-      } else {
-        self$copy_or_ref <- fct
-      }
-    },
-
-    traverse = function(tree) {
-      if (!is.call(tree)) {
-        return(tree)
-      }
-      tree <- as.list(tree)
-      fct <- deparse(tree[[1]])
-      if (fct == "type") {
-        self$within_type_call <- TRUE
-        self$handle_type(tree[-1])
-      } else if (fct == "const") {
-        self$handle_const(fct, tree[-1])
-        self$within_type_call <- FALSE
-      } else if (fct %within% c("copy", "ref", "reference")) {
-        self$handle_copy_or_ref(fct, tree[-1])
-        self$within_type_call <- FALSE
-      } else if (!self$within_type_call) {
-        self$error <- c(self$error, sprintf("Found unsupported function: %s", fct))
-        self$within_type_call <- FALSE
-      }
-      lapply(tree, self$traverse)
-    },
-
-    traverse_within_fct = function(tree) {
-      if (!is.call(tree)) {
-        return(tree)
-      }
-      tree <- as.list(tree)
-      fct <- deparse(tree[[1]])
-      if (fct == "type") {
-        self$within_type_call <- TRUE
-        self$handle_type(tree[-1])
-      } else if (!self$within_type_call) {
-        self$error <- c(self$error, sprintf("Found unsupported function: %s", fct))
-        self$within_type_call <- FALSE
-      }
-      lapply(tree, self$traverse)
-    },
-
-    get_variable_from_arg = function() {
-      types <- c(permitted_base_types(), permitted_data_structs(self$r_fct))
-      av <- all.vars(self$tree)
-      av <- av[!(av %within% types)]
-      if (length(av) == 0) {
-        self$error <- c(self$error,
-          sprintf("Didn't found a variable within: %s", deparse(self$tree))
-        )
-      }
-      if (length(av) > 1) {
-        self$error <- c(self$error,
-          sprintf("Found invalid types. Allowed are: %s and the type found is: %s",
-            paste(types, collapse = ", "), deparse(self$tree)))
-      }
-      av
-    },
-
-    init = function() {
-      self$traverse(self$tree)
-      # Set default values
-      if (is.null(self$base_type)) self$base_type <- "double"
-      if (is.null(self$data_struct)) self$data_struct <- "vector"
-      if (is.null(self$name)) {
-        self$name <- self$get_variable_from_arg()
-      }
-    },
-
-    init_within_fct = function() {
-      self$traverse_within_fct(self$tree)
-      # Set default values
-      if (is.null(self$base_type)) self$base_type <- "double"
-      if (is.null(self$data_struct)) self$data_struct <- "vector"
-      if (is.null(self$name)) {
-        self$name <- self$get_variable_from_arg()
-      }
-    },
-
-    check_allowed_base_types = function() {
-      if (!self$base_type %within% permitted_base_types()) {
-        self$error <- c(self$error, sprintf("Found unsupported base type: %s", self$base_type))
-      }
-    },
-
-    check_allowed_data_structs = function() {
-      # DOnt use self$r_fct as the user has to have the ability to use borrowed data structures for the inner functions
-      if (!(self$data_struct %within% permitted_data_structs(FALSE))) {
-        self$error <- c(self$error, sprintf("Found unsupported data structure: %s", self$data_struct))
-      }
-    },
-
-    check_borrow_ref = function() {
-      if (self$r_fct && grepl("borrow_", self$data_struct) && self$copy_or_ref != "ref") {
-        self$error <- c(self$error, "You have to add ref() to the type declaration if the R object should be borrowed")
-      }
-    },
-
-    check = function() {
-      self$check_allowed_base_types()
-      self$check_allowed_data_structs()
-      self$check_borrow_ref()
-    },
-
     stringify = function(indent = "") {
-      if (self$data_struct == "scalar") {
-        return(paste0(indent, self$base_type))
-      }
-      return(paste0(indent, self$data_struct, "(", self$base_type, ")"))
+      paste0(indent, self$data_struct$stringify(indent), " ", self$name, ";")
+    },
+    get_name = function() {
+      self$name
+    },
+    get_base_type = function() {
+      self$data_struct$get_base_type()
+    },
+    get_data_struct = function() {
+      self$data_struct$get_data_struct()
+    },
+    get_data_struct_verbose = function() {
+      self$data_struct$get_data_struct_verbose()
+    },
+    get_const_or_mut = function() {
+      self$const_or_mut
+    },
+    get_copy_or_ref = function() {
+      self$copy_or_ref
+    },
+    get_iterator = function() {
+      self$iterator
+    },
+    get_type_decl = function() {
+      self$type_decl
+    },
+    get_fct_input = function() {
+      self$fct_input
+    },
+    get_error = function() {
+      self$error
     },
     stringify_error = function(indent = "") {
-      return(paste0(indent, self$error))
+      paste0(indent, self$error)
     },
-
-    generate_type = function(indent = "") {
-      convert_types_to_etr_types(self$base_type, self$data_struct, self$r_fct, self$real_type, indent)
-    },
-    stringify_signature = function(r_fct) {
-      if (!self$fct_input) return("")
-      if (r_fct) {
-        return(paste0("SEXP ", self$name, "SEXP"))
+    describe = function(indent = "") {
+      if (self$get_data_struct() == "scalar") {
+        return(paste0(indent, self$get_base_type()))
       }
-      type <- convert_types_to_etr_types(self$base_type, self$data_struct, self$r_fct, self$real_type, "")
-      if (self$const_or_mut == "const") type <- paste0("const ", type)
-      if (self$copy_or_ref %within% c("ref", "reference")) type <- paste0(type, "&")
-      paste0(type, " ", self$name)
+      paste0(indent, self$get_data_struct(), "(", self$get_base_type(), ")")
     },
-    stringify_declaration = function(indent = "", r_fct) {
-      if (self$iterator) return("")
-      if (!r_fct && self$fct_input) return("")
-      if (r_fct && self$fct_input) {
-        data_struct <- self$data_struct
-        if(self$copy_or_ref != "copy" && !grepl("borrow_", data_struct)) {
-          data_struct <- paste0("borrow_", self$data_struct)
-        }
-        type <- convert_types_to_etr_types(self$base_type, data_struct, self$r_fct, self$real_type, indent)
-        if (self$const_or_mut == "const") {
-          type <- paste0("const ", type)
-        }
-
-        if (data_struct == "scalar") {
-          conv_base_type <- convert_base_type(self$base_type, self$real_type)
-          return(
-            paste0(indent, type, " ", self$name, " = ",
-              paste0("etr::SEXP2Scalar<", conv_base_type, ">(", self$name, "SEXP);")
-            )
-          )
-        }
-        return(
-          paste0(indent, type, " ", self$name, " = ", paste0(self$name, "SEXP;"))
-        )
+    set_name = function(name) {
+      self$name <- name
+    },
+    set_const_or_mut = function(const_or_mut) {
+      self$const_or_mut <- const_or_mut
+    },
+    set_copy_or_ref = function(copy_or_ref) {
+      self$copy_or_ref <- copy_or_ref
+    },
+    set_iterator = function(iterator) {
+      self$iterator <- iterator
+    },
+    set_fct_input = function(fct_input) {
+      self$fct_input <- fct_input
+    },
+    set_data_struct = function(data_struct) {
+      base_type <- NULL
+      if (!is.null(self$data_struct)) {
+        base_type <- self$data_struct$get_base_type()
       }
-      type <- convert_types_to_etr_types(self$base_type, self$data_struct, self$r_fct, self$real_type, indent)
-      paste0(indent, type, " ", self$name, ";")
-    },
-
-    print = function() {
-      print("Type:")
-      cat(
-        "Name: ", self$name, "\n",
-        "base type: ", self$base_type, "\n",
-        "data struct: ", self$data_struct, "\n",
-        "const or mut", self$const_or_mut, "\n",
-        "copy or ref", self$copy_or_ref, "\n",
-        "fct input", self$fct_input, "\n",
-        "iterator", self$iterator, "\n"
+      ds <- switch(data_struct,
+        scalar = scalar$new(),
+        vector = vec$new(),
+        matrix = mat$new(),
+        array = arr$new()
       )
+      ds$base_type <- base_type
+      ds$r_fct <- self$r_fct
+      ds$real_type <- self$real_type
+      self$data_struct <- ds
+    },
+    set_base_type = function(base_type) {
+      self$data_struct$base_type <- base_type
+    },
+    flatten = function() {
+      if (inherits(self$data_struct$base_type, "pre_type_node")) {
+        self$set_base_type(self$data_struct$base_type$get_base_type())
+        self$flatten()
+      }
+      if (inherits(self$data_struct, "pre_type_node")) {
+        self$data_struct <- self$data_struct$data_struct
+        self$flatten()
+      }
+      invisible(self)
+    },
+    declare = function(indent = "") {
+      if (self$iterator) return("")
+      if (!self$r_fct && self$fct_input) return("")
+      if (self$r_fct && self$fct_input) {
+        res <- paste0(self$data_struct$stringify(indent), " ", self$name)
+        cast_fct <- self$data_struct$cast_fct()
+        if (is.null(cast_fct)) {
+          return(paste0(indent, res, " = ", self$name, "SEXP;"))
+        }
+        return(paste0(indent, res, " = ", cast_fct, "(", self$name, "SEXP);"))
+      }
+      paste0(indent, self$data_struct$stringify(indent), " ", self$name, ";")
+    },
+    signature = function(indent = "") {
+      if (!self$fct_input) return("")
+      if (self$r_fct) {
+        return(sprintf("SEXP %sSEXP", self$name))
+      }
+      cm <- "const "
+      if (self$const_or_mut != "const") cm <- ""
+      cr <- "&"
+      if (self$copy_or_ref == "copy") cr <- ""
+      paste0(cm, self$data_struct$stringify(indent), cr, " ", self$name)
+    }
+  )
+)
+
+scalar <- R6::R6Class(
+  "scalar",
+  public = list(
+    base_type = NULL,
+    r_fct = NULL,
+    real_type = NULL,
+    print = function() {
+      cat(sprintf("scalar value of: %s", self$base_type), "\n")
+    },
+    stringify = function(indent = "") {
+      basic <- is_base_type(self$get_base_type())
+      if (basic) {
+        res <- convert_base_type(self$base_type, self$real_type)
+      } else {
+        res <- self$base_type
+      }
+      res
+    },
+    cast_fct = function() {
+      paste0("etr::SEXP2Scalar<", convert_base_type(self$base_type, self$real_type), ">")
+    },
+    get_base_type = function() {
+      self$base_type
+    },
+    get_data_struct = function() {
+      "scalar"
+    },
+    get_data_struct_verbose = function() {
+      "scalar"
+    }
+  )
+)
+unresolved_node <- R6::R6Class(
+  "unresolved_node",
+  public = list(
+    name = NULL,
+    base_type = NULL,
+    get_base_type = function() {
+      self$base_type
+    },
+    get_data_struct = function() {
+      self$name
+    },
+    get_data_struct_verbose = function() {
+      self$name
+    }
+  )
+)
+vec <- R6::R6Class(
+  "vec",
+  public = list(
+    base_type = NULL,
+    r_fct = NULL,
+    real_type = NULL,
+    print = function() {
+      cat(sprintf("vector containing: %s", self$base_type), "\n")
+    },
+    stringify = function(indent = "") {
+      bt <- convert_base_type(self$base_type, self$real_type)
+      sprintf("etr::Array<%s, etr::Buffer<%s>>", bt, bt)
+    },
+    cast_fct = function() {
+      NULL
+    },
+    get_base_type = function() {
+      self$base_type
+    },
+    get_data_struct = function() {
+      "vector"
+    },
+    get_data_struct_verbose = function() {
+      "vector"
+    }
+  )
+)
+
+mat <- R6::R6Class(
+  "mat",
+  public = list(
+    base_type = NULL,
+    r_fct = NULL,
+    real_type = NULL,
+    print = function() {
+      cat(sprintf("matrix containing: %s", self$base_type), "\n")
+    },
+    stringify = function(indent = "") {
+      bt <- convert_base_type(self$base_type, self$real_type)
+      sprintf("etr::Array<%s, etr::Buffer<%s>>", bt, bt)
+    },
+    cast_fct = function() {
+      NULL
+    },
+    get_base_type = function() {
+      self$base_type
+    },
+    get_data_struct = function() {
+      "matrix"
+    },
+    get_data_struct_verbose = function() {
+      "matrix"
+    }
+  )
+)
+arr <- R6::R6Class(
+  "arr",
+  public = list(
+    base_type = NULL,
+    r_fct = NULL,
+    real_type = NULL,
+    print = function() {
+      cat(sprintf("array containing: %s", self$base_type), "\n")
+    },
+    stringify = function(indent = "") {
+      bt <- convert_base_type(self$base_type, self$real_type)
+      sprintf("etr::Array<%s, etr::Buffer<%s>>", bt, bt)
+    },
+    cast_fct = function() {
+      NULL
+    },
+    get_base_type = function() {
+      self$base_type
+    },
+    get_data_struct = function() {
+      "array"
+    },
+    get_data_struct_verbose = function() {
+      "array"
+    }
+  )
+)
+borrow_vec <- R6::R6Class(
+  "borrow_vec",
+  public = list(
+    base_type = NULL,
+    r_fct = NULL,
+    real_type = NULL,
+    print = function() {
+      cat(sprintf("vector (borrowed) containing: %s", self$base_type), "\n")
+    },
+    stringify = function(indent = "") {
+      bt <- convert_base_type(self$base_type, self$real_type)
+      sprintf("etr::Array<%s, etr::Borrow<%s>>", bt, bt)
+    },
+    cast_fct = function() {
+      NULL
+    },
+    get_base_type = function() {
+      self$base_type
+    },
+    get_data_struct = function() {
+      "vector"
+    },
+    get_data_struct_verbose = function() {
+      "borrow_vector"
+    }
+  )
+)
+
+borrow_mat <- R6::R6Class(
+  "borrow_mat",
+  public = list(
+    base_type = NULL,
+    r_fct = NULL,
+    real_type = NULL,
+    print = function() {
+      cat(sprintf("matrix (borrowed) containing: %s", self$base_type), "\n")
+    },
+    stringify = function(indent = "") {
+      bt <- convert_base_type(self$base_type, self$real_type)
+      sprintf("etr::Array<%s, etr::Borrow<%s>>", bt, bt)
+    },
+    cast_fct = function() {
+      NULL
+    },
+    get_base_type = function() {
+      self$base_type
+    },
+    get_data_struct = function() {
+      "matrix"
+    },
+    get_data_struct_verbose = function() {
+      "borrow_matrix"
+    }
+  )
+)
+borrow_arr <- R6::R6Class(
+  "borrow_arr",
+  public = list(
+    base_type = NULL,
+    r_fct = NULL,
+    real_type = NULL,
+    print = function() {
+      cat(sprintf("array (borrowed) containing: %s", self$base_type), "\n")
+    },
+    stringify = function(indent = "") {
+      bt <- convert_base_type(self$base_type, self$real_type)
+      sprintf("etr::Array<%s, etr::Borrow<%s>>", bt, bt)
+    },
+    cast_fct = function() {
+      NULL
+    },
+    get_base_type = function() {
+      self$base_type
+    },
+    get_data_struct = function() {
+      "array"
+    },
+    get_data_struct_verbose = function() {
+      "borrow_array"
+    }
+  )
+)
+
+new_type_node <- R6::R6Class(
+  "new_type_node",
+  public = list(
+    name = NULL,
+    slots = NULL,
+    r_fct = NULL,
+    real_type = NULL,
+    var_name = NULL,
+    type_decl = NULL,
+    fct_input = NULL,
+    iterator = NULL,
+    error = NULL,
+    const_or_mut = "mutable",
+    copy_or_ref = "copy",
+    # TRUE for builtin types whose struct already lives in namespace etr
+    # (hardcoded in a header, e.g. uniroot_result) rather than being
+    # codegen'd into the translated .cpp's own anonymous namespace --
+    # references to the type name need the etr:: qualifier.
+    part_of_etr = FALSE,
+    initialize = function(name) {
+      self$name <- name
+    },
+    print = function() {
+      cat(self$name, "\n")
+      cat("=============================\n")
+      for (i in self$slots) {
+        print(i)
+        cat("------------------------------\n")
+      }
+    },
+
+    create_constructor_SEXP = function() {
+      n_slots <- length(self$slots)
+      input <- vapply(seq_len(n_slots), function(i) {
+        s <- self$slots[[i]]
+        basic <- is_base_type(s$get_base_type())
+        elt <- sprintf("etr::checked_elt(arg, %s, %s, \"%s\")", i - 1, n_slots, self$name)
+        if (inherits(s, "pre_type_node")) {
+          res <- elt
+          if (s$get_data_struct() == "scalar" && basic) {
+            res <- sprintf("etr::SEXP2Scalar<%s>(%s)", convert_base_type(s$get_base_type(), self$real_type), res)
+          }
+          res
+        } else if (inherits(s, "new_type_node")) {
+          sprintf("%s(%s)", s$name, elt)
+        } else {
+          # Handle error
+        }
+      }, character(1L))
+      names <- vapply(self$slots, function(s) s$get_name(), character(1L))
+      input <- paste0(names, "(", input, ")", collapse = ", ")
+      sprintf("\texplicit %s(SEXP arg) :\n\t %s {}\n", self$name, input)
+    },
+    create_cast_to_SEXP = function() {
+      n_slots <- length(self$slots)
+      field_names <- vapply(self$slots, function(s) s$get_name(), character(1L))
+      value_lines <- vapply(seq_len(n_slots), function(i) {
+        s <- self$slots[[i]]
+        field <- field_names[i]
+        # Collection<T>, like a new_type_node, provides its own to_SEXP()
+        # and has no etr::Cast() overload -- everything else routes through Cast().
+        if (inherits(s, "new_type_node") || (inherits(s, "pre_type_node") && s$get_data_struct() == "collection")) {
+          sprintf("\t\tSET_VECTOR_ELT(res, %s, %s.to_SEXP());", i - 1, field)
+        } else {
+          sprintf("\t\tSET_VECTOR_ELT(res, %s, etr::Cast(%s));", i - 1, field)
+        }
+      }, character(1L))
+      name_lines <- vapply(seq_len(n_slots), function(i) {
+        sprintf("\t\tSET_STRING_ELT(names, %s, Rf_mkChar(\"%s\"));", i - 1, field_names[i])
+      }, character(1L))
+      paste0(
+        "\tSEXP to_SEXP() const {\n",
+        "\t\tSEXP res = PROTECT(Rf_allocVector(VECSXP, ", n_slots, "));\n",
+        paste0(value_lines, collapse = "\n"), "\n",
+        "\t\tSEXP names = PROTECT(Rf_allocVector(STRSXP, ", n_slots, "));\n",
+        paste0(name_lines, collapse = "\n"), "\n",
+        "\t\tRf_setAttrib(res, R_NamesSymbol, names);\n",
+        "\t\tRf_setAttrib(res, R_ClassSymbol, Rf_mkString(\"", self$name, "\"));\n",
+        "\t\tUNPROTECT(2);\n",
+        "\t\treturn res;\n",
+        "\t}\n"
+      )
+    },
+    create_special_member_functions = function() {
+      n <- self$name
+      paste0(
+        "\t", n, "() = default;\n",
+        "\t", n, "(const ", n, "&) = default;\n",
+        "\t", n, "(", n, "&&) noexcept = default;\n",
+        "\t", n, "& operator=(const ", n, "&) = default;\n",
+        "\t", n, "& operator=(", n, "&&) noexcept = default;\n"
+      )
+    },
+    define_type = function() {
+      ctr <- self$create_constructor_SEXP()
+      cast <- self$create_cast_to_SEXP()
+      special <- self$create_special_member_functions()
+      ts <- lapply(self$slots, function(s) {
+        if (inherits(s, "new_type_node")) {
+          paste0("\t", s$stringify(""), " ", s$get_name(), ";")
+        } else {
+          s$stringify("\t")
+        }
+      })
+      paste0(
+        "struct ", self$name, "{\n",
+        paste0(ts, collapse = "\n"),
+        "\n",
+        ctr,
+        "\n",
+        cast,
+        "\n",
+        special,
+        "\n",
+        "};"
+      )
+    },
+    stringify = function(indent = "") {
+      if (isTRUE(self$part_of_etr)) {
+        return(paste0("etr::", self$name))
+      }
+      self$name
+    },
+    cast_fct = function() {
+      self$stringify()
+    },
+    get_base_type = function() {
+      sprintf("Class %s does not possess a base type", self$name)
+    },
+    get_data_struct = function() {
+      self$name
+    },
+    get_data_struct_verbose = function() {
+      self$name
+    },
+    get_const_or_mut = function() {
+      self$const_or_mut
+    },
+    get_copy_or_ref = function() {
+      self$copy_or_ref
+    },
+    get_name = function() {
+      self$var_name
+    },
+    set_name = function(name) {
+      self$var_name <- name
+    },
+    get_type_decl = function() {
+      self$type_decl
+    },
+    get_fct_input = function() {
+      self$fct_input
+    },
+    get_iterator = function() {
+      self$iterator
+    },
+    get_error = function() {
+      self$error
+    },
+    stringify_error = function(indent = "") {
+      paste0(indent, self$error)
+    },
+    declare = function(indent = "") {
+      if (self$iterator) return("")
+      if (!self$r_fct && self$fct_input) return("")
+      if (self$r_fct && self$fct_input) {
+        res <- paste0(self$stringify(indent), " ", self$var_name)
+        cast_fct <- self$cast_fct()
+        if (is.null(cast_fct)) {
+          return(paste0(indent, res, " = ", self$var_name, "SEXP;"))
+        }
+        return(paste0(indent, res, " = ", cast_fct, "(", self$var_name, "SEXP);"))
+      }
+      paste0(indent, self$stringify(indent), " ", self$var_name, ";")
+    },
+    signature = function(indent = "") {
+      if (!self$fct_input) return("")
+      if (self$r_fct) {
+        return(sprintf("SEXP %sSEXP", self$var_name))
+      }
+      cm <- "const "
+      if (self$get_const_or_mut() != "const") cm <- ""
+      cr <- "&"
+      if (self$get_copy_or_ref() == "copy") cr <- ""
+      paste0(cm, self$stringify(indent), cr, " ", self$var_name)
+    }
+  )
+)
+
+collection <- R6::R6Class(
+  "collection",
+  public = list(
+    type = NULL,
+    element_type = NULL,
+    r_fct = NULL,
+    real_type = NULL,
+    print = function() {
+      cat(sprintf("collection containing: %s", self$type), "\n")
+    },
+    stringify = function(indent = "") {
+      basic <- is_base_type(self$type)
+      if (basic) {
+        stop("collections cannot contain basic types")
+      }
+      sprintf("etr::Collection<%s>", self$type)
+    },
+    cast_fct = function() {
+      self$stringify()
+    },
+    get_base_type = function() {
+      sprintf("Class collection of %s does not possess a base type", self$type)
+    },
+    get_data_struct = function() {
+      "collection"
+    },
+    get_data_struct_verbose = function() {
+      "collection"
     }
   )
 )

@@ -2,7 +2,10 @@ library(tinytest)
 
 # --- helpers ---------------------------------------------------------------
 get_checks <- function(f, r_fct = TRUE) {
-  ast <- ast2ast:::parse_body(body(f), r_fct, ast2ast:::function_registry_global)
+  env <- new.env(parent = emptyenv())
+  env$r_fct <- r_fct
+  env$real_type <- "etr::Double"
+  ast <- ast2ast:::parse_body(body(f), env, ast2ast:::function_registry_global)
   ast2ast:::run_checks(ast, r_fct, ast2ast:::function_registry_global)
 }
 test_action_error <- function(f, error_message, r_fct = TRUE) {
@@ -17,7 +20,7 @@ f <- function() {
 }
 test_action_error(
   f,
-  "\ntype(1.0, int)\nInvalid type declaration for: 1.0"
+  "\ntype(1.0, integer)\nInvalid type declaration for: 1.0"
 )
 f <- function() {
   type(a, 3.14)
@@ -38,7 +41,7 @@ f <- function() {
 }
 test_action_error(
   f,
-  "\ntype(a, vec(integr))\nFound unsupported base type: integr\nInvalid type declaration: integr for variable a"
+  "\ntype(a, vector(integr))\nFound unsupported base type: integr\nInvalid type declaration: integr for variable a"
 )
 f <- function() {
   type(a, vectr(integr))
@@ -52,7 +55,7 @@ f <- function() {
 }
 test_action_error(
   f,
-  "\ntype(a, vectr(int))\nFound unsupported data structure: vectr\nInvalid type declaration: vectr for variable a"
+  "\ntype(a, vectr(integer))\nFound unsupported data structure: vectr\nInvalid type declaration: vectr for variable a"
 )
 
 # --- variable names --------------------------------------------------------

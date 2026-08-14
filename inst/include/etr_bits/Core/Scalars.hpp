@@ -18,7 +18,7 @@ enum class ROp : uint8_t {
   Var, Const,
   Add, Sub, Mul, Div, Neg,
   Sin, Cos, Tan, Asin, Acos, Atan, Sinh, Cosh, Tanh,
-  Exp, Log, Log10, Sqrt, Pow,
+  Exp, Log, Log10, Sqrt, Pow, Abs,
   // A MatMul produces M*N output cells. We push M*N consecutive tape nodes
   // so downstream ops can reference any cell by tape id. The FIRST node is
   // tagged MatMul and carries the whole block's backward pass; the other
@@ -130,6 +130,7 @@ struct ReverseTape {
       case ROp::Log:   outv = std::log(x); break;
       case ROp::Log10: outv = std::log10(x); break;
       case ROp::Sqrt:  outv = std::sqrt(x); break;
+      case ROp::Abs:   outv = std::abs(x); break;
       default:
         ass<"push_unary: unsupported op">(false);
     }
@@ -624,6 +625,11 @@ struct ReverseTape {
           adj[static_cast<std::size_t>(ai)] += w * (0.5 / y);
           break;
         }
+        case ROp::Abs: {
+          const double x = val[static_cast<std::size_t>(ai)];
+          adj[static_cast<std::size_t>(ai)] += w * (x >= 0.0 ? 1.0 : -1.0);
+          break;
+        }
         case ROp::Pow: {
           const double x = val[static_cast<std::size_t>(ai)];
           const double y = val[static_cast<std::size_t>(bi)];
@@ -1089,6 +1095,7 @@ struct Logical {
   inline Double log() const;
   inline Double log10() const;
   inline Double sqrt() const;
+  inline Integer abs() const;
   inline Integer operator-() const;
   inline friend std::ostream& operator<<(std::ostream&, const Logical&);
   inline static Logical NA() { Logical x; x.is_na = true; return x; }
@@ -1155,6 +1162,7 @@ struct Integer {
   inline Double log() const;
   inline Double log10() const;
   inline Double sqrt() const;
+  inline Integer abs() const;
   inline Integer operator-() const;
   inline friend std::ostream& operator<<(std::ostream&, const Integer&);
   inline static Integer NA() { Integer x; x.is_na = true; return x; }
@@ -1222,6 +1230,7 @@ struct Double {
   inline Double log() const;
   inline Double log10() const;
   inline Double sqrt() const;
+  inline Double abs() const;
   inline Double operator-() const;
   inline friend std::ostream& operator<<(std::ostream&, const Double&);
   inline static Double NA() {
@@ -1312,6 +1321,7 @@ struct Dual {
   inline Dual log() const;
   inline Dual log10() const;
   inline Dual sqrt() const;
+  inline Dual abs() const;
   inline Dual operator-() const;
   inline friend std::ostream& operator<<(std::ostream&, const Dual&);
   inline static Dual NA() {
@@ -1493,6 +1503,7 @@ struct ReverseDouble {
   inline ReverseDouble log() const;
   inline ReverseDouble log10() const;
   inline ReverseDouble sqrt() const;
+  inline ReverseDouble abs() const;
 
   template<typename T> requires IsArray<Decayed<T>> inline ReverseDouble& operator=(const T& arr) {
     using inner = typename ExtractDataType<T>::value_type;
@@ -2363,6 +2374,31 @@ inline ReverseDouble ReverseDouble::sqrt() const {
   return unary_(ROp::Sqrt);
 }
 
+// abs: type-preserving, matching R (abs(integer) -> integer, abs(double) ->
+// double), unlike sin/cos/etc. which always promote to Double.
+inline Integer Logical::abs() const {
+  if (is_na) return Integer::NA();
+  return Integer(std::abs(static_cast<int>(val)));
+}
+inline Integer Integer::abs() const {
+  if (is_na) return Integer::NA();
+  return Integer(std::abs(val));
+}
+inline Double Double::abs() const {
+  if (is_na) return Double::NA();
+  return Double(std::abs(val));
+}
+inline Dual Dual::abs() const {
+  if (is_na) return Dual::NA();
+  const double v = std::abs(val);
+  if (is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  const double s = (val >= 0.0) ? 1.0 : -1.0; // d/dx |x| = sign(x)
+  return Dual(v, dot * s);
+}
+inline ReverseDouble ReverseDouble::abs() const {
+  return unary_(ROp::Abs);
+}
+
 inline Integer Logical::operator-() const {
   if (is_na) return Integer::NA();
   return Integer(-static_cast<int>(val));
@@ -2474,11 +2510,10 @@ inline auto sinh(const O& o) -> decltype(o.sinh()) {
 }
 
 // abs ===================================================
-// This is required for Eigen
 template<typename O>
 requires (!IsArray<O> && IsScalarOrScalarRef<O>)
-inline double abs(const O& o) {
-  return std::abs(static_cast<double>(get_val(o)));
+inline auto abs(const O& o) -> decltype(o.abs()) {
+  return o.abs();
 }
 
 // && ===================================================
@@ -2543,6 +2578,13 @@ inline auto operator==(const L& l, const R& r) -> decltype( common_type_t<L,R>(l
 template<typename L, typename R>
 requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScalarRef<R>)
 inline auto pow(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).pow( common_type_t<L,R>(r) ) ){
+  using CT = common_type_t<L, R>;
+  return CT(l).pow( CT(r) );
+}
+// power (scalar; ^ codegens to etr::power, not etr::pow) ===========
+template<typename L, typename R>
+requires (!IsArray<L> && !IsArray<R> && IsScalarOrScalarRef<L> && IsScalarOrScalarRef<R>)
+inline auto power(const L& l, const R& r) -> decltype( common_type_t<L,R>(l).pow( common_type_t<L,R>(r) ) ){
   using CT = common_type_t<L, R>;
   return CT(l).pow( CT(r) );
 }

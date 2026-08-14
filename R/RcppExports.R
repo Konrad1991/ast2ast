@@ -25,6 +25,10 @@ test_calculation <- function() {
     invisible(.Call(`_ast2ast_test_calculation`))
 }
 
+test_collection <- function() {
+    invisible(.Call(`_ast2ast_test_collection`))
+}
+
 test_concepts <- function() {
     invisible(.Call(`_ast2ast_test_concepts`))
 }

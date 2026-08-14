@@ -2,7 +2,10 @@ library(tinytest)
 library(ast2ast)
 
 get_sorted_ast <- function(f, r_fct = TRUE) {
-  ast <- ast2ast:::parse_body(body(f), r_fct, ast2ast:::function_registry_global)
+  env <- new.env(parent = emptyenv())
+  env$r_fct <- r_fct
+  env$real_type <- "etr::Double"
+  ast <- ast2ast:::parse_body(body(f), env, ast2ast:::function_registry_global)
   ast2ast:::sort_args(ast, ast2ast:::function_registry_global)
 }
 

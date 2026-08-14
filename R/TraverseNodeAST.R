@@ -3,7 +3,9 @@
 traverse_ast <- function(node, action, ...) {
   if (inherits(node, "variable_node")) {
     action(node, ...)
-  } else if (inherits(node, "type_node")) {
+  } else if (inherits(node, "pre_type_node")) {
+    action(node, ...)
+  } else if (inherits(node, "new_type_node")) {
     action(node, ...)
   } else if (inherits(node, "binary_node")) {
     action(node, ...)
@@ -90,7 +92,12 @@ action_transpile_inner_functions <- function(node, real_type) {
   f <- eval(as.call(as.list(code)))
   function_registry <- node$function_registry
   args_f_raw <- eval(as.call(as.list(node$args_f_raw)))
-  AST <- try(parse_body(body(f), r_fct, function_registry), silent = TRUE)
+
+  info_env <- new.env(parent = emptyenv())
+  info_env$r_fct <- FALSE
+  info_env$real_type <- real_type
+  info_env$known_types <- node$known_types
+  AST <- try(parse_body(body(f), info_env, function_registry), silent = TRUE)
   if (inherits(AST, "try-error")) {
     error_string <- AST |> as.character()
     stop(sprintf("Could not translate the function due to %s", error_string))
@@ -129,7 +136,7 @@ action_transpile_inner_functions <- function(node, real_type) {
     stop(paste0("\n", line))
   }
   AST <- sort_args(AST, function_registry)
-  node$vars_types_list <- infer_types(AST, f, args_f_raw, r_fct, function_registry)
+  node$vars_types_list <- infer_types(AST, f, args_f_raw, r_fct, real_type, function_registry, node$known_types)
 
   # TODO: figure out why this loop is required
   for(i in seq_len(length(node$vars_types_list))) {
@@ -137,24 +144,26 @@ action_transpile_inner_functions <- function(node, real_type) {
   }
   node$return_type$real_type <- real_type
 
-  trash <- type_checking(AST, node$vars_types_list, r_fct, real_type, function_registry)
-  return_type <- determine_types_of_returns(AST, node$vars_types_list, r_fct, function_registry)
+  if (!is.null(node$return_type$get_error())) {
+    stop(sprintf("Wrong return type for function %s: %s", node$fct_name, node$return_type$get_error()))
+  }
+
+  trash <- type_checking(AST, node$vars_types_list, r_fct, real_type, function_registry, node$known_types)
+  return_type <- determine_types_of_returns(AST, node$vars_types_list, r_fct, real_type, function_registry, node$known_types)
   if (is.character(return_type)) {
     if (return_type != "void") {
       stop(sprintf("Found invalid return type %s in function %s", return_type, node$fct_name))
     }
-    return_type <- type_node$new(NA, FALSE, r_fct)
-    return_type$base_type <- "void"
-    return_type$data_struct <- "scalar"
+    return_type <- make_inferred_type("scalar", "void", r_fct, real_type)
   }
-  if (!same_base_type(return_type$base_type, node$return_type$base_type)) {
+  if (!same_base_type(return_type$get_base_type(), node$return_type$get_base_type())) {
     stop(sprintf(
-      "Specified return type does not match the detected return type for function %s. Desired base type is %s but found %s", node$fct_name, node$return_type$base_type, return_type$base_type
+      "Specified return type does not match the detected return type for function %s. Desired base type is %s but found %s", node$fct_name, node$return_type$get_base_type(), return_type$get_base_type()
     ))
   }
-  if (!same_data_struct(return_type$data_struct, node$return_type$data_struct)) {
+  if (!same_data_struct(return_type$get_data_struct(), node$return_type$get_data_struct())) {
     stop(sprintf(
-      "Specified return type does not match the detected return type for function %s. Desired data structure is %s but found %s", node$fct_name, node$return_type$data_struct, return_type$data_struct
+      "Specified return type does not match the detected return type for function %s. Desired data structure is %s but found %s", node$fct_name, node$return_type$get_data_struct(), return_type$get_data_struct()
     ))
   }
 
@@ -169,6 +178,9 @@ action_transpile_inner_functions <- function(node, real_type) {
 # ========================================================================
 action_find_variables <- function(node, env) {
   if (!inherits(node, "variable_node")) {
+    return()
+  }
+  if (isTRUE(node$field_name)) {
     return()
   }
   env$variable_list <- c(env$variable_list, deparse(node$name))
@@ -201,7 +213,7 @@ action_update_function_registry <- function(node, function_registry) {
   if (num_args > 2L) node_type <- "function_node"
 
   ret_type <- fn$return_type$clone()
-  infer_fct <- function(node, vars_list, r_fct, function_registry) {
+  infer_fct <- function(node, vars_list, info_env, function_registry) {
     node$internal_type <- ret_type
     return(ret_type)
   }
@@ -210,16 +222,17 @@ action_update_function_registry <- function(node, function_registry) {
     if (inherits(is_type_node, "variable_node")) {
       is_type <- vars_types_list[[is_type_node$name]]
     }
-    if (!same_base_type(is_type$base_type, should_type$base_type)) {
-      node$error <- sprintf("The argument Nr. %s to function %s has not the correct type. Found %s but %s is required", index, name, is_type$base_type, should_type$base_type)
+
+    if (!same_base_type(is_type$get_base_type(), should_type$get_base_type())) {
+      node$error <- sprintf("The argument Nr. %s to function %s has not the correct type. Found %s but %s is required", index, name, is_type$get_base_type(), should_type$get_base_type())
     }
-    if (!same_data_struct(is_type$data_struct, should_type$data_struct)) {
-      node$error <- sprintf("The argument Nr. %s to function %s has not the correct data structure. Found %s but %s is required", index, name, is_type$data_struct, should_type$data_struct)
+    if (!same_data_struct(is_type$get_data_struct(), should_type$get_data_struct())) {
+      node$error <- sprintf("The argument Nr. %s to function %s has not the correct data structure. Found %s but %s is required", index, name, is_type$get_data_struct(), should_type$get_data_struct())
     }
   }
   const_or_mut_check <- function(node, should_type, index, name) {
     is_variable <- inherits(node, "variable_node")
-    mut_arg <- should_type$const_or_mut == "mutable"
+    mut_arg <- should_type$get_const_or_mut() == "mutable"
     if (!is_variable && mut_arg) {
       node$error <- sprintf(
         "Argument Nr. %s to function %s accepts only variables. If you want to use an expression (e.g. variable + variable) you have to declare the argument as const",
@@ -228,16 +241,16 @@ action_update_function_registry <- function(node, function_registry) {
     }
   }
   if (node_type == "nullary_node") {
-    check_fct <- function(node, vars_types_list, r_fct, real_type) {}
+    check_fct <- function(node, vars_types_list, info_env, real_type) {}
   }
   else if (node_type == "unary_node") {
-    check_fct <- function(node, vars_types_list, r_fct, real_type) {
+    check_fct <- function(node, vars_types_list, info_env, real_type) {
       check(node, vars_types_list, node$obj, fn$args_f[[1]], 1L)
       const_or_mut_check(node$obj, fn$args_f[[1]], 1L, node$operator)
     }
   }
   else if (node_type == "binary_node") {
-    check_fct <- function(node, vars_types_list, r_fct, real_type) {
+    check_fct <- function(node, vars_types_list, info_env, real_type) {
       check(node, vars_types_list, node$left_node, fn$args_f[[1]], 1L)
       check(node, vars_types_list, node$right_node, fn$args_f[[2]], 2L)
       const_or_mut_check(node$left_node, fn$args_f[[1]], 1L, node$operator)
@@ -245,7 +258,7 @@ action_update_function_registry <- function(node, function_registry) {
     }
   }
   else if (node_type == "function_node") {
-    check_fct <- function(node, vars_types_list, r_fct, real_type) {
+    check_fct <- function(node, vars_types_list, info_env, real_type) {
       for (i in seq_len(length(node$args))) {
         check(node, vars_types_list, node$args[[i]], fn$args_f[[i]], i)
         const_or_mut_check(node$args[[i]], fn$args_f[[i]], i, node$operator)
@@ -335,7 +348,7 @@ check_operator <- function(node, function_registry) {
         }
         if (inherits(node$left_node, c("binary_node", "function_node"))) {
           op_left <- node$left_node$operator
-          if (!(op_left %within% c("type", "[", "[[", "at"))) {
+          if (!(op_left %within% c("type", "[", "[[", "at", "$"))) {
             return(FALSE)
           } else {
             return(TRUE)
@@ -443,24 +456,30 @@ check_type_declaration <- function(node, r_fct) {
     )
     return()
   }
-  if (!inherits(node$right_node, "type_node")) {
+  if (inherits(node$right_node, "new_type_node")) {
+    return()
+  }
+  if (inherits(node$right_node, "pre_type_node") && node$right_node$get_data_struct() == "collection") {
+    return()
+  }
+  if (!inherits(node$right_node, "pre_type_node")) {
     node$error <- paste0(
       "Invalid type declaration: ",
       node$right_node$stringify()
     )
     return()
   }
-  if (!(node$right_node$base_type %within% permitted_base_types())) {
+  if (!(node$right_node$get_base_type() %in% permitted_base_types())) {
     node$error <- paste0(
       "Invalid type declaration: ",
-      node$right_node$base_type, " for variable ", node$left_node$name
+      node$right_node$get_base_type(), " for variable ", node$left_node$name
     )
     return()
   }
-  if (!(node$right_node$data_struct %within% permitted_data_structs(r_fct))) {
+  if (!(node$right_node$get_data_struct() %in% permitted_data_structs(r_fct))) {
     node$error <- paste0(
       "Invalid type declaration: ",
-      node$right_node$data_struct, " for variable ", node$left_node$name
+      node$right_node$get_data_struct(), " for variable ", node$left_node$name
     )
     return()
   }
@@ -502,7 +521,7 @@ action_sort_args <- function(node, function_registry) {
 # error checking round
 # Check that the types of the arguments are correct
 # ========================================================================
-action_check_type_of_args <- function(node, variables, r_fct, real_type, function_registry) {
+action_check_type_of_args <- function(node, variables, r_fct, real_type, function_registry, known_types = list()) {
   if (!inherits(node, "unary_node") &&
     !inherits(node, "binary_node") &&
     !inherits(node, "function_node") &&
@@ -514,7 +533,11 @@ action_check_type_of_args <- function(node, variables, r_fct, real_type, functio
     operator <- "for"
   }
   type_check_fct <- function_registry$check_fct(operator)
-  type_check_fct(node, variables, r_fct, real_type)
+  info_env <- new.env(parent = emptyenv())
+  info_env$r_fct <- r_fct
+  info_env$real_type <- real_type
+  info_env$known_types <- known_types
+  type_check_fct(node, variables, info_env)
 }
 
 # The actual translation of the AST to C++
@@ -564,6 +587,10 @@ action_translate <- function(node, function_registry, real_type) {
         node$operator <- op
         node$args[[1]] <- NULL
         node$args <- Filter(Negate(is.null), node$args)
+      } else if (inherits(node$internal_type, "pre_type_node") && node$internal_type$get_data_struct() == "collection") {
+        node$operator <- sprintf("etr::Collection<%s>", mode)
+        node$args[[1]] <- NULL
+        node$args <- Filter(Negate(is.null), node$args)
       }
     }
     else if (inherits(node, "function_node") && node$operator == "diag") {
@@ -579,6 +606,11 @@ action_translate <- function(node, function_registry, real_type) {
         "etr::ReverseDouble" = "etr::numeric_reverse_double"
       )[[real_type]]
       node$operator <- op
+    }
+    else if (inherits(node, "binary_node") && node$operator %in% c("[[", "at") &&
+             inherits(node$left_node$internal_type, "pre_type_node") &&
+             node$left_node$internal_type$get_data_struct() == "collection") {
+      node$operator <- "etr::collection_at"
     }
     else {
       op <- function_registry$get_cpp_name(node$operator)

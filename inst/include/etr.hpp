@@ -23,11 +23,16 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #define ETR_HPP
 
 #include "etr_bits/Core.hpp"
+#include "etr_bits/Collection.hpp"
 #include "etr_bits/Allocation.hpp"
 #include "etr_bits/Calculations.hpp"
 #include "etr_bits/Interpolation.hpp"
 #include "etr_bits/Subsetting.hpp"
 #include "etr_bits/Utilities.hpp"
+// Uniroot.hpp's uniroot_result struct needs Cast/SEXP2Scalar/checked_elt
+// from Utilities/SEXPConversions.hpp, so it has to come after Utilities.hpp
+// -- can't live in Core.hpp like the other Core/*.hpp headers.
+#include "etr_bits/Core/Uniroot.hpp"
 #include "etr_bits/Derivatives.hpp"
 
 #endif

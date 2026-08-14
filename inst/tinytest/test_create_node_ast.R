@@ -12,7 +12,10 @@ expect_error(
 
 # --- helpers ---------------------------------------------------------------
 ast_of <- function(f, r_fct = TRUE) {
-  ast2ast:::parse_body(body(f), r_fct, ast2ast:::function_registry_global)
+  env <- new.env(parent = emptyenv())
+  env$r_fct <- r_fct
+  env$real_type <- "etr::Double"
+  ast2ast:::parse_body(body(f), env, ast2ast:::function_registry_global)
 }
 
 expect_node <- function(node, cls, operator = NULL, context = NULL) {
@@ -84,7 +87,7 @@ f <- function() {
 error <- try(ast2ast::translate(f), silent = TRUE)
 expect_equal(
   attributes(error)[["condition"]]$message,
-  "\nfct <- [](  ) -> NULL {\n\n\n  }\nWrong return type: Found unsupported base type: invalid"
+  "Wrong return type for function fct: Found unsupported base type: invalid"
 )
 # lambda function not assigned to variable
 f <- function() {
@@ -217,7 +220,7 @@ stmt <- AST$block[[1]]
 expect_true(inherits(stmt, "binary_node"))
 expect_equal(stmt$operator, "type")
 expect_true(inherits(stmt$left_node, "variable_node"))
-expect_true(inherits(stmt$right_node, "type_node"))
+expect_true(inherits(stmt$right_node, "pre_type_node"))
 expected_to_find(AST, c("type"), character(), c("a"))
 
 # --- logical & comparisons -------------------------------------------------

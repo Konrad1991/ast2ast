@@ -65,6 +65,15 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_collection
+void test_collection();
+RcppExport SEXP _ast2ast_test_collection() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_collection();
+    return R_NilValue;
+END_RCPP
+}
 // test_concepts
 void test_concepts();
 RcppExport SEXP _ast2ast_test_concepts() {
@@ -244,6 +253,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_buffer", (DL_FUNC) &_ast2ast_test_buffer, 0},
     {"_ast2ast_test_cmr", (DL_FUNC) &_ast2ast_test_cmr, 0},
     {"_ast2ast_test_calculation", (DL_FUNC) &_ast2ast_test_calculation, 0},
+    {"_ast2ast_test_collection", (DL_FUNC) &_ast2ast_test_collection, 0},
     {"_ast2ast_test_concepts", (DL_FUNC) &_ast2ast_test_concepts, 0},
     {"_ast2ast_test_first_dispatch_layer", (DL_FUNC) &_ast2ast_test_first_dispatch_layer, 0},
     {"_ast2ast_test_jacobian", (DL_FUNC) &_ast2ast_test_jacobian, 0},

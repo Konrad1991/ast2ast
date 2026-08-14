@@ -1,19 +1,23 @@
 library(tinytest)
 
 get_ret_type <- function(fct, fct_args, r_fct = FALSE) {
-  AST <- ast2ast:::parse_body(body(fct), r_fct, ast2ast:::function_registry_global)
+  real_type <- "etr::Double"
+  env <- new.env(parent = emptyenv())
+  env$r_fct <- r_fct
+  env$real_type <- real_type
+  AST <- ast2ast:::parse_body(body(fct), env, ast2ast:::function_registry_global)
   AST <- ast2ast:::sort_args(AST, ast2ast:::function_registry_global)
-  vars_types_list <- ast2ast:::infer_types(AST, fct, fct_args, r_fct, ast2ast:::function_registry_global)
-  ast2ast:::type_checking(AST, vars_types_list, r_fct, "etr::Double", ast2ast:::function_registry_global)
-  ast2ast:::determine_types_of_returns(AST, vars_types_list, r_fct, ast2ast:::function_registry_global)
+  vars_types_list <- ast2ast:::infer_types(AST, fct, fct_args, r_fct, real_type, ast2ast:::function_registry_global)
+  ast2ast:::type_checking(AST, vars_types_list, r_fct, real_type, ast2ast:::function_registry_global)
+  ast2ast:::determine_types_of_returns(AST, vars_types_list, r_fct, real_type, ast2ast:::function_registry_global)
 }
 check_type_f_arg <- function(type, bt, ds, const_or_mut, copy_or_ref, fct_input = TRUE) {
   check <- logical(5)
-  check[1] <- type$base_type == bt
-  check[2] <- type$data_struct == ds
-  check[3] <- type$fct_input == fct_input
-  check[4] <- type$const_or_mut == const_or_mut
-  check[5] <- type$copy_or_ref == copy_or_ref
+  check[1] <- type$get_base_type() == bt
+  check[2] <- type$get_data_struct() == ds
+  check[3] <- type$get_fct_input() == fct_input
+  check[4] <- type$get_const_or_mut() == const_or_mut
+  check[5] <- type$get_copy_or_ref() == copy_or_ref
   expect_true(all(check))
 }
 # --- void + something else --> error -------------------------------------
@@ -73,7 +77,7 @@ f_args <- function(a) {
   a |> type(vec(double))
 }
 ret_type <- get_ret_type(f, f_args, TRUE)
-check_type_f_arg(ret_type, "double", "vec", "mutable", "copy", TRUE)
+check_type_f_arg(ret_type, "double", "vector", "mutable", "copy", TRUE)
 
 f <- function(a) {
   return(1L)

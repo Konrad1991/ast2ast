@@ -1,17 +1,131 @@
 library(tinytest)
 
 # --- helpers ---------------------------------------------------------------
-run_fr_checks <- function(fct, args_fct, r_fct = TRUE) {
-  AST <- ast2ast:::parse_body(body(fct), r_fct, ast2ast:::function_registry_global)
+run_fr_checks <- function(fct, args_fct, r_fct = TRUE, known_types) {
+  real_type <- "etr::Double"
+  env <- new.env(parent = emptyenv())
+  env$r_fct <- r_fct
+  env$real_type <- real_type
+  env$known_types <- known_types
+  AST <- ast2ast:::parse_body(body(fct), env, ast2ast:::function_registry_global)
   AST <- ast2ast:::sort_args(AST, ast2ast:::function_registry_global)
-  vars_types_list <- ast2ast:::infer_types(AST, fct, args_fct, r_fct, ast2ast:::function_registry_global)
-  ast2ast:::type_checking(AST, vars_types_list, r_fct, "etr::Double", ast2ast:::function_registry_global)
+  vars_types_list <- ast2ast:::infer_types(
+    AST, fct, args_fct, r_fct, real_type, ast2ast:::function_registry_global, known_types
+  )
+  ast2ast:::type_checking(AST, vars_types_list, r_fct, real_type, ast2ast:::function_registry_global, known_types)
 }
-test_checks <- function(f, args_f, r_fct, error_message, info = "") {
-  e <- try(run_fr_checks(f, args_f, r_fct), silent = TRUE)
+test_checks <- function(f, args_f, r_fct, error_message, info = "", known_types = list()) {
+  e <- try(run_fr_checks(f, args_f, r_fct, known_types), silent = TRUE)
   e <- attributes(e)[["condition"]]$message
   expect_equal(as.character(e), error_message, info = info)
 }
+
+# --- subsetting stuff which cannot be subsetted ----------------------------------------------------------
+args_fct <- function() {}
+
+## preserved subsetting of a collection
+types_fct <- function() {
+  new_type(
+    Point,
+    slots(
+      x |> type(double),
+      y |> type(double)
+    )
+  )
+}
+known_types <- ast2ast:::make_known_types(types_fct, TRUE, "etr::Double")
+f <- function() {
+  pts <- vector(mode = "Point", 5)
+  pts[1:3]
+}
+test_checks(
+  f, args_fct, TRUE,
+  "pts[1.0 : 3.0]\nFound unsupported subsetting: pts[1.0 : 3.0]",
+  info = "",
+  known_types
+)
+
+## subsetting a class
+types_fct <- function() {
+  new_type(
+    Point,
+    slots(
+      x |> type(double),
+      y |> type(double)
+    )
+  )
+}
+known_types <- ast2ast:::make_known_types(types_fct, TRUE, "etr::Double")
+f <- function() {
+  a |> type(Point)
+  a[[1L]]
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a[[1L]]\nFound unsupported left type in: a[[1L]]",
+  info = "",
+  known_types
+)
+f <- function() {
+  a |> type(Point)
+  a[1L]
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a[1L]\nFound unsupported left type in: a[1L]",
+  info = "",
+  known_types
+)
+f <- function() {
+  a |> type(Point)
+  at(a, a)
+}
+test_checks(
+  f, args_fct, TRUE,
+  "at(a, a)\nFound unsupported left type in: at(a, a)",
+  info = "",
+  known_types
+)
+f <- function() {
+  a |> type(Point)
+  at(c(1, 2, 3), a)
+}
+test_checks(
+  f, args_fct, TRUE,
+  "at(c(1.0, 2.0, 3.0), a)\nFound unsupported right type in: at(c(1.0, 2.0, 3.0), a)",
+  info = "",
+  known_types
+)
+
+f <- function() {
+  a |> type(double)
+  a <- 3.14
+  a[1]
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a[1.0]\nYou can only subset variables of type array, matrix or vector"
+)
+
+f <- function() {
+  a |> type(double)
+  a <- 3.14
+  a[[1L]]
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a[[1L]]\nYou can only subset variables of type array, matrix or vector"
+)
+
+f <- function() {
+  a |> type(double)
+  a <- 3.14
+  at(a, 1L)
+}
+test_checks(
+  f, args_fct, TRUE,
+  "at(a, 1L)\nYou can only subset variables of type array, matrix or vector"
+)
 
 # --- assignment ------------------------------------------------------------
 f <- function() {
@@ -66,6 +180,7 @@ test_checks(
   f, args_fct, TRUE,
   "array(0.0, c(2.0, 2.0))[NA, NA]\nYou cannot use character/NA/NaN/Inf entries for subsetting"
 )
+
 f <- function() {
   array(0, c(2, 2))[NA]
 }
@@ -74,6 +189,7 @@ test_checks(
   f, args_fct, TRUE,
 "array(0.0, c(2.0, 2.0))[NA]\nYou cannot use character/NA/NaN/Inf entries for subsetting"
 )
+
 # --- subsetting matrix ----------------------------------------------------------
 f <- function() {
   matrix(0, 2, 2)[NA, NA]
@@ -201,6 +317,7 @@ test_checks(
   f, args_fct, TRUE,
   "for (i in \"asdsagf\") {\nYou cannot sequence over characters/NA/NaN/Inf"
 )
+
 # --- c ---------------------------------------------------------------------
 f <- function() {
   a <- c(1, 2, "Invalid")
@@ -210,6 +327,29 @@ test_checks(
   f, args_fct, TRUE,
   "a <- c(1.0, 2.0, \"Invalid\")\nYou cannot use character entries in c"
 )
+
+args_fct <- function() {}
+types_fct <- function() {
+  new_type(
+    Point,
+    slots(
+      x |> type(double),
+      y |> type(double)
+    )
+  )
+}
+known_types <- ast2ast:::make_known_types(types_fct, TRUE, "etr::Double")
+f <- function() {
+  pts <- vector(mode = "Point", 5)
+  a <- c(3.14, pts)
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a <- c(3.14, pts)\nFound unexpected type in: c(3.14, pts)",
+  info = "",
+  known_types
+)
+
 # --- : ---------------------------------------------------------------------
 f <- function() {
   a <- "a":"b"
@@ -463,7 +603,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"l <- length(a)\nYou can only call length on variables of type array, matrix or vector\n\nd <- dim(a)\nYou can only call dim on variables of type array or matrix"
+"l <- length(a)\nYou can only call length on variables of type array, matrix, vector or collection\n\nd <- dim(a)\nYou can only call dim on variables of type array or matrix"
 )
 f <- function() {
   a <- 1L

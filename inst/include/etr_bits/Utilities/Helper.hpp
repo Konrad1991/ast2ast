@@ -84,7 +84,7 @@ template <typename T> requires IsArray<T> inline auto isFinite(const T &inp) {
 
 // length
 // -----------------------------------------------------------------------------------------------------------
-template <typename T> requires (!IsArray<T>) inline Integer length(const T inp) {
+template <typename T> requires (!IsArray<T> && !IsCollection<T>) inline Integer length(const T inp) {
   return Integer(1);
 }
 template <typename T> requires IsArray<T> inline Integer length(const T &inp) {
@@ -92,7 +92,7 @@ template <typename T> requires IsArray<T> inline Integer length(const T &inp) {
 }
 // dim
 // -----------------------------------------------------------------------------------------------------------
-template <typename T> requires (!IsArray<T>) inline Integer dim(T inp) {
+template <typename T> requires (!IsArray<T> && !IsCollection<T>) inline Integer dim(T inp) {
   return Integer(1);
 }
 template <typename T> requires IsArray<T> inline auto dim(const T &inp) {
@@ -106,10 +106,10 @@ template <typename T> requires IsArray<T> inline auto dim(const T &inp) {
 }
 // ncol & nrow
 // -----------------------------------------------------------------------------------------------------------
-template <typename T> requires (!IsArray<T>) inline Integer nrow(T inp) {
+template <typename T> requires (!IsArray<T> && !IsCollection<T>) inline Integer nrow(T inp) {
   return Integer(0);
 }
-template <typename T> requires (!IsArray<T>) inline Integer ncol(T inp) {
+template <typename T> requires (!IsArray<T> && !IsCollection<T>) inline Integer ncol(T inp) {
   return Integer(0);
 }
 template <typename T> requires IsArray<T> inline Integer nrow(const T& inp) {

@@ -4,9 +4,12 @@ library(tinytest)
 # =========================================================================
 args_fct <- function() {}
 run_fr_checks <- function(fct, args_fct, r_fct = TRUE, real_type) {
-  AST <- ast2ast:::parse_body(body(fct), r_fct, ast2ast:::function_registry_global)
+  env <- new.env(parent = emptyenv())
+  env$r_fct <- r_fct
+  env$real_type <- real_type
+  AST <- ast2ast:::parse_body(body(fct), env, ast2ast:::function_registry_global)
   AST <- ast2ast:::sort_args(AST, ast2ast:::function_registry_global)
-  vars_types_list <- ast2ast:::infer_types(AST, fct, args_fct, r_fct, ast2ast:::function_registry_global)
+  vars_types_list <- ast2ast:::infer_types(AST, fct, args_fct, r_fct, real_type, ast2ast:::function_registry_global)
   ast2ast:::type_checking(AST, vars_types_list, r_fct, real_type, ast2ast:::function_registry_global)
 }
 test_checks <- function(f, args_f, r_fct, real_type, error_message, info = "") {

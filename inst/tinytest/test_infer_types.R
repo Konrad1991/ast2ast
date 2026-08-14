@@ -2,23 +2,29 @@ library(tinytest)
 
 get_types <- function(f, r_fct = TRUE, real_type = "etr::Double") {
   function_registry <- ast2ast:::function_registry_global$clone()
-  ast <- ast2ast:::parse_body(body(f), r_fct, function_registry)
+  env <- new.env(parent = emptyenv())
+  env$r_fct <- r_fct
+  env$real_type <- real_type
+  ast <- ast2ast:::parse_body(body(f), env, function_registry)
   ast2ast:::update_function_registry(ast, function_registry)
-  types <- ast2ast:::infer_types(ast, f, NULL, r_fct, function_registry)
+  types <- ast2ast:::infer_types(ast, f, NULL, r_fct, real_type, function_registry)
   ast2ast:::traverse_ast(ast, ast2ast:::action_transpile_inner_functions, real_type)
   types
 }
-get_types_with_f_args <- function(f, f_args, r_fct = FALSE) {
-  ast <- ast2ast:::parse_body(body(f), r_fct, ast2ast:::function_registry_global)
-  ast2ast:::infer_types(ast, f, f_args, r_fct, ast2ast:::function_registry_global)
+get_types_with_f_args <- function(f, f_args, r_fct = FALSE, real_type = "etr::Double") {
+  env <- new.env(parent = emptyenv())
+  env$r_fct <- r_fct
+  env$real_type <- real_type
+  ast <- ast2ast:::parse_body(body(f), env, ast2ast:::function_registry_global)
+  ast2ast:::infer_types(ast, f, f_args, r_fct, real_type, ast2ast:::function_registry_global)
 }
 check_type_f_arg <- function(type, bt, ds, const_or_mut, copy_or_ref, fct_input = TRUE) {
   check <- logical(5)
-  check[1] <- type$base_type == bt
-  check[2] <- type$data_struct == ds
-  check[3] <- type$fct_input == fct_input
-  check[4] <- type$const_or_mut == const_or_mut
-  check[5] <- type$copy_or_ref == copy_or_ref
+  check[1] <- type$get_base_type() == bt
+  check[2] <- type$get_data_struct() == ds
+  check[3] <- type$get_fct_input() == fct_input
+  check[4] <- type$get_const_or_mut() == const_or_mut
+  check[5] <- type$get_copy_or_ref() == copy_or_ref
   expect_true(all(check))
 }
 
@@ -133,7 +139,7 @@ f <- function() {
   )
 }
 check_error(f, TRUE, "etr::Double",
-  "Specified return type does not match the detected return type for function foo. Desired base type is int but found void")
+  "Specified return type does not match the detected return type for function foo. Desired base type is integer but found void")
 
 # Recurion works
 f <- function() {
@@ -192,8 +198,8 @@ f <- function(a) {
   result <- b(a) + 100L
 }
 types <- get_types(f)
-expect_true(types$result$base_type == "int")
-expect_true(types$result$data_struct == "vector")
+expect_true(types$result$get_base_type() == "integer")
+expect_true(types$result$get_data_struct() == "vector")
 
 # Use a function in assignment which returns void
 f <- function(a) {
@@ -282,7 +288,7 @@ f <- function(a) {
 }
 check_error(
   f, TRUE, "etr::Double",
-  "Error: Could not infer the types, caused by Error in type_infer_assignment(node, env) : \n  You cannot reassign a function to the variable b, that was previously declared as scalar of type double\n"
+  "Error: Could not infer the types, caused by Error in type_infer_assignment(node, info_env) : \n  You cannot reassign a function to the variable b, that was previously declared as scalar of type double\n"
 )
 
 # Simple example of inner function
@@ -301,10 +307,10 @@ f <- function(a) {
   return(g(a))
 }
 types <- get_types(f)
-check_type_f_arg(types$a, "double", "vector", "mutable", "copy")
-check_type_f_arg(types$g$args_f[[1L]], "double", "vec", "mutable", "ref", TRUE)
-check_type_f_arg(types$g$return_type, "double", "vec", "mutable", "copy", FALSE)
-check_type_f_arg(types$g$vars_types_list$x, "double", "vec", "mutable", "ref", TRUE)
+check_type_f_arg(types$a, "double", "matrix", "mutable", "copy")
+check_type_f_arg(types$g$args_f[[1L]], "double", "vector", "mutable", "ref", TRUE)
+check_type_f_arg(types$g$return_type, "double", "vector", "mutable", "copy", FALSE)
+check_type_f_arg(types$g$vars_types_list$x, "double", "vector", "mutable", "ref", TRUE)
 check_type_f_arg(types$g$vars_types_list$y, "logical", "vector", "mutable", "copy", FALSE)
 check_type_f_arg(types$g$vars_types_list$z, "integer", "vector", "mutable", "copy", FALSE)
 expect_equal(types$g$fct_name, "g")
@@ -326,16 +332,16 @@ f_args <- function(a, b, c, d, e, f) {
   i |> type(borrow_array(double)) |> ref()
 }
 types <- get_types_with_f_args(f, f_args)
-check_type_f_arg(types$a, "logical", "borrow_vec", "mutable", "ref")
-check_type_f_arg(types$b, "integer", "borrow_vec", "mutable", "ref")
-check_type_f_arg(types$c, "double", "borrow_vec", "mutable", "ref")
-check_type_f_arg(types$d, "logical", "borrow_mat", "mutable", "ref")
-check_type_f_arg(types$e, "integer", "borrow_mat", "mutable", "ref")
-check_type_f_arg(types$f, "double", "borrow_mat", "mutable", "ref")
-check_type_f_arg(types$g, "logical", "borrow_array", "mutable", "ref")
-check_type_f_arg(types$h, "integer", "borrow_array", "mutable", "ref")
-check_type_f_arg(types$i, "double", "borrow_array", "mutable", "ref")
-check_type_f_arg(types$inner, "integer", "vec", "mutable", "copy", FALSE)
+check_type_f_arg(types$a, "logical", "vector", "mutable", "ref")
+check_type_f_arg(types$b, "integer", "vector", "mutable", "ref")
+check_type_f_arg(types$c, "double", "vector", "mutable", "ref")
+check_type_f_arg(types$d, "logical", "matrix", "mutable", "ref")
+check_type_f_arg(types$e, "integer", "matrix", "mutable", "ref")
+check_type_f_arg(types$f, "double", "matrix", "mutable", "ref")
+check_type_f_arg(types$g, "logical", "array", "mutable", "ref")
+check_type_f_arg(types$h, "integer", "array", "mutable", "ref")
+check_type_f_arg(types$i, "double", "array", "mutable", "ref")
+check_type_f_arg(types$inner, "integer", "vector", "mutable", "copy", FALSE)
 
 f <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
   return(a)
@@ -356,14 +362,14 @@ f_args <- function(a, b, c, d, e, f, g, h, i) {
 }
 types <- get_types_with_f_args(f, f_args)
 check_type_f_arg(types$a, "logical", "scalar", "mutable", "copy")
-check_type_f_arg(types$b, "int", "scalar", "mutable", "copy")
+check_type_f_arg(types$b, "integer", "scalar", "mutable", "copy")
 check_type_f_arg(types$c, "double", "scalar", "mutable", "copy")
-check_type_f_arg(types$d, "logical", "vec", "mutable", "copy")
-check_type_f_arg(types$e, "integer", "vec", "mutable", "copy")
-check_type_f_arg(types$f, "double", "vec", "mutable", "copy")
-check_type_f_arg(types$g, "logical", "mat", "mutable", "copy")
-check_type_f_arg(types$h, "integer", "mat", "mutable", "copy")
-check_type_f_arg(types$i, "double", "mat", "mutable", "copy")
+check_type_f_arg(types$d, "logical", "vector", "mutable", "copy")
+check_type_f_arg(types$e, "integer", "vector", "mutable", "copy")
+check_type_f_arg(types$f, "double", "vector", "mutable", "copy")
+check_type_f_arg(types$g, "logical", "matrix", "mutable", "copy")
+check_type_f_arg(types$h, "integer", "matrix", "mutable", "copy")
+check_type_f_arg(types$i, "double", "matrix", "mutable", "copy")
 check_type_f_arg(types$j, "logical", "array", "mutable", "copy")
 check_type_f_arg(types$k, "integer", "array", "mutable", "copy")
 check_type_f_arg(types$l, "double", "array", "mutable", "copy")
@@ -387,14 +393,14 @@ f_args <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
 }
 types <- get_types_with_f_args(f, f_args)
 check_type_f_arg(types$a, "logical", "scalar", "mutable", "ref")
-check_type_f_arg(types$b, "int", "scalar", "mutable", "ref")
+check_type_f_arg(types$b, "integer", "scalar", "mutable", "ref")
 check_type_f_arg(types$c, "double", "scalar", "mutable", "ref")
-check_type_f_arg(types$d, "logical", "vec", "mutable", "ref")
-check_type_f_arg(types$e, "integer", "vec", "mutable", "ref")
-check_type_f_arg(types$f, "double", "vec", "mutable", "ref")
-check_type_f_arg(types$g, "logical", "mat", "mutable", "ref")
-check_type_f_arg(types$h, "integer", "mat", "mutable", "ref")
-check_type_f_arg(types$i, "double", "mat", "mutable", "ref")
+check_type_f_arg(types$d, "logical", "vector", "mutable", "ref")
+check_type_f_arg(types$e, "integer", "vector", "mutable", "ref")
+check_type_f_arg(types$f, "double", "vector", "mutable", "ref")
+check_type_f_arg(types$g, "logical", "matrix", "mutable", "ref")
+check_type_f_arg(types$h, "integer", "matrix", "mutable", "ref")
+check_type_f_arg(types$i, "double", "matrix", "mutable", "ref")
 check_type_f_arg(types$j, "logical", "array", "mutable", "ref")
 check_type_f_arg(types$k, "integer", "array", "mutable", "ref")
 check_type_f_arg(types$l, "double", "array", "mutable", "ref")
@@ -418,30 +424,33 @@ f_args <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
 }
 types <- get_types_with_f_args(f, f_args)
 check_type_f_arg(types$a, "logical", "scalar", "const", "ref")
-check_type_f_arg(types$b, "int", "scalar", "const", "ref")
+check_type_f_arg(types$b, "integer", "scalar", "const", "ref")
 check_type_f_arg(types$c, "double", "scalar", "const", "ref")
-check_type_f_arg(types$d, "logical", "vec", "const", "ref")
-check_type_f_arg(types$e, "integer", "vec", "const", "ref")
-check_type_f_arg(types$f, "double", "vec", "const", "ref")
-check_type_f_arg(types$g, "logical", "mat", "const", "ref")
-check_type_f_arg(types$h, "integer", "mat", "const", "ref")
-check_type_f_arg(types$i, "double", "mat", "const", "ref")
+check_type_f_arg(types$d, "logical", "vector", "const", "ref")
+check_type_f_arg(types$e, "integer", "vector", "const", "ref")
+check_type_f_arg(types$f, "double", "vector", "const", "ref")
+check_type_f_arg(types$g, "logical", "matrix", "const", "ref")
+check_type_f_arg(types$h, "integer", "matrix", "const", "ref")
+check_type_f_arg(types$i, "double", "matrix", "const", "ref")
 check_type_f_arg(types$j, "logical", "array", "const", "ref")
 check_type_f_arg(types$k, "integer", "array", "const", "ref")
 check_type_f_arg(types$l, "double", "array", "const", "ref")
 
 # --- function input R ----------------------------------------------------
-get_types_with_f_args <- function(f, f_args, r_fct = TRUE) {
-  ast <- ast2ast:::parse_body(body(f), r_fct, ast2ast:::function_registry_global)
-  ast2ast:::infer_types(ast, f, f_args, r_fct, ast2ast:::function_registry_global)
+get_types_with_f_args <- function(f, f_args, r_fct = TRUE, real_type = "etr::Double") {
+  env <- new.env(parent = emptyenv())
+  env$r_fct <- r_fct
+  env$real_type <- real_type
+  ast <- ast2ast:::parse_body(body(f), env, ast2ast:::function_registry_global)
+  ast2ast:::infer_types(ast, f, f_args, r_fct, real_type, ast2ast:::function_registry_global)
 }
 check_type_f_arg <- function(type, bt, ds, const_or_mut, copy_or_ref) {
   check <- logical(5)
-  check[1] <- type$base_type == bt
-  check[2] <- type$data_struct == ds
-  check[3] <- type$fct_input
-  check[4] <- type$const_or_mut == const_or_mut
-  check[5] <- type$copy_or_ref == copy_or_ref
+  check[1] <- type$get_base_type() == bt
+  check[2] <- type$get_data_struct() == ds
+  check[3] <- type$get_fct_input()
+  check[4] <- type$get_const_or_mut() == const_or_mut
+  check[5] <- type$get_copy_or_ref() == copy_or_ref
   expect_true(all(check))
 }
 
@@ -464,14 +473,14 @@ f_args <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
 }
 types <- get_types_with_f_args(f, f_args)
 check_type_f_arg(types$a, "logical", "scalar", "mutable", "copy")
-check_type_f_arg(types$b, "int", "scalar", "mutable", "copy")
+check_type_f_arg(types$b, "integer", "scalar", "mutable", "copy")
 check_type_f_arg(types$c, "double", "scalar", "mutable", "copy")
-check_type_f_arg(types$d, "logical", "vec", "mutable", "copy")
-check_type_f_arg(types$e, "integer", "vec", "mutable", "copy")
-check_type_f_arg(types$f, "double", "vec", "mutable", "copy")
-check_type_f_arg(types$g, "logical", "mat", "mutable", "copy")
-check_type_f_arg(types$h, "integer", "mat", "mutable", "copy")
-check_type_f_arg(types$i, "double", "mat", "mutable", "copy")
+check_type_f_arg(types$d, "logical", "vector", "mutable", "copy")
+check_type_f_arg(types$e, "integer", "vector", "mutable", "copy")
+check_type_f_arg(types$f, "double", "vector", "mutable", "copy")
+check_type_f_arg(types$g, "logical", "matrix", "mutable", "copy")
+check_type_f_arg(types$h, "integer", "matrix", "mutable", "copy")
+check_type_f_arg(types$i, "double", "matrix", "mutable", "copy")
 check_type_f_arg(types$j, "logical", "array", "mutable", "copy")
 check_type_f_arg(types$k, "integer", "array", "mutable", "copy")
 check_type_f_arg(types$l, "double", "array", "mutable", "copy")
@@ -493,16 +502,16 @@ f_args <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
   k |> type(array(integer)) |> ref()
   l |> type(array(double)) |> ref()
 }
-types <- get_types_with_f_args(f, f_args)
+types <- get_types_with_f_args(f, f_args, r_fct = FALSE)
 check_type_f_arg(types$a, "logical", "scalar", "mutable", "ref")
-check_type_f_arg(types$b, "int", "scalar", "mutable", "ref")
+check_type_f_arg(types$b, "integer", "scalar", "mutable", "ref")
 check_type_f_arg(types$c, "double", "scalar", "mutable", "ref")
-check_type_f_arg(types$d, "logical", "vec", "mutable", "ref")
-check_type_f_arg(types$e, "integer", "vec", "mutable", "ref")
-check_type_f_arg(types$f, "double", "vec", "mutable", "ref")
-check_type_f_arg(types$g, "logical", "mat", "mutable", "ref")
-check_type_f_arg(types$h, "integer", "mat", "mutable", "ref")
-check_type_f_arg(types$i, "double", "mat", "mutable", "ref")
+check_type_f_arg(types$d, "logical", "vector", "mutable", "ref")
+check_type_f_arg(types$e, "integer", "vector", "mutable", "ref")
+check_type_f_arg(types$f, "double", "vector", "mutable", "ref")
+check_type_f_arg(types$g, "logical", "matrix", "mutable", "ref")
+check_type_f_arg(types$h, "integer", "matrix", "mutable", "ref")
+check_type_f_arg(types$i, "double", "matrix", "mutable", "ref")
 check_type_f_arg(types$j, "logical", "array", "mutable", "ref")
 check_type_f_arg(types$k, "integer", "array", "mutable", "ref")
 check_type_f_arg(types$l, "double", "array", "mutable", "ref")
@@ -524,16 +533,16 @@ f_args <- function(a, b, c, d, e, f, g, h, i, j, k, l) {
   k |> type(array(integer)) |> ref() |> const()
   l |> type(array(double)) |> ref() |> const()
 }
-types <- get_types_with_f_args(f, f_args)
+types <- get_types_with_f_args(f, f_args, r_fct = FALSE)
 check_type_f_arg(types$a, "logical", "scalar", "const", "ref")
-check_type_f_arg(types$b, "int", "scalar", "const", "ref")
+check_type_f_arg(types$b, "integer", "scalar", "const", "ref")
 check_type_f_arg(types$c, "double", "scalar", "const", "ref")
-check_type_f_arg(types$d, "logical", "vec", "const", "ref")
-check_type_f_arg(types$e, "integer", "vec", "const", "ref")
-check_type_f_arg(types$f, "double", "vec", "const", "ref")
-check_type_f_arg(types$g, "logical", "mat", "const", "ref")
-check_type_f_arg(types$h, "integer", "mat", "const", "ref")
-check_type_f_arg(types$i, "double", "mat", "const", "ref")
+check_type_f_arg(types$d, "logical", "vector", "const", "ref")
+check_type_f_arg(types$e, "integer", "vector", "const", "ref")
+check_type_f_arg(types$f, "double", "vector", "const", "ref")
+check_type_f_arg(types$g, "logical", "matrix", "const", "ref")
+check_type_f_arg(types$h, "integer", "matrix", "const", "ref")
+check_type_f_arg(types$i, "double", "matrix", "const", "ref")
 check_type_f_arg(types$j, "logical", "array", "const", "ref")
 check_type_f_arg(types$k, "integer", "array", "const", "ref")
 check_type_f_arg(types$l, "double", "array", "const", "ref")
@@ -587,56 +596,56 @@ f <- function() {
   y <- ncol(matrix(1:10, 2, 5))
 }
 types <- get_types(f)
-expect_true(types$d$base_type == "integer")
-expect_true(types$d$data_struct == "scalar")
-expect_true(types$e$base_type == "integer")
-expect_true(types$e$data_struct == "scalar")
-expect_true(types$f$base_type == "integer")
-expect_true(types$f$data_struct == "scalar")
+expect_true(types$d$get_base_type() == "integer")
+expect_true(types$d$get_data_struct() == "scalar")
+expect_true(types$e$get_base_type() == "integer")
+expect_true(types$e$get_data_struct() == "scalar")
+expect_true(types$f$get_base_type() == "integer")
+expect_true(types$f$get_data_struct() == "scalar")
 
-expect_true(types$g$base_type == "integer")
-expect_true(types$g$data_struct == "vector")
-expect_true(types$h$base_type == "integer")
-expect_true(types$h$data_struct == "vector")
-expect_true(types$i$base_type == "integer")
-expect_true(types$i$data_struct == "vector")
+expect_true(types$g$get_base_type() == "integer")
+expect_true(types$g$get_data_struct() == "vector")
+expect_true(types$h$get_base_type() == "integer")
+expect_true(types$h$get_data_struct() == "vector")
+expect_true(types$i$get_base_type() == "integer")
+expect_true(types$i$get_data_struct() == "vector")
 
-expect_true(types$j$base_type == "logical")
-expect_true(types$j$data_struct == "scalar")
-expect_true(types$k$base_type == "logical")
-expect_true(types$k$data_struct == "vector")
-expect_true(types$l$base_type == "logical")
-expect_true(types$l$data_struct == "matrix")
+expect_true(types$j$get_base_type() == "logical")
+expect_true(types$j$get_data_struct() == "scalar")
+expect_true(types$k$get_base_type() == "logical")
+expect_true(types$k$get_data_struct() == "vector")
+expect_true(types$l$get_base_type() == "logical")
+expect_true(types$l$get_data_struct() == "matrix")
 
-expect_true(types$m$base_type == "logical")
-expect_true(types$m$data_struct == "scalar")
-expect_true(types$n$base_type == "logical")
-expect_true(types$n$data_struct == "vector")
-expect_true(types$o$base_type == "logical")
-expect_true(types$o$data_struct == "matrix")
+expect_true(types$m$get_base_type() == "logical")
+expect_true(types$m$get_data_struct() == "scalar")
+expect_true(types$n$get_base_type() == "logical")
+expect_true(types$n$get_data_struct() == "vector")
+expect_true(types$o$get_base_type() == "logical")
+expect_true(types$o$get_data_struct() == "matrix")
 
-expect_true(types$p$base_type == "logical")
-expect_true(types$p$data_struct == "scalar")
-expect_true(types$q$base_type == "logical")
-expect_true(types$q$data_struct == "vector")
-expect_true(types$r$base_type == "logical")
-expect_true(types$r$data_struct == "matrix")
+expect_true(types$p$get_base_type() == "logical")
+expect_true(types$p$get_data_struct() == "scalar")
+expect_true(types$q$get_base_type() == "logical")
+expect_true(types$q$get_data_struct() == "vector")
+expect_true(types$r$get_base_type() == "logical")
+expect_true(types$r$get_data_struct() == "matrix")
 
-expect_true(types$s$base_type == "logical")
-expect_true(types$s$data_struct == "scalar")
-expect_true(types$t$base_type == "logical")
-expect_true(types$t$data_struct == "vector")
-expect_true(types$u$base_type == "logical")
-expect_true(types$u$data_struct == "matrix")
+expect_true(types$s$get_base_type() == "logical")
+expect_true(types$s$get_data_struct() == "scalar")
+expect_true(types$t$get_base_type() == "logical")
+expect_true(types$t$get_data_struct() == "vector")
+expect_true(types$u$get_base_type() == "logical")
+expect_true(types$u$get_data_struct() == "matrix")
 
-expect_true(types$v$base_type == "double")
-expect_true(types$v$data_struct == "scalar")
-expect_true(types$w$base_type == "double")
-expect_true(types$w$data_struct == "array")
-expect_true(types$x$base_type == "integer")
-expect_true(types$x$data_struct == "scalar")
-expect_true(types$y$base_type == "integer")
-expect_true(types$y$data_struct == "scalar")
+expect_true(types$v$get_base_type() == "double")
+expect_true(types$v$get_data_struct() == "scalar")
+expect_true(types$w$get_base_type() == "double")
+expect_true(types$w$get_data_struct() == "array")
+expect_true(types$x$get_base_type() == "integer")
+expect_true(types$x$get_data_struct() == "scalar")
+expect_true(types$y$get_base_type() == "integer")
+expect_true(types$y$get_data_struct() == "scalar")
 # --- logical operators --------------------------------------------------
 f <- function() {
   a <- 1:3
@@ -650,18 +659,18 @@ f <- function() {
   i <- g | h
 }
 types <- get_types(f)
-expect_true(types$c$base_type == "logical")
-expect_true(types$c$data_struct == "scalar")
-expect_true(types$d$base_type == "logical")
-expect_true(types$d$data_struct == "scalar")
-expect_true(types$e$base_type == "logical")
-expect_true(types$e$data_struct == "vector")
-expect_true(types$f$base_type == "logical")
-expect_true(types$f$data_struct == "vector")
-expect_true(types$h$base_type == "logical")
-expect_true(types$h$data_struct == "matrix")
-expect_true(types$i$base_type == "logical")
-expect_true(types$i$data_struct == "matrix")
+expect_true(types$c$get_base_type() == "logical")
+expect_true(types$c$get_data_struct() == "scalar")
+expect_true(types$d$get_base_type() == "logical")
+expect_true(types$d$get_data_struct() == "scalar")
+expect_true(types$e$get_base_type() == "logical")
+expect_true(types$e$get_data_struct() == "vector")
+expect_true(types$f$get_base_type() == "logical")
+expect_true(types$f$get_data_struct() == "vector")
+expect_true(types$h$get_base_type() == "logical")
+expect_true(types$h$get_data_struct() == "matrix")
+expect_true(types$i$get_base_type() == "logical")
+expect_true(types$i$get_data_struct() == "matrix")
 
 # --- comparisons --------------------------------------------------------
 f <- function() {
@@ -675,18 +684,18 @@ f <- function() {
   h <- c(1, 2, 3) <= c(4, 5, 6)
 }
 types <- get_types(f)
-expect_true(types$c$base_type == "logical")
-expect_true(types$c$data_struct == "matrix")
-expect_true(types$d$base_type == "logical")
-expect_true(types$d$data_struct == "matrix")
-expect_true(types$e$base_type == "logical")
-expect_true(types$e$data_struct == "matrix")
-expect_true(types$f$base_type == "logical")
-expect_true(types$f$data_struct == "matrix")
-expect_true(types$g$base_type == "logical")
-expect_true(types$g$data_struct == "scalar")
-expect_true(types$h$base_type == "logical")
-expect_true(types$h$data_struct == "vector")
+expect_true(types$c$get_base_type() == "logical")
+expect_true(types$c$get_data_struct() == "matrix")
+expect_true(types$d$get_base_type() == "logical")
+expect_true(types$d$get_data_struct() == "matrix")
+expect_true(types$e$get_base_type() == "logical")
+expect_true(types$e$get_data_struct() == "matrix")
+expect_true(types$f$get_base_type() == "logical")
+expect_true(types$f$get_data_struct() == "matrix")
+expect_true(types$g$get_base_type() == "logical")
+expect_true(types$g$get_data_struct() == "scalar")
+expect_true(types$h$get_base_type() == "logical")
+expect_true(types$h$get_data_struct() == "vector")
 
 # --- binary arithmetic --------------------------------------------------
 f <- function() {
@@ -699,16 +708,16 @@ f <- function() {
   g <- a ^ b
 }
 types <- get_types(f)
-expect_true(types$c$base_type == "integer", info = "Type promotion of bool values in arithmetic")
-expect_true(types$c$data_struct == "vector", info = "Type promotion of bool values in arithmetic")
-expect_true(types$d$base_type == "integer", info = "Type promotion of bool values in arithmetic")
-expect_true(types$d$data_struct == "vector", info = "Type promotion of bool values in arithmetic")
-expect_true(types$e$base_type == "integer", info = "Type promotion of bool values in arithmetic")
-expect_true(types$e$data_struct == "vector", info = "Type promotion of bool values in arithmetic")
-expect_true(types$f$base_type == "double", info = "No type promotion for / of bool values in arithmetic")
-expect_true(types$f$data_struct == "vector", info = "No type promotion for / of bool values in arithmetic")
-expect_true(types$g$base_type == "double", info = "No type promotion for ^ of bool values in arithmetic")
-expect_true(types$g$data_struct == "vector", info = "No type promotion for ^ of bool values in arithmetic")
+expect_true(types$c$get_base_type() == "integer", info = "Type promotion of bool values in arithmetic")
+expect_true(types$c$get_data_struct() == "vector", info = "Type promotion of bool values in arithmetic")
+expect_true(types$d$get_base_type() == "integer", info = "Type promotion of bool values in arithmetic")
+expect_true(types$d$get_data_struct() == "vector", info = "Type promotion of bool values in arithmetic")
+expect_true(types$e$get_base_type() == "integer", info = "Type promotion of bool values in arithmetic")
+expect_true(types$e$get_data_struct() == "vector", info = "Type promotion of bool values in arithmetic")
+expect_true(types$f$get_base_type() == "double", info = "No type promotion for / of bool values in arithmetic")
+expect_true(types$f$get_data_struct() == "vector", info = "No type promotion for / of bool values in arithmetic")
+expect_true(types$g$get_base_type() == "double", info = "No type promotion for ^ of bool values in arithmetic")
+expect_true(types$g$get_data_struct() == "vector", info = "No type promotion for ^ of bool values in arithmetic")
 
 f <- function() {
   a <- c(1L, 2L)
@@ -720,16 +729,16 @@ f <- function() {
   g <- a ^ b
 }
 types <- get_types(f)
-expect_true(types$c$base_type == "integer", info = "Type promotion of int values in arithmetic")
-expect_true(types$c$data_struct == "vector", info = "Type promotion of int values in arithmetic")
-expect_true(types$d$base_type == "integer", info = "Type promotion of int values in arithmetic")
-expect_true(types$d$data_struct == "vector", info = "Type promotion of int values in arithmetic")
-expect_true(types$e$base_type == "integer", info = "Type promotion of int values in arithmetic")
-expect_true(types$e$data_struct == "vector", info = "Type promotion of int values in arithmetic")
-expect_true(types$f$base_type == "double", info = "No type promotion for / of int values in arithmetic")
-expect_true(types$f$data_struct == "vector", info = "No type promotion for / of int values in arithmetic")
-expect_true(types$g$base_type == "double", info = "No type promotion for ^ of int values in arithmetic")
-expect_true(types$g$data_struct == "vector", info = "No type promotion for ^ of int values in arithmetic")
+expect_true(types$c$get_base_type() == "integer", info = "Type promotion of int values in arithmetic")
+expect_true(types$c$get_data_struct() == "vector", info = "Type promotion of int values in arithmetic")
+expect_true(types$d$get_base_type() == "integer", info = "Type promotion of int values in arithmetic")
+expect_true(types$d$get_data_struct() == "vector", info = "Type promotion of int values in arithmetic")
+expect_true(types$e$get_base_type() == "integer", info = "Type promotion of int values in arithmetic")
+expect_true(types$e$get_data_struct() == "vector", info = "Type promotion of int values in arithmetic")
+expect_true(types$f$get_base_type() == "double", info = "No type promotion for / of int values in arithmetic")
+expect_true(types$f$get_data_struct() == "vector", info = "No type promotion for / of int values in arithmetic")
+expect_true(types$g$get_base_type() == "double", info = "No type promotion for ^ of int values in arithmetic")
+expect_true(types$g$get_data_struct() == "vector", info = "No type promotion for ^ of int values in arithmetic")
 
 f <- function() {
   a <- matrix(c(1L, 2L), 2, 1)
@@ -741,16 +750,16 @@ f <- function() {
   g <- a ^ b
 }
 types <- get_types(f)
-expect_true(types$c$base_type == "double", info = "Type promotion of mixed values in arithmetic")
-expect_true(types$c$data_struct == "matrix", info = "Type promotion of mixed values in arithmetic")
-expect_true(types$d$base_type == "double", info = "Type promotion of mixed values in arithmetic")
-expect_true(types$d$data_struct == "matrix", info = "Type promotion of mixed values in arithmetic")
-expect_true(types$e$base_type == "double", info = "Type promotion of mixed values in arithmetic")
-expect_true(types$e$data_struct == "matrix", info = "Type promotion of mixed values in arithmetic")
-expect_true(types$f$base_type == "double", info = "No type promotion for / of mixed values in arithmetic")
-expect_true(types$f$data_struct == "matrix", info = "No type promotion for / of mixed values in arithmetic")
-expect_true(types$g$base_type == "double", info = "No type promotion for ^ of mixed values in arithmetic")
-expect_true(types$g$data_struct == "matrix", info = "No type promotion for ^ of mixed values in arithmetic")
+expect_true(types$c$get_base_type() == "double", info = "Type promotion of mixed values in arithmetic")
+expect_true(types$c$get_data_struct() == "matrix", info = "Type promotion of mixed values in arithmetic")
+expect_true(types$d$get_base_type() == "double", info = "Type promotion of mixed values in arithmetic")
+expect_true(types$d$get_data_struct() == "matrix", info = "Type promotion of mixed values in arithmetic")
+expect_true(types$e$get_base_type() == "double", info = "Type promotion of mixed values in arithmetic")
+expect_true(types$e$get_data_struct() == "matrix", info = "Type promotion of mixed values in arithmetic")
+expect_true(types$f$get_base_type() == "double", info = "No type promotion for / of mixed values in arithmetic")
+expect_true(types$f$get_data_struct() == "matrix", info = "No type promotion for / of mixed values in arithmetic")
+expect_true(types$g$get_base_type() == "double", info = "No type promotion for ^ of mixed values in arithmetic")
+expect_true(types$g$get_data_struct() == "matrix", info = "No type promotion for ^ of mixed values in arithmetic")
 
 # --- unary arithmetic ---------------------------------------------------
 f <- function() {
@@ -769,35 +778,35 @@ f <- function() {
   m <- -a
 }
 types <- get_types(f)
-expect_true(types$a$base_type == "double")
-expect_true(types$a$data_struct == "scalar")
-expect_true(types$b$base_type == "double")
-expect_true(types$b$data_struct == "scalar")
-expect_true(types$c$base_type == "double")
-expect_true(types$c$data_struct == "scalar")
+expect_true(types$a$get_base_type() == "double")
+expect_true(types$a$get_data_struct() == "scalar")
+expect_true(types$b$get_base_type() == "double")
+expect_true(types$b$get_data_struct() == "scalar")
+expect_true(types$c$get_base_type() == "double")
+expect_true(types$c$get_data_struct() == "scalar")
 
-expect_true(types$d$base_type == "double")
-expect_true(types$d$data_struct == "vector")
-expect_true(types$e$base_type == "double")
-expect_true(types$e$data_struct == "vector")
-expect_true(types$f$base_type == "double")
-expect_true(types$f$data_struct == "vector")
+expect_true(types$d$get_base_type() == "double")
+expect_true(types$d$get_data_struct() == "vector")
+expect_true(types$e$get_base_type() == "double")
+expect_true(types$e$get_data_struct() == "vector")
+expect_true(types$f$get_base_type() == "double")
+expect_true(types$f$get_data_struct() == "vector")
 
-expect_true(types$g$base_type == "double")
-expect_true(types$g$data_struct == "matrix")
-expect_true(types$h$base_type == "double")
-expect_true(types$h$data_struct == "matrix")
-expect_true(types$i$base_type == "double")
-expect_true(types$i$data_struct == "matrix")
+expect_true(types$g$get_base_type() == "double")
+expect_true(types$g$get_data_struct() == "matrix")
+expect_true(types$h$get_base_type() == "double")
+expect_true(types$h$get_data_struct() == "matrix")
+expect_true(types$i$get_base_type() == "double")
+expect_true(types$i$get_data_struct() == "matrix")
 
-expect_true(types$j$base_type == "double")
-expect_true(types$j$data_struct == "scalar")
-expect_true(types$k$base_type == "double")
-expect_true(types$k$data_struct == "scalar")
-expect_true(types$l$base_type == "double")
-expect_true(types$l$data_struct == "scalar")
-expect_true(types$m$base_type == "double")
-expect_true(types$m$data_struct == "scalar")
+expect_true(types$j$get_base_type() == "double")
+expect_true(types$j$get_data_struct() == "scalar")
+expect_true(types$k$get_base_type() == "double")
+expect_true(types$k$get_data_struct() == "scalar")
+expect_true(types$l$get_base_type() == "double")
+expect_true(types$l$get_data_struct() == "scalar")
+expect_true(types$m$get_base_type() == "double")
+expect_true(types$m$get_data_struct() == "scalar")
 
 # --- rep, :, and seq_len -------------------------------------------------
 f <- function() {
@@ -811,22 +820,22 @@ f <- function() {
   h <- seq_along(c(1, 2, 10))
 }
 types <- get_types(f)
-expect_true(types$a$base_type == "integer")
-expect_true(types$a$data_struct == "vector")
-expect_true(types$b$base_type == "integer")
-expect_true(types$b$data_struct == "vector")
-expect_true(types$c$base_type == "double")
-expect_true(types$c$data_struct == "vector")
-expect_true(types$d$base_type == "logical")
-expect_true(types$d$data_struct == "vector")
-expect_true(types$e$base_type == "integer")
-expect_true(types$e$data_struct == "vector")
-expect_true(types$f$base_type == "double")
-expect_true(types$f$data_struct == "vector")
-expect_true(types$g$base_type == "integer")
-expect_true(types$g$data_struct == "vector")
-expect_true(types$h$base_type == "integer")
-expect_true(types$h$data_struct == "vector")
+expect_true(types$a$get_base_type() == "integer")
+expect_true(types$a$get_data_struct() == "vector")
+expect_true(types$b$get_base_type() == "integer")
+expect_true(types$b$get_data_struct() == "vector")
+expect_true(types$c$get_base_type() == "double")
+expect_true(types$c$get_data_struct() == "vector")
+expect_true(types$d$get_base_type() == "logical")
+expect_true(types$d$get_data_struct() == "vector")
+expect_true(types$e$get_base_type() == "integer")
+expect_true(types$e$get_data_struct() == "vector")
+expect_true(types$f$get_base_type() == "double")
+expect_true(types$f$get_data_struct() == "vector")
+expect_true(types$g$get_base_type() == "integer")
+expect_true(types$g$get_data_struct() == "vector")
+expect_true(types$h$get_base_type() == "integer")
+expect_true(types$h$get_data_struct() == "vector")
 
 # --- if conditions ------------------------------------------------------
 f <- function() {
@@ -842,12 +851,12 @@ f <- function() {
   }
 }
 types <- get_types(f)
-expect_true(types$a$base_type == "integer", info = "Type promotion in condition of if")
-expect_true(types$a$data_struct == "vector", info = "Type promotion in condition of if")
-expect_true(types$b$base_type == "integer", info = "No type promotion in condition of if")
-expect_true(types$b$data_struct == "scalar", info = "No type promotion in condition of if")
-expect_true(types$c$base_type == "integer", info = "Type promotion in condition of if")
-expect_true(types$c$data_struct == "matrix", info = "Type promotion in condition of if")
+expect_true(types$a$get_base_type() == "integer", info = "Type promotion in condition of if")
+expect_true(types$a$get_data_struct() == "vector", info = "Type promotion in condition of if")
+expect_true(types$b$get_base_type() == "integer", info = "No type promotion in condition of if")
+expect_true(types$b$get_data_struct() == "scalar", info = "No type promotion in condition of if")
+expect_true(types$c$get_base_type() == "integer", info = "Type promotion in condition of if")
+expect_true(types$c$get_data_struct() == "matrix", info = "Type promotion in condition of if")
 
 # --- iterations ---------------------------------------------------------
 f <- function() {
@@ -873,20 +882,20 @@ f <- function() {
   }
 }
 types <- get_types(f)
-expect_true(types$i$base_type == "double")
-expect_true(types$i$data_struct == "scalar")
+expect_true(types$i$get_base_type() == "double")
+expect_true(types$i$get_data_struct() == "scalar")
 expect_true(types$i$iterator)
-expect_true(types$j$base_type == "double")
-expect_true(types$j$data_struct == "scalar")
+expect_true(types$j$get_base_type() == "double")
+expect_true(types$j$get_data_struct() == "scalar")
 expect_true(types$j$iterator)
-expect_true(types$k$base_type == "double")
-expect_true(types$k$data_struct == "scalar")
+expect_true(types$k$get_base_type() == "double")
+expect_true(types$k$get_data_struct() == "scalar")
 expect_true(types$k$iterator)
-expect_true(types$l$base_type == "integer")
-expect_true(types$l$data_struct == "scalar")
+expect_true(types$l$get_base_type() == "integer")
+expect_true(types$l$get_data_struct() == "scalar")
 expect_true(types$l$iterator)
-expect_true(types$outer_val$base_type == "integer", info = "Type not changed even variable is later used as iterator")
-expect_true(types$outer_val$data_struct == "vector",  info = "Type not changed even variable is later used as iterator")
+expect_true(types$outer_val$get_base_type() == "integer", info = "Type not changed even variable is later used as iterator")
+expect_true(types$outer_val$get_data_struct() == "vector",  info = "Type not changed even variable is later used as iterator")
 
 f <- function() {
   a <- 1L
@@ -901,8 +910,8 @@ f <- function() {
   }
 }
 types <- get_types(f)
-expect_true(types$a$base_type == "double", info = "Type promotion in condition of while")
-expect_true(types$a$data_struct == "vector", info = "Type promotion in condition of while")
+expect_true(types$a$get_base_type() == "double", info = "Type promotion in condition of while")
+expect_true(types$a$get_data_struct() == "vector", info = "Type promotion in condition of while")
 
 # --- subsetting ---------------------------------------------------------
 f <- function() {
@@ -924,36 +933,36 @@ f <- function() {
   p <- e[c(1), c(2)]
 }
 types <- get_types(f)
-expect_true(types$b$base_type == "double")
-expect_true(types$b$data_struct == "scalar")
-expect_true(types$c$base_type == "double")
-expect_true(types$c$data_struct == "scalar")
-expect_true(types$d$base_type == "double")
-expect_true(types$d$data_struct == "scalar")
-expect_true(types$e$base_type == "double")
-expect_true(types$e$data_struct == "matrix")
-expect_true(types$f$base_type == "double")
-expect_true(types$f$data_struct == "scalar")
-expect_true(types$g$base_type == "double")
-expect_true(types$g$data_struct == "scalar")
-expect_true(types$h$base_type == "double")
-expect_true(types$h$data_struct == "scalar")
-expect_true(types$i$base_type == "double")
-expect_true(types$i$data_struct == "scalar")
-expect_true(types$j$base_type == "double")
-expect_true(types$j$data_struct == "scalar")
-expect_true(types$k$base_type == "double")
-expect_true(types$k$data_struct == "scalar")
-expect_true(types$l$base_type == "double")
-expect_true(types$l$data_struct == "array")
-expect_true(types$m$base_type == "double")
-expect_true(types$m$data_struct == "array")
-expect_true(types$n$base_type == "double")
-expect_true(types$n$data_struct == "vector")
-expect_true(types$o$base_type == "double")
-expect_true(types$o$data_struct == "vector")
-expect_true(types$p$base_type == "double")
-expect_true(types$p$data_struct == "matrix")
+expect_true(types$b$get_base_type() == "double")
+expect_true(types$b$get_data_struct() == "scalar")
+expect_true(types$c$get_base_type() == "double")
+expect_true(types$c$get_data_struct() == "scalar")
+expect_true(types$d$get_base_type() == "double")
+expect_true(types$d$get_data_struct() == "scalar")
+expect_true(types$e$get_base_type() == "double")
+expect_true(types$e$get_data_struct() == "matrix")
+expect_true(types$f$get_base_type() == "double")
+expect_true(types$f$get_data_struct() == "scalar")
+expect_true(types$g$get_base_type() == "double")
+expect_true(types$g$get_data_struct() == "scalar")
+expect_true(types$h$get_base_type() == "double")
+expect_true(types$h$get_data_struct() == "scalar")
+expect_true(types$i$get_base_type() == "double")
+expect_true(types$i$get_data_struct() == "scalar")
+expect_true(types$j$get_base_type() == "double")
+expect_true(types$j$get_data_struct() == "scalar")
+expect_true(types$k$get_base_type() == "double")
+expect_true(types$k$get_data_struct() == "scalar")
+expect_true(types$l$get_base_type() == "double")
+expect_true(types$l$get_data_struct() == "array")
+expect_true(types$m$get_base_type() == "double")
+expect_true(types$m$get_data_struct() == "array")
+expect_true(types$n$get_base_type() == "double")
+expect_true(types$n$get_data_struct() == "vector")
+expect_true(types$o$get_base_type() == "double")
+expect_true(types$o$get_data_struct() == "vector")
+expect_true(types$p$get_base_type() == "double")
+expect_true(types$p$get_data_struct() == "matrix")
 
 f <- function() {
   a <- 1
@@ -971,18 +980,18 @@ f <- function() {
   f[1, 1, 1] <- 300
 }
 types <- get_types(f)
-expect_true(types$a$base_type == "double", info = "Type promotion at LHS")
-expect_true(types$a$data_struct == "vector", info = "Type promotion at LHS")
-expect_true(types$b$base_type == "double", info = "Type promotion at LHS")
-expect_true(types$b$data_struct == "matrix", info = "Type promotion at LHS")
-expect_true(types$c$base_type == "double", info = "Type promotion at LHS")
-expect_true(types$c$data_struct == "matrix", info = "Type promotion at LHS")
-expect_true(types$d$base_type == "double", info = "Type promotion at LHS")
-expect_true(types$d$data_struct == "vector", info = "Type promotion at LHS")
-expect_true(types$e$base_type == "double", info = "Type promotion at LHS")
-expect_true(types$e$data_struct == "matrix", info = "Type promotion at LHS")
-expect_true(types$f$base_type == "double", info = "Type promotion at LHS")
-expect_true(types$f$data_struct == "array", info = "Type promotion at LHS")
+expect_true(types$a$get_base_type() == "double", info = "Type promotion at LHS")
+expect_true(types$a$get_data_struct() == "vector", info = "Type promotion at LHS")
+expect_true(types$b$get_base_type() == "double", info = "Type promotion at LHS")
+expect_true(types$b$get_data_struct() == "matrix", info = "Type promotion at LHS")
+expect_true(types$c$get_base_type() == "double", info = "Type promotion at LHS")
+expect_true(types$c$get_data_struct() == "matrix", info = "Type promotion at LHS")
+expect_true(types$d$get_base_type() == "double", info = "Type promotion at LHS")
+expect_true(types$d$get_data_struct() == "vector", info = "Type promotion at LHS")
+expect_true(types$e$get_base_type() == "double", info = "Type promotion at LHS")
+expect_true(types$e$get_data_struct() == "matrix", info = "Type promotion at LHS")
+expect_true(types$f$get_base_type() == "double", info = "Type promotion at LHS")
+expect_true(types$f$get_data_struct() == "array", info = "Type promotion at LHS")
 
 f <- function() {
   a <- c(1, 2, 3, 4)
@@ -997,16 +1006,16 @@ f <- function() {
   j <- e[c(1L), 1, 1]
 }
 types <- get_types(f)
-expect_true(types$d$base_type == "double")
-expect_true(types$d$data_struct == "scalar")
-expect_true(types$g$base_type == "double")
-expect_true(types$g$data_struct == "vector")
-expect_true(types$h$base_type == "double")
-expect_true(types$h$data_struct == "scalar")
-expect_true(types$i$base_type == "double")
-expect_true(types$i$data_struct == "matrix")
-expect_true(types$j$base_type == "double")
-expect_true(types$j$data_struct == "array")
+expect_true(types$d$get_base_type() == "double")
+expect_true(types$d$get_data_struct() == "scalar")
+expect_true(types$g$get_base_type() == "double")
+expect_true(types$g$get_data_struct() == "vector")
+expect_true(types$h$get_base_type() == "double")
+expect_true(types$h$get_data_struct() == "scalar")
+expect_true(types$i$get_base_type() == "double")
+expect_true(types$i$get_data_struct() == "matrix")
+expect_true(types$j$get_base_type() == "double")
+expect_true(types$j$get_data_struct() == "array")
 
 # Fast path choosen
 f <- function() {
@@ -1025,97 +1034,97 @@ f <- function() {
   k <- j[5, 1, 1]
 }
 types <- get_types(f)
-expect_true(types$d$base_type == "double")
-expect_true(types$d$data_struct == "vector")
-expect_true(types$e$base_type == "double")
-expect_true(types$e$data_struct == "scalar")
-expect_true(types$f$base_type == "double")
-expect_true(types$f$data_struct == "scalar")
-expect_true(types$g$base_type == "double")
-expect_true(types$g$data_struct == "scalar")
-expect_true(types$i$base_type == "double")
-expect_true(types$i$data_struct == "scalar")
-expect_true(types$k$base_type == "double")
-expect_true(types$k$data_struct == "scalar")
+expect_true(types$d$get_base_type() == "double")
+expect_true(types$d$get_data_struct() == "vector")
+expect_true(types$e$get_base_type() == "double")
+expect_true(types$e$get_data_struct() == "scalar")
+expect_true(types$f$get_base_type() == "double")
+expect_true(types$f$get_data_struct() == "scalar")
+expect_true(types$g$get_base_type() == "double")
+expect_true(types$g$get_data_struct() == "scalar")
+expect_true(types$i$get_base_type() == "double")
+expect_true(types$i$get_data_struct() == "scalar")
+expect_true(types$k$get_base_type() == "double")
+expect_true(types$k$get_data_struct() == "scalar")
 
 # --- type ---------------------------------------------------------------
 f <- function() {
   a |> type(logical)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "logical")
-expect_true(types[[1]]$data_struct == "scalar")
+expect_true(types[[1]]$get_base_type() == "logical")
+expect_true(types[[1]]$get_data_struct() == "scalar")
 
 f <- function() {
   a |> type(logical) <- 1L
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "logical")
-expect_true(types[[1]]$data_struct == "scalar")
+expect_true(types[[1]]$get_base_type() == "logical")
+expect_true(types[[1]]$get_data_struct() == "scalar")
 
 f <- function() {
   a |> type(logical) <- 1L
   a <- c(1.1, 2.2)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "logical", info = "Type is preserved")
-expect_true(types[[1]]$data_struct == "scalar", info = "Type is preserved")
+expect_true(types[[1]]$get_base_type() == "logical", info = "Type is preserved")
+expect_true(types[[1]]$get_data_struct() == "scalar", info = "Type is preserved")
 
 f <- function() {
   a |> type(vec(logical))
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "logical")
-expect_true(types[[1]]$data_struct == "vec")
+expect_true(types[[1]]$get_base_type() == "logical")
+expect_true(types[[1]]$get_data_struct() == "vector")
 
 f <- function() {
   a |> type(vector(logical))
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "logical")
-expect_true(types[[1]]$data_struct == "vector")
+expect_true(types[[1]]$get_base_type() == "logical")
+expect_true(types[[1]]$get_data_struct() == "vector")
 
 f <- function() {
   a |> type(matrix(logical))
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "logical")
-expect_true(types[[1]]$data_struct == "matrix")
+expect_true(types[[1]]$get_base_type() == "logical")
+expect_true(types[[1]]$get_data_struct() == "matrix")
 
 f <- function() {
   a |> type(array(logical))
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "logical")
-expect_true(types[[1]]$data_struct == "array")
+expect_true(types[[1]]$get_base_type() == "logical")
+expect_true(types[[1]]$get_data_struct() == "array")
 
 f <- function() {
   a |> type(mat(logical))
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "logical")
-expect_true(types[[1]]$data_struct == "mat")
+expect_true(types[[1]]$get_base_type() == "logical")
+expect_true(types[[1]]$get_data_struct() == "matrix")
 
 f <- function() {
   a |> type(int)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "int")
-expect_true(types[[1]]$data_struct == "scalar")
+expect_true(types[[1]]$get_base_type() == "integer")
+expect_true(types[[1]]$get_data_struct() == "scalar")
 
 f <- function() {
   a |> type(integer)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "integer")
-expect_true(types[[1]]$data_struct == "scalar")
+expect_true(types[[1]]$get_base_type() == "integer")
+expect_true(types[[1]]$get_data_struct() == "scalar")
 
 f <- function() {
   a |> type(double)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "double")
-expect_true(types[[1]]$data_struct == "scalar")
+expect_true(types[[1]]$get_base_type() == "double")
+expect_true(types[[1]]$get_data_struct() == "scalar")
 
 f <- function() {
   a |> type(invalid)
@@ -1156,43 +1165,43 @@ f <- function() {
   a <- NA
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "NA")
-expect_true(types[[1]]$data_struct == "scalar")
+expect_true(types[[1]]$get_base_type() == "NA")
+expect_true(types[[1]]$get_data_struct() == "scalar")
 
 f <- function() {
   a <- NaN
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "NaN")
-expect_true(types[[1]]$data_struct == "scalar")
+expect_true(types[[1]]$get_base_type() == "NaN")
+expect_true(types[[1]]$get_data_struct() == "scalar")
 
 f <- function() {
   a <- Inf
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "Inf")
-expect_true(types[[1]]$data_struct == "scalar")
+expect_true(types[[1]]$get_base_type() == "Inf")
+expect_true(types[[1]]$get_data_struct() == "scalar")
 
 f <- function() {
   a <- TRUE
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "logical")
-expect_true(types[[1]]$data_struct == "scalar")
+expect_true(types[[1]]$get_base_type() == "logical")
+expect_true(types[[1]]$get_data_struct() == "scalar")
 
 f <- function() {
   a <- 1L
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "integer")
-expect_true(types[[1]]$data_struct == "scalar")
+expect_true(types[[1]]$get_base_type() == "integer")
+expect_true(types[[1]]$get_data_struct() == "scalar")
 
 f <- function() {
   a <- 1
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "double")
-expect_true(types[[1]]$data_struct == "scalar")
+expect_true(types[[1]]$get_base_type() == "double")
+expect_true(types[[1]]$get_data_struct() == "scalar")
 
 
 # --- allocation fcts ---------------------------------------------------------------
@@ -1200,64 +1209,64 @@ f <- function() {
   a <- c(TRUE, FALSE)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "logical")
-expect_true(types[[1]]$data_struct == "vector")
+expect_true(types[[1]]$get_base_type() == "logical")
+expect_true(types[[1]]$get_data_struct() == "vector")
 
 f <- function() {
   a <- c(TRUE, 1L)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "integer")
-expect_true(types[[1]]$data_struct == "vector")
+expect_true(types[[1]]$get_base_type() == "integer")
+expect_true(types[[1]]$get_data_struct() == "vector")
 
 f <- function() {
   a <- c(TRUE, 1L, 3.14)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "double")
-expect_true(types[[1]]$data_struct == "vector")
+expect_true(types[[1]]$get_base_type() == "double")
+expect_true(types[[1]]$get_data_struct() == "vector")
 
 f <- function() {
   a <- logical(2)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "logical")
-expect_true(types[[1]]$data_struct == "vector")
+expect_true(types[[1]]$get_base_type() == "logical")
+expect_true(types[[1]]$get_data_struct() == "vector")
 
 f <- function() {
   a <- integer(2)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "integer")
-expect_true(types[[1]]$data_struct == "vector")
+expect_true(types[[1]]$get_base_type() == "integer")
+expect_true(types[[1]]$get_data_struct() == "vector")
 
 f <- function() {
   a <- numeric(2)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "double")
-expect_true(types[[1]]$data_struct == "vector")
+expect_true(types[[1]]$get_base_type() == "double")
+expect_true(types[[1]]$get_data_struct() == "vector")
 
 f <- function() {
   a <- vector(mode = "logical", length = 2)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "logical")
-expect_true(types[[1]]$data_struct == "vector")
+expect_true(types[[1]]$get_base_type() == "logical")
+expect_true(types[[1]]$get_data_struct() == "vector")
 
 f <- function() {
   a <- vector(mode = "integer", length = 2)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "integer")
-expect_true(types[[1]]$data_struct == "vector")
+expect_true(types[[1]]$get_base_type() == "integer")
+expect_true(types[[1]]$get_data_struct() == "vector")
 
 f <- function() {
   a <- vector(mode = "numeric", length = 2)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "double")
-expect_true(types[[1]]$data_struct == "vector")
+expect_true(types[[1]]$get_base_type() == "double")
+expect_true(types[[1]]$get_data_struct() == "vector")
 
 f <- function() {
   a <- vector(mode = "double", length = 2L)
@@ -1272,57 +1281,57 @@ f <- function() {
   a <- matrix(TRUE, 2, 2)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "logical")
-expect_true(types[[1]]$data_struct == "matrix")
+expect_true(types[[1]]$get_base_type() == "logical")
+expect_true(types[[1]]$get_data_struct() == "matrix")
 
 f <- function() {
   a <- matrix(1L, 2, 2)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "integer")
-expect_true(types[[1]]$data_struct == "matrix")
+expect_true(types[[1]]$get_base_type() == "integer")
+expect_true(types[[1]]$get_data_struct() == "matrix")
 
 f <- function() {
   a <- matrix(0, 2, 2)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "double")
-expect_true(types[[1]]$data_struct == "matrix")
+expect_true(types[[1]]$get_base_type() == "double")
+expect_true(types[[1]]$get_data_struct() == "matrix")
 
 f <- function() {
   a <- matrix(NA, 2, 2)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "NA")
-expect_true(types[[1]]$data_struct == "matrix")
+expect_true(types[[1]]$get_base_type() == "NA")
+expect_true(types[[1]]$get_data_struct() == "matrix")
 
 f <- function() {
   a <- array(TRUE, 2, 2)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "logical")
-expect_true(types[[1]]$data_struct == "array")
+expect_true(types[[1]]$get_base_type() == "logical")
+expect_true(types[[1]]$get_data_struct() == "array")
 
 f <- function() {
   a <- array(1L, 2, 2)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "integer")
-expect_true(types[[1]]$data_struct == "array")
+expect_true(types[[1]]$get_base_type() == "integer")
+expect_true(types[[1]]$get_data_struct() == "array")
 
 f <- function() {
   a <- array(0, 2, 2)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "double")
-expect_true(types[[1]]$data_struct == "array")
+expect_true(types[[1]]$get_base_type() == "double")
+expect_true(types[[1]]$get_data_struct() == "array")
 
 f <- function() {
   a <- array(NA, 2, 2)
 }
 types <- get_types(f)
-expect_true(types[[1]]$base_type == "NA")
-expect_true(types[[1]]$data_struct == "array")
+expect_true(types[[1]]$get_base_type() == "NA")
+expect_true(types[[1]]$get_data_struct() == "array")
 
 # --- reductions: min/max keep base type, which.* -> integer, all/any -> logical
 f <- function() {
@@ -1337,13 +1346,13 @@ f <- function() {
   an <- any(x)
 }
 types <- get_types(f)
-expect_true(types$mx$base_type == "double" && types$mx$data_struct == "scalar")
-expect_true(types$mn$base_type == "double" && types$mn$data_struct == "scalar")
-expect_true(types$mxi$base_type == "integer" && types$mxi$data_struct == "scalar")
-expect_true(types$wmx$base_type == "integer" && types$wmx$data_struct == "scalar")
-expect_true(types$wmn$base_type == "integer" && types$wmn$data_struct == "scalar")
-expect_true(types$al$base_type == "logical" && types$al$data_struct == "scalar")
-expect_true(types$an$base_type == "logical" && types$an$data_struct == "scalar")
+expect_true(types$mx$get_base_type() == "double" && types$mx$get_data_struct() == "scalar")
+expect_true(types$mn$get_base_type() == "double" && types$mn$get_data_struct() == "scalar")
+expect_true(types$mxi$get_base_type() == "integer" && types$mxi$get_data_struct() == "scalar")
+expect_true(types$wmx$get_base_type() == "integer" && types$wmx$get_data_struct() == "scalar")
+expect_true(types$wmn$get_base_type() == "integer" && types$wmn$get_data_struct() == "scalar")
+expect_true(types$al$get_base_type() == "logical" && types$al$get_data_struct() == "scalar")
+expect_true(types$an$get_base_type() == "logical" && types$an$get_data_struct() == "scalar")
 
 # --- modulo (%%): keeps integer vs double base type ---------------------------
 f <- function() {
@@ -1355,9 +1364,9 @@ f <- function() {
   v <- c(5, 6, 7) %% 2
 }
 types <- get_types(f)
-expect_true(types$di$base_type == "integer" && types$di$data_struct == "scalar")
-expect_true(types$dd$base_type == "double" && types$dd$data_struct == "scalar")
-expect_true(types$v$base_type == "double" && types$v$data_struct == "vector")
+expect_true(types$di$get_base_type() == "integer" && types$di$get_data_struct() == "scalar")
+expect_true(types$dd$get_base_type() == "double" && types$dd$get_data_struct() == "scalar")
+expect_true(types$v$get_base_type() == "double" && types$v$get_data_struct() == "vector")
 
 # --- integer division (%/%): keeps integer vs double base type ----------------
 f <- function() {
@@ -1369,9 +1378,9 @@ f <- function() {
   v <- c(5, 6, 7) %/% 2
 }
 types <- get_types(f)
-expect_true(types$di$base_type == "integer" && types$di$data_struct == "scalar")
-expect_true(types$dd$base_type == "double" && types$dd$data_struct == "scalar")
-expect_true(types$v$base_type == "double" && types$v$data_struct == "vector")
+expect_true(types$di$get_base_type() == "integer" && types$di$get_data_struct() == "scalar")
+expect_true(types$dd$get_base_type() == "double" && types$dd$get_data_struct() == "scalar")
+expect_true(types$v$get_base_type() == "double" && types$v$get_data_struct() == "vector")
 
 # --- rev: keeps base type, always returns a vector ----------------------------
 f <- function() {
@@ -1379,8 +1388,8 @@ f <- function() {
   ri <- rev(1L:3L)
 }
 types <- get_types(f)
-expect_true(types$rd$base_type == "double" && types$rd$data_struct == "vector")
-expect_true(types$ri$base_type == "integer" && types$ri$data_struct == "vector")
+expect_true(types$rd$get_base_type() == "double" && types$rd$get_data_struct() == "vector")
+expect_true(types$ri$get_base_type() == "integer" && types$ri$get_data_struct() == "vector")
 
 # --- as.numeric / as.integer / as.logical: change base type, keep structure ---
 f <- function() {
@@ -1391,10 +1400,10 @@ f <- function() {
   s <- as.numeric(5L)
 }
 types <- get_types(f)
-expect_true(types$vd$base_type == "double" && types$vd$data_struct == "vector")
-expect_true(types$vl$base_type == "logical" && types$vl$data_struct == "vector")
-expect_true(types$vint$base_type == "integer" && types$vint$data_struct == "vector")
-expect_true(types$s$base_type == "double" && types$s$data_struct == "scalar")
+expect_true(types$vd$get_base_type() == "double" && types$vd$get_data_struct() == "vector")
+expect_true(types$vl$get_base_type() == "logical" && types$vl$get_data_struct() == "vector")
+expect_true(types$vint$get_base_type() == "integer" && types$vint$get_data_struct() == "vector")
+expect_true(types$s$get_base_type() == "double" && types$s$get_data_struct() == "scalar")
 
 # --- rbind / cbind: always a matrix, base type is the common type -------------
 f <- function() {
@@ -1403,9 +1412,9 @@ f <- function() {
   m3 <- rbind(c(1, 2), 3L)
 }
 types <- get_types(f)
-expect_true(types$m1$base_type == "double" && types$m1$data_struct == "matrix")
-expect_true(types$m2$base_type == "integer" && types$m2$data_struct == "matrix")
-expect_true(types$m3$base_type == "double" && types$m3$data_struct == "matrix")
+expect_true(types$m1$get_base_type() == "double" && types$m1$get_data_struct() == "matrix")
+expect_true(types$m2$get_base_type() == "integer" && types$m2$get_data_struct() == "matrix")
+expect_true(types$m3$get_base_type() == "double" && types$m3$get_data_struct() == "matrix")
 
 # --- floor / ceiling / trunc: always double, shape preserved ------------------
 f <- function() {
@@ -1415,10 +1424,10 @@ f <- function() {
   m <- floor(matrix(1.5, 2, 2))
 }
 types <- get_types(f)
-expect_true(types$s$base_type == "double" && types$s$data_struct == "scalar")
-expect_true(types$v$base_type == "double" && types$v$data_struct == "vector")
-expect_true(types$vi$base_type == "double" && types$vi$data_struct == "vector")
-expect_true(types$m$base_type == "double" && types$m$data_struct == "matrix")
+expect_true(types$s$get_base_type() == "double" && types$s$get_data_struct() == "scalar")
+expect_true(types$v$get_base_type() == "double" && types$v$get_data_struct() == "vector")
+expect_true(types$vi$get_base_type() == "double" && types$vi$get_data_struct() == "vector")
+expect_true(types$m$get_base_type() == "double" && types$m$get_data_struct() == "matrix")
 
 # --- sum / prod: sum keeps type (logical -> integer), prod is always double ----
 f <- function() {
@@ -1429,11 +1438,11 @@ f <- function() {
   pp <- prod(1L:3L)
 }
 types <- get_types(f)
-expect_true(types$sd$base_type == "double" && types$sd$data_struct == "scalar")
-expect_true(types$si$base_type == "integer" && types$si$data_struct == "scalar")
-expect_true(types$sl$base_type == "integer" && types$sl$data_struct == "scalar")
-expect_true(types$pd$base_type == "double" && types$pd$data_struct == "scalar")
-expect_true(types$pp$base_type == "double" && types$pp$data_struct == "scalar")
+expect_true(types$sd$get_base_type() == "double" && types$sd$get_data_struct() == "scalar")
+expect_true(types$si$get_base_type() == "integer" && types$si$get_data_struct() == "scalar")
+expect_true(types$sl$get_base_type() == "integer" && types$sl$get_data_struct() == "scalar")
+expect_true(types$pd$get_base_type() == "double" && types$pd$get_data_struct() == "scalar")
+expect_true(types$pp$get_base_type() == "double" && types$pp$get_data_struct() == "scalar")
 
 # --- chol: returns a double matrix --------------------------------------------
 f <- function() {
@@ -1441,7 +1450,7 @@ f <- function() {
   r <- chol(m)
 }
 types <- get_types(f)
-expect_true(types$r$base_type == "double" && types$r$data_struct == "matrix")
+expect_true(types$r$get_base_type() == "double" && types$r$get_data_struct() == "matrix")
 
 # --- solve: inverse is a matrix; solve(A, x) inherits x's data structure ------
 f <- function() {
@@ -1449,7 +1458,7 @@ f <- function() {
   inv <- solve(m)
 }
 types <- get_types(f)
-expect_true(types$inv$base_type == "double" && types$inv$data_struct == "matrix")
+expect_true(types$inv$get_base_type() == "double" && types$inv$get_data_struct() == "matrix")
 
 f <- function() {
   m <- matrix(1.0, 2, 2)
@@ -1457,7 +1466,7 @@ f <- function() {
   x <- solve(m, v)
 }
 types <- get_types(f)
-expect_true(types$x$base_type == "double" && types$x$data_struct == "vector")
+expect_true(types$x$get_base_type() == "double" && types$x$get_data_struct() == "vector")
 
 f <- function() {
   m <- matrix(1.0, 2, 2)
@@ -1465,7 +1474,7 @@ f <- function() {
   x <- solve(m, b)
 }
 types <- get_types(f)
-expect_true(types$x$base_type == "double" && types$x$data_struct == "matrix")
+expect_true(types$x$get_base_type() == "double" && types$x$get_data_struct() == "matrix")
 
 # --- character assignment is rejected --------------------------------------
 f <- function() {
