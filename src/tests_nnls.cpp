@@ -4,25 +4,12 @@
 #include <cmath>
 using namespace etr;
 
-// Reference: the actual Lawson-Hanson Fortran routine (src/nnls.f), same
-// algorithm the CRAN `nnls` package wraps. Compiled into ast2ast's own
-// test build only -- not something consuming packages link against, see
-// the discussion around etr_bits/Core/nnls.hpp for why that distinction
-// matters.
-extern "C" {
-  void F77_NAME(nnls)(double* a, int* mda, int* m, int* n, double* b,
-                       double* x, double* rnorm, double* w, double* zz,
-                       int* index, int* mode);
-}
-
-static void run_fortran_nnls(std::vector<double> a, int m, int n, std::vector<double> b,
-                              std::vector<double>& x, double& rnorm, int& mode) {
-  x.assign(n, 0.0);
-  std::vector<double> w(n, 0.0), zz(m, 0.0);
-  std::vector<int> index(n, 0);
-  int mda = m;
-  F77_CALL(nnls)(a.data(), &mda, &m, &n, b.data(), x.data(), &rnorm, w.data(), zz.data(), index.data(), &mode);
-}
+// Sanity test for etr::nnls_core against hand-derived expected values --
+// no longer compared against the Lawson-Hanson Fortran routine (nnls.f is
+// kept under development/ as reference material only, not compiled into
+// the package; see etr_bits/Core/nnls.hpp for the C++ port). The
+// R-side test (inst/tinytest/test_nnls.R) covers broader comparison
+// against the CRAN `nnls` package instead.
 
 static void run_etr_nnls(const std::vector<double>& a, int m, int n, const std::vector<double>& b,
                           std::vector<double>& x, double& rnorm, int& mode) {
@@ -38,25 +25,6 @@ static void run_etr_nnls(const std::vector<double>& a, int m, int n, const std::
   rnorm = rn.val;
 }
 
-static void compare_case(const char* label, const std::vector<double>& a, int m, int n,
-                          const std::vector<double>& b) {
-  std::vector<double> x_f, x_e;
-  double rnorm_f = 0.0, rnorm_e = 0.0;
-  int mode_f = 0, mode_e = 0;
-  run_fortran_nnls(a, m, n, b, x_f, rnorm_f, mode_f);
-  run_etr_nnls(a, m, n, b, x_e, rnorm_e, mode_e);
-
-  ass<"nnls vs nnls.f: mode mismatch">(mode_f == mode_e);
-  for (int i = 0; i < n; ++i) {
-    if (std::abs(x_f[i] - x_e[i]) >= 1e-8) {
-      Rcpp::Rcout << label << ": x[" << i << "] fortran=" << x_f[i]
-                  << " etr=" << x_e[i] << "\n";
-    }
-    ass<"nnls vs nnls.f: x mismatch">(std::abs(x_f[i] - x_e[i]) < 1e-8);
-  }
-  ass<"nnls vs nnls.f: rnorm mismatch">(std::abs(rnorm_f - rnorm_e) < 1e-8);
-}
-
 // [[Rcpp::export]]
 void test_nnls() {
   // ---- case 1: unconstrained solution already feasible, no active bound --
@@ -65,10 +33,9 @@ void test_nnls() {
   {
     std::vector<double> a = {1.0, 1.0, 0.0,  0.0, 1.0, 1.0}; // col1={1,1,0}, col2={0,1,1}
     std::vector<double> b = {2.0, 1.0, 1.0};
-    compare_case("case1", a, 3, 2, b);
-
-    std::vector<double> x, r; double rnorm; int mode;
+    std::vector<double> x; double rnorm; int mode;
     run_etr_nnls(a, 3, 2, b, x, rnorm, mode);
+    ass<"nnls case1 mode">(mode == 1);
     ass<"nnls case1 x[0]">(std::abs(x[0] - 4.0 / 3.0) < 1e-8);
     ass<"nnls case1 x[1]">(std::abs(x[1] - 1.0 / 3.0) < 1e-8);
   }
@@ -79,10 +46,9 @@ void test_nnls() {
   {
     std::vector<double> a = {1.0, 1.0};
     std::vector<double> b = {-1.0, -1.0};
-    compare_case("case2", a, 2, 1, b);
-
-    std::vector<double> x, r; double rnorm; int mode;
+    std::vector<double> x; double rnorm; int mode;
     run_etr_nnls(a, 2, 1, b, x, rnorm, mode);
+    ass<"nnls case2 mode">(mode == 1);
     ass<"nnls case2 x[0]==0">(std::abs(x[0]) < 1e-8);
     ass<"nnls case2 rnorm==sqrt(2)">(std::abs(rnorm - std::sqrt(2.0)) < 1e-8);
   }
@@ -91,9 +57,15 @@ void test_nnls() {
   // A = [[1,0],[0,1],[0,1]] (col-major), b = [1,-1,-1].
   // Column 2 alone can't reach negative targets (x>=0), so x2 -> 0;
   // x1 solves the remaining 1D problem against column 1: x1 = 1.
+  // residual = (0,-1,-1) -> rnorm = sqrt(2).
   {
     std::vector<double> a = {1.0, 0.0, 0.0,  0.0, 1.0, 1.0};
     std::vector<double> b = {1.0, -1.0, -1.0};
-    compare_case("case3", a, 3, 2, b);
+    std::vector<double> x; double rnorm; int mode;
+    run_etr_nnls(a, 3, 2, b, x, rnorm, mode);
+    ass<"nnls case3 mode">(mode == 1);
+    ass<"nnls case3 x[0]">(std::abs(x[0] - 1.0) < 1e-8);
+    ass<"nnls case3 x[1]==0">(std::abs(x[1]) < 1e-8);
+    ass<"nnls case3 rnorm==sqrt(2)">(std::abs(rnorm - std::sqrt(2.0)) < 1e-8);
   }
 }

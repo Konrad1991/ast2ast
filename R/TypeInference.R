@@ -103,6 +103,9 @@ infer <- function(node, vars_list, info_env, function_registry) {
     node$internal_type <- t
     return(t)
   } else if (inherits(node, "variable_node")) {
+    if (isTRUE(node$field_name)) { # struct field name, not a real variable -- resolved by infer_dollar, not vars_list
+      return(node$internal_type)
+    }
     name <- node$name
     if (is.symbol(node$name)) {
       name <- deparse(node$name)

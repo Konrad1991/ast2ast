@@ -3,9 +3,11 @@
 
 // Direct port of the Lawson-Hanson NNLS algorithm (nnls.f, from "Solving
 // Least Squares Problems", Lawson & Hanson 1974/1995 -- public domain,
-// netlib.org/lawson-hanson/, see nnls.f next to this file). nnls isn't in
+// netlib.org/lawson-hanson/; reference Fortran kept under development/
+// for comparison purposes, not compiled into the package). nnls isn't in
 // base R at all (unlike uniroot); the CRAN `nnls` package just wraps this
-// same Fortran.
+// same Fortran, and is what this port is validated against (see
+// inst/tinytest/test_nnls.R).
 //
 // Templated over T (Double or Dual only -- see note at the bottom for why
 // ReverseDouble is deliberately NOT here): every step is EXACT linear

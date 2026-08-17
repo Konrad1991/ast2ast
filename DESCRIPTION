@@ -26,5 +26,6 @@ Suggests:
   microbenchmark,
   ggplot2,
   RcppXPtrUtils,
-  pkgbuild
+  pkgbuild,
+  nnls
 Encoding: UTF-8

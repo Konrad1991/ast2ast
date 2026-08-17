@@ -18,6 +18,8 @@
 
 ## General
 - in action_transpile_inner_functions check why the loop (marked with a TODO) is required
+- max, min (and similar) are registered in the function registry (R/FunctionRegistry.R)
+  but the corresponding C++ implementation is missing/incomplete.
 
 ## Linear algebra
 LAPACK info != 0 -> throw. Type dispatch (scalar/vector/matrix) handled by inferred types.
@@ -25,3 +27,7 @@ LAPACK info != 0 -> throw. Type dispatch (scalar/vector/matrix) handled by infer
 - %o%
 - chol2inv, crossprod, outer,
 - qr.solve, svd, tcrossprod,
+- nnls.hpp: Konrad to rewrite nnls_core as a literal goto-based port of
+  nnls.f (labels + computed-GOTO-as-switch), instead of the current
+  while/for restructuring, for line-by-line auditability against the
+  original. Konrad is doing this one himself.

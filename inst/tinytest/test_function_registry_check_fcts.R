@@ -345,7 +345,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "a <- c(3.14, pts)\nFound unexpected type in: c(3.14, pts)",
+  "a <- c(3.14, pts)\nFound unexpected type collection containing Point for variable pts",
   info = "",
   known_types
 )
@@ -416,7 +416,7 @@ for (i in 1:13) {
   message <- sprintf(
     "a <- %s(\"a\")\nYou cannot use character/NA/NaN/Inf entries in %s",
     fct_strings[i], fct_strings[i])
-  e <- try(run_fr_checks(fcts[[i]], args_fct, TRUE), silent = TRUE)
+  e <- try(run_fr_checks(fcts[[i]], args_fct, TRUE, list()), silent = TRUE)
   e <- attributes(e)[["condition"]]$message
   if (i == 13) {
     message <- sprintf(
@@ -505,7 +505,7 @@ f <- function() {
   NA & a
   NA | a
 }
-e <- try(run_fr_checks(f, args_fct, TRUE), silent = TRUE)
+e <- try(run_fr_checks(f, args_fct, TRUE, list()), silent = TRUE)
 e <- attributes(e)[["condition"]]$message
 got <- strsplit(e, "\n\n")[[1]] |> as.list()
 expected <- list(
@@ -523,7 +523,6 @@ expected <- list(
 checks <- Map(function(g, e) {
   g == e
 }, got, expected) |> unlist()
-checks
 expect_true(all(checks), info = "check functions for comparison and logical functions")
 
 # --- vector/logical/integer/numeric & matrix --------------------------------------------------------
@@ -695,7 +694,7 @@ for (i in seq_along(red_fcts)) {
   message <- sprintf(
     "a <- %s(\"a\")\nYou cannot use character/NA/NaN/Inf entries in %s",
     red_names[i], red_names[i])
-  e <- try(run_fr_checks(red_fcts[[i]], args_fct, TRUE), silent = TRUE)
+  e <- try(run_fr_checks(red_fcts[[i]], args_fct, TRUE, list()), silent = TRUE)
   e <- attributes(e)[["condition"]]$message
   red_checks[i] <- message == e
 }
@@ -731,7 +730,7 @@ for (i in seq_along(rt_fcts)) {
   message <- sprintf(
     "a <- %s(\"a\")\nYou cannot use character/NA/NaN/Inf entries in %s",
     rt_names[i], rt_names[i])
-  e <- try(run_fr_checks(rt_fcts[[i]], args_fct, TRUE), silent = TRUE)
+  e <- try(run_fr_checks(rt_fcts[[i]], args_fct, TRUE, list()), silent = TRUE)
   e <- attributes(e)[["condition"]]$message
   rt_checks[i] <- message == e
 }
@@ -749,7 +748,7 @@ for (i in seq_along(sp_fcts)) {
   message <- sprintf(
     "a <- %s(\"a\")\nYou cannot use character/NA/NaN/Inf entries in %s",
     sp_names[i], sp_names[i])
-  e <- try(run_fr_checks(sp_fcts[[i]], args_fct, TRUE), silent = TRUE)
+  e <- try(run_fr_checks(sp_fcts[[i]], args_fct, TRUE, list()), silent = TRUE)
   e <- attributes(e)[["condition"]]$message
   sp_checks[i] <- message == e
 }

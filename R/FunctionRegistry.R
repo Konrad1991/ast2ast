@@ -307,6 +307,7 @@ infer_dollar <- function(node, vars_list, info_env, function_registry) {
     return(sprintf("%s has no field named %s", left_type$name, field_name))
   }
   node$internal_type <- slot
+  node$right_node$internal_type <- slot # cache so infer() on the field-name node alone (see variable_node branch) doesn't need vars_list
   return(slot)
 }
 infer_unary_math <- function(node, vars_list, info_env, function_registry) {

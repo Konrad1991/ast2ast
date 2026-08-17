@@ -35,3 +35,28 @@ fcpp <- translate(
   f,
   types_f = types_f_point
 )
+
+fr <- function(x) {   ## Rosenbrock Banana function
+    x1 <- x[1]
+    x2 <- x[2]
+    100 * (x2 - x1 * x1)^2 + (1 - x1)^2
+}
+optim(c(-1.2,1), fr)
+
+types_f <- function() {
+  new_type(
+    optim_result,
+    slots(
+      par |> type(vec(double)),
+      value |> type(double),
+      counts |> type(int),
+      gradient_counts |> type(int),
+      convergence |> type(logical)
+    )
+  )
+}
+f <- function() {
+  p |> type(optim_result)
+}
+fcpp <- ast2ast::translate(f, types_f = types_f, getsource = TRUE)
+cat(fcpp, "\n")

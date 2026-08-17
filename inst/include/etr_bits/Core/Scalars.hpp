@@ -2744,6 +2744,7 @@ struct LogicalRef {
   inline Double log()   const { return Logical(*this).log(); }
   inline Double log10() const { return Logical(*this).log10(); }
   inline Double sqrt()  const { return Logical(*this).sqrt(); }
+  inline Integer abs()  const { return Logical(*this).abs(); }
   inline Integer operator-() const { return -Logical(*this); }
   inline bool isNA() const noexcept { return Logical(*this).isNA(); }
   // Explicit copy-assign: write through the referenced slot, do not rebind.
@@ -2820,6 +2821,7 @@ struct IntegerRef {
   inline Double log()   const { return Integer(*this).log(); }
   inline Double log10() const { return Integer(*this).log10(); }
   inline Double sqrt()  const { return Integer(*this).sqrt(); }
+  inline Integer abs()  const { return Integer(*this).abs(); }
   inline Integer operator-() const { return -Integer(*this); }
   inline bool isNA() const noexcept { return Integer(*this).isNA(); }
   IntegerRef& operator=(const IntegerRef& other) {
@@ -2892,6 +2894,7 @@ struct DoubleRef {
   inline Double log()   const { return Double(*this).log(); }
   inline Double log10() const { return Double(*this).log10(); }
   inline Double sqrt()  const { return Double(*this).sqrt(); }
+  inline Double abs()   const { return Double(*this).abs(); }
   inline Double operator-() const { return -Double(*this); }
   inline bool isNA()       const noexcept { return Double(*this).isNA(); }
   inline bool isNaN()      const noexcept { return Double(*this).isNaN(); }
@@ -2970,6 +2973,7 @@ struct DualRef {
   inline Dual log()   const { return Dual(*this).log(); }
   inline Dual log10() const { return Dual(*this).log10(); }
   inline Dual sqrt()  const { return Dual(*this).sqrt(); }
+  inline Dual abs()   const { return Dual(*this).abs(); }
   inline Dual operator-() const { return -Dual(*this); }
   inline bool isNA()          const noexcept { return Dual(*this).isNA(); }
   inline bool isNADot()       const noexcept { return Dual(*this).isNADot(); }
