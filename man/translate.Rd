@@ -5,6 +5,7 @@
 translate(
   f,
   args_f = NULL,
+  types_f = NULL,
   output = "R",
   derivative = NULL,
   verbose = FALSE,
@@ -15,6 +16,10 @@ translate(
   \item{f}{An R function to be translated into C++.}
   \item{args_f}{A helper function that defines the types of the arguments of \code{f}.
     Optional; defaults to \code{NULL}. See the Details section.}
+  \item{types_f}{A helper function that declares custom struct types via
+    \code{new_type()}, for use as argument types, variable types, or slot
+    types inside \code{f}. Optional; defaults to \code{NULL}. See the
+    Details section.}
   \item{output}{Controls what is returned:
     \itemize{
       \item \code{"R"} (default): an R function wrapping the compiled C++.
@@ -46,26 +51,38 @@ translate(
   \subsection{Supported functions}{
     The following R constructs are currently supported:
     \enumerate{
-      \item Assignment: \code{=} and \code{<-}
-      \item Allocation: \code{vector}, \code{matrix}, \code{rep}, \code{logical}, \code{integer}, \code{numeric}
-      \item Object info: \code{length}, \code{dim}
-      \item Arithmetic: \code{+}, \code{-}, \code{*}, \code{/}
+      \item Assignment: \code{=}, \code{<-}, and \code{$} (struct field access/assignment)
+      \item Allocation: \code{vector}, \code{matrix}, \code{array}, \code{rep}, \code{logical},
+        \code{integer}, \code{numeric}
+      \item Object info: \code{length}, \code{dim}, \code{nrow}, \code{ncol}
+      \item Arithmetic: \code{+}, \code{-}, \code{*}, \code{/}, \code{\%\%}, \code{\%/\%}, \code{\%*\%}, \code{^}
       \item Indexing: \code{[]} and \code{[[]]}
       \item Math: \code{sin}, \code{asin}, \code{sinh}, \code{cos}, \code{acos}, \code{cosh},
-        \code{tan}, \code{atan}, \code{tanh}, \code{sqrt}, \code{log}, \code{^}, \code{exp}
+        \code{tan}, \code{atan}, \code{tanh}, \code{sqrt}, \code{abs}, \code{log}, \code{exp},
+        \code{floor}, \code{ceiling}, \code{trunc}
+      \item Reductions: \code{sum}, \code{prod}, \code{max}, \code{min}, \code{which.max},
+        \code{which.min}, \code{all}, \code{any}, \code{rev}
+      \item Linear algebra: \code{t}, \code{chol}, \code{crossprod}, \code{tcrossprod}, \code{diag},
+        \code{get_diag}, \code{solve}, \code{backsolve}, \code{forwardsolve}, \code{rbind}, \code{cbind}
+      \item Root finding / least squares: \code{uniroot}, \code{nnls}
+      \item Casts: \code{as.numeric}, \code{as.integer}, \code{as.logical}
+      \item Sequences: \code{seq_len}, \code{seq_along}
       \item Concatenation: \code{c}
       \item Control flow: \code{for}, \code{while}, \code{repeat}, \code{next}, \code{break},
         \code{if}, \code{else if}, \code{else}
       \item Comparison: \code{==}, \code{!=}, \code{>}, \code{<}, \code{>=}, \code{<=}
-      \item Logical ops: \code{&&}, \code{||}, \code{&}, \code{|}
+      \item Logical ops: \code{&&}, \code{||}, \code{&}, \code{|}, \code{!}
       \item Printing: \code{print}
+      \item Errors: \code{stop}
       \item Return: \code{return}
       \item Catmull–Rom spline: \code{cmr}
       \item Sequence operator: \code{:}
-      \item Helpers: \code{is.na}, \code{is.finite}, \code{is.infinite}
+      \item Helpers: \code{is.na}, \code{is.nan}, \code{is.finite}, \code{is.infinite}
       \item Explicit typing: \code{type()}
       \item Derivative functions in forward mode: \code{seed}, \code{unseed}, and \code{get_dot}
       \item Derivative functions in reverse mode: \code{deriv}
+      \item Inner functions: \code{fn()}, see below
+      \item Custom types: \code{new_type()}, see below
     }
     Types are static in C++ and cannot be changed within the function. Each type consists of a base data type and a data structure:
     \itemize{
@@ -97,6 +114,46 @@ translate(
       \item \code{const()}: disallow modification of inputs.
       \item \code{ref()}: pass by reference (only valid when \code{output = "XPtr"}).
     }
+  }
+  \subsection{Inner functions}{
+    Functions can be defined inside \code{f} with \code{fn()}, which takes
+    \code{args_f} (argument types, same form as the top-level \code{args_f}),
+    \code{return_value} (the return type via \code{type()}), and \code{block}
+    (the function body, whose block must be wrapped in \code{\{ \}} even for
+    a single statement). Inner functions may call each other, including
+    recursively, and can be passed as values to functions expecting one, such
+    as \code{uniroot()}.
+    \preformatted{
+      factorial <- fn(
+        args_f = function(a) a |> type(int) |> const(),
+        return_value = type(int),
+        block = function(a) {
+          if (a == 1L) return(a) else return(a * factorial(a - 1L))
+        }
+      )
+    }
+    \code{uniroot(f, interval, tol, maxiter)} takes a function of a single
+    \code{double} returning a \code{double} (or two arguments if a fifth,
+    extra-data argument is supplied to \code{uniroot}), and returns a struct
+    with fields \code{root}, \code{f_root}, \code{iter}, and \code{estim_prec}.
+    \code{nnls(A, b)} solves the non-negative least squares problem and
+    returns the solution vector.
+  }
+  \subsection{Custom types}{
+    User-defined struct types are declared in a \code{types_f} helper function
+    (passed to \code{translate()} via \code{types_f =}) and created with
+    \code{new_type()} and \code{slots()}:
+    \preformatted{
+      types_f <- function() {
+        new_type(Point, slots(x |> type(double), y |> type(double)))
+      }
+    }
+    On the R side, a value of a custom type is a named list with a matching
+    \code{class} attribute, e.g. \code{structure(list(x = 1, y = 2), class = "Point")}.
+    Fields are read and written with \code{$}, including chained access such
+    as \code{s$circles[[1L]]$center$x}. A slot may itself be a custom type
+    (nested structs) or \code{collection(TypeName)}, a vector of a custom
+    type; allocate one locally with \code{vector(mode = "TypeName", n)}.
   }
   \subsection{Derivatives}{
     \code{ast2ast} supports automatic differentiation (AD) in two modes: forward
@@ -220,6 +277,35 @@ fib <- function(n = 10) {
 }
 fib_cpp <- ast2ast::translate(fib)
 fib_cpp(10)
+
+# Custom types
+# ----------------------------------------------------------------
+types_f <- function() {
+  new_type(Point, slots(x |> type(double), y |> type(double)))
+}
+f <- function(p) {
+  p$x <- p$x + 1
+  return(p)
+}
+fcpp <- ast2ast::translate(f, args_f = function(p) p |> type(Point), types_f = types_f)
+p <- structure(list(x = 1, y = 2), class = "Point")
+fcpp(p)
+
+# Inner functions and uniroot
+# ----------------------------------------------------------------
+f <- function(interval) {
+  g <- fn(
+    args_f = function(x) x |> type(double),
+    return_value = type(double),
+    block = function(x) {
+      return(x^2 - 4)
+    }
+  )
+  res <- uniroot(g, interval, 1e-10, 1000)
+  return(res$root)
+}
+fcpp <- ast2ast::translate(f, args_f = function(interval) interval |> type(vec(double)))
+fcpp(c(0, 10))
 
 # External pointer interface
 # ----------------------------------------------------------------

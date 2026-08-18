@@ -50,17 +50,26 @@ Supported objects:
 *  scalar values
 *  vectors
 *  matrices
+*  arrays
+*  custom types (structs) and collections thereof, see `new_type` below
 
 Supported functions:
 
-*  assignment: = and <-
-*  allocation: `vector`, `logical`, `integer`, `numeric`, `:`, `c`, `rep`, and `matrix`
-*  some helpers: `length`, `dim`, `is.na`, `is.nan`, `is.finite`, `is.infinte`, and `print`
-*  Math functions: `+`, `-`, `*`, `/`, `sin`, `asin`, `sinh`, `cos`, `acos`, `cosh`, `tan`, `atan`, `tanh`, `log`, `^`, and `exp`
+*  assignment: `=`, `<-`, and `$` (struct field access/assignment)
+*  allocation: `vector`, `logical`, `integer`, `numeric`, `:`, `c`, `rep`, `matrix`, and `array`
+*  some helpers: `length`, `dim`, `nrow`, `ncol`, `is.na`, `is.nan`, `is.finite`, `is.infinite`, `print`, and `stop`
+*  Math functions: `+`, `-`, `*`, `/`, `%%`, `%/%`, `%*%`, `sin`, `asin`, `sinh`, `cos`, `acos`, `cosh`, `tan`, `atan`, `tanh`, `log`, `sqrt`, `abs`, `^`, `exp`, `floor`, `ceiling`, and `trunc`
+*  reductions: `sum`, `prod`, `max`, `min`, `which.max`, `which.min`, `all`, `any`, `rev`
+*  linear algebra: `t`, `chol`, `crossprod`, `tcrossprod`, `diag`, `get_diag`, `solve`, `backsolve`, `forwardsolve`, `rbind`, `cbind`
+*  root finding / least squares: `uniroot`, `nnls`
+*  casts: `as.numeric`, `as.integer`, `as.logical`
+*  sequences: `seq_len`, `seq_along`
 *  Subsetting: `[]` and `[[]]`
 *  control flow: `for`, `while`, `repeat`, `if`, `else if`, and `else`
 *  comparison: `==`, `!=`, `>`, `<`, `>=`, and `<=`
-* derivative: `seed`, `unseed`, `get_dot`, `deriv`
+*  logical: `&&`, `||`, `&`, `|`, `!`
+*  derivative: `seed`, `unseed`, `get_dot`, `deriv`
+*  inner functions: `fn`, see below
 
 ### Type system in ast2ast
 
@@ -235,6 +244,92 @@ This approach:
 * maps naturally to high-performance C++ code.
 
 Rather than hiding differentiation behind abstractions, ast2ast treats derivatives as first-class values that can be manipulated like any other object.
+
+## Inner functions
+
+Functions can be defined inside `f` using `fn()`. This is required whenever a function
+needs to be passed as a value, e.g. to `uniroot()`. An inner function is declared with
+three parts: `args_f` (types of its arguments, same as the top-level `args_f`),
+`return_value` (its return type via `type()`), and `block` (the R code, same signature
+as `args_f`). `block`'s body must be wrapped in `{ }`, even for a single statement.
+
+```{r, eval = FALSE}
+f <- function(a) {
+  factorial <- fn(
+    args_f = function(a) a |> type(int) |> const(),
+    return_value = type(int),
+    block = function(a) {
+      if (a == 1L) return(a) else return(a * factorial(a - 1L))
+    }
+  )
+  return(factorial(a))
+}
+fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(int))
+```
+
+Inner functions can call each other (including mutual recursion) and can be passed to
+functions expecting a function argument, e.g. `uniroot`:
+
+```{r, eval = FALSE}
+f <- function(interval) {
+  g <- fn(
+    args_f = function(x) x |> type(double),
+    return_value = type(double),
+    block = function(x) {
+      return(x^2 - 4)
+    }
+  )
+  res <- uniroot(g, interval, 1e-10, 1000)
+  return(res$root)
+}
+fcpp <- ast2ast::translate(f, args_f = function(interval) interval |> type(vec(double)))
+```
+
+`uniroot(f, interval, tol, maxiter)` returns a struct with fields `root`, `f_root`,
+`iter`, and `estim_prec` (accessed via `$`, see custom types below). `f` must take a
+single `double` and return a `double`; an optional fifth argument is passed through to
+`f` as extra data (`f` then takes two arguments).
+
+`nnls(A, b)` solves the non-negative least squares problem and returns the solution
+vector directly.
+
+## Custom types (`new_type`)
+
+Besides scalars, vectors, matrices and arrays, **ast2ast** supports user-defined struct
+types. They are declared via a `types_f` helper function (analogous to `args_f`) and
+passed to `translate()`:
+
+```{r, eval = FALSE}
+types_f <- function() {
+  new_type(Point, slots(x |> type(double), y |> type(double)))
+}
+
+f <- function(p) {
+  p$x <- p$x + 1
+  return(p)
+}
+
+fcpp <- ast2ast::translate(
+  f,
+  args_f = function(p) p |> type(Point),
+  types_f = types_f
+)
+
+p <- structure(list(x = 1, y = 2), class = "Point")
+fcpp(p)
+```
+
+Notes:
+
+- On the R side, a value of a custom type is a named `list` with a matching `class`
+  attribute, e.g. `structure(list(x = 1, y = 2), class = "Point")`.
+- Slots can themselves be custom types, allowing nested structs.
+- `collection(TypeName)` is a vector of a custom type, e.g.
+  `slots(points |> type(collection(Point)))` or, as a local variable,
+  `coll |> type(collection(Point))`. Allocate one with
+  `vector(mode = "Point", n)`.
+- Fields are read and written with `$`, including chained access such as
+  `s$circles[[1L]]$center$x`.
 
 ## Interpolation
 

@@ -58,8 +58,9 @@ Certain functions share identical names in both R and C++, such as the *length* 
 To mitigate potential conflicts, these calls are modified to explicitly reference the etr namespace, 
 resulting in expressions like *etr::length*. Other functions as for example *`:`* and *`[`* cannot be defined in C++ (at least not in the way they are used in R)
 therefore they are replaced by functions with new names e.g. *etr::colon* and *etr::subset*. \
-Additionally, C++ necessitates explicit declaration of variable types. 
-Within this example for all variables the type *Array<Double, Buffer<Double>>* is used. A detailed explanation is deferred to the subsequent section.
+Additionally, C++ necessitates explicit declaration of variable types.
+The argument `a` keeps the vector type *Array<Double, Buffer<Double>>*, while `size` and `temp` are inferred as scalars (*etr::Integer* and *etr::Double*
+respectively), since `length()` and single-element subsetting both produce scalars. A detailed explanation is deferred to the subsequent section.
 
 ```{r, eval = FALSE, echo = TRUE, attr.source='.numberLines'}
 bubbleSort <- function(a) {
@@ -84,18 +85,18 @@ bubbleSort <- function(a) {
 #include "etr.hpp"
 // [[Rcpp::export]]
 SEXP bubbleSort(SEXP aSEXP) {
-etr::Aetr::Double, etr::Buffer<etr::Double>> a = aSEXP;
-  int size;
-etr::Array<etr::Double, etr::Buffer<etr::Double>> temp;
+  etr::Array<etr::Double, etr::Buffer<etr::Double>> a = aSEXP;
+  etr::Integer size;
+  etr::Double temp;
   size = etr::length(a);
-  for(const auto& i : etr::colon(1, size)) {
-   for(const auto& j : etr::colon(1, (size - 1.0))) {
-    if (etr::subset(a, j) > etr::subset(a, j + 1.0)) {
-       temp = etr::subset(a, j);
-       etr::subset(a, j) = etr::subset(a, j + 1.0);
-       etr::subset(a, j + 1.0) = temp;
-    };
-   }
+  for (const auto i : etr::colon(etr::Double(1.0), size)) {
+    for (const auto j : etr::colon(etr::Double(1.0), (size - etr::Double(1.0)))) {
+      if (etr::subset(a, j) > etr::subset(a, j + etr::Double(1.0))) {
+        temp = etr::subset(a, j);
+        etr::subset(a, j) = etr::subset(a, j + etr::Double(1.0));
+        etr::subset(a, j + etr::Double(1.0)) = temp;
+      }
+    }
   }
   return(etr::Cast(a));
 }
