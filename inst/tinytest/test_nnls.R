@@ -15,7 +15,8 @@ f_args <- function(A, b) {
 fcpp <- ast2ast::translate(f, f_args)
 
 check_case <- function(A, b, info = "") {
-  x_etr <- fcpp(A, b)
+  x_etr <- fcpp(A, b) |> c()
+  attr(x_etr, "dim") <- NULL
   x_ref <- nnls::nnls(A, b)$x
   expect_equal(x_etr, x_ref, tolerance = 1e-6, info = info)
 }

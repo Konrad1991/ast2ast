@@ -402,7 +402,7 @@ if_node <- R6::R6Class(
       # Remove white space until if
       l <- sub("^\\s*.*?(if\\s*\\()", "\\1", l)
       l <- paste0(" else ", l)
-      return(l)
+      return(paste(l, collapse = ""))
     },
     string_false = function(indent) {
       l <- self$false_node$stringify(indent = paste0(indent, "    "))

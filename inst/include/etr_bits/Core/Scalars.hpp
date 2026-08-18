@@ -1058,7 +1058,10 @@ concept HasNonScalarIndex = (!ScalarIndex<Args> || ...);
 struct Logical {
   bool val;
   bool is_na{false};
-  inline operator bool() const { return val; }
+  inline operator bool() const {
+    ass<"missing value where TRUE/FALSE needed">(!is_na);
+    return val;
+  }
   inline Logical();
   inline Logical(bool v);
   inline Logical(Integer v);
@@ -1998,46 +2001,85 @@ inline Logical ReverseDouble::operator!=(const ReverseDouble& r) const {
 /*
 Logical operators
 */
+// R's three-valued logic: a definite FALSE operand settles && to FALSE (and
+// a definite TRUE operand settles || to TRUE) regardless of whether the
+// other operand is NA -- only fall back to NA when neither operand alone
+// determines the result. Matches R's `&&`/`||` (?"&&": "NA is a valid
+// logical object [...] If the result is undetermined, the value is NA").
 inline Logical Logical::operator&&(const Logical& other) const {
+  bool l_false = !is_na && !val;
+  bool r_false = !other.is_na && !other.val;
+  if (l_false || r_false) return Logical(false);
   if (is_na || other.is_na) return Logical::NA();
-  return Logical(val && other.val);
+  return Logical(true);
 }
 inline Logical Integer::operator&&(const Integer& other) const {
+  bool l_false = !is_na && !val;
+  bool r_false = !other.is_na && !other.val;
+  if (l_false || r_false) return Logical(false);
   if (is_na || other.is_na) return Logical::NA();
-  return Logical(val && other.val);
+  return Logical(true);
 }
 inline Logical Double::operator&&(const Double& other) const {
+  bool l_false = !is_na && !val;
+  bool r_false = !other.is_na && !other.val;
+  if (l_false || r_false) return Logical(false);
   if (is_na || other.is_na) return Logical::NA();
-  return Logical(val && other.val);
+  return Logical(true);
 }
 inline Logical Dual::operator&&(const Dual& other) const {
+  bool l_false = !is_na && !val;
+  bool r_false = !other.is_na && !other.val;
+  if (l_false || r_false) return Logical(false);
   if (is_na || other.is_na) return Logical::NA();
-  return Logical(val && other.val);
+  return Logical(true);
 }
 inline Logical ReverseDouble::operator&&(const ReverseDouble& r) const {
+  bool l_val = get_val_from_tape() != 0.0;
+  bool r_val = r.get_val_from_tape() != 0.0;
+  bool l_false = !is_na && !l_val;
+  bool r_false = !r.is_na && !r_val;
+  if (l_false || r_false) return Logical(false);
   if (is_na || r.is_na) return Logical::NA();
-  return Logical{get_val_from_tape() != 0.0 && r.get_val_from_tape() != 0.0};
+  return Logical(true);
 }
 
 inline Logical Logical::operator||(const Logical& other) const {
+  bool l_true = !is_na && val;
+  bool r_true = !other.is_na && other.val;
+  if (l_true || r_true) return Logical(true);
   if (is_na || other.is_na) return Logical::NA();
-  return Logical(val || other.val);
+  return Logical(false);
 }
 inline Logical Integer::operator||(const Integer& other) const {
+  bool l_true = !is_na && val;
+  bool r_true = !other.is_na && other.val;
+  if (l_true || r_true) return Logical(true);
   if (is_na || other.is_na) return Logical::NA();
-  return Logical(val || other.val);
+  return Logical(false);
 }
 inline Logical Double::operator||(const Double& other) const {
+  bool l_true = !is_na && val;
+  bool r_true = !other.is_na && other.val;
+  if (l_true || r_true) return Logical(true);
   if (is_na || other.is_na) return Logical::NA();
-  return Logical(val || other.val);
+  return Logical(false);
 }
 inline Logical Dual::operator||(const Dual& other) const {
+  bool l_true = !is_na && val;
+  bool r_true = !other.is_na && other.val;
+  if (l_true || r_true) return Logical(true);
   if (is_na || other.is_na) return Logical::NA();
-  return Logical(val || other.val);
+  return Logical(false);
 }
 inline Logical ReverseDouble::operator||(const ReverseDouble& r) const {
+  bool l_val = get_val_from_tape() != 0.0;
+  bool r_val = r.get_val_from_tape() != 0.0;
+  bool l_true = !is_na && l_val;
+  bool r_true = !r.is_na && r_val;
+  if (l_true || r_true) return Logical(true);
   if (is_na || r.is_na) return Logical::NA();
-  return Logical{get_val_from_tape() != 0.0 || r.get_val_from_tape() != 0.0};
+  return Logical(false);
 }
 
 inline Logical Logical::operator&(const Logical& other) const {
