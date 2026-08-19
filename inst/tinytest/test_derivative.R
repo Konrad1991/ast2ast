@@ -326,6 +326,82 @@ expect_error(
   pattern = "cannot be a subsetting result"
 )
 
+# --- unseed() rejects a subsetting result -----------------------------------
+f <- function() {
+  x |> type(vec(double))
+  x <- numeric(3)
+  seed(x, 1L)
+  unseed(x[[1L]], 1L)
+  z <- x[[1L]] * x[[1L]]
+  return(get_dot(z))
+}
+expect_error(
+  ast2ast::translate(f, derivative = "forward"),
+  pattern = "cannot be a subsetting result"
+)
+
+# --- seed()/unseed() reject a const-qualified target ------------------------
+f <- function() {
+  g <- fn(
+    args_f = function(x) x |> type(vec(double)) |> const(),
+    return_value = type(double),
+    block = function(x) {
+      seed(x, 1L)
+      return(x[[1L]])
+    }
+  )
+  z <- numeric(3)
+  return(g(z))
+}
+expect_error(
+  ast2ast::translate(f, derivative = "forward"),
+  pattern = "You cannot seed a constant variable"
+)
+
+f <- function() {
+  g <- fn(
+    args_f = function(x) x |> type(vec(double)) |> const(),
+    return_value = type(double),
+    block = function(x) {
+      unseed(x, 1L)
+      return(x[[1L]])
+    }
+  )
+  z <- numeric(3)
+  return(g(z))
+}
+expect_error(
+  ast2ast::translate(f, derivative = "forward"),
+  pattern = "You cannot unseed a constant variable"
+)
+
+# --- seed()/unseed() reject a for-loop iterator ------------------------------
+f <- function() {
+  x |> type(vec(double))
+  x <- numeric(3)
+  for (i in seq_len(3)) {
+    seed(i, 1L)
+  }
+  return(get_dot(x[[1L]]))
+}
+expect_error(
+  ast2ast::translate(f, derivative = "forward"),
+  pattern = "You cannot seed an index variable"
+)
+
+f <- function() {
+  x |> type(vec(double))
+  x <- numeric(3)
+  for (i in seq_len(3)) {
+    unseed(i, 1L)
+  }
+  return(get_dot(x[[1L]]))
+}
+expect_error(
+  ast2ast::translate(f, derivative = "forward"),
+  pattern = "You cannot unseed an index variable"
+)
+
 # --- seed/get_dot on a bare scalar variable ---------------------------------
 f <- function() {
   x |> type(double)
@@ -377,5 +453,4 @@ p <- structure(
   list(x = c(1, 2, 3), y = c(4, 5, 6)),
   class = "Pair"
 )
-fcpp(p) |> str()
 expect_equal(fcpp(p), diag(c(8, 10, 12)))

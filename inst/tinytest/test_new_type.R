@@ -1280,3 +1280,104 @@ ptr <- ast2ast::translate(
   output = "XPtr"
 )
 expect_true(inherits(ptr, "XPtr"))
+
+# --- struct fields are matched by name, not by list position ---------------
+
+types_f_pair <- function() {
+  new_type(Pair, slots(y |> type(vec(double)), x |> type(vec(double))))
+}
+f <- function(p) {
+  return(p)
+}
+fcpp <- ast2ast::translate(f, args_f = function(p) p |> type(Pair), types_f = types_f_pair)
+# x listed before y here, but slots() declares y before x -- if the
+# constructor matched by position instead of name, x and y would be swapped.
+p_in <- structure(list(x = c(1, 2, 3), y = c(4, 5, 6)), class = "Pair")
+p_out <- fcpp(p_in)
+expect_equal(p_out$x |> c(), c(1, 2, 3))
+expect_equal(p_out$y |> c(), c(4, 5, 6))
+
+# --- collection used as an if-condition -------------------------------------
+
+f <- function() {
+  cs |> type(collection(AwesomeClass))
+  if (cs) print("Foo") else print("Bar")
+}
+expect_error(
+  ast2ast::translate(f, types_f = types_f_awesome),
+  pattern = "is a collection and cannot be used as a condition"
+)
+
+# --- struct used as a while-condition ---------------------------------------
+
+f <- function() {
+  a |> type(AwesomeClass)
+  while (a) {
+    print("Foo")
+  }
+}
+expect_error(
+  ast2ast::translate(f, types_f = types_f_awesome),
+  pattern = "cannot be used as a condition"
+)
+
+# --- passing an uninitialized variable to a fn() argument -------------------
+
+f <- function() {
+  square <- fn(
+    args_f = function(x) x |> type(double) |> const(),
+    return_value = type(double),
+    block = function(x) { return(x * x) }
+  )
+  return(square(undeclared_var))
+}
+expect_error(
+  ast2ast::translate(f, getsource = TRUE),
+  pattern = "Found uninitialzed variable: undeclared_var"
+)
+
+# --- a local variable cannot shadow a custom type's own name ----------------
+
+types_f_shadow <- function() {
+  new_type(Point, slots(x |> type(double)))
+}
+f <- function() {
+  p |> type(Point)
+  Point <- 5.0
+  return(p$x + Point)
+}
+expect_error(
+  ast2ast::translate(f, types_f = types_f_shadow),
+  pattern = "is already used as a custom type name"
+)
+
+# a field named the same as another declared type is fine (not a shadowing
+# variable, just a field access -- exempt via node$field_name). check_no_error
+# uses get_types(), which never calls run_checks() -- this check specifically
+# lives in run_checks(), so the full translate() pipeline is required here.
+types_f_shadow_field <- function() {
+  new_type(Circle, slots(x |> type(double)))
+  new_type(Shape, slots(Circle |> type(double)))
+}
+f <- function() {
+  s |> type(Shape)
+  return(s$Circle)
+}
+e <- try(ast2ast::translate(f, types_f = types_f_shadow_field), silent = TRUE)
+expect_false(inherits(e, "try-error"))
+
+# a struct's own slot name is fine reused as a local variable name -- p$x and
+# a bare x are resolved through entirely separate paths (field_name-cached
+# type vs. vars_list lookup), so there's no real collision.
+types_f_slot_shadow <- function() {
+  new_type(Point, slots(x |> type(double), y |> type(double)))
+}
+f <- function() {
+  p |> type(Point)
+  p$x <- 1
+  p$y <- 2
+  x <- 5
+  return(p$x + x)
+}
+fcpp <- ast2ast::translate(f, types_f = types_f_slot_shadow)
+expect_equal(fcpp(), 6)

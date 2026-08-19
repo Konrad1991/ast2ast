@@ -31,6 +31,25 @@ check_uniroot_case(c(1.9, 10), "case3")
 # case 4: root close to the upper bound
 check_uniroot_case(c(-10, -1.9), "case4")
 
+# printing a uniroot_result
+f_print <- function(interval) {
+  g <- fn(
+    args_f = function(x) x |> type(double),
+    return_value = type(double),
+    block = function(x) return(x^2 - 4)
+  )
+  res <- uniroot(g, interval, 1e-10, 1000)
+  print(res)
+  return(res$root)
+}
+fcpp_print <- ast2ast::translate(f_print, args_f = function(interval) interval |> type(vec(double)))
+out <- capture.output(fcpp_print(c(0, 10)))
+expect_true(any(grepl("uniroot_result", out)))
+expect_true(any(grepl("root:", out)))
+expect_true(any(grepl("f_root:", out)))
+expect_true(any(grepl("iter:", out)))
+expect_true(any(grepl("estim_prec:", out)))
+
 # --- nnls ----------------------------------------------------------------
 
 if (!requireNamespace("nnls", quietly = TRUE)) {

@@ -15,8 +15,8 @@ struct TestPoint {
   TestPoint& operator=(TestPoint&&) noexcept = default;
   TestPoint(Double x_, Double y_) : x(x_), y(y_) {}
   explicit TestPoint(SEXP arg) :
-    x(SEXP2Scalar<Double>(checked_elt(arg, 0, 2, "TestPoint"))),
-    y(SEXP2Scalar<Double>(checked_elt(arg, 1, 2, "TestPoint"))) {}
+    x(SEXP2Scalar<Double>(checked_elt(arg, "x", 2, "TestPoint"))),
+    y(SEXP2Scalar<Double>(checked_elt(arg, "y", 2, "TestPoint"))) {}
   SEXP to_SEXP() const {
     SEXP res = PROTECT(Rf_allocVector(VECSXP, 2));
     SET_VECTOR_ELT(res, 0, Cast(x));

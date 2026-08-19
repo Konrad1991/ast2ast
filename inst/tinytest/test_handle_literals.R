@@ -39,3 +39,12 @@ f <- function() {
   print(NULL)
 }
 expect_error(ast2ast::translate(f), pattern = "NULL is not supported")
+
+# NULL as a bare block statement (not wrapped in an assignment or a call) --
+# exercises literal_node's own stringify_error_line(), used directly by
+# block_node when a top-level statement itself carries the error.
+f <- function() {
+  NULL
+  return(1)
+}
+expect_error(ast2ast::translate(f), pattern = "NULL is not supported")

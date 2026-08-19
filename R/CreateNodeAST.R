@@ -143,8 +143,8 @@ update_function_registry <- function(ast, function_registry) {
 
 # Run checks on: operators, valid variables, and type declarations
 # ========================================================================
-run_checks <- function(ast, r_fct, function_registry) {
-  e <- try(traverse_ast(ast, action_error, r_fct, function_registry), silent = TRUE)
+run_checks <- function(ast, r_fct, function_registry, known_types = list()) {
+  e <- try(traverse_ast(ast, action_error, r_fct, function_registry, known_types), silent = TRUE)
   if (inherits(e, "try-error")) {
     stop("error: Could not run checks on AST")
   }
@@ -383,7 +383,7 @@ translate_internally <- function(fct, args_fct, types_fct, derivative, name_fct,
   update_function_registry(AST, function_registry)
 
   # Run checks
-  run_checks(AST, r_fct, function_registry)
+  run_checks(AST, r_fct, function_registry, known_types)
 
   # Sort the arguments
   AST <- sort_args(AST, function_registry)

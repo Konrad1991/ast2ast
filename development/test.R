@@ -1,4 +1,4 @@
-system('find -name "*.o" | xargs rm')
+fystem('find -name "*.o" | xargs rm')
 system('find -name "*.so" | xargs rm')
 Rcpp::compileAttributes()
 install.packages(".", types = "source", repo = NULL)
@@ -22,3 +22,4 @@ f <- function() {
 }
 fcpp <- translate(f, types_f = types, verbose = TRUE)
 fcpp()
+

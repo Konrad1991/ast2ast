@@ -129,7 +129,7 @@ action_transpile_inner_functions <- function(node, real_type) {
     node$function_registry$cpp_names <- c(node$function_registry$cpp_names, node$function_registry_outer$cpp_names[[idx]])
   }
 
-  e <- try(run_checks(AST, r_fct, function_registry), silent = TRUE)
+  e <- try(run_checks(AST, r_fct, function_registry, node$known_types), silent = TRUE)
   if (!is.null(e) && inherits(e, "try-error")) {
     stop(sprintf("In inner function %s: Could not run checks on AST due to: %s", node$fct_name, attributes(e)[["condition"]]$message))
   }
@@ -298,9 +298,9 @@ action_update_function_registry <- function(node, function_registry) {
 # - Operations at left side of an assignment can only be subsets or type definitions
 # - No literal at left side of assignment
 # ========================================================================
-action_error <- function(node, r_fct, function_registry) {
+action_error <- function(node, r_fct, function_registry, known_types = list()) {
   check_operator(node, function_registry)
-  check_variable_names(node)
+  check_variable_names(node, known_types)
   check_type_declaration(node, r_fct)
 }
 
@@ -437,7 +437,7 @@ not_cpp_keyword <- function(name) {
   name %within% cpp_keywords()
 }
 
-check_variable_names <- function(node) {
+check_variable_names <- function(node, known_types = list()) {
   if (!inherits(node, "variable_node")) {
     return()
   }
@@ -452,6 +452,11 @@ check_variable_names <- function(node) {
   } else if (not_cpp_keyword(name)) {
     node$error <- paste0(
       "Invalid variable name: is a C++ keyword --> ",
+      name
+    )
+  } else if (!isTRUE(node$field_name) && name %in% names(known_types)) {
+    node$error <- paste0(
+      "Invalid variable name: is already used as a custom type name --> ",
       name
     )
   }

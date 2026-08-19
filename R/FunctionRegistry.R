@@ -1256,12 +1256,12 @@ function_registry_global$add(
     if (info_env$real_type != "etr::Dual") {
       node$error <- "seed can be only used when derivative is set to forward"
     }
-    left_type_node <- infer(node$left_node, vars_list, info_env, info_env$function_registry)
-    right_type_node <- infer(node$right_node, vars_list, info_env, info_env$function_registry)
+    left_type_node <- node$left_node$internal_type
+    right_type_node <- node$right_node$internal_type
     err <- check_operand_type(left_type_node, node, "left", allow_collection = TRUE)
-    if (!is.null(err)) return(err)
+    if (!is.null(err)) { node$error <- err; return() }
     err <- check_operand_type(right_type_node, node, "right", allow_collection = TRUE)
-    if (!is.null(err)) return(err)
+    if (!is.null(err)) { node$error <- err; return() }
     if (!(left_type_node$get_base_type() %in% c("int", "integer", "double"))) {
       node$error <- "The first argument of seed has to have the base type double"
     }
@@ -1270,6 +1270,16 @@ function_registry_global$add(
     }
     if (inherits(node$left_node, c("binary_node", "function_node")) && node$left_node$operator %in% c("[", "[[", "at")) {
       node$error <- "The first argument of seed cannot be a subsetting result -- pass the whole array and an index instead, e.g. seed(x, 1L)"
+    }
+    root_var <- find_var_lhs(node$left_node)
+    if (!is.null(root_var) && root_var != "") {
+      root_type <- vars_list[[root_var]]
+      if (inherits(root_type, c("pre_type_node", "new_type_node")) && isTRUE(root_type$get_iterator())) {
+        node$error <- "You cannot seed an index variable"
+      }
+      if (inherits(root_type, c("pre_type_node", "new_type_node")) && root_type$get_const_or_mut() == "const") {
+        node$error <- "You cannot seed a constant variable"
+      }
     }
   },
  group = "binary_node", cpp_name = "etr::seed"
@@ -1283,12 +1293,12 @@ function_registry_global$add(
     if (info_env$real_type != "etr::Dual") {
       node$error <- "unseed can be only used when derivative is set to forward"
     }
-    left_type_node <- infer(node$left_node, vars_list, info_env, info_env$function_registry)
-    right_type_node <- infer(node$right_node, vars_list, info_env, info_env$function_registry)
+    left_type_node <- node$left_node$internal_type
+    right_type_node <- node$right_node$internal_type
     err <- check_operand_type(left_type_node, node, "left", allow_collection = TRUE)
-    if (!is.null(err)) return(err)
+    if (!is.null(err)) { node$error <- err; return() }
     err <- check_operand_type(right_type_node, node, "right", allow_collection = TRUE)
-    if (!is.null(err)) return(err)
+    if (!is.null(err)) { node$error <- err; return() }
     if (!(left_type_node$get_base_type() %in% c("int", "integer", "double"))) {
       node$error <- "The first argument of seed has to have the base type double"
     }
@@ -1297,6 +1307,16 @@ function_registry_global$add(
     }
     if (inherits(node$left_node, c("binary_node", "function_node")) && node$left_node$operator %in% c("[", "[[", "at")) {
       node$error <- "The first argument of unseed cannot be a subsetting result -- pass the whole array and an index instead, e.g. unseed(x, 1L)"
+    }
+    root_var <- find_var_lhs(node$left_node)
+    if (!is.null(root_var) && root_var != "") {
+      root_type <- vars_list[[root_var]]
+      if (inherits(root_type, c("pre_type_node", "new_type_node")) && isTRUE(root_type$get_iterator())) {
+        node$error <- "You cannot unseed an index variable"
+      }
+      if (inherits(root_type, c("pre_type_node", "new_type_node")) && root_type$get_const_or_mut() == "const") {
+        node$error <- "You cannot unseed a constant variable"
+      }
     }
   },
  group = "binary_node", cpp_name = "etr::unseed"
@@ -1313,9 +1333,9 @@ function_registry_global$add(
     if (info_env$real_type != "etr::Dual") {
       node$error <- "get_dot can be only used when derivative is set to forward"
     }
-    type <- infer(node$obj, vars_list, info_env, info_env$function_registry)
+    type <- node$obj$internal_type
     err <- check_operand_type(type, node, allow_collection = TRUE)
-    if (!is.null(err)) return(err)
+    if (!is.null(err)) { node$error <- err; return() }
     if (type$get_base_type() != "double") {
       node$error <- "The argument of get_dot has to have the base type double"
     }
@@ -1351,12 +1371,12 @@ function_registry_global$add(
     if (info_env$real_type != "etr::ReverseDouble") {
       node$error <- "deriv can be only used when derivative is set to reverse"
     }
-    left_type_node <- infer(node$left_node, vars_list, info_env, info_env$function_registry)
-    right_type_node <- infer(node$right_node, vars_list, info_env, info_env$function_registry)
+    left_type_node <- node$left_node$internal_type
+    right_type_node <- node$right_node$internal_type
     err <- check_operand_type(left_type_node, node, "left", allow_collection = TRUE)
-    if (!is.null(err)) return(err)
+    if (!is.null(err)) { node$error <- err; return() }
     err <- check_operand_type(right_type_node, node, "right", allow_collection = TRUE)
-    if (!is.null(err)) return(err)
+    if (!is.null(err)) { node$error <- err; return() }
     if (left_type_node$get_base_type() != "double") {
       node$error <- "The first argument of deriv has to have the base type double"
     }
