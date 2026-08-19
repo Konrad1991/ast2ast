@@ -30,10 +30,11 @@ traverse_ast <- function(node, action, ...) {
   } else if (inherits(node, "nullary_node")) {
     action(node, ...)
   } else if (inherits(node, "for_node")) {
-    action(node, ...)
+    # TRUE means action() already traversed node$block itself (type_infer_action does, for iterator scoping)
+    handled <- isTRUE(action(node, ...))
     traverse_ast(node$i, action, ...)
     traverse_ast(node$seq, action, ...)
-    traverse_ast(node$block, action, ...)
+    if (!handled) traverse_ast(node$block, action, ...)
   } else if (inherits(node, "while_node")) {
     action(node, ...)
     traverse_ast(node$condition, action, ...)
@@ -83,6 +84,10 @@ action_print <- function(node) {
 
 # transpile inner function
 # ========================================================================
+with_fct_error_context <- function(fct_name, expr) {
+  tryCatch(expr, error = function(e) stop(sprintf("In inner function %s: %s", fct_name, conditionMessage(e)), call. = FALSE))
+}
+
 action_transpile_inner_functions <- function(node, real_type) {
   if (!inherits(node, "fn_node")) {
     return()
@@ -97,15 +102,15 @@ action_transpile_inner_functions <- function(node, real_type) {
   info_env$r_fct <- FALSE
   info_env$real_type <- real_type
   info_env$known_types <- node$known_types
-  AST <- try(parse_body(body(f), info_env, function_registry), silent = TRUE)
+  AST <- try(parse_body(body(f) |> wrap_in_block(), info_env, function_registry), silent = TRUE)
   if (inherits(AST, "try-error")) {
     error_string <- AST |> as.character()
-    stop(sprintf("Could not translate the function due to %s", error_string))
+    stop(sprintf("In inner function %s: Could not translate the function due to %s", node$fct_name, error_string))
   }
   e <- try(traverse_ast(AST, action_update_function_registry, function_registry), silent = TRUE)
   if (inherits(e, "try-error")) {
     error_string <- e |> as.character()
-    stop(sprintf("Could not update the function registry due to: %s", error_string))
+    stop(sprintf("In inner function %s: Could not update the function registry due to: %s", node$fct_name, error_string))
   }
 
   known_from_inner <- node$function_registry$permitted_fcts()
@@ -126,17 +131,18 @@ action_transpile_inner_functions <- function(node, real_type) {
 
   e <- try(run_checks(AST, r_fct, function_registry), silent = TRUE)
   if (!is.null(e) && inherits(e, "try-error")) {
-    stop("error: Could not run checks on AST due to:", attributes(e)[["condition"]]$message)
+    stop(sprintf("In inner function %s: Could not run checks on AST due to: %s", node$fct_name, attributes(e)[["condition"]]$message))
   }
   line <- try( {AST$stringify_error_line() }, silent = TRUE)
   if (inherits(line, "try-error")) {
-    stop("error: Could not stringify the AST")
+    stop(sprintf("In inner function %s: Could not stringify the AST", node$fct_name))
   }
   if (err_found(line)) {
-    stop(paste0("\n", line))
+    stop(sprintf("In inner function %s:\n%s", node$fct_name, line))
   }
   AST <- sort_args(AST, function_registry)
-  node$vars_types_list <- infer_types(AST, f, args_f_raw, r_fct, real_type, function_registry, node$known_types)
+  node$vars_types_list <- with_fct_error_context(node$fct_name,
+    infer_types(AST, f, args_f_raw, r_fct, real_type, function_registry, node$known_types))
 
   # TODO: figure out why this loop is required
   for(i in seq_len(length(node$vars_types_list))) {
@@ -148,8 +154,10 @@ action_transpile_inner_functions <- function(node, real_type) {
     stop(sprintf("Wrong return type for function %s: %s", node$fct_name, node$return_type$get_error()))
   }
 
-  trash <- type_checking(AST, node$vars_types_list, r_fct, real_type, function_registry, node$known_types)
-  return_type <- determine_types_of_returns(AST, node$vars_types_list, r_fct, real_type, function_registry, node$known_types)
+  trash <- with_fct_error_context(node$fct_name,
+    type_checking(AST, node$vars_types_list, r_fct, real_type, function_registry, node$known_types))
+  return_type <- with_fct_error_context(node$fct_name,
+    determine_types_of_returns(AST, node$vars_types_list, r_fct, real_type, function_registry, node$known_types))
   if (is.character(return_type)) {
     if (return_type != "void") {
       stop(sprintf("Found invalid return type %s in function %s", return_type, node$fct_name))
@@ -217,17 +225,26 @@ action_update_function_registry <- function(node, function_registry) {
     node$internal_type <- ret_type
     return(ret_type)
   }
+  bad_type_desc <- function(t) {
+    if (inherits(t, "fn_node")) return("a function")
+    if (inherits(t, "unknown_type")) return("an uninitialized variable")
+    "an unsupported value"
+  }
   check <- function(node, vars_types_list, is_type_node, should_type, index) {
     is_type <- is_type_node$internal_type
     if (inherits(is_type_node, "variable_node")) {
       is_type <- vars_types_list[[is_type_node$name]]
     }
+    if (!inherits(is_type, c("pre_type_node", "new_type_node"))) {
+      node$error <- sprintf("The argument Nr. %s to function %s is %s and cannot be used here", index, name, bad_type_desc(is_type))
+      return()
+    }
 
     if (!same_base_type(is_type$get_base_type(), should_type$get_base_type())) {
       node$error <- sprintf("The argument Nr. %s to function %s has not the correct type. Found %s but %s is required", index, name, is_type$get_base_type(), should_type$get_base_type())
     }
-    if (!same_data_struct(is_type$get_data_struct(), should_type$get_data_struct())) {
-      node$error <- sprintf("The argument Nr. %s to function %s has not the correct data structure. Found %s but %s is required", index, name, is_type$get_data_struct(), should_type$get_data_struct())
+    if (!same_data_struct(is_type$get_data_struct_verbose(), should_type$get_data_struct_verbose())) {
+      node$error <- sprintf("The argument Nr. %s to function %s has not the correct data structure. Found %s but %s is required", index, name, is_type$get_data_struct_verbose(), should_type$get_data_struct_verbose())
     }
   }
   const_or_mut_check <- function(node, should_type, index, name) {
@@ -537,6 +554,7 @@ action_check_type_of_args <- function(node, variables, r_fct, real_type, functio
   info_env$r_fct <- r_fct
   info_env$real_type <- real_type
   info_env$known_types <- known_types
+  info_env$function_registry <- function_registry
   type_check_fct(node, variables, info_env)
 }
 
@@ -611,6 +629,10 @@ action_translate <- function(node, function_registry, real_type) {
              inherits(node$left_node$internal_type, "pre_type_node") &&
              node$left_node$internal_type$get_data_struct() == "collection") {
       node$operator <- "etr::collection_at"
+    }
+    else if (inherits(node, "unary_node") && node$operator == "print" &&
+             inherits(node$obj$internal_type, "new_type_node")) {
+      node$operator <- "print" # unqualified so ADL finds the struct's own print(), emitted alongside it
     }
     else {
       op <- function_registry$get_cpp_name(node$operator)

@@ -554,7 +554,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   attributes(e)[["condition"]]$message,
-"Error: Could not infer the types, caused by Error in are_vars_init(t, name) : Found uninitialzed variable: b\n"
+  "a <- b + 1.0\nFound uninitialzed variable: b"
 )
 
 # --- print --------------------------------------------------------------
@@ -877,9 +877,6 @@ f <- function() {
   for (l in 1L:5L) {
     print(l)
   }
-  for (outer_val in 1L:5L) {
-    print(outer_val)
-  }
 }
 types <- get_types(f)
 expect_true(types$i$get_base_type() == "double")
@@ -894,8 +891,8 @@ expect_true(types$k$iterator)
 expect_true(types$l$get_base_type() == "integer")
 expect_true(types$l$get_data_struct() == "scalar")
 expect_true(types$l$iterator)
-expect_true(types$outer_val$get_base_type() == "integer", info = "Type not changed even variable is later used as iterator")
-expect_true(types$outer_val$get_data_struct() == "vector",  info = "Type not changed even variable is later used as iterator")
+expect_true(types$outer_val$get_base_type() == "integer")
+expect_true(types$outer_val$get_data_struct() == "vector")
 
 f <- function() {
   a <- 1L

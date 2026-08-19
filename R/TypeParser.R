@@ -85,6 +85,9 @@ create_type_tree <- function(code, env) {
   }
 
   else if (operator %in% c("borrow_vec", "borrow_vector") && env$fct_input) {
+    if (env$real_type %in% c("etr::Dual", "etr::ReverseDouble")) {
+      add_error(env, "borrow types cannot be used together with automatic differentiation (forward or reverse)")
+    }
     v <- borrow_vec$new()
     v$base_type <- resolve_base_type(code[[2L]], env)
     v$r_fct <- env$r_fct
@@ -92,6 +95,9 @@ create_type_tree <- function(code, env) {
     return(v)
   }
   else if (operator %in% c("borrow_mat", "borrow_matrix") && env$fct_input) {
+    if (env$real_type %in% c("etr::Dual", "etr::ReverseDouble")) {
+      add_error(env, "borrow types cannot be used together with automatic differentiation (forward or reverse)")
+    }
     m <- borrow_mat$new()
     m$base_type <- resolve_base_type(code[[2L]], env)
     m$r_fct <- env$r_fct
@@ -99,6 +105,9 @@ create_type_tree <- function(code, env) {
     return(m)
   }
   else if (operator == "borrow_array" && env$fct_input) {
+    if (env$real_type %in% c("etr::Dual", "etr::ReverseDouble")) {
+      add_error(env, "borrow types cannot be used together with automatic differentiation (forward or reverse)")
+    }
     a <- borrow_arr$new()
     a$base_type <- resolve_base_type(code[[2L]], env)
     a$r_fct <- env$r_fct
@@ -108,6 +117,10 @@ create_type_tree <- function(code, env) {
 
   else if (operator %in% c("borrow_vec", "borrow_vector", "borrow_mat", "borrow_matrix", "borrow_array")) {
     add_error(env, sprintf("borrow types only allowed in function inputs, found %s", operator))
+    u <- unresolved_node$new()
+    u$name <- operator
+    u$base_type <- resolve_base_type(code[[2L]], env)
+    return(u)
   }
 
   else if (operator == "const" && env$fct_input) {
@@ -165,11 +178,17 @@ parse_new_type <- function(code, env) {
     } else if (not_cpp_keyword(name)) {
       add_error(env, paste0("Invalid type name: is a C++ keyword --> ", name))
     }
+    if (!is.null(env$list[[name]])) {
+      add_error(env, paste0("Duplicated type name: ", name))
+    }
     env$new_type <- new_type_node$new(name)
     parse_new_type(code[[3]], env)
   }
   if (operator == "slots") {
     code <- code[-1]
+    if (length(code) == 0) {
+      add_error(env, "A custom type must have at least one slot")
+    }
     env$new_type$slots <- list()
     for (i in seq_len(length(code))) {
       if (is.symbol(code[[i]])) {
@@ -190,9 +209,15 @@ parse_new_type <- function(code, env) {
             add_error(env, paste0(unallowed, " found in ", slot_name))
           } else if (not_cpp_keyword(slot_name)) {
             add_error(env, paste0("Invalid slot name: is a C++ keyword --> ", slot_name))
+          } else if (identical(slot_name, env$new_type$name)) {
+            add_error(env, paste0("Invalid slot name: cannot be the same as its own type name --> ", slot_name))
           }
         }
       }
+    }
+    slot_names <- vapply(env$new_type$slots, function(s) s$get_name(), character(1L))
+    for (d in unique(slot_names[duplicated(slot_names)])) {
+      add_error(env, paste0("Duplicated slot name: ", d))
     }
   }
 }

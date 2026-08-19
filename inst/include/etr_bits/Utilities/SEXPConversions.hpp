@@ -108,10 +108,13 @@ inline SEXP Cast(std::string &res) { return Rf_mkString(res.data()); }
 inline SEXP Cast(const char *res) { return Rf_mkString(res); }
 
 // Validated list-element access for generated struct constructors: checks
-// the incoming SEXP's class and length before indexing it, so an
-// undersized/mistyped list is rejected here rather than read out of bounds.
+// the incoming SEXP's class and length, then looks the field up by name
+// rather than position -- a named R list is not required to list its
+// elements in any particular order, so matching by position alone would
+// silently swap fields whenever the caller's list order differs from the
+// struct's declared slot order.
 // -----------------------------------------------------------------------------------------------------------
-inline SEXP checked_elt(SEXP arg, int index, int expected_length, const char* expected_class) {
+inline SEXP checked_elt(SEXP arg, const char* field_name, int expected_length, const char* expected_class) {
   SEXP cls = Rf_getAttrib(arg, R_ClassSymbol);
   if (cls == R_NilValue || std::strcmp(CHAR(STRING_ELT(cls, 0)), expected_class) != 0) {
     Rf_error("Expected an object of class '%s'", expected_class);
@@ -119,7 +122,17 @@ inline SEXP checked_elt(SEXP arg, int index, int expected_length, const char* ex
   if (Rf_length(arg) != expected_length) {
     Rf_error("Expected an object of class '%s' with %d fields, but got %d", expected_class, expected_length, (int)Rf_length(arg));
   }
-  return VECTOR_ELT(arg, index);
+  SEXP names = Rf_getAttrib(arg, R_NamesSymbol);
+  if (names == R_NilValue) {
+    Rf_error("Expected a named list for class '%s'", expected_class);
+  }
+  int n = Rf_length(names);
+  for (int i = 0; i < n; i++) {
+    if (std::strcmp(CHAR(STRING_ELT(names, i)), field_name) == 0) {
+      return VECTOR_ELT(arg, i);
+    }
+  }
+  Rf_error("Expected an object of class '%s' to have a field named '%s'", expected_class, field_name);
 }
 
 // Cast Array

@@ -89,6 +89,15 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
     dim = other.get_dim();
   }
 
+  // Materialize an owned copy from a borrowed array, e.g. returning a
+  // borrowed parameter as an owned value.
+  template<typename T2, typename R2>
+  requires(IsBorrow<R2>)
+  Array(const Array<T2, R2>& other) {
+    assign(other);
+    dim = other.get_dim();
+  }
+
   // Example: Array<Double, Buffer<Double>> a(Array<Double, Buffer<Double, RBufferTrait>>(SI{3}));
   template<typename T2, typename R2>
   requires(IS<T, T2> && IsRArray<Array<T2, R2>>)

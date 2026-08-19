@@ -175,10 +175,10 @@ struct uniroot_result{
   etr::Integer iter;
   etr::Double estim_prec;
   explicit uniroot_result(SEXP arg) :
-    root(etr::SEXP2Scalar<etr::Double>(etr::checked_elt(arg, 0, 4, "uniroot_result"))),
-    f_root(etr::SEXP2Scalar<etr::Double>(etr::checked_elt(arg, 1, 4, "uniroot_result"))),
-    iter(etr::SEXP2Scalar<etr::Integer>(etr::checked_elt(arg, 2, 4, "uniroot_result"))),
-    estim_prec(etr::SEXP2Scalar<etr::Double>(etr::checked_elt(arg, 3, 4, "uniroot_result"))) {}
+    root(etr::SEXP2Scalar<etr::Double>(etr::checked_elt(arg, "root", 4, "uniroot_result"))),
+    f_root(etr::SEXP2Scalar<etr::Double>(etr::checked_elt(arg, "f_root", 4, "uniroot_result"))),
+    iter(etr::SEXP2Scalar<etr::Integer>(etr::checked_elt(arg, "iter", 4, "uniroot_result"))),
+    estim_prec(etr::SEXP2Scalar<etr::Double>(etr::checked_elt(arg, "estim_prec", 4, "uniroot_result"))) {}
   SEXP to_SEXP() const {
     SEXP res = PROTECT(Rf_allocVector(VECSXP, 4));
     SET_VECTOR_ELT(res, 0, etr::Cast(root));
@@ -210,6 +210,14 @@ struct uniroot_result{
     return r;
   }
 };
+
+inline void print(const uniroot_result& x) {
+  PRINT_STREAM << "uniroot_result" << std::endl;
+  PRINT_STREAM << "  root: " << x.root << std::endl;
+  PRINT_STREAM << "  f_root: " << x.f_root << std::endl;
+  PRINT_STREAM << "  iter: " << x.iter << std::endl;
+  PRINT_STREAM << "  estim_prec: " << x.estim_prec << std::endl;
+}
 
 template<typename B> requires (IsArray<Decayed<B>>)
 inline uniroot_result uniroot(const std::function<Double(Double)>& f, const B& boundaries, Double tol, Integer maxit) {

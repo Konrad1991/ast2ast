@@ -3,6 +3,9 @@ scientific_notated <- function(obj) {
 }
 
 determine_literal_type <- function(obj) {
+  if (is.null(obj)) {
+    return("NULL")
+  }
   if (is.infinite(obj)) {
     return("Inf")
   }

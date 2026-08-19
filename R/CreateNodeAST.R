@@ -277,7 +277,7 @@ assemble <- function(name_fct, vars_types_list, return_type, body, real_type, r_
   arguments <- arguments[arguments != ""]
 
   emit_types <- Filter(function(t) !isTRUE(t$part_of_etr), known_types)
-  struct_defs <- lapply(emit_types, function(t) t$define_type()) |> combine_strings("\n\n")
+  struct_defs <- lapply(emit_types, function(t) paste0(t$define_type(), "\n\n", t$define_print())) |> combine_strings("\n\n")
   if (struct_defs != "") {
     struct_defs <- paste0("namespace {\n", struct_defs, "\n}\n")
   }

@@ -295,3 +295,87 @@ expect_equal(
   fcpp_reverse(y, x),
   matrix(c(-2.5, 0.625,  0, -1.25,  0, 0,  0, -0.1875,  0.5, -0.125,  0, 0.25), 2, 6)
 )
+
+# --- seed/get_dot through a struct field ------------------------------------
+types_f <- function() {
+  new_type(Point, slots(x |> type(double), y |> type(double)))
+}
+f <- function() {
+  p |> type(Point)
+  p$x <- 1
+  p$y <- 2
+  seed(p$x, 1L)
+  z <- p$x * p$x + p$y
+  return(get_dot(z))
+}
+fcpp <- ast2ast::translate(
+  f, types_f = types_f, derivative = "forward"
+)
+expect_equal(c(fcpp()), 2)
+
+# --- seed() rejects a subsetting result -------------------------------------
+f <- function() {
+  x |> type(vec(double))
+  x <- numeric(3)
+  seed(x[[1L]], 1L)
+  z <- x[[1L]] * x[[1L]]
+  return(get_dot(z))
+}
+expect_error(
+  ast2ast::translate(f, derivative = "forward"),
+  pattern = "cannot be a subsetting result"
+)
+
+# --- seed/get_dot on a bare scalar variable ---------------------------------
+f <- function() {
+  x |> type(double)
+  x <- 1
+  seed(x, 1L)
+  z <- x * x
+  return(get_dot(z))
+}
+fcpp <- ast2ast::translate(
+  f, derivative = "forward"
+)
+expect_equal(c(fcpp()), 2)
+
+# --- seed on the whole array, get_dot on a [[ result ------------------------
+f <- function() {
+  x |> type(vec(double))
+  x <- 1:2
+  seed(x, 1L)
+  y <- numeric(2)
+  y[[1L]] <- x[[1L]] * x[[1L]]
+  d <- get_dot(y[[1L]])
+  return(d)
+}
+fcpp <- ast2ast::translate(f, derivative = "forward")
+expect_equal(c(fcpp()), 2)
+
+# --- reverse-mode deriv() through a struct field, element-wise mul ----------
+types_f <- function() {
+  new_type(
+    Pair,
+    slots(
+      y |> type(vec(double)),
+      x |> type(vec(double))
+    )
+  )
+}
+f <- function(p) {
+  p$y <- p$y*p$x*2
+  jac <- deriv(p$y, p$x)
+  return(jac)
+}
+fcpp <- ast2ast::translate(
+  f,
+  args_f = function(p) p |> type(Pair),
+  types_f = types_f, derivative = "reverse",
+  verbose = TRUE
+)
+p <- structure(
+  list(x = c(1, 2, 3), y = c(4, 5, 6)),
+  class = "Pair"
+)
+fcpp(p) |> str()
+expect_equal(fcpp(p), diag(c(8, 10, 12)))

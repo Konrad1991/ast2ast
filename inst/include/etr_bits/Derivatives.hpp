@@ -67,6 +67,12 @@ template<typename T> requires IsDual<T> inline auto get_dot(const T& obj) {
   res.set(0, Double(obj.dot));
   return res;
 }
+// [[ / at on a Dual array yields a DualRef, not a Dual -- template deduction
+// pins T to DualRef before its operator Dual() conversion could apply, so
+// the IsDual<T> overload above never matches it. Convert explicitly instead.
+inline auto get_dot(const DualRef& obj) {
+  return get_dot(Dual(obj));
+}
 template<typename T> requires IsArray<T> inline auto get_dot(const T& obj) {
   using DataType = typename ExtractDataType<Decayed<T>>::value_type;
   static_assert(IS<DataType, Dual>, "data type of obj has to be Dual");

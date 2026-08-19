@@ -127,12 +127,18 @@ convert_types_to_etr_types <- function(base_type, data_struct, r_fct, real_type,
     if (real_type == "etr::ReverseDouble") {
       stop("You cannot use borrowed data structures in combination with reverse mode automatic differentiation")
     }
+    if (real_type == "etr::Dual") {
+      stop("You cannot use borrowed data structures in combination with forward mode automatic differentiation")
+    }
     data_struct <- "etr::Array"
     return(paste0(indent, data_struct, "<", convert_base_type(base_type, real_type), ", etr::Borrow<", convert_base_type(base_type, real_type), ">>"))
   }
   else if (any(data_struct == c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat", "borrow_array")) && r_fct) {
     if (real_type == "etr::ReverseDouble") {
       stop("You cannot use borrowed data structures in combination with reverse mode automatic differentiation")
+    }
+    if (real_type == "etr::Dual") {
+      stop("You cannot use borrowed data structures in combination with forward mode automatic differentiation")
     }
     data_struct <- "etr::Array"
     return(paste0(indent, data_struct, "<", convert_base_type(base_type, real_type), ", etr::Borrow<", convert_base_type(base_type, real_type), ">>"))
@@ -308,7 +314,11 @@ resolve_type_collection <- function(code, env) {
   }, character(1L))
   ops <- c(new_ops, permitted_base_types(), "void", "R_NilValue")
   if (!(elem %in% ops)) {
-    add_error(env, sprintf("Found unsupported base type: %s", elem))
+    if (!is.null(env$new_type) && identical(env$new_type$name, elem)) {
+      add_error(env, sprintf("Self-referencing types are not supported: %s cannot reference itself in its own slot definition", elem))
+    } else {
+      add_error(env, sprintf("Found unsupported base type: %s", elem))
+    }
   }
   if (elem == "int") {
     return("integer")

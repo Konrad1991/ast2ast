@@ -35,12 +35,18 @@ literal_node <- R6::R6Class(
     initialize = function(obj) {
       self$literal_type <- determine_literal_type(obj)
       self$name <- deparse(obj)
+      if (self$literal_type == "NULL") {
+        self$error <- "NULL is not supported"
+      }
     },
     stringify = function(indent = "") {
       t_literal(self$context, self$name, indent, self$literal_type, self$wrap, self$real_type)
     },
     stringify_error = function(indent = "") {
       return(paste0(indent, self$error))
+    },
+    stringify_error_line = function(indent = "") {
+      self$stringify()
     },
     print = function() {
       cat(self$stringify())
@@ -446,11 +452,12 @@ if_node <- R6::R6Class(
       ))
     },
     stringify_error = function(indent = "") {
+      own_error <- self$error
       condition_error <- self$stringify_condition_error()
       true_error <- self$stringify_true_node_error()
       else_if_error <- self$string_else_if_node_error()
       false_error <- self$stringify_false_node_error()
-      errors <- c(condition_error, true_error, else_if_error, false_error)
+      errors <- c(own_error, condition_error, true_error, else_if_error, false_error)
       errors <- errors[errors != ""]
       errors <- combine_strings(errors)
       ret <- paste0(
@@ -462,7 +469,8 @@ if_node <- R6::R6Class(
     stringify_error_line = function(indent = "") {
       s <- ""
       # Check condition
-      condition <- self$stringify_condition_error() |> combine_strings("\n")
+      condition <- c(self$error, self$stringify_condition_error())
+      condition <- combine_strings(condition[condition != ""], "\n")
       if (condition != "") {
         s <- paste0(
           indent, "if (",
@@ -691,7 +699,7 @@ while_node <- R6::R6Class(
     stringify_error = function(indent = "") {
       block_err <- self$block$stringify_error()
       cond_err <- self$condition$stringify_error()
-      res <- c(cond_err, block_err)
+      res <- c(self$error, cond_err, block_err)
       res <- res[res != ""]
       e <- combine_strings(list(res), "\n")
       if (e != "") {
@@ -701,7 +709,8 @@ while_node <- R6::R6Class(
     },
     stringify_error_line = function(indent = "") {
       block_res <- self$block$stringify_error_line(paste0(indent, "  "))
-      cond_err <- self$condition$stringify_error()
+      cond_err <- c(self$error, self$condition$stringify_error())
+      cond_err <- combine_strings(cond_err[cond_err != ""], "\n")
       res <- ""
       if (block_res == "" && cond_err == "") {
         return("")
@@ -909,6 +918,7 @@ pre_type_node <- R6::R6Class(
     r_fct = NULL,
     real_type = NULL,
     iterator = NULL,
+    in_scope = TRUE,
     type_decl = NULL,
     fct_input = NULL,
     error = NULL,
@@ -946,6 +956,9 @@ pre_type_node <- R6::R6Class(
     get_iterator = function() {
       self$iterator
     },
+    get_in_scope = function() {
+      self$in_scope
+    },
     get_type_decl = function() {
       self$type_decl
     },
@@ -975,6 +988,9 @@ pre_type_node <- R6::R6Class(
     },
     set_iterator = function(iterator) {
       self$iterator <- iterator
+    },
+    set_in_scope = function(in_scope) {
+      self$in_scope <- in_scope
     },
     set_fct_input = function(fct_input) {
       self$fct_input <- fct_input
@@ -1260,6 +1276,7 @@ new_type_node <- R6::R6Class(
     type_decl = NULL,
     fct_input = NULL,
     iterator = NULL,
+    in_scope = TRUE,
     error = NULL,
     const_or_mut = "mutable",
     copy_or_ref = "copy",
@@ -1285,7 +1302,7 @@ new_type_node <- R6::R6Class(
       input <- vapply(seq_len(n_slots), function(i) {
         s <- self$slots[[i]]
         basic <- is_base_type(s$get_base_type())
-        elt <- sprintf("etr::checked_elt(arg, %s, %s, \"%s\")", i - 1, n_slots, self$name)
+        elt <- sprintf("etr::checked_elt(arg, \"%s\", %s, \"%s\")", s$get_name(), n_slots, self$name)
         if (inherits(s, "pre_type_node")) {
           res <- elt
           if (s$get_data_struct() == "scalar" && basic) {
@@ -1366,6 +1383,26 @@ new_type_node <- R6::R6Class(
         "};"
       )
     },
+    define_print = function() {
+      field_names <- vapply(self$slots, function(s) s$get_name(), character(1L))
+      lines <- vapply(seq_along(self$slots), function(i) {
+        s <- self$slots[[i]]
+        field <- field_names[i]
+        if (inherits(s, "new_type_node")) {
+          sprintf("\t\tPRINT_STREAM << \"  %s:\" << std::endl;\n\t\tprint(x.%s);", field, field)
+        } else if (s$get_data_struct() == "scalar") {
+          sprintf("\t\tPRINT_STREAM << \"  %s: \" << x.%s << std::endl;", field, field)
+        } else {
+          sprintf("\t\tPRINT_STREAM << \"  %s:\" << std::endl;\n\t\tetr::print(x.%s);", field, field)
+        }
+      }, character(1L))
+      paste0(
+        "inline void print(const ", self$name, "& x) {\n",
+        "\tPRINT_STREAM << \"", self$name, "\" << std::endl;\n",
+        paste0(lines, collapse = "\n"), "\n",
+        "}"
+      )
+    },
     stringify = function(indent = "") {
       if (isTRUE(self$part_of_etr)) {
         return(paste0("etr::", self$name))
@@ -1404,6 +1441,15 @@ new_type_node <- R6::R6Class(
     },
     get_iterator = function() {
       self$iterator
+    },
+    set_iterator = function(iterator) {
+      self$iterator <- iterator
+    },
+    get_in_scope = function() {
+      self$in_scope
+    },
+    set_in_scope = function(in_scope) {
+      self$in_scope <- in_scope
     },
     get_error = function() {
       self$error

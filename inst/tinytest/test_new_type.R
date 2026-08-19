@@ -1068,3 +1068,215 @@ expect_error(
   ast2ast::translate(f, args_f = function(s) s |> type(Shapes), types_f = types_f_shapes_with_scalar, getsource = TRUE),
   pattern = "You can only call nrow on variables of type array or matrix"
 )
+
+# --- printing of new_types ---------------------------------------------
+
+types_f_point <- function() {
+  new_type(
+    Point,
+    slots(
+      x |> type(double),
+      y |> type(double)
+    )
+  )
+}
+
+# 1. printing a plain struct
+f <- function() {
+  p |> type(Point)
+  print(p)
+}
+fcpp <- ast2ast::translate(f, types_f = types_f_point)
+out <- capture.output(fcpp())
+expect_true(any(grepl("Point", out)))
+expect_true(any(grepl("x:", out)))
+expect_true(any(grepl("y:", out)))
+
+# 2. nested printing (a struct containing struct fields)
+types_f_nested <- function() {
+  new_type(
+    Point,
+    slots(
+      x |> type(double),
+      y |> type(double)
+    )
+  )
+  new_type(
+    Bla,
+    slots(
+      p1 |> type(Point),
+      p2 |> type(Point)
+    )
+  )
+}
+f <- function() {
+  p |> type(Bla)
+  print(p)
+}
+fcpp <- ast2ast::translate(f, types_f = types_f_nested)
+out <- capture.output(fcpp())
+expect_true(any(grepl("Bla", out)))
+expect_true(any(grepl("p1:", out)))
+expect_true(any(grepl("p2:", out)))
+expect_equal(sum(grepl("Point", out)), 2L)
+
+# 3. printing a collection of structs
+f <- function() {
+  c <- vector("Point", 5L)
+  print(c)
+}
+fcpp <- ast2ast::translate(f, types_f = types_f_point)
+out <- capture.output(fcpp())
+expect_true(any(grepl("Collection\\[5\\]", out)))
+expect_equal(sum(grepl("Point", out)), 5L)
+
+# --- struct used as an if-condition -------------------------------------
+
+types_f_awesome <- function() {
+  new_type(
+    AwesomeClass,
+    slots(
+      x |> type(double)
+    )
+  )
+}
+f <- function() {
+  a |> type(AwesomeClass)
+  if (a) print("Foo") else print("Bar")
+}
+expect_error(
+  ast2ast::translate(f, types_f = types_f_awesome),
+  pattern = "cannot be used as a condition"
+)
+
+# --- const() is enforced through nested struct/collection/field access -----
+
+types_f_scene <- function() {
+  new_type(Point, slots(x |> type(double), y |> type(double)))
+  new_type(Circle, slots(center |> type(Point), radius |> type(double)))
+  new_type(Scene, slots(circles |> type(collection(Circle)), tag |> type(int)))
+}
+f <- function(s) {
+  s$circles[[1L]]$center$x <- s$circles[[1L]]$center$x + 10
+  return(s)
+}
+expect_error(
+  ast2ast::translate(f, args_f = function(s) s |> type(Scene) |> const(), types_f = types_f_scene, getsource = TRUE),
+  pattern = "You cannot assign to a constant variable"
+)
+
+# --- ref() lets an inner fn() mutate a struct argument in place ------------
+
+types_f_point <- function() {
+  new_type(Point, slots(x |> type(double), y |> type(double)))
+}
+f <- function(p) {
+  mutate_it <- fn(
+    args_f = function(a) a |> type(Point) |> ref(),
+    return_value = type(double),
+    block = function(a) {
+      a$x <- a$x + 1
+      return(a$x)
+    }
+  )
+  r <- mutate_it(p)
+  return(p)
+}
+fcpp <- ast2ast::translate(f, args_f = function(p) p |> type(Point), types_f = types_f_point)
+p_in <- structure(list(x = 1, y = 2), class = "Point")
+expect_equal(fcpp(p_in)$x, 2)
+
+# --- new_type declaration edge cases ----------------------------------------
+
+# 1. duplicated slot names
+types_f_dup_slot <- function() {
+  new_type(
+    Point,
+    slots(
+      x |> type(double),
+      x |> type(int)
+    )
+  )
+}
+f <- function() {
+  p |> type(Point)
+  return(p$x)
+}
+expect_error(
+  ast2ast::translate(f, types_f = types_f_dup_slot),
+  pattern = "Duplicated slot name: x"
+)
+
+# 2. empty slots
+types_f_empty <- function() {
+  new_type(Empty, slots())
+}
+f <- function() {
+  e |> type(Empty)
+  return(1)
+}
+expect_error(
+  ast2ast::translate(f, types_f = types_f_empty),
+  pattern = "A custom type must have at least one slot"
+)
+
+# 3. self-referencing type through collection()
+types_f_self_ref <- function() {
+  new_type(Node, slots(val |> type(double), children |> type(collection(Node))))
+}
+f <- function() {
+  n |> type(Node)
+  return(n$val)
+}
+expect_error(
+  ast2ast::translate(f, types_f = types_f_self_ref, getsource = TRUE),
+  pattern = "Self-referencing types are not supported"
+)
+
+# 4. new_type redeclaration -- the second declaration must not silently win
+types_f_redecl <- function() {
+  new_type(Point, slots(x |> type(double)))
+  new_type(Point, slots(y |> type(int)))
+}
+f <- function() {
+  p |> type(Point)
+  return(p$y) # only the second declaration's slot (y) actually exists
+}
+expect_error(
+  ast2ast::translate(f, types_f = types_f_redecl, getsource = TRUE),
+  pattern = "Duplicated type name: Point"
+)
+
+# 5. slot name equal to its own type name
+types_f_weird <- function() {
+  new_type(Weird, slots(Weird |> type(double)))
+}
+f <- function() {
+  w |> type(Weird)
+  return(w$Weird)
+}
+expect_error(
+  ast2ast::translate(f, types_f = types_f_weird),
+  pattern = "cannot be the same as its own type name"
+)
+
+# --- output = "XPtr" with a mutated struct field ----------------------------
+
+types_f_ptr <- function() {
+  new_type(
+    Point,
+    slots(
+      x |> type(double),
+      y |> type(double)
+    )
+  )
+}
+f <- function(p) { p$x <- p$x + 1; return(p) }
+args_f_ptr <- function() {
+  p |> type(Point)
+}
+ptr <- ast2ast::translate(
+  f, args_f = args_f_ptr, types_f = types_f_ptr,
+  output = "XPtr"
+)
+expect_true(inherits(ptr, "XPtr"))

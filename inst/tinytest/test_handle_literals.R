@@ -32,3 +32,10 @@ expect_equal(ast2ast:::t_literal("<-", NaN, "", "NaN", TRUE, "etr::Double"), "et
 expect_equal(ast2ast:::t_literal("print", NaN, "", "NaN", TRUE, "etr::Double"), "etr::Double::NaN()")
 expect_equal(ast2ast:::t_literal("<-", Inf, "", "Inf", TRUE, "etr::Double"), "etr::Double::Inf()")
 expect_equal(ast2ast:::t_literal("print", Inf, "", "Inf", TRUE, "etr::Double"), "etr::Double::Inf()")
+
+f <- function() {
+  a <- NULL
+  print(a)
+  print(NULL)
+}
+expect_error(ast2ast::translate(f), pattern = "NULL is not supported")

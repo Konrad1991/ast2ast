@@ -112,12 +112,10 @@ infer <- function(node, vars_list, info_env, function_registry) {
     }
     t <- vars_list[[name]]
     t <- flatten_type(t)
-    are_vars_init(t, name)
-    if (inherits(t, "pre_type_node")) {
-      if (grepl("borrow", t$get_data_struct_verbose())) { # Don't propagate borrow
-        t <- t$clone(deep = TRUE)
-        t$set_data_struct(t$get_data_struct())
-      }
+    err <- are_vars_init(t, name)
+    if (!is.null(err)) return(err)
+    if (inherits(t, c("pre_type_node", "new_type_node")) && isTRUE(t$get_iterator()) && !isTRUE(t$get_in_scope())) {
+      return(sprintf("The for-loop iterator variable %s cannot be used outside of its for-loop block", name))
     }
     node$internal_type <- t
     return(t)
@@ -131,7 +129,6 @@ infer <- function(node, vars_list, info_env, function_registry) {
     ifct <- function_registry$infer_fct(node$operator)
     t <- ifct(node, vars_list, info_env, function_registry)
     t <- flatten_type(t)
-    are_vars_init(t)
     node$internal_type <- t
     return(t)
   } else if (inherits(node, "fn_node")) {
@@ -140,21 +137,18 @@ infer <- function(node, vars_list, info_env, function_registry) {
     ifct <- function_registry$infer_fct("for")
     t <- ifct(node, vars_list, info_env, function_registry)
     t <- flatten_type(t)
-    are_vars_init(t)
     node$internal_type <- t
     return(t)
   } else if (inherits(node, "while_node")) {
     ifct <- function_registry$infer_fct("while")
     t <- ifct(node, vars_list, info_env, function_registry)
     t <- flatten_type(t)
-    are_vars_init(t)
     node$internal_type <- t
     return(t)
   } else if (inherits(node, "repeat_node")) {
     ifct <- function_registry$infer_fct("repeat")
     t <- ifct(node, vars_list, info_env, function_registry)
     t <- flatten_type(t)
-    are_vars_init(t)
     node$internal_type <- t
     return(t)
   } else {
@@ -264,12 +258,15 @@ type_infer_assignment <- function(node, info_env) {
     infer(node, info_env$vars_list, info_env, info_env$function_registry)
     handle_type_dcl_in_assign(node, info_env)
     type <- infer(node$right_node, info_env$vars_list, info_env, info_env$function_registry)
-    if (is.character(type) &&
-        (inherits(node$right_node, "nullary_node") ||
-         (inherits(node$right_node, c("unary_node", "binary_node", "function_node")) && void_only_operator(node$right_node$operator)))) {
-      node$error <- type
+    if (is.character(type)) {
+      # only record here when nothing else will -- a compound RHS (binary/unary/function_node,
+      # unless void-only like print/stop) gets independently visited and records its own error
+      if (inherits(node$right_node, "nullary_node") ||
+          (inherits(node$right_node, c("unary_node", "binary_node", "function_node")) && void_only_operator(node$right_node$operator))) {
+        node$error <- type
+      }
     }
-    if (inherits(type, "pre_type_node") && type$get_base_type() == "character" && type$get_data_struct() == "scalar" && inherits(node$right_node, "literal_node")) {
+    else if (inherits(type, "pre_type_node") && type$get_base_type() == "character" && type$get_data_struct() == "scalar" && inherits(node$right_node, "literal_node")) {
       node$error <- "You cannot assign characters to variables"
     }
     # RHS:
@@ -286,6 +283,9 @@ type_infer_assignment <- function(node, info_env) {
           type$set_const_or_mut("mutable")
           type$set_fct_input(FALSE)
           type$set_iterator(FALSE) # Dont propagate iterator
+          if (grepl("borrow", type$get_data_struct_verbose())) { # a new local var cannot itself be borrow-typed
+            type$set_data_struct(type$get_data_struct())
+          }
           type$set_name(variable)
         }
         if (inherits(type, "new_type_node")) {
@@ -387,38 +387,53 @@ type_infer_assignment <- function(node, info_env) {
   }
 }
 
+# Traverses node$block itself (bracketed by in_scope TRUE/FALSE) and returns
+# TRUE, so traverse_ast() skips its own block descent for this node.
 type_infer_for_node <- function(node, info_env) {
-  if (inherits(node, "for_node")) {
-    type <- infer(node, info_env$vars_list, info_env, info_env$function_registry)
-    if (is.character(type)) {
-      node$error <- type
-    }
-    else {
-
-      variable <- deparse(node$i$name)
-
-      if (inherits(info_env$vars_list[[variable]], "unknown_type")) {
-        info_env$vars_list[[variable]] <- type
-      }
-      else if (inherits(info_env$vars_list[[variable]], "pre_type_node")) {
-        type <- common_type(info_env$vars_list[[variable]], type)
-        if (is.character(type)) {
-          node$i$error <- type
-        } else {
-          if (!info_env$vars_list[[variable]]$get_type_decl()) {
-            type <- type |> flatten_type()
-            type$set_name(variable)
-            info_env$vars_list[[variable]] <- type
-          }
-        }
-      }
-      else if (inherits(info_env$vars_list[[variable]], "fn_node")) {
-        node$i$error <- sprintf("The variable %s is marked as function and cannot be used as iterator", variable)
-      }
-
-    }
-
+  if (!inherits(node, "for_node")) {
+    return(NULL)
   }
+
+  variable <- deparse(node$i$name)
+  existing <- info_env$vars_list[[variable]]
+
+  # only a former iterator (now out of scope) may be reused, not any other existing variable
+  if (inherits(existing, "pre_type_node") && !isTRUE(existing$get_iterator())) {
+    node$i$error <- sprintf("Cannot reuse the existing variable %s as a for-loop iterator", variable)
+    return(TRUE)
+  }
+  if (inherits(existing, "new_type_node") && !isTRUE(existing$get_iterator())) {
+    node$i$error <- sprintf("Cannot reuse the existing variable %s as a for-loop iterator", variable)
+    return(TRUE)
+  }
+  if (inherits(existing, "fn_node")) {
+    node$i$error <- sprintf("The variable %s is marked as function and cannot be used as iterator", variable)
+    return(TRUE)
+  }
+
+  type <- infer(node, info_env$vars_list, info_env, info_env$function_registry)
+  if (is.character(type)) {
+    node$error <- type
+    return(TRUE)
+  }
+
+  if (inherits(existing, c("pre_type_node", "new_type_node"))) { # reused iterator, merge with its earlier type
+    type <- common_type(existing, type)
+    if (is.character(type)) {
+      node$i$error <- type
+      return(TRUE)
+    }
+    type <- type |> flatten_type()
+  }
+  type$set_iterator(TRUE)
+  type$set_in_scope(TRUE)
+  type$set_name(variable)
+  info_env$vars_list[[variable]] <- type
+
+  traverse_ast(node$block, type_infer_action, info_env)
+
+  type$set_in_scope(FALSE)
+  TRUE
 }
 
 type_infer_while_and_if <- function(node, info_env) {
@@ -436,6 +451,9 @@ type_infer_while_and_if <- function(node, info_env) {
         if (inherits(info_env$vars_list[[variable]], "unknown_type")) {
           info_env$vars_list[[variable]] <- type
         }
+        else if (inherits(info_env$vars_list[[variable]], "pre_type_node") && info_env$vars_list[[variable]]$get_data_struct() == "collection") {
+          node$error <- sprintf("The variable %s is a collection and cannot be used as a condition", variable)
+        }
         else if (inherits(info_env$vars_list[[variable]], "pre_type_node")) {
           type <- common_type(info_env$vars_list[[variable]], type)
           if (is.character(type)) {
@@ -444,6 +462,12 @@ type_infer_while_and_if <- function(node, info_env) {
             type <- type |> flatten_type()
             info_env$vars_list[[variable]] <- type
           }
+        }
+        else if (inherits(info_env$vars_list[[variable]], "new_type_node")) {
+          node$error <- sprintf(
+            "The variable %s is of custom type %s and cannot be used as a condition",
+            variable, info_env$vars_list[[variable]]$name
+          )
         }
         else if (inherits(info_env$vars_list[[variable]], "fn_node")) {
           node$error <- sprintf("The variable %s is marked as function and cannot be used in this context", variable)
@@ -516,7 +540,7 @@ type_infer_function_subsetting <- function(node, info_env) {
 type_infer_action <- function(node, info_env) {
   handle_type_dcl(node, info_env)
   type_infer_assignment(node, info_env)
-  type_infer_for_node(node, info_env)
+  handled <- type_infer_for_node(node, info_env)
   type_infer_while_and_if(node, info_env)
   type_infer_binary_node(node, info_env)
 
@@ -540,6 +564,8 @@ type_infer_action <- function(node, info_env) {
     })
     type_infer_function_subsetting(node, info_env)
   }
+
+  isTRUE(handled)
 }
 
 type_infer_return_action <- function(node, info_env) {
@@ -559,12 +585,10 @@ type_infer_return_action <- function(node, info_env) {
 
 
 are_vars_init <- function(type, name = "") {
-  if (!inherits(type, "R6")) {
-    return()
+  if (!inherits(type, "unknown_type")) {
+    return(NULL)
   }
-  if (inherits(type, "unknown_type")) {
-    stop(sprintf("Found uninitialzed variable: %s", name))
-  }
+  sprintf("Found uninitialzed variable: %s", name)
 }
 
 type_list_checks <- function(l) {

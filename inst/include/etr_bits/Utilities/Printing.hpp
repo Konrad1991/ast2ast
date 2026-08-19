@@ -20,6 +20,14 @@ inline void print(const char *inp) {
   PRINT_STREAM << inp << std::endl;
 }
 
+template <typename T>
+inline void print(const Collection<T> &c) {
+  PRINT_STREAM << "Collection[" << c.size() << "]" << std::endl;
+  for (const auto &elem : c) {
+    print(elem); // unqualified: ADL finds the element struct's own print(), which lives outside namespace etr
+  }
+}
+
 template<typename P, typename T>
 inline void print_matrix(const P& pos, const T& obj,
                          std::size_t rs, std::size_t cs, std::size_t offset) {

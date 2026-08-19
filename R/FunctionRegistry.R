@@ -212,6 +212,21 @@ check_subsetting <- function(node, vars_types_list, info_env) {
   }
 }
 
+check_operand_type <- function(type, node, side = "", allow_collection = FALSE) {
+  if (is.character(type)) return(type) # propagate a nested infer() error instead of masking it below
+  label <- if (side == "") "type" else paste0(side, " type")
+  if (inherits(type, c("new_type_node", "fn_node"))) {
+    return(sprintf("Found unsupported %s in: %s", label, node$stringify()))
+  }
+  if (!inherits(type, "pre_type_node")) {
+    return(sprintf("Found unsupported %s in: %s", label, node$stringify()))
+  }
+  if (!allow_collection && type$get_data_struct() == "collection") {
+    return(sprintf("Found unsupported %s in: %s", label, node$stringify()))
+  }
+  NULL
+}
+
 infer_subsetting <- function(node, vars_list, info_env, function_registry) {
   choose_fast_path <- function(types) {
     fulfilled <- function(t) {
@@ -231,19 +246,11 @@ infer_subsetting <- function(node, vars_list, info_env, function_registry) {
   }
   if (inherits(node, "binary_node")) {
     left_type_node <- infer(node$left_node, vars_list, info_env, function_registry)
-    if (inherits(left_type_node, c("new_type_node", "fn_node"))) {
-      return(sprintf("Found unsupported left type in: %s", node$stringify()))
-    }
-    if (!inherits(left_type_node, "pre_type_node")) {
-      return(sprintf("Found unsupported left type in: %s", node$stringify()))
-    }
+    err <- check_operand_type(left_type_node, node, "left", allow_collection = TRUE)
+    if (!is.null(err)) return(err)
     right_type_node <- infer(node$right_node, vars_list, info_env, function_registry)
-    if (inherits(right_type_node, c("new_type_node", "fn_node"))) {
-      return(sprintf("Found unsupported right type in: %s", node$stringify()))
-    }
-    if (!inherits(right_type_node, "pre_type_node")) {
-      return(sprintf("Found unsupported right type in: %s", node$stringify()))
-    }
+    err <- check_operand_type(right_type_node, node, "right")
+    if (!is.null(err)) return(err)
     if (left_type_node$get_data_struct() == "collection") {
       if (!(node$operator %in% c("[[", "at"))) {
         return(sprintf("Found unsupported subsetting: %s", node$stringify()))
@@ -270,12 +277,8 @@ infer_subsetting <- function(node, vars_list, info_env, function_registry) {
       infer(arg, vars_list, info_env, function_registry)
     })
     type_first_arg <- all_types[[1]]
-    if (inherits(type_first_arg, c("new_type_node", "fn_node"))) {
-      return(sprintf("Found unsupported subsetting: %s", node$stringify()))
-    }
-    if (!inherits(type_first_arg, "pre_type_node")) {
-      return(sprintf("Found unsupported subsetting: %s", node$stringify()))
-    }
+    err <- check_operand_type(type_first_arg, node, "subsetted", allow_collection = TRUE)
+    if (!is.null(err)) return(err)
     if (type_first_arg$get_data_struct() == "collection") {
       return(sprintf("Found unsupported subsetting: %s", node$stringify()))
     }
@@ -297,6 +300,7 @@ infer_subsetting <- function(node, vars_list, info_env, function_registry) {
 }
 infer_dollar <- function(node, vars_list, info_env, function_registry) {
   left_type <- infer(node$left_node, vars_list, info_env, function_registry)
+  if (is.character(left_type)) return(left_type)
   if (!inherits(left_type, "new_type_node")) {
     return(sprintf("Found unsupported left type in: %s", node$stringify()))
   }
@@ -312,30 +316,16 @@ infer_dollar <- function(node, vars_list, info_env, function_registry) {
 }
 infer_unary_math <- function(node, vars_list, info_env, function_registry) {
   inner_type <- infer(node$obj, vars_list, info_env, function_registry)
-  if (inherits(inner_type, c("new_type_node", "fn_node"))) {
-    return(sprintf("Found unsupported type in: %s", node$stringify()))
-  }
-  if (!inherits(inner_type, "pre_type_node")) {
-    return(sprintf("Found unsupported type in: %s", node$stringify()))
-  }
-  if (inner_type$get_data_struct() == "collection") {
-    return(sprintf("Found unsupported type in: %s", node$stringify()))
-  }
+  err <- check_operand_type(inner_type, node)
+  if (!is.null(err)) return(err)
   t <- make_inferred_type(inner_type$get_data_struct(), "double", info_env$r_fct, info_env$real_type)
   node$internal_type <- t
   return(t)
 }
 infer_unary_minus <- function(node, vars_list, info_env, function_registry) {
   inner_type <- infer(node$obj, vars_list, info_env, function_registry)
-  if (inherits(inner_type, c("new_type_node", "fn_node"))) {
-    return(sprintf("Found unsupported type in: %s", node$stringify()))
-  }
-  if (!inherits(inner_type, "pre_type_node")) {
-    return(sprintf("Found unsupported type in: %s", node$stringify()))
-  }
-  if (inner_type$get_data_struct() == "collection") {
-    return(sprintf("Found unsupported type in: %s", node$stringify()))
-  }
+  err <- check_operand_type(inner_type, node)
+  if (!is.null(err)) return(err)
   base_type <- inner_type$get_base_type()
   if (base_type == "logical") base_type <- "int"
   t <- make_inferred_type(inner_type$get_data_struct(), base_type, info_env$r_fct, info_env$real_type) 
@@ -344,25 +334,11 @@ infer_unary_minus <- function(node, vars_list, info_env, function_registry) {
 }
 infer_binary_math <- function(node, vars_list, info_env, function_registry) {
   left_type <- infer(node$left_node, vars_list, info_env, function_registry)
-  if (inherits(left_type, c("new_type_node", "fn_node"))) {
-    return(sprintf("Found unsupported left type in: %s", node$stringify()))
-  }
-  if (!inherits(left_type, "pre_type_node")) {
-    return(sprintf("Found unsupported left type in: %s", node$stringify()))
-  }
-  if (left_type$get_data_struct() == "collection") {
-    return(sprintf("Found unsupported left type in: %s", node$stringify()))
-  }
+  err <- check_operand_type(left_type, node, "left")
+  if (!is.null(err)) return(err)
   right_type <- infer(node$right_node, vars_list, info_env, function_registry)
-  if (inherits(right_type, c("new_type_node", "fn_node"))) {
-    return(sprintf("Found unsupported right type in: %s", node$stringify()))
-  }
-  if (!inherits(right_type, "pre_type_node")) {
-    return(sprintf("Found unsupported right type in: %s", node$stringify()))
-  }
-  if (right_type$get_data_struct() == "collection") {
-    return(sprintf("Found unsupported right type in: %s", node$stringify()))
-  }
+  err <- check_operand_type(right_type, node, "right")
+  if (!is.null(err)) return(err)
   l_type <- left_type$clone(deep = TRUE)
   r_type <- right_type$clone(deep = TRUE)
   if (l_type$get_base_type() == "logical") l_type$set_base_type("integer")
@@ -384,40 +360,19 @@ infer_minus <- function(node, vars_list, info_env, function_registry) {
 }
 infer_check_type <- function(node, vars_list, info_env, function_registry) {
   inner_type <- infer(node$obj, vars_list, info_env, function_registry)
-  if (inherits(inner_type, c("new_type_node", "fn_node"))) {
-    return(sprintf("Found unsupported type in: %s", node$stringify()))
-  }
-  if (!inherits(inner_type, "pre_type_node")) {
-    return(sprintf("Found unsupported type in: %s", node$stringify()))
-  }
-  if (inner_type$get_data_struct() == "collection") {
-    return(sprintf("Found unsupported type in: %s", node$stringify()))
-  }
+  err <- check_operand_type(inner_type, node)
+  if (!is.null(err)) return(err)
   t <- make_inferred_type(inner_type$get_data_struct(), "logical", info_env$r_fct, info_env$real_type)
   node$internal_type <- t
   return(t)
 }
 infer_comparison <- function(node, vars_list, info_env, function_registry) {
   left_type <- infer(node$left_node, vars_list, info_env, function_registry)
-  if (inherits(left_type, c("new_type_node", "fn_node"))) {
-    return(sprintf("Found unsupported left type in: %s", node$stringify()))
-  }
-  if (!inherits(left_type, "pre_type_node")) {
-    return(sprintf("Found unsupported left type in: %s", node$stringify()))
-  }
-  if (left_type$get_data_struct() == "collection") {
-    return(sprintf("Found unsupported left type in: %s", node$stringify()))
-  }
+  err <- check_operand_type(left_type, node, "left")
+  if (!is.null(err)) return(err)
   right_type <- infer(node$right_node, vars_list, info_env, function_registry)
-  if (inherits(right_type, c("new_type_node", "fn_node"))) {
-    return(sprintf("Found unsupported right type in: %s", node$stringify()))
-  }
-  if (!inherits(right_type, "pre_type_node")) {
-    return(sprintf("Found unsupported right type in: %s", node$stringify()))
-  }
-  if (right_type$get_data_struct() == "collection") {
-    return(sprintf("Found unsupported right type in: %s", node$stringify()))
-  }
+  err <- check_operand_type(right_type, node, "right")
+  if (!is.null(err)) return(err)
   common_type <- "logical"
   common_data_struct <- "scalar"
   if ("vector" %within% c(left_type$get_data_struct(), right_type$get_data_struct())) {
@@ -435,25 +390,11 @@ infer_comparison <- function(node, vars_list, info_env, function_registry) {
 }
 infer_and_or_scalar <- function(node, vars_list, info_env, function_registry) {
   left_type <- infer(node$left_node, vars_list, info_env, function_registry)
-  if (inherits(left_type, c("new_type_node", "fn_node"))) {
-    return(sprintf("Found unsupported left type in: %s", node$stringify()))
-  }
-  if (!inherits(left_type, "pre_type_node")) {
-    return(sprintf("Found unsupported left type in: %s", node$stringify()))
-  }
-  if (left_type$get_data_struct() == "collection") {
-    return(sprintf("Found unsupported left type in: %s", node$stringify()))
-  }
+  err <- check_operand_type(left_type, node, "left")
+  if (!is.null(err)) return(err)
   right_type <- infer(node$right_node, vars_list, info_env, function_registry)
-  if (inherits(right_type, c("new_type_node", "fn_node"))) {
-    return(sprintf("Found unsupported right type in: %s", node$stringify()))
-  }
-  if (!inherits(right_type, "pre_type_node")) {
-    return(sprintf("Found unsupported right type in: %s", node$stringify()))
-  }
-  if (right_type$get_data_struct() == "collection") {
-    return(sprintf("Found unsupported right type in: %s", node$stringify()))
-  }
+  err <- check_operand_type(right_type, node, "right")
+  if (!is.null(err)) return(err)
   common_type <- "logical"
   common_data_struct <- "scalar"
   t <- make_inferred_type(common_data_struct, common_type, info_env$r_fct, info_env$real_type)
@@ -462,25 +403,11 @@ infer_and_or_scalar <- function(node, vars_list, info_env, function_registry) {
 }
 infer_and_or_vector <- function(node, vars_list, info_env, function_registry) {
   left_type <- infer(node$left_node, vars_list, info_env, function_registry)
-  if (inherits(left_type, c("new_type_node", "fn_node"))) {
-    return(sprintf("Found unsupported left type in: %s", node$stringify()))
-  }
-  if (!inherits(left_type, "pre_type_node")) {
-    return(sprintf("Found unsupported left type in: %s", node$stringify()))
-  }
-  if (left_type$get_data_struct() == "collection") {
-    return(sprintf("Found unsupported left type in: %s", node$stringify()))
-  }
+  err <- check_operand_type(left_type, node, "left")
+  if (!is.null(err)) return(err)
   right_type <- infer(node$right_node, vars_list, info_env, function_registry)
-  if (inherits(right_type, c("new_type_node", "fn_node"))) {
-    return(sprintf("Found unsupported right type in: %s", node$stringify()))
-  }
-  if (!inherits(right_type, "pre_type_node")) {
-    return(sprintf("Found unsupported right type in: %s", node$stringify()))
-  }
-  if (right_type$get_data_struct() == "collection") {
-    return(sprintf("Found unsupported right type in: %s", node$stringify()))
-  }
+  err <- check_operand_type(right_type, node, "right")
+  if (!is.null(err)) return(err)
   common_type <- "logical"
   common_data_struct <- "vector"
   if ("matrix" %within% c(left_type$get_data_struct(), right_type$get_data_struct())) {
@@ -495,9 +422,8 @@ infer_and_or_vector <- function(node, vars_list, info_env, function_registry) {
 }
 infer_num_int_log <- function(node, vars_list, info_env, function_registry) {
   inner_type <- infer(node$obj, vars_list, info_env, function_registry)
-  if (!inherits(inner_type, "pre_type_node")) {
-    return(sprintf("Found unsupported type in: %s", node$stringify()))
-  }
+  err <- check_operand_type(inner_type, node, allow_collection = TRUE)
+  if (!is.null(err)) return(err)
   base_type <- c(numeric = "double", integer = "integer", logical = "logical")[node$operator]
   t <- make_inferred_type("vector", base_type, info_env$r_fct, info_env$real_type)
   node$internal_type <- t
@@ -631,9 +557,8 @@ function_registry_global$add(
   name = "for", num_args = 3, arg_names = c(NA, NA, NA),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     temp <- infer(node$seq, vars_list, info_env, function_registry)
-    if (!inherits(temp, "pre_type_node")) {
-      return(sprintf("Found unsupported type in: %s", node$stringify()))
-    }
+    err <- check_operand_type(temp, node, allow_collection = TRUE)
+    if (!is.null(err)) return(err)
     if (temp$get_data_struct() == "collection") {
       t <- temp$data_struct$element_type$clone()
       t$iterator <- TRUE
@@ -746,24 +671,10 @@ function_registry_global$add(
   infer_fct = function(node, vars_list, info_env, function_registry) {
     left_type <- infer(node$left_node, vars_list, info_env, function_registry)
     right_type <- infer(node$right_node, vars_list, info_env, function_registry)
-    if (inherits(left_type, c("new_type_node", "fn_node"))) {
-      return(sprintf("Found unsupported left type in: %s", node$stringify()))
-    }
-    if (!inherits(left_type, "pre_type_node")) {
-      return(sprintf("Found unsupported left type in: %s", node$stringify()))
-    }
-    if (left_type$get_data_struct() == "collection") {
-      return(sprintf("Found unsupported left type in: %s", node$stringify()))
-    }
-    if (inherits(right_type, c("new_type_node", "fn_node"))) {
-      return(sprintf("Found unsupported right type in: %s", node$stringify()))
-    }
-    if (!inherits(right_type, "pre_type_node")) {
-      return(sprintf("Found unsupported right type in: %s", node$stringify()))
-    }
-    if (right_type$get_data_struct() == "collection") {
-      return(sprintf("Found unsupported right type in: %s", node$stringify()))
-    }
+    err <- check_operand_type(left_type, node, "left")
+    if (!is.null(err)) return(err)
+    err <- check_operand_type(right_type, node, "right")
+    if (!is.null(err)) return(err)
     left_base_type <- left_type$get_base_type()
     right_base_type <- right_type$get_base_type()
     if (left_base_type == "logical") left_base_type <- "integer"
@@ -810,12 +721,10 @@ function_registry_global$add(
   infer_fct = function(node, vars_list, info_env, function_registry) {
     left_type <- infer(node$left_node, vars_list, info_env, function_registry)
     right_type <- infer(node$right_node, vars_list, info_env, function_registry)
-    if (!inherits(left_type, "pre_type_node")) {
-      return(sprintf("Found unsupported left type in: %s", node$stringify()))
-    }
-    if (!inherits(right_type, "pre_type_node")) {
-      return(sprintf("Found unsupported right type in: %s", node$stringify()))
-    }
+    err <- check_operand_type(left_type, node, "left", allow_collection = TRUE)
+    if (!is.null(err)) return(err)
+    err <- check_operand_type(right_type, node, "right", allow_collection = TRUE)
+    if (!is.null(err)) return(err)
     t <- make_inferred_type("vector", left_type$get_base_type(), info_env$r_fct, info_env$real_type)
     node$internal_type <- t
     return(t)
@@ -1053,12 +962,10 @@ function_registry_global$add(
   infer_fct = function(node, vars_list, info_env, function_registry) {
     left_type <- infer(node$args[[1]], vars_list, info_env, function_registry)
     right_type <- infer(node$args[[2]], vars_list, info_env, function_registry)
-    if (!inherits(left_type, "pre_type_node")) {
-      return(sprintf("Found unsupported left type in: %s", node$stringify()))
-    }
-    if (!inherits(right_type, "pre_type_node")) {
-      return(sprintf("Found unsupported right type in: %s", node$stringify()))
-    }
+    err <- check_operand_type(left_type, node, "left", allow_collection = TRUE)
+    if (!is.null(err)) return(err)
+    err <- check_operand_type(right_type, node, "right", allow_collection = TRUE)
+    if (!is.null(err)) return(err)
     mode_type <- node$args[[1]]$name |> remove_double_quotes()
     custom_type <- info_env$known_types[[mode_type]]
     if (!is.null(custom_type) && inherits(custom_type, "new_type_node")) {
@@ -1349,20 +1256,20 @@ function_registry_global$add(
     if (info_env$real_type != "etr::Dual") {
       node$error <- "seed can be only used when derivative is set to forward"
     }
-    # TODO: function_registry is a free var here, not a check_fct param
-    left_type_node <- infer(node$left_node, vars_list, info_env, function_registry)
-    right_type_node <- infer(node$right_node, vars_list, info_env, function_registry)
-    if (!inherits(left_type_node, "pre_type_node")) {
-      return(sprintf("Found unsupported left type in: %s", node$stringify()))
-    }
-    if (!inherits(right_type_node, "pre_type_node")) {
-      return(sprintf("Found unsupported right type in: %s", node$stringify()))
-    }
+    left_type_node <- infer(node$left_node, vars_list, info_env, info_env$function_registry)
+    right_type_node <- infer(node$right_node, vars_list, info_env, info_env$function_registry)
+    err <- check_operand_type(left_type_node, node, "left", allow_collection = TRUE)
+    if (!is.null(err)) return(err)
+    err <- check_operand_type(right_type_node, node, "right", allow_collection = TRUE)
+    if (!is.null(err)) return(err)
     if (!(left_type_node$get_base_type() %in% c("int", "integer", "double"))) {
       node$error <- "The first argument of seed has to have the base type double"
     }
     if (!(right_type_node$get_base_type() %in% c("int", "integer", "double"))) {
       node$error <- "The second argument of seed has to have the base type integer or double"
+    }
+    if (inherits(node$left_node, c("binary_node", "function_node")) && node$left_node$operator %in% c("[", "[[", "at")) {
+      node$error <- "The first argument of seed cannot be a subsetting result -- pass the whole array and an index instead, e.g. seed(x, 1L)"
     }
   },
  group = "binary_node", cpp_name = "etr::seed"
@@ -1376,20 +1283,20 @@ function_registry_global$add(
     if (info_env$real_type != "etr::Dual") {
       node$error <- "unseed can be only used when derivative is set to forward"
     }
-    # TODO: function_registry is a free var here, not a check_fct param
-    left_type_node <- infer(node$left_node, vars_list, info_env, function_registry)
-    right_type_node <- infer(node$right_node, vars_list, info_env, function_registry)
-    if (!inherits(left_type_node, "pre_type_node")) {
-      return(sprintf("Found unsupported left type in: %s", node$stringify()))
-    }
-    if (!inherits(right_type_node, "pre_type_node")) {
-      return(sprintf("Found unsupported right type in: %s", node$stringify()))
-    }
+    left_type_node <- infer(node$left_node, vars_list, info_env, info_env$function_registry)
+    right_type_node <- infer(node$right_node, vars_list, info_env, info_env$function_registry)
+    err <- check_operand_type(left_type_node, node, "left", allow_collection = TRUE)
+    if (!is.null(err)) return(err)
+    err <- check_operand_type(right_type_node, node, "right", allow_collection = TRUE)
+    if (!is.null(err)) return(err)
     if (!(left_type_node$get_base_type() %in% c("int", "integer", "double"))) {
       node$error <- "The first argument of seed has to have the base type double"
     }
     if (!(right_type_node$get_base_type() %in% c("int", "integer", "double"))) {
       node$error <- "The second argument of seed has to have the base type integer or double"
+    }
+    if (inherits(node$left_node, c("binary_node", "function_node")) && node$left_node$operator %in% c("[", "[[", "at")) {
+      node$error <- "The first argument of unseed cannot be a subsetting result -- pass the whole array and an index instead, e.g. unseed(x, 1L)"
     }
   },
  group = "binary_node", cpp_name = "etr::unseed"
@@ -1406,11 +1313,9 @@ function_registry_global$add(
     if (info_env$real_type != "etr::Dual") {
       node$error <- "get_dot can be only used when derivative is set to forward"
     }
-    # TODO: function_registry is a free var here, not a check_fct param
-    type <- infer(node$obj, vars_list, info_env, function_registry)
-    if (!inherits(type, "pre_type_node")) {
-      return(sprintf("Found unsupported type in: %s", node$stringify()))
-    }
+    type <- infer(node$obj, vars_list, info_env, info_env$function_registry)
+    err <- check_operand_type(type, node, allow_collection = TRUE)
+    if (!is.null(err)) return(err)
     if (type$get_base_type() != "double") {
       node$error <- "The argument of get_dot has to have the base type double"
     }
@@ -1422,12 +1327,10 @@ function_registry_global$add(
   infer_fct = function(node, vars_list, info_env, function_registry) {
     left_type_node <- infer(node$left_node, vars_list, info_env, function_registry)
     right_type_node <- infer(node$right_node, vars_list, info_env, function_registry)
-    if (!inherits(left_type_node, "pre_type_node")) {
-      return(sprintf("Found unsupported left type in: %s", node$stringify()))
-    }
-    if (!inherits(right_type_node, "pre_type_node")) {
-      return(sprintf("Found unsupported right type in: %s", node$stringify()))
-    }
+    err <- check_operand_type(left_type_node, node, "left", allow_collection = TRUE)
+    if (!is.null(err)) return(err)
+    err <- check_operand_type(right_type_node, node, "right", allow_collection = TRUE)
+    if (!is.null(err)) return(err)
     lds <- left_type_node$get_data_struct()
     rds <- right_type_node$get_data_struct()
     ds <- "scalar"
@@ -1448,15 +1351,12 @@ function_registry_global$add(
     if (info_env$real_type != "etr::ReverseDouble") {
       node$error <- "deriv can be only used when derivative is set to reverse"
     }
-    # TODO: function_registry is a free var here, not a check_fct param
-    left_type_node <- infer(node$left_node, vars_list, info_env, function_registry)
-    right_type_node <- infer(node$right_node, vars_list, info_env, function_registry)
-    if (!inherits(left_type_node, "pre_type_node")) {
-      return(sprintf("Found unsupported left type in: %s", node$stringify()))
-    }
-    if (!inherits(right_type_node, "pre_type_node")) {
-      return(sprintf("Found unsupported right type in: %s", node$stringify()))
-    }
+    left_type_node <- infer(node$left_node, vars_list, info_env, info_env$function_registry)
+    right_type_node <- infer(node$right_node, vars_list, info_env, info_env$function_registry)
+    err <- check_operand_type(left_type_node, node, "left", allow_collection = TRUE)
+    if (!is.null(err)) return(err)
+    err <- check_operand_type(right_type_node, node, "right", allow_collection = TRUE)
+    if (!is.null(err)) return(err)
     if (left_type_node$get_base_type() != "double") {
       node$error <- "The first argument of deriv has to have the base type double"
     }
