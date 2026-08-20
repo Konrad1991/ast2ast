@@ -37,33 +37,12 @@ x <- c(1, 2, 3)
 fcpp(x)
 x
 
-g <- function() {
-  A <- matrix(c(2, 0, 0, 2), 2, 2)
-  b <- matrix(c(4, 6), 2, 1)
-  x <- solve(A, b)
-  return(x[1])
+g <- function(a) {
+  print("hello world")
 }
-fcpp <- ast2ast::translate(g)
-fcpp()
-
-types_f <- function() {
-  new_type(
-    Point,
-    slots(
-      x |> type(double),
-      y |> type(double),
-    )
-  )
+args_f <- function() {
+  a |> type(mat(double))
 }
-f <- function(n) {
-  pts <- vector(mode = "Point", n)
-  pts[[n + 1L]]$x <- 99.0
-  return(pts[[1L]]$x)
-}
-fcpp <- ast2ast::translate(
-  f,
-  types_f = types_f,
-  # getsource = TRUE,
-  verbose = TRUE
-)
-fcpp(1)
+fcpp <- ast2ast::translate(g, args_f, verbose = TRUE)
+a <- matrix(1:4, 2, 2)
+fcpp(a)

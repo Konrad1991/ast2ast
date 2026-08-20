@@ -21,38 +21,6 @@ shown directly to the R user, with no variable name, no line, and (in one case) 
 misleading category. These are the least actionable errors in the package and
 contrast sharply with the clean static-layer messages elsewhere.
 
-**1a. Single-index subsetting of a 2-D object.** `solve(A, B)` with a *matrix*
-RHS returns a matrix; single-indexing it then throws:
-
-```r
-library(ast2ast)
-g <- function() {
-  A <- matrix(c(2, 0, 0, 2), 2, 2)
-  b <- matrix(c(4, 6), 2, 1)   # column vector as 2x1 matrix
-  x <- solve(A, b)             # x is 2x1 matrix
-  return(x[1])                 # single index on a 2-D object
-}
-translate(g)()
-#> Error: Too less index arguments for array rank
-```
-
-A *vector* RHS returns a vector and indexes fine (`solve(A, c(4,6))[1]` works), so
-the shape divergence from base R is the trap. Message is unlocated and reads
-"Too less" (→ "Too few").
-
-**1b. Collection out-of-bounds** leaks libstdc++ internals:
-
-```r
-types_f <- function() new_type(Point, slots(x |> type(double), y |> type(double)))
-f <- function(n) {
-  pts <- vector(mode = "Point", n)
-  pts[[n + 1L]]$x <- 99.0
-  return(pts[[1L]]$x)
-}
-translate(f, args_f = function(n) n |> type(int), types_f = types_f)(3L)
-#> Error: vector::_M_range_check: __n (which is 3) >= this->size() (which is 3)
-```
-
 **1c. Numeric base-type mismatch** (`REAL`/`INTEGER` macro strictness) reports the
 wrong expected type and names neither the argument nor the slot:
 

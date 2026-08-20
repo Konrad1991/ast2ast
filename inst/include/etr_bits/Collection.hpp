@@ -54,8 +54,14 @@ public:
     return res;
   }
 
-  T& operator[](std::size_t i) { return data_.at(i); }
-  const T& operator[](std::size_t i) const { return data_.at(i); }
+  T& operator[](std::size_t i) {
+    ass<"Error: out of boundaries">(i < data_.size());
+    return data_[i];
+  }
+  const T& operator[](std::size_t i) const {
+    ass<"Error: out of boundaries">(i < data_.size());
+    return data_[i];
+  }
 
   std::size_t size() const { return data_.size(); }
 
@@ -73,10 +79,7 @@ template <typename T> struct is_any_collection<Collection<T>> : std::true_type {
 template <typename T> inline constexpr bool is_any_collection_v = is_any_collection<T>::value;
 template <typename T> concept IsCollection = is_any_collection_v<T>;
 
-// R-facing element access: takes a 1-based index (matching [[ ]] in the DSL)
-// and converts to the 0-based index Collection<T>::operator[] expects.
-// Out-of-range access (including a bad/negative index, which wraps to a huge
-// size_t) is caught by the bounds-checked .at() inside operator[].
+// 1-based index, matching [[ ]] in the DSL
 template <typename T>
 inline T& collection_at(Collection<T>& c, long i) {
   return c[static_cast<std::size_t>(i - 1)];
