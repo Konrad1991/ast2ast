@@ -1149,6 +1149,20 @@ expect_error(
   pattern = "cannot be used as a condition"
 )
 
+# --- comparing struct fields via $ in a condition must not be misflagged
+# as "struct used as a condition" (only the struct itself is disallowed,
+# not a $-access into a scalar field)
+f <- function() {
+  a |> type(AwesomeClass)
+  b |> type(AwesomeClass)
+  a$x <- 1
+  b$x <- 2
+  if (a$x < b$x) print("Foo") else print("Bar")
+}
+fcpp <- ast2ast::translate(f, types_f = types_f_awesome)
+out <- capture.output(fcpp())
+expect_true(any(grepl("Foo", out)))
+
 # --- const() is enforced through nested struct/collection/field access -----
 
 types_f_scene <- function() {

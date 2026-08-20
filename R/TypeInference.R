@@ -439,38 +439,47 @@ type_infer_for_node <- function(node, info_env) {
 type_infer_while_and_if <- function(node, info_env) {
 
   if (inherits(node, c("while_node", "if_node"))) {
-    variable <- find_var_lhs(node$condition)
+    type <- infer(node$condition, info_env$vars_list, info_env, info_env$function_registry)
 
-    if (!is.null(variable)) { # e.g. while(TRUE)
-      type <- infer(node$condition, info_env$vars_list, info_env, info_env$function_registry)
-      if (is.character(type)) {
-        node$error <- type
+    if (is.character(type)) {
+      node$error <- type
+    }
+    else {
+      # "the variable" only makes sense for a bare (possibly negated/parenthesized)
+      # variable used directly as a condition, e.g. if (x). For x$f, x[[i]] or a
+      # comparison, `type` above already resolved the type of the *whole*
+      # condition correctly through the subsetting/operator -- that's what the
+      # collection/struct/function rejections below must check, not the
+      # declared type of some variable found by walking into the expression
+      # (e.g. collection[[1L]] is not itself a collection, and must not be
+      # rejected as one just because `collection` is).
+      bare <- node$condition
+      while (inherits(bare, "unary_node")) bare <- bare$obj
+      variable <- if (inherits(bare, "variable_node")) deparse(bare$name) else NULL
+      label <- if (is.null(variable)) node$condition$stringify() else variable
+
+      if (!is.null(variable) && inherits(info_env$vars_list[[variable]], "unknown_type")) {
+        info_env$vars_list[[variable]] <- type
       }
-      else {
-
-        if (inherits(info_env$vars_list[[variable]], "unknown_type")) {
-          info_env$vars_list[[variable]] <- type
-        }
-        else if (inherits(info_env$vars_list[[variable]], "pre_type_node") && info_env$vars_list[[variable]]$get_data_struct() == "collection") {
-          node$error <- sprintf("The variable %s is a collection and cannot be used as a condition", variable)
-        }
-        else if (inherits(info_env$vars_list[[variable]], "pre_type_node")) {
-          type <- common_type(info_env$vars_list[[variable]], type)
-          if (is.character(type)) {
-            node$error <- type
-          } else if (!info_env$vars_list[[variable]]$get_type_decl()) {
-            type <- type |> flatten_type()
-            info_env$vars_list[[variable]] <- type
-          }
-        }
-        else if (inherits(info_env$vars_list[[variable]], "new_type_node")) {
-          node$error <- sprintf(
-            "The variable %s is of custom type %s and cannot be used as a condition",
-            variable, info_env$vars_list[[variable]]$name
-          )
-        }
-        else if (inherits(info_env$vars_list[[variable]], "fn_node")) {
-          node$error <- sprintf("The variable %s is marked as function and cannot be used in this context", variable)
+      else if (inherits(type, "pre_type_node") && type$get_data_struct() == "collection") {
+        node$error <- sprintf("The variable %s is a collection and cannot be used as a condition", label)
+      }
+      else if (inherits(type, "new_type_node")) {
+        node$error <- sprintf(
+          "The variable %s is of custom type %s and cannot be used as a condition",
+          label, type$name
+        )
+      }
+      else if (inherits(type, "fn_node")) {
+        node$error <- sprintf("The variable %s is marked as function and cannot be used in this context", label)
+      }
+      else if (!is.null(variable) && inherits(info_env$vars_list[[variable]], "pre_type_node")) {
+        detected_type <- common_type(info_env$vars_list[[variable]], type)
+        if (is.character(detected_type)) {
+          node$error <- detected_type
+        } else if (!info_env$vars_list[[variable]]$get_type_decl()) {
+          detected_type <- detected_type |> flatten_type()
+          info_env$vars_list[[variable]] <- detected_type
         }
       }
     }
