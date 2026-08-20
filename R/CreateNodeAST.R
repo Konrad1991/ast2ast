@@ -41,36 +41,40 @@ create_ast <- function(code, context, env, function_registry) {
     fn$block <- code[[4]] |> wrap_in_block() |> process(operator, env, function_registry)
     fn$context <- context
     return(fn)
-  } else if (function_registry$is_group_functions(operator) || length(code) > 3) {
-    if (operator == "fn") {
-      fn <- fn_node$new()
-      fn$function_registry <- function_registry$clone(deep = TRUE)
-      fn$function_registry_outer <- function_registry
-      fn$known_types <- env$known_types
-      fn$args_f <- code[[2]][[3]] |> parse_input_args_for_fn_node(FALSE, env$real_type, env$known_types)
-      fn$args_f_raw <- code[[2]]
-
-      return_type_expr <- deparse(code[[3]])
-      return_type_expr <- paste0("RETURN_TYPE |> ", return_type_expr)
-      return_type_expr <- str2lang(return_type_expr)
-      return_type <- parse_types(list(return_type_expr), fct_input = FALSE, FALSE, env$real_type, env$known_types)
-      fn$return_type <- return_type[[1]]
-      fn$AST <- code[[4]] |> wrap_in_block()
-      fn$context <- context
-      if (!(context %in% c("<-", "="))) {
-        fn$error <- "You have to assign functions (fn) to variables"
-      }
-      return(fn)
-    } else {
-      # by adding length(code) > 3 also wrong fcts are added to the AST
-      fn <- function_node$new()
-      fn$operator <- operator
-      fn$args <- lapply(code[-1], function(x) {
-        process(x, operator, env, function_registry)
-      })
-      fn$context <- context
-      return(fn)
+  } else if (operator == "fn") {
+    required_args <- c("args_f", "return_value", "block")
+    missing_args <- setdiff(required_args, names(code)[-1])
+    if (length(missing_args) > 0) {
+      stop(sprintf("fn: %s %s required", paste(missing_args, collapse = ", "),
+        if (length(missing_args) > 1) "are" else "is"))
     }
+    fn <- fn_node$new()
+    fn$function_registry <- function_registry$clone(deep = TRUE)
+    fn$function_registry_outer <- function_registry
+    fn$known_types <- env$known_types
+    fn$args_f <- code[["args_f"]][[3]] |> parse_input_args_for_fn_node(FALSE, env$real_type, env$known_types)
+    fn$args_f_raw <- code[["args_f"]]
+
+    return_type_expr <- deparse(code[["return_value"]])
+    return_type_expr <- paste0("RETURN_TYPE |> ", return_type_expr)
+    return_type_expr <- str2lang(return_type_expr)
+    return_type <- parse_types(list(return_type_expr), fct_input = FALSE, FALSE, env$real_type, env$known_types)
+    fn$return_type <- return_type[[1]]
+    fn$AST <- code[["block"]] |> wrap_in_block()
+    fn$context <- context
+    if (!(context %in% c("<-", "="))) {
+      fn$error <- "You have to assign functions (fn) to variables"
+    }
+    return(fn)
+  } else if (function_registry$is_group_functions(operator) || length(code) > 3) {
+    # by adding length(code) > 3 also wrong fcts are added to the AST
+    fn <- function_node$new()
+    fn$operator <- operator
+    fn$args <- lapply(code[-1], function(x) {
+      process(x, operator, env, function_registry)
+    })
+    fn$context <- context
+    return(fn)
   } else if (length(code) == 3) {
     if (operator == "type") {
       t <- parse_types(list(as.call(code)),
@@ -116,7 +120,7 @@ create_ast <- function(code, context, env, function_registry) {
 parse_body <- function(b, env, function_registry) {
   ast <- try({
     process(b, "Start", env, function_registry)
-  })
+  }, silent = TRUE)
   if (inherits(ast, "try-error")) {
     error_string <- ast |> as.character()
     stop(sprintf("Could not translate the function due to %s", error_string))

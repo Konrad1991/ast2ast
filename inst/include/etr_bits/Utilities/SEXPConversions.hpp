@@ -64,7 +64,7 @@ inline Integer SEXP2Scalar<Integer>(SEXP s) {
 }
 template<>
 inline Double SEXP2Scalar<Double>(SEXP s) {
-  ass<"R object is not of type integer">(Rf_isReal(s));
+  ass<"R object is not of type double">(Rf_isReal(s));
   const R_xlen_t sz = Rf_xlength(s);
   ass<"Argument has length > 1">(sz == 1);
   const double d = REAL(s)[0];
@@ -73,7 +73,7 @@ inline Double SEXP2Scalar<Double>(SEXP s) {
 }
 template<>
 inline Dual SEXP2Scalar<Dual>(SEXP s) {
-  ass<"R object is not of type integer">(Rf_isReal(s));
+  ass<"R object is not of type double">(Rf_isReal(s));
   const R_xlen_t sz = Rf_xlength(s);
   ass<"Argument has length > 1">(sz == 1);
   const double d = REAL(s)[0];
@@ -82,12 +82,53 @@ inline Dual SEXP2Scalar<Dual>(SEXP s) {
 }
 template<>
 inline ReverseDouble SEXP2Scalar<ReverseDouble>(SEXP s) {
-  ass<"R object is not of type integer">(Rf_isReal(s));
+  ass<"R object is not of type double">(Rf_isReal(s));
   const R_xlen_t sz = Rf_xlength(s);
   ass<"Argument has length > 1">(sz == 1);
   const double d = REAL(s)[0];
   ass<"NA/NaN double not allowed">(!ISNA(d) && !ISNAN(d));
   return ReverseDouble::Var(d);
+}
+
+inline const char* r_type_name(SEXP s) {
+  if (Rf_isReal(s)) return "double";
+  if (Rf_isInteger(s)) return "integer";
+  if (Rf_isLogical(s)) return "logical";
+  if (Rf_isString(s)) return "character";
+  if (Rf_isNewList(s)) return "list";
+  return "unknown";
+}
+
+// Scalars have no safe T(SEXP) constructor to delegate to (collides with
+// T(double)/T(int) via 0's null-pointer-constant conversion), so this
+// extracts the value itself for those; arrays/borrows/structs already have
+// one, so this only validates and hands s back unchanged.
+template <typename T>
+inline decltype(auto) CheckSEXP(SEXP s, const char* name) {
+  if constexpr (IsDouble<T> || IsDual<T> || IsReverseDouble<T>) {
+    ass(Rf_isReal(s), std::string("Type mismatch for '") + name + "': expected double, got " + r_type_name(s));
+    return SEXP2Scalar<T>(s);
+  } else if constexpr (IsInteger<T>) {
+    ass(Rf_isInteger(s), std::string("Type mismatch for '") + name + "': expected integer, got " + r_type_name(s));
+    return SEXP2Scalar<T>(s);
+  } else if constexpr (IsLogical<T>) {
+    ass(Rf_isLogical(s), std::string("Type mismatch for '") + name + "': expected logical, got " + r_type_name(s));
+    return SEXP2Scalar<T>(s);
+  } else if constexpr (IsArray<T>) {
+    using ElemT = typename ExtractDataType<T>::value_type;
+    if constexpr (IsDouble<ElemT> || IsDual<ElemT> || IsReverseDouble<ElemT>) {
+      ass(Rf_isReal(s), std::string("Type mismatch for '") + name + "': expected double, got " + r_type_name(s));
+    } else if constexpr (IsInteger<ElemT>) {
+      ass(Rf_isInteger(s), std::string("Type mismatch for '") + name + "': expected integer, got " + r_type_name(s));
+    } else if constexpr (IsLogical<ElemT>) {
+      ass(Rf_isLogical(s), std::string("Type mismatch for '") + name + "': expected logical, got " + r_type_name(s));
+    }
+    return s;
+  } else {
+    // struct/collection -- no scalar base type to check here, the type's
+    // own generated SEXP constructor validates class/fields itself.
+    return s;
+  }
 }
 
 // Cast scalar elements to their SEXP equivalents

@@ -1054,7 +1054,6 @@ concept AllScalarIndices = NonEmpty<Args...> && (ScalarIndex<Args> && ...);
 template <typename... Args>
 concept HasNonScalarIndex = (!ScalarIndex<Args> || ...);
 
-
 struct Logical {
   bool val;
   bool is_na{false};

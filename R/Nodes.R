@@ -1040,12 +1040,11 @@ pre_type_node <- R6::R6Class(
       if (self$iterator) return("")
       if (!self$r_fct && self$fct_input) return("")
       if (self$r_fct && self$fct_input) {
-        res <- paste0(self$data_struct$stringify(indent), " ", self$name)
-        cast_fct <- self$data_struct$cast_fct()
-        if (is.null(cast_fct)) {
-          return(paste0(indent, res, " = ", self$name, "SEXP;"))
-        }
-        return(paste0(indent, res, " = ", cast_fct, "(", self$name, "SEXP);"))
+        type_str <- self$data_struct$stringify(indent)
+        return(paste0(
+          indent, type_str, " ", self$name,
+          "(etr::CheckSEXP<", type_str, ">(", self$name, "SEXP, \"", self$name, "\"));"
+        ))
       }
       paste0(indent, self$data_struct$stringify(indent), " ", self$name, ";")
     },
@@ -1472,12 +1471,11 @@ new_type_node <- R6::R6Class(
       if (self$iterator) return("")
       if (!self$r_fct && self$fct_input) return("")
       if (self$r_fct && self$fct_input) {
-        res <- paste0(self$stringify(indent), " ", self$var_name)
-        cast_fct <- self$cast_fct()
-        if (is.null(cast_fct)) {
-          return(paste0(indent, res, " = ", self$var_name, "SEXP;"))
-        }
-        return(paste0(indent, res, " = ", cast_fct, "(", self$var_name, "SEXP);"))
+        type_str <- self$stringify(indent)
+        return(paste0(
+          indent, type_str, " ", self$var_name,
+          "(etr::CheckSEXP<", type_str, ">(", self$var_name, "SEXP, \"", self$var_name, "\"));"
+        ))
       }
       paste0(indent, self$stringify(indent), " ", self$var_name, ";")
     },

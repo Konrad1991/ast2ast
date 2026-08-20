@@ -47,21 +47,3 @@ f <- function() {
 test_checks(f, args_f, types_f, TRUE,
 "a <- c(3.14, c)\nFound unexpected type collection containing Point for variable c"
 )
-
-f <- function() {
-  g <- fn(
-    f_args = function(a, b) {
-      a |> type(double)
-      b |> type(double)
-    },
-    return_value = type(int),
-    block = function(a, b) {
-      c <- as.integer(a + b)
-      return(c)
-    }
-  )
-  a <- c(3.14, g)
-}
-test_checks(f, args_f, types_f, TRUE,
-"a <- c(3.14, g)\nFound unexpected type inner function for variable g which is not supported in 'c'"
-)

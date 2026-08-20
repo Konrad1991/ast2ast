@@ -7,42 +7,9 @@ tinytest::test_package("ast2ast")
 files <- list.files("./R", full.names = TRUE)
 invisible(lapply(files, source))
 
-types <- function() {
-  new_type(
-    Node,
-    slots(
-      x |> type(double),
-      y |> type(vec(int))
-    )
-  )
+f <- function(x) {
+  g <- fn(args_f = function(a) a |> type(double),
+          block = function(a) { return(a * 2) })   # no return_value
+  return(g(x))
 }
-f <- function() {
-  n |> type(Node)
-  print(n)
-}
-fcpp <- translate(f, types_f = types, verbose = TRUE)
-fcpp()
-
-f <- function(a) {
-  n <- length(a)
-  for (i in 1L:n) { a[i] <- a[i] * 2.0 }
-  return(a)
-}
-fcpp <- ast2ast::translate(f,
-  args_f = function(a) {
-    a |> type(borrow_vec(double))
-  }
-)
-x <- c(1, 2, 3)
-fcpp(x)
-x
-
-g <- function(a) {
-  print("hello world")
-}
-args_f <- function() {
-  a |> type(mat(double))
-}
-fcpp <- ast2ast::translate(g, args_f, verbose = TRUE)
-a <- matrix(1:4, 2, 2)
-fcpp(a)
+ast2ast::translate(f)
