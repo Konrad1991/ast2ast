@@ -18,10 +18,13 @@ template <typename T, typename BorrowTrait> struct Borrow {
   // T can thus be only Logical, Integer or Double!
   // But a raw C pointer is borrowed of bool*, int* or double*
   from_ast_scalar_t<T> *p = nullptr;
-  // Optional NA flags. Null when the borrowed memory has no parallel NA
+  // Optional NA flags, shared (not deep-copied) across Borrow copies so
+  // copying stays cheap. Null when the borrowed memory has no parallel NA
   // array (e.g. SEXP-backed Borrow, where R encodes NA via sentinel values
-  // inside `p` itself, not in a separate buffer).
-  bool *p_na = nullptr;
+  // inside `p` itself, not in a separate buffer). When constructed from an
+  // externally-owned bool*, wrapped with a no-op deleter -- that memory is
+  // never Borrow's to free.
+  std::shared_ptr<bool[]> p_na;
 
   std::size_t size() const noexcept { return allocated ? sz : 0; }
 
@@ -84,7 +87,7 @@ template <typename T, typename BorrowTrait> struct Borrow {
   void init(T2 *p_, std::size_t sz_, bool *na_p_ = nullptr) {
     ass<"null pointer with positive size">(p_ != nullptr || sz_ == 0);
     this->p    = p_;
-    this->p_na = na_p_;
+    this->p_na = na_p_ ? std::shared_ptr<bool[]>(na_p_, [](bool*){}) : std::shared_ptr<bool[]>();
     this->sz = sz_;
     capacity = sz;
     this->allocated = true;

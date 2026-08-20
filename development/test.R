@@ -23,3 +23,16 @@ f <- function() {
 fcpp <- translate(f, types_f = types, verbose = TRUE)
 fcpp()
 
+f <- function(a) {
+  n <- length(a)
+  for (i in 1L:n) { a[i] <- a[i] * 2.0 }
+  return(a)
+}
+fcpp <- ast2ast::translate(f,
+  args_f = function(a) {
+    a |> type(borrow_vec(double))
+  }
+)
+x <- c(1, 2, 3)
+fcpp(x)
+x

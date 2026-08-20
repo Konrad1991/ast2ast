@@ -161,7 +161,7 @@ inline void set_dimnames_attrib(SEXP x, SEXP dimnames /* must be a VECSXP of len
 //
 // Storage layout we exploit:
 //   Buffer<T,LBufferTrait> / Buffer<T,RBufferTrait>  → SoA: p_val, p_na
-//   Borrow<T,BorrowTrait>                            → p,     na_p
+//   Borrow<T,BorrowTrait>                            → p,     p_na (shared_ptr)
 //   Buffer<Dual,*>  is always SoA: p_val, p_dot, p_na, p_na_dot
 //   ReverseDouble has no contiguous double buffer (each handle's value lives
 //   on the tape), so it stays on the per-element path.
@@ -172,7 +172,7 @@ inline auto cast_value_ptr(const A& a) {
 }
 template <typename A>
 inline auto cast_na_ptr(const A& a) {
-  if constexpr (IsBorrowArray<Decayed<A>>) return a.d.na_p;
+  if constexpr (IsBorrowArray<Decayed<A>>) return a.d.p_na.get();
   else                                      return a.d.p_na;
 }
 
