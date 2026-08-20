@@ -5,7 +5,7 @@ translate <- function(f,
                       derivative = NULL,
                       verbose = FALSE,
                       getsource = FALSE,
-                      debug = FALSE
+                      debug = TRUE
                       )
 {
   stopifnot("f is not a function" = is.function(f))

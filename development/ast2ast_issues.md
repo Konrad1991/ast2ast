@@ -151,55 +151,6 @@ top-level and inner-function undefined variables).
 
 ---
 
-## Issue 5 — Doc/behaviour mismatches (parser is often better than documented)
-
-Several documented rules no longer match behaviour — mostly because the parser
-improved. All doc-side fixes except where noted.
-
-**5a. `fn` single-statement block braces.** Docs (vignette + `translate.Rd`) say the
-block "must be wrapped in `{ }`, even for a single statement", but the improved
-parser accepts it without:
-
-```r
-g <- fn(args_f = function(a) a |> type(double),
-        return_value = type(double),
-        block = function(a) return(a * 2))   # no braces -> works, returns 6
-```
-
-Relax the wording.
-
-**5b. `const()` violation.** Docs say `const()` produces a *C++ compile-time* error;
-it is actually caught earlier and more cleanly by the static checker
-("You cannot assign to a constant variable"). Update wording — the current
-behaviour is better than documented.
-
-**5c. `cmr` evaluation-point argument.** Docs say the first argument must be a
-"vector of length one", but a length-1 vector triggers a spurious warning while a
-true scalar works silently:
-
-```r
-# length-1 vector -> warns
-#> Warning: time point has more than one element only the first one is used
-# true scalar (x <- 2.5) -> no warning, correct result
-```
-
-Reconcile: the doc should likely say scalar, and/or the warning should not fire for
-length-1 input.
-
-**5d. Undocumented `fn` argument-binding rule.** Passing a non-variable *expression*
-(e.g. `x[[1L]]`, `a + b`) to an inner function requires the parameter to be `const`;
-non-const params bind only to bare variables. The error is excellent (names arg
-position, function, rule, and the exact fix) — this is purely a docs gap:
-
-```r
-#> Argument Nr. 1 to function sq accepts only variables. If you want to use an
-#> expression (e.g. variable + variable) you have to declare the argument as const
-```
-
-Document the lvalue/rvalue binding distinction for `fn` parameters.
-
----
-
 ## Issue 6 — Document the borrow / ref / XPtr calling convention (with the raw-pointer use case)
 
 The docs show the XPtr calling convention only for a nullary `void()` function.

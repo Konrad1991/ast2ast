@@ -45,3 +45,26 @@ g <- function() {
 }
 fcpp <- ast2ast::translate(g)
 fcpp()
+
+types_f <- function() {
+  new_type(
+    Point,
+    slots(
+      x |> type(double),
+      y |> type(double),
+    )
+  )
+}
+f <- function(n) {
+  pts <- vector(mode = "Point", n)
+  pts[[n + 1L]]$x <- 99.0
+  return(pts[[1L]]$x)
+}
+fcpp <- ast2ast::translate(
+  f,
+  types_f = types_f,
+  # getsource = TRUE,
+  verbose = TRUE
+)
+cat(fcpp, "\n")
+fcpp()

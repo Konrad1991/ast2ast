@@ -24,6 +24,15 @@ public:
   template <typename N>
     requires IsScalarLike<N>
   explicit Collection(N n) : data_(static_cast<std::size_t>(get_val(n))) {}
+  // n's type isn't required to be a strict scalar (e.g. an untyped arg
+  // defaults to matrix(double)) -- same length-1-narrows-to-scalar
+  // tolerance at() already gives index arguments via ExtractIndex().
+  template <typename N>
+    requires IsArray<Decayed<N>>
+  explicit Collection(const N& n) {
+    ass<"vector()'s length argument must be a scalar or a length-1 vector">(n.size() == 1);
+    data_.resize(static_cast<std::size_t>(get_val(n.get(0))));
+  }
 
   explicit Collection(SEXP arg) {
     if (!Rf_isNewList(arg)) {
@@ -87,6 +96,21 @@ template <typename T, typename I>
   requires IsScalarLike<I>
 inline const T& collection_at(const Collection<T>& c, I i) {
   return c[static_cast<std::size_t>(get_val(i) - 1)];
+}
+// Same length-1-narrows-to-scalar tolerance as at()'s ExtractIndex(), for
+// an index whose type isn't a strict scalar (e.g. an untyped arg defaults
+// to matrix(double)).
+template <typename T, typename I>
+  requires IsArray<Decayed<I>>
+inline T& collection_at(Collection<T>& c, const I& i) {
+  ass<"collection index must be a scalar or a length-1 vector">(i.size() == 1);
+  return c[static_cast<std::size_t>(get_val(i.get(0)) - 1)];
+}
+template <typename T, typename I>
+  requires IsArray<Decayed<I>>
+inline const T& collection_at(const Collection<T>& c, const I& i) {
+  ass<"collection index must be a scalar or a length-1 vector">(i.size() == 1);
+  return c[static_cast<std::size_t>(get_val(i.get(0)) - 1)];
 }
 
 template <typename T>

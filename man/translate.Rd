@@ -9,7 +9,8 @@ translate(
   output = "R",
   derivative = NULL,
   verbose = FALSE,
-  getsource = FALSE
+  getsource = FALSE,
+  debug = TRUE
 )
 }
 \arguments{
@@ -33,6 +34,10 @@ translate(
     }}
   \item{verbose}{Logical. If \code{TRUE}, prints output from the compilation process.}
   \item{getsource}{Logical. If \code{TRUE}, returns the generated C++ source code as a string instead of compiling it.}
+  \item{debug}{Logical. Defaults to \code{TRUE}. When \code{TRUE}, a runtime
+    error is reported as \code{"In '<statement>': <message>"}, naming the
+    specific line of translated code that failed. Set to \code{FALSE} to get
+    the plain, unattributed message instead.}
 }
 \value{
   Depending on \code{output}:
@@ -119,10 +124,13 @@ translate(
     Functions can be defined inside \code{f} with \code{fn()}, which takes
     \code{args_f} (argument types, same form as the top-level \code{args_f}),
     \code{return_value} (the return type via \code{type()}), and \code{block}
-    (the function body, whose block must be wrapped in \code{\{ \}} even for
-    a single statement). Inner functions may call each other, including
-    recursively, and can be passed as values to functions expecting one, such
-    as \code{uniroot()}.
+    (the function body; does not need to be wrapped in \code{\{ \}} for a
+    single statement, but wrapping it is fine too). Inner functions may call
+    each other, including recursively, and can be passed as values to
+    functions expecting one, such as \code{uniroot()}. A non-\code{const()}
+    parameter only binds to a bare variable at the call site, not to an
+    arbitrary expression (e.g. \code{x + 1}); declare the parameter
+    \code{const()} to accept expressions.
     \preformatted{
       factorial <- fn(
         args_f = function(a) a |> type(int) |> const(),

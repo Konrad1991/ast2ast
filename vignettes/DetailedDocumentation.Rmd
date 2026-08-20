@@ -139,7 +139,7 @@ f_args <- function(a, b, c) {
 Notes:
 
 - Borrowed arguments are useful for avoiding allocations and modifying inputs in place.
-- `const()` produces a compile-time error in C++ if mutation is attempted.
+- `const()` is enforced by the static checker at translation time ("You cannot assign to a constant variable"), before any C++ compilation happens.
 - `ref()` is primarily intended for the external pointer interface.
 
 ---
@@ -251,7 +251,8 @@ Functions can be defined inside `f` using `fn()`. This is required whenever a fu
 needs to be passed as a value, e.g. to `uniroot()`. An inner function is declared with
 three parts: `args_f` (types of its arguments, same as the top-level `args_f`),
 `return_value` (its return type via `type()`), and `block` (the R code, same signature
-as `args_f`). `block`'s body must be wrapped in `{ }`, even for a single statement.
+as `args_f`). `block`'s body does not need to be wrapped in `{ }` for a single statement,
+but wrapping it is fine too.
 
 ```{r, eval = FALSE}
 f <- function(a) {
@@ -265,6 +266,21 @@ f <- function(a) {
   return(factorial(a))
 }
 fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(int))
+```
+
+An inner function's non-`const` parameters only bind to bare variables passed at the
+call site, not to arbitrary expressions (e.g. `x + 1`, `x[[1L]]`) -- a non-`const`
+parameter is a mutable reference to the caller's argument, and an expression has no
+addressable storage to reference. Declare the parameter `const()` if you need to pass
+an expression:
+
+```{r, eval = FALSE}
+sq <- fn(
+  args_f = function(x) x |> type(double) |> const(),  # const -- accepts expressions
+  return_value = type(double),
+  block = function(x) return(x * x)
+)
+# sq(a + b) is fine; without const() on x, only sq(a) (a bare variable) would be.
 ```
 
 Inner functions can call each other (including mutual recursion) and can be passed to
@@ -335,7 +351,7 @@ Notes:
 
 To interpolate values, the 'cmr' function can be used. The function needs three arguments.
 
-* the first argument is the point of the independent variable (x) for which the dependent variable should be calculated (y). This has to be a vector of length one.
+* the first argument is the point of the independent variable (x) for which the dependent variable should be calculated (y). This has to be a scalar (a length-one vector triggers a warning and only uses its first element).
 * the second argument is a vector defining the points of the independent variable (x). This has to be a vector of at least length four.
 * the third argument is a vector defining the points of the dependent variable (y). This has to be a vector of at least length four.
 

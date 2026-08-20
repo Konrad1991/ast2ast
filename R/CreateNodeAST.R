@@ -270,7 +270,7 @@ translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry) {
 
 # Assembles function (includes, signature, declarations, body)
 # ========================================================================
-assemble <- function(name_fct, vars_types_list, return_type, body, real_type, r_fct, known_types = list(), debug = FALSE) {
+assemble <- function(name_fct, vars_types_list, return_type, body, real_type, r_fct, known_types = list(), debug = TRUE) {
 
   arguments <- lapply(vars_types_list, function(x) {
     x$signature()
@@ -375,7 +375,7 @@ resolve_derivative <- function(derivative) {
   if (derivative == "reverse") return("etr::ReverseDouble")
 }
 
-translate_internally <- function(fct, args_fct, types_fct, derivative, name_fct, r_fct, debug = FALSE) {
+translate_internally <- function(fct, args_fct, types_fct, derivative, name_fct, r_fct, debug = TRUE) {
   b <- body(fct) |> wrap_in_block()
   code_string <- list()
   real_type <- resolve_derivative(derivative)
