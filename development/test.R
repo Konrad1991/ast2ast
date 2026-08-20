@@ -66,5 +66,4 @@ fcpp <- ast2ast::translate(
   # getsource = TRUE,
   verbose = TRUE
 )
-cat(fcpp, "\n")
-fcpp()
+fcpp(1)
