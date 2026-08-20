@@ -2802,7 +2802,11 @@ struct LogicalRef {
     if (p_na) *p_na = x.is_na;
     return *this;
   }
-  template<typename T> requires (IsArithV<T> || IsReverseDouble<T>) LogicalRef& operator=(const T& x) {
+  // IsArithRefV (LogicalRef/IntegerRef/DoubleRef/DualRef) covers cross-type
+  // Ref sources (e.g. lv[i] = iv[j]); get_val/get_scalar_val already have
+  // overloads for it (extracting through *p_val / the Ref's own conversion
+  // operator), so this one template handles every source type uniformly.
+  template<typename T> requires (IsArithV<T> || IsArithRefV<T>) LogicalRef& operator=(const T& x) {
     *p_val = static_cast<bool>(get_val(x));
     if (p_na) *p_na = get_scalar_val(x).is_na;
     return *this;
@@ -2876,7 +2880,7 @@ struct IntegerRef {
     if (p_na) *p_na = x.is_na;
     return *this;
   }
-  template<typename T> requires (IsArithV<T> || IsReverseDouble<T>) IntegerRef& operator=(const T& x) {
+  template<typename T> requires (IsArithV<T> || IsArithRefV<T>) IntegerRef& operator=(const T& x) {
     *p_val = static_cast<int>(get_val(x));
     if (p_na) *p_na = get_scalar_val(x).is_na;
     return *this;
@@ -2952,7 +2956,7 @@ struct DoubleRef {
     if (p_na) *p_na = x.is_na;
     return *this;
   }
-  template<typename T> requires (IsArithV<T> || IsReverseDouble<T>) DoubleRef& operator=(const T& x) {
+  template<typename T> requires (IsArithV<T> || IsArithRefV<T>) DoubleRef& operator=(const T& x) {
     *p_val = static_cast<double>(get_val(x));
     if (p_na) *p_na = get_scalar_val(x).is_na;
     return *this;
@@ -3039,10 +3043,10 @@ struct DualRef {
     if (p_na_dot) *p_na_dot = x.is_na_dot;
     return *this;
   }
-  template<typename T> requires (IsArithV<T>) DualRef& operator=(const T& x) {
+  template<typename T> requires (IsArithV<T> || IsArithRefV<T>) DualRef& operator=(const T& x) {
     *p_val    = static_cast<double>(get_val(x));
     *p_dot    = 0.0;
-    if (p_na)     *p_na     = x.is_na;
+    if (p_na)     *p_na     = get_scalar_val(x).is_na;
     if (p_na_dot) *p_na_dot = false;
     return *this;
   }

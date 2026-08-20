@@ -93,6 +93,9 @@ Typical types are therefore:
 
 A key difference to R: **ast2ast scalars are true scalars**, not length-1 vectors. Scalars cannot be subset using `[]` or `[[ ]]`.
 
+Another difference to R: **negative indices are not supported** (R's `v[-1L]`
+drop-element form). Indices must be positive and 1-based.
+
 ---
 
 ## Setting types for function arguments
@@ -160,6 +163,35 @@ You can override inference using explicit annotations.
 Once a variable has a type, it cannot change its base type or structure. This follows C++ rules.
 For example, you cannot first treat a variable as `scalar(double)` and later assign a scalar `double` to it.
 If you need a different type or structure, create a new variable with a new name.
+
+---
+
+### Type promotion
+
+When two differently-typed operands are combined (e.g. `integer + double`), ast2ast
+picks a common result type along two independent precedence orders:
+
+- base type: `logical` < `integer` (`int`) < `double`
+- structure: `scalar` < `vector` (`vec`) < `matrix` (`mat`) < `array`
+
+The result takes the higher-precedence base type and the higher-precedence structure
+of the two operands, e.g.:
+
+- `logical + integer` -> `integer`
+- `integer + double` -> `double`
+- `double` (scalar) `+ vec(double)` -> `vec(double)`
+
+A few operators promote unconditionally, regardless of what they're given:
+
+- `/` and `^` always produce `double` (R never returns an integer from division or
+  exponentiation)
+- transcendental functions (`sin`, `sqrt`, `log`, `exp`, ...) always return `double`
+- `sum()` keeps `double` as `double`, but promotes `logical`/`integer` to `integer`
+  (matches R's own `sum()` behavior)
+
+This same promotion also finalizes a locally-inferred variable's type from its
+first few uses when it was not given an explicit `type()` annotation; once
+fixed, that type is immutable (see above).
 
 ## Derivatives
 

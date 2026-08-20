@@ -3,11 +3,16 @@
 
 namespace etr {
 
+// obj can be a *Ref proxy of a *different* base type (e.g. IntegerRef here),
+// which only has a conversion operator to its own plain type (Integer), not
+// to Logical/Double directly -- going through get_scalar_val first avoids
+// chaining two user-defined conversions in one implicit conversion, which
+// C++ does not allow (`Logical l = obj;` would need IntegerRef->Integer->Logical).
 template<typename T> requires IsScalarLike<Decayed<T>> inline auto as_logical(const T& obj) {
   if constexpr (IS<Decayed<T>, Logical>) {
     return obj;
   } else {
-    Logical l = obj;
+    Logical l = get_scalar_val(obj);
     return l;
   }
 }
@@ -15,7 +20,7 @@ template<typename T> requires IsScalarLike<Decayed<T>> inline auto as_integer(co
   if constexpr (IS<Decayed<T>, Integer>) {
     return obj;
   } else {
-    Integer i = obj;
+    Integer i = get_scalar_val(obj);
     return i;
   }
 }
@@ -23,7 +28,7 @@ template<typename RealType, typename T> requires IsScalarLike<Decayed<T>> inline
   if constexpr (IS<Decayed<T>, RealType>) {
     return obj;
   } else {
-    RealType d = obj;
+    RealType d = get_scalar_val(obj);
     return d;
   }
 }

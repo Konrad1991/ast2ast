@@ -55,6 +55,14 @@ inline decltype(auto) at(ArrayType& arr, const Args&... args) {
     args...
   );
 
+  // each index must be checked against its own dimension's extent; checking
+  // only the linearized offset against the buffer size lets an overshoot in
+  // a non-final dimension fold into a later dimension and silently alias
+  // the wrong cell (e.g. M[3,1] on a 2x2 landing on M[1,2]).
+  for (std::size_t i = 0; i < N; i++) {
+    ass<"Error: out of boundaries">(indices[i] < dim[i]);
+  }
+
   std::size_t idx = 0;
   auto stride = make_strides_from_vec<N>(dim);
   for (std::size_t i = 0; i < N; i++) {
@@ -156,6 +164,10 @@ inline decltype(auto) at(ArrayType&& arr, const Args&... args) {
     args...
   );
 
+  for (std::size_t i = 0; i < N; i++) {
+    ass<"Error: out of boundaries">(indices[i] < dim[i]);
+  }
+
   std::size_t idx = 0;
   auto stride = make_strides_from_vec<N>(dim);
   for (std::size_t i = 0; i < N; i++) {
@@ -185,6 +197,9 @@ inline const auto at(const ArrayType& arr, const Args&... args) {
     },
     args...
   );
+  for (std::size_t i = 0; i < N; i++) {
+    ass<"Error: out of boundaries">(indices[i] < dim[i]);
+  }
   std::size_t idx = 0;
   auto stride = make_strides_from_vec<N>(dim);
   for (std::size_t i = 0; i < N; i++) {
