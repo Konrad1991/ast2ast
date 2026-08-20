@@ -78,6 +78,12 @@ inline void ass(bool inp, const std::string &message) {
 #endif
 }
 
+// bare inline thread_local at namespace scope breaks under MinGW
+inline const char*& current_line() {
+  thread_local const char* line = "";
+  return line;
+}
+
 // https://ctrpeach.io/posts/cpp20-string-literal-template-parameters/
 template <std::size_t N> struct string_literal {
   constexpr string_literal(const char (&str)[N]) {

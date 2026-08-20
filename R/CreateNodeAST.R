@@ -257,6 +257,7 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct, real_type, f
 translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry) {
   code_string <- NULL
   traverse_ast(ast, action_transpile_inner_functions, real_type)
+  traverse_ast(ast, action_snapshot_lines)
   traverse_ast(ast, action_set_true, r_fct, real_type)
   traverse_ast(ast, action_translate, function_registry, real_type)
   # Stringify ast
@@ -269,7 +270,7 @@ translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry) {
 
 # Assembles function (includes, signature, declarations, body)
 # ========================================================================
-assemble <- function(name_fct, vars_types_list, return_type, body, real_type, r_fct, known_types = list()) {
+assemble <- function(name_fct, vars_types_list, return_type, body, real_type, r_fct, known_types = list(), debug = FALSE) {
 
   arguments <- lapply(vars_types_list, function(x) {
     x$signature()
@@ -304,10 +305,20 @@ assemble <- function(name_fct, vars_types_list, return_type, body, real_type, r_
   }
 
   body <- paste0(body, "\n")
+  wrap_for_debug <- function(b) {
+    if (!debug) return(b)
+    paste0(
+      "try {\n", b,
+      "} catch (const std::exception& e) {\n",
+      "  Rcpp::stop(std::string(\"In '\") + etr::current_line() + \"': \" + e.what());\n",
+      "}\n"
+    )
+  }
   if (r_fct) {
     signature <- paste0("SEXP ", name_fct, "(", paste(arguments, collapse = ", "), ") {")
     declarations <- combine_strings(declarations, "\n")
     includes <- r_fct_sig()
+    wrapped_body <- wrap_for_debug(body)
     res <- paste0(
       c(
         includes,
@@ -316,7 +327,7 @@ assemble <- function(name_fct, vars_types_list, return_type, body, real_type, r_
         signature, "\n",
         tape_clear, "\n",
         declarations, "\n",
-        body, "}\n"
+        wrapped_body, "}\n"
       ),
       collapse = "\n\n"
     )
@@ -335,6 +346,7 @@ assemble <- function(name_fct, vars_types_list, return_type, body, real_type, r_
       paste(arguments, collapse = ", "), ");"
     )
     rest <- sprintf("   return Rcpp::XPtr<fct_ptr>(new fct_ptr(&  %s ));\n }", deparse(name_fct))
+    wrapped_body <- wrap_for_debug(body)
     res <- paste0(
       c(
         includes, "\n",
@@ -342,7 +354,7 @@ assemble <- function(name_fct, vars_types_list, return_type, body, real_type, r_
         signature, "\n",
         tape_clear, "\n",
         declarations, "\n",
-        body, "}\n\n",
+        wrapped_body, "}\n\n",
         def_get_xptr,
         typedef_line, "\n",
         rest),
@@ -363,7 +375,7 @@ resolve_derivative <- function(derivative) {
   if (derivative == "reverse") return("etr::ReverseDouble")
 }
 
-translate_internally <- function(fct, args_fct, types_fct, derivative, name_fct, r_fct) {
+translate_internally <- function(fct, args_fct, types_fct, derivative, name_fct, r_fct, debug = FALSE) {
   b <- body(fct) |> wrap_in_block()
   code_string <- list()
   real_type <- resolve_derivative(derivative)
@@ -404,7 +416,7 @@ translate_internally <- function(fct, args_fct, types_fct, derivative, name_fct,
   }
 
   # Create function signature & variable declarations
-  code <- assemble(name_fct, vars_types_list, return_type, code_string, real_type, r_fct, known_types)
+  code <- assemble(name_fct, vars_types_list, return_type, code_string, real_type, r_fct, known_types, debug)
   code <- remove_blank_lines(code)
   return(code)
 }

@@ -7,6 +7,7 @@ variable_node <- R6::R6Class(
     internal_type = NULL,
     initialized = FALSE,
     field_name = FALSE,
+    pre_translate_line = NULL,
     initialize = function(obj) {
       self$name <- obj
     },
@@ -32,6 +33,7 @@ literal_node <- R6::R6Class(
     internal_type = NULL,
     wrap = FALSE,
     real_type = NULL,
+    pre_translate_line = NULL,
     initialize = function(obj) {
       self$literal_type <- determine_literal_type(obj)
       self$name <- deparse(obj)
@@ -101,6 +103,7 @@ binary_node <- R6::R6Class(
     remove_type_decl = FALSE,
     type = NULL,
     is_infix = NULL,
+    pre_translate_line = NULL,
     initialize = function() {},
     string_left = function() {
       return(self$left_node$stringify())
@@ -207,6 +210,7 @@ unary_node <- R6::R6Class(
     internal_type = NULL,
     handle_return = FALSE,
     output_is_r_fct = TRUE,
+    pre_translate_line = NULL,
     initialize = function() {},
     string_obj = function() {
       return(self$obj$stringify())
@@ -288,6 +292,7 @@ nullary_node <- R6::R6Class(
     internal_type = NULL,
     handle_return = FALSE,
     output_is_r_fct = TRUE,
+    pre_translate_line = NULL,
     initialize = function() {},
     stringify = function(indent = "") {
       if (self$operator == "next" || self$operator == "break" || self$operator == "continue") {
@@ -330,6 +335,7 @@ function_node <- R6::R6Class(
     context = NULL,
     internal_type = NULL,
     args = list(),
+    pre_translate_line = NULL,
     initialize = function() {},
     create_r_subsetting_string = function(indent = "", obj_string, args_string) {
       if (self$operator == "[") {
@@ -559,10 +565,15 @@ block_node <- R6::R6Class(
       result <- list()
       for (stmt in self$block) {
         end <- ";"
+        s <- stmt$stringify(indent = indent)
         if (inherits(stmt, c("if_node", "for_node", "while_node", "repeat_node", "fn_node"))) {
           end <- ""
+        } else {
+          line <- stmt$pre_translate_line
+          if (is.null(line)) line <- s
+          label <- escape_cpp_string_literal(line)
+          s <- paste0(indent, "etr::current_line() = \"", label, "\";\n", s)
         }
-        s <- stmt$stringify(indent = indent)
         result[[length(result) + 1]] <- paste0(s, end)
       }
       result <- combine_strings(result)

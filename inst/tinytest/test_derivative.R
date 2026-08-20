@@ -447,7 +447,7 @@ fcpp <- ast2ast::translate(
   f,
   args_f = function(p) p |> type(Pair),
   types_f = types_f, derivative = "reverse",
-  verbose = TRUE
+  verbose = FALSE
 )
 p <- structure(
   list(x = c(1, 2, 3), y = c(4, 5, 6)),

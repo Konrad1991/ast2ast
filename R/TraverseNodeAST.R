@@ -178,6 +178,7 @@ action_transpile_inner_functions <- function(node, real_type) {
   for (i in seq_along(AST$block)) {
     traverse_ast(AST$block[[i]], action_transpile_inner_functions, real_type)
   }
+  traverse_ast(AST, action_snapshot_lines)
   traverse_ast(AST, action_set_true, r_fct, real_type)
   node$AST <- AST
 }
@@ -561,6 +562,22 @@ action_check_type_of_args <- function(node, variables, r_fct, real_type, functio
   info_env$known_types <- known_types
   info_env$function_registry <- function_registry
   type_check_fct(node, variables, info_env)
+}
+
+# snapshot each statement's stringify() before action_set_true/action_translate
+# touch anything -- current_line()'s label should read like the R the user
+# wrote, not the emitted C++ (wrap/handle_return/etc. all default to their
+# plain, unflagged rendering at this point).
+# ========================================================================
+action_snapshot_lines <- function(node) {
+  if (!inherits(node, "block_node")) {
+    return()
+  }
+  for (stmt in node$block) {
+    if (!inherits(stmt, c("if_node", "for_node", "while_node", "repeat_node", "fn_node"))) {
+      stmt$pre_translate_line <- stmt$stringify()
+    }
+  }
 }
 
 # The actual translation of the AST to C++

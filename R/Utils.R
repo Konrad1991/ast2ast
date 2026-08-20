@@ -149,6 +149,13 @@ combine_strings <- function(string_list, collapse = "\n") {
   paste0(string_list, collapse = collapse)
 }
 
+escape_cpp_string_literal <- function(s) {
+  s <- gsub("\\\\", "\\\\\\\\", s)
+  s <- gsub("\"", "\\\\\"", s)
+  s <- gsub("\n", "\\\\n", s)
+  s
+}
+
 remove_blank_lines <- function(chars) {
   chars <- strsplit(chars, split = "\n")[[1]]
   empty_line <- function(line) {

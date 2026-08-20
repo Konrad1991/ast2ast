@@ -4,7 +4,8 @@ translate <- function(f,
                       output = "R",
                       derivative = NULL,
                       verbose = FALSE,
-                      getsource = FALSE
+                      getsource = FALSE,
+                      debug = FALSE
                       )
 {
   stopifnot("f is not a function" = is.function(f))
@@ -15,6 +16,7 @@ translate <- function(f,
   stopifnot("verbose is not of type logical" = is.logical(verbose))
   stopifnot("getsource is not of type logical" = is.logical(getsource))
   stopifnot("derivative is not of type character" = is.character(derivative) || is.null(derivative))
+  stopifnot("debug is not of type logical" = is.logical(debug))
 
   r_fct <- TRUE
   if (output == "XPtr") r_fct <- FALSE
@@ -32,7 +34,7 @@ translate <- function(f,
     stop("The function name is not valid as it is a C++ keyword")
   }
 
-  cpp_code <- translate_internally(f, args_f, types_f, derivative, name_f, r_fct)
+  cpp_code <- translate_internally(f, args_f, types_f, derivative, name_f, r_fct, debug)
   if (getsource) return(cpp_code)
 
   compile(cpp_code, r_fct, verbose, as.character(name_f))

@@ -1,0 +1,60 @@
+#define STANDALONE_ETR
+#include "../../inst/include/etr_bits/Core.hpp"
+#include "../../inst/include/etr_bits/Subsetting.hpp"
+using namespace etr;
+int main() {
+  Array<Double, Buffer<Double>> a(std::size_t(50 + 1));
+  for (std::size_t i = 0; i <= (std::size_t)50; i++) a.d.set(i, Double((double)i));
+  Double acc(0.0);
+  acc = acc + at(a, Integer(1));
+  acc = acc + at(a, Integer(2));
+  acc = acc + at(a, Integer(3));
+  acc = acc + at(a, Integer(4));
+  acc = acc + at(a, Integer(5));
+  acc = acc + at(a, Integer(6));
+  acc = acc + at(a, Integer(7));
+  acc = acc + at(a, Integer(8));
+  acc = acc + at(a, Integer(9));
+  acc = acc + at(a, Integer(10));
+  acc = acc + at(a, Integer(11));
+  acc = acc + at(a, Integer(12));
+  acc = acc + at(a, Integer(13));
+  acc = acc + at(a, Integer(14));
+  acc = acc + at(a, Integer(15));
+  acc = acc + at(a, Integer(16));
+  acc = acc + at(a, Integer(17));
+  acc = acc + at(a, Integer(18));
+  acc = acc + at(a, Integer(19));
+  acc = acc + at(a, Integer(20));
+  acc = acc + at(a, Integer(21));
+  acc = acc + at(a, Integer(22));
+  acc = acc + at(a, Integer(23));
+  acc = acc + at(a, Integer(24));
+  acc = acc + at(a, Integer(25));
+  acc = acc + at(a, Integer(26));
+  acc = acc + at(a, Integer(27));
+  acc = acc + at(a, Integer(28));
+  acc = acc + at(a, Integer(29));
+  acc = acc + at(a, Integer(30));
+  acc = acc + at(a, Integer(31));
+  acc = acc + at(a, Integer(32));
+  acc = acc + at(a, Integer(33));
+  acc = acc + at(a, Integer(34));
+  acc = acc + at(a, Integer(35));
+  acc = acc + at(a, Integer(36));
+  acc = acc + at(a, Integer(37));
+  acc = acc + at(a, Integer(38));
+  acc = acc + at(a, Integer(39));
+  acc = acc + at(a, Integer(40));
+  acc = acc + at(a, Integer(41));
+  acc = acc + at(a, Integer(42));
+  acc = acc + at(a, Integer(43));
+  acc = acc + at(a, Integer(44));
+  acc = acc + at(a, Integer(45));
+  acc = acc + at(a, Integer(46));
+  acc = acc + at(a, Integer(47));
+  acc = acc + at(a, Integer(48));
+  acc = acc + at(a, Integer(49));
+  acc = acc + at(a, Integer(50));
+  std::cout << get_val(acc) << std::endl;
+}
