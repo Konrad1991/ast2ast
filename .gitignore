@@ -27,3 +27,5 @@ Meta
 ast2ast_0.5.tar.gz
 a.out
 CLAUDE.md
+/development/Benchmarks/bench_compare_quickr_armacmp.R
+/development/Benchmarks/compare_quickr_armacmp.md

@@ -32,10 +32,12 @@ source code can also be retrieved without compilation.
 <pre><code class='language-R'>translate(
   f,
   args_f = NULL,
+  types_f = NULL,
   output = "R",
   derivative = NULL,
   verbose = FALSE,
-  getsource = FALSE
+  getsource = FALSE,
+  debug = TRUE
 )
 </code></pre>
 
@@ -51,6 +53,13 @@ source code can also be retrieved without compilation.
 <td>
 <p>A helper function that defines the types of the arguments of <code>f</code>.
 Optional; defaults to <code>NULL</code>. See the Details section.</p>
+</td></tr>
+<tr><td><code id="types_f">types_f</code></td>
+<td>
+<p>A helper function that declares custom struct types via
+<code>new_type()</code>, for use as argument types, variable types, or slot
+types inside <code>f</code>. Optional; defaults to <code>NULL</code>. See the
+Details section.</p>
 </td></tr>
 <tr><td><code id="output">output</code></td>
 <td>
@@ -89,6 +98,13 @@ Optional; defaults to <code>NULL</code>. See the Details section.</p>
 <td>
 <p>Logical. If <code>TRUE</code>, returns the generated C++ source code as a string instead of compiling it.</p>
 </td></tr>
+<tr><td><code id="debug">debug</code></td>
+<td>
+<p>Logical. Defaults to <code>TRUE</code>. When <code>TRUE</code>, a runtime
+error is reported as <code>"In '&lt;statement&gt;': &lt;message&gt;"</code>, naming the
+specific line of translated code that failed. Set to <code>FALSE</code> to get
+the plain, unattributed message instead.</p>
+</td></tr>
 </table>
 
 
@@ -102,23 +118,42 @@ Optional; defaults to <code>NULL</code>. See the Details section.</p>
 </p>
 
 <ol>
-<li><p> Assignment: <code>=</code> and <code>&lt;-</code>
+<li><p> Assignment: <code>=</code>, <code>&lt;-</code>, and <code>$</code> (struct field access/assignment)
 </p>
 </li>
-<li><p> Allocation: <code>vector</code>, <code>matrix</code>, <code>rep</code>, <code>logical</code>, <code>integer</code>, <code>numeric</code>
+<li><p> Allocation: <code>vector</code>, <code>matrix</code>, <code>array</code>, <code>rep</code>, <code>logical</code>,
+<code>integer</code>, <code>numeric</code>
 </p>
 </li>
-<li><p> Object info: <code>length</code>, <code>dim</code>
+<li><p> Object info: <code>length</code>, <code>dim</code>, <code>nrow</code>, <code>ncol</code>
 </p>
 </li>
-<li><p> Arithmetic: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>
+<li><p> Arithmetic: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>%%</code>, <code>%/%</code>, <code>%*%</code>, <code>^</code>
 </p>
 </li>
 <li><p> Indexing: <code>[]</code> and <code>[[]]</code>
 </p>
 </li>
 <li><p> Math: <code>sin</code>, <code>asin</code>, <code>sinh</code>, <code>cos</code>, <code>acos</code>, <code>cosh</code>,
-<code>tan</code>, <code>atan</code>, <code>tanh</code>, <code>sqrt</code>, <code>log</code>, <code>^</code>, <code>exp</code>
+<code>tan</code>, <code>atan</code>, <code>tanh</code>, <code>sqrt</code>, <code>abs</code>, <code>log</code>, <code>exp</code>,
+<code>floor</code>, <code>ceiling</code>, <code>trunc</code>
+</p>
+</li>
+<li><p> Reductions: <code>sum</code>, <code>prod</code>, <code>max</code>, <code>min</code>, <code>which.max</code>,
+<code>which.min</code>, <code>all</code>, <code>any</code>, <code>rev</code>
+</p>
+</li>
+<li><p> Linear algebra: <code>t</code>, <code>chol</code>, <code>crossprod</code>, <code>tcrossprod</code>, <code>diag</code>,
+<code>get_diag</code>, <code>solve</code>, <code>backsolve</code>, <code>forwardsolve</code>, <code>rbind</code>, <code>cbind</code>
+</p>
+</li>
+<li><p> Root finding / least squares: <code>uniroot</code>, <code>nnls</code>
+</p>
+</li>
+<li><p> Casts: <code>as.numeric</code>, <code>as.integer</code>, <code>as.logical</code>
+</p>
+</li>
+<li><p> Sequences: <code>seq_len</code>, <code>seq_along</code>
 </p>
 </li>
 <li><p> Concatenation: <code>c</code>
@@ -131,10 +166,13 @@ Optional; defaults to <code>NULL</code>. See the Details section.</p>
 <li><p> Comparison: <code>==</code>, <code>!=</code>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>
 </p>
 </li>
-<li><p> Logical ops: <code>&amp;&amp;</code>, <code>||</code>, <code>&amp;</code>, <code>|</code>
+<li><p> Logical ops: <code>&amp;&amp;</code>, <code>||</code>, <code>&amp;</code>, <code>|</code>, <code>!</code>
 </p>
 </li>
 <li><p> Printing: <code>print</code>
+</p>
+</li>
+<li><p> Errors: <code>stop</code>
 </p>
 </li>
 <li><p> Return: <code>return</code>
@@ -146,7 +184,7 @@ Optional; defaults to <code>NULL</code>. See the Details section.</p>
 <li><p> Sequence operator: <code>:</code>
 </p>
 </li>
-<li><p> Helpers: <code>is.na</code>, <code>is.finite</code>, <code>is.infinite</code>
+<li><p> Helpers: <code>is.na</code>, <code>is.nan</code>, <code>is.finite</code>, <code>is.infinite</code>
 </p>
 </li>
 <li><p> Explicit typing: <code>type()</code>
@@ -156,6 +194,12 @@ Optional; defaults to <code>NULL</code>. See the Details section.</p>
 </p>
 </li>
 <li><p> Derivative functions in reverse mode: <code>deriv</code>
+</p>
+</li>
+<li><p> Inner functions: <code>fn()</code>, see below
+</p>
+</li>
+<li><p> Custom types: <code>new_type()</code>, see below
 </p>
 </li></ol>
 
@@ -208,6 +252,59 @@ To override, supply a function that annotates each argument:
 </p>
 </li></ul>
 
+
+
+
+<h4>Inner functions</h4>
+
+<p>Functions can be defined inside <code>f</code> with <code>fn()</code>, which takes
+<code>args_f</code> (argument types, same form as the top-level <code>args_f</code>),
+<code>return_value</code> (the return type via <code>type()</code>), and <code>block</code>
+(the function body; does not need to be wrapped in <code>{ }</code> for a
+single statement, but wrapping it is fine too). Inner functions may call
+each other, including recursively, and can be passed as values to
+functions expecting one, such as <code>uniroot()</code>. A non-<code>const()</code>
+parameter only binds to a bare variable at the call site, not to an
+arbitrary expression (e.g. <code>x + 1</code>); declare the parameter
+<code>const()</code> to accept expressions.
+</p>
+<pre>
+      factorial &lt;- fn(
+        args_f = function(a) a |&gt; type(int) |&gt; const(),
+        return_value = type(int),
+        block = function(a) {
+          if (a == 1L) return(a) else return(a * factorial(a - 1L))
+        }
+      )
+    </pre>
+<p><code>uniroot(f, interval, tol, maxiter)</code> takes a function of a single
+<code>double</code> returning a <code>double</code> (or two arguments if a fifth,
+extra-data argument is supplied to <code>uniroot</code>), and returns a struct
+with fields <code>root</code>, <code>f_root</code>, <code>iter</code>, and <code>estim_prec</code>.
+<code>nnls(A, b)</code> solves the non-negative least squares problem and
+returns the solution vector.
+</p>
+
+
+
+<h4>Custom types</h4>
+
+<p>User-defined struct types are declared in a <code>types_f</code> helper function
+(passed to <code>translate()</code> via <code>types_f =</code>) and created with
+<code>new_type()</code> and <code>slots()</code>:
+</p>
+<pre>
+      types_f &lt;- function() {
+        new_type(Point, slots(x |&gt; type(double), y |&gt; type(double)))
+      }
+    </pre>
+<p>On the R side, a value of a custom type is a named list with a matching
+<code>class</code> attribute, e.g. <code>structure(list(x = 1, y = 2), class = "Point")</code>.
+Fields are read and written with <code>$</code>, including chained access such
+as <code>s$circles[[1L]]$center$x</code>. A slot may itself be a custom type
+(nested structs) or <code>collection(TypeName)</code>, a vector of a custom
+type; allocate one locally with <code>vector(mode = "TypeName", n)</code>.
+</p>
 
 
 
@@ -383,6 +480,35 @@ fib &lt;- function(n = 10) {
 }
 fib_cpp &lt;- ast2ast::translate(fib)
 fib_cpp(10)
+
+# Custom types
+# ----------------------------------------------------------------
+types_f &lt;- function() {
+  new_type(Point, slots(x |&gt; type(double), y |&gt; type(double)))
+}
+f &lt;- function(p) {
+  p$x &lt;- p$x + 1
+  return(p)
+}
+fcpp &lt;- ast2ast::translate(f, args_f = function(p) p |&gt; type(Point), types_f = types_f)
+p &lt;- structure(list(x = 1, y = 2), class = "Point")
+fcpp(p)
+
+# Inner functions and uniroot
+# ----------------------------------------------------------------
+f &lt;- function(interval) {
+  g &lt;- fn(
+    args_f = function(x) x |&gt; type(double),
+    return_value = type(double),
+    block = function(x) {
+      return(x^2 - 4)
+    }
+  )
+  res &lt;- uniroot(g, interval, 1e-10, 1000)
+  return(res$root)
+}
+fcpp &lt;- ast2ast::translate(f, args_f = function(interval) interval |&gt; type(vec(double)))
+fcpp(c(0, 10))
 
 # External pointer interface
 # ----------------------------------------------------------------

@@ -376,29 +376,53 @@ enhance performance, as shown in the benchmark below.</p>
 <li>scalar values</li>
 <li>vectors</li>
 <li>matrices</li>
+<li>arrays</li>
+<li>custom types (structs) and collections thereof, see
+<code>new_type</code> below</li>
 </ul>
 <p>Supported functions:</p>
 <ul>
-<li>assignment: = and &lt;-</li>
+<li>assignment: <code>=</code>, <code>&lt;-</code>, and <code>$</code>
+(struct field access/assignment)</li>
 <li>allocation: <code>vector</code>, <code>logical</code>,
 <code>integer</code>, <code>numeric</code>, <code>:</code>,
-<code>c</code>, <code>rep</code>, and <code>matrix</code></li>
+<code>c</code>, <code>rep</code>, <code>matrix</code>, and
+<code>array</code></li>
 <li>some helpers: <code>length</code>, <code>dim</code>,
-<code>is.na</code>, <code>is.nan</code>, <code>is.finite</code>,
-<code>is.infinte</code>, and <code>print</code></li>
+<code>nrow</code>, <code>ncol</code>, <code>is.na</code>,
+<code>is.nan</code>, <code>is.finite</code>, <code>is.infinite</code>,
+<code>print</code>, and <code>stop</code></li>
 <li>Math functions: <code>+</code>, <code>-</code>, <code>*</code>,
-<code>/</code>, <code>sin</code>, <code>asin</code>, <code>sinh</code>,
+<code>/</code>, <code>%%</code>, <code>%/%</code>, <code>%*%</code>,
+<code>sin</code>, <code>asin</code>, <code>sinh</code>,
 <code>cos</code>, <code>acos</code>, <code>cosh</code>,
 <code>tan</code>, <code>atan</code>, <code>tanh</code>,
-<code>log</code>, <code>^</code>, and <code>exp</code></li>
+<code>log</code>, <code>sqrt</code>, <code>abs</code>, <code>^</code>,
+<code>exp</code>, <code>floor</code>, <code>ceiling</code>, and
+<code>trunc</code></li>
+<li>reductions: <code>sum</code>, <code>prod</code>, <code>max</code>,
+<code>min</code>, <code>which.max</code>, <code>which.min</code>,
+<code>all</code>, <code>any</code>, <code>rev</code></li>
+<li>linear algebra: <code>t</code>, <code>chol</code>,
+<code>crossprod</code>, <code>tcrossprod</code>, <code>diag</code>,
+<code>get_diag</code>, <code>solve</code>, <code>backsolve</code>,
+<code>forwardsolve</code>, <code>rbind</code>, <code>cbind</code></li>
+<li>root finding / least squares: <code>uniroot</code>,
+<code>nnls</code></li>
+<li>casts: <code>as.numeric</code>, <code>as.integer</code>,
+<code>as.logical</code></li>
+<li>sequences: <code>seq_len</code>, <code>seq_along</code></li>
 <li>Subsetting: <code>[]</code> and <code>[[]]</code></li>
 <li>control flow: <code>for</code>, <code>while</code>,
 <code>repeat</code>, <code>if</code>, <code>else if</code>, and
 <code>else</code></li>
 <li>comparison: <code>==</code>, <code>!=</code>, <code>&gt;</code>,
 <code>&lt;</code>, <code>&gt;=</code>, and <code>&lt;=</code></li>
+<li>logical: <code>&amp;&amp;</code>, <code>||</code>,
+<code>&amp;</code>, <code>|</code>, <code>!</code></li>
 <li>derivative: <code>seed</code>, <code>unseed</code>,
 <code>get_dot</code>, <code>deriv</code></li>
+<li>inner functions: <code>fn</code>, see below</li>
 </ul>
 <div id="type-system-in-ast2ast" class="section level3">
 <h3>Type system in ast2ast</h3>
@@ -431,6 +455,9 @@ matrix)</li>
 <p>A key difference to R: <strong>ast2ast scalars are true
 scalars</strong>, not length-1 vectors. Scalars cannot be subset using
 <code>[]</code> or <code>[[ ]]</code>.</p>
+<p>Another difference to R: <strong>negative indices are not
+supported</strong> (R’s <code>v[-1L]</code> drop-element form). Indices
+must be positive and 1-based.</p>
 <hr />
 </div>
 </div>
@@ -477,8 +504,9 @@ memory (no copy)</li>
 <ul>
 <li>Borrowed arguments are useful for avoiding allocations and modifying
 inputs in place.</li>
-<li><code>const()</code> produces a compile-time error in C++ if
-mutation is attempted.</li>
+<li><code>const()</code> is enforced by the static checker at
+translation time (“You cannot assign to a constant variable”), before
+any C++ compilation happens.</li>
 <li><code>ref()</code> is primarily intended for the external pointer
 interface.</li>
 </ul>
@@ -503,6 +531,44 @@ structure. This follows C++ rules. For example, you cannot first treat a
 variable as <code>scalar(double)</code> and later assign a scalar
 <code>double</code> to it. If you need a different type or structure,
 create a new variable with a new name.</p>
+<hr />
+</div>
+<div id="type-promotion" class="section level3">
+<h3>Type promotion</h3>
+<p>When two differently-typed operands are combined
+(e.g. <code>integer + double</code>), ast2ast picks a common result type
+along two independent precedence orders:</p>
+<ul>
+<li>base type: <code>logical</code> &lt; <code>integer</code>
+(<code>int</code>) &lt; <code>double</code></li>
+<li>structure: <code>scalar</code> &lt; <code>vector</code>
+(<code>vec</code>) &lt; <code>matrix</code> (<code>mat</code>) &lt;
+<code>array</code></li>
+</ul>
+<p>The result takes the higher-precedence base type and the
+higher-precedence structure of the two operands, e.g.:</p>
+<ul>
+<li><code>logical + integer</code> -&gt; <code>integer</code></li>
+<li><code>integer + double</code> -&gt; <code>double</code></li>
+<li><code>double</code> (scalar) <code>+ vec(double)</code> -&gt;
+<code>vec(double)</code></li>
+</ul>
+<p>A few operators promote unconditionally, regardless of what they’re
+given:</p>
+<ul>
+<li><code>/</code> and <code>^</code> always produce <code>double</code>
+(R never returns an integer from division or exponentiation)</li>
+<li>transcendental functions (<code>sin</code>, <code>sqrt</code>,
+<code>log</code>, <code>exp</code>, …) always return
+<code>double</code></li>
+<li><code>sum()</code> keeps <code>double</code> as <code>double</code>,
+but promotes <code>logical</code>/<code>integer</code> to
+<code>integer</code> (matches R’s own <code>sum()</code> behavior)</li>
+</ul>
+<p>This same promotion also finalizes a locally-inferred variable’s type
+from its first few uses when it was not given an explicit
+<code>type()</code> annotation; once fixed, that type is immutable (see
+above).</p>
 </div>
 </div>
 <div id="derivatives" class="section level2">
@@ -589,6 +655,103 @@ treats derivatives as first-class values that can be manipulated like
 any other object.</p>
 </div>
 </div>
+<div id="inner-functions" class="section level2">
+<h2>Inner functions</h2>
+<p>Functions can be defined inside <code>f</code> using
+<code>fn()</code>. This is required whenever a function needs to be
+passed as a value, e.g. to <code>uniroot()</code>. An inner function is
+declared with three parts: <code>args_f</code> (types of its arguments,
+same as the top-level <code>args_f</code>), <code>return_value</code>
+(its return type via <code>type()</code>), and <code>block</code> (the R
+code, same signature as <code>args_f</code>). <code>block</code>’s body
+does not need to be wrapped in <code>{ }</code> for a single statement,
+but wrapping it is fine too.</p>
+<pre class="r"><code>f &lt;- function(a) {
+  factorial &lt;- fn(
+    args_f = function(a) a |&gt; type(int) |&gt; const(),
+    return_value = type(int),
+    block = function(a) {
+      if (a == 1L) return(a) else return(a * factorial(a - 1L))
+    }
+  )
+  return(factorial(a))
+}
+fcpp &lt;- ast2ast::translate(f, args_f = function(a) a |&gt; type(int))</code></pre>
+<p>An inner function’s non-<code>const</code> parameters only bind to
+bare variables passed at the call site, not to arbitrary expressions
+(e.g. <code>x + 1</code>, <code>x[[1L]]</code>) – a
+non-<code>const</code> parameter is a mutable reference to the caller’s
+argument, and an expression has no addressable storage to reference.
+Declare the parameter <code>const()</code> if you need to pass an
+expression:</p>
+<pre class="r"><code>sq &lt;- fn(
+  args_f = function(x) x |&gt; type(double) |&gt; const(),  # const -- accepts expressions
+  return_value = type(double),
+  block = function(x) return(x * x)
+)
+# sq(a + b) is fine; without const() on x, only sq(a) (a bare variable) would be.</code></pre>
+<p>Inner functions can call each other (including mutual recursion) and
+can be passed to functions expecting a function argument,
+e.g. <code>uniroot</code>:</p>
+<pre class="r"><code>f &lt;- function(interval) {
+  g &lt;- fn(
+    args_f = function(x) x |&gt; type(double),
+    return_value = type(double),
+    block = function(x) {
+      return(x^2 - 4)
+    }
+  )
+  res &lt;- uniroot(g, interval, 1e-10, 1000)
+  return(res$root)
+}
+fcpp &lt;- ast2ast::translate(f, args_f = function(interval) interval |&gt; type(vec(double)))</code></pre>
+<p><code>uniroot(f, interval, tol, maxiter)</code> returns a struct with
+fields <code>root</code>, <code>f_root</code>, <code>iter</code>, and
+<code>estim_prec</code> (accessed via <code>$</code>, see custom types
+below). <code>f</code> must take a single <code>double</code> and return
+a <code>double</code>; an optional fifth argument is passed through to
+<code>f</code> as extra data (<code>f</code> then takes two
+arguments).</p>
+<p><code>nnls(A, b)</code> solves the non-negative least squares problem
+and returns the solution vector directly.</p>
+</div>
+<div id="custom-types-new_type" class="section level2">
+<h2>Custom types (<code>new_type</code>)</h2>
+<p>Besides scalars, vectors, matrices and arrays,
+<strong>ast2ast</strong> supports user-defined struct types. They are
+declared via a <code>types_f</code> helper function (analogous to
+<code>args_f</code>) and passed to <code>translate()</code>:</p>
+<pre class="r"><code>types_f &lt;- function() {
+  new_type(Point, slots(x |&gt; type(double), y |&gt; type(double)))
+}
+
+f &lt;- function(p) {
+  p$x &lt;- p$x + 1
+  return(p)
+}
+
+fcpp &lt;- ast2ast::translate(
+  f,
+  args_f = function(p) p |&gt; type(Point),
+  types_f = types_f
+)
+
+p &lt;- structure(list(x = 1, y = 2), class = &quot;Point&quot;)
+fcpp(p)</code></pre>
+<p>Notes:</p>
+<ul>
+<li>On the R side, a value of a custom type is a named <code>list</code>
+with a matching <code>class</code> attribute,
+e.g. <code>structure(list(x = 1, y = 2), class = &quot;Point&quot;)</code>.</li>
+<li>Slots can themselves be custom types, allowing nested structs.</li>
+<li><code>collection(TypeName)</code> is a vector of a custom type, e.g.
+<code>slots(points |&gt; type(collection(Point)))</code> or, as a local
+variable, <code>coll |&gt; type(collection(Point))</code>. Allocate one
+with <code>vector(mode = &quot;Point&quot;, n)</code>.</li>
+<li>Fields are read and written with <code>$</code>, including chained
+access such as <code>s$circles[[1L]]$center$x</code>.</li>
+</ul>
+</div>
 <div id="interpolation" class="section level2">
 <h2>Interpolation</h2>
 <p>To interpolate values, the ‘cmr’ function can be used. The function
@@ -596,7 +759,8 @@ needs three arguments.</p>
 <ul>
 <li>the first argument is the point of the independent variable (x) for
 which the dependent variable should be calculated (y). This has to be a
-vector of length one.</li>
+scalar (a length-one vector triggers a warning and only uses its first
+element).</li>
 <li>the second argument is a vector defining the points of the
 independent variable (x). This has to be a vector of at least length
 four.</li>

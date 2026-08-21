@@ -71,6 +71,56 @@ into a followable pattern.
 
 ---
 
+## Issue 7 — `for (i in a:b)` materializes a full array just to drive a counter
+
+`seq_len(n)` used directly as a `for`-loop's sequence already gets special-cased
+codegen: a plain scalar counter, no allocation. `:` (colon) does not — it always
+routes through `etr::colon()`, which eagerly allocates and fills a full
+`Array<DataType, Buffer<...>>` of length `b-a+1` before the loop body runs at
+all, purely to drive a counter that never needed to exist as an array.
+
+```r
+f1 <- function(rounds) {
+  s <- 0.0
+  for (i in seq_len(rounds)) s <- s + 1.0
+  return(s)
+}
+f2 <- function(rounds) {
+  s <- 0.0
+  for (i in 1:rounds) s <- s + 1.0
+  return(s)
+}
+```
+
+Generated code for the `seq_len` loop (`inst/include/etr_bits/Allocation.hpp`,
+`length_seq`) — a direct counting loop:
+
+```cpp
+for(etr::Integer i = 1; i <= etr::length_seq(rounds); i = i + etr::Integer(1)) { ... }
+```
+
+Generated code for the `:` loop — routes through `colonInternal`
+(`inst/include/etr_bits/Allocation.hpp:135-163`), which allocates
+`Array<DataType, Buffer<DataType, RBufferTrait>> ret(SI{length})` and fills it
+element-by-element *before* the range-based `for` even starts:
+
+```cpp
+for(const auto i : etr::colon(etr::Double(1.0), rounds)) { ... }
+```
+
+Measured impact (Leibniz-formula pi loop, `development/Benchmarks/bench_leibniz.R`,
+rounds = 10,000,000, median of 5 reps): the `seq_len` form ran in **~17ms**, the
+otherwise-identical `:` form in **~77ms** — a **~4.5x** difference from this one
+codegen gap, on a loop that does no other array work.
+
+**Suggested direction:** give `for (i in a:b)` the same direct-counter codegen
+`seq_len` already has when the sequence expression is a colon binary_node
+(a compile-time-visible pattern, no new runtime machinery needed) — skip
+`etr::colon()`/array materialization entirely and lower straight to a scalar
+counting loop, matching `length_seq`'s existing approach.
+
+---
+
 ### What worked well (no issue needed)
 
 Reverse- and forward-mode AD (incl. through loops and, with `const` args, through

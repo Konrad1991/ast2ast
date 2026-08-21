@@ -401,9 +401,12 @@ be defined in C++ (at least not in the way they are used in R) therefore
 they are replaced by functions with new names e.g. <em>etr::colon</em>
 and <em>etr::subset</em>.<br />
 Additionally, C++ necessitates explicit declaration of variable types.
-Within this example for all variables the type <em>Array&lt;Double,
-Buffer<Double>&gt;</em> is used. A detailed explanation is deferred to
-the subsequent section.</p>
+The argument <code>a</code> keeps the vector type <em>Array&lt;Double,
+Buffer<Double>&gt;</em>, while <code>size</code> and <code>temp</code>
+are inferred as scalars (<em>etr::Integer</em> and <em>etr::Double</em>
+respectively), since <code>length()</code> and single-element subsetting
+both produce scalars. A detailed explanation is deferred to the
+subsequent section.</p>
 <pre class="r numberLines"><code>bubbleSort &lt;- function(a) {
   size &lt;- length(a)
   for (i in 1:size) {
@@ -417,23 +420,24 @@ the subsequent section.</p>
   }
   return(a)
 }</code></pre>
-<pre class="cpp numberLines"><code>// [[Rcpp::depends(ast2ast)]]
+<pre class="cpp numberLines"><code>#include &lt;Rcpp.h&gt;
+// [[Rcpp::depends(ast2ast)]]
 // [[Rcpp::plugins(cpp2a)]]
 #include &quot;etr.hpp&quot;
 // [[Rcpp::export]]
 SEXP bubbleSort(SEXP aSEXP) {
-etr::Aetr::Double, etr::Buffer&lt;etr::Double&gt;&gt; a = aSEXP;
-  int size;
-etr::Array&lt;etr::Double, etr::Buffer&lt;etr::Double&gt;&gt; temp;
+  etr::Array&lt;etr::Double, etr::Buffer&lt;etr::Double&gt;&gt; a = aSEXP;
+  etr::Integer size;
+  etr::Double temp;
   size = etr::length(a);
-  for(const auto&amp; i : etr::colon(1, size)) {
-   for(const auto&amp; j : etr::colon(1, (size - 1.0))) {
-    if (etr::subset(a, j) &gt; etr::subset(a, j + 1.0)) {
-       temp = etr::subset(a, j);
-       etr::subset(a, j) = etr::subset(a, j + 1.0);
-       etr::subset(a, j + 1.0) = temp;
-    };
-   }
+  for (const auto i : etr::colon(etr::Double(1.0), size)) {
+    for (const auto j : etr::colon(etr::Double(1.0), (size - etr::Double(1.0)))) {
+      if (etr::subset(a, j) &gt; etr::subset(a, j + etr::Double(1.0))) {
+        temp = etr::subset(a, j);
+        etr::subset(a, j) = etr::subset(a, j + etr::Double(1.0));
+        etr::subset(a, j + etr::Double(1.0)) = temp;
+      }
+    }
   }
   return(etr::Cast(a));
 }</code></pre>
@@ -455,7 +459,7 @@ fcpp &lt;- ast2ast::translate(f, f_args, output = &quot;XPtr&quot;)</code></pre>
 </div>
 <div id="afterwards-the-external-pointer-is-used-in-an-r-package" class="section level4">
 <h4>Afterwards the external pointer is used in an R package</h4>
-<pre class="cpp"><code>// [[Rcpp::depends(RcppArmadillo)]]
+<pre class="cpp"><code>#include &lt;Rcpp.h&gt;
 // [[Rcpp::depends(ast2ast)]]
 // [[Rcpp::plugins(cpp2a)]]
 #include &quot;etr.hpp&quot;
