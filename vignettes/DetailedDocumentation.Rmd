@@ -36,6 +36,7 @@ text-align: justify}
 
 ## Overview
 
+
 The *ast2ast* package translates R functions into C++ functions,
 returning either an external pointer (XPtr) or an R function.
 This package is particularly useful for tasks requiring frequent function evaluations,
