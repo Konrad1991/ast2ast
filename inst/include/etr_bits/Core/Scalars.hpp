@@ -500,6 +500,16 @@ struct ReverseTape {
     if (any_na) {
       for (std::size_t i = 0; i < out_size; ++i) { X[i] = std::numeric_limits<double>::quiet_NaN(); out_na[i] = 1; }
     } else {
+      // dtrsm has no singularity check of its own (unlike dgetrf/dpotrf, it
+      // takes no info parameter) -- a zero diagonal entry silently divides by
+      // zero during substitution, so it has to be checked here explicitly.
+      for (std::size_t i = 0; i < n; ++i) {
+        if (upper) {
+          ass<"backsolve: matrix is exactly singular (zero on the diagonal)">(A[i * n + i] != 0.0);
+        } else {
+          ass<"forwardsolve: matrix is exactly singular (zero on the diagonal)">(A[i * n + i] != 0.0);
+        }
+      }
       int ni = static_cast<int>(n), ki = static_cast<int>(k);
       const double one = 1.0;
       F77_CALL(dtrsm)("L", upper ? "U" : "L", "N", "N", &ni, &ki, &one,

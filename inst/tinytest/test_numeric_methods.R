@@ -50,6 +50,19 @@ expect_true(any(grepl("f_root:", out)))
 expect_true(any(grepl("iter:", out)))
 expect_true(any(grepl("estim_prec:", out)))
 
+# maxiter accepts an integer literal too, not just double
+f_int_maxiter <- function(interval) {
+  g <- fn(
+    args_f = function(x) x |> type(double),
+    return_value = type(double),
+    block = function(x) return(x^2 - 4)
+  )
+  res <- uniroot(g, interval, 1e-10, 1000L)
+  return(res$root)
+}
+fcpp_int_maxiter <- ast2ast::translate(f_int_maxiter, args_f = function(interval) interval |> type(vec(double)))
+expect_equal(fcpp_int_maxiter(c(0, 10)), stats::uniroot(function(x) x^2 - 4, c(0, 10), tol = 1e-10, maxiter = 1000)$root, tolerance = 1e-6)
+
 # --- nnls ----------------------------------------------------------------
 
 if (!requireNamespace("nnls", quietly = TRUE)) {
@@ -93,3 +106,27 @@ set.seed(1)
 A <- matrix(rnorm(30), nrow = 10, ncol = 3)
 b <- rnorm(10)
 check_nnls_case(A, b, "case4")
+
+# --- which -----------------------------------------------------------------
+
+f <- function(v) {
+  return(which(v > 3.0))
+}
+fcpp <- ast2ast::translate(f, args_f = function(v) v |> type(vec(double)))
+x <- c(1.0, 5.0, 2.0, 8.0)
+res <- fcpp(x) |> c()
+
+expect_equal(res, which(x > 3.0))
+
+# no matches -- must return a zero-length integer vector, not error
+x <- c(1.0, 2.0, 3.0)
+res <- fcpp(x) |> c()
+expect_equal(res, integer(0))
+
+# a scalar condition still returns a vector, matching R
+f_scalar <- function(x) {
+  return(which(x > 3.0))
+}
+fcpp_scalar <- ast2ast::translate(f_scalar, args_f = function(x) x |> type(double))
+expect_equal(c(fcpp_scalar(5.0)), 1L)
+expect_equal(c(fcpp_scalar(1.0)), integer(0))

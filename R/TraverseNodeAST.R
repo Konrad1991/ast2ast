@@ -36,12 +36,14 @@ traverse_ast <- function(node, action, ...) {
     traverse_ast(node$seq, action, ...)
     if (!handled) traverse_ast(node$block, action, ...)
   } else if (inherits(node, "while_node")) {
-    action(node, ...)
+    # TRUE means action() already traversed node$block itself, same as for_node above
+    handled <- isTRUE(action(node, ...))
     traverse_ast(node$condition, action, ...)
-    traverse_ast(node$block, action, ...)
+    if (!handled) traverse_ast(node$block, action, ...)
   } else if (inherits(node, "repeat_node")) {
-    action(node, ...)
-    traverse_ast(node$block, action, ...)
+    # TRUE means action() already traversed node$block itself, same as for_node above
+    handled <- isTRUE(action(node, ...))
+    if (!handled) traverse_ast(node$block, action, ...)
   } else if (inherits(node, "function_node")) {
     action(node, ...)
     lapply(node$args, function(arg) traverse_ast(arg, action, ...))
@@ -407,7 +409,7 @@ unallowed_signs <- function(name) {
     # Thereby, one can easily create argument names nameSEXP and assign it to name
     # - the types of ast2ast: logical, integer, double, int cannot be used as names.
     # Thereby, all.vars can directly be used to find all variables
-    "\\.", "SEXP", "getXPtr", "fct_ptr"
+    "\\.", "SEXP", "getXPtr", "fct_ptr", "__bound__"
   )
   sign_found <- 0
   for (i in seq_along(unallowed)) {
@@ -507,6 +509,28 @@ check_type_declaration <- function(node, r_fct) {
     return()
   }
   return()
+}
+
+# break/next may only appear inside a for/while/repeat body.
+# Manually traverses node$block with in_loop flipped on, then returns TRUE
+# so traverse_ast() skips its own (unflagged) block descent -- same pattern
+# type_infer_for_node uses for iterator scoping.
+# ========================================================================
+action_check_break_next <- function(node, info_env) {
+  if (inherits(node, "nullary_node")) {
+    if (node$operator %in% c("break", "next") && !isTRUE(info_env$in_loop)) {
+      node$error <- sprintf("%s used outside of a loop", node$operator)
+    }
+    return()
+  }
+  if (!inherits(node, c("for_node", "while_node", "repeat_node"))) {
+    return()
+  }
+  outer_in_loop <- info_env$in_loop
+  info_env$in_loop <- TRUE
+  traverse_ast(node$block, action_check_break_next, info_env)
+  info_env$in_loop <- outer_in_loop
+  TRUE
 }
 
 # Sort arguments

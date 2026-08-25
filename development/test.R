@@ -16,12 +16,7 @@ f <- function(x) {
 }
 ast2ast::translate(f)
 
-f <- function() {
-  iv <- integer(3)
-  iv[1] <- 5L
-  dv <- numeric(3)
-  dv[1] <- iv[1]
-  return(dv[1])
-}
-fcpp <- ast2ast::translate(f)
-fcpp()
+x <- 1:3
+a <- which(x > 3)
+a[1]
+a[[1]]

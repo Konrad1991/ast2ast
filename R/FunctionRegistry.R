@@ -463,6 +463,21 @@ infer_reduce_fixed_type <- function(base) {
     return(t)
   }
 }
+infer_which <- function(node, vars_list, info_env, function_registry) {
+  inner <- infer(node$obj, vars_list, info_env, function_registry)
+  if (inherits(inner, c("new_type_node", "fn_node"))) {
+    return(sprintf("Found unallowed type in: %s", node$stringify()))
+  }
+  if (!inherits(inner, "pre_type_node")) {
+    return(sprintf("Found unallowed type in: %s", node$stringify()))
+  }
+  if (inner$get_data_struct() == "collection") {
+    return(sprintf("Found unallowed type in: %s", node$stringify()))
+  }
+  t <- make_inferred_type("vector", "integer", info_env$r_fct, info_env$real_type)
+  node$internal_type <- t
+  return(t)
+}
 # sum keeps the type, except logical -> integer (R semantics); double stays double
 infer_sum <- function(node, vars_list, info_env, function_registry) {
   inner <- infer(node$obj, vars_list, info_env, function_registry)
@@ -1535,6 +1550,11 @@ function_registry_global$add(
   check_fct = check_unary, group = "unary_node", cpp_name = "etr::which_min"
 )
 function_registry_global$add(
+  name = "which", num_args = 1, arg_names = NA,
+  infer_fct = infer_which,
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::which"
+)
+function_registry_global$add(
   name = "all", num_args = 1, arg_names = NA,
   infer_fct = infer_reduce_fixed_type("logical"),
   check_fct = check_unary, group = "unary_node", cpp_name = "etr::all"
@@ -1883,9 +1903,9 @@ function_registry_global$add(
     }
     maxiter_ok <- inherits(all_types[[4L]], "pre_type_node") &&
       all_types[[4L]]$get_data_struct() == "scalar" &&
-      all_types[[4L]]$get_base_type() == "double"
+      all_types[[4L]]$get_base_type() %in% c("double", "integer", "int")
     if (!maxiter_ok) {
-      return("The fourth argument (maxiter) to uniroot has to be a scalar double")
+      return("The fourth argument (maxiter) to uniroot has to be a scalar integer or double")
     }
     if (length(node$args) == 5L) {
       extra_type <- all_types[[5L]]

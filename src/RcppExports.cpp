@@ -164,6 +164,24 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_trisolve_zero_diag
+void test_trisolve_zero_diag();
+RcppExport SEXP _ast2ast_test_trisolve_zero_diag() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_trisolve_zero_diag();
+    return R_NilValue;
+END_RCPP
+}
+// test_uniroot_maxiter
+void test_uniroot_maxiter();
+RcppExport SEXP _ast2ast_test_uniroot_maxiter() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_uniroot_maxiter();
+    return R_NilValue;
+END_RCPP
+}
 // test_utilities
 void test_utilities();
 RcppExport SEXP _ast2ast_test_utilities() {
@@ -273,6 +291,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_preserved_subsetting", (DL_FUNC) &_ast2ast_test_preserved_subsetting, 0},
     {"_ast2ast_test_second_dispatch_layer", (DL_FUNC) &_ast2ast_test_second_dispatch_layer, 0},
     {"_ast2ast_test_simplified_subsetting", (DL_FUNC) &_ast2ast_test_simplified_subsetting, 0},
+    {"_ast2ast_test_trisolve_zero_diag", (DL_FUNC) &_ast2ast_test_trisolve_zero_diag, 0},
+    {"_ast2ast_test_uniroot_maxiter", (DL_FUNC) &_ast2ast_test_uniroot_maxiter, 0},
     {"_ast2ast_test_utilities", (DL_FUNC) &_ast2ast_test_utilities, 0},
     {"_ast2ast_test_assign_array_to_scalar", (DL_FUNC) &_ast2ast_test_assign_array_to_scalar, 0},
     {"_ast2ast_test_crossprod", (DL_FUNC) &_ast2ast_test_crossprod, 0},

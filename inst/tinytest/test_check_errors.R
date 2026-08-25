@@ -13,6 +13,10 @@ test_action_error <- function(f, error_message, r_fct = TRUE) {
   e <- attributes(e)[["condition"]]$message
   expect_equal(e, error_message)
 }
+test_no_action_error <- function(f, r_fct = TRUE) {
+  e <- try(get_checks(f, r_fct), silent = TRUE)
+  expect_false(inherits(e, "try-error"))
+}
 
 # --- type declarations -----------------------------------------------------
 f <- function() {
@@ -271,3 +275,63 @@ test_action_error(
   f,
   "\nmatrix(3.0, 2.0, 2.0)\nFound wrong named argument for: matrix"
 )
+
+# --- break/next only inside a loop -----------------------------------------
+f <- function() {
+  break
+}
+test_action_error(
+  f,
+  "\nbreak;\nbreak used outside of a loop"
+)
+f <- function() {
+  if (TRUE) {
+    next
+  }
+}
+test_action_error(
+  f,
+  "\nnext;\nnext used outside of a loop"
+)
+f <- function() {
+  for (i in seq_len(3L)) {
+    i <- i + 1L
+  }
+  break
+}
+test_action_error(
+  f,
+  "\nbreak;\nbreak used outside of a loop"
+)
+
+f <- function() {
+  for (i in seq_len(3L)) {
+    if (i > 1L) break
+  }
+}
+test_no_action_error(f)
+f <- function() {
+  i <- 0L
+  while (i < 3L) {
+    i <- i + 1L
+    if (i == 2L) next
+  }
+}
+test_no_action_error(f)
+f <- function() {
+  repeat {
+    break
+  }
+}
+test_no_action_error(f)
+# weird case: nested loops each break independently, and the inner loop's
+# scope must not leak into (or be shadowed by) the outer one
+f <- function() {
+  for (i in seq_len(3L)) {
+    for (j in seq_len(3L)) {
+      if (j > 1L) break
+    }
+    if (i > 1L) break
+  }
+}
+test_no_action_error(f)

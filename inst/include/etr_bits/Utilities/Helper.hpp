@@ -197,6 +197,28 @@ template <typename T> requires IsArray<T> inline Integer which_min(const T &inp)
   return Integer(static_cast<int>(best_idx + 1));
 }
 
+// which -- 1-based indices of truthy elements, always returns a vector (even
+// for a scalar input, matching R); NA is skipped (not selected), not an error
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsScalarLike<T> inline auto which(const T inp) {
+  const auto v = get_scalar_val(inp);
+  Array<Integer, Buffer<Integer, RBufferTrait>> ret;
+  if (!v.isNA() && get_val(v) != 0) ret.push_back(Integer(1));
+  ret.dim = std::vector<std::size_t>{ret.size()};
+  return ret;
+}
+template <typename T> requires IsArray<T> inline auto which(const T &inp) {
+  Array<Integer, Buffer<Integer, RBufferTrait>> ret;
+  for (std::size_t i = 0; i < inp.size(); i++) {
+    const auto cur = get_scalar_val(inp.get(i));
+    if (!cur.isNA() && get_val(cur) != 0) {
+      ret.push_back(Integer(static_cast<int>(i + 1)));
+    }
+  }
+  ret.dim = std::vector<std::size_t>{ret.size()};
+  return ret;
+}
+
 // all & any -- three-valued logic, matches R (empty all -> TRUE, empty any -> FALSE)
 // -----------------------------------------------------------------------------------------------------------
 template <typename T> requires IsScalarLike<T> inline Logical all(const T inp) {

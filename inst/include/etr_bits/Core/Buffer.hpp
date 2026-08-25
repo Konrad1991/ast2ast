@@ -339,7 +339,6 @@ struct SoABuffer {
   }
 
   void resize(std::size_t newSize) {
-    ass<"Size has to be larger than 0!">(newSize > 0);
     if (!allocated) {
       init(newSize);
       return;
@@ -716,7 +715,6 @@ struct Buffer<Dual, BufferTrait> {
   }
 
   void resize(std::size_t newSize) {
-    ass<"Size has to be larger than 0!">(newSize > 0);
     if (!allocated) { init(newSize); return; }
     if (newSize > capacity) { realloc(newSize); return; }
     sz = newSize;

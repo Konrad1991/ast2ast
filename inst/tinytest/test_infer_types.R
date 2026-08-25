@@ -554,7 +554,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   attributes(e)[["condition"]]$message,
-  "a <- b + 1.0\nFound uninitialzed variable: b"
+  "a <- b + 1.0\nFound uninitialized variable: b"
 )
 
 # --- print --------------------------------------------------------------

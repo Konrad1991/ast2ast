@@ -603,7 +603,10 @@ block_node <- R6::R6Class(
         }
         return(NULL)
       })
-      res <- Filter(Negate(is.null), res)
+      # for_node/if_node/while_node/repeat_node's own stringify_error_line
+      # returns "" (not NULL) when they have no error, so both must be
+      # filtered here or "" leaves a blank line in the combine_strings join.
+      res <- Filter(function(r) !is.null(r) && r != "", res)
       return(combine_strings(res, "\n\n"))
     },
     print = function() {
@@ -627,13 +630,19 @@ for_node <- R6::R6Class(
       sequence <- self$seq$stringify("")
       b <- self$block$stringify(paste0(indent, " "))
       if (inherits(self$seq, "unary_node") && self$seq$operator %in% c("etr::seq_len", "etr::seq_along")) {
-        until <- paste0("etr::length_seq(", self$seq$obj$stringify(indent = ""))
-        if (self$seq$operator == "etr::seq_along") until <- paste0("etr::length(", self$seq$obj$stringify(indent = ""))
+        bound_fn <- if (self$seq$operator == "etr::seq_along") "etr::length" else "etr::length_seq"
+        bound_var <- paste0(idx, "__bound__")
+        # NOTE: bound is hoisted into a local instead of re-evaluated in the
+        # for-condition -- otherwise etr::length_seq()/etr::length() run on
+        # every iteration, which is wasteful when this loop is nested inside
+        # another loop.
         return(paste0(
-          indent,
-          "for(etr::Integer ", idx, " = 1; ",
-          idx, " <= ", until, "); ", idx, " = ", idx, " + etr::Integer(1)) {\n",
+          indent, "{\n",
+          indent, " auto ", bound_var, " = ", bound_fn, "(", self$seq$obj$stringify(indent = ""), ");\n",
+          indent, " for(etr::Integer ", idx, " = 1; ",
+          idx, " <= ", bound_var, "; ", idx, " = ", idx, " + etr::Integer(1)) {\n",
           b, "\n",
+          indent, " }\n",
           indent, "}\n"
         ))
       } else {

@@ -329,6 +329,24 @@ template<typename RealType> void test_array_r_buffer() {
     RealType as = static_cast<RealType>(create_r_array());
     ass<"Conversion of vector to Scalar">(compare(get_val(as), 1.1));
   }
+  // Default (empty) construction, growth via push_back, and copying an empty array
+  {
+    Array<RealType, Buffer<RealType, RBufferTrait>> a;
+    ass<"default-constructed R-array is empty">(a.size() == 0);
+
+    Array<RealType, Buffer<RealType>> b;
+    Array<RealType, Buffer<RealType>> c;
+    b = a;
+    ass<"copying an empty R-array does not crash">(b.size() == 0);
+    c = b;
+    ass<"copying an empty R-array does not crash">(c.size() == 0);
+
+    a.push_back(RealType(1.1));
+    a.push_back(RealType(2.2));
+    ass<"push_back grows from empty">(a.size() == 2);
+    ass<"push_back preserves order">(compare(get_val(a.get(0)), 1.1));
+    ass<"push_back preserves order">(compare(get_val(a.get(1)), 2.2));
+  }
 }
 
 template<typename RealType> void test_array_borrow() {

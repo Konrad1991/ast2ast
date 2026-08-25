@@ -69,6 +69,14 @@ test_simplified_subsetting <- function() {
     invisible(.Call(`_ast2ast_test_simplified_subsetting`))
 }
 
+test_trisolve_zero_diag <- function() {
+    invisible(.Call(`_ast2ast_test_trisolve_zero_diag`))
+}
+
+test_uniroot_maxiter <- function() {
+    invisible(.Call(`_ast2ast_test_uniroot_maxiter`))
+}
+
 test_utilities <- function() {
     invisible(.Call(`_ast2ast_test_utilities`))
 }

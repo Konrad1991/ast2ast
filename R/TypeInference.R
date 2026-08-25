@@ -253,6 +253,21 @@ void_only_operator <- function(operator) {
   operator %in% c("print", "seed", "unseed", "stop")
 }
 
+warn_if_type_widened <- function(variable, old_type, new_type) {
+  if (!inherits(old_type, "pre_type_node") || !inherits(new_type, "pre_type_node")) {
+    return()
+  }
+  same <- same_base_type(old_type$get_base_type(), new_type$get_base_type()) &&
+    same_data_struct(old_type$get_data_struct(), new_type$get_data_struct())
+  if (!same) {
+    warning(sprintf(
+      "Promoted the type of variable %s from %s %s to %s %s",
+      variable, old_type$get_data_struct(), old_type$get_base_type(),
+      new_type$get_data_struct(), new_type$get_base_type()
+    ), call. = FALSE)
+  }
+}
+
 type_infer_assignment <- function(node, info_env) {
   if (inherits(node, "binary_node") && node$operator %in% c("=", "<-")) {
     infer(node, info_env$vars_list, info_env, info_env$function_registry)
@@ -294,6 +309,7 @@ type_infer_assignment <- function(node, info_env) {
           type$iterator <- FALSE
           type$type_decl <- TRUE
           type$error <- NULL
+          type$const_or_mut <- "mutable" # Don't propagate const
           type$set_name(variable)
         }
         info_env$vars_list[[variable]] <- type
@@ -314,6 +330,7 @@ type_infer_assignment <- function(node, info_env) {
             detected_type <- detected_type$clone()
             detected_type$set_iterator(FALSE) # Don't propagate iterator
             detected_type$set_name(variable)
+            warn_if_type_widened(variable, info_env$vars_list[[variable]], detected_type)
             info_env$vars_list[[variable]] <- detected_type
           }
         }
@@ -351,6 +368,7 @@ type_infer_assignment <- function(node, info_env) {
             } else {
               detected_type <- detected_type |> flatten_type()
               detected_type$set_name(variable)
+              warn_if_type_widened(variable, info_env$vars_list[[variable]], detected_type)
               info_env$vars_list[[variable]] <- detected_type
             }
           }
@@ -424,6 +442,7 @@ type_infer_for_node <- function(node, info_env) {
       return(TRUE)
     }
     type <- type |> flatten_type()
+    warn_if_type_widened(variable, existing, type)
   }
   type$set_iterator(TRUE)
   type$set_in_scope(TRUE)
@@ -479,6 +498,7 @@ type_infer_while_and_if <- function(node, info_env) {
           node$error <- detected_type
         } else if (!info_env$vars_list[[variable]]$get_type_decl()) {
           detected_type <- detected_type |> flatten_type()
+          warn_if_type_widened(variable, info_env$vars_list[[variable]], detected_type)
           info_env$vars_list[[variable]] <- detected_type
         }
       }
@@ -501,7 +521,7 @@ type_infer_binary_node <- function(node, info_env) {
       if (!is.null(variable) && variable != "") {
 
         if (inherits(info_env$vars_list[[variable]], "unknown_type")) {
-          node$error <- sprintf("You tried to subset the uninitialzed variable %s", variable)
+          node$error <- sprintf("You tried to subset the uninitialized variable %s", variable)
         }
         else if (inherits(info_env$vars_list[[variable]], "pre_type_node")) {
           if (!info_env$vars_list[[variable]]$get_type_decl() && !info_env$vars_list[[variable]]$get_fct_input()) {
@@ -525,7 +545,7 @@ type_infer_function_subsetting <- function(node, info_env) {
     if (!is.null(variable) && variable != "") {
 
       if (inherits(info_env$vars_list[[variable]], "unknown_type")) {
-        node$error <- sprintf("You tried to subset the uninitialzed variable %s", variable)
+        node$error <- sprintf("You tried to subset the uninitialized variable %s", variable)
       }
       else if (inherits(info_env$vars_list[[variable]], "pre_type_node")) {
         if (!info_env$vars_list[[variable]]$get_type_decl() && !info_env$vars_list[[variable]]$get_fct_input()) {
@@ -597,14 +617,14 @@ are_vars_init <- function(type, name = "") {
   if (!inherits(type, "unknown_type")) {
     return(NULL)
   }
-  sprintf("Found uninitialzed variable: %s", name)
+  sprintf("Found uninitialized variable: %s", name)
 }
 
 type_list_checks <- function(l) {
   lapply(names(l), function(name) {
     var <- l[[name]]
     if (inherits(var, "unknown_type")) {
-      stop(sprintf("Found uninitialzed variable: %s", name))
+      stop(sprintf("Found uninitialized variable: %s", name))
     }
     else if (inherits(var, "pre_type_node")) {
       if (any(var$get_base_type() == c("NA", "NaN", "Inf"))) {

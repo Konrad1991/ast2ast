@@ -265,6 +265,32 @@ expect_error(
   pattern = "You cannot assign to a constant variable"
 )
 
+# copying a const Point argument into a fresh local must not propagate the
+# const-ness to the copy -- previously new_type_node's first-assignment
+# branch never reset const_or_mut, so the copy inherited "const" from the
+# const argument and any field mutation on the copy was rejected
+f <- function(p) {
+  p2 <- p
+  p2$x <- 99
+  return(p2)
+}
+fcpp <- ast2ast::translate(f, args_f = function(p) p |> type(Point) |> const(), types_f = types_f_point)
+p_in <- structure(list(x = 1, y = 2), class = "Point")
+res <- fcpp(p_in)
+expect_equal(res$x, 99)
+expect_equal(res$y, 2)
+
+# and the copy must be independent -- mutating it must not affect the original
+f <- function(p) {
+  p2 <- p
+  p2$x <- 99
+  return(p)
+}
+fcpp <- ast2ast::translate(f, args_f = function(p) p |> type(Point) |> const(), types_f = types_f_point)
+res <- fcpp(p_in)
+expect_equal(res$x, 1)
+expect_equal(res$y, 2)
+
 # --- 5. custom types combined with inner functions ------------------------------
 # inner fn taking a const-ref Point argument, returning one of its fields
 f <- function() {
@@ -1347,7 +1373,7 @@ f <- function() {
 }
 expect_error(
   ast2ast::translate(f, getsource = TRUE),
-  pattern = "Found uninitialzed variable: undeclared_var"
+  pattern = "Found uninitialized variable: undeclared_var"
 )
 
 # --- a local variable cannot shadow a custom type's own name ----------------

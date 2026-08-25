@@ -93,3 +93,41 @@ f <- function() {
   return(g(1))
 }
 expect_error(ast2ast::translate(f, getsource = TRUE), pattern = "fn: args_f, return_value, block are required")
+
+# --- break/next scope is checked per fn(), independently of the outer fct --
+
+# weird case: break outside any loop, but only inside the inner fn() body --
+# must be rejected there, attributed to that inner fn, even though the
+# outer function never uses break/next at all
+f <- function(x) {
+  h <- fn(
+    args_f = function(y) y |> type(double) |> const(),
+    return_value = type(double),
+    block = function(y) { break; return(y) }
+  )
+  return(h(x))
+}
+expect_error(
+  ast2ast::translate(f, args_f = function(x) x |> type(double), getsource = TRUE),
+  pattern = "In inner function h: Could not run checks on AST due to: \nbreak;\nbreak used outside of a loop"
+)
+
+# break inside a loop that itself lives inside the inner fn() body is fine
+f <- function(x) {
+  h <- fn(
+    args_f = function(y) y |> type(double) |> const(),
+    return_value = type(double),
+    block = function(y) {
+      z <- y
+      for (i in seq_len(3L)) {
+        if (i > 1L) break
+        z <- z + 1.0
+      }
+      return(z)
+    }
+  )
+  return(h(x))
+}
+expect_true(is.character(
+  ast2ast::translate(f, args_f = function(x) x |> type(double), getsource = TRUE)
+))

@@ -15,8 +15,22 @@
 
 namespace etr {
 
+// dtrsm has no singularity check of its own (unlike dgetrf/dpotrf, it takes
+// no info parameter) -- a zero diagonal entry silently divides by zero
+// during substitution, so it has to be checked here explicitly.
+inline void check_tri_diag(const std::vector<double>& A, std::size_t n, bool upper) {
+  for (std::size_t i = 0; i < n; ++i) {
+    if (upper) {
+      ass<"backsolve: matrix is exactly singular (zero on the diagonal)">(A[i * n + i] != 0.0);
+    } else {
+      ass<"forwardsolve: matrix is exactly singular (zero on the diagonal)">(A[i * n + i] != 0.0);
+    }
+  }
+}
+
 inline void trisolve_apply(std::vector<double>& A, std::size_t n, std::size_t k,
                            std::vector<double>& B, bool upper, const char* trans) {
+  check_tri_diag(A, n, upper);
   int ni = static_cast<int>(n), ki = static_cast<int>(k);
   const double one = 1.0;
   F77_CALL(dtrsm)("L", upper ? "U" : "L", trans, "N", &ni, &ki, &one,

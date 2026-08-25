@@ -152,6 +152,12 @@ run_checks <- function(ast, r_fct, function_registry, known_types = list()) {
   if (inherits(e, "try-error")) {
     stop("error: Could not run checks on AST")
   }
+  info_env <- new.env(parent = emptyenv())
+  info_env$in_loop <- FALSE
+  e <- try(traverse_ast(ast, action_check_break_next, info_env), silent = TRUE)
+  if (inherits(e, "try-error")) {
+    stop("error: Could not run checks on AST")
+  }
   line <- try( { ast$stringify_error_line() }, silent = TRUE)
   if (inherits(line, "try-error")) {
     stop("error: Could not stringify the AST")

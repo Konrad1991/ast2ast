@@ -99,12 +99,8 @@ b = b;
   // resize
   {
     Buffer<RealType> b(300);
-    try {
-      b.resize(0);
-    } catch (const std::exception& e) {
-      const std::string expected = "Size has to be larger than 0!";
-      ass<"Reisze with new size = 0">(std::strcmp(e.what(), expected.c_str()) == 0);
-    }
+    b.resize(0);
+    ass<"resize to 0 succeeds and buffer becomes empty">(b.size() == 0);
     const std::size_t old_capacity = [&]() -> std::size_t {
       if constexpr (HasCapacity<Buffer<RealType>>) return b.capacity;
       else return 0;
@@ -391,11 +387,8 @@ void test_buffer_integer() {
   // resize
   {
     Buffer<Integer> b(300);
-    try {
-      b.resize(0);
-    } catch (const std::exception& e) {
-      ass<"int resize 0 throws">(std::strcmp(e.what(), "Size has to be larger than 0!") == 0);
-    }
+    b.resize(0);
+    ass<"int resize to 0 succeeds and buffer becomes empty">(b.size() == 0);
     const std::size_t old_capacity = b.capacity;
     b.resize(1);
     ass<"int shrink size">(b.size() == 1);
@@ -604,11 +597,8 @@ void test_buffer_logical() {
     ass<"logical resize prefix 1">(get_val(b.get(1)) == true);
     for (std::size_t i = 2; i < b.size(); i++)
       ass<"logical resize zero-fills false">(get_val(b.get(i)) == false);
-    try {
-      b.resize(0);
-    } catch (const std::exception& e) {
-      ass<"logical resize 0 throws">(std::strcmp(e.what(), "Size has to be larger than 0!") == 0);
-    }
+    b.resize(0);
+    ass<"logical resize to 0 succeeds and buffer becomes empty">(b.size() == 0);
   }
   // moveit
   {

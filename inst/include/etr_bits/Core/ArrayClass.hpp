@@ -219,6 +219,9 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
   // ======================= internal methods =================================================
   void set(std::size_t idx, const T& val) { d.set(idx, val); }
   decltype(auto) get(std::size_t idx) const { return d.get(idx); }
+  // grows from empty -- lets a result of runtime-determined length (e.g.
+  // which()) be built without going through SI, which floors at size 1
+  void push_back(const T& val) { d.push_back(val); }
 
   explicit operator bool() const {
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
@@ -239,6 +242,7 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
   auto end() const { return d.end(); }
 
   // ======================= Constructors ===================================================
+  explicit Array() : d(), dim(1, 0) {}
   explicit Array(const SI &sz) : d(sz.sz) {}
 
   // Copy other Array with RBuffer
