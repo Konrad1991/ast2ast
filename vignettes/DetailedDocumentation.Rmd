@@ -159,28 +159,51 @@ You can override inference using explicit annotations.
 
 ---
 
-### Immutability of types
+### Static types vs. R's dynamic typing
 
-Once a variable has a type, it cannot change its base type or structure. This follows C++ rules.
-For example, you cannot first treat a variable as `scalar(double)` and later assign a scalar `double` to it.
-If you need a different type or structure, create a new variable with a new name.
+In R, reassigning a variable to a different type mid-function is completely normal:
 
----
+```{r, eval = FALSE}
+a <- 1L
+a <- 2.5
+```
 
-### Type promotion
+The generated C++ can't do that. A variable has exactly **one** type for its entire lifetime,
+declared once, before any of the function's logic runs. So when a variable's type isn't pinned
+down with an explicit `type()` annotation, ast2ast has to *decide* that one type -- and it does so
+by looking at **every** assignment to that variable across the whole function, not just the first
+one, and picking the type wide enough to hold all of them. That decision is then applied
+retroactively to *all* of the variable's assignments -- including ones that come before the line
+that actually forced the wider type:
 
-When two differently-typed operands are combined (e.g. `integer + double`), ast2ast
-picks a common result type along two independent precedence orders:
+```{r, eval = FALSE}
+f <- function() {
+  a <- 1L      # looks like an integer assignment...
+  a <- 2.5     # ...but a is reassigned a double two lines later
+  return(a)
+}
+```
+
+Because `a` is also assigned a `double` further down, ast2ast decides `a` is `double` for the
+*whole* function. The generated C++ declares `a` as `double` up front, and even the first
+assignment (`a <- 1L`) compiles to storing `1.0` -- not `1L`. A warning is raised whenever this
+happens (`Promoted the type of variable a from ... to ...`), so it's visible rather than silent.
+
+This "pick the wider of two types" logic is the same one used to combine two operands within a
+single expression (e.g. `integer + double`), along two independent precedence orders:
 
 - base type: `logical` < `integer` (`int`) < `double`
 - structure: `scalar` < `vector` (`vec`) < `matrix` (`mat`) < `array`
 
-The result takes the higher-precedence base type and the higher-precedence structure
-of the two operands, e.g.:
+The result takes the higher-precedence base type and the higher-precedence structure of the two
+operands (or, for a variable, of everything ever assigned to it), e.g.:
 
 - `logical + integer` -> `integer`
 - `integer + double` -> `double`
 - `double` (scalar) `+ vec(double)` -> `vec(double)`
+
+It only ever widens -- never narrows, and never reconciles genuinely incompatible kinds (e.g. a
+custom type and a plain vector; those are hard errors, not promotions).
 
 A few operators promote unconditionally, regardless of what they're given:
 
@@ -190,9 +213,11 @@ A few operators promote unconditionally, regardless of what they're given:
 - `sum()` keeps `double` as `double`, but promotes `logical`/`integer` to `integer`
   (matches R's own `sum()` behavior)
 
-This same promotion also finalizes a locally-inferred variable's type from its
-first few uses when it was not given an explicit `type()` annotation; once
-fixed, that type is immutable (see above).
+**This promotion mechanism only applies to inferred variables.** A variable whose type was fixed
+explicitly -- via a `type()` annotation, or as a function argument -- is truly immutable: it does
+not widen, and assigning it something outside that fixed type is a translation-time error, not a
+promotion. If you need a genuinely different type or structure somewhere in the function, create a
+new variable with a new name rather than relying on an existing one to change shape.
 
 ## Derivatives
 
