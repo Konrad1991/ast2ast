@@ -131,3 +131,79 @@ f <- function(x) {
 expect_true(is.character(
   ast2ast::translate(f, args_f = function(x) x |> type(double), getsource = TRUE)
 ))
+
+# --- a zero-arg inner fn's return type must be inferred correctly ----------
+# infer() previously had no case for nullary_node, so a bare zero-arg call
+# could never get a type -- return(h()) alone silently "worked" (a separate
+# bug in determine_types_of_returns swallowed the resulting error and
+# treated the function as void), but any real use of the value failed
+
+f <- function() {
+  h <- fn(
+    args_f = function() {},
+    return_value = type(double),
+    block = function() { return(5.0) }
+  )
+  return(h())
+}
+fcpp <- ast2ast::translate(f)
+expect_equal(fcpp(), 5.0)
+
+# the case actually encountered: a zero-arg inner fn's result passed into
+# another function call (sum()), instead of returned directly
+f <- function(x) {
+  inner <- fn(
+    args_f = function() {},
+    return_value = type(double),
+    block = function() { return(5.0) }
+  )
+  return(sum(inner()) + x)
+}
+fcpp <- ast2ast::translate(f, args_f = function(x) x |> type(double))
+expect_equal(fcpp(3.0), 8.0)
+
+# same, but the sum(inner()) result is assigned to a variable first -- goes
+# through type_infer_assignment instead of directly through return/binary
+f <- function() {
+  inner <- fn(
+    args_f = function() {},
+    return_value = type(double),
+    block = function() { return(5.0) }
+  )
+  y <- sum(inner())
+  return(y)
+}
+fcpp <- ast2ast::translate(f)
+expect_equal(fcpp(), 5.0)
+
+# --- assigning the result of a void-returning inner fn must be rejected ----
+# a void fn's call type is a real pre_type_node (base type "void"), so it
+# used to sail through type_infer_assignment's checks and declare an
+# (invalid) "void result;" in the generated C++ instead of being caught here
+
+f <- function(a) {
+  b <- fn(
+    args_f = function() {},
+    return_value = type(void),
+    block = function() {}
+  )
+  result <- b()
+  return(a)
+}
+expect_error(
+  ast2ast::translate(f, args_f = function(a) a |> type(double), getsource = TRUE),
+  pattern = "Cannot assign the result of b\\(\\) to a variable because it does not return a value"
+)
+
+# calling a void-returning inner fn as a bare statement (no assignment) is fine
+f <- function(a) {
+  b <- fn(
+    args_f = function() {},
+    return_value = type(void),
+    block = function() {}
+  )
+  b()
+  return(a)
+}
+fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(double))
+expect_equal(fcpp(3.0), 3.0)

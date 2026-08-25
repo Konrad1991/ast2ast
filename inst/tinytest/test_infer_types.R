@@ -213,7 +213,9 @@ f <- function(a) {
   )
   result <- b()
 }
-check_error(f, TRUE, "etr::Double", "result <- b()\nCannot determine the type for: b()")
+check_error(f, TRUE, "etr::Double",
+"result <- b()\nCannot assign the result of b() to a variable because it does not return a value"
+)
 
 # Void works
 f <- function(a) {

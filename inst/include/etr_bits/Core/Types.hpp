@@ -275,6 +275,13 @@ inline std::size_t safe_index_from_double(double x) {
   return static_cast<std::size_t>(t);
 }
 
+inline std::size_t safe_index_from_double_lower_bound_0(double x) {
+  ass<"invalid index argument">(std::isfinite(x));
+  double t = std::trunc(x);
+  ass<"Negative indices are not supported">(t >= 0);
+  return static_cast<std::size_t>(t);
+}
+
 // 7. struct Dim. Currently this is not used.
 // Potentially this replaces later std::vector<std::size_t> dim
 // The idea is that Dim stores the first two dimensions on the stack

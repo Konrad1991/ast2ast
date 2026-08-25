@@ -598,7 +598,20 @@ action_snapshot_lines <- function(node) {
     return()
   }
   for (stmt in node$block) {
-    if (!inherits(stmt, c("if_node", "for_node", "while_node", "repeat_node", "fn_node"))) {
+    if (inherits(stmt, "for_node")) {
+      idx <- stmt$i$stringify("")
+      sequence <- stmt$seq$stringify("")
+      stmt$pre_translate_line <- sprintf("for (%s in %s)", idx, sequence)
+    } else if (inherits(stmt, "while_node")) {
+      stmt$pre_translate_line <- sprintf("while (%s)", stmt$condition$stringify(""))
+    } else if (inherits(stmt, "if_node")) {
+      # NOTE: a runtime error can occur while evaluating any of the
+      # if/else-if conditions, but current_line() can only hold one string
+      # per statement. So the whole chain is summarized with "{...}" standing
+      # in for each branch body, telling the user one of these conditions
+      # caused the error instead of pointing at the wrong branch.
+      stmt$pre_translate_line <- stmt$string_summary_line()
+    } else if (!inherits(stmt, c("repeat_node", "fn_node"))) {
       stmt$pre_translate_line <- stmt$stringify()
     }
   }

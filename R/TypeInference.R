@@ -119,7 +119,7 @@ infer <- function(node, vars_list, info_env, function_registry) {
     }
     node$internal_type <- t
     return(t)
-  } else if (inherits(node, c("unary_node", "binary_node", "function_node"))) {
+  } else if (inherits(node, c("nullary_node", "unary_node", "binary_node", "function_node"))) {
     if (!function_registry$deriv_possible(node$operator) && info_env$real_type != "etr::Double") {
       return(sprintf(
         "%s does not support automatic differentiation yet (forward/reverse) -- only plain double translations",
@@ -283,6 +283,9 @@ type_infer_assignment <- function(node, info_env) {
     }
     else if (inherits(type, "pre_type_node") && type$get_base_type() == "character" && type$get_data_struct() == "scalar" && inherits(node$right_node, "literal_node")) {
       node$error <- "You cannot assign characters to variables"
+    }
+    else if (inherits(type, "pre_type_node") && type$get_base_type() == "void") {
+      node$error <- sprintf("Cannot assign the result of %s to a variable because it does not return a value", node$right_node$stringify())
     }
     # RHS:
     else {

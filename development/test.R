@@ -4,19 +4,41 @@ Rcpp::compileAttributes()
 install.packages(".", types = "source", repo = NULL)
 tinytest::test_package("ast2ast")
 
-tinytest::run_test_file("./inst/tinytest/test_subsetting.R")
+tinytest::run_test_file("./inst/tinytest/test_infer_types.R")
 
+# 8. missing functions:
+#   - round
+#   - sort
+#   - mean
+#   - cumsum
+#   - ifelse (does this work?)
+#   - %in%
+#
 files <- list.files("./R", full.names = TRUE)
 invisible(lapply(files, source))
 
-f <- function(x) {
-  g <- fn(args_f = function(a) a |> type(double),
-          block = function(a) { return(a * 2) })   # no return_value
-  return(g(x))
+f <- function() {
+  a <- 3.14
+  for (i in seq_along(which(a > 4))) {
+    print("TEST")
+  }
+  matrix(10.0, 2, 2)
 }
-ast2ast::translate(f)
+fcpp <- translate(f, verbose = TRUE)
+fcpp()
+traceback()
 
-x <- 1:3
-a <- which(x > 3)
-a[1]
-a[[1]]
+f <- function(a) {
+  b <- fn(
+    args_f = function() {
+    },
+    return_value = type(void),
+    block = function() {
+
+    }
+  )
+  result <- b()
+}
+fcpp <- ast2ast::translate(f)
+fcpp <- translate(f, getsource = TRUE)
+cat(fcpp, "\n")

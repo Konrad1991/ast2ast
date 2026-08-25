@@ -178,23 +178,23 @@ inline auto length_seq(const T& obj) {
   if constexpr(is_scalar) {
     using sType = Decayed<decltype(obj)>;
     static_assert(!IsLogical<sType>, "seq_len cannot handle logical values");
-    ass<"seq_len requires integer arguments >= 1">(obj >= Integer(1));
+    ass<"seq_len requires integer arguments >= 0">(obj >= Integer(0));
     constexpr bool is_int = IsInteger<sType>;
     if constexpr (is_int) {
       return obj;
     } else if constexpr(!is_int) {
-      return Integer(safe_index_from_double(get_val(obj)));
+      return Integer(safe_index_from_double_lower_bound_0(get_val(obj)));
     }
   } else {
     ass<"seq_len accepts only vector of length 1">(obj.size() == 1);
-    ass<"seq_len requires integer arguments >= 1">(obj.get(0) >= 1);
+    ass<"seq_len requires integer arguments >= 0">(obj.get(0) >= 0);
     using E = typename ExtractDataType<DecayedT>::value_type;
     static_assert(!IsLogical<E>, "seq_len cannot handle logical values");
     constexpr bool is_int = IsInteger<E>;
     if constexpr (is_int) {
       return obj.get(0);
     } else if constexpr(!is_int) {
-      return Integer(safe_index_from_double(get_val(obj.get(0))));
+      return Integer(safe_index_from_double_lower_bound_0(get_val(obj.get(0))));
     }
   }
 }
@@ -270,13 +270,13 @@ inline std::size_t ConvertSizeVec(const T& s) {
   constexpr bool is_scalar = IsScalarLike<DecayedT>;
   if constexpr(is_scalar) {
     const auto v = get_val(s);
-    ass<"size in fct vector/logical/integer/numeric/matrix/array has to be a positive integer">(v >= 1);
+    ass<"size in fct vector/logical/integer/numeric/matrix/array has to be an integer >= 0">(v >= 0);
     std::size_t res = static_cast<std::size_t>(v);
     return res;
   } else {
     ass<"size in fct vector/logical/integer/numeric/matrix/array has to be a vector of length 1">(s.size() == 1);
     const auto v = get_val(s.get(0));
-    ass<"size in fct vector/logical/integer/numeric/matrix/array has to be a positive integer">(v >= 1);
+    ass<"size in fct vector/logical/integer/numeric/matrix/array has to be an integer >= 0">(v >= 0);
     std::size_t res = static_cast<std::size_t>(v);
     return res;
   }
@@ -284,7 +284,12 @@ inline std::size_t ConvertSizeVec(const T& s) {
 
 template <typename Type, typename T> inline auto createRVec(T s) {
   std::size_t size = ConvertSizeVec(s);
-  ass<"invalid length argument">(size > 0);
+  ass<"invalid length argument">(size >= 0);
+  if (size == 0) {
+    Array<Type, Buffer<Type, RBufferTrait>> res;
+    res.dim = std::vector<std::size_t>(1, 0);
+    return res;
+  }
   Array<Type, Buffer<Type, RBufferTrait>> res(SI{size});
   res.dim = std::vector<std::size_t>{size};
   return res;

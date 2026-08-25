@@ -245,6 +245,9 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct, real_type, f
   if (inherits(line, "try-error")) {
     stop("error: Could not stringify the AST")
   }
+  if (err_found(line)) {
+    stop(line)
+  }
   if (length(env$return_list) == 0) {
     type <- "void"
     if (r_fct) type <- "R_NilValue"

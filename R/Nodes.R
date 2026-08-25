@@ -399,10 +399,24 @@ if_node <- R6::R6Class(
     error = NULL,
     context = NULL,
     internal_type = NULL,
+    pre_translate_line = NULL,
 
     initialize = function() {},
     string_condition = function(indent) {
       return(self$condition$stringify(indent = paste0(indent, "")))
+    },
+    string_summary_line = function() {
+      result <- sprintf("if (%s) {...}", self$string_condition(""))
+      if (!is.null(self$else_if_nodes)) {
+        else_ifs <- vapply(self$else_if_nodes, function(node) {
+          sprintf(" else if (%s) {...}", node$string_condition(""))
+        }, character(1L))
+        result <- paste0(result, paste(else_ifs, collapse = ""))
+      }
+      if (!is.null(self$false_node)) {
+        result <- paste0(result, " else {...}")
+      }
+      return(result)
     },
     string_true = function(indent) {
       return(self$true_node$stringify(indent = paste0(indent, "    ")))
@@ -566,7 +580,7 @@ block_node <- R6::R6Class(
       for (stmt in self$block) {
         end <- ";"
         s <- stmt$stringify(indent = indent)
-        if (inherits(stmt, c("if_node", "for_node", "while_node", "repeat_node", "fn_node"))) {
+        if (inherits(stmt, c("repeat_node", "fn_node"))) {
           end <- ""
         } else {
           line <- stmt$pre_translate_line
@@ -624,6 +638,7 @@ for_node <- R6::R6Class(
     block = NULL,
     context = NULL,
     internal_type = NULL,
+    pre_translate_line = NULL,
     initialize = function() {},
     stringify = function(indent = "") {
       idx <- self$i$stringify("")
@@ -705,6 +720,7 @@ while_node <- R6::R6Class(
     block = NULL,
     context = NULL,
     internal_type = NULL,
+    pre_translate_line = NULL,
     initialize = function() {},
     stringify = function(indent = "") {
       cond <- self$condition$stringify(indent)
