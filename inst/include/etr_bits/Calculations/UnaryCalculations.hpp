@@ -95,6 +95,12 @@ inline auto operator-(T&& obj) {
 }
 
 template <typename T> requires IsArray<Decayed<T>>
+inline auto operator!(T&& obj) {
+  using I = std::decay_t<decltype(obj.d)>;
+  return create_unary<T, I, NotUnaryTrait>(std::forward<T>(obj));
+}
+
+template <typename T> requires IsArray<Decayed<T>>
 inline auto sinh(T &&obj) {
   using I = std::decay_t<decltype(obj.d)>;
   return create_unary<T, I, SinusHTrait>(std::forward<T>(obj));

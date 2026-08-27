@@ -11,6 +11,9 @@ get_checks <- function(f, r_fct = TRUE) {
 test_action_error <- function(f, error_message, r_fct = TRUE) {
   e <- try(get_checks(f), silent = TRUE)
   e <- attributes(e)[["condition"]]$message
+  # drop the registry `Signature:` hint appended to arity/named-arg errors --
+  # its wording lives in FunctionRegistry.R, not in these assertions
+  e <- sub("(?s)\nSignature: .*$", "", e, perl = TRUE)
   expect_equal(e, error_message)
 }
 test_no_action_error <- function(f, r_fct = TRUE) {
@@ -145,6 +148,22 @@ test_action_error(
   "\nprint(m) <- 1.0\nFound invalid expression at left side of assignment: <-"
 )
 
+# --- 'if' on the rhs of an assignment ------------------------------------
+# C++ 'if' yields no value; the error shows an R-level summary of the
+# offending statement, not the transpiled C++.
+f <- function(a) {
+  bla <- if (a == 1) 3 else 4
+}
+test_action_error(
+  f,
+  "\nbla <- if (a == 1.0) {...} else {...}\nIn C++ 'if' does not return anything and therefore it cannot be assigned"
+)
+# the branch-into-the-variable form is fine
+f <- function(a) {
+  if (a == 1) bla <- 3 else bla <- 4
+}
+test_no_action_error(f)
+
 # --- only permitted functions ----------------------------------------------
 f <- function() {
   a <- bla()
@@ -173,9 +192,11 @@ test_action_error(
 f <- function() {
   a <- cmr(1, 2, 3, 4)
 }
+# cmr carries a `docu`: arity error now names got/expected (the appended
+# `Signature:` hint is stripped by the test helper).
 test_action_error(
   f,
-  "\na <- cmr(1.0, 2.0, 3.0, 4.0)\nWrong number of arguments for: cmr"
+  "\na <- cmr(1.0, 2.0, 3.0, 4.0)\nWrong number of arguments for cmr: got 4, expected 3."
 )
 
 # --- arity ----------------------------------------------------------------
@@ -200,7 +221,7 @@ f <- function() {
 }
 test_action_error(
   f,
-  "\na <- cmr(1.0, 2.0, 3.0, 4.0)\nWrong number of arguments for: cmr"
+  "\na <- cmr(1.0, 2.0, 3.0, 4.0)\nWrong number of arguments for cmr: got 4, expected 3."
 )
 
 # --- named args -----------------------------------------------------------

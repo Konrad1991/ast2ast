@@ -82,10 +82,12 @@ template <typename T> concept IsCollection = is_any_collection_v<T>;
 // 1-based index, matching [[ ]] in the DSL
 template <typename T>
 inline T& collection_at(Collection<T>& c, long i) {
+  ass<"Zero and negative indices are not supported">(i >= 1);
   return c[static_cast<std::size_t>(i - 1)];
 }
 template <typename T>
 inline const T& collection_at(const Collection<T>& c, long i) {
+  ass<"Zero and negative indices are not supported">(i >= 1);
   return c[static_cast<std::size_t>(i - 1)];
 }
 // Accepts the DSL's scalar wrapper types (etr::Integer, ...) directly,
@@ -93,12 +95,16 @@ inline const T& collection_at(const Collection<T>& c, long i) {
 template <typename T, typename I>
   requires IsScalarLike<I>
 inline T& collection_at(Collection<T>& c, I i) {
-  return c[static_cast<std::size_t>(get_val(i) - 1)];
+  const auto v = get_val(i);
+  ass<"Zero and negative indices are not supported">(v >= 1);
+  return c[static_cast<std::size_t>(v - 1)];
 }
 template <typename T, typename I>
   requires IsScalarLike<I>
 inline const T& collection_at(const Collection<T>& c, I i) {
-  return c[static_cast<std::size_t>(get_val(i) - 1)];
+  const auto v = get_val(i);
+  ass<"Zero and negative indices are not supported">(v >= 1);
+  return c[static_cast<std::size_t>(v - 1)];
 }
 // Same length-1-narrows-to-scalar tolerance as at()'s ExtractIndex(), for
 // an index whose type isn't a strict scalar (e.g. an untyped arg defaults
@@ -107,13 +113,17 @@ template <typename T, typename I>
   requires IsArray<Decayed<I>>
 inline T& collection_at(Collection<T>& c, const I& i) {
   ass<"collection index must be a scalar or a length-1 vector">(i.size() == 1);
-  return c[static_cast<std::size_t>(get_val(i.get(0)) - 1)];
+  const auto v = get_val(i.get(0));
+  ass<"Zero and negative indices are not supported">(v >= 1);
+  return c[static_cast<std::size_t>(v - 1)];
 }
 template <typename T, typename I>
   requires IsArray<Decayed<I>>
 inline const T& collection_at(const Collection<T>& c, const I& i) {
   ass<"collection index must be a scalar or a length-1 vector">(i.size() == 1);
-  return c[static_cast<std::size_t>(get_val(i.get(0)) - 1)];
+  const auto v = get_val(i.get(0));
+  ass<"Zero and negative indices are not supported">(v >= 1);
+  return c[static_cast<std::size_t>(v - 1)];
 }
 
 template <typename T>

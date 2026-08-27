@@ -43,7 +43,7 @@ f <- function() {
   return(v[[0L]])
 }
 fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "out of boundaries")
+expect_error(fcpp(), pattern = "Zero and negative indices are not supported")
 
 # =============================================================================
 # Matrix subsetting -- M[i, j]
@@ -109,7 +109,7 @@ f <- function() {
   return(M)
 }
 fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "out of boundaries")
+expect_error(fcpp(), pattern = "Zero and negative indices are not supported")
 
 f <- function() {
   M <- matrix(0.0, 2L, 2L)
@@ -117,7 +117,7 @@ f <- function() {
   return(M)
 }
 fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "out of boundaries")
+expect_error(fcpp(), pattern = "Zero and negative indices are not supported")
 
 # runtime (variable) row index overshoot -- a compile-time constant check
 # would not be enough, this must be caught at runtime

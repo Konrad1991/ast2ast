@@ -272,7 +272,7 @@ template<typename Dim> auto&& dim_view(Dim& d) {
 inline std::size_t safe_index_from_double(double x) {
   ass<"invalid index argument">(std::isfinite(x));
   double t = std::trunc(x);
-  ass<"Negative indices are not supported">(t >= 1);
+  ass<"Zero and negative indices are not supported">(t >= 1);
   return static_cast<std::size_t>(t);
 }
 
@@ -281,6 +281,13 @@ inline std::size_t safe_index_from_double_lower_bound_0(double x) {
   double t = std::trunc(x);
   ass<"Negative indices are not supported">(t >= 0);
   return static_cast<std::size_t>(t);
+}
+
+// integer index -> 1-based bounds check, mirroring safe_index_from_double.
+// NA_INTEGER is INT_MIN, so the >= 1 test also rejects an NA index.
+inline std::size_t safe_index_from_int(long x) {
+  ass<"Zero and negative indices are not supported">(x >= 1);
+  return static_cast<std::size_t>(x);
 }
 
 // 7. struct Dim. Currently this is not used.
@@ -501,6 +508,9 @@ struct SquareRootTrait {
 struct MinusUnaryTrait {
   template <typename L> static inline auto f(L a) { return -a; }
 };
+struct NotUnaryTrait {
+  template <typename L> static inline auto f(L a) { return !a; }
+};
 
 /*
 -----------------------------------------------------------------------------------------------------------
@@ -608,7 +618,8 @@ IS<typename ReRef<T>::type::Trait, TangensHTrait> ||
 IS<typename ReRef<T>::type::Trait, ExpTrait> ||
 IS<typename ReRef<T>::type::Trait, LogTrait> ||
 IS<typename ReRef<T>::type::Trait, SquareRootTrait> ||
-IS<typename ReRef<T>::type::Trait, MinusUnaryTrait>;
+IS<typename ReRef<T>::type::Trait, MinusUnaryTrait> ||
+IS<typename ReRef<T>::type::Trait, NotUnaryTrait>;
 };
 template <typename T> concept IsBinary = requires {
 typename ReRef<T>::type::Trait;

@@ -1109,6 +1109,7 @@ struct Logical {
   inline Double sqrt() const;
   inline Integer abs() const;
   inline Integer operator-() const;
+  inline Logical operator!() const;
   inline friend std::ostream& operator<<(std::ostream&, const Logical&);
   inline static Logical NA() { Logical x; x.is_na = true; return x; }
   inline bool isNA() const noexcept {
@@ -1176,6 +1177,7 @@ struct Integer {
   inline Double sqrt() const;
   inline Integer abs() const;
   inline Integer operator-() const;
+  inline Logical operator!() const;
   inline friend std::ostream& operator<<(std::ostream&, const Integer&);
   inline static Integer NA() { Integer x; x.is_na = true; return x; }
   inline bool isNA() const noexcept {
@@ -1244,6 +1246,7 @@ struct Double {
   inline Double sqrt() const;
   inline Double abs() const;
   inline Double operator-() const;
+  inline Logical operator!() const;
   inline friend std::ostream& operator<<(std::ostream&, const Double&);
   inline static Double NA() {
     Double x(std::numeric_limits<double>::quiet_NaN());
@@ -1335,6 +1338,7 @@ struct Dual {
   inline Dual sqrt() const;
   inline Dual abs() const;
   inline Dual operator-() const;
+  inline Logical operator!() const;
   inline friend std::ostream& operator<<(std::ostream&, const Dual&);
   inline static Dual NA() {
     Dual x(std::numeric_limits<double>::quiet_NaN(),
@@ -1488,6 +1492,7 @@ struct ReverseDouble {
   inline ReverseDouble& operator/=(const ReverseDouble& r);
 
   inline ReverseDouble operator-() const;
+  inline Logical operator!() const;
 
   inline Logical operator==(const ReverseDouble& r) const;
   inline Logical operator<(const ReverseDouble& r) const;
@@ -2475,6 +2480,31 @@ inline ReverseDouble ReverseDouble::operator-() const {
   return out;
 }
 
+// unary ! : always yields Logical, matching R. !NA -> NA; zero -> TRUE,
+// non-zero -> FALSE. NaN counts as NA for Double/Dual.
+inline Logical Logical::operator!() const {
+  if (is_na) return Logical::NA();
+  return Logical(!val);
+}
+inline Logical Integer::operator!() const {
+  if (is_na) return Logical::NA();
+  return Logical(val == 0);
+}
+inline Logical Double::operator!() const {
+  if (is_na || std::isnan(val)) return Logical::NA();
+  return Logical(val == 0.0);
+}
+inline Logical Dual::operator!() const {
+  if (is_na || std::isnan(val)) return Logical::NA();
+  return Logical(val == 0.0);
+}
+inline Logical ReverseDouble::operator!() const {
+  if (is_na) return Logical::NA();
+  const double v = get_val_from_tape();
+  if (std::isnan(v)) return Logical::NA();
+  return Logical(v == 0.0);
+}
+
 /*
 --------------------------------------------------------------------------------------------------
 Second dispatch layer
@@ -2486,6 +2516,12 @@ template<typename O>
 requires (!IsArray<O> && IsScalarOrScalarRef<O>)
 inline auto operator-(const O& o) -> decltype(o.operator-()) {
   return o.operator-();
+}
+// unary ! ================================================
+template<typename O>
+requires (!IsArray<O> && IsScalarOrScalarRef<O>)
+inline auto operator!(const O& o) -> decltype(o.operator!()) {
+  return o.operator!();
 }
 // sqrt ===================================================
 template<typename O>
@@ -2797,6 +2833,7 @@ struct LogicalRef {
   inline Double sqrt()  const { return Logical(*this).sqrt(); }
   inline Integer abs()  const { return Logical(*this).abs(); }
   inline Integer operator-() const { return -Logical(*this); }
+  inline Logical operator!() const { return !Logical(*this); }
   inline bool isNA() const noexcept { return Logical(*this).isNA(); }
   // Explicit copy-assign: write through the referenced slot, do not rebind.
   // Without this the compiler-generated copy-assign copies pointers and
@@ -2878,6 +2915,7 @@ struct IntegerRef {
   inline Double sqrt()  const { return Integer(*this).sqrt(); }
   inline Integer abs()  const { return Integer(*this).abs(); }
   inline Integer operator-() const { return -Integer(*this); }
+  inline Logical operator!() const { return !Integer(*this); }
   inline bool isNA() const noexcept { return Integer(*this).isNA(); }
   IntegerRef& operator=(const IntegerRef& other) {
     if (this == &other) return *this;
@@ -2951,6 +2989,7 @@ struct DoubleRef {
   inline Double sqrt()  const { return Double(*this).sqrt(); }
   inline Double abs()   const { return Double(*this).abs(); }
   inline Double operator-() const { return -Double(*this); }
+  inline Logical operator!() const { return !Double(*this); }
   inline bool isNA()       const noexcept { return Double(*this).isNA(); }
   inline bool isNaN()      const noexcept { return Double(*this).isNaN(); }
   inline bool isFinite()   const noexcept { return Double(*this).isFinite(); }
@@ -3030,6 +3069,7 @@ struct DualRef {
   inline Dual sqrt()  const { return Dual(*this).sqrt(); }
   inline Dual abs()   const { return Dual(*this).abs(); }
   inline Dual operator-() const { return -Dual(*this); }
+  inline Logical operator!() const { return !Dual(*this); }
   inline bool isNA()          const noexcept { return Dual(*this).isNA(); }
   inline bool isNADot()       const noexcept { return Dual(*this).isNADot(); }
   inline bool isNaN()         const noexcept { return Dual(*this).isNaN(); }

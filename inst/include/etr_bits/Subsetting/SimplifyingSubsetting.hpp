@@ -13,7 +13,7 @@ inline size_t ExtractIndex(const T& obj) {
     static_assert(!IsLogical<sType>, "simplified cannot handle logical values");
     constexpr bool is_int = IsInteger<sType>;
     if constexpr (is_int) {
-      return static_cast<std::size_t>(get_val(s));
+      return safe_index_from_int(get_val(s));
     } else if constexpr(!is_int) {
       return safe_index_from_double(get_val(s));
     }
@@ -25,7 +25,7 @@ inline size_t ExtractIndex(const T& obj) {
     constexpr bool is_int = IsInteger<E>;
     ass<"at accepts only vector of length 1">(obj.size() == 1);
     if constexpr (is_int) {
-      return static_cast<std::size_t>(get_val(obj.get(0)));
+      return safe_index_from_int(get_val(obj.get(0)));
     } else if constexpr(!is_int) {
       return safe_index_from_double(get_val(obj.get(0)));
     }

@@ -305,6 +305,61 @@ action_error <- function(node, r_fct, function_registry, known_types = list()) {
   check_operator(node, function_registry)
   check_variable_names(node, known_types)
   check_type_declaration(node, r_fct)
+  check_assignment_of_if(node)
+}
+
+check_assignment_of_if <- function(node) {
+  if (!inherits(node, "binary_node")) {
+    return()
+  }
+  if (!node$operator %in% c("=", "<-")) return()
+  if (inherits(node$right_node, "if_node")) {
+    node$error <- "In C++ 'if' does not return anything and therefore it cannot be assigned"
+  }
+}
+
+# "" when the registered function carries no `docu`, otherwise the line to
+# append to a "you called it wrong" message (arity / named-arg mismatch).
+signature_hint <- function(fct, function_registry) {
+  docu <- function_registry$get_docu(fct)
+  if (is.null(docu)) "" else paste0("\nSignature: ", docu)
+}
+
+# Arity check, kept separate so the message can carry the signature hint.
+# Returns TRUE when the argument count is accepted, otherwise an error
+# string. These are the calls where re-checking the signature is all that is
+# needed (matrix(..., byrow=), sum(..., na.rm=), diag(n), crossprod(a, b), ...).
+check_arity <- function(node, function_registry) {
+  fct <- node$operator
+  expected <- function_registry$expected_n_args(fct)[[1]]
+  got <- if (inherits(node, "nullary_node")) {
+    0L
+  } else if (inherits(node, "unary_node")) {
+    1L
+  } else if (inherits(node, "binary_node")) {
+    2L
+  } else {
+    length(node$args)
+  }
+  if (length(expected) == 1L && is.na(expected)) {
+    return(TRUE) # c, if, ... accept any arity
+  }
+  if (got %within% expected) { # %within% covers ranges e.g. return (0 | 1)
+    return(TRUE)
+  }
+  hint <- signature_hint(fct, function_registry)
+  if (hint == "") {
+    return(paste0("Wrong number of arguments for: ", fct))
+  }
+  expected_str <- if (length(expected) == 1L) {
+    as.character(expected)
+  } else {
+    paste0(min(expected), " to ", max(expected))
+  }
+  sprintf(
+    "Wrong number of arguments for %s: got %d, expected %s.%s",
+    fct, got, expected_str, hint
+  )
 }
 
 check_operator <- function(node, function_registry) {
@@ -318,27 +373,6 @@ check_operator <- function(node, function_registry) {
   check_function <- function(node, function_registry) {
     fct <- node$operator
     fct %within% function_registry$permitted_fcts()
-  }
-
-  check_arity <- function(node, function_registry) {
-    fct <- node$operator
-    expected_args <- function_registry$expected_n_args(fct)
-    args_length <- NULL
-    if (inherits(node, "nullary_node")) {
-      args_length <- 0
-    } else if (inherits(node, "unary_node")) {
-      args_length <- 1
-    } else if (inherits(node, "binary_node")) {
-      args_length <- 2
-    } else if (inherits(node, "function_node")) {
-      args_length <- node$args |> length()
-    } else {
-      stop("Something went wrong. Sorry for that.")
-    }
-    if (is.na(expected_args)) { # for c, if, etc.
-      return(TRUE)
-    }
-    args_length %within% expected_args[[1]] # %within% because return (0 | 1) and - (1 | 2)
   }
 
   check_named_args <- function(node, function_registry) {
@@ -380,26 +414,33 @@ check_operator <- function(node, function_registry) {
     return(TRUE)
   }
 
-  list_check_fcts <- c(
-    check_function,
-    check_arity,
-    check_named_args,
-    check_lhs_operation
-  )
-  messages <- c(
-    "Invalid function ", "Wrong number of arguments for: ",
-    "Found wrong named argument for: ",
-    "Found invalid expression at left side of assignment: "
-  )
-  err <- ""
-  for (i in seq_along(list_check_fcts)) {
-    fct <- list_check_fcts[[i]]
-    if (!fct(node, function_registry)) {
-      err <- paste0(messages[i], node$operator)
-      break
-    }
+  if (!check_function(node, function_registry)) {
+    node$error <- paste0("Invalid function ", node$operator)
+    return()
   }
-  node$error <- err
+
+  arity <- check_arity(node, function_registry)
+  if (!isTRUE(arity)) {
+    node$error <- arity
+    return()
+  }
+
+  if (!check_named_args(node, function_registry)) {
+    node$error <- paste0(
+      "Found wrong named argument for: ", node$operator,
+      signature_hint(node$operator, function_registry)
+    )
+    return()
+  }
+
+  if (!check_lhs_operation(node, function_registry)) {
+    node$error <- paste0(
+      "Found invalid expression at left side of assignment: ", node$operator
+    )
+    return()
+  }
+
+  node$error <- ""
   return()
 }
 

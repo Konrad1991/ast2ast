@@ -15,3 +15,18 @@ f.foo <- function() print("Hello")
 expect_error(ast2ast::translate(f.foo))
 class <- function() print("Hello")
 expect_error(ast2ast::translate(class))
+
+# default argument values are dropped -- warn
+f <- function(n = 10L) {
+  return(n)
+}
+n_int <- function(n) n |> type(int)
+expect_warning(
+  ast2ast::translate(f, args_f = n_int, getsource = TRUE),
+  pattern = "ignores default argument values"
+)
+# no defaults -> no warning
+f <- function(n) {
+  return(n)
+}
+expect_silent(ast2ast::translate(f, args_f = n_int, getsource = TRUE))

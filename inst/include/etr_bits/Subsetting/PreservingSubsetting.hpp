@@ -282,6 +282,14 @@ inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& conve
       }
       // --- Case 5: Scalars
       else if constexpr (IsScalarLike<A>) {
+        // get_val() drops the is_na flag, and an NA Integer carries val == 0,
+        // which would otherwise trip the zero-index guard downstream instead
+        // of reporting the NA. (NA Double/Dual carry NaN and are caught by
+        // safe_index_from_double as "invalid index argument".)
+        using V = std::decay_t<decltype(get_val(arg))>;
+        if constexpr (std::is_integral_v<V> && !std::is_same_v<V, bool>) {
+          ass<"Found NA value in subsetting (within an integer object)">(!arg.isNA());
+        }
         fill_scalars_in_index_lists<N>(arr, converted_arrays,
                                        index_lists, get_val(arg),
                                        counter, counter_converted);
@@ -345,6 +353,7 @@ inline out_L create_indices(const ArrayType& arr, const Args&... args) {
     for (std::size_t k = 0; k < N; k++) {
       const auto val = (*index_lists[k]).get(pos[k]);
       ass<"Found NA value in subsetting">(!val.isNA());
+      ass<"Zero and negative indices are not supported">(val.val >= 1);
       offset += (val.val - 1) * stride[k];
     }
     out.set(counter++, offset - 1);

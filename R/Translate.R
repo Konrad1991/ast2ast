@@ -34,6 +34,18 @@ translate <- function(f,
     stop("The function name is not valid as it is a C++ keyword")
   }
 
+  # default argument values are dropped -- the wrapper's formals carry no
+  # default and the generated C++ takes none. Warn rather than ignore silently.
+  defaulted <- names(Filter(
+    function(d) !identical(d, quote(expr = )), formals(f)
+  ))
+  if (length(defaulted) > 0) {
+    warning(sprintf(
+      "ast2ast ignores default argument values; the default(s) for %s are dropped -- pass them explicitly when calling the translated function.",
+      paste(sprintf("'%s'", defaulted), collapse = ", ")
+    ), call. = FALSE)
+  }
+
   cpp_code <- translate_internally(f, args_f, types_f, derivative, name_f, r_fct, debug)
   if (getsource) return(cpp_code)
 

@@ -360,7 +360,7 @@ void test_indices_preserved_subsetting() {
     try {
       subset(What, Integer_dim1_3, TRUE, TRUE) = Integer(300);
     } catch (const std::exception& e) {
-      ass<"Reisze with new size = 0">(std::strcmp(e.what(), "Error: out of boundaries") == 0);
+      ass<"Reisze with new size = 0">(std::strcmp(e.what(), "Zero and negative indices are not supported") == 0);
     }
     try {
       subset(What, Integer_dim1_4, TRUE, TRUE) = Integer(300);

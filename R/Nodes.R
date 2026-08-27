@@ -216,6 +216,16 @@ binary_node <- R6::R6Class(
       return(ret)
     },
     stringify_error_line = function(indent = "") {
+      # An 'if' on the RHS of an assignment is rejected (C++ 'if' yields no
+      # value). stringify() would emit the transpiled C++ (static_cast<bool>,
+      # etr::current_line(), expanded braces) -- noise here. Show an R-level
+      # summary instead.
+      if (!is.null(self$error) && self$error != "" &&
+          self$operator %in% c("=", "<-") &&
+          inherits(self$right_node, "if_node")) {
+        return(paste0(indent, self$left_node$stringify(), " ", self$operator,
+          " ", self$right_node$string_summary_line()))
+      }
       self$stringify()
     },
     print = function() {

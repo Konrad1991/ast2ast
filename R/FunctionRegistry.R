@@ -11,10 +11,12 @@ Functions <- R6::R6Class(
     groups = NULL,
     cpp_names = NULL,
     deriv_possibles = NULL,
+    docus = list(),
 
     initialize = function() {},
     add = function(name, num_args, arg_names, infer_fct,
-                   check_fct, group, cpp_name, deriv_possible = TRUE) {
+                   check_fct, group, cpp_name, deriv_possible = TRUE,
+                   docu = NULL) {
       self$function_names <- c(self$function_names, name)
       self$number_of_args[[length(self$number_of_args) + 1]] <- num_args
       self$arg_names[[length(self$arg_names) + 1]] <- arg_names
@@ -23,6 +25,8 @@ Functions <- R6::R6Class(
       self$groups <- c(self$groups, group)
       self$cpp_names <- c(self$cpp_names, cpp_name)
       self$deriv_possibles <- c(self$deriv_possibles, deriv_possible)
+      # single-bracket + list() so a NULL docu keeps its slot (never `[[`)
+      self$docus[length(self$docus) + 1] <- list(docu)
     },
 
     permitted_fcts = function() self$function_names,
@@ -40,6 +44,13 @@ Functions <- R6::R6Class(
     },
     get_cpp_name = function(name) {
       self$cpp_names[which(self$function_names == name)]
+    },
+    get_docu = function(name) {
+      idx <- which(self$function_names == name)
+      if (length(idx) == 0) {
+        return(NULL)
+      }
+      self$docus[[idx]]
     },
     deriv_possible = function(name) {
       idx <- which(self$function_names == name)
@@ -745,6 +756,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "rep", num_args = 2, arg_names = c(NA, NA),
+  docu = "rep(x, times)  # times: a single integer (no `each`, no `length.out`)",
   infer_fct = function(node, vars_list, info_env, function_registry) {
     left_type <- infer(node$left_node, vars_list, info_env, function_registry)
     right_type <- infer(node$right_node, vars_list, info_env, function_registry)
@@ -872,6 +884,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "%*%", num_args = 2, arg_names = c(NA, NA),
+  docu = "a %*% b  # matrix / vector product",
   infer_fct = infer_binary_math,
   check_fct = check_binary,
   group = "binary_node", cpp_name = "etr::mat_mul"
@@ -986,6 +999,11 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "vector", num_args = 2, arg_names = c("mode", "length"),
+  docu = paste0(
+    "vector(mode, length)  # mode: \"logical\" / \"integer\" / \"numeric\".\n",
+    "For a new_type collection pass the type name as mode: ",
+    "vector(\"MyType\", n) -> a length-n collection of MyType"
+  ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     left_type <- infer(node$args[[1]], vars_list, info_env, function_registry)
     right_type <- infer(node$args[[2]], vars_list, info_env, function_registry)
@@ -1049,6 +1067,10 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "matrix", num_args = 3, arg_names = c("data", "nrow", "ncol"),
+  docu = paste0(
+    "matrix(data, nrow, ncol)  # all three arguments are required.\n",
+    "Column-major fill like R; `byrow` is not supported."
+  ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
@@ -1084,6 +1106,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "array", num_args = 2, arg_names = c(NA, NA),
+  docu = "array(data, dim)  # both arguments required; dim: integer vector of extents",
   infer_fct = function(node, vars_list, info_env, function_registry) {
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
@@ -1221,6 +1244,10 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "cmr", num_args = 3, arg_names = c(NA, NA, NA),
+  docu = paste0(
+    "cmr(point, x, y)  # Catmull-Rom spline interpolation, all three required.\n",
+    "point: scalar; x, y: vectors of equal length >= 4 (x = independent, y = dependent)"
+  ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
@@ -1415,6 +1442,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "t", num_args = 1, arg_names = NA,
+  docu = "t(x)  # x: matrix",
   infer_fct = function(node, vars_list, info_env, function_registry) {
     infer(node$obj, vars_list, info_env, function_registry)
     t <- make_inferred_type("matrix", "double", info_env$r_fct, info_env$real_type)
@@ -1432,6 +1460,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "chol", num_args = 1, arg_names = NA,
+  docu = "chol(x)  # x: symmetric positive-definite matrix -> upper triangular factor",
   infer_fct = function(node, vars_list, info_env, function_registry) {
     inner <- infer(node$obj, vars_list, info_env, function_registry)
     if (!inherits(inner, "pre_type_node")) {
@@ -1452,6 +1481,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "crossprod", num_args = 1, arg_names = NA,
+  docu = "crossprod(x)  # one argument only -> t(x) %*% x (use t(a) %*% b for the two-matrix form)",
   infer_fct = function(node, vars_list, info_env, function_registry) {
     inner <- infer(node$obj, vars_list, info_env, function_registry)
     if (!inherits(inner, "pre_type_node")) {
@@ -1472,6 +1502,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "tcrossprod", num_args = 1, arg_names = NA,
+  docu = "tcrossprod(x)  # one argument only -> x %*% t(x)",
   infer_fct = function(node, vars_list, info_env, function_registry) {
     inner <- infer(node$obj, vars_list, info_env, function_registry)
     if (!inherits(inner, "pre_type_node")) {
@@ -1492,6 +1523,10 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "diag", num_args = 3L, arg_names = c("x", "nrow", "ncol"),
+  docu = paste0(
+    "diag(x, nrow, ncol)  # all three required; builds a matrix with x on the diagonal.\n",
+    "To read a diagonal out of a matrix use get_diag(m)."
+  ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
@@ -1523,6 +1558,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "get_diag", num_args = 1, arg_names = NA,
+  docu = "get_diag(x)  # x: matrix -> its diagonal as a vector",
   infer_fct = function(node, vars_list, info_env, function_registry) {
     inner <- infer(node$obj, vars_list, info_env, function_registry)
     if (!inherits(inner, "pre_type_node")) {
@@ -1661,6 +1697,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "rbind", num_args = NA, arg_names = NA,
+  docu = "rbind(...)  # any number of vectors / matrices, stacked by row",
   infer_fct = function(node, vars_list, info_env, function_registry) {
     types_of_args <- lapply(node$args, function(x) {
       temp <- infer(x, vars_list, info_env, function_registry)
@@ -1708,6 +1745,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "cbind", num_args = NA, arg_names = NA,
+  docu = "cbind(...)  # any number of vectors / matrices, stacked by column",
   infer_fct = function(node, vars_list, info_env, function_registry) {
     types_of_args <- lapply(node$args, function(x) {
       temp <- infer(x, vars_list, info_env, function_registry)
@@ -1770,6 +1808,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "sum", num_args = 1, arg_names = NA,
+  docu = "sum(x)  # one argument; `na.rm` is not supported",
   infer_fct = infer_sum,
   check_fct = check_unary, group = "unary_node", cpp_name = "etr::sum"
 )
@@ -1781,6 +1820,10 @@ function_registry_global$add(
 
 function_registry_global$add(
   name = "solve", num_args = c(1, 2), arg_names = c(NA, NA),
+  docu = paste0(
+    "solve(a)      # inverse of square matrix a\n",
+    "solve(a, b)   # solution x of a %*% x = b"
+  ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
@@ -1825,6 +1868,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "backsolve", num_args = 2, arg_names = c(NA, NA),
+  docu = "backsolve(r, x)  # both required; r: upper-triangular matrix -> solves r %*% b = x",
   infer_fct = function(node, vars_list, info_env, function_registry) {
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
@@ -1856,6 +1900,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "forwardsolve", num_args = 2, arg_names = c(NA, NA),
+  docu = "forwardsolve(l, x)  # both required; l: lower-triangular matrix -> solves l %*% b = x",
   infer_fct = function(node, vars_list, info_env, function_registry) {
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
@@ -1887,6 +1932,13 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "uniroot", num_args = c(4, 5), arg_names = c(NA, NA, NA, NA, NA),
+  docu = paste0(
+    "uniroot(f, interval, tol, maxiter[, data])\n",
+    "f: fn() taking one double and returning a double; interval: length-2 vector.\n",
+    "data is optional and must be a new_type struct -- when given, f takes a second ",
+    "argument of that type.\n",
+    "Returns a struct with $root, $f_root, $iter, $estim_prec."
+  ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
@@ -1973,6 +2025,7 @@ function_registry_global$add(
 )
 function_registry_global$add(
   name = "nnls", num_args = 2, arg_names = c(NA, NA),
+  docu = "nnls(a, b)  # both required; a: matrix, b: vector -> non-negative least-squares solution vector",
   infer_fct = function(node, vars_list, info_env, function_registry) {
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
