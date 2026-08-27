@@ -14,6 +14,9 @@ variable_node <- R6::R6Class(
     stringify = function(indent = "") {
       return(paste0(indent, self$name))
     },
+    stringify_condition = function(indent = "") {
+      paste0(indent, "static_cast<bool>(", self$stringify(""), ")")
+    },
     stringify_error = function(indent = "") {
       return(paste0(indent, self$error))
     },
@@ -44,6 +47,9 @@ literal_node <- R6::R6Class(
     stringify = function(indent = "") {
       t_literal(self$context, self$name, indent, self$literal_type, self$wrap, self$real_type)
     },
+    stringify_condition = function(indent = "") {
+      paste0(indent, "static_cast<bool>(", self$stringify(""), ")")
+    },
     stringify_error = function(indent = "") {
       return(paste0(indent, self$error))
     },
@@ -57,15 +63,19 @@ literal_node <- R6::R6Class(
 )
 
 handle_var <- function(code, context) {
-  if (is_symbol(code) && context == "{") {
-    nn <- nullary_node$new()
-    operator <- deparse(code)
-    nn$operator <- operator
-    nn$context <- context
-    return(nn)
-  } else
-  if (is_symbol(code) && context != "{") {
-    if (context == "[" && deparse(code) == "") {
+  if (is_symbol(code)) {
+    name <- deparse(code)
+    # break / next are R keywords; a bare symbol at statement position that
+    # names one is the control-flow op. Every other bare symbol is a variable
+    # read (matches R -- a lone symbol is never a call), including as the last
+    # statement of a block used as an implicit return.
+    if (context == "{" && name %in% c("break", "next", "continue")) {
+      nn <- nullary_node$new()
+      nn$operator <- name
+      nn$context <- context
+      return(nn)
+    }
+    if (context == "[" && name == "") {
       # empty indexing --> change all entries
       ln <- literal_node$new(TRUE)
       ln$context <- context
@@ -73,11 +83,11 @@ handle_var <- function(code, context) {
     }
     # dont know why but short forms T and F
     # are returned as symbols and not as logicals
-    if (deparse(code) == "T") {
+    if (name == "T") {
       ln <- literal_node$new(TRUE)
       ln$context <- context
       return(ln)
-    } else if (deparse(code) == "F") {
+    } else if (name == "F") {
       ln <- literal_node$new(FALSE)
       ln$context <- context
       return(ln)
@@ -172,6 +182,20 @@ binary_node <- R6::R6Class(
       }
       return(ret)
     },
+    # NOTE: && / || are overloaded (for R's NA-aware logic), so C++ won't
+    # short-circuit them -- cast each leaf to bool and recurse to restore it.
+    stringify_condition = function(indent = "") {
+      if (self$operator %in% c("&&", "||")) {
+        paste0(
+          indent,
+          self$left_node$stringify_condition(""),
+          " ", self$operator, " ",
+          self$right_node$stringify_condition("")
+        )
+      } else {
+        paste0(indent, "static_cast<bool>(", self$stringify(""), ")")
+      }
+    },
     stringerror_left = function() {
       return(self$left_node$stringify_error())
     },
@@ -262,6 +286,9 @@ unary_node <- R6::R6Class(
       }
       return(ret)
     },
+    stringify_condition = function(indent = "") {
+      paste0(indent, "static_cast<bool>(", self$stringify(""), ")")
+    },
     stringify_error = function(indent = "") {
       obj_error <- self$obj$stringify_error()
       op_error <- self$error
@@ -294,6 +321,9 @@ nullary_node <- R6::R6Class(
     output_is_r_fct = TRUE,
     pre_translate_line = NULL,
     initialize = function() {},
+    stringify_condition = function(indent = "") {
+      paste0(indent, "static_cast<bool>(", self$stringify(""), ")")
+    },
     stringify = function(indent = "") {
       if (self$operator == "next" || self$operator == "break" || self$operator == "continue") {
         return(paste0(indent, self$operator, ";"))
@@ -364,6 +394,9 @@ function_node <- R6::R6Class(
         ret <- paste0(ret, ";")
       }
       return(ret)
+    },
+    stringify_condition = function(indent = "") {
+      paste0(indent, "static_cast<bool>(", self$stringify(""), ")")
     },
     stringify_error = function(indent = "") {
       args_errors <- lapply(self$args, function(arg) {
@@ -436,7 +469,7 @@ if_node <- R6::R6Class(
     },
     stringify = function(indent = "") {
       result <- ""
-      result <- paste0(indent, "if (", self$string_condition(""), ") {\n")
+      result <- paste0(indent, "if (", self$condition$stringify_condition(""), ") {\n")
       result <- paste0(result, self$string_true(indent), "\n", indent, "}")
       if (!is.null(self$else_if_nodes)) {
         result <- paste0(result, self$string_else_if(indent))
@@ -574,6 +607,7 @@ block_node <- R6::R6Class(
     error = NULL,
     context = NULL,
     internal_type = NULL,
+    debug = TRUE,
     initialize = function() {},
     stringify = function(indent = "") {
       result <- list()
@@ -582,7 +616,7 @@ block_node <- R6::R6Class(
         s <- stmt$stringify(indent = indent)
         if (inherits(stmt, c("repeat_node", "fn_node"))) {
           end <- ""
-        } else {
+        } else if (isTRUE(self$debug)) {
           line <- stmt$pre_translate_line
           if (is.null(line)) line <- s
           label <- escape_cpp_string_literal(line)
@@ -723,7 +757,7 @@ while_node <- R6::R6Class(
     pre_translate_line = NULL,
     initialize = function() {},
     stringify = function(indent = "") {
-      cond <- self$condition$stringify(indent)
+      cond <- self$condition$stringify_condition(indent)
       b <- self$block$stringify(paste0(indent, " "))
       return(paste0(
         indent,

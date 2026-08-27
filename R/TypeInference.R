@@ -581,7 +581,10 @@ type_infer_action <- function(node, info_env) {
     if (is.character(type) && !void_only_operator(node$operator)) {
       node$error <- type
     }
-    infer(node$obj, info_env$vars_list, info_env, info_env$function_registry)
+    obj_type <- infer(node$obj, info_env$vars_list, info_env, info_env$function_registry)
+    if (inherits(obj_type, "fn_node")) {
+      node$error <- sprintf("Cannot use an inner function as an argument to '%s'", node$operator)
+    }
   }
   else if (inherits(node, "nullary_node")) {
     infer(node, info_env$vars_list, info_env, info_env$function_registry)
@@ -599,22 +602,6 @@ type_infer_action <- function(node, info_env) {
 
   isTRUE(handled)
 }
-
-type_infer_return_action <- function(node, info_env) {
-  if (inherits(node, "unary_node") && node$operator == "return") {
-    type <- infer(node$obj, info_env$vars_list, info_env, info_env$function_registry)
-    if (is.character(type)) {
-      node$error <- type
-    } else {
-      info_env$return_list[[length(info_env$return_list) + 1]] <- type
-    }
-    info_env$found_non_void_return <- TRUE
-  } else if (inherits(node, "nullary_node") && node$operator == "return") {
-    info_env$return_list[[length(info_env$return_list) + 1]] <- if (info_env$r_fct) type <- "R_NilValue" else "void"
-    info_env$found_void_return <- TRUE
-  }
-}
-
 
 are_vars_init <- function(type, name = "") {
   if (!inherits(type, "unknown_type")) {

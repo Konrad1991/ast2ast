@@ -227,17 +227,20 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct, real_type, f
   type <- NULL
   env <- new.env(parent = emptyenv())
   env$vars_list <- vars_types_list
-  env$return_list <- list()
+  env$in_if_block_list <- list()
   env$r_fct <- r_fct
   env$real_type <- real_type
   env$found_void_return <- FALSE
   env$found_non_void_return <- FALSE
   env$function_registry <- function_registry
   env$known_types <- known_types
-  e <- try(traverse_ast(ast, type_infer_return_action, env), silent = TRUE)
-  if (env$found_non_void_return && env$found_void_return) {
-    stop("Found a return() and return(obj) statements. You can only use one of these at the same time")
-  }
+  # ast is the function body block. Flag a tail-position if missing its else,
+  # then turn the last statement into a return so its type joins return_list.
+  check_tail_missing_else(ast)
+  ast <- create_return_statement(ast, function_registry)
+  e <- try(traverse_ast(
+    ast, type_infer_return_action, env
+  ), silent = TRUE)
   if (inherits(e, "try-error")) {
     stop("Error: Could not infer the return type")
   }
@@ -248,29 +251,25 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct, real_type, f
   if (err_found(line)) {
     stop(line)
   }
-  if (length(env$return_list) == 0) {
-    type <- "void"
-    if (r_fct) type <- "R_NilValue"
-    nn <- nullary_node$new()
-    nn$operator <- "return"
-    nn$context <- "{"
-    ast$block[[length(ast$block) + 1]] <- nn
-  } else if (length(env$return_list) == 1) {
-    type <- env$return_list[[1]]
-  } else {
-    for (i in seq_along(1:(length(env$return_list) - 1))) {
-      type <- common_type(env$return_list[[i]], env$return_list[[i + 1]]) |> flatten_type()
-    }
+  # r_fct returns SEXP, so a valueless path (return()/NULL) and a value return
+  # mix fine. XPtr has one concrete return type -> the two cannot coexist,
+  # whether the valueless path is user-written or inserted by
+  # create_return_statement for a fall-through.
+  if (!r_fct && env$found_void_return && env$found_non_void_return) {
+    stop("An XPtr function must return a value on every path, or on none: found both a valueless path and a value return")
   }
-  return(type)
+  # Reduce the value returns to one type; character entries are void markers
+  # ("R_NilValue" / "void"). r_fct returns SEXP so nothing is reconciled.
+  value_types <- Filter(function(t) !is.character(t), env$return_list)
+  reconcile_return_types(value_types, r_fct)
 }
 
 # Translates the AST representation into C++ code
 # ========================================================================
-translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry) {
+translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry, debug = TRUE) {
   code_string <- NULL
-  traverse_ast(ast, action_transpile_inner_functions, real_type)
-  traverse_ast(ast, action_snapshot_lines)
+  traverse_ast(ast, action_transpile_inner_functions, real_type, debug)
+  traverse_ast(ast, action_snapshot_lines, debug)
   traverse_ast(ast, action_set_true, r_fct, real_type)
   traverse_ast(ast, action_translate, function_registry, real_type)
   # Stringify ast
@@ -422,8 +421,15 @@ translate_internally <- function(fct, args_fct, types_fct, derivative, name_fct,
   # Determine return type
   return_type <- determine_types_of_returns(AST, vars_types_list, r_fct, real_type, function_registry, known_types)
 
+  # A string return is fine for output "R" (Cast(const char*) -> mkString) but
+  # has no C++ type for the XPtr signature -- reject before it hits the compiler.
+  if (!r_fct && inherits(return_type, "pre_type_node") &&
+      identical(return_type$get_base_type(), "character")) {
+    stop("An XPtr function cannot return a string")
+  }
+
   # Translate
-  code_string <- translate_to_cpp_code(AST, r_fct, real_type, function_registry)
+  code_string <- translate_to_cpp_code(AST, r_fct, real_type, function_registry, debug)
   for (i in seq_along(vars_types_list)) {
     vars_types_list[[i]]$real_type <- real_type
   }

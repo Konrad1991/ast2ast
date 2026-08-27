@@ -90,7 +90,7 @@ with_fct_error_context <- function(fct_name, expr) {
   tryCatch(expr, error = function(e) stop(sprintf("In inner function %s: %s", fct_name, conditionMessage(e)), call. = FALSE))
 }
 
-action_transpile_inner_functions <- function(node, real_type) {
+action_transpile_inner_functions <- function(node, real_type, debug = TRUE) {
   if (!inherits(node, "fn_node")) {
     return()
   }
@@ -178,9 +178,9 @@ action_transpile_inner_functions <- function(node, real_type) {
   }
 
   for (i in seq_along(AST$block)) {
-    traverse_ast(AST$block[[i]], action_transpile_inner_functions, real_type)
+    traverse_ast(AST$block[[i]], action_transpile_inner_functions, real_type, debug)
   }
-  traverse_ast(AST, action_snapshot_lines)
+  traverse_ast(AST, action_snapshot_lines, debug)
   traverse_ast(AST, action_set_true, r_fct, real_type)
   node$AST <- AST
 }
@@ -593,10 +593,11 @@ action_check_type_of_args <- function(node, variables, r_fct, real_type, functio
 # wrote, not the emitted C++ (wrap/handle_return/etc. all default to their
 # plain, unflagged rendering at this point).
 # ========================================================================
-action_snapshot_lines <- function(node) {
+action_snapshot_lines <- function(node, debug = TRUE) {
   if (!inherits(node, "block_node")) {
     return()
   }
+  node$debug <- debug
   for (stmt in node$block) {
     if (inherits(stmt, "for_node")) {
       idx <- stmt$i$stringify("")

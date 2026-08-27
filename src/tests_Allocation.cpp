@@ -146,24 +146,23 @@ void tests_allocation() {
     ass<"vector size dual vec">(dua.size() == 3);
     ass<"vector size rev_ad vec">(rev_ad.size() == 3);
 
-    // invalid size
+    // size 0: a valid, empty allocation
     {
-      int invalid1 = 0;
-      try {
-        Array<Logical, Buffer<Logical>> l = logical(Integer(invalid1));
-      }
-      catch (const std::exception& e) {
-        const std::string expected = "size in fct vector/logical/integer/numeric/matrix/array has to be a positive integer";
-        ass<"size in allocation is 0">(std::strcmp(e.what(), expected.c_str()) == 0);
-      }
+      int zero_size = 0;
+      Array<Logical, Buffer<Logical>> l = logical(Integer(zero_size));
+      ass<"size 0 vector allocation is empty">(l.size() == 0);
+    }
 
-      int invalid2 = -1;
+    // negative size: still invalid
+    {
+      int invalid = -1;
       try {
-        Array<Logical, Buffer<Logical>> l = logical(Integer(invalid2));
+        Array<Logical, Buffer<Logical>> l = logical(Integer(invalid));
+        ass<"expected size in allocation assertion">(false);
       }
       catch (const std::exception& e) {
-        const std::string expected = "size in fct vector/logical/integer/numeric/matrix/array has to be a positive integer";
-        ass<"size in allocation is 0">(std::strcmp(e.what(), expected.c_str()) == 0);
+        const std::string expected = "size in fct vector/logical/integer/numeric/matrix/array has to be an integer >= 0";
+        ass<"size in allocation is negative">(std::strcmp(e.what(), expected.c_str()) == 0);
       }
     }
 
@@ -278,36 +277,55 @@ void tests_allocation() {
       }
     }
 
-    // invalid nrow and/or ncol
+    // nrow and/or ncol of 0: unlike plain vectors, matrix() still rejects a
+    // zero total size (createRMat has its own unconditional size > 0 check,
+    // separate from ConvertSizeVec's per-dimension >= 0 check)
     {
-      Integer invalid_nrow(0);
-      Integer invalid_ncol(0);
+      Integer zero(0);
       Integer valid_nrow(2);
       Integer valid_col(3);
       const Logical val = Logical(true);
-      // both invalid
+      // both zero
       try {
-        Array<Logical, Buffer<Logical>> l = matrix(val, invalid_nrow, invalid_ncol);
+        Array<Logical, Buffer<Logical>> l = matrix(val, zero, zero);
+        ass<"expected invalid length assertion">(false);
       }
       catch (const std::exception& e) {
-        const std::string expected = "size in fct vector/logical/integer/numeric/matrix/array has to be a positive integer";
-        ass<"size in allocation is 0">(std::strcmp(e.what(), expected.c_str()) == 0);
+        const std::string expected = "invalid length argument";
+        ass<"matrix 0x0 rejected">(std::strcmp(e.what(), expected.c_str()) == 0);
       }
-      // rows invalid
+      // rows zero
       try {
-        Array<Logical, Buffer<Logical>> l = matrix(val, invalid_nrow, valid_col);
+        Array<Logical, Buffer<Logical>> l = matrix(val, zero, valid_col);
+        ass<"expected invalid length assertion">(false);
       }
       catch (const std::exception& e) {
-        const std::string expected = "size in fct vector/logical/integer/numeric/matrix/array has to be a positive integer";
-        ass<"size in allocation is 0">(std::strcmp(e.what(), expected.c_str()) == 0);
+        const std::string expected = "invalid length argument";
+        ass<"matrix 0xN rejected">(std::strcmp(e.what(), expected.c_str()) == 0);
       }
-      // cols invalid
+      // cols zero
       try {
-        Array<Logical, Buffer<Logical>> l = matrix(val, valid_nrow, invalid_ncol);
+        Array<Logical, Buffer<Logical>> l = matrix(val, valid_nrow, zero);
+        ass<"expected invalid length assertion">(false);
       }
       catch (const std::exception& e) {
-        const std::string expected = "size in fct vector/logical/integer/numeric/matrix/array has to be a positive integer";
-        ass<"size in allocation is 0">(std::strcmp(e.what(), expected.c_str()) == 0);
+        const std::string expected = "invalid length argument";
+        ass<"matrix Nx0 rejected">(std::strcmp(e.what(), expected.c_str()) == 0);
+      }
+    }
+
+    // negative nrow/ncol: rejected earlier, by ConvertSizeVec itself
+    {
+      Integer invalid(-1);
+      Integer valid_nrow(2);
+      const Logical val = Logical(true);
+      try {
+        Array<Logical, Buffer<Logical>> l = matrix(val, invalid, valid_nrow);
+        ass<"expected size in allocation assertion">(false);
+      }
+      catch (const std::exception& e) {
+        const std::string expected = "size in fct vector/logical/integer/numeric/matrix/array has to be an integer >= 0";
+        ass<"matrix negative nrow rejected">(std::strcmp(e.what(), expected.c_str()) == 0);
       }
     }
 
@@ -350,19 +368,84 @@ void tests_allocation() {
         ass<"input array does not match size">(std::strcmp(e.what(), expected.c_str()) == 0);
       }
     }
-    // invalid dim
+    // dim of 0: array() still rejects a zero total size (same unconditional
+    // size > 0 check as createRMat, separate from ConvertSizeVec)
     {
-      Integer invalid_dim1(0);
-      Integer valid_dim(2);
+      Integer zero_dim(0);
       const Logical val = Logical(true);
-      // both invalid
       try {
-        Array<Logical, Buffer<Logical>> l = array(val, c(invalid_dim1));
+        Array<Logical, Buffer<Logical>> l = array(val, c(zero_dim));
+        ass<"expected invalid length assertion">(false);
       }
       catch (const std::exception& e) {
-        const std::string expected = "size in fct vector/logical/integer/numeric/matrix/array has to be a positive integer";
-        ass<"size in allocation is 0">(std::strcmp(e.what(), expected.c_str()) == 0);
+        const std::string expected = "invalid length argument";
+        ass<"array dim 0 rejected">(std::strcmp(e.what(), expected.c_str()) == 0);
       }
+    }
+
+    // negative dim: rejected earlier, by ConvertSizeVec itself
+    {
+      Integer invalid_dim(-1);
+      const Logical val = Logical(true);
+      try {
+        Array<Logical, Buffer<Logical>> l = array(val, c(invalid_dim));
+        ass<"expected size in allocation assertion">(false);
+      }
+      catch (const std::exception& e) {
+        const std::string expected = "size in fct vector/logical/integer/numeric/matrix/array has to be an integer >= 0";
+        ass<"array negative dim rejected">(std::strcmp(e.what(), expected.c_str()) == 0);
+      }
+    }
+  }
+
+  // 9. seq_len / seq_along
+  {
+    // regular case still works
+    {
+      Array<Integer, Buffer<Integer, RBufferTrait>> s = seq_len(Integer(5));
+      ass<"seq_len(5) size">(s.size() == 5);
+      for (std::size_t i = 0; i < s.size(); i++) {
+        ass<"seq_len(5) content">(get_val(s.get(i)) == static_cast<int>(i + 1));
+      }
+    }
+
+    // bound of 0: empty, not the two-element {1, 0} colon(1, 0) would give
+    {
+      Array<Integer, Buffer<Integer, RBufferTrait>> s = seq_len(Integer(0));
+      ass<"seq_len(0) is empty">(s.size() == 0);
+    }
+    // same, but the bound arrives as a double
+    {
+      Array<Integer, Buffer<Integer, RBufferTrait>> s = seq_len(Double(0.0));
+      ass<"seq_len(0.0) is empty">(s.size() == 0);
+    }
+    // same, but the bound arrives as a length-1 vector (length_seq's other branch)
+    {
+      const Array<Integer, Buffer<Integer, RBufferTrait>> zero = c(Integer(0));
+      Array<Integer, Buffer<Integer, RBufferTrait>> s = seq_len(zero);
+      ass<"seq_len(c(0)) is empty">(s.size() == 0);
+    }
+
+    // seq_along of an empty vector is empty
+    {
+      const Array<Double, Buffer<Double, RBufferTrait>> empty;
+      Array<Integer, Buffer<Integer, RBufferTrait>> s = seq_along(empty);
+      ass<"seq_along(empty) is empty">(s.size() == 0);
+    }
+    // seq_along of a non-empty vector still works
+    {
+      const Array<Double, Buffer<Double, RBufferTrait>> content = c(Double(10.0), Double(20.0), Double(30.0));
+      Array<Integer, Buffer<Integer, RBufferTrait>> s = seq_along(content);
+      ass<"seq_along(vec) size">(s.size() == 3);
+      for (std::size_t i = 0; i < s.size(); i++) {
+        ass<"seq_along(vec) content">(get_val(s.get(i)) == static_cast<int>(i + 1));
+      }
+    }
+    // seq_along of a scalar is always length 1, regardless of the fix above
+    {
+      Array<Integer, Buffer<Integer, RBufferTrait>> s = seq_along(Double(3.14));
+      ass<"seq_along(scalar) size">(s.size() == 1);
+      ass<"seq_along(scalar) content">(get_val(s.get(0)) == 1);
     }
   }
 

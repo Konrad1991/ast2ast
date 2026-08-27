@@ -583,6 +583,18 @@ function_registry_global$add(
       node$i$internal_type <- t
       return(t)
     }
+    if (identical(temp$get_data_struct(), "scalar") &&
+        !identical(temp$get_base_type(), "character")) {
+      # for (i in <scalar>) runs the body once in R; wrap the seq in c() so the
+      # generated range-for iterates a length-1 vector instead of failing to
+      # compile on a non-iterable scalar. A character scalar is left alone so
+      # the for check_fct reports "cannot sequence over characters".
+      wrapped <- function_node$new()
+      wrapped$operator <- "c"
+      wrapped$context <- node$seq$context
+      wrapped$args <- list(node$seq)
+      node$seq <- wrapped
+    }
     t <- make_inferred_type("scalar", temp$get_base_type(), info_env$r_fct, info_env$real_type)
     if (!inherits(t, "pre_type_node")) {
       return(sprintf("Found unexpected type in %s: ", node$stringify()))

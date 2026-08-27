@@ -148,6 +148,17 @@ functional_tests <- function(a, b, n, type_test) {
     return(backsolve(R, rhs))
   }
 
+  if (type_test == 18) { # for (i in <scalar>): R runs the body once, i == the scalar
+    s <- a[[1L]]
+    acc <- 0.0
+    cnt <- 0.0
+    for (i in s) {
+      acc <- acc + i
+      cnt <- cnt + 1.0
+    }
+    return(c(acc, cnt))
+  }
+
    if (type_test == 17) { # forwardsolve(L, b): L lower-triangular, solves L x = b
      X <- matrix(a[1L:9L], 3, 3)
      A <- t(X) %*% X
@@ -156,6 +167,9 @@ functional_tests <- function(a, b, n, type_test) {
      rhs <- a[1L:3L]
      return(forwardsolve(L, rhs))
    }
+  else {
+    return(TRUE)
+  }
 
 }
 
@@ -201,6 +215,8 @@ expect_true(all(abs(fcpp(a, b, n, 15L) - functional_tests(a, b, n, 15L)) < 1e-8)
 # backsolve / forwardsolve (triangular solve against the Cholesky factor)
 expect_true(all(abs(fcpp(a, b, n, 16L) - functional_tests(a, b, n, 16L)) < 1e-8))
 expect_true(all(abs(fcpp(a, b, n, 17L) - functional_tests(a, b, n, 17L)) < 1e-8))
+# for (i in <scalar>): body runs once, i takes the scalar value
+expect_true(all(abs(fcpp(a, b, n, 18L) - functional_tests(a, b, n, 18L)) < 1e-8))
 
 # --- diag --------------------------------------------------------------------
 # ast2ast supports diag(x, nrow, ncol): an nrow x ncol matrix with x recycled
@@ -252,3 +268,29 @@ diag_src_rev <- paste(
   collapse = "\n"
 )
 expect_true(grepl("etr::diag<etr::ReverseDouble>", diag_src_rev, fixed = TRUE))
+
+# --- insertion sort ------------------------------------------------------------
+# regression test for && / || short-circuit: the guard `j >= 1L && v[[j]] > key`
+# relies on the left operand being FALSE stopping evaluation before v[[j]] is
+# read with an out-of-range j
+insertion_sort <- function(v) {
+  n <- length(v)
+  for (i in 2L:n) {
+    key <- v[[i]]
+    j <- i - 1L
+    while (j >= 1L && v[[j]] > key) {
+      v[[j + 1L]] <- v[[j]]
+      j <- j - 1L
+    }
+    v[[j + 1L]] <- key
+  }
+  return(v)
+}
+insertion_sort_cpp <- translate(insertion_sort, args_f = function(v) v |> type(vec(double)))
+
+set.seed(123)
+v <- rnorm(50)
+expect_equal(insertion_sort_cpp(v) |> c(), sort(v))
+expect_equal(insertion_sort_cpp(sort(v)) |> c(), sort(v))
+expect_equal(insertion_sort_cpp(sort(v, decreasing = TRUE)) |> c(), sort(v))
+expect_equal(insertion_sort_cpp(c(2.0, 1.0)) |> c(), c(1.0, 2.0))

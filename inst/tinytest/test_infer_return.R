@@ -29,7 +29,8 @@ f_args <- function() {}
 e <- try(get_ret_type(f, f_args), silent = TRUE)
 e <- attributes(e)[["condition"]]$message
 expect_equal(
-  e, "Found a return() and return(obj) statements. You can only use one of these at the same time"
+  e,
+"An XPtr function must return a value on every path, or on none: found both a valueless path and a value return"
 )
 # --- function input R ----------------------------------------------------
 f <- function() {
@@ -169,10 +170,167 @@ f <- function(a) {
     return(matrix(3.14, 5, 5))
   } else if (a == 8) {
     return(array(3.14, c(2, 3, 4)))
+  } else {
+    return(100)
   }
 }
 f_args <- function(a) {
   a |> type(vec(double))
 }
-ret_type <- get_ret_type(f, f_args, TRUE)
+ret_type <- get_ret_type(f, f_args, FALSE)
 check_type_f_arg(ret_type, "double", "array", "mutable", "copy", FALSE)
+
+# ==========================================================================
+# Custom types, collections, strings, inner functions
+#   XPtr (one concrete C++ return type) must reject an incompatible mix;
+#   output "R" (SEXP) tolerates it and reports "R_NilValue".
+# ==========================================================================
+
+# get_ret_type variant that threads a types helper (new_type / collection)
+get_ret_type_kt <- function(fct, fct_args, types_fct, r_fct = FALSE) {
+  real_type <- "etr::Double"
+  fr <- ast2ast:::function_registry_global$clone()
+  known_types <- ast2ast:::make_known_types(types_fct, r_fct, real_type)
+  env <- new.env(parent = emptyenv())
+  env$r_fct <- r_fct
+  env$real_type <- real_type
+  env$known_types <- known_types
+  AST <- ast2ast:::parse_body(ast2ast:::wrap_in_block(body(fct)), env, fr)
+  ast2ast:::update_function_registry(AST, fr)
+  ast2ast:::run_checks(AST, r_fct, fr, known_types)
+  AST <- ast2ast:::sort_args(AST, fr)
+  v <- ast2ast:::infer_types(AST, fct, fct_args, r_fct, real_type, fr, known_types)
+  ast2ast:::type_checking(AST, v, r_fct, real_type, fr, known_types)
+  ast2ast:::determine_types_of_returns(AST, v, r_fct, real_type, fr, known_types)
+}
+point_type <- function() {
+  new_type(Point, slots(x |> type(double), y |> type(double)))
+}
+two_types <- function() {
+  new_type(Point, slots(x |> type(double), y |> type(double)))
+  new_type(Circle, slots(rad |> type(double)))
+}
+
+# --- a single custom-type return is reported, in both output modes --------
+f <- function(p) {
+  p$x <- p$x + 1
+  return(p)
+}
+a <- function(p) p |> type(Point)
+rt <- get_ret_type_kt(f, a, point_type, FALSE)
+expect_true(inherits(rt, "new_type_node"))
+expect_equal(rt$get_data_struct(), "Point")
+rt <- get_ret_type_kt(f, a, point_type, TRUE)
+expect_true(inherits(rt, "new_type_node"))
+expect_equal(rt$get_data_struct(), "Point")
+
+# --- a single collection return is reported ------------------------------
+f <- function(ps) {
+  return(ps)
+}
+a <- function(ps) ps |> type(collection(Point))
+rt <- get_ret_type_kt(f, a, point_type, FALSE)
+expect_false(is.character(rt))
+
+# --- incompatible mix: custom type vs plain vector ----------------------
+f <- function(p, v) {
+  if (p$x > 0) {
+    return(p)
+  } else {
+    return(v)
+  }
+}
+a <- function(p, v) {
+  p |> type(Point)
+  v |> type(vec(double))
+}
+expect_error(get_ret_type_kt(f, a, point_type, FALSE), pattern = "same type on every path")
+expect_equal(get_ret_type_kt(f, a, point_type, TRUE), "R_NilValue")
+
+# --- incompatible mix: two different custom types ----------------------
+f <- function(p, c) {
+  if (p$x > 0) {
+    return(p)
+  } else {
+    return(c)
+  }
+}
+a <- function(p, c) {
+  p |> type(Point)
+  c |> type(Circle)
+}
+expect_error(get_ret_type_kt(f, a, two_types, FALSE), pattern = "same type on every path")
+expect_equal(get_ret_type_kt(f, a, two_types, TRUE), "R_NilValue")
+
+# --- incompatible mix: collection vs its element type ------------------
+f <- function(ps, p) {
+  if (p$x > 0) {
+    return(ps)
+  } else {
+    return(p)
+  }
+}
+a <- function(ps, p) {
+  ps |> type(collection(Point))
+  p |> type(Point)
+}
+expect_error(get_ret_type_kt(f, a, point_type, FALSE), pattern = "same type on every path")
+
+# --- plain-type widening across a branch is still fine under XPtr ------
+f <- function(a) {
+  if (a == 1) {
+    return(1L)
+  } else {
+    return(3.14)
+  }
+}
+rt <- get_ret_type(f, function(a) a |> type(double), FALSE)
+check_type_f_arg(rt, "double", "scalar", "mutable", "copy", FALSE)
+
+# --- string returns are rejected (no character base type in the DSL) --
+f <- function() {
+  return("hello")
+}
+type <- get_ret_type(f, function() {}, FALSE)
+expect_equal(type$get_data_struct(), "scalar")
+expect_equal(type$get_base_type(), "character")
+e <- try(ast2ast::translate(f, output = "XPtr"), silent = TRUE)
+expect_true(inherits(e, "try-error"))
+
+f <- function(a) {
+  if (a == 1) {
+    return("x")
+  } else {
+    return(1.0)
+  }
+}
+expect_error(ast2ast::translate(f, output = "XPtr"), pattern = "An XPtr function cannot return a string")
+expect_error(get_ret_type(f, function(a) a |> type(double), FALSE))
+expect_equal(get_ret_type(f, function(a) a |> type(double), TRUE), "R_NilValue")
+
+# --- returning an inner function is rejected --------------------------
+f <- function() {
+  g <- fn(
+    args_f = function(x) x |> type(double),
+    return_value = type(double),
+    block = function(x) return(x * x)
+  )
+  return(g)
+}
+expect_error(ast2ast::translate(f))
+expect_error(ast2ast::translate(f, output = "XPtr"))
+
+f <- function(a) {
+  g <- fn(
+    args_f = function(x) x |> type(double),
+    return_value = type(double),
+    block = function(x) return(x * x)
+  )
+  if (a == 1) {
+    return(g)
+  } else {
+    return(1.0)
+  }
+}
+expect_error(ast2ast::translate(f))
+expect_error(ast2ast::translate(f, output = "XPtr"))

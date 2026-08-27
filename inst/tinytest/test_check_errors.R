@@ -335,3 +335,38 @@ f <- function() {
   }
 }
 test_no_action_error(f)
+
+# --- inner functions cannot be used as a value --------------------------
+# these are caught during type inference / return handling, not run_checks,
+# so drive them through the full translator
+inner_fn <- quote(fn(
+  args_f = function() {},
+  return_value = type(double),
+  block = function() {
+    return(3.14)
+  }
+))
+
+f <- function() {
+  g <- eval(inner_fn)
+  print(g)
+}
+body(f)[[2]][[3]] <- inner_fn
+e <- try(ast2ast::translate(f), silent = TRUE)
+expect_true(inherits(e, "try-error"))
+expect_true(grepl(
+  "Cannot use an inner function as an argument to 'print'",
+  attributes(e)[["condition"]]$message, fixed = TRUE
+))
+
+f <- function() {
+  g <- eval(inner_fn)
+  return(g)
+}
+body(f)[[2]][[3]] <- inner_fn
+e <- try(ast2ast::translate(f), silent = TRUE)
+expect_true(inherits(e, "try-error"))
+expect_true(grepl(
+  "return(g)\nCannot use an inner function as an argument to 'return'",
+  attributes(e)[["condition"]]$message, fixed = TRUE
+))

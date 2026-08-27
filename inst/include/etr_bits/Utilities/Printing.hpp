@@ -31,6 +31,8 @@ inline void print(const Collection<T> &c) {
 template<typename P, typename T>
 inline void print_matrix(const P& pos, const T& obj,
                          std::size_t rs, std::size_t cs, std::size_t offset) {
+  // pos is only non-empty for the pages of a rank > 2 array; a plain matrix
+  // passes an empty pos and gets no ", , i" slab header.
   if (!pos.empty()) {
     PRINT_STREAM << ", , ";
     for (std::size_t i = 0; i < pos.size(); i++) {
@@ -39,12 +41,47 @@ inline void print_matrix(const P& pos, const T& obj,
         PRINT_STREAM << ", ";
       }
     }
-    PRINT_STREAM << std::endl;
+    PRINT_STREAM << "\n" << std::endl;
   }
 
+  auto pad = [](const std::string& s, std::size_t w) {
+    return std::string(w > s.size() ? w - s.size() : 0, ' ') + s;
+  };
+
+  // Stringify every cell first so each column can be right-aligned to its
+  // widest entry, matching R's matrix layout.
+  std::vector<std::string> cell(rs * cs);
+  std::vector<std::size_t> width(cs, 0);
+  for (std::size_t c = 0; c < cs; c++) {
+    std::ostringstream head;
+    head << "[," << (c + 1) << "]";
+    width[c] = head.str().size();
+    for (std::size_t r = 0; r < rs; r++) {
+      std::ostringstream v;
+      v << obj.get(offset + c * rs + r);
+      cell[c * rs + r] = v.str();
+      width[c] = std::max(width[c], cell[c * rs + r].size());
+    }
+  }
+
+  std::ostringstream last_label;
+  last_label << "[" << rs << ",]";
+  const std::size_t label_width = last_label.str().size();
+
+  PRINT_STREAM << std::string(label_width, ' ');
+  for (std::size_t c = 0; c < cs; c++) {
+    std::ostringstream head;
+    head << "[," << (c + 1) << "]";
+    PRINT_STREAM << " " << pad(head.str(), width[c]);
+  }
+  PRINT_STREAM << std::endl;
+
   for (std::size_t r = 0; r < rs; r++) {
+    std::ostringstream label;
+    label << "[" << (r + 1) << ",]";
+    PRINT_STREAM << pad(label.str(), label_width);
     for (std::size_t c = 0; c < cs; c++) {
-      PRINT_STREAM << obj.get(offset + c * rs + r) << "   ";
+      PRINT_STREAM << " " << pad(cell[c * rs + r], width[c]);
     }
     PRINT_STREAM << std::endl;
   }
@@ -97,7 +134,7 @@ inline void print(const T& obj) {
   }
 
   if (dim.size() == 2) {
-    print_matrix(std::vector<std::size_t>{0, 0}, obj, dim[0], dim[1], 0);
+    print_matrix(std::vector<std::size_t>{}, obj, dim[0], dim[1], 0);
   }
 
   if (dim.size() > 2) {
@@ -121,7 +158,7 @@ inline void print(const T& arr) {
   }
 
   if (dim.size() == 2) {
-    print_matrix(std::vector<std::size_t>{0, 0}, arr, dim[0], dim[1], 0);
+    print_matrix(std::vector<std::size_t>{}, arr, dim[0], dim[1], 0);
   }
 
   if (dim.size() > 2) {

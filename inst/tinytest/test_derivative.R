@@ -128,7 +128,7 @@ fcpp_reverse <- ast2ast::translate(
 y <- 0.0
 x <- c(1.0, 2.0, 3.0, 4.0, 5.0)
 res <- fcpp_reverse(y, x)
-expect_equal(res, array(c(21, 3, 2, 5, 4), 5L))
+expect_equal(res, c(21, 3, 2, 5, 4), 5L)
 
 f <- function(y, x) {
   res <- numeric(length(x))
@@ -151,7 +151,7 @@ fcpp_forward <- ast2ast::translate(
 y <- 0.0
 x <- c(1.0, 2.0, 3.0, 4.0, 5.0)
 res <- fcpp_forward(y, x)
-expect_equal(res, array(c(21, 3, 2, 5, 4), dim = 5))
+expect_equal(res, c(21, 3, 2, 5, 4))
 
 # Example Nr. 3: reverse-AD through get_diag (diagonal extraction)
 # =========================================================================

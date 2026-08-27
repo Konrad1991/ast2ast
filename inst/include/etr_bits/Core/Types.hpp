@@ -54,6 +54,7 @@ extern "C" void dgetrs_(const char* trans, const int* n, const int* nrhs,
 #include <math.h>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <type_traits>
 #include <utility>

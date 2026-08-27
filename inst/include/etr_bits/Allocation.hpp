@@ -200,7 +200,12 @@ inline auto length_seq(const T& obj) {
 }
 template<typename A>
 inline auto seq_len(const A& length) {
-  return colon(Integer(1), length_seq(length));
+  const Integer ub = length_seq(length);
+  if (ub == Integer(0)) {
+    return Array<Integer, Buffer<Integer, RBufferTrait>>();
+  } else {
+    return colon(Integer(1), length_seq(length));
+  }
 }
 template<typename A>
 inline auto seq_along(const A& obj) {
