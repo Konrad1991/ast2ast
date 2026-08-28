@@ -1235,4 +1235,75 @@ void test_preserved_subsetting() {
     ass<"Inf in scalar dual">(std::strcmp(NA_in_dual.c_str(), "invalid index argument") == 0);
 
   }
+
+  // ===========================================================================
+  // Single index on a rank>1 array: column-major flatten (R's m[i] / m[mask])
+  // ===========================================================================
+  {
+    auto lclose = [](double l, double r) { return std::abs(l - r) < 1e-9; };
+    std::vector<std::size_t> dim{3, 4};
+    Array<Double, Buffer<Double, LBufferTrait>> a(SI{12});
+    a.dim = dim;
+    for (std::size_t i = 0; i < 12; i++) a.set(i, static_cast<double>(i));
+
+    // vector of linear indices -> rank-1 vector
+    {
+      Array<Integer, Buffer<Integer, LBufferTrait>> idx(SI{3});
+      idx.set(0, Integer(1));
+      idx.set(1, Integer(6));
+      idx.set(2, Integer(12));
+      auto r = subset(a, idx);
+      ass<"linear idx size">(r.size() == 3);
+      ass<"linear idx rank 1">(r.get_dim().size() == 1);
+      ass<"linear idx [0]">(lclose(get_val(r.get(0)), 0.0));
+      ass<"linear idx [1]">(lclose(get_val(r.get(1)), 5.0));
+      ass<"linear idx [2]">(lclose(get_val(r.get(2)), 11.0));
+    }
+
+    // full-size logical mask -> the TRUE positions, column-major order
+    {
+      Array<Logical, Buffer<Logical, LBufferTrait>> mask(SI{12});
+      for (std::size_t i = 0; i < 12; i++) mask.set(i, Logical(i >= 6));
+      auto r = subset(a, mask);
+      ass<"mask size">(r.size() == 6);
+      for (std::size_t i = 0; i < 6; i++)
+        ass<"mask value">(lclose(get_val(r.get(i)), static_cast<double>(6 + i)));
+    }
+
+    // recycled logical mask {TRUE, FALSE} -> even 0-based positions
+    {
+      Array<Logical, Buffer<Logical, LBufferTrait>> mask(SI{2});
+      mask.set(0, Logical(true));
+      mask.set(1, Logical(false));
+      auto r = subset(a, mask);
+      ass<"recycled mask size">(r.size() == 6);
+      for (std::size_t i = 0; i < 6; i++)
+        ass<"recycled mask value">(lclose(get_val(r.get(i)), static_cast<double>(2 * i)));
+    }
+
+    // masked assignment writes back through the linear positions
+    {
+      Array<Logical, Buffer<Logical, LBufferTrait>> mask(SI{12});
+      for (std::size_t i = 0; i < 12; i++) mask.set(i, Logical(i >= 6));
+      subset(a, mask) = Double(0.0);
+      for (std::size_t i = 0; i < 6; i++)
+        ass<"masked assign kept">(lclose(get_val(a.get(i)), static_cast<double>(i)));
+      for (std::size_t i = 6; i < 12; i++)
+        ass<"masked assign wrote">(lclose(get_val(a.get(i)), 0.0));
+      for (std::size_t i = 0; i < 12; i++) a.set(i, static_cast<double>(i));
+    }
+
+    // a two-index form is unchanged
+    {
+      Array<Integer, Buffer<Integer, LBufferTrait>> ri(SI{2});
+      ri.set(0, Integer(1));
+      ri.set(1, Integer(3));
+      Array<Integer, Buffer<Integer, LBufferTrait>> ci(SI{1});
+      ci.set(0, Integer(4));
+      auto r = subset(a, ri, ci); // rows 1,3 of col 4 -> linear 9, 11
+      ass<"2-index size">(r.size() == 2);
+      ass<"2-index [0]">(lclose(get_val(r.get(0)), 9.0));
+      ass<"2-index [1]">(lclose(get_val(r.get(1)), 11.0));
+    }
+  }
 }

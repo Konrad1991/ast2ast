@@ -211,4 +211,33 @@ void test_simplified_subsetting() {
     ass<"borrow Dual at() dot [3]">(compare(d3.dot, 30.0));
   }
 
+
+  // ===========================================================================
+  // Single index on a rank>1 array -> column-major linear access (R's m[i])
+  // ===========================================================================
+  {
+    std::vector<std::size_t> dim{3, 4};
+    Array<Double, Buffer<Double, LBufferTrait>> a(SI{12});
+    a.dim = dim;
+    fill_0_11(a); // a[k] == k
+
+    ass<"linear at(m, 1) -> 0">(compare(get_val(at(a, Integer(1))), 0.0));
+    ass<"linear at(m, 5) -> 4">(compare(get_val(at(a, Integer(5))), 4.0));
+    ass<"linear at(m, 12) -> 11">(compare(get_val(at(a, Integer(12))), 11.0));
+    ass<"linear at(m, Double(7)) -> 6">(compare(get_val(at(a, Double(7.0))), 6.0));
+
+    at(a, Integer(5)) = Double(99.0);
+    ass<"linear at(m, 5) <- 99">(compare(get_val(a.get(4)), 99.0));
+    fill_0_11(a);
+
+    bool threw = false;
+    try { (void)at(a, Integer(13)); } catch (const std::exception& e) {
+      threw = std::strcmp(e.what(), "Error: out of boundaries") == 0;
+    }
+    ass<"linear at(m, 13) out of range">(threw);
+
+    // two-index form is unchanged: (2,3) on a 3x4 -> linear (2-1)+(3-1)*3 == 7
+    ass<"m[2,3] still works">(compare(get_val(at(a, Integer(2), Integer(3))), 7.0));
+  }
+
 }

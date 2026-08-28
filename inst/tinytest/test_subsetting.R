@@ -303,3 +303,69 @@ expect_equal(fcpp(3L, iv0, dv0, lv0), 1)    # logical elem -> integer elem
 expect_equal(fcpp(4L, iv0, dv0, lv0), 5)    # double elem -> integer elem (truncates 5.7 -> 5)
 expect_equal(fcpp(5L, iv0, dv0, lv0), 1)    # double elem -> logical elem
 expect_equal(fcpp(6L, iv0, dv0, lv0), 1)    # int elem -> logical elem
+
+# =============================================================================
+# Single-bracket indexing of a matrix: indexes the column-major flattening,
+# like R's m[i] / m[mask] (returns a plain vector; a scalar index -> scalar)
+# =============================================================================
+m0 <- matrix(as.double(1:12), 3, 4)
+
+# scalar linear index -> scalar
+f <- function(a) a[5L]
+fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+expect_equal(c(fcpp(m0)), m0[5])
+f <- function(a) a[[7L]]
+fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+expect_equal(c(fcpp(m0)), m0[[7]])
+
+# vector of linear indices -> vector
+f <- function(a) a[c(1L, 6L, 11L, 12L)]
+fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+expect_equal(c(fcpp(m0)), m0[c(1, 6, 11, 12)])
+
+# logical mask (same size) -> vector of the TRUE positions
+f <- function(a) a[a > 6.0]
+fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+expect_equal(c(fcpp(m0)), m0[m0 > 6])
+
+# logical mask recycled
+f <- function(a) a[c(TRUE, FALSE)]
+fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+expect_equal(c(fcpp(m0)), m0[c(TRUE, FALSE)])
+
+# reduction over a masked selection
+f <- function(a) sum(a[a > 6.0])
+fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+expect_equal(fcpp(m0), sum(m0[m0 > 6]))
+
+# masked assignment: scalar
+f <- function(a) { a[a > 6.0] <- 0.0; a }
+fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+r <- m0; r[r > 6] <- 0
+expect_equal(fcpp(m0), r)
+
+# masked assignment: vector (recycled)
+f <- function(a) { a[a > 6.0] <- rep(c(-1.0, -2.0), 3L); a }
+fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+r <- m0; r[r > 6] <- c(-1, -2)
+expect_equal(fcpp(m0), r)
+
+# linear scalar-index assignment
+f <- function(a) { a[5L] <- 99.0; a }
+fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+r <- m0; r[5] <- 99
+expect_equal(fcpp(m0), r)
+
+# still: a two-index form is unchanged
+f <- function(a) a[2L, 3L]
+fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+expect_equal(c(fcpp(m0)), m0[2, 3])
+
+# reverse-mode AD through a masked selection: d/dx sum(x[x > 0]) picks the
+# positive entries -> gradient 1 there, 0 elsewhere
+g <- ast2ast::translate(function(x) {
+  y <- sum(x[x > 0.0])
+  return(deriv(y, x))
+}, derivative = "reverse")
+xv <- c(-2.0, 3.0, -1.0, 4.0, 0.5)
+expect_equal(c(g(xv)), as.double(xv > 0))

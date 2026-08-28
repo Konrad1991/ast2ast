@@ -39,12 +39,6 @@ requires (IsLBufferArray<ArrayType> || IsBorrowArray<ArrayType>)
 inline decltype(auto) at(ArrayType& arr, const Args&... args) {
   constexpr std::size_t N = sizeof...(Args);
   const auto& dim = dim_view(arr.get_dim());
-  if (N > dim.size()) {
-    ass<"Too many index arguments for array rank">(false);
-  }
-  if (N < dim.size()) {
-    ass<"Too less index arguments for array rank">(false);
-  }
 
   int counter = 0;
   std::array<std::size_t, N> indices{};
@@ -55,18 +49,28 @@ inline decltype(auto) at(ArrayType& arr, const Args&... args) {
     args...
   );
 
-  // each index must be checked against its own dimension's extent; checking
-  // only the linearized offset against the buffer size lets an overshoot in
-  // a non-final dimension fold into a later dimension and silently alias
-  // the wrong cell (e.g. M[3,1] on a 2x2 landing on M[1,2]).
-  for (std::size_t i = 0; i < N; i++) {
-    ass<"Error: out of boundaries">(indices[i] < dim[i]);
-  }
-
   std::size_t idx = 0;
-  auto stride = make_strides_from_vec<N>(dim);
-  for (std::size_t i = 0; i < N; i++) {
-    idx += indices[i] * stride[i];
+  if constexpr (N == 1) {
+    // a single index walks the column-major flattening (R's m[i]); stride is 1
+    idx = indices[0];
+  } else {
+    if (N > dim.size()) {
+      ass<"Too many index arguments for array rank">(false);
+    }
+    if (N < dim.size()) {
+      ass<"Too less index arguments for array rank">(false);
+    }
+    // each index must be checked against its own dimension's extent; checking
+    // only the linearized offset against the buffer size lets an overshoot in
+    // a non-final dimension fold into a later dimension and silently alias
+    // the wrong cell (e.g. M[3,1] on a 2x2 landing on M[1,2]).
+    for (std::size_t i = 0; i < N; i++) {
+      ass<"Error: out of boundaries">(indices[i] < dim[i]);
+    }
+    auto stride = make_strides_from_vec<N>(dim);
+    for (std::size_t i = 0; i < N; i++) {
+      idx += indices[i] * stride[i];
+    }
   }
 
   ass<"No memory was allocated">(arr.d.allocated);
@@ -150,11 +154,6 @@ inline decltype(auto) at(ArrayType&& arr, const Args&... args) {
   constexpr std::size_t N = sizeof...(Args);
   const auto& dim = dim_view(arr.get_dim());
 
-  if (N != dim.size()) {
-    if (N > dim.size()) ass<"Too many index arguments for array rank">(false);
-    else               ass<"Too less index arguments for array rank">(false);
-  }
-
   int counter = 0;
   std::array<std::size_t, N> indices{};
   forEachArg(
@@ -164,14 +163,21 @@ inline decltype(auto) at(ArrayType&& arr, const Args&... args) {
     args...
   );
 
-  for (std::size_t i = 0; i < N; i++) {
-    ass<"Error: out of boundaries">(indices[i] < dim[i]);
-  }
-
   std::size_t idx = 0;
-  auto stride = make_strides_from_vec<N>(dim);
-  for (std::size_t i = 0; i < N; i++) {
-    idx += indices[i] * stride[i];
+  if constexpr (N == 1) {
+    idx = indices[0];
+  } else {
+    if (N != dim.size()) {
+      if (N > dim.size()) ass<"Too many index arguments for array rank">(false);
+      else               ass<"Too less index arguments for array rank">(false);
+    }
+    for (std::size_t i = 0; i < N; i++) {
+      ass<"Error: out of boundaries">(indices[i] < dim[i]);
+    }
+    auto stride = make_strides_from_vec<N>(dim);
+    for (std::size_t i = 0; i < N; i++) {
+      idx += indices[i] * stride[i];
+    }
   }
 
   ass<"Error: out of boundaries">(idx < arr.d.size());
@@ -182,12 +188,6 @@ template <typename ArrayType, typename... Args>
 inline const auto at(const ArrayType& arr, const Args&... args) {
   constexpr std::size_t N = sizeof...(Args);
   const auto& dim = dim_view(arr.get_dim());
-  if (N > dim.size()) {
-    ass<"Too many index arguments for array rank">(false);
-  }
-  if (N < dim.size()) {
-    ass<"Too less index arguments for array rank">(false);
-  }
 
   int counter = 0;
   std::array<std::size_t, N> indices;
@@ -197,13 +197,25 @@ inline const auto at(const ArrayType& arr, const Args&... args) {
     },
     args...
   );
-  for (std::size_t i = 0; i < N; i++) {
-    ass<"Error: out of boundaries">(indices[i] < dim[i]);
-  }
+
   std::size_t idx = 0;
-  auto stride = make_strides_from_vec<N>(dim);
-  for (std::size_t i = 0; i < N; i++) {
-    idx += indices[i] * stride[i];
+  if constexpr (N == 1) {
+    idx = indices[0];
+    ass<"Error: out of boundaries">(idx < arr.size());
+  } else {
+    if (N > dim.size()) {
+      ass<"Too many index arguments for array rank">(false);
+    }
+    if (N < dim.size()) {
+      ass<"Too less index arguments for array rank">(false);
+    }
+    for (std::size_t i = 0; i < N; i++) {
+      ass<"Error: out of boundaries">(indices[i] < dim[i]);
+    }
+    auto stride = make_strides_from_vec<N>(dim);
+    for (std::size_t i = 0; i < N; i++) {
+      idx += indices[i] * stride[i];
+    }
   }
   return arr.get(idx);
 }

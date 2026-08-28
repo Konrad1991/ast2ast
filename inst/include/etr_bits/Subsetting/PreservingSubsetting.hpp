@@ -177,12 +177,21 @@ inline std::vector<std::size_t> make_strides_dyn(const std::vector<std::size_t>&
   return stride;
 }
 
-template<std::size_t N,typename T, typename O>
+inline std::vector<std::size_t> linear_dim_if_single_index(const std::vector<std::size_t>& dim, std::size_t nargs) {
+  if (nargs == 1 && dim.size() > 1) {
+    std::size_t total = 1;
+    for (std::size_t d : dim) total *= d;
+    return std::vector<std::size_t>(1, total);
+  }
+  return std::vector<std::size_t>(dim.begin(), dim.end());
+}
+
+template<std::size_t N, typename O>
 inline void fill_scalars_in_index_lists(
-  const T& arr, std::array<Buffer<Integer>, N>& converted_arrays,
+  const std::vector<std::size_t>& dim,
+  std::array<Buffer<Integer>, N>& converted_arrays,
   std::array<const Buffer<Integer>*, N>& index_lists, O&& arg,
   std::size_t& counter, std::size_t& counter_converted) {
-  const auto& dim = dim_view(arr.get_dim());
   using A = std::decay_t<decltype(arg)>;
   if constexpr (IsCppDouble<A>) {
     auto& v = converted_arrays[counter_converted++];
@@ -207,12 +216,12 @@ inline void fill_scalars_in_index_lists(
   }
 }
 
-template<std::size_t N, typename T, typename... Args>
-inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& converted_arrays,
+template<std::size_t N, typename... Args>
+inline void fill_index_lists(const std::vector<std::size_t>& dim,
+                             std::array<Buffer<Integer>, N>& converted_arrays,
                              std::array<const Buffer<Integer>*, N>& index_lists, Args&&... args) {
   std::size_t counter = 0;
   std::size_t counter_converted = 0;
-  const auto& dim = dim_view(arr.get_dim());
   forEachArg(
     [&](const auto& arg) {
       using A = std::decay_t<decltype(arg)>;
@@ -276,7 +285,7 @@ inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& conve
       }
       // --- Case 4: C++ scalars
       else if constexpr (IsCppArithV<A>) {
-        fill_scalars_in_index_lists<N>(arr, converted_arrays,
+        fill_scalars_in_index_lists<N>(dim, converted_arrays,
                                        index_lists, arg,
                                        counter, counter_converted);
       }
@@ -290,7 +299,7 @@ inline void fill_index_lists(const T& arr, std::array<Buffer<Integer>, N>& conve
         if constexpr (std::is_integral_v<V> && !std::is_same_v<V, bool>) {
           ass<"Found NA value in subsetting (within an integer object)">(!arg.isNA());
         }
-        fill_scalars_in_index_lists<N>(arr, converted_arrays,
+        fill_scalars_in_index_lists<N>(dim, converted_arrays,
                                        index_lists, get_val(arg),
                                        counter, counter_converted);
       }
@@ -310,7 +319,7 @@ struct out_L {
 template <typename ArrayType, typename... Args>
 inline out_L create_indices(const ArrayType& arr, const Args&... args) {
   constexpr std::size_t N = sizeof...(Args);
-  const auto& dim = dim_view(arr.get_dim());
+  const std::vector<std::size_t> dim = linear_dim_if_single_index(dim_view(arr.get_dim()), N);
   if (N > dim.size()) {
     ass<"Too many index arguments for array rank">(false);
   }
@@ -322,7 +331,7 @@ inline out_L create_indices(const ArrayType& arr, const Args&... args) {
   std::array<const Buffer<Integer>*, N> index_lists{};
 
   fill_index_lists<N>(
-    arr,
+    dim,
     converted_arrays,
     index_lists,
     args...
