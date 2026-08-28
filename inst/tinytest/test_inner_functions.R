@@ -13,6 +13,9 @@ f <- function() {
   return(g(z))
 }
 expect_error(ast2ast::translate(f, getsource = TRUE), pattern = "In inner function g")
+# the message names the outer variable and how to fix it
+expect_error(ast2ast::translate(f, getsource = TRUE),
+  pattern = "add it as a parameter of the inner function")
 
 # --- passing a fn() where a scalar argument is declared must not crash -----
 
@@ -93,6 +96,23 @@ f <- function() {
   return(g(1))
 }
 expect_error(ast2ast::translate(f, getsource = TRUE), pattern = "fn: args_f, return_value, block are required")
+
+# 7. inner fn() called with the wrong number of arguments -> clean arity
+#    error, not an out-of-bounds crash (inner fns carry no signature `docs`)
+f <- function() {
+  g <- fn(
+    args_f = function(a) { a |> type(double) },
+    return_value = type(double),
+    block = function(a) { return(a + 3) }
+  )
+  h <- fn(
+    args_f = function(a) { a |> type(double) |> const() },
+    return_value = type(double),
+    block = function(a) { return(g()) }   # g needs one argument
+  )
+  return(h(3.14))
+}
+expect_error(ast2ast::translate(f, getsource = TRUE), pattern = "Wrong number of arguments")
 
 # --- break/next scope is checked per fn(), independently of the outer fct --
 

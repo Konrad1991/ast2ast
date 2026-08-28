@@ -88,6 +88,14 @@ inline auto sin(T &&obj) {
   return create_unary<T, I, SinusTrait>(std::forward<T>(obj));
 }
 
+// abs on an array/lazy expression. Element type is preserved (R keeps
+// abs(int) integer); AD comes from the scalar element's .abs() via AbsTrait.
+template <typename T> requires IsArray<Decayed<T>>
+inline auto abs(T &&obj) {
+  using I = std::decay_t<decltype(obj.d)>;
+  return create_unary<T, I, AbsTrait>(std::forward<T>(obj));
+}
+
 template <typename T> requires IsArray<Decayed<T>>
 inline auto operator-(T&& obj) {
   using I = std::decay_t<decltype(obj.d)>;

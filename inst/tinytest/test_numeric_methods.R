@@ -130,3 +130,125 @@ f_scalar <- function(x) {
 fcpp_scalar <- ast2ast::translate(f_scalar, args_f = function(x) x |> type(double))
 expect_equal(c(fcpp_scalar(5.0)), 1L)
 expect_equal(c(fcpp_scalar(1.0)), integer(0))
+
+# --- abs() on arrays / lazy expressions ------------------------------------
+# abs had a scalar overload but no array one (dispatch layer 3, not 1), so
+# abs(vec), abs(mat), abs(a - b) all leaked a g++ error.
+
+f <- function(a) abs(a)
+fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(vec(double)))
+x <- c(-1.5, 2.5, -3.5, 0.0)
+expect_equal(c(fcpp(x)), abs(x))
+
+# lazy expression argument
+f <- function(a) abs(a - 1.0)
+fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(vec(double)))
+expect_equal(c(fcpp(x)), abs(x - 1))
+
+# nested in another op, and a reduction
+f <- function(a) sum(abs(a - 1.0))
+fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(vec(double)))
+expect_equal(fcpp(x), sum(abs(x - 1)))
+
+# matrix
+f <- function(a) abs(a)
+fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+m <- matrix(c(-1, 2, -3, 4), 2)
+expect_equal(fcpp(m), abs(m))
+
+# integer element type is preserved (like R: abs(1:3) is integer)
+f <- function(a) abs(a)
+fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(vec(integer)))
+expect_equal(c(fcpp(c(-2L, 3L, -4L))), c(2L, 3L, 4L))
+
+# reverse-mode AD through abs: d/dx sum(abs(x)) = sign(x)
+g <- ast2ast::translate(function(x) { y <- sum(abs(x)); return(deriv(y, x)) },
+  derivative = "reverse")
+expect_equal(c(g(c(-2.0, 3.0, -0.5))), c(-1, 1, -1))
+
+# --- diag(x): 1-argument forms -------------------------------------------------
+# diag(n): scalar size -> n-by-n identity (n is a dimension, not data)
+f <- function() diag(4L)
+fcpp <- ast2ast::translate(f)
+expect_equal(fcpp(), diag(4))
+
+# diag(v): vector -> square matrix with v on the diagonal
+f <- function(v) diag(v)
+fcpp <- ast2ast::translate(f, args_f = function(v) v |> type(vec(double)))
+expect_equal(fcpp(c(2.0, 3.0, 4.0)), diag(c(2, 3, 4)))
+
+# 3-arg construction still works
+f <- function() diag(1.0, 2L, 3L)
+fcpp <- ast2ast::translate(f)
+expect_equal(fcpp(), diag(1, 2, 3))
+
+# 2 args is still an arity error
+expect_error(ast2ast::translate(function() diag(3L, 3L)),
+  pattern = "Wrong number of arguments")
+
+# diag(matrix) is rejected -> pointed at get_diag
+expect_error(
+  ast2ast::translate(function(m) diag(m), args_f = function(m) m |> type(mat(double))),
+  pattern = "get_diag"
+)
+
+# diag(n) with a double scalar size
+f <- function() diag(3.0)
+fcpp <- ast2ast::translate(f)
+expect_equal(fcpp(), diag(3))
+
+# diag(v) with an integer vector -> integer matrix (like R)
+f <- function(v) diag(v)
+fcpp <- ast2ast::translate(f, args_f = function(v) v |> type(vec(integer)))
+expect_equal(fcpp(c(1L, 2L, 3L)), diag(1:3))
+
+# diag(n) as a size taken from an argument
+f <- function(n) diag(n)
+fcpp <- ast2ast::translate(f, args_f = function(n) n |> type(integer))
+expect_equal(fcpp(5L), diag(5))
+
+# 3-arg square, scalar x
+f <- function() diag(2.0, 3L, 3L)
+fcpp <- ast2ast::translate(f)
+expect_equal(fcpp(), diag(2, 3, 3))
+
+# 3-arg with a vector x, recycled along the diagonal
+f <- function(v) diag(v, 3L, 3L)
+fcpp <- ast2ast::translate(f, args_f = function(v) v |> type(vec(double)))
+expect_equal(fcpp(c(1.0, 2.0)), diag(c(1, 2), 3, 3))
+
+# 3-arg non-square, more rows than cols
+f <- function() diag(1.0, 4L, 2L)
+fcpp <- ast2ast::translate(f)
+expect_equal(fcpp(), diag(1, 4, 2))
+
+# reverse-mode AD through diag(v): s = sum(get_diag(diag(x) %*% diag(x))) = sum(x^2)
+g <- ast2ast::translate(function(x) {
+  M <- diag(x)
+  s <- sum(get_diag(M %*% M))
+  return(deriv(s, x))
+}, derivative = "reverse",
+  args_f = function(x) {
+    x |> type(vec(double))
+  }
+)
+expect_equal(c(g(c(2.0, 3.0, 4.0))), c(4, 6, 8))
+
+# forward-mode AD through diag(v)
+fw <- ast2ast::translate(function(x) {
+  jac <- matrix(0.0, 1L, 3L)
+  for (i in 1L:3L) {
+    seed(x, i)
+    M <- diag(x)
+    s <- sum(get_diag(M %*% M))
+    d <- get_dot(s)
+    jac[1L, i] <- d[[1L]]
+    unseed(x, i)
+  }
+  return(jac)
+}, derivative = "forward",
+  args_f = function(x) {
+    x |> type(vec(double))
+  }
+)
+expect_equal(c(fw(c(2.0, 3.0, 4.0))), c(4, 6, 8))

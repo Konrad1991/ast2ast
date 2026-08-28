@@ -127,6 +127,54 @@ test_checks(
   "at(a, 1L)\nYou can only subset variables of type array, matrix or vector"
 )
 
+# --- chained subsetting of a vector: the intermediate is a scalar --------------
+# `[` with a single scalar index takes the fast path and yields a scalar, so a
+# second subset (of any kind) has nothing left to index.
+
+f <- function() {
+  a <- numeric(10)
+  a[[1L]][[1L]]
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a[[1L]][[1L]]\nYou cannot subset a scalar value: [[ always yields a scalar, so the following [[ has nothing to index."
+)
+
+f <- function() {
+  a <- numeric(10)
+  a[1L][1L]
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a[1L][1L]\nYou cannot subset a scalar value: with a single scalar index, [ takes the fast path and behaves like [[, yielding a scalar, so the following [ has nothing to index."
+)
+
+f <- function() {
+  a <- numeric(10)
+  a[1L][[1L]]
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a[1L][[1L]]\nYou cannot subset a scalar value: with a single scalar index, [ takes the fast path and behaves like [[, yielding a scalar, so the following [[ has nothing to index."
+)
+
+f <- function() {
+  a <- numeric(10)
+  a[[1L]][1L]
+}
+test_checks(
+  f, args_fct, TRUE,
+  "a[[1L]][1L]\nYou cannot subset a scalar value: [[ yields a scalar, so the following [ has nothing to index."
+)
+
+# a single subset of a vector stays fine
+f <- function() {
+  a <- numeric(10)
+  a[[1L]]
+}
+e <- try(run_fr_checks(f, args_fct, TRUE, list()), silent = TRUE)
+expect_false(inherits(e, "try-error"))
+
 # --- assignment ------------------------------------------------------------
 f <- function() {
  for (i in 1:10) {
@@ -319,6 +367,14 @@ test_checks(
 )
 
 # --- c ---------------------------------------------------------------------
+f <- function() {
+  a <- c()
+}
+args_fct <- function() {}
+test_checks(
+  f, args_fct, TRUE,
+  "a <- c()\nYou cannot use c without any arguments"
+)
 f <- function() {
   a <- c(1, 2, "Invalid")
 }

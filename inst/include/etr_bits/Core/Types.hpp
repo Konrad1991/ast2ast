@@ -511,6 +511,9 @@ struct MinusUnaryTrait {
 struct NotUnaryTrait {
   template <typename L> static inline auto f(L a) { return !a; }
 };
+struct AbsTrait {
+  template <typename L> static inline auto f(L a) { return abs(a); }
+};
 
 /*
 -----------------------------------------------------------------------------------------------------------
@@ -619,7 +622,8 @@ IS<typename ReRef<T>::type::Trait, ExpTrait> ||
 IS<typename ReRef<T>::type::Trait, LogTrait> ||
 IS<typename ReRef<T>::type::Trait, SquareRootTrait> ||
 IS<typename ReRef<T>::type::Trait, MinusUnaryTrait> ||
-IS<typename ReRef<T>::type::Trait, NotUnaryTrait>;
+IS<typename ReRef<T>::type::Trait, NotUnaryTrait> ||
+IS<typename ReRef<T>::type::Trait, AbsTrait>;
 };
 template <typename T> concept IsBinary = requires {
 typename ReRef<T>::type::Trait;

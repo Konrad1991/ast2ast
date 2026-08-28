@@ -82,13 +82,17 @@ handle_var <- function(code, context) {
       return(ln)
     }
     # dont know why but short forms T and F
-    # are returned as symbols and not as logicals
+    # are returned as symbols and not as logicals.
+    # keep the original spelling on $name so an error can say "T"/"F" rather
+    # than the transpiled "true"/"false"; stringify() still emits true/false.
     if (name == "T") {
       ln <- literal_node$new(TRUE)
+      ln$name <- "T"
       ln$context <- context
       return(ln)
     } else if (name == "F") {
       ln <- literal_node$new(FALSE)
+      ln$name <- "F"
       ln$context <- context
       return(ln)
     }
@@ -651,7 +655,7 @@ block_node <- R6::R6Class(
         return("")
       }
       res <- lapply(self$block, function(elem) {
-        if (class(elem)[[1]] %within% c("for_node", "if_node", "block_node", "while_node", "repeat_node")) {
+        if (class(elem)[[1]] %in% c("for_node", "if_node", "block_node", "while_node", "repeat_node")) {
           return(elem$stringify_error_line(indent))
         }
         error <- elem$stringify_error() |> combine_strings("\n")

@@ -1048,7 +1048,7 @@ expect_true(types$k$get_data_struct() == "scalar")
 
 # --- type ---------------------------------------------------------------
 f <- function() {
-  a |> type(logical)
+  a |> type(logical) <- TRUE
 }
 types <- get_types(f)
 expect_true(types[[1]]$get_base_type() == "logical")
@@ -1070,56 +1070,56 @@ expect_true(types[[1]]$get_base_type() == "logical", info = "Type is preserved")
 expect_true(types[[1]]$get_data_struct() == "scalar", info = "Type is preserved")
 
 f <- function() {
-  a |> type(vec(logical))
+  a |> type(vec(logical)) <- FALSE
 }
 types <- get_types(f)
 expect_true(types[[1]]$get_base_type() == "logical")
 expect_true(types[[1]]$get_data_struct() == "vector")
 
 f <- function() {
-  a |> type(vector(logical))
+  a |> type(vector(logical)) <- c(TRUE)
 }
 types <- get_types(f)
 expect_true(types[[1]]$get_base_type() == "logical")
 expect_true(types[[1]]$get_data_struct() == "vector")
 
 f <- function() {
-  a |> type(matrix(logical))
+  a |> type(matrix(logical)) <- matrix(TRUE, 2, 2)
 }
 types <- get_types(f)
 expect_true(types[[1]]$get_base_type() == "logical")
 expect_true(types[[1]]$get_data_struct() == "matrix")
 
 f <- function() {
-  a |> type(array(logical))
+  a |> type(array(logical)) <- TRUE
 }
 types <- get_types(f)
 expect_true(types[[1]]$get_base_type() == "logical")
 expect_true(types[[1]]$get_data_struct() == "array")
 
 f <- function() {
-  a |> type(mat(logical))
+  a |> type(mat(logical)) <- FALSE
 }
 types <- get_types(f)
 expect_true(types[[1]]$get_base_type() == "logical")
 expect_true(types[[1]]$get_data_struct() == "matrix")
 
 f <- function() {
-  a |> type(int)
+  a |> type(int) <- 3L
 }
 types <- get_types(f)
 expect_true(types[[1]]$get_base_type() == "integer")
 expect_true(types[[1]]$get_data_struct() == "scalar")
 
 f <- function() {
-  a |> type(integer)
+  a |> type(integer) <- 5L
 }
 types <- get_types(f)
 expect_true(types[[1]]$get_base_type() == "integer")
 expect_true(types[[1]]$get_data_struct() == "scalar")
 
 f <- function() {
-  a |> type(double)
+  a |> type(double) <- 3.14
 }
 types <- get_types(f)
 expect_true(types[[1]]$get_base_type() == "double")

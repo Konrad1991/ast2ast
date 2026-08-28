@@ -12,7 +12,7 @@ translate <- function(f,
   stopifnot("args_f is not a function" = is.function(args_f) || is.null(args_f))
   stopifnot("types_f is not a function" = is.function(types_f) || is.null(types_f))
   stopifnot("output is not of type character" = is.character(output))
-  stopifnot("Output is neither 'R' nor 'XPtr'" = output %within% c("R", "XPtr"))
+  stopifnot("Output is neither 'R' nor 'XPtr'" = output %in% c("R", "XPtr"))
   stopifnot("verbose is not of type logical" = is.logical(verbose))
   stopifnot("getsource is not of type logical" = is.logical(getsource))
   stopifnot("derivative is not of type character" = is.character(derivative) || is.null(derivative))

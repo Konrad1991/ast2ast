@@ -1183,6 +1183,11 @@ struct Integer {
   inline bool isNA() const noexcept {
     return is_na;
   }
+  // condition context (if/while); matches R: NA -> error, otherwise x != 0
+  explicit inline operator bool() const {
+    ass<"missing value where TRUE/FALSE needed">(!is_na);
+    return val != 0;
+  }
   template<typename T> requires IsArray<Decayed<T>> inline Integer& operator=(const T& arr) {
     using  inner = typename ExtractDataType<T>::value_type;
     ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
@@ -1270,6 +1275,12 @@ struct Double {
   }
   inline bool isInfinite() const noexcept {
     return !is_na && !isNaN() && !std::isfinite(val);
+  }
+  // condition context (if/while); matches R: NA/NaN -> error, otherwise x != 0
+  explicit inline operator bool() const {
+    ass<"missing value where TRUE/FALSE needed">(!is_na);
+    ass<"argument is not interpretable as logical">(!std::isnan(val));
+    return val != 0.0;
   }
   template<typename T> requires IsArray<Decayed<T>> inline Double& operator=(const T& arr) {
     using  inner = typename ExtractDataType<T>::value_type;
@@ -1379,6 +1390,12 @@ struct Dual {
   inline bool isInfiniteDot() const noexcept {
     return !is_na_dot && !isNaNDot() && !std::isfinite(dot);
   }
+  // condition context (if/while) tests the value part only; matches R
+  explicit inline operator bool() const {
+    ass<"missing value where TRUE/FALSE needed">(!is_na);
+    ass<"argument is not interpretable as logical">(!std::isnan(val));
+    return val != 0.0;
+  }
   template<typename T> requires IsArray<Decayed<T>> inline Dual& operator=(const T& arr) {
     using  inner = typename ExtractDataType<T>::value_type;
     ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
@@ -1461,6 +1478,14 @@ struct ReverseDouble {
   inline bool isNaN() const noexcept { return !static_cast<bool>(is_na) && std::isnan(get_val_from_tape()); }
   inline bool isFinite() const noexcept { return !static_cast<bool>(is_na) && std::isfinite(get_val_from_tape()); }
   inline bool isInfinite() const noexcept { return !static_cast<bool>(is_na) && !isNaN() && !std::isfinite(get_val_from_tape()); }
+
+  // condition context (if/while); matches R: NA/NaN -> error, otherwise x != 0
+  explicit inline operator bool() const {
+    ass<"missing value where TRUE/FALSE needed">(!is_na);
+    const double v = get_val_from_tape();
+    ass<"argument is not interpretable as logical">(!std::isnan(v));
+    return v != 0.0;
+  }
 
   inline ReverseDouble unary_(ROp u) const {
     if (is_na) return NA();
@@ -2858,7 +2883,8 @@ struct LogicalRef {
     if (p_na) *p_na = get_scalar_val(x).is_na;
     return *this;
   }
-  explicit inline operator bool() const { return *p_val; }
+  // delegate to Logical so the NA guard applies, like every other method here
+  explicit inline operator bool() const { return static_cast<bool>(Logical(*this)); }
   explicit inline LogicalRef(bool* v, bool* n = nullptr);
   inline LogicalRef(Logical) = delete;
   inline LogicalRef(bool) = delete;
@@ -2917,6 +2943,7 @@ struct IntegerRef {
   inline Integer operator-() const { return -Integer(*this); }
   inline Logical operator!() const { return !Integer(*this); }
   inline bool isNA() const noexcept { return Integer(*this).isNA(); }
+  explicit inline operator bool() const { return static_cast<bool>(Integer(*this)); }
   IntegerRef& operator=(const IntegerRef& other) {
     if (this == &other) return *this;
     *p_val = *other.p_val;
@@ -2994,6 +3021,7 @@ struct DoubleRef {
   inline bool isNaN()      const noexcept { return Double(*this).isNaN(); }
   inline bool isFinite()   const noexcept { return Double(*this).isFinite(); }
   inline bool isInfinite() const noexcept { return Double(*this).isInfinite(); }
+  explicit inline operator bool() const { return static_cast<bool>(Double(*this)); }
   DoubleRef& operator=(const DoubleRef& other) {
     if (this == &other) return *this;
     *p_val = *other.p_val;
@@ -3078,6 +3106,7 @@ struct DualRef {
   inline bool isInfinite()    const noexcept { return Dual(*this).isInfinite(); }
   inline bool isFiniteDot()   const noexcept { return Dual(*this).isFiniteDot(); }
   inline bool isInfiniteDot() const noexcept { return Dual(*this).isInfiniteDot(); }
+  explicit inline operator bool() const { return static_cast<bool>(Dual(*this)); }
   DualRef& operator=(const DualRef& other) {
     if (this == &other) return *this;
     *p_val = *other.p_val;

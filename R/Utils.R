@@ -5,13 +5,6 @@ is_symbol <- function (x) {
   return(TRUE)
 }
 
-`%within%` <- function(elem, v) {
-  for (i in seq_along(v)) {
-    if (elem == v[i]) return(TRUE)
-  }
-  return(FALSE)
-}
-
 err_found <- function(string) {
   if (is.null(string)) return(FALSE)
   string <- gsub("\n|\t| ", "", string)
@@ -42,6 +35,54 @@ same_data_struct <- function(is, should) {
   is <- correct(is)
   should <- correct(should)
   should == is
+}
+
+base_type_rank <- function(bt) {
+  switch(bt,
+    logical = 1L, bool = 1L,
+    integer = 2L, int = 2L,
+    double = 3L,
+    NA_integer_
+  )
+}
+data_struct_rank <- function(ds) {
+  switch(ds,
+    scalar = 1L,
+    vec = 2L, vector = 2L, borrow_vec = 2L, borrow_vector = 2L,
+    mat = 3L, matrix = 3L, borrow_mat = 3L, borrow_matrix = 3L,
+    array = 4L, borrow_array = 4L,
+    NA_integer_
+  )
+}
+
+rhs_fits_lhs <- function(lhs_base, lhs_struct, rhs_base, rhs_struct) {
+  lb <- base_type_rank(lhs_base)
+  rb <- base_type_rank(rhs_base)
+  ls <- data_struct_rank(lhs_struct)
+  rs <- data_struct_rank(rhs_struct)
+  if (anyNA(c(lb, rb, ls, rs))) return(TRUE)
+  (rb <= lb) && (rs == ls || rhs_struct == "scalar")
+}
+
+is_at_or_double_bracket <- function(s) {
+  s %in% c("at", "[[")
+}
+
+choose_fast_path <- function(types) {
+  fulfilled <- function(t) {
+    if (!inherits(t, "pre_type_node")) return(FALSE)
+    if (t$get_data_struct() != "scalar" || t$get_base_type() == "logical") return(FALSE)
+    return(TRUE)
+  }
+  if (is.list(types)) {
+    for (t in types) {
+      if (!fulfilled(t)) return(FALSE)
+    }
+    return(TRUE)
+  } else {
+    if (!fulfilled(types)) return(FALSE)
+    return(TRUE)
+  }
 }
 
 infix_ops <- c(

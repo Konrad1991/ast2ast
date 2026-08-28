@@ -151,13 +151,13 @@ is_data_structs <- function(node, vars_types_list, data_structs) {
   if (!is.null(var_name)) {
     type <- vars_types_list[[var_name]]
     if (inherits(type, "pre_type_node")) {
-      if (type$get_data_struct() %within% data_structs) {
+      if (type$get_data_struct() %in% data_structs) {
         return(TRUE)
       }
     }
     FALSE
   } else {
-    node$internal_type$get_data_struct() %within% data_structs
+    node$internal_type$get_data_struct() %in% data_structs
   }
 }
 is_vec_mat_or_array <- function(node, vars_types_list, data_structs) {
@@ -186,6 +186,62 @@ is_array <- function(node, vars_types_list) {
   )
 }
 
+check_assignment <- function(node, vars_types_list, info_env) {
+  if (!(node$context %in% c("<-", "=", "{"))) {
+    node$error <- "assignments cannot be done within another function"
+  }
+  var_name <- find_var_lhs(node)
+  type <- vars_types_list[[var_name]]
+  if (inherits(type, c("pre_type_node", "new_type_node")) && type$get_iterator()) {
+    node$error <- "You cannot assign to an index variable"
+  }
+  if (inherits(type, c("pre_type_node", "new_type_node")) && type$get_const_or_mut() == "const") {
+    node$error <- "You cannot assign to a constant variable"
+  }
+  right_node_type <- node$right_node$internal_type
+  if (inherits(type, "pre_type_node") && inherits(right_node_type, "new_type_node")) {
+    node$error <- sprintf(
+      "Found incompatible types. On the left side: %s(%s) and on the right side: %s",
+      type$get_data_struct(), type$get_base_type(), right_node_type$get_data_struct()
+    )
+  }
+  if (inherits(type, "pre_type_node") && inherits(right_node_type, "pre_type_node")) {
+    if (type$get_data_struct() != "collection" && right_node_type$get_data_struct() == "collection") {
+      collection_type <- right_node_type$data_struct # don't use the get function as this calls self$data_struct$get_data_struct 
+      node$error <- sprintf(
+        "Found incompatible types. On the left side: %s(%s) and on the right side: collection(%s)",
+        type$get_data_struct(), type$get_base_type(), collection_type$type
+      )
+    }
+    # Only a plain reassignment of a *fixed*-type variable can genuinely
+    # mismatch: a subset/slice assignment (m[i, ] <- v) writes a vector-shaped
+    # target, and an *inferred* variable that later widens is already covered
+    # by the "Promoted the type of variable ..." warning -- flagging it here
+    # too is noise.
+    lhs_is_plain_var <- inherits(node$left_node, "variable_node") ||
+      (inherits(node$left_node, "binary_node") && identical(node$left_node$operator, "type"))
+    lhs_is_fixed <- isTRUE(type$get_type_decl()) || isTRUE(type$get_fct_input())
+    fits <- !(lhs_is_plain_var && lhs_is_fixed) || rhs_fits_lhs(
+      type$get_base_type(), type$get_data_struct(),
+      right_node_type$get_base_type(), right_node_type$get_data_struct()
+    )
+    if (!fits) {
+      line <- try(node$stringify(), silent = TRUE)
+      if (inherits(line, "try-error")) line <- ""
+      warning(sprintf(
+        "%s\nTypes do not match perfectly: On the left side: %s(%s) and on the right side: %s(%s)",
+        line, type$get_data_struct(), type$get_base_type(), right_node_type$get_data_struct(), right_node_type$get_base_type()
+      ))
+    }
+  }
+  if (inherits(type, "pre_type_node") && inherits(right_node_type, "fn_node")) {
+    node$error <- sprintf(
+      "Found incompatible types. On the left side: %s(%s) and on the right side: the inner function %s",
+      type$get_data_struct(), type$get_base_type(), right_node_type$fct_name
+    )
+  }
+}
+
 check_unary <- function(node, vars_types_list, info_env) {
   if (is_charNANaNInf(node$obj, vars_types_list)) {
     node$error <- sprintf("You cannot use character/NA/NaN/Inf entries in %s", node$operator)
@@ -205,6 +261,31 @@ check_subsetting <- function(node, vars_types_list, info_env) {
     collection_ok <- node$operator %in% c("[[", "at") &&
       inherits(left_internal_type, "pre_type_node") &&
       left_internal_type$get_data_struct() == "collection"
+
+    if (left_internal_type$get_data_struct() == "scalar") {
+      cfp <- if (inherits(node$left_node, "binary_node")) {
+        choose_fast_path(node$right_node$internal_type)
+      } else FALSE
+      if (inherits(node, "binary_node") && inherits(node$left_node, "binary_node") &&
+        is_at_or_double_bracket(node$operator) && is_at_or_double_bracket(node$left_node$operator)) {
+        node$error <- sprintf(
+          "You cannot subset a scalar value: %s always yields a scalar, so the following %s has nothing to index.",
+          node$left_node$operator, node$operator
+        )
+      } else if (cfp) {
+        reason <- if (node$left_node$operator == "[") {
+          "with a single scalar index, [ takes the fast path and behaves like [[, yielding a scalar"
+        } else {
+          sprintf("%s yields a scalar", node$left_node$operator)
+        }
+        node$error <- sprintf(
+          "You cannot subset a scalar value: %s, so the following %s has nothing to index.",
+          reason, node$operator
+        )
+      } else {
+        node$error <- "You cannot subset a scalar value"
+      }
+    }
     if (!is_vec_mat_or_array(node$left_node, vars_types_list) && !collection_ok) {
       node$error <- "You can only subset variables of type array, matrix or vector"
     }
@@ -212,6 +293,32 @@ check_subsetting <- function(node, vars_types_list, info_env) {
       node$error <- "You cannot use character/NA/NaN/Inf entries for subsetting"
     }
   } else if (inherits(node, "function_node")) {
+    left_internal_type <- node$args[[1]]$internal_type
+
+    if (left_internal_type$get_data_struct() == "scalar") {
+      cfp <- if (inherits(node$args[[1]], c("binary_node", "function_node"))) {
+        choose_fast_path(lapply(node$args[-1], function(a) a$internal_type))
+      } else FALSE
+      if (inherits(node$args[[1]], c("binary_node", "function_node")) &&
+        is_at_or_double_bracket(node$operator) && is_at_or_double_bracket(node$args[[1]]$operator)) {
+        node$error <- sprintf(
+          "You cannot subset a scalar value: %s always yields a scalar, so the following %s has nothing to index.",
+          node$args[[1]]$operator, node$operator
+        )
+      } else if (cfp) {
+        reason <- if (node$args[[1]]$operator == "[") {
+          "with a single scalar index, [ takes the fast path and behaves like [[, yielding a scalar"
+        } else {
+          sprintf("%s yields a scalar", node$args[[1]]$operator)
+        }
+        node$error <- sprintf(
+          "You cannot subset a scalar value: %s, so the following %s has nothing to index.",
+          reason, node$operator
+        )
+      } else {
+        node$error <- "You cannot subset a scalar value"
+      }
+    }
     if (!is_vec_mat_or_array(node$args[[1]], vars_types_list)) {
       node$error <- "You can only subset variables of type array, matrix or vector"
     }
@@ -239,22 +346,6 @@ check_operand_type <- function(type, node, side = "", allow_collection = FALSE) 
 }
 
 infer_subsetting <- function(node, vars_list, info_env, function_registry) {
-  choose_fast_path <- function(types) {
-    fulfilled <- function(t) {
-      if (!inherits(t, "pre_type_node")) return(FALSE)
-      if (t$get_data_struct() != "scalar" || t$get_base_type() == "logical") return(FALSE)
-      return(TRUE)
-    }
-    if (is.list(types)) {
-      for (t in types) {
-        if (!fulfilled(t)) return(FALSE)
-      }
-      return(TRUE)
-    } else {
-      if (!fulfilled(types)) return(FALSE)
-      return(TRUE)
-    }
-  }
   if (inherits(node, "binary_node")) {
     left_type_node <- infer(node$left_node, vars_list, info_env, function_registry)
     err <- check_operand_type(left_type_node, node, "left", allow_collection = TRUE)
@@ -386,13 +477,13 @@ infer_comparison <- function(node, vars_list, info_env, function_registry) {
   if (!is.null(err)) return(err)
   common_type <- "logical"
   common_data_struct <- "scalar"
-  if ("vector" %within% c(left_type$get_data_struct(), right_type$get_data_struct())) {
+  if ("vector" %in% c(left_type$get_data_struct(), right_type$get_data_struct())) {
     common_data_struct <- "vector"
   }
-  if ("matrix" %within% c(left_type$get_data_struct(), right_type$get_data_struct())) {
+  if ("matrix" %in% c(left_type$get_data_struct(), right_type$get_data_struct())) {
     common_data_struct <- "matrix"
   }
-  if ("array" %within% c(left_type$get_data_struct(), right_type$get_data_struct())) {
+  if ("array" %in% c(left_type$get_data_struct(), right_type$get_data_struct())) {
     common_data_struct <- "array"
   }
   t <- make_inferred_type(common_data_struct, common_type, info_env$r_fct, info_env$real_type)
@@ -421,10 +512,10 @@ infer_and_or_vector <- function(node, vars_list, info_env, function_registry) {
   if (!is.null(err)) return(err)
   common_type <- "logical"
   common_data_struct <- "vector"
-  if ("matrix" %within% c(left_type$get_data_struct(), right_type$get_data_struct())) {
+  if ("matrix" %in% c(left_type$get_data_struct(), right_type$get_data_struct())) {
     common_data_struct <- "matrix"
   }
-  if ("array" %within% c(left_type$get_data_struct(), right_type$get_data_struct())) {
+  if ("array" %in% c(left_type$get_data_struct(), right_type$get_data_struct())) {
     common_data_struct <- "array"
   }
   t <- make_inferred_type(common_data_struct, common_type, info_env$r_fct, info_env$real_type)
@@ -522,38 +613,12 @@ function_registry_global$add(
 function_registry_global$add(
   name = "=", num_args = 2, arg_names = c(NA, NA),
   infer_fct = function(node, vars_list, info_env, function_registry) {},
-  check_fct = function(node, vars_types_list, info_env) {
-    if (!(node$context %in% c("<-", "=", "{"))) {
-      node$error <- "assignments cannot be done within another function"
-    }
-    var_name <- find_var_lhs(node)
-    type <- vars_types_list[[var_name]]
-    if (inherits(type, c("pre_type_node", "new_type_node")) && type$get_iterator()) {
-      node$error <- "You cannot assign to an index variable"
-    }
-    if (inherits(type, c("pre_type_node", "new_type_node")) && type$get_const_or_mut() == "const") {
-      node$error <- "You cannot assign to a constant variable"
-    }
-  },
-  group = "binary_node", cpp_name = "="
+  check_fct = check_assignment, group = "binary_node", cpp_name = "="
 )
 function_registry_global$add(
   name = "<-", num_args = 2, arg_names = c(NA, NA),
   infer_fct = function(node, vars_list, info_env, function_registry) {},
-  check_fct = function(node, vars_types_list, info_env) {
-    if (!(node$context %in% c("<-", "=", "{"))) {
-      node$error <- "assignments cannot be done within another function"
-    }
-    var_name <- find_var_lhs(node)
-    type <- vars_types_list[[var_name]]
-    if (inherits(type, c("pre_type_node", "new_type_node")) && type$get_iterator()) {
-      node$error <- "You cannot assign to an index variable"
-    }
-    if (inherits(type, c("pre_type_node", "new_type_node")) && type$get_const_or_mut() == "const") {
-      node$error <- "You cannot assign to a constant variable"
-    }
-  },
-  group = "binary_node", cpp_name = "="
+  check_fct = check_assignment, group = "binary_node", cpp_name = "="
 )
 function_registry_global$add(
   name = "[", num_args = NA, arg_names = NA,
@@ -688,6 +753,9 @@ function_registry_global$add(
     return(t)
   },
   check_fct = function(node, vars_types_list, info_env) {
+    if (length(node$args) == 0) {
+      node$error <- "You cannot use c without any arguments"
+    }
     for (i in seq_along(node$args)) {
       if (inherits(node$args[[i]], "variable_node")) {
         t <- vars_types_list[[node$args[[i]]$name]]
@@ -1026,7 +1094,7 @@ function_registry_global$add(
       node$internal_type <- t
       return(t)
     }
-    if (!(mode_type %within% c("numeric", "logical", "integer"))) {
+    if (!(mode_type %in% c("numeric", "logical", "integer"))) {
       return(sprintf("Found invalid mode in vector: %s", mode_type))
     }
     if (mode_type == "numeric") mode_type <- "double"
@@ -1041,7 +1109,7 @@ function_registry_global$add(
     s <- remove_double_quotes(node$args[[1]]$name)
     custom_type <- info_env$known_types[[s]]
     is_custom_type <- !is.null(custom_type) && inherits(custom_type, "new_type_node")
-    if (!is_custom_type && !(s %within% c("logical", "integer", "numeric"))) {
+    if (!is_custom_type && !(s %in% c("logical", "integer", "numeric"))) {
       node$error <- sprintf("Found unallowed mode %s in vector", s)
     }
     if (!is_int(node$args[[2]], vars_types_list) && !is_num(node$args[[2]], vars_types_list)) {
@@ -1522,10 +1590,11 @@ function_registry_global$add(
   group = "unary_node", cpp_name = "etr::tcrossprod"
 )
 function_registry_global$add(
-  name = "diag", num_args = 3L, arg_names = c("x", "nrow", "ncol"),
+  name = "diag", num_args = c(1L, 3L), arg_names = c("x", "nrow", "ncol"),
   docu = paste0(
-    "diag(x, nrow, ncol)  # all three required; builds a matrix with x on the diagonal.\n",
-    "To read a diagonal out of a matrix use get_diag(m)."
+    "diag(x)              # x scalar -> x-by-x identity; x vector -> square matrix with x on the diagonal.\n",
+    "diag(x, nrow, ncol)  # builds an nrow-by-ncol matrix with x (recycled) on the diagonal.\n",
+    "To read the diagonal out of a matrix use get_diag(m)."
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     all_types <- lapply(node$args, function(arg) {
@@ -1541,6 +1610,12 @@ function_registry_global$add(
       if (all_types[[i]]$get_data_struct() == "collection") {
         return(sprintf("Found unallowed type in: %s", node$stringify()))
       }
+    }
+    # 1-arg diag(x): x is a size (scalar) or the diagonal values (vector).
+    # diag() never *reads* a diagonal -- that is get_diag().
+    if (length(all_types) == 1L &&
+        all_types[[1]]$get_data_struct() %in% c("matrix", "mat", "array")) {
+      return("diag(x) builds a matrix from a scalar or vector; to read the diagonal of a matrix use get_diag(m)")
     }
     t <- make_inferred_type("matrix", "double", info_env$r_fct, info_env$real_type)
     node$internal_type <- t
@@ -1617,7 +1692,11 @@ function_registry_global$add(
   infer_fct = function(node, vars_list, info_env, function_registry) {
     return(sprintf("Found stop within an expression: %s", node$stringify()))
   },
-  check_fct = mock, group = "unary_node", cpp_name = "etr::stop"
+  check_fct = function(node, vars_types_list, info_env) {
+    if (!is_char(node$obj, vars_types_list)) {
+      node$error <- "You can only use characters as an argument to stop"
+    }
+  }, group = "unary_node", cpp_name = "etr::stop"
 )
 function_registry_global$add(
   name = "rev", num_args = 1, arg_names = NA,

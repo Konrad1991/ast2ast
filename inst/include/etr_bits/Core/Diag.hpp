@@ -80,6 +80,32 @@ inline auto diag(const A& x, const B& nrow, const C& ncol) {
   }
 }
 
+// --- 1-argument forms (R's diag(x)) ------------------------------------------
+// diag(n): n-by-n identity. n is a *size*, not data (matches R -- diag(4) is a
+// 4x4 identity, not a 1x1 matrix holding 4). Result has no derivative.
+template<typename RealType, typename A> requires IsScalarLike<Decayed<A>>
+inline auto diag(const A& n) {
+  const std::size_t k = calc_ncol_or_nrow(n);
+  return make_diag<RealType>(k, k, [](std::size_t) { return RealType(1.0); });
+}
+
+// diag(v): length(v)-by-length(v) with v on the diagonal, 0 elsewhere.
+// v must be a vector -- reading the diagonal *out* of a matrix is get_diag().
+template<typename RealType, typename A> requires IsArray<Decayed<A>>
+inline auto diag(const A& v) {
+  using T = typename ExtractDataType<Decayed<A>>::value_type;
+  const auto& dim = dim_view(v.get_dim());
+  ass<"diag(x): x must be a vector of diagonal values; use get_diag(m) to read a matrix diagonal">(dim.size() <= 1);
+  const std::size_t k = v.size();
+  ass<"diag: the input vector must have at least one element">(k >= 1);
+  constexpr bool is_numeric = IS<T, Double> || IS<T, Dual> || IS<T, ReverseDouble>;
+  if constexpr (is_numeric) {
+    return make_diag<RealType>(k, k, [&](std::size_t i) { return v.get(i); });
+  } else {
+    return make_diag<T>(k, k, [&](std::size_t i) { return v.get(i); });
+  }
+}
+
 // extract the diagonal of a matrix as a vector
 template<typename A> requires IsScalarLike<Decayed<A>>
 inline auto get_diag(const A& scalar) {

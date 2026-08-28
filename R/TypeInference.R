@@ -56,8 +56,48 @@ create_vars_types_list <- function(ast, f, f_args, r_fct, real_type, known_types
   }
   if (wrong_input) stop("Types for arguments are invalid")
 
+  check_orphan_type_annotations(ast, names(formals(f)))
+
   l <- c(input_args, non_fct_args(ast, f, r_fct))
   return(l)
+}
+
+# A bare `x |> type(t)` for a name that is never otherwise assigned or read is
+# almost always a typo -- reject it instead of emitting a dead declaration.
+# `x |> type(t) <- v` counts as a use (the annotation is part of an assignment).
+check_orphan_type_annotations <- function(ast, arguments) {
+  env <- new.env(parent = emptyenv())
+  env$annotated <- character(0)
+  env$assigned_via_type <- character(0)
+  traverse_ast(ast, function(node, ...) {
+    if (!inherits(node, "binary_node")) return()
+    if (identical(node$operator, "type") && inherits(node$left_node, "variable_node")) {
+      env$annotated <- c(env$annotated, deparse(node$left_node$name))
+    } else if (node$operator %in% c("<-", "=") &&
+      inherits(node$left_node, "binary_node") && identical(node$left_node$operator, "type")) {
+      env$assigned_via_type <- c(env$assigned_via_type, deparse(node$left_node$left_node$name))
+    }
+  })
+  if (length(env$annotated) == 0L) return(invisible())
+
+  counts_env <- new.env(parent = emptyenv())
+  counts_env$variable_list <- c()
+  traverse_ast(ast, action_find_variables, counts_env)
+  counts <- table(counts_env$variable_list)
+
+  orphans <- Filter(function(nm) {
+    !(nm %in% arguments) &&
+      !(nm %in% env$assigned_via_type) &&
+      isTRUE(counts[nm] <= 1L)
+  }, unique(env$annotated))
+
+  if (length(orphans) > 0L) {
+    stop(sprintf(
+      "type() annotation for %s, which is never used as a variable",
+      paste(sprintf("'%s'", orphans), collapse = ", ")
+    ))
+  }
+  invisible()
 }
 
 # Infer input f_args for fn node
@@ -266,6 +306,16 @@ warn_if_type_widened <- function(variable, old_type, new_type) {
       new_type$get_data_struct(), new_type$get_base_type()
     ), call. = FALSE)
   }
+}
+
+warn_if_type_widened_by_subsetting <- function(variable, old_data_struct, new_data_struct) {
+  if (old_data_struct == new_data_struct) return()
+  warning(
+    sprintf(
+      "Promoted the type of variable %s from %s to %s",
+      variable, old_data_struct, new_data_struct
+    ), call. = FALSE
+  )
 }
 
 type_infer_assignment <- function(node, info_env) {
@@ -530,6 +580,7 @@ type_infer_binary_node <- function(node, info_env) {
           if (!info_env$vars_list[[variable]]$get_type_decl() && !info_env$vars_list[[variable]]$get_fct_input()) {
             if (info_env$vars_list[[variable]]$get_data_struct() == "scalar") {
               info_env$vars_list[[variable]]$set_data_struct("vector")
+              warn_if_type_widened_by_subsetting(variable, "scalar", "vector")
             }
           }
         }
@@ -554,8 +605,10 @@ type_infer_function_subsetting <- function(node, info_env) {
         if (!info_env$vars_list[[variable]]$get_type_decl() && !info_env$vars_list[[variable]]$get_fct_input()) {
           if (info_env$vars_list[[variable]]$get_data_struct() %in% c("scalar", "vector", "matrix", "vec", "mat")) {
             if (length(node$args) == 3L) {
+              warn_if_type_widened_by_subsetting(variable, info_env$vars_list[[variable]]$get_data_struct(), "matrix")
               info_env$vars_list[[variable]]$set_data_struct("matrix")
             } else {
+              warn_if_type_widened_by_subsetting(variable, info_env$vars_list[[variable]]$get_data_struct(), "array")
               info_env$vars_list[[variable]]$set_data_struct("array")
             }
           }

@@ -755,6 +755,7 @@ expect_error(
 # any actual misuse)
 f <- function() {
   coll |> type(collection(Point))
+  print(coll)
   return(1)
 }
 e <- try(ast2ast::translate(f, types_f = types_f_point_box, getsource = TRUE), silent = TRUE)

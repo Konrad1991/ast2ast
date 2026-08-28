@@ -206,12 +206,15 @@ void test_cmr() {
     Array<Double, Buffer<Double, LBufferTrait>> q1(SI{1});
     q1.set(0, Double(3.0));
     ass<"array tInp size1 works">(compare(get_val(cmr(q1, t, y)), get_val(y.get(3))));
-
-    Array<Double, Buffer<Double, LBufferTrait>> q2(SI{2});
-    q2.set(0, Double(2.0));
-    q2.set(1, Double(4.0));
-    // should still use first element (2.0)
-    ass<"array tInp uses first elem">(compare(get_val(cmr(q2, t, y)), get_val(y.get(2))));
+    try {
+      Array<Double, Buffer<Double, LBufferTrait>> q2(SI{2});
+      q2.set(0, Double(2.0));
+      q2.set(1, Double(4.0));
+      cmr(q2, t, y);
+    } catch (const std::exception& e) {
+      const std::string expected = "In cmr: the first argument cannot have more than one element";
+      ass<"cmr being called with t having more than one argument">(std::strcmp(e.what(), expected.c_str()) == 0);
+    }
   }
 
   // timeVec must be strictly increasing

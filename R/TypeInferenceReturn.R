@@ -1,4 +1,23 @@
+# The return-type pass runs after infer_types has already reset every
+# iterator's in_scope flag. A return() lexically inside a for-loop is legal,
+# so re-assert in_scope for that iterator while descending this loop's body,
+# then restore it (save/restore, not force-FALSE, so nested loops and the
+# use-after-loop rejection still work). Returns TRUE so traverse_ast() skips
+# its own block descent -- same contract as type_infer_for_node().
+type_infer_return_for_node <- function(node, info_env) {
+  if (!inherits(node, "for_node")) return(NULL)
+  variable <- deparse(node$i$name)
+  it <- info_env$vars_list[[variable]]
+  is_iter <- inherits(it, c("pre_type_node", "new_type_node")) && isTRUE(it$get_iterator())
+  prev <- if (is_iter) it$get_in_scope() else NULL
+  if (is_iter) it$set_in_scope(TRUE)
+  traverse_ast(node$block, type_infer_return_action, info_env)
+  if (is_iter) it$set_in_scope(prev)
+  TRUE
+}
+
 type_infer_return_action <- function(node, info_env) {
+  if (isTRUE(type_infer_return_for_node(node, info_env))) return(TRUE)
   if (inherits(node, "unary_node") && node$operator == "return") {
     type <- infer(node$obj, info_env$vars_list, info_env, info_env$function_registry)
     if (is.character(type)) {

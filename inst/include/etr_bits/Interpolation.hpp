@@ -93,7 +93,7 @@ template <typename A, typename B, typename C>
 inline Double cmr(const A &tInp, const B &timeVec, const C &parVec) {
   static_assert(IsArray<B>, "time vector has to be a vector");
   static_assert(IsArray<C>, "parameter vector has to be a vector");
-  warn<"time point has more than one element only the first one is used">(tInp.size() > 1);
+  ass<"In cmr: the first argument cannot have more than one element">(tInp.size() <= 1);
   return cmrInternal(get_val(tInp.get(0)), timeVec, parVec);
 }
 

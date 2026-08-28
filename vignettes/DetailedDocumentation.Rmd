@@ -97,6 +97,20 @@ A key difference to R: **ast2ast scalars are true scalars**, not length-1 vector
 Another difference to R: **negative indices are not supported** (R's `v[-1L]`
 drop-element form). Indices must be positive and 1-based.
 
+Another difference to R: **variables are declared and zero-initialised up
+front** (Fortran-style: all declarations first, then the body). A variable that
+is only assigned on one branch but read unconditionally therefore does *not*
+raise an "object not found" error the way R would -- it reads its zero value.
+ast2ast does not currently perform use-before-assignment analysis, so make sure
+every path that reads a variable also assigns it.
+
+```{r, eval = FALSE}
+f <- function(a) {
+  if (a > 0) x <- 1.0   # x is only assigned here...
+  return(x)             # ...but read here regardless: returns 0.0 when a <= 0
+}
+```
+
 ---
 
 ## Setting types for function arguments

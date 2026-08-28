@@ -391,3 +391,38 @@ expect_true(grepl(
   "return(g)\nCannot use an inner function as an argument to 'return'",
   attributes(e)[["condition"]]$message, fixed = TRUE
 ))
+
+# --- chained assignment (a <- b <- c) is rejected ----------------------
+for (src in list(
+  function() { a <- b <- 3.0; return(a) },
+  function() { x <- y <- z <- 1.0; return(x) },
+  function() { a = b = 3.0; return(a) }
+)) {
+  e <- try(ast2ast::translate(src), silent = TRUE)
+  expect_true(inherits(e, "try-error"))
+  expect_true(grepl("Chained assignments are not supported",
+    attributes(e)[["condition"]]$message, fixed = TRUE))
+}
+
+# --- T / F cannot be bound (assignment target or for-iterator) --------
+# they still work as a value in read position (-> TRUE / FALSE)
+for (src in list(
+  function() { T <- 3.0; return(T) },
+  function() { F <- 3.0; return(F) },
+  function() { s <- 0L; for (T in 1L:3L) s <- s + 1L; return(s) }
+)) {
+  e <- try(ast2ast::translate(src), silent = TRUE)
+  expect_true(inherits(e, "try-error"))
+  expect_true(grepl("reserved internally",
+    attributes(e)[["condition"]]$message, fixed = TRUE))
+}
+
+f <- ast2ast::translate(function() { x <- T; if (x) return(1.0) else return(0.0) })
+expect_equal(f(), 1)
+
+# --- unary + gets a specific message ---------------------------------
+e <- try(ast2ast::translate(function(x) { y <- +x; return(y) },
+  args_f = function(x) x |> type(double)), silent = TRUE)
+expect_true(inherits(e, "try-error"))
+expect_true(grepl("Unary '+' is not supported",
+  attributes(e)[["condition"]]$message, fixed = TRUE))

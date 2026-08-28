@@ -268,9 +268,9 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct, real_type, f
 
 # Translates the AST representation into C++ code
 # ========================================================================
-translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry, debug = TRUE) {
+translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry, debug = TRUE, outer_var_names = character(0)) {
   code_string <- NULL
-  traverse_ast(ast, action_transpile_inner_functions, real_type, debug)
+  traverse_ast(ast, action_transpile_inner_functions, real_type, debug, outer_var_names)
   traverse_ast(ast, action_snapshot_lines, debug)
   traverse_ast(ast, action_set_true, r_fct, real_type)
   traverse_ast(ast, action_translate, function_registry, real_type)
@@ -359,7 +359,7 @@ assemble <- function(name_fct, vars_types_list, return_type, body, real_type, r_
       "   typedef ", ret_type, "(*fct_ptr) (",
       paste(arguments, collapse = ", "), ");"
     )
-    rest <- sprintf("   return Rcpp::XPtr<fct_ptr>(new fct_ptr(&  %s ));\n }", deparse(name_fct))
+    rest <- sprintf("   return Rcpp::XPtr<fct_ptr>(new fct_ptr(&  %s ));\n }", as.character(name_fct))
     wrapped_body <- wrap_for_debug(body)
     res <- paste0(
       c(
@@ -431,7 +431,7 @@ translate_internally <- function(fct, args_fct, types_fct, derivative, name_fct,
   }
 
   # Translate
-  code_string <- translate_to_cpp_code(AST, r_fct, real_type, function_registry, debug)
+  code_string <- translate_to_cpp_code(AST, r_fct, real_type, function_registry, debug, names(vars_types_list))
   for (i in seq_along(vars_types_list)) {
     vars_types_list[[i]]$real_type <- real_type
   }

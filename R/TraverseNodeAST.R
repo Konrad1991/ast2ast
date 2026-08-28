@@ -90,7 +90,20 @@ with_fct_error_context <- function(fct_name, expr) {
   tryCatch(expr, error = function(e) stop(sprintf("In inner function %s: %s", fct_name, conditionMessage(e)), call. = FALSE))
 }
 
-action_transpile_inner_functions <- function(node, real_type, debug = TRUE) {
+# Inner functions cannot see the outer function's variables. When the failing
+# name is one of them, say so rather than just "uninitialized variable".
+augment_outer_var_hint <- function(msg, outer_var_names) {
+  m <- regmatches(msg, regexec("Found uninitialized variable:\\s*(\\S+)", msg))[[1]]
+  if (length(m) == 2L && m[[2]] %in% outer_var_names) {
+    return(paste0(msg, sprintf(
+      "\n'%s' is a variable of the outer function; inner functions cannot access outer variables -- add it as a parameter of the inner function.",
+      m[[2]]
+    )))
+  }
+  msg
+}
+
+action_transpile_inner_functions <- function(node, real_type, debug = TRUE, outer_var_names = character(0)) {
   if (!inherits(node, "fn_node")) {
     return()
   }
@@ -129,6 +142,7 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE) {
     node$function_registry$type_check_fcts <- c(node$function_registry$type_check_fcts, node$function_registry_outer$type_check_fcts[[idx]])
     node$function_registry$groups <- c(node$function_registry$groups, node$function_registry_outer$groups[[idx]])
     node$function_registry$cpp_names <- c(node$function_registry$cpp_names, node$function_registry_outer$cpp_names[[idx]])
+    node$function_registry$docus <- c(node$function_registry$docus, "User defined")
   }
 
   e <- try(run_checks(AST, r_fct, function_registry, node$known_types), silent = TRUE)
@@ -143,8 +157,11 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE) {
     stop(sprintf("In inner function %s:\n%s", node$fct_name, line))
   }
   AST <- sort_args(AST, function_registry)
-  node$vars_types_list <- with_fct_error_context(node$fct_name,
-    infer_types(AST, f, args_f_raw, r_fct, real_type, function_registry, node$known_types))
+  node$vars_types_list <- tryCatch(
+    infer_types(AST, f, args_f_raw, r_fct, real_type, function_registry, node$known_types),
+    error = function(e) stop(sprintf("In inner function %s: %s", node$fct_name,
+      augment_outer_var_hint(conditionMessage(e), outer_var_names)), call. = FALSE)
+  )
 
   # TODO: figure out why this loop is required
   for(i in seq_len(length(node$vars_types_list))) {
@@ -306,6 +323,31 @@ action_error <- function(node, r_fct, function_registry, known_types = list()) {
   check_variable_names(node, known_types)
   check_type_declaration(node, r_fct)
   check_assignment_of_if(node)
+  check_for_chained_assignments(node)
+  check_reserved_binding_name(node)
+}
+
+check_reserved_binding_name <- function(node) {
+  is_tf_literal <- function(n) inherits(n, "literal_node") && (identical(n$name, "T") || identical(n$name, "F"))
+  bad <- NULL
+  if (inherits(node, "binary_node") && node$operator %in% c("=", "<-") && is_tf_literal(node$left_node)) {
+    bad <- node$left_node
+  } else if (inherits(node, "for_node") && is_tf_literal(node$i)) {
+    bad <- node$i
+  }
+  if (!is.null(bad)) {
+    node$error <- paste0("Invalid variable name (reserved internally) ", bad$name)
+  }
+}
+
+check_for_chained_assignments <- function(node) {
+  if (!inherits(node, "binary_node")) {
+    return()
+  }
+  if (!node$operator %in% c("=", "<-")) return()
+  if (inherits(node$right_node, "binary_node") && node$right_node$operator %in% c("=", "<-")) {
+    node$error <- "Chained assignments are not supported"
+  }
 }
 
 check_assignment_of_if <- function(node) {
@@ -344,7 +386,10 @@ check_arity <- function(node, function_registry) {
   if (length(expected) == 1L && is.na(expected)) {
     return(TRUE) # c, if, ... accept any arity
   }
-  if (got %within% expected) { # %within% covers ranges e.g. return (0 | 1)
+  if (fct == "+" && inherits(node, "unary_node")) {
+    return("Unary '+' is not supported. It is a no-op in R -- remove it.")
+  }
+  if (got %in% expected) { # exact membership; e.g. return accepts 0 or 1 args
     return(TRUE)
   }
   hint <- signature_hint(fct, function_registry)
@@ -372,7 +417,7 @@ check_operator <- function(node, function_registry) {
 
   check_function <- function(node, function_registry) {
     fct <- node$operator
-    fct %within% function_registry$permitted_fcts()
+    fct %in% function_registry$permitted_fcts()
   }
 
   check_named_args <- function(node, function_registry) {
@@ -383,7 +428,7 @@ check_operator <- function(node, function_registry) {
         args_names <- names(node$args)
         args_names <- args_names[args_names != ""]
         for (i in seq_along(args_names)) {
-          if (!(args_names[[i]] %within% expected_args)) {
+          if (!(args_names[[i]] %in% expected_args)) {
             return(FALSE)
           }
         }
@@ -402,7 +447,7 @@ check_operator <- function(node, function_registry) {
         }
         if (inherits(node$left_node, c("binary_node", "function_node"))) {
           op_left <- node$left_node$operator
-          if (!(op_left %within% c("type", "[", "[[", "at", "$"))) {
+          if (!(op_left %in% c("type", "[", "[[", "at", "$"))) {
             return(FALSE)
           } else {
             return(TRUE)
@@ -445,6 +490,7 @@ check_operator <- function(node, function_registry) {
 }
 
 unallowed_signs <- function(name) {
+  name <- as.character(name)
   unallowed <- c(
     # SEXP cannot be part of the name.
     # Thereby, one can easily create argument names nameSEXP and assign it to name
@@ -459,6 +505,7 @@ unallowed_signs <- function(name) {
       break
     }
   }
+  if (deparse(name) %in% c("T", "F")) sign_found <- 1L
   if (sign_found > 0) {
     invalid_char <- gsub("\\\\", "", unallowed[sign_found])
     return(paste0(
@@ -466,7 +513,7 @@ unallowed_signs <- function(name) {
       invalid_char
     ))
   }
-  if (name %within%
+  if (name %in%
     c(permitted_base_types(), permitted_data_structs(FALSE), "T", "F")) {
     # added T and F to prevent usage of T and F as variable.
     return(paste0(
@@ -478,7 +525,8 @@ unallowed_signs <- function(name) {
 }
 
 not_cpp_keyword <- function(name) {
-  name %within% cpp_keywords()
+  name <- as.character(name)
+  name %in% cpp_keywords()
 }
 
 check_variable_names <- function(node, known_types = list()) {
