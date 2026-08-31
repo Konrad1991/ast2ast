@@ -53,14 +53,14 @@ types_f_ida <- function() {
 # through a length-1 `parameter` vector (that vector only existed for R's
 # own stats::optimize() calling convention).
 grid_search_ida_a2a <- function(lowerBounds, upperBounds, nGrid, add_params) {
-  args(
+  argtypes(
     lowerBounds |> type(double),
     upperBounds |> type(double),
     nGrid |> type(int),
     add_params |> type(AddParamsIda)
   )
   loss_fn <- fn(
-    args(
+    argtypes(
       Kga |> type(double),
       add_params |> type(AddParamsIda)
     ),
@@ -69,7 +69,7 @@ grid_search_ida_a2a <- function(lowerBounds, upperBounds, nGrid, add_params) {
       eval_out |> type(LossEval)
       eval_out$betas <- numeric(3L * add_params$n_sigs)
       solve_h_ida <- fn(
-        args(
+        argtypes(
           Kd |> type(double) |> const(),
           Kg |> type(double) |> const(),
           h0 |> type(double) |> const(),
@@ -79,7 +79,7 @@ grid_search_ida_a2a <- function(lowerBounds, upperBounds, nGrid, add_params) {
         return(SolveD_HD_Result),
         {
           equation_h_ida <- fn(
-            args(
+            argtypes(
               h |> type(double),
               params |> type(EquationParamsIda)
             ),

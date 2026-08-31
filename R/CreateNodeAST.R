@@ -44,10 +44,10 @@ create_ast <- function(code, context, env, function_registry) {
   } else if (operator == "fn") {
     parts <- as.list(code)[-1]
     if (!is.null(names(parts)) && any(nzchar(names(parts)))) {
-      stop("fn() takes no named arguments -- use fn(args(...), return(spec), { ... })")
+      stop("fn() takes no named arguments -- use fn(argtypes(...), return(spec), { ... })")
     }
     if (length(parts) != 3L) {
-      stop("fn() takes exactly three parts: args(...), return(spec), and a { } block")
+      stop("fn() takes exactly three parts: argtypes(...), return(spec), and a { } block")
     }
     args_call <- parts[[1L]]
     return_call <- parts[[2L]]
@@ -57,7 +57,7 @@ create_ast <- function(code, context, env, function_registry) {
     fn$function_registry <- function_registry$clone(deep = TRUE)
     fn$function_registry_outer <- function_registry
     fn$known_types <- env$known_types
-    fn$args_f <- parse_args(args_call, TRUE, FALSE, env$real_type, env$known_types)
+    fn$args_f <- parse_argtypes(args_call, TRUE, FALSE, env$real_type, env$known_types)
     fn$args_f_raw <- args_call
     fn$return_type <- parse_return(return_call, FALSE, env$real_type, env$known_types)[[1]]
     fn$AST <- body_block |> wrap_in_block()
@@ -67,7 +67,7 @@ create_ast <- function(code, context, env, function_registry) {
     }
     return(fn)
   } else if (operator == "function") {
-    stop("Defining a function inside f is not supported. Use fn() to declare a nested function: fn(args(...), return(spec), { ... }).")
+    stop("Defining a function inside f is not supported. Use fn() to declare a nested function: fn(argtypes(...), return(spec), { ... }).")
   } else if (function_registry$is_group_functions(operator) || length(code) > 3) {
     # by adding length(code) > 3 also wrong fcts are added to the AST
     fn <- function_node$new()
@@ -394,10 +394,10 @@ translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, de
   real_type <- resolve_derivative(derivative)
   function_registry <- function_registry_global$clone()
 
-  # A leading args(...) statement in the body declares the argument types.
+  # A leading argtypes(...) statement in the body declares the argument types.
   stmts <- as.list(body(fct) |> wrap_in_block())[-1]
   is_args <- vapply(stmts, function(s) {
-    is.call(s) && identical(deparse(s[[1L]]), "args")
+    is.call(s) && identical(deparse(s[[1L]]), "argtypes")
   }, logical(1L))
   args_fct <- NULL
   if (length(is_args) >= 1L && is_args[[1L]]) {
@@ -406,7 +406,7 @@ translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, de
     is_args <- is_args[-1L]
   }
   if (any(is_args)) {
-    stop("args(...) must be the first statement of the function body")
+    stop("argtypes(...) must be the first statement of the function body")
   }
   b <- as.call(c(as.name("{"), stmts))
 

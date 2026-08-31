@@ -204,14 +204,14 @@ expect_error(fcpp(), pattern = "out of boundaries")
 # =============================================================================
 
 f <- function(M) {
-  args(M |> type(mat(double)) |> ref() |> const())
+  argtypes(M |> type(mat(double)) |> ref() |> const())
   return(M[3L, 1L])
 }
 fcpp <- ast2ast::translate(f)
 expect_error(fcpp(matrix(0.0, 2L, 2L)), pattern = "out of boundaries")
 
 f <- function(M) {
-  args(M |> type(mat(double)) |> ref() |> const())
+  argtypes(M |> type(mat(double)) |> ref() |> const())
   return(M[2L, 2L])
 }
 fcpp <- ast2ast::translate(f)
@@ -222,14 +222,14 @@ expect_equal(fcpp(matrix(c(1.0, 2.0, 3.0, 4.0), 2L, 2L)), 4)
 # =============================================================================
 
 f <- function(M) {
-  args(M |> type(borrow_mat(double)))
+  argtypes(M |> type(borrow_mat(double)))
   return(M[3L, 1L])
 }
 fcpp <- ast2ast::translate(f)
 expect_error(fcpp(matrix(0.0, 2L, 2L)), pattern = "out of boundaries")
 
 f <- function(M) {
-  args(M |> type(borrow_mat(double)))
+  argtypes(M |> type(borrow_mat(double)))
   return(M[2L, 2L])
 }
 fcpp <- ast2ast::translate(f)
@@ -259,7 +259,7 @@ expect_equal(fcpp(matrix(c(1.0, 2.0, 3.0, 4.0), 2L, 2L)), 4)
 # =============================================================================
 
 f <- function(mode, iv, dv, lv) {
-  args(
+  argtypes(
     mode |> type(integer),
     iv |> type(vec(integer)),
     dv |> type(vec(double)),
@@ -307,11 +307,11 @@ expect_equal(fcpp(6L, iv0, dv0, lv0), 1)    # int elem -> logical elem
 # =============================================================================
 m0 <- matrix(as.double(1:12), 3, 4)
 
-# prepend args(a |> type(mat(double))) to a one-liner body, then translate
+# prepend argtypes(a |> type(mat(double))) to a one-liner body, then translate
 tr_mat <- function(f) {
   b <- body(f)
   if (!is.call(b) || !identical(b[[1L]], as.name("{"))) b <- call("{", b)
-  body(f) <- as.call(c(as.name("{"), quote(args(a |> type(mat(double)))), as.list(b)[-1]))
+  body(f) <- as.call(c(as.name("{"), quote(argtypes(a |> type(mat(double)))), as.list(b)[-1]))
   ast2ast::translate(f)
 }
 

@@ -14,7 +14,7 @@ translate(
 }
 \arguments{
   \item{f}{An R function to be translated into C++. Argument types are declared
-    with an \code{args(...)} block as the first statement of its body; see the
+    with an \code{argtypes(...)} block as the first statement of its body; see the
     Details section.}
   \item{types_f}{A helper function that declares custom struct types via
     \code{new_type()}, for use as argument types, variable types, or slot
@@ -104,11 +104,11 @@ translate(
   }
   \subsection{Argument types}{
     Arguments default to \code{matrix(double)} if \code{f}'s body has no
-    \code{args(...)} block. To override, make \code{args(...)} the first
+    \code{argtypes(...)} block. To override, make \code{argtypes(...)} the first
     statement of the body, one \code{type()} annotation per argument:
     \preformatted{
       f <- function(a, b, c) {
-        args(
+        argtypes(
           a |> type(borrow_vec(double)) |> ref(),
           b |> type(borrow_mat(double)) |> ref() |> const(),
           c |> type(double) |> ref()
@@ -125,8 +125,8 @@ translate(
   }
   \subsection{Inner functions}{
     Functions can be defined inside \code{f} with \code{fn()}, which takes three
-    positional parts: \code{args(...)} (argument types, same form as the outer
-    \code{args(...)} block), \code{return(...)} (the return type), and a
+    positional parts: \code{argtypes(...)} (argument types, same form as the outer
+    \code{argtypes(...)} block), \code{return(...)} (the return type), and a
     \code{\{ \}} block (the function body; the braces are optional for a single
     statement). Inner functions may call each other, including recursively, and
     can be passed as values to functions expecting one, such as
@@ -135,7 +135,7 @@ translate(
     declare the parameter \code{const()} to accept expressions.
     \preformatted{
       factorial <- fn(
-        args(a |> type(int) |> const()),
+        argtypes(a |> type(int) |> const()),
         return(int),
         {
           if (a == 1L) return(a) else return(a * factorial(a - 1L))
@@ -294,7 +294,7 @@ types_f <- function() {
   new_type(Point, slots(x |> type(double), y |> type(double)))
 }
 f <- function(p) {
-  args(p |> type(Point))
+  argtypes(p |> type(Point))
   p$x <- p$x + 1
   return(p)
 }
@@ -305,9 +305,9 @@ fcpp(p)
 # Inner functions and uniroot
 # ----------------------------------------------------------------
 f <- function(interval) {
-  args(interval |> type(vec(double)))
+  argtypes(interval |> type(vec(double)))
   g <- fn(
-    args(x |> type(double)),
+    argtypes(x |> type(double)),
     return(double),
     {
       return(x^2 - 4)

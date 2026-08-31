@@ -258,7 +258,7 @@ parse_types <- function(block, fct_input, r_fct, real_type, known_types = list()
 }
 
 # =====================================================================
-# fn() surface: args(...) / return(spec)
+# fn() surface: argtypes(...) / return(spec)
 # parse_types + report every entry that failed to resolve
 # =====================================================================
 parse_types_with_check <- function(args, fct_input, r_fct, real_type, known_types = list()) {
@@ -275,9 +275,9 @@ parse_types_with_check <- function(args, fct_input, r_fct, real_type, known_type
   l
 }
 
-parse_args <- function(obj, fct_input, r_fct, real_type, known_types = list()) {
+parse_argtypes <- function(obj, fct_input, r_fct, real_type, known_types = list()) {
   obj <- as.list(obj)
-  stopifnot("Expected 'args' as first entry to fn" = deparse(obj[[1]]) == "args")
+  stopifnot("Expected 'argtypes' as first entry to fn" = deparse(obj[[1]]) == "argtypes")
   # drop srcref etc. -- parse_types matches on deparse(row[[1]])
   annotations <- lapply(obj[-1], function(x) { attributes(x) <- NULL; x })
   parse_types_with_check(annotations, fct_input, r_fct, real_type, known_types)

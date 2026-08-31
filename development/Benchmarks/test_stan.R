@@ -8,7 +8,7 @@ Rcpp::sourceCpp("/home/konrad/Documents/ast2ast/development/Benchmarks/stan_ad.c
 # Plain function
 # ------------------------------------------------------------------------------
 f_plain <- function(A, B) {
-  args(
+  argtypes(
     A |> type(mat(double)) |> ref(),
     B |> type(mat(double)) |> ref()
   )
@@ -24,7 +24,7 @@ fp_cpp <- ast2ast::translate(f_plain, verbose = FALSE)
 # Reverse AD
 # ------------------------------------------------------------------------------
 f_rev <- function(A, B) {
-  args(
+  argtypes(
     A |> type(mat(double)),
     B |> type(mat(double))
   )
@@ -39,12 +39,12 @@ f_rev <- function(A, B) {
 fr_cpp <- ast2ast::translate(f_rev, derivative = "reverse", verbose = FALSE)
 
 f_rev <- function(A, B) {
-  args(
+  argtypes(
     A |> type(mat(double)),
     B |> type(mat(double))
   )
   f <- fn(
-    args(
+    argtypes(
       A_inner |> type(matrix(double)),
       B_inner |> type(mat(double)) |> ref()
     ),
@@ -67,7 +67,7 @@ fr_cpp2 <- ast2ast::translate(f_rev, derivative = "reverse", verbose = FALSE)
 # Forward AD
 # ------------------------------------------------------------------------------
 f_for <- function(A, B) {
-  args(
+  argtypes(
     A |> type(mat(double)),
     B |> type(mat(double))
   )

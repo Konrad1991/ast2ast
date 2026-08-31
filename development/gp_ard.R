@@ -13,7 +13,7 @@
 library(ast2ast)
 
 gp_nll <- function(X, y, logtheta) {
-  args(
+  argtypes(
     X        |> type(mat(double)),
     y        |> type(vec(double)),
     logtheta |> type(vec(double))
@@ -46,7 +46,7 @@ gp_nll <- function(X, y, logtheta) {
 
 # same body, ending in deriv(nll, logtheta) -- the DSL has no closures / calls
 gp_grad <- function(X, y, logtheta) {
-  args(
+  argtypes(
     X        |> type(mat(double)),
     y        |> type(vec(double)),
     logtheta |> type(vec(double))

@@ -17,7 +17,7 @@
 library(ast2ast)
 
 lv_loss <- function(theta, y0, obs, dt, substeps) {
-  args(
+  argtypes(
     theta    |> type(vec(double)),
     y0       |> type(vec(double)),
     obs      |> type(mat(double)),
@@ -53,7 +53,7 @@ lv_loss <- function(theta, y0, obs, dt, substeps) {
 
 # same body, ending in deriv(loss, theta)  (no closures in the DSL)
 lv_grad <- function(theta, y0, obs, dt, substeps) {
-  args(
+  argtypes(
     theta    |> type(vec(double)),
     y0       |> type(vec(double)),
     obs      |> type(mat(double)),

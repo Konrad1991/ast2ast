@@ -10,7 +10,7 @@
 library(ast2ast)
 
 mandelbrot <- function(nx, ny, xmin, xmax, ymin, ymax, maxiter) {
-  args(
+  argtypes(
     nx      |> type(integer),
     ny      |> type(integer),
     xmin    |> type(double),
@@ -47,7 +47,7 @@ mandelbrot <- function(nx, ny, xmin, xmax, ymin, ymax, maxiter) {
 
 mb_cpp <- ast2ast::translate(mandelbrot)
 mb_R   <- mandelbrot                       # same source, run as plain R
-body(mb_R) <- as.call(as.list(body(mandelbrot))[-2])  # drop the args() line for plain R
+body(mb_R) <- as.call(as.list(body(mandelbrot))[-2])  # drop the argtypes() line for plain R
 
 p <- list(nx = 200L, ny = 200L, xmin = -2.2, xmax = 0.8, ymin = -1.3, ymax = 1.3,
   maxiter = 120L)

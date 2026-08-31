@@ -7,7 +7,7 @@ library(ast2ast)
 library(microbenchmark)
 
 leibniz <- function(rounds) {
-  args(rounds |> type(int))
+  argtypes(rounds |> type(int))
   x <- 1.0
   pi <- 1.0
   for (i in 2:(rounds + 2)) {
@@ -19,7 +19,7 @@ leibniz <- function(rounds) {
 }
 
 leibniz_shifted <- function(rounds) {
-  args(rounds |> type(int))
+  argtypes(rounds |> type(int))
   x <- 1.0
   pi <- 1.0
   for (i in 1:(rounds + 2)) {
@@ -32,7 +32,7 @@ leibniz_shifted <- function(rounds) {
 }
 
 leibniz_seqlen <- function(rounds) {
-  args(rounds |> type(int))
+  argtypes(rounds |> type(int))
   x <- 1.0
   pi <- 1.0
   for (i in seq_len(rounds + 2)) {
@@ -53,7 +53,7 @@ leibniz_vectorized <- function(rounds) {
 # integer range (:), 0-indexed to match seq.int's start, then scaled/shifted
 # -- same denominators as seq.int(-2*rounds+1, 2*rounds, by=4).
 leibniz_vectorized_ast2ast <- function(rounds) {
-  args(rounds |> type(int))
+  argtypes(rounds |> type(int))
   idx <- 0L:(rounds - 1L)
   denom <- -2.0 * rounds + 1.0 + 4.0 * idx
   pi <- sum(4.0 / denom)
@@ -66,7 +66,7 @@ leibniz_shifted_cpp <- ast2ast::translate(leibniz_shifted)
 leibniz_seqlen_cpp <- ast2ast::translate(leibniz_seqlen)
 leibniz_vec_cpp <- ast2ast::translate(leibniz_vectorized_ast2ast)
 
-# plain-R reference for the naive version (drop the args() line)
+# plain-R reference for the naive version (drop the argtypes() line)
 leibniz_r <- leibniz; body(leibniz_r) <- as.call(as.list(body(leibniz))[-2])
 
 rounds <- 10000000L

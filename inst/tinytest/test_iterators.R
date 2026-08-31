@@ -82,7 +82,7 @@ expect_equal(fcpp(), 4L)
 
 # if with a numeric literal condition, both branches return
 f <- function(x) {
-  args(x |> type(double))
+  argtypes(x |> type(double))
   if (1) return(x) else return(-x)
 }
 fcpp <- ast2ast::translate(f)
@@ -91,7 +91,7 @@ expect_equal(fcpp(-2), -2)
 
 # if with a numeric *variable* condition: 0 is FALSE, non-zero TRUE (like R)
 f <- function(x) {
-  args(x |> type(double))
+  argtypes(x |> type(double))
   if (x) return(1.0) else return(0.0)
 }
 fcpp <- ast2ast::translate(f)
@@ -101,7 +101,7 @@ expect_equal(fcpp(-0.5), 1)
 
 # while with an integer variable condition: loops while non-zero
 f <- function(n) {
-  args(n |> type(int))
+  argtypes(n |> type(int))
   s <- 0L
   while (n) {
     s <- s + n
@@ -128,7 +128,7 @@ expect_error(fcpp(), pattern = "missing value where TRUE/FALSE needed")
 # "used outside of its for-loop block" (a plain `s <- i; return(s)` was fine).
 
 f <- function(x) {
-  args(x |> type(int))
+  argtypes(x |> type(int))
   for (i in 1L:10L) {
     if (i == x) return(i)
   }
@@ -139,7 +139,7 @@ expect_equal(fcpp(4L), 4L)
 expect_equal(fcpp(11L), -1L)
 
 f <- function(x) {
-  args(x |> type(int))
+  argtypes(x |> type(int))
   for (i in 1L:10L) {
     return(i)
   }
@@ -150,7 +150,7 @@ expect_equal(fcpp(0L), 1L)
 
 # nested loops: returning the outer iterator from inside the inner loop
 f <- function(x) {
-  args(x |> type(int))
+  argtypes(x |> type(int))
   for (i in 1L:5L) {
     for (j in 1L:5L) {
       if (i * j == x) return(i)

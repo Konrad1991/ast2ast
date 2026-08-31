@@ -6,9 +6,9 @@ files <- list.files("./R", full.names = TRUE)
 invisible(lapply(files, source))
 
 f <- function(interval) {
-  args(interval |> type(vec(double)))
+  argtypes(interval |> type(vec(double)))
   g <- fn(
-    args(a |> type(double)),
+    argtypes(a |> type(double)),
     return(double),
     {
       return(a^2 - 4)

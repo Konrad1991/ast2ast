@@ -100,7 +100,7 @@ check_error(f, types_f_point, pattern = "has no field named z")
 
 # --- 2. functional (compiled) tests for structs -------------------------------
 f <- function(p) {
-  args(p |> type(Point))
+  argtypes(p |> type(Point))
   p$x <- p$x + 10
   return(p)
 }
@@ -113,7 +113,7 @@ expect_equal(class(res), "Point")
 
 # 2.1 wrong class passed in must be rejected at runtime, not silently accepted
 f <- function(p) {
-  args(p |> type(Point))
+  argtypes(p |> type(Point))
   return(p$x)
 }
 fcpp <- ast2ast::translate(f, types_f = types_f_point)
@@ -122,7 +122,7 @@ expect_error(fcpp(wrong), pattern = "Expected an object of class 'Point'")
 
 # 2.2 nested struct: the inner value has the wrong class
 f <- function(a) {
-  args(a |> type(Area))
+  argtypes(a |> type(Area))
   return(a$x$x)
 }
 fcpp <- ast2ast::translate(f, types_f = types_f_area)
@@ -131,7 +131,7 @@ expect_error(fcpp(bad_inner), pattern = "Expected an object of class 'Point'")
 
 # 2.3 correct nested struct: retrieve the inner struct itself as the result
 f <- function(a) {
-  args(a |> type(Area))
+  argtypes(a |> type(Area))
   return(a$x)
 }
 fcpp <- ast2ast::translate(f, types_f = types_f_area)
@@ -225,7 +225,7 @@ check_error(f, types_f_area, pattern = "Cannot assign incompatible type to field
 # const + ref on a Point argument shows up correctly in the internal (XPtr) signature
 fcpp_src <- ast2ast::translate(
   f <- function(p) {
-    args(p |> type(Point) |> const() |> ref())
+    argtypes(p |> type(Point) |> const() |> ref())
     return(p$x)
   },
   types_f = types_f_point,
@@ -239,7 +239,7 @@ expect_true(grepl("const Point&", fcpp_src, fixed = TRUE))
 # pipeline -- get_types()/check_error() above stop at infer_types() and never
 # exercise it, matching test_infer_types.R's own get_types() convention)
 f <- function(p) {
-  args(p |> type(Point) |> const())
+  argtypes(p |> type(Point) |> const())
   p$x <- 5
   return(p$x)
 }
@@ -255,7 +255,7 @@ expect_error(
 # a const Point argument also rejects reassignment of the whole variable, not
 # just field mutation (same check_fct, different lhs shape)
 f <- function(p) {
-  args(p |> type(Point) |> const())
+  argtypes(p |> type(Point) |> const())
   p2 |> type(Point)
   p <- p2
   return(p)
@@ -274,7 +274,7 @@ expect_error(
 # branch never reset const_or_mut, so the copy inherited "const" from the
 # const argument and any field mutation on the copy was rejected
 f <- function(p) {
-  args(p |> type(Point) |> const())
+  argtypes(p |> type(Point) |> const())
   p2 <- p
   p2$x <- 99
   return(p2)
@@ -287,7 +287,7 @@ expect_equal(res$y, 2)
 
 # and the copy must be independent -- mutating it must not affect the original
 f <- function(p) {
-  args(p |> type(Point) |> const())
+  argtypes(p |> type(Point) |> const())
   p2 <- p
   p2$x <- 99
   return(p)
@@ -304,7 +304,7 @@ f <- function() {
   p$x <- 5
   p$y <- 6
   get_x <- fn(
-    args(pt |> type(Point) |> const() |> ref()),
+    argtypes(pt |> type(Point) |> const() |> ref()),
     return(double),
     {
       return(pt$x)
@@ -323,7 +323,7 @@ f <- function() {
   p$x <- 7
   p$y <- 8
   make_it <- fn(
-    args(pt |> type(Point) |> const() |> ref()),
+    argtypes(pt |> type(Point) |> const() |> ref()),
     return(Point),
     {
       return(pt)
@@ -340,7 +340,7 @@ expect_equal(class(res), "Point")
 # length check on the constructor: too few fields must be rejected, not read
 # out of bounds
 f <- function(p) {
-  args(p |> type(Point))
+  argtypes(p |> type(Point))
   return(p$x)
 }
 fcpp <- ast2ast::translate(f, types_f = types_f_point)
@@ -360,7 +360,7 @@ check_error(f, types_f_point, pattern = "unsupported type")
 
 f <- function() {
   b <- fn(
-    args(),
+    argtypes(),
     return(int),
     {
       return(1L)
@@ -703,7 +703,7 @@ check_error(f, types_f_point_box, pattern = "Found unallowed type")
 # branch has no reachable end-to-end test -- exercise it directly instead
 f_with_fn <- function() {
   b <- fn(
-    args(),
+    argtypes(),
     return(int),
     {
       return(1L)
@@ -725,7 +725,7 @@ expect_true(grepl("Found incompatible types involving a function", result, fixed
 f <- function() {
   p |> type(Point)
   get_it <- fn(
-    args(),
+    argtypes(),
     return(int),
     {
       return(1L)
@@ -742,7 +742,7 @@ check_error(f, types_f_point_box, pattern = "Cannot assign incompatible type to 
 f <- function() {
   wrong |> type(collection(Circle))
   get_it <- fn(
-    args(c |> type(collection(Point)) |> const() |> ref()),
+    argtypes(c |> type(collection(Point)) |> const() |> ref()),
     return(int),
     {
       return(1L)
@@ -823,7 +823,7 @@ expect_equal(fcpp(), 60)
 # a collection as a function argument, mutated in place and returned --
 # exercises Collection's SEXP constructor and to_SEXP() round trip
 f <- function(pts) {
-  args(pts |> type(collection(Point)))
+  argtypes(pts |> type(collection(Point)))
   pts[[1]]$x <- pts[[1]]$x + 100
   return(pts)
 }
@@ -870,7 +870,7 @@ types_f_nested <- function() {
 # R -> C++ -> R round trip through a four-level LHS chain
 # (s$circles[[i]]$center$x), mutating one element's nested field
 f <- function(s) {
-  args(s |> type(Scene))
+  argtypes(s |> type(Scene))
   s$circles[[1]]$center$x <- s$circles[[1]]$center$x + 10
   return(s)
 }
@@ -894,7 +894,7 @@ f <- function() {
   circles[[1]]$center$y <- 8.0
   circles[[1]]$radius <- 2.0
   get_first_x <- fn(
-    args(cs |> type(collection(Circle)) |> const() |> ref()),
+    argtypes(cs |> type(collection(Circle)) |> const() |> ref()),
     return(double),
     {
       return(cs[[1]]$center$x)
@@ -913,7 +913,7 @@ f <- function() {
   circ$center$y <- 4.0
   circ$radius <- 1.0
   get_center <- fn(
-    args(c |> type(Circle) |> const() |> ref()),
+    argtypes(c |> type(Circle) |> const() |> ref()),
     return(Point),
     {
       return(c$center)
@@ -934,7 +934,7 @@ f <- function() {
   coll[[1]]$x <- 1.0
   coll[[2]]$x <- 2.0
   bump <- fn(
-    args(c |> type(collection(Point)) |> ref()),
+    argtypes(c |> type(collection(Point)) |> ref()),
     return(int),
     {
       c[[1]]$x <- c[[1]]$x + 100.0
@@ -954,7 +954,7 @@ expect_equal(res[[2]]$x, 2)
 f <- function() {
   coll |> type(collection(Point))
   bad_mut <- fn(
-    args(c |> type(collection(Point)) |> const()),
+    argtypes(c |> type(collection(Point)) |> const()),
     return(int),
     {
       c[[1]]$x <- 5.0
@@ -972,7 +972,7 @@ expect_error(
 # (XPtr) signature, mirroring the existing const/ref-on-Point test
 fcpp_src <- ast2ast::translate(
   f <- function(cs) {
-    args(cs |> type(collection(Circle)) |> const() |> ref())
+    argtypes(cs |> type(collection(Circle)) |> const() |> ref())
     return(length(cs))
   },
   types_f = types_f_nested,
@@ -999,7 +999,7 @@ types_f_shapes <- function() {
 
 check_full_pipeline_no_error <- function(f) {
   body(f) <- as.call(c(as.name("{"),
-    quote(args(s |> type(Shapes))),
+    quote(argtypes(s |> type(Shapes))),
     as.list(body(f))[-1]))
   e <- try(
     ast2ast::translate(f, types_f = types_f_shapes, getsource = TRUE),
@@ -1091,7 +1091,7 @@ check_full_pipeline_no_error(f)
 # the root-variable-based checks must still correctly reject a genuine
 # non-array/matrix/vector field (regression guard for the "$" fix)
 f <- function(s) {
-  args(s |> type(Shapes))
+  argtypes(s |> type(Shapes))
   n <- nrow(s$tag)
   return(n)
 }
@@ -1210,7 +1210,7 @@ types_f_scene <- function() {
   new_type(Scene, slots(circles |> type(collection(Circle)), tag |> type(int)))
 }
 f <- function(s) {
-  args(s |> type(Scene) |> const())
+  argtypes(s |> type(Scene) |> const())
   s$circles[[1L]]$center$x <- s$circles[[1L]]$center$x + 10
   return(s)
 }
@@ -1225,9 +1225,9 @@ types_f_point <- function() {
   new_type(Point, slots(x |> type(double), y |> type(double)))
 }
 f <- function(p) {
-  args(p |> type(Point))
+  argtypes(p |> type(Point))
   mutate_it <- fn(
-    args(a |> type(Point) |> ref()),
+    argtypes(a |> type(Point) |> ref()),
     return(double),
     {
       a$x <- a$x + 1
@@ -1326,7 +1326,7 @@ types_f_ptr <- function() {
     )
   )
 }
-f <- function(p) { args(p |> type(Point)); p$x <- p$x + 1; return(p) }
+f <- function(p) { argtypes(p |> type(Point)); p$x <- p$x + 1; return(p) }
 ptr <- ast2ast::translate(
   f, types_f = types_f_ptr,
   output = "XPtr"
@@ -1339,7 +1339,7 @@ types_f_pair <- function() {
   new_type(Pair, slots(y |> type(vec(double)), x |> type(vec(double))))
 }
 f <- function(p) {
-  args(p |> type(Pair))
+  argtypes(p |> type(Pair))
   return(p)
 }
 fcpp <- ast2ast::translate(f, types_f = types_f_pair)
@@ -1378,7 +1378,7 @@ expect_error(
 
 f <- function() {
   square <- fn(
-    args(x |> type(double) |> const()),
+    argtypes(x |> type(double) |> const()),
     return(double),
     { return(x * x) }
   )

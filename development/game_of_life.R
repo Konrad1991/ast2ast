@@ -8,7 +8,7 @@ library(ast2ast)
 library(png)
 
 life <- function(grid, gens) {
-  args(
+  argtypes(
     grid |> type(mat(int)),
     gens |> type(integer)
   )
@@ -41,7 +41,7 @@ life <- function(grid, gens) {
 
 life_cpp <- ast2ast::translate(life)
 life_R <- life
-body(life_R) <- as.call(as.list(body(life))[-2])  # drop the args() line for plain R
+body(life_R) <- as.call(as.list(body(life))[-2])  # drop the argtypes() line for plain R
 
 # -- seed: an R-pentomino, which stays chaotic for ~1100 generations --------
 n <- 120L

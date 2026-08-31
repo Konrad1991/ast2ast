@@ -5,7 +5,7 @@ library(tinytest)
 f <- function() {
   outer_val <- 5
   g <- fn(
-    args(x |> type(double) |> const()),
+    argtypes(x |> type(double) |> const()),
     return(double),
     { return(x + outer_val) }
   )
@@ -21,12 +21,12 @@ expect_error(ast2ast::translate(f, getsource = TRUE),
 
 f <- function() {
   square <- fn(
-    args(x |> type(double) |> const()),
+    argtypes(x |> type(double) |> const()),
     return(double),
     { return(x * x) }
   )
   apply_twice <- fn(
-    args(
+    argtypes(
       func |> type(double) |> const(),
       x |> type(double) |> const()
     ),
@@ -43,7 +43,7 @@ expect_error(ast2ast::translate(f, getsource = TRUE), pattern = "is a function a
 # 1. missing name: fn() not assigned to a variable
 f <- function() {
   fn(
-    args(x |> type(double)),
+    argtypes(x |> type(double)),
     return(double),
     { return(x * 2) }
   )
@@ -54,7 +54,7 @@ expect_error(ast2ast::translate(f, getsource = TRUE), pattern = "You have to ass
 # 2. wrong number of parts
 f <- function() {
   g <- fn(
-    args(x |> type(double)),
+    argtypes(x |> type(double)),
     { return(x * 2) }
   )
   return(g(1))
@@ -83,12 +83,12 @@ expect_error(ast2ast::translate(f, getsource = TRUE), pattern = "no named argume
 #    error, not an out-of-bounds crash (inner fns carry no signature `docs`)
 f <- function() {
   g <- fn(
-    args(a |> type(double)),
+    argtypes(a |> type(double)),
     return(double),
     { return(a + 3) }
   )
   h <- fn(
-    args(a |> type(double) |> const()),
+    argtypes(a |> type(double) |> const()),
     return(double),
     { return(g()) }   # g needs one argument
   )
@@ -102,9 +102,9 @@ expect_error(ast2ast::translate(f, getsource = TRUE), pattern = "Wrong number of
 # must be rejected there, attributed to that inner fn, even though the
 # outer function never uses break/next at all
 f <- function(x) {
-  args(x |> type(double))
+  argtypes(x |> type(double))
   h <- fn(
-    args(y |> type(double) |> const()),
+    argtypes(y |> type(double) |> const()),
     return(double),
     { break; return(y) }
   )
@@ -117,9 +117,9 @@ expect_error(
 
 # break inside a loop that itself lives inside the inner fn() body is fine
 f <- function(x) {
-  args(x |> type(double))
+  argtypes(x |> type(double))
   h <- fn(
-    args(y |> type(double) |> const()),
+    argtypes(y |> type(double) |> const()),
     return(double),
     {
       z <- y
@@ -144,7 +144,7 @@ expect_true(is.character(
 
 f <- function() {
   h <- fn(
-    args(),
+    argtypes(),
     return(double),
     { return(5.0) }
   )
@@ -156,9 +156,9 @@ expect_equal(fcpp(), 5.0)
 # the case actually encountered: a zero-arg inner fn's result passed into
 # another function call (sum()), instead of returned directly
 f <- function(x) {
-  args(x |> type(double))
+  argtypes(x |> type(double))
   inner <- fn(
-    args(),
+    argtypes(),
     return(double),
     { return(5.0) }
   )
@@ -171,7 +171,7 @@ expect_equal(fcpp(3.0), 8.0)
 # through type_infer_assignment instead of directly through return/binary
 f <- function() {
   inner <- fn(
-    args(),
+    argtypes(),
     return(double),
     { return(5.0) }
   )
@@ -187,9 +187,9 @@ expect_equal(fcpp(), 5.0)
 # (invalid) "void result;" in the generated C++ instead of being caught here
 
 f <- function(a) {
-  args(a |> type(double))
+  argtypes(a |> type(double))
   b <- fn(
-    args(),
+    argtypes(),
     return(void),
     {}
   )
@@ -203,9 +203,9 @@ expect_error(
 
 # calling a void-returning inner fn as a bare statement (no assignment) is fine
 f <- function(a) {
-  args(a |> type(double))
+  argtypes(a |> type(double))
   b <- fn(
-    args(),
+    argtypes(),
     return(void),
     {}
   )

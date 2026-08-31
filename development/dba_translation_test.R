@@ -35,13 +35,13 @@ types_f_dba <- function() {
 }
 
 solve_h_dba <- function(Kd, h0, d0) {
-  args(
+  argtypes(
     Kd |> type(double),
     h0 |> type(vec(double)),
     d0 |> type(vec(double))
   )
   equation_h_dba <- fn(
-    args(
+    argtypes(
       h |> type(double) |> const(),
       extra |> type(HDBAParams) |> const()
     ),
@@ -197,12 +197,12 @@ types_f_loss <- function() {
 }
 
 lossFctDBA <- function(parameter, env) {
-  args(
+  argtypes(
     parameter |> type(vec(double)),
     env |> type(LossEnv)
   )
   equation_h_dba <- fn(
-    args(
+    argtypes(
       h |> type(double) |> const(),
       extra |> type(HDBAParams) |> const()
     ),

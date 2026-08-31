@@ -6,7 +6,7 @@ resolve_args_f <- function(f, f_args) {
     if (is.function(f_args)) {
       body_expr <- wrap_in_block(body(f_args))
     } else {
-      # args(x |> type(t), ...) call from fn()
+      # argtypes(x |> type(t), ...) call from fn()
       body_expr <- as.call(c(quote(`{`), as.list(f_args)[-1]))
     }
   } else {

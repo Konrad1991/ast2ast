@@ -17,7 +17,7 @@ expect_error(ast2ast::translate(class))
 
 # default argument values are dropped -- warn
 f <- function(n = 10L) {
-  args(n |> type(int))
+  argtypes(n |> type(int))
   return(n)
 }
 expect_warning(
@@ -26,7 +26,7 @@ expect_warning(
 )
 # no defaults -> no warning
 f <- function(n) {
-  args(n |> type(int))
+  argtypes(n |> type(int))
   return(n)
 }
 expect_silent(ast2ast::translate(f, getsource = TRUE))
@@ -36,7 +36,7 @@ expect_silent(ast2ast::translate(f, getsource = TRUE))
 # compile. A named function deparsed cleanly and hid the bug.
 ptr <- ast2ast::translate(
   function(a, b) {
-    args(a |> type(vec(double)) |> ref(), b |> type(vec(double)) |> ref())
+    argtypes(a |> type(vec(double)) |> ref(), b |> type(vec(double)) |> ref())
     c <- a + b
     return(c)
   },
@@ -47,7 +47,7 @@ expect_true(inherits(ptr, "XPtr"))
 # the generated source references the function, not a string literal
 src <- ast2ast::translate(
   function(a, b) {
-    args(a |> type(vec(double)) |> ref(), b |> type(vec(double)) |> ref())
+    argtypes(a |> type(vec(double)) |> ref(), b |> type(vec(double)) |> ref())
     c <- a + b
     return(c)
   },
@@ -58,7 +58,7 @@ expect_false(grepl('"lambda_fct"', src, fixed = TRUE))
 
 # a named function still works (regression guard for the deparse -> as.character swap)
 named_xptr_fn <- function(a) {
-  args(a |> type(vec(double)) |> ref())
+  argtypes(a |> type(vec(double)) |> ref())
   b <- a * 2
   return(b)
 }

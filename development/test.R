@@ -23,7 +23,7 @@ files <- list.files("./R", full.names = TRUE)
 invisible(lapply(files, source))
 code <- function() {
   g <- fn(
-    args(
+    argtypes(
       a |> type(double),
       b |> type(double)
     ),

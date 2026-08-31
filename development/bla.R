@@ -3,7 +3,7 @@ trash <- lapply(files, source)
 
 f <- function() {
   f2 <- fn(
-    args(
+    argtypes(
       a |> type(double),
       b |> type(double)
     ),

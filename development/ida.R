@@ -34,12 +34,12 @@ types_f_ida <- function() {
 
 # parameter: [Kga] only -- linear coeffs are profiled out via nnls() below.
 loss_fct_ida_a2a <- function(parameter, add_params) {
-  args(
+  argtypes(
     parameter |> type(vec(double)),
     add_params |> type(AddParamsIda)
   )
   solve_h_ida <- fn(
-    args(
+    argtypes(
       Kd |> type(double) |> const(),
       Kg |> type(double) |> const(),
       h0 |> type(double) |> const(),
@@ -53,7 +53,7 @@ loss_fct_ida_a2a <- function(parameter, add_params) {
       # unary-in-h root-find target -- Kd/Kg/h0/d0/g are read from `params`,
       # passed explicitly as uniroot()'s 5th argument, not via closure.
       equation_h_ida <- fn(
-        args(
+        argtypes(
           h |> type(double),
           params |> type(EquationParamsIda)
         ),

@@ -117,17 +117,17 @@ f <- function(a) {
 
 ### Default behavior
 
-If no `args(...)` block is present, all arguments default to `matrix(double)`, as this is most convinient for numeric code.
+If no `argtypes(...)` block is present, all arguments default to `matrix(double)`, as this is most convinient for numeric code.
 
 ---
 
-### Using `args()`
+### Using `argtypes()`
 
-To control argument types, make `args(...)` the **first statement** of `f`'s body. Each entry names one of `f`'s arguments and assigns its type with `type()`:
+To control argument types, make `argtypes(...)` the **first statement** of `f`'s body. Each entry names one of `f`'s arguments and assigns its type with `type()`:
 
 ```{r, eval = FALSE}
 f <- function(a, b, c) {
-  args(
+  argtypes(
     a |> type(vec(double)),
     b |> type(mat(double)),
     c |> type(double)
@@ -151,7 +151,7 @@ Example:
 
 ```{r, eval = FALSE}
 f <- function(a, b, c) {
-  args(
+  argtypes(
     a |> type(borrow_vec(double)) |> ref(),            # mutable, passed by reference
     b |> type(borrow_mat(double)) |> ref() |> const(), # read-only matrix reference
     c |> type(double) |> ref()                         # scalar reference (XPtr only)
@@ -327,15 +327,15 @@ Rather than hiding differentiation behind abstractions, ast2ast treats derivativ
 
 Functions can be defined inside `f` using `fn()`. This is required whenever a function
 needs to be passed as a value, e.g. to `uniroot()`. An inner function is declared with
-three positional parts: `args(...)` (types of its arguments, same form as the outer
-`args(...)` block), `return(...)` (its return type), and a `{ }` block (the R code).
+three positional parts: `argtypes(...)` (types of its arguments, same form as the outer
+`argtypes(...)` block), `return(...)` (its return type), and a `{ }` block (the R code).
 A single-statement body does not need the `{ }`, but wrapping it is fine too.
 
 ```{r, eval = FALSE}
 f <- function(a) {
-  args(a |> type(int))
+  argtypes(a |> type(int))
   factorial <- fn(
-    args(a |> type(int) |> const()),
+    argtypes(a |> type(int) |> const()),
     return(int),
     {
       if (a == 1L) return(a) else return(a * factorial(a - 1L))
@@ -354,7 +354,7 @@ an expression:
 
 ```{r, eval = FALSE}
 sq <- fn(
-  args(x |> type(double) |> const()),  # const -- accepts expressions
+  argtypes(x |> type(double) |> const()),  # const -- accepts expressions
   return(double),
   return(x * x)
 )
@@ -366,9 +366,9 @@ functions expecting a function argument, e.g. `uniroot`:
 
 ```{r, eval = FALSE}
 f <- function(interval) {
-  args(interval |> type(vec(double)))
+  argtypes(interval |> type(vec(double)))
   g <- fn(
-    args(x |> type(double)),
+    argtypes(x |> type(double)),
     return(double),
     {
       return(x^2 - 4)
@@ -399,7 +399,7 @@ types_f <- function() {
 }
 
 f <- function(p) {
-  args(p |> type(Point))
+  argtypes(p |> type(Point))
   p$x <- p$x + 1
   return(p)
 }

@@ -35,18 +35,18 @@ attribute: `structure(list(x = 1, y = 2), class = "Point")`.
 ## An inner function operating on the type
 
 `fn()` defines a function local to `f`. It takes three positional parts:
-`args(...)` (argument types), `return(...)` (return type), and a `{ }` block
+`argtypes(...)` (argument types), `return(...)` (return type), and a `{ }` block
 (the function body). The outer function declares its own argument types with
-`args(...)` as the first statement of its body:
+`argtypes(...)` as the first statement of its body:
 
 ```{r}
 f <- function(p, q) {
-  args(
+  argtypes(
     p |> type(Point),
     q |> type(Point)
   )
   squared_dist <- fn(
-    args(
+    argtypes(
       a |> type(Point) |> const() |> ref(),
       b |> type(Point) |> const() |> ref()
     ),

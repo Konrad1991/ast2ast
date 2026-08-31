@@ -8,7 +8,7 @@ library(ast2ast)
 
 # 1. Bubble sort ------------------------------------------------------------
 bubble_sort <- function(v) {
-  args(v |> type(vec(double)))
+  argtypes(v |> type(vec(double)))
   n <- length(v)
   for (i in 1L:(n - 1L)) {
     for (j in 1L:(n - i)) {
@@ -28,7 +28,7 @@ print(sort(v))
 
 # 2. Sieve of Eratosthenes ---------------------------------------------------
 sieve <- function(n) {
-  args(n |> type(int))
+  argtypes(n |> type(int))
   is_prime <- rep(TRUE, n)
   is_prime[[1L]] <- FALSE
   for (i in 2L:n) {
@@ -57,7 +57,7 @@ print(ref_sieve)
 
 # 3. Binary search ------------------------------------------------------------
 binary_search <- function(v, target) {
-  args(
+  argtypes(
     v |> type(vec(double)),
     target |> type(double)
   )
@@ -84,7 +84,7 @@ print(fcpp_bsearch(sv, 4))
 
 # 4. Euclidean GCD ------------------------------------------------------------
 gcd <- function(a, b) {
-  args(
+  argtypes(
     a |> type(int),
     b |> type(int)
   )
@@ -102,7 +102,7 @@ print(gcd_r(48L, 18L))
 
 # 5. Manual matrix multiplication --------------------------------------------
 matmul_manual <- function(A, B) {
-  args(
+  argtypes(
     A |> type(matrix(double)),
     B |> type(matrix(double))
   )
@@ -129,7 +129,7 @@ print(A %*% B)
 
 # 6. Insertion sort -----------------------------------------------------------
 insertion_sort <- function(v) {
-  args(v |> type(vec(double)))
+  argtypes(v |> type(vec(double)))
   n <- length(v)
   for (i in 2L:n) {
     key <- v[[i]]
@@ -149,7 +149,7 @@ print(sort(v2))
 
 # 7. Reverse a vector in place -----------------------------------------------
 reverse_vec <- function(v) {
-  args(v |> type(vec(double)))
+  argtypes(v |> type(vec(double)))
   n <- length(v)
   lo <- 1L
   hi <- n
@@ -172,7 +172,7 @@ types_f_vecpair <- function() {
   new_type(VecPair, slots(a |> type(vec(double)), b |> type(vec(double))))
 }
 dot_product <- function(p) {
-  args(p |> type(VecPair))
+  argtypes(p |> type(VecPair))
   n <- length(p$a)
   s <- 0.0
   for (i in 1L:n) {
@@ -187,7 +187,7 @@ print(sum(c(1, 2, 3) * c(4, 5, 6)))
 
 # 9. Horner's method + forward-mode derivative, descending for-loop ---------
 horner_deriv <- function(coeffs, x0) {
-  args(
+  argtypes(
     coeffs |> type(vec(double)),
     x0 |> type(double)
   )
@@ -208,7 +208,7 @@ print(fcpp_horner(coeffs, 2))
 
 # 10. Selection sort ----------------------------------------------------------
 selection_sort <- function(v) {
-  args(v |> type(vec(double)))
+  argtypes(v |> type(vec(double)))
   n <- length(v)
   for (i in 1L:(n - 1L)) {
     min_idx <- i
@@ -238,7 +238,7 @@ print(sort(v4))
 # worth checking directly rather than guessing.
 f_recursive <- function() {
   factorial <- fn(
-    args(n |> type(int) |> const()),
+    argtypes(n |> type(int) |> const()),
     return(int),
     {
       if (n <= 1L) return(1L)

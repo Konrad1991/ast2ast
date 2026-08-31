@@ -8,7 +8,7 @@ library(ast2ast)
 
 # 1. Scalar types (double/int/logical) mixed in one expression -------------
 scalar_mix <- function(a, b, c) {
-  args(
+  argtypes(
     a |> type(double),
     b |> type(int),
     c |> type(logical)
@@ -26,7 +26,7 @@ print((2.5 + 3) * 2)
 
 # 2. Vector: create, subset, grow via assignment ----------------------------
 vec_ops <- function(n) {
-  args(n |> type(int))
+  argtypes(n |> type(int))
   v <- numeric(n)
   for (i in 1L:n) {
     v[[i]] <- i * i
@@ -39,7 +39,7 @@ print((1:5)^2)
 
 # 3. Matrix: create, index by [i,j], row/col reductions ---------------------
 mat_ops <- function(A) {
-  args(A |> type(matrix(double)))
+  argtypes(A |> type(matrix(double)))
   n <- nrow(A)
   m <- ncol(A)
   total <- 0.0
@@ -57,7 +57,7 @@ print(sum(A))
 
 # 4. 3D array: create, index by [i,j,k] --------------------------------------
 array_ops <- function(dims) {
-  args(dims |> type(vec(int)))
+  argtypes(dims |> type(vec(int)))
   d1 <- dims[[1L]]
   d2 <- dims[[2L]]
   d3 <- dims[[3L]]
@@ -81,7 +81,7 @@ print(sum(ref))
 
 # 5. borrow_vec / borrow_mat as read-only function inputs --------------------
 borrow_sum <- function(v, M) {
-  args(
+  argtypes(
     v |> type(borrow_vec(double)),
     M |> type(borrow_mat(double))
   )
@@ -111,7 +111,7 @@ types_f_mixed <- function() {
   ))
 }
 mixed_sum <- function(m) {
-  args(m |> type(Mixed))
+  argtypes(m |> type(Mixed))
   s <- m$scalar_field
   for (i in 1L:length(m$vec_field)) {
     s <- s + m$vec_field[[i]]
@@ -138,7 +138,7 @@ types_f_nested3 <- function() {
   new_type(Outer, slots(middle |> type(Middle), name_id |> type(int)))
 }
 nested_read <- function(o) {
-  args(o |> type(Outer))
+  argtypes(o |> type(Outer))
   return(o$middle$inner$val + o$name_id + o$middle$tag)
 }
 fcpp_nested3 <- ast2ast::translate(nested_read, types_f = types_f_nested3)
@@ -154,7 +154,7 @@ print(3.5 + 2 + 7)
 
 # 8. Nested-struct field mutation through the full chain ---------------------
 nested_write <- function(o) {
-  args(o |> type(Outer))
+  argtypes(o |> type(Outer))
   o$middle$inner$val <- o$middle$inner$val + 100.0
   return(o)
 }
@@ -166,7 +166,7 @@ types_f_point <- function() {
   new_type(Point, slots(x |> type(double), y |> type(double)))
 }
 collection_ops <- function(n) {
-  args(n |> type(int))
+  argtypes(n |> type(int))
   pts <- vector("Point", n)
   for (i in 1L:n) {
     pts[[i]]$x <- i * 1.0
@@ -189,7 +189,7 @@ types_f_scene <- function() {
   new_type(Scene, slots(points |> type(collection(Point)), n |> type(int)))
 }
 scene_sum <- function(sc) {
-  args(sc |> type(Scene))
+  argtypes(sc |> type(Scene))
   s <- 0.0
   for (i in 1L:sc$n) {
     s <- s + sc$points[[i]]$x + sc$points[[i]]$y

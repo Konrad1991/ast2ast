@@ -30,12 +30,12 @@ types_f_ida <- function() {
 }
 
 loss_fct_ida_a2a <- function(parameter, add_params) {
-  args(
+  argtypes(
     parameter |> type(vec(double)),
     add_params |> type(AddParamsIda)
   )
   solve_h_ida <- fn(
-    args(
+    argtypes(
       Kd |> type(double) |> const(),
       Kg |> type(double) |> const(),
       h0 |> type(double) |> const(),
@@ -45,7 +45,7 @@ loss_fct_ida_a2a <- function(parameter, add_params) {
     return(SolveD_HD_Result),
     {
       equation_h_ida <- fn(
-        args(
+        argtypes(
           h |> type(double),
           params |> type(EquationParamsIda)
         ),

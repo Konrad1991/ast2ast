@@ -3,9 +3,9 @@ library(tinytest)
 # --- uniroot -----------------------------------------------------------
 
 f <- function(interval) {
-  args(interval |> type(vec(double)))
+  argtypes(interval |> type(vec(double)))
   g <- fn(
-    args(x |> type(double)),
+    argtypes(x |> type(double)),
     return(double),
     return(x^2 - 4)
   )
@@ -34,9 +34,9 @@ check_uniroot_case(c(-10, -1.9), "case4")
 
 # printing a uniroot_result
 f_print <- function(interval) {
-  args(interval |> type(vec(double)))
+  argtypes(interval |> type(vec(double)))
   g <- fn(
-    args(x |> type(double)),
+    argtypes(x |> type(double)),
     return(double),
     return(x^2 - 4)
   )
@@ -54,9 +54,9 @@ expect_true(any(grepl("estim_prec:", out)))
 
 # maxiter accepts an integer literal too, not just double
 f_int_maxiter <- function(interval) {
-  args(interval |> type(vec(double)))
+  argtypes(interval |> type(vec(double)))
   g <- fn(
-    args(x |> type(double)),
+    argtypes(x |> type(double)),
     return(double),
     return(x^2 - 4)
   )
@@ -73,7 +73,7 @@ if (!requireNamespace("nnls", quietly = TRUE)) {
 }
 
 f_nnls <- function(A, b) {
-  args(
+  argtypes(
     A |> type(matrix(double)),
     b |> type(vec(double))
   )
@@ -113,7 +113,7 @@ check_nnls_case(A, b, "case4")
 # --- which -----------------------------------------------------------------
 
 f <- function(v) {
-  args(v |> type(vec(double)))
+  argtypes(v |> type(vec(double)))
   return(which(v > 3.0))
 }
 fcpp <- ast2ast::translate(f)
@@ -129,7 +129,7 @@ expect_equal(res, integer(0))
 
 # a scalar condition still returns a vector, matching R
 f_scalar <- function(x) {
-  args(x |> type(double))
+  argtypes(x |> type(double))
   return(which(x > 3.0))
 }
 fcpp_scalar <- ast2ast::translate(f_scalar)
@@ -140,29 +140,29 @@ expect_equal(c(fcpp_scalar(1.0)), integer(0))
 # abs had a scalar overload but no array one (dispatch layer 3, not 1), so
 # abs(vec), abs(mat), abs(a - b) all leaked a g++ error.
 
-f <- function(a) { args(a |> type(vec(double))); abs(a) }
+f <- function(a) { argtypes(a |> type(vec(double))); abs(a) }
 fcpp <- ast2ast::translate(f)
 x <- c(-1.5, 2.5, -3.5, 0.0)
 expect_equal(c(fcpp(x)), abs(x))
 
 # lazy expression argument
-f <- function(a) { args(a |> type(vec(double))); abs(a - 1.0) }
+f <- function(a) { argtypes(a |> type(vec(double))); abs(a - 1.0) }
 fcpp <- ast2ast::translate(f)
 expect_equal(c(fcpp(x)), abs(x - 1))
 
 # nested in another op, and a reduction
-f <- function(a) { args(a |> type(vec(double))); sum(abs(a - 1.0)) }
+f <- function(a) { argtypes(a |> type(vec(double))); sum(abs(a - 1.0)) }
 fcpp <- ast2ast::translate(f)
 expect_equal(fcpp(x), sum(abs(x - 1)))
 
 # matrix
-f <- function(a) { args(a |> type(mat(double))); abs(a) }
+f <- function(a) { argtypes(a |> type(mat(double))); abs(a) }
 fcpp <- ast2ast::translate(f)
 m <- matrix(c(-1, 2, -3, 4), 2)
 expect_equal(fcpp(m), abs(m))
 
 # integer element type is preserved (like R: abs(1:3) is integer)
-f <- function(a) { args(a |> type(vec(integer))); abs(a) }
+f <- function(a) { argtypes(a |> type(vec(integer))); abs(a) }
 fcpp <- ast2ast::translate(f)
 expect_equal(c(fcpp(c(-2L, 3L, -4L))), c(2L, 3L, 4L))
 
@@ -178,7 +178,7 @@ fcpp <- ast2ast::translate(f)
 expect_equal(fcpp(), diag(4))
 
 # diag(v): vector -> square matrix with v on the diagonal
-f <- function(v) { args(v |> type(vec(double))); diag(v) }
+f <- function(v) { argtypes(v |> type(vec(double))); diag(v) }
 fcpp <- ast2ast::translate(f)
 expect_equal(fcpp(c(2.0, 3.0, 4.0)), diag(c(2, 3, 4)))
 
@@ -193,7 +193,7 @@ expect_error(ast2ast::translate(function() diag(3L, 3L)),
 
 # diag(matrix) is rejected -> pointed at get_diag
 expect_error(
-  ast2ast::translate(function(m) { args(m |> type(mat(double))); diag(m) }),
+  ast2ast::translate(function(m) { argtypes(m |> type(mat(double))); diag(m) }),
   pattern = "get_diag"
 )
 
@@ -203,12 +203,12 @@ fcpp <- ast2ast::translate(f)
 expect_equal(fcpp(), diag(3))
 
 # diag(v) with an integer vector -> integer matrix (like R)
-f <- function(v) { args(v |> type(vec(integer))); diag(v) }
+f <- function(v) { argtypes(v |> type(vec(integer))); diag(v) }
 fcpp <- ast2ast::translate(f)
 expect_equal(fcpp(c(1L, 2L, 3L)), diag(1:3))
 
 # diag(n) as a size taken from an argument
-f <- function(n) { args(n |> type(integer)); diag(n) }
+f <- function(n) { argtypes(n |> type(integer)); diag(n) }
 fcpp <- ast2ast::translate(f)
 expect_equal(fcpp(5L), diag(5))
 
@@ -218,7 +218,7 @@ fcpp <- ast2ast::translate(f)
 expect_equal(fcpp(), diag(2, 3, 3))
 
 # 3-arg with a vector x, recycled along the diagonal
-f <- function(v) { args(v |> type(vec(double))); diag(v, 3L, 3L) }
+f <- function(v) { argtypes(v |> type(vec(double))); diag(v, 3L, 3L) }
 fcpp <- ast2ast::translate(f)
 expect_equal(fcpp(c(1.0, 2.0)), diag(c(1, 2), 3, 3))
 
@@ -229,7 +229,7 @@ expect_equal(fcpp(), diag(1, 4, 2))
 
 # reverse-mode AD through diag(v): s = sum(get_diag(diag(x) %*% diag(x))) = sum(x^2)
 g <- ast2ast::translate(function(x) {
-  args(x |> type(vec(double)))
+  argtypes(x |> type(vec(double)))
   M <- diag(x)
   s <- sum(get_diag(M %*% M))
   return(deriv(s, x))
@@ -238,7 +238,7 @@ expect_equal(c(g(c(2.0, 3.0, 4.0))), c(4, 6, 8))
 
 # forward-mode AD through diag(v)
 fw <- ast2ast::translate(function(x) {
-  args(x |> type(vec(double)))
+  argtypes(x |> type(vec(double)))
   jac <- matrix(0.0, 1L, 3L)
   for (i in 1L:3L) {
     seed(x, i)

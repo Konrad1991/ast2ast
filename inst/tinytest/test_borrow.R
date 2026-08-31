@@ -3,9 +3,9 @@ library(tinytest)
 # --- passing a borrowed vector where an owned vector is required -----------
 
 f <- function(v) {
-  args(v |> type(borrow_vec(double)))
+  argtypes(v |> type(borrow_vec(double)))
   g <- fn(
-    args(x |> type(vec(double)) |> const()),
+    argtypes(x |> type(vec(double)) |> const()),
     return(vec(double)),
     { return(x) }
   )
@@ -19,9 +19,9 @@ expect_error(
 # --- happy path: a borrowed argument materialized into an owned return -----
 
 f <- function(v) {
-  args(v |> type(borrow_vec(double)))
+  argtypes(v |> type(borrow_vec(double)))
   g <- fn(
-    args(x |> type(borrow_vec(double)) |> const()),
+    argtypes(x |> type(borrow_vec(double)) |> const()),
     return(vec(double)),
     { return(x) }
   )
@@ -34,9 +34,9 @@ expect_equal(fcpp(v) |> c(), v)
 # --- a return cannot itself be declared borrow_vec --------------------
 
 f <- function(v) {
-  args(v |> type(borrow_vec(double)))
+  argtypes(v |> type(borrow_vec(double)))
   g <- fn(
-    args(x |> type(borrow_vec(double)) |> const()),
+    argtypes(x |> type(borrow_vec(double)) |> const()),
     return(borrow_vec(double)),
     { return(x) }
   )
@@ -50,7 +50,7 @@ expect_error(
 # --- borrow_vec cannot be combined with automatic differentiation ----------
 
 f <- function(a) {
-  args(a |> type(borrow_vec(double)))
+  argtypes(a |> type(borrow_vec(double)))
   a[[1L]] <- a[[1L]] * a[[1L]]
   return(a)
 }

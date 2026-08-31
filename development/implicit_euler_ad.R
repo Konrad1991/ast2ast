@@ -1,5 +1,5 @@
 implicit_euler <- function(yinit, tstart, tend, h) {
-  args(
+  argtypes(
     yinit |> type(vec(double)),
     tstart |> type(double),
     tend |> type(double),
@@ -15,7 +15,7 @@ implicit_euler <- function(yinit, tstart, tend, h) {
   for (k in 1L:n) yres[1L, k + 1L] <- yinit[[k]]
 
   ode <- fn(
-    args(
+    argtypes(
       y |> type(vec(double)) |> ref() |> const(),
       t |> type(double) |> const()
     ),
@@ -30,7 +30,7 @@ implicit_euler <- function(yinit, tstart, tend, h) {
   )
 
   g <- fn(
-    args(
+    argtypes(
       ycurrent |> type(vec(double)) |> ref() |> const(),
       ynew |> type(vec(double)) |> ref() |> const(),
       h |> type(double),
@@ -43,7 +43,7 @@ implicit_euler <- function(yinit, tstart, tend, h) {
   )
 
   finite_differences <- fn(
-    args(
+    argtypes(
       x |> type(vec(double)) |> ref(),
       xnew |> type(vec(double)) |> ref(),
       h |> type(double) |> const(),
@@ -63,7 +63,7 @@ implicit_euler <- function(yinit, tstart, tend, h) {
   )
 
   newton_raphson <- fn(
-    args(
+    argtypes(
       x |> type(vec(double)) |> ref(),
       xnew |> type(vec(double)) |> ref(),
       h |> type(double) |> const(),

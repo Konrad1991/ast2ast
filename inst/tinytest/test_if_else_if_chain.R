@@ -10,7 +10,7 @@ library(ast2ast)
 # needs 2+ "else if" branches (3+ total including the closing "if"/"else").
 
 four_way_chain <- function(code, x) {
-  args(
+  argtypes(
     code |> type(int),
     x |> type(double)
   )
@@ -34,7 +34,7 @@ expect_equal(f_cpp(4L, 10), 2.5)
 # Same shape without a trailing else: 3 branches, 2 "else if" nodes -- the
 # minimal case that triggers the bug.
 three_branch_no_else <- function(code, x) {
-  args(
+  argtypes(
     code |> type(int),
     x |> type(double)
   )
@@ -57,7 +57,7 @@ expect_equal(f2_cpp(99L, 10), -1)
 # 5-way chain nested inside a for loop, matching the shape that originally
 # surfaced this (an error-code dispatch inside a per-row loop body).
 five_way_in_loop <- function(codes, x) {
-  args(
+  argtypes(
     codes |> type(vec(int)),
     x |> type(double)
   )

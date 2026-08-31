@@ -38,14 +38,14 @@ check_error <- function(f, r_fct, real_type, error_message) {
 # Mutual recursion
 f <- function() {
   is_even <- fn(
-    args(a |> type(int) |> const()),
+    argtypes(a |> type(int) |> const()),
     return(logical),
     {
       if (a == 0L) return(TRUE) else return(is_odd(a - 1L))
     }
   )
   is_odd <- fn(
-    args(a |> type(int) |> const()),
+    argtypes(a |> type(int) |> const()),
     return(logical),
     {
       if (a == 0L) return(FALSE) else return(is_even(a - 1L))
@@ -61,7 +61,7 @@ f <- function() {
 
   # foo in outer block
   foo <- fn(
-    args(),
+    argtypes(),
     return(int),
     {
       return(2L)
@@ -70,12 +70,12 @@ f <- function() {
 
 
   bar <- fn(
-    args(),
+    argtypes(),
     return(int),
     {
 
       bla <- fn(
-        args(),
+        argtypes(),
         return(int),
         {
           return(3L)
@@ -84,7 +84,7 @@ f <- function() {
 
       # foo in bar block
       foo <- fn(
-        args(),
+        argtypes(),
         return(int),
         {
           return(3L)
@@ -111,7 +111,7 @@ expect_equal(tail(fr_foo_inner, 3L), c("bla", "foo", "bar"))
 # Specified return type does not match the detected one
 f <- function(a) {
   b <- fn(
-    args(),
+    argtypes(),
     return(array(double)),
     {
       return(matrix(1.1, 2, 2))
@@ -122,7 +122,7 @@ check_error(f, TRUE, "etr::Variable<etr::Double>",
 "Specified return type does not match the detected return type for function b. Desired data structure is array but found matrix")
 f <- function(a) {
   b <- fn(
-    args(),
+    argtypes(),
     return(logical),
     {
       return(1.1)
@@ -133,7 +133,7 @@ check_error(f, TRUE, "etr::Variable<etr::Double>",
   "Specified return type does not match the detected return type for function b. Desired base type is logical but found double")
 f <- function() {
   foo <- fn(
-    args(a |> type(int)),
+    argtypes(a |> type(int)),
     return(int),
     {}
   )
@@ -144,7 +144,7 @@ check_error(f, TRUE, "etr::Double",
 # Recurion works
 f <- function() {
   factorial <- fn(
-    args(a |> type(int) |> const()),
+    argtypes(a |> type(int) |> const()),
     return(int),
     {
       if (a == 1L) return(a) else return(a*factorial(a - 1L))
@@ -159,7 +159,7 @@ expect_equal(fcpp(), factorial(10))
 f <- function(a) {
   b <- 1L
   f1 <- fn(
-    args(a |> type(double)),
+    argtypes(a |> type(double)),
     return(double),
     {
       res <- f2(1.1)
@@ -167,7 +167,7 @@ f <- function(a) {
     }
   )
   f2 <- fn(
-    args(a |> type(double)),
+    argtypes(a |> type(double)),
     return(double),
     {
       return(100 + a)
@@ -179,7 +179,7 @@ f <- function(a) {
 # Using inner functions
 f <- function(a) {
   b <- fn(
-    args(a |> type(vec(double))),
+    argtypes(a |> type(vec(double))),
     return(vector(int)),
     {
       result |> type(vector(int)) <- integer(length(a))
@@ -198,7 +198,7 @@ expect_true(types$result$get_data_struct() == "vector")
 # Use a function in assignment which returns void
 f <- function(a) {
   b <- fn(
-    args(),
+    argtypes(),
     return(void),
     {
 
@@ -213,7 +213,7 @@ check_error(f, TRUE, "etr::Double",
 # Void works
 f <- function(a) {
   b <- fn(
-    args(),
+    argtypes(),
     return(void),
     {
 
@@ -226,14 +226,14 @@ check_type_f_arg(types$b$return_type, "void", "scalar", "mutable", "copy", FALSE
 # Overwritng a function with a function ==> Error
 f <- function(a) {
   b <- fn(
-    args(x |> type(double)),
+    argtypes(x |> type(double)),
     return(double),
     {
       return(1.1)
     }
   )
   b <- fn(
-    args(x |> type(double)),
+    argtypes(x |> type(double)),
     return(double),
     {
       return(1.1)
@@ -248,7 +248,7 @@ check_error(
 # Using a function as numeric variable results in error
 f <- function(a) {
   b <- fn(
-    args(x |> type(double)),
+    argtypes(x |> type(double)),
     return(double),
     {
       return(1.1)
@@ -265,7 +265,7 @@ check_error(
 f <- function(a) {
   b <- 1.1
   b <- fn(
-    args(x |> type(double)),
+    argtypes(x |> type(double)),
     return(double),
     {
       return(1.1)
@@ -280,7 +280,7 @@ check_error(
 # Simple example of inner function
 f <- function(a) {
   g <- fn(
-    args(x |> type(vec(double)) |> ref()),
+    argtypes(x |> type(vec(double)) |> ref()),
     return(vec(double)),
     {
       y <- c(TRUE, TRUE, FALSE)

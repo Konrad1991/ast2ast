@@ -111,7 +111,7 @@ The XPtr interfaces creates an external pointer which can be used in other C++ p
 
 ```{r, eval = TRUE, echo = TRUE}
 f <- function(a, b) {
-  args(
+  argtypes(
     a |> type(vec(double)) |> ref(),
     b |> type(vec(double)) |> ref()
   )

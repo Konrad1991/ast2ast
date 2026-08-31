@@ -5,7 +5,7 @@ library(ast2ast)
 get_diag <- function(m) diag(m)
 
 functional_tests <- function(a, b, n, type_test) {
-  args(
+  argtypes(
     a |> type(vec(double)),
     b |> type(vec(double)),
     n |> type(integer),
@@ -174,7 +174,7 @@ functional_tests <- function(a, b, n, type_test) {
 
 fcpp <- translate(functional_tests, getsource = FALSE, verbose = FALSE)
 
-# plain-R oracle: same body without the args() prologue (args() is DSL-only and
+# plain-R oracle: same body without the argtypes() prologue (argtypes() is DSL-only and
 # resolves to base::args when the function is run in R)
 functional_tests_ref <- functional_tests
 body(functional_tests_ref) <- as.call(as.list(body(functional_tests))[-2])
@@ -236,7 +236,7 @@ diag_ref <- function(x, nrow, ncol) {
 }
 
 diag_fct <- function(x, nr, nc) {
-  args(
+  argtypes(
     x |> type(vec(double)),
     nr |> type(integer),
     nc |> type(integer)
@@ -278,7 +278,7 @@ expect_true(grepl("etr::diag<etr::ReverseDouble>", diag_src_rev, fixed = TRUE))
 # relies on the left operand being FALSE stopping evaluation before v[[j]] is
 # read with an out-of-range j
 insertion_sort <- function(v) {
-  args(v |> type(vec(double)))
+  argtypes(v |> type(vec(double)))
   n <- length(v)
   for (i in 2L:n) {
     key <- v[[i]]

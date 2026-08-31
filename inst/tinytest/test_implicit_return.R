@@ -47,15 +47,15 @@ f <- function(x) {
 is_type(ret_type_of(f, function(x) x |> type(vec(double)), TRUE), "double", "scalar")
 
 # end to end
-f <- ast2ast::translate(function(x) { args(x |> type(double)); x^2 })
+f <- ast2ast::translate(function(x) { argtypes(x |> type(double)); x^2 })
 expect_equal(f(3), 9)
 f <- ast2ast::translate(function(x) {
-  args(x |> type(vec(double)))
+  argtypes(x |> type(vec(double)))
   s <- sum(x)
   s / length(x)
 })
 expect_equal(f(c(1, 2, 3, 4)), 2.5)
-f <- ast2ast::translate(function(x) { args(x |> type(vec(double))); x })
+f <- ast2ast::translate(function(x) { argtypes(x |> type(vec(double))); x })
 expect_equal(
   c(f(c(7, 8, 9))),
   c(7, 8, 9)
@@ -64,13 +64,13 @@ expect_equal(
 # ==========================================================================
 # 2. Tail if: each branch's last statement becomes a return
 # ==========================================================================
-f <- ast2ast::translate(function(x) { args(x |> type(double)); if (x > 0) 1 else 2 })
+f <- ast2ast::translate(function(x) { argtypes(x |> type(double)); if (x > 0) 1 else 2 })
 expect_equal(f(3), 1)
 expect_equal(f(-3), 2)
 
 # nested tail if
 f <- ast2ast::translate(function(x) {
-  args(x |> type(double))
+  argtypes(x |> type(double))
   if (x > 0) {
     if (x > 10) 3 else 2
   } else {
@@ -83,7 +83,7 @@ expect_equal(f(-1), 1)
 
 # else-if chain with a terminal else
 f <- ast2ast::translate(function(x) {
-  args(x |> type(double))
+  argtypes(x |> type(double))
   if (x == 1) 10 else if (x == 2) 20 else 30
 })
 expect_equal(f(1), 10)
@@ -98,7 +98,7 @@ tail_err <- "If the last statement is an if-block an else-branch is required!"
 # tail if, no else (was: falls off end -> UB / core dump)
 expect_error(
   ast2ast::translate(function(x) {
-    args(x |> type(double))
+    argtypes(x |> type(double))
     if (x > 0) return(1)
   }),
   pattern = "else-branch is required"
@@ -107,7 +107,7 @@ expect_error(
 # else-if chain, no terminal else
 expect_error(
   ast2ast::translate(function(x) {
-    args(x |> type(double))
+    argtypes(x |> type(double))
     if (x > 0) return(1) else if (x < 0) return(-1)
   }),
   pattern = "else-branch is required"
@@ -115,7 +115,7 @@ expect_error(
 
 # guard clause (if NOT the last statement) must NOT be flagged
 f <- ast2ast::translate(function(x) {
-  args(x |> type(double))
+  argtypes(x |> type(double))
   if (x < 0) return(-1)
   return(x * 2)
 })
@@ -124,7 +124,7 @@ expect_equal(f(4), 8)
 
 # guard nested inside a tail branch must NOT be flagged
 f <- ast2ast::translate(function(x) {
-  args(x |> type(double))
+  argtypes(x |> type(double))
   if (x > 0) {
     if (x == 1) return(99)
     return(x * 2)
@@ -152,7 +152,7 @@ expect_equal(ret_type_of(function() {}, function() {}, TRUE), "R_NilValue")
 
 # trailing loop, no return anywhere (was: fall off end)
 f <- ast2ast::translate(function(n) {
-  args(n |> type(integer))
+  argtypes(n |> type(integer))
   v <- numeric(n)
   for (i in 1:n) v[i] <- i * i
 })
@@ -160,7 +160,7 @@ expect_null(f(5L))
 
 # trailing print
 f <- ast2ast::translate(function(x) {
-  args(x |> type(double))
+  argtypes(x |> type(double))
   print(x)
 })
 expect_null(f(3))
@@ -170,7 +170,7 @@ expect_null(f(3))
 # ==========================================================================
 # r_fct: explicit return() alongside return(obj) is fine now
 f <- ast2ast::translate(function(x) {
-  args(x |> type(double))
+  argtypes(x |> type(double))
   if (x > 0) return(1) else return()
 })
 expect_equal(f(2), 1)
@@ -178,7 +178,7 @@ expect_null(f(-2))
 
 # r_fct: value return + valueless (loop) tail is fine
 f <- ast2ast::translate(function(x) {
-  args(x |> type(double))
+  argtypes(x |> type(double))
   if (x > 0) return(x * 2)
   for (i in 1:3) print(i)
 })
@@ -188,14 +188,14 @@ expect_null(f(-1))
 # XPtr: the same mix is a translation-time error
 expect_error(
   ast2ast::translate(function(x) {
-    args(x |> type(double))
+    argtypes(x |> type(double))
     if (x > 0) return(1.0) else return()
   }, output = "XPtr"),
   pattern = "every path"
 )
 expect_error(
   ast2ast::translate(function(x) {
-    args(x |> type(double))
+    argtypes(x |> type(double))
     if (x > 0) return(x * 2)
     for (i in 1:3) print(i)
   }, output = "XPtr"),
@@ -250,9 +250,9 @@ is_type(ret_type_of(f, function(a) a |> type(double), TRUE), "double", "matrix")
 # ==========================================================================
 # non-void inner fn -> its value is returned
 f <- ast2ast::translate(function(x) {
-  args(x |> type(double))
+  argtypes(x |> type(double))
   g <- fn(
-    args(),
+    argtypes(),
     return(double),
     return(13)
   )
@@ -264,9 +264,9 @@ expect_equal(f(1), 1)
 
 # void inner fn -> call kept for side effects, function returns NULL
 f <- ast2ast::translate(function(x) {
-  args(x |> type(double))
+  argtypes(x |> type(double))
   g <- fn(
-    args(),
+    argtypes(),
     return(void),
     print("hi")
   )
