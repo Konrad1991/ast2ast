@@ -1131,6 +1131,11 @@ struct Logical {
     }
     return *this;
   }
+  // scalar-ref RHS: DoubleRef -> Double -> Logical would be two user conversions
+  template<typename T> requires IsArithRefV<T> inline Logical& operator=(const T& r) {
+    *this = Logical(get_scalar_val(r));
+    return *this;
+  }
 };
 
 struct Integer {
@@ -1202,6 +1207,11 @@ struct Integer {
       val = static_cast<int>(arr_val.val);
       is_na = arr_val.is_na;
     }
+    return *this;
+  }
+  // scalar-ref RHS: DoubleRef -> Double -> Integer would be two user conversions
+  template<typename T> requires IsArithRefV<T> inline Integer& operator=(const T& r) {
+    *this = Integer(get_scalar_val(r));
     return *this;
   }
 };
@@ -1296,6 +1306,11 @@ struct Double {
       val = static_cast<double>(arr_val.val);
       is_na = arr_val.is_na;
     }
+    return *this;
+  }
+  // scalar-ref RHS: IntegerRef -> Integer -> Double would be two user conversions
+  template<typename T> requires IsArithRefV<T> inline Double& operator=(const T& r) {
+    *this = Double(get_scalar_val(r));
     return *this;
   }
 };
@@ -1416,6 +1431,11 @@ struct Dual {
       dot = 0;
       is_na_dot = false;
     }
+    return *this;
+  }
+  // scalar-ref RHS: DoubleRef -> Double -> Dual would be two user conversions
+  template<typename T> requires IsArithRefV<T> inline Dual& operator=(const T& r) {
+    *this = Dual(get_scalar_val(r));
     return *this;
   }
 };

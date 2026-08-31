@@ -69,3 +69,19 @@ image(seq(big$xmin, big$xmax, length.out = big$nx),
   seq(big$ymin, big$ymax, length.out = big$ny),
   t(sqrt(M)), col = pal, axes = FALSE, useRaster = TRUE)
 par(op)
+
+
+gifski::save_gif(
+  {
+    cx <- -0.743643887037151; cy <- 0.13182590420533   # seahorse valley
+    w <- 3.0
+    for (f in 1:140) {
+      it <- as.integer(250 + f * 14)
+      M  <- mb_cpp(900L, 900L, cx - w/2, cx + w/2, cy - w/2, cy + w/2, it)
+      par(mar = c(0, 0, 0, 0))
+      image(t(sqrt(M)), col = pal, axes = FALSE, useRaster = TRUE)
+      w <- w * 0.92                                     # ~25000x by the last frame
+    }
+  },
+  gif_file = "mandelbrot_zoom.gif", width = 700, height = 700, delay = 0.06
+)
