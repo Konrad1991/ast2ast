@@ -105,3 +105,65 @@ f <- function(a) {
 }
 fcpp <- ast2ast::translate(f)
 expect_equal(as.vector(fcpp(matrix(2.0, 1, 1))), 4)
+
+# --- the shape checks apply to a nested fn()'s argtypes() too ---------------
+# fn() has no R formals, but a duplicate entry is still rejected (parse_argtypes
+# would otherwise silently overwrite the first 'x')
+f <- function() {
+  g <- fn(
+    argtypes(x |> type(double), x |> type(vec(double))),
+    return(double),
+    { return(x) }
+  )
+  z <- 1.0
+  return(g(z))
+}
+expect_error(
+  ast2ast::translate(f, getsource = TRUE),
+  pattern = "argtypes\\(\\) declares 'x' more than once"
+)
+
+# a malformed entry in a nested fn() is caught with the same message as top-level
+f <- function() {
+  g <- fn(
+    argtypes(x + 1),
+    return(double),
+    { return(x) }
+  )
+  z <- 1.0
+  return(g(z))
+}
+expect_error(
+  ast2ast::translate(f, getsource = TRUE),
+  pattern = "is not of the form"
+)
+
+# --- the shape checks apply to a nested fn()'s argtypes() too ---------------
+# fn() has no R formals, but a duplicate / malformed entry is still rejected
+f <- function() {
+  g <- fn(
+    argtypes(x |> type(double), x |> type(double)),
+    return(double),
+    { return(x) }
+  )
+  z <- 1.0
+  return(g(z))
+}
+expect_error(
+  ast2ast::translate(f, getsource = TRUE),
+  pattern = "argtypes\\(\\) declares 'x' more than once"
+)
+
+f <- function() {
+  g <- fn(
+    argtypes(x + 1),
+    return(double),
+    { return(x) }
+  )
+  z <- 1.0
+  return(g(z))
+}
+expect_error(
+  ast2ast::translate(f, getsource = TRUE),
+  pattern = "is not of the form"
+)

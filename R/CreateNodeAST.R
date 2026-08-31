@@ -53,6 +53,11 @@ create_ast <- function(code, context, env, function_registry) {
     return_call <- parts[[2L]]
     body_block <- parts[[3L]]
 
+    # nested fn has no R formals -- still validate the argtypes() shape
+    # (well-formed entries, no duplicate names) that needs no signature;
+    # run before parse_argtypes so its message wins over parse_types'
+    argtypes_arg_names(args_call)
+
     fn <- fn_node$new()
     fn$function_registry <- function_registry$clone(deep = TRUE)
     fn$function_registry_outer <- function_registry
@@ -389,18 +394,17 @@ resolve_derivative <- function(derivative) {
   if (derivative == "reverse") return("etr::ReverseDouble")
 }
 
-# Validate a leading argtypes(...) block against the function's formals: it must
-# list every parameter exactly once, in the same order as the function signature
-# (the generated C++ parameter order follows argtypes(), not formals(f)). An
-# empty argtypes() is valid only for a function with no arguments; to use the
-# defaults, omit argtypes() entirely.
-argtypes_match_formals <- function(f, argtypes) {
-  formal_args <- names(formals(f))
-  entries <- as.list(argtypes)[-1L] # drop the `argtypes` head
-  if (length(entries) == 0L) {
-    if (length(formal_args) == 0L) return(invisible())
-    stop("argtypes() is empty, which is only valid for a function with no arguments")
+# Extract the declared argument names from an argtypes(...) call, checking the
+# parts that hold regardless of where the block sits: every entry must be
+# `<name> |> type(...)` (optionally wrapped in const()/ref()), and no name may
+# be declared twice. Shared by the top-level check (argtypes_match_formals) and
+# the nested-fn check in process().
+argtypes_arg_names <- function(argtypes) {
+  if (!is.call(argtypes) || !identical(deparse(argtypes[[1L]]), "argtypes")) {
+    stop("expected an argtypes(...) block")
   }
+  entries <- as.list(argtypes)[-1L] # drop the `argtypes` head
+  if (length(entries) == 0L) return(character(0L))
 
   # each entry is `<name> |> type(...)`, possibly `|> const()` / `|> ref()`;
   # the pipe desugars so const/ref wrap the type() call -- unwrap to the name
@@ -420,6 +424,21 @@ argtypes_match_formals <- function(f, argtypes) {
   if (length(dups) > 0L) {
     stop(sprintf("argtypes() declares %s more than once",
       paste0("'", dups, "'", collapse = ", ")))
+  }
+  at_names
+}
+
+# Validate a leading argtypes(...) block against the function's formals: it must
+# list every parameter exactly once, in the same order as the function signature
+# (the generated C++ parameter order follows argtypes(), not formals(f)). An
+# empty argtypes() is valid only for a function with no arguments; to use the
+# defaults, omit argtypes() entirely.
+argtypes_match_formals <- function(f, argtypes) {
+  formal_args <- names(formals(f))
+  at_names <- argtypes_arg_names(argtypes)
+  if (length(at_names) == 0L) {
+    if (length(formal_args) == 0L) return(invisible())
+    stop("argtypes() is empty, which is only valid for a function with no arguments")
   }
 
   extra <- setdiff(at_names, formal_args)
