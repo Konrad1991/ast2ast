@@ -115,15 +115,12 @@ expect_equal(fcpp_forward(y, x), matrix(c(3, 1, 2, 6), 2, 2))
 # df/dx4 = 5
 # df/dx5 = 4
 f <- function(y, x) {
+  args(y |> type(scalar(double)), x |> type(vec(double)))
   y <- x[[1L]] + x[[2L]]*x[[3L]] + x[[1L]]*x[[4L]]*x[[5L]]
   return(deriv(y, x))
 }
-args_f <- function(y, x) {
-  y |> type(scalar(double))
-  x |> type(vec(double))
-}
 fcpp_reverse <- ast2ast::translate(
-  f, args_f = args_f, derivative = "reverse"
+  f, derivative = "reverse"
 )
 y <- 0.0
 x <- c(1.0, 2.0, 3.0, 4.0, 5.0)
@@ -131,6 +128,7 @@ res <- fcpp_reverse(y, x)
 expect_equal(res, c(21, 3, 2, 5, 4), 5L)
 
 f <- function(y, x) {
+  args(y |> type(scalar(double)), x |> type(vec(double)))
   res <- numeric(length(x))
   for (i in 1L:length(x)) {
     seed(x, i)
@@ -141,12 +139,8 @@ f <- function(y, x) {
   }
   return(res)
 }
-args_f <- function(y, x) {
-  y |> type(scalar(double))
-  x |> type(vec(double))
-}
 fcpp_forward <- ast2ast::translate(
-  f, args_f = args_f, derivative = "forward"
+  f, derivative = "forward"
 )
 y <- 0.0
 x <- c(1.0, 2.0, 3.0, 4.0, 5.0)
@@ -165,17 +159,14 @@ expect_equal(res, c(21, 3, 2, 5, 4))
 #   dy1/dx1 = x4 = 3   dy1/dx4 = x1 = 2
 #   dy2/dx1 = 1        dy2/dx4 = 2*x4 = 6
 f <- function(y, x) {
+  args(y |> type(vec(double)), x |> type(vec(double)))
   d <- get_diag(matrix(x, 2, 2))
   y[[1L]] <- d[[1L]] * d[[2L]]
   y[[2L]] <- d[[1L]] + d[[2L]] * d[[2L]]
   jac <- deriv(y, x)
   return(jac)
 }
-args_f <- function(y, x) {
-  y |> type(vec(double))
-  x |> type(vec(double))
-}
-fcpp_reverse <- ast2ast::translate(f, args_f = args_f, derivative = "reverse")
+fcpp_reverse <- ast2ast::translate(f, derivative = "reverse")
 y <- c(0, 0)
 x <- c(2, 7, 8, 3)
 expect_equal(fcpp_reverse(y, x), matrix(c(3, 1, 0, 0, 0, 0, 2, 6), 2, 4))
@@ -192,6 +183,7 @@ expect_equal(fcpp_reverse(y, x), matrix(c(3, 1, 0, 0, 0, 0, 2, 6), 2, 4))
 #   y3=S12 -> (x3, x4, x1, x2)      = (3, 4, 1, 2)
 #   y4=S22 -> (0, 0, 2x3, 2x4)      = (0, 0, 6, 8)
 f <- function(y, x) {
+  args(y |> type(vec(double)), x |> type(vec(double)))
   S <- crossprod(matrix(x, 2, 2))
   y[[1L]] <- S[1L, 1L]
   y[[2L]] <- S[2L, 1L]
@@ -199,11 +191,7 @@ f <- function(y, x) {
   y[[4L]] <- S[2L, 2L]
   return(deriv(y, x))
 }
-args_f <- function(y, x) {
-  y |> type(vec(double))
-  x |> type(vec(double))
-}
-fcpp_reverse <- ast2ast::translate(f, args_f = args_f, derivative = "reverse")
+fcpp_reverse <- ast2ast::translate(f, derivative = "reverse")
 y <- c(0, 0, 0, 0)
 x <- c(1, 2, 3, 4)
 expect_equal(
@@ -222,6 +210,7 @@ expect_equal(
 #   y3=S12 -> (x2, x1, x4, x3)      = (2, 1, 4, 3)
 #   y4=S22 -> (0, 2x2, 0, 2x4)      = (0, 4, 0, 8)
 f <- function(y, x) {
+  args(y |> type(vec(double)), x |> type(vec(double)))
   S <- tcrossprod(matrix(x, 2, 2))
   y[[1L]] <- S[1L, 1L]
   y[[2L]] <- S[2L, 1L]
@@ -229,11 +218,7 @@ f <- function(y, x) {
   y[[4L]] <- S[2L, 2L]
   return(deriv(y, x))
 }
-args_f <- function(y, x) {
-  y |> type(vec(double))
-  x |> type(vec(double))
-}
-fcpp_reverse <- ast2ast::translate(f, args_f = args_f, derivative = "reverse")
+fcpp_reverse <- ast2ast::translate(f, derivative = "reverse")
 y <- c(0, 0, 0, 0)
 x <- c(1, 2, 3, 4)
 expect_equal(
@@ -252,16 +237,13 @@ expect_equal(
 #   dy1 = (-2, 0, -1, 0.25, 0.5, -0.125)
 #   dy2 = ( 0, 0,  0, -0.5, 0,    0.25)
 f <- function(y, x) {
+  args(y |> type(vec(double)), x |> type(vec(double)))
   R <- matrix(x[1L:4L], 2, 2)
   b <- x[5L:6L]
   y <- backsolve(R, b)
   return(deriv(y, x))
 }
-args_f <- function(y, x) {
-  y |> type(vec(double))
-  x |> type(vec(double))
-}
-fcpp_reverse <- ast2ast::translate(f, args_f = args_f, derivative = "reverse")
+fcpp_reverse <- ast2ast::translate(f, derivative = "reverse")
 y <- c(0, 0)
 x <- c(2, 99, 1, 4, 10, 8)
 expect_equal(
@@ -279,16 +261,13 @@ expect_equal(
 #   dy1 = (-2.5,  0,    0, 0,       0.5,   0  )
 #   dy2 = ( 0.625, -1.25, 0, -0.1875, -0.125, 0.25)
 f <- function(y, x) {
+  args(y |> type(vec(double)), x |> type(vec(double)))
   L <- matrix(x[1L:4L], 2, 2)
   b <- x[5L:6L]
   y <- forwardsolve(L, b)
   return(deriv(y, x))
 }
-args_f <- function(y, x) {
-  y |> type(vec(double))
-  x |> type(vec(double))
-}
-fcpp_reverse <- ast2ast::translate(f, args_f = args_f, derivative = "reverse")
+fcpp_reverse <- ast2ast::translate(f, derivative = "reverse")
 y <- c(0, 0)
 x <- c(2, 1, 99, 4, 10, 8)
 expect_equal(
@@ -343,9 +322,9 @@ expect_error(
 # --- seed()/unseed() reject a const-qualified target ------------------------
 f <- function() {
   g <- fn(
-    args_f = function(x) x |> type(vec(double)) |> const(),
-    return_value = type(double),
-    block = function(x) {
+    args(x |> type(vec(double)) |> const()),
+    return(double),
+    {
       seed(x, 1L)
       return(x[[1L]])
     }
@@ -360,9 +339,9 @@ expect_error(
 
 f <- function() {
   g <- fn(
-    args_f = function(x) x |> type(vec(double)) |> const(),
-    return_value = type(double),
-    block = function(x) {
+    args(x |> type(vec(double)) |> const()),
+    return(double),
+    {
       unseed(x, 1L)
       return(x[[1L]])
     }
@@ -439,13 +418,13 @@ types_f <- function() {
   )
 }
 f <- function(p) {
+  args(p |> type(Pair))
   p$y <- p$y*p$x*2
   jac <- deriv(p$y, p$x)
   return(jac)
 }
 fcpp <- ast2ast::translate(
   f,
-  args_f = function(p) p |> type(Pair),
   types_f = types_f, derivative = "reverse",
   verbose = FALSE
 )

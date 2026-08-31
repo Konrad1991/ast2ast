@@ -8,6 +8,10 @@ Rcpp::sourceCpp("/home/konrad/Documents/ast2ast/development/Benchmarks/stan_ad.c
 # Plain function
 # ------------------------------------------------------------------------------
 f_plain <- function(A, B) {
+  args(
+    A |> type(mat(double)) |> ref(),
+    B |> type(mat(double)) |> ref()
+  )
   C <- c(A %*% B)
   s <- 0.0
   for (i in seq_len(length(C))) {
@@ -15,15 +19,15 @@ f_plain <- function(A, B) {
   }
   return(s)
 }
-fp_args <- function(A, B) {
-  A |> type(mat(double)) |> ref()
-  B |> type(mat(double)) |> ref()
-}
-fp_cpp <- ast2ast::translate(f_plain, fp_args, verbose = FALSE)
+fp_cpp <- ast2ast::translate(f_plain, verbose = FALSE)
 
 # Reverse AD
 # ------------------------------------------------------------------------------
 f_rev <- function(A, B) {
+  args(
+    A |> type(mat(double)),
+    B |> type(mat(double))
+  )
   C <- c(A %*% B)
   s <- 0.0
   for (i in seq_len(length(C))) {
@@ -32,20 +36,20 @@ f_rev <- function(A, B) {
   res <- matrix(deriv(s, A), nrow(A), ncol(A))
   return(res)
 }
-fr_args <- function(A, B) {
-  A |> type(mat(double))
-  B |> type(mat(double))
-}
-fr_cpp <- ast2ast::translate(f_rev, fr_args, derivative = "reverse", verbose = FALSE)
+fr_cpp <- ast2ast::translate(f_rev, derivative = "reverse", verbose = FALSE)
 
 f_rev <- function(A, B) {
+  args(
+    A |> type(mat(double)),
+    B |> type(mat(double))
+  )
   f <- fn(
-    f_args = function(A_inner, B_inner) {
-      A_inner |> type(matrix(double))
+    args(
+      A_inner |> type(matrix(double)),
       B_inner |> type(mat(double)) |> ref()
-    },
-    return_value = type(mat(double)),
-    block = function(A_inner, B_inner) {
+    ),
+    return(mat(double)),
+    {
       C <- c(A_inner %*% B_inner)
       s <- 0.0
       for (i in seq_len(length(C))) {
@@ -58,15 +62,15 @@ f_rev <- function(A, B) {
   res <- f(A, B)
   return(res)
 }
-fr_args <- function(A, B) {
-  A |> type(mat(double))
-  B |> type(mat(double))
-}
-fr_cpp2 <- ast2ast::translate(f_rev, fr_args, derivative = "reverse", verbose = FALSE)
+fr_cpp2 <- ast2ast::translate(f_rev, derivative = "reverse", verbose = FALSE)
 
 # Forward AD
 # ------------------------------------------------------------------------------
 f_for <- function(A, B) {
+  args(
+    A |> type(mat(double)),
+    B |> type(mat(double))
+  )
   res <- numeric(nrow(A) * ncol(A))
   for (i in seq_len(length(A))) {
     seed(A, i)
@@ -80,7 +84,7 @@ f_for <- function(A, B) {
   }
   return(matrix(res, nrow(A), ncol(A)))
 }
-ff_cpp <- ast2ast::translate(f_for, fr_args, derivative = "forward", verbose = FALSE)
+ff_cpp <- ast2ast::translate(f_for, derivative = "forward", verbose = FALSE)
 
 # Benchmark
 # ------------------------------------------------------------------------------

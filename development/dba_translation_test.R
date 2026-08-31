@@ -35,13 +35,18 @@ types_f_dba <- function() {
 }
 
 solve_h_dba <- function(Kd, h0, d0) {
+  args(
+    Kd |> type(double),
+    h0 |> type(vec(double)),
+    d0 |> type(vec(double))
+  )
   equation_h_dba <- fn(
-    args_f = function(h, extra) {
-      h |> type(double) |> const()
+    args(
+      h |> type(double) |> const(),
       extra |> type(HDBAParams) |> const()
-    },
-    return_value = type(double),
-    block = function(h, extra) {
+    ),
+    return(double),
+    {
       if (h <= 0) {
         return(Inf)
       }
@@ -94,15 +99,7 @@ solve_h_dba <- function(Kd, h0, d0) {
   return(result)
 }
 
-fcpp_dba <- ast2ast::translate(
-  solve_h_dba,
-  args_f = function(Kd, h0, d0) {
-    Kd |> type(double)
-    h0 |> type(vec(double))
-    d0 |> type(vec(double))
-  },
-  types_f = types_f_dba
-)
+fcpp_dba <- ast2ast::translate(solve_h_dba, types_f = types_f_dba)
 
 # --- plain-R reference (tryCatch/ifelse kept, for comparison only) --------
 equation_h_dba_ref <- function(h, Kd, h0, d0) {
@@ -200,13 +197,17 @@ types_f_loss <- function() {
 }
 
 lossFctDBA <- function(parameter, env) {
+  args(
+    parameter |> type(vec(double)),
+    env |> type(LossEnv)
+  )
   equation_h_dba <- fn(
-    args_f = function(h, extra) {
-      h |> type(double) |> const()
+    args(
+      h |> type(double) |> const(),
       extra |> type(HDBAParams) |> const()
-    },
-    return_value = type(double),
-    block = function(h, extra) {
+    ),
+    return(double),
+    {
       if (h <= 0) {
         return(Inf)
       }
@@ -298,14 +299,7 @@ lossFctDBA <- function(parameter, env) {
   return(total / count)
 }
 
-fcpp_loss <- ast2ast::translate(
-  lossFctDBA,
-  args_f = function(parameter, env) {
-    parameter |> type(vec(double))
-    env |> type(LossEnv)
-  },
-  types_f = types_f_loss
-)
+fcpp_loss <- ast2ast::translate(lossFctDBA, types_f = types_f_loss)
 
 signal_mat <- matrix(c(0.1, 0.3, 0.5, 0.2, 0.4, 0.6), nrow = 3, ncol = 2)
 env_in <- structure(

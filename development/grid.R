@@ -29,29 +29,28 @@ types_f_ida <- function() {
   )
 }
 
-args_f_loss_ida <- function(parameter, add_params) {
-  parameter |> type(vec(double))
-  add_params |> type(AddParamsIda)
-}
-
 loss_fct_ida_a2a <- function(parameter, add_params) {
+  args(
+    parameter |> type(vec(double)),
+    add_params |> type(AddParamsIda)
+  )
   solve_h_ida <- fn(
-    f_args = function(Kd, Kg, h0, d0, g) {
-      Kd |> type(double) |> const()
-      Kg |> type(double) |> const()
-      h0 |> type(double) |> const()
-      d0 |> type(double) |> const()
+    args(
+      Kd |> type(double) |> const(),
+      Kg |> type(double) |> const(),
+      h0 |> type(double) |> const(),
+      d0 |> type(double) |> const(),
       g |> type(vec(double)) |> const()
-    },
-    return_value = type(SolveD_HD_Result),
-    block = function(Kd, Kg, h0, d0, g) {
+    ),
+    return(SolveD_HD_Result),
+    {
       equation_h_ida <- fn(
-        f_args = function(h, params) {
-          h |> type(double)
+        args(
+          h |> type(double),
           params |> type(EquationParamsIda)
-        },
-        return_value = type(double),
-        block = function(h, params) {
+        ),
+        return(double),
+        {
           if (h <= 0) {
             return(1.797693e+308)
           }
@@ -152,7 +151,7 @@ loss_fct_ida_a2a <- function(parameter, add_params) {
 
 # 1. installed ast2ast first
 fcpp1 <- tryCatch(
-  ast2ast::translate(f = loss_fct_ida_a2a, args_f = args_f_loss_ida, types_f = types_f_ida),
+  ast2ast::translate(f = loss_fct_ida_a2a, types_f = types_f_ida),
   error = function(e) conditionMessage(e)
 )
 print(fcpp1)
@@ -161,7 +160,7 @@ print(fcpp1)
 files <- list.files("./R", full.names = TRUE)
 invisible(lapply(files, source))
 fcpp2 <- tryCatch(
-  translate(f = loss_fct_ida_a2a, args_f = args_f_loss_ida, types_f = types_f_ida),
+  translate(f = loss_fct_ida_a2a, types_f = types_f_ida),
   error = function(e) conditionMessage(e)
 )
 print(fcpp2)
@@ -174,6 +173,5 @@ str(args_f) # is NULL
 types_f <- spec$types_f
 translate(
   f = f,
-  args_f = args_f,
   types_f = types_f
 )

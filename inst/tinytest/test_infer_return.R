@@ -311,9 +311,9 @@ expect_equal(get_ret_type(f, function(a) a |> type(double), TRUE), "R_NilValue")
 # --- returning an inner function is rejected --------------------------
 f <- function() {
   g <- fn(
-    args_f = function(x) x |> type(double),
-    return_value = type(double),
-    block = function(x) return(x * x)
+    args(x |> type(double)),
+    return(double),
+    return(x * x)
   )
   return(g)
 }
@@ -322,9 +322,9 @@ expect_error(ast2ast::translate(f, output = "XPtr"))
 
 f <- function(a) {
   g <- fn(
-    args_f = function(x) x |> type(double),
-    return_value = type(double),
-    block = function(x) return(x * x)
+    args(x |> type(double)),
+    return(double),
+    return(x * x)
   )
   if (a == 1) {
     return(g)

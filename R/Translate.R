@@ -1,5 +1,4 @@
 translate <- function(f,
-                      args_f = NULL,
                       types_f = NULL,
                       output = "R",
                       derivative = NULL,
@@ -9,7 +8,6 @@ translate <- function(f,
                       )
 {
   stopifnot("f is not a function" = is.function(f))
-  stopifnot("args_f is not a function" = is.function(args_f) || is.null(args_f))
   stopifnot("types_f is not a function" = is.function(types_f) || is.null(types_f))
   stopifnot("output is not of type character" = is.character(output))
   stopifnot("Output is neither 'R' nor 'XPtr'" = output %in% c("R", "XPtr"))
@@ -46,7 +44,7 @@ translate <- function(f,
     ), call. = FALSE)
   }
 
-  cpp_code <- translate_internally(f, args_f, types_f, derivative, name_f, r_fct, debug)
+  cpp_code <- translate_internally(f, types_f, derivative, name_f, r_fct, debug)
   if (getsource) return(cpp_code)
 
   compile(cpp_code, r_fct, verbose, as.character(name_f))

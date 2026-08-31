@@ -34,27 +34,31 @@ types_f_ida <- function() {
 
 # parameter: [Kga] only -- linear coeffs are profiled out via nnls() below.
 loss_fct_ida_a2a <- function(parameter, add_params) {
+  args(
+    parameter |> type(vec(double)),
+    add_params |> type(AddParamsIda)
+  )
   solve_h_ida <- fn(
-    f_args = function(Kd, Kg, h0, d0, g) {
-      Kd |> type(double) |> const()
-      Kg |> type(double) |> const()
-      h0 |> type(double) |> const()
-      d0 |> type(double) |> const()
+    args(
+      Kd |> type(double) |> const(),
+      Kg |> type(double) |> const(),
+      h0 |> type(double) |> const(),
+      d0 |> type(double) |> const(),
       g |> type(vec(double)) |> const()
-    },
-    return_value = type(SolveD_HD_Result),
-    block = function(Kd, Kg, h0, d0, g) {
+    ),
+    return(SolveD_HD_Result),
+    {
 
       # equation_h_ida_gda(h, Kd, Kg, h0, d0, g0), specialized to a single
       # unary-in-h root-find target -- Kd/Kg/h0/d0/g are read from `params`,
       # passed explicitly as uniroot()'s 5th argument, not via closure.
       equation_h_ida <- fn(
-        f_args = function(h, params) {
-          h |> type(double)
+        args(
+          h |> type(double),
           params |> type(EquationParamsIda)
-        },
-        return_value = type(double),
-        block = function(h, params) {
+        ),
+        return(double),
+        {
           if (h <= 0) {
             return(1.797693e+308)
           }
@@ -154,9 +158,4 @@ loss_fct_ida_a2a <- function(parameter, add_params) {
   return(total_err / add_params$n_sigs)
 }
 
-args_f_loss <- function(parameter, add_params) {
-  parameter |> type(vec(double))
-  add_params |> type(AddParamsIda)
-}
-
-loss_a2a <- translate(loss_fct_ida_a2a, args_f = args_f_loss, types_f = types_f_ida)
+loss_a2a <- translate(loss_fct_ida_a2a, types_f = types_f_ida)

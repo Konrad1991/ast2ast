@@ -361,9 +361,9 @@ test_no_action_error(f)
 # these are caught during type inference / return handling, not run_checks,
 # so drive them through the full translator
 inner_fn <- quote(fn(
-  args_f = function() {},
-  return_value = type(double),
-  block = function() {
+  args(),
+  return(double),
+  {
     return(3.14)
   }
 ))
@@ -421,8 +421,8 @@ f <- ast2ast::translate(function() { x <- T; if (x) return(1.0) else return(0.0)
 expect_equal(f(), 1)
 
 # --- unary + gets a specific message ---------------------------------
-e <- try(ast2ast::translate(function(x) { y <- +x; return(y) },
-  args_f = function(x) x |> type(double)), silent = TRUE)
+e <- try(ast2ast::translate(function(x) { args(x |> type(double)); y <- +x; return(y) }),
+  silent = TRUE)
 expect_true(inherits(e, "try-error"))
 expect_true(grepl("Unary '+' is not supported",
   attributes(e)[["condition"]]$message, fixed = TRUE))

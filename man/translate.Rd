@@ -4,7 +4,6 @@
 \usage{
 translate(
   f,
-  args_f = NULL,
   types_f = NULL,
   output = "R",
   derivative = NULL,
@@ -14,9 +13,9 @@ translate(
 )
 }
 \arguments{
-  \item{f}{An R function to be translated into C++.}
-  \item{args_f}{A helper function that defines the types of the arguments of \code{f}.
-    Optional; defaults to \code{NULL}. See the Details section.}
+  \item{f}{An R function to be translated into C++. Argument types are declared
+    with an \code{args(...)} block as the first statement of its body; see the
+    Details section.}
   \item{types_f}{A helper function that declares custom struct types via
     \code{new_type()}, for use as argument types, variable types, or slot
     types inside \code{f}. Optional; defaults to \code{NULL}. See the
@@ -104,13 +103,17 @@ translate(
     Scalars in ast2ast differ from R: in R, scalars are length-1 vectors, but in C++ they are true scalars and cannot be subset.
   }
   \subsection{Argument types}{
-    Arguments default to \code{matrix(double)} if \code{args_f} is \code{NULL}.
-    To override, supply a function that annotates each argument:
+    Arguments default to \code{matrix(double)} if \code{f}'s body has no
+    \code{args(...)} block. To override, make \code{args(...)} the first
+    statement of the body, one \code{type()} annotation per argument:
     \preformatted{
-      f_args <- function(a, b, c) {
-        a |> type(borrow_vec(double)) |> ref()
-        b |> type(borrow_mat(double)) |> ref() |> const()
-        c |> type(double) |> ref()
+      f <- function(a, b, c) {
+        args(
+          a |> type(borrow_vec(double)) |> ref(),
+          b |> type(borrow_mat(double)) |> ref() |> const(),
+          c |> type(double) |> ref()
+        )
+        # ... body ...
       }
     }
     Supported extensions for arguments:
@@ -121,21 +124,20 @@ translate(
     }
   }
   \subsection{Inner functions}{
-    Functions can be defined inside \code{f} with \code{fn()}, which takes
-    \code{args_f} (argument types, same form as the top-level \code{args_f}),
-    \code{return_value} (the return type via \code{type()}), and \code{block}
-    (the function body; does not need to be wrapped in \code{\{ \}} for a
-    single statement, but wrapping it is fine too). Inner functions may call
-    each other, including recursively, and can be passed as values to
-    functions expecting one, such as \code{uniroot()}. A non-\code{const()}
-    parameter only binds to a bare variable at the call site, not to an
-    arbitrary expression (e.g. \code{x + 1}); declare the parameter
-    \code{const()} to accept expressions.
+    Functions can be defined inside \code{f} with \code{fn()}, which takes three
+    positional parts: \code{args(...)} (argument types, same form as the outer
+    \code{args(...)} block), \code{return(...)} (the return type), and a
+    \code{\{ \}} block (the function body; the braces are optional for a single
+    statement). Inner functions may call each other, including recursively, and
+    can be passed as values to functions expecting one, such as
+    \code{uniroot()}. A non-\code{const()} parameter only binds to a bare
+    variable at the call site, not to an arbitrary expression (e.g. \code{x + 1});
+    declare the parameter \code{const()} to accept expressions.
     \preformatted{
       factorial <- fn(
-        args_f = function(a) a |> type(int) |> const(),
-        return_value = type(int),
-        block = function(a) {
+        args(a |> type(int) |> const()),
+        return(int),
+        {
           if (a == 1L) return(a) else return(a * factorial(a - 1L))
         }
       )
@@ -292,27 +294,29 @@ types_f <- function() {
   new_type(Point, slots(x |> type(double), y |> type(double)))
 }
 f <- function(p) {
+  args(p |> type(Point))
   p$x <- p$x + 1
   return(p)
 }
-fcpp <- ast2ast::translate(f, args_f = function(p) p |> type(Point), types_f = types_f)
+fcpp <- ast2ast::translate(f, types_f = types_f)
 p <- structure(list(x = 1, y = 2), class = "Point")
 fcpp(p)
 
 # Inner functions and uniroot
 # ----------------------------------------------------------------
 f <- function(interval) {
+  args(interval |> type(vec(double)))
   g <- fn(
-    args_f = function(x) x |> type(double),
-    return_value = type(double),
-    block = function(x) {
+    args(x |> type(double)),
+    return(double),
+    {
       return(x^2 - 4)
     }
   )
   res <- uniroot(g, interval, 1e-10, 1000)
   return(res$root)
 }
-fcpp <- ast2ast::translate(f, args_f = function(interval) interval |> type(vec(double)))
+fcpp <- ast2ast::translate(f)
 fcpp(c(0, 10))
 
 # External pointer interface

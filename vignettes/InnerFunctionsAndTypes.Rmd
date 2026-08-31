@@ -34,18 +34,24 @@ attribute: `structure(list(x = 1, y = 2), class = "Point")`.
 
 ## An inner function operating on the type
 
-`fn()` defines a function local to `f`. It takes `args_f` (argument types),
-`return_value` (return type), and `block` (the function body):
+`fn()` defines a function local to `f`. It takes three positional parts:
+`args(...)` (argument types), `return(...)` (return type), and a `{ }` block
+(the function body). The outer function declares its own argument types with
+`args(...)` as the first statement of its body:
 
 ```{r}
 f <- function(p, q) {
+  args(
+    p |> type(Point),
+    q |> type(Point)
+  )
   squared_dist <- fn(
-    args_f = function(a, b) {
-      a |> type(Point) |> const() |> ref()
+    args(
+      a |> type(Point) |> const() |> ref(),
       b |> type(Point) |> const() |> ref()
-    },
-    return_value = type(double),
-    block = function(a, b) {
+    ),
+    return(double),
+    {
       dx <- a$x - b$x
       dy <- a$y - b$y
       return(dx * dx + dy * dy)
@@ -58,14 +64,7 @@ f <- function(p, q) {
 ## Translating and calling it
 
 ```{r}
-fcpp <- ast2ast::translate(
-  f,
-  args_f = function(p, q) {
-    p |> type(Point)
-    q |> type(Point)
-  },
-  types_f = types_f
-)
+fcpp <- ast2ast::translate(f, types_f = types_f)
 
 p <- structure(list(x = 0, y = 0), class = "Point")
 q <- structure(list(x = 3, y = 4), class = "Point")

@@ -117,21 +117,24 @@ f <- function(a) {
 
 ### Default behavior
 
-If `args_f = NULL`, all arguments default to: `matrix(double)`, as this is most convinient for numeric code.
+If no `args(...)` block is present, all arguments default to `matrix(double)`, as this is most convinient for numeric code.
 
 ---
 
-### Using `args_f`
+### Using `args()`
 
-To control argument types, provide a helper function via `args_f`. It has the same argument list as `f` and assigns types using `type()`:
+To control argument types, make `args(...)` the **first statement** of `f`'s body. Each entry names one of `f`'s arguments and assigns its type with `type()`:
 
 ```{r, eval = FALSE}
-f_args <- function(a, b, c) {
-  a |> type(vec(double))
-  b |> type(mat(double))
-  c |> type(double)
+f <- function(a, b, c) {
+  args(
+    a |> type(vec(double)),
+    b |> type(mat(double)),
+    c |> type(double)
+  )
+  # ... body ...
 }
-f_cpp <- ast2ast::translate(f, args_f = f_args)
+f_cpp <- ast2ast::translate(f)
 ```
 
 ---
@@ -147,10 +150,13 @@ For arguments, you can additionally control how values are passed:
 Example:
 
 ```{r, eval = FALSE}
-f_args <- function(a, b, c) {
-  a |> type(borrow_vec(double)) |> ref()           # mutable, passed by reference
-  b |> type(borrow_mat(double)) |> ref() |> const()# read-only matrix reference
-  c |> type(double) |> ref()                       # scalar reference (XPtr only)
+f <- function(a, b, c) {
+  args(
+    a |> type(borrow_vec(double)) |> ref(),            # mutable, passed by reference
+    b |> type(borrow_mat(double)) |> ref() |> const(), # read-only matrix reference
+    c |> type(double) |> ref()                         # scalar reference (XPtr only)
+  )
+  # ... body ...
 }
 ```
 
@@ -321,23 +327,23 @@ Rather than hiding differentiation behind abstractions, ast2ast treats derivativ
 
 Functions can be defined inside `f` using `fn()`. This is required whenever a function
 needs to be passed as a value, e.g. to `uniroot()`. An inner function is declared with
-three parts: `args_f` (types of its arguments, same as the top-level `args_f`),
-`return_value` (its return type via `type()`), and `block` (the R code, same signature
-as `args_f`). `block`'s body does not need to be wrapped in `{ }` for a single statement,
-but wrapping it is fine too.
+three positional parts: `args(...)` (types of its arguments, same form as the outer
+`args(...)` block), `return(...)` (its return type), and a `{ }` block (the R code).
+A single-statement body does not need the `{ }`, but wrapping it is fine too.
 
 ```{r, eval = FALSE}
 f <- function(a) {
+  args(a |> type(int))
   factorial <- fn(
-    args_f = function(a) a |> type(int) |> const(),
-    return_value = type(int),
-    block = function(a) {
+    args(a |> type(int) |> const()),
+    return(int),
+    {
       if (a == 1L) return(a) else return(a * factorial(a - 1L))
     }
   )
   return(factorial(a))
 }
-fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(int))
+fcpp <- ast2ast::translate(f)
 ```
 
 An inner function's non-`const` parameters only bind to bare variables passed at the
@@ -348,9 +354,9 @@ an expression:
 
 ```{r, eval = FALSE}
 sq <- fn(
-  args_f = function(x) x |> type(double) |> const(),  # const -- accepts expressions
-  return_value = type(double),
-  block = function(x) return(x * x)
+  args(x |> type(double) |> const()),  # const -- accepts expressions
+  return(double),
+  return(x * x)
 )
 # sq(a + b) is fine; without const() on x, only sq(a) (a bare variable) would be.
 ```
@@ -360,17 +366,18 @@ functions expecting a function argument, e.g. `uniroot`:
 
 ```{r, eval = FALSE}
 f <- function(interval) {
+  args(interval |> type(vec(double)))
   g <- fn(
-    args_f = function(x) x |> type(double),
-    return_value = type(double),
-    block = function(x) {
+    args(x |> type(double)),
+    return(double),
+    {
       return(x^2 - 4)
     }
   )
   res <- uniroot(g, interval, 1e-10, 1000)
   return(res$root)
 }
-fcpp <- ast2ast::translate(f, args_f = function(interval) interval |> type(vec(double)))
+fcpp <- ast2ast::translate(f)
 ```
 
 `uniroot(f, interval, tol, maxiter)` returns a struct with fields `root`, `f_root`,
@@ -384,8 +391,7 @@ vector directly.
 ## Custom types (`new_type`)
 
 Besides scalars, vectors, matrices and arrays, **ast2ast** supports user-defined struct
-types. They are declared via a `types_f` helper function (analogous to `args_f`) and
-passed to `translate()`:
+types. They are declared in a `types_f` helper function passed to `translate()`:
 
 ```{r, eval = FALSE}
 types_f <- function() {
@@ -393,15 +399,12 @@ types_f <- function() {
 }
 
 f <- function(p) {
+  args(p |> type(Point))
   p$x <- p$x + 1
   return(p)
 }
 
-fcpp <- ast2ast::translate(
-  f,
-  args_f = function(p) p |> type(Point),
-  types_f = types_f
-)
+fcpp <- ast2ast::translate(f, types_f = types_f)
 
 p <- structure(list(x = 1, y = 2), class = "Point")
 fcpp(p)

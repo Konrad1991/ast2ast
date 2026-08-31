@@ -13,6 +13,11 @@
 library(ast2ast)
 
 gp_nll <- function(X, y, logtheta) {
+  args(
+    X        |> type(mat(double)),
+    y        |> type(vec(double)),
+    logtheta |> type(vec(double))
+  )
   n <- nrow(X)
   d <- ncol(X)
   sf2 <- exp(2.0 * logtheta[[d + 1L]])
@@ -41,6 +46,11 @@ gp_nll <- function(X, y, logtheta) {
 
 # same body, ending in deriv(nll, logtheta) -- the DSL has no closures / calls
 gp_grad <- function(X, y, logtheta) {
+  args(
+    X        |> type(mat(double)),
+    y        |> type(vec(double)),
+    logtheta |> type(vec(double))
+  )
   n <- nrow(X)
   d <- ncol(X)
   sf2 <- exp(2.0 * logtheta[[d + 1L]])
@@ -68,14 +78,8 @@ gp_grad <- function(X, y, logtheta) {
   return(deriv(nll, logtheta))
 }
 
-args_gp <- function(X, y, logtheta) {
-  X        |> type(mat(double))
-  y        |> type(vec(double))
-  logtheta |> type(vec(double))
-}
-
-nll_cpp  <- ast2ast::translate(gp_nll,  args_f = args_gp)
-grad_cpp <- ast2ast::translate(gp_grad, args_f = args_gp, derivative = "reverse")
+nll_cpp  <- ast2ast::translate(gp_nll)
+grad_cpp <- ast2ast::translate(gp_grad, derivative = "reverse")
 
 # toy data: 8 inputs, only dims 1 and 3 drive y
 set.seed(1)

@@ -77,11 +77,9 @@ expected_to_find <- function(AST, fcts_expected, literals_expected, vars_expecte
 # Wrong declared return value
 f <- function() {
   fct <- fn(
-    args_f = function(a) {
-      a |> type(double)
-    },
-    return_value = type(invalid),
-    block = function(a) {}
+    args(a |> type(double)),
+    return(invalid),
+    {}
   )
 }
 error <- try(ast2ast::translate(f), silent = TRUE)
@@ -92,11 +90,9 @@ expect_equal(
 # lambda function not assigned to variable
 f <- function() {
   fn(
-    args_f = function(a) {
-      a |> type(double)
-    },
-    return_value = type(void),
-    block = function(a) {}
+    args(a |> type(double)),
+    return(void),
+    {}
   )
 }
 error <- try(ast2ast::translate(f), silent = TRUE)
@@ -107,9 +103,9 @@ expect_equal(
 # Everything empty works
 f <- function() {
   fct <- fn(
-    args_f = function() {},
-    return_value = type(void),
-    block = function() {}
+    args(),
+    return(void),
+    {}
   )
 }
 AST <- ast_of(f)
@@ -244,14 +240,14 @@ expect_equal(AST$stringify_error_line(), "")
 # --- lambda functions -----------------------------------------------------
 f <- function() {
   g <- fn(
-    args_f = function() {},
-    return_value = type(vec(double)),
-    block = function() {
-      
+    args(),
+    return(vec(double)),
+    {
+
       h <- fn(
-        args_f = function() {},
-        return_value = type(vec(double)),
-        block = function() {
+        args(),
+        return(vec(double)),
+        {
           return(c(1.1, 2.2))
         }
       )

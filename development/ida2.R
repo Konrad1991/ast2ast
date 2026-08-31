@@ -53,32 +53,38 @@ types_f_ida <- function() {
 # through a length-1 `parameter` vector (that vector only existed for R's
 # own stats::optimize() calling convention).
 grid_search_ida_a2a <- function(lowerBounds, upperBounds, nGrid, add_params) {
+  args(
+    lowerBounds |> type(double),
+    upperBounds |> type(double),
+    nGrid |> type(int),
+    add_params |> type(AddParamsIda)
+  )
   loss_fn <- fn(
-    f_args = function(Kga, add_params) {
-      Kga |> type(double)
+    args(
+      Kga |> type(double),
       add_params |> type(AddParamsIda)
-    },
-    return_value = type(LossEval),
-    block = function(Kga, add_params) {
+    ),
+    return(LossEval),
+    {
       eval_out |> type(LossEval)
       eval_out$betas <- numeric(3L * add_params$n_sigs)
       solve_h_ida <- fn(
-        f_args = function(Kd, Kg, h0, d0, g) {
-          Kd |> type(double) |> const()
-          Kg |> type(double) |> const()
-          h0 |> type(double) |> const()
-          d0 |> type(double) |> const()
+        args(
+          Kd |> type(double) |> const(),
+          Kg |> type(double) |> const(),
+          h0 |> type(double) |> const(),
+          d0 |> type(double) |> const(),
           g |> type(vec(double)) |> const()
-        },
-        return_value = type(SolveD_HD_Result),
-        block = function(Kd, Kg, h0, d0, g) {
+        ),
+        return(SolveD_HD_Result),
+        {
           equation_h_ida <- fn(
-            f_args = function(h, params) {
-              h |> type(double)
+            args(
+              h |> type(double),
               params |> type(EquationParamsIda)
-            },
-            return_value = type(double),
-            block = function(h, params) {
+            ),
+            return(double),
+            {
               if (h <= 0) {
                 return(1.797693e+308)
               }
@@ -205,11 +211,4 @@ grid_search_ida_a2a <- function(lowerBounds, upperBounds, nGrid, add_params) {
   return(res)
 }
 
-args_f_grid_search <- function(lowerBounds, upperBounds, nGrid, add_params) {
-  lowerBounds |> type(double)
-  upperBounds |> type(double)
-  nGrid |> type(int)
-  add_params |> type(AddParamsIda)
-}
-
-loss_a2a <- ast2ast::translate(grid_search_ida_a2a , args_f = args_f_grid_search, types_f = types_f_ida)
+loss_a2a <- ast2ast::translate(grid_search_ida_a2a, types_f = types_f_ida)

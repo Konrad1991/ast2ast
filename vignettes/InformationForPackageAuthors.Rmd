@@ -111,14 +111,14 @@ The XPtr interfaces creates an external pointer which can be used in other C++ p
 
 ```{r, eval = TRUE, echo = TRUE}
 f <- function(a, b) {
+  args(
+    a |> type(vec(double)) |> ref(),
+    b |> type(vec(double)) |> ref()
+  )
   c <- a + b
   return(c)
 }
-f_args <- function(a, b) {
-  a |> type(vec(double)) |> ref()
-  b |> type(vec(double)) |> ref()
-}
-fcpp <- ast2ast::translate(f, f_args, output = "XPtr")
+fcpp <- ast2ast::translate(f, output = "XPtr")
 ```
 
 #### Afterwards the external pointer is used in an R package

@@ -6,12 +6,11 @@ files <- list.files("./R", full.names = TRUE)
 invisible(lapply(files, source))
 
 f <- function(interval) {
+  args(interval |> type(vec(double)))
   g <- fn(
-    f_args = function(a) {
-      a |> type(double)
-    },
-    return_value = type(double),
-    block = function(a) {
+    args(a |> type(double)),
+    return(double),
+    {
       return(a^2 - 4)
     }
   )

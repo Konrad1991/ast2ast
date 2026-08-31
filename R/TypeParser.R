@@ -258,6 +258,43 @@ parse_types <- function(block, fct_input, r_fct, real_type, known_types = list()
 }
 
 # =====================================================================
+# fn() surface: args(...) / return(spec)
+# parse_types + report every entry that failed to resolve
+# =====================================================================
+parse_types_with_check <- function(args, fct_input, r_fct, real_type, known_types = list()) {
+  l <- parse_types(args, fct_input, r_fct, real_type, known_types)
+  wrong_input <- FALSE
+  for (i in seq_len(length(l))) {
+    e <- l[[i]]$error
+    if (!is.null(e) && e != "") {
+      print(sprintf("%s, for variable: %s", l[[i]]$error, l[[i]]$get_name()))
+      wrong_input <- TRUE
+    }
+  }
+  if (wrong_input) stop("Types for arguments are invalid")
+  l
+}
+
+parse_args <- function(obj, fct_input, r_fct, real_type, known_types = list()) {
+  obj <- as.list(obj)
+  stopifnot("Expected 'args' as first entry to fn" = deparse(obj[[1]]) == "args")
+  # drop srcref etc. -- parse_types matches on deparse(row[[1]])
+  annotations <- lapply(obj[-1], function(x) { attributes(x) <- NULL; x })
+  parse_types_with_check(annotations, fct_input, r_fct, real_type, known_types)
+}
+
+parse_return <- function(obj, r_fct, real_type, known_types = list()) {
+  obj <- as.list(obj)
+  stopifnot("Expected 'return' as first entry to fn" = deparse(obj[[1]]) == "return")
+  args <- obj[-1]
+  stopifnot("return can only contain one expression" = length(args) == 1L)
+  # keep the node's $error -- it is reported later as a "Wrong return type" message,
+  # not stopped here
+  expr <- str2lang(paste0("RETURN_TYPE |> type(", deparse1(args[[1L]]), ")"))
+  parse_types(list(expr), fct_input = FALSE, r_fct, real_type, known_types)
+}
+
+# =====================================================================
 # Build a type ad hoc (no source expression to parse, e.g. inferred
 # types of expressions such as subsetting, arithmetic, ...)
 # =====================================================================

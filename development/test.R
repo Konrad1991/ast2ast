@@ -19,18 +19,20 @@ f <- function() {
 }
 fcpp <- translate(f, verbose = TRUE)
 
-code <- quote(
+files <- list.files("./R", full.names = TRUE)
+invisible(lapply(files, source))
+code <- function() {
   g <- fn(
-    args_f(
+    args(
       a |> type(double),
       b |> type(double)
     ),
-    types(vec(double)),
+    return(vec(double)),
     {
       c <- a + b
       return(c(c))
     }
   )
-)
-code <- as.list(code)
-as.list(code[[3L]])
+}
+fcpp <- translate(code, getsource = TRUE)
+cat(fcpp, "\n")

@@ -8,6 +8,7 @@ library(ast2ast)
 
 # 1. Bubble sort ------------------------------------------------------------
 bubble_sort <- function(v) {
+  args(v |> type(vec(double)))
   n <- length(v)
   for (i in 1L:(n - 1L)) {
     for (j in 1L:(n - i)) {
@@ -20,13 +21,14 @@ bubble_sort <- function(v) {
   }
   return(v)
 }
-fcpp_bubble <- ast2ast::translate(bubble_sort, args_f = function(v) v |> type(vec(double)))
+fcpp_bubble <- ast2ast::translate(bubble_sort)
 v <- c(5, 3, 8, 1, 9, 2, 7)
 print(fcpp_bubble(v))
 print(sort(v))
 
 # 2. Sieve of Eratosthenes ---------------------------------------------------
 sieve <- function(n) {
+  args(n |> type(int))
   is_prime <- rep(TRUE, n)
   is_prime[[1L]] <- FALSE
   for (i in 2L:n) {
@@ -40,9 +42,7 @@ sieve <- function(n) {
   }
   return(is_prime)
 }
-fcpp_sieve <- ast2ast::translate(
-  sieve, args_f = function(n) n |> type(int)
-)
+fcpp_sieve <- ast2ast::translate(sieve)
 print(fcpp_sieve(30L))
 ref_sieve <- rep(TRUE, 30);
 ref_sieve[1] <- FALSE
@@ -57,6 +57,10 @@ print(ref_sieve)
 
 # 3. Binary search ------------------------------------------------------------
 binary_search <- function(v, target) {
+  args(
+    v |> type(vec(double)),
+    target |> type(double)
+  )
   lo <- 1L
   hi <- length(v)
   result <- -1L
@@ -73,16 +77,17 @@ binary_search <- function(v, target) {
   }
   return(result)
 }
-fcpp_bsearch <- ast2ast::translate(binary_search, args_f = function(v, target) {
-  v |> type(vec(double))
-  target |> type(double)
-})
+fcpp_bsearch <- ast2ast::translate(binary_search)
 sv <- c(1, 3, 5, 7, 9, 11, 13, 15)
 print(fcpp_bsearch(sv, 7))
 print(fcpp_bsearch(sv, 4))
 
 # 4. Euclidean GCD ------------------------------------------------------------
 gcd <- function(a, b) {
+  args(
+    a |> type(int),
+    b |> type(int)
+  )
   while (b != 0L) {
     tmp <- b
     b <- a %% b
@@ -90,15 +95,17 @@ gcd <- function(a, b) {
   }
   return(a)
 }
-fcpp_gcd <- ast2ast::translate(gcd, args_f = function(a, b) {
-  a |> type(int)
-  b |> type(int)
-})
+fcpp_gcd <- ast2ast::translate(gcd)
 print(fcpp_gcd(48L, 18L))
-print(gcd(48L, 18L))
+gcd_r <- gcd; body(gcd_r) <- as.call(as.list(body(gcd))[-2])
+print(gcd_r(48L, 18L))
 
 # 5. Manual matrix multiplication --------------------------------------------
 matmul_manual <- function(A, B) {
+  args(
+    A |> type(matrix(double)),
+    B |> type(matrix(double))
+  )
   n <- nrow(A)
   m <- ncol(B)
   k <- ncol(A)
@@ -114,10 +121,7 @@ matmul_manual <- function(A, B) {
   }
   return(C)
 }
-fcpp_matmul <- ast2ast::translate(matmul_manual, args_f = function(A, B) {
-  A |> type(matrix(double))
-  B |> type(matrix(double))
-})
+fcpp_matmul <- ast2ast::translate(matmul_manual)
 A <- matrix(as.numeric(1:6.0), nrow = 2, ncol = 3)
 B <- matrix(as.numeric(1.0:6.0), nrow = 3, ncol = 2)
 print(fcpp_matmul(A, B))
@@ -125,6 +129,7 @@ print(A %*% B)
 
 # 6. Insertion sort -----------------------------------------------------------
 insertion_sort <- function(v) {
+  args(v |> type(vec(double)))
   n <- length(v)
   for (i in 2L:n) {
     key <- v[[i]]
@@ -137,13 +142,14 @@ insertion_sort <- function(v) {
   }
   return(v)
 }
-fcpp_insertion <- ast2ast::translate(insertion_sort, args_f = function(v) v |> type(vec(double)))
+fcpp_insertion <- ast2ast::translate(insertion_sort)
 v2 <- c(9, 4, 6, 1, 3, 8)
 print(fcpp_insertion(v2))
 print(sort(v2))
 
 # 7. Reverse a vector in place -----------------------------------------------
 reverse_vec <- function(v) {
+  args(v |> type(vec(double)))
   n <- length(v)
   lo <- 1L
   hi <- n
@@ -156,7 +162,7 @@ reverse_vec <- function(v) {
   }
   return(v)
 }
-fcpp_reverse <- ast2ast::translate(reverse_vec, args_f = function(v) v |> type(vec(double)))
+fcpp_reverse <- ast2ast::translate(reverse_vec)
 v3 <- c(1, 2, 3, 4, 5)
 print(fcpp_reverse(v3))
 print(rev(v3))
@@ -166,6 +172,7 @@ types_f_vecpair <- function() {
   new_type(VecPair, slots(a |> type(vec(double)), b |> type(vec(double))))
 }
 dot_product <- function(p) {
+  args(p |> type(VecPair))
   n <- length(p$a)
   s <- 0.0
   for (i in 1L:n) {
@@ -173,15 +180,17 @@ dot_product <- function(p) {
   }
   return(s)
 }
-fcpp_dot <- ast2ast::translate(
-  dot_product, args_f = function(p) p |> type(VecPair), types_f = types_f_vecpair
-)
+fcpp_dot <- ast2ast::translate(dot_product, types_f = types_f_vecpair)
 p_in <- structure(list(a = c(1, 2, 3), b = c(4, 5, 6)), class = "VecPair")
 print(fcpp_dot(p_in))
 print(sum(c(1, 2, 3) * c(4, 5, 6)))
 
 # 9. Horner's method + forward-mode derivative, descending for-loop ---------
 horner_deriv <- function(coeffs, x0) {
+  args(
+    coeffs |> type(vec(double)),
+    x0 |> type(double)
+  )
   x |> type(double)
   x <- x0
   seed(x, 1L)
@@ -192,20 +201,14 @@ horner_deriv <- function(coeffs, x0) {
   }
   return(get_dot(result))
 }
-fcpp_horner <- ast2ast::translate(
-  horner_deriv,
-  args_f = function(coeffs, x0) {
-    coeffs |> type(vec(double))
-    x0 |> type(double)
-  },
-  derivative = "forward"
-)
+fcpp_horner <- ast2ast::translate(horner_deriv, derivative = "forward")
 # p(x) = 2 + 3x + 4x^2 -> p'(x) = 3 + 8x, at x=2 -> 19
 coeffs <- c(2, 3, 4)
 print(fcpp_horner(coeffs, 2))
 
 # 10. Selection sort ----------------------------------------------------------
 selection_sort <- function(v) {
+  args(v |> type(vec(double)))
   n <- length(v)
   for (i in 1L:(n - 1L)) {
     min_idx <- i
@@ -222,7 +225,7 @@ selection_sort <- function(v) {
   }
   return(v)
 }
-fcpp_selection <- ast2ast::translate(selection_sort, args_f = function(v) v |> type(vec(double)))
+fcpp_selection <- ast2ast::translate(selection_sort)
 v4 <- c(6, 2, 9, 1, 5, 3)
 print(fcpp_selection(v4))
 print(sort(v4))
@@ -235,9 +238,9 @@ print(sort(v4))
 # worth checking directly rather than guessing.
 f_recursive <- function() {
   factorial <- fn(
-    args_f = function(n) n |> type(int) |> const(),
-    return_value = type(int),
-    block = function(n) {
+    args(n |> type(int) |> const()),
+    return(int),
+    {
       if (n <= 1L) return(1L)
       return(n * factorial(n - 1L))
     }

@@ -3,12 +3,12 @@ trash <- lapply(files, source)
 
 f <- function() {
   f2 <- fn(
-    f_args = function(a, b) {
-      a |> type(double)
+    args(
+      a |> type(double),
       b |> type(double)
-    },
-    return_value = type(int),
-    block = function(a, b) {
+    ),
+    return(int),
+    {
       c <- as.integer(a + b)
       return(c)
     }

@@ -17,6 +17,13 @@
 library(ast2ast)
 
 lv_loss <- function(theta, y0, obs, dt, substeps) {
+  args(
+    theta    |> type(vec(double)),
+    y0       |> type(vec(double)),
+    obs      |> type(mat(double)),
+    dt       |> type(double),
+    substeps |> type(integer)
+  )
   a <- theta[[1L]]; b <- theta[[2L]]; d <- theta[[3L]]; g <- theta[[4L]]
   u <- y0[[1L]]; v <- y0[[2L]]
   nrec <- nrow(obs)
@@ -46,6 +53,13 @@ lv_loss <- function(theta, y0, obs, dt, substeps) {
 
 # same body, ending in deriv(loss, theta)  (no closures in the DSL)
 lv_grad <- function(theta, y0, obs, dt, substeps) {
+  args(
+    theta    |> type(vec(double)),
+    y0       |> type(vec(double)),
+    obs      |> type(mat(double)),
+    dt       |> type(double),
+    substeps |> type(integer)
+  )
   a <- theta[[1L]]; b <- theta[[2L]]; d <- theta[[3L]]; g <- theta[[4L]]
   u <- y0[[1L]]; v <- y0[[2L]]
   nrec <- nrow(obs)
@@ -73,16 +87,8 @@ lv_grad <- function(theta, y0, obs, dt, substeps) {
   return(deriv(loss, theta))
 }
 
-args_lv <- function(theta, y0, obs, dt, substeps) {
-  theta    |> type(vec(double))
-  y0       |> type(vec(double))
-  obs      |> type(mat(double))
-  dt       |> type(double)
-  substeps |> type(integer)
-}
-
-loss_cpp <- ast2ast::translate(lv_loss, args_f = args_lv)
-grad_cpp <- ast2ast::translate(lv_grad, args_f = args_lv, derivative = "reverse")
+loss_cpp <- ast2ast::translate(lv_loss)
+grad_cpp <- ast2ast::translate(lv_grad, derivative = "reverse")
 
 # -- data: integrate the truth, add noise -----------------------------------
 lv_traj_R <- function(theta, y0, nrec, dt, substeps) {

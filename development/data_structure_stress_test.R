@@ -8,6 +8,11 @@ library(ast2ast)
 
 # 1. Scalar types (double/int/logical) mixed in one expression -------------
 scalar_mix <- function(a, b, c) {
+  args(
+    a |> type(double),
+    b |> type(int),
+    c |> type(logical)
+  )
   d |> type(double)
   d <- a + b
   if (c) {
@@ -15,28 +20,26 @@ scalar_mix <- function(a, b, c) {
   }
   return(d)
 }
-fcpp_scalar_mix <- ast2ast::translate(scalar_mix, args_f = function(a, b, c) {
-  a |> type(double)
-  b |> type(int)
-  c |> type(logical)
-})
+fcpp_scalar_mix <- ast2ast::translate(scalar_mix)
 print(fcpp_scalar_mix(2.5, 3L, TRUE))
 print((2.5 + 3) * 2)
 
 # 2. Vector: create, subset, grow via assignment ----------------------------
 vec_ops <- function(n) {
+  args(n |> type(int))
   v <- numeric(n)
   for (i in 1L:n) {
     v[[i]] <- i * i
   }
   return(v)
 }
-fcpp_vec <- ast2ast::translate(vec_ops, args_f = function(n) n |> type(int))
+fcpp_vec <- ast2ast::translate(vec_ops)
 print(fcpp_vec(5L))
 print((1:5)^2)
 
 # 3. Matrix: create, index by [i,j], row/col reductions ---------------------
 mat_ops <- function(A) {
+  args(A |> type(matrix(double)))
   n <- nrow(A)
   m <- ncol(A)
   total <- 0.0
@@ -47,13 +50,14 @@ mat_ops <- function(A) {
   }
   return(total)
 }
-fcpp_mat <- ast2ast::translate(mat_ops, args_f = function(A) A |> type(matrix(double)))
+fcpp_mat <- ast2ast::translate(mat_ops)
 A <- matrix(as.numeric(1:12), nrow = 3, ncol = 4)
 print(fcpp_mat(A))
 print(sum(A))
 
 # 4. 3D array: create, index by [i,j,k] --------------------------------------
 array_ops <- function(dims) {
+  args(dims |> type(vec(int)))
   d1 <- dims[[1L]]
   d2 <- dims[[2L]]
   d3 <- dims[[3L]]
@@ -69,7 +73,7 @@ array_ops <- function(dims) {
   }
   return(total)
 }
-fcpp_array <- ast2ast::translate(array_ops, args_f = function(dims) dims |> type(vec(int)))
+fcpp_array <- ast2ast::translate(array_ops)
 print(fcpp_array(c(2L, 3L, 2L)))
 ref <- array(0, c(2, 3, 2))
 for (i in 1:2) for (j in 1:3) for (k in 1:2) ref[i, j, k] <- i + j + k
@@ -77,6 +81,10 @@ print(sum(ref))
 
 # 5. borrow_vec / borrow_mat as read-only function inputs --------------------
 borrow_sum <- function(v, M) {
+  args(
+    v |> type(borrow_vec(double)),
+    M |> type(borrow_mat(double))
+  )
   s <- 0.0
   for (i in 1L:length(v)) {
     s <- s + v[[i]]
@@ -88,10 +96,7 @@ borrow_sum <- function(v, M) {
   }
   return(s)
 }
-fcpp_borrow <- ast2ast::translate(borrow_sum, args_f = function(v, M) {
-  v |> type(borrow_vec(double))
-  M |> type(borrow_mat(double))
-})
+fcpp_borrow <- ast2ast::translate(borrow_sum)
 vv <- c(1, 2, 3)
 MM <- matrix(as.numeric(1:4), 2, 2)
 print(fcpp_borrow(vv, MM))
@@ -106,6 +111,7 @@ types_f_mixed <- function() {
   ))
 }
 mixed_sum <- function(m) {
+  args(m |> type(Mixed))
   s <- m$scalar_field
   for (i in 1L:length(m$vec_field)) {
     s <- s + m$vec_field[[i]]
@@ -117,9 +123,7 @@ mixed_sum <- function(m) {
   }
   return(s)
 }
-fcpp_mixed <- ast2ast::translate(
-  mixed_sum, args_f = function(m) m |> type(Mixed), types_f = types_f_mixed
-)
+fcpp_mixed <- ast2ast::translate(mixed_sum, types_f = types_f_mixed)
 m_in <- structure(
   list(scalar_field = 10, vec_field = c(1, 2, 3), mat_field = matrix(as.numeric(1:4), 2, 2)),
   class = "Mixed"
@@ -134,11 +138,10 @@ types_f_nested3 <- function() {
   new_type(Outer, slots(middle |> type(Middle), name_id |> type(int)))
 }
 nested_read <- function(o) {
+  args(o |> type(Outer))
   return(o$middle$inner$val + o$name_id + o$middle$tag)
 }
-fcpp_nested3 <- ast2ast::translate(
-  nested_read, args_f = function(o) o |> type(Outer), types_f = types_f_nested3
-)
+fcpp_nested3 <- ast2ast::translate(nested_read, types_f = types_f_nested3)
 o_in <- structure(
   list(
     middle = structure(list(inner = structure(list(val = 3.5), class = "Inner"), tag = 7L), class = "Middle"),
@@ -151,12 +154,11 @@ print(3.5 + 2 + 7)
 
 # 8. Nested-struct field mutation through the full chain ---------------------
 nested_write <- function(o) {
+  args(o |> type(Outer))
   o$middle$inner$val <- o$middle$inner$val + 100.0
   return(o)
 }
-fcpp_nested_write <- ast2ast::translate(
-  nested_write, args_f = function(o) o |> type(Outer), types_f = types_f_nested3
-)
+fcpp_nested_write <- ast2ast::translate(nested_write, types_f = types_f_nested3)
 print(fcpp_nested_write(o_in)$middle$inner$val)
 
 # 9. Collection of structs: build, iterate, mutate, print --------------------
@@ -164,6 +166,7 @@ types_f_point <- function() {
   new_type(Point, slots(x |> type(double), y |> type(double)))
 }
 collection_ops <- function(n) {
+  args(n |> type(int))
   pts <- vector("Point", n)
   for (i in 1L:n) {
     pts[[i]]$x <- i * 1.0
@@ -176,9 +179,7 @@ collection_ops <- function(n) {
   print(pts)
   return(s)
 }
-fcpp_collection <- ast2ast::translate(
-  collection_ops, args_f = function(n) n |> type(int), types_f = types_f_point
-)
+fcpp_collection <- ast2ast::translate(collection_ops, types_f = types_f_point)
 print(fcpp_collection(3L))
 print(sum(1:3) + sum((1:3) * 2))
 
@@ -188,15 +189,14 @@ types_f_scene <- function() {
   new_type(Scene, slots(points |> type(collection(Point)), n |> type(int)))
 }
 scene_sum <- function(sc) {
+  args(sc |> type(Scene))
   s <- 0.0
   for (i in 1L:sc$n) {
     s <- s + sc$points[[i]]$x + sc$points[[i]]$y
   }
   return(s)
 }
-fcpp_scene <- ast2ast::translate(
-  scene_sum, args_f = function(sc) sc |> type(Scene), types_f = types_f_scene
-)
+fcpp_scene <- ast2ast::translate(scene_sum, types_f = types_f_scene)
 pts_in <- list(
   structure(list(x = 1, y = 1), class = "Point"),
   structure(list(x = 2, y = 2), class = "Point")

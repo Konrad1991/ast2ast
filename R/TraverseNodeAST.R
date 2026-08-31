@@ -109,9 +109,16 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, oute
   }
   r_fct <- FALSE # Inner functions
   code <- node$AST
-  f <- eval(as.call(as.list(code)))
+  # rebuild a closure -- formals from the parsed args, body from the block -- so the
+  # downstream type passes can keep reading formals(f) / body(f)
+  arg_names <- vapply(node$args_f, function(a) a$get_name(), character(1))
+  f <- function() {}
+  if (length(arg_names)) {
+    formals(f) <- setNames(rep(list(quote(expr = )), length(arg_names)), arg_names)
+  }
+  body(f) <- code
   function_registry <- node$function_registry
-  args_f_raw <- eval(as.call(as.list(node$args_f_raw)))
+  args_f_raw <- node$args_f_raw
 
   info_env <- new.env(parent = emptyenv())
   info_env$r_fct <- FALSE
@@ -232,7 +239,7 @@ action_update_function_registry <- function(node, function_registry) {
     arg_names <- NA
   } else {
     arg_names <- vapply(fn$args_f, function(a) {
-      return(a$name)
+      return(a$get_name())
     }, character(1L))
   }
   node_type <- "nullary_node"

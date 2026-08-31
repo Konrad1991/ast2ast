@@ -1,4 +1,10 @@
 implicit_euler <- function(yinit, tstart, tend, h) {
+  args(
+    yinit |> type(vec(double)),
+    tstart |> type(double),
+    tend |> type(double),
+    h |> type(double)
+  )
   n <- length(yinit)
   nsteps <- as.integer((tend - tstart) / h + 0.5)   # +0.5: 2/0.1 is 19.999..., round is not in the DSL
   tcurrent <- tstart
@@ -9,12 +15,12 @@ implicit_euler <- function(yinit, tstart, tend, h) {
   for (k in 1L:n) yres[1L, k + 1L] <- yinit[[k]]
 
   ode <- fn(
-    args_f = function(y, t) {
-      y |> type(vec(double)) |> ref() |> const()
+    args(
+      y |> type(vec(double)) |> ref() |> const(),
       t |> type(double) |> const()
-    },
-    return_value = type(vec(double)),
-    block = function(y, t) {
+    ),
+    return(vec(double)),
+    {
       # Van der Pol (autonomous, mu = 5 -- no closures in the DSL so it is a literal)
       dy <- numeric(2L)
       dy[[1L]] <- y[[2L]]
@@ -24,27 +30,27 @@ implicit_euler <- function(yinit, tstart, tend, h) {
   )
 
   g <- fn(
-    args_f = function(ycurrent, ynew, h, tcurrent) {
-      ycurrent |> type(vec(double)) |> ref() |> const()
-      ynew |> type(vec(double)) |> ref() |> const()
-      h |> type(double)
+    args(
+      ycurrent |> type(vec(double)) |> ref() |> const(),
+      ynew |> type(vec(double)) |> ref() |> const(),
+      h |> type(double),
       tcurrent |> type(double)
-    },
-    return_value = type(vec(double)),
-    block = function(ycurrent, ynew, h, tcurrent) {
+    ),
+    return(vec(double)),
+    {
       ynew - h * ode(ynew, tcurrent) - ycurrent
     }
   )
 
   finite_differences <- fn(
-    args_f = function(x, xnew, h, tcurrent) {
-      x |> type(vec(double)) |> ref()
-      xnew |> type(vec(double)) |> ref()
-      h |> type(double) |> const()
+    args(
+      x |> type(vec(double)) |> ref(),
+      xnew |> type(vec(double)) |> ref(),
+      h |> type(double) |> const(),
       tcurrent |> type(double) |> const()
-    },
-    return_value = type(mat(double)),
-    block = function(x, xnew, h, tcurrent) {
+    ),
+    return(mat(double)),
+    {
       fx <- g(x, xnew, h, tcurrent)
       jac <- matrix(0, length(fx), length(xnew))
       for (i in seq_along(xnew)) {
@@ -57,16 +63,16 @@ implicit_euler <- function(yinit, tstart, tend, h) {
   )
 
   newton_raphson <- fn(
-    args_f = function(x, xnew, h, tol, max_iter, tcurrent) {
-      x |> type(vec(double)) |> ref()
-      xnew |> type(vec(double)) |> ref()
-      h |> type(double) |> const()
-      tol |> type(double) |> const()
-      max_iter |> type(int) |> const()
+    args(
+      x |> type(vec(double)) |> ref(),
+      xnew |> type(vec(double)) |> ref(),
+      h |> type(double) |> const(),
+      tol |> type(double) |> const(),
+      max_iter |> type(int) |> const(),
       tcurrent |> type(double) |> const()
-    },
-    return_value = type(vec(double)),
-    block = function(x, xnew, h, tol, max_iter, tcurrent) {
+    ),
+    return(vec(double)),
+    {
       for (iter in 1:max_iter) {
         fx <- g(x, xnew, h, tcurrent)
         if (sqrt(sum(fx^2)) < tol) {
@@ -92,14 +98,7 @@ implicit_euler <- function(yinit, tstart, tend, h) {
   return(yres)
 }
 
-args_f <- function(yinit, tstart, tend, h) {
-  yinit |> type(vec(double))
-  tstart |> type(double)
-  tend |> type(double)
-  h |> type(double)
-}
-
-fcpp <- ast2ast::translate(implicit_euler, args_f)
+fcpp <- ast2ast::translate(implicit_euler)
 
 # --- same fixed-step scheme in plain R, for a fair benchmark ---------------
 implicit_euler_R <- function(yinit, tstart, tend, h) {

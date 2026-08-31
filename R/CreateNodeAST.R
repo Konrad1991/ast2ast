@@ -42,32 +42,32 @@ create_ast <- function(code, context, env, function_registry) {
     fn$context <- context
     return(fn)
   } else if (operator == "fn") {
-    required_args <- c("args_f", "return_value", "block")
-    missing_args <- setdiff(required_args, names(code)[-1])
-    if (length(missing_args) > 0) {
-      stop(sprintf("fn: %s %s required", paste(missing_args, collapse = ", "),
-        if (length(missing_args) > 1) "are" else "is"))
+    parts <- as.list(code)[-1]
+    if (!is.null(names(parts)) && any(nzchar(names(parts)))) {
+      stop("fn() takes no named arguments -- use fn(args(...), return(spec), { ... })")
     }
+    if (length(parts) != 3L) {
+      stop("fn() takes exactly three parts: args(...), return(spec), and a { } block")
+    }
+    args_call <- parts[[1L]]
+    return_call <- parts[[2L]]
+    body_block <- parts[[3L]]
+
     fn <- fn_node$new()
     fn$function_registry <- function_registry$clone(deep = TRUE)
     fn$function_registry_outer <- function_registry
     fn$known_types <- env$known_types
-    fn$args_f <- code[["args_f"]][[3]] |> parse_input_args_for_fn_node(FALSE, env$real_type, env$known_types)
-    fn$args_f_raw <- code[["args_f"]]
-
-    return_type_expr <- deparse(code[["return_value"]])
-    return_type_expr <- paste0("RETURN_TYPE |> ", return_type_expr)
-    return_type_expr <- str2lang(return_type_expr)
-    return_type <- parse_types(list(return_type_expr), fct_input = FALSE, FALSE, env$real_type, env$known_types)
-    fn$return_type <- return_type[[1]]
-    fn$AST <- code[["block"]] |> wrap_in_block()
+    fn$args_f <- parse_args(args_call, TRUE, FALSE, env$real_type, env$known_types)
+    fn$args_f_raw <- args_call
+    fn$return_type <- parse_return(return_call, FALSE, env$real_type, env$known_types)[[1]]
+    fn$AST <- body_block |> wrap_in_block()
     fn$context <- context
     if (!(context %in% c("<-", "="))) {
       fn$error <- "You have to assign functions (fn) to variables"
     }
     return(fn)
   } else if (operator == "function") {
-    stop("Defining a function inside f is not supported. Use fn() to declare a nested function (args_f / return_value / block).")
+    stop("Defining a function inside f is not supported. Use fn() to declare a nested function: fn(args(...), return(spec), { ... }).")
   } else if (function_registry$is_group_functions(operator) || length(code) > 3) {
     # by adding length(code) > 3 also wrong fcts are added to the AST
     fn <- function_node$new()
@@ -389,11 +389,26 @@ resolve_derivative <- function(derivative) {
   if (derivative == "reverse") return("etr::ReverseDouble")
 }
 
-translate_internally <- function(fct, args_fct, types_fct, derivative, name_fct, r_fct, debug = TRUE) {
-  b <- body(fct) |> wrap_in_block()
+translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, debug = TRUE) {
   code_string <- list()
   real_type <- resolve_derivative(derivative)
   function_registry <- function_registry_global$clone()
+
+  # A leading args(...) statement in the body declares the argument types.
+  stmts <- as.list(body(fct) |> wrap_in_block())[-1]
+  is_args <- vapply(stmts, function(s) {
+    is.call(s) && identical(deparse(s[[1L]]), "args")
+  }, logical(1L))
+  args_fct <- NULL
+  if (length(is_args) >= 1L && is_args[[1L]]) {
+    args_fct <- stmts[[1L]]
+    stmts <- stmts[-1L]
+    is_args <- is_args[-1L]
+  }
+  if (any(is_args)) {
+    stop("args(...) must be the first statement of the function body")
+  }
+  b <- as.call(c(as.name("{"), stmts))
 
   known_types <- make_known_types(types_fct, r_fct, real_type)
 

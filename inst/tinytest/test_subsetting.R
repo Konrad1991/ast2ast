@@ -204,19 +204,17 @@ expect_error(fcpp(), pattern = "out of boundaries")
 # =============================================================================
 
 f <- function(M) {
+  args(M |> type(mat(double)) |> ref() |> const())
   return(M[3L, 1L])
 }
-fcpp <- ast2ast::translate(f, args_f = function(M) {
-  M |> type(mat(double)) |> ref() |> const()
-})
+fcpp <- ast2ast::translate(f)
 expect_error(fcpp(matrix(0.0, 2L, 2L)), pattern = "out of boundaries")
 
 f <- function(M) {
+  args(M |> type(mat(double)) |> ref() |> const())
   return(M[2L, 2L])
 }
-fcpp <- ast2ast::translate(f, args_f = function(M) {
-  M |> type(mat(double)) |> ref() |> const()
-})
+fcpp <- ast2ast::translate(f)
 expect_equal(fcpp(matrix(c(1.0, 2.0, 3.0, 4.0), 2L, 2L)), 4)
 
 # =============================================================================
@@ -224,19 +222,17 @@ expect_equal(fcpp(matrix(c(1.0, 2.0, 3.0, 4.0), 2L, 2L)), 4)
 # =============================================================================
 
 f <- function(M) {
+  args(M |> type(borrow_mat(double)))
   return(M[3L, 1L])
 }
-fcpp <- ast2ast::translate(f, args_f = function(M) {
-  M |> type(borrow_mat(double))
-})
+fcpp <- ast2ast::translate(f)
 expect_error(fcpp(matrix(0.0, 2L, 2L)), pattern = "out of boundaries")
 
 f <- function(M) {
+  args(M |> type(borrow_mat(double)))
   return(M[2L, 2L])
 }
-fcpp <- ast2ast::translate(f, args_f = function(M) {
-  M |> type(borrow_mat(double))
-})
+fcpp <- ast2ast::translate(f)
 expect_equal(fcpp(matrix(c(1.0, 2.0, 3.0, 4.0), 2L, 2L)), 4)
 
 # =============================================================================
@@ -263,6 +259,12 @@ expect_equal(fcpp(matrix(c(1.0, 2.0, 3.0, 4.0), 2L, 2L)), 4)
 # =============================================================================
 
 f <- function(mode, iv, dv, lv) {
+  args(
+    mode |> type(integer),
+    iv |> type(vec(integer)),
+    dv |> type(vec(double)),
+    lv |> type(vec(logical))
+  )
   if (mode == 1L) {
     iv[1] <- 5L
     dv[1] <- iv[1]
@@ -289,12 +291,7 @@ f <- function(mode, iv, dv, lv) {
     return(as.numeric(lv[1]))
   }
 }
-fcpp <- ast2ast::translate(f, args_f = function(mode, iv, dv, lv) {
-  mode |> type(integer)
-  iv |> type(vec(integer))
-  dv |> type(vec(double))
-  lv |> type(vec(logical))
-})
+fcpp <- ast2ast::translate(f)
 iv0 <- c(0L, 0L); dv0 <- c(0, 0); lv0 <- c(FALSE, FALSE)
 
 expect_equal(fcpp(1L, iv0, dv0, lv0), 5)    # int elem   -> double elem
@@ -310,55 +307,63 @@ expect_equal(fcpp(6L, iv0, dv0, lv0), 1)    # int elem -> logical elem
 # =============================================================================
 m0 <- matrix(as.double(1:12), 3, 4)
 
+# prepend args(a |> type(mat(double))) to a one-liner body, then translate
+tr_mat <- function(f) {
+  b <- body(f)
+  if (!is.call(b) || !identical(b[[1L]], as.name("{"))) b <- call("{", b)
+  body(f) <- as.call(c(as.name("{"), quote(args(a |> type(mat(double)))), as.list(b)[-1]))
+  ast2ast::translate(f)
+}
+
 # scalar linear index -> scalar
 f <- function(a) a[5L]
-fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+fcpp <- tr_mat(f)
 expect_equal(c(fcpp(m0)), m0[5])
 f <- function(a) a[[7L]]
-fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+fcpp <- tr_mat(f)
 expect_equal(c(fcpp(m0)), m0[[7]])
 
 # vector of linear indices -> vector
 f <- function(a) a[c(1L, 6L, 11L, 12L)]
-fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+fcpp <- tr_mat(f)
 expect_equal(c(fcpp(m0)), m0[c(1, 6, 11, 12)])
 
 # logical mask (same size) -> vector of the TRUE positions
 f <- function(a) a[a > 6.0]
-fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+fcpp <- tr_mat(f)
 expect_equal(c(fcpp(m0)), m0[m0 > 6])
 
 # logical mask recycled
 f <- function(a) a[c(TRUE, FALSE)]
-fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+fcpp <- tr_mat(f)
 expect_equal(c(fcpp(m0)), m0[c(TRUE, FALSE)])
 
 # reduction over a masked selection
 f <- function(a) sum(a[a > 6.0])
-fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+fcpp <- tr_mat(f)
 expect_equal(fcpp(m0), sum(m0[m0 > 6]))
 
 # masked assignment: scalar
 f <- function(a) { a[a > 6.0] <- 0.0; a }
-fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+fcpp <- tr_mat(f)
 r <- m0; r[r > 6] <- 0
 expect_equal(fcpp(m0), r)
 
 # masked assignment: vector (recycled)
 f <- function(a) { a[a > 6.0] <- rep(c(-1.0, -2.0), 3L); a }
-fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+fcpp <- tr_mat(f)
 r <- m0; r[r > 6] <- c(-1, -2)
 expect_equal(fcpp(m0), r)
 
 # linear scalar-index assignment
 f <- function(a) { a[5L] <- 99.0; a }
-fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+fcpp <- tr_mat(f)
 r <- m0; r[5] <- 99
 expect_equal(fcpp(m0), r)
 
 # still: a two-index form is unchanged
 f <- function(a) a[2L, 3L]
-fcpp <- ast2ast::translate(f, args_f = function(a) a |> type(mat(double)))
+fcpp <- tr_mat(f)
 expect_equal(c(fcpp(m0)), m0[2, 3])
 
 # reverse-mode AD through a masked selection: d/dx sum(x[x > 0]) picks the

@@ -4,14 +4,13 @@ library(ast2ast)
 # R reference for the DSL get_diag (base R diag() extracts a matrix diagonal)
 get_diag <- function(m) diag(m)
 
-f_args <- function(a, b, n, type_test) {
-  a |> type(vec(double))
-  b |> type(vec(double))
-  n |> type(integer)
-  type_test |> type(int)
-}
-
 functional_tests <- function(a, b, n, type_test) {
+  args(
+    a |> type(vec(double)),
+    b |> type(vec(double)),
+    n |> type(integer),
+    type_test |> type(int)
+  )
   if (type_test == 0) { # bubblesort V1
     size <- length(a)
     for (i in 1:size) {
@@ -173,19 +172,25 @@ functional_tests <- function(a, b, n, type_test) {
 
 }
 
-fcpp <- translate(functional_tests, f_args, getsource = FALSE, verbose = FALSE)
+fcpp <- translate(functional_tests, getsource = FALSE, verbose = FALSE)
+
+# plain-R oracle: same body without the args() prologue (args() is DSL-only and
+# resolves to base::args when the function is run in R)
+functional_tests_ref <- functional_tests
+body(functional_tests_ref) <- as.call(as.list(body(functional_tests))[-2])
+
 set.seed(42)
 a <- runif(100)
 b <- rnorm(10000)
 n <- 500L
 type_test <- 4L
 cpp <- fcpp(a, b, n, type_test)
-r <- functional_tests(a, b, n, type_test)
+r <- functional_tests_ref(a, b, n, type_test)
 
 checks <- logical(5L)
 for (i in 0L:4L) {
   cpp <- fcpp(a, b, n, i)
-  r <- functional_tests(a, b, n, i)
+  r <- functional_tests_ref(a, b, n, i)
   if (i == 4L) {
     # At the beginning the NA atre somehow NaN now. Minor issue for later
     checks[i + 1] <- all(r[501:length(r)] == cpp[501:length(cpp)])
@@ -198,25 +203,25 @@ expect_true(all(checks))
 # min/max/which (case 5) and all/any/rev (case 8) are exact (selection only);
 # modulo (6) and sum/prod (7) involve floating-point arithmetic, so compare with
 # a tolerance (R sum/prod use an extended-precision accumulator).
-expect_true(all(fcpp(a, b, n, 5L) == functional_tests(a, b, n, 5L)))
-expect_true(all(abs(fcpp(a, b, n, 6L) - functional_tests(a, b, n, 6L)) < 1e-8))
-expect_true(all(abs(fcpp(a, b, n, 7L) - functional_tests(a, b, n, 7L)) < 1e-8))
-expect_true(all(fcpp(a, b, n, 8L) == functional_tests(a, b, n, 8L)))
-expect_true(all(abs(fcpp(a, b, n, 9L) - functional_tests(a, b, n, 9L)) < 1e-8))
-expect_true(all(abs(fcpp(a, b, n, 10L) - functional_tests(a, b, n, 10L)) < 1e-8))
+expect_true(all(fcpp(a, b, n, 5L) == functional_tests_ref(a, b, n, 5L)))
+expect_true(all(abs(fcpp(a, b, n, 6L) - functional_tests_ref(a, b, n, 6L)) < 1e-8))
+expect_true(all(abs(fcpp(a, b, n, 7L) - functional_tests_ref(a, b, n, 7L)) < 1e-8))
+expect_true(all(fcpp(a, b, n, 8L) == functional_tests_ref(a, b, n, 8L)))
+expect_true(all(abs(fcpp(a, b, n, 9L) - functional_tests_ref(a, b, n, 9L)) < 1e-8))
+expect_true(all(abs(fcpp(a, b, n, 10L) - functional_tests_ref(a, b, n, 10L)) < 1e-8))
 # solve: system solve (vector result, case 11) and matrix inverse (case 12)
-expect_true(all(abs(fcpp(a, b, n, 11L) - functional_tests(a, b, n, 11L)) < 1e-8))
-expect_true(all(abs(fcpp(a, b, n, 12L) - functional_tests(a, b, n, 12L)) < 1e-8))
+expect_true(all(abs(fcpp(a, b, n, 11L) - functional_tests_ref(a, b, n, 11L)) < 1e-8))
+expect_true(all(abs(fcpp(a, b, n, 12L) - functional_tests_ref(a, b, n, 12L)) < 1e-8))
 # get_diag: extract the diagonal of a matrix (vector result)
-expect_true(all(abs(fcpp(a, b, n, 13L) - functional_tests(a, b, n, 13L)) < 1e-8))
+expect_true(all(abs(fcpp(a, b, n, 13L) - functional_tests_ref(a, b, n, 13L)) < 1e-8))
 # crossprod / tcrossprod (non-square input exercises both m != n shapes)
-expect_true(all(abs(fcpp(a, b, n, 14L) - functional_tests(a, b, n, 14L)) < 1e-8))
-expect_true(all(abs(fcpp(a, b, n, 15L) - functional_tests(a, b, n, 15L)) < 1e-8))
+expect_true(all(abs(fcpp(a, b, n, 14L) - functional_tests_ref(a, b, n, 14L)) < 1e-8))
+expect_true(all(abs(fcpp(a, b, n, 15L) - functional_tests_ref(a, b, n, 15L)) < 1e-8))
 # backsolve / forwardsolve (triangular solve against the Cholesky factor)
-expect_true(all(abs(fcpp(a, b, n, 16L) - functional_tests(a, b, n, 16L)) < 1e-8))
-expect_true(all(abs(fcpp(a, b, n, 17L) - functional_tests(a, b, n, 17L)) < 1e-8))
+expect_true(all(abs(fcpp(a, b, n, 16L) - functional_tests_ref(a, b, n, 16L)) < 1e-8))
+expect_true(all(abs(fcpp(a, b, n, 17L) - functional_tests_ref(a, b, n, 17L)) < 1e-8))
 # for (i in <scalar>): body runs once, i takes the scalar value
-expect_true(all(abs(fcpp(a, b, n, 18L) - functional_tests(a, b, n, 18L)) < 1e-8))
+expect_true(all(abs(fcpp(a, b, n, 18L) - functional_tests_ref(a, b, n, 18L)) < 1e-8))
 
 # --- diag --------------------------------------------------------------------
 # ast2ast supports diag(x, nrow, ncol): an nrow x ncol matrix with x recycled
@@ -230,18 +235,17 @@ diag_ref <- function(x, nrow, ncol) {
   matrix(res, nrow, ncol)
 }
 
-diag_args <- function(x, nr, nc) {
-  x |> type(vec(double))
-  nr |> type(integer)
-  nc |> type(integer)
-}
-
 diag_fct <- function(x, nr, nc) {
+  args(
+    x |> type(vec(double)),
+    nr |> type(integer),
+    nc |> type(integer)
+  )
   m <- diag(x, nr, nc)
   return(m)
 }
 
-diag_cpp <- translate(diag_fct, diag_args, getsource = FALSE, verbose = FALSE)
+diag_cpp <- translate(diag_fct, getsource = FALSE, verbose = FALSE)
 
 diag_cases <- list(
   list(x = 2.0,           nr = 3L, nc = 3L), # scalar, square
@@ -261,10 +265,10 @@ for (i in seq_along(diag_cases)) {
 expect_true(all(diag_checks))
 
 # diag is templated on the real type during translation
-diag_src <- paste(translate(diag_fct, diag_args, getsource = TRUE), collapse = "\n")
+diag_src <- paste(translate(diag_fct, getsource = TRUE), collapse = "\n")
 expect_true(grepl("etr::diag<etr::Double>", diag_src, fixed = TRUE))
 diag_src_rev <- paste(
-  translate(diag_fct, diag_args, getsource = TRUE, derivative = "reverse"),
+  translate(diag_fct, getsource = TRUE, derivative = "reverse"),
   collapse = "\n"
 )
 expect_true(grepl("etr::diag<etr::ReverseDouble>", diag_src_rev, fixed = TRUE))
@@ -274,6 +278,7 @@ expect_true(grepl("etr::diag<etr::ReverseDouble>", diag_src_rev, fixed = TRUE))
 # relies on the left operand being FALSE stopping evaluation before v[[j]] is
 # read with an out-of-range j
 insertion_sort <- function(v) {
+  args(v |> type(vec(double)))
   n <- length(v)
   for (i in 2L:n) {
     key <- v[[i]]
@@ -286,7 +291,7 @@ insertion_sort <- function(v) {
   }
   return(v)
 }
-insertion_sort_cpp <- translate(insertion_sort, args_f = function(v) v |> type(vec(double)))
+insertion_sort_cpp <- translate(insertion_sort)
 
 set.seed(123)
 v <- rnorm(50)

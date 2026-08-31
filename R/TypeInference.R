@@ -3,7 +3,12 @@
 # Handle f_args == NULL --> default types and handling
 resolve_args_f <- function(f, f_args) {
   if (!is.null(f_args)) {
-    body_expr <- wrap_in_block(body(f_args))
+    if (is.function(f_args)) {
+      body_expr <- wrap_in_block(body(f_args))
+    } else {
+      # args(x |> type(t), ...) call from fn()
+      body_expr <- as.call(c(quote(`{`), as.list(f_args)[-1]))
+    }
   } else {
     args <- names(formals(f))
     exprs <- lapply(args, function(a) {
@@ -62,9 +67,6 @@ create_vars_types_list <- function(ast, f, f_args, r_fct, real_type, known_types
   return(l)
 }
 
-# A bare `x |> type(t)` for a name that is never otherwise assigned or read is
-# almost always a typo -- reject it instead of emitting a dead declaration.
-# `x |> type(t) <- v` counts as a use (the annotation is part of an assignment).
 check_orphan_type_annotations <- function(ast, arguments) {
   env <- new.env(parent = emptyenv())
   env$annotated <- character(0)
@@ -98,28 +100,6 @@ check_orphan_type_annotations <- function(ast, arguments) {
     ))
   }
   invisible()
-}
-
-# Infer input f_args for fn node
-# ========================================================================
-parse_input_args_for_fn_node <- function(block, r_fct, real_type, known_types = list()) {
-  block <- wrap_in_block(block)
-  block <- as.list(block)[-1]
-  block <- lapply(block, function(x) {
-    attributes(x) <- NULL
-    x
-  })
-  l <- parse_types(block, fct_input = TRUE, r_fct, real_type, known_types)
-  wrong_input <- FALSE
-  for (i in seq_len(length(l))) {
-    e <- l[[i]]$error
-    if (!is.null(e) && e != "") {
-      print(sprintf("%s, for variable: %s", l[[i]]$error, l[[i]]$get_name()))
-      wrong_input <- TRUE
-    }
-  }
-  if (wrong_input) stop("Types for arguments are invalid")
-  l
 }
 
 # Infer types of expressions
