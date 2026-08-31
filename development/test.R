@@ -36,3 +36,4 @@ code <- function() {
 }
 fcpp <- translate(code, getsource = TRUE)
 cat(fcpp, "\n")
+

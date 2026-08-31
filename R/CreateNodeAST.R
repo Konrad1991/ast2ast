@@ -389,6 +389,71 @@ resolve_derivative <- function(derivative) {
   if (derivative == "reverse") return("etr::ReverseDouble")
 }
 
+# Validate a leading argtypes(...) block against the function's formals: it must
+# list every parameter exactly once, in the same order as the function signature
+# (the generated C++ parameter order follows argtypes(), not formals(f)). An
+# empty argtypes() is valid only for a function with no arguments; to use the
+# defaults, omit argtypes() entirely.
+argtypes_match_formals <- function(f, argtypes) {
+  formal_args <- names(formals(f))
+  entries <- as.list(argtypes)[-1L] # drop the `argtypes` head
+  if (length(entries) == 0L) {
+    if (length(formal_args) == 0L) return(invisible())
+    stop("argtypes() is empty, which is only valid for a function with no arguments")
+  }
+
+  # each entry is `<name> |> type(...)`, possibly `|> const()` / `|> ref()`;
+  # the pipe desugars so const/ref wrap the type() call -- unwrap to the name
+  arg_name <- function(x) {
+    while (is.call(x) && as.character(x[[1L]]) %in% c("const", "ref")) {
+      x <- x[[2L]]
+    }
+    if (!is.call(x) || !identical(as.character(x[[1L]]), "type")) {
+      stop(sprintf("argtypes() entry %s is not of the form `<name> |> type(...)`",
+        deparse(x)))
+    }
+    as.character(x[[2L]])
+  }
+  at_names <- vapply(entries, arg_name, character(1L))
+
+  dups <- unique(at_names[duplicated(at_names)])
+  if (length(dups) > 0L) {
+    stop(sprintf("argtypes() declares %s more than once",
+      paste0("'", dups, "'", collapse = ", ")))
+  }
+
+  extra <- setdiff(at_names, formal_args)
+  if (length(extra) > 0L) {
+    msg <- sprintf("argtypes() names %s, which %s not %s of the function",
+      paste0("'", extra, "'", collapse = ", "),
+      if (length(extra) > 1L) "are" else "is",
+      if (length(extra) > 1L) "arguments" else "an argument")
+    if (length(extra) == 1L && length(formal_args) > 0L) {
+      d <- adist(extra, formal_args)[1L, ]
+      if (min(d) <= 2L) {
+        msg <- paste0(msg, sprintf(" (did you mean '%s'?)", formal_args[which.min(d)]))
+      }
+    }
+    stop(msg)
+  }
+
+  missing <- setdiff(formal_args, at_names)
+  if (length(missing) > 0L) {
+    stop(sprintf(
+      "argtypes() gives no type for %s -- every argument must be typed when argtypes() is present",
+      paste0("'", missing, "'", collapse = ", ")))
+  }
+
+  # same set of names now -- the order must match the function signature
+  if (!identical(at_names, formal_args)) {
+    stop(sprintf(
+      "argtypes() must list the arguments in the same order as the function: expected (%s), got (%s)",
+      paste(formal_args, collapse = ", "), paste(at_names, collapse = ", ")))
+  }
+
+  invisible()
+}
+
 translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, debug = TRUE) {
   code_string <- list()
   real_type <- resolve_derivative(derivative)
@@ -407,6 +472,9 @@ translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, de
   }
   if (any(is_args)) {
     stop("argtypes(...) must be the first statement of the function body")
+  }
+  if (!is.null(args_fct)) {
+    argtypes_match_formals(fct, args_fct)
   }
   b <- as.call(c(as.name("{"), stmts))
 
