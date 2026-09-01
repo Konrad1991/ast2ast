@@ -648,6 +648,94 @@ infer_sum <- function(node, vars_list, info_env, function_registry) {
   return(t)
 }
 
+# cumsum: like sum but length-preserving (vector), logical -> integer
+infer_cumsum <- function(node, vars_list, info_env, function_registry) {
+  inner <- infer(node$obj, vars_list, info_env, function_registry)
+  if (inherits(inner, c("new_type_node", "fn_node"))) {
+    return(sprintf("Found unallowed type in: %s", node$stringify()))
+  }
+  if (!inherits(inner, "pre_type_node")) {
+    return(sprintf("Found unallowed type in: %s", node$stringify()))
+  }
+  if (inner$get_data_struct() == "collection") {
+    return(sprintf("Found unallowed type in: %s", node$stringify()))
+  }
+  base_type <- if (inner$get_base_type() %in% c("double", "numeric")) "double" else "integer"
+  t <- make_inferred_type("vector", base_type, info_env$r_fct, info_env$real_type)
+  node$internal_type <- t
+  return(t)
+}
+
+# colSums/rowSums/colMeans/rowMeans: matrix in, vector out, always double
+infer_margin_reduce <- function(node, vars_list, info_env, function_registry) {
+  inner <- infer(node$obj, vars_list, info_env, function_registry)
+  if (inherits(inner, c("new_type_node", "fn_node"))) {
+    return(sprintf("Found unallowed type in: %s", node$stringify()))
+  }
+  if (!inherits(inner, "pre_type_node")) {
+    return(sprintf("Found unallowed type in: %s", node$stringify()))
+  }
+  if (inner$get_data_struct() == "collection") {
+    return(sprintf("Found unallowed type in: %s", node$stringify()))
+  }
+  t <- make_inferred_type("vector", "double", info_env$r_fct, info_env$real_type)
+  node$internal_type <- t
+  return(t)
+}
+check_matrix_arg <- function(node, vars_types_list, info_env) {
+  if (is_charNANaNInf(node$obj, vars_types_list)) {
+    node$error <- sprintf("You cannot use character/NA/NaN/Inf entries in %s", node$operator)
+  } else if (!is_mat(node$obj, vars_types_list)) {
+    node$error <- sprintf("You can only call %s on a matrix", node$operator)
+  }
+}
+
+# sort: vector out, base type kept; arg 2 (decreasing) is optional
+infer_sort <- function(node, vars_list, info_env, function_registry) {
+  types <- lapply(node$args, function(a) infer(a, vars_list, info_env, function_registry))
+  inner <- types[[1]]
+  if (inherits(inner, c("new_type_node", "fn_node"))) {
+    return(sprintf("Found unallowed type in: %s", node$stringify()))
+  }
+  if (!inherits(inner, "pre_type_node")) {
+    return(sprintf("Found unallowed type in: %s", node$stringify()))
+  }
+  if (inner$get_data_struct() == "collection") {
+    return(sprintf("Found unallowed type in: %s", node$stringify()))
+  }
+  t <- make_inferred_type("vector", inner$get_base_type(), info_env$r_fct, info_env$real_type)
+  node$internal_type <- t
+  return(t)
+}
+
+# ifelse: result keeps test's data structure, base type = common type of yes/no
+infer_ifelse <- function(node, vars_list, info_env, function_registry) {
+  types <- lapply(node$args, function(a) infer(a, vars_list, info_env, function_registry))
+  for (tp in types) {
+    if (inherits(tp, c("new_type_node", "fn_node"))) {
+      return(sprintf("Found unallowed type in: %s", node$stringify()))
+    }
+    if (!inherits(tp, "pre_type_node")) {
+      return(sprintf("Found unallowed type in: %s", node$stringify()))
+    }
+    if (tp$get_data_struct() == "collection") {
+      return(sprintf("Found unallowed type in: %s", node$stringify()))
+    }
+  }
+  rank <- c(logical = 1L, integer = 2L, int = 2L, double = 3L, numeric = 3L)
+  yb <- types[[2]]$get_base_type()
+  nb <- types[[3]]$get_base_type()
+  if (is.null(rank[[yb]]) || is.null(rank[[nb]])) {
+    return(sprintf("ifelse expects numeric/logical yes and no arguments, in: %s", node$stringify()))
+  }
+  base_type <- if (rank[[yb]] >= rank[[nb]]) yb else nb
+  if (base_type == "numeric") base_type <- "double"
+  if (base_type == "int") base_type <- "integer"
+  t <- make_inferred_type(types[[1]]$get_data_struct(), base_type, info_env$r_fct, info_env$real_type)
+  node$internal_type <- t
+  return(t)
+}
+
 function_registry_global$add(
   name = "type", num_args = 2, arg_names = c(NA, NA),
   infer_fct = function(node, vars_list, info_env, function_registry) { },
@@ -965,6 +1053,13 @@ function_registry_global$add(
   infer_fct = infer_unary_minus,
   check_fct = check_unary,
   group = "unary_node", cpp_name = "etr::abs"
+)
+function_registry_global$add(
+  # like floor/ceiling/trunc: always double, derivative 0 almost everywhere
+  name = "sign", num_args = 1, arg_names = NA,
+  infer_fct = infer_unary_math,
+  check_fct = check_unary,
+  group = "unary_node", cpp_name = "etr::sign"
 )
 function_registry_global$add(
   name = "exp", num_args = 1, arg_names = NA,
@@ -1938,6 +2033,13 @@ function_registry_global$add(
   check_fct = check_unary, group = "unary_node", cpp_name = "etr::trunc"
 )
 function_registry_global$add(
+  # round(x) only (no digits); R's ties-to-even rule; always double, derivative 0 a.e.
+  name = "round", num_args = 1, arg_names = NA,
+  docu = "round(x)  # one argument; the `digits` argument is not supported",
+  infer_fct = infer_unary_math,
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::round"
+)
+function_registry_global$add(
   name = "sum", num_args = 1, arg_names = NA,
   docu = "sum(x)  # one argument; `na.rm` is not supported",
   infer_fct = infer_sum,
@@ -1947,6 +2049,64 @@ function_registry_global$add(
   name = "prod", num_args = 1, arg_names = NA,
   infer_fct = infer_reduce_fixed_type("double"),
   check_fct = check_unary, group = "unary_node", cpp_name = "etr::prod"
+)
+function_registry_global$add(
+  # always double, even for integer input (R semantics); NA propagates
+  name = "mean", num_args = 1, arg_names = NA,
+  docu = "mean(x)  # one argument; `na.rm` / `trim` are not supported",
+  infer_fct = infer_reduce_fixed_type("double"),
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::mean"
+)
+function_registry_global$add(
+  name = "cumsum", num_args = 1, arg_names = NA,
+  infer_fct = infer_cumsum,
+  check_fct = check_unary, group = "unary_node", cpp_name = "etr::cumsum"
+)
+function_registry_global$add(
+  name = "colSums", num_args = 1, arg_names = NA,
+  infer_fct = infer_margin_reduce,
+  check_fct = check_matrix_arg, group = "unary_node", cpp_name = "etr::colSums"
+)
+function_registry_global$add(
+  name = "rowSums", num_args = 1, arg_names = NA,
+  infer_fct = infer_margin_reduce,
+  check_fct = check_matrix_arg, group = "unary_node", cpp_name = "etr::rowSums"
+)
+function_registry_global$add(
+  name = "colMeans", num_args = 1, arg_names = NA,
+  infer_fct = infer_margin_reduce,
+  check_fct = check_matrix_arg, group = "unary_node", cpp_name = "etr::colMeans"
+)
+function_registry_global$add(
+  name = "rowMeans", num_args = 1, arg_names = NA,
+  infer_fct = infer_margin_reduce,
+  check_fct = check_matrix_arg, group = "unary_node", cpp_name = "etr::rowMeans"
+)
+function_registry_global$add(
+  # drops NA like R (na.last = NA); no AD -- only plain double translations
+  name = "sort", num_args = c(1, 2), arg_names = c(NA, NA),
+  docu = "sort(x)  or  sort(x, decreasing)  # NAs are dropped; base type is kept",
+  infer_fct = infer_sort,
+  check_fct = function(node, vars_types_list, info_env) {
+    if (is_charNANaNInf(node$args[[1]], vars_types_list)) {
+      node$args[[1]]$error <- "You cannot sort character/NA/NaN/Inf entries"
+    }
+  },
+  group = "function_node", cpp_name = "etr::sort", deriv_possible = FALSE
+)
+function_registry_global$add(
+  # no recycling: yes/no must be a scalar or exactly length(test)
+  name = "ifelse", num_args = 3, arg_names = c(NA, NA, NA),
+  docu = "ifelse(test, yes, no)  # yes/no must be a scalar or length(test)",
+  infer_fct = infer_ifelse,
+  check_fct = function(node, vars_types_list, info_env) {
+    for (i in seq_along(node$args)) {
+      if (is_charNANaNInf(node$args[[i]], vars_types_list)) {
+        node$error <- "You cannot use character/NA/NaN/Inf entries in ifelse"
+      }
+    }
+  },
+  group = "function_node", cpp_name = "etr::ifelse"
 )
 
 function_registry_global$add(

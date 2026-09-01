@@ -47,6 +47,19 @@ template <typename T> requires (IsScalarLike<Decayed<T>> || IsArray<Decayed<T>>)
 inline auto trunc(const T& obj) {
   return round_like([](double x) { return std::trunc(x); }, obj);
 }
+// std::nearbyint honours the default (to-nearest, ties-to-even) mode, matching R's round().
+template <typename T> requires (IsScalarLike<Decayed<T>> || IsArray<Decayed<T>>)
+inline auto round(const T& obj) {
+  return round_like([](double x) { return std::nearbyint(x); }, obj);
+}
+// R's sign(): -1 / 0 / 1 as double, NaN kept (round_like already forwards NA).
+template <typename T> requires (IsScalarLike<Decayed<T>> || IsArray<Decayed<T>>)
+inline auto sign(const T& obj) {
+  return round_like([](double x) {
+    if (std::isnan(x)) return x;
+    return static_cast<double>((x > 0.0) - (x < 0.0));
+  }, obj);
+}
 
 }
 

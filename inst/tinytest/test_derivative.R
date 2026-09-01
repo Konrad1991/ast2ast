@@ -407,6 +407,37 @@ f <- function() {
 fcpp <- ast2ast::translate(f, derivative = "forward")
 expect_equal(c(fcpp()), 2)
 
+# --- forward-mode chain rule through composed transcendentals --------------
+# g(h(x)) must carry h'(x) into g' (Dual dot), and forward must match reverse.
+chain_cases <- list(
+  list(body = quote(exp(sin(2.0 * x))), d = function(x) exp(sin(2 * x)) * cos(2 * x) * 2),
+  list(body = quote(log(x * x)),        d = function(x) 2 / x),
+  list(body = quote(sqrt(x * x + 1.0)), d = function(x) x / sqrt(x * x + 1)),
+  list(body = quote(exp(-x)),           d = function(x) -exp(-x)),
+  list(body = quote(tanh(3.0 * x)),     d = function(x) (1 - tanh(3 * x)^2) * 3),
+  list(body = quote(atan(2.0 * x)),     d = function(x) 2 / (1 + (2 * x)^2))
+)
+for (cc in chain_cases) {
+  ff <- as.function(c(alist(x = ), bquote({
+    argtypes(x |> type(double))
+    seed(x, 1L)
+    z <- .(cc$body)
+    return(get_dot(z))
+  })))
+  fr <- as.function(c(alist(x = ), bquote({
+    argtypes(x |> type(double))
+    y <- .(cc$body)
+    return(deriv(y, x))
+  })))
+  fwd <- ast2ast::translate(ff, derivative = "forward")
+  rev <- ast2ast::translate(fr, derivative = "reverse")
+  for (xv in c(0.3, 0.7, 1.4)) {
+    info <- deparse(cc$body)
+    expect_equal(c(fwd(xv)), cc$d(xv), tolerance = 1e-8, info = info)
+    expect_equal(c(rev(xv)), cc$d(xv), tolerance = 1e-8, info = info)
+  }
+}
+
 # --- reverse-mode deriv() through a struct field, element-wise mul ----------
 types_f <- function() {
   new_type(

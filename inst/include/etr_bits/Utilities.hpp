@@ -6,6 +6,7 @@
 #include "./Utilities/Rev.hpp"
 #include "./Utilities/Casts.hpp"
 #include "./Utilities/CeilingFloorTrunc.hpp"
+#include "./Utilities/SortIfelse.hpp"
 #include "./Utilities/Printing.hpp"
 
 #endif

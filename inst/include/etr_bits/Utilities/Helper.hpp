@@ -306,6 +306,118 @@ template <typename T> requires IsArray<T> inline auto prod(const T &inp) {
   }
 }
 
+// mean -- always double-family (like R, even for an integer input); NA
+// propagates; empty -> NaN. Built from scalar Add + Div so reverse/forward AD
+// gradients use the chain rule.
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsScalarLike<T> inline auto mean(const T inp) {
+  auto v = get_scalar_val(inp);
+  using V = Decayed<decltype(v)>;
+  if constexpr (IS<V, Dual> || IS<V, ReverseDouble>) {
+    return v;
+  } else {
+    return Double(v);
+  }
+}
+template <typename T> requires IsArray<T> inline auto mean(const T &inp) {
+  using Inner = typename ExtractDataType<Decayed<T>>::value_type;
+  const double n = static_cast<double>(inp.size());
+  if constexpr (IS<Inner, Dual> || IS<Inner, ReverseDouble>) {
+    Inner acc(0);
+    for (std::size_t i = 0; i < inp.size(); i++) acc = acc + inp.get(i);
+    return acc / Double(n);
+  } else {
+    Double acc(0);
+    for (std::size_t i = 0; i < inp.size(); i++) acc = acc + inp.get(i);
+    return acc / Double(n);
+  }
+}
+
+// cumsum -- running total, length-preserving; logical -> integer, otherwise the
+// input type is kept. NA propagates from its first occurrence on (like R).
+// Built from scalar Add so AD gradients use the chain rule.
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsScalarLike<T> inline auto cumsum(const T inp) {
+  auto v = get_scalar_val(inp);
+  using V = Decayed<decltype(v)>;
+  if constexpr (IS<V, Logical>) {
+    Array<Integer, Buffer<Integer, RBufferTrait>> res(SI{1});
+    res.dim = std::vector<std::size_t>{1};
+    res.set(0, Integer(v));
+    return res;
+  } else {
+    Array<V, Buffer<V, RBufferTrait>> res(SI{1});
+    res.dim = std::vector<std::size_t>{1};
+    res.set(0, v);
+    return res;
+  }
+}
+template <typename T> requires IsArray<T> inline auto cumsum(const T &inp) {
+  using Inner = typename ExtractDataType<Decayed<T>>::value_type;
+  if constexpr (IS<Inner, Logical>) {
+    Array<Integer, Buffer<Integer, RBufferTrait>> res(SI{inp.size()});
+    res.dim = std::vector<std::size_t>{inp.size()};
+    Integer acc(0);
+    for (std::size_t i = 0; i < inp.size(); i++) { acc = acc + inp.get(i); res.set(i, acc); }
+    return res;
+  } else {
+    Array<Inner, Buffer<Inner, RBufferTrait>> res(SI{inp.size()});
+    res.dim = std::vector<std::size_t>{inp.size()};
+    Inner acc(0);
+    for (std::size_t i = 0; i < inp.size(); i++) { acc = acc + inp.get(i); res.set(i, acc); }
+    return res;
+  }
+}
+
+// colSums / rowSums / colMeans / rowMeans -- matrix margin reductions, always
+// double-family (like R). `byRow` picks the margin, `doMean` divides by the
+// margin length. Built from scalar Add + Div so AD gradients use the chain rule.
+// Column-major storage: element (r, c) sits at c * nr + r.
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsArray<T>
+inline auto margin_reduce(const T &inp, bool byRow, bool doMean) {
+  const auto d = dim_view(inp.get_dim());
+  ass<"Error in colSums/rowSums/colMeans/rowMeans: a matrix is required">(d.size() == 2);
+  const std::size_t nr = d[0];
+  const std::size_t nc = d[1];
+  const std::size_t nOut = byRow ? nr : nc;
+  const std::size_t nIn = byRow ? nc : nr;
+  using Inner = typename ExtractDataType<Decayed<T>>::value_type;
+  if constexpr (IS<Inner, Dual> || IS<Inner, ReverseDouble>) {
+    Array<Inner, Buffer<Inner, RBufferTrait>> res(SI{nOut});
+    res.dim = std::vector<std::size_t>{nOut};
+    for (std::size_t o = 0; o < nOut; o++) {
+      Inner acc(0);
+      for (std::size_t k = 0; k < nIn; k++) {
+        const std::size_t r = byRow ? o : k;
+        const std::size_t c = byRow ? k : o;
+        acc = acc + inp.get(c * nr + r);
+      }
+      if (doMean) acc = acc / Double(static_cast<double>(nIn));
+      res.set(o, acc);
+    }
+    return res;
+  } else {
+    Array<Double, Buffer<Double, RBufferTrait>> res(SI{nOut});
+    res.dim = std::vector<std::size_t>{nOut};
+    for (std::size_t o = 0; o < nOut; o++) {
+      Double acc(0);
+      for (std::size_t k = 0; k < nIn; k++) {
+        const std::size_t r = byRow ? o : k;
+        const std::size_t c = byRow ? k : o;
+        acc = acc + inp.get(c * nr + r);
+      }
+      if (doMean) acc = acc / Double(static_cast<double>(nIn));
+      res.set(o, acc);
+    }
+    return res;
+  }
+}
+template <typename T> requires IsArray<T> inline auto colSums(const T &inp)  { return margin_reduce(inp, false, false); }
+template <typename T> requires IsArray<T> inline auto rowSums(const T &inp)  { return margin_reduce(inp, true, false); }
+template <typename T> requires IsArray<T> inline auto colMeans(const T &inp) { return margin_reduce(inp, false, true); }
+template <typename T> requires IsArray<T> inline auto rowMeans(const T &inp) { return margin_reduce(inp, true, true); }
+
 // stop -- abort with a message
 // -----------------------------------------------------------------------------------------------------------
 [[noreturn]] inline void stop(const char *msg) {
