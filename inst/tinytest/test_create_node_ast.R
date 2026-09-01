@@ -98,7 +98,7 @@ f <- function() {
 error <- try(ast2ast::translate(f), silent = TRUE)
 expect_equal(
   attributes(error)[["condition"]]$message,
-  "\nauto  = [&](  ) -> void { ... };\nYou have to assign functions (fn) to variables\nYou have to assign functions (fn) to variables"
+  "\nauto <anonymous> = [&](  ) -> void { ... };\nYou have to assign functions (fn) to variables\nYou have to assign functions (fn) to variables"
 )
 # Everything empty works
 f <- function() {

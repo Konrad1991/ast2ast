@@ -67,7 +67,10 @@ create_ast <- function(code, context, env, function_registry) {
     fn$return_type <- parse_return(return_call, FALSE, env$real_type, env$known_types)[[1]]
     fn$AST <- body_block |> wrap_in_block()
     fn$context <- context
-    if (!(context %in% c("<-", "="))) {
+    # assigned fns get their real name at TypeInference (type$fct_name <- variable);
+    # an inline fn (map/Reduce/Filter/uniroot arg) never does -- give it a label
+    fn$fct_name <- "<anonymous>"
+    if (!function_registry$valid_fn_context(context)) {
       fn$error <- "You have to assign functions (fn) to variables"
     }
     return(fn)

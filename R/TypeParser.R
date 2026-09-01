@@ -325,6 +325,17 @@ predefined_known_types <- function() {
       estim_prec |> type(double)
     )
   )
+  # slots must match the hand-written etr::lbfgsb_result struct in
+  # etr_bits/Optimization/lbfgsb.hpp
+  new_type(
+    lbfgsb_result,
+    slots(
+      par |> type(vec(double)),
+      value |> type(double),
+      convergence |> type(int),
+      counts |> type(vec(int))
+    )
+  )
 }
 
 make_known_types <- function(types_fct, r_fct, real_type) {

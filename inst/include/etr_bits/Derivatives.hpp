@@ -196,6 +196,82 @@ void jacobian_backward(J& jac, const Fun& fct, Args&&... args) {
   }
 }
 
+// jacobian(f, x[, extra]): m-by-n Jacobian of f at x, column-major like R.
+// Dispatch on x's scalar type -- forward mode for Dual, reverse mode for
+// ReverseDouble. `extra` is threaded through to f unchanged (as in uniroot).
+// A scalar-valued f is allowed too: the result is the 1-by-n gradient row
+// (used by lbfgsb for the objective's gradient).
+template<typename X, typename Call>
+inline auto jacobian_impl(const X& x, Call&& call_f) {
+  using XT = typename ExtractDataType<Decayed<X>>::value_type;
+  const std::size_t ncol = x.size();
+
+  if constexpr (IsReverseDouble<XT>) {
+    Array<ReverseDouble, Buffer<ReverseDouble>> xr(SI{ncol});
+    for (std::size_t i = 0; i < ncol; i++) xr.set(i, ReverseDouble::Var(get_val(x.get(i))));
+
+    auto y = call_f(xr);
+    // scalar-valued f -> one gradient row (1 x ncol); vector-valued f -> full m x n
+    if constexpr (IsArray<Decayed<decltype(y)>>) {
+      const std::size_t nrow = y.size();
+      auto jac = matrix(Double(0.0), Integer(static_cast<int>(nrow)), Integer(static_cast<int>(ncol)));
+      for (std::size_t j = 0; j < nrow; j++) {
+        TAPE_INTERN.reverse(y.get(j).id);
+        for (std::size_t i = 0; i < ncol; i++) {
+          jac.set(i * nrow + j, Double(TAPE_INTERN.adj[static_cast<std::size_t>(xr.get(i).id)]));
+        }
+      }
+      return jac;
+    } else {
+      auto jac = matrix(Double(0.0), Integer(1), Integer(static_cast<int>(ncol)));
+      TAPE_INTERN.reverse(y.id);
+      for (std::size_t i = 0; i < ncol; i++) {
+        jac.set(i, Double(TAPE_INTERN.adj[static_cast<std::size_t>(xr.get(i).id)]));
+      }
+      return jac;
+    }
+  } else {
+    Array<Dual, Buffer<Dual>> xd(SI{ncol});
+    for (std::size_t i = 0; i < ncol; i++) xd.set(i, Dual(get_val(x.get(i)), 0.0));
+
+    if constexpr (IsArray<Decayed<decltype(call_f(xd))>>) {
+      // seed column 0 first to learn f's output length, then the rest
+      seed(xd, std::size_t{0});
+      auto y0 = call_f(xd);
+      const std::size_t nrow = y0.size();
+      auto jac = matrix(Double(0.0), Integer(static_cast<int>(nrow)), Integer(static_cast<int>(ncol)));
+      for (std::size_t j = 0; j < nrow; j++) jac.set(j, y0.d.get_dot(j));
+      unseed(xd, std::size_t{0});
+
+      for (std::size_t i = 1; i < ncol; i++) {
+        seed(xd, i);
+        auto y = call_f(xd);
+        for (std::size_t j = 0; j < nrow; j++) jac.set(i * nrow + j, y.d.get_dot(j));
+        unseed(xd, i);
+      }
+      return jac;
+    } else {
+      auto jac = matrix(Double(0.0), Integer(1), Integer(static_cast<int>(ncol)));
+      for (std::size_t i = 0; i < ncol; i++) {
+        seed(xd, i);
+        jac.set(i, Double(call_f(xd).dot));
+        unseed(xd, i);
+      }
+      return jac;
+    }
+  }
+}
+
+template<typename F, typename X> requires (IsArray<Decayed<X>>)
+inline auto jacobian(const F& f, const X& x) {
+  return jacobian_impl(x, [&f](const auto& xv) { return f(xv); });
+}
+
+template<typename F, typename X, typename E> requires (IsArray<Decayed<X>>)
+inline auto jacobian(const F& f, const X& x, const E& extra) {
+  return jacobian_impl(x, [&f, &extra](const auto& xv) { return f(xv, extra); });
+}
+
 } // namespace etr
 
 #endif

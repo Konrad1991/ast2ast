@@ -32,7 +32,11 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 // Uniroot.hpp's uniroot_result struct needs Cast/SEXP2Scalar/checked_elt
 // from Utilities/SEXPConversions.hpp, so it has to come after Utilities.hpp
 // -- can't live in Core.hpp like the other Core/*.hpp headers.
+// -- same is true for Functionals
 #include "etr_bits/Core/Uniroot.hpp"
+#include "etr_bits/Functionals.hpp"
 #include "etr_bits/Derivatives.hpp"
+// after Derivatives.hpp: lbfgsb's gradient goes through etr::jacobian
+#include "etr_bits/Optimization.hpp"
 
 #endif

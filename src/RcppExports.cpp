@@ -218,6 +218,51 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_lbfgsb_quadratic_forward
+void test_lbfgsb_quadratic_forward();
+RcppExport SEXP _ast2ast_test_lbfgsb_quadratic_forward() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_lbfgsb_quadratic_forward();
+    return R_NilValue;
+END_RCPP
+}
+// test_lbfgsb_quadratic_reverse
+void test_lbfgsb_quadratic_reverse();
+RcppExport SEXP _ast2ast_test_lbfgsb_quadratic_reverse() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_lbfgsb_quadratic_reverse();
+    return R_NilValue;
+END_RCPP
+}
+// test_lbfgsb_bounds
+void test_lbfgsb_bounds();
+RcppExport SEXP _ast2ast_test_lbfgsb_bounds() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_lbfgsb_bounds();
+    return R_NilValue;
+END_RCPP
+}
+// test_lbfgsb_rosenbrock
+void test_lbfgsb_rosenbrock();
+RcppExport SEXP _ast2ast_test_lbfgsb_rosenbrock() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_lbfgsb_rosenbrock();
+    return R_NilValue;
+END_RCPP
+}
+// test_lbfgsb_bound_length_error
+void test_lbfgsb_bound_length_error();
+RcppExport SEXP _ast2ast_test_lbfgsb_bound_length_error() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_lbfgsb_bound_length_error();
+    return R_NilValue;
+END_RCPP
+}
 // test_nnls
 void test_nnls();
 RcppExport SEXP _ast2ast_test_nnls() {
@@ -297,6 +342,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_assign_array_to_scalar", (DL_FUNC) &_ast2ast_test_assign_array_to_scalar, 0},
     {"_ast2ast_test_crossprod", (DL_FUNC) &_ast2ast_test_crossprod, 0},
     {"_ast2ast_test_diag", (DL_FUNC) &_ast2ast_test_diag, 0},
+    {"_ast2ast_test_lbfgsb_quadratic_forward", (DL_FUNC) &_ast2ast_test_lbfgsb_quadratic_forward, 0},
+    {"_ast2ast_test_lbfgsb_quadratic_reverse", (DL_FUNC) &_ast2ast_test_lbfgsb_quadratic_reverse, 0},
+    {"_ast2ast_test_lbfgsb_bounds", (DL_FUNC) &_ast2ast_test_lbfgsb_bounds, 0},
+    {"_ast2ast_test_lbfgsb_rosenbrock", (DL_FUNC) &_ast2ast_test_lbfgsb_rosenbrock, 0},
+    {"_ast2ast_test_lbfgsb_bound_length_error", (DL_FUNC) &_ast2ast_test_lbfgsb_bound_length_error, 0},
     {"_ast2ast_test_nnls", (DL_FUNC) &_ast2ast_test_nnls, 0},
     {"_ast2ast_test_scalars", (DL_FUNC) &_ast2ast_test_scalars, 0},
     {"_ast2ast_test_scalar_assignment", (DL_FUNC) &_ast2ast_test_scalar_assignment, 0},

@@ -93,6 +93,26 @@ test_diag <- function() {
     invisible(.Call(`_ast2ast_test_diag`))
 }
 
+test_lbfgsb_quadratic_forward <- function() {
+    invisible(.Call(`_ast2ast_test_lbfgsb_quadratic_forward`))
+}
+
+test_lbfgsb_quadratic_reverse <- function() {
+    invisible(.Call(`_ast2ast_test_lbfgsb_quadratic_reverse`))
+}
+
+test_lbfgsb_bounds <- function() {
+    invisible(.Call(`_ast2ast_test_lbfgsb_bounds`))
+}
+
+test_lbfgsb_rosenbrock <- function() {
+    invisible(.Call(`_ast2ast_test_lbfgsb_rosenbrock`))
+}
+
+test_lbfgsb_bound_length_error <- function() {
+    invisible(.Call(`_ast2ast_test_lbfgsb_bound_length_error`))
+}
+
 test_nnls <- function() {
     invisible(.Call(`_ast2ast_test_nnls`))
 }
