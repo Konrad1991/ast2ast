@@ -4,8 +4,8 @@
 // lbfgsb(f, x, lower, upper, maxit, factr, pgtol, lmm): bound-constrained
 // L-BFGS-B, calling R's own C routine (src/appl/lbfgsb.c) directly -- no SEXP
 // round-trip per evaluation. f is a translated fn() taking a double vector and
-// returning a scalar double; its gradient comes from etr::jacobian (forward
-// mode under derivative = "forward", reverse mode under "reverse").
+// returning a scalar double. Gradient: etr::jacobian under derivative =
+// "forward"/"reverse", central differences otherwise.
 //
 // The objective/gradient callbacks passed to R are plain C function pointers
 // (optimfn/optimgr) -- no captures. The translated functor is reached through
@@ -84,10 +84,15 @@ inline A lbfgsb_make_x(int n, const double* par) {
   using VT = typename ExtractDataType<Decayed<A>>::value_type;
   A x(SI{static_cast<std::size_t>(n)});
   for (int i = 0; i < n; i++) {
-    if constexpr (IsReverseDouble<VT>) x.set(i, ReverseDouble::Var(par[i]));
-    else                               x.set(i, Dual(par[i], 0.0));
-  }
-  return x;
+    if constexpr (IsReverseDouble<VT>) {
+      x.set(i, ReverseDouble::Var(par[i]));
+    } else if constexpr (IsDual<VT>) {
+      x.set(i, Dual(par[i], 0.0));
+    } else {
+      x.set(i, par[i]);
+    }
+    }
+    return x;
 }
 
 template<typename S, typename A>
@@ -102,10 +107,22 @@ template<typename S, typename A>
 void lbfgsb_gr(int n, double* par, double* grad, void* ex) {
   using VT = typename ExtractDataType<Decayed<A>>::value_type;
   auto* ctx = static_cast<LbfgsbCtx<S, A>*>(ex);
-  if constexpr (IsReverseDouble<VT>) TAPE_INTERN.clear();
-  A x = lbfgsb_make_x<S, A>(n, par);
-  auto jac = jacobian(*ctx->loss, x);          // 1 x n (scalar-output jacobian)
-  for (int i = 0; i < n; i++) grad[i] = get_val(jac.get(i));
+  if constexpr (IsReverseDouble<VT> || IsDual<VT>) {
+    if constexpr (IsReverseDouble<VT>) TAPE_INTERN.clear();
+    A x = lbfgsb_make_x<S, A>(n, par);
+    auto jac = jacobian(*ctx->loss, x);          // 1 x n (scalar-output jacobian)
+    for (int i = 0; i < n; i++) grad[i] = get_val(jac.get(i));
+  } else {
+    A x = lbfgsb_make_x<S, A>(n, par);
+    for (int i = 0; i < n; i++) {
+      const double xi = par[i]; 
+      const double h  = 1e-3 * std::max(std::abs(xi), 1.0);
+      x.set(i, xi + h); const double fp = get_val((*ctx->loss)(x));
+      x.set(i, xi - h); const double fm = get_val((*ctx->loss)(x));
+      x.set(i, xi);
+      grad[i] = (fp - fm) / (2.0 * h);
+    }
+  }
 }
 
 // lower/upper: length 1 (broadcast) or length(x); non-finite on a side => that
@@ -180,6 +197,19 @@ inline lbfgsb_result lbfgsb(const std::function<S(A)>& loss,
   counts.set(1, Integer(grcount));
   res.counts = counts;
   return res;
+}
+
+// lbfgsb(f, ..., data): f takes (x, data). Bind data into a one-arg loss and
+// delegate -- lbfgsb_fn/lbfgsb_gr and the internal jacobian stay one-argument.
+template<typename S, typename A, typename D, typename XV, typename LO, typename UP,
+         typename MI, typename FA, typename PG, typename LM, typename DArg>
+inline lbfgsb_result lbfgsb(const std::function<S(A, D)>& loss,
+                            const XV& x0, const LO& lower, const UP& upper,
+                            const MI& maxit, const FA& factr,
+                            const PG& pgtol, const LM& lmm, const DArg& data) {
+  std::function<S(A)> wrapped =
+    [&loss, &data](const A& xv) -> S { return loss(xv, data); };
+  return lbfgsb(wrapped, x0, lower, upper, maxit, factr, pgtol, lmm);
 }
 
 } // namespace etr

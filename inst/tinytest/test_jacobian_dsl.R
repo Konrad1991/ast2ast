@@ -52,11 +52,19 @@ expect_equal(j_rect_rev(c(1, 2, 3)), matrix(c(1, 6, 1, 3, 1, 2), 2, 3))
 # --- 4. extra `data` argument (new_type struct), forward -------------
 # g(v, s) = c(s$a * v1, s$b * v2)  ->  J = diag(s$a, s$b)
 j_data <- function(x, p) {
-  argtypes(x |> type(vec(double)), p |> type(Scale))
+  argtypes(
+    x |> type(vec(double)),
+    p |> type(Scale)
+  )
   g <- fn(
-    argtypes(v |> type(vec(double)), s |> type(Scale) |> const() |> ref()),
+    argtypes(
+      v |> type(vec(double)),
+      s |> type(Scale) |> const() |> ref()
+    ),
     return(vec(double)),
-    { return(c(s$a * v[[1]], s$b * v[[2]])) }
+    {
+      return(c(s$a * v[[1]], s$b * v[[2]]))
+    }
   )
   return(jacobian(g, x, p))
 }

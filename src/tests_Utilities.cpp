@@ -194,11 +194,11 @@ void test_utilities() {
   }
   // modulo derivatives: d/dx = 1, d/dy = -floor(x/y)
   {
-    Dual rx = Dual(5.0, 1.0) % Dual(3.0, 0.0);
+    Dual rx = Dual(5.0, 2.0) % Dual(3.0, 0.0);
     ass<"dual mod value">(rx.val == 2.0);
-    ass<"dual mod d/dx = 1">(rx.dot == 1.0);
-    Dual ry = Dual(5.0, 0.0) % Dual(3.0, 1.0);
-    ass<"dual mod d/dy = -floor(x/y)">(ry.dot == -1.0);
+    ass<"dual mod d/dx = 1 * seed">(rx.dot == 2.0);
+    Dual ry = Dual(5.0, 0.0) % Dual(3.0, 2.0);
+    ass<"dual mod d/dy = -floor(x/y) * seed">(ry.dot == -2.0);
     // reverse mode: same gradients via Sub/Mul composition (no ROp::Mod)
     TAPE_INTERN.clear();
     ReverseDouble x = ReverseDouble::Var(5.0);
@@ -229,9 +229,9 @@ void test_utilities() {
     ass<"vec %/% scalar [1]">(get_val(r.get(1)) == 4.0);
     ass<"vec %/% scalar [2]">(get_val(r.get(2)) == 4.0);
     // forward AD: pure floor, derivative 0
-    Dual d = idiv(Dual(7.0, 1.0), Dual(2.0, 0.0));
+    Dual d = idiv(Dual(7.0, 2.0), Dual(2.0, 3.0));
     ass<"idiv dual value">(d.val == 3.0);
-    ass<"idiv dual derivative 0">(d.dot == 0.0);
+    ass<"idiv dual derivative 0 despite non-unit seeds">(d.dot == 0.0);
     // reverse AD: both gradients 0 (value is a tape constant)
     TAPE_INTERN.clear();
     ReverseDouble rx = ReverseDouble::Var(7.0);
@@ -369,9 +369,9 @@ void test_utilities() {
     ass<"floor matrix nrow">(nrow(rm) == Integer(2));
     ass<"floor matrix ncol">(ncol(rm) == Integer(3));
     // forward AD: value floored, derivative 0
-    Dual fd = floor(Dual(2.7, 1.0));
+    Dual fd = floor(Dual(2.7, 3.0));
     ass<"floor dual value">(fd.val == 2.0);
-    ass<"floor dual derivative 0">(fd.dot == 0.0);
+    ass<"floor dual derivative 0 despite non-unit seed">(fd.dot == 0.0);
     // reverse AD: gradient is 0
     TAPE_INTERN.clear();
     ReverseDouble x = ReverseDouble::Var(2.7);
@@ -403,12 +403,13 @@ void test_utilities() {
     z = c(Double(2.0), Double(0.0), Double(5.0));
     ass<"prod with zero -> 0">(get_val(prod(z)) == 0.0);
     // forward AD: d(sum)/dx0 = 1, d(prod)/dx0 = product of the others
-    Dual sd = sum(c(Dual(2.0, 1.0), Dual(3.0, 0.0)));
+    // seeds s0 = 2, s1 = 5: d(sum) = s0 + s1; d(prod) = x1*s0 + x0*s1
+    Dual sd = sum(c(Dual(2.0, 2.0), Dual(3.0, 5.0)));
     ass<"sum dual value">(sd.val == 5.0);
-    ass<"sum dual d/dx0 = 1">(sd.dot == 1.0);
-    Dual pd = prod(c(Dual(2.0, 1.0), Dual(3.0, 0.0)));
+    ass<"sum dual dot = s0 + s1">(sd.dot == 7.0);
+    Dual pd = prod(c(Dual(2.0, 2.0), Dual(3.0, 5.0)));
     ass<"prod dual value">(pd.val == 6.0);
-    ass<"prod dual d/dx0 = x1 = 3">(pd.dot == 3.0);
+    ass<"prod dual dot = x1*s0 + x0*s1">(pd.dot == 16.0);
     // reverse AD: sum gradient is 1 everywhere; prod gradient is product of others
     TAPE_INTERN.clear();
     Array<ReverseDouble, Buffer<ReverseDouble>> r;

@@ -47,6 +47,9 @@ expect_equal(quad_rev(c(0, 0), lo, up), ref$par, tolerance = 1e-5)
 quad_val_fwd <- translate(quad_val, derivative = "forward", verbose = FALSE)
 expect_equal(quad_val_fwd(c(0, 0), lo, up), ref$value, tolerance = 1e-6)
 
+quad_fd <- translate(quad)
+expect_equal(quad_fd(c(0, 0), lo, up), ref$par, tolerance = 1e-6)
+
 # ---- 2. active bound: same bowl shifted, box clips the minimum -----------
 # f(x) = (x1 - 3)^2 + (x2 - 3)^2, upper = 1 -> minimiser pinned at (1, 1)
 box_r  <- function(p) (p[1] - 3)^2 + (p[2] - 3)^2
@@ -68,8 +71,10 @@ up2 <- c(1, 1)
 ref2 <- optim(c(0, 0), box_r, box_gr, method = "L-BFGS-B", lower = lo2, upper = up2)
 
 box_fwd <- translate(box, derivative = "forward", verbose = FALSE)
+box_fd <- translate(box)
 expect_equal(box_fwd(c(0, 0), lo2, up2), ref2$par, tolerance = 1e-6)
 expect_equal(box_fwd(c(0, 0), lo2, up2), c(1, 1), tolerance = 1e-6)
+expect_equal(box_fd(c(0, 0), lo2, up2), ref2$par, tolerance = 1e-6)
 
 # ---- 3. Rosenbrock: nonlinear, exercises the gradient wiring ------------
 rosen_r <- function(p) 100 * (p[2] - p[1]^2)^2 + (1 - p[1])^2
@@ -106,6 +111,10 @@ expect_equal(rosen_fwd(c(-1.2, 1), lo3, up3), c(1, 1), tolerance = 1e-3)
 rosen_rev <- translate(rosen, derivative = "reverse", verbose = FALSE)
 expect_equal(rosen_rev(c(-1.2, 1), lo3, up3), ref3$par, tolerance = 1e-4)
 
+rosen_fd <- translate(rosen)
+set.seed(1234)
+expect_equal(rosen_fd(c(-1.2, 1), lo3, up3), ref3$par, tolerance = 1e-2)
+
 # ---- 4. convergence flag ---------------------------------------------
 conv <- function(x, lo, up) {
   argtypes(x |> type(vec(double)), lo |> type(vec(double)), up |> type(vec(double)))
@@ -119,9 +128,3 @@ conv <- function(x, lo, up) {
 }
 conv_fwd <- translate(conv, derivative = "forward", verbose = FALSE)
 expect_equal(conv_fwd(c(0, 0), lo, up), 0L)
-
-# ---- 5. rejected without a derivative mode --------------------------
-expect_error(
-  translate(quad, getsource = TRUE),
-  pattern = "lbfgsb requires"
-)

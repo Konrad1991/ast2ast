@@ -34,7 +34,6 @@ Dual create_dual(const double val, const double dot, const bool is_na, const boo
 
 template<typename L, typename R> void compare(const L& l, const R& r) {
   const double TOL = 1e-6;
-
   if constexpr (requires { l.isNaN(); } && requires {r.isNaN(); }) {
     if (l.isNaN() && r.isNaN()) {
       ass<"both values are NaN">(true);
@@ -254,7 +253,7 @@ void test_scalars() {
   compare(sin(d1), Double(0.141120008059867));
   compare(sin(d2), Double::NA());
   compare(sin(d3), Double::NaN());
-  compare(sin(dua1), Dual(0.141120008059867, -0.989992496600445));
+  compare(sin(dua1), Dual(std::sin(d), d_dot * std::cos(d)));
   compare(sin(dua2), Dual::NA());
   compare(sin(dua3), Dual::NA());
   compare(sin(dua4), Dual(0.141120008059867, std::numeric_limits<double>::quiet_NaN()));
@@ -267,7 +266,7 @@ void test_scalars() {
   compare(sin(ir_owned2), Integer::NA());
   compare(sin(dr_owned1), Double(0.912945250727628));
   compare(sin(dr_owned2), Double::NA());
-  compare(sin(duar_owned1), Dual(0.909297426825682, -0.416146836547142));
+  compare(sin(duar_owned1), Dual(std::sin(dualref_val1), dualref_dot1 * std::cos(dualref_val1)));
   compare(sin(duar_owned2), Dual::NA());
   compare(sin(duar_owned3), Dual(0.141120008059867, std::numeric_limits<double>::quiet_NaN()));
   compare(sin(duar_owned4), Dual::NA());

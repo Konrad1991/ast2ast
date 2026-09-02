@@ -219,6 +219,16 @@ void test_calculation() {
     0.99308101,  0.43774896, -0.52004747, -0.99971465, -0.56024880,  0.39430722,  0.98633900,  0.67153525, -0.26067491, -0.95322176, -0.76938092,
     0.12182519,  0.90102578,  0.85182742,  0.01946286, -0.83079576
   };
+  // Dual_arr carries .dot = 2.0, so forward-mode sin(Dual) yields 2 * cos(x);
+  // expected_sin_dual_dot_arr (cos(x), seed = 1) is for the reverse-AD checks.
+  std::vector<double> expected_sin_dual_dot_arr_scaled {
+     1.99000833,  0.90719224, -1.00969221, -1.99827030, -1.14964789,  0.75595549,  1.96653688,  1.36909333, -0.48708831, -1.89544320, -1.56113636,
+     0.20847205,  1.78641222,  1.72193323,  0.07431677, -1.64162619, -1.84826560, -0.35561814,  1.46398300,  1.93760492,  0.62980182, -1.25703817,
+    -1.98816306, -0.89138000,  1.02493372,  1.99892811,  1.13511721, -0.77231522, -1.96968459, -1.35613504,  0.50423882,  1.90101783,  1.55000982,
+    -0.22607007, -1.79430218, -1.71286114, -0.05662347,  1.65167356,  1.84142953,  0.33818368, -1.47598668, -1.93314170, -0.61297515,  1.27075792,
+     1.98616203,  0.87549792, -1.04009493, -1.99942930, -1.12049759,  0.78861444,  1.97267799,  1.34307050, -0.52134982, -1.90644352, -1.53876184,
+     0.24365038,  1.80205156,  1.70365485,  0.03892572, -1.66159153
+  };
   std::vector<double> expected_sin_of_unary_minus {
     -0.09983342, -0.89120736, -0.86320937, -0.04158066,  0.81827711,  0.92581468,  0.18216250, -0.72896904, -0.96988981, -0.31909836,
     0.62507065,  0.99455259,  0.44964746, -0.50866146, -0.99930939, -0.57119687,  0.38207142,  0.98406501,  0.68131377, -0.24783421,
@@ -327,19 +337,19 @@ void test_calculation() {
   ass<"sin logical arr">(compare_result(sin(Logical_arr), expected_sin_logical_arr));
   ass<"sin integer arr">(compare_result(sin(Integer_arr), expected_sin_integer_arr));
   ass<"sin double arr">(compare_result(sin(Double_arr), expected_sin_double_arr));
-  ass<"sin dual arr">(compare_result_dual(sin(Dual_arr), expected_sin_double_arr, expected_sin_dual_dot_arr));
+  ass<"sin dual arr">(compare_result_dual(sin(Dual_arr), expected_sin_double_arr, expected_sin_dual_dot_arr_scaled));
   ass<"sin AD arr">(compare_result_reverse_ad(rev_ad_arr, sin(rev_ad_arr), expected_sin_double_arr, expected_sin_dual_dot_arr));
 
   ass<"sin logical r arr">(compare_result(sin(Logical_r_arr), expected_sin_logical_arr));
   ass<"sin integer r arr">(compare_result(sin(Integer_r_arr), expected_sin_integer_arr));
   ass<"sin double r arr">(compare_result(sin(Double_r_arr), expected_sin_double_arr));
-  ass<"sin dual r arr">(compare_result_dual(sin(Dual_r_arr), expected_sin_double_arr, expected_sin_dual_dot_arr));
+  ass<"sin dual r arr">(compare_result_dual(sin(Dual_r_arr), expected_sin_double_arr, expected_sin_dual_dot_arr_scaled));
   ass<"sin AD r arr">(compare_result_reverse_ad(rev_ad_arr, sin(rev_ad_arr), expected_sin_double_arr, expected_sin_dual_dot_arr));
 
   ass<"sin logical borrow arr">(compare_result(sin(Logical_borrowed_arr), expected_sin_logical_arr));
   ass<"sin integer borrow arr">(compare_result(sin(Integer_borrowed_arr), expected_sin_integer_arr));
   ass<"sin double borrow arr">(compare_result(sin(Double_borrowed_arr), expected_sin_double_arr));
-  ass<"sin dual borrow arr">(compare_result_dual(sin(Dual_borrowed_arr), expected_sin_double_arr, expected_sin_dual_dot_arr));
+  ass<"sin dual borrow arr">(compare_result_dual(sin(Dual_borrowed_arr), expected_sin_double_arr, expected_sin_dual_dot_arr_scaled));
 
   ass<"sin of unary">(compare_result(sin(-Double_arr), expected_sin_of_unary_minus));
   ass<"sin of binary">(compare_result(sin(Double_arr + Double_arr), expected_sin_of_plus));

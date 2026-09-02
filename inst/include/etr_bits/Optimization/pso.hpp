@@ -213,5 +213,21 @@ inline auto pso(
   return global_best_vec;
 }
 
+// pso(f, ..., data): f takes (particle, data). Bind data into a one-arg loss
+// and reuse the implementation above -- keeping return_type_t on a concrete
+// std::function rather than a generic lambda.
+template<typename S, typename A, typename D, typename Arg1, typename Arg2,
+         typename Arg3, typename Arg4, typename Arg5, typename Arg6, typename DArg>
+inline auto pso(
+  const std::function<S(A, D)>& f,
+  const Arg1& lb_, const Arg2& ub_,
+  const Arg3& ngen_, const Arg4& npop_,
+  const Arg5& error_threshold_,
+  const Arg6& global_, const DArg& data) {
+  std::function<S(A)> wrapped =
+    [&f, &data](const A& particle) -> S { return f(particle, data); };
+  return pso(wrapped, lb_, ub_, ngen_, npop_, error_threshold_, global_);
+}
+
 } // namespace etr
 #endif

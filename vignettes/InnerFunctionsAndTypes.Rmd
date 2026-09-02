@@ -72,7 +72,9 @@ fcpp(p, q) # 25
 ```
 
 Inner functions may call each other (including recursively) and can be
-passed as values to functions expecting a function argument, e.g.
-`uniroot()`. Struct fields are read and written with `$`, and a slot can
-itself be a custom type or a `collection(TypeName)` (a vector of a custom
-type), enabling nested structs and vectors of structs.
+passed as values to functions expecting a function argument: `uniroot()`,
+the functionals `map()`, `Reduce()`, `Filter()`, `apply()`, and the
+optimizers `jacobian()`, `lbfgsb()`, `pso()`. Struct fields are read and
+written with `$`, and a slot can itself be a custom type or a
+`collection(TypeName)` (a vector of a custom type), enabling nested structs
+and vectors of structs.

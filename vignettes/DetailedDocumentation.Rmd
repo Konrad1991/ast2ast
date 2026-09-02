@@ -59,13 +59,18 @@ Supported functions:
 *  assignment: `=`, `<-`, and `$` (struct field access/assignment)
 *  allocation: `vector`, `logical`, `integer`, `numeric`, `:`, `c`, `rep`, `matrix`, and `array`
 *  some helpers: `length`, `dim`, `nrow`, `ncol`, `is.na`, `is.nan`, `is.finite`, `is.infinite`, `print`, and `stop`
-*  Math functions: `+`, `-`, `*`, `/`, `%%`, `%/%`, `%*%`, `sin`, `asin`, `sinh`, `cos`, `acos`, `cosh`, `tan`, `atan`, `tanh`, `log`, `sqrt`, `abs`, `^`, `exp`, `floor`, `ceiling`, and `trunc`
-*  reductions: `sum`, `prod`, `max`, `min`, `which.max`, `which.min`, `all`, `any`, `rev`
+*  Math functions: `+`, `-`, `*`, `/`, `%%`, `%/%`, `%*%`, `sin`, `asin`, `sinh`, `cos`, `acos`, `cosh`, `tan`, `atan`, `tanh`, `log`, `sqrt`, `abs`, `sign`, `^`, `exp`, `floor`, `ceiling`, `trunc`, and `round`
+*  reductions: `sum`, `prod`, `mean`, `max`, `min`, `which.max`, `which.min`, `which`, `all`, `any`
+*  vector transforms: `rev`, `sort`, `cumsum`
+*  matrix margins: `colSums`, `rowSums`, `colMeans`, `rowMeans`
+*  selection: `ifelse`
 *  linear algebra: `t`, `chol`, `crossprod`, `tcrossprod`, `diag`, `get_diag`, `solve`, `backsolve`, `forwardsolve`, `rbind`, `cbind`
 *  root finding / least squares: `uniroot`, `nnls`
+*  functionals (take an `fn`): `map`, `Reduce`, `Filter`, `apply`
+*  optimizers / Jacobians of an `fn`: `jacobian`, `lbfgsb`, `pso`
 *  casts: `as.numeric`, `as.integer`, `as.logical`
 *  sequences: `seq_len`, `seq_along`
-*  Subsetting: `[]` and `[[]]`
+*  Subsetting: `[]`, `[[]]`, and `at()` (alias for `[[]]`)
 *  control flow: `for`, `while`, `repeat`, `if`, `else if`, and `else`
 *  comparison: `==`, `!=`, `>`, `<`, `>=`, and `<=`
 *  logical: `&&`, `||`, `&`, `|`, `!`
@@ -250,9 +255,10 @@ fcpp <- ast2ast::translate(f, derivative = "reverse")
 ```
 
 Unlike many high-level AD frameworks, ast2ast intentionally exposes a low-level and explicit interface.
-Rather than automatically differentiating a function or providing a single jacobian() wrapper,
-users explicitly assemble derivative computations using a small set of primitive operations.
-This design keeps the behavior transparent, predictable, and close to the generated C++ code.
+Derivative computations are assembled from a small set of primitive operations (`seed`, `unseed`,
+`get_dot`, `deriv`), which keeps the behavior transparent, predictable, and close to the generated
+C++ code. A built-in `jacobian(f, x)` wrapper is also available for the common case (see
+*Optimizers* below); it is implemented on top of the same primitives.
 
 ### Forward mode
 
@@ -387,6 +393,84 @@ single `double` and return a `double`; an optional fifth argument is passed thro
 
 `nnls(A, b)` solves the non-negative least squares problem and returns the solution
 vector directly.
+
+## Functionals
+
+These take an inner function (`fn`) as their first argument.
+
+* `map(f, x, ...)` -- apply `f` element-wise over the given vectors; scalars
+  broadcast. The result shape follows `f`'s return type: scalar produces a
+  vector, vector a matrix, matrix/array an array (with `n` as the last axis),
+  and a `new_type` a `collection`.
+* `Reduce(f, x)` -- left fold seeded with `x[[1]]`; `f` is `fn(acc, elem) -> acc`
+  and must return the same type as its accumulator argument.
+* `Filter(f, x)` -- keep the elements of vector `x` for which `f(elem)` is `TRUE`
+  (`f` returns a logical scalar).
+* `apply(f, MARGIN, x)` -- function first, unlike base R's
+  `apply(X, MARGIN, FUN)`. `x` is a matrix, `MARGIN` is `1` (rows) or `2`
+  (columns), and `f` maps a vector to a scalar or a vector.
+
+```{r, eval = FALSE}
+f <- function(x) {
+  argtypes(
+    x |> type(vec(double))
+  )
+  sq <- fn(
+    argtypes(
+      a |> type(double) |> const()
+    ),
+    return(double),
+    return(a * a)
+  )
+  return(map(sq, x))
+}
+fcpp <- ast2ast::translate(f)
+fcpp(1:5)
+```
+
+## Optimizers
+
+* `jacobian(f, x[, data])` -- the `m`-by-`n` Jacobian of `f` (double vector to
+  double vector) evaluated at `x`. Requires `derivative = "forward"` or
+  `"reverse"`.
+* `lbfgsb(f, x, lower, upper, maxit, factr, pgtol, lmm[, data])` --
+  bound-constrained L-BFGS-B via R's own C routine. `f` maps a double vector to a
+  scalar double. Under `derivative = "forward"` / `"reverse"` the gradient is
+  exact (computed with `jacobian`); otherwise it is a central-difference
+  approximation. Returns a struct with `$par`, `$value`, `$convergence`,
+  `$counts`.
+* `pso(f, lower, upper, ngen, npop, error_threshold, global[, data])` --
+  derivative-free particle-swarm optimisation. `f` maps a double vector to a
+  scalar double; returns the best parameter vector found.
+
+For `lbfgsb` and `pso` the optional trailing `data` argument (any non-function,
+non-character value) is passed to `f` unchanged as a second argument, so `f` then
+takes two arguments.
+
+```{r, eval = FALSE}
+rosen <- function(p) {
+  argtypes(
+    p |> type(vec(double))
+  )
+  loss <- fn(
+    argtypes(
+      x |> type(vec(double)) |> const()
+    ),
+    return(double),
+    {
+      a <- 1.0 - x[[1L]]
+      b <- x[[2L]] - x[[1L]] * x[[1L]]
+      return(a * a + 100.0 * b * b)
+    }
+  )
+  lo <- c(-5.0, -5.0)
+  up <- c(5.0, 5.0)
+  res <- lbfgsb(loss, p, lo, up, 100L, 1e7, 1e-8, 5L)
+  return(res$par)
+}
+fcpp <- ast2ast::translate(rosen, derivative = "reverse")
+fcpp(c(-1.2, 1.0))
+```
 
 ## Custom types (`new_type`)
 

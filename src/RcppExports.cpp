@@ -11,6 +11,15 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// test_ad_array_ops
+void test_ad_array_ops();
+RcppExport SEXP _ast2ast_test_ad_array_ops() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_ad_array_ops();
+    return R_NilValue;
+END_RCPP
+}
 // tests_allocation
 void tests_allocation();
 RcppExport SEXP _ast2ast_tests_allocation() {
@@ -319,6 +328,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_ast2ast_test_ad_array_ops", (DL_FUNC) &_ast2ast_test_ad_array_ops, 0},
     {"_ast2ast_tests_allocation", (DL_FUNC) &_ast2ast_tests_allocation, 0},
     {"_ast2ast_test_allocation", (DL_FUNC) &_ast2ast_test_allocation, 0},
     {"_ast2ast_test_Borrow", (DL_FUNC) &_ast2ast_test_Borrow, 0},

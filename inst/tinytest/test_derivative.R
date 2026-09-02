@@ -438,6 +438,36 @@ for (cc in chain_cases) {
   }
 }
 
+# --- same, but vector input: forward (per-index seed) == reverse == analytic --
+# For an element-wise body the Jacobian is diag(f'(x_i)); both modes must
+# reproduce it, and the forward path must carry each element's own seed.
+for (cc in chain_cases) {
+  ff <- as.function(c(alist(x = ), bquote({
+    argtypes(x |> type(vec(double)))
+    jac <- matrix(0.0, length(x), length(x))
+    for (i in 1L:length(x)) {
+      seed(x, i)
+      z <- .(cc$body)
+      jac[TRUE, i] <- get_dot(z)
+      unseed(x, i)
+    }
+    return(jac)
+  })))
+  fr <- as.function(c(alist(x = ), bquote({
+    argtypes(x |> type(vec(double)))
+    y <- .(cc$body)
+    return(deriv(y, x))
+  })))
+  fwd <- ast2ast::translate(ff, derivative = "forward")
+  rev <- ast2ast::translate(fr, derivative = "reverse")
+  for (xv in list(c(0.3, 0.7, 1.4), c(1.1, 0.5, 2.0, 0.9))) {
+    info <- paste(deparse(cc$body), "vec")
+    want <- diag(cc$d(xv))
+    expect_equal(fwd(xv), want, tolerance = 1e-8, info = info)
+    expect_equal(rev(xv), want, tolerance = 1e-8, info = info)
+  }
+}
+
 # --- reverse-mode deriv() through a struct field, element-wise mul ----------
 types_f <- function() {
   new_type(

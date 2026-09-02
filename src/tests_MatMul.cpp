@@ -148,25 +148,25 @@ void test_mat_mul() {
   }
 
   // ---- 9. forward AD: Dual x Dual -------------------------------------------
-  // A.dot and B.dot are all 1s. C.dot[i,j] = colSum(B,j) + rowSum(A,i).
+  // A.dot all 2, B.dot all 3. C.dot[i,j] = 2*colSum(B,j) + 3*rowSum(A,i).
   //   col0 B = 27, col1 B = 30; row0 A = 6, row1 A = 15.
-  //   → C.dot col-major: [33, 42, 36, 45]
+  //   → C.dot col-major: [72, 99, 78, 105]
   {
     Array<Dual, Buffer<Dual, LBufferTrait>> A(SI{6});
     for (std::size_t k = 0; k < 6; ++k) {
-      Dual d; d.val = Avals[k]; d.dot = 1.0; d.is_na = false; d.is_na_dot = false;
+      Dual d; d.val = Avals[k]; d.dot = 2.0; d.is_na = false; d.is_na_dot = false;
       A.set(k, d);
     }
     A.dim = dimA;
     Array<Dual, Buffer<Dual, LBufferTrait>> B(SI{6});
     for (std::size_t k = 0; k < 6; ++k) {
-      Dual d; d.val = Bvals[k]; d.dot = 1.0; d.is_na = false; d.is_na_dot = false;
+      Dual d; d.val = Bvals[k]; d.dot = 3.0; d.is_na = false; d.is_na_dot = false;
       B.set(k, d);
     }
     B.dim = dimB;
 
     auto C = mat_mul(A, B);
-    const std::vector<double> exp_dot{33.0, 42.0, 36.0, 45.0};
+    const std::vector<double> exp_dot{72.0, 99.0, 78.0, 105.0};
     for (std::size_t k = 0; k < 4; ++k) {
       ass<"Dual x Dual: val">(close(C.get(k).val, expC[k]));
       ass<"Dual x Dual: dot">(close(C.get(k).dot, exp_dot[k]));
@@ -175,11 +175,11 @@ void test_mat_mul() {
 
   // ---- 10. forward AD mixed: Dual x Double ----------------------------------
   // B has no dot (treated as 0). C.dot[i,j] = sum_k A.dot[i,k] * B[k,j].
-  // With A.dot all 1s, that's just colSum(B,j): [27, 27, 30, 30].
+  // With A.dot all 2s, that's 2*colSum(B,j): [54, 54, 60, 60].
   {
     Array<Dual, Buffer<Dual, LBufferTrait>> A(SI{6});
     for (std::size_t k = 0; k < 6; ++k) {
-      Dual d; d.val = Avals[k]; d.dot = 1.0; d.is_na = false; d.is_na_dot = false;
+      Dual d; d.val = Avals[k]; d.dot = 2.0; d.is_na = false; d.is_na_dot = false;
       A.set(k, d);
     }
     A.dim = dimA;
@@ -188,7 +188,7 @@ void test_mat_mul() {
     B.dim = dimB;
 
     auto C = mat_mul(A, B);
-    const std::vector<double> exp_dot{27.0, 27.0, 30.0, 30.0};
+    const std::vector<double> exp_dot{54.0, 54.0, 60.0, 60.0};
     for (std::size_t k = 0; k < 4; ++k) {
       ass<"Dual x Double: val">(close(C.get(k).val, expC[k]));
       ass<"Dual x Double: dot">(close(C.get(k).dot, exp_dot[k]));

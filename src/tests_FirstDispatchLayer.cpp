@@ -328,25 +328,27 @@ void test_scalar_methods() {
 
   // Dual methods
   {
-    Dual l(1.1, 1.0);
-    Dual r(2.2, 0.0);
+    // non-unit seeds so the chain factor f'(x) * dot is actually exercised
+    const double dl = 2.0, dr = 5.0, dv = 3.0;
+    Dual l(1.1, dl);
+    Dual r(2.2, dr);
     ass<"1.1 + 2.2 = 3.3">( compare( (l.operator+(r)).val, 3.3) );
-    ass<"deriv: 1.1 + 2.2 = 1.0">( compare( (l.operator+(r)).dot, 1.0) );
+    ass<"deriv: (l+r) = dl+dr">( compare( (l.operator+(r)).dot, dl + dr) );
 
     ass<"1.1 - 2.2 = -1.1">( compare( (l.operator-(r)).val, -1.1) );
-    ass<"deriv: 1.1 - 2.2 = 1.0">( compare( (l.operator-(r)).dot, 1.0) );
-    ass<"deriv: 2.2 - 1.0 = -1.0">( compare( (r.operator-(l)).dot, -1.0) );
+    ass<"deriv: (l-r) = dl-dr">( compare( (l.operator-(r)).dot, dl - dr) );
+    ass<"deriv: (r-l) = dr-dl">( compare( (r.operator-(l)).dot, dr - dl) );
 
     ass<"1.1 * 2.2 = 2.42">( compare( (l.operator*(r)).val, 2.42) );
-    ass<"deriv: 1.1 * 2.2 = 2.2">( compare( (l.operator*(r)).dot, 2.2) );
+    ass<"deriv: (l*r) = dl*r + l*dr">( compare( (l.operator*(r)).dot, dl * 2.2 + 1.1 * dr) );
 
     ass<"1.1 / 2.2 = 0.5">( compare( (l.operator/(r)).val, 0.5));
-    ass<"deriv: 1.1 / (1.1*1.1) = 1 / (1.1*1.1)">( compare( (l.operator/(l.operator*(l))).dot,
-                                                           -1.0 / (1.1 * 1.1)));
+    ass<"deriv: l/(l*l) = -dl / (1.1*1.1)">( compare( (l.operator/(l.operator*(l))).dot,
+                                                     -dl / (1.1 * 1.1)));
 
     ass<"1.1 ^ 1.1 = 1.11...">( compare( l.pow(l).val, std::pow(1.1, 1.1)) );
-    ass<"deriv: 1.1 ^ 1.1 = x^x + x^x*ln(x)">( compare( l.pow(l).dot,
-                                              std::pow(1.1, 1.1) + std::pow(1.1, 1.1) * std::log(1.1)) );
+    ass<"deriv: l^l = dl * (x^x + x^x*ln(x))">( compare( l.pow(l).dot,
+                                              dl * (std::pow(1.1, 1.1) + std::pow(1.1, 1.1) * std::log(1.1))) );
 
     ass<"1.1 == 2.2 = false">( l.operator==(r).val == false);
     ass<"1.1 < 2.2 = true">( l.operator<(r).val == true);
@@ -361,52 +363,52 @@ void test_scalar_methods() {
     ass<"1.1 || 1.1 = true">( l.operator||(l).val == true);
 
     ass<"sin(1.1)">( compare(l.sin().val, std::sin(1.1)));
-    ass<"deriv: sin(1.1) = cos(1.1)">( compare(l.sin().dot, std::cos(1.1)));
+    ass<"deriv: sin(1.1) = cos(1.1) * dl">( compare(l.sin().dot, std::cos(1.1) * dl));
 
-    Dual valid(0.5, 1.0);
+    Dual valid(0.5, dv);
     ass<"asin(0.5)">( compare(valid.asin().val, std::asin(0.5)));
-    ass<"deriv: asin(0.5) = 1 / sqrt(1 - x^2)">( compare(valid.asin().dot,
-                                                 1.0 / std::sqrt(1.0 - 0.5*0.5)) );
+    ass<"deriv: asin(0.5) = dv / sqrt(1 - x^2)">( compare(valid.asin().dot,
+                                                 dv / std::sqrt(1.0 - 0.5*0.5)) );
     ass<"asin(2.2)">( (r.asin().val));
 
     ass<"sinh(1.1)">( compare(l.sinh().val, std::sinh(1.1)));
-    ass<"deriv: sinh(1.1) = cosh(1.1)">( compare(l.sinh().dot, std::cosh(1.1)));
+    ass<"deriv: sinh(1.1) = cosh(1.1) * dl">( compare(l.sinh().dot, std::cosh(1.1) * dl));
 
     ass<"cos(1.1)">( compare(l.cos().val, std::cos(1.1)));
-    ass<"deriv: cos(1.1) = -sin(1.1)">( compare(l.cos().dot, -std::sin(1.1)));
+    ass<"deriv: cos(1.1) = -sin(1.1) * dl">( compare(l.cos().dot, -std::sin(1.1) * dl));
 
     ass<"acos(0.5)">( compare(valid.acos().val, std::acos(0.5)));
-    ass<"deriv: acos(0.5) = -1 / sqrt(1 - x^2)">( compare(valid.acos().dot,
-                                                 -1.0 / std::sqrt(1.0 - 0.5*0.5)) );
+    ass<"deriv: acos(0.5) = -dv / sqrt(1 - x^2)">( compare(valid.acos().dot,
+                                                 -dv / std::sqrt(1.0 - 0.5*0.5)) );
     ass<"acos(2.2)">( (r.acos().val));
 
     ass<"cosh(1.1)">( compare(l.cosh().val, std::cosh(1.1)));
-    ass<"deriv: cosh(1.1) = sinh(1.1)">( compare(l.cosh().dot, std::sinh(1.1)));
+    ass<"deriv: cosh(1.1) = sinh(1.1) * dl">( compare(l.cosh().dot, std::sinh(1.1) * dl));
 
     ass<"tan(1.1)">( compare(l.tan().val, std::tan(1.1)));
-    ass<"deriv: tan(1.1) = 1 + tan(1.1)*tan(1.1)">( compare(l.tan().dot, 1.0 + std::tan(1.1)*std::tan(1.1)) );
+    ass<"deriv: tan(1.1) = (1 + tan^2) * dl">( compare(l.tan().dot, (1.0 + std::tan(1.1)*std::tan(1.1)) * dl) );
 
     ass<"atan(1.1)">( compare(l.atan().val, std::atan(1.1)));
-    ass<"deriv: atan(1.1) = 1 / (1 + 1.1*1.1)">( compare(l.atan().dot, 1.0 / (1 + 1.1*1.1)) );
+    ass<"deriv: atan(1.1) = dl / (1 + 1.1*1.1)">( compare(l.atan().dot, dl / (1 + 1.1*1.1)) );
 
     ass<"tanh(1.1)">( compare(l.tanh().val, std::tanh(1.1)));
-    ass<"deriv: tanh(1.1) = 1 / (cosh(1.1)*cosh(1.1))">( compare(l.tanh().dot, 1.0 / (std::cosh(1.1) * std::cosh(1.1))) );
+    ass<"deriv: tanh(1.1) = dl / cosh^2">( compare(l.tanh().dot, dl / (std::cosh(1.1) * std::cosh(1.1))) );
 
     ass<"exp(1.1)">( compare(l.exp().val, std::exp(1.1)));
-    ass<"deriv: exp(1.1)">( compare(l.exp().dot, std::exp(1.1)));
+    ass<"deriv: exp(1.1) = exp(1.1) * dl">( compare(l.exp().dot, std::exp(1.1) * dl));
 
     ass<"log(1.1)">( compare(l.log().val, std::log(1.1)));
-    ass<"deriv: log(1.1) = 1/1.1">( compare(l.log().dot, 1.0 / 1.1) );
+    ass<"deriv: log(1.1) = dl / 1.1">( compare(l.log().dot, dl / 1.1) );
     ass<"log(0.0)">( z.log().val == -Double::Inf().val );
     ass<"log(0.0)">( std::isnan(z.log().dot) );
     ass<"log(0.0)">( z.log().isNaNDot() );
     ass<"log(0.0)">( !(z.log().isFinite()));
 
     ass<"sqrt(1.1)">( compare(l.sqrt().val, std::sqrt(1.1)));
-    ass<"deriv: sqrt(1.1) = 1 / (2*sqrt(1.1))">( compare(l.sqrt().dot, 1.0 / (2.0*std::sqrt(1.1))) );
+    ass<"deriv: sqrt(1.1) = dl / (2*sqrt(1.1))">( compare(l.sqrt().dot, dl / (2.0*std::sqrt(1.1))) );
 
     ass<"-1.1">( compare(l.operator-().val, -1.1));
-    ass<"deriv: -1.1 = -1.0">( compare(l.operator-().dot, -1.0));
+    ass<"deriv: -l = -dl">( compare(l.operator-().dot, -dl));
   }
   // NA
   {

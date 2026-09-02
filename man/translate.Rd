@@ -60,15 +60,20 @@ translate(
         \code{integer}, \code{numeric}
       \item Object info: \code{length}, \code{dim}, \code{nrow}, \code{ncol}
       \item Arithmetic: \code{+}, \code{-}, \code{*}, \code{/}, \code{\%\%}, \code{\%/\%}, \code{\%*\%}, \code{^}
-      \item Indexing: \code{[]} and \code{[[]]}
+      \item Indexing: \code{[]}, \code{[[]]}, and \code{at()} (an alias for \code{[[]]})
       \item Math: \code{sin}, \code{asin}, \code{sinh}, \code{cos}, \code{acos}, \code{cosh},
-        \code{tan}, \code{atan}, \code{tanh}, \code{sqrt}, \code{abs}, \code{log}, \code{exp},
-        \code{floor}, \code{ceiling}, \code{trunc}
-      \item Reductions: \code{sum}, \code{prod}, \code{max}, \code{min}, \code{which.max},
-        \code{which.min}, \code{all}, \code{any}, \code{rev}
+        \code{tan}, \code{atan}, \code{tanh}, \code{sqrt}, \code{abs}, \code{sign}, \code{log}, \code{exp},
+        \code{floor}, \code{ceiling}, \code{trunc}, \code{round}
+      \item Reductions: \code{sum}, \code{prod}, \code{mean}, \code{max}, \code{min}, \code{which.max},
+        \code{which.min}, \code{which}, \code{all}, \code{any}
+      \item Vector transforms: \code{rev}, \code{sort}, \code{cumsum}
+      \item Matrix margins: \code{colSums}, \code{rowSums}, \code{colMeans}, \code{rowMeans}
+      \item Selection: \code{ifelse}
       \item Linear algebra: \code{t}, \code{chol}, \code{crossprod}, \code{tcrossprod}, \code{diag},
         \code{get_diag}, \code{solve}, \code{backsolve}, \code{forwardsolve}, \code{rbind}, \code{cbind}
       \item Root finding / least squares: \code{uniroot}, \code{nnls}
+      \item Functionals (take an \code{fn()}): \code{map}, \code{Reduce}, \code{Filter}, \code{apply}
+      \item Optimizers / derivatives of an \code{fn()}: \code{jacobian}, \code{lbfgsb}, \code{pso}
       \item Casts: \code{as.numeric}, \code{as.integer}, \code{as.logical}
       \item Sequences: \code{seq_len}, \code{seq_along}
       \item Concatenation: \code{c}
@@ -149,6 +154,41 @@ translate(
     \code{nnls(A, b)} solves the non-negative least squares problem and
     returns the solution vector.
   }
+  \subsection{Functionals}{
+    These take an \code{fn()} as their first argument:
+    \itemize{
+      \item \code{map(f, x, ...)}: apply \code{f} element-wise over the given
+        vectors (scalars broadcast). The result shape follows \code{f}'s return
+        type: scalar gives a vector, vector a matrix, matrix/array an array,
+        \code{new_type} a \code{collection}.
+      \item \code{Reduce(f, x)}: left fold seeded with \code{x[[1]]};
+        \code{f} is \code{fn(acc, elem) -> acc}.
+      \item \code{Filter(f, x)}: keep the elements of vector \code{x} for which
+        \code{f(elem)} is \code{TRUE}.
+      \item \code{apply(f, MARGIN, x)}: function first (unlike base R). \code{x}
+        is a matrix, \code{MARGIN} is 1 (rows) or 2 (columns), \code{f} maps a
+        vector to a scalar or vector.
+    }
+  }
+  \subsection{Optimizers and Jacobians}{
+    \itemize{
+      \item \code{jacobian(f, x[, data])}: the \code{m}-by-\code{n} Jacobian at
+        \code{x} of \code{f}, which maps a double vector to a double vector.
+        Requires \code{derivative = "forward"} or \code{"reverse"}.
+      \item \code{lbfgsb(f, x, lower, upper, maxit, factr, pgtol, lmm[, data])}:
+        bound-constrained L-BFGS-B via R's own C routine. \code{f} maps a double
+        vector to a scalar double. Under \code{derivative = "forward"}/\code{"reverse"}
+        the gradient is exact (via \code{jacobian}); otherwise it is a
+        central-difference approximation. Returns a struct with \code{$par},
+        \code{$value}, \code{$convergence}, \code{$counts}.
+      \item \code{pso(f, lower, upper, ngen, npop, error_threshold, global[, data])}:
+        derivative-free particle-swarm optimisation. \code{f} maps a double
+        vector to a scalar double; returns the best parameter vector found.
+    }
+    For \code{lbfgsb} and \code{pso} the optional trailing \code{data} argument
+    (any non-function, non-character value) is passed to \code{f} unchanged as a
+    second argument.
+  }
   \subsection{Custom types}{
     User-defined struct types are declared in a \code{types_f} helper function
     (passed to \code{translate()} via \code{types_f =}) and created with
@@ -173,11 +213,13 @@ translate(
       \item \code{derivative = "forward"} enables forward-mode AD.
       \item \code{derivative = "reverse"} enables reverse-mode AD.
     }
-    The AD system is intentionally low-level and explicit. Rather than providing
-    high-level wrappers (such as a built-in \code{jacobian()}), users are expected
-    to assemble derivative computations themselves using a small set of primitive
-    building blocks. This keeps the interface flexible, transparent, and close
-    to the generated C++ code.
+    The AD system is intentionally low-level and explicit: derivative
+    computations are assembled from a small set of primitive building blocks
+    (\code{seed}, \code{unseed}, \code{get_dot}, \code{deriv}), which keeps the
+    interface transparent and close to the generated C++ code. A built-in
+    \code{jacobian(f, x)} is also provided for the common case (see
+    \emph{Optimizers and Jacobians} above); it is itself implemented on top of
+    those primitives.
     \subsection{Forward mode}{
     In forward mode, derivatives are propagated alongside values. The following
     functions are available:

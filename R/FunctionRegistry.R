@@ -194,11 +194,40 @@ is_array <- function(node, vars_types_list) {
     c("array", "borrow_array")
   )
 }
+compare_types_passed_to_fn <- function(node, type1, type2) {
 
-# Validate the fn passed to a functional (map / Reduce / Filter / apply).
-# `expect` holds one entry per expected parameter, each either a new_type_node
-# (matched by name) or list(data_struct=, base_type=) where a NULL field is not
-# constrained. Returns NULL when ok, otherwise an error string.
+  # nothing to compare against -- infer_fct already flagged the real problem
+  if (is.null(type1) || is.null(type2)) return()
+
+  if (inherits(type1, "pre_type_node") && inherits(type2, "pre_type_node")) {
+    if (type1$get_data_struct() != type2$get_data_struct()) {
+      node$error <- sprintf("Found a type mismatch: expected %s got %s", type1$get_data_struct(), type2$get_data_struct())
+    }
+    else if (type1$get_data_struct() == "collection" && type2$get_data_struct() == "collection") {
+      nt_t1 <- type1$data_struct$type
+      nt_t2 <- type2$data_struct$type
+      if (nt_t1 != nt_t2) {
+        node$error <- sprintf("Found a type mismatch: expected %s got %s", nt_t1, nt_t2)
+      }
+    }
+    else if (type1$get_data_struct() %in% c("scalar", "vector", "matrix", "array") &&
+      type2$get_data_struct() %in% c("scalar", "vector", "matrix", "array")) {
+      if (!same_base_type(type1$get_base_type(), type2$get_base_type())) {
+        node$error <- sprintf("Mismatched base types: expected %s got %s", type1$get_base_type(), type2$get_base_type())
+      }
+    }
+  }
+  else if (inherits(type1, "new_type_node") && inherits(type2, "new_type_node")) {
+    if (type1$get_data_struct() != type2$get_data_struct()) {
+      node$error <- sprintf("Mismatched new types: expected %s got %s", type1$get_data_struct(), type2$get_data_struct())
+    }
+  }
+  else if (class(type1)[[1L]] != class(type2)[[1L]]) { # index so that R6 is ignored
+    node$error <- sprintf("Mismatched types: expected %s got %s", class(type1)[[1L]], class(type2)[[1L]])
+  }
+
+}
+
 check_functional_fn <- function(fn, expect, label) {
   af <- fn$args_f
   nm <- fn$fct_name
@@ -2270,10 +2299,6 @@ function_registry_global$add(
       if (inherits(extra_type, "pre_type_node") && extra_type$get_base_type() == "character") {
         return("The fifth argument to uniroot (extra data passed to the function) cannot be a character/string")
       }
-      # Any other type (numeric/logical/integer scalar/vector/matrix, or a
-      # new_type_node struct) is allowed and not checked further here -- a
-      # mismatch against the function's own second parameter type will
-      # simply fail to compile in C++.
     }
     if (is.null(info_env$known_types[["uniroot_result"]])) {
       return("Did not found uniroot_result type which is required as return type for uniroot")
@@ -2281,7 +2306,10 @@ function_registry_global$add(
     return(info_env$known_types[["uniroot_result"]])
   },
   check_fct = function(node, vars_types_list, info_env) {
-    f <- node$args[[1L]]$internal_type
+    # inline fn: the arg is the fn_node itself; named fn: infer() cached it as internal_type
+    f <- node$args[[1L]]
+    if (!inherits(f, "fn_node")) f <- f$internal_type
+    if (!inherits(f, "fn_node")) return()
     args_to_f <- f$args_f
     ret_from_f <- f$return_type
     has_extra <- length(node$args) == 5L
@@ -2310,6 +2338,10 @@ function_registry_global$add(
       if (ret_from_f$get_data_struct() != "scalar") {
         node$error <- "the function passed to uniroot has to return an argument of type scalar"
       }
+    }
+
+    if (length(args_to_f) == 2L) {
+      compare_types_passed_to_fn(node, args_to_f[[2L]], node$args[[5L]]$internal_type)
     }
   },
  group = "function_node", cpp_name = "etr::uniroot", deriv_possible = FALSE,
@@ -2417,30 +2449,46 @@ function_registry_global$add(
     node$internal_type <- t
     return(t)
   },
-  check_fct = mock,
+  check_fct = function(node, vars_types_list, info_env) {
+    # inline fn: the arg is the fn_node itself; named fn: infer() cached it as internal_type
+    f <- node$args[[1L]]
+    if (!inherits(f, "fn_node")) f <- f$internal_type
+    if (!inherits(f, "fn_node")) return()
+    args_to_f <- f$args_f
+    arg1 <- node$args[[2L]]
+    compare_types_passed_to_fn(node, args_to_f[[1L]], arg1$internal_type)
+    if (length(args_to_f) == 2L) {
+      arg2 <- node$args[[3L]]
+      compare_types_passed_to_fn(node, args_to_f[[2L]], arg2$internal_type)
+    }
+  },
   group = "function_node", cpp_name = "etr::jacobian", valid_fn_context = TRUE
 )
 function_registry_global$add(
-  name = "lbfgsb", num_args = 8, arg_names = c(NA, NA, NA, NA, NA, NA, NA, NA),
+  name = "lbfgsb", num_args = c(8, 9), arg_names = c(NA, NA, NA, NA, NA, NA, NA, NA, NA),
   docu = paste0(
     "lbfgsb(f, x, lower, upper, maxit, factr, pgtol, lmm)\n",
+    "lbfgsb(f, x, lower, upper, maxit, factr, pgtol, lmm, data)\n",
     "Bound-constrained L-BFGS-B via R's own C routine. f: fn() taking a double ",
-    "vector and returning a scalar double; its gradient is taken with jacobian, ",
-    "so translate(derivative = \"forward\") or \"reverse\" is required.\n",
+    "vector and returning a scalar double. Under translate(derivative = \"forward\" ",
+    "or \"reverse\") the gradient is exact (via jacobian); otherwise it is a ",
+    "central-difference approximation.\n",
     "lower/upper: scalar (broadcast) or length(x) double; a non-finite entry ",
     "means that side is unbounded. maxit/lmm: scalar integer; factr/pgtol: ",
     "scalar double.\n",
+    "data is optional (any non-function, non-character value) and is passed to f ",
+    "unchanged -- when given, f takes a second argument of that type.\n",
     "Returns a struct with $par, $value, $convergence, $counts."
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     if (info_env$real_type == "etr::Double") {
-      return("lbfgsb requires translate(derivative = \"forward\") or \"reverse\"")
+      warning("lbfgsb: gradient computed by finite differences; set translate(derivative = 'forward' or 'reverse') for exact derivatives")
     }
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
     })
-    if (length(all_types) != 8L) {
-      return("lbfgsb expects 8 arguments")
+    if (!(length(all_types) %in% c(8L, 9L))) {
+      return("lbfgsb expects 8 or 9 arguments")
     }
     if (!inherits(all_types[[1L]], "fn_node")) {
       return("The first argument to lbfgsb has to be a function")
@@ -2480,17 +2528,35 @@ function_registry_global$add(
     if (!scalar_num(all_types[[8L]], c("double", "integer", "int"))) {
       return("The eighth argument (lmm) to lbfgsb has to be a scalar integer")
     }
+    if (length(node$args) == 9L) {
+      extra_type <- all_types[[9L]]
+      if (inherits(extra_type, "fn_node")) {
+        return("The ninth argument to lbfgsb (extra data passed to the function) cannot itself be a function")
+      }
+      if (inherits(extra_type, "pre_type_node") && extra_type$get_base_type() == "character") {
+        return("The ninth argument to lbfgsb (extra data passed to the function) cannot be a character/string")
+      }
+    }
     if (is.null(info_env$known_types[["lbfgsb_result"]])) {
       return("Did not found lbfgsb_result type which is required as return type for lbfgsb")
     }
     return(info_env$known_types[["lbfgsb_result"]])
   },
   check_fct = function(node, vars_types_list, info_env) {
-    f <- node$args[[1L]]$internal_type
+    # inline fn: the arg is the fn_node itself; named fn: infer() cached it as internal_type
+    f <- node$args[[1L]]
+    if (!inherits(f, "fn_node")) f <- f$internal_type
+    if (!inherits(f, "fn_node")) return()
     args_to_f <- f$args_f
     ret_from_f <- f$return_type
-    if (length(args_to_f) != 1L) {
-      node$error <- "the function passed to lbfgsb has to accept exactly 1 argument"
+    has_extra <- length(node$args) == 9L
+    expected_n_args <- if (has_extra) 2L else 1L
+    if (length(args_to_f) != expected_n_args) {
+      node$error <- sprintf(
+        "the function passed to lbfgsb has to accept exactly %d argument%s%s",
+        expected_n_args, if (expected_n_args == 1L) "" else "s",
+        if (has_extra) " (the parameter vector, then the extra data argument)" else ""
+      )
     } else if (inherits(args_to_f[[1L]], "pre_type_node")) {
       atf <- args_to_f[[1L]]
       if (atf$get_base_type() != "double" || atf$get_data_struct() != "vector") {
@@ -2503,27 +2569,33 @@ function_registry_global$add(
                ret_from_f$get_data_struct() != "scalar") {
       node$error <- "the function passed to lbfgsb has to return a scalar double"
     }
+    if (has_extra && length(args_to_f) == 2L) {
+      compare_types_passed_to_fn(node, args_to_f[[2L]], node$args[[9L]]$internal_type)
+    }
   },
  group = "function_node", cpp_name = "etr::lbfgsb", valid_fn_context = TRUE
 )
 function_registry_global$add(
-  name = "pso", num_args = 7, arg_names = c(NA, NA, NA, NA, NA, NA, NA),
+  name = "pso", num_args = c(7, 8), arg_names = c(NA, NA, NA, NA, NA, NA, NA, NA),
   docu = paste0(
     "pso(f, lower, upper, ngen, npop, error_threshold, global)\n",
+    "pso(f, lower, upper, ngen, npop, error_threshold, global, data)\n",
     "Particle-swarm optimisation (derivative-free). f: fn() taking a double ",
     "vector and returning a scalar double.\n",
     "lower/upper: scalar or length(npar) double (npar = length(lower)); ",
     "ngen/npop: scalar integer (>= 10 / >= 5); error_threshold: scalar double ",
     "(stop once the best error drops below it); global: scalar logical (use the ",
     "global best instead of the neighbourhood best for the social pull).\n",
+    "data is optional (any non-function, non-character value) and is passed to f ",
+    "unchanged -- when given, f takes a second argument of that type.\n",
     "Returns the best parameter vector found."
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
     })
-    if (length(all_types) != 7L) {
-      return("pso expects 7 arguments")
+    if (!(length(all_types) %in% c(7L, 8L))) {
+      return("pso expects 7 or 8 arguments")
     }
     if (!inherits(all_types[[1L]], "fn_node")) {
       return("The first argument to pso has to be a function")
@@ -2556,16 +2628,34 @@ function_registry_global$add(
     if (!scalar_num(all_types[[7L]], c("logical", "bool"))) {
       return("The seventh argument (global) to pso has to be a scalar logical")
     }
+    if (length(node$args) == 8L) {
+      extra_type <- all_types[[8L]]
+      if (inherits(extra_type, "fn_node")) {
+        return("The eighth argument to pso (extra data passed to the function) cannot itself be a function")
+      }
+      if (inherits(extra_type, "pre_type_node") && extra_type$get_base_type() == "character") {
+        return("The eighth argument to pso (extra data passed to the function) cannot be a character/string")
+      }
+    }
     t <- make_inferred_type("vector", "double", info_env$r_fct, info_env$real_type)
     node$internal_type <- t
     return(t)
   },
   check_fct = function(node, vars_types_list, info_env) {
-    f <- node$args[[1L]]$internal_type
+    # inline fn: the arg is the fn_node itself; named fn: infer() cached it as internal_type
+    f <- node$args[[1L]]
+    if (!inherits(f, "fn_node")) f <- f$internal_type
+    if (!inherits(f, "fn_node")) return()
     args_to_f <- f$args_f
     ret_from_f <- f$return_type
-    if (length(args_to_f) != 1L) {
-      node$error <- "the function passed to pso has to accept exactly 1 argument"
+    has_extra <- length(node$args) == 8L
+    expected_n_args <- if (has_extra) 2L else 1L
+    if (length(args_to_f) != expected_n_args) {
+      node$error <- sprintf(
+        "the function passed to pso has to accept exactly %d argument%s%s",
+        expected_n_args, if (expected_n_args == 1L) "" else "s",
+        if (has_extra) " (the parameter vector, then the extra data argument)" else ""
+      )
     } else if (inherits(args_to_f[[1L]], "pre_type_node")) {
       atf <- args_to_f[[1L]]
       if (atf$get_base_type() != "double" || atf$get_data_struct() != "vector") {
@@ -2577,6 +2667,9 @@ function_registry_global$add(
     } else if (ret_from_f$get_base_type() != "double" ||
                ret_from_f$get_data_struct() != "scalar") {
       node$error <- "the function passed to pso has to return a scalar double"
+    }
+    if (has_extra && length(args_to_f) == 2L) {
+      compare_types_passed_to_fn(node, args_to_f[[2L]], node$args[[8L]]$internal_type)
     }
   },
  group = "function_node", cpp_name = "etr::pso", deriv_possible = FALSE,
