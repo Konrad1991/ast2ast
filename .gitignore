@@ -33,3 +33,7 @@ CLAUDE.md
 /development/Benchmarks/bench_error_reporting.R
 /development/Benchmarks/bench_copy_overhead.R
 /development/Benchmarks/bench_ode_integration.R
+
+# sanitizer run artefacts
+/development/sanitize-ubsan.log
+/development/sanitize-asan.log

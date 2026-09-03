@@ -37,6 +37,10 @@ test_concepts <- function() {
     invisible(.Call(`_ast2ast_test_concepts`))
 }
 
+test_determinant <- function() {
+    invisible(.Call(`_ast2ast_test_determinant`))
+}
+
 test_first_dispatch_layer <- function() {
     invisible(.Call(`_ast2ast_test_first_dispatch_layer`))
 }

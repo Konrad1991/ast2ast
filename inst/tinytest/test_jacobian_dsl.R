@@ -1,6 +1,11 @@
 library(tinytest)
 library(ast2ast)
 
+# Skipped on CRAN: two AD compiles (forward + reverse jacobian codegen) are
+# expensive, and jacobian()'s math correctness overlaps the forward/reverse
+# coverage in test_derivative.R.
+if (!at_home()) exit_file("slow: AD compiles; runs at home / CI only")
+
 # jacobian(f, x[, data]): m-by-n Jacobian of f at x, column-major like R
 # (entry [j, i] = d f_j / d x_i). Forward mode under derivative = "forward",
 # reverse mode under derivative = "reverse".

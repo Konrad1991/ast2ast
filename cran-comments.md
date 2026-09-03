@@ -13,6 +13,18 @@ since the last CRAN release and is now ready to return.
   * windows-latest, R-release
 * win-builder, R-release / R-devel / R-oldrelease
 
+## Additional checks
+
+The full test suite, including the slower tests that are skipped on CRAN, was
+run locally on Ubuntu Linux under:
+
+* valgrind (memcheck): no errors
+* g++ 13, -fsanitize=undefined: no runtime errors
+* g++ 13, -fsanitize=address: no errors
+
+These exercise the C++ code, including the automatic-differentiation tape and
+the linear-algebra routines.
+
 ## R CMD check results
 
 There were no ERRORs or WARNINGs.

@@ -1,5 +1,13 @@
 library(tinytest)
 
+# Skipped on CRAN: container semantics + growth-from-empty are covered in the
+# C++ tests (tests_Buffer/Array/Allocation, run via test_cpp_code.R); the DSL
+# codegen paths are covered elsewhere -- numeric(0) consumed in test_iterators.R
+# (seq_len/seq_along), zero-length result round-trip in test_numeric_methods.R
+# (which) and test_reduce_filter.R (Filter), and `x <- c(x, v)` growth-from-zero
+# in the Fibonacci branch of test_functionals.R.
+if (!at_home()) exit_file("covered by the C++ and other DSL tests")
+
 TU <- function(test) {
   argtypes(
     test |> type(int)

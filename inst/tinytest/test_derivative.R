@@ -1,5 +1,10 @@
 library(tinytest)
 
+# Skipped on CRAN: ~14 forward/reverse AD compiles. Math correctness is also
+# covered by the C++ suite (test_deriv_scalar, test_jacobian, test_ad_array_ops,
+# test_tape_reuse); the full DSL matrix runs at home / CI only.
+if (!at_home()) exit_file("slow: AD compiles; runs at home / CI only")
+
 # Errors
 # =========================================================================
 args_fct <- function() {}

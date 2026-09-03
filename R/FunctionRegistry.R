@@ -1766,6 +1766,27 @@ function_registry_global$add(
   group = "unary_node", cpp_name = "etr::tcrossprod"
 )
 function_registry_global$add(
+  name = "det", num_args = 1, arg_names = NA,
+  docu = "det(x)  # x: square matrix -> scalar determinant",
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    inner <- infer(node$obj, vars_list, info_env, function_registry)
+    if (!inherits(inner, "pre_type_node")) {
+      return(sprintf("Found unallowed type in: %s", node$stringify()))
+    }
+    t <- make_inferred_type("scalar", "double", info_env$r_fct, info_env$real_type)
+    node$internal_type <- t
+    return(t)
+  },
+  check_fct = function(node, vars_types_list, info_env) {
+    if (is_charNANaNInf(node$obj, vars_types_list)) {
+      node$error <- "You cannot use character/NA/NaN/Inf entries in det"
+    } else if (!is_mat(node$obj, vars_types_list)) {
+      node$error <- "You can only call det on a matrix"
+    }
+  },
+  group = "unary_node", cpp_name = "etr::determinant"
+)
+function_registry_global$add(
   name = "diag", num_args = c(1L, 3L), arg_names = c("x", "nrow", "ncol"),
   docu = paste0(
     "diag(x)              # x scalar -> x-by-x identity; x vector -> square matrix with x on the diagonal.\n",

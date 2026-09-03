@@ -1,6 +1,11 @@
 library(tinytest)
 library(ast2ast)
 
+# Skipped on CRAN: three L-BFGS-B compiles (optimizer + AD gradient wiring) are
+# among the heaviest in the suite, and the ast2ast-specific part (gradient via
+# jacobian) is covered by test_jacobian_dsl.R and test_derivative.R.
+if (!at_home()) exit_file("slow: optimizer compiles; runs at home / CI only")
+
 # lbfgsb(f, x, lower, upper, maxit, factr, pgtol, lmm): bound-constrained
 # L-BFGS-B via R's own C routine. f: fn() taking a double vector, returning a
 # scalar double; its gradient comes from etr::jacobian (forward or reverse).

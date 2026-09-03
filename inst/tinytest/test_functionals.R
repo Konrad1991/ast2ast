@@ -45,7 +45,10 @@ functional_tests <- function(a, b, n, type_test) {
   }
 
   if (type_test == 2) { # Fibonacci
-    ret <- integer(20)
+    ret <- integer(0) # instead of using integer(20) I just do it this way to cover this common idiom
+    for (i in seq_len(20)) {
+      ret <- c(ret, i)
+    }
     ret[[1]] <- 1L
     ret[[2]] <- 1L
     for (i in 3L:length(ret)) {

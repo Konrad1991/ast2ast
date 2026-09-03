@@ -92,6 +92,15 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_determinant
+void test_determinant();
+RcppExport SEXP _ast2ast_test_determinant() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_determinant();
+    return R_NilValue;
+END_RCPP
+}
 // test_first_dispatch_layer
 void test_first_dispatch_layer();
 RcppExport SEXP _ast2ast_test_first_dispatch_layer() {
@@ -337,6 +346,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_calculation", (DL_FUNC) &_ast2ast_test_calculation, 0},
     {"_ast2ast_test_collection", (DL_FUNC) &_ast2ast_test_collection, 0},
     {"_ast2ast_test_concepts", (DL_FUNC) &_ast2ast_test_concepts, 0},
+    {"_ast2ast_test_determinant", (DL_FUNC) &_ast2ast_test_determinant, 0},
     {"_ast2ast_test_first_dispatch_layer", (DL_FUNC) &_ast2ast_test_first_dispatch_layer, 0},
     {"_ast2ast_test_jacobian", (DL_FUNC) &_ast2ast_test_jacobian, 0},
     {"_ast2ast_test_deriv_scalar", (DL_FUNC) &_ast2ast_test_deriv_scalar, 0},

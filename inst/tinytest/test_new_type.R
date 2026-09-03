@@ -1,6 +1,10 @@
 library(tinytest)
 library(ast2ast)
 
+# Skipped on CRAN: ~29 struct-codegen compiles. Custom-type regressions are
+# caught on every push by CI; the full matrix runs at home / CI only.
+if (!at_home()) exit_file("slow: many struct-codegen compiles; runs at home / CI only")
+
 # --- helpers -----------------------------------------------------------------
 build_known_types <- function(types_f, r_fct = TRUE, real_type = "etr::Double") {
   if (is.null(types_f)) return(list())

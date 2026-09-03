@@ -154,7 +154,7 @@ template<typename Of, typename Wrt> inline auto deriv(const Of& of, const Wrt& w
     using DataTypeWrt = typename ExtractDataType<DecayedWrt>::value_type;
     static_assert(IsReverseDouble<DataTypeWrt>, "data type of wrt has to be ReverseDouble");
     Array<Double, Buffer<Double, RBufferTrait>> res(SI{w_inp.size()});
-    res.dim = std::vector<std::size_t>{w_inp.size()};
+    res.dim = w_inp.get_dim(); // keep wrt's shape: deriv(scalar, matrix) -> matrix
     TAPE_INTERN.reverse(of.id);
     for (std::size_t i = 0; i < res.size(); i++) {
       res.set(i, Double(TAPE_INTERN.adj[static_cast<std::size_t>(w_inp.get(i).id)]));

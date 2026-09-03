@@ -231,7 +231,8 @@ inline SEXP Cast(const T &res_) {
     double*       dst = REAL(ret);
     const double* src = cast_value_ptr(res);
     const bool*   na  = cast_na_ptr(res);
-    std::memcpy(dst, src, static_cast<std::size_t>(N) * sizeof(double));
+    // src is null for an empty result; memcpy(_, null, 0) is UB (nonnull args)
+    if (N > 0) std::memcpy(dst, src, static_cast<std::size_t>(N) * sizeof(double));
     if (na) {
       for (R_xlen_t i = 0; i < N; ++i) if (na[i]) dst[i] = NA_REAL;
     }
@@ -246,7 +247,7 @@ inline SEXP Cast(const T &res_) {
     double*       dst = REAL(ret);
     const double* src = res.d.p_val;
     const bool*   na  = res.d.p_na;
-    std::memcpy(dst, src, static_cast<std::size_t>(N) * sizeof(double));
+    if (N > 0) std::memcpy(dst, src, static_cast<std::size_t>(N) * sizeof(double));
     if (na) {
       for (R_xlen_t i = 0; i < N; ++i) if (na[i]) dst[i] = NA_REAL;
     }
@@ -270,7 +271,7 @@ inline SEXP Cast(const T &res_) {
     int*        dst = INTEGER(ret);
     const int*  src = cast_value_ptr(res);
     const bool* na  = cast_na_ptr(res);
-    std::memcpy(dst, src, static_cast<std::size_t>(N) * sizeof(int));
+    if (N > 0) std::memcpy(dst, src, static_cast<std::size_t>(N) * sizeof(int));
     if (na) {
       for (R_xlen_t i = 0; i < N; ++i) if (na[i]) dst[i] = NA_INTEGER;
     }

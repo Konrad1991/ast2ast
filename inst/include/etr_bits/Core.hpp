@@ -12,6 +12,7 @@
 #include "./Core/CrossProd.hpp"
 #include "./Core/Chol.hpp"
 #include "./Core/Solve.hpp"
+#include "./Core/Determinant.hpp"
 #include "./Core/TriSolve.hpp"
 #include "./Core/Transpose.hpp"
 #include "./Core/Diag.hpp"

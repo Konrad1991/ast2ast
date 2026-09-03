@@ -25,11 +25,13 @@ enum class ROp : uint8_t {
   // M*N-1 nodes are tagged BlockSlot and are no-ops in reverse(). Both
   // node kinds store block_idx (index into ReverseTape::blocks) in a[],
   // NOT a tape id.
-  MatMul, BlockSlot, Chol, Solve, CrossProd, TriSolve
+  MatMul, BlockSlot, Chol, Solve, CrossProd, TriSolve, Det
 };
 
 struct BlockOp {
-  enum class Kind : uint8_t { MatMul, Chol, Solve, CrossProd, TCrossProd, BackSolve, ForwardSolve };
+  enum class Kind : uint8_t {
+    MatMul, Chol, Solve, CrossProd, TCrossProd, BackSolve, ForwardSolve, Det
+  };
   Kind kind;
   std::size_t rows_a;
   std::size_t cols_a; // == rows_b
@@ -388,6 +390,45 @@ struct ReverseTape {
     blk.cols_b = n;
     blk.a_ids = std::move(a_ids);
     blk.a_vals = std::move(a_vals);
+    blk.out_tape_id_first = head_id;
+    blocks.push_back(std::move(blk));
+    return head_id;
+  }
+
+  inline int push_det(std::size_t n, std::vector<int> m_ids) {
+    ass<"push_det: size mismatch">(m_ids.size() == n * n);
+    std::vector<double> M(n * n);
+    bool any_na = false;
+    for (std::size_t i = 0; i < n*n; ++i) {
+      M[i] = val[static_cast<std::size_t>(m_ids[i])];
+      if (is_na[static_cast<std::size_t>(m_ids[i])]) any_na = true;
+    }
+    ass<"det: missing or infinite values in matrix">(!any_na);
+    int info = 0;
+    std::vector<int> ipiv(n);
+    int ni = static_cast<int>(n);
+    F77_CALL(dgetrf)(&ni, &ni, M.data(), &ni, ipiv.data(), &info);
+    ass<"Error in determinant: illegal argument to dgetrf">(info >= 0);
+    double prod = 1.0;
+    for (int i = 0; i < ni; ++i) prod *= M[i*ni + i];
+    int swaps = 0;
+    for (std::size_t i = 0; i < ipiv.size(); ++i) {
+      if (ipiv[i] != static_cast<int>(i) + 1) swaps++;
+    }
+    double detv = (swaps % 2) ? -prod : prod;
+    if (info > 0) detv = 0.0; // finite singular
+    const int block_idx = static_cast<int>(blocks.size());
+    const int head_id = push_node(ROp::Det, block_idx, -1, detv, false);
+    BlockOp blk;
+    blk.kind = BlockOp::Kind::Det;
+    blk.rows_a = n;
+    blk.cols_a = n;
+    blk.cols_b = 1; // basically b is not existing for determinant
+    blk.a_ids  = std::move(m_ids);
+    if (info == 0) {
+      blk.lu = std::move(M);
+      blk.ipiv = std::move(ipiv); 
+    }  // skip cache on singular
     blk.out_tape_id_first = head_id;
     blocks.push_back(std::move(blk));
     return head_id;
@@ -795,6 +836,25 @@ struct ReverseTape {
               const double g = (r == c) ? M[idx] : (M[idx] + M[r * n + c]);
               if (g != 0.0) adj[static_cast<std::size_t>(blk.a_ids[idx])] += g;
             }
+          }
+          break;
+        }
+        case ROp::Det: {
+          const BlockOp& blk = blocks[static_cast<std::size_t>(ai)];
+          if (blk.lu.empty()) break; // singular: no cached factor, no gradient
+          const std::size_t n = blk.rows_a;
+          const double ybar = adj[ii];
+          const double detv = val[ii];
+          std::vector<double> Ainv(n*n, 0.0);
+          for (std::size_t d = 0; d < n; ++d) Ainv[d*n + d] = 1.0;
+          const int ni = static_cast<int>(n);
+          int info = 0;
+          F77_CALL(dgetrs)("T", &ni, &ni, blk.lu.data(), &ni, blk.ipiv.data(),
+                           Ainv.data(), &ni, &info FCONE);
+          ass<"det(backward): triangular solve failed">(info == 0);
+          const double scale = ybar * detv;
+          for (std::size_t k = 0; k < n*n; ++k) {
+            adj[static_cast<std::size_t>(blk.a_ids[k])] += scale * Ainv[k];
           }
           break;
         }

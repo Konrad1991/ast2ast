@@ -1,6 +1,10 @@
 library(tinytest)
 library(ast2ast)
 
+# Skipped on CRAN: ~11 compiles. Return-type inference is exercised without
+# compiling elsewhere; the compile-and-run checks run at home / CI only.
+if (!at_home()) exit_file("slow: implicit-return compiles; runs at home / CI only")
+
 ret_type_of <- function(fct, args_fct = NULL, r_fct = FALSE, types_fct = NULL) {
   real_type <- "etr::Double"
   fr <- ast2ast:::function_registry_global$clone()
