@@ -4,7 +4,10 @@ Rcpp::compileAttributes()
 install.packages(".", types = "source", repo = NULL)
 tinytest::test_package("ast2ast")
 
-tinytest::run_test_file("./inst/tinytest/test_jacobian_dsl.R")
+tinytest::run_test_file("./inst/tinytest/test_inner_functions.R")
+# f_else_if_chain 10s,
+# current_line 9s,
+# argtypes 9s.
 
 files <- list.files("./R", full.names = TRUE)
 invisible(lapply(files, source))

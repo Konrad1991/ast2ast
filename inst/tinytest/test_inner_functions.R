@@ -136,56 +136,65 @@ expect_true(is.character(
   ast2ast::translate(f, getsource = TRUE)
 ))
 
-# --- a zero-arg inner fn's return type must be inferred correctly ----------
-# infer() previously had no case for nullary_node, so a bare zero-arg call
-# could never get a type -- return(h()) alone silently "worked" (a separate
-# bug in determine_types_of_returns swallowed the resulting error and
-# treated the function as void), but any real use of the value failed
-
-f <- function() {
-  h <- fn(
-    argtypes(),
-    return(double),
-    { return(5.0) }
+# --- zero-arg inner fn return type + void inner fn as a bare statement -----
+# All four compiled cases go through one dispatch TU (one compile).
+#   1  zero-arg inner fn, result returned directly (nullary_node type inference:
+#      infer() previously had no case for it, so a bare zero-arg call could
+#      never get a type)
+#   2  zero-arg inner fn's result passed into another call, sum(inner()) + x
+#      (goes through return/binary rather than a direct return)
+#   3  same, but sum(inner()) assigned first -> type_infer_assignment path
+#   4  void-returning inner fn called as a bare statement (no assignment) -- fine
+#      (assigning its result IS rejected; that case stays a getsource error below)
+TU <- function(test, x) {
+  argtypes(
+    test |> type(int),
+    x |> type(double)
   )
-  return(h())
+  if (test == 1L) {
+    h1 <- fn(
+      argtypes(),
+      return(double),
+      { return(5.0) }
+    )
+    return(h1())
+  } else if (test == 2L) {
+    inner2 <- fn(
+      argtypes(),
+      return(double),
+      { return(5.0) }
+    )
+    return(sum(inner2()) + x)
+  } else if (test == 3L) {
+    inner3 <- fn(
+      argtypes(),
+      return(double),
+      { return(5.0) }
+    )
+    y <- sum(inner3())
+    return(y)
+  } else if (test == 4L) {
+    b4 <- fn(
+      argtypes(),
+      return(void),
+      {}
+    )
+    b4()
+    return(x)
+  } else {
+    return(x)
+  }
 }
-fcpp <- ast2ast::translate(f)
-expect_equal(fcpp(), 5.0)
-
-# the case actually encountered: a zero-arg inner fn's result passed into
-# another function call (sum()), instead of returned directly
-f <- function(x) {
-  argtypes(x |> type(double))
-  inner <- fn(
-    argtypes(),
-    return(double),
-    { return(5.0) }
-  )
-  return(sum(inner()) + x)
-}
-fcpp <- ast2ast::translate(f)
-expect_equal(fcpp(3.0), 8.0)
-
-# same, but the sum(inner()) result is assigned to a variable first -- goes
-# through type_infer_assignment instead of directly through return/binary
-f <- function() {
-  inner <- fn(
-    argtypes(),
-    return(double),
-    { return(5.0) }
-  )
-  y <- sum(inner())
-  return(y)
-}
-fcpp <- ast2ast::translate(f)
-expect_equal(fcpp(), 5.0)
+fcpp <- ast2ast::translate(TU)
+expect_equal(fcpp(1L, 0.0), 5.0)
+expect_equal(fcpp(2L, 3.0), 8.0)
+expect_equal(fcpp(3L, 0.0), 5.0)
+expect_equal(fcpp(4L, 3.0), 3.0)
 
 # --- assigning the result of a void-returning inner fn must be rejected ----
 # a void fn's call type is a real pre_type_node (base type "void"), so it
 # used to sail through type_infer_assignment's checks and declare an
 # (invalid) "void result;" in the generated C++ instead of being caught here
-
 f <- function(a) {
   argtypes(a |> type(double))
   b <- fn(
@@ -200,17 +209,3 @@ expect_error(
   ast2ast::translate(f, getsource = TRUE),
   pattern = "Cannot assign the result of b\\(\\) to a variable because it does not return a value"
 )
-
-# calling a void-returning inner fn as a bare statement (no assignment) is fine
-f <- function(a) {
-  argtypes(a |> type(double))
-  b <- fn(
-    argtypes(),
-    return(void),
-    {}
-  )
-  b()
-  return(a)
-}
-fcpp <- ast2ast::translate(f)
-expect_equal(fcpp(3.0), 3.0)

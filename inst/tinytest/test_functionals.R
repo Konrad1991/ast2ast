@@ -57,7 +57,7 @@ functional_tests <- function(a, b, n, type_test) {
   if (type_test == 3) { # Leibniz formula
     x = 1.0
     pi = 1.0
-    rounds = 10000000L
+    rounds = 100000L # only checks compiled == R oracle, not pi accuracy
     for (i in 2L:(rounds + 2L)) {
       x = x * -1
       pi = pi + (x / (2 * i - 1))
@@ -156,6 +156,21 @@ functional_tests <- function(a, b, n, type_test) {
       cnt <- cnt + 1.0
     }
     return(c(acc, cnt))
+  }
+
+  if (type_test == 19) { # insertion sort -- regression for && short-circuit:
+    # `j >= 1L && a[[j]] > key` must not read a[[j]] once the left operand is FALSE
+    size <- length(a)
+    for (i in 2L:size) {
+      key <- a[[i]]
+      jis <- i - 1L
+      while (jis >= 1L && a[[jis]] > key) {
+        a[[jis + 1L]] <- a[[jis]]
+        jis <- jis - 1L
+      }
+      a[[jis + 1L]] <- key
+    }
+    return(a)
   }
 
    if (type_test == 17) { # forwardsolve(L, b): L lower-triangular, solves L x = b
@@ -273,29 +288,11 @@ diag_src_rev <- paste(
 )
 expect_true(grepl("etr::diag<etr::ReverseDouble>", diag_src_rev, fixed = TRUE))
 
-# --- insertion sort ------------------------------------------------------------
-# regression test for && / || short-circuit: the guard `j >= 1L && v[[j]] > key`
-# relies on the left operand being FALSE stopping evaluation before v[[j]] is
-# read with an out-of-range j
-insertion_sort <- function(v) {
-  argtypes(v |> type(vec(double)))
-  n <- length(v)
-  for (i in 2L:n) {
-    key <- v[[i]]
-    j <- i - 1L
-    while (j >= 1L && v[[j]] > key) {
-      v[[j + 1L]] <- v[[j]]
-      j <- j - 1L
-    }
-    v[[j + 1L]] <- key
-  }
-  return(v)
-}
-insertion_sort_cpp <- translate(insertion_sort)
-
+# --- insertion sort (functional_tests branch 19) ----------------------------
+# regression test for && / || short-circuit -- see the branch body above
 set.seed(123)
 v <- rnorm(50)
-expect_equal(insertion_sort_cpp(v) |> c(), sort(v))
-expect_equal(insertion_sort_cpp(sort(v)) |> c(), sort(v))
-expect_equal(insertion_sort_cpp(sort(v, decreasing = TRUE)) |> c(), sort(v))
-expect_equal(insertion_sort_cpp(c(2.0, 1.0)) |> c(), c(1.0, 2.0))
+expect_equal(fcpp(v, b, n, 19L) |> c(), sort(v))
+expect_equal(fcpp(sort(v), b, n, 19L) |> c(), sort(v))
+expect_equal(fcpp(sort(v, decreasing = TRUE), b, n, 19L) |> c(), sort(v))
+expect_equal(fcpp(c(2.0, 1.0), b, n, 19L) |> c(), c(1.0, 2.0))
