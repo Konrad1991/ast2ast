@@ -1,14 +1,30 @@
 News for package 'ast2ast'
 
+changes in ast2ast version 1.0
+
+- Major release, and the first since the package was archived on CRAN.
+  A great deal has changed; ast2ast is substantially more capable than
+  version 0.3. Highlights follow.
+- New tree-based type system with type inference, `const` checking,
+  user-defined types (`new_type` / `slots`) and functions as types
+  (`fn`, including inner functions and recursion).
+- Automatic differentiation: forward mode and reverse (tape-based) mode.
+- Root finding and optimization: uniroot, L-BFGS-B and nnls.
+- Support for n-dimensional arrays and for collection types.
+- Functional helpers: apply, map, Reduce, Filter.
+- Runtime errors now report the originating R source line.
+- A much larger set of supported base R functions and operators;
+  see the vignettes for the current list.
+
 changes in ast2ast version 0.30
 
-- removed bug in cmr. 
+- removed bug in cmr.
 - refactored the conversion of sexp to SEXP
 
 changes in ast2ast version 0.2.1
 
 - all functions in C++ are now inlined
 
-changes in paropt version 0.2
+changes in ast2ast version 0.2
 
 - code can now be translated to R function and external pointer

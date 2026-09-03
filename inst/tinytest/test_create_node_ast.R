@@ -15,7 +15,9 @@ ast_of <- function(f, r_fct = TRUE) {
   env <- new.env(parent = emptyenv())
   env$r_fct <- r_fct
   env$real_type <- "etr::Double"
-  ast2ast:::parse_body(body(f), env, ast2ast:::function_registry_global)
+  ast2ast:::parse_body(
+    body(f), env, ast2ast:::function_registry_global
+  )
 }
 
 expect_node <- function(node, cls, operator = NULL, context = NULL) {
@@ -77,7 +79,9 @@ expected_to_find <- function(AST, fcts_expected, literals_expected, vars_expecte
 # Wrong declared return value
 f <- function() {
   fct <- fn(
-    argtypes(a |> type(double)),
+    argtypes(
+      a |> type(double)
+    ),
     return(invalid),
     {}
   )
@@ -88,9 +92,20 @@ expect_equal(
   "Wrong return type for function fct: Found unsupported base type: invalid"
 )
 # lambda function not assigned to variable
+# TODO: the error message was correct but it is actually misleading now.
+# I think we should infer also the type for anonymous functions
+# and most iportantly assign this type to 'internal_type'
+# Then, we could allow to write lambda functions everywhere
+# also as in this test just as defintion even though
+# it is pointless to do this. Or at least we have to improve
+# the error message so that it tells the user that functions
+# which expect an inner function do no require a Previously
+# defined function but that the function can be defined in place
 f <- function() {
   fn(
-    argtypes(a |> type(double)),
+    argtypes(
+      a |> type(double)
+    ),
     return(void),
     {}
   )
@@ -113,13 +128,17 @@ expect_node(AST$block[[1]], "binary_node", context = "{")
 expect_node(AST$block[[1]]$right_node, "fn_node", context = "<-")
 
 # --- smoke: empty & simple bodies -----------------------------------------
-f <- function() { a <- 1 }
+f <- function() {
+  a <- 1 
+}
 AST <- ast_of(f)
 expect_node(AST, "block_node", context = "Start")
 expect_block_len(AST, 1)
 expected_to_find(AST, c("<-"), 1, "a")
 
-f <- function() { a <- 1L }
+f <- function() {
+  a <- 1L 
+}
 AST <- ast_of(f)
 stmt <- AST$block[[1]]
 expect_node(stmt, "binary_node", operator = "<-", context = "{")
@@ -128,7 +147,9 @@ expect_true(inherits(stmt$right_node, "literal_node"))
 expected_to_find(AST, "<-", "1L", "a")
 
 # --- unary / binary / function nodes --------------------------------------
-f <- function() { b <- -a }
+f <- function() {
+  b <- -a 
+}
 AST <- ast_of(f)
 assign <- AST$block[[1]]
 expect_node(assign, "binary_node", operator = "<-")
@@ -136,7 +157,9 @@ expect_true(inherits(assign$right_node, "unary_node"))
 expect_equal(assign$right_node$operator, "-")
 expected_to_find(AST, c("<-", "-"), character(), c("a", "b"))
 
-f <- function() { z <- x + y * 2 }
+f <- function() {
+  z <- x + y * 2 
+}
 AST <- ast_of(f)
 assign <- AST$block[[1]]
 rhs <- assign$right_node
@@ -144,7 +167,9 @@ expect_true(inherits(rhs, "binary_node"))
 expect_true(rhs$operator %in% c("+","*"))
 expected_to_find(AST, c("<-", "+", "*"), 2, c("x", "y", "z"))
 
-f <- function() { v <- c(1, 2, 3) }
+f <- function() {
+  v <- c(1, 2, 3) 
+}
 AST <- ast_of(f)
 rhs <- AST$block[[1]]$right_node
 expect_node(rhs, "function_node", operator = "c")
@@ -152,20 +177,27 @@ expect_length(rhs$args, 3)
 expected_to_find(AST, c("<-", "c"), c(1, 2, 3), c("v"))
 
 # --- subsetting: vector vs matrix forms -----------------------------------
-f1 <- function() { y <- x[1] }
+f1 <- function() {
+  y <- x[1] 
+}
 AST <- ast_of(f1)
 expect_true(inherits(AST$block[[1]]$right_node, "binary_node"))
 expect_equal(AST$block[[1]]$right_node$operator, "[")
 expected_to_find(AST, c("<-", "["), c(1), c("x", "y"))
 
-f2 <- function() { m <- M[1, 2] }
+f2 <- function() {
+  m <- M[1, 2] 
+}
 AST <- ast_of(f2)
 expect_true(inherits(AST$block[[1]]$right_node, "function_node"))
 expect_equal(AST$block[[1]]$right_node$operator, "[")
-expect_length(AST$block[[1]]$right_node$args, 3) # target + two indices
+expect_length(AST$block[[1]]$right_node$args, 3)
 expected_to_find(AST, c("<-", "["), c(1, 2), c("m", "M"))
 
-f <- function() { s <- x[[1]]; t <- at(x, 1) }
+f <- function() {
+  s <- x[[1]]
+  t <- at(x, 1) 
+}
 AST <- ast_of(f)
 s_rhs <- AST$block[[1]]$right_node
 t_rhs <- AST$block[[2]]$right_node
@@ -177,9 +209,13 @@ expected_to_find(AST, c("<-", "[[", "at", "<-"), c(1, 1), c("s", "x", "t", "x"))
 
 # --- control flow nodes ----------------------------------------------------
 f <- function() {
-  if (a > 0) { x <- 1
-  } else if (a == 0) { x <- 0
-  } else { x <- -1 }
+  if (a > 0) {
+    x <- 1
+  } else if (a == 0) {
+    x <- 0
+  } else {
+    x <- -1 
+  }
 }
 AST <- ast_of(f)
 stmt <- AST$block[[1]]
@@ -191,7 +227,11 @@ expect_true(length(stmt$else_if_nodes) >= 1)
 expected_to_find(AST, c(">", "<-", "==", "<-", "<-", "-"),
   c(0, 1, 0, 0, 1), c("a", "x", "a", "x", "x"))
 
-f <- function() { for (i in 1:3) { a <- i } }
+f <- function() {
+  for (i in 1:3) {
+    a <- i
+  }
+}
 AST <- ast_of(f)
 stmt <- AST$block[[1]]
 expect_true(inherits(stmt, "for_node"))
@@ -201,8 +241,12 @@ expect_true(inherits(stmt$block, "block_node"))
 expected_to_find(AST, c(":", "<-"), c(1, 3), c("a", "i", "i"))
 
 f <- function() {
-  while (cond) { next }
-  repeat { break }
+  while (cond) {
+    next
+  }
+  repeat {
+    break
+  }
 }
 AST <- ast_of(f)
 expect_true(inherits(AST$block[[1]], "while_node"))
@@ -210,7 +254,9 @@ expect_true(inherits(AST$block[[2]], "repeat_node"))
 expected_to_find(AST, c("next", "break"), character(), "cond")
 
 # --- type declaration surface ---------------------------------------------
-f <- function() { type(a, vec(double)) }
+f <- function() {
+  type(a, vec(double))
+}
 AST <- ast_of(f)
 stmt <- AST$block[[1]]
 expect_true(inherits(stmt, "binary_node"))
@@ -220,20 +266,29 @@ expect_true(inherits(stmt$right_node, "pre_type_node"))
 expected_to_find(AST, c("type"), character(), c("a"))
 
 # --- logical & comparisons -------------------------------------------------
-f <- function() { ok <- (x > 0) && (y <= 1) || z }
+f <- function() {
+  ok <- (x > 0) && (y <= 1) || z
+}
 AST <- ast_of(f)
 rhs <- AST$block[[1]]$right_node
 expect_true(inherits(rhs, "binary_node"))
 expected_to_find(AST, c("<-", "||", "&&", "(", ">", "(", "<="), c(0, 1), c("ok", "x", "y", "z"))
 
 # --- stringify sanity (no errors, basic invariants) -----------------------
-f <- function() { a <- 1; if (a > 0) { a <- a + 1 } }
+f <- function() {
+  a <- 1
+  if (a > 0) {
+    a <- a + 1
+  } 
+}
 AST <- ast_of(f)
 expect_true(inherits(AST, "block_node"))
 expected_to_find(AST, c("<-", ">", "<-", "+"), c(1, 0, 1), c("a", "a", "a", "a"))
 
 # --- error-line stringification is empty right after parsing --------------
-f <- function() { a <- 1 }
+f <- function() {
+  a <- 1
+}
 AST <- ast_of(f)
 expect_equal(AST$stringify_error_line(), "")
 
@@ -243,7 +298,6 @@ f <- function() {
     argtypes(),
     return(vec(double)),
     {
-
       h <- fn(
         argtypes(),
         return(vec(double)),
@@ -251,7 +305,6 @@ f <- function() {
           return(c(1.1, 2.2))
         }
       )
-
       return(h())
     }
   )
@@ -260,4 +313,4 @@ AST <- ast_of(f)
 g <- AST$block[[1]]$right_node
 expect_true(inherits(g, "fn_node"))
 h <- AST$block[[1]]$right_node$AST
-expect_true(is.language(h)) # Not yet evaluated
+expect_true(is.language(h))

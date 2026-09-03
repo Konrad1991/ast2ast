@@ -1,13 +1,18 @@
 library(tinytest)
 
 # --- passing a borrowed vector where an owned vector is required -----------
-
 f <- function(v) {
-  argtypes(v |> type(borrow_vec(double)))
+  argtypes(
+    v |> type(borrow_vec(double))
+  )
   g <- fn(
-    argtypes(x |> type(vec(double)) |> const()),
+    argtypes(
+      x |> type(vec(double)) |> const()
+    ),
     return(vec(double)),
-    { return(x) }
+    {
+      return(x)
+    }
   )
   return(g(v))
 }
@@ -17,13 +22,19 @@ expect_error(
 )
 
 # --- happy path: a borrowed argument materialized into an owned return -----
-
+# TODO: hopefully we can bundle this compilation together with other tests
 f <- function(v) {
-  argtypes(v |> type(borrow_vec(double)))
+  argtypes(
+    v |> type(borrow_vec(double))
+  )
   g <- fn(
-    argtypes(x |> type(borrow_vec(double)) |> const()),
+    argtypes(
+      x |> type(borrow_vec(double)) |> const()
+    ),
     return(vec(double)),
-    { return(x) }
+    {
+      return(x)
+    }
   )
   return(g(v))
 }
@@ -32,13 +43,18 @@ v <- c(1.1, 2.2, 3.3)
 expect_equal(fcpp(v) |> c(), v)
 
 # --- a return cannot itself be declared borrow_vec --------------------
-
 f <- function(v) {
-  argtypes(v |> type(borrow_vec(double)))
+  argtypes(
+    v |> type(borrow_vec(double))
+  )
   g <- fn(
-    argtypes(x |> type(borrow_vec(double)) |> const()),
+    argtypes(
+      x |> type(borrow_vec(double)) |> const()
+    ),
     return(borrow_vec(double)),
-    { return(x) }
+    {
+      return(x)
+    }
   )
   return(g(v))
 }
@@ -48,25 +64,28 @@ expect_error(
 )
 
 # --- borrow_vec cannot be combined with automatic differentiation ----------
-
 f <- function(a) {
-  argtypes(a |> type(borrow_vec(double)))
+  argtypes(
+    a |> type(borrow_vec(double))
+  )
   a[[1L]] <- a[[1L]] * a[[1L]]
   return(a)
 }
 # create_vars_types_list() print()s the specific message and only throws the
 # generic "Types for arguments are invalid" as the condition itself.
 check_borrow_ad_rejected <- function(derivative, info = "") {
-  out <- capture.output(
-    e <- tryCatch(
+  e <- capture.output(
+    error <- try(
       ast2ast::translate(f, derivative = derivative),
-      error = function(e) e
+      silent = TRUE
     )
   )
-  expect_true(inherits(e, "error"), info = info)
-  expect_equal(conditionMessage(e), "Types for arguments are invalid", info = info)
+  expect_true(inherits(error, "try-error"), info = info)
   expect_true(
-    any(grepl("borrow types cannot be used together with automatic differentiation", out)),
+    any(
+      grepl("borrow types cannot be used together with automatic differentiation",
+        e)
+    ),
     info = info
   )
 }

@@ -53,227 +53,116 @@ test_checks(fct, args_fct, TRUE, "etr::Double",
 "get_dot(y)\nget_dot can be only used when derivative is set to forward")
 
 
-# Example Nr. 1: quadratic jacobian
+# Examples 1-7: reverse-AD Jacobians, united in one TU (one compile).
 # =========================================================================
-# f:
-# --> f1 = x1 * x2
-# --> f2 = x1 + x2*x2
+# The per-branch comments give f and its analytic Jacobian; the numbers in
+# the expect_equal calls below are those Jacobians evaluated at the inputs.
 #
-# Jacobian:
-# df1/dx1 = x2    df1/dx2 = x1
-# df2/dx1 = 1     df2/dx2 = 2*x2
-#
-# with x1 = 2 and x2 = 3
-# f1 = 6
-# f2 = 11
-#
-# df1/dfx = 3     df1/dx2 = 2
-# df2/dx1 = 1     df2/dx2 = 6
-f <- function(y, x) {
-  y[[1L]] <- x[[1L]] * x[[2L]]
-  y[[2L]] <- x[[1L]] + x[[2L]]*x[[2L]]
-  jac <- deriv(y, x)
-  return(jac)
-}
-fcpp_reverse <- ast2ast::translate(f, derivative = "reverse")
-y <- c(0, 0)
-x <- c(2, 3)
-expect_equal(fcpp_reverse(y, x), matrix(c(3, 1, 2, 6), 2, 2))
-
-f <- function(y, x) {
-  jac <- matrix(0.0, length(y), length(x))
-  for (i in 1L:length(x)) {
-    seed(x, i)
+#  1 quadratic:   f1 = x1*x2,  f2 = x1 + x2^2                       (2x2 jac)
+#  2 1D of / 5 wrt: f = x1 + x2*x3 + x1*x4*x5   (y is length-1 vec -> 1x5 jac)
+#  3 get_diag:    d = diag(matrix(x,2,2)) = (x1, x4); x2,x3 -> 0    (2x4 jac)
+#  4 crossprod:   S = XᵀX,  y = (S11,S21,S12,S22)                   (4x4 jac)
+#  5 tcrossprod:  S = XXᵀ,  y = (S11,S21,S12,S22)                   (4x4 jac)
+#  6 backsolve:   R upper = [[x1,x3],[0,x4]], b = x[5:6]; x2 -> 0   (2x6 jac)
+#  7 forwardsolve:L lower = [[x1,0],[x2,x4]], b = x[5:6]; x3 -> 0   (2x6 jac)
+TU_reverse <- function(test, y, x) {
+  argtypes(
+    test |> type(int),
+    y |> type(vec(double)),
+    x |> type(vec(double))
+  )
+  if (test == 1L) {
     y[[1L]] <- x[[1L]] * x[[2L]]
-    y[[2L]] <- x[[1L]] + x[[2L]]*x[[2L]]
-    d <- get_dot(y)
-    jac[TRUE, i] <- d
-    unseed(x, i)
+    y[[2L]] <- x[[1L]] + x[[2L]] * x[[2L]]
+    return(deriv(y, x))
+  } else if (test == 2L) {
+    y[[1L]] <- x[[1L]] + x[[2L]] * x[[3L]] + x[[1L]] * x[[4L]] * x[[5L]]
+    return(deriv(y, x))
+  } else if (test == 3L) {
+    d <- get_diag(matrix(x, 2, 2))
+    y[[1L]] <- d[[1L]] * d[[2L]]
+    y[[2L]] <- d[[1L]] + d[[2L]] * d[[2L]]
+    return(deriv(y, x))
+  } else if (test == 4L) {
+    S <- crossprod(matrix(x, 2, 2))
+    y[[1L]] <- S[1L, 1L]
+    y[[2L]] <- S[2L, 1L]
+    y[[3L]] <- S[1L, 2L]
+    y[[4L]] <- S[2L, 2L]
+    return(deriv(y, x))
+  } else if (test == 5L) {
+    S <- tcrossprod(matrix(x, 2, 2))
+    y[[1L]] <- S[1L, 1L]
+    y[[2L]] <- S[2L, 1L]
+    y[[3L]] <- S[1L, 2L]
+    y[[4L]] <- S[2L, 2L]
+    return(deriv(y, x))
+  } else if (test == 6L) {
+    R <- matrix(x[1L:4L], 2, 2)
+    b <- x[5L:6L]
+    y <- backsolve(R, b)
+    return(deriv(y, x))
+  } else if (test == 7L) {
+    L <- matrix(x[1L:4L], 2, 2)
+    b <- x[5L:6L]
+    y <- forwardsolve(L, b)
+    return(deriv(y, x))
+  } else {
+    return(matrix(0.0, length(y), length(x)))
   }
-  return(jac)
 }
-fcpp_forward <- ast2ast::translate(f, derivative = "forward")
-y <- c(0, 0)
-x <- c(2, 3)
-expect_equal(fcpp_forward(y, x), matrix(c(3, 1, 2, 6), 2, 2))
+fcpp_rev <- ast2ast::translate(TU_reverse, derivative = "reverse")
+expect_equal(fcpp_rev(1L, c(0, 0), c(2, 3)),
+  matrix(c(3, 1, 2, 6), 2, 2))
+expect_equal(fcpp_rev(2L, c(0), c(1, 2, 3, 4, 5)),
+  matrix(c(21, 3, 2, 5, 4), 1, 5))
+expect_equal(fcpp_rev(3L, c(0, 0), c(2, 7, 8, 3)),
+  matrix(c(3, 1, 0, 0, 0, 0, 2, 6), 2, 4))
+expect_equal(fcpp_rev(4L, c(0, 0, 0, 0), c(1, 2, 3, 4)),
+  matrix(c(2, 3, 3, 0,  4, 4, 4, 0,  0, 1, 1, 6,  0, 2, 2, 8), 4, 4))
+expect_equal(fcpp_rev(5L, c(0, 0, 0, 0), c(1, 2, 3, 4)),
+  matrix(c(2, 2, 2, 0,  0, 1, 1, 4,  6, 4, 4, 0,  0, 3, 3, 8), 4, 4))
+expect_equal(fcpp_rev(6L, c(0, 0), c(2, 99, 1, 4, 10, 8)),
+  matrix(c(-2, 0,  0, 0,  -1, 0,  0.25, -0.5,  0.5, 0,  -0.125, 0.25), 2, 6))
+expect_equal(fcpp_rev(7L, c(0, 0), c(2, 1, 99, 4, 10, 8)),
+  matrix(c(-2.5, 0.625,  0, -1.25,  0, 0,  0, -0.1875,  0.5, -0.125,  0, 0.25), 2, 6))
 
-# Example Nr. 2: 1D of and multiple wrt
-# =========================================================================
-# f:
-# --> f = x1 + x2*x3 + x1*x4*x5
-#
-# df/dx1 = 1 + x4*x5;
-# df/dx2 = x3
-# df/dx3 = x2
-# df/dx4 = x1*x5
-# df/dx5 = x1*x4
-#
-# with: x1 = 1, x2 = 2, x3 = 3, x4 = 4 and x5 = 5
-# df/dx1 = 21;
-# df/dx2 = 3
-# df/dx3 = 2
-# df/dx4 = 5
-# df/dx5 = 4
-f <- function(y, x) {
-  argtypes(y |> type(scalar(double)), x |> type(vec(double)))
-  y <- x[[1L]] + x[[2L]]*x[[3L]] + x[[1L]]*x[[4L]]*x[[5L]]
-  return(deriv(y, x))
-}
-fcpp_reverse <- ast2ast::translate(
-  f, derivative = "reverse"
-)
-y <- 0.0
-x <- c(1.0, 2.0, 3.0, 4.0, 5.0)
-res <- fcpp_reverse(y, x)
-expect_equal(res, c(21, 3, 2, 5, 4), 5L)
-
-f <- function(y, x) {
-  argtypes(y |> type(scalar(double)), x |> type(vec(double)))
-  res <- numeric(length(x))
-  for (i in 1L:length(x)) {
-    seed(x, i)
-    y <- x[[1L]] + x[[2L]]*x[[3L]] + x[[1L]]*x[[4L]]*x[[5L]]
-    d <- get_dot(y)
-    res[[i]] <- d
-    unseed(x, i)
+# Examples 1-2 again, forward mode (per-index seed), united in one TU.
+# y is a length-|y| vec so both branches return a matrix; test 2's result is
+# therefore the 1x5 jac, not the length-5 vector of the old scalar-y form.
+TU_forward <- function(test, y, x) {
+  argtypes(
+    test |> type(int),
+    y |> type(vec(double)),
+    x |> type(vec(double))
+  )
+  jac <- matrix(0.0, length(y), length(x))
+  if (test == 1L) {
+    for (i in 1L:length(x)) {
+      seed(x, i)
+      y[[1L]] <- x[[1L]] * x[[2L]]
+      y[[2L]] <- x[[1L]] + x[[2L]] * x[[2L]]
+      jac[TRUE, i] <- get_dot(y)
+      unseed(x, i)
+    }
+    return(jac)
+  } else if (test == 2L) {
+    for (i in 1L:length(x)) {
+      seed(x, i)
+      y[[1L]] <- x[[1L]] + x[[2L]] * x[[3L]] + x[[1L]] * x[[4L]] * x[[5L]]
+      jac[TRUE, i] <- get_dot(y)
+      unseed(x, i)
+    }
+    return(jac)
+  } else {
+    return(jac)
   }
-  return(res)
 }
-fcpp_forward <- ast2ast::translate(
-  f, derivative = "forward"
-)
-y <- 0.0
-x <- c(1.0, 2.0, 3.0, 4.0, 5.0)
-res <- fcpp_forward(y, x)
-expect_equal(res, c(21, 3, 2, 5, 4))
-
-# Example Nr. 3: reverse-AD through get_diag (diagonal extraction)
-# =========================================================================
-# matrix(x, 2, 2) is column-major, so the diagonal picks x1 and x4:
-#   d <- get_diag(matrix(x, 2, 2)) -> d1 = x1, d2 = x4
-#   y1 = d1 * d2       = x1 * x4
-#   y2 = d1 + d2 * d2  = x1 + x4*x4
-# The off-diagonal inputs x2, x3 must receive zero gradient.
-#
-# with x1 = 2 and x4 = 3:
-#   dy1/dx1 = x4 = 3   dy1/dx4 = x1 = 2
-#   dy2/dx1 = 1        dy2/dx4 = 2*x4 = 6
-f <- function(y, x) {
-  argtypes(y |> type(vec(double)), x |> type(vec(double)))
-  d <- get_diag(matrix(x, 2, 2))
-  y[[1L]] <- d[[1L]] * d[[2L]]
-  y[[2L]] <- d[[1L]] + d[[2L]] * d[[2L]]
-  jac <- deriv(y, x)
-  return(jac)
-}
-fcpp_reverse <- ast2ast::translate(f, derivative = "reverse")
-y <- c(0, 0)
-x <- c(2, 7, 8, 3)
-expect_equal(fcpp_reverse(y, x), matrix(c(3, 1, 0, 0, 0, 0, 2, 6), 2, 4))
-
-# Example Nr. 4: reverse-AD through crossprod (S = XᵀX)
-# =========================================================================
-# X = matrix(x, 2, 2) (column-major): col1 = (x1, x2), col2 = (x3, x4).
-#   S11 = x1^2 + x2^2          S12 = S21 = x1*x3 + x2*x4
-#   S22 = x3^2 + x4^2
-# Reading S[2,1] and S[1,2] separately exercises the Sbar + Sbarᵀ adjoint.
-# Outputs y = (S11, S21, S12, S22); Jacobian at x = (1,2,3,4):
-#   y1=S11 -> (2x1, 2x2, 0, 0)      = (2, 4, 0, 0)
-#   y2=S21 -> (x3, x4, x1, x2)      = (3, 4, 1, 2)
-#   y3=S12 -> (x3, x4, x1, x2)      = (3, 4, 1, 2)
-#   y4=S22 -> (0, 0, 2x3, 2x4)      = (0, 0, 6, 8)
-f <- function(y, x) {
-  argtypes(y |> type(vec(double)), x |> type(vec(double)))
-  S <- crossprod(matrix(x, 2, 2))
-  y[[1L]] <- S[1L, 1L]
-  y[[2L]] <- S[2L, 1L]
-  y[[3L]] <- S[1L, 2L]
-  y[[4L]] <- S[2L, 2L]
-  return(deriv(y, x))
-}
-fcpp_reverse <- ast2ast::translate(f, derivative = "reverse")
-y <- c(0, 0, 0, 0)
-x <- c(1, 2, 3, 4)
-expect_equal(
-  fcpp_reverse(y, x),
-  matrix(c(2, 3, 3, 0,  4, 4, 4, 0,  0, 1, 1, 6,  0, 2, 2, 8), 4, 4)
-)
-
-# Example Nr. 5: reverse-AD through tcrossprod (S = XXᵀ)
-# =========================================================================
-# X = matrix(x, 2, 2): rows = (x1, x3) and (x2, x4).
-#   S11 = x1^2 + x3^2          S12 = S21 = x1*x2 + x3*x4
-#   S22 = x2^2 + x4^2
-# Outputs y = (S11, S21, S12, S22); Jacobian at x = (1,2,3,4):
-#   y1=S11 -> (2x1, 0, 2x3, 0)      = (2, 0, 6, 0)
-#   y2=S21 -> (x2, x1, x4, x3)      = (2, 1, 4, 3)
-#   y3=S12 -> (x2, x1, x4, x3)      = (2, 1, 4, 3)
-#   y4=S22 -> (0, 2x2, 0, 2x4)      = (0, 4, 0, 8)
-f <- function(y, x) {
-  argtypes(y |> type(vec(double)), x |> type(vec(double)))
-  S <- tcrossprod(matrix(x, 2, 2))
-  y[[1L]] <- S[1L, 1L]
-  y[[2L]] <- S[2L, 1L]
-  y[[3L]] <- S[1L, 2L]
-  y[[4L]] <- S[2L, 2L]
-  return(deriv(y, x))
-}
-fcpp_reverse <- ast2ast::translate(f, derivative = "reverse")
-y <- c(0, 0, 0, 0)
-x <- c(1, 2, 3, 4)
-expect_equal(
-  fcpp_reverse(y, x),
-  matrix(c(2, 2, 2, 0,  0, 1, 1, 4,  6, 4, 4, 0,  0, 3, 3, 8), 4, 4)
-)
-
-# Example Nr. 6: reverse-AD through backsolve (R x = b, R upper-triangular)
-# =========================================================================
-# x packs R then b: R = matrix(x[1:4], 2, 2) read as UPPER -> [[x1, x3],
-#                                                              [ 0, x4]],
-# so x2 = R[2,1] is ignored and must get ZERO gradient (mask under test).
-# b = x[5:6]. Solving R y = b:
-#   y2 = b2/x4,  y1 = (b1 - x3*y2)/x1.
-# At x = (2, 99, 1, 4, 10, 8): y = (4, 2). Analytic Jacobian dy/dx (2x6):
-#   dy1 = (-2, 0, -1, 0.25, 0.5, -0.125)
-#   dy2 = ( 0, 0,  0, -0.5, 0,    0.25)
-f <- function(y, x) {
-  argtypes(y |> type(vec(double)), x |> type(vec(double)))
-  R <- matrix(x[1L:4L], 2, 2)
-  b <- x[5L:6L]
-  y <- backsolve(R, b)
-  return(deriv(y, x))
-}
-fcpp_reverse <- ast2ast::translate(f, derivative = "reverse")
-y <- c(0, 0)
-x <- c(2, 99, 1, 4, 10, 8)
-expect_equal(
-  fcpp_reverse(y, x),
-  matrix(c(-2, 0,  0, 0,  -1, 0,  0.25, -0.5,  0.5, 0,  -0.125, 0.25), 2, 6)
-)
-
-# Example Nr. 7: reverse-AD through forwardsolve (L x = b, L lower-triangular)
-# =========================================================================
-# L = matrix(x[1:4], 2, 2) read as LOWER -> [[x1, 0 ],
-#                                            [x2, x4]],
-# so x3 = L[1,2] is ignored and must get ZERO gradient. b = x[5:6].
-# Solving L y = b:  y1 = b1/x1,  y2 = (b2 - x2*y1)/x4.
-# At x = (2, 1, 99, 4, 10, 8): y = (5, 0.75). Analytic Jacobian dy/dx (2x6):
-#   dy1 = (-2.5,  0,    0, 0,       0.5,   0  )
-#   dy2 = ( 0.625, -1.25, 0, -0.1875, -0.125, 0.25)
-f <- function(y, x) {
-  argtypes(y |> type(vec(double)), x |> type(vec(double)))
-  L <- matrix(x[1L:4L], 2, 2)
-  b <- x[5L:6L]
-  y <- forwardsolve(L, b)
-  return(deriv(y, x))
-}
-fcpp_reverse <- ast2ast::translate(f, derivative = "reverse")
-y <- c(0, 0)
-x <- c(2, 1, 99, 4, 10, 8)
-expect_equal(
-  fcpp_reverse(y, x),
-  matrix(c(-2.5, 0.625,  0, -1.25,  0, 0,  0, -0.1875,  0.5, -0.125,  0, 0.25), 2, 6)
-)
+fcpp_fwd <- ast2ast::translate(TU_forward, derivative = "forward")
+expect_equal(fcpp_fwd(1L, c(0, 0), c(2, 3)),
+  matrix(c(3, 1, 2, 6), 2, 2))
+expect_equal(fcpp_fwd(2L, c(0), c(1, 2, 3, 4, 5)),
+  matrix(c(21, 3, 2, 5, 4), 1, 5))
 
 # --- seed/get_dot through a struct field ------------------------------------
 types_f <- function() {
@@ -417,54 +306,75 @@ chain_cases <- list(
   list(body = quote(tanh(3.0 * x)),     d = function(x) (1 - tanh(3 * x)^2) * 3),
   list(body = quote(atan(2.0 * x)),     d = function(x) 2 / (1 + (2 * x)^2))
 )
-for (cc in chain_cases) {
-  ff <- as.function(c(alist(x = ), bquote({
-    argtypes(x |> type(double))
-    seed(x, 1L)
-    z <- .(cc$body)
-    return(get_dot(z))
-  })))
-  fr <- as.function(c(alist(x = ), bquote({
-    argtypes(x |> type(double))
-    y <- .(cc$body)
-    return(deriv(y, x))
-  })))
-  fwd <- ast2ast::translate(ff, derivative = "forward")
-  rev <- ast2ast::translate(fr, derivative = "reverse")
+# The 6 case bodies are inlined into one forward TU and one reverse TU,
+# dispatched on `test`; that is 2 compiles instead of 2 per case. x is
+# always vec(double): a scalar test just passes a length-1 vector, whose
+# jacobian is 1x1. Keep the branch order in sync with chain_cases above.
+TU_chain_forward <- function(test, x) {
+  argtypes(test |> type(int), x |> type(vec(double)))
+  jac <- matrix(0.0, length(x), length(x))
+  for (i in 1L:length(x)) {
+    seed(x, i)
+    z <- x
+    if (test == 1L) {
+      z <- exp(sin(2.0 * x))
+    } else if (test == 2L) {
+      z <- log(x * x)
+    } else if (test == 3L) {
+      z <- sqrt(x * x + 1.0)
+    } else if (test == 4L) {
+      z <- exp(-x)
+    } else if (test == 5L) {
+      z <- tanh(3.0 * x)
+    } else if (test == 6L) {
+      z <- atan(2.0 * x)
+    }
+    jac[TRUE, i] <- get_dot(z)
+    unseed(x, i)
+  }
+  return(jac)
+}
+TU_chain_reverse <- function(test, x) {
+  argtypes(test |> type(int), x |> type(vec(double)))
+  y <- x
+  if (test == 1L) {
+    y <- exp(sin(2.0 * x))
+  } else if (test == 2L) {
+    y <- log(x * x)
+  } else if (test == 3L) {
+    y <- sqrt(x * x + 1.0)
+  } else if (test == 4L) {
+    y <- exp(-x)
+  } else if (test == 5L) {
+    y <- tanh(3.0 * x)
+  } else if (test == 6L) {
+    y <- atan(2.0 * x)
+  }
+  return(deriv(y, x))
+}
+fwd <- ast2ast::translate(TU_chain_forward, derivative = "forward")
+rev <- ast2ast::translate(TU_chain_reverse, derivative = "reverse")
+
+# scalar input: 1x1 jacobian == f'(x)
+for (k in seq_along(chain_cases)) {
+  cc <- chain_cases[[k]]
   for (xv in c(0.3, 0.7, 1.4)) {
     info <- deparse(cc$body)
-    expect_equal(c(fwd(xv)), cc$d(xv), tolerance = 1e-8, info = info)
-    expect_equal(c(rev(xv)), cc$d(xv), tolerance = 1e-8, info = info)
+    expect_equal(c(fwd(k, xv)), cc$d(xv), tolerance = 1e-8, info = info)
+    expect_equal(c(rev(k, xv)), cc$d(xv), tolerance = 1e-8, info = info)
   }
 }
 
 # --- same, but vector input: forward (per-index seed) == reverse == analytic --
-# For an element-wise body the Jacobian is diag(f'(x_i)); both modes must
+# For an element-wise body the jacobian is diag(f'(x_i)); both modes must
 # reproduce it, and the forward path must carry each element's own seed.
-for (cc in chain_cases) {
-  ff <- as.function(c(alist(x = ), bquote({
-    argtypes(x |> type(vec(double)))
-    jac <- matrix(0.0, length(x), length(x))
-    for (i in 1L:length(x)) {
-      seed(x, i)
-      z <- .(cc$body)
-      jac[TRUE, i] <- get_dot(z)
-      unseed(x, i)
-    }
-    return(jac)
-  })))
-  fr <- as.function(c(alist(x = ), bquote({
-    argtypes(x |> type(vec(double)))
-    y <- .(cc$body)
-    return(deriv(y, x))
-  })))
-  fwd <- ast2ast::translate(ff, derivative = "forward")
-  rev <- ast2ast::translate(fr, derivative = "reverse")
+for (k in seq_along(chain_cases)) {
+  cc <- chain_cases[[k]]
   for (xv in list(c(0.3, 0.7, 1.4), c(1.1, 0.5, 2.0, 0.9))) {
     info <- paste(deparse(cc$body), "vec")
     want <- diag(cc$d(xv))
-    expect_equal(fwd(xv), want, tolerance = 1e-8, info = info)
-    expect_equal(rev(xv), want, tolerance = 1e-8, info = info)
+    expect_equal(fwd(k, xv), want, tolerance = 1e-8, info = info)
+    expect_equal(rev(k, xv), want, tolerance = 1e-8, info = info)
   }
 }
 

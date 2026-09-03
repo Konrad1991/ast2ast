@@ -11,8 +11,6 @@ get_checks <- function(f, r_fct = TRUE) {
 test_action_error <- function(f, error_message, r_fct = TRUE) {
   e <- try(get_checks(f), silent = TRUE)
   e <- attributes(e)[["condition"]]$message
-  # drop the registry `Signature:` hint appended to arity/named-arg errors --
-  # its wording lives in FunctionRegistry.R, not in these assertions
   e <- sub("(?s)\nSignature: .*$", "", e, perl = TRUE)
   expect_equal(e, error_message)
 }
@@ -149,8 +147,6 @@ test_action_error(
 )
 
 # --- 'if' on the rhs of an assignment ------------------------------------
-# C++ 'if' yields no value; the error shows an R-level summary of the
-# offending statement, not the transpiled C++.
 f <- function(a) {
   bla <- if (a == 1) 3 else 4
 }
@@ -192,8 +188,6 @@ test_action_error(
 f <- function() {
   a <- cmr(1, 2, 3, 4)
 }
-# cmr carries a `docu`: arity error now names got/expected (the appended
-# `Signature:` hint is stripped by the test helper).
 test_action_error(
   f,
   "\na <- cmr(1.0, 2.0, 3.0, 4.0)\nWrong number of arguments for cmr: got 4, expected 3."
@@ -360,19 +354,16 @@ test_no_action_error(f)
 # --- inner functions cannot be used as a value --------------------------
 # these are caught during type inference / return handling, not run_checks,
 # so drive them through the full translator
-inner_fn <- quote(fn(
-  argtypes(),
-  return(double),
-  {
-    return(3.14)
-  }
-))
-
 f <- function() {
-  g <- eval(inner_fn)
+  g <- fn(
+    argtypes(),
+    return(double),
+    {
+      return(3.14)
+    }
+  )
   print(g)
 }
-body(f)[[2]][[3]] <- inner_fn
 e <- try(ast2ast::translate(f), silent = TRUE)
 expect_true(inherits(e, "try-error"))
 expect_true(grepl(
@@ -381,10 +372,15 @@ expect_true(grepl(
 ))
 
 f <- function() {
-  g <- eval(inner_fn)
+  g <- fn(
+    argtypes(),
+    return(double),
+    {
+      return(3.14)
+    }
+  )
   return(g)
 }
-body(f)[[2]][[3]] <- inner_fn
 e <- try(ast2ast::translate(f), silent = TRUE)
 expect_true(inherits(e, "try-error"))
 expect_true(grepl(
@@ -393,11 +389,21 @@ expect_true(grepl(
 ))
 
 # --- chained assignment (a <- b <- c) is rejected ----------------------
-for (src in list(
-  function() { a <- b <- 3.0; return(a) },
-  function() { x <- y <- z <- 1.0; return(x) },
-  function() { a = b = 3.0; return(a) }
-)) {
+test_cases_chained <- list(
+  function() {
+    a <- b <- 3.0
+    return(a) 
+  },
+  function() {
+    x <- y <- z <- 1.0
+    return(x)
+  },
+  function() {
+    a = b = 3.0
+    return(a)
+  }
+)
+for (src in test_cases_chained) {
   e <- try(ast2ast::translate(src), silent = TRUE)
   expect_true(inherits(e, "try-error"))
   expect_true(grepl("Chained assignments are not supported",
@@ -406,23 +412,53 @@ for (src in list(
 
 # --- T / F cannot be bound (assignment target or for-iterator) --------
 # they still work as a value in read position (-> TRUE / FALSE)
-for (src in list(
-  function() { T <- 3.0; return(T) },
-  function() { F <- 3.0; return(F) },
-  function() { s <- 0L; for (T in 1L:3L) s <- s + 1L; return(s) }
-)) {
+T_F_cases <- list(
+  function() {
+    T <- 3.0
+    return(T)
+  },
+  function() {
+    F <- 3.0
+    return(F) 
+  },
+  function() {
+    s <- 0L
+    for (T in 1L:3L) s <- s + 1L
+    return(s)
+  }
+)
+for (src in T_F_cases) {
   e <- try(ast2ast::translate(src), silent = TRUE)
   expect_true(inherits(e, "try-error"))
   expect_true(grepl("reserved internally",
     attributes(e)[["condition"]]$message, fixed = TRUE))
 }
 
-f <- ast2ast::translate(function() { x <- T; if (x) return(1.0) else return(0.0) })
+# TODO: is this test really required?
+# Actually it is but it would be better to merge
+# it together with another test.
+f <- ast2ast::translate(
+  function() {
+    x <- T
+    if (x) {
+      return(1.0)
+    } else {
+      return(0.0)
+    }
+  }
+)
+f
 expect_equal(f(), 1)
 
 # --- unary + gets a specific message ---------------------------------
-e <- try(ast2ast::translate(function(x) { argtypes(x |> type(double)); y <- +x; return(y) }),
-  silent = TRUE)
+e <- try(ast2ast::translate(
+  function(x) {
+    argtypes(
+      x |> type(double)
+    )
+    y <- +x
+    return(y)
+  }), silent = TRUE)
 expect_true(inherits(e, "try-error"))
 expect_true(grepl("Unary '+' is not supported",
   attributes(e)[["condition"]]$message, fixed = TRUE))

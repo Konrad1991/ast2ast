@@ -451,7 +451,7 @@ argtypes_match_formals <- function(f, argtypes) {
       if (length(extra) > 1L) "are" else "is",
       if (length(extra) > 1L) "arguments" else "an argument")
     if (length(extra) == 1L && length(formal_args) > 0L) {
-      d <- adist(extra, formal_args)[1L, ]
+      d <- utils::adist(extra, formal_args)[1L, ]
       if (min(d) <= 2L) {
         msg <- paste0(msg, sprintf(" (did you mean '%s'?)", formal_args[which.min(d)]))
       }

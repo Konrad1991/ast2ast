@@ -46,49 +46,64 @@ f <- function(x) {
 }
 is_type(ret_type_of(f, function(x) x |> type(vec(double)), TRUE), "double", "scalar")
 
-# end to end
-f <- ast2ast::translate(function(x) { argtypes(x |> type(double)); x^2 })
-expect_equal(f(3), 9)
-f <- ast2ast::translate(function(x) {
-  argtypes(x |> type(vec(double)))
-  s <- sum(x)
-  s / length(x)
+# end to end -- one TU, the tail of each branch is a bare expression
+#   1  scalar expr   2  reduction / arithmetic tail   3  bare variable
+f <- ast2ast::translate(function(test, s, v) {
+  argtypes(
+    test |> type(int),
+    s |> type(double),
+    v |> type(vec(double))
+  )
+  if (test == 1L) {
+    s^2
+  } else if (test == 2L) {
+    total <- sum(v)
+    total / length(v)
+  } else {
+    v
+  }
 })
-expect_equal(f(c(1, 2, 3, 4)), 2.5)
-f <- ast2ast::translate(function(x) { argtypes(x |> type(vec(double))); x })
-expect_equal(
-  c(f(c(7, 8, 9))),
-  c(7, 8, 9)
-)
+expect_equal(f(1L, 3, c(0.0)), 9)
+expect_equal(f(2L, 0, c(1, 2, 3, 4)), 2.5)
+expect_equal(c(f(3L, 0, c(7, 8, 9))), c(7, 8, 9))
 
 # ==========================================================================
 # 2. Tail if: each branch's last statement becomes a return
+# One TU dispatched on `test`; the tail statement of each `test` branch is
+# itself a bare tail-if, so the implicit-return machinery still has to
+# return-ify it (test 2 already covers a tail-if nested in a tail-if branch).
+#   1  plain tail if           2  nested tail if           3  else-if chain
 # ==========================================================================
-f <- ast2ast::translate(function(x) { argtypes(x |> type(double)); if (x > 0) 1 else 2 })
-expect_equal(f(3), 1)
-expect_equal(f(-3), 2)
-
-# nested tail if
-f <- ast2ast::translate(function(x) {
-  argtypes(x |> type(double))
-  if (x > 0) {
-    if (x > 10) 3 else 2
+f <- ast2ast::translate(function(test, x) {
+  argtypes(
+    test |> type(int),
+    x |> type(double)
+  )
+  if (test == 1L) {
+    if (x > 0) 1 else 2
+  } else if (test == 2L) {
+    if (x > 0) {
+      if (x > 10) 3 else 2
+    } else {
+      1
+    }
+  } else if (test == 3L) {
+    if (x == 1) 10 else if (x == 2) 20 else 30
   } else {
-    1
+    0
   }
 })
-expect_equal(f(20), 3)
-expect_equal(f(5), 2)
-expect_equal(f(-1), 1)
-
+# plain tail if
+expect_equal(f(1L, 3), 1)
+expect_equal(f(1L, -3), 2)
+# nested tail if
+expect_equal(f(2L, 20), 3)
+expect_equal(f(2L, 5), 2)
+expect_equal(f(2L, -1), 1)
 # else-if chain with a terminal else
-f <- ast2ast::translate(function(x) {
-  argtypes(x |> type(double))
-  if (x == 1) 10 else if (x == 2) 20 else 30
-})
-expect_equal(f(1), 10)
-expect_equal(f(2), 20)
-expect_equal(f(9), 30)
+expect_equal(f(3L, 1), 10)
+expect_equal(f(3L, 2), 20)
+expect_equal(f(3L, 9), 30)
 
 # ==========================================================================
 # 3. check_tail_missing_else
@@ -150,40 +165,48 @@ expect_equal(ret_type_of(function() {
 }, function() {}, FALSE), "void")
 expect_equal(ret_type_of(function() {}, function() {}, TRUE), "R_NilValue")
 
-# trailing loop, no return anywhere (was: fall off end)
-f <- ast2ast::translate(function(n) {
-  argtypes(n |> type(integer))
-  v <- numeric(n)
-  for (i in 1:n) v[i] <- i * i
+# valueless tail -> NULL, no crash
+#   1  trailing loop, no return anywhere    2  trailing print
+f <- ast2ast::translate(function(test, n, x) {
+  argtypes(
+    test |> type(int),
+    n |> type(integer),
+    x |> type(double)
+  )
+  if (test == 1L) {
+    v <- numeric(n)
+    for (i in 1:n) v[i] <- i * i
+  } else {
+    print(x)
+  }
 })
-expect_null(f(5L))
-
-# trailing print
-f <- ast2ast::translate(function(x) {
-  argtypes(x |> type(double))
-  print(x)
-})
-expect_null(f(3))
+expect_null(f(1L, 5L, 0))
+expect_null(f(2L, 0L, 3))
 
 # ==========================================================================
 # 5. void + value returns: r_fct allows, XPtr rejects
 # ==========================================================================
-# r_fct: explicit return() alongside return(obj) is fine now
-f <- ast2ast::translate(function(x) {
-  argtypes(x |> type(double))
-  if (x > 0) return(1) else return()
+# r_fct allows a valueless path alongside a value return
+#   1  explicit return() as a tail-if else branch
+#   2  value return via guard + valueless (loop) tail
+f <- ast2ast::translate(function(test, x) {
+  argtypes(
+    test |> type(int),
+    x |> type(double)
+  )
+  if (test == 1L) {
+    if (x > 0) return(1) else return()
+  } else if (test == 2L) {
+    if (x > 0) return(x * 2)
+    for (i in 1:3) print(i)
+  } else {
+    return()
+  }
 })
-expect_equal(f(2), 1)
-expect_null(f(-2))
-
-# r_fct: value return + valueless (loop) tail is fine
-f <- ast2ast::translate(function(x) {
-  argtypes(x |> type(double))
-  if (x > 0) return(x * 2)
-  for (i in 1:3) print(i)
-})
-expect_equal(f(4), 8)
-expect_null(f(-1))
+expect_equal(f(1L, 2), 1)
+expect_null(f(1L, -2))
+expect_equal(f(2L, 4), 8)
+expect_null(f(2L, -1))
 
 # XPtr: the same mix is a translation-time error
 expect_error(
@@ -248,30 +271,35 @@ is_type(ret_type_of(f, function(a) a |> type(double), TRUE), "double", "matrix")
 # ==========================================================================
 # 7. Inner fn (fn()) call as the tail statement
 # ==========================================================================
-# non-void inner fn -> its value is returned
-f <- ast2ast::translate(function(x) {
-  argtypes(x |> type(double))
-  g <- fn(
-    argtypes(),
-    return(double),
-    return(13)
+# inner fn() call as the tail statement
+#   1  non-void inner fn -> its value is returned
+#   2  void inner fn -> call kept for side effects, function returns NULL
+f <- ast2ast::translate(function(test, x) {
+  argtypes(
+    test |> type(int),
+    x |> type(double)
   )
-  if (x == 1) return(1.0) else {}
-  g()
+  if (test == 1L) {
+    g_val <- fn(
+      argtypes(),
+      return(double),
+      return(13)
+    )
+    if (x == 1) return(1.0) else {}
+    g_val()
+  } else if (test == 2L) {
+    g_void <- fn(
+      argtypes(),
+      return(void),
+      print("hi")
+    )
+    if (x == 1) return(1.0) else {}
+    g_void()
+  } else {
+    return()
+  }
 })
-expect_equal(f(2), 13)
-expect_equal(f(1), 1)
-
-# void inner fn -> call kept for side effects, function returns NULL
-f <- ast2ast::translate(function(x) {
-  argtypes(x |> type(double))
-  g <- fn(
-    argtypes(),
-    return(void),
-    print("hi")
-  )
-  if (x == 1) return(1.0) else {}
-  g()
-})
-expect_null(f(2))
-expect_equal(f(1), 1)
+expect_equal(f(1L, 2), 13)
+expect_equal(f(1L, 1), 1)
+expect_null(f(2L, 2))
+expect_equal(f(2L, 1), 1)

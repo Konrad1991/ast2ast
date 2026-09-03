@@ -225,16 +225,10 @@ template<typename RealType> void test_borrow() {
     b.set(0, Double(1.1));
     b.set(1, Double(2.2));
 
-#if defined(__clang__)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wself-assign-overloaded"
-#endif
-
-b = b;
-
-#if defined(__clang__)
-    #pragma clang diagnostic pop
-#endif
+    // alias on the rhs so this still exercises operator=(self) without
+    // tripping clang's -Wself-assign-overloaded (flagged by R CMD check)
+    auto &b_alias = b;
+    b = b_alias;
 
     ass<"self assign safe">(compare(get_val(b.get(1)), 2.2));
   }

@@ -315,7 +315,10 @@ make_inferred_type <- function(data_struct, base_type, r_fct, real_type) {
   t
 }
 
-predefined_known_types <- function() {
+# quote(), not a function: the body is only ever consumed via as.list() in
+# make_known_types, and codetools doesn't walk quoted expressions, so the DSL
+# symbols (new_type, slots, type, vec, the slot names) raise no R CMD check note.
+predefined_known_types <- quote({
   new_type(
     uniroot_result,
     slots(
@@ -336,10 +339,10 @@ predefined_known_types <- function() {
       counts |> type(vec(int))
     )
   )
-}
+})
 
 make_known_types <- function(types_fct, r_fct, real_type) {
-  types_block <- as.list(wrap_in_block(body(predefined_known_types)))[-1]
+  types_block <- as.list(wrap_in_block(predefined_known_types))[-1]
   known_types <- parse_types(types_block, fct_input = FALSE, r_fct, real_type)
   for (nm in names(known_types)) {
     if (inherits(known_types[[nm]], "new_type_node")) {

@@ -1,239 +1,178 @@
 library(tinytest)
 
+TU <- function(test) {
+  argtypes(
+    test |> type(int)
+  )
+  # Vector subsetting
+  if (test == 1L) {
+    v <- numeric(3L)
+    v[1L] <- 10.0
+    v[[2L]] <- 20.0
+    v[3L] <- 30.0
+    return(v)
+  } else if (test == 2L) {
+    v <- c(1.0, 2.0, 3.0)
+    return(v[[2L]])
+  } else if (test == 3L) {
+    v <- numeric(3L)
+    v[[4L]] <- 1.0
+    return(v)
+  } else if (test == 4L) {
+    v <- c(1.0, 2.0, 3.0)
+    return(v[[4L]])
+  } else if (test == 5L) {
+    v <- c(1.0, 2.0, 3.0)
+    return(v[[0L]])
+  }
+  # Matrix subsetting
+  else if (test == 6L) {
+    M <- matrix(0.0, 2L, 3L)
+    M[1L, 1L] <- 1.0
+    M[2L, 3L] <- 6.0
+    return(M)
+  } else if (test == 7L) {
+    M <- matrix(c(1.0, 2.0, 3.0, 4.0, 5.0, 6.0), 2L, 3L)
+    return(M[2L, 2L])
+  } else if (test == 8L) {
+    M <- matrix(0.0, 2L, 2L)
+    M[3L, 1L] <- 99.0
+    return(M)
+  } else if (test == 9L) {
+    M <- matrix(c(1.0, 2.0, 3.0, 4.0), 2L, 2L)
+    return(M[3L, 1L])
+  } else if (test == 10L) {
+    M <- matrix(0.0, 3L, 3L)
+    return(M[5L, 1L])
+  } else if (test == 11L) {
+    M <- matrix(0.0, 2L, 2L)
+    M[1L, 3L] <- 99.0
+    return(M)
+  } else if (test == 12L) {
+    M <- matrix(0.0, 2L, 2L)
+    M[0L, 1L] <- 1.0
+    return(M)
+  } else if (test == 13L) {
+    M <- matrix(0.0, 2L, 2L)
+    M[1L, 0L] <- 1.0
+    return(M)
+  } else if (test == 14L) {
+    M <- matrix(0.0, 2L, 2L)
+    r <- 3L
+    return(M[r, 1L])
+  }
+  # Matrix slicing -- M[i, ] / M[, j]
+  else if (test == 15L) {
+    M <- matrix(c(1.0, 2.0, 3.0, 4.0, 5.0, 6.0), 2L, 3L)
+    return(M[1L, ])
+  } else if (test == 16L) {
+    M <- matrix(c(1.0, 2.0, 3.0, 4.0, 5.0, 6.0), 2L, 3L)
+    return(M[, 2L])
+  } else if (test == 17L) {
+    M <- matrix(0.0, 2L, 2L)
+    return(M[3L, ])
+  } else if (test == 18L) {
+    M <- matrix(0.0, 2L, 2L)
+    return(M[, 3L])
+  }
+  # N-D array subsetting -- a[i, j, k]
+  else if (test == 19L) {
+    a <- array(0.0, c(2L, 2L, 2L))
+    a[1L, 1L, 1L] <- 1.0
+    a[2L, 2L, 2L] <- 8.0
+    return(a)
+  } else if (test == 20L) {
+    a <- array(0.0, c(2L, 2L, 2L))
+    return(a[3L, 1L, 1L])
+  } else if (test == 21L) {
+    a <- array(0.0, c(2L, 2L, 2L))
+    return(a[1L, 3L, 1L])
+  } else if (test == 22L) {
+    a <- array(0.0, c(2L, 2L, 2L))
+    return(a[1L, 1L, 3L])
+  }
+
+  else {
+    return()
+  }
+}
+fcpp <- ast2ast::translate(TU)
 # =============================================================================
 # Vector subsetting -- v[i] / v[[i]]
 # =============================================================================
-
-f <- function() {
-  v <- numeric(3L)
-  v[1L] <- 10.0
-  v[[2L]] <- 20.0
-  v[3L] <- 30.0
-  return(v)
-}
-fcpp <- ast2ast::translate(f)
-expect_equal(fcpp() |> c(), c(10, 20, 30))
-
-f <- function() {
-  v <- c(1.0, 2.0, 3.0)
-  return(v[[2L]])
-}
-fcpp <- ast2ast::translate(f)
-expect_equal(fcpp(), 2)
-
+expect_equal(fcpp(1L) |> c(), c(10, 20, 30))
+expect_equal(fcpp(2L), 2)
 # index too high
-f <- function() {
-  v <- numeric(3L)
-  v[[4L]] <- 1.0
-  return(v)
-}
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "out of boundaries")
-
-f <- function() {
-  v <- c(1.0, 2.0, 3.0)
-  return(v[[4L]])
-}
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "out of boundaries")
-
-# index 0 (must error, not silently underflow to another element)
-f <- function() {
-  v <- c(1.0, 2.0, 3.0)
-  return(v[[0L]])
-}
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "Zero and negative indices are not supported")
-
+expect_error(fcpp(3L), pattern = "out of boundaries")
+expect_error(fcpp(4L), pattern = "out of boundaries")
+expect_error(fcpp(5L), pattern = "Zero and negative indices are not supported")
 # =============================================================================
 # Matrix subsetting -- M[i, j]
 # =============================================================================
-
-f <- function() {
-  M <- matrix(0.0, 2L, 3L)
-  M[1L, 1L] <- 1.0
-  M[2L, 3L] <- 6.0
-  return(M)
-}
-fcpp <- ast2ast::translate(f)
-expect_equal(fcpp() |> c(), c(1, 0, 0, 0, 0, 6))
-
-f <- function() {
-  M <- matrix(c(1.0, 2.0, 3.0, 4.0, 5.0, 6.0), 2L, 3L)
-  return(M[2L, 2L])
-}
-fcpp <- ast2ast::translate(f)
-expect_equal(fcpp(), 4)
-
-# --- regression: non-final-dimension (row) overshoot must error, not alias
-# another cell. M[3,1] on a 2x2 used to silently write/read M[1,2], because
-# only the final linearized offset was checked against the buffer size,
-# not each index against its own dimension's extent. ---
-
-f <- function() {
-  M <- matrix(0.0, 2L, 2L)
-  M[3L, 1L] <- 99.0
-  return(M)
-}
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "out of boundaries")
-
-f <- function() {
-  M <- matrix(c(1.0, 2.0, 3.0, 4.0), 2L, 2L)
-  return(M[3L, 1L])
-}
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "out of boundaries")
-
-# mid-range row overshoot (not just N+1, still an interior-dimension case)
-f <- function() {
-  M <- matrix(0.0, 3L, 3L)
-  return(M[5L, 1L])
-}
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "out of boundaries")
-
-# column overshoot (already caught before the fix -- offset lands past buffer)
-f <- function() {
-  M <- matrix(0.0, 2L, 2L)
-  M[1L, 3L] <- 99.0
-  return(M)
-}
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "out of boundaries")
-
-# zero index on either dimension
-f <- function() {
-  M <- matrix(0.0, 2L, 2L)
-  M[0L, 1L] <- 1.0
-  return(M)
-}
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "Zero and negative indices are not supported")
-
-f <- function() {
-  M <- matrix(0.0, 2L, 2L)
-  M[1L, 0L] <- 1.0
-  return(M)
-}
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "Zero and negative indices are not supported")
-
-# runtime (variable) row index overshoot -- a compile-time constant check
-# would not be enough, this must be caught at runtime
-f <- function() {
-  M <- matrix(0.0, 2L, 2L)
-  r <- 3L
-  return(M[r, 1L])
-}
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "out of boundaries")
+expect_equal(fcpp(6L) |> c(), c(1, 0, 0, 0, 0, 6))
+expect_equal(fcpp(7L), 4)
+expect_error(fcpp(8L), pattern = "out of boundaries")
+expect_error(fcpp(9L), pattern = "out of boundaries")
+expect_error(fcpp(10L), pattern = "out of boundaries")
+expect_error(fcpp(11L), pattern = "out of boundaries")
+expect_error(fcpp(12L), pattern = "Zero and negative indices are not supported")
+expect_error(fcpp(13L), pattern = "Zero and negative indices are not supported")
+expect_error(fcpp(14L), pattern = "out of boundaries")
 
 # =============================================================================
 # Matrix slicing -- M[i, ] / M[, j] (whole row/column)
 # =============================================================================
-
-f <- function() {
-  M <- matrix(c(1.0, 2.0, 3.0, 4.0, 5.0, 6.0), 2L, 3L)
-  return(M[1L, ])
-}
-fcpp <- ast2ast::translate(f)
-expect_equal(fcpp() |> c(), c(1, 3, 5))
-
-f <- function() {
-  M <- matrix(c(1.0, 2.0, 3.0, 4.0, 5.0, 6.0), 2L, 3L)
-  return(M[, 2L])
-}
-fcpp <- ast2ast::translate(f)
-expect_equal(fcpp() |> c(), c(3, 4))
-
-f <- function() {
-  M <- matrix(0.0, 2L, 2L)
-  return(M[3L, ])
-}
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "out of boundaries")
-
-f <- function() {
-  M <- matrix(0.0, 2L, 2L)
-  return(M[, 3L])
-}
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "out of boundaries")
+expect_equal(fcpp(15L) |> c(), c(1, 3, 5))
+expect_equal(fcpp(16L) |> c(), c(3, 4))
+expect_error(fcpp(17L), pattern = "out of boundaries")
+expect_error(fcpp(18L), pattern = "out of boundaries")
 
 # =============================================================================
 # N-D array subsetting -- a[i, j, k]
+# 20/21 are the regression: overshoot in a non-final dimension (first, then
+# interior); 22 is the last-dimension overshoot that was already caught.
 # =============================================================================
-
-f <- function() {
-  a <- array(0.0, c(2L, 2L, 2L))
-  a[1L, 1L, 1L] <- 1.0
-  a[2L, 2L, 2L] <- 8.0
-  return(a)
-}
-fcpp <- ast2ast::translate(f)
-expect_equal(fcpp() |> c(), c(1, 0, 0, 0, 0, 0, 0, 8))
-
-# regression: overshoot in the first (non-final) dimension
-f <- function() {
-  a <- array(0.0, c(2L, 2L, 2L))
-  return(a[3L, 1L, 1L])
-}
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "out of boundaries")
-
-# regression: overshoot in the second (interior) dimension
-f <- function() {
-  a <- array(0.0, c(2L, 2L, 2L))
-  return(a[1L, 3L, 1L])
-}
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "out of boundaries")
-
-# last-dimension overshoot (already caught before the fix)
-f <- function() {
-  a <- array(0.0, c(2L, 2L, 2L))
-  return(a[1L, 1L, 3L])
-}
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(), pattern = "out of boundaries")
+expect_equal(fcpp(19L) |> c(), c(1, 0, 0, 0, 0, 0, 0, 8))
+expect_error(fcpp(20L), pattern = "out of boundaries")
+expect_error(fcpp(21L), pattern = "out of boundaries")
+expect_error(fcpp(22L), pattern = "out of boundaries")
 
 # =============================================================================
 # const-argument matrix -- exercises the read-only at() overload, which had
 # NO bounds check at all before the fix (the most dangerous of the three)
 # =============================================================================
-
-f <- function(M) {
-  argtypes(M |> type(mat(double)) |> ref() |> const())
-  return(M[3L, 1L])
+TU_const_mat <- function(test, M) {
+  argtypes(
+    test |> type(int),
+    M |> type(mat(double)) |> ref() |> const()
+  )
+  if (test == 1L) {
+    return(M[3L, 1L])
+  } else {
+    return(M[2L, 2L])
+  }
 }
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(matrix(0.0, 2L, 2L)), pattern = "out of boundaries")
-
-f <- function(M) {
-  argtypes(M |> type(mat(double)) |> ref() |> const())
-  return(M[2L, 2L])
-}
-fcpp <- ast2ast::translate(f)
-expect_equal(fcpp(matrix(c(1.0, 2.0, 3.0, 4.0), 2L, 2L)), 4)
+fcpp <- ast2ast::translate(TU_const_mat)
+expect_error(fcpp(1L, matrix(0.0, 2L, 2L)), pattern = "out of boundaries")
+expect_equal(fcpp(2L, matrix(c(1.0, 2.0, 3.0, 4.0), 2L, 2L)), 4)
 
 # =============================================================================
 # borrow_mat -- exercises the Borrow-array at() overload
 # =============================================================================
-
-f <- function(M) {
-  argtypes(M |> type(borrow_mat(double)))
-  return(M[3L, 1L])
+TU_borrow_mat <- function(test, M) {
+  argtypes(
+    test |> type(int),
+    M |> type(borrow_mat(double))
+  )
+  if (test == 1L) {
+    return(M[3L, 1L])
+  } else {
+    return(M[2L, 2L])
+  }
 }
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(matrix(0.0, 2L, 2L)), pattern = "out of boundaries")
-
-f <- function(M) {
-  argtypes(M |> type(borrow_mat(double)))
-  return(M[2L, 2L])
-}
-fcpp <- ast2ast::translate(f)
-expect_equal(fcpp(matrix(c(1.0, 2.0, 3.0, 4.0), 2L, 2L)), 4)
+fcpp <- ast2ast::translate(TU_borrow_mat)
+expect_error(fcpp(1L, matrix(0.0, 2L, 2L)), pattern = "out of boundaries")
+expect_equal(fcpp(2L, matrix(c(1.0, 2.0, 3.0, 4.0), 2L, 2L)), 4)
 
 # =============================================================================
 # Cross-type element assignment -- v[i] <- w[j] where v and w have different
@@ -303,68 +242,67 @@ expect_equal(fcpp(6L, iv0, dv0, lv0), 1)    # int elem -> logical elem
 
 # =============================================================================
 # Single-bracket indexing of a matrix: indexes the column-major flattening,
-# like R's m[i] / m[mask] (returns a plain vector; a scalar index -> scalar)
+# like R's m[i] / m[mask] (returns a plain vector; a scalar index -> scalar).
+# One translated function, test flag selects the branch -> single compilation.
 # =============================================================================
 m0 <- matrix(as.double(1:12), 3, 4)
 
-# prepend argtypes(a |> type(mat(double))) to a one-liner body, then translate
-tr_mat <- function(f) {
-  b <- body(f)
-  if (!is.call(b) || !identical(b[[1L]], as.name("{"))) b <- call("{", b)
-  body(f) <- as.call(c(as.name("{"), quote(argtypes(a |> type(mat(double)))), as.list(b)[-1]))
-  ast2ast::translate(f)
+TU_mat_lin <- function(test, a) {
+  argtypes(
+    test |> type(int),
+    a |> type(mat(double))
+  )
+  if (test == 1L) {
+    return(a[5L])
+  } else if (test == 2L) {
+    return(a[[7L]])
+  } else if (test == 3L) {
+    return(a[c(1L, 6L, 11L, 12L)])
+  } else if (test == 4L) {
+    return(a[a > 6.0])
+  } else if (test == 5L) {
+    return(a[c(TRUE, FALSE)])
+  } else if (test == 6L) {
+    return(sum(a[a > 6.0]))
+  } else if (test == 7L) {
+    a[a > 6.0] <- 0.0
+    return(a)
+  } else if (test == 8L) {
+    a[a > 6.0] <- rep(c(-1.0, -2.0), 3L)
+    return(a)
+  } else if (test == 9L) {
+    a[5L] <- 99.0
+    return(a)
+  } else if (test == 10L) {
+    return(a[2L, 3L])
+  } else {
+    return()
+  }
 }
+fcpp <- ast2ast::translate(TU_mat_lin)
 
 # scalar linear index -> scalar
-f <- function(a) a[5L]
-fcpp <- tr_mat(f)
-expect_equal(c(fcpp(m0)), m0[5])
-f <- function(a) a[[7L]]
-fcpp <- tr_mat(f)
-expect_equal(c(fcpp(m0)), m0[[7]])
-
+expect_equal(c(fcpp(1L, m0)), m0[5])
+expect_equal(c(fcpp(2L, m0)), m0[[7]])
 # vector of linear indices -> vector
-f <- function(a) a[c(1L, 6L, 11L, 12L)]
-fcpp <- tr_mat(f)
-expect_equal(c(fcpp(m0)), m0[c(1, 6, 11, 12)])
-
+expect_equal(c(fcpp(3L, m0)), m0[c(1, 6, 11, 12)])
 # logical mask (same size) -> vector of the TRUE positions
-f <- function(a) a[a > 6.0]
-fcpp <- tr_mat(f)
-expect_equal(c(fcpp(m0)), m0[m0 > 6])
-
+expect_equal(c(fcpp(4L, m0)), m0[m0 > 6])
 # logical mask recycled
-f <- function(a) a[c(TRUE, FALSE)]
-fcpp <- tr_mat(f)
-expect_equal(c(fcpp(m0)), m0[c(TRUE, FALSE)])
-
+expect_equal(c(fcpp(5L, m0)), m0[c(TRUE, FALSE)])
 # reduction over a masked selection
-f <- function(a) sum(a[a > 6.0])
-fcpp <- tr_mat(f)
-expect_equal(fcpp(m0), sum(m0[m0 > 6]))
-
+expect_equal(c(fcpp(6L, m0)), sum(m0[m0 > 6]))
 # masked assignment: scalar
-f <- function(a) { a[a > 6.0] <- 0.0; a }
-fcpp <- tr_mat(f)
 r <- m0; r[r > 6] <- 0
-expect_equal(fcpp(m0), r)
-
+expect_equal(fcpp(7L, m0), r)
 # masked assignment: vector (recycled)
-f <- function(a) { a[a > 6.0] <- rep(c(-1.0, -2.0), 3L); a }
-fcpp <- tr_mat(f)
 r <- m0; r[r > 6] <- c(-1, -2)
-expect_equal(fcpp(m0), r)
-
+expect_equal(fcpp(8L, m0), r)
 # linear scalar-index assignment
-f <- function(a) { a[5L] <- 99.0; a }
-fcpp <- tr_mat(f)
 r <- m0; r[5] <- 99
-expect_equal(fcpp(m0), r)
-
-# still: a two-index form is unchanged
-f <- function(a) a[2L, 3L]
-fcpp <- tr_mat(f)
-expect_equal(c(fcpp(m0)), m0[2, 3])
+expect_equal(fcpp(9L, m0), r)
+# a two-index form is unchanged
+expect_equal(c(fcpp(10L, m0)), m0[2, 3])
 
 # reverse-mode AD through a masked selection: d/dx sum(x[x > 0]) picks the
 # positive entries -> gradient 1 there, 0 elsewhere

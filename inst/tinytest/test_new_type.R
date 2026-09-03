@@ -99,44 +99,52 @@ f <- function() {
 check_error(f, types_f_point, pattern = "has no field named z")
 
 # --- 2. functional (compiled) tests for structs -------------------------------
-f <- function(p) {
-  argtypes(p |> type(Point))
-  p$x <- p$x + 10
-  return(p)
+# One TU dispatched on `test`; Point and Area are both in scope via
+# types_f_area. Branches 1/2 use p, 3/4 use a -- the unused struct arg still
+# gets a valid dummy so its entry-time class check passes.
+#   1  mutate and return a struct
+#   2  wrong class passed for a Point arg -> runtime reject (2.1)
+#   3  nested struct whose inner value has the wrong class (2.2)
+#   4  retrieve the inner struct itself as the result (2.3)
+TU <- function(test, p, a) {
+  argtypes(
+    test |> type(int),
+    p |> type(Point),
+    a |> type(Area)
+  )
+  if (test == 1L) {
+    p$x <- p$x + 10
+    return(p)
+  } else if (test == 2L) {
+    return(p$x)
+  } else if (test == 3L) {
+    return(a$x$x)
+  } else if (test == 4L) {
+    return(a$x)
+  } else {
+    return(p)
+  }
 }
-fcpp <- ast2ast::translate(f, types_f = types_f_point)
-p_in <- structure(list(x = 1, y = 2), class = "Point")
-res <- fcpp(p_in)
+fcpp <- ast2ast::translate(TU, types_f = types_f_area)
+ok_point <- structure(list(x = 0, y = 0), class = "Point")
+ok_area <- structure(list(x = structure(list(x = 0, y = 0), class = "Point")), class = "Area")
+
+res <- fcpp(1L, structure(list(x = 1, y = 2), class = "Point"), ok_area)
 expect_equal(res$x, 11)
 expect_equal(res$y, 2)
 expect_equal(class(res), "Point")
 
 # 2.1 wrong class passed in must be rejected at runtime, not silently accepted
-f <- function(p) {
-  argtypes(p |> type(Point))
-  return(p$x)
-}
-fcpp <- ast2ast::translate(f, types_f = types_f_point)
 wrong <- structure(list(x = 1, y = 2), class = "BLA")
-expect_error(fcpp(wrong), pattern = "Expected an object of class 'Point'")
+expect_error(fcpp(2L, wrong, ok_area), pattern = "Expected an object of class 'Point'")
 
 # 2.2 nested struct: the inner value has the wrong class
-f <- function(a) {
-  argtypes(a |> type(Area))
-  return(a$x$x)
-}
-fcpp <- ast2ast::translate(f, types_f = types_f_area)
 bad_inner <- structure(list(x = structure(list(x = 1, y = 2), class = "NotPoint")), class = "Area")
-expect_error(fcpp(bad_inner), pattern = "Expected an object of class 'Point'")
+expect_error(fcpp(3L, ok_point, bad_inner), pattern = "Expected an object of class 'Point'")
 
 # 2.3 correct nested struct: retrieve the inner struct itself as the result
-f <- function(a) {
-  argtypes(a |> type(Area))
-  return(a$x)
-}
-fcpp <- ast2ast::translate(f, types_f = types_f_area)
 good <- structure(list(x = structure(list(x = 3, y = 4), class = "Point")), class = "Area")
-res <- fcpp(good)
+res <- fcpp(4L, ok_point, good)
 expect_equal(res$x, 3)
 expect_equal(res$y, 4)
 expect_equal(class(res), "Point")
@@ -273,79 +281,82 @@ expect_error(
 # const-ness to the copy -- previously new_type_node's first-assignment
 # branch never reset const_or_mut, so the copy inherited "const" from the
 # const argument and any field mutation on the copy was rejected
-f <- function(p) {
-  argtypes(p |> type(Point) |> const())
+f <- function(test, p) {
+  argtypes(
+    test |> type(int),
+    p |> type(Point) |> const()
+  )
   p2 <- p
   p2$x <- 99
-  return(p2)
+  if (test == 1L) {
+    return(p2)
+  } else if (test == 2L) {
+    # and the copy must be independent -- mutating it must not affect the original
+    return(p)
+  } else {
+    stop("wrong test number")
+    return()
+  }
 }
+
 fcpp <- ast2ast::translate(f, types_f = types_f_point)
 p_in <- structure(list(x = 1, y = 2), class = "Point")
-res <- fcpp(p_in)
+res <- fcpp(1L, p_in)
 expect_equal(res$x, 99)
 expect_equal(res$y, 2)
-
-# and the copy must be independent -- mutating it must not affect the original
-f <- function(p) {
-  argtypes(p |> type(Point) |> const())
-  p2 <- p
-  p2$x <- 99
-  return(p)
-}
-fcpp <- ast2ast::translate(f, types_f = types_f_point)
-res <- fcpp(p_in)
+res <- fcpp(2L, p_in)
 expect_equal(res$x, 1)
 expect_equal(res$y, 2)
 
 # --- 5. custom types combined with inner functions ------------------------------
 # inner fn taking a const-ref Point argument, returning one of its fields
-f <- function() {
-  p |> type(Point)
-  p$x <- 5
-  p$y <- 6
-  get_x <- fn(
-    argtypes(pt |> type(Point) |> const() |> ref()),
-    return(double),
-    {
-      return(pt$x)
-    }
+f <- function(test, p2) {
+  argtypes(
+    test |> type(int),
+    p2 |> type(Point)
   )
-  return(get_x(p))
+  if (test == 1L) {
+    p |> type(Point)
+    p$x <- 5
+    p$y <- 6
+    get_x <- fn(
+      argtypes(
+        pt |> type(Point) |> const() |> ref()
+      ),
+      return(double),
+      {
+        return(pt$x)
+      }
+    )
+    return(get_x(p))
+  } else if (test == 2L) {
+    p |> type(Point)
+    p$x <- 7
+    p$y <- 8
+    make_it <- fn(
+      argtypes(
+        pt |> type(Point) |> const() |> ref()
+      ),
+      return(Point),
+      {
+        return(pt)
+      }
+    )
+    return(make_it(p))
+  } else {
+    stop("invalid test number")
+    return()
+  }
 }
 fcpp <- ast2ast::translate(f, types_f = types_f_point)
-expect_equal(fcpp(), 5)
-
-# inner fn returning a whole struct (not just a field) -- exercises the
-# non-r_fct return path, which used to route through etr::Evaluate and would
-# not compile for a plain struct; fixed to return the struct directly instead
-f <- function() {
-  p |> type(Point)
-  p$x <- 7
-  p$y <- 8
-  make_it <- fn(
-    argtypes(pt |> type(Point) |> const() |> ref()),
-    return(Point),
-    {
-      return(pt)
-    }
-  )
-  return(make_it(p))
-}
-fcpp <- ast2ast::translate(f, types_f = types_f_point)
-res <- fcpp()
+correct <- structure(list(x = 1, y = 2), class = "Point")
+expect_equal(fcpp(1L, correct), 5)
+res <- fcpp(2L, correct)
 expect_equal(res$x, 7)
 expect_equal(res$y, 8)
 expect_equal(class(res), "Point")
-
-# length check on the constructor: too few fields must be rejected, not read
-# out of bounds
-f <- function(p) {
-  argtypes(p |> type(Point))
-  return(p$x)
-}
-fcpp <- ast2ast::translate(f, types_f = types_f_point)
 short <- structure(list(x = 1), class = "Point")
-expect_error(fcpp(short), pattern = "with 2 fields")
+expect_error(fcpp(3L, short), pattern = "with 2 fields")
 
 # --- 6. for-loop over a struct or a function must be rejected cleanly ---------
 f <- function() {
@@ -789,68 +800,68 @@ expect_false(inherits(e, "try-error"))
 # --- 15. functional (compiled + executed) pipeline tests for collections --------
 # the exact real-world shape that surfaced the check_subsetting/Collection.hpp
 # bugs, run end to end
-f <- function() {
-  pts <- vector(mode = "Point", 5L)
-  for (i in seq_len(length(pts))) {
-    pts[[i]]$x <- i
-    pts[[i]]$y <- i * 2
+f <- function(test, pts) {
+  argtypes(
+    test |> type(int),
+    pts |> type(collection(Point))
+  )
+  if (test == 1L) {
+    pts <- vector(mode = "Point", 5L)
+    for (i in seq_len(length(pts))) {
+      pts[[i]]$x <- i
+      pts[[i]]$y <- i * 2
+    }
+    return(pts)
+  } else if (test == 2L) {
+    # length() and [[ ]] element access, reducing over the collection
+    pts <- vector(mode = "Point", 3L)
+    pts[[1]]$x <- 10
+    pts[[2]]$x <- 20
+    pts[[3]]$x <- 30
+    total <- 0
+    n <- length(pts)
+    for (i in seq_len(n)) {
+      total <- total + pts[[i]]$x
+    }
+    return(total)
+  } else if (test == 3L) {
+    # a collection as a function argument, mutated in place and returned --
+    # exercises Collection's SEXP constructor and to_SEXP() round trip
+    pts[[1]]$x <- pts[[1]]$x + 100
+    return(pts)
+  } else if (test == 4L) {
+    # a struct field that is itself a collection, returned to R -- exercises the
+    # generated Box::to_SEXP(), which used to route collection-typed fields
+    # through etr::Cast() (no such overload) instead of calling field.to_SEXP()
+    b |> type(Box)
+    coll <- vector(mode = "Point", 2L)
+    coll[[1]]$x <- 1.0
+    coll[[2]]$x <- 2.0
+    b$points <- coll
+    return(b)
+  } else {
+    stop("Invalid test number")
+    return()
   }
-  return(pts)
 }
 fcpp <- ast2ast::translate(f, types_f = types_f_point_box)
-res <- fcpp()
+p1 <- structure(list(x = 1, y = 2), class = "Point")
+p2 <- structure(list(x = 3, y = 4), class = "Point")
+pts <- list(p1, p2)
+res <- fcpp(1L, pts)
 expect_equal(length(res), 5L)
 expect_equal(sapply(res, function(p) p$x), as.double(1:5))
 expect_equal(sapply(res, function(p) p$y), as.double(1:5) * 2)
 expect_equal(unique(sapply(res, class)), "Point")
 
-# length() and [[ ]] element access, reducing over the collection
-f <- function() {
-  pts <- vector(mode = "Point", 3L)
-  pts[[1]]$x <- 10
-  pts[[2]]$x <- 20
-  pts[[3]]$x <- 30
-  total <- 0
-  n <- length(pts)
-  for (i in seq_len(n)) {
-    total <- total + pts[[i]]$x
-  }
-  return(total)
-}
-fcpp <- ast2ast::translate(f, types_f = types_f_point_box)
-expect_equal(fcpp(), 60)
+expect_equal(fcpp(2L, pts), 60)
 
-# a collection as a function argument, mutated in place and returned --
-# exercises Collection's SEXP constructor and to_SEXP() round trip
-f <- function(pts) {
-  argtypes(pts |> type(collection(Point)))
-  pts[[1]]$x <- pts[[1]]$x + 100
-  return(pts)
-}
-fcpp <- ast2ast::translate(
-  f,
-  types_f = types_f_point_box
-)
-p1 <- structure(list(x = 1, y = 2), class = "Point")
-p2 <- structure(list(x = 3, y = 4), class = "Point")
-res <- fcpp(list(p1, p2))
+res <- fcpp(3L, pts)
 expect_equal(res[[1]]$x, 101)
 expect_equal(res[[2]]$x, 3)
 expect_equal(class(res[[1]]), "Point")
 
-# a struct field that is itself a collection, returned to R -- exercises the
-# generated Box::to_SEXP(), which used to route collection-typed fields
-# through etr::Cast() (no such overload) instead of calling field.to_SEXP()
-f <- function() {
-  b |> type(Box)
-  coll <- vector(mode = "Point", 2L)
-  coll[[1]]$x <- 1.0
-  coll[[2]]$x <- 2.0
-  b$points <- coll
-  return(b)
-}
-fcpp <- ast2ast::translate(f, types_f = types_f_point_box)
-res <- fcpp()
+res <- fcpp(4L, pts)
 expect_equal(class(res), "Box")
 expect_equal(length(res$points), 2L)
 expect_equal(res$points[[1]]$x, 1.0)
@@ -997,96 +1008,53 @@ types_f_shapes <- function() {
   ))
 }
 
-check_full_pipeline_no_error <- function(f) {
-  body(f) <- as.call(c(as.name("{"),
-    quote(argtypes(s |> type(Shapes))),
-    as.list(body(f))[-1]))
-  e <- try(
-    ast2ast::translate(f, types_f = types_f_shapes, getsource = TRUE),
-    silent = TRUE
+# One TU dispatched on `test` exercises every is_data_structs()/find_var_lhs()
+# path through "$". Branches 1-4 return the shape scalars/vectors wrapped in
+# as.numeric() so the whole function has a single (double) return type; the
+# wrap does not weaken the check_fct-level validation being tested.
+#   1-2  nrow/ncol on a matrix field
+#   3    dim on a matrix field
+#   4    length on a matrix field, length on a vector field
+#   5-9  chol/crossprod/tcrossprod/get_diag/t on a matrix field
+#   10-12 [[ / [ / [i, j] subsetting through a field
+TU <- function(test, s) {
+  argtypes(
+    test |> type(int),
+    s |> type(Shapes)
   )
-  expect_false(inherits(e, "try-error"))
+  if (test == 1L) {
+    return(as.numeric(nrow(s$m)))
+  } else if (test == 2L) {
+    return(as.numeric(ncol(s$m)))
+  } else if (test == 3L) {
+    return(as.numeric(dim(s$m)))
+  } else if (test == 4L) {
+    return(as.numeric(length(s$m) + length(s$v)))
+  } else if (test == 5L) {
+    return(chol(s$m))
+  } else if (test == 6L) {
+    return(crossprod(s$m))
+  } else if (test == 7L) {
+    return(tcrossprod(s$m))
+  } else if (test == 8L) {
+    return(get_diag(s$m))
+  } else if (test == 9L) {
+    return(t(s$m))
+  } else if (test == 10L) {
+    return(s$v[[1L]])
+  } else if (test == 11L) {
+    return(s$v[1L])
+  } else if (test == 12L) {
+    return(s$m[1L, 1L])
+  } else {
+    return(as.numeric(nrow(s$m)))
+  }
 }
-
-f <- function(s) {
-  n <- nrow(s$m)
-  return(n)
-}
-check_full_pipeline_no_error(f)
-
-f <- function(s) {
-  n <- ncol(s$m)
-  return(n)
-}
-check_full_pipeline_no_error(f)
-
-f <- function(s) {
-  d <- dim(s$m)
-  return(d)
-}
-check_full_pipeline_no_error(f)
-
-f <- function(s) {
-  r <- chol(s$m)
-  return(r)
-}
-check_full_pipeline_no_error(f)
-
-f <- function(s) {
-  r <- crossprod(s$m)
-  return(r)
-}
-check_full_pipeline_no_error(f)
-
-f <- function(s) {
-  r <- tcrossprod(s$m)
-  return(r)
-}
-check_full_pipeline_no_error(f)
-
-f <- function(s) {
-  r <- get_diag(s$m)
-  return(r)
-}
-check_full_pipeline_no_error(f)
-
-f <- function(s) {
-  r <- t(s$m)
-  return(r)
-}
-check_full_pipeline_no_error(f)
-
-f <- function(s) {
-  n <- length(s$m)
-  return(n)
-}
-check_full_pipeline_no_error(f)
-
-f <- function(s) {
-  n <- length(s$v)
-  return(n)
-}
-check_full_pipeline_no_error(f)
-
-# check_subsetting's binary_node branch ([[, at, [) through a field
-f <- function(s) {
-  x <- s$v[[1L]]
-  return(x)
-}
-check_full_pipeline_no_error(f)
-
-f <- function(s) {
-  x <- s$v[1L]
-  return(x)
-}
-check_full_pipeline_no_error(f)
-
-# check_subsetting's function_node branch (multi-arg subsetting) through a field
-f <- function(s) {
-  x <- s$m[1L, 1L]
-  return(x)
-}
-check_full_pipeline_no_error(f)
+e <- try(
+  ast2ast::translate(TU, types_f = types_f_shapes, getsource = TRUE),
+  silent = TRUE
+)
+expect_false(inherits(e, "try-error"))
 
 # the root-variable-based checks must still correctly reject a genuine
 # non-array/matrix/vector field (regression guard for the "$" fix)

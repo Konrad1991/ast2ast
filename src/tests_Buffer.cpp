@@ -83,16 +83,10 @@ void test_buffer() {
     b.set(0, Double(1.1));
     b.set(1, Double(2.2));
 
-#if defined(__clang__)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wself-assign-overloaded"
-#endif
-
-b = b;
-
-#if defined(__clang__)
-    #pragma clang diagnostic pop
-#endif
+    // alias on the rhs so this still exercises operator=(self) without
+    // tripping clang's -Wself-assign-overloaded (flagged by R CMD check)
+    auto &b_alias = b;
+    b = b_alias;
 
     ass<"self assign safe">(compare(get_val(b.get(1)), 2.2));
   }
@@ -374,14 +368,10 @@ void test_buffer_integer() {
     Buffer<Integer> b(2);
     b.set(0, Integer(11));
     b.set(1, Integer(22));
-#if defined(__clang__)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wself-assign-overloaded"
-#endif
-    b = b;
-#if defined(__clang__)
-    #pragma clang diagnostic pop
-#endif
+    // alias on the rhs so this still exercises operator=(self) without
+    // tripping clang's -Wself-assign-overloaded (flagged by R CMD check)
+    auto &b_alias = b;
+    b = b_alias;
     ass<"int self assign safe">(get_val(b.get(1)) == 22);
   }
   // resize
@@ -576,14 +566,10 @@ void test_buffer_logical() {
     Buffer<Logical> b(2);
     b.set(0, Logical(true));
     b.set(1, Logical(false));
-#if defined(__clang__)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wself-assign-overloaded"
-#endif
-    b = b;
-#if defined(__clang__)
-    #pragma clang diagnostic pop
-#endif
+    // alias on the rhs so this still exercises operator=(self) without
+    // tripping clang's -Wself-assign-overloaded (flagged by R CMD check)
+    auto &b_alias = b;
+    b = b_alias;
     ass<"logical self assign safe">(get_val(b.get(0)) == true && get_val(b.get(1)) == false);
   }
   // resize grows with false (Logical() == false)

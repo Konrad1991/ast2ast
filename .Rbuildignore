@@ -10,10 +10,15 @@
 ^\.travis\.yml$
 ^\.github$
 ^\.git$
+^\.claude$
+^development$
+^notes$
 ^.cran-comments.md
 ^doc$
 ^Meta$
 ^.Rhistory
+^CLAUDE.md
+^translate.html
 ^DetailedDocumentation.pdf
 ^InformationForPackageAuthors.pdf
 ^translate.pdf
@@ -29,7 +34,5 @@
 ^compile_commands.json
 ^\.cache
 ^\.docs
-^\development$
-^\notes$
 ^index.html
 ^compile_flags.txt
