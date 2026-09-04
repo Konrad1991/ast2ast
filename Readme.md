@@ -1,161 +1,200 @@
-# R package **ast2ast**
+# ast2ast
 
-## News
+<!-- badges: start -->
+[![CRAN status](https://www.r-pkg.org/badges/version/ast2ast)](https://CRAN.R-project.org/package=ast2ast)
+[![R-CMD-check](https://github.com/Konrad1991/ast2ast/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/Konrad1991/ast2ast/actions/workflows/check-standard.yaml)
+<!-- badges: end -->
 
-* Project website and documentation: https://konrad1991.github.io/ast2ast/
-* I gave a talk at *useR! 2022* about *ast2ast*. The recording is available here:
-  https://m.youtube.com/watch?v=5NDPOLunQTA&list=PL77T87Q0eoJjvKVFHuJZ5_BGVbPPpB8LL&index=8
----
+**Write a function in R. Get a compiled C++ function back — with automatic
+differentiation and bounds checking kept on.**
 
-## Overview
+`ast2ast` takes an ordinary R function, infers a static type for every variable,
+and generates C++ that is compiled and handed back to you as either a callable R
+function or an external pointer for use from other C/C++ code. It is meant for
+the code you call *a lot* — ODE right-hand sides, likelihoods, optimiser
+objectives, simulation kernels — where R's per-call overhead is the bottleneck.
 
-**ast2ast** translates an R function into a C++ function. The user can either obtain:
+Unlike a black-box JIT, the generated code is explicit and readable, out-of-bounds
+access is caught at runtime with the originating R source line, and forward- and
+reverse-mode automatic differentiation are built in.
 
-- an **external pointer** to the compiled C++ function, or
-- a regular **R function** that wraps the compiled C++ code.
+## Installation
 
-To install the development version from GitHub (including vignettes):
 ```r
-devtools::install_github("Konrad1991/ast2ast", build_vignettes = TRUE)
+install.packages("ast2ast")
 ```
 
----
+Development version:
 
-## Motivation
+```r
+# install.packages("remotes")
+remotes::install_github("Konrad1991/ast2ast")
+```
 
-Many scientific and numerical applications require calling the same function *very often*—for example:
+`ast2ast` compiles C++ at runtime, so a working toolchain is required: Rtools on
+Windows, the usual `r-base-dev` / Xcode command-line tools elsewhere.
 
-- ODE solvers
-- optimization routines
-- Monte Carlo simulations
-- sensitivity analysis
-- root finding
-- likelihood evaluations
+## Example: the Mandelbrot set
 
-In these scenarios, even small overheads can accumulate and become a bottleneck.
+The escape-time loop is exactly the kind of thing you would write in R and then
+wait for. `ast2ast` has no complex type, so `z = a + b*i` is carried as two
+doubles.
 
-One solution is to rewrite the function in C or C++, but this comes with significant drawbacks:
+```r
+library(ast2ast)
 
-- steep learning curve
-- long development time
-- harder debugging
-- loss of R’s expressive syntax
+mandelbrot <- function(nx, ny, xmin, xmax, ymin, ymax, maxiter) {
+  argtypes(
+    nx      |> type(int),
+    ny      |> type(int),
+    xmin    |> type(double),
+    xmax    |> type(double),
+    ymin    |> type(double),
+    ymax    |> type(double),
+    maxiter |> type(int)
+  )
+  out <- matrix(0L, ny, nx)
+  dx <- (xmax - xmin) / (nx - 1L)
+  dy <- (ymax - ymin) / (ny - 1L)
+  for (j in 1L:nx) {
+    cx <- xmin + (j - 1L) * dx
+    for (i in 1L:ny) {
+      cy <- ymin + (i - 1L) * dy
+      a <- 0.0
+      b <- 0.0
+      k <- 0L
+      while (k < maxiter) {
+        a2 <- a * a
+        b2 <- b * b
+        if (a2 + b2 > 4.0) break
+        b <- 2.0 * a * b + cy
+        a <- a2 - b2 + cx
+        k <- k + 1L
+      }
+      out[i, j] <- k
+    }
+  }
+  return(out)
+}
 
-**ast2ast** provides a third way:
+mb <- translate(mandelbrot)   # compiled C++, callable from R
 
-> ✨ Write your function in R — run it at C++ speed.
+p <- list(nx = 1200L, ny = 900L, xmin = -2.5, xmax = 1.0,
+          ymin = -1.25, ymax = 1.25, maxiter = 500L)
+M <- do.call(mb, p)
 
----
+pal <- colorRampPalette(c("#000428", "#004e92", "#43cea2", "#f9d423", "#ffffff"))(256)
+op <- par(mar = c(0, 0, 0, 0))
+image(t(sqrt(M)), col = pal, axes = FALSE, useRaster = TRUE)
+par(op)
+```
 
-## What ast2ast already supports
+![Mandelbrot set rendered from the translated function](development/mandelbrot.png)
 
-### Data structures
+Same source, same result, timed against plain R:
 
-- Scalars
-- Vectors
-- Matrices
+```r
+# the untranslated function, with the argtypes() line removed so R can run it
+mb_R <- mandelbrot
+body(mb_R) <- as.call(as.list(body(mandelbrot))[-2])
 
-### Control flow
+small <- list(nx = 200L, ny = 200L, xmin = -2.2, xmax = 0.8,
+              ymin = -1.3, ymax = 1.3, maxiter = 120L)
 
-- `for`, `while`, `repeat`
-- `if`, `else if`, `else`
-- `break`, `next`
+stopifnot(identical(do.call(mb, small), do.call(mb_R, small)))
 
-### Arithmetic and logic
+microbenchmark::microbenchmark(
+  ast2ast = do.call(mb,   small),
+  R       = do.call(mb_R, small)
+)
+#> Unit: milliseconds
+#>     expr     min      lq    mean  median      uq     max neval
+#>  ast2ast    3.13    3.21    3.33    3.32    3.43    3.83   100
+#>        R  151.86  154.30  155.13  155.17  155.76  160.52   100
+```
 
-- `+`, `-`, `*`, `/`, `^`
-- `==`, `!=`, `<`, `>`, `<=`, `>=`
-- `&&`, `||`, `&`, `|`
-
-### Math functions
-
-- `sin`, `asin`, `sinh`
-- `cos`, `acos`, `cosh`
-- `tan`, `atan`, `tanh`
-- `log`, `sqrt`, `exp`
-
-### Allocation and helpers
-
-- `numeric`, `integer`, `logical`
-- `vector`, `matrix`, `rep`, `c`, `:`
-- `length`, `dim`
-- `is.na`, `is.nan`, `is.finite`, `is.infinite`
-- `print`
-
-### Subsetting
-
-- `[]` and `[[ ]]`
-
-### Interpolation
-
-- Catmull–Rom spline via `cmr()`
-
-### Automatic differentiation
-
-- Forward mode: `seed()`, `unseed()`, `get_dot()`
-- Reverse mode: `deriv()`
-
----
-
-## Performance
-
-The translated code is often **orders of magnitude faster** than native R and approaches the performance of handwritten C++.
-
-Below is a benchmark comparing R, C++, and ast2ast-generated code for solving a simple ODE system:
-
-![Benchmark](https://github.com/Konrad1991/ast2ast/blob/master/vignettes/benchmark.png)
-
-The full code for this benchmark can be found in the vignettes.
-
----
-
-## Documentation
-
-- Main API documentation for `translate()`:
-  https://konrad1991.github.io/ast2ast/translate.html
-
-- Full language reference and semantics:
-  https://konrad1991.github.io/ast2ast/DetailedDocumentation.html
-
-- Guide for package authors:
-  https://konrad1991.github.io/ast2ast/InformationForPackageAuthors.html
-
----
+About 47x faster on this grid, computing the identical result.
 
 ## Automatic differentiation
 
-**ast2ast** includes a built-in automatic differentiation (AD) engine with both:
+Set `derivative = "reverse"` (or `"forward"`) and call `deriv(y, x)` inside the
+function to get the Jacobian of `y` with respect to `x`. No expression graph to
+assemble by hand.
 
-- forward mode
-- reverse mode
+```r
+f <- function(y, x) {
+  argtypes(
+    y |> type(vec(double)),
+    x |> type(vec(double))
+  )
+  y[[1L]] <- x[[1L]] * x[[2L]]
+  y[[2L]] <- x[[1L]] + x[[2L]] * x[[2L]]
+  return(deriv(y, x))
+}
 
-The reverse-mode engine is adapted and refactored from the open-source *autodiff* library by Allan Leal (MIT license). It has been extended to:
+jac <- translate(f, derivative = "reverse")
 
-- integrate with ast2ast’s scalar type system (`Logical`, `Integer`, `Double`, `Dual`)
-- support expression-level dispatch
-- interoperate with generated C++20 code
-- provide explicit, user-controlled derivative logic
-- align error handling and memory semantics with the ast2ast runtime
+jac(c(0, 0), c(2, 3))
+#>      [,1] [,2]
+#> [1,]    3    2
+#> [2,]    1    6
+```
 
-Unlike many AD frameworks, ast2ast follows an **explicit differentiation model**:  
-users assemble derivative computations themselves. This makes performance transparent and predictable.
+Reverse mode runs on a flat tape and works through the linear algebra —
+`chol`, `solve`, `crossprod`, `backsolve` / `forwardsolve`, `get_diag` — so a
+Gaussian log-likelihood gradient comes straight out of one Cholesky.
 
----
+## Why ast2ast
 
-## Why ast2ast is different
+- **R syntax, C++ speed.** Write the loop in R; skip the rewrite-in-C++ step,
+  the build system, and the debugging round trip.
+- **Derivatives included.** Forward and reverse mode, through control flow and
+  through dense linear algebra.
+- **Safety left on.** Out-of-bounds subsetting is an error, not a silent bad
+  read, and the message names the R line that failed.
+- **Callable both ways.** Get an R function, or an `XPtr` to drop into a C/C++
+  ODE solver or optimiser.
 
-ast2ast is not a black-box JIT compiler. It is designed for:
+## What is supported
 
-- **Transparency** – you see what is differentiated and how
-- **Reproducibility** – static typing and explicit semantics
-- **Performance** – zero-overhead abstractions in generated C++
-- **Interoperability** – callable from R *and* C++
-- **Scientific workflows** – built for real numerical code
+- **Data:** scalars, vectors, matrices, n-dimensional arrays; `vector` /
+  `matrix` / `array` / `rep` / `numeric` / `integer` / `logical` / `c` / `:`;
+  `[`, `[[`, `at()`.
+- **Control flow:** `for` / `while` / `repeat`, `if` / `else if` / `else`,
+  `break` / `next`, `return`, `stop`.
+- **Operators:** `+ - * / ^ %% %/%`, all comparisons, `& | && || !`.
+- **Elementwise / reductions:** the `Math` group (`sin`, `exp`, `log`,
+  `sqrt`, `floor`, `round`, ...), `sum`, `prod`, `mean`, `min`, `max`,
+  `which.min` / `which.max`, `cumsum`, `sort`, `rev`, `colSums` / `rowSums` /
+  `colMeans` / `rowMeans`, `ifelse`.
+- **Linear algebra:** `t`, `%*%`, `chol`, `solve`, `crossprod` / `tcrossprod`,
+  `backsolve` / `forwardsolve`, `diag` / `get_diag`, `rbind` / `cbind`.
+- **Numerics:** `uniroot`, `nnls`, `lbfgsb`, `pso`, `jacobian`, Catmull–Rom
+  interpolation via `cmr()`.
+- **Functionals:** `map`, `Reduce`, `Filter`, `apply` (each takes an `fn()`).
+- **Types:** static, inferred, optionally annotated with `type()`; user-defined
+  structs via `new_type()` / `slots()`; inner functions as first-class typed
+  values via `fn()`.
 
----
+Not supported: R's dynamic typing, `NULL`, complex numbers, character data,
+S3/S4 dispatch, and recycling of mismatched lengths. The full reference is in
+`?translate` and the vignettes.
 
-## Contribution
+## Documentation
 
-Contributions are warmly appreciated — whether bug reports, feature requests, documentation improvements, or pull requests.
+- Package website: <https://konrad1991.github.io/ast2ast/>
+- `?translate` for the full argument reference and the supported-language list
+- `vignette(package = "ast2ast")` for the language reference, the guide for
+  package authors, and the inner-functions / custom-types guide
+- *useR! 2022* talk:
+  <https://www.youtube.com/watch?v=5NDPOLunQTA>
 
-Please see the Code of Conduct.
+## Contributing
+
+Bug reports, feature requests, and pull requests are welcome via the
+[issue tracker](https://github.com/Konrad1991/ast2ast/issues). Please see the
+Code of Conduct.
+
+## License
+
+GPL-3.
