@@ -8,7 +8,7 @@ get_types <- function(f, r_fct = TRUE, real_type = "etr::Double") {
   ast <- ast2ast:::parse_body(body(f), env, function_registry)
   ast2ast:::update_function_registry(ast, function_registry)
   types <- ast2ast:::infer_types(ast, f, NULL, r_fct, real_type, function_registry)
-  ast2ast:::traverse_ast(ast, ast2ast:::action_transpile_inner_functions, real_type)
+  ast2ast:::traverse_ast(ast, ast2ast:::action_transpile_inner_functions, real_type, TRUE, types)
   types
 }
 get_types_with_f_args <- function(f, f_args, r_fct = FALSE, real_type = "etr::Double") {

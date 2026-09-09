@@ -205,13 +205,26 @@ remove_blank_lines <- function(chars) {
   Filter(Negate(empty_line), chars) |> combine_strings("\n")
 }
 
+# TRUE when the optional 'sundials' package is installed. cvode() is only added
+# to the function registry, and a2a_sundials.hpp only included, in that case.
+sundials_available <- function() requireNamespace("sundials", quietly = TRUE)
+
+# a2a_sundials.hpp ships in ast2ast's own inst/include (reached via the ast2ast
+# Rcpp::depends already in the preamble); it needs the SUNDIALS headers and
+# -DSUNDIALS_AVAILABLE, which compile() adds in the same branch.
+sundials_include_line <- function() {
+  if (sundials_available()) '#include "a2a_sundials.hpp"' else character(0)
+}
+
 r_fct_sig <- function() {
   combine_strings(
     c(
       "#include <Rcpp.h>",
       "// [[Rcpp::depends(ast2ast)]]",
       "// [[Rcpp::plugins(cpp2a)]]",
-      '#include "etr.hpp"\n'), "\n"
+      '#include "etr.hpp"',
+      sundials_include_line(),
+      ""), "\n"
   )
 }
 xptr_sig <- function() {
@@ -220,7 +233,9 @@ xptr_sig <- function() {
       "#include <Rcpp.h>",
       "// [[Rcpp::depends(ast2ast)]]",
       "// [[Rcpp::plugins(cpp2a)]]",
-      '#include "etr.hpp"\n',
+      '#include "etr.hpp"',
+      sundials_include_line(),
+      "",
       "// [[Rcpp::export]]",
       "SEXP getXPtr();\n"
     ),
@@ -261,9 +276,22 @@ compile <- function(fct_code, r_fct,
 
   # link R's BLAS/LAPACK so dgemm_ resolves on all platforms (Windows is strict)
   old_libs <- Sys.getenv("PKG_LIBS", unset = NA)
-  Sys.setenv(PKG_LIBS = "$(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)")
+  old_cpp <- Sys.getenv("PKG_CPPFLAGS", unset = NA)
+  libs <- "$(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)"
+  if (sundials_available()) {
+    # flags built here rather than via sundials::LdFlags() (which prints)
+    sun_lib <- system.file("lib", .Platform$r_arch, package = "sundials")
+    sun_inc <- system.file("include", package = "sundials")
+    libs <- paste0(libs, " -L", shQuote(sun_lib), " -lsundials")
+    Sys.setenv(PKG_CPPFLAGS = paste(
+      if (is.na(old_cpp)) "" else old_cpp,
+      "-DSUNDIALS_AVAILABLE", paste0("-I", shQuote(sun_inc))
+    ))
+  }
+  Sys.setenv(PKG_LIBS = libs)
   on.exit({
     if (is.na(old_libs)) Sys.unsetenv("PKG_LIBS") else Sys.setenv(PKG_LIBS = old_libs)
+    if (is.na(old_cpp)) Sys.unsetenv("PKG_CPPFLAGS") else Sys.setenv(PKG_CPPFLAGS = old_cpp)
   }, add = TRUE)
 
   if (!r_fct) {

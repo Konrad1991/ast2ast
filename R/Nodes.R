@@ -920,8 +920,9 @@ fn_node <- R6::R6Class(
       } else {
         args <- ""
       }
-      declarations <- lapply(self$vars_types_list, \(x) {
-        res <- x$declare(indent = "")
+      declarations <- lapply(names(self$vars_types_list), \(nm) {
+        if (nm %in% self$known_fcts) return("") # captured via [&], not a local
+        res <- self$vars_types_list[[nm]]$declare(indent = "")
         paste0(indent, "     ", res)
       }) |> unlist() |> c()
       declarations <- declarations[declarations != ""]

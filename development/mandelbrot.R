@@ -1,17 +1,11 @@
-# =============================================================================
-# Mandelbrot set in ast2ast  --  README example
-#
-# Run from the package root:  Rscript development/mandelbrot.R
-# Produces development/mandelbrot.png and prints the benchmark.
-#
-# ast2ast has no complex type, so z = a + b*i is carried as two doubles:
-#   z^2 + c  ->  a' = a^2 - b^2 + cx,   b' = 2*a*b + cy
-# escape test: a^2 + b^2 > 4.
-# =============================================================================
-
 library(ast2ast)
 
-mandelbrot <- function(nx, ny, xmin, xmax, ymin, ymax, maxiter) {
+mandelbrot <- function(
+  nx, ny,
+  xmin, xmax,
+  ymin, ymax,
+  maxiter
+) {
   argtypes(
     nx      |> type(int),
     ny      |> type(int),
@@ -59,10 +53,11 @@ small <- list(nx = 200L, ny = 200L, xmin = -2.2, xmax = 0.8,
 stopifnot(identical(do.call(mb, small), do.call(mb_R, small)))
 
 # ---- benchmark -----------------------------------------------------------
-microbenchmark::microbenchmark(
+ben <- microbenchmark::microbenchmark(
   ast2ast = do.call(mb, small),
   R = do.call(mb_R, small)
 )
+plot(ben)
 
 # ---- figure for the README ----------------------------------------------
 big <- list(nx = 1200L, ny = 900L, xmin = -2.5, xmax = 1.0,

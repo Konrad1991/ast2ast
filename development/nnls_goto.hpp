@@ -21,7 +21,7 @@ inline decltype(auto) at_lin(T& cvec, Integer idx) {
 //  HOUSEHOLDER TRANSFORMATION..     Q = I + U*(U**T)/B
 template<typename SubsetArr, typename Arr>
 void H12(Integer mode, Integer lpivot, Integer l1, Integer m,
-         SubsetArr u, Integer iue, Double& up, Arr& cvec,
+         const SubsetArr& u, Integer iue, Double& up, Arr& cvec,
          Integer ice, Integer icv, Integer ncv) {
 
   Integer i2;

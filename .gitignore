@@ -37,3 +37,5 @@ CLAUDE.md
 # sanitizer run artefacts
 /development/sanitize-ubsan.log
 /development/sanitize-asan.log
+
+/development/posts/

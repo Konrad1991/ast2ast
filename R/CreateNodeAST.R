@@ -191,8 +191,9 @@ sort_args <- function(ast, function_registry) {
 
 # Infer types
 # ========================================================================
-infer_types <- function(ast, f, f_args, r_fct, real_type, function_registry, known_types = list()) {
+infer_types <- function(ast, f, f_args, r_fct, real_type, function_registry, known_types = list(), extra_vars = list()) {
   vars_list <- create_vars_types_list(ast, f, f_args, r_fct, real_type, known_types)
+  vars_list[names(extra_vars)] <- extra_vars
   env <- new.env(parent = emptyenv())
   env$vars_list <- vars_list
   env$r_fct <- r_fct
@@ -276,9 +277,9 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct, real_type, f
 
 # Translates the AST representation into C++ code
 # ========================================================================
-translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry, debug = TRUE, outer_var_names = character(0)) {
+translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry, debug = TRUE, var_list) {
   code_string <- NULL
-  traverse_ast(ast, action_transpile_inner_functions, real_type, debug, outer_var_names)
+  traverse_ast(ast, action_transpile_inner_functions, real_type, debug, var_list)
   traverse_ast(ast, action_snapshot_lines, debug)
   traverse_ast(ast, action_set_true, r_fct, real_type)
   traverse_ast(ast, action_translate, function_registry, real_type)
@@ -536,7 +537,7 @@ translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, de
   }
 
   # Translate
-  code_string <- translate_to_cpp_code(AST, r_fct, real_type, function_registry, debug, names(vars_types_list))
+  code_string <- translate_to_cpp_code(AST, r_fct, real_type, function_registry, debug, vars_types_list)
   for (i in seq_along(vars_types_list)) {
     vars_types_list[[i]]$real_type <- real_type
   }

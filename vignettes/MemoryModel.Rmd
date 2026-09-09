@@ -1,0 +1,297 @@
+---
+title: "The Memory Model: Copy, Borrow, Ref"
+author: "Konrad Kraemer"
+output: html_document
+
+vignette: >
+  %\VignetteIndexEntry{The Memory Model: Copy, Borrow, Ref}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+<style>
+.cbr-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin: 1em 0 0.5em;
+}
+.cbr-grid > figure {
+  flex: 1 1 260px;
+  margin: 0;
+  border: 1px solid #dbe2ea;
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: #fff;
+}
+.cbr-grid > figure > figcaption {
+  font-size: 0.86em;
+  color: #5c6773;
+  line-height: 1.5;
+  margin-top: 10px;
+}
+.cbr-kw {
+  font-family: "DejaVu Sans Mono", "Menlo", monospace;
+  font-size: 0.82em;
+  background: #e4f1f1;
+  color: #1a212b;
+  padding: 3px 7px;
+  border-radius: 4px;
+}
+.cbr-kw-plain { background: transparent; color: #5c6773; }
+.cbr svg.diagram {
+  display: block;
+  width: 100%;
+  max-width: 240px;
+  height: auto;
+  margin: 8px auto 0;
+  color: #1a212b;
+}
+.cbr svg .mono { font-family: "DejaVu Sans Mono", "Menlo", monospace; }
+.cbr svg .val  { font-size: 12px; }
+.cbr svg .lbl  { font-size: 10px; }
+.cbr svg .sub  { font-size: 8.5px; fill: #5c6773; }
+.cbr svg .cap  { font-size: 9px;   fill: #5c6773; }
+.cbr svg .surf        { fill: #fff; }
+.cbr svg .rule-stroke { stroke: #c9d3dd; }
+.cbr svg .soft-fill   { fill: #e4f1f1; }
+.cbr svg .a-stroke    { stroke: #1f7a80; }
+.cbr svg .a-text      { fill: #1f7a80; }
+.cbr svg text {
+  fill: currentColor;
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.cbr-callout {
+  border-left: 3px solid #a03a35;
+  background: #fbf4f3;
+  padding: 12px 16px;
+  margin: 1.5em 0;
+  border-radius: 0 6px 6px 0;
+  font-size: 0.93em;
+}
+.cbr-callout .cbr-tag {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.72em;
+  color: #a03a35;
+  font-weight: bold;
+  margin-right: 8px;
+}
+</style>
+
+When does **ast2ast** duplicate your data, and when do writes inside a function
+stay visible to the caller? It depends on which boundary the argument crosses --
+and the same keyword can mean different things on each.
+
+Base R never faces this question: vectors and lists are copy-on-modify, so a
+change a function makes to its argument never escapes. The one keyword that
+changes that -- `ref` -- has no counterpart in ordinary R, so it is worth being
+precise about where it applies.
+
+## Boundary 1 -- R calls the translated function
+
+The argument arrives as a `SEXP` (an ordinary R object) and is turned into an
+`etr` vector before the body runs.
+
+<div class="cbr">
+<div class="cbr-grid">
+<figure>
+<span class="cbr-kw cbr-kw-plain">default</span>
+<svg class="diagram" viewBox="0 0 260 270" role="img" aria-label="R calls the translated function; the SEXP contents are copied into the function's own vector at a new address, so the caller's R vector is unchanged after the call.">
+  <rect class="surf rule-stroke" x="88" y="8" width="84" height="32" rx="5" stroke-width="1.2"/>
+  <text class="val" x="130" y="24" text-anchor="middle">vec</text>
+  <text class="sub" x="130" y="35" text-anchor="middle">in R</text>
+  <line x1="130" y1="42" x2="130" y2="59" stroke="currentColor" stroke-width="1.4"/>
+  <polygon points="130,62 126,54 134,54" fill="currentColor"/>
+  <text class="cap" x="138" y="54" text-anchor="start">holds</text>
+  <rect class="surf rule-stroke" x="24" y="64" width="212" height="42" rx="5" stroke-width="1.2"/>
+  <text class="val mono" x="130" y="84" text-anchor="middle">[9, 5, 6]</text>
+  <text class="sub mono" x="130" y="97" text-anchor="middle">SEXP data &#183; 0x&#8230;d2b0</text>
+  <line x1="130" y1="108" x2="130" y2="150" stroke="currentColor" stroke-width="1.4" stroke-dasharray="4 3"/>
+  <polygon points="130,153 126,145 134,145" fill="currentColor"/>
+  <text class="cap" x="140" y="133" text-anchor="start">copy on call</text>
+  <rect class="surf rule-stroke" x="24" y="155" width="212" height="42" rx="5" stroke-width="1.2"/>
+  <text class="val mono" x="130" y="175" text-anchor="middle">[9, 5, 6]</text>
+  <text class="sub mono" x="130" y="188" text-anchor="middle">fresh copy &#183; 0x&#8230;22b0</text>
+  <line x1="130" y1="238" x2="130" y2="202" stroke="currentColor" stroke-width="1.4"/>
+  <polygon points="130,199 126,207 134,207" fill="currentColor"/>
+  <text class="cap" x="138" y="223" text-anchor="start">holds</text>
+  <rect class="surf rule-stroke" x="88" y="238" width="84" height="32" rx="5" stroke-width="1.2"/>
+  <text class="val" x="130" y="254" text-anchor="middle">x</text>
+  <text class="sub" x="130" y="265" text-anchor="middle">in f</text>
+</svg>
+<figcaption><strong>Copied.</strong> The <code>SEXP</code> contents land in
+<code>f</code>'s own vector at a new address. Your R vector is unchanged after
+the call.</figcaption>
+</figure>
+<figure>
+<span class="cbr-kw">borrow_vec(double)</span>
+<svg class="diagram" viewBox="0 0 260 270" role="img" aria-label="With borrow_vec, the function's vector and the caller's R vector both point to one buffer at the same address; no data is copied, and without const a write reaches the caller's storage.">
+  <rect class="surf rule-stroke" x="88" y="14" width="84" height="32" rx="5" stroke-width="1.2"/>
+  <text class="val" x="130" y="30" text-anchor="middle">vec</text>
+  <text class="sub" x="130" y="41" text-anchor="middle">in R</text>
+  <line x1="130" y1="48" x2="130" y2="86" stroke="currentColor" stroke-width="1.4"/>
+  <polygon points="130,89 126,81 134,81" fill="currentColor"/>
+  <text class="cap" x="138" y="70" text-anchor="start">points to</text>
+  <rect class="soft-fill a-stroke" x="26" y="91" width="208" height="88" rx="7" stroke-width="1.6"/>
+  <text class="a-text lbl" x="130" y="117" text-anchor="middle">one buffer, two names</text>
+  <text class="val mono" x="130" y="140" text-anchor="middle">[9, 5, 6]</text>
+  <text class="sub mono" x="130" y="156" text-anchor="middle">SEXP data &#183; 0x&#8230;d2b0</text>
+  <line x1="130" y1="222" x2="130" y2="184" stroke="currentColor" stroke-width="1.4"/>
+  <polygon points="130,181 126,189 134,189" fill="currentColor"/>
+  <text class="cap" x="138" y="204" text-anchor="start">points to</text>
+  <rect class="surf rule-stroke" x="88" y="224" width="84" height="32" rx="5" stroke-width="1.2"/>
+  <text class="val" x="130" y="240" text-anchor="middle">x</text>
+  <text class="sub" x="130" y="253" text-anchor="middle">in f</text>
+</svg>
+<figcaption><strong>Shared.</strong> <code>f</code>'s vector points straight into
+R's <code>SEXP</code> buffer -- same address, no copy. Without
+<code>const()</code>, a write here reaches the caller's storage.</figcaption>
+</figure>
+</div>
+</div>
+
+```{r}
+scale_inplace <- function(v, k) {
+  argtypes(
+    v |> type(borrow_vec(double)),
+    k |> type(double)
+  )
+  for (i in seq_len(length(v))) {
+    v[[i]] <- v[[i]] * k
+  }
+  return(v)
+}
+f <- ast2ast::translate(scale_inplace)
+
+x <- c(1, 2, 3)
+f(x, 10)
+x   # c(10, 20, 30): x itself was modified, because f borrowed its buffer
+```
+
+Drop the `borrow_vec` -- plain `v |> type(vec(double))` -- and `x` stays
+`c(1, 2, 3)`: the function worked on a copy.
+
+## Boundary 2 -- inside f, calling an inner fn()
+
+The argument is already an `etr` object, not a `SEXP` -- so `ref()` works here
+whatever `output` you translate to. In this sense inner `fn()` arguments behave
+like `XPtr` arguments.
+
+<div class="cbr">
+<div class="cbr-grid">
+<figure>
+<span class="cbr-kw cbr-kw-plain">default</span>
+<svg class="diagram" viewBox="0 0 260 270" role="img" aria-label="Passing a value to an inner fn; the inner function receives its own copy of the etr object at a new address, and its writes stay inside it.">
+  <rect class="surf rule-stroke" x="88" y="8" width="84" height="32" rx="5" stroke-width="1.2"/>
+  <text class="val" x="130" y="24" text-anchor="middle">vec</text>
+  <text class="sub" x="130" y="35" text-anchor="middle">in f</text>
+  <line x1="130" y1="42" x2="130" y2="59" stroke="currentColor" stroke-width="1.4"/>
+  <polygon points="130,62 126,54 134,54" fill="currentColor"/>
+  <text class="cap" x="138" y="54" text-anchor="start">holds</text>
+  <rect class="surf rule-stroke" x="24" y="64" width="212" height="42" rx="5" stroke-width="1.2"/>
+  <text class="val mono" x="130" y="84" text-anchor="middle">[9, 5, 6]</text>
+  <text class="sub mono" x="130" y="97" text-anchor="middle">etr object &#183; 0x&#8230;d2b0</text>
+  <line x1="130" y1="108" x2="130" y2="150" stroke="currentColor" stroke-width="1.4" stroke-dasharray="4 3"/>
+  <polygon points="130,153 126,145 134,145" fill="currentColor"/>
+  <text class="cap" x="140" y="133" text-anchor="start">copy on call</text>
+  <rect class="surf rule-stroke" x="24" y="155" width="212" height="42" rx="5" stroke-width="1.2"/>
+  <text class="val mono" x="130" y="175" text-anchor="middle">[9, 5, 6]</text>
+  <text class="sub mono" x="130" y="188" text-anchor="middle">fresh copy &#183; 0x&#8230;22b0</text>
+  <line x1="130" y1="238" x2="130" y2="202" stroke="currentColor" stroke-width="1.4"/>
+  <polygon points="130,199 126,207 134,207" fill="currentColor"/>
+  <text class="cap" x="138" y="223" text-anchor="start">holds</text>
+  <rect class="surf rule-stroke" x="88" y="238" width="84" height="32" rx="5" stroke-width="1.2"/>
+  <text class="val" x="130" y="254" text-anchor="middle">y</text>
+  <text class="sub" x="130" y="265" text-anchor="middle">in g</text>
+</svg>
+<figcaption><strong>Copied.</strong> The inner function <code>g</code> gets its
+own copy of the <code>etr</code> object. Whatever <code>g</code> writes stays in
+<code>g</code>.</figcaption>
+</figure>
+<figure>
+<span class="cbr-kw">y |&gt; type(vec(double)) |&gt; ref()</span>
+<svg class="diagram" viewBox="0 0 260 270" role="img" aria-label="With ref, the inner function and its caller both name one etr object; after the inner function returns, the changes are still there, unlike normal R.">
+  <rect class="surf rule-stroke" x="88" y="14" width="84" height="32" rx="5" stroke-width="1.2"/>
+  <text class="val" x="130" y="30" text-anchor="middle">vec</text>
+  <text class="sub" x="130" y="41" text-anchor="middle">in f</text>
+  <line x1="130" y1="48" x2="130" y2="86" stroke="currentColor" stroke-width="1.4"/>
+  <polygon points="130,89 126,81 134,81" fill="currentColor"/>
+  <text class="cap" x="138" y="70" text-anchor="start">points to</text>
+  <rect class="soft-fill a-stroke" x="26" y="91" width="208" height="88" rx="7" stroke-width="1.6"/>
+  <text class="a-text lbl" x="130" y="117" text-anchor="middle">same object, two names</text>
+  <text class="val mono" x="130" y="140" text-anchor="middle">[9, 5, 6]</text>
+  <text class="sub mono" x="130" y="156" text-anchor="middle">etr object &#183; 0x&#8230;d2b0</text>
+  <line x1="130" y1="222" x2="130" y2="184" stroke="currentColor" stroke-width="1.4"/>
+  <polygon points="130,181 126,189 134,189" fill="currentColor"/>
+  <text class="cap" x="138" y="204" text-anchor="start">points to</text>
+  <rect class="surf rule-stroke" x="88" y="224" width="84" height="32" rx="5" stroke-width="1.2"/>
+  <text class="val" x="130" y="240" text-anchor="middle">y</text>
+  <text class="sub" x="130" y="253" text-anchor="middle">in g</text>
+</svg>
+<figcaption><strong>Shared.</strong> <code>g</code> works on the caller's object
+itself. After <code>g</code> returns, the changes are still there -- the one
+place ast2ast behaves unlike base R.</figcaption>
+</figure>
+</div>
+</div>
+
+```{r}
+demo <- function(v) {
+  argtypes(v |> type(vec(double)))
+
+  double_it <- fn(
+    argtypes(out |> type(vec(double)) |> ref()),
+    return(void),
+    {
+      for (i in seq_len(length(out))) {
+        out[[i]] <- out[[i]] * 2
+      }
+    }
+  )
+
+  double_it(v)   # v is filled in place -- no copy, no allocation
+  return(v)
+}
+f <- ast2ast::translate(demo)
+f(c(1, 2, 3))    # c(2, 4, 6)
+```
+
+Without `|> ref()` on `out`, `double_it` would double a private copy and `v`
+would come back unchanged. This is the mechanism behind the
+"preallocate a buffer once, let an inner function fill it every iteration"
+pattern -- it removes a per-call allocation from hot loops.
+
+<div class="cbr-callout">
+<span class="cbr-tag">note</span><code>ref()</code> on an argument of the
+<em>outer</em> function is ignored, with a warning. Converting R's
+<code>SEXP</code> into an <code>etr</code> object has already happened, so there
+is no shared handle left to pass by reference. Use <code>borrow_vec()</code> /
+<code>borrow_mat()</code> to skip the copy at that boundary.
+</div>
+
+## In one table
+
+| Keyword | Boundary | Copies the data | Writes visible to caller |
+|---|---|:---:|:---:|
+| *(default)* | R &rarr; translated `f` | yes | no |
+| `borrow_vec()` / `borrow_mat()` | R &rarr; translated `f` | no | yes&nbsp;&dagger; |
+| *(default)* | `f` &rarr; inner `fn()` | yes | no |
+| `\|> ref()` | `f` &rarr; inner `fn()` | no | yes |
+| `\|> ref()` | R &rarr; translated `f` | \-- ignored, warning \-- | |
+
+&dagger; unless the argument is also marked `const()`.
+
+## The short version
+
+**borrow** = don't copy the data. **ref** = don't copy the object.
+
+The observable rule, without pointers or `SEXP` in it: a *copied* argument's
+changes stop at the function; a *shared* argument's changes are still there
+after it returns. The addresses in the figures are shortened from a real run of
+`vec <- c(9, 5, 6)` -- `0x...d2b0` is its storage, `0x...22b0` a fresh
+allocation.

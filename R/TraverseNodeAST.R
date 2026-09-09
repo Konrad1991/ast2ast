@@ -61,22 +61,42 @@ traverse_ast <- function(node, action, ...) {
 # inner fn nested within it) actually references -- a nested lambda referencing
 # an outer fn forces all enclosing lambdas to capture it too.
 # ========================================================================
-collect_called_fcts <- function(node) {
+collect_used_fcts <- function(node, var_list) {
   if (is.null(node)) return(character(0))
-  switch(class(node)[[1]],
-    binary_node = c(node$operator, collect_called_fcts(node$left_node), collect_called_fcts(node$right_node)),
-    unary_node = c(node$operator, collect_called_fcts(node$obj)),
-    nullary_node = node$operator,
-    function_node = c(node$operator, unlist(lapply(node$args, collect_called_fcts))),
-    fn_node = collect_called_fcts(node$AST),
-    block_node = unlist(lapply(node$block, collect_called_fcts)),
-    if_node = c(collect_called_fcts(node$condition), collect_called_fcts(node$true_node),
-      collect_called_fcts(node$false_node), unlist(lapply(node$else_if_nodes, collect_called_fcts))),
-    for_node = c(collect_called_fcts(node$i), collect_called_fcts(node$seq), collect_called_fcts(node$block)),
-    while_node = c(collect_called_fcts(node$condition), collect_called_fcts(node$block)),
-    repeat_node = collect_called_fcts(node$block),
-    character(0)
-  )
+  if (inherits(node, "variable_node")) {
+    if (inherits(var_list[[node$name]], "fn_node")) {
+      deparse(node$name)
+    }
+  } else if (inherits(node, "binary_node")) {
+    c(node$operator, collect_used_fcts(node$left_node, var_list), collect_used_fcts(node$right_node, var_list))
+  } else if (inherits(node, "unary_node")) {
+    c(node$operator, collect_used_fcts(node$obj, var_list))
+  } else if (inherits(node, "nullary_node")) {
+    node$operator
+  } else if (inherits(node, "function_node")) {
+    temp <- unlist(lapply(node$args, collect_used_fcts, var_list))
+    c(node$operator, unlist(lapply(node$args, collect_used_fcts, var_list)))
+  } else if (inherits(node, "fn_node")) {
+    # c(node$name, collect_used_fcts(node$AST, var_list)) # TODO: Is this correct for anonymous functions test it
+    collect_used_fcts(node$AST, var_list)
+  } else if (inherits(node, "block_node")) {
+    unlist(lapply(node$block, collect_used_fcts, var_list))
+  } else if (inherits(node, "if_node")) {
+    c(
+      collect_used_fcts(node$condition, var_list),
+      collect_used_fcts(node$true_node, var_list),
+      collect_used_fcts(node$false_node, var_list),
+      unlist(lapply(node$else_if_nodes, collect_used_fcts, var_list))
+    )
+  } else if (inherits(node, "for_node")) {
+    c(collect_used_fcts(node$i, var_list), collect_used_fcts(node$seq, var_list), collect_used_fcts(node$block, var_list))
+  } else if (inherits(node, "while_node")) {
+    c(collect_used_fcts(node$condition, var_list), collect_used_fcts(node$block, var_list))
+  } else if (inherits(node, "repeat_node")) {
+    collect_used_fcts(node$block, var_list)
+  } else {
+    character(0L)
+  }
 }
 
 # For debugging
@@ -103,10 +123,11 @@ augment_outer_var_hint <- function(msg, outer_var_names) {
   msg
 }
 
-action_transpile_inner_functions <- function(node, real_type, debug = TRUE, outer_var_names = character(0)) {
+action_transpile_inner_functions <- function(node, real_type, debug = TRUE, var_list) {
   if (!inherits(node, "fn_node")) {
     return()
   }
+  outer_var_names <- names(var_list)
   r_fct <- FALSE # Inner functions
   code <- node$AST
   # rebuild a closure -- formals from the parsed args, body from the block -- so the
@@ -138,7 +159,8 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, oute
   known_from_inner <- node$function_registry$permitted_fcts()
   known_outer <- node$function_registry_outer$permitted_fcts()
   diffs <- setdiff(known_outer, known_from_inner)
-  node$known_fcts <- intersect(diffs, collect_called_fcts(AST))
+  temp <- collect_used_fcts(AST, var_list)
+  node$known_fcts <- intersect(diffs, collect_used_fcts(AST, var_list))
 
   for (i in diffs) {
     idx <- which(known_outer == i)
@@ -149,6 +171,8 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, oute
     node$function_registry$type_check_fcts <- c(node$function_registry$type_check_fcts, node$function_registry_outer$type_check_fcts[[idx]])
     node$function_registry$groups <- c(node$function_registry$groups, node$function_registry_outer$groups[[idx]])
     node$function_registry$cpp_names <- c(node$function_registry$cpp_names, node$function_registry_outer$cpp_names[[idx]])
+    node$function_registry$deriv_possibles <- c(node$function_registry$deriv_possibles, node$function_registry_outer$deriv_possibles[[idx]])
+    node$function_registry$valid_fn_contexts <- c(node$function_registry$valid_fn_contexts, node$function_registry_outer$valid_fn_contexts[[idx]])
     node$function_registry$docus <- c(node$function_registry$docus, "User defined")
   }
 
@@ -165,12 +189,11 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, oute
   }
   AST <- sort_args(AST, function_registry)
   node$vars_types_list <- tryCatch(
-    infer_types(AST, f, args_f_raw, r_fct, real_type, function_registry, node$known_types),
+    infer_types(AST, f, args_f_raw, r_fct, real_type, function_registry, node$known_types, extra_vars = var_list[node$known_fcts]),
     error = function(e) stop(sprintf("In inner function %s: %s", node$fct_name,
       augment_outer_var_hint(conditionMessage(e), outer_var_names)), call. = FALSE)
   )
 
-  # TODO: figure out why this loop is required
   for(i in seq_len(length(node$vars_types_list))) {
     node$vars_types_list[[i]]$real_type <- real_type
   }
@@ -202,7 +225,8 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, oute
   }
 
   for (i in seq_along(AST$block)) {
-    traverse_ast(AST$block[[i]], action_transpile_inner_functions, real_type, debug)
+    # var_list for nested fns is this fn's own scope (like the outer call passes `types`)
+    traverse_ast(AST$block[[i]], action_transpile_inner_functions, real_type, debug, node$vars_types_list)
   }
   traverse_ast(AST, action_snapshot_lines, debug)
   traverse_ast(AST, action_set_true, r_fct, real_type)

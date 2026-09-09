@@ -10,7 +10,7 @@ files <- list.files("~/Documents/ast2ast/inst/tinytest/", full.names = TRUE)
 invisible(lapply(files, tinytest::run_test_file))
 
 tinytest::run_test_file("./inst/tinytest/test_det_dsl.R")
-tinytest::run_test_file("./inst/tinytest/test_cpp_code.R")
+tinytest::run_test_file("./inst/tinytest/test_new_type.R")
 
 # win builder R4.6.1 --> only the note that it was archived and test time was 588 seconds
 # win builder R under development --> only the note that it was archived and test time was 588 seconds
@@ -19,40 +19,52 @@ tinytest::run_test_file("./inst/tinytest/test_cpp_code.R")
 files <- list.files("./R", full.names = TRUE)
 invisible(lapply(files, source))
 
-types <- function() {
-  new_type(
-    Point,
-    slots(
-      a |> type(double),
-      b |> type(double)
-    )
-  )
-}
-
-f <- function(x, p) {
+f <- function(interval, maxiter) {
   argtypes(
-    x |> type(vec(double)),
-    p |> type(Point)
+    interval |> type(vec(double)),
+    maxiter |> type(int)
   )
-
-  print(p)
-
-  return(
-    jacobian(
-      fn(
-        argtypes(
-          v |> type(vec(double)),
-          p |> type(Point)
-        ),
-        return(vec(double)),
-        {
-          return(c(v[[1]] * v[[2]], v[[1]] + v[[2]] * v[[2]]) * p$a*v[[1]])
-        }
-      ),
-      x, p
-    )
+  fct <- fn(
+    argtypes(
+      a |> type(double)
+    ),
+    return(double),
+    {
+      a*a - 4
+    }
   )
+  call_uniroot <- fn(
+    argtypes(
+      interval |> type(vec(double)),
+      maxiter |> type(int)
+    ),
+    return(uniroot_result),
+    {
+      uniroot(fct, interval, 1e-10, maxiter)
+    }
+  )
+  call_uniroot(interval, maxiter)
 }
-fcpp <- translate(f, types_f = types, derivative = "reverse")
-p <- structure(list(a = 1, b = 2), class = "Point")
-fcpp(c(1, 2), p)
+fcpp <- translate(f, verbose = TRUE, debug = FALSE)
+interval <- c(0.0, 100)
+maxiter <- 100L
+fcpp(interval, maxiter)
+
+demo <- function(v) {
+  argtypes(v |> type(vec(double)))
+
+  double_it <- fn(
+    argtypes(out |> type(vec(double)) |> ref()),
+    return(void),
+    {
+      for (i in seq_len(length(out))) {
+        out[[i]] <- out[[i]] * 2
+      }
+    }
+  )
+
+  double_it(v)   # v is filled in place -- no copy, no allocation
+  return(v)
+}
+f <- ast2ast::translate(demo)
+f(c(1, 2, 3))    # c(2, 4, 6)

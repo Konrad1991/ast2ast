@@ -144,6 +144,13 @@ Reverse mode runs on a flat tape and works through the linear algebra —
 `chol`, `solve`, `crossprod`, `backsolve` / `forwardsolve`, `get_diag` — so a
 Gaussian log-likelihood gradient comes straight out of one Cholesky.
 
+## In the wild
+
+[thermosimfit](https://github.com/ComPlat/Thermosimfit) (binding-isotherm
+fitting) has an ast2ast-compiled engine for its full fitting pipeline — grid
+search, root finding, non-negative least squares — that runs ~100x faster than
+the pure-R path and produces bit-identical fits.
+
 ## Why ast2ast
 
 - **R syntax, C++ speed.** Write the loop in R; skip the rewrite-in-C++ step,
@@ -170,7 +177,7 @@ Gaussian log-likelihood gradient comes straight out of one Cholesky.
 - **Linear algebra:** `t`, `%*%`, `chol`, `solve`, `crossprod` / `tcrossprod`,
   `backsolve` / `forwardsolve`, `diag` / `get_diag`, `rbind` / `cbind`.
 - **Numerics:** `uniroot`, `nnls`, `lbfgsb`, `pso`, `jacobian`, Catmull–Rom
-  interpolation via `cmr()`.
+  interpolation via `cmr`.
 - **Functionals:** `map`, `Reduce`, `Filter`, `apply` (each takes an `fn()`).
 - **Types:** static, inferred, optionally annotated with `type()`; user-defined
   structs via `new_type()` / `slots()`; inner functions as first-class typed
