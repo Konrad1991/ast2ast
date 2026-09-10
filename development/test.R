@@ -19,52 +19,21 @@ tinytest::run_test_file("./inst/tinytest/test_new_type.R")
 files <- list.files("./R", full.names = TRUE)
 invisible(lapply(files, source))
 
-f <- function(interval, maxiter) {
+f <- function(a) {
   argtypes(
-    interval |> type(vec(double)),
-    maxiter |> type(int)
+    a |> type(double)
   )
-  fct <- fn(
+  g <- function(a) {
     argtypes(
       a |> type(double)
-    ),
-    return(double),
-    {
-      a*a - 4
-    }
-  )
-  call_uniroot <- fn(
-    argtypes(
-      interval |> type(vec(double)),
-      maxiter |> type(int)
-    ),
-    return(uniroot_result),
-    {
-      uniroot(fct, interval, 1e-10, maxiter)
-    }
-  )
-  call_uniroot(interval, maxiter)
+    )
+    returntype(double)
+    b <- a * 3.14
+    b
+  }
+
+  a <- 4.0
+  g(a)
 }
 fcpp <- translate(f, verbose = TRUE, debug = FALSE)
-interval <- c(0.0, 100)
-maxiter <- 100L
-fcpp(interval, maxiter)
-
-demo <- function(v) {
-  argtypes(v |> type(vec(double)))
-
-  double_it <- fn(
-    argtypes(out |> type(vec(double)) |> ref()),
-    return(void),
-    {
-      for (i in seq_len(length(out))) {
-        out[[i]] <- out[[i]] * 2
-      }
-    }
-  )
-
-  double_it(v)   # v is filled in place -- no copy, no allocation
-  return(v)
-}
-f <- ast2ast::translate(demo)
-f(c(1, 2, 3))    # c(2, 4, 6)
+fcpp(4)

@@ -75,7 +75,34 @@ create_ast <- function(code, context, env, function_registry) {
     }
     return(fn)
   } else if (operator == "function") {
-    stop("Defining a function inside f is not supported. Use fn() to declare a nested function: fn(argtypes(...), return(spec), { ... }).")
+    body <- code[[3L]] |> wrap_in_block()
+    if (length(body) < 4L) {
+      stop("function() requires the definition of: argtypes(...), returntype(...) followed by the function body itself")
+    }
+    args_call <- body[[2L]]
+    temp_f <- function() {}
+    formals(temp_f) <- code[[2L]]
+    body(temp_f) <- body
+    argtypes_match_formals(temp_f, args_call)
+    return_call <- body[[3L]]
+    body <- body[c(-2, -3)]
+    fn <- fn_node$new()
+    fn$function_registry <- function_registry$clone(deep = TRUE)
+    fn$function_registry_outer <- function_registry
+    fn$known_types <- env$known_types
+    fn$args_f <- parse_argtypes(args_call, TRUE, FALSE, env$real_type, env$known_types)
+    fn$args_f_raw <- args_call
+    fn$return_type <- parse_return(return_call, FALSE, env$real_type, env$known_types, TRUE)[[1]]
+    fn$AST <- body |> wrap_in_block()
+    fn$context <- context
+    # assigned fns get their real name at TypeInference (type$fct_name <- variable);
+    # an inline fn (map/Reduce/Filter/uniroot arg) never does -- give it a label
+    fn$fct_name <- "<anonymous>"
+    if (!function_registry$valid_fn_context(context)) {
+      fn$error <- "You have to assign functions (fn) to variables"
+    }
+    return(fn)
+    # stop("Defining a function inside f is not supported. Use fn() to declare a nested function: fn(argtypes(...), return(spec), { ... }).")
   } else if (function_registry$is_group_functions(operator) || length(code) > 3) {
     # by adding length(code) > 3 also wrong fcts are added to the AST
     fn <- function_node$new()

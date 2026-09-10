@@ -283,11 +283,29 @@ parse_argtypes <- function(obj, fct_input, r_fct, real_type, known_types = list(
   parse_types_with_check(annotations, fct_input, r_fct, real_type, known_types)
 }
 
-parse_return <- function(obj, r_fct, real_type, known_types = list()) {
+parse_return <- function(obj, r_fct, real_type, known_types = list(), is_function = FALSE) {
   obj <- as.list(obj)
-  stopifnot("Expected 'return' as first entry to fn" = deparse(obj[[1]]) == "return")
+  target <- "return"
+  what <- "fn"
+  if (is_function) {
+    target <- "returntype"
+    what <- "function"
+  }
+  if (deparse(obj[[1L]]) != target) {
+    stop(
+      sprintf(
+        "Expected '%s' as second entry to %s", target, what
+      )
+    )
+  }
   args <- obj[-1]
-  stopifnot("return can only contain one expression" = length(args) == 1L)
+  if (length(args) != 1L) {
+    stop(
+      sprintf(
+        "%s can only contain one expression", target
+      )
+    )
+  }
   # keep the node's $error -- it is reported later as a "Wrong return type" message,
   # not stopped here
   expr <- str2lang(paste0("RETURN_TYPE |> type(", deparse1(args[[1L]]), ")"))
