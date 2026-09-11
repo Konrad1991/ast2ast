@@ -102,7 +102,6 @@ create_ast <- function(code, context, env, function_registry) {
       fn$error <- "You have to assign functions (fn) to variables"
     }
     return(fn)
-    # stop("Defining a function inside f is not supported. Use fn() to declare a nested function: fn(argtypes(...), return(spec), { ... }).")
   } else if (function_registry$is_group_functions(operator) || length(code) > 3) {
     # by adding length(code) > 3 also wrong fcts are added to the AST
     fn <- function_node$new()

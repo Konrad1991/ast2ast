@@ -10,7 +10,10 @@ library(microbenchmark)
 # --- shared driver ---------------------------------------------------------
 run_case <- function(name, dsl, y0, times, params, reltol, abstol, stiff,
                      de_func, de_method) {
+  start <- Sys.time()
   fcpp <- ast2ast::translate(dsl)
+  end <- Sys.time()
+  cat("\nCompile time: ", end - start, "s\n")
   cv <- fcpp(y0, times, params, reltol, abstol, stiff)
   de <- ode(y0, times, de_func, params, method = de_method,
             rtol = reltol, atol = abstol)[, -1L, drop = FALSE]

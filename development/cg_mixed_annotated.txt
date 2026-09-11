@@ -1,0 +1,1491 @@
+--------------------------------------------------------------------------------
+Profile data file 'cg_mixed.out' (creator: callgrind-3.22.0)
+--------------------------------------------------------------------------------
+I1 cache: 
+D1 cache: 
+LL cache: 
+Timerange: Basic block 0 - 1403903374
+Trigger: Program termination
+Profiled target:  ./perf_mixed (PID 74951, part 1)
+Events recorded:  Ir
+Events shown:     Ir
+Event sort order: Ir
+Thresholds:       99
+Include dirs:     
+User annotated:   
+Auto-annotation:  on
+
+--------------------------------------------------------------------------------
+Ir                     
+--------------------------------------------------------------------------------
+5,044,661,547 (100.0%)  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir                      file:function
+--------------------------------------------------------------------------------
+1,924,145,000 (38.14%)  ../inst/include/etr_bits/Subsetting/PreservingSubsetting.hpp:std::variant<etr::out_L, etr::StridedResult<2> > etr::create_indices<etr::Array<etr::Double, etr::Buffer<etr::Double, etr::LBufferTrait> >, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> >, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > >(etr::Array<etr::Double, etr::Buffer<etr::Double, etr::LBufferTrait> > const&, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > const&, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > const&) [/home/konrad/Documents/ast2ast/development/perf_mixed]
+  672,330,000 (13.33%)  ../inst/include/etr_bits/./Core/Types.hpp:std::variant<etr::out_L, etr::StridedResult<2> > etr::create_indices<etr::Array<etr::Double, etr::Buffer<etr::Double, etr::LBufferTrait> >, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> >, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > >(etr::Array<etr::Double, etr::Buffer<etr::Double, etr::LBufferTrait> > const&, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > const&, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > const&)
+  576,330,012 (11.42%)  ../inst/include/etr_bits/./Core/Types.hpp:main
+  336,140,000 ( 6.66%)  ../inst/include/etr_bits/./Core/Scalars.hpp:main
+  288,250,848 ( 5.71%)  ../inst/include/etr_bits/./Core/Buffer.hpp:main
+  240,230,000 ( 4.76%)  ../inst/include/etr_bits/./Core/Buffer.hpp:std::variant<etr::out_L, etr::StridedResult<2> > etr::create_indices<etr::Array<etr::Double, etr::Buffer<etr::Double, etr::LBufferTrait> >, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> >, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > >(etr::Array<etr::Double, etr::Buffer<etr::Double, etr::LBufferTrait> > const&, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > const&, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > const&)
+  240,100,000 ( 4.76%)  ../inst/include/etr_bits/./Core/Scalars.hpp:std::variant<etr::out_L, etr::StridedResult<2> > etr::create_indices<etr::Array<etr::Double, etr::Buffer<etr::Double, etr::LBufferTrait> >, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> >, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > >(etr::Array<etr::Double, etr::Buffer<etr::Double, etr::LBufferTrait> > const&, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > const&, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > const&)
+  193,138,132 ( 3.83%)  ./string/../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S:__memset_avx2_unaligned_erms [/usr/lib/x86_64-linux-gnu/libc.so.6]
+  192,225,032 ( 3.81%)  /usr/include/c++/13/bits/stl_vector.h:main
+  144,090,009 ( 2.86%)  ../inst/include/etr_bits/./Core/ArrayClass.hpp:main
+   96,195,000 ( 1.91%)  /usr/include/c++/13/variant:main
+   96,065,000 ( 1.90%)  ../inst/include/etr_bits/Subsetting/PreservingSubsetting.hpp:main
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: ../inst/include/etr_bits/Subsetting/PreservingSubsetting.hpp
+--------------------------------------------------------------------------------
+Ir                   
+
+-- line 30 ----------------------------------------
+          .               return static_cast<std::size_t>(off);
+          .             }
+          .           };
+          .           
+          .           using IndexEntry = std::variant<const Buffer<Integer>*, AxisStride>;
+          .           
+          .           inline std::optional<AxisStride> detect_stride(const Buffer<Integer>& v) {
+          .             const std::size_t n = v.size();
+     20,000 ( 0.00%)    if (n == 0) return std::nullopt;
+          .             const auto first = v.get(0);
+          .             ass<"Found NA value in subsetting">(!first.isNA());
+          .             ass<"Zero and negative indices are not supported">(first.val >= 1);
+     20,000 ( 0.00%)    if (n == 1) return AxisStride{first.val, 0, 1};
+          .           
+          .             const auto second = v.get(1);
+          .             ass<"Found NA value in subsetting">(!second.isNA());
+     20,000 ( 0.00%)    const int step = second.val - first.val;
+          .             int prev = second.val;
+  1,650,000 ( 0.03%)    for (std::size_t i = 2; i < n; i++) {
+          .               const auto cur = v.get(i);
+          .               ass<"Found NA value in subsetting">(!cur.isNA());
+  2,185,000 ( 0.04%)      if (cur.val - prev != step) return std::nullopt;
+          .               prev = cur.val;
+          .             }
+     20,000 ( 0.00%)    const int last = first.val + step * static_cast<int>(n - 1);
+          .             const int lo = (step >= 0) ? first.val : last;
+          .             ass<"Zero and negative indices are not supported">(lo >= 1);
+          .             return AxisStride{first.val, step, n};
+          .           }
+          .           
+          .           template <std::size_t N>
+     90,000 ( 0.00%)  inline void assign_dim_entry(std::array<IndexEntry, N>& index_lists,
+          .                                         std::size_t& counter, const Buffer<Integer>& v) {
+          .             if (auto s = detect_stride(v)) {
+     25,000 ( 0.00%)      index_lists[counter++] = *s;
+          .             } else {
+     15,000 ( 0.00%)      index_lists[counter++] = &v;
+          .             }
+     60,000 ( 0.00%)  }
+          .           
+          .           // Iterators
+          .           // -----------------------------------------------------------------------------------------------------------
+          .           template <typename Subset>
+          .           struct SubsetViewIterator {
+          .             Holder<Subset> subset;
+          .             size_t index;
+          .           
+-- line 76 ----------------------------------------
+-- line 112 ----------------------------------------
+          .               obj(obj_), repr(std::move(layout_)) {}
+          .             SubsetView(O&& obj_, StridedLayout<N>&& layout_) :
+          .               obj(std::move(obj_)), repr(std::move(layout_)) {}
+          .           
+          .             std::size_t resolve(std::size_t i) const {
+          .               if (const auto* layout = std::get_if<StridedLayout<N>>(&repr)) {
+          .                 return layout->offset_of(i);
+          .               }
+ 96,040,000 ( 1.90%)      return static_cast<std::size_t>(std::get<Buffer<int>>(repr).get(i));
+          .             }
+          .           
+          .             auto get(std::size_t i) const {
+          .               return obj.get().get(resolve(i));
+          .             }
+          .             template<typename Val>
+          .             void set(std::size_t i, const Val& v) const {
+          .               const std::size_t off = resolve(i);
+-- line 128 ----------------------------------------
+-- line 252 ----------------------------------------
+          .             auto end() const { return SubsetViewIterator<const SubsetWithScalarView>{*this, this->size()}; }
+          .           };
+          .           
+          .           // -----------------------------------------------------------------------------------------------------------
+          .           template<std::size_t N>
+          .           inline std::array<std::size_t, N> make_strides_from_vec(const std::vector<std::size_t>& dim) {
+          .             std::array<std::size_t, N> stride{};
+          .             stride[0] = 1;
+     10,000 ( 0.00%)    for (std::size_t k = 1; k < N; k++) stride[k] = stride[k-1] * dim[k-1];
+          .             return stride;
+          .           }
+          .           inline std::vector<std::size_t> make_strides_dyn(const std::vector<std::size_t>& dim) {
+          .             std::vector<std::size_t> stride(dim.size(), 0);
+          .             stride[0] = 1;
+          .             for (std::size_t k = 1; k < stride.size(); k++) stride[k] = stride[k-1] * dim[k-1];
+          .             return stride;
+          .           }
+-- line 268 ----------------------------------------
+-- line 305 ----------------------------------------
+          .               assign_dim_entry<N>(index_lists, counter, v);
+          .             }
+          .           }
+          .           
+          .           template<std::size_t N, typename... Args>
+          .           inline void fill_index_lists(const std::vector<std::size_t>& dim,
+          .                                        std::array<Buffer<Integer>, N>& converted_arrays,
+          .                                        std::array<IndexEntry, N>& index_lists, Args&&... args) {
+      5,000 ( 0.00%)    std::size_t counter = 0;
+      5,000 ( 0.00%)    std::size_t counter_converted = 0;
+          .             forEachArg(
+    170,000 ( 0.00%)      [&](const auto& arg) {
+          .                 using A = std::decay_t<decltype(arg)>;
+          .                 if constexpr (IsArray<A>) {
+     30,000 ( 0.00%)          ass<"Too many index arguments for at least one dimension">(dim[counter] >= arg.size());
+          .           
+          .                   using arg_val_type = typename ExtractDataType<A>::value_type;
+          .                   // --- Case 1.1: Array<Integer> (L value)
+          .                   if constexpr (IsArray<A> && IsLBufferArray<A> && IsInteger<arg_val_type>) {
+          .                     const std::size_t n = arg.size();
+     20,000 ( 0.00%)            if (dim[counter] == arg.size()) {
+          .                       assign_dim_entry<N>(index_lists, counter, arg.d);
+          .                     } else {
+     50,000 ( 0.00%)              auto& v = converted_arrays[counter_converted++];
+          .                       v.resize(n);
+  2,960,000 ( 0.06%)              for (std::size_t i = 0; i < n; i++) {
+  3,930,000 ( 0.08%)                const auto i_val = get_scalar_val(arg.get(i));
+          .                         ass<"Found NA value in subsetting (within an integer object)">(!i_val.isNA());
+          .                         v.set(i, i_val.val);
+          .                       }
+     40,000 ( 0.00%)              assign_dim_entry<N>(index_lists, counter, v);
+  8,695,000 ( 0.17%)  => ../inst/include/etr_bits/Subsetting/PreservingSubsetting.hpp:void etr::assign_dim_entry<2ul>(std::array<std::variant<etr::Buffer<etr::Integer, etr::LBufferTrait> const*, etr::AxisStride>, 2ul>&, unsigned long&, etr::Buffer<etr::Integer, etr::LBufferTrait> const&) (10,000x)
+          .                     }
+          .                   }
+          .                   // --- Case 2: Array<Logical>
+          .                   else if constexpr (IsArray<A> && IsLogical<arg_val_type>) {
+          .                     const std::size_t n = dim[counter];
+          .                     auto& v = converted_arrays[counter_converted++];
+          .                     for (std::size_t b = 0; b < n; b++) {
+          .                       const auto b_val = get_scalar_val(arg.get(safe_modulo(b, arg.size())));
+-- line 343 ----------------------------------------
+-- line 416 ----------------------------------------
+          .             std::array<std::size_t, N> counts{};
+          .             std::vector<std::size_t> L;
+          .           };
+          .           
+          .           template <std::size_t N>
+          .           using CreateIndicesResult = std::variant<out_L, StridedResult<N>>;
+          .           
+          .           template <typename ArrayType, typename... Args>
+     60,000 ( 0.00%)  inline CreateIndicesResult<sizeof...(Args)> create_indices(const ArrayType& arr, const Args&... args) {
+          .             constexpr std::size_t N = sizeof...(Args);
+          .             const std::vector<std::size_t> dim = linear_dim_if_single_index(dim_view(arr.get_dim()), N);
+          .             if (N > dim.size()) {
+          .               ass<"Too many index arguments for array rank">(false);
+          .             }
+     20,000 ( 0.00%)    if (N < dim.size()) {
+          .               ass<"Too less index arguments for array rank">(false);
+          .             }
+          .           
+     35,000 ( 0.00%)    std::array<Buffer<Integer>, N> converted_arrays;
+     15,000 ( 0.00%)    std::array<IndexEntry, N> index_lists{};
+          .           
+          .             fill_index_lists<N>(
+          .               dim,
+          .               converted_arrays,
+          .               index_lists,
+          .               args...
+          .             );
+          .           
+          .             std::vector<std::size_t> L(N, 0);
+     10,000 ( 0.00%)    bool all_strided = true;
+          .             for (std::size_t k = 0; k < N; k++) {
+          .               if (const auto* s = std::get_if<AxisStride>(&index_lists[k])) {
+     10,000 ( 0.00%)        L[k] = s->count;
+          .               } else {
+          .                 all_strided = false;
+      5,000 ( 0.00%)        const auto buf = std::get<const Buffer<Integer>*>(index_lists[k]);
+     20,000 ( 0.00%)        if (!buf || buf->size() == 0) {
+          .                   ass<"Empty index for at least one dimension">(false);
+          .                 }
+      5,000 ( 0.00%)        L[k] = buf->size();
+          .               }
+          .             }
+          .           
+     10,000 ( 0.00%)    auto stride = make_strides_from_vec<N>(dim);
+          .           
+          .             if (all_strided) {
+          .               StridedResult<N> res{};
+          .               for (std::size_t k = 0; k < N; k++) {
+          .                 const AxisStride& s = std::get<AxisStride>(index_lists[k]);
+          .                 res.base += static_cast<std::size_t>(s.start - 1) * stride[k];
+          .                 res.effective_stride[k] = static_cast<std::ptrdiff_t>(stride[k]) * s.step;
+          .                 res.counts[k] = s.count;
+-- line 467 ----------------------------------------
+-- line 470 ----------------------------------------
+          .               return CreateIndicesResult<N>{std::move(res)};
+          .             }
+          .           
+          .             // Fallback: materialize the flat offset buffer, same odometer as before.
+          .             // Each dimension's accessor is resolved once here, not inside the
+          .             // innermost per-position loop, so a strided dimension mixed in with
+          .             // irregular ones doesn't add a repeated branch to the hot loop.
+          .             struct ResolvedDim { bool is_stride; int start; int step; const Buffer<Integer>* buf; };
+     20,000 ( 0.00%)    std::array<ResolvedDim, N> resolved{};
+          .             for (std::size_t k = 0; k < N; k++) {
+          .               if (const auto* s = std::get_if<AxisStride>(&index_lists[k])) {
+     40,000 ( 0.00%)        resolved[k] = ResolvedDim{true, s->start, s->step, nullptr};
+          .               } else {
+     20,000 ( 0.00%)        resolved[k] = ResolvedDim{false, 0, 0, std::get<const Buffer<Integer>*>(index_lists[k])};
+          .               }
+          .             }
+          .           
+          .             std::size_t S = 1;
+     10,000 ( 0.00%)    for (std::size_t k = 0; k < N; k++) S *= L[k];
+          .           
+     20,000 ( 0.00%)    Buffer<int> out(S);
+193,330,000 ( 3.83%)  => /home/konrad/Documents/ast2ast/development/../inst/include/etr_bits/./Core/Buffer.hpp:etr::Buffer<int, etr::LBufferTrait>::Buffer(unsigned long) (5,000x)
+          .           
+     10,000 ( 0.00%)    std::array<std::size_t, N> pos{};
+          .           
+          .             std::size_t offset = 0;
+          .             std::size_t k = 0;
+      5,000 ( 0.00%)    std::size_t counter = 0;
+          .             for (;;) {
+ 48,020,000 ( 0.95%)      offset = 1;
+432,185,000 ( 8.57%)      for (std::size_t k = 0; k < N; k++) {
+          .                 const ResolvedDim& r = resolved[k];
+          .                 int val;
+          .                 bool is_na;
+288,120,000 ( 5.71%)        if (r.is_stride) {
+144,060,000 ( 2.86%)          val = r.start + static_cast<int>(pos[k]) * r.step;
+          .                   is_na = false;
+          .                 } else {
+ 96,040,000 ( 1.90%)          const auto sc = r.buf->get(pos[k]);
+          .                   val = sc.val;
+          .                   is_na = sc.isNA();
+          .                 }
+          .                 ass<"Found NA value in subsetting">(!is_na);
+          .                 ass<"Zero and negative indices are not supported">(val >= 1);
+384,180,000 ( 7.62%)        offset += (val - 1) * stride[k];
+          .               }
+288,105,000 ( 5.71%)      out.set(counter++, offset - 1);
+          .           
+          .               k = 0;
+          .               for (;;) {
+145,530,000 ( 2.88%)        pos[k] += 1;
+ 97,020,000 ( 1.92%)        if (pos[k] < L[k]) break;
+    490,000 ( 0.01%)        pos[k] = 0;
+          .                 k++;
+          .                 if (k == N) {
+          .                   return CreateIndicesResult<N>{out_L{std::move(out), std::move(L)}};
+          .                 }
+          .               }
+          .             }
+     60,000 ( 0.00%)  }
+          .           
+          .           // Create mutable subset
+          .           template <typename ArrayType, typename... Args>
+          .           inline auto subset(ArrayType& arr, const Args&... args) {
+          .             using E = typename ExtractDataType<ArrayType>::value_type;
+          .             using DTYPE = Decayed<decltype(arr.d)>;
+          .             constexpr std::size_t N = sizeof...(Args);
+          .             using ViewT = SubsetView<DTYPE, N, SubsetViewTrait>;
+          .           
+     25,000 ( 0.00%)    auto result = create_indices(arr, args...);
+3,310,010,864 (65.61%)  => ../inst/include/etr_bits/Subsetting/PreservingSubsetting.hpp:std::variant<etr::out_L, etr::StridedResult<2> > etr::create_indices<etr::Array<etr::Double, etr::Buffer<etr::Double, etr::LBufferTrait> >, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> >, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > >(etr::Array<etr::Double, etr::Buffer<etr::Double, etr::LBufferTrait> > const&, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > const&, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > const&) (5,000x)
+          .             return std::visit([&](auto&& r) -> Array<E, ViewT> {
+          .               using R = std::decay_t<decltype(r)>;
+          .               if constexpr (std::is_same_v<R, out_L>) {
+          .                 return Array<E, ViewT>(ViewT{arr.d, std::move(r.out)}, std::move(r.L));
+          .               } else {
+          .                 return Array<E, ViewT>(
+          .                   ViewT{arr.d, StridedLayout<N>{r.base, r.effective_stride, r.counts}},
+          .                   std::move(r.L));
+-- line 546 ----------------------------------------
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: ../inst/include/etr_bits/./Core/Buffer.hpp
+--------------------------------------------------------------------------------
+Ir                   
+
+-- line 9 ----------------------------------------
+          .           // so Buffer<T> with any other unspecialized T is a compile error.
+          .           template <> struct Buffer<int, LBufferTrait> {
+          .           
+          .             using value_type = int;
+          .           
+          .             std::vector<int> data;
+          .             bool allocated = false;
+          .           
+     10,000 ( 0.00%)    std::size_t size() const noexcept { return allocated ? data.size() : 0; }
+          .           
+          .             Buffer() {}
+          .             Buffer(const Buffer& other) : data(other.data), allocated(other.allocated) {}
+          .             Buffer(Buffer&& other) noexcept
+     30,000 ( 0.00%)    : data(std::move(other.data)), allocated(other.allocated) { other.allocated = false; }
+          .             Buffer& operator=(const Buffer& other) {
+          .               if (this == &other) return *this;
+          .               data = other.data;
+          .               allocated = other.allocated;
+          .               return *this;
+          .             }
+          .             Buffer& operator=(Buffer&& other) noexcept {
+          .               if (this == &other) return *this;
+          .               data = std::move(other.data);
+          .               allocated = other.allocated;
+          .               other.allocated = false;
+          .               return *this;
+          .             }
+     50,000 ( 0.00%)    Buffer(std::size_t sz_) { init(sz_); }
+          .           
+          .             ~Buffer() { data.clear(); }
+          .           
+          .             void init(std::size_t size) {
+          .               ass<"Size has to be larger than 0!">(size > 0);
+          .               data.assign(size, 0);
+      5,000 ( 0.00%)      allocated = true;
+          .             }
+          .           
+          .             void resize(std::size_t newSize) {
+          .               data.resize(newSize);
+          .               allocated = true;
+          .             }
+          .           
+          .             void realloc(std::size_t new_size) {
+-- line 51 ----------------------------------------
+-- line 56 ----------------------------------------
+          .           
+          .             value_type get(std::size_t idx) const {
+          .               ass<"No memory was allocated">(allocated);
+          .               ass<"Error: out of boundaries">(idx < size());
+          .               return data[idx];
+          .             }
+          .           
+          .             void set(std::size_t idx, const value_type& val) {
+     10,000 ( 0.00%)      ass<"No memory was allocated">(allocated);
+          .               ass<"Error: out of boundaries">(idx < size());
+ 48,020,000 ( 0.95%)      data[idx] = val;
+          .             }
+          .           
+          .             template <typename L2> void moveit(L2& other) {
+          .               data.swap(other.data);
+          .               std::swap(allocated, other.allocated);
+          .               allocated = true;
+          .             }
+          .           
+-- line 74 ----------------------------------------
+-- line 230 ----------------------------------------
+          .             using TypeTrait  = BufferTrait;
+          .           
+          .             raw_type*   p_val = nullptr;
+          .             bool*       p_na  = nullptr;
+          .             std::size_t sz = 0;
+          .             std::size_t capacity = 0;
+          .             bool allocated = false;
+          .           
+     95,403 ( 0.00%)    std::size_t size() const noexcept { return allocated ? sz : 0; }
+          .           
+          .             raw_type*       data()       noexcept { return p_val; }
+          .             const raw_type* data() const noexcept { return p_val; }
+          .             bool*           na_data()       noexcept { return p_na; }
+          .             const bool*     na_data() const noexcept { return p_na; }
+          .           
+          .             void reset() noexcept {
+          .               p_val = nullptr;
+          .               p_na  = nullptr;
+          .               sz = 0;
+          .               capacity = 0;
+          .               allocated = false;
+          .             }
+          .           
+     20,008 ( 0.00%)    SoABuffer() = default;
+          .           
+          .             SoABuffer(const SoABuffer& other)
+          .             : sz(other.sz), capacity(other.capacity), allocated(other.allocated) {
+          .               if (!allocated || capacity == 0) { reset(); return; }
+          .               ass<"Buffer invariant violated: sz > capacity">(!(sz > capacity));
+          .               p_val = new raw_type[capacity];
+          .               p_na  = new bool[capacity];
+          .               std::copy_n(other.p_val, sz, p_val);
+-- line 261 ----------------------------------------
+-- line 280 ----------------------------------------
+          .               return *this;
+          .             }
+          .           
+          .             SoABuffer& operator=(SoABuffer&& other) noexcept {
+          .               swap(other);
+          .               return *this;
+          .             }
+          .           
+         18 ( 0.00%)    SoABuffer(std::size_t sz_) {
+          .               ass<"Size has to be larger than 0!">(sz_ > 0);
+          .               init(sz_);
+          .             }
+          .           
+          2 ( 0.00%)    ~SoABuffer() {
+     30,022 ( 0.00%)      if (allocated) {
+     40,024 ( 0.00%)        delete[] p_val;
+        285 ( 0.00%)  => ???:0x000000000010a1f0 (3x)
+     40,024 ( 0.00%)        delete[] p_na;
+        285 ( 0.00%)  => ???:0x000000000010a1f0 (3x)
+          .                 reset();
+          .               }
+          .             }
+          .           
+          .             void init(std::size_t size_) {
+          .               if (allocated) {
+          .                 ass<"try to delete nullptr">(p_val != nullptr);
+          .                 delete[] p_val;
+          .                 delete[] p_na;
+          .                 p_val = nullptr;
+          .                 p_na  = nullptr;
+          .               }
+     10,020 ( 0.00%)      sz = size_;
+    150,028 ( 0.00%)      capacity = static_cast<std::size_t>(1.15 * static_cast<double>(sz));
+     60,032 ( 0.00%)      p_val = new raw_type[capacity];
+        422 ( 0.00%)  => ???:0x000000000010a150 (2x)
+     50,024 ( 0.00%)      p_na  = new bool[capacity];
+        428 ( 0.00%)  => ???:0x000000000010a150 (2x)
+          .               fill(Scalar());
+     20,006 ( 0.00%)      allocated = true;
+     10,000 ( 0.00%)    }
+          .           
+          .             void realloc(std::size_t new_size) {
+          .               std::size_t new_capacity = static_cast<std::size_t>(new_size * 1.15);
+          .               raw_type* new_val = new raw_type[new_capacity];
+          .               bool*     new_na  = new bool[new_capacity];
+          .           
+          .               const std::size_t keep = std::min(sz, new_size);
+          .               for (std::size_t i = 0; i < keep; ++i) {
+-- line 323 ----------------------------------------
+-- line 334 ----------------------------------------
+          .               p_val = new_val;
+          .               p_na  = new_na;
+          .               capacity = new_capacity;
+          .               sz = new_size;
+          .               allocated = true;
+          .             }
+          .           
+          .             void resize(std::size_t newSize) {
+     30,000 ( 0.00%)      if (!allocated) {
+          .                 init(newSize);
+          .                 return;
+          .               }
+     10,000 ( 0.00%)      if (newSize > capacity) {
+          .                 realloc(newSize);
+          .                 // Newly grown region is already zero-initialised by realloc.
+          .                 return;
+          .               }
+      5,000 ( 0.00%)      sz = newSize;
+          .             }
+          .           
+          .             template <typename V>
+          .             requires (IsCppArithV<Decayed<V>> || IsScalarOrScalarRef<Decayed<V>>
+          .                       || IS<Decayed<V>, Scalar>)
+          .             void fill(V&& v) {
+          .               raw_type base_val;
+          .               bool     base_na;
+-- line 359 ----------------------------------------
+-- line 363 ----------------------------------------
+          .               } else if constexpr (IsScalarOrScalarRef<Decayed<V>>) {
+          .                 Scalar tmp = static_cast<Scalar>(get_val(v));
+          .                 base_val = tmp.val;
+          .                 base_na  = tmp.is_na;
+          .               } else {
+          .                 base_val = static_cast<raw_type>(v);
+          .                 base_na  = false;
+          .               }
+     30,008 ( 0.00%)      std::fill(p_val, p_val + sz, base_val);
+          .               std::fill(p_na,  p_na  + sz, base_na);
+          .             }
+          .           
+          .             value_type get(std::size_t idx) const {
+          .               ass<"No memory was allocated">(allocated);
+          .               ass<"Error: out of boundaries">(idx < sz);
+          .               Scalar s;
+242,645,000 ( 4.81%)      s.val   = p_val[idx];
+145,050,000 ( 2.88%)      s.is_na = p_na[idx];
+          .               return s;
+          .             }
+          .           
+          .             void set(std::size_t idx, const value_type& val) {
+     35,000 ( 0.00%)      ass<"No memory was allocated">(allocated);
+          .               ass<"Error: out of boundaries">(idx < sz);
+ 49,980,202 ( 0.99%)      p_val[idx] = val.val;
+     80,019 ( 0.00%)  => ???:0x000000000010a190 (1x)
+ 49,990,205 ( 0.99%)      p_na[idx]  = val.is_na;
+     10,019 ( 0.00%)  => ???:0x000000000010a190 (1x)
+          .             }
+          .           
+          .             void push_back(const value_type& input) {
+          .               if (sz == capacity) {
+          .                 const std::size_t szOld = sz;
+          .                 realloc(sz == 0 ? 1 : sz * 2);
+          .                 capacity = sz;
+          .                 sz = szOld;
+-- line 396 ----------------------------------------
+-- line 401 ----------------------------------------
+          .             }
+          .           
+          .             template <typename L2> void moveit(L2& other) {
+          .               std::swap(p_val,     other.p_val);
+          .               std::swap(p_na,      other.p_na);
+          .               std::swap(sz,        other.sz);
+          .               std::swap(capacity,  other.capacity);
+          .               std::swap(allocated, other.allocated);
+      5,002 ( 0.00%)      allocated = true;
+          .             }
+          .           
+          .             void swap(SoABuffer& other) noexcept {
+          .               if (this == &other) return;
+          .               std::swap(p_val,     other.p_val);
+          .               std::swap(p_na,      other.p_na);
+          .               std::swap(sz,        other.sz);
+          .               std::swap(capacity,  other.capacity);
+-- line 417 ----------------------------------------
+-- line 447 ----------------------------------------
+          .               return Iterator{ p_val, p_na, sz };
+          .             }
+          .           };
+          .           
+          .           //------------------------------------------------------------------------------
+          .           // Buffer<Double, Trait>
+          .           //------------------------------------------------------------------------------
+          .           template <typename BufferTrait>
+          2 ( 0.00%)  struct Buffer<Double, BufferTrait> : SoABuffer<Double, BufferTrait> {
+          4 ( 0.00%)  => ../inst/include/etr_bits/./Core/Buffer.hpp:etr::SoABuffer<etr::Double, etr::RBufferTrait>::~SoABuffer() (1x)
+          .             using Base = SoABuffer<Double, BufferTrait>;
+          .             using Base::Base;
+          .             using Base::p_val;
+          .             using Base::p_na;
+          .             using Base::sz;
+          .             using Base::capacity;
+          .             using Base::allocated;
+          .             using Base::reset;
+-- line 463 ----------------------------------------
+-- line 487 ----------------------------------------
+          .             Buffer(SEXP s) { initSEXP(s); }
+          .           #endif
+          .           };
+          .           
+          .           //------------------------------------------------------------------------------
+          .           // Buffer<Integer, Trait>
+          .           //------------------------------------------------------------------------------
+          .           template <typename BufferTrait>
+          2 ( 0.00%)  struct Buffer<Integer, BufferTrait> : SoABuffer<Integer, BufferTrait> {
+          4 ( 0.00%)  => ../inst/include/etr_bits/./Core/Buffer.hpp:etr::SoABuffer<etr::Integer, etr::RBufferTrait>::~SoABuffer() (1x)
+          .             using Base = SoABuffer<Integer, BufferTrait>;
+          .             using Base::Base;
+          .             using Base::p_val;
+          .             using Base::p_na;
+          .             using Base::sz;
+          .             using Base::capacity;
+          .             using Base::allocated;
+          .             using Base::reset;
+-- line 503 ----------------------------------------
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: ../inst/include/etr_bits/./Core/Scalars.hpp
+--------------------------------------------------------------------------------
+Ir                   
+
+-- line 1244 ----------------------------------------
+          .             inline Double log10() const;
+          .             inline Double sqrt() const;
+          .             inline Integer abs() const;
+          .             inline Integer operator-() const;
+          .             inline Logical operator!() const;
+          .             inline friend std::ostream& operator<<(std::ostream&, const Integer&);
+          .             inline static Integer NA() { Integer x; x.is_na = true; return x; }
+          .             inline bool isNA() const noexcept {
+241,625,000 ( 4.79%)      return is_na;
+          .             }
+          .             // condition context (if/while); matches R: NA -> error, otherwise x != 0
+          .             explicit inline operator bool() const {
+          .               ass<"missing value where TRUE/FALSE needed">(!is_na);
+          .               return val != 0;
+          .             }
+          .             template<typename T> requires IsArray<Decayed<T>> inline Integer& operator=(const T& arr) {
+          .               using  inner = typename ExtractDataType<T>::value_type;
+-- line 1260 ----------------------------------------
+-- line 1654 ----------------------------------------
+          .           */
+          .           inline Logical::Logical() : val(false), is_na(false) {}
+          .           inline Logical::Logical(bool v) : val(v), is_na(false) {}
+          .           inline Logical::Logical(Integer v) : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
+          .           inline Logical::Logical(Double v) : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
+          .           inline Logical::Logical(Dual v) : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
+          .           inline Logical::Logical(ReverseDouble v) : val(static_cast<bool>(v.get_val_from_tape())), is_na(v.is_na) {}
+          .           
+  1,635,000 ( 0.03%)  inline Integer::Integer() : val(0), is_na(false) {}
+          .           inline Integer::Integer(int v) : val(v), is_na(false) {}
+          .           inline Integer::Integer(Logical v) : val(static_cast<int>(v.val)), is_na(v.is_na) {}
+          .           inline Integer::Integer(Double v) : val(static_cast<int>(v.val)), is_na(v.is_na) {}
+          .           inline Integer::Integer(Dual v) : val(static_cast<int>(v.val)), is_na(v.is_na) {}
+          .           inline Integer::Integer(ReverseDouble v) : val(static_cast<int>(v.get_val_from_tape())), is_na(v.is_na) {}
+          .           
+          .           inline Double::Double() : val(0.0), is_na(false) {}
+          .           inline Double::Double(double v) : val(v), is_na(false) {}
+-- line 1670 ----------------------------------------
+-- line 1831 ----------------------------------------
+          .             if (is_na || other.is_na) return Integer::NA();
+          .             return Integer(val + other.val);
+          .           }
+          .           inline Integer Integer::operator+(const Integer& other) const {
+          .             if (is_na || other.is_na) return Integer::NA();
+          .             return Integer(val + other.val);
+          .           }
+          .           inline Double Double::operator+(const Double& other) const {
+192,080,000 ( 3.81%)    if (is_na || other.is_na) return Double::NA();
+144,060,000 ( 2.86%)    return Double(val + other.val);
+          .           }
+          .           inline Dual Dual::operator+(const Dual& other) const {
+          .             if (is_na || other.is_na) return Dual::NA();
+          .             const double v = val + other.val;
+          .             if (is_na_dot || other.is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+          .             return Dual(v, dot + other.dot);
+          .           }
+          .           inline ReverseDouble ReverseDouble::operator+(const ReverseDouble& r) const {
+-- line 1848 ----------------------------------------
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: ../inst/include/etr_bits/./Core/ArrayClass.hpp
+--------------------------------------------------------------------------------
+Ir                   
+
+-- line 5 ----------------------------------------
+          .           
+          .           /*
+          .           ---------------------------------------------------------------------------------------------
+          .           ---------------------------------------------------------------------------------------------
+          .           ----------------------------------L Buffer --------------------------------------------------
+          .           ---------------------------------------------------------------------------------------------
+          .           ---------------------------------------------------------------------------------------------
+          .           */
+         16 ( 0.00%)  template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
+          .             using Type = T;
+          .             using DType = Buffer<T, LBufferTrait>;
+          .             using value_type = T;
+          .             Buffer<T, LBufferTrait> d;
+          .             Buffer<T, LBufferTrait> temp;
+          .             std::vector<std::size_t> dim;
+          .           
+          .             // ======================= internal methods =================================================
+-- line 21 ----------------------------------------
+-- line 39 ----------------------------------------
+          .             const std::vector<std::size_t>& get_dim() const { return dim; }
+          .             auto begin() const { return d.begin(); }
+          .             auto end() const { return d.end(); }
+          .           
+          .             template <typename OtherObj, typename DataTypeOtherObj>
+          .             void copy_with_temp(const OtherObj& other_obj) {
+          .               const std::size_t n = other_obj.size();
+          .               temp.resize(n);
+144,075,000 ( 2.86%)      for (std::size_t i = 0; i < n; i++) {
+          .                 if constexpr (IS<DataTypeOtherObj, T>) {
+          .                   temp.set(i, other_obj.get(i));
+          .                 } else {
+          .                   temp.set(i, cast_preserve_na<T>(other_obj.get(i)));
+          .                 }
+          .               }
+          .             }
+          .             template<typename T2>
+-- line 55 ----------------------------------------
+-- line 66 ----------------------------------------
+          .             // Scalar constructors
+          .             Array(Logical b) : d(1), temp(1), dim(1, 1) { d.set(0, static_cast<T>(b));}
+          .             Array(Integer sz) : d(1), temp(1), dim(1, 1) { d.set(0, static_cast<T>(sz));}
+          .             Array(Double sz) : d(1), temp(1), dim(1, 1) { d.set(0, get_val(sz)); }
+          .             Array(Dual sz) : d(1), temp(1), dim(1, 1) { d.set(0, static_cast<T>(sz));}
+          .             Array(ReverseDouble sz) : d(1), temp(1), dim(1, 1) { d.set(0, sz); }
+          .           
+          .             // define Arraytor with specific size
+         28 ( 0.00%)    explicit Array(const SI &sz) : d(sz.sz), temp(sz.sz), dim(1, sz.sz) {}
+          .           
+          .             // Copy other Array with LBuffer
+          .             Array(const Array& other) {
+          .               assign(other);
+          .               dim = other.get_dim();
+          .             }
+          .             // Move other Array e.g. vec = std::move(other_vec)
+          .             Array(Array&& other) noexcept(std::is_nothrow_move_constructible_v<decltype(d)>)
+-- line 82 ----------------------------------------
+-- line 99 ----------------------------------------
+          .               dim = other.get_dim();
+          .             }
+          .           
+          .             // Example: Array<Double, Buffer<Double>> a(Array<Double, Buffer<Double, RBufferTrait>>(SI{3}));
+          .             template<typename T2, typename R2>
+          .             requires(IS<T, T2> && IsRArray<Array<T2, R2>>)
+          .             Array(Array<T2, R2>&& other) {
+          .               d.moveit(other.d);
+          9 ( 0.00%)      dim = std::move(other.get_dim());
+        225 ( 0.00%)  => /usr/include/c++/13/bits/vector.tcc:std::vector<unsigned long, std::allocator<unsigned long> >::operator=(std::vector<unsigned long, std::allocator<unsigned long> > const&) [clone .isra.0] (2x)
+          .             }
+          .             // Example: Array<Double, Buffer<Double>> a(Array<Integer, Buffer<Integer, RBufferTrait>>(SI{3}));
+          .             template<typename T2, typename R2>
+          .             requires((!IS<T, T2>) && IsRArray<Array<T2, R2>>)
+          .             Array(Array<T2, R2>&& other) {
+          .               assign(other);
+          .               dim = std::move(other.get_dim());
+          .             }
+-- line 115 ----------------------------------------
+-- line 176 ----------------------------------------
+          .               return *this;
+          .             }
+          .           
+          .             // copy assignment LArrays and expressions
+          .             template<typename T2>
+          .             requires(!IsScalarLike<Decayed<T2>> && IsArray<Decayed<T2>>)
+          .             Array &operator=(const T2& other_obj) {
+          .               assign(other_obj);
+     15,000 ( 0.00%)      dim = other_obj.get_dim();
+    250,169 ( 0.00%)  => /usr/include/c++/13/bits/vector.tcc:std::vector<unsigned long, std::allocator<unsigned long> >::operator=(std::vector<unsigned long, std::allocator<unsigned long> > const&) [clone .isra.0] (5,000x)
+          .               return *this;
+          .             }
+          .             // move assignment. Swap resources e.g. Array<int> v; v = array(0, 1:3)
+          .             template<typename T2, typename R2>
+          .             requires(IS<T, T2> && IsRArray<Array<T2, R2>>)
+          .             Array& operator=(Array<T2, R2>&& other_obj) {
+          .               d.moveit(other_obj.d);
+          .               dim = std::move(other_obj.get_dim());
+-- line 192 ----------------------------------------
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: /usr/include/c++/13/variant
+--------------------------------------------------------------------------------
+Ir                  
+
+-- line 216 ----------------------------------------
+         .               struct _Uninitialized;
+         .           
+         .             template<typename _Type>
+         .               struct _Uninitialized<_Type, true>
+         .               {
+         .                 template<typename... _Args>
+         .           	constexpr
+         .           	_Uninitialized(in_place_index_t<0>, _Args&&... __args)
+    20,000 ( 0.00%)  	: _M_storage(std::forward<_Args>(__args)...)
+         .           	{ }
+         .           
+         .                 constexpr const _Type& _M_get() const & noexcept
+         .                 { return _M_storage; }
+         .           
+         .                 constexpr _Type& _M_get() & noexcept
+         .                 { return _M_storage; }
+         .           
+-- line 232 ----------------------------------------
+-- line 472 ----------------------------------------
+         .           					      unsigned char,
+         .           					      unsigned short>::type::value_type;
+         .           
+         .             template<typename... _Types>
+         .               struct _Variant_storage<false, _Types...>
+         .               {
+         .                 constexpr
+         .                 _Variant_storage()
+     5,000 ( 0.00%)        : _M_index(static_cast<__index_type>(variant_npos))
+         .                 { }
+         .           
+         .                 template<size_t _Np, typename... _Args>
+         .           	constexpr
+         .           	_Variant_storage(in_place_index_t<_Np>, _Args&&... __args)
+         .           	: _M_u(in_place_index<_Np>, std::forward<_Args>(__args)...),
+     5,000 ( 0.00%)  	_M_index{_Np}
+         .           	{ }
+         .           
+         .                 constexpr void
+         .                 _M_reset()
+         .                 {
+    20,000 ( 0.00%)  	if (!_M_valid()) [[unlikely]]
+         .           	  return;
+         .           
+         .           	std::__do_visit<void>([](auto&& __this_mem) mutable
+         .           	  {
+         .           	    std::_Destroy(std::__addressof(__this_mem));
+         .           	  }, __variant_cast<_Types...>(*this));
+         .           
+         .           	_M_index = static_cast<__index_type>(variant_npos);
+-- line 501 ----------------------------------------
+-- line 505 ----------------------------------------
+         .                 ~_Variant_storage()
+         .                 { _M_reset(); }
+         .           
+         .                 constexpr bool
+         .                 _M_valid() const noexcept
+         .                 {
+         .           	if constexpr (__variant::__never_valueless<_Types...>())
+         .           	  return true;
+    20,000 ( 0.00%)  	return this->_M_index != __index_type(variant_npos);
+         .                 }
+         .           
+         .                 _Variadic_union<_Types...> _M_u;
+         .                 using __index_type = __select_index<_Types...>;
+         .                 __index_type _M_index;
+         .               };
+         .           
+         .             template<typename... _Types>
+-- line 521 ----------------------------------------
+-- line 562 ----------------------------------------
+         .               inline void
+         .               __emplace(_Variant_storage<_Triv, _Types...>& __v, _Args&&... __args)
+         .               {
+         .                 __v._M_reset();
+         .                 auto* __addr = __variant::__construct_n<_Np>(__v._M_u);
+         .                 std::_Construct(__addr, in_place_index<0>,
+         .           		      std::forward<_Args>(__args)...);
+         .                 // Construction didn't throw, so can set the new index now:
+     5,000 ( 0.00%)        __v._M_index = _Np;
+         .               }
+         .           
+         .             template<typename... _Types>
+         .               using _Variant_storage_alias =
+         .           	_Variant_storage<_Traits<_Types...>::_S_trivial_dtor, _Types...>;
+         .           
+         .             // The following are (Copy|Move) (ctor|assign) layers for forwarding
+         .             // triviality and handling non-trivial SMF behaviors.
+-- line 578 ----------------------------------------
+-- line 628 ----------------------------------------
+         .           	  [this](auto&& __rhs_mem, auto __rhs_index) mutable
+         .           	  {
+         .           	    constexpr size_t __j = __rhs_index;
+         .           	    if constexpr (__j != variant_npos)
+         .           	      std::_Construct(std::__addressof(this->_M_u),
+         .           			      in_place_index<__j>,
+         .           			      std::forward<decltype(__rhs_mem)>(__rhs_mem));
+         .           	  }, __variant_cast<_Types...>(std::move(__rhs)));
+    10,000 ( 0.00%)  	this->_M_index = __rhs._M_index;
+         .                 }
+         .           
+         .                 _Move_ctor_base(const _Move_ctor_base&) = default;
+         .                 _Move_ctor_base& operator=(const _Move_ctor_base&) = default;
+         .                 _Move_ctor_base& operator=(_Move_ctor_base&&) = default;
+         .               };
+         .           
+         .             template<typename... _Types>
+-- line 644 ----------------------------------------
+-- line 1182 ----------------------------------------
+         .                 static_assert(__detail::__variant::__exactly_once<_Tp, _Types...>,
+         .           		    "T must occur exactly once in alternatives");
+         .                 constexpr size_t __n = std::__find_uniq_type_in_pack<_Tp, _Types...>();
+         .                 return std::get<__n>(std::move(__v));
+         .               }
+         .           
+         .             template<size_t _Np, typename... _Types>
+         .               constexpr add_pointer_t<variant_alternative_t<_Np, variant<_Types...>>>
+     5,000 ( 0.00%)      get_if(variant<_Types...>* __ptr) noexcept
+         .               {
+         .                 using _Alternative_type = variant_alternative_t<_Np, variant<_Types...>>;
+         .                 static_assert(_Np < sizeof...(_Types),
+         .           		    "The index must be in [0, number of alternatives)");
+         .                 static_assert(!is_void_v<_Alternative_type>, "_Tp must not be void");
+    40,000 ( 0.00%)        if (__ptr && __ptr->index() == _Np)
+         .           	return std::addressof(__detail::__variant::__get<_Np>(*__ptr));
+         .                 return nullptr;
+         .               }
+         .           
+         .             template<size_t _Np, typename... _Types>
+         .               constexpr
+         .               add_pointer_t<const variant_alternative_t<_Np, variant<_Types...>>>
+         .               get_if(const variant<_Types...>* __ptr) noexcept
+         .               {
+         .                 using _Alternative_type = variant_alternative_t<_Np, variant<_Types...>>;
+         .                 static_assert(_Np < sizeof...(_Types),
+         .           		    "The index must be in [0, number of alternatives)");
+         .                 static_assert(!is_void_v<_Alternative_type>, "_Tp must not be void");
+96,040,000 ( 1.90%)        if (__ptr && __ptr->index() == _Np)
+         .           	return std::addressof(__detail::__variant::__get<_Np>(*__ptr));
+         .                 return nullptr;
+         .               }
+         .           
+         .             template<typename _Tp, typename... _Types>
+         .               constexpr add_pointer_t<_Tp>
+         .               get_if(variant<_Types...>* __ptr) noexcept
+         .               {
+-- line 1218 ----------------------------------------
+-- line 1491 ----------------------------------------
+         .           		    && is_constructible_v<__accepted_type<_Tp&&>, _Tp>
+         .           		    && is_assignable_v<__accepted_type<_Tp&&>&, _Tp>,
+         .           		    variant&>
+         .           	operator=(_Tp&& __rhs)
+         .           	noexcept(is_nothrow_assignable_v<__accepted_type<_Tp&&>&, _Tp>
+         .           		 && is_nothrow_constructible_v<__accepted_type<_Tp&&>, _Tp>)
+         .           	{
+         .           	  constexpr auto __index = __accepted_index<_Tp>;
+    20,000 ( 0.00%)  	  if (index() == __index)
+     5,000 ( 0.00%)  	    std::get<__index>(*this) = std::forward<_Tp>(__rhs);
+         .           	  else
+         .           	    {
+         .           	      using _Tj = __accepted_type<_Tp&&>;
+         .           	      if constexpr (is_nothrow_constructible_v<_Tj, _Tp>
+         .           			    || !is_nothrow_move_constructible_v<_Tj>)
+         .           		this->emplace<__index>(std::forward<_Tp>(__rhs));
+         .           	      else
+         .           		// _GLIBCXX_RESOLVE_LIB_DEFECTS
+-- line 1508 ----------------------------------------
+-- line 1617 ----------------------------------------
+         .           
+         .                 constexpr bool valueless_by_exception() const noexcept
+         .                 { return !this->_M_valid(); }
+         .           
+         .                 constexpr size_t index() const noexcept
+         .                 {
+         .           	using __index_type = typename _Base::__index_type;
+         .           	if constexpr (__detail::__variant::__never_valueless<_Types...>())
+    10,000 ( 0.00%)  	  return this->_M_index;
+         .           	else if constexpr (sizeof...(_Types) <= __index_type(-1) / 2)
+    15,000 ( 0.00%)  	  return make_signed_t<__index_type>(this->_M_index);
+         .           	else
+         .           	  return size_t(__index_type(this->_M_index + 1)) - 1;
+         .                 }
+         .           
+         .                 _GLIBCXX20_CONSTEXPR
+         .                 void
+         .                 swap(variant& __rhs)
+         .                 noexcept((__is_nothrow_swappable<_Types>::value && ...)
+-- line 1635 ----------------------------------------
+-- line 1707 ----------------------------------------
+         .               };
+         .           
+         .             template<size_t _Np, typename... _Types>
+         .               constexpr variant_alternative_t<_Np, variant<_Types...>>&
+         .               get(variant<_Types...>& __v)
+         .               {
+         .                 static_assert(_Np < sizeof...(_Types),
+         .           		    "The index must be in [0, number of alternatives)");
+    10,000 ( 0.00%)        if (__v.index() != _Np)
+         .           	__throw_bad_variant_access(__v.valueless_by_exception());
+         .                 return __detail::__variant::__get<_Np>(__v);
+         .               }
+         .           
+         .             template<size_t _Np, typename... _Types>
+         .               constexpr variant_alternative_t<_Np, variant<_Types...>>&&
+         .               get(variant<_Types...>&& __v)
+         .               {
+-- line 1723 ----------------------------------------
+-- line 1729 ----------------------------------------
+         .               }
+         .           
+         .             template<size_t _Np, typename... _Types>
+         .               constexpr const variant_alternative_t<_Np, variant<_Types...>>&
+         .               get(const variant<_Types...>& __v)
+         .               {
+         .                 static_assert(_Np < sizeof...(_Types),
+         .           		    "The index must be in [0, number of alternatives)");
+    20,000 ( 0.00%)        if (__v.index() != _Np)
+         .           	__throw_bad_variant_access(__v.valueless_by_exception());
+         .                 return __detail::__variant::__get<_Np>(__v);
+         .               }
+         .           
+         .             template<size_t _Np, typename... _Types>
+         .               constexpr const variant_alternative_t<_Np, variant<_Types...>>&&
+         .               get(const variant<_Types...>&& __v)
+         .               {
+-- line 1745 ----------------------------------------
+-- line 1805 ----------------------------------------
+         .                 {									\
+         .           	return __gen_vtable_impl<_Ma, index_sequence<N>>::		\
+         .           	  __visit_invoke(std::forward<_Visitor>(__visitor),		\
+         .           			 std::forward<_V0>(__v0));		\
+         .                 }									\
+         .               else _GLIBCXX_VISIT_UNREACHABLE();					\
+         .             }
+         .           
+    60,000 ( 0.00%)  	      switch (__v0.index())
+         .           		{
+         .           		  _GLIBCXX_VISIT_CASE(0)
+         .           		  _GLIBCXX_VISIT_CASE(1)
+         .           		  _GLIBCXX_VISIT_CASE(2)
+         .           		  _GLIBCXX_VISIT_CASE(3)
+         .           		  _GLIBCXX_VISIT_CASE(4)
+         .           		  _GLIBCXX_VISIT_CASE(5)
+         .           		  _GLIBCXX_VISIT_CASE(6)
+-- line 1821 ----------------------------------------
+-- line 1847 ----------------------------------------
+         .             /// @endcond
+         .           
+         .             template<typename _Visitor, typename... _Variants>
+         .               constexpr __detail::__variant::__visit_result_t<_Visitor, _Variants...>
+         .               visit(_Visitor&& __visitor, _Variants&&... __variants)
+         .               {
+         .                 namespace __variant = std::__detail::__variant;
+         .           
+    20,000 ( 0.00%)        if ((__variant::__as(__variants).valueless_by_exception() || ...))
+         .           	__throw_bad_variant_access("std::visit: variant is valueless");
+         .           
+         .                 using _Result_type
+         .           	= __detail::__variant::__visit_result_t<_Visitor, _Variants...>;
+         .           
+         .                 using _Tag = __detail::__variant::__deduce_visit_result<_Result_type>;
+         .           
+         .                 if constexpr (sizeof...(_Variants) == 1)
+-- line 1863 ----------------------------------------
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: ../inst/include/etr_bits/./Core/Types.hpp
+--------------------------------------------------------------------------------
+Ir                     
+
+-- line 89 ----------------------------------------
+            .           // https://ctrpeach.io/posts/cpp20-string-literal-template-parameters/
+            .           template <std::size_t N> struct string_literal {
+            .             constexpr string_literal(const char (&str)[N]) {
+            .               std::copy_n(str, N, value.begin());
+            .             }
+            .             std::array<char, N> value;
+            .           };
+            .           
+      545,002 ( 0.01%)  template <string_literal msg> inline void ass(bool inp) {
+            .           #ifdef STANDALONE_ETR
+1,259,520,022 (24.97%)    if (!inp) throw std::runtime_error(msg.value.data());
+            .           #else
+            .             if (!inp) Rcpp::stop(msg.value.data());
+            .           #endif
+            .           }
+            .           
+            .           inline void warn(bool inp, std::string message) {
+            .           #ifdef STANDALONE_ETR
+            .             if (!inp) std::cerr << "Warning: " + message << std::endl;
+-- line 107 ----------------------------------------
+-- line 133 ----------------------------------------
+            .             // duplicating the underlying data; its copy/move already do the right
+            .             // thing via the pointee's address staying constant across copies, unlike
+            .             // std::optional's.
+            .             std::optional<T> val;
+            .             std::shared_ptr<T> owned;
+            .             const T* ptr = nullptr;
+            .           
+            .           public:
+       10,000 ( 0.00%)    ConstHolder(const T& ref) : ptr(&ref) {}
+            .           
+        5,000 ( 0.00%)    ConstHolder(T&& r) {
+            .               if constexpr (std::is_trivially_copyable_v<T>) {
+            .                 val.emplace(std::move(r));
+       10,000 ( 0.00%)        ptr = &val.value();
+            .               } else {
+            .                 owned = std::make_shared<T>(std::move(r));
+        5,000 ( 0.00%)        ptr = owned.get();
+            .               }
+            .             }
+            .           
+        5,000 ( 0.00%)    ConstHolder(const ConstHolder& other) {
+            .               if constexpr (std::is_trivially_copyable_v<T>) {
+            .                 if (other.val.has_value()) {
+            .                   val.emplace(*other.val);
+       10,000 ( 0.00%)          ptr = &val.value();
+            .                 } else {
+            .                   ptr = other.ptr;
+            .                 }
+            .               } else {
+            .                 owned = other.owned;
+        5,000 ( 0.00%)        ptr = other.ptr;
+            .               }
+            .             }
+            .             ConstHolder(ConstHolder&& other) noexcept {
+            .               if constexpr (std::is_trivially_copyable_v<T>) {
+            .                 if (other.val.has_value()) {
+            .                   val.emplace(std::move(*other.val));
+            .                   ptr = &val.value();
+            .                 } else {
+-- line 171 ----------------------------------------
+-- line 206 ----------------------------------------
+            .                 } else {
+            .                   owned = std::move(other.owned);
+            .                   ptr = other.ptr;
+            .                 }
+            .               }
+            .               return *this;
+            .             }
+            .           
+       10,000 ( 0.00%)    const T& get() const { return *ptr; }
+            .           
+            .             // Debug-only inspectors, not for production use -- confirm at runtime
+            .             // which storage path is active instead of assuming from reading the
+            .             // constructor branches.
+            .             bool debug_owns_via_shared_ptr() const { return static_cast<bool>(owned); }
+            .             bool debug_owns_via_inline_value() const { return val.has_value(); }
+            .           };
+            .           
+-- line 222 ----------------------------------------
+-- line 251 ----------------------------------------
+            .                   val.reset();
+            .                   ptr = other.ptr;
+            .                 }
+            .               }
+            .               return *this;
+            .             }
+            .             // Move constructor
+            .             Holder(Holder&& other) noexcept {
+       10,000 ( 0.00%)      if (other.val.has_value()) {
+            .                 val.emplace(std::move(*other.val));
+            .                 ptr = &val.value();
+            .               } else {
+       15,000 ( 0.00%)        ptr = other.ptr;
+            .               }
+            .             }
+            .             // Move assignment
+            .             Holder& operator=(Holder&& other) noexcept {
+            .               if (this != &other) {
+            .                 if (other.val.has_value()) {
+            .                   val.emplace(std::move(*other.val));  // avoid operator=
+            .                   ptr = &val.value();
+-- line 271 ----------------------------------------
+-- line 272 ----------------------------------------
+            .                 } else {
+            .                   val.reset();
+            .                   ptr = other.ptr;
+            .                 }
+            .               }
+            .               return *this;
+            .             }
+            .             T& get() const {
+        5,000 ( 0.00%)      return *ptr;
+            .             }
+            .           };
+            .           
+            .           /*
+            .           -----------------------------------------------------------------------------------------------------------
+            .           Helper:
+            .           -----------------------------------------------------------------------------------------------------------
+            .           */
+-- line 288 ----------------------------------------
+-- line 298 ----------------------------------------
+            .           
+            .           template <typename T> constexpr bool IsRvalueV = std::is_rvalue_reference_v<T>;
+            .           
+            .           // 2. The struct SI which is used to initialize Arrays of a respective size
+            .           struct SI {
+            .             std::size_t sz{0};
+            .           
+            .             SI() = default;
+            2 ( 0.00%)    explicit SI(std::size_t n) : sz(n) {
+            6 ( 0.00%)      ass<"Size has to be larger than 0!">(sz >= 1);
+            8 ( 0.00%)  => ../inst/include/etr_bits/./Core/Types.hpp:void etr::ass<etr::string_literal<30ul>{std::array<char, 30ul>{char [30]{(char)83, (char)105, (char)122, (char)101, (char)32, (char)104, (char)97, (char)115, (char)32, (char)116, (char)111, (char)32, (char)98, (char)101, (char)32, (char)108, (char)97, (char)114, (char)103, (char)101, (char)114, (char)32, (char)116, (char)104, (char)97, (char)110, (char)32, (char)48, (char)33}}}>(bool) (2x)
+            .             }
+            .             // signed integers (e.g., int, long long)
+            .             template <std::signed_integral I>
+            .             explicit SI(I n) {
+            .               ass<"Size has to be larger than 0!">(n >= 1);
+            .               using U = std::make_unsigned_t<I>;
+            .               const U un = static_cast<U>(n);
+            .               ass<"Requested size too large">(un <= static_cast<U>(std::numeric_limits<std::size_t>::max()));
+-- line 315 ----------------------------------------
+-- line 329 ----------------------------------------
+            .           
+            .           // 3. safe modulo which works for std::size_t --> used in preserved subsetting
+            .           inline std::size_t safe_modulo(std::size_t idx, std::size_t sz) {
+            .             return sz ? (idx % sz) : 0;  // no UB if n==0
+            .           }
+            .           
+            .           // 4. helper to loop over variadic templates 
+            .           // Used in preserved and simplified subsetting and in allocation::c
+       10,000 ( 0.00%)  template <class F, class... Args> inline F forEachArg(F f, Args &&...args) {
+       40,000 ( 0.00%)    (f(std::forward<Args>(args)), ...); return f;
+   36,315,574 ( 0.72%)  => /home/konrad/Documents/ast2ast/development/../inst/include/etr_bits/Subsetting/PreservingSubsetting.hpp:auto etr::fill_index_lists<2ul, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > const&, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > const&>(std::vector<unsigned long, std::allocator<unsigned long> > const&, std::array<etr::Buffer<etr::Integer, etr::LBufferTrait>, 2ul>&, std::array<std::variant<etr::Buffer<etr::Integer, etr::LBufferTrait> const*, etr::AxisStride>, 2ul>&, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > const&, etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > const&)::{lambda(auto:1 const&)#1}::operator()<etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > >(etr::Array<etr::Integer, etr::Buffer<etr::Integer, etr::LBufferTrait> > const&) const (10,000x)
+            .           }
+            .           
+            .           // 5. extract dimension from an array instance
+            .           // Used in subsetting and printing
+            .           template<typename Dim> auto&& dim_view(Dim& d) {
+            .             if constexpr (requires { d.get(); }) {
+            .               return d.get();
+            .             } else {
+-- line 346 ----------------------------------------
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: /usr/include/c++/13/bits/stl_vector.h
+--------------------------------------------------------------------------------
+Ir                   
+
+-- line 92 ----------------------------------------
+          .                 struct _Vector_impl_data
+          .                 {
+          .           	pointer _M_start;
+          .           	pointer _M_finish;
+          .           	pointer _M_end_of_storage;
+          .           
+          .           	_GLIBCXX20_CONSTEXPR
+          .           	_Vector_impl_data() _GLIBCXX_NOEXCEPT
+     40,022 ( 0.00%)  	: _M_start(), _M_finish(), _M_end_of_storage()
+          .           	{ }
+          .           
+          .           #if __cplusplus >= 201103L
+          .           	_GLIBCXX20_CONSTEXPR
+          .           	_Vector_impl_data(_Vector_impl_data&& __x) noexcept
+     50,000 ( 0.00%)  	: _M_start(__x._M_start), _M_finish(__x._M_finish),
+     45,000 ( 0.00%)  	  _M_end_of_storage(__x._M_end_of_storage)
+     15,000 ( 0.00%)  	{ __x._M_start = __x._M_finish = __x._M_end_of_storage = pointer(); }
+          .           #endif
+          .           
+          .           	_GLIBCXX20_CONSTEXPR
+          .           	void
+          .           	_M_copy_data(_Vector_impl_data const& __x) _GLIBCXX_NOEXCEPT
+          .           	{
+     10,000 ( 0.00%)  	  _M_start = __x._M_start;
+      5,000 ( 0.00%)  	  _M_finish = __x._M_finish;
+     10,000 ( 0.00%)  	  _M_end_of_storage = __x._M_end_of_storage;
+          .           	}
+          .           
+          .           	_GLIBCXX20_CONSTEXPR
+          .           	void
+          .           	_M_swap_data(_Vector_impl_data& __x) _GLIBCXX_NOEXCEPT
+          .           	{
+          .           	  // Do not use std::swap(_M_start, __x._M_start), etc as it loses
+          .           	  // information used by TBAA.
+-- line 125 ----------------------------------------
+-- line 359 ----------------------------------------
+          .           
+          .                 _GLIBCXX20_CONSTEXPR
+          .                 _Vector_base(const allocator_type& __a, _Vector_base&& __x)
+          .                 : _M_impl(_Tp_alloc_type(__a), std::move(__x._M_impl))
+          .                 { }
+          .           #endif
+          .           
+          .                 _GLIBCXX20_CONSTEXPR
+          2 ( 0.00%)        ~_Vector_base() _GLIBCXX_NOEXCEPT
+          .                 {
+          .           	_M_deallocate(_M_impl._M_start,
+     45,018 ( 0.00%)  		      _M_impl._M_end_of_storage - _M_impl._M_start);
+          .                 }
+          .           
+          .               public:
+          .                 _Vector_impl _M_impl;
+          .           
+          .                 _GLIBCXX20_CONSTEXPR
+          .                 pointer
+          .                 _M_allocate(size_t __n)
+          .                 {
+          .           	typedef __gnu_cxx::__alloc_traits<_Tp_alloc_type> _Tr;
+     15,000 ( 0.00%)  	return __n != 0 ? _Tr::allocate(_M_impl, __n) : pointer();
+          .                 }
+          .           
+          .                 _GLIBCXX20_CONSTEXPR
+          .                 void
+          .                 _M_deallocate(pointer __p, size_t __n)
+          .                 {
+          .           	typedef __gnu_cxx::__alloc_traits<_Tp_alloc_type> _Tr;
+     50,018 ( 0.00%)  	if (__p)
+          .           	  _Tr::deallocate(_M_impl, __p, __n);
+          .                 }
+          .           
+          .               protected:
+          .                 _GLIBCXX20_CONSTEXPR
+          .                 void
+          .                 _M_create_storage(size_t __n)
+          .                 {
+      5,005 ( 0.00%)  	this->_M_impl._M_start = this->_M_allocate(__n);
+          .           	this->_M_impl._M_finish = this->_M_impl._M_start;
+     15,008 ( 0.00%)  	this->_M_impl._M_end_of_storage = this->_M_impl._M_start + __n;
+          .                 }
+          .               };
+          .           
+          .             /**
+          .              *  @brief A standard container which offers fixed time access to
+          .              *  individual elements in any order.
+          .              *
+          .              *  @ingroup sequences
+-- line 408 ----------------------------------------
+-- line 597 ----------------------------------------
+          .                  *  The newly-created %vector uses a copy of the allocator object used
+          .                  *  by @a __x (unless the allocator traits dictate a different object).
+          .                  */
+          .                 _GLIBCXX20_CONSTEXPR
+          .                 vector(const vector& __x)
+          .                 : _Base(__x.size(),
+          .           	_Alloc_traits::_S_select_on_copy(__x._M_get_Tp_allocator()))
+          .                 {
+          2 ( 0.00%)  	this->_M_impl._M_finish =
+          .           	  std::__uninitialized_copy_a(__x.begin(), __x.end(),
+          .           				      this->_M_impl._M_start,
+          .           				      _M_get_Tp_allocator());
+          .                 }
+          .           
+          .           #if __cplusplus >= 201103L
+          .                 /**
+          .                  *  @brief  %Vector move constructor.
+-- line 613 ----------------------------------------
+-- line 730 ----------------------------------------
+          .                  *  responsibility.
+          .                  */
+          .                 _GLIBCXX20_CONSTEXPR
+          .                 ~vector() _GLIBCXX_NOEXCEPT
+          .                 {
+          .           	std::_Destroy(this->_M_impl._M_start, this->_M_impl._M_finish,
+          .           		      _M_get_Tp_allocator());
+          .           	_GLIBCXX_ASAN_ANNOTATE_BEFORE_DEALLOC;
+          7 ( 0.00%)        }
+        206 ( 0.00%)  => /usr/include/c++/13/bits/stl_vector.h:std::_Vector_base<unsigned long, std::allocator<unsigned long> >::~_Vector_base() (2x)
+          .           
+          .                 /**
+          .                  *  @brief  %Vector assignment operator.
+          .                  *  @param  __x  A %vector of identical element and allocator types.
+          .                  *
+          .                  *  All the elements of @a __x are copied, but any unused capacity in
+          .                  *  @a __x will not be copied.
+          .                  *
+-- line 746 ----------------------------------------
+-- line 985 ----------------------------------------
+          .                 { return const_reverse_iterator(begin()); }
+          .           #endif
+          .           
+          .                 // [23.2.4.2] capacity
+          .                 /**  Returns the number of elements in the %vector.  */
+          .                 _GLIBCXX_NODISCARD _GLIBCXX20_CONSTEXPR
+          .                 size_type
+          .                 size() const _GLIBCXX_NOEXCEPT
+192,180,005 ( 3.81%)        { return size_type(this->_M_impl._M_finish - this->_M_impl._M_start); }
+          .           
+          .                 /**  Returns the size() of the largest possible %vector.  */
+          .                 _GLIBCXX_NODISCARD _GLIBCXX20_CONSTEXPR
+          .                 size_type
+          .                 max_size() const _GLIBCXX_NOEXCEPT
+          .                 { return _S_max_size(_M_get_Tp_allocator()); }
+          .           
+          .           #if __cplusplus >= 201103L
+-- line 1001 ----------------------------------------
+-- line 1072 ----------------------------------------
+          .                 /**
+          .                  *  Returns the total number of elements that the %vector can
+          .                  *  hold before needing to allocate more memory.
+          .                  */
+          .                 _GLIBCXX_NODISCARD _GLIBCXX20_CONSTEXPR
+          .                 size_type
+          .                 capacity() const _GLIBCXX_NOEXCEPT
+          .                 { return size_type(this->_M_impl._M_end_of_storage
+     15,006 ( 0.00%)  			 - this->_M_impl._M_start); }
+          .           
+          .                 /**
+          .                  *  Returns true if the %vector is empty.  (Thus begin() would
+          .                  *  equal end().)
+          .                  */
+          .                 _GLIBCXX_NODISCARD _GLIBCXX20_CONSTEXPR
+          .                 bool
+          .                 empty() const _GLIBCXX_NOEXCEPT
+-- line 1088 ----------------------------------------
+-- line 1140 ----------------------------------------
+          .                  *  out_of_range lookups are not defined. (For checked lookups
+          .                  *  see at().)
+          .                  */
+          .                 _GLIBCXX_NODISCARD _GLIBCXX20_CONSTEXPR
+          .                 const_reference
+          .                 operator[](size_type __n) const _GLIBCXX_NOEXCEPT
+          .                 {
+          .           	__glibcxx_requires_subscript(__n);
+     20,000 ( 0.00%)  	return *(this->_M_impl._M_start + __n);
+          .                 }
+          .           
+          .               protected:
+          .                 /// Safety check used only from at().
+          .                 _GLIBCXX20_CONSTEXPR
+          .                 void
+          .                 _M_range_check(size_type __n) const
+          .                 {
+-- line 1156 ----------------------------------------
+-- line 1598 ----------------------------------------
+          .                  *  Erases all the elements.  Note that this function only erases the
+          .                  *  elements, and that if the elements themselves are pointers, the
+          .                  *  pointed-to memory is not touched in any way.  Managing the pointer is
+          .                  *  the user's responsibility.
+          .                  */
+          .                 _GLIBCXX20_CONSTEXPR
+          .                 void
+          .                 clear() _GLIBCXX_NOEXCEPT
+     10,000 ( 0.00%)        { _M_erase_at_end(this->_M_impl._M_start); }
+          .           
+          .               protected:
+          .                 /**
+          .                  *  Memory expansion handler.  Uses the member allocation function to
+          .                  *  obtain @a n bytes of memory, and then copies [first,last) into it.
+          .                  */
+          .                 template<typename _ForwardIterator>
+          .           	_GLIBCXX20_CONSTEXPR
+-- line 1614 ----------------------------------------
+-- line 1684 ----------------------------------------
+          .                 template<typename _ForwardIterator>
+          .           	_GLIBCXX20_CONSTEXPR
+          .           	void
+          .           	_M_range_initialize(_ForwardIterator __first, _ForwardIterator __last,
+          .           			    std::forward_iterator_tag)
+          .           	{
+          .           	  const size_type __n = std::distance(__first, __last);
+          .           	  this->_M_impl._M_start
+      5,000 ( 0.00%)  	    = this->_M_allocate(_S_check_init_len(__n, _M_get_Tp_allocator()));
+     10,000 ( 0.00%)  	  this->_M_impl._M_end_of_storage = this->_M_impl._M_start + __n;
+      5,000 ( 0.00%)  	  this->_M_impl._M_finish =
+          .           	    std::__uninitialized_copy_a(__first, __last,
+          .           					this->_M_impl._M_start,
+          .           					_M_get_Tp_allocator());
+          .           	}
+          .           
+          .                 // Called by the first initialize_dispatch above and by the
+          .                 // vector(n,value,a) constructor.
+          .                 _GLIBCXX20_CONSTEXPR
+          .                 void
+          .                 _M_fill_initialize(size_type __n, const value_type& __value)
+          .                 {
+      5,002 ( 0.00%)  	this->_M_impl._M_finish =
+          .           	  std::__uninitialized_fill_n_a(this->_M_impl._M_start, __n, __value,
+          .           					_M_get_Tp_allocator());
+          .                 }
+          .           
+          .           #if __cplusplus >= 201103L
+          .                 // Called by the vector(n) constructor.
+          .                 _GLIBCXX20_CONSTEXPR
+          .                 void
+-- line 1714 ----------------------------------------
+-- line 1901 ----------------------------------------
+          .           	const size_type __len = size() + (std::max)(size(), __n);
+          .           	return (__len < size() || __len > max_size()) ? max_size() : __len;
+          .                 }
+          .           
+          .                 // Called by constructors to check initial size.
+          .                 static _GLIBCXX20_CONSTEXPR size_type
+          .                 _S_check_init_len(size_type __n, const allocator_type& __a)
+          .                 {
+     30,000 ( 0.00%)  	if (__n > _S_max_size(_Tp_alloc_type(__a)))
+          .           	  __throw_length_error(
+          .           	      __N("cannot create std::vector larger than max_size()"));
+          .           	return __n;
+          .                 }
+          .           
+          .                 static _GLIBCXX20_CONSTEXPR size_type
+          .                 _S_max_size(const _Tp_alloc_type& __a) _GLIBCXX_NOEXCEPT
+          .                 {
+-- line 1917 ----------------------------------------
+-- line 1927 ----------------------------------------
+          .                 // Internal erase functions follow.
+          .           
+          .                 // Called by erase(q1,q2), clear(), resize(), _M_fill_assign,
+          .                 // _M_assign_aux.
+          .                 _GLIBCXX20_CONSTEXPR
+          .                 void
+          .                 _M_erase_at_end(pointer __pos) _GLIBCXX_NOEXCEPT
+          .                 {
+     20,000 ( 0.00%)  	if (size_type __n = this->_M_impl._M_finish - __pos)
+          .           	  {
+          .           	    std::_Destroy(__pos, this->_M_impl._M_finish,
+          .           			  _M_get_Tp_allocator());
+      5,000 ( 0.00%)  	    this->_M_impl._M_finish = __pos;
+          .           	    _GLIBCXX_ASAN_ANNOTATE_SHRINK(__n);
+          .           	  }
+          .                 }
+          .           
+          .                 _GLIBCXX20_CONSTEXPR
+          .                 iterator
+          .                 _M_erase(iterator __position);
+          .           
+-- line 1947 ----------------------------------------
+
+--------------------------------------------------------------------------------
+The following files chosen for auto-annotation could not be found:
+--------------------------------------------------------------------------------
+  ./string/../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S
+
+--------------------------------------------------------------------------------
+Ir                     
+--------------------------------------------------------------------------------
+4,840,581,212 (95.95%)  events annotated
+

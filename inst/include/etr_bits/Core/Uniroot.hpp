@@ -174,6 +174,7 @@ struct uniroot_result{
   etr::Double f_root;
   etr::Integer iter;
   etr::Double estim_prec;
+#ifndef STANDALONE_ETR
   explicit uniroot_result(SEXP arg) :
     root(etr::SEXP2Scalar<etr::Double>(etr::checked_elt(arg, "root", 4, "uniroot_result"))),
     f_root(etr::SEXP2Scalar<etr::Double>(etr::checked_elt(arg, "f_root", 4, "uniroot_result"))),
@@ -195,6 +196,7 @@ struct uniroot_result{
     UNPROTECT(2);
     return res;
   }
+#endif // !STANDALONE_ETR
   uniroot_result() = default;
   uniroot_result(const uniroot_result&) = default;
   uniroot_result(uniroot_result&&) noexcept = default;

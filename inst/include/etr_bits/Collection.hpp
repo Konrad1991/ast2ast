@@ -6,6 +6,15 @@
 namespace etr {
 
 #ifdef STANDALONE_ETR
+
+// Collection is SEXP-backed (element ctor/to_SEXP round-trip through R);
+// no standalone equivalent. Forward-declared only, and IsCollection is
+// always false, so call sites elsewhere that reference Collection<T>/
+// IsCollection<T> in a dead (if constexpr / requires) branch still parse --
+// the type itself is never actually usable in this build.
+template <typename T> class Collection;
+template <typename T> concept IsCollection = false;
+
 #else
 
 // A dynamic, homogeneous container of a single ast2ast custom (new_type)

@@ -2431,7 +2431,7 @@ function_registry_global$add(
     # inline fn: the arg is the fn_node; named fn: infer() cached it as internal_type
     f <- node$args[[1L]]
     if (!inherits(f, "fn_node")) f <- f$internal_type
-    if (!inherits(f, "fn_node")) return()
+    if (!inherits(f, "fn_node")) return() # TODO: we have to write here into node$error
     args_to_f <- f$args_f
     if (length(args_to_f) != 4L) {
       node$error <- "the function passed to cvode has to accept exactly 4 arguments (t, y, ydot, params)"
@@ -2463,6 +2463,8 @@ function_registry_global$add(
     if (inherits(ret_from_f, "pre_type_node") && ret_from_f$get_base_type() != "void") {
       node$error <- "the function passed to cvode must not return a value (it writes ydot in place)"
     }
+
+    # TODO: check the return value as well
   },
  group = "function_node", cpp_name = "a2a::cvode_solve", deriv_possible = FALSE,
  valid_fn_context = TRUE

@@ -42,8 +42,9 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
 
   template <typename OtherObj, typename DataTypeOtherObj>
   void copy_with_temp(const OtherObj& other_obj) {
-    temp.resize(other_obj.size());
-    for (std::size_t i = 0; i < other_obj.size(); i++) {
+    const std::size_t n = other_obj.size();
+    temp.resize(n);
+    for (std::size_t i = 0; i < n; i++) {
       if constexpr (IS<DataTypeOtherObj, T>) {
         temp.set(i, other_obj.get(i));
       } else {
@@ -312,8 +313,9 @@ template<typename T> requires (IsArithV<T> || IsReverseDouble<T>) struct Array<T
 
   template <typename OtherObj, typename DataTypeOtherObj>
   void copy_with_temp(const OtherObj& other_obj) {
-    temp.resize(other_obj.size());
-    for (std::size_t i = 0; i < other_obj.size(); i++) {
+    const std::size_t n = other_obj.size();
+    temp.resize(n);
+    for (std::size_t i = 0; i < n; i++) {
       if constexpr (IS<DataTypeOtherObj, T>) {
         temp.set(i, other_obj.get(i));
       } else {
@@ -325,9 +327,10 @@ template<typename T> requires (IsArithV<T> || IsReverseDouble<T>) struct Array<T
   void assign(const T2& other_obj) {
     using DataTypeOtherArray = typename ReRef<decltype(other_obj)>::type::value_type;
     copy_with_temp<T2, DataTypeOtherArray>(other_obj);
-    ass<"the borrowed region is too small for this assignment.">(other_obj.size() <= d.capacity);
-    d.resize(other_obj.size());
-    for (std::size_t i = 0; i < other_obj.size(); i++) {
+    const std::size_t n = other_obj.size();
+    ass<"the borrowed region is too small for this assignment.">(n <= d.capacity);
+    d.resize(n);
+    for (std::size_t i = 0; i < n; i++) {
       d.set(i, temp.get(i));
     }
   }
@@ -585,8 +588,9 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
 
   template <typename OtherObj, typename DataTypeOtherObj>
   void copy_with_temp(const OtherObj& other_obj) {
-    temp.resize(other_obj.size());
-    for (std::size_t i = 0; i < other_obj.size(); i++) {
+    const std::size_t n = other_obj.size();
+    temp.resize(n);
+    for (std::size_t i = 0; i < n; i++) {
       if constexpr (IS<DataTypeOtherObj, T>) {
         temp.set(i, other_obj.get(i));
       } else {
@@ -598,9 +602,10 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   void assign(const T2& other_obj) {
     using DataTypeOtherArray = typename ReRef<decltype(other_obj)>::type::value_type;
     copy_with_temp<T2, DataTypeOtherArray>(other_obj);
-    ass<"number of items to replace is not a multiple of replacement length">(other_obj.size() == d.size());
+    const std::size_t n = other_obj.size();
+    ass<"number of items to replace is not a multiple of replacement length">(n == d.size());
     // TODO: can I safely move temp and d?
-    for (std::size_t i = 0; i < other_obj.size(); i++) {
+    for (std::size_t i = 0; i < n; i++) {
       d.set(i, temp.get(i));
     }
   }

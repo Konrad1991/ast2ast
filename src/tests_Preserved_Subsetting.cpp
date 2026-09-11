@@ -1063,10 +1063,150 @@ void test_indices_preserved_subsetting() {
   }
 }
 
+void test_range_subsetting() {
+  auto reset = [&](Array<Integer, Buffer<Integer, LBufferTrait>>& vec) {
+    for (std::size_t i = 0; i < vec.size(); i++) {
+      vec.set(i, i + 1);
+    }
+  };
+
+  // Descending range (5:2).
+  {
+    Array<Integer, Buffer<Integer, LBufferTrait>> What(SI{5});
+    reset(What);
+    Array<Integer, Buffer<Integer, LBufferTrait>> idx(SI{4});
+    idx.set(0, 5); idx.set(1, 4); idx.set(2, 3); idx.set(3, 2);
+    std::vector<int> expected{5, 4, 3, 2};
+    std::vector<std::size_t> expected_dim{4};
+    compare_result_ints(subset(What, idx), expected, expected_dim);
+  }
+
+  // Repeated index (step 0), e.g. c(2,2,2).
+  {
+    Array<Integer, Buffer<Integer, LBufferTrait>> What(SI{5});
+    reset(What);
+    Array<Integer, Buffer<Integer, LBufferTrait>> idx(SI{3});
+    idx.set(0, 2); idx.set(1, 2); idx.set(2, 2);
+    std::vector<int> expected{2, 2, 2};
+    std::vector<std::size_t> expected_dim{3};
+    compare_result_ints(subset(What, idx), expected, expected_dim);
+  }
+
+  // Direct-alias L-value integer array covering the whole dimension
+  // (dim[counter] == arg.size(), the "no materialization" branch).
+  {
+    Array<Integer, Buffer<Integer, LBufferTrait>> What(SI{4});
+    reset(What);
+    Array<Integer, Buffer<Integer, LBufferTrait>> idx(SI{4});
+    idx.set(0, 1); idx.set(1, 2); idx.set(2, 3); idx.set(3, 4);
+    std::vector<int> expected{1, 2, 3, 4};
+    std::vector<std::size_t> expected_dim{4};
+    compare_result_ints(subset(What, idx), expected, expected_dim);
+  }
+
+  // Mixed: one range dimension, one irregular dimension.
+  {
+    std::vector<std::size_t> dim{4, 5};
+    Array<Integer, Buffer<Integer, LBufferTrait>> What(SI{20});
+    What.dim = dim;
+    reset(What);
+    Array<Integer, Buffer<Integer, LBufferTrait>> idx_rows(SI{3}); // 2:4
+    idx_rows.set(0, 2); idx_rows.set(1, 3); idx_rows.set(2, 4);
+    Array<Integer, Buffer<Integer, LBufferTrait>> idx_cols(SI{3}); // irregular
+    idx_cols.set(0, 1); idx_cols.set(1, 3); idx_cols.set(2, 2);
+    std::vector<int> expected{2, 3, 4, 10, 11, 12, 6, 7, 8};
+    std::vector<std::size_t> expected_dim{3, 3};
+    compare_result_ints(subset(What, idx_rows, idx_cols), expected, expected_dim);
+  }
+
+  // NA inside a range-like index array must still be caught.
+  {
+    Array<Integer, Buffer<Integer, LBufferTrait>> What(SI{5});
+    reset(What);
+    Array<Integer, Buffer<Integer, LBufferTrait>> idx(SI{3});
+    idx.set(0, 2); idx.set(1, Integer::NA()); idx.set(2, 4);
+    std::string err;
+    try {
+      subset(What, idx);
+    } catch (const std::exception& e) {
+      err = e.what();
+    }
+    ass<"NA in range-like index array">(
+      std::strcmp(err.c_str(), "Found NA value in subsetting (within an integer object)") == 0);
+  }
+
+  // Assignment through a 2-D range subset.
+  {
+    std::vector<std::size_t> dim{4, 5};
+    Array<Integer, Buffer<Integer, LBufferTrait>> What(SI{20});
+    What.dim = dim;
+    reset(What);
+    Array<Integer, Buffer<Integer, LBufferTrait>> idx_rows(SI{2}); // 2:3
+    idx_rows.set(0, 2); idx_rows.set(1, 3);
+    Array<Integer, Buffer<Integer, LBufferTrait>> idx_cols(SI{2}); // 1:2
+    idx_cols.set(0, 1); idx_cols.set(1, 2);
+    subset(What, idx_rows, idx_cols) = subset(What, idx_rows, idx_cols) + Integer(1000);
+    std::vector<int> expected{1002, 1003, 1006, 1007};
+    std::vector<std::size_t> expected_dim{2, 2};
+    compare_result_ints(subset(What, idx_rows, idx_cols), expected, expected_dim);
+  }
+
+  // ReverseDouble through a range subset: reading must resolve to the
+  // correct tape id (checked via deriv against the source variable), and
+  // assigning back through the view must rebind it at the right slot.
+  {
+    std::vector<std::size_t> dim{3, 3};
+    Array<ReverseDouble, Buffer<ReverseDouble, LBufferTrait>> What(SI{9});
+    What.dim = dim;
+    for (std::size_t i = 0; i < 9; i++) What.set(i, ReverseDouble::Var(static_cast<double>(i) + 1.0));
+
+    Array<Integer, Buffer<Integer, LBufferTrait>> idx_rows(SI{2}); // 1:2
+    idx_rows.set(0, 1); idx_rows.set(1, 2);
+    Array<Integer, Buffer<Integer, LBufferTrait>> idx_cols(SI{2}); // 2:3
+    idx_cols.set(0, 2); idx_cols.set(1, 3);
+
+    auto sub = subset(What, idx_rows, idx_cols);
+    auto expr = sub + ReverseDouble(2.0);
+
+    // Output (0,0) is row=1, col=2 -> flat 0-based offset 3 -> value 4.0.
+    auto t0 = expr.get(0);
+    ass<"ReverseDouble range subset value">(std::abs(get_val(t0) - 6.0) < 1e-9);
+    auto d0 = deriv(t0, What.get(3));
+    ass<"ReverseDouble range subset grad">(std::abs(get_val(d0.get(0)) - 1.0) < 1e-9);
+
+    subset(What, idx_rows, idx_cols) = expr;
+    ass<"ReverseDouble range subset assign rebinds">(std::abs(get_val(What.get(3)) - 6.0) < 1e-9);
+  }
+
+  // Subset-of-subset with a range outer layer.
+  {
+    std::vector<std::size_t> dim{5, 5};
+    Array<Integer, Buffer<Integer, LBufferTrait>> What(SI{25});
+    What.dim = dim;
+    reset(What);
+
+    Array<Integer, Buffer<Integer, LBufferTrait>> idx_rows(SI{3}); // 2:4
+    idx_rows.set(0, 2); idx_rows.set(1, 3); idx_rows.set(2, 4);
+    Array<Integer, Buffer<Integer, LBufferTrait>> idx_cols(SI{3}); // 2:4
+    idx_cols.set(0, 2); idx_cols.set(1, 3); idx_cols.set(2, 4);
+    auto outer = subset(What, idx_rows, idx_cols); // 3x3 range subset
+
+    Array<Integer, Buffer<Integer, LBufferTrait>> idx_inner(SI{2}); // 1:2 within the view
+    idx_inner.set(0, 1); idx_inner.set(1, 2);
+    auto inner = subset(outer, idx_inner, idx_inner);
+
+    // Picks original rows/cols {2,3}.
+    std::vector<int> expected{7, 8, 12, 13};
+    std::vector<std::size_t> expected_dim{2, 2};
+    compare_result_ints(inner, expected, expected_dim);
+  }
+}
+
 // [[Rcpp::export]]
 void test_preserved_subsetting() {
   test_all_types_usuable_preserved_subsetting();
   test_indices_preserved_subsetting();
+  test_range_subsetting();
 
   auto reset = [&](Array<Integer, Buffer<Integer, LBufferTrait>>& vec) {
     for (std::size_t i = 0; i < vec.size(); i++) {

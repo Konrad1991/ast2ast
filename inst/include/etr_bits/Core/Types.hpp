@@ -58,6 +58,7 @@ extern "C" void dgetrs_(const char* trans, const int* n, const int* nrhs,
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <functional>
 #include <numeric>
@@ -124,20 +125,99 @@ Instead R values are kept alive by storing them on the heap using ConstHolder
 -----------------------------------------------------------------------------------------------------------
 */
 template <class T> class ConstHolder {
-  std::shared_ptr<T> owned; // used only when constructed from rvalue
+  // Rvalue construction needs the referent to outlive this ConstHolder's own
+  // copies. For a trivially copyable T (a scalar) storing it inline and
+  // deep-copying on ConstHolder-copy is cheap and needs no allocation. For
+  // anything else (an owning/reference-wrapping type -- e.g. a Buffer moved
+  // in as an rvalue) a shared_ptr keeps ConstHolder-copies O(1) instead of
+  // duplicating the underlying data; its copy/move already do the right
+  // thing via the pointee's address staying constant across copies, unlike
+  // std::optional's.
+  std::optional<T> val;
+  std::shared_ptr<T> owned;
   const T* ptr = nullptr;
 
 public:
   ConstHolder(const T& ref) : ptr(&ref) {}
 
-  ConstHolder(T&& r) : owned(std::make_shared<T>(std::move(r))), ptr(owned.get()) {}
+  ConstHolder(T&& r) {
+    if constexpr (std::is_trivially_copyable_v<T>) {
+      val.emplace(std::move(r));
+      ptr = &val.value();
+    } else {
+      owned = std::make_shared<T>(std::move(r));
+      ptr = owned.get();
+    }
+  }
 
-  ConstHolder(const ConstHolder&) = default;
-  ConstHolder(ConstHolder&&) noexcept = default;
-  ConstHolder& operator=(const ConstHolder&) = default;
-  ConstHolder& operator=(ConstHolder&&) noexcept = default;
+  ConstHolder(const ConstHolder& other) {
+    if constexpr (std::is_trivially_copyable_v<T>) {
+      if (other.val.has_value()) {
+        val.emplace(*other.val);
+        ptr = &val.value();
+      } else {
+        ptr = other.ptr;
+      }
+    } else {
+      owned = other.owned;
+      ptr = other.ptr;
+    }
+  }
+  ConstHolder(ConstHolder&& other) noexcept {
+    if constexpr (std::is_trivially_copyable_v<T>) {
+      if (other.val.has_value()) {
+        val.emplace(std::move(*other.val));
+        ptr = &val.value();
+      } else {
+        ptr = other.ptr;
+      }
+    } else {
+      owned = std::move(other.owned);
+      ptr = other.ptr;
+    }
+  }
+  ConstHolder& operator=(const ConstHolder& other) {
+    if (this != &other) {
+      if constexpr (std::is_trivially_copyable_v<T>) {
+        if (other.val.has_value()) {
+          val.emplace(*other.val);
+          ptr = &val.value();
+        } else {
+          val.reset();
+          ptr = other.ptr;
+        }
+      } else {
+        owned = other.owned;
+        ptr = other.ptr;
+      }
+    }
+    return *this;
+  }
+  ConstHolder& operator=(ConstHolder&& other) noexcept {
+    if (this != &other) {
+      if constexpr (std::is_trivially_copyable_v<T>) {
+        if (other.val.has_value()) {
+          val.emplace(std::move(*other.val));
+          ptr = &val.value();
+        } else {
+          val.reset();
+          ptr = other.ptr;
+        }
+      } else {
+        owned = std::move(other.owned);
+        ptr = other.ptr;
+      }
+    }
+    return *this;
+  }
 
   const T& get() const { return *ptr; }
+
+  // Debug-only inspectors, not for production use -- confirm at runtime
+  // which storage path is active instead of assuming from reading the
+  // constructor branches.
+  bool debug_owns_via_shared_ptr() const { return static_cast<bool>(owned); }
+  bool debug_owns_via_inline_value() const { return val.has_value(); }
 };
 
 
@@ -468,7 +548,6 @@ struct OrTrait {
     return l || r;
   }
 };
-
 struct SinusTrait {
   template <typename L> static inline auto f(L a) { return sin(a); }
 };

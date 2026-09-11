@@ -4,7 +4,6 @@
 #ifndef STANDALONE_ETR
 #include <R_ext/Random.h>
 #include <Rmath.h>
-#endif
 
 namespace etr {
 
@@ -230,4 +229,6 @@ inline auto pso(
 }
 
 } // namespace etr
+
+#endif // !STANDALONE_ETR
 #endif

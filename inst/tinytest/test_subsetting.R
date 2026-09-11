@@ -312,3 +312,69 @@ g <- ast2ast::translate(function(x) {
 }, derivative = "reverse")
 xv <- c(-2.0, 3.0, -1.0, 4.0, 0.5)
 expect_equal(c(g(xv)), as.double(xv > 0))
+
+# =============================================================================
+# Range subsetting -- v[a:b], a range stored in a variable first,
+# descending ranges, and 2-D range x range / range x irregular. General
+# regression coverage for these shapes, independent of internal mechanism.
+# =============================================================================
+TU_range <- function(test) {
+  argtypes(
+    test |> type(int)
+  )
+  if (test == 1L) {
+    v <- c(1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
+    return(v[2L:4L])
+  } else if (test == 2L) {
+    v <- c(1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
+    idx <- 2L:4L
+    return(v[idx])
+  } else if (test == 3L) {
+    v <- c(1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
+    return(v[4L:2L])
+  } else if (test == 4L) {
+    M <- matrix(c(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0), 4L, 3L)
+    return(M[2L:3L, 1L:2L])
+  } else if (test == 5L) {
+    M <- matrix(c(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0), 4L, 3L)
+    ridx <- 2L:4L
+    cidx <- c(1L, 3L, 2L)
+    return(M[ridx, cidx])
+  } else {
+    return()
+  }
+}
+fcpp <- ast2ast::translate(TU_range)
+
+v0 <- c(1, 2, 3, 4, 5, 6)
+M0 <- matrix(c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12), 4, 3)
+
+expect_equal(c(fcpp(1L)), v0[2:4])
+expect_equal(c(fcpp(2L)), v0[2:4])
+expect_equal(c(fcpp(3L)), v0[4:2])
+expect_equal(fcpp(4L), M0[2:3, 1:2])
+expect_equal(fcpp(5L), M0[2:4, c(1, 3, 2)])
+
+# Assignment through a range.
+TU_range_assign <- function() {
+  v <- c(1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
+  v[2L:4L] <- c(-1.0, -2.0, -3.0)
+  return(v)
+}
+fcpp <- ast2ast::translate(TU_range_assign)
+r <- v0; r[2:4] <- c(-1, -2, -3)
+expect_equal(c(fcpp()), r)
+
+# Reverse-mode AD through a range stored in a variable: d/dx sum(x[idx])
+# is 1 at the selected positions, 0 elsewhere. Catches an offset bug in the
+# subset view's set() during backward accumulation, not just its get()
+# during the forward sum.
+g_range <- ast2ast::translate(function(x) {
+  idx <- 2L:4L
+  y <- sum(x[idx])
+  return(deriv(y, x))
+}, derivative = "reverse")
+xv2 <- c(10.0, 20.0, 30.0, 40.0, 50.0, 60.0)
+expected_grad <- rep(0, 6)
+expected_grad[2:4] <- 1
+expect_equal(c(g_range(xv2)), expected_grad)

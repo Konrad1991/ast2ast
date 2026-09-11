@@ -272,6 +272,9 @@ inline void fill_index_lists(const std::vector<std::size_t>& dim,
         }
         // --- Case 4: Array except LBuffer Integer or LBuffer Logical
         else if constexpr (IsArray<A>) {
+          // TODO: shouldn't that be splitted up based on the base type?
+          // because at least the error is misleading if the object
+          // is not holding doubles
           const std::size_t n = arg.size();
           auto& v = converted_arrays[counter_converted++];
           v.resize(n);

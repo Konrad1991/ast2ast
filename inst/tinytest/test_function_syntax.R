@@ -28,7 +28,7 @@ f <- function(a) {
   g <- function(x, y) {
     argtypes(
       x |> type(double),
-      y |> type(double)
+      y |> type(double) |> const()
     )
     returntype(double)
     s <- x + y
@@ -181,12 +181,12 @@ f <- function(a) {
   g <- function(x, y) {
     argtypes(
       x |> type(vec(double)) |> const(),
-      y |> type(mat(double)) |> ref()
+      y |> type(mat(double)) |> ref() |> const()
     )
     returntype(double)
     return(x[[1L]] + y[1L, 1L])
   }
-  return(g(a, a))
+  return(g(a, matrix(a, 2, 2)))
 }
 expect_true(
   is.character(ast2ast::translate(f, getsource = TRUE))
