@@ -7,44 +7,75 @@ namespace etr {
 // Holds subset positions as plain ints. No L/R buffer trait -- an index list is
 // never an expression-template operand. The primary template stays undefined,
 // so Buffer<T> with any other unspecialized T is a compile error.
+//
+// Raw-pointer storage (not std::vector<int>): the only real construction site
+// is create_indices's `out` buffer, which fully overwrites every slot in the
+// very next loop -- std::vector::resize/assign would zero-fill first for no
+// reason (a guarantee it can't skip), so `new int[n]` (genuinely
+// uninitialized for a built-in type) avoids that wasted write.
 template <> struct Buffer<int, LBufferTrait> {
 
   using value_type = int;
 
-  std::vector<int> data;
+  int* p = nullptr;
+  std::size_t sz = 0;
+  std::size_t capacity = 0;
   bool allocated = false;
 
-  std::size_t size() const noexcept { return allocated ? data.size() : 0; }
+  std::size_t size() const noexcept { return allocated ? sz : 0; }
+
+  void reset() noexcept { p = nullptr; sz = 0; capacity = 0; allocated = false; }
 
   Buffer() {}
-  Buffer(const Buffer& other) : data(other.data), allocated(other.allocated) {}
+  Buffer(const Buffer& other) : sz(other.sz), capacity(other.capacity), allocated(other.allocated) {
+    if (!allocated || capacity == 0) { reset(); return; }
+    p = new int[capacity];
+    std::copy_n(other.p, sz, p);
+  }
   Buffer(Buffer&& other) noexcept
-  : data(std::move(other.data)), allocated(other.allocated) { other.allocated = false; }
+  : p(std::exchange(other.p, nullptr)),
+    sz(std::exchange(other.sz, 0)),
+    capacity(std::exchange(other.capacity, 0)),
+    allocated(std::exchange(other.allocated, false)) {}
   Buffer& operator=(const Buffer& other) {
     if (this == &other) return *this;
-    data = other.data;
+    if (other.size() > capacity) {
+      delete[] p;
+      p = other.size() ? new int[other.size()] : nullptr;
+      capacity = other.size();
+    }
+    sz = other.size();
+    if (sz) std::copy_n(other.p, sz, p);
     allocated = other.allocated;
     return *this;
   }
   Buffer& operator=(Buffer&& other) noexcept {
     if (this == &other) return *this;
-    data = std::move(other.data);
-    allocated = other.allocated;
-    other.allocated = false;
+    swap(other);
     return *this;
   }
   Buffer(std::size_t sz_) { init(sz_); }
 
-  ~Buffer() { data.clear(); }
+  ~Buffer() { delete[] p; }
 
   void init(std::size_t size) {
     ass<"Size has to be larger than 0!">(size > 0);
-    data.assign(size, 0);
+    delete[] p;
+    p = new int[size];
+    sz = size;
+    capacity = size;
     allocated = true;
   }
 
   void resize(std::size_t newSize) {
-    data.resize(newSize);
+    if (newSize > capacity) {
+      int* new_p = new int[newSize];
+      std::copy_n(p, sz, new_p);
+      delete[] p;
+      p = new_p;
+      capacity = newSize;
+    }
+    sz = newSize;
     allocated = true;
   }
 
@@ -57,23 +88,29 @@ template <> struct Buffer<int, LBufferTrait> {
   value_type get(std::size_t idx) const {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < size());
-    return data[idx];
+    return p[idx];
   }
 
   void set(std::size_t idx, const value_type& val) {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < size());
-    data[idx] = val;
+    p[idx] = val;
   }
 
+  // Skip both checks -- for callers (e.g. the subsetting offset pipeline)
+  // that already proved idx is valid once, up front, for the whole buffer.
+  value_type get_unchecked(std::size_t idx) const { return p[idx]; }
+  void set_unchecked(std::size_t idx, const value_type& val) { p[idx] = val; }
+
   template <typename L2> void moveit(L2& other) {
-    data.swap(other.data);
-    std::swap(allocated, other.allocated);
+    swap(other);
     allocated = true;
   }
 
   void swap(Buffer& other) noexcept {
-    data.swap(other.data);
+    std::swap(p, other.p);
+    std::swap(sz, other.sz);
+    std::swap(capacity, other.capacity);
     std::swap(allocated, other.allocated);
   }
 
@@ -89,7 +126,15 @@ template <> struct Buffer<int, LBufferTrait> {
   auto end() const { return iterator(this, size()); }
 
   template <typename T> void push_back(T input) {
-    data.push_back(static_cast<int>(get_val(input)));
+    if (sz == capacity) {
+      const std::size_t new_cap = capacity == 0 ? 1 : capacity * 2;
+      int* new_p = new int[new_cap];
+      std::copy_n(p, sz, new_p);
+      delete[] p;
+      p = new_p;
+      capacity = new_cap;
+    }
+    p[sz++] = static_cast<int>(get_val(input));
     allocated = true;
   }
 };
@@ -187,6 +232,12 @@ template <typename BufferTrait> struct Buffer<ReverseDouble, BufferTrait> {
     ass<"Error: out of boundaries">(idx < size());
     data[idx] = val;
   }
+
+  // Skip both checks -- for callers that already proved idx is valid once,
+  // up front, for the whole buffer.
+  ReverseDouble& get_unchecked(std::size_t idx) { return data[idx]; }
+  const ReverseDouble& get_unchecked(std::size_t idx) const { return data[idx]; }
+  void set_unchecked(std::size_t idx, const ReverseDouble& val) { data[idx] = val; }
 
   template <typename L2> void moveit(L2& other) {
     data.swap(other.data);
@@ -384,6 +435,19 @@ struct SoABuffer {
   void set(std::size_t idx, const value_type& val) {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
+    p_val[idx] = val.val;
+    p_na[idx]  = val.is_na;
+  }
+
+  // Skip both checks -- for callers that already proved idx is valid once,
+  // up front, for the whole buffer.
+  value_type get_unchecked(std::size_t idx) const {
+    Scalar s;
+    s.val   = p_val[idx];
+    s.is_na = p_na[idx];
+    return s;
+  }
+  void set_unchecked(std::size_t idx, const value_type& val) {
     p_val[idx] = val.val;
     p_na[idx]  = val.is_na;
   }
@@ -759,6 +823,22 @@ struct Buffer<Dual, BufferTrait> {
     p_na[idx]     = val.is_na;
     p_na_dot[idx] = val.is_na_dot;
   }
+
+  // Skip both checks -- for callers that already proved idx is valid once,
+  // up front, for the whole buffer.
+  value_type get_unchecked(std::size_t idx) const {
+    Dual d(p_val[idx], p_dot[idx]);
+    d.is_na     = p_na[idx];
+    d.is_na_dot = p_na_dot[idx];
+    return d;
+  }
+  void set_unchecked(std::size_t idx, const value_type& val) {
+    p_val[idx]    = val.val;
+    p_dot[idx]    = val.dot;
+    p_na[idx]     = val.is_na;
+    p_na_dot[idx] = val.is_na_dot;
+  }
+
   void set_dot(std::size_t idx, const double& val_dot) {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);

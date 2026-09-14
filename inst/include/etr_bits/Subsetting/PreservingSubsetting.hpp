@@ -45,15 +45,20 @@ public:
   SubsetView(O&& obj_, Buffer<int>&& indices_) :
     obj(std::move(obj_)), indices(std::move(indices_)) {}
 
+  // indices.get(i) stays checked: i comes from whatever loop drives this
+  // view, not from create_indices. The offset it returns is unchecked
+  // against obj: create_indices already proved it's in bounds (same
+  // reasoning as R never re-checking the assembled offset it built from
+  // validated subscripts, see PreservingSubsetting.hpp's create_indices).
   auto get(std::size_t i) const {
-    return obj.get().get(indices.get(i));
+    return obj.get().get_unchecked(indices.get(i));
   }
   template<typename Val>
   void set(std::size_t i, const Val& v) const {
     if constexpr (IS<Decayed<Val>, value_type>) {
-      obj.get().set(indices.get(i), v);
+      obj.get().set_unchecked(indices.get(i), v);
     } else {
-      obj.get().set(indices.get(i), static_cast<value_type>(v));
+      obj.get().set_unchecked(indices.get(i), static_cast<value_type>(v));
     }
   }
   std::size_t size() const {return indices.size();}
@@ -97,7 +102,7 @@ public:
   ConstSubsetView(O&& obj_, Buffer<int>&& indices_) : obj(std::move(obj_)), indices(std::move(indices_)) {}
 
   auto get(std::size_t i) const {
-    return obj.get().get(indices.get().get(i));
+    return obj.get().get_unchecked(indices.get().get(i));
   }
   std::size_t size() const {return indices.get().size();}
 
@@ -177,13 +182,21 @@ inline std::vector<std::size_t> make_strides_dyn(const std::vector<std::size_t>&
   return stride;
 }
 
-inline std::vector<std::size_t> linear_dim_if_single_index(const std::vector<std::size_t>& dim, std::size_t nargs) {
+// Returns `dim` unchanged (by reference, no copy) unless a single index is
+// being used to linearly address a multi-dim array, which needs a
+// synthetic 1-element "total size" dim -- `storage` backs that one rare
+// case so the common case (nargs == dim.size(), true for plain vector and
+// matrix subsetting) allocates nothing.
+inline const std::vector<std::size_t>& linear_dim_if_single_index(
+    const std::vector<std::size_t>& dim, std::size_t nargs,
+    std::vector<std::size_t>& storage) {
   if (nargs == 1 && dim.size() > 1) {
     std::size_t total = 1;
     for (std::size_t d : dim) total *= d;
-    return std::vector<std::size_t>(1, total);
+    storage.assign(1, total);
+    return storage;
   }
-  return std::vector<std::size_t>(dim.begin(), dim.end());
+  return dim;
 }
 
 template<std::size_t N, typename O>
@@ -230,20 +243,12 @@ inline void fill_index_lists(const std::vector<std::size_t>& dim,
 
         using arg_val_type = typename ExtractDataType<A>::value_type;
         // --- Case 1.1: Array<Integer> (L value)
+        // arg.d is only ever read here, into a freshly-allocated `out` that
+        // outlives this call -- no aliasing hazard, so reference it directly
+        // regardless of length. NA is still caught by create_indices' own
+        // validation pass over index_lists.
         if constexpr (IsArray<A> && IsLBufferArray<A> && IsInteger<arg_val_type>) {
-          const std::size_t n = arg.size();
-          if (dim[counter] == arg.size()) {
-            index_lists[counter++] = &arg.d;
-          } else {
-            auto& v = converted_arrays[counter_converted++];
-            v.resize(n);
-            for (std::size_t i = 0; i < n; i++) {
-              const auto i_val = get_scalar_val(arg.get(i));
-              ass<"Found NA value in subsetting (within an integer object)">(!i_val.isNA());
-              v.set(i, i_val.val);
-            }
-            index_lists[counter++] = &v;
-          }
+          index_lists[counter++] = &arg.d;
         }
         // --- Case 2: Array<Logical>
         else if constexpr (IsArray<A> && IsLogical<arg_val_type>) {
@@ -322,7 +327,8 @@ struct out_L {
 template <typename ArrayType, typename... Args>
 inline out_L create_indices(const ArrayType& arr, const Args&... args) {
   constexpr std::size_t N = sizeof...(Args);
-  const std::vector<std::size_t> dim = linear_dim_if_single_index(dim_view(arr.get_dim()), N);
+  std::vector<std::size_t> dim_storage;
+  const std::vector<std::size_t>& dim = linear_dim_if_single_index(dim_view(arr.get_dim()), N, dim_storage);
   if (N > dim.size()) {
     ass<"Too many index arguments for array rank">(false);
   }
@@ -355,29 +361,60 @@ inline out_L create_indices(const ArrayType& arr, const Args&... args) {
 
   Buffer<int> out(S);
 
-  std::array<std::size_t, N> pos{};
-
-  std::size_t offset = 0;
-  std::size_t k = 0;
-  std::size_t counter = 0;
-  for (;;) {
-    offset = 1;
-    for (std::size_t k = 0; k < N; k++) {
-      const auto val = (*index_lists[k]).get(pos[k]);
+  // Validate each subscript ONCE, over its own L[k] values, instead of
+  // re-validating on every one of the S output elements. The hot loop
+  // below then reads raw values and needs no bounds/NA checks at all --
+  // every value it can see has already been proven valid here.
+  // Mirrors R's own range-check pass in ArraySubset(), src/main/subset.c
+  // (GNU R source, see ~/Documents/r-source).
+  std::array<const int*, N> vals{};
+  for (std::size_t k = 0; k < N; k++) {
+    for (std::size_t j = 0; j < L[k]; j++) {
+      const auto val = (*index_lists[k]).get(j);
       ass<"Found NA value in subsetting">(!val.isNA());
       ass<"Zero and negative indices are not supported">(val.val >= 1);
-      offset += (val.val - 1) * stride[k];
     }
-    out.set(counter++, offset - 1);
+    vals[k] = index_lists[k]->data();
+  }
 
-    k = 0;
+  // Matrix fast path: mirrors R's MatrixSubset() (src/main/subset.c) --
+  // the stride[1]-scaled term only changes once per outer (L[1]) step
+  // instead of being recomputed on every one of the S = L[0]*L[1]
+  // elements, like the general N-dim loop below still does.
+  if constexpr (N == 2) {
+    const int* v0 = vals[0];
+    const int* v1 = vals[1];
+    std::size_t counter = 0;
+    for (std::size_t j = 0; j < L[1]; j++) {
+      const std::size_t col_offset = 1 + (static_cast<std::size_t>(v1[j]) - 1) * stride[1];
+      for (std::size_t i = 0; i < L[0]; i++) {
+        const std::size_t offset = col_offset + (static_cast<std::size_t>(v0[i]) - 1) * stride[0];
+        out.set_unchecked(counter++, offset - 1);
+      }
+    }
+    return out_L{std::move(out), std::move(L)};
+  } else {
+    std::array<std::size_t, N> pos{};
+
+    std::size_t offset = 0;
+    std::size_t k = 0;
+    std::size_t counter = 0;
     for (;;) {
-      pos[k] += 1;
-      if (pos[k] < L[k]) break;
-      pos[k] = 0;
-      k++;
-      if (k == N) {
-        return out_L{std::move(out), std::move(L)};
+      offset = 1;
+      for (std::size_t k = 0; k < N; k++) {
+        offset += (static_cast<std::size_t>(vals[k][pos[k]]) - 1) * stride[k];
+      }
+      out.set_unchecked(counter++, offset - 1);
+
+      k = 0;
+      for (;;) {
+        pos[k] += 1;
+        if (pos[k] < L[k]) break;
+        pos[k] = 0;
+        k++;
+        if (k == N) {
+          return out_L{std::move(out), std::move(L)};
+        }
       }
     }
   }

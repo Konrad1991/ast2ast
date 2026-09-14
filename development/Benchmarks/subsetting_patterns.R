@@ -95,5 +95,5 @@ microbenchmark::microbenchmark(
   mat_irr_reg_a2a     = fcpp_mat(M0, i_irregular, j_regular, reps),
   mat_irr_irr_r       = mat_subset_r(M0, i_irregular, j_irregular, reps),
   mat_irr_irr_a2a     = fcpp_mat(M0, i_irregular, j_irregular, reps),
-  times = 20L
+  times = 100L
 )
