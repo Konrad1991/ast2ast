@@ -37,8 +37,9 @@ fct <- function() {
   jac <- seed(y, x)
   return(jac)
 }
-test_checks(fct, args_fct, TRUE, "etr::Double",
-"jac <- seed(y, x)\nFound seed within an expression: seed(y, x)"
+expect_error(
+  run_fr_checks(fct, args_fct, TRUE, "etr::Double"),
+  pattern = "Found seed within an expression"
 )
 fct <- function() {
   x <- c(1, 2)
@@ -46,8 +47,9 @@ fct <- function() {
   jac <- unseed(y, x)
   return(jac)
 }
-test_checks(fct, args_fct, TRUE, "etr::Double",
-"jac <- unseed(y, x)\nFound unseed within an expression: unseed(y, x)"
+expect_error(
+  run_fr_checks(fct, args_fct, TRUE, "etr::Double"),
+  pattern = "Found unseed within an expression"
 )
 fct <- function() {
   x <- c(1, 2)

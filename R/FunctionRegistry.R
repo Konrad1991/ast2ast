@@ -2699,16 +2699,17 @@ function_registry_global$add(
  group = "function_node", cpp_name = "etr::lbfgsb", valid_fn_context = TRUE
 )
 function_registry_global$add(
-  name = "pso", num_args = c(7, 8), arg_names = c(NA, NA, NA, NA, NA, NA, NA, NA),
+  name = "pso", num_args = c(8, 9), arg_names = c(NA, NA, NA, NA, NA, NA, NA, NA, NA),
   docu = paste0(
-    "pso(f, lower, upper, ngen, npop, error_threshold, global)\n",
-    "pso(f, lower, upper, ngen, npop, error_threshold, global, data)\n",
+    "pso(f, lower, upper, ngen, npop, error_threshold, global, seed)\n",
+    "pso(f, lower, upper, ngen, npop, error_threshold, global, seed, data)\n",
     "Particle-swarm optimisation (derivative-free). f: fn() taking a double ",
     "vector and returning a scalar double.\n",
     "lower/upper: scalar or length(npar) double (npar = length(lower)); ",
     "ngen/npop: scalar integer (>= 10 / >= 5); error_threshold: scalar double ",
     "(stop once the best error drops below it); global: scalar logical (use the ",
-    "global best instead of the neighbourhood best for the social pull).\n",
+    "global best instead of the neighbourhood best for the social pull); ",
+    "seed: scalar integer seeding pso's own Mersenne-Twister RNG.\n",
     "data is optional (any non-function, non-character value) and is passed to f ",
     "unchanged -- when given, f takes a second argument of that type.\n",
     "Returns the best parameter vector found."
@@ -2717,8 +2718,8 @@ function_registry_global$add(
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
     })
-    if (!(length(all_types) %in% c(7L, 8L))) {
-      return("pso expects 7 or 8 arguments")
+    if (!(length(all_types) %in% c(8L, 9L))) {
+      return("pso expects 8 or 9 arguments")
     }
     if (!inherits(all_types[[1L]], "fn_node")) {
       return("The first argument to pso has to be a function")
@@ -2751,13 +2752,16 @@ function_registry_global$add(
     if (!scalar_num(all_types[[7L]], c("logical", "bool"))) {
       return("The seventh argument (global) to pso has to be a scalar logical")
     }
-    if (length(node$args) == 8L) {
-      extra_type <- all_types[[8L]]
+    if (!scalar_num(all_types[[8L]], c("double", "integer", "int"))) {
+      return("The eighth argument (seed) to pso has to be a scalar integer")
+    }
+    if (length(node$args) == 9L) {
+      extra_type <- all_types[[9L]]
       if (inherits(extra_type, "fn_node")) {
-        return("The eighth argument to pso (extra data passed to the function) cannot itself be a function")
+        return("The ninth argument to pso (extra data passed to the function) cannot itself be a function")
       }
       if (inherits(extra_type, "pre_type_node") && extra_type$get_base_type() == "character") {
-        return("The eighth argument to pso (extra data passed to the function) cannot be a character/string")
+        return("The ninth argument to pso (extra data passed to the function) cannot be a character/string")
       }
     }
     t <- make_inferred_type("vector", "double", info_env$r_fct, info_env$real_type)
@@ -2771,7 +2775,7 @@ function_registry_global$add(
     if (!inherits(f, "fn_node")) return()
     args_to_f <- f$args_f
     ret_from_f <- f$return_type
-    has_extra <- length(node$args) == 8L
+    has_extra <- length(node$args) == 9L
     expected_n_args <- if (has_extra) 2L else 1L
     if (length(args_to_f) != expected_n_args) {
       node$error <- sprintf(
@@ -2792,7 +2796,7 @@ function_registry_global$add(
       node$error <- "the function passed to pso has to return a scalar double"
     }
     if (has_extra && length(args_to_f) == 2L) {
-      compare_types_passed_to_fn(node, args_to_f[[2L]], node$args[[8L]]$internal_type)
+      compare_types_passed_to_fn(node, args_to_f[[2L]], node$args[[9L]]$internal_type)
     }
   },
  group = "function_node", cpp_name = "etr::pso", deriv_possible = FALSE,

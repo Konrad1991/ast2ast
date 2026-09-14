@@ -61,6 +61,20 @@ public:
       obj.get().set_unchecked(indices.get(i), static_cast<value_type>(v));
     }
   }
+  // For when THIS SubsetView is itself nested inside another view/expression
+  // (e.g. subset-of-subset) -- the outer caller already proved i is in
+  // bounds, so skip indices' own check too, not just obj's.
+  auto get_unchecked(std::size_t i) const {
+    return obj.get().get_unchecked(indices.get_unchecked(i));
+  }
+  template<typename Val>
+  void set_unchecked(std::size_t i, const Val& v) const {
+    if constexpr (IS<Decayed<Val>, value_type>) {
+      obj.get().set_unchecked(indices.get_unchecked(i), v);
+    } else {
+      obj.get().set_unchecked(indices.get_unchecked(i), static_cast<value_type>(v));
+    }
+  }
   std::size_t size() const {return indices.size();}
 
   std::size_t translate(std::size_t i) const {
@@ -104,6 +118,9 @@ public:
   auto get(std::size_t i) const {
     return obj.get().get_unchecked(indices.get().get(i));
   }
+  auto get_unchecked(std::size_t i) const {
+    return obj.get().get_unchecked(indices.get().get_unchecked(i));
+  }
   std::size_t size() const {return indices.get().size();}
 
   // Copy constructor
@@ -142,6 +159,14 @@ template <typename O, typename Trait> struct SubsetWithScalarView {
       obj.get().set(index, v);
     } else {
       obj.get().set(index, static_cast<value_type>(v));
+    }
+  }
+  auto get_unchecked(std::size_t i) const { return obj.get().get_unchecked(index); }
+  template<typename Val> void set_unchecked(std::size_t i, const Val& v) const {
+    if constexpr (IS<Decayed<Val>, value_type>) {
+      obj.get().set_unchecked(index, v);
+    } else {
+      obj.get().set_unchecked(index, static_cast<value_type>(v));
     }
   }
   std::size_t size() const {return 1; }
@@ -232,7 +257,8 @@ inline void fill_scalars_in_index_lists(
 template<std::size_t N, typename... Args>
 inline void fill_index_lists(const std::vector<std::size_t>& dim,
                              std::array<Buffer<Integer>, N>& converted_arrays,
-                             std::array<const Buffer<Integer>*, N>& index_lists, Args&&... args) {
+                             std::array<const Buffer<Integer>*, N>& index_lists,
+                             std::array<bool, N>& is_plain_int_array, Args&&... args) {
   std::size_t counter = 0;
   std::size_t counter_converted = 0;
   forEachArg(
@@ -245,9 +271,16 @@ inline void fill_index_lists(const std::vector<std::size_t>& dim,
         // --- Case 1.1: Array<Integer> (L value)
         // arg.d is only ever read here, into a freshly-allocated `out` that
         // outlives this call -- no aliasing hazard, so reference it directly
-        // regardless of length. NA is still caught by create_indices' own
-        // validation pass over index_lists.
+        // regardless of length, no copy needed, no per-element check here
+        // either: a separate NA pass over it would be a genuinely new O(L[k])
+        // loop (measured ~20% slower on the hot vector-assign case), unlike
+        // every other branch below where the check just rides along with a
+        // conversion loop that has to happen anyway. is_plain_int_array[k]
+        // lets create_indices' own (already mandatory) validation pass pick
+        // the "integer object"-specific message for this axis instead,
+        // without a second pass.
         if constexpr (IsArray<A> && IsLBufferArray<A> && IsInteger<arg_val_type>) {
+          is_plain_int_array[counter] = true;
           index_lists[counter++] = &arg.d;
         }
         // --- Case 2: Array<Logical>
@@ -338,11 +371,13 @@ inline out_L create_indices(const ArrayType& arr, const Args&... args) {
 
   std::array<Buffer<Integer>, N> converted_arrays;
   std::array<const Buffer<Integer>*, N> index_lists{};
+  std::array<bool, N> is_plain_int_array{};
 
   fill_index_lists<N>(
     dim,
     converted_arrays,
     index_lists,
+    is_plain_int_array,
     args...
   );
 
@@ -366,13 +401,30 @@ inline out_L create_indices(const ArrayType& arr, const Args&... args) {
   // below then reads raw values and needs no bounds/NA checks at all --
   // every value it can see has already been proven valid here.
   // Mirrors R's own range-check pass in ArraySubset(), src/main/subset.c
-  // (GNU R source, see ~/Documents/r-source).
+  // (GNU R source, see ~/Documents/r-source). The is_plain_int_array
+  // branch (once per axis, not per element) picks a message specific to
+  // "integer object" for that case instead of paying for a second pass
+  // over it in fill_index_lists just to get a better message (measured:
+  // that costs ~20% on the hot vector-assign case).
   std::array<const int*, N> vals{};
   for (std::size_t k = 0; k < N; k++) {
-    for (std::size_t j = 0; j < L[k]; j++) {
-      const auto val = (*index_lists[k]).get(j);
-      ass<"Found NA value in subsetting">(!val.isNA());
-      ass<"Zero and negative indices are not supported">(val.val >= 1);
+    // Upper bound too, not just NA/negative: get_unchecked/set_unchecked
+    // below trust this pass completely, so it's the only place left that
+    // can catch an index past dim[k].
+    if (is_plain_int_array[k]) {
+      for (std::size_t j = 0; j < L[k]; j++) {
+        const auto val = (*index_lists[k]).get(j);
+        ass<"Found NA value in subsetting (within an integer object)">(!val.isNA());
+        ass<"Zero and negative indices are not supported">(val.val >= 1);
+        ass<"Error: out of boundaries">(static_cast<std::size_t>(val.val) <= dim[k]);
+      }
+    } else {
+      for (std::size_t j = 0; j < L[k]; j++) {
+        const auto val = (*index_lists[k]).get(j);
+        ass<"Found NA value in subsetting">(!val.isNA());
+        ass<"Zero and negative indices are not supported">(val.val >= 1);
+        ass<"Error: out of boundaries">(static_cast<std::size_t>(val.val) <= dim[k]);
+      }
     }
     vals[k] = index_lists[k]->data();
   }
@@ -418,6 +470,145 @@ inline out_L create_indices(const ArrayType& arr, const Args&... args) {
       }
     }
   }
+}
+
+// Fused assignment: `arr[args...] <- rhs`. Unlike `subset(arr, args...) =
+// rhs` (which builds a SubsetView backed by a materialized `out` offset
+// buffer, then a separate pass copies through it), this computes each
+// offset and writes straight into `arr` in the SAME pass -- no `out` buffer
+// at all, mirroring R's fused subassign.c.
+//
+// `rhs` comes right after `arr` (not last, alongside args...) because a
+// template parameter pack can only be deduced when nothing follows it in
+// the function's parameter list.
+//
+// `rhs` is still fully materialized into `temp` first, matching
+// Array<T,SubsetView<...>>::assign()'s copy_with_temp: until alias
+// detection is added at the codegen level (planned separately, checking
+// whether `arr` occurs in `rhs` or in `args...`), this stays required for
+// correctness -- `x[idx] <- x[idx] + 1` must read the unmodified `x`
+// throughout, even when `idx` has duplicates.
+template <typename ArrayType, typename RHS, typename... Args>
+inline void subset_assign(ArrayType& arr, const RHS& rhs, const Args&... args) {
+  using E = typename ExtractDataType<ArrayType>::value_type;
+  constexpr std::size_t N = sizeof...(Args);
+
+  std::vector<std::size_t> dim_storage;
+  const std::vector<std::size_t>& dim = linear_dim_if_single_index(dim_view(arr.get_dim()), N, dim_storage);
+  if (N > dim.size()) {
+    ass<"Too many index arguments for array rank">(false);
+  }
+  if (N < dim.size()) {
+    ass<"Too less index arguments for array rank">(false);
+  }
+
+  std::array<Buffer<Integer>, N> converted_arrays;
+  std::array<const Buffer<Integer>*, N> index_lists{};
+  std::array<bool, N> is_plain_int_array{};
+  fill_index_lists<N>(dim, converted_arrays, index_lists, is_plain_int_array, args...);
+
+  std::array<std::size_t, N> L{};
+  for (std::size_t k = 0; k < N; k++) {
+    if (!index_lists[k] || (index_lists[k]->size() == 0)) {
+      ass<"Empty index for at least one dimension">(false);
+    }
+    L[k] = index_lists[k]->size();
+  }
+
+  auto stride = make_strides_from_vec<N>(dim);
+
+  std::size_t S = 1;
+  for (std::size_t k = 0; k < N; k++) S *= L[k];
+
+  // Validate each subscript ONCE, same as create_indices -- see its comment
+  // for why the write loop below then needs no bounds/NA checks, and for
+  // why is_plain_int_array picks the message per-axis instead of per-element.
+  std::array<const int*, N> vals{};
+  for (std::size_t k = 0; k < N; k++) {
+    if (is_plain_int_array[k]) {
+      for (std::size_t j = 0; j < L[k]; j++) {
+        const auto val = (*index_lists[k]).get(j);
+        ass<"Found NA value in subsetting (within an integer object)">(!val.isNA());
+        ass<"Zero and negative indices are not supported">(val.val >= 1);
+      }
+    } else {
+      for (std::size_t j = 0; j < L[k]; j++) {
+        const auto val = (*index_lists[k]).get(j);
+        ass<"Found NA value in subsetting">(!val.isNA());
+        ass<"Zero and negative indices are not supported">(val.val >= 1);
+      }
+    }
+    vals[k] = index_lists[k]->data();
+  }
+
+  Buffer<E> temp(S);
+  // Scalar RHS (e.g. `x[idx] <- 0.0`) broadcasts one value into every
+  // selected element -- mirrors Array<T,SubsetView<...>>::operator=(scalar)
+  // (ArrayClass.hpp), which has no `.size()`/`.get(i)` to call at all.
+  if constexpr (IsScalarLike<RHS>) {
+    if constexpr (IS<RHS, E>) {
+      for (std::size_t i = 0; i < S; i++) temp.set(i, rhs);
+    } else {
+      const E val = static_cast<E>(rhs);
+      for (std::size_t i = 0; i < S; i++) temp.set(i, val);
+    }
+  } else {
+    ass<"number of items to replace is not a multiple of replacement length">(rhs.size() == S);
+    using RhsValueType = typename ReRef<RHS>::type::value_type;
+    for (std::size_t i = 0; i < S; i++) {
+      if constexpr (IS<RhsValueType, E>) {
+        temp.set(i, rhs.get(i));
+      } else {
+        temp.set(i, cast_preserve_na<E>(rhs.get(i)));
+      }
+    }
+  }
+
+  if constexpr (N == 2) {
+    const int* v0 = vals[0];
+    const int* v1 = vals[1];
+    std::size_t counter = 0;
+    for (std::size_t j = 0; j < L[1]; j++) {
+      const std::size_t col_offset = 1 + (static_cast<std::size_t>(v1[j]) - 1) * stride[1];
+      for (std::size_t i = 0; i < L[0]; i++) {
+        const std::size_t offset = col_offset + (static_cast<std::size_t>(v0[i]) - 1) * stride[0];
+        arr.d.set_unchecked(offset - 1, temp.get_unchecked(counter++));
+      }
+    }
+  } else {
+    std::array<std::size_t, N> pos{};
+    std::size_t counter = 0;
+    for (;;) {
+      std::size_t offset = 1;
+      for (std::size_t k = 0; k < N; k++) {
+        offset += (static_cast<std::size_t>(vals[k][pos[k]]) - 1) * stride[k];
+      }
+      arr.d.set_unchecked(offset - 1, temp.get_unchecked(counter++));
+
+      std::size_t k = 0;
+      for (;;) {
+        pos[k] += 1;
+        if (pos[k] < L[k]) break;
+        pos[k] = 0;
+        k++;
+        if (k == N) {
+          return;
+        }
+      }
+    }
+  }
+}
+
+// Fast path: `arr[scalars...] <- rhs`. Mirrors subset()'s AllScalarIndices
+// overload below -- skips subset_assign's index-list/temp-buffer machinery
+// entirely for a single at()-Ref write. ReverseDouble stays on the general
+// path for the same reason subset() excludes it: its write must rebind the
+// tape id via Buffer::set, which at()'s by-value return can't do.
+template <typename ArrayType, typename RHS, typename... Args>
+requires AllScalarIndices<Args...> &&
+         (!IsReverseDouble<typename ExtractDataType<ArrayType>::value_type>)
+inline void subset_assign(ArrayType& arr, const RHS& rhs, const Args&... args) {
+  at(arr, args...) = rhs;
 }
 
 // Create mutable subset
@@ -466,19 +657,28 @@ inline auto subset(ArrayType&& arr, const Args&... args) {
   );
 }
 
-// Create constant subset
+// Create constant subset -- materializes into a flat, owned buffer instead
+// of a ConstSubsetView, matching R's own `[` (always a copy, never aliases
+// the source). This also sidesteps what ConstSubsetView did here: `arr` is
+// a const reference (that's why this overload, not the mutable one above,
+// got picked), so `std::move(arr.d)` couldn't actually move -- it silently
+// copy-constructed a whole extra `arr.d`-sized Buffer just to wrap it in a
+// view over S elements. Gathering only the S selected elements directly is
+// strictly less copying, and leaves later reads as flat/contiguous instead
+// of index-indirected, which is what actually lets them vectorize.
 // ------------------------------------------------------------------
 template <typename ArrayType, typename... Args> requires (!IsSubsetArray<std::remove_reference_t<ArrayType>>) && HasNonScalarIndex<Args...>
 inline auto subset(ArrayType&& arr, const Args&... args) {
   using E = typename ExtractDataType<ArrayType>::value_type;
-  using DTYPE = Decayed<decltype(arr.d)>;
-  constexpr std::size_t N = sizeof...(Args);
 
   auto ol = create_indices(arr, args...);
-  return Array<E, ConstSubsetView<DTYPE, N, ConstSubsetViewTrait>>(
-    ConstSubsetView<DTYPE, N, ConstSubsetViewTrait>{std::move(arr.d), std::move(ol.out)},
-    std::move(ol.L)
-  );
+  const std::size_t S = ol.out.size();
+  Array<E, Buffer<E, RBufferTrait>> res(SI{S});
+  res.dim = std::move(ol.L);
+  for (std::size_t i = 0; i < S; i++) {
+    res.set(i, arr.d.get_unchecked(ol.out.get_unchecked(i)));
+  }
+  return res;
 }
 
 } // namespace etr

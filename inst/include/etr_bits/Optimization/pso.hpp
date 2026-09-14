@@ -1,9 +1,7 @@
 #ifndef PSO_ETR_HPP
 #define PSO_ETR_HPP
 
-#ifndef STANDALONE_ETR
-#include <R_ext/Random.h>
-#include <Rmath.h>
+#include "MersenneTwister.hpp"
 
 namespace etr {
 
@@ -32,13 +30,13 @@ template<typename T> inline auto extract_scalars(const T& obj) {
 
 } // end pso_internally
 
-template<typename F, typename Arg1, typename Arg2, typename Arg3, typename Arg4, typename Arg5, typename Arg6>
+template<typename F, typename Arg1, typename Arg2, typename Arg3, typename Arg4, typename Arg5, typename Arg6, typename Arg7>
 inline auto pso(
   const F& f,
   const Arg1& lb_, const Arg2& ub_,
   const Arg3& ngen_, const Arg4 npop_,
   const Arg5 error_threshold_,
-  const Arg6& global_) {
+  const Arg6& global_, const Arg7& seed_) {
   using R = return_type_t<F>;
   Array<R, Buffer<R>> lb = pso_internally::extract_boundaries(lb_);
   Array<R, Buffer<R>> ub = pso_internally::extract_boundaries(ub_);
@@ -49,6 +47,7 @@ inline auto pso(
   const std::size_t npar_t = static_cast<std::size_t>(get_val(npar));
   Double error_threshold = pso_internally::extract_scalars(error_threshold_);
   Logical  global= pso_internally::extract_scalars(global_);
+  Integer seed = pso_internally::extract_scalars(seed_);
   ass<"Length mismatch of lower and upper boundary">(lb.size() == ub.size());
   ass<"the boundaries have to have at least one value">(lb.size() >= 1);
   for (std::size_t i = 0; i < lb.size(); i++) {
@@ -72,13 +71,11 @@ inline auto pso(
   const Double w_max = Double(0.9);
   const Double w_min = Double(0.4);
 
-  const auto runif = [](const double l, const double u) { return Rf_runif(l, u); };
-
-  GetRNGstate();
+  MersenneTwister rng(get_val(seed));
 
   for (std::size_t i = 0; i < npop_t; i++) {
     for (std::size_t j = 0; j < npar_t; j++) {
-      swarm.set(i*npar_t + j, runif(get_val(lb.get(j)), get_val(ub.get(j))));
+      swarm.set(i*npar_t + j, rng.runif(get_val(lb.get(j)), get_val(ub.get(j))));
     }
     Array<R, Borrow<R, BorrowTrait>> particle(
       &swarm.d.p_val[i * npar_t], npar_t, std::vector<std::size_t>{npar_t}
@@ -104,13 +101,11 @@ inline auto pso(
   const auto calc_neighberhood = [&]() {
     for (std::size_t c = 0; c < npop_t; c++) {
       for (std::size_t r = 0; r < k_t; r++) neighberhood.set(c * k_t + r, Integer(-1));
-      const std::size_t nn =
-        static_cast<std::size_t>(R_unif_index(static_cast<double>(k_t))) + 1;
+      const std::size_t nn = rng.unif_index(k_t) + 1;
       std::iota(pool.begin(), pool.end(), 0);
       std::size_t remaining = npop_t;
       for (std::size_t r = 0; r < nn; r++) {
-        const std::size_t pick =
-          static_cast<std::size_t>(R_unif_index(static_cast<double>(remaining)));
+        const std::size_t pick = rng.unif_index(remaining);
         neighberhood.set(c * k_t + r, Integer(pool[pick]));
         pool[pick] = pool[--remaining];
       }
@@ -173,8 +168,8 @@ inline auto pso(
         ? static_cast<std::size_t>(get_val(global_best)) : best_nb;
       const double* social_pos = &swarm.d.p_val[social * npar_t];
 
-      const double r1 = unif_rand();
-      const double r2 = unif_rand();
+      const double r1 = rng.runif();
+      const double r2 = rng.runif();
       for (std::size_t d = 0; d < npar_t; d++) {
         vel[d] = get_val(w) * vel[d]
                + cog * r1 * (pbest[d]      - pos[d])
@@ -208,7 +203,6 @@ inline auto pso(
     if (static_cast<bool>(global_best_error < error_threshold)) break;
   }
 
-  PutRNGstate();
   return global_best_vec;
 }
 
@@ -216,19 +210,18 @@ inline auto pso(
 // and reuse the implementation above -- keeping return_type_t on a concrete
 // std::function rather than a generic lambda.
 template<typename S, typename A, typename D, typename Arg1, typename Arg2,
-         typename Arg3, typename Arg4, typename Arg5, typename Arg6, typename DArg>
+         typename Arg3, typename Arg4, typename Arg5, typename Arg6, typename Arg7, typename DArg>
 inline auto pso(
   const std::function<S(A, D)>& f,
   const Arg1& lb_, const Arg2& ub_,
   const Arg3& ngen_, const Arg4& npop_,
   const Arg5& error_threshold_,
-  const Arg6& global_, const DArg& data) {
+  const Arg6& global_, const Arg7& seed_, const DArg& data) {
   std::function<S(A)> wrapped =
     [&f, &data](const A& particle) -> S { return f(particle, data); };
-  return pso(wrapped, lb_, ub_, ngen_, npop_, error_threshold_, global_);
+  return pso(wrapped, lb_, ub_, ngen_, npop_, error_threshold_, global_, seed_);
 }
 
 } // namespace etr
 
-#endif // !STANDALONE_ETR
 #endif

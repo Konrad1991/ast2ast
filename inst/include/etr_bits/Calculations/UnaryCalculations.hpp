@@ -50,6 +50,12 @@ template <typename I, typename UTrait> struct UnaryOperation {
   auto get(std::size_t i) const {
     return Trait::f(obj.get().get(i));
   }
+  // For when this UnaryOperation is itself nested inside another view/
+  // expression (e.g. subset-of-subset) whose caller already proved i is
+  // in bounds.
+  auto get_unchecked(std::size_t i) const {
+    return Trait::f(obj.get().get_unchecked(i));
+  }
   template<typename V> void set(std::size_t i, const V& val) = delete;
 
   std::size_t size() const {

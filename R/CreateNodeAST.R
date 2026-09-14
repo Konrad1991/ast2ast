@@ -237,6 +237,15 @@ infer_types <- function(ast, f, f_args, r_fct, real_type, function_registry, kno
   if (err_found(line)) {
     stop(line)
   }
+  # a variable only ever read, never assigned, stays unknown_type here; catch it
+  # now with the same message type_checking()'s type_list_checks() would give
+  # later -- but before callers poke at unknown_type's non-existent/locked
+  # real_type field. Only the unknown_type half of type_list_checks() applies
+  # here: the NA/NaN/Inf base-type check needs later passes to have run first.
+  unresolved <- names(env$vars_list)[vapply(env$vars_list, inherits, logical(1), "unknown_type")]
+  if (length(unresolved)) {
+    stop(sprintf("Found uninitialized variable: %s", unresolved[[1L]]))
+  }
   return(env$vars_list)
 }
 

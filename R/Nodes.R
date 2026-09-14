@@ -158,6 +158,25 @@ binary_node <- R6::R6Class(
         ")"
       )
     },
+    # `arr[idx...] <- rhs`. By this point action_translate has already
+    # rewritten "[" to its cpp_name ("etr::subset"), and arity decides the
+    # left_node's shape: a single index is a binary_node (left_node/
+    # right_node), two or more is a function_node (args[[1]] is the array,
+    # args[-1] the indices) -- see create_ast in CreateNodeAST.R.
+    create_subset_assign_string = function(indent = "") {
+      left <- self$left_node
+      if (inherits(left, "function_node")) {
+        arr_str <- left$args[[1]]$stringify()
+        idx_strs <- vapply(left$args[-1], function(a) a$stringify(), character(1))
+      } else {
+        arr_str <- left$left_node$stringify()
+        idx_strs <- left$right_node$stringify()
+      }
+      paste0(
+        indent, "etr::subset_assign(", arr_str, ", ", self$right_node$stringify(), ", ",
+        paste(idx_strs, collapse = ", "), ")"
+      )
+    },
     stringify = function(indent = "") {
       ret <- ""
       if (self$operator == "type" && self$remove_type_decl) {
@@ -167,6 +186,10 @@ binary_node <- R6::R6Class(
         ret <- paste0(indent, self$string_left())
       } else if (self$operator %in% c("<-", "=") && inherits(self$right_node, "fn_node")) {
         return(self$create_infix_string(indent))
+      } else if (self$operator %in% c("<-", "=") &&
+                 inherits(self$left_node, c("binary_node", "function_node")) &&
+                 self$left_node$operator == "etr::subset") {
+        ret <- self$create_subset_assign_string(indent)
       } else if (self$operator %in% c("[", "[[")) {
         ret <- self$create_r_subsetting_string(indent)
       } else if (self$is_infix && !(self$operator %in% not_infix_in_cpp)) {

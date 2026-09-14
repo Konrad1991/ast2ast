@@ -38,9 +38,9 @@ f3 <- function(a) {
   return(a)
 }
 
- fcpp <- ast2ast::translate(f1, verbose = TRUE)
- fcpp2 <- ast2ast::translate(f2, verbose = TRUE)
- fcpp3 <- ast2ast::translate(f3, verbose = TRUE)
+ fcpp <- ast2ast::translate(f1)
+ fcpp2 <- ast2ast::translate(f2)
+ fcpp3 <- ast2ast::translate(f3)
  a <- runif(1000)
  microbenchmark::microbenchmark(
    f1(a), f2(a), fcpp(a), fcpp2(a), fcpp3(a)
@@ -54,12 +54,12 @@ convolve <- function(a, b) {
   ab <- numeric(length(a) + length(b) - 1)
   for (i in 1L:length(a)) {
     for (j in 1L:length(b)) {
-      ab[i+j-1] <- ab[i+j-1] + a[i] * b[j]
+      ab[[i+j-1]] <- ab[i+j-1] + a[i] * b[j]
     }
   }
   return(ab)
 }
-convolve_cpp1 <- ast2ast::translate(convolve, verbose = TRUE)
+convolve_cpp1 <- ast2ast::translate(convolve)
 convolve2 <- function(a, b) {
   ab <- numeric(length(a) + length(b) - 1L)
   i |> type(int) <- 1L
@@ -74,21 +74,26 @@ convolve2 <- function(a, b) {
   }
   return(ab)
 }
-convolve_cpp2 <- ast2ast::translate(convolve2, verbose = TRUE)
+convolve_cpp2 <- ast2ast::translate(convolve2)
+
 convolve3 <- function(a, b) {
+  argtypes(
+    a |> type(borrow_vec(double)),
+    b |> type(borrow_vec(double))
+  )
   ab <- numeric(length(a) + length(b) - 1L)
   for (i in seq_len(length(a))) {
     for (j in seq_len(length(b))) {
-      ab[i+j-1L] <- ab[i+j-1L] + a[i] * b[j]
+      ab[[i+j-1L]] <- ab[i+j-1L] + a[i] * b[j]
+      # TODO: by adding subset_assign
+      # using a[i+j-1L] results in subset_assign
+      # which is in this case significantly slower
+      # than [[]]
     }
   }
   return(ab)
 }
-f_args <- function(a, b) {
-  a |> type(vec(double)) |> ref()
-  b |> type(vec(double)) |> ref()
-}
-convolve_cpp3 <- ast2ast::translate(convolve3, f_args, verbose = TRUE)
+convolve_cpp3 <- ast2ast::translate(convolve3, verbose = TRUE)
 
 convolve_c <- inline::cfunction(
   sig = c(a = "SEXP", b = "SEXP"), body = r"({
@@ -113,7 +118,8 @@ a <- runif (100000)
 b <- runif (100)
 microbenchmark::microbenchmark(
   convolve(a, b),
-  convolve_cpp1(a, b), convolve_cpp2(a, b), convolve_cpp3(a, b),
+  convolve_cpp1(a, b), convolve_cpp2(a, b),
+  convolve_cpp3(a, b),
   convolve_c(a, b),
   times = 10
 )

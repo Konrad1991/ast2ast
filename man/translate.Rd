@@ -181,9 +181,10 @@ translate(
         the gradient is exact (via \code{jacobian}); otherwise it is a
         central-difference approximation. Returns a struct with \code{$par},
         \code{$value}, \code{$convergence}, \code{$counts}.
-      \item \code{pso(f, lower, upper, ngen, npop, error_threshold, global[, data])}:
+      \item \code{pso(f, lower, upper, ngen, npop, error_threshold, global, seed[, data])}:
         derivative-free particle-swarm optimisation. \code{f} maps a double
-        vector to a scalar double; returns the best parameter vector found.
+        vector to a scalar double; \code{seed} seeds pso's own Mersenne-Twister
+        RNG; returns the best parameter vector found.
     }
     For \code{lbfgsb} and \code{pso} the optional trailing \code{data} argument
     (any non-function, non-character value) is passed to \code{f} unchanged as a

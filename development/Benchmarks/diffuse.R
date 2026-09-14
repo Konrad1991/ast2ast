@@ -71,16 +71,13 @@ diffuse_heat_a2a <- function(nx, ny, dx, dy, dt, k, steps) {
       k |> type(double) |> ref()
     )
     returntype(void)
-
     temp_new <- temp
     i <- 2L:(nx - 1L)
     j <- 2L:(ny - 1L)
-    laplacian <- 1
     laplacian <-
       (temp[i + 1L, j] - 2 * temp[i, j] + temp[i - 1L, j]) / dx ^ 2 +
         (temp[i, j + 1L] - 2 * temp[i, j] + temp[i, j - 1L]) / dy ^ 2
-    temp_new[i, j] <- temp[i, j] + k * dt * laplacian
-    temp <- temp_new
+    temp[i, j] <- temp[i, j] + k * dt * laplacian
   }
   for (step in seq_len(steps)) {
     apply_boundary_conditions(temp, nx, ny)

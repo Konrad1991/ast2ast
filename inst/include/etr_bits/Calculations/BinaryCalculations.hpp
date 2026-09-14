@@ -89,6 +89,22 @@ template <typename L, typename R, typename BTrait> struct BinaryOperation {
       return Trait::f(l.get(), r.get());
     }
   }
+  // For when this BinaryOperation is itself nested inside another view/
+  // expression (e.g. subset-of-subset) whose caller already proved i is
+  // in bounds.
+  auto get_unchecked(std::size_t i) const {
+    constexpr bool is_scalar_l = IsScalarLike<L>;
+    constexpr bool is_scalar_r = IsScalarLike<R>;
+    if constexpr (!is_scalar_l && is_scalar_r) {
+      return Trait::f(l.get().get_unchecked(i), r.get());
+    } else if constexpr (is_scalar_l && !is_scalar_r) {
+      return Trait::f(l.get(), r.get().get_unchecked(i));
+    } else if constexpr (!is_scalar_l && !is_scalar_r) {
+      return Trait::f(l.get().get_unchecked(i), r.get().get_unchecked(i));
+    } else if constexpr (is_scalar_l && is_scalar_r) {
+      return Trait::f(l.get(), r.get());
+    }
+  }
   template<typename V> void set(std::size_t i, const V& val) = delete;
 
   std::size_t size() const {

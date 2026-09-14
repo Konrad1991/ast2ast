@@ -142,6 +142,21 @@ template <typename T, typename BorrowTrait> struct Borrow {
       if (p_na) p_na[idx] = val.is_na;
     }
   }
+  // Skip both checks -- for callers that already proved idx is valid once,
+  // up front, for the whole buffer.
+  value_type get_unchecked(std::size_t idx) const {
+    value_type out = load(p[idx]);
+    if constexpr (IsArithV<value_type>) {
+      if (p_na) out.is_na = p_na[idx];
+    }
+    return out;
+  }
+  void set_unchecked(std::size_t idx, const value_type& val) {
+    p[idx] = store(val);
+    if constexpr (IsArithV<value_type>) {
+      if (p_na) p_na[idx] = val.is_na;
+    }
+  }
 
   template <typename Raw, typename Scalar>
   struct BorrowIt {
@@ -290,6 +305,20 @@ template <typename BorrowTrait> struct Borrow<Dual, BorrowTrait> {
   void set(std::size_t idx, const Dual& d) {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
+    p_val[idx] = d.val;
+    p_dot[idx] = d.dot;
+    if (p_na)     p_na[idx]     = d.is_na;
+    if (p_na_dot) p_na_dot[idx] = d.is_na_dot;
+  }
+  // Skip both checks -- for callers that already proved idx is valid once,
+  // up front, for the whole buffer.
+  value_type get_unchecked(std::size_t idx) const {
+    Dual out{ p_val[idx], p_dot[idx] };
+    if (p_na)     out.is_na     = p_na[idx];
+    if (p_na_dot) out.is_na_dot = p_na_dot[idx];
+    return out;
+  }
+  void set_unchecked(std::size_t idx, const Dual& d) {
     p_val[idx] = d.val;
     p_dot[idx] = d.dot;
     if (p_na)     p_na[idx]     = d.is_na;

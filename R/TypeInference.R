@@ -618,6 +618,11 @@ type_infer_action <- function(node, info_env) {
     if (inherits(obj_type, "fn_node")) {
       node$error <- sprintf("Cannot use an inner function as an argument to '%s'", node$operator)
     }
+    # e.g. print(b) with b never assigned: print's own infer_fct doesn't look at
+    # its argument's type, so this is the only place that sees the error
+    else if (is.null(node$error) && is.character(obj_type)) {
+      node$error <- obj_type
+    }
   }
   else if (inherits(node, "nullary_node")) {
     infer(node, info_env$vars_list, info_env, info_env$function_registry)
@@ -627,9 +632,12 @@ type_infer_action <- function(node, info_env) {
     if (is.character(type) && !void_only_operator(node$operator)) {
       node$error <- type
     }
-    lapply(node$args, function(arg) {
-      infer(arg, info_env$vars_list, info_env, info_env$function_registry)
-    })
+    for (arg in node$args) {
+      arg_type <- infer(arg, info_env$vars_list, info_env, info_env$function_registry)
+      if (is.null(node$error) && is.character(arg_type)) {
+        node$error <- arg_type
+      }
+    }
     type_infer_function_subsetting(node, info_env)
   }
 

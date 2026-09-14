@@ -32,11 +32,11 @@ nbody_r <- function(x, y, vx, vy, m, steps, dt, eps2) {
 
 nbody_ast2ast <- function(x, y, vx, vy, m, steps, dt, eps2) {
   argtypes(
-    x |> type(vec(double)),
-    y |> type(vec(double)),
-    vx |> type(vec(double)),
-    vy |> type(vec(double)),
-    m |> type(vec(double)),
+    x |> type(borrow_vec(double)),
+    y |> type(borrow_vec(double)),
+    vx |> type(borrow_vec(double)),
+    vy |> type(borrow_vec(double)),
+    m |> type(borrow_vec(double)),
     steps |> type(int),
     dt |> type(double),
     eps2 |> type(double)
