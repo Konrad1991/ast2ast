@@ -14,8 +14,9 @@ translate(
 }
 \arguments{
   \item{f}{An R function to be translated into C++. Argument types are declared
-    with an \code{argtypes(...)} block as the first statement of its body; see the
-    Details section.}
+    with an \code{argtypes(...)} block as the first statement of its body, and
+    the return type optionally with \code{returntype(...)} right after it; see
+    the Details section.}
   \item{types_f}{A helper function that declares custom struct types via
     \code{new_type()}, for use as argument types, variable types, or slot
     types inside \code{f}. Optional; defaults to \code{NULL}. See the
@@ -127,6 +128,22 @@ translate(
       \item \code{const()}: disallow modification of inputs.
       \item \code{ref()}: pass by reference (only valid when \code{output = "XPtr"}).
     }
+  }
+  \subsection{Return type}{
+    The return type is normally inferred from \code{f}'s body. To declare it
+    explicitly, add \code{returntype(...)} directly after \code{argtypes(...)}
+    (or as the first statement if there is no \code{argtypes(...)}):
+    \preformatted{
+      f <- function(x) {
+        argtypes(x |> type(vec(double)))
+        returntype(double)
+        return(sum(x))
+      }
+    }
+    When given, every \code{return} in \code{f} is checked against the
+    declared type instead of being inferred, for both \code{output = "R"} and
+    \code{output = "XPtr"}. Use \code{returntype(void)} for a function with no
+    return value.
   }
   \subsection{Inner functions}{
     Functions can be defined inside \code{f} with \code{fn()}, which takes three

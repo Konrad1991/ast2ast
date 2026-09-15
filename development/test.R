@@ -19,15 +19,12 @@ tinytest::run_test_file("./inst/tinytest/test_subsetting.R")
 files <- list.files("./R", full.names = TRUE)
 invisible(lapply(files, source))
 
-f <- function() {
-  g <- function(a) {
-    argtypes(
-      a |> type(double)
-    )
-    returntype(void)
-    a <- a
-  }
-  h <- 3.14
-  g(h)
+f <- function(a) {
+  argtypes(
+    a |> type(double)
+  )
+  returntype(double)
+  return(c(a))
 }
 fcpp <- translate(f, debug = FALSE)
+fcpp(3)

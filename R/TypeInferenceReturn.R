@@ -128,6 +128,39 @@ reconcile_return_types <- function(value_types, r_fct) {
   }, value_types)
 }
 
+# A declared returntype() is an exact contract, checked against every actual
+# return directly -- unlike reconcile_return_types() above, which only exists
+# because an undeclared r_fct return needs no concrete type (always SEXP) and
+# so is free to stay ambiguous across branches.
+validate_declared_return_type <- function(declared, value_types, found_void_return, found_non_void_return, fct_name = NULL) {
+  label <- if (is.null(fct_name)) "the function" else sprintf("function %s", fct_name)
+  is_void <- inherits(declared, "pre_type_node") && identical(declared$get_base_type(), "void")
+  if (is_void) {
+    if (found_non_void_return) {
+      stop(sprintf("%s is declared with returntype(void) but returns a value on at least one path", label))
+    }
+    return(declared)
+  }
+  if (found_void_return) {
+    stop(sprintf("%s has a declared return type but returns nothing (NULL/void) on at least one path", label))
+  }
+  for (t in value_types) {
+    if (!same_base_type(t$get_base_type(), declared$get_base_type())) {
+      stop(sprintf(
+        "Specified return type does not match the detected return type for %s. Desired base type is %s but found %s",
+        label, declared$get_base_type(), t$get_base_type()
+      ))
+    }
+    if (!same_data_struct(t$get_data_struct(), declared$get_data_struct())) {
+      stop(sprintf(
+        "Specified return type does not match the detected return type for %s. Desired data structure is %s but found %s",
+        label, declared$get_data_struct(), t$get_data_struct()
+      ))
+    }
+  }
+  declared
+}
+
 create_return_statement <- function(node, function_registry) {
   if (inherits(node, "block_node")) {
     n <- length(node$block)

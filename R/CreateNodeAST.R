@@ -269,7 +269,7 @@ type_checking <- function(ast, vars_types_list, r_fct, real_type, function_regis
 
 # Determine the type of each return Expression
 # ========================================================================
-determine_types_of_returns <- function(ast, vars_types_list, r_fct, real_type, function_registry, known_types = list()) {
+determine_types_of_returns <- function(ast, vars_types_list, r_fct, real_type, function_registry, known_types = list(), declared_return_type = NULL, fct_name = NULL) {
   type <- NULL
   env <- new.env(parent = emptyenv())
   env$vars_list <- vars_types_list
@@ -307,6 +307,10 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct, real_type, f
   # Reduce the value returns to one type; character entries are void markers
   # ("R_NilValue" / "void"). r_fct returns SEXP so nothing is reconciled.
   value_types <- Filter(function(t) !is.character(t), env$return_list)
+  if (!is.null(declared_return_type)) {
+    return(validate_declared_return_type(
+      declared_return_type, value_types, env$found_void_return, env$found_non_void_return, fct_name))
+  }
   reconcile_return_types(value_types, r_fct)
 }
 
@@ -534,9 +538,34 @@ translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, de
   if (!is.null(args_fct)) {
     argtypes_match_formals(fct, args_fct)
   }
+
+  # An optional returntype(...) statement, directly following argtypes(...)
+  # when both are present, declares the function's return type -- same idea
+  # as argtypes() above, mirrored from the inner function() syntax.
+  is_ret <- vapply(stmts, function(s) {
+    is.call(s) && identical(deparse(s[[1L]]), "returntype")
+  }, logical(1L))
+  returntype_fct <- NULL
+  if (length(is_ret) >= 1L && is_ret[[1L]]) {
+    returntype_fct <- stmts[[1L]]
+    stmts <- stmts[-1L]
+    is_ret <- is_ret[-1L]
+  }
+  if (any(is_ret)) {
+    stop("returntype(...) must directly follow argtypes(...) as the first statement of the function body")
+  }
   b <- as.call(c(as.name("{"), stmts))
 
   known_types <- make_known_types(types_fct, r_fct, real_type)
+
+  declared_return_type <- NULL
+  if (!is.null(returntype_fct)) {
+    declared_return_type <- parse_return(returntype_fct, r_fct, real_type, known_types, TRUE)[[1]]
+    declared_return_type$real_type <- real_type
+    if (!is.null(declared_return_type$get_error())) {
+      stop(sprintf("Wrong return type for function %s: %s", name_fct, declared_return_type$get_error()))
+    }
+  }
 
   env <- new.env(parent = emptyenv())
   env$r_fct <- r_fct
@@ -562,7 +591,7 @@ translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, de
   type_checking(AST, vars_types_list, r_fct, real_type, function_registry, known_types)
 
   # Determine return type
-  return_type <- determine_types_of_returns(AST, vars_types_list, r_fct, real_type, function_registry, known_types)
+  return_type <- determine_types_of_returns(AST, vars_types_list, r_fct, real_type, function_registry, known_types, declared_return_type, as.character(name_fct))
 
   # A string return is fine for output "R" (Cast(const char*) -> mkString) but
   # has no C++ type for the XPtr signature -- reject before it hits the compiler.
