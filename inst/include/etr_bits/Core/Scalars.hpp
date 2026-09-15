@@ -1071,31 +1071,31 @@ Concepts for sclars
 --------------------------------------------------------------------------------------------------
 */
 template<typename T> concept IsArith =
-std::same_as<bare_t<T>, Logical> ||
-std::same_as<bare_t<T>, Integer> ||
-std::same_as<bare_t<T>, Double> ||
-std::same_as<bare_t<T>, ReverseDouble> ||
-std::same_as<bare_t<T>, Dual>;
+IS<bare_t<T>, Logical> ||
+IS<bare_t<T>, Integer> ||
+IS<bare_t<T>, Double> ||
+IS<bare_t<T>, ReverseDouble> ||
+IS<bare_t<T>, Dual>;
 template <typename T> constexpr bool IsArithV = IsArith<T>;
 
 // Concept to detect refs to scalars
 template<typename T> concept IsArithRef =
-std::same_as<bare_t<T>, LogicalRef> ||
-std::same_as<bare_t<T>, IntegerRef> ||
-std::same_as<bare_t<T>, DoubleRef> ||
-std::same_as<bare_t<T>, DualRef>;
+IS<bare_t<T>, LogicalRef> ||
+IS<bare_t<T>, IntegerRef> ||
+IS<bare_t<T>, DoubleRef> ||
+IS<bare_t<T>, DualRef>;
 template <typename T> constexpr bool IsArithRefV = IsArithRef<T>;
 
-template<typename T> concept IsDouble = std::same_as<T, Double>;
-template<typename T> concept IsInteger = std::same_as<T, Integer>;
-template<typename T> concept IsLogical = std::same_as<T, Logical>;
-template<typename T> concept IsDual = std::same_as<T, Dual>;
-template<typename T> concept IsReverseDouble = std::same_as<T, ReverseDouble>;
+template<typename T> concept IsDouble = IS<T, Double>;
+template<typename T> concept IsInteger = IS<T, Integer>;
+template<typename T> concept IsLogical = IS<T, Logical>;
+template<typename T> concept IsDual = IS<T, Dual>;
+template<typename T> concept IsReverseDouble = IS<T, ReverseDouble>;
 
-template<typename T> concept IsDoubleRef = std::same_as<T, DoubleRef>;
-template<typename T> concept IsIntegerRef = std::same_as<T, IntegerRef>;
-template<typename T> concept IsLogicalRef = std::same_as<T, LogicalRef>;
-template<typename T> concept IsDualRef = std::same_as<T, DualRef>;
+template<typename T> concept IsDoubleRef = IS<T, DoubleRef>;
+template<typename T> concept IsIntegerRef = IS<T, IntegerRef>;
+template<typename T> concept IsLogicalRef = IS<T, LogicalRef>;
+template<typename T> concept IsDualRef = IS<T, DualRef>;
 
 /*
 --------------------------------------------------------------------------------------------------
