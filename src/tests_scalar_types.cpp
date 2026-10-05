@@ -952,4 +952,23 @@ void test_scalar_assignment() {
     ReverseDouble dst;
     dst = src; compare(dst, create_reverse_double(9.0, false));
   }
+
+  // real NaN (is_na == false, val == NaN) converting to Integer must become
+  // NA instead of UB-casting (CRAN M1 UBSan caught this, see Scalars.hpp).
+  {
+    compare(Integer(Double::NaN()), Integer::NA());
+    compare(Integer(Dual::NaN()), Integer::NA());
+    compare(Integer(ReverseDouble::NaN()), Integer::NA());
+
+    int iv = 7; bool ina = false;
+    IntegerRef ir(&iv, &ina);
+    ir = Double::NaN();
+    ass<"NaN through IntegerRef assignment becomes NA">(ina);
+
+    // TEMP: sanity check that sanitize.sh actually fires on this UB pattern.
+    // Remove once confirmed.
+    volatile double raw_nan = std::numeric_limits<double>::quiet_NaN();
+    int raw_cast = static_cast<int>(raw_nan);
+    (void)raw_cast;
+  }
 }

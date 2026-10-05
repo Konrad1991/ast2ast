@@ -1,7 +1,7 @@
 Package: ast2ast
 Type: Package
 Title: Translates an R Function to a C++ Function
-Version: 1.0
+Version: 1.0.2
 Date: 2026-09-01
 Authors@R: c(person(given = "Krämer",
       family = "Konrad",

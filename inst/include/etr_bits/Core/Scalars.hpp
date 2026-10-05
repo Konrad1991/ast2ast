@@ -1127,6 +1127,18 @@ concept AllScalarIndices = NonEmpty<Args...> && (ScalarIndex<Args> && ...);
 template <typename... Args>
 concept HasNonScalarIndex = (!ScalarIndex<Args> || ...);
 
+// static_cast<int> on a NaN/Inf/out-of-range double is UB (caught by
+// UBSan on CRAN's M1 check). R's as.integer() maps these to NA instead.
+inline int double_to_int_na(double v, bool& is_na) {
+  if (!std::isfinite(v) ||
+      v < static_cast<double>(std::numeric_limits<int>::min()) ||
+      v > static_cast<double>(std::numeric_limits<int>::max())) {
+    is_na = true;
+    return 0;
+  }
+  return static_cast<int>(v);
+}
+
 struct Logical {
   bool val;
   bool is_na{false};
@@ -1264,11 +1276,11 @@ struct Integer {
       val = arr_val.val;
       is_na = arr_val.is_na;
     } else if constexpr(IS<inner, ReverseDouble>) {
-      val = static_cast<int>(arr_val.get_val_from_tape());
       is_na = arr_val.is_na;
+      val = double_to_int_na(arr_val.get_val_from_tape(), is_na);
     } else {
-      val = static_cast<int>(arr_val.val);
       is_na = arr_val.is_na;
+      val = double_to_int_na(arr_val.val, is_na);
     }
     return *this;
   }
@@ -1662,9 +1674,9 @@ inline Logical::Logical(ReverseDouble v) : val(static_cast<bool>(v.get_val_from_
 inline Integer::Integer() : val(0), is_na(false) {}
 inline Integer::Integer(int v) : val(v), is_na(false) {}
 inline Integer::Integer(Logical v) : val(static_cast<int>(v.val)), is_na(v.is_na) {}
-inline Integer::Integer(Double v) : val(static_cast<int>(v.val)), is_na(v.is_na) {}
-inline Integer::Integer(Dual v) : val(static_cast<int>(v.val)), is_na(v.is_na) {}
-inline Integer::Integer(ReverseDouble v) : val(static_cast<int>(v.get_val_from_tape())), is_na(v.is_na) {}
+inline Integer::Integer(Double v) : val(0), is_na(v.is_na) { val = double_to_int_na(v.val, is_na); }
+inline Integer::Integer(Dual v) : val(0), is_na(v.is_na) { val = double_to_int_na(v.val, is_na); }
+inline Integer::Integer(ReverseDouble v) : val(0), is_na(v.is_na) { val = double_to_int_na(v.get_val_from_tape(), is_na); }
 
 inline Double::Double() : val(0.0), is_na(false) {}
 inline Double::Double(double v) : val(v), is_na(false) {}
@@ -3048,8 +3060,9 @@ struct IntegerRef {
     return *this;
   }
   template<typename T> requires (IsArithV<T> || IsArithRefV<T>) IntegerRef& operator=(const T& x) {
-    *p_val = static_cast<int>(get_val(x));
-    if (p_na) *p_na = get_scalar_val(x).is_na;
+    bool na = get_scalar_val(x).is_na;
+    *p_val = double_to_int_na(static_cast<double>(get_val(x)), na);
+    if (p_na) *p_na = na;
     return *this;
   }
   explicit inline IntegerRef(int* v, bool* n = nullptr);

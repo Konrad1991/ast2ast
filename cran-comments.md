@@ -4,6 +4,12 @@ This is a resubmission of ast2ast, which was archived on CRAN on
 2025-12-01 at my request. The package has been substantially extended
 since the last CRAN release and is now ready to return.
 
+This resubmission fixes an undefined-behaviour finding from the M1 mac
+UBSan check on the previous submission: `static_cast<int>` on a `double`
+that could be NaN in the scalar type conversions
+(`inst/include/etr_bits/Core/Scalars.hpp`). NaN now converts to NA instead,
+matching R's own `as.integer(NaN)` behaviour. A regression test was added.
+
 ## Test environments
 
 * local Ubuntu Linux, R 4.6.1
