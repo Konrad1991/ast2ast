@@ -178,6 +178,11 @@ translate(
         vectors (scalars broadcast). The result shape follows \code{f}'s return
         type: scalar gives a vector, vector a matrix, matrix/array an array,
         \code{new_type} a \code{collection}.
+      \item \code{pmap(f, ncores, x, ...)}: like \code{map}, but the elements
+        are processed in parallel. \code{ncores} is a scalar int or double,
+        clamped to the number of available cores. \code{f} may not call
+        functions that use the R API internally (currently \code{lbfgsb}).
+        Not available with \code{derivative = "forward"}/\code{"reverse"}.
       \item \code{Reduce(f, x)}: left fold seeded with \code{x[[1]]};
         \code{f} is \code{fn(acc, elem) -> acc}.
       \item \code{Filter(f, x)}: keep the elements of vector \code{x} for which

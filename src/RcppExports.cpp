@@ -282,6 +282,16 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_pmap_warnings
+void test_pmap_warnings(int n);
+RcppExport SEXP _ast2ast_test_pmap_warnings(SEXP nSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    test_pmap_warnings(n);
+    return R_NilValue;
+END_RCPP
+}
 // test_scalars
 void test_scalars();
 RcppExport SEXP _ast2ast_test_scalars() {
@@ -359,6 +369,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_lbfgsb_rosenbrock", (DL_FUNC) &_ast2ast_test_lbfgsb_rosenbrock, 0},
     {"_ast2ast_test_lbfgsb_bound_length_error", (DL_FUNC) &_ast2ast_test_lbfgsb_bound_length_error, 0},
     {"_ast2ast_test_nnls", (DL_FUNC) &_ast2ast_test_nnls, 0},
+    {"_ast2ast_test_pmap_warnings", (DL_FUNC) &_ast2ast_test_pmap_warnings, 1},
     {"_ast2ast_test_scalars", (DL_FUNC) &_ast2ast_test_scalars, 0},
     {"_ast2ast_test_scalar_assignment", (DL_FUNC) &_ast2ast_test_scalar_assignment, 0},
     {"_ast2ast_test_solve", (DL_FUNC) &_ast2ast_test_solve, 0},

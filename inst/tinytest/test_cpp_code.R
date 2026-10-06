@@ -31,6 +31,17 @@ ast2ast:::test_trisolve()
 ast2ast:::test_trisolve_zero_diag()
 ast2ast:::test_uniroot_maxiter()
 ast2ast:::test_nnls()
+
+# pmap: warnings from the workers arrive in task order
+msgs <- character(0)
+withCallingHandlers(
+  ast2ast:::test_pmap_warnings(200L),
+  warning = function(w) {
+    msgs <<- c(msgs, conditionMessage(w))
+    invokeRestart("muffleWarning")
+  }
+)
+expect_equal(msgs, paste0("Warning: task ", 0:199))
 ast2ast:::test_lbfgsb_quadratic_forward()
 ast2ast:::test_lbfgsb_quadratic_reverse()
 ast2ast:::test_lbfgsb_bounds()

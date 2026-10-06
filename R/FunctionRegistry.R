@@ -11,13 +11,14 @@ Functions <- R6::R6Class(
     groups = NULL,
     cpp_names = NULL,
     deriv_possibles = NULL,
+    thread_safes = NULL,
     valid_fn_contexts = NULL,
     docus = list(),
 
     initialize = function() {},
     add = function(name, num_args, arg_names, infer_fct,
                    check_fct, group, cpp_name, deriv_possible = TRUE,
-                   valid_fn_context = FALSE, docu = NULL) {
+                   valid_fn_context = FALSE, docu = NULL, thread_safe = TRUE) {
       self$function_names <- c(self$function_names, name)
       self$number_of_args[[length(self$number_of_args) + 1]] <- num_args
       self$arg_names[[length(self$arg_names) + 1]] <- arg_names
@@ -26,6 +27,7 @@ Functions <- R6::R6Class(
       self$groups <- c(self$groups, group)
       self$cpp_names <- c(self$cpp_names, cpp_name)
       self$deriv_possibles <- c(self$deriv_possibles, deriv_possible)
+      self$thread_safes <- c(self$thread_safes, thread_safe)
       self$valid_fn_contexts <- c(self$valid_fn_contexts, valid_fn_context)
       # single-bracket + list() so a NULL docu keeps its slot (never `[[`)
       self$docus[length(self$docus) + 1] <- list(docu)
@@ -60,6 +62,14 @@ Functions <- R6::R6Class(
         return(TRUE)
       }
       self$deriv_possibles[idx]
+    },
+    # FALSE: touches the R API at runtime (e.g. R_alloc), so not callable inside pmap
+    thread_safe = function(name) {
+      idx <- which(self$function_names == name)
+      if (length(idx) == 0) {
+        return(TRUE)
+      }
+      isTRUE(self$thread_safes[idx])
     },
     valid_fn_context = function(name) {
       idx <- which(self$function_names == name)
@@ -2594,7 +2604,8 @@ function_registry_global$add(
       compare_types_passed_to_fn(node, args_to_f[[2L]], node$args[[9L]]$internal_type)
     }
   },
- group = "function_node", cpp_name = "etr::lbfgsb", valid_fn_context = TRUE
+ group = "function_node", cpp_name = "etr::lbfgsb", valid_fn_context = TRUE,
+ thread_safe = FALSE
 )
 function_registry_global$add(
   name = "pso", num_args = c(8, 9), arg_names = c(NA, NA, NA, NA, NA, NA, NA, NA, NA),
@@ -2700,24 +2711,29 @@ function_registry_global$add(
  group = "function_node", cpp_name = "etr::pso", deriv_possible = FALSE,
  valid_fn_context = TRUE
 )
-function_registry_global$add(
-  name = "map", num_args = NA, arg_names = NA,
-  docu = paste0(
-    "map(f, x, ...)  # apply f element-wise over the given vectors; scalars broadcast.\n",
-    "Result shape follows f's return type: scalar -> vector, vector -> matrix,\n",
-    "matrix/array -> array (n as the last axis), new_type -> collection.\n",
-    "f may not return a collection -- wrap it in a new_type."
-  ),
-  infer_fct = function(node, vars_list, info_env, function_registry) {
-    types_of_args <- lapply(node$args, function(x) {
-      temp <- infer(x, vars_list, info_env, function_registry)
-      return(temp)
-    })
-    if (length(types_of_args) < 2) {
-      return("Too less arguments to function map. At least 2 are required.")
+# thread_safe = FALSE builtins reachable from fn, also through the fns it calls
+unsafe_calls <- function(fn, vars_list, function_registry, seen = character(0)) {
+  scope <- c(vars_list, fn$vars_types_list)
+  # during the outer type inference fn$AST is still raw R code; it becomes a
+  # node AST only when the inner function is transpiled
+  used <- if (is.language(fn$AST)) all.names(fn$AST) else collect_used_fcts(fn$AST, scope)
+  used <- unique(used)
+  bad <- Filter(function(u) !function_registry$thread_safe(u), used)
+  for (u in setdiff(used, seen)) {
+    if (inherits(scope[[u]], "fn_node")) {
+      bad <- c(bad, unsafe_calls(scope[[u]], vars_list, function_registry, c(seen, used)))
+    }
+  }
+  unique(bad)
+}
+
+# shared by map and pmap; the data args start at first_data
+infer_map_like <- function(node, types_of_args, info_env, name, first_data) {
+    if (length(types_of_args) < first_data) {
+      return(sprintf("Too less arguments to function %s. At least %d are required.", name, first_data))
     }
     if (!inherits(types_of_args[[1L]], "fn_node")) {
-      return("The first argument to map has to be a function")
+      return(sprintf("The first argument to %s has to be a function", name))
     }
     for (i in 2:length(types_of_args)) {
       toa <- types_of_args[[i]]
@@ -2725,7 +2741,7 @@ function_registry_global$add(
         return(sprintf("Found unexpected type in: %s", node$stringify()))
       }
       if (inherits(toa, "pre_type_node") && toa$get_base_type() == "character") {
-        return("You cannot use character entries in map")
+        return(sprintf("You cannot use character entries in %s", name))
       }
     }
     t <- types_of_args[[1L]]$return_type
@@ -2743,7 +2759,7 @@ function_registry_global$add(
       #                                        using this mechanism.
 
       if (t$get_data_struct() == "collection") {
-        return("map does not support functions which return collections")
+        return(sprintf("%s does not support functions which return collections", name))
       }
       data_struct <- t$get_data_struct()
       if (data_struct == "scalar") {
@@ -2770,42 +2786,92 @@ function_registry_global$add(
     }
     # f takes one parameter per data arg: a scalar of that arg's base type, or
     # the element type when the data arg is a collection
-    expect <- lapply(types_of_args[-1L], function(ta) {
+    expect <- lapply(types_of_args[first_data:length(types_of_args)], function(ta) {
       if (inherits(ta, "pre_type_node") && ta$get_data_struct() == "collection") {
         ta$data_struct$element_type
       } else {
         list(data_struct = "scalar", base_type = ta$get_base_type())
       }
     })
-    err <- check_functional_fn(types_of_args[[1L]], expect, "map")
+    err <- check_functional_fn(types_of_args[[1L]], expect, name)
     if (!is.null(err)) return(err)
     node$internal_type <- t
     return(t)
-  },
-  check_fct = function(node, vars_types_list, info_env) {
-    if (length(node$args) < 2) {
-      node$error <- "Too less arguments to function map. At least 2 are required."
+}
+
+check_map_like <- function(node, vars_types_list, name, first_data) {
+    if (length(node$args) < first_data) {
+      node$error <- sprintf("Too less arguments to function %s. At least %d are required.", name, first_data)
     }
     for (i in seq_along(node$args)) {
       if (inherits(node$args[[i]], "variable_node")) {
         t <- vars_types_list[[node$args[[i]]$name]]
         if (i == 1 && !inherits(t, "fn_node")) {
-          node$error <- sprintf("The first argument to map has to be a function (fn) instead got %s", class(t))
+          node$error <- sprintf("The first argument to %s has to be a function (fn) instead got %s", name, class(t))
           return()
         }
         if (i > 1 && !inherits(t, "pre_type_node")) {
-          node$error <- sprintf("You cannot use entries of type %s in map", class(t))
+          node$error <- sprintf("You cannot use entries of type %s in %s", class(t), name)
           return()
         }
       }
       # skip i == 1: the function slot is an fn_node whose internal_type is NULL
       if (i >= 2 && is_char(node$args[[i]], vars_types_list)) {
-        node$error <- "You cannot use character entries in map"
+        node$error <- sprintf("You cannot use character entries in %s", name)
         return()
       }
     }
+}
+
+function_registry_global$add(
+  name = "map", num_args = NA, arg_names = NA,
+  docu = paste0(
+    "map(f, x, ...)  # apply f element-wise over the given vectors; scalars broadcast.\n",
+    "Result shape follows f's return type: scalar -> vector, vector -> matrix,\n",
+    "matrix/array -> array (n as the last axis), new_type -> collection.\n",
+    "f may not return a collection -- wrap it in a new_type."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    types_of_args <- lapply(node$args, function(x) {
+      infer(x, vars_list, info_env, function_registry)
+    })
+    infer_map_like(node, types_of_args, info_env, "map", 2L)
+  },
+  check_fct = function(node, vars_types_list, info_env) {
+    check_map_like(node, vars_types_list, "map", 2L)
   },
   group = "function_node", cpp_name = "etr::map", valid_fn_context = TRUE
+)
+function_registry_global$add(
+  name = "pmap", num_args = NA, arg_names = NA,
+  docu = paste0(
+    "pmap(f, ncores, x, ...)  # like map, but the elements are processed in parallel.\n",
+    "ncores: scalar int or double, clamped to [1, number of cores].\n",
+    "f may not call functions that use the R API (e.g. lbfgsb)."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    types_of_args <- lapply(node$args, function(x) {
+      infer(x, vars_list, info_env, function_registry)
+    })
+    t <- infer_map_like(node, types_of_args, info_env, "pmap", 3L)
+    if (is.character(t)) return(t)
+    nc <- types_of_args[[2L]]
+    if (!inherits(nc, "pre_type_node") || nc$get_data_struct() != "scalar" ||
+        !nc$get_base_type() %in% c("int", "integer", "double")) {
+      return("pmap: ncores (argument 2) has to be a scalar int or double")
+    }
+    bad <- unsafe_calls(types_of_args[[1L]], vars_list, function_registry)
+    if (length(bad) > 0L) {
+      return(sprintf("pmap: the mapped function calls %s, which cannot run in parallel",
+        paste0("'", bad, "'", collapse = ", ")))
+    }
+    t
+  },
+  check_fct = function(node, vars_types_list, info_env) {
+    check_map_like(node, vars_types_list, "pmap", 3L)
+  },
+  group = "function_node", cpp_name = "etr::pmap", deriv_possible = FALSE,
+  valid_fn_context = TRUE
 )
 function_registry_global$add(
   name = "Reduce", num_args = 2, arg_names = c(NA, NA),

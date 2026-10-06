@@ -121,6 +121,10 @@ test_nnls <- function() {
     invisible(.Call(`_ast2ast_test_nnls`))
 }
 
+test_pmap_warnings <- function(n) {
+    invisible(.Call(`_ast2ast_test_pmap_warnings`, n))
+}
+
 test_scalars <- function() {
     invisible(.Call(`_ast2ast_test_scalars`))
 }

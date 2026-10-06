@@ -9,7 +9,7 @@ install.packages(".", types = "source", repo = NULL)
 files <- list.files("~/Documents/ast2ast/inst/tinytest/", full.names = TRUE)
 invisible(lapply(files, tinytest::run_test_file))
 
-tinytest::run_test_file("./inst/tinytest/test_derivative.R")
+tinytest::run_test_file("./inst/tinytest/test_pmap.R")
 tinytest::run_test_file("./inst/tinytest/test_subsetting.R")
 
 files <- list.files("./R", full.names = TRUE)

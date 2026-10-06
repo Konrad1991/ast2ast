@@ -178,7 +178,8 @@ the pure-R path and produces bit-identical fits.
   `backsolve` / `forwardsolve`, `diag` / `get_diag`, `rbind` / `cbind`.
 - **Numerics:** `uniroot`, `nnls`, `lbfgsb`, `pso`, `jacobian`, Catmull–Rom
   interpolation via `cmr`.
-- **Functionals:** `map`, `Reduce`, `Filter`, `apply` (each takes an `fn()`).
+- **Functionals:** `map`, `pmap` (parallel `map`), `Reduce`, `Filter`, `apply`
+  (each takes an `fn()`).
 - **Types:** static, inferred, optionally annotated with `type()`; user-defined
   structs via `new_type()` / `slots()`; inner functions as first-class typed
   values via `fn()`.

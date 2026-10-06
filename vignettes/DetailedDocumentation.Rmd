@@ -402,6 +402,13 @@ These take an inner function (`fn`) as their first argument.
   broadcast. The result shape follows `f`'s return type: scalar produces a
   vector, vector a matrix, matrix/array an array (with `n` as the last axis),
   and a `new_type` a `collection`.
+* `pmap(f, ncores, x, ...)` -- like `map`, but the elements are processed in
+  parallel on `ncores` threads (a scalar int or double, clamped to the number
+  of available cores). The result is identical to `map`. Warnings raised
+  inside `f` are reported in element order. `f` may not call functions that
+  use the R API internally (currently `lbfgsb`), and `pmap` is not available
+  with `derivative = "forward"` / `"reverse"`. Parallelism pays off when each
+  call of `f` does a substantial amount of work.
 * `Reduce(f, x)` -- left fold seeded with `x[[1]]`; `f` is `fn(acc, elem) -> acc`
   and must return the same type as its accumulator argument.
 * `Filter(f, x)` -- keep the elements of vector `x` for which `f(elem)` is `TRUE`
@@ -428,6 +435,28 @@ fcpp <- ast2ast::translate(f)
 fcpp(1:5)
 ```
 
+The same with `pmap` on 4 threads. Inner functions cannot access variables of
+the outer function, so the calls of `f` are independent of each other and can
+safely run in parallel:
+
+```{r, eval = FALSE}
+f <- function(x) {
+  argtypes(
+    x |> type(vec(double))
+  )
+  sq <- fn(
+    argtypes(
+      a |> type(double) |> const()
+    ),
+    return(double),
+    return(a * a)
+  )
+  return(pmap(sq, 4L, x))
+}
+fcpp <- ast2ast::translate(f)
+fcpp(1:5)
+```
+
 ## Optimizers
 
 * `jacobian(f, x[, data])` -- the `m`-by-`n` Jacobian of `f` (double vector to
@@ -439,9 +468,11 @@ fcpp(1:5)
   exact (computed with `jacobian`); otherwise it is a central-difference
   approximation. Returns a struct with `$par`, `$value`, `$convergence`,
   `$counts`.
-* `pso(f, lower, upper, ngen, npop, error_threshold, global[, data])` --
+* `pso(f, lower, upper, ngen, npop, error_threshold, global, seed[, data])` --
   derivative-free particle-swarm optimisation. `f` maps a double vector to a
-  scalar double; returns the best parameter vector found.
+  scalar double; returns the best parameter vector found. `seed` (scalar
+  integer) seeds pso's own Mersenne-Twister RNG, so results are reproducible
+  and independent of R's RNG state.
 
 For `lbfgsb` and `pso` the optional trailing `data` argument (any non-function,
 non-character value) is passed to `f` unchanged as a second argument, so `f` then

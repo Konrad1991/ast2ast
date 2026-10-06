@@ -95,20 +95,52 @@ template <string_literal msg> inline void ass(bool inp) {
   if (!inp) throw std::runtime_error(msg.value.data());
 }
 
-inline void warn(bool inp, std::string message) {
+// Rcpp::warning touches the R API: a pmap task writes into its own slot,
+// the main thread emits after the pool finished
+// bare inline thread_local at namespace scope breaks under MinGW
+inline std::vector<std::string>*& warning_slot() {
+  thread_local std::vector<std::string>* slot = nullptr;
+  return slot;
+}
+// set for the duration of one pmap task; restores the previous slot for nested pmap
+struct WarningScope {
+  std::vector<std::string>* prev;
+  explicit WarningScope(std::vector<std::string>& s) : prev(warning_slot()) { warning_slot() = &s; }
+  ~WarningScope() { warning_slot() = prev; }
+  WarningScope(const WarningScope&) = delete;
+  WarningScope& operator=(const WarningScope&) = delete;
+};
+
+inline void emit_warning(const std::string& msg) {
 #ifdef STANDALONE_ETR
-  if (!inp) std::cerr << "Warning: " + message << std::endl;
+  std::cerr << msg << std::endl;
 #else
-  if (!inp) Rcpp::warning("Warning: " + message);
+  Rcpp::warning("%s", msg.c_str());
 #endif
 }
 
+inline void raise_warning(std::string msg) {
+  if (auto* slot = warning_slot()) {
+    slot->push_back(std::move(msg));
+  } else {
+    emit_warning(msg);
+  }
+}
+
+// after wait(); slot order = task order = serial map order.
+// raise_warning: a nested pmap forwards into the slot of its outer task
+inline void flush_warnings(const std::vector<std::vector<std::string>>& slots) {
+  for (const auto& slot : slots) {
+    for (const auto& msg : slot) raise_warning(msg);
+  }
+}
+
+inline void warn(bool inp, std::string message) {
+  if (!inp) raise_warning("Warning: " + message);
+}
+
 template <string_literal msg> inline void warn(bool inp) {
-#ifdef STANDALONE_ETR
-  if (!inp) std::cerr << msg.value.data() << std::endl;
-#else
-  if (!inp) Rcpp::warning(msg.value.data());
-#endif
+  if (!inp) raise_warning(msg.value.data());
 }
 
 /*

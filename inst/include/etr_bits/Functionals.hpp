@@ -97,6 +97,118 @@ inline auto map(const F &f, const First &first, const Rest &...rest) {
   }
 }
 
+#ifdef STANDALONE_ETR
+template <typename F, typename NC, typename First, typename... Rest>
+inline auto pmap(const F &f, const NC &, const First &first, const Rest &...rest) {
+  return map(f, first, rest...);
+}
+#else
+// current_line() is thread_local: a worker error carries the worker's line to the
+// main thread. The line is a string literal (static storage), so the pointer stays valid
+struct WorkerError : std::runtime_error {
+  const char* line;
+  WorkerError(const char* what, const char* l) : std::runtime_error(what), line(l) {}
+};
+
+template <typename Body>
+inline void run_pmap_task(std::vector<std::string>& warn_slot, Body&& body) {
+  WarningScope ws(warn_slot);
+  try {
+    body();
+  } catch (const WorkerError&) {
+    throw; // nested pmap: keep the innermost line
+  } catch (const std::exception& e) {
+    throw WorkerError(e.what(), current_line());
+  }
+}
+
+inline void pmap_wait(RcppThread::ThreadPool& pool) {
+  try {
+    pool.wait();
+  } catch (const WorkerError& e) {
+    current_line() = e.line;
+    throw;
+  }
+}
+
+// map with the iterations on a thread pool; each i writes only res[i] and warns[i].
+// thread_safe = FALSE builtins inside f are rejected on the R side
+template <typename F, typename NC, typename First, typename... Rest>
+inline auto pmap(const F &f, const NC &ncores, const First &first, const Rest &...rest) {
+  using R = return_type_t<F>;
+  const std::size_t n = map_size(first, rest...);
+  const std::size_t hw = std::max<std::size_t>(std::thread::hardware_concurrency(), 1);
+  // comparisons instead of a cast: NaN and negatives end up at 1 without UB
+  const double req = static_cast<double>(get_val(ncores));
+  std::size_t nthr = 1;
+  if (req >= static_cast<double>(hw)) nthr = hw;
+  else if (req >= 1.0) nthr = static_cast<std::size_t>(req);
+
+  std::vector<std::vector<std::string>> warns(n);
+  RcppThread::ThreadPool pool(nthr);
+  if constexpr (IsScalarLike<Decayed<R>>) {
+    Array<R, Buffer<R, RBufferTrait>> res(SI{n});
+    res.dim = std::vector<std::size_t>{n};
+    pool.parallelFor(0, static_cast<int>(n), [&](auto i_) {
+      const std::size_t i = static_cast<std::size_t>(i_);
+      run_pmap_task(warns[i], [&] {
+        res.set(i, f(map_at(first, i), map_at(rest, i)...));
+      });
+    });
+    pmap_wait(pool);
+    flush_warnings(warns);
+    return res;
+  } else if constexpr (IsArray<Decayed<R>>) {
+    using Inner = typename ExtractDataType<Decayed<R>>::value_type;
+    Array<Inner, Buffer<Inner, RBufferTrait>> res;
+    if (n == 0) return res;
+    // i == 0 serial: fixes dim and allocates res before the workers write into it
+    std::vector<std::size_t> dim;
+    std::size_t len = 0;
+    {
+      WarningScope ws(warns[0]);
+      R temp = f(map_at(first, 0), map_at(rest, 0)...);
+      dim = temp.get_dim();
+      len = temp.size();
+      res.d.resize(len * n);
+      res.dim = dim;
+      res.dim.push_back(n);
+      for (std::size_t j = 0; j < len; j++) res.set(j, temp.get(j));
+    }
+    pool.parallelFor(1, static_cast<int>(n), [&](auto i_) {
+      const std::size_t i = static_cast<std::size_t>(i_);
+      run_pmap_task(warns[i], [&] {
+        R temp = f(map_at(first, i), map_at(rest, i)...);
+        const auto temp_dim = temp.get_dim();
+        ass<"pmap: results of the mapped function differ in rank">(temp_dim.size() == dim.size());
+        for (std::size_t d = 0; d < dim.size(); d++) {
+          ass<"pmap: results of the mapped function differ in extent">(temp_dim[d] == dim[d]);
+        }
+        for (std::size_t j = 0; j < len; j++) res.set(i * len + j, temp.get(j));
+      });
+    });
+    pmap_wait(pool);
+    flush_warnings(warns);
+    return res;
+  } else { // is a new_type --> assured at the R side
+    static_assert(
+      !IsCollection<Decayed<R>>,
+      "pmap: the mapped function may not return a collection - wrap it in a new_type"
+    );
+    Collection<R> res(n);
+    pool.parallelFor(0, static_cast<int>(n), [&](auto i_) {
+      const std::size_t i = static_cast<std::size_t>(i_);
+      run_pmap_task(warns[i], [&] {
+        res[i] = f(map_at(first, i), map_at(rest, i)...);
+      });
+    });
+    pmap_wait(pool);
+    flush_warnings(warns);
+    return res;
+  }
+}
+#endif
+
 template <typename F, typename X>
 inline auto reduce(const F &f, const X &x) {
   using R = return_type_t<F>;

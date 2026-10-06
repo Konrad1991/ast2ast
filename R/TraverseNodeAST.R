@@ -172,6 +172,7 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, var_
     node$function_registry$groups <- c(node$function_registry$groups, node$function_registry_outer$groups[[idx]])
     node$function_registry$cpp_names <- c(node$function_registry$cpp_names, node$function_registry_outer$cpp_names[[idx]])
     node$function_registry$deriv_possibles <- c(node$function_registry$deriv_possibles, node$function_registry_outer$deriv_possibles[[idx]])
+    node$function_registry$thread_safes <- c(node$function_registry$thread_safes, node$function_registry_outer$thread_safes[[idx]])
     node$function_registry$valid_fn_contexts <- c(node$function_registry$valid_fn_contexts, node$function_registry_outer$valid_fn_contexts[[idx]])
     node$function_registry$docus <- c(node$function_registry$docus, "User defined")
   }
