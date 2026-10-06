@@ -2368,10 +2368,6 @@ function_registry_global$add(
  group = "function_node", cpp_name = "etr::uniroot", deriv_possible = FALSE,
  valid_fn_context = TRUE
 )
-# cvode() only exists in the DSL when the optional 'sundials' package is
-# installed; r_fct_sig()/xptr_sig() then include a2a_sundials.hpp and compile()
-# adds -DSUNDIALS_AVAILABLE plus the SUNDIALS include/lib flags.
-if (requireNamespace("sundials", quietly = TRUE)) {
 function_registry_global$add(
   name = "cvode", num_args = 7, arg_names = c(NA, NA, NA, NA, NA, NA, NA),
   docu = paste0(
@@ -2382,8 +2378,7 @@ function_registry_global$add(
     "scalar, new_type struct); the rhs's 4th argument must match it.\n",
     "y0, times: double vectors (times[1] is t0). reltol, abstol: scalar doubles. ",
     "stiff: scalar, non-zero -> BDF, else ADAMS.\n",
-    "Returns a length(times) x length(y0) matrix; row k is the state at times[k]. ",
-    "Requires the 'sundials' package."
+    "Returns a length(times) x length(y0) matrix; row k is the state at times[k]."
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     all_types <- lapply(node$args, function(arg) {
@@ -2469,7 +2464,6 @@ function_registry_global$add(
  group = "function_node", cpp_name = "a2a::cvode_solve", deriv_possible = FALSE,
  valid_fn_context = TRUE
 )
-}
 function_registry_global$add(
   name = "nnls", num_args = 2, arg_names = c(NA, NA),
   docu = "nnls(a, b)  # both required; a: matrix, b: vector -> non-negative least-squares solution vector",

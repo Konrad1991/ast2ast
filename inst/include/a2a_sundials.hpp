@@ -1,10 +1,6 @@
 #ifndef A2A_SUNDIALS_HPP
 #define A2A_SUNDIALS_HPP
 
-#ifndef SUNDIALS_AVAILABLE
-#error "cvode() requires the 'sundials' package (compile() adds -DSUNDIALS_AVAILABLE)"
-#endif
-
 #include <cvode/cvode.h>
 #include <nvector/nvector_serial.h>
 #include <sunlinsol/sunlinsol_dense.h>
