@@ -875,7 +875,7 @@ void test_buffer_int() {
     ass<"int-buffer push_back size">(b.size() == 3);
     ass<"int-buffer push_back values">(b.get(0) == 3 && b.get(2) == 5);
   }
-  // resize preserves prefix, zero-fills growth
+  // resize preserves prefix; growth stays uninitialized
   {
     Buffer<int> b(2);
     b.set(0, 1);
@@ -883,7 +883,6 @@ void test_buffer_int() {
     b.resize(4);
     ass<"int-buffer resize size">(b.size() == 4);
     ass<"int-buffer resize prefix">(b.get(0) == 1 && b.get(1) == 2);
-    ass<"int-buffer resize zero-fill">(b.get(2) == 0 && b.get(3) == 0);
   }
   // copy is independent
   {

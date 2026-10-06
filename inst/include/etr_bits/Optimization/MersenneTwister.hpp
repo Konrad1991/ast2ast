@@ -26,12 +26,12 @@ class MersenneTwister {
     return obj;
   }
 
-  static int init_scrambling(int seed) {
+  static unsigned int init_scrambling(std::uint32_t seed) {
     for (int i = 0; i < 50; i++) seed = seed * 69069 + 1;
     return seed;
   }
 
-  void rng_init(int seed) {
+  void rng_init(std::uint32_t seed) {
     for (std::size_t i = 0; i <= N; i++) {
       seed = seed * 69069 + 1;
       i_seed[i] = static_cast<std::uint32_t>(seed);
@@ -95,7 +95,7 @@ class MersenneTwister {
 
 public:
   explicit MersenneTwister(int seed) : initial(true) {
-    rng_init(init_scrambling(seed));
+    rng_init(init_scrambling(static_cast<std::uint32_t>(seed)));
     fixup_seeds();
   }
 
