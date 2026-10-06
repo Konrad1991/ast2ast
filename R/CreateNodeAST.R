@@ -332,7 +332,16 @@ translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry, debu
 
 # Assembles function (includes, signature, declarations, body)
 # ========================================================================
-assemble <- function(name_fct, vars_types_list, return_type, body, real_type, r_fct, known_types = list(), debug = TRUE) {
+clean_lines <- function(code) {
+  res <- strsplit(code, "\n")[[1]]
+  res <- res[res != "\n"]
+  res <- res[res != ";"]
+  res <- res[res != ""]
+  paste0(res, collapse = "\n")
+}
+
+# struct definitions + function definition without includes or export glue
+assemble_fn_def <- function(name_fct, vars_types_list, return_type, body, real_type, r_fct, known_types = list(), debug = TRUE) {
 
   arguments <- lapply(vars_types_list, function(x) {
     x$signature()
@@ -367,67 +376,37 @@ assemble <- function(name_fct, vars_types_list, return_type, body, real_type, r_
   }
 
   body <- paste0(body, "\n")
-  wrap_for_debug <- function(b) {
-    if (!debug) return(b)
-    paste0(
-      "try {\n", b,
+  if (debug) {
+    body <- paste0(
+      "try {\n", body,
       "} catch (const std::exception& e) {\n",
       "  Rcpp::stop(std::string(\"In '\") + etr::current_line() + \"': \" + e.what());\n",
       "}\n"
     )
   }
+  ret <- if (r_fct) "SEXP" else ret_type
+  signature <- paste0(ret, " ", name_fct, "(", paste(arguments, collapse = ", "), ") {")
+  def <- paste0(c(signature, tape_clear, declarations, body, "}\n"), collapse = "\n")
+
+  list(
+    struct_defs = struct_defs, def = clean_lines(def), name = as.character(name_fct),
+    ret_type = ret_type, arguments = arguments
+  )
+}
+
+assemble <- function(name_fct, vars_types_list, return_type, body, real_type, r_fct, known_types = list(), debug = TRUE) {
+  parts <- assemble_fn_def(name_fct, vars_types_list, return_type, body, real_type, r_fct, known_types, debug)
   if (r_fct) {
-    signature <- paste0("SEXP ", name_fct, "(", paste(arguments, collapse = ", "), ") {")
-    declarations <- combine_strings(declarations, "\n")
-    includes <- r_fct_sig()
-    wrapped_body <- wrap_for_debug(body)
-    res <- paste0(
-      c(
-        includes,
-        struct_defs, "\n",
-        "// [[Rcpp::export]]",
-        signature, "\n",
-        tape_clear, "\n",
-        declarations, "\n",
-        wrapped_body, "}\n"
-      ),
-      collapse = "\n\n"
-    )
-    res <- strsplit(res, "\n")[[1]]
-    res <- res[res != "\n"]
-    res <- res[res != ";"]
-    res <- res[res != ""]
-    paste0(res, collapse = "\n")
+    res <- c(r_fct_sig(), parts$struct_defs, "// [[Rcpp::export]]", parts$def)
   } else {
-    includes <- xptr_sig()
-    signature <- paste0(ret_type, " ", name_fct, "(", paste(arguments, collapse = ", "), ") {")
-    declarations <- combine_strings(declarations, "\n")
-    def_get_xptr <- "SEXP getXPtr() {\n"
     typedef_line <- paste0(
-      "   typedef ", ret_type, "(*fct_ptr) (",
-      paste(arguments, collapse = ", "), ");"
+      "   typedef ", parts$ret_type, "(*fct_ptr) (",
+      paste(parts$arguments, collapse = ", "), ");"
     )
-    rest <- sprintf("   return Rcpp::XPtr<fct_ptr>(new fct_ptr(&  %s ));\n }", as.character(name_fct))
-    wrapped_body <- wrap_for_debug(body)
-    res <- paste0(
-      c(
-        includes, "\n",
-        struct_defs, "\n",
-        signature, "\n",
-        tape_clear, "\n",
-        declarations, "\n",
-        wrapped_body, "}\n\n",
-        def_get_xptr,
-        typedef_line, "\n",
-        rest),
-      collapse = "\n"
-    )
-    res <- strsplit(res, "\n")[[1]]
-    res <- res[res != "\n"]
-    res <- res[res != ";"]
-    res <- res[res != ""]
-    paste0(res, collapse = "\n")
+    rest <- sprintf("   return Rcpp::XPtr<fct_ptr>(new fct_ptr(&  %s ));\n }", parts$name)
+    res <- c(xptr_sig(), parts$struct_defs, parts$def, "SEXP getXPtr() {", typedef_line, rest)
   }
+  clean_lines(paste0(res, collapse = "\n"))
 }
 
 resolve_derivative <- function(derivative) {

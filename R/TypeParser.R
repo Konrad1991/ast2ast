@@ -85,8 +85,9 @@ create_type_tree <- function(code, env) {
   }
 
   else if (operator %in% c("borrow_vec", "borrow_vector") && env$fct_input) {
-    if (env$real_type %in% c("etr::Dual", "etr::ReverseDouble")) {
-      add_error(env, "borrow types cannot be used together with automatic differentiation (forward or reverse)")
+    if ((env$r_fct && env$real_type %in% c("etr::Dual", "etr::ReverseDouble")) ||
+        (!env$r_fct && env$real_type == "etr::ReverseDouble")) {
+      add_error(env, "borrow types cannot be used together with automatic differentiation (reverse; forward only when output = \"R\")")
     }
     v <- borrow_vec$new()
     v$base_type <- resolve_base_type(code[[2L]], env)
@@ -95,8 +96,9 @@ create_type_tree <- function(code, env) {
     return(v)
   }
   else if (operator %in% c("borrow_mat", "borrow_matrix") && env$fct_input) {
-    if (env$real_type %in% c("etr::Dual", "etr::ReverseDouble")) {
-      add_error(env, "borrow types cannot be used together with automatic differentiation (forward or reverse)")
+    if ((env$r_fct && env$real_type %in% c("etr::Dual", "etr::ReverseDouble")) ||
+        (!env$r_fct && env$real_type == "etr::ReverseDouble")) {
+      add_error(env, "borrow types cannot be used together with automatic differentiation (reverse; forward only when output = \"R\")")
     }
     m <- borrow_mat$new()
     m$base_type <- resolve_base_type(code[[2L]], env)
@@ -105,8 +107,9 @@ create_type_tree <- function(code, env) {
     return(m)
   }
   else if (operator == "borrow_array" && env$fct_input) {
-    if (env$real_type %in% c("etr::Dual", "etr::ReverseDouble")) {
-      add_error(env, "borrow types cannot be used together with automatic differentiation (forward or reverse)")
+    if ((env$r_fct && env$real_type %in% c("etr::Dual", "etr::ReverseDouble")) ||
+        (!env$r_fct && env$real_type == "etr::ReverseDouble")) {
+      add_error(env, "borrow types cannot be used together with automatic differentiation (reverse; forward only when output = \"R\")")
     }
     a <- borrow_arr$new()
     a$base_type <- resolve_base_type(code[[2L]], env)

@@ -73,10 +73,10 @@ f <- function(a) {
 }
 # create_vars_types_list() print()s the specific message and only throws the
 # generic "Types for arguments are invalid" as the condition itself.
-check_borrow_ad_rejected <- function(derivative, info = "") {
+check_borrow_ad_rejected <- function(derivative, output = "R", info = "") {
   e <- capture.output(
     error <- try(
-      ast2ast::translate(f, derivative = derivative),
+      ast2ast::translate(f, derivative = derivative, output = output, getsource = TRUE),
       silent = TRUE
     )
   )
@@ -91,7 +91,36 @@ check_borrow_ad_rejected <- function(derivative, info = "") {
 }
 
 # 1. forward mode
-check_borrow_ad_rejected("forward", "forward")
+check_borrow_ad_rejected("forward", info = "forward")
 
 # 2. reverse mode
-check_borrow_ad_rejected("reverse", "reverse")
+check_borrow_ad_rejected("reverse", info = "reverse")
+
+# 3. reverse mode is also rejected for XPtr
+check_borrow_ad_rejected("reverse", "XPtr", info = "reverse XPtr")
+
+# --- forward mode + XPtr: Dual memory can be borrowed ----------------------
+code <- ast2ast::translate(f, derivative = "forward", output = "XPtr", getsource = TRUE)
+expect_true(grepl("etr::Array<etr::Dual, etr::Borrow<etr::Dual>>", code, fixed = TRUE))
+
+# inner fn with a borrowed Dual argument
+f <- function(a) {
+  argtypes(
+    a |> type(borrow_vec(double))
+  )
+  g <- fn(
+    argtypes(
+      x |> type(borrow_vec(double)) |> const()
+    ),
+    return(vec(double)),
+    {
+      return(x * x)
+    }
+  )
+  return(g(a))
+}
+code <- ast2ast::translate(f, derivative = "forward", output = "XPtr", getsource = TRUE)
+expect_true(grepl("etr::Borrow<etr::Dual>", code, fixed = TRUE))
+# Borrow<Dual> has to compile, not only translate
+fcpp <- ast2ast::translate(f, derivative = "forward", output = "XPtr")
+expect_true(inherits(fcpp, "XPtr"))
