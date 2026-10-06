@@ -421,11 +421,7 @@ template <typename T> requires IsArray<T> inline auto rowMeans(const T &inp) { r
 // stop -- abort with a message
 // -----------------------------------------------------------------------------------------------------------
 [[noreturn]] inline void stop(const char *msg) {
-#ifdef STANDALONE_ETR
   throw std::runtime_error(msg);
-#else
-  Rcpp::stop(msg);
-#endif
 }
 [[noreturn]] inline void stop(const std::string &msg) { stop(msg.c_str()); }
 

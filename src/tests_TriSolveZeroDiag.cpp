@@ -33,7 +33,7 @@ void test_trisolve_zero_diag() {
     try {
       auto x = backsolve(R, b);
       ass<"backsolve zero diagonal must throw">(false);
-    } catch (const Rcpp::exception& e) {
+    } catch (const std::exception& e) {
       const std::string expected = "backsolve: matrix is exactly singular (zero on the diagonal)";
       ass<"backsolve zero diagonal message">(std::strcmp(e.what(), expected.c_str()) == 0);
     }
@@ -45,7 +45,7 @@ void test_trisolve_zero_diag() {
     try {
       auto x = forwardsolve(L, b);
       ass<"forwardsolve zero diagonal must throw">(false);
-    } catch (const Rcpp::exception& e) {
+    } catch (const std::exception& e) {
       const std::string expected = "forwardsolve: matrix is exactly singular (zero on the diagonal)";
       ass<"forwardsolve zero diagonal message">(std::strcmp(e.what(), expected.c_str()) == 0);
     }
@@ -67,7 +67,7 @@ void test_trisolve_zero_diag() {
     try {
       auto x = backsolve(R, b);
       ass<"backsolve dual zero diagonal must throw">(false);
-    } catch (const Rcpp::exception& e) {
+    } catch (const std::exception& e) {
       const std::string expected = "backsolve: matrix is exactly singular (zero on the diagonal)";
       ass<"backsolve dual zero diagonal message">(std::strcmp(e.what(), expected.c_str()) == 0);
     }
@@ -83,7 +83,7 @@ void test_trisolve_zero_diag() {
     try {
       auto x = backsolve(R, b);
       ass<"backsolve reverse zero diagonal must throw">(false);
-    } catch (const Rcpp::exception& e) {
+    } catch (const std::exception& e) {
       const std::string expected = "backsolve: matrix is exactly singular (zero on the diagonal)";
       ass<"backsolve reverse zero diagonal message">(std::strcmp(e.what(), expected.c_str()) == 0);
     }

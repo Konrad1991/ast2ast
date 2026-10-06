@@ -36,6 +36,7 @@ extern "C" void dgetrs_(const char* trans, const int* n, const int* nrhs,
 // to match R's runtime ABI. Without it FCONE is empty and the lengths are read
 // from garbage; reference/OpenBLAS tolerate it, R's LAPACK does not.
 #define USE_FC_LEN_T
+#include <RcppThread.h>
 #include <R_ext/BLAS.h>
 #include <R_ext/Lapack.h>
 #include <R_ext/RS.h>
@@ -70,14 +71,10 @@ namespace etr {
 Messages/Warnings and Errors
 --------------------------------------------------------------------------------------------------------------
 */
+// no Rcpp::stop: must be callable from worker threads; the pool / .Call boundary rethrows
 inline void ass(bool inp, const std::string &message) {
-#ifdef STANDALONE_ETR
   if (!inp)
     throw std::runtime_error(message);
-#else
-  if (!inp)
-    Rcpp::stop(message);
-#endif
 }
 
 // bare inline thread_local at namespace scope breaks under MinGW
@@ -95,11 +92,7 @@ template <std::size_t N> struct string_literal {
 };
 
 template <string_literal msg> inline void ass(bool inp) {
-#ifdef STANDALONE_ETR
   if (!inp) throw std::runtime_error(msg.value.data());
-#else
-  if (!inp) Rcpp::stop(msg.value.data());
-#endif
 }
 
 inline void warn(bool inp, std::string message) {

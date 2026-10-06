@@ -209,7 +209,7 @@ r_fct_sig <- function() {
   combine_strings(
     c(
       "#include <Rcpp.h>",
-      "// [[Rcpp::depends(ast2ast)]]",
+      "// [[Rcpp::depends(ast2ast, RcppThread)]]",
       "// [[Rcpp::plugins(cpp2a)]]",
       '#include "etr.hpp"',
       ""), "\n"
@@ -219,7 +219,7 @@ xptr_sig <- function() {
   combine_strings(
     c(
       "#include <Rcpp.h>",
-      "// [[Rcpp::depends(ast2ast)]]",
+      "// [[Rcpp::depends(ast2ast, RcppThread)]]",
       "// [[Rcpp::plugins(cpp2a)]]",
       '#include "etr.hpp"',
       "",
