@@ -37,6 +37,10 @@ This section of the documentation describes how the external pointers to C++ fun
 This information is intended for package authors who want to use the translated functions within their own code.
 Additionally, this section endeavors to present pertinent implementation details, providing valuable insights into the inner workings of the process.
 
+The headers of *ast2ast* include *RcppThread*.
+Therefore, a package using them has to add both to its DESCRIPTION: `LinkingTo: Rcpp, ast2ast, RcppThread`.
+When using `Rcpp::sourceCpp` the corresponding attribute is `// [[Rcpp::depends(ast2ast, RcppThread)]]`.
+
 ## Naming rationalization ast2ast
 
 The nomenclature of the package, ast2ast, is rooted in the abbreviation *ast*, signifying abstract syntax tree. 
@@ -80,7 +84,7 @@ bubbleSort <- function(a) {
 
 ```{Rcpp, eval = FALSE, echo = TRUE, attr.source='.numberLines'}
 #include <Rcpp.h>
-// [[Rcpp::depends(ast2ast)]]
+// [[Rcpp::depends(ast2ast, RcppThread)]]
 // [[Rcpp::plugins(cpp2a)]]
 #include "etr.hpp"
 // [[Rcpp::export]]
@@ -125,7 +129,7 @@ fcpp <- ast2ast::translate(f, output = "XPtr")
 
 ```{Rcpp, eval = TRUE, echo = TRUE}
 #include <Rcpp.h>
-// [[Rcpp::depends(ast2ast)]]
+// [[Rcpp::depends(ast2ast, RcppThread)]]
 // [[Rcpp::plugins(cpp2a)]]
 #include "etr.hpp"
 
