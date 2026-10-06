@@ -89,7 +89,7 @@ image(t(sqrt(M)), col = pal, axes = FALSE, useRaster = TRUE)
 par(op)
 ```
 
-![Mandelbrot set rendered from the translated function](development/mandelbrot.png)
+![Mandelbrot set rendered from the translated function](development/examples/Mandelbrot/mandelbrot.png)
 
 Same source, same result, timed against plain R:
 
