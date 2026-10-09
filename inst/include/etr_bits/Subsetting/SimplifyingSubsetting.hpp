@@ -74,7 +74,7 @@ inline std::size_t index_from_dims(const std::array<std::size_t, N>& indices,
 // -----------------------------------------------------------------------------------------------------------
 template <typename ArrayType, typename... Args>
 requires (IsLBufferArray<ArrayType> || IsBorrowArray<ArrayType>)
-inline decltype(auto) at(ArrayType& arr, const Args&... args) {
+[[gnu::always_inline]] inline decltype(auto) at(ArrayType& arr, const Args&... args) {
   constexpr std::size_t N = sizeof...(Args);
   const auto& dim = dim_view(arr.get_dim());
 

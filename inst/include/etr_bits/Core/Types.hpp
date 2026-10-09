@@ -91,8 +91,14 @@ template <std::size_t N> struct string_literal {
   std::array<char, N> value;
 };
 
+// throw kept out of line: otherwise callers like at() grow too big to inline
+[[noreturn, gnu::cold, gnu::noinline]]
+inline void ass_fail(const char* msg) {
+  throw std::runtime_error(msg);
+}
+
 template <string_literal msg> inline void ass(bool inp) {
-  if (!inp) throw std::runtime_error(msg.value.data());
+  if (!inp) [[unlikely]] ass_fail(msg.value.data());
 }
 
 // Rcpp::warning touches the R API: a pmap task writes into its own slot,
