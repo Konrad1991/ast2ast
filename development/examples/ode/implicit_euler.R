@@ -1,3 +1,5 @@
+argtypes <- function(...) {}
+returntype <- function(ReturnValue) {}
 implicit_euler <- function(yinit, tstart, tend, h) {
   argtypes(
     yinit |> type(vec(double)),

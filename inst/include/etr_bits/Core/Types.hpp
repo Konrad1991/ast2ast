@@ -503,6 +503,20 @@ struct MinusTrait {
     return l - r;
   }
 };
+// lazy a:b / seq_len; l = start, r = signed length (sign = direction)
+struct RangeTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r, std::size_t i) {
+    const auto s = get_val(l);
+    const auto k = static_cast<std::decay_t<decltype(s)>>(i);
+    return get_val(r) >= 0 ? s + k : s - k;
+  }
+  template <typename L, typename R>
+  static inline std::size_t size(const L&, const R& r) {
+    const auto n = get_val(r);
+    return static_cast<std::size_t>(n >= 0 ? n : -n);
+  }
+};
 struct TimesTrait {
   template <typename L, typename R>
   static inline auto f(const L& l, const R& r) {
@@ -744,6 +758,9 @@ IS<typename ReRef<T>::type::Trait, MinusTrait> ||
 IS<typename ReRef<T>::type::Trait, TimesTrait> ||
 IS<typename ReRef<T>::type::Trait, DivideTrait> ||
 IS<typename ReRef<T>::type::Trait, PowTrait> ||
+IS<typename ReRef<T>::type::Trait, ModTrait> ||
+IS<typename ReRef<T>::type::Trait, IDivTrait> ||
+IS<typename ReRef<T>::type::Trait, RangeTrait> ||
 IS<typename ReRef<T>::type::Trait, EqualTrait> ||
 IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
 IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||

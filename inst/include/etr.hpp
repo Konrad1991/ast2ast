@@ -24,8 +24,9 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 
 #include "etr_bits/Core.hpp"
 #include "etr_bits/Collection.hpp"
-#include "etr_bits/Allocation.hpp"
+// Calculations first: seq_len()/colon() build a BinaryOperation (lazy range)
 #include "etr_bits/Calculations.hpp"
+#include "etr_bits/Allocation.hpp"
 #include "etr_bits/Interpolation.hpp"
 #include "etr_bits/Subsetting.hpp"
 #include "etr_bits/Utilities.hpp"

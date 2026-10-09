@@ -402,7 +402,7 @@ void tests_allocation() {
   {
     // regular case still works
     {
-      Array<Integer, Buffer<Integer, RBufferTrait>> s = seq_len(Integer(5));
+      Array<Integer, Buffer<Integer>> s = seq_len(Integer(5));
       ass<"seq_len(5) size">(s.size() == 5);
       for (std::size_t i = 0; i < s.size(); i++) {
         ass<"seq_len(5) content">(get_val(s.get(i)) == static_cast<int>(i + 1));
@@ -411,31 +411,31 @@ void tests_allocation() {
 
     // bound of 0: empty, not the two-element {1, 0} colon(1, 0) would give
     {
-      Array<Integer, Buffer<Integer, RBufferTrait>> s = seq_len(Integer(0));
+      Array<Integer, Buffer<Integer>> s = seq_len(Integer(0));
       ass<"seq_len(0) is empty">(s.size() == 0);
     }
     // same, but the bound arrives as a double
     {
-      Array<Integer, Buffer<Integer, RBufferTrait>> s = seq_len(Double(0.0));
+      Array<Integer, Buffer<Integer>> s = seq_len(Double(0.0));
       ass<"seq_len(0.0) is empty">(s.size() == 0);
     }
     // same, but the bound arrives as a length-1 vector (length_seq's other branch)
     {
       const Array<Integer, Buffer<Integer, RBufferTrait>> zero = c(Integer(0));
-      Array<Integer, Buffer<Integer, RBufferTrait>> s = seq_len(zero);
+      Array<Integer, Buffer<Integer>> s = seq_len(zero);
       ass<"seq_len(c(0)) is empty">(s.size() == 0);
     }
 
     // seq_along of an empty vector is empty
     {
       const Array<Double, Buffer<Double, RBufferTrait>> empty;
-      Array<Integer, Buffer<Integer, RBufferTrait>> s = seq_along(empty);
+      Array<Integer, Buffer<Integer>> s = seq_along(empty);
       ass<"seq_along(empty) is empty">(s.size() == 0);
     }
     // seq_along of a non-empty vector still works
     {
       const Array<Double, Buffer<Double, RBufferTrait>> content = c(Double(10.0), Double(20.0), Double(30.0));
-      Array<Integer, Buffer<Integer, RBufferTrait>> s = seq_along(content);
+      Array<Integer, Buffer<Integer>> s = seq_along(content);
       ass<"seq_along(vec) size">(s.size() == 3);
       for (std::size_t i = 0; i < s.size(); i++) {
         ass<"seq_along(vec) content">(get_val(s.get(i)) == static_cast<int>(i + 1));
@@ -443,7 +443,7 @@ void tests_allocation() {
     }
     // seq_along of a scalar is always length 1, regardless of the fix above
     {
-      Array<Integer, Buffer<Integer, RBufferTrait>> s = seq_along(Double(3.14));
+      Array<Integer, Buffer<Integer>> s = seq_along(Double(3.14));
       ass<"seq_along(scalar) size">(s.size() == 1);
       ass<"seq_along(scalar) content">(get_val(s.get(0)) == 1);
     }

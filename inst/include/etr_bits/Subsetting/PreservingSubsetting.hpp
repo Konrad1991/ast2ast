@@ -613,6 +613,57 @@ inline void subset_assign(ArrayType& arr, const RHS& rhs, const Args&... args) {
   at(arr, args...) = rhs;
 }
 
+// Fast path: x[a:b] with an integer range. Contiguous, so only the endpoints are checked
+template <typename T>
+concept IsIntRangeArray = IsArray<T> && requires { typename T::DType::Trait; } &&
+  IS<typename T::DType::Trait, RangeTrait> && IsInteger<typename T::value_type>;
+
+struct RangeIdx {
+  std::size_t first;
+  std::size_t len;
+  bool up;
+  std::size_t operator()(std::size_t i) const { return up ? first + i : first - i; }
+};
+
+template <typename Idx>
+inline RangeIdx checked_range(const Idx& idx, std::size_t n) {
+  const auto& start = idx.d.l.get();
+  ass<"Found NA value in subsetting (within an integer object)">(!start.isNA());
+  const long s = get_val(start);
+  const long len = static_cast<long>(idx.size());
+  const bool up = get_val(idx.d.r.get()) >= 0;
+  ass<"Empty index for at least one dimension">(len > 0);
+  const long last = up ? s + len - 1 : s - len + 1;
+  ass<"Zero and negative indices are not supported">(std::min(s, last) >= 1);
+  ass<"Error: out of boundaries">(static_cast<std::size_t>(std::max(s, last)) <= n);
+  return RangeIdx{static_cast<std::size_t>(s - 1), static_cast<std::size_t>(len), up};
+}
+
+template <typename ArrayType, typename RHS, typename Idx>
+requires IsIntRangeArray<Decayed<Idx>>
+inline void subset_assign(ArrayType& arr, const RHS& rhs, const Idx& idx) {
+  using E = typename ExtractDataType<ArrayType>::value_type;
+  const RangeIdx r = checked_range(idx, arr.size());
+  if constexpr (IsScalarLike<RHS>) {
+    // copy first: rhs can be a ref into arr (x[1:3] <- x[[2]])
+    const E val = static_cast<E>(rhs);
+    for (std::size_t i = 0; i < r.len; i++) arr.d.set_unchecked(r(i), val);
+  } else {
+    ass<"number of items to replace is not a multiple of replacement length">(rhs.size() == r.len);
+    // temp: rhs may alias arr, see subset_assign above
+    Buffer<E> temp(r.len);
+    using RhsValueType = typename ReRef<RHS>::type::value_type;
+    for (std::size_t i = 0; i < r.len; i++) {
+      if constexpr (IS<RhsValueType, E>) {
+        temp.set(i, rhs.get(i));
+      } else {
+        temp.set(i, cast_preserve_na<E>(rhs.get(i)));
+      }
+    }
+    for (std::size_t i = 0; i < r.len; i++) arr.d.set_unchecked(r(i), temp.get_unchecked(i));
+  }
+}
+
 // Create mutable subset
 template <typename ArrayType, typename... Args>
 inline auto subset(ArrayType& arr, const Args&... args) {
@@ -641,6 +692,35 @@ inline decltype(auto) subset(ArrayType& arr, const Args&... args) {
 template <typename ArrayType, typename... Args> requires AllScalarIndices<Args...>
 inline decltype(auto) subset(ArrayType&& arr, const Args&... args) {
   return at(std::forward<ArrayType>(arr), args...);
+}
+
+// Fast path: mutable subset(x, a:b)
+template <typename ArrayType, typename Idx>
+requires IsIntRangeArray<Decayed<Idx>>
+inline auto subset(ArrayType& arr, const Idx& idx) {
+  using E = typename ExtractDataType<ArrayType>::value_type;
+  using DTYPE = Decayed<decltype(arr.d)>;
+  const RangeIdx r = checked_range(idx, arr.size());
+  Buffer<int> out(r.len);
+  for (std::size_t i = 0; i < r.len; i++) out.set_unchecked(i, static_cast<int>(r(i)));
+  return Array<E, SubsetView<DTYPE, 1, SubsetViewTrait>>(
+    SubsetView<DTYPE, 1, SubsetViewTrait>{arr.d, std::move(out)},
+    std::vector<std::size_t>{r.len}
+  );
+}
+
+// Fast path: constant subset(x, a:b)
+template <typename ArrayType, typename Idx>
+requires (!IsSubsetArray<std::remove_reference_t<ArrayType>>) && IsIntRangeArray<Decayed<Idx>>
+inline auto subset(ArrayType&& arr, const Idx& idx) {
+  using E = typename ExtractDataType<ArrayType>::value_type;
+  const RangeIdx r = checked_range(idx, arr.size());
+  Array<E, Buffer<E, RBufferTrait>> res(SI{r.len});
+  res.dim = std::vector<std::size_t>{r.len};
+  for (std::size_t i = 0; i < r.len; i++) {
+    res.set(i, arr.d.get_unchecked(r(i)));
+  }
+  return res;
 }
 
 // Create subset of subset

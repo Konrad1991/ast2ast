@@ -132,34 +132,11 @@ inline auto ConvertValueColon(const T& obj) {
   }
 }
 
-template <typename DataType, typename S, typename E> inline auto colonInternal(S& startScalar, E& endScalar) {
-  auto start = get_val(startScalar);
-  const auto end = get_val(endScalar);
-  if (start < end) {
-    std::size_t length = static_cast<std::size_t>(end - start + 1);
-    ass<"invalid start or end values as argument to colon(:)">(length >= 1);
-    Array<DataType, Buffer<DataType, RBufferTrait>> ret(SI{length});
-    ret.dim = std::vector<std::size_t>{length};
-    std::size_t counter = 0;
-    while (start <= end) {
-      ret.d.set(counter, DataType(start));
-      start++;
-      counter++;
-    }
-    return ret;
-  } else {
-    std::size_t length = static_cast<std::size_t>(start - end + 1);
-    ass<"invalid start or end values as argument to colon(:)">(length >= 1);
-    Array<DataType, Buffer<DataType, RBufferTrait>> ret(SI{length});
-    ret.dim = std::vector<std::size_t>{length};
-    std::size_t counter = 0;
-    while (end <= start) {
-      ret.d.set(counter, DataType(start));
-      start--;
-      counter++;
-    }
-    return ret;
-  }
+template <typename T>
+inline auto make_range(T start, Integer signed_len) {
+  using Op = BinaryOperation<T, Integer, RangeTrait>;
+  std::vector<std::size_t> dim{RangeTrait::size(start, signed_len)};
+  return Array<T, Op>(Op(std::move(start), std::move(signed_len)), std::move(dim));
 }
 
 template <typename A, typename O>
@@ -167,7 +144,13 @@ inline auto colon(const A& start,const O& end) {
   auto s = ConvertValueColon(start);
   auto e = ConvertValueColon(end);
   using DataType = typename common_type<decltype(s), decltype(e)>::type;
-  return colonInternal<DataType>(s, e);
+  const double d = static_cast<double>(get_val(e)) - static_cast<double>(get_val(s));
+  // + eps as in R's seq_colon
+  const double len = std::abs(d) + 1.0 + std::numeric_limits<float>::epsilon();
+  ass<"result of colon(:) would be too long a vector">(len <= std::numeric_limits<int>::max());
+  const int n = static_cast<int>(len);
+  // copy, not ref: a:b is evaluated once as in R
+  return make_range(DataType(get_val(s)), Integer(d >= 0 ? n : -n));
 }
 
 template<typename T>
@@ -200,12 +183,7 @@ inline auto length_seq(const T& obj) {
 }
 template<typename A>
 inline auto seq_len(const A& length) {
-  const Integer ub = length_seq(length);
-  if (ub == Integer(0)) {
-    return Array<Integer, Buffer<Integer, RBufferTrait>>();
-  } else {
-    return colon(Integer(1), length_seq(length));
-  }
+  return make_range(Integer(1), Integer(length_seq(length)));
 }
 template<typename A>
 inline auto seq_along(const A& obj) {

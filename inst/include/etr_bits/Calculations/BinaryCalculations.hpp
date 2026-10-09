@@ -15,7 +15,9 @@ struct BinaryOpClassIterator {
   auto operator*() const {
     constexpr bool is_scalar_l = IsScalarLike<L>;
     constexpr bool is_scalar_r = IsScalarLike<R>;
-    if constexpr (!is_scalar_l && is_scalar_r) {
+    if constexpr (IS<Trait, RangeTrait>) {
+      return L(Trait::f(l, r, index));
+    } else if constexpr (!is_scalar_l && is_scalar_r) {
       return Trait::f(l.get(index), r);
     } else if constexpr (is_scalar_l && !is_scalar_r) {
       return Trait::f(l, r.get(index));
@@ -45,6 +47,8 @@ template <typename L, typename R, typename BTrait>
 inline auto determine_type_binary_op() {
   if constexpr (IsComparisonTrait<BTrait>) {
     return Logical{};
+  } else if constexpr (IS<BTrait, RangeTrait>) {
+    return L{};
   } else if constexpr (IsArray<L> && IsArray<R>) {
     using value_type = common_type_t<typename L::value_type, typename R::value_type>;
     return value_type{};
@@ -79,7 +83,9 @@ template <typename L, typename R, typename BTrait> struct BinaryOperation {
   auto get(std::size_t i) const {
     constexpr bool is_scalar_l = IsScalarLike<L>;
     constexpr bool is_scalar_r = IsScalarLike<R>;
-    if constexpr (!is_scalar_l && is_scalar_r) {
+    if constexpr (IS<BTrait, RangeTrait>) {
+      return value_type(Trait::f(l.get(), r.get(), i));
+    } else if constexpr (!is_scalar_l && is_scalar_r) {
       return Trait::f(l.get().get(i), r.get());
     } else if constexpr (is_scalar_l && !is_scalar_r) {
       return Trait::f(l.get(), r.get().get(i));
@@ -95,7 +101,9 @@ template <typename L, typename R, typename BTrait> struct BinaryOperation {
   auto get_unchecked(std::size_t i) const {
     constexpr bool is_scalar_l = IsScalarLike<L>;
     constexpr bool is_scalar_r = IsScalarLike<R>;
-    if constexpr (!is_scalar_l && is_scalar_r) {
+    if constexpr (IS<BTrait, RangeTrait>) {
+      return value_type(Trait::f(l.get(), r.get(), i));
+    } else if constexpr (!is_scalar_l && is_scalar_r) {
       return Trait::f(l.get().get_unchecked(i), r.get());
     } else if constexpr (is_scalar_l && !is_scalar_r) {
       return Trait::f(l.get(), r.get().get_unchecked(i));
@@ -110,7 +118,9 @@ template <typename L, typename R, typename BTrait> struct BinaryOperation {
   std::size_t size() const {
     constexpr bool is_scalar_l = IsScalarLike<L>;
     constexpr bool is_scalar_r = IsScalarLike<R>;
-    if constexpr (!is_scalar_l && is_scalar_r) {
+    if constexpr (IS<BTrait, RangeTrait>) {
+      return Trait::size(l.get(), r.get());
+    } else if constexpr (!is_scalar_l && is_scalar_r) {
       return l.get().size();
     } else if constexpr (is_scalar_l && !is_scalar_r) {
       return r.get().size();

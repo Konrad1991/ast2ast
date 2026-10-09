@@ -45,5 +45,6 @@ identical(M, M_R)
 
 microbenchmark::microbenchmark(
   do.call(mb, p),
-  do.call(mandelbrot, p)
+  do.call(mandelbrot, p),
+  times = 5L
 )
