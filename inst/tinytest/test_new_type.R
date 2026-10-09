@@ -371,7 +371,7 @@ f <- function() {
   }
   return(s)
 }
-check_error(f, types_f_point, pattern = "unsupported type")
+check_error(f, types_f_point, pattern = "unsupported sequence type")
 
 f <- function() {
   b <- fn(
@@ -387,7 +387,7 @@ f <- function() {
   }
   return(s)
 }
-check_error(f, pattern = "unsupported type")
+check_error(f, pattern = "unsupported sequence type")
 
 # --- 7. new_type / slot name validation ----------------------------------------
 f <- function() {
@@ -473,21 +473,21 @@ f <- function() {
   z <- min(coll)
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unallowed type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type")
 
 f <- function() {
   coll |> type(collection(Point))
   z <- sum(coll)
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unallowed type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type")
 
 f <- function() {
   coll |> type(collection(Point))
   z <- which.max(coll)
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unallowed type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type")
 
 # multi-arg (matrix-style) subsetting on a collection is rejected; [[ / at are the
 # only permitted subsetting operators (checked elsewhere via the existing
@@ -560,7 +560,7 @@ f <- function() {
 }
 expect_error(
   ast2ast::translate(f, types_f = types_f_point_box, getsource = TRUE),
-  pattern = "You can only call nrow on variables of type array or matrix"
+  pattern = "Found unsupported type collection(Point) in: nrow(coll)", fixed = TRUE
 )
 
 # construction + iteration + [[ ]] element access still work (existing valid
@@ -584,7 +584,7 @@ f <- function() {
   z <- c(coll)
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unexpected type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type collection(Point)")
 
 f <- function() {
   coll |> type(collection(Point))
@@ -598,21 +598,21 @@ f <- function() {
   z <- rev(coll)
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unallowed type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type")
 
 f <- function() {
   coll |> type(collection(Point))
   z <- rbind(coll)
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unexpected type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type")
 
 f <- function() {
   coll |> type(collection(Point))
   z <- cbind(coll)
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unexpected type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type")
 
 # solve()/backsolve()/forwardsolve() used to crash (get_data_struct() fed
 # straight into make_inferred_type()'s switch(), which has no "collection"
@@ -622,21 +622,21 @@ f <- function() {
   z <- solve(coll)
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unallowed type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type")
 
 f <- function() {
   coll |> type(collection(Point))
   z <- backsolve(coll, coll)
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unallowed type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type")
 
 f <- function() {
   coll |> type(collection(Point))
   z <- forwardsolve(coll, coll)
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unallowed type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type")
 
 # cmr() and diag() were already safe from crashing (their check_fct already
 # rejected non-matrix/vector types) but silently accepted a collection at
@@ -646,14 +646,14 @@ f <- function() {
   z <- cmr(coll, coll, coll)
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unallowed type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type")
 
 f <- function() {
   coll |> type(collection(Point))
   z <- diag(coll, 3L, 3L)
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unallowed type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type")
 
 # matrix()/array() with a collection as the data argument
 f <- function() {
@@ -661,14 +661,14 @@ f <- function() {
   z <- matrix(coll, 3L, 3L)
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unallowed type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type")
 
 f <- function() {
   coll |> type(collection(Point))
   z <- array(coll, c(3L, 3L))
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unallowed type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type")
 
 # as.numeric/as.integer/as.logical on a collection
 f <- function() {
@@ -676,21 +676,21 @@ f <- function() {
   z <- as.numeric(coll)
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unallowed type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type")
 
 f <- function() {
   coll |> type(collection(Point))
   z <- as.integer(coll)
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unallowed type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type")
 
 f <- function() {
   coll |> type(collection(Point))
   z <- as.logical(coll)
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unallowed type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type")
 
 # --- 10. remaining shared infer_fct guards not yet exercised --------------------
 # infer_and_or_scalar's && was already tested in section 8; infer_and_or_vector
@@ -708,7 +708,7 @@ f <- function() {
   z <- prod(coll)
   return(z)
 }
-check_error(f, types_f_point_box, pattern = "Found unallowed type")
+check_error(f, types_f_point_box, pattern = "Found unsupported type")
 
 # --- 11. common_type()'s fn_node branch (unit-level) -----------------------------
 # every DSL-reachable path that could hand a bare fn_node to common_type() is
@@ -998,7 +998,7 @@ expect_true(grepl("const etr::Collection<Circle>&", fcpp_src, fixed = TRUE))
 
 # --- 17. is_data_structs() through struct-field access ("$") --------------------
 # nrow/ncol/dim/chol/crossprod/tcrossprod/get_diag/t/length/subsetting all
-# validate their argument via is_vec_mat_or_array()/is_mat()/is_array(), which
+# validate their argument via is_*_internal_type(); the old is_vec_mat_or_array()/is_mat()/is_array()
 # used to trace back through "$" to the struct itself (find_var_lhs() was
 # designed to trace back through chained *subsetting*, not field access) and
 # see a struct instead of the field's actual (vector/matrix/array) type.

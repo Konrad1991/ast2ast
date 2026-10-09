@@ -65,7 +65,7 @@ template <typename... Args> inline auto c(Args &&...args) {
   int size = 0;
 
   forEachArg(
-    [&](auto arg) {
+    [&](const auto& arg) {
       using testType = Decayed<decltype(arg)>;
       constexpr bool is_scalar = IsScalarLike<testType>;
       if constexpr (is_scalar) {
@@ -218,6 +218,17 @@ inline auto seq_along(const A& obj) {
   }
 }
 
+// checks before the cast: NaN/Inf/negative -> size_t is UB, negative int wraps
+template<string_literal msg, typename S>
+inline std::size_t checked_size(const S& s) {
+  const auto sv = get_scalar_val(s);
+  ass<msg>(!sv.isNA());
+  const double v = static_cast<double>(get_val(sv));
+  ass<msg>(std::isfinite(v) && v >= 0.0);
+  ass<msg>(v < static_cast<double>(std::numeric_limits<std::size_t>::max()));
+  return static_cast<std::size_t>(v);
+}
+
 // ---------------------------------------------------------------------
 // rep -----------------------------------------------------------------
 // ---------------------------------------------------------------------
@@ -225,18 +236,15 @@ template<typename T>
 inline std::size_t ConvertTimesRep(const T& times) {
   using DecayedT = Decayed<T>;
   constexpr bool is_scalar = IsScalarLike<DecayedT>;
+  std::size_t res = 0;
   if constexpr(is_scalar) {
-    const auto v = get_val(times);
-    std::size_t res = static_cast<std::size_t>(v);
-    ass<"times in fct rep has to be a positive integer">(res >= 1);
-    return res;
+    res = checked_size<"times in fct rep has to be a positive integer">(times);
   } else {
     ass<"times in rep has to be a vector of length 1">(times.size() == 1);
-    const auto v = get_val(times.get(0));
-    std::size_t res = static_cast<std::size_t>(v);
-    ass<"times in fct rep has to be a positive integer">(res >= 1);
-    return res;
+    res = checked_size<"times in fct rep has to be a positive integer">(times.get(0));
   }
+  ass<"times in fct rep has to be a positive integer">(res >= 1);
+  return res;
 }
 
 template <typename L, typename R>
@@ -274,16 +282,10 @@ inline std::size_t ConvertSizeVec(const T& s) {
   using DecayedT = Decayed<T>;
   constexpr bool is_scalar = IsScalarLike<DecayedT>;
   if constexpr(is_scalar) {
-    const auto v = get_val(s);
-    ass<"size in fct vector/logical/integer/numeric/matrix/array has to be an integer >= 0">(v >= 0);
-    std::size_t res = static_cast<std::size_t>(v);
-    return res;
+    return checked_size<"size in fct vector/logical/integer/numeric/matrix/array has to be an integer >= 0">(s);
   } else {
     ass<"size in fct vector/logical/integer/numeric/matrix/array has to be a vector of length 1">(s.size() == 1);
-    const auto v = get_val(s.get(0));
-    ass<"size in fct vector/logical/integer/numeric/matrix/array has to be an integer >= 0">(v >= 0);
-    std::size_t res = static_cast<std::size_t>(v);
-    return res;
+    return checked_size<"size in fct vector/logical/integer/numeric/matrix/array has to be an integer >= 0">(s.get(0));
   }
 }
 
@@ -407,7 +409,7 @@ template <typename... Args> inline auto rbind(Args &&...args) {
   std::size_t ncols = 0;
 
   forEachArg(
-    [&](auto arg) {
+    [&](const auto& arg) {
       using testType = Decayed<decltype(arg)>;
       constexpr bool is_scalar = IsScalarLike<testType>;
       if constexpr (is_scalar) {
@@ -470,7 +472,7 @@ template <typename... Args> inline auto cbind(Args &&...args) {
   std::size_t nrows = 0;
 
   forEachArg(
-    [&](auto arg) {
+    [&](const auto& arg) {
       using testType = Decayed<decltype(arg)>;
       constexpr bool is_scalar = IsScalarLike<testType>;
       if constexpr (is_scalar) {

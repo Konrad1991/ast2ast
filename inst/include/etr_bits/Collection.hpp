@@ -44,9 +44,7 @@ public:
   }
 
   explicit Collection(SEXP arg) {
-    if (!Rf_isNewList(arg)) {
-      Rf_error("Expected a list to construct a Collection");
-    }
+    ass<"Expected a list to construct a Collection">(Rf_isNewList(arg));
     const R_xlen_t n = Rf_xlength(arg);
     data_.reserve(static_cast<std::size_t>(n));
     for (R_xlen_t i = 0; i < n; ++i) {

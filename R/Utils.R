@@ -242,6 +242,22 @@ remove_double_quotes <- function(s) {
   gsub('"', "", s)
 }
 
+# RcppThread::LdFlags() cat()s the link flags on every sourceCpp
+# sink instead of capture.output: keeps the compiler errors if sourceCpp fails
+source_cpp_quiet <- function(code, verbose, env) {
+  out <- character()
+  con <- textConnection("out", "w", local = TRUE)
+  sink(con)
+  ok <- FALSE
+  on.exit({
+    sink()
+    close(con)
+    if (verbose || !ok) cat(out, sep = "\n")
+  })
+  Rcpp::sourceCpp(code = code, verbose = verbose, env = env)
+  ok <- TRUE
+}
+
 compile <- function(fct_code, r_fct,
                          verbose, name_f) {
 
@@ -276,7 +292,7 @@ compile <- function(fct_code, r_fct,
           cat(fct)
         }
         env <- new.env()
-        Rcpp::sourceCpp(code = fct, verbose = verbose, env = env)
+        source_cpp_quiet(fct, verbose, env)
         fct_ret <- env$getXPtr()
         attributes(fct_ret) <- list(class = "XPtr")
       },
@@ -296,7 +312,7 @@ compile <- function(fct_code, r_fct,
     tryCatch(
       expr = {
         env <- new.env()
-        res <- Rcpp::sourceCpp(code = fct, verbose = verbose, env = env)
+        source_cpp_quiet(fct, verbose, env)
         fct_ret <- env[[name_f]]
       },
       error = function(e) {

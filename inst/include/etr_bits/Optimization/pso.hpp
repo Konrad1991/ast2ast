@@ -136,13 +136,19 @@ inline auto pso(
   for (std::size_t d = 0; d < npar_t; d++)
     global_best_vec.set(d, R(swarm.d.p_val[static_cast<std::size_t>(get_val(global_best)) * npar_t + d]));
 
-  Integer convergence_check = Integer(0);
-  Integer no_improvement = Integer(0);
+  // SPSO-2011 renews the topology after every stagnating iteration; 50 is gentler
+  constexpr int max_stagnation = 50;
+  int stagnation = 0;
+  bool improved = false;
   const double ngen_d = static_cast<double>(get_val(ngen));
   const bool use_global = static_cast<bool>(global);
 
   for (int iter = 1; iter < static_cast<int>(get_val(ngen)); iter++) {
-    if (iter == 1 || get_val(convergence_check) != 0) calc_neighberhood();
+    if (stagnation >= max_stagnation) {
+      calc_neighberhood();
+      stagnation = 0;
+    }
+    improved = false;
 
     w = Double(get_val(w_max) - iter * (get_val(w_max) - get_val(w_min)) / ngen_d);
     const double cog = get_val(initial_cog)
@@ -193,12 +199,10 @@ inline auto pso(
         global_best = Integer(static_cast<int>(i));
         for (std::size_t d = 0; d < npar_t; d++) global_best_vec.set(d, R(pos[d]));
         global_best_error = Double(err);
-        no_improvement = Integer(0);
-      } else {
-        no_improvement = no_improvement + Integer(1);
+        improved = true;
       }
-      convergence_check = convergence_check + Integer(1);
     }
+    stagnation = improved ? 0 : stagnation + 1;
 
     if (static_cast<bool>(global_best_error < error_threshold)) break;
   }

@@ -62,7 +62,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "a[[1L]]\nFound unsupported left type in: a[[1L]]",
+  "a[[1L]]\nFound unsupported left type Point in: a[[1L]]",
   info = "",
   known_types
 )
@@ -72,7 +72,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "a[1L]\nFound unsupported left type in: a[1L]",
+  "a[1L]\nFound unsupported left type Point in: a[1L]",
   info = "",
   known_types
 )
@@ -82,7 +82,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "at(a, a)\nFound unsupported left type in: at(a, a)",
+  "at(a, a)\nFound unsupported left type Point in: at(a, a)",
   info = "",
   known_types
 )
@@ -92,7 +92,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "at(c(1.0, 2.0, 3.0), a)\nFound unsupported right type in: at(c(1.0, 2.0, 3.0), a)",
+  "at(c(1.0, 2.0, 3.0), a)\nFound unsupported right type Point in: at(c(1.0, 2.0, 3.0), a)",
   info = "",
   known_types
 )
@@ -104,7 +104,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "a[1.0]\nYou can only subset variables of type array, matrix or vector"
+  "a[1.0]\nYou cannot subset a scalar value"
 )
 
 f <- function() {
@@ -114,7 +114,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "a[[1L]]\nYou can only subset variables of type array, matrix or vector"
+  "a[[1L]]\nYou cannot subset a scalar value"
 )
 
 f <- function() {
@@ -124,7 +124,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "at(a, 1L)\nYou can only subset variables of type array, matrix or vector"
+  "at(a, 1L)\nYou cannot subset a scalar value"
 )
 
 # --- chained subsetting of a vector: the intermediate is a scalar --------------
@@ -235,7 +235,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"array(0.0, c(2.0, 2.0))[NA]\nYou cannot use character/NA/NaN/Inf entries for subsetting"
+"array(0.0, c(2.0, 2.0))[NA]\nYou cannot use character/NA/NaN/Inf entries in right type in: array(0.0, c(2.0, 2.0))[NA]"
 )
 
 # --- subsetting matrix ----------------------------------------------------------
@@ -253,7 +253,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "matrix(0.0, 2.0, 2.0)[NA]\nYou cannot use character/NA/NaN/Inf entries for subsetting"
+  "matrix(0.0, 2.0, 2.0)[NA]\nYou cannot use character/NA/NaN/Inf entries in right type in: matrix(0.0, 2.0, 2.0)[NA]"
 )
 f <- function() {
   a <- matrix(0, 5, 5)
@@ -290,7 +290,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "c(1.0, 2.0, 3.0)[NA]\nYou cannot use character/NA/NaN/Inf entries for subsetting"
+  "c(1.0, 2.0, 3.0)[NA]\nYou cannot use character/NA/NaN/Inf entries in right type in: c(1.0, 2.0, 3.0)[NA]"
 )
 f <- function() {
   a |> type(int) <- 1L
@@ -299,7 +299,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "print(a[1.0, 1.0])\nYou can only subset variables of type array, matrix or vector"
+  "print(a[1.0, 1.0])\nYou cannot subset a scalar value"
 )
 f <- function() {
   a |> type(int) <- 1L
@@ -308,7 +308,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"print(a[1.0])\nYou can only subset variables of type array, matrix or vector"
+"print(a[1.0])\nYou cannot subset a scalar value"
 )
 f <- function() {
   a |> type(int) <- 1L
@@ -317,7 +317,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"print(a[[1.0]])\nYou can only subset variables of type array, matrix or vector"
+"print(a[[1.0]])\nYou cannot subset a scalar value"
 )
 f <- function() {
   a |> type(int) <- 1L
@@ -326,7 +326,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"print(at(a, 1.0))\nYou can only subset variables of type array, matrix or vector"
+"print(at(a, 1.0))\nYou cannot subset a scalar value"
 )
 f <- function() {
   a <- numeric(10)
@@ -335,7 +335,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "print(a[\"Invalid\"])\nYou cannot use character/NA/NaN/Inf entries for subsetting"
+  "print(a[\"Invalid\"])\nYou cannot use character/NA/NaN/Inf entries in right type in: a[\"Invalid\"]"
 )
 f <- function() {
   a <- numeric(10)
@@ -344,7 +344,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "print(a[[\"Invalid\"]])\nYou cannot use character/NA/NaN/Inf entries for subsetting"
+  "print(a[[\"Invalid\"]])\nYou cannot use character/NA/NaN/Inf entries in right type in: a[[\"Invalid\"]]"
 )
 f <- function() {
   a <- numeric(10)
@@ -353,7 +353,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"print(at(a, \"Invalid\"))\nYou cannot use character/NA/NaN/Inf entries for subsetting"
+"print(at(a, \"Invalid\"))\nYou cannot use character/NA/NaN/Inf entries in right type in: at(a, \"Invalid\")"
 )
 
 # --- for loop --------------------------------------------------------------
@@ -363,7 +363,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "for (i in \"asdsagf\") {\nYou cannot sequence over characters/NA/NaN/Inf"
+  "for (i in \"asdsagf\") {\nYou cannot use character/NA/NaN/Inf entries in sequence type in: \"asdsagf\""
 )
 
 # --- c ---------------------------------------------------------------------
@@ -381,7 +381,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "a <- c(1.0, 2.0, \"Invalid\")\nYou cannot use character entries in c"
+  "a <- c(1.0, 2.0, \"Invalid\")\nYou cannot use character/NA/NaN/Inf entries in type in: c(1.0, 2.0, \"Invalid\")"
 )
 
 args_fct <- function() {}
@@ -401,7 +401,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "a <- c(3.14, pts)\nFound unexpected type collection containing Point for variable pts",
+  "a <- c(3.14, pts)\nFound unsupported type collection(Point) in: c(3.14, pts)",
   info = "",
   known_types
 )
@@ -413,7 +413,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"a <- \"a\" : \"b\"\nYou cannot use character/NA/NaN/Inf entries in :"
+"a <- \"a\" : \"b\"\nYou cannot use character/NA/NaN/Inf entries in left type in: \"a\" : \"b\""
 )
 # --- rep -------------------------------------------------------------------
 f <- function() {
@@ -422,7 +422,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"a <- rep(\"a\", 3.0)\nYou cannot use character/NA/NaN/Inf entries in rep"
+"a <- rep(\"a\", 3.0)\nYou cannot use character/NA/NaN/Inf entries in left type in: rep(\"a\", 3.0)"
 )
 f <- function() {
   a <- rep("a", "b")
@@ -430,7 +430,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"a <- rep(\"a\", \"b\")\nYou cannot use character/NA/NaN/Inf entries in rep"
+"a <- rep(\"a\", \"b\")\nYou cannot use character/NA/NaN/Inf entries in left type in: rep(\"a\", \"b\")"
 )
 # --- seq_len ----------------------------------------------------------------
 f <- function() {
@@ -448,7 +448,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"a <- seq_along(\"Bla\")\nYou cannot use character/NA/NaN/Inf entries in seq_along"
+"a <- seq_along(\"Bla\")\nYou cannot use character/NA/NaN/Inf entries in type in: seq_along(\"Bla\")"
 )
 # --- unary math--------------------------------------------------------------
 args_fct <- function() {}
@@ -470,13 +470,13 @@ checks <- logical(13)
 fct_strings <- c("sin", "asin", "sinh", "cos", "acos", "cosh", "tan", "atan", "tanh", "log", "sqrt", "exp", "-")
 for (i in 1:13) {
   message <- sprintf(
-    "a <- %s(\"a\")\nYou cannot use character/NA/NaN/Inf entries in %s",
+    "a <- %s(\"a\")\nYou cannot use character/NA/NaN/Inf entries in type in: %s(\"a\")",
     fct_strings[i], fct_strings[i])
   e <- try(run_fr_checks(fcts[[i]], args_fct, TRUE, list()), silent = TRUE)
   e <- attributes(e)[["condition"]]$message
   if (i == 13) {
     message <- sprintf(
-      "a <- %s\"a\"\nYou cannot use character/NA/NaN/Inf entries in %s",
+      "a <- %s\"a\"\nYou cannot use character/NA/NaN/Inf entries in type in: %s\"a\"",
       fct_strings[i], fct_strings[i])
     checks[i] <- message == e
   } else {
@@ -491,7 +491,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-"1.0 ^ Inf\nYou cannot use character/NA/NaN/Inf entries in ^"
+"1.0 ^ Inf\nYou cannot use character/NA/NaN/Inf entries in right type in: 1.0 ^ Inf"
 )
 args_fct <- function() {}
 f <- function() {
@@ -500,7 +500,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-"c <- a + NA\nYou cannot use character/NA/NaN/Inf entries in +"
+"c <- a + NA\nYou cannot use character/NA/NaN/Inf entries in right type in: a + NA"
 )
 args_fct <- function() {}
 f <- function() {
@@ -509,7 +509,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-"c <- a - NA\nYou cannot use character/NA/NaN/Inf entries in -"
+"c <- a - NA\nYou cannot use character/NA/NaN/Inf entries in right type in: a - NA"
 )
 args_fct <- function() {}
 f <- function() {
@@ -518,7 +518,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-"c <- a * NA\nYou cannot use character/NA/NaN/Inf entries in *"
+"c <- a * NA\nYou cannot use character/NA/NaN/Inf entries in right type in: a * NA"
 )
 args_fct <- function() {}
 f <- function() {
@@ -527,7 +527,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-"c <- a / NA\nYou cannot use character/NA/NaN/Inf entries in /"
+"c <- a / NA\nYou cannot use character/NA/NaN/Inf entries in right type in: a / NA"
 )
 args_fct <- function() {}
 f <- function() {
@@ -536,7 +536,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-"c <- a %% NA\nYou cannot use character/NA/NaN/Inf entries in %%"
+"c <- a %% NA\nYou cannot use character/NA/NaN/Inf entries in right type in: a %% NA"
 )
 args_fct <- function() {}
 f <- function() {
@@ -545,7 +545,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-"c <- a %/% NA\nYou cannot use character/NA/NaN/Inf entries in %/%"
+"c <- a %/% NA\nYou cannot use character/NA/NaN/Inf entries in right type in: a %/% NA"
 )
 args_fct <- function() {}
 f <- function() {
@@ -565,16 +565,16 @@ e <- try(run_fr_checks(f, args_fct, TRUE, list()), silent = TRUE)
 e <- attributes(e)[["condition"]]$message
 got <- strsplit(e, "\n\n")[[1]] |> as.list()
 expected <- list(
-"a == NA\nYou cannot use character/NA/NaN/Inf entries in ==",
-"a != NA\nYou cannot use character/NA/NaN/Inf entries in !=",
-"a > NA\nYou cannot use character/NA/NaN/Inf entries in >",
-"a >= NA\nYou cannot use character/NA/NaN/Inf entries in >=",
-"a < NA\nYou cannot use character/NA/NaN/Inf entries in <",
-"a <= NA\nYou cannot use character/NA/NaN/Inf entries in <=",
-"NA && a\nYou cannot use character/NA/NaN/Inf entries in &&",
-"NA || a\nYou cannot use character/NA/NaN/Inf entries in ||",
-"NA & a\nYou cannot use character/NA/NaN/Inf entries in &",
-"NA | a\nYou cannot use character/NA/NaN/Inf entries in |"
+"a == NA\nYou cannot use character/NA/NaN/Inf entries in right type in: a == NA",
+"a != NA\nYou cannot use character/NA/NaN/Inf entries in right type in: a != NA",
+"a > NA\nYou cannot use character/NA/NaN/Inf entries in right type in: a > NA",
+"a >= NA\nYou cannot use character/NA/NaN/Inf entries in right type in: a >= NA",
+"a < NA\nYou cannot use character/NA/NaN/Inf entries in right type in: a < NA",
+"a <= NA\nYou cannot use character/NA/NaN/Inf entries in right type in: a <= NA",
+"NA && a\nYou cannot use character/NA/NaN/Inf entries in left type in: NA && a",
+"NA || a\nYou cannot use character/NA/NaN/Inf entries in left type in: NA || a",
+"NA & a\nYou cannot use character/NA/NaN/Inf entries in left type in: NA & a",
+"NA | a\nYou cannot use character/NA/NaN/Inf entries in left type in: NA | a"
 )
 checks <- Map(function(g, e) {
   g == e
@@ -588,7 +588,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "a <- logical(NA)\nYou cannot use character/NA/NaN/Inf entries in logical"
+  "a <- logical(NA)\nYou cannot use character/NA/NaN/Inf entries in type in: logical(NA)"
 )
 f <- function() {
   a <- integer(NA)
@@ -596,7 +596,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "a <- integer(NA)\nYou cannot use character/NA/NaN/Inf entries in integer"
+  "a <- integer(NA)\nYou cannot use character/NA/NaN/Inf entries in type in: integer(NA)"
 )
 f <- function() {
   a <- numeric(NA)
@@ -604,7 +604,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "a <- numeric(NA)\nYou cannot use character/NA/NaN/Inf entries in numeric"
+  "a <- numeric(NA)\nYou cannot use character/NA/NaN/Inf entries in type in: numeric(NA)"
 )
 f <- function() {
   a <- vector("integer", "Bla")
@@ -612,7 +612,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "a <- vector(\"integer\", \"Bla\")\nFound unallowed length type in vector"
+  "a <- vector(\"integer\", \"Bla\")\nYou cannot use character/NA/NaN/Inf entries in right type in: vector(\"integer\", \"Bla\")"
 )
 f <- function() {
   m <- matrix(1, "nrow", "ncol")
@@ -620,7 +620,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "m <- matrix(1.0, \"nrow\", \"ncol\")\nFound unallowed ncol type in matrix"
+  "m <- matrix(1.0, \"nrow\", \"ncol\")\nYou cannot use character/NA/NaN/Inf entries in type in: matrix(1.0, \"nrow\", \"ncol\")"
 )
 f <- function() {
   m <- matrix(1, "nrow", 1)
@@ -628,7 +628,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "m <- matrix(1.0, \"nrow\", 1.0)\nFound unallowed nrow type in matrix"
+  "m <- matrix(1.0, \"nrow\", 1.0)\nYou cannot use character/NA/NaN/Inf entries in type in: matrix(1.0, \"nrow\", 1.0)"
 )
 f <- function() {
   m <- array("invalid", c(2, 2))
@@ -636,7 +636,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"m <- array(\"invalid\", c(2.0, 2.0))\nYou cannot fill an array with character entries"
+"m <- array(\"invalid\", c(2.0, 2.0))\nYou cannot use character/NA/NaN/Inf entries in type in: array(\"invalid\", c(2.0, 2.0))"
 )
 
 # --- length, dim, nrow and ncol ---------------------------------------------
@@ -748,7 +748,7 @@ red_names <- c("max", "min", "which.max", "which.min", "all", "any")
 red_checks <- logical(length(red_fcts))
 for (i in seq_along(red_fcts)) {
   message <- sprintf(
-    "a <- %s(\"a\")\nYou cannot use character/NA/NaN/Inf entries in %s",
+    "a <- %s(\"a\")\nYou cannot use character/NA/NaN/Inf entries in type in: %s(\"a\")",
     red_names[i], red_names[i])
   e <- try(run_fr_checks(red_fcts[[i]], args_fct, TRUE, list()), silent = TRUE)
   e <- attributes(e)[["condition"]]$message
@@ -763,14 +763,14 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "a <- rbind(1.0, 2.0, \"Invalid\")\nYou cannot use character entries in rbind"
+  "a <- rbind(1.0, 2.0, \"Invalid\")\nYou cannot use character/NA/NaN/Inf entries in type in: rbind(1.0, 2.0, \"Invalid\")"
 )
 f <- function() {
   a <- cbind(1, 2, "Invalid")
 }
 test_checks(
   f, args_fct, TRUE,
-  "a <- cbind(1.0, 2.0, \"Invalid\")\nYou cannot use character entries in cbind"
+  "a <- cbind(1.0, 2.0, \"Invalid\")\nYou cannot use character/NA/NaN/Inf entries in type in: cbind(1.0, 2.0, \"Invalid\")"
 )
 
 # --- floor / ceiling / trunc ------------------------------------------------
@@ -784,7 +784,7 @@ rt_names <- c("floor", "ceiling", "trunc")
 rt_checks <- logical(length(rt_fcts))
 for (i in seq_along(rt_fcts)) {
   message <- sprintf(
-    "a <- %s(\"a\")\nYou cannot use character/NA/NaN/Inf entries in %s",
+    "a <- %s(\"a\")\nYou cannot use character/NA/NaN/Inf entries in type in: %s(\"a\")",
     rt_names[i], rt_names[i])
   e <- try(run_fr_checks(rt_fcts[[i]], args_fct, TRUE, list()), silent = TRUE)
   e <- attributes(e)[["condition"]]$message
@@ -802,7 +802,7 @@ sp_names <- c("sum", "prod")
 sp_checks <- logical(length(sp_fcts))
 for (i in seq_along(sp_fcts)) {
   message <- sprintf(
-    "a <- %s(\"a\")\nYou cannot use character/NA/NaN/Inf entries in %s",
+    "a <- %s(\"a\")\nYou cannot use character/NA/NaN/Inf entries in type in: %s(\"a\")",
     sp_names[i], sp_names[i])
   e <- try(run_fr_checks(sp_fcts[[i]], args_fct, TRUE, list()), silent = TRUE)
   e <- attributes(e)[["condition"]]$message
@@ -817,7 +817,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "a <- chol(\"a\")\nYou cannot use character/NA/NaN/Inf entries in chol"
+  "a <- chol(\"a\")\nYou cannot use character/NA/NaN/Inf entries in type in: chol(\"a\")"
 )
 f <- function() {
   s <- 5.0
@@ -842,7 +842,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "a <- get_diag(\"a\")\nYou cannot use character/NA/NaN/Inf entries in get_diag"
+  "a <- get_diag(\"a\")\nYou cannot use character/NA/NaN/Inf entries in type in: get_diag(\"a\")"
 )
 f <- function() {
   s <- 5.0
@@ -867,7 +867,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "a <- crossprod(\"a\")\nYou cannot use character/NA/NaN/Inf entries in crossprod"
+  "a <- crossprod(\"a\")\nYou cannot use character/NA/NaN/Inf entries in type in: crossprod(\"a\")"
 )
 f <- function() {
   s <- 5.0
@@ -892,7 +892,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "a <- tcrossprod(\"a\")\nYou cannot use character/NA/NaN/Inf entries in tcrossprod"
+  "a <- tcrossprod(\"a\")\nYou cannot use character/NA/NaN/Inf entries in type in: tcrossprod(\"a\")"
 )
 f <- function() {
   s <- 5.0
@@ -918,7 +918,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "a <- solve(\"a\")\nYou cannot use character entries in solve"
+  "a <- solve(\"a\")\nYou cannot use character/NA/NaN/Inf entries in type in: solve(\"a\")"
 )
 f <- function() {
   m <- matrix(1.0, 2, 2)
@@ -926,7 +926,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "x <- solve(m, \"b\")\nYou cannot use character entries in solve"
+  "x <- solve(m, \"b\")\nYou cannot use character/NA/NaN/Inf entries in type in: solve(m, \"b\")"
 )
 
 # --- backsolve / forwardsolve -----------------------------------------------
@@ -936,7 +936,7 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "x <- backsolve(m, \"b\")\nYou cannot use character entries in backsolve"
+  "x <- backsolve(m, \"b\")\nYou cannot use character/NA/NaN/Inf entries in type in: backsolve(m, \"b\")"
 )
 f <- function() {
   m <- matrix(1.0, 2, 2)
@@ -944,5 +944,5 @@ f <- function() {
 }
 test_checks(
   f, args_fct, TRUE,
-  "x <- forwardsolve(m, \"b\")\nYou cannot use character entries in forwardsolve"
+  "x <- forwardsolve(m, \"b\")\nYou cannot use character/NA/NaN/Inf entries in type in: forwardsolve(m, \"b\")"
 )

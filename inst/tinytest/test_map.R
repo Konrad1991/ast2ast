@@ -188,7 +188,15 @@ f11 <- function(a) {
   g <- fn(argtypes(av |> type(double)), return(double), { return(av) })
   return(map(g, "hello"))
 }
-expect_error(translate(f11, getsource = TRUE), pattern = "character entries in map")
+expect_error(translate(f11, getsource = TRUE), pattern = "character/NA/NaN/Inf entries in type in: map", fixed = TRUE)
+
+# --- mutable ref() argument of the mapped function ----------------------
+f12 <- function(a) {
+  argtypes(a |> type(vec(double)))
+  g <- fn(argtypes(av |> type(double) |> ref()), return(double), { return(av) })
+  return(map(g, a))
+}
+expect_error(translate(f12, getsource = TRUE), pattern = "is ref() and has to be const() as well", fixed = TRUE)
 
 # --- collection-returning inner function is rejected -------------------
 f12 <- function(a) {

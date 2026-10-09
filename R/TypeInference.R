@@ -620,7 +620,7 @@ type_infer_action <- function(node, info_env) {
     }
     # e.g. print(b) with b never assigned: print's own infer_fct doesn't look at
     # its argument's type, so this is the only place that sees the error
-    else if (is.null(node$error) && is.character(obj_type)) {
+    else if (is.null(node$error) && is.character(obj_type) && inherits(node$obj, "variable_node")) {
       node$error <- obj_type
     }
   }

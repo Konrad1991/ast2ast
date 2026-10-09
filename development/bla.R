@@ -1,22 +1,25 @@
 files <- list.files("./R", full.names = TRUE)
 trash <- lapply(files, source)
 
-f <- function() {
-  f2 <- fn(
-    argtypes(
-      a |> type(double),
-      b |> type(double)
-    ),
-    return(int),
-    {
-      c <- as.integer(a + b)
-      return(c)
-    }
+types <- function() {
+  new_type(
+    Point,
+    slots(
+      x |> type(double),
+      y |> type(double)
+    )
   )
-  # f2 <- 3L
-  a <- 1
-  f2 + a
-  a <- "bla"
 }
-fcpp <- translate(f, getsource = TRUE)
-cat(fcpp, "\n")
+
+f <- function(i) {
+  argtypes(
+    i |> type(Point)
+  )
+  v <- c(1, 2, 3)
+  a <- t(diag(v))
+}
+fcpp <- translate(f, types_f = types, verbose = TRUE)
+
+i <- structure(list(x = 1, y = 2), class = "Point")
+fcpp(i)
+traceback()

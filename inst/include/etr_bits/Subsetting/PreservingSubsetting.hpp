@@ -530,12 +530,14 @@ inline void subset_assign(ArrayType& arr, const RHS& rhs, const Args&... args) {
         const auto val = (*index_lists[k]).get(j);
         ass<"Found NA value in subsetting (within an integer object)">(!val.isNA());
         ass<"Zero and negative indices are not supported">(val.val >= 1);
+        ass<"Error: out of boundaries">(static_cast<std::size_t>(val.val) <= dim[k]);
       }
     } else {
       for (std::size_t j = 0; j < L[k]; j++) {
         const auto val = (*index_lists[k]).get(j);
         ass<"Found NA value in subsetting">(!val.isNA());
         ass<"Zero and negative indices are not supported">(val.val >= 1);
+        ass<"Error: out of boundaries">(static_cast<std::size_t>(val.val) <= dim[k]);
       }
     }
     vals[k] = index_lists[k]->data();
