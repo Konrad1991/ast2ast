@@ -8,7 +8,9 @@ namespace etr {
 // Evaluation: this is required as the lifetime for some objects do not survive the function itself
 // -----------------------------------------------------------------------------------------------------------
 template<typename T>
-inline auto Evaluate(T && obj) {
+// NOTE: decltype(auto), not auto: auto decays the forwarded reference and
+// copies a concrete array (alloc + per-element copy) on every Cast.
+inline decltype(auto) Evaluate(T && obj) {
   constexpr bool is_scalar = IsScalarLike<Decayed<T>>;
   // Materialize lazy expression views (BinaryOp, SubsetView, ...) into a
   // concrete RBuffer. Concrete arrays — LBuffer, RBuffer, Borrow — already
@@ -26,7 +28,7 @@ inline auto Evaluate(T && obj) {
     res.dim = std::move(obj.get_dim());
     return res;
   } else {
-    return std::forward<decltype(obj)>(obj);
+    return std::forward<T>(obj);
   }
 }
 inline auto Evaluate() {
@@ -222,7 +224,7 @@ inline auto cast_na_ptr(const A& a) {
 template <typename T>
 requires IsArray<Decayed<T>>
 inline SEXP Cast(const T &res_) {
-  auto res = Evaluate(res_);
+  const auto& res = Evaluate(res_);
   const auto dim = dim_view(res.get_dim());
   using vtype = typename ExtractDataType<Decayed<decltype(res)>>::value_type;
   const R_xlen_t N = static_cast<R_xlen_t>(res.size());
