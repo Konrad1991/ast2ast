@@ -262,9 +262,58 @@ inline auto jacobian_impl(const X& x, Call&& call_f) {
   }
 }
 
+// Sparsity pattern + column colouring of f, built at translation
+// (R/Colouring.R) for length(x) == n. Per column (CSC, 0-based): its colour
+// and the rows it touches. Columns of one colour share no row.
+struct Colouring {
+  std::size_t n;
+  std::size_t m;
+  std::size_t ncolours;
+  std::vector<int> colour;
+  std::vector<int> col_ptr;
+  std::vector<int> row_idx;
+};
+
+// one forward sweep per colour: seed all its columns at once, then scatter
+// J*v into the rows each column touches
+template<typename X, typename Call>
+inline auto jacobian_coloured_impl(const X& x, const Colouring& c, Call&& call_f) {
+  ass<"jacobian: length(x) differs from n given for colouring">(x.size() == c.n);
+  Array<Dual, Buffer<Dual>> xd(SI{c.n});
+  for (std::size_t i = 0; i < c.n; i++) xd.set(i, Dual(get_val(x.get(i)), 0.0));
+  auto jac = matrix(Double(0.0), Integer(static_cast<int>(c.m)), Integer(static_cast<int>(c.n)));
+
+  std::vector<std::vector<std::size_t>> cols_of(c.ncolours);
+  for (std::size_t j = 0; j < c.n; j++) cols_of[static_cast<std::size_t>(c.colour[j])].push_back(j);
+
+  for (const auto& cols : cols_of) {
+    for (std::size_t j : cols) xd.d.set_dot(j, 1.0);
+    auto y = call_f(xd);
+    ass<"jacobian: f returned another length than the colouring assumes">(y.size() == c.m);
+    for (std::size_t j : cols) {
+      for (int p = c.col_ptr[j]; p < c.col_ptr[j + 1]; p++) {
+        const std::size_t i = static_cast<std::size_t>(c.row_idx[static_cast<std::size_t>(p)]);
+        jac.set(j * c.m + i, y.d.get_dot(i));
+      }
+    }
+    for (std::size_t j : cols) xd.d.set_dot(j, 0.0);
+  }
+  return jac;
+}
+
 template<typename F, typename X> requires (IsArray<Decayed<X>>)
 inline auto jacobian(const F& f, const X& x) {
   return jacobian_impl(x, [&f](const auto& xv) { return f(xv); });
+}
+
+template<typename F, typename X> requires (IsArray<Decayed<X>>)
+inline auto jacobian(const F& f, const X& x, const Colouring& c) {
+  return jacobian_coloured_impl(x, c, [&f](const auto& xv) { return f(xv); });
+}
+
+template<typename F, typename X, typename E> requires (IsArray<Decayed<X>>)
+inline auto jacobian(const F& f, const X& x, const E& extra, const Colouring& c) {
+  return jacobian_coloured_impl(x, c, [&f, &extra](const auto& xv) { return f(xv, extra); });
 }
 
 template<typename F, typename X, typename E> requires (IsArray<Decayed<X>>)

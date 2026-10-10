@@ -1,5 +1,16 @@
 # Coloured forward-AD Jacobian
 
+Status (2026-10-10): steps 1-4 done. Steps 1-3 ported to `R/Colouring.R`
+(prototype file keeps only the examples). Step 4:
+`jacobian(f, x[, data], colouring = TRUE, n = <literal>)` (forward mode);
+`n` is the literal state length, so pattern + colours are computed at
+translation and emitted as `etr::Colouring{...}` (CSC per column, 0-based);
+`etr::jacobian(f, x, Colouring)` does one sweep per colour (all columns of the
+colour seeded at once) and scatters. f forms: `out <- numeric(..)` +
+`out[[i]] <- ..` + `return(out)`, or `return(c(...))`. Not resolvable ->
+warning + plain jacobian. Runtime: length(x) == n and length(f(x)) == m checked.
+Tests: inst/tinytest/test_jacobian_colouring.R. Next: step 5 (SUNDIALS).
+
 Goal: build the Jacobian `J = d(ydot)/dy` of a translated ODE RHS cheaply, so
 CVODE/IDA can use an analytic Jacobian instead of finite differences on large
 stiff systems.
