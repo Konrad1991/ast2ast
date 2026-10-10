@@ -15,7 +15,7 @@ template <typename T> requires IsArithRefV<T> inline Logical isNA(const T inp) {
 }
 template <typename T> requires IsArray<T> inline auto isNA(const T &inp) {
   Array<Logical, Buffer<Logical, RBufferTrait>> res( SI{inp.size()});
-  res.dim = std::vector<std::size_t>{inp.size()};
+  res.dim = Dim{inp.size()};
   for (std::size_t i = 0; i < res.size(); i++) {
     res.set(i, get_scalar_val(inp.get(i)).isNA());
   }
@@ -36,7 +36,7 @@ template <typename T> requires IsArithRefV<T> inline Logical isNaN(const T inp) 
 }
 template <typename T> requires IsArray<T> inline auto isNaN(const T &inp) {
   Array<Logical, Buffer<Logical, RBufferTrait>> res( SI{inp.size()});
-  res.dim = std::vector<std::size_t>{inp.size()};
+  res.dim = Dim{inp.size()};
   for (std::size_t i = 0; i < res.size(); i++) {
     res.set(i, inp.get(i).isNaN());
   }
@@ -57,7 +57,7 @@ template <typename T> requires IsArithRefV<T> inline Logical isInfinite(const T 
 }
 template <typename T> requires IsArray<T> inline auto isInfinite(const T &inp) {
   Array<Logical, Buffer<Logical, RBufferTrait>> res( SI{inp.size()});
-  res.dim = std::vector<std::size_t>{inp.size()};
+  res.dim = Dim{inp.size()};
   for (std::size_t i = 0; i < res.size(); i++) {
     res.set(i, inp.get(i).isInfinite());
   }
@@ -79,7 +79,7 @@ template <typename T> requires IsArithRefV<T> inline Logical isFinite(const T in
 }
 template <typename T> requires IsArray<T> inline auto isFinite(const T &inp) {
   Array<Logical, Buffer<Logical, RBufferTrait>> res( SI{inp.size()});
-  res.dim = std::vector<std::size_t>{inp.size()};
+  res.dim = Dim{inp.size()};
   for (std::size_t i = 0; i < res.size(); i++) {
     res.set(i, inp.get(i).isFinite());
   }
@@ -105,7 +105,7 @@ template <typename T> requires IsArray<T> inline auto dim(const T &inp) {
   for (std::size_t i = 0; i < res.size(); i++) {
     res.set(i, Integer(static_cast<int>(d[i])));
   }
-  res.dim = std::vector<std::size_t>{2};
+  res.dim = Dim{2};
   return res;
 }
 // ncol & nrow
@@ -204,7 +204,7 @@ template <typename T> requires IsScalarLike<T> inline auto which(const T inp) {
   const auto v = get_scalar_val(inp);
   Array<Integer, Buffer<Integer, RBufferTrait>> ret;
   if (!v.isNA() && get_val(v) != 0) ret.push_back(Integer(1));
-  ret.dim = std::vector<std::size_t>{ret.size()};
+  ret.dim = Dim{ret.size()};
   return ret;
 }
 template <typename T> requires IsArray<T> inline auto which(const T &inp) {
@@ -215,7 +215,7 @@ template <typename T> requires IsArray<T> inline auto which(const T &inp) {
       ret.push_back(Integer(static_cast<int>(i + 1)));
     }
   }
-  ret.dim = std::vector<std::size_t>{ret.size()};
+  ret.dim = Dim{ret.size()};
   return ret;
 }
 
@@ -342,12 +342,12 @@ template <typename T> requires IsScalarLike<T> inline auto cumsum(const T inp) {
   using V = Decayed<decltype(v)>;
   if constexpr (IS<V, Logical>) {
     Array<Integer, Buffer<Integer, RBufferTrait>> res(SI{1});
-    res.dim = std::vector<std::size_t>{1};
+    res.dim = Dim{1};
     res.set(0, Integer(v));
     return res;
   } else {
     Array<V, Buffer<V, RBufferTrait>> res(SI{1});
-    res.dim = std::vector<std::size_t>{1};
+    res.dim = Dim{1};
     res.set(0, v);
     return res;
   }
@@ -356,13 +356,13 @@ template <typename T> requires IsArray<T> inline auto cumsum(const T &inp) {
   using Inner = typename ExtractDataType<Decayed<T>>::value_type;
   if constexpr (IS<Inner, Logical>) {
     Array<Integer, Buffer<Integer, RBufferTrait>> res(SI{inp.size()});
-    res.dim = std::vector<std::size_t>{inp.size()};
+    res.dim = Dim{inp.size()};
     Integer acc(0);
     for (std::size_t i = 0; i < inp.size(); i++) { acc = acc + inp.get(i); res.set(i, acc); }
     return res;
   } else {
     Array<Inner, Buffer<Inner, RBufferTrait>> res(SI{inp.size()});
-    res.dim = std::vector<std::size_t>{inp.size()};
+    res.dim = Dim{inp.size()};
     Inner acc(0);
     for (std::size_t i = 0; i < inp.size(); i++) { acc = acc + inp.get(i); res.set(i, acc); }
     return res;
@@ -385,7 +385,7 @@ inline auto margin_reduce(const T &inp, bool byRow, bool doMean) {
   using Inner = typename ExtractDataType<Decayed<T>>::value_type;
   if constexpr (IS<Inner, Dual> || IS<Inner, ReverseDouble>) {
     Array<Inner, Buffer<Inner, RBufferTrait>> res(SI{nOut});
-    res.dim = std::vector<std::size_t>{nOut};
+    res.dim = Dim{nOut};
     for (std::size_t o = 0; o < nOut; o++) {
       Inner acc(0);
       for (std::size_t k = 0; k < nIn; k++) {
@@ -399,7 +399,7 @@ inline auto margin_reduce(const T &inp, bool byRow, bool doMean) {
     return res;
   } else {
     Array<Double, Buffer<Double, RBufferTrait>> res(SI{nOut});
-    res.dim = std::vector<std::size_t>{nOut};
+    res.dim = Dim{nOut};
     for (std::size_t o = 0; o < nOut; o++) {
       Double acc(0);
       for (std::size_t k = 0; k < nIn; k++) {

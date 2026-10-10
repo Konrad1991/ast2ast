@@ -1,5 +1,14 @@
 # Lazy `Range` + N-D strided (contiguous) subset view
 
+Status (2026-10-10): implemented as affine version. Range = (start, step, len)
+(`RangeSpec`); range +-* integer scalar stays a range. Strided layout used for
+`subset_assign` and const subsets (nested loops, no buffer). Mutable subsets
+(reads inside expressions) still use a SubsetView over an index buffer, only
+filled via the strided loop.
+REJECTED: a view decoding i -> offset per element (div, also Lemire fastdiv):
+diffuse.R inline 147 / 134 ms vs 120 ms with index buffer.
+Open: range type for variables (`i <- 2L:n` stays lazy).
+
 ## Goal
 
 `subset(a, ...)` currently always materializes a flat `Buffer<int>` of

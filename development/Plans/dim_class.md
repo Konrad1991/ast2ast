@@ -1,6 +1,7 @@
 # Dim class: dims without heap allocation
 
-Status: plan, not started (2026-10-09)
+Status: done (2026-10-10). window_sum ~90 -> ~36 ns, window_fill ~55 -> ~23 ns,
+2dheat unchanged (4.5 ms)
 
 ## Problem
 

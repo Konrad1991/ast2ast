@@ -362,7 +362,7 @@ inline auto nnls(const MA& Ain, const MB& bin) {
   ass<"nnls: iteration count exceeded">(mode != 3);
 
   Array<Double, Buffer<Double, RBufferTrait>> res(SI{static_cast<std::size_t>(n)});
-  res.dim = std::vector<std::size_t>{static_cast<std::size_t>(n)};
+  res.dim = Dim{static_cast<std::size_t>(n)};
   for (std::size_t i = 0; i < x.size(); ++i) res.set(i, x[i]);
   return res;
 }

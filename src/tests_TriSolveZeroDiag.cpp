@@ -17,7 +17,7 @@ void test_trisolve_zero_diag() {
   auto make_mat = [](double v0, double v1, double v2, double v3, std::size_t n) {
     Array<Double, Buffer<Double>> M;
     M = c(Double(v0), Double(v1), Double(v2), Double(v3));
-    M.dim = std::vector<std::size_t>{n, n};
+    M.dim = Dim{n, n};
     return M;
   };
   auto make_vec = [](double a, double b) {
@@ -62,7 +62,7 @@ void test_trisolve_zero_diag() {
   {
     Array<Dual, Buffer<Dual>> R;
     R = c(Dual(0.0, 0.0), Dual(0.0, 0.0), Dual(1.0, 0.0), Dual(2.0, 0.0));
-    R.dim = std::vector<std::size_t>{2, 2};
+    R.dim = Dim{2, 2};
     auto b = make_vec(1.0, 1.0);
     try {
       auto x = backsolve(R, b);
@@ -78,7 +78,7 @@ void test_trisolve_zero_diag() {
     Array<ReverseDouble, Buffer<ReverseDouble>> R;
     R = c(ReverseDouble::Var(0.0), ReverseDouble::Var(0.0),
           ReverseDouble::Var(1.0), ReverseDouble::Var(2.0));
-    R.dim = std::vector<std::size_t>{2, 2};
+    R.dim = Dim{2, 2};
     auto b = make_vec(1.0, 1.0);
     try {
       auto x = backsolve(R, b);

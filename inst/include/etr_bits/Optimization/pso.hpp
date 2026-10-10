@@ -58,9 +58,9 @@ inline auto pso(
   ass<"npop has to be at least 5">(npop >= Integer(5));
   ass<"ngen has to be at least 10">(ngen >= Integer(10));
   Array<R, Buffer<R>> swarm(SI{npop_t * npar_t});
-  swarm.dim = std::vector<std::size_t>{npar_t, npop_t};
+  swarm.dim = Dim{npar_t, npop_t};
   Array<R, Buffer<R>> v(SI{npop_t * npar_t});
-  v.dim = std::vector<std::size_t>{npar_t, npop_t};
+  v.dim = Dim{npar_t, npop_t};
   Array<R, Buffer<R>> swarm_bests = numeric(npop);
   Array<R, Buffer<R>> swarm_errors = numeric(npop);
   const Double initial_cog = Double(2.5);
@@ -78,7 +78,7 @@ inline auto pso(
       swarm.set(i*npar_t + j, rng.runif(get_val(lb.get(j)), get_val(ub.get(j))));
     }
     Array<R, Borrow<R, BorrowTrait>> particle(
-      &swarm.d.p_val[i * npar_t], npar_t, std::vector<std::size_t>{npar_t}
+      &swarm.d.p_val[i * npar_t], npar_t, Dim{npar_t}
     );
     swarm_errors.set(i, f(particle));
     swarm_bests.set(i, swarm_errors.get(i));
@@ -96,7 +96,7 @@ inline auto pso(
   const std::size_t k_t = static_cast<std::size_t>(get_val(k));
 
   [[maybe_unused]] Array<Integer, Buffer<Integer>> neighberhood(SI{k_t * npop_t});
-  neighberhood.dim = std::vector<std::size_t>{k_t, npop_t};
+  neighberhood.dim = Dim{k_t, npop_t};
   std::vector<int> pool(npop_t);
   const auto calc_neighberhood = [&]() {
     for (std::size_t c = 0; c < npop_t; c++) {
@@ -128,11 +128,11 @@ inline auto pso(
 
   for (std::size_t idx = 0; idx < npar_t * npop_t; idx++) v.set(idx, R(0.0));
   Array<R, Buffer<R>> swarm_best_params(SI{npar_t * npop_t});
-  swarm_best_params.dim = std::vector<std::size_t>{npar_t, npop_t};
+  swarm_best_params.dim = Dim{npar_t, npop_t};
   for (std::size_t idx = 0; idx < npar_t * npop_t; idx++)
     swarm_best_params.set(idx, R(swarm.d.p_val[idx]));
   Array<R, Buffer<R>> global_best_vec(SI{npar_t});
-  global_best_vec.dim = std::vector<std::size_t>{npar_t};
+  global_best_vec.dim = Dim{npar_t};
   for (std::size_t d = 0; d < npar_t; d++)
     global_best_vec.set(d, R(swarm.d.p_val[static_cast<std::size_t>(get_val(global_best)) * npar_t + d]));
 
@@ -186,7 +186,7 @@ inline auto pso(
       correct_above_ub(pos);
 
       Array<R, Borrow<R, BorrowTrait>> particle(
-        pos, npar_t, std::vector<std::size_t>{npar_t}
+        pos, npar_t, Dim{npar_t}
       );
       const double err = get_val(f(particle));
       const bool ok = std::isfinite(err);

@@ -194,13 +194,13 @@ template <typename O, typename Trait> struct SubsetWithScalarView {
 
 // -----------------------------------------------------------------------------------------------------------
 template<std::size_t N>
-inline std::array<std::size_t, N> make_strides_from_vec(const std::vector<std::size_t>& dim) {
+inline std::array<std::size_t, N> make_strides_from_vec(const Dim& dim) {
   std::array<std::size_t, N> stride{};
   stride[0] = 1;
   for (std::size_t k = 1; k < N; k++) stride[k] = stride[k-1] * dim[k-1];
   return stride;
 }
-inline std::vector<std::size_t> make_strides_dyn(const std::vector<std::size_t>& dim) {
+inline std::vector<std::size_t> make_strides_dyn(const Dim& dim) {
   std::vector<std::size_t> stride(dim.size(), 0);
   stride[0] = 1;
   for (std::size_t k = 1; k < stride.size(); k++) stride[k] = stride[k-1] * dim[k-1];
@@ -212,13 +212,13 @@ inline std::vector<std::size_t> make_strides_dyn(const std::vector<std::size_t>&
 // synthetic 1-element "total size" dim -- `storage` backs that one rare
 // case so the common case (nargs == dim.size(), true for plain vector and
 // matrix subsetting) allocates nothing.
-inline const std::vector<std::size_t>& linear_dim_if_single_index(
-    const std::vector<std::size_t>& dim, std::size_t nargs,
-    std::vector<std::size_t>& storage) {
+inline const Dim& linear_dim_if_single_index(
+    const Dim& dim, std::size_t nargs,
+    Dim& storage) {
   if (nargs == 1 && dim.size() > 1) {
     std::size_t total = 1;
     for (std::size_t d : dim) total *= d;
-    storage.assign(1, total);
+    storage = Dim{total};
     return storage;
   }
   return dim;
@@ -226,7 +226,7 @@ inline const std::vector<std::size_t>& linear_dim_if_single_index(
 
 template<std::size_t N, typename O>
 inline void fill_scalars_in_index_lists(
-  const std::vector<std::size_t>& dim,
+  const Dim& dim,
   std::array<Buffer<Integer>, N>& converted_arrays,
   std::array<const Buffer<Integer>*, N>& index_lists, O&& arg,
   std::size_t& counter, std::size_t& counter_converted) {
@@ -255,7 +255,7 @@ inline void fill_scalars_in_index_lists(
 }
 
 template<std::size_t N, typename... Args>
-inline void fill_index_lists(const std::vector<std::size_t>& dim,
+inline void fill_index_lists(const Dim& dim,
                              std::array<Buffer<Integer>, N>& converted_arrays,
                              std::array<const Buffer<Integer>*, N>& index_lists,
                              std::array<bool, N>& is_plain_int_array, Args&&... args) {
@@ -354,14 +354,14 @@ inline void fill_index_lists(const std::vector<std::size_t>& dim,
 
 struct out_L {
   Buffer<int> out;
-  std::vector<std::size_t> L;
+  Dim L;
 };
 
 template <typename ArrayType, typename... Args>
 inline out_L create_indices(const ArrayType& arr, const Args&... args) {
   constexpr std::size_t N = sizeof...(Args);
-  std::vector<std::size_t> dim_storage;
-  const std::vector<std::size_t>& dim = linear_dim_if_single_index(dim_view(arr.get_dim()), N, dim_storage);
+  Dim dim_storage;
+  const Dim& dim = linear_dim_if_single_index(dim_view(arr.get_dim()), N, dim_storage);
   if (N > dim.size()) {
     ass<"Too many index arguments for array rank">(false);
   }
@@ -381,7 +381,7 @@ inline out_L create_indices(const ArrayType& arr, const Args&... args) {
     args...
   );
 
-  std::vector<std::size_t> L(N, 0);
+  Dim L(N, 0);
   for (std::size_t k = 0; k < N; k++) {
     if (!index_lists[k] || (index_lists[k]->size() == 0)) {
       ass<"Empty index for at least one dimension">(false);
@@ -493,8 +493,8 @@ inline void subset_assign(ArrayType& arr, const RHS& rhs, const Args&... args) {
   using E = typename ExtractDataType<ArrayType>::value_type;
   constexpr std::size_t N = sizeof...(Args);
 
-  std::vector<std::size_t> dim_storage;
-  const std::vector<std::size_t>& dim = linear_dim_if_single_index(dim_view(arr.get_dim()), N, dim_storage);
+  Dim dim_storage;
+  const Dim& dim = linear_dim_if_single_index(dim_view(arr.get_dim()), N, dim_storage);
   if (N > dim.size()) {
     ass<"Too many index arguments for array rank">(false);
   }
@@ -556,14 +556,7 @@ inline void subset_assign(ArrayType& arr, const RHS& rhs, const Args&... args) {
     }
   } else {
     ass<"number of items to replace is not a multiple of replacement length">(rhs.size() == S);
-    using RhsValueType = typename ReRef<RHS>::type::value_type;
-    for (std::size_t i = 0; i < S; i++) {
-      if constexpr (IS<RhsValueType, E>) {
-        temp.set(i, rhs.get(i));
-      } else {
-        temp.set(i, cast_preserve_na<E>(rhs.get(i)));
-      }
-    }
+    fill_temp(temp, rhs);
   }
 
   if constexpr (N == 2) {
@@ -613,54 +606,159 @@ inline void subset_assign(ArrayType& arr, const RHS& rhs, const Args&... args) {
   at(arr, args...) = rhs;
 }
 
-// Fast path: x[a:b] with an integer range. Contiguous, so only the endpoints are checked
-template <typename T>
-concept IsIntRangeArray = IsArray<T> && requires { typename T::DType::Trait; } &&
-  IS<typename T::DType::Trait, RangeTrait> && IsInteger<typename T::value_type>;
-
-struct RangeIdx {
-  std::size_t first;
+// Strided fast path: every index is an integer range, a scalar or TRUE.
+// Each axis is affine (first + step * i), so no index buffer is built and
+// only the endpoints are checked.
+struct AxisSpec {
+  std::size_t first; // 0-based
+  long step;
   std::size_t len;
-  bool up;
-  std::size_t operator()(std::size_t i) const { return up ? first + i : first - i; }
 };
 
 template <typename Idx>
-inline RangeIdx checked_range(const Idx& idx, std::size_t n) {
+inline AxisSpec checked_range(const Idx& idx, std::size_t extent) {
   const auto& start = idx.d.l.get();
   ass<"Found NA value in subsetting (within an integer object)">(!start.isNA());
   const long s = get_val(start);
+  const long step = idx.d.r.get().step;
   const long len = static_cast<long>(idx.size());
-  const bool up = get_val(idx.d.r.get()) >= 0;
   ass<"Empty index for at least one dimension">(len > 0);
-  const long last = up ? s + len - 1 : s - len + 1;
+  const long last = s + step * (len - 1);
   ass<"Zero and negative indices are not supported">(std::min(s, last) >= 1);
-  ass<"Error: out of boundaries">(static_cast<std::size_t>(std::max(s, last)) <= n);
-  return RangeIdx{static_cast<std::size_t>(s - 1), static_cast<std::size_t>(len), up};
+  ass<"Error: out of boundaries">(static_cast<std::size_t>(std::max(s, last)) <= extent);
+  return AxisSpec{static_cast<std::size_t>(s - 1), step, static_cast<std::size_t>(len)};
 }
 
-template <typename ArrayType, typename RHS, typename Idx>
-requires IsIntRangeArray<Decayed<Idx>>
-inline void subset_assign(ArrayType& arr, const RHS& rhs, const Idx& idx) {
+template <typename A>
+concept IsLogicalScalarIndex = IS<A, bool> || IsLogical<A> || IsLogicalRef<A>;
+
+template <typename A>
+concept StridedIndex = IsIntRangeArray<A> || ScalarIndex<A> || IsCppArithV<A> || IsLogicalScalarIndex<A>;
+
+// built on HasNonScalarIndex/NotSubsetArray so it subsumes the general
+// subset overloads instead of being ambiguous with them
+template <typename... Args>
+concept AllStridedIndices = HasNonScalarIndex<Args...> && (StridedIndex<Decayed<Args>> && ...);
+
+template <typename T>
+concept NotSubsetArray = !IsSubsetArray<std::remove_reference_t<T>>;
+
+template <typename A>
+inline AxisSpec axis_spec(const A& arg, std::size_t extent) {
+  if constexpr (IsIntRangeArray<A>) {
+    return checked_range(arg, extent);
+  } else if constexpr (IsLogicalScalarIndex<A>) {
+    if constexpr (IS<A, bool>) {
+      ass<"Bool subsetting is only with TRUE possible">(arg);
+    } else {
+      const auto b = get_scalar_val(arg);
+      ass<"Found NA value in subsetting (within a logical object)">(!b.isNA());
+      ass<"Bool subsetting is only with TRUE possible">(static_cast<bool>(get_val(b)));
+    }
+    return AxisSpec{0, 1, extent};
+  } else {
+    std::size_t v = 0;
+    if constexpr (IsCppArithV<A>) {
+      if constexpr (std::is_floating_point_v<A>) v = safe_index_from_double(arg);
+      else v = safe_index_from_int(arg);
+    } else {
+      const auto s = get_scalar_val(arg);
+      if constexpr (IsInteger<Decayed<decltype(s)>>) {
+        ass<"Found NA value in subsetting (within an integer object)">(!s.isNA());
+      }
+      v = ExtractIndex(s);
+    }
+    ass<"Error: out of boundaries">(v <= extent);
+    return AxisSpec{v - 1, 1, 1};
+  }
+}
+
+template <std::size_t N>
+struct StridedLayout {
+  std::size_t offset = 0;
+  std::array<std::size_t, N> len{};
+  std::array<long, N> vstride{};
+  std::size_t size = 1;
+};
+
+template <typename ArrayType, typename... Args>
+inline StridedLayout<sizeof...(Args)> make_strided_layout(const ArrayType& arr, const Args&... args) {
+  constexpr std::size_t N = sizeof...(Args);
+  Dim dim_storage;
+  const Dim& dim = linear_dim_if_single_index(dim_view(arr.get_dim()), N, dim_storage);
+  ass<"Too many index arguments for array rank">(N <= dim.size());
+  ass<"Too less index arguments for array rank">(N >= dim.size());
+  const auto parent_stride = make_strides_from_vec<N>(dim);
+  StridedLayout<N> lay;
+  std::size_t k = 0;
+  forEachArg(
+    [&](const auto& arg) {
+      const AxisSpec a = axis_spec(arg, dim[k]);
+      lay.offset += a.first * parent_stride[k];
+      lay.len[k] = a.len;
+      lay.vstride[k] = a.step * static_cast<long>(parent_stride[k]);
+      lay.size *= a.len;
+      k++;
+    },
+    args...
+  );
+  return lay;
+}
+
+template <std::size_t N>
+inline Dim dim_of(const StridedLayout<N>& lay) {
+  Dim d(N, 0);
+  for (std::size_t k = 0; k < N; k++) d[k] = lay.len[k];
+  return d;
+}
+
+// calls f(flat_parent_offset) for every element in column-major order; no div
+template <std::size_t N, typename F>
+inline void for_each_strided(const StridedLayout<N>& lay, F&& f) {
+  if constexpr (N == 1) {
+    long off = static_cast<long>(lay.offset);
+    for (std::size_t i = 0; i < lay.len[0]; i++, off += lay.vstride[0]) f(static_cast<std::size_t>(off));
+  } else if constexpr (N == 2) {
+    long col = static_cast<long>(lay.offset);
+    for (std::size_t j = 0; j < lay.len[1]; j++, col += lay.vstride[1]) {
+      long off = col;
+      for (std::size_t i = 0; i < lay.len[0]; i++, off += lay.vstride[0]) f(static_cast<std::size_t>(off));
+    }
+  } else {
+    std::array<std::size_t, N> pos{};
+    long off = static_cast<long>(lay.offset);
+    for (;;) {
+      f(static_cast<std::size_t>(off));
+      std::size_t k = 0;
+      for (;;) {
+        pos[k]++;
+        off += lay.vstride[k];
+        if (pos[k] < lay.len[k]) break;
+        off -= lay.vstride[k] * static_cast<long>(lay.len[k]);
+        pos[k] = 0;
+        k++;
+        if (k == N) return;
+      }
+    }
+  }
+}
+
+template <typename ArrayType, typename RHS, typename... Args>
+requires AllStridedIndices<Args...>
+inline void subset_assign(ArrayType& arr, const RHS& rhs, const Args&... args) {
   using E = typename ExtractDataType<ArrayType>::value_type;
-  const RangeIdx r = checked_range(idx, arr.size());
+  const auto lay = make_strided_layout(arr, args...);
   if constexpr (IsScalarLike<RHS>) {
     // copy first: rhs can be a ref into arr (x[1:3] <- x[[2]])
     const E val = static_cast<E>(rhs);
-    for (std::size_t i = 0; i < r.len; i++) arr.d.set_unchecked(r(i), val);
+    for_each_strided(lay, [&](std::size_t off) { arr.d.set_unchecked(off, val); });
   } else {
-    ass<"number of items to replace is not a multiple of replacement length">(rhs.size() == r.len);
+    ass<"number of items to replace is not a multiple of replacement length">(rhs.size() == lay.size);
     // temp: rhs may alias arr, see subset_assign above
-    Buffer<E> temp(r.len);
-    using RhsValueType = typename ReRef<RHS>::type::value_type;
-    for (std::size_t i = 0; i < r.len; i++) {
-      if constexpr (IS<RhsValueType, E>) {
-        temp.set(i, rhs.get(i));
-      } else {
-        temp.set(i, cast_preserve_na<E>(rhs.get(i)));
-      }
-    }
-    for (std::size_t i = 0; i < r.len; i++) arr.d.set_unchecked(r(i), temp.get_unchecked(i));
+    Buffer<E> temp;
+    fill_temp(temp, rhs);
+    std::size_t i = 0;
+    for_each_strided(lay, [&](std::size_t off) { arr.d.set_unchecked(off, temp.get_unchecked(i++)); });
   }
 }
 
@@ -694,32 +792,36 @@ inline decltype(auto) subset(ArrayType&& arr, const Args&... args) {
   return at(std::forward<ArrayType>(arr), args...);
 }
 
-// Fast path: mutable subset(x, a:b)
-template <typename ArrayType, typename Idx>
-requires IsIntRangeArray<Decayed<Idx>>
-inline auto subset(ArrayType& arr, const Idx& idx) {
+// Fast path: mutable strided subset, e.g. x[a:b, j] or x[i + 1L, TRUE].
+// NOTE: still a SubsetView over an index buffer. A view decoding i -> offset
+// on the fly needs a div per element and measured slower (diffuse.R).
+// The buffer is only filled faster: no per-element checks, no div.
+template <typename ArrayType, typename... Args>
+requires AllStridedIndices<Args...>
+inline auto subset(ArrayType& arr, const Args&... args) {
   using E = typename ExtractDataType<ArrayType>::value_type;
   using DTYPE = Decayed<decltype(arr.d)>;
-  const RangeIdx r = checked_range(idx, arr.size());
-  Buffer<int> out(r.len);
-  for (std::size_t i = 0; i < r.len; i++) out.set_unchecked(i, static_cast<int>(r(i)));
-  return Array<E, SubsetView<DTYPE, 1, SubsetViewTrait>>(
-    SubsetView<DTYPE, 1, SubsetViewTrait>{arr.d, std::move(out)},
-    std::vector<std::size_t>{r.len}
+  constexpr std::size_t N = sizeof...(Args);
+  const auto lay = make_strided_layout(arr, args...);
+  Buffer<int> out(lay.size);
+  std::size_t i = 0;
+  for_each_strided(lay, [&](std::size_t off) { out.set_unchecked(i++, static_cast<int>(off)); });
+  return Array<E, SubsetView<DTYPE, N, SubsetViewTrait>>(
+    SubsetView<DTYPE, N, SubsetViewTrait>{arr.d, std::move(out)},
+    dim_of(lay)
   );
 }
 
-// Fast path: constant subset(x, a:b)
-template <typename ArrayType, typename Idx>
-requires (!IsSubsetArray<std::remove_reference_t<ArrayType>>) && IsIntRangeArray<Decayed<Idx>>
-inline auto subset(ArrayType&& arr, const Idx& idx) {
+// Fast path: constant strided subset, gathered like the general const subset below
+template <typename ArrayType, typename... Args>
+requires NotSubsetArray<ArrayType> && AllStridedIndices<Args...>
+inline auto subset(ArrayType&& arr, const Args&... args) {
   using E = typename ExtractDataType<ArrayType>::value_type;
-  const RangeIdx r = checked_range(idx, arr.size());
-  Array<E, Buffer<E, RBufferTrait>> res(SI{r.len});
-  res.dim = std::vector<std::size_t>{r.len};
-  for (std::size_t i = 0; i < r.len; i++) {
-    res.set(i, arr.d.get_unchecked(r(i)));
-  }
+  const auto lay = make_strided_layout(arr, args...);
+  Array<E, Buffer<E, RBufferTrait>> res(SI{lay.size});
+  res.dim = dim_of(lay);
+  std::size_t i = 0;
+  for_each_strided(lay, [&](std::size_t off) { res.set(i++, arr.d.get_unchecked(off)); });
   return res;
 }
 
@@ -749,7 +851,7 @@ inline auto subset(ArrayType&& arr, const Args&... args) {
 // strictly less copying, and leaves later reads as flat/contiguous instead
 // of index-indirected, which is what actually lets them vectorize.
 // ------------------------------------------------------------------
-template <typename ArrayType, typename... Args> requires (!IsSubsetArray<std::remove_reference_t<ArrayType>>) && HasNonScalarIndex<Args...>
+template <typename ArrayType, typename... Args> requires NotSubsetArray<ArrayType> && HasNonScalarIndex<Args...>
 inline auto subset(ArrayType&& arr, const Args&... args) {
   using E = typename ExtractDataType<ArrayType>::value_type;
 

@@ -178,7 +178,7 @@ inline SEXP checked_elt(SEXP arg, const char* field_name, int expected_length, c
 
 // Cast Array
 // -----------------------------------------------------------------------------------------------------------
-inline void set_dim_attrib(SEXP x, const std::vector<std::size_t>& dim) {
+inline void set_dim_attrib(SEXP x, const Dim& dim) {
   if (dim.empty()) return;           // no dim => plain vector
   if (dim.size() == 1) return;       // 1D dim => leave as a plain R vector, not a 1D array
   // R stores dims as int

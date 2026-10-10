@@ -1847,9 +1847,16 @@ inline Integer Integer::operator+(const Integer& other) const {
   if (is_na || other.is_na) return Integer::NA();
   return Integer(val + other.val);
 }
+// NOTE: branchless on purpose (no `if (is_na) return NA()`): NA branches between
+// the FP ops kept the CPU from overlapping e.g. divisions (diffuse.R, perf).
+// NA result still gets val = NaN, like Double::NA().
+inline Double double_na_select(double v, bool na) {
+  Double r(na ? std::numeric_limits<double>::quiet_NaN() : v);
+  r.is_na = na;
+  return r;
+}
 inline Double Double::operator+(const Double& other) const {
-  if (is_na || other.is_na) return Double::NA();
-  return Double(val + other.val);
+  return double_na_select(val + other.val, is_na | other.is_na);
 }
 inline Dual Dual::operator+(const Dual& other) const {
   if (is_na || other.is_na) return Dual::NA();
@@ -1870,8 +1877,7 @@ inline Integer Integer::operator-(const Integer& other) const {
   return Integer(val - other.val);
 }
 inline Double Double::operator-(const Double& other) const {
-  if (is_na || other.is_na) return Double::NA();
-  return Double(val - other.val);
+  return double_na_select(val - other.val, is_na | other.is_na);
 }
 inline Dual Dual::operator-(const Dual& other) const {
   if (is_na || other.is_na) return Dual::NA();
@@ -1947,8 +1953,7 @@ inline Integer Integer::operator*(const Integer& other) const {
   return Integer(val * other.val);
 }
 inline Double Double::operator*(const Double& other) const {
-  if (is_na || other.is_na) return Double::NA();
-  return Double(val * other.val);
+  return double_na_select(val * other.val, is_na | other.is_na);
 }
 inline Dual Dual::operator*(const Dual& other) const {
   if (is_na || other.is_na) return Dual::NA();
@@ -1969,8 +1974,7 @@ inline Double Integer::operator/(const Integer& other) const {
   return Double(static_cast<double>(val) / static_cast<double>(other.val));
 }
 inline Double Double::operator/(const Double& other) const {
-  if (is_na || other.is_na) return Double::NA();
-  return Double(val / other.val);
+  return double_na_select(val / other.val, is_na | other.is_na);
 }
 inline Dual Dual::operator/(const Dual& other) const {
   if (is_na || other.is_na) return Dual::NA();
@@ -2593,8 +2597,7 @@ inline Integer Integer::operator-() const {
   return Integer(-val);
 }
 inline Double Double::operator-() const {
-  if (is_na) return Double::NA();
-  return Double(-val);
+  return double_na_select(-val, is_na);
 }
 inline Dual Dual::operator-() const {
   if (is_na) return Dual::NA();

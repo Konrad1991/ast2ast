@@ -185,14 +185,14 @@ inline lbfgsb_result lbfgsb(const std::function<S(A)>& loss,
 
   lbfgsb_result res;
   Array<Double, Buffer<Double>> par_out(SI{static_cast<std::size_t>(n)});
-  par_out.dim = std::vector<std::size_t>{static_cast<std::size_t>(n)};
+  par_out.dim = Dim{static_cast<std::size_t>(n)};
   for (int i = 0; i < n; i++) par_out.set(i, Double(xv[static_cast<std::size_t>(i)]));
   res.par = par_out;
   res.value = Double(Fmin);
   res.convergence = Integer(fail);
 
   Array<Integer, Buffer<Integer>> counts(SI{2});
-  counts.dim = std::vector<std::size_t>{2};
+  counts.dim = Dim{2};
   counts.set(0, Integer(fncount));
   counts.set(1, Integer(grcount));
   res.counts = counts;

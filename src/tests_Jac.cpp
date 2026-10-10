@@ -59,8 +59,8 @@ void test_jacobian() {
     std::vector<double> owner_y_dot{0, 0};
     std::vector<double> owner_x{2, 3};
     std::vector<double> owner_x_dot{0, 0};
-    Array<Dual, Borrow<Dual, BorrowTrait>> y(owner_y.data(), owner_y_dot.data(), owner_y.size(), std::vector<std::size_t>{2});
-    Array<Dual, Borrow<Dual, BorrowTrait>> x(owner_x.data(), owner_x_dot.data(), owner_x.size(), std::vector<std::size_t>{2});
+    Array<Dual, Borrow<Dual, BorrowTrait>> y(owner_y.data(), owner_y_dot.data(), owner_y.size(), Dim{2});
+    Array<Dual, Borrow<Dual, BorrowTrait>> x(owner_x.data(), owner_x_dot.data(), owner_x.size(), Dim{2});
     Array<Double, Buffer<Double>> jac;
 
     jacobian_forward<0, 1>(jac, &f, std::ref(y), std::ref(x), whatever);

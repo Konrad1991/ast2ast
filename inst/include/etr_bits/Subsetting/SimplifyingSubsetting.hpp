@@ -36,7 +36,7 @@ inline size_t ExtractIndex(const T& obj) {
 // only rank >= 5 falls back to the general stride loop.
 template<std::size_t N>
 inline std::size_t index_from_dims(const std::array<std::size_t, N>& indices,
-                                    const std::vector<std::size_t>& dim) {
+                                    const Dim& dim) {
   // a single index walks the column-major flattening (R's m[i]); it isn't
   // tied to one axis, so the per-dimension rank/bounds checks below don't apply
   if constexpr (N == 1) {

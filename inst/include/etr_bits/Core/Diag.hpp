@@ -26,7 +26,7 @@ template<typename A> inline auto calc_ncol_or_nrow(const A& obj) {
 template<typename Type, typename F> inline auto make_diag(std::size_t nrow, std::size_t ncol, F value_at) {
   if constexpr (!IS<Type, ReverseDouble>) {
     Array<Type, Buffer<Type, RBufferTrait>> res(SI{nrow * ncol});
-    res.dim = std::vector<std::size_t>{nrow, ncol};
+    res.dim = Dim{nrow, ncol};
     std::size_t iter = ncol < nrow ? ncol : nrow;
     for (std::size_t i = 0; i < iter; i++) {
       res.set(i * nrow + i, value_at(i));
@@ -34,7 +34,7 @@ template<typename Type, typename F> inline auto make_diag(std::size_t nrow, std:
     return res;
   } else {
     Array<Type, Buffer<Type>> res(SI{nrow * ncol});
-    res.dim = std::vector<std::size_t>{nrow, ncol};
+    res.dim = Dim{nrow, ncol};
     std::size_t iter = ncol < nrow ? ncol : nrow;
     for (std::size_t i = 0; i < iter; i++) {
       res.set(i * nrow + i, value_at(i));
@@ -124,13 +124,13 @@ inline auto get_diag(const A& arr) {
   const std::size_t n = nc < nr ? nc : nr;
   if constexpr (!IS<T, ReverseDouble>) {
     Array<T, Buffer<T, RBufferTrait>> res(SI{n});
-    res.dim = std::vector<std::size_t>{n};
+    res.dim = Dim{n};
     for (std::size_t i = 0; i < n; i++) res.set(i, arr.get(i + i * nr));
     return res;
   } else {
     // no RBufferTrait -> enforce copy; copied ReverseDouble aliases tape id, grad flows
     Array<T, Buffer<T>> res(SI{n});
-    res.dim = std::vector<std::size_t>{n};
+    res.dim = Dim{n};
     for (std::size_t i = 0; i < n; i++) res.set(i, arr.get(i + i * nr));
     return res;
   }

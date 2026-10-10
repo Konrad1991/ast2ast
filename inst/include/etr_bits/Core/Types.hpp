@@ -373,7 +373,7 @@ template <class F, class... Args> inline F forEachArg(F f, Args &&...args) {
 
 // 5. extract dimension from an array instance
 // Used in subsetting and printing
-template<typename Dim> auto&& dim_view(Dim& d) {
+template<typename D> auto&& dim_view(D& d) {
   if constexpr (requires { d.get(); }) {
     return d.get();
   } else {
@@ -403,77 +403,120 @@ inline std::size_t safe_index_from_int(long x) {
   return static_cast<std::size_t>(x);
 }
 
-// 7. struct Dim. Currently this is not used.
-// Potentially this replaces later std::vector<std::size_t> dim
-// The idea is that Dim stores the first two dimensions on the stack
-// Starting from the third dimension the dimension are put on the heap
-struct Dim {
-  std::size_t rank = 1;
-  std::size_t nrow = 1;
-  std::size_t ncol = 0;
-  std::unique_ptr<std::size_t[]> other_dims;
-
-  Dim() = default;
-  Dim(const Dim& other) { *this = other; }
-  Dim(Dim&& other) noexcept { *this = std::move(other); }
-  Dim& operator=(const Dim& other) {
-    if (this == &other) return *this;
-    rank = other.rank;
-    nrow = other.nrow;
-    ncol = (other.rank >= 2) ? other.ncol : 0;
-    if (rank > 2) {
-      other_dims = std::make_unique<std::size_t[]>(rank - 2);
-      std::copy_n(other.other_dims.get(), rank - 2, other_dims.get());
+// 7. Dim: dims of an array. Replaces std::vector<std::size_t>.
+// NOTE: no ctor from std::vector on purpose; see NoVectorDim.
+// Up to 7 dims inline -> no malloc when expression dims are copied.
+class Dim {
+  static constexpr std::size_t N_INLINE = 7;
+  std::size_t rank_ = 0;
+  union {
+    std::size_t inline_[N_INLINE];
+    std::size_t* heap_; // only rank_ > N_INLINE
+  };
+  bool on_heap() const noexcept { return rank_ > N_INLINE; }
+  void release() noexcept {
+    if (on_heap()) delete[] heap_;
+    rank_ = 0;
+  }
+  void copy_from(const Dim& o) {
+    if (o.on_heap()) {
+      heap_ = new std::size_t[o.rank_];
+      std::copy_n(o.heap_, o.rank_, heap_);
     } else {
-      other_dims.reset();
+      std::copy_n(o.inline_, o.rank_, inline_);
+    }
+    rank_ = o.rank_;
+  }
+  void move_from(Dim& o) noexcept {
+    if (o.on_heap()) {
+      heap_ = o.heap_;
+    } else {
+      std::copy_n(o.inline_, o.rank_, inline_);
+    }
+    rank_ = o.rank_;
+    o.rank_ = 0;
+  }
+  template <typename It> void assign_range(It first, std::size_t n) {
+    resize(n);
+    std::copy_n(first, n, data());
+  }
+
+public:
+  using value_type = std::size_t;
+  using iterator = std::size_t*;
+  using const_iterator = const std::size_t*;
+
+  Dim() noexcept {}
+  // same semantics as std::vector(count, value)
+  Dim(std::size_t count, std::size_t value) { resize(count, value); }
+  Dim(std::initializer_list<std::size_t> l) { assign_range(l.begin(), l.size()); }
+  Dim(const Dim& o) { copy_from(o); }
+  Dim(Dim&& o) noexcept { move_from(o); }
+  ~Dim() { release(); }
+
+  Dim& operator=(const Dim& o) {
+    if (this != &o) {
+      release();
+      copy_from(o);
+    }
+    return *this;
+  }
+  Dim& operator=(Dim&& o) noexcept {
+    if (this != &o) {
+      release();
+      move_from(o);
     }
     return *this;
   }
 
-  Dim& operator=(Dim&& other) noexcept {
-    if (this == &other) return *this;
-    rank = other.rank;
-    nrow = other.nrow;
-    ncol = other.ncol;
-    other_dims = std::move(other.other_dims);
-    other.rank = 1;
-    other.nrow = 1;
-    other.ncol = 0;
-    return *this;
-  }
-  std::size_t size() const noexcept { return rank; }
+  std::size_t size() const noexcept { return rank_; }
+  bool empty() const noexcept { return rank_ == 0; }
+  std::size_t* data() noexcept { return on_heap() ? heap_ : inline_; }
+  const std::size_t* data() const noexcept { return on_heap() ? heap_ : inline_; }
+  std::size_t& operator[](std::size_t i) noexcept { return data()[i]; }
+  std::size_t operator[](std::size_t i) const noexcept { return data()[i]; }
+  std::size_t* begin() noexcept { return data(); }
+  std::size_t* end() noexcept { return data() + rank_; }
+  const std::size_t* begin() const noexcept { return data(); }
+  const std::size_t* end() const noexcept { return data() + rank_; }
+  std::size_t& back() noexcept { return data()[rank_ - 1]; }
+  std::size_t back() const noexcept { return data()[rank_ - 1]; }
 
-  std::size_t dim(std::size_t k) const noexcept {
-    ass<"Invalid dim (out of bounds)">(k < rank);
-    if (k == 0) return nrow;
-    if (k == 1) return ncol;
-    return other_dims[k - 2];
-  }
-
-  void set_rank1(std::size_t n) {
-    rank = 1;
-    nrow = n;
-    ncol = 0;
-    other_dims.reset();
-  }
-  void set_rank2(std::size_t r, std::size_t c) {
-    rank = 2;
-    nrow = r;
-    ncol = c;
-    other_dims.reset();
-  }
-  void set_rankN(std::size_t rk, std::size_t r, std::size_t c, const std::size_t* tail) {
-    rank = rk;
-    nrow = r;
-    ncol = c;
-    if (rank > 2) {
-      other_dims = std::make_unique<std::size_t[]>(rank - 2);
-      std::copy_n(tail, rank - 2, other_dims.get());
-    } else {
-      other_dims.reset();
+  void resize(std::size_t n, std::size_t value = 0) {
+    if (n <= N_INLINE) {
+      if (on_heap()) {
+        std::size_t* h = heap_;
+        std::copy_n(h, n, inline_);
+        delete[] h;
+      } else {
+        for (std::size_t i = rank_; i < n; ++i) inline_[i] = value;
+      }
+      rank_ = n;
+      return;
     }
+    std::size_t* h = new std::size_t[n];
+    const std::size_t keep = rank_ < n ? rank_ : n;
+    std::copy_n(data(), keep, h);
+    std::fill(h + keep, h + n, value);
+    if (on_heap()) delete[] heap_;
+    heap_ = h;
+    rank_ = n;
   }
+  void push_back(std::size_t v) {
+    resize(rank_ + 1);
+    back() = v;
+  }
+
+  friend bool operator==(const Dim& l, const Dim& r) noexcept {
+    return l.rank_ == r.rank_ && std::equal(l.begin(), l.end(), r.begin());
+  }
+  friend bool operator!=(const Dim& l, const Dim& r) noexcept { return !(l == r); }
 };
+
+// excluded from the Array(Args...) catch-all: otherwise an old-style
+// std::vector dim compiles and only fails at runtime
+template <typename... Args>
+concept NoVectorDim = (!IS<Decayed<Args>, std::vector<std::size_t>> && ...);
 
 /*
 --------------------------------------------------------------------------------------------------
@@ -503,18 +546,27 @@ struct MinusTrait {
     return l - r;
   }
 };
-// lazy a:b / seq_len; l = start, r = signed length (sign = direction)
+// lazy affine sequence (a:b, seq_len, range +-* scalar): l = start, r = RangeSpec
+// element i = start + step * i
+struct RangeSpec {
+  long step;
+  std::size_t len;
+};
 struct RangeTrait {
-  template <typename L, typename R>
-  static inline auto f(const L& l, const R& r, std::size_t i) {
+  template <typename L>
+  static inline L f(const L& l, const RangeSpec& r, std::size_t i) {
+    if (l.isNA()) return l;
     const auto s = get_val(l);
-    const auto k = static_cast<std::decay_t<decltype(s)>>(i);
-    return get_val(r) >= 0 ? s + k : s - k;
+    using V = std::decay_t<decltype(s)>;
+    if constexpr (std::is_integral_v<V>) {
+      return L(static_cast<V>(static_cast<long>(s) + r.step * static_cast<long>(i)));
+    } else {
+      return L(s + static_cast<V>(r.step) * static_cast<V>(i));
+    }
   }
-  template <typename L, typename R>
-  static inline std::size_t size(const L&, const R& r) {
-    const auto n = get_val(r);
-    return static_cast<std::size_t>(n >= 0 ? n : -n);
+  template <typename L>
+  static inline std::size_t size(const L&, const RangeSpec& r) {
+    return r.len;
   }
 };
 struct TimesTrait {
@@ -882,6 +934,10 @@ template <typename T, typename O, std::size_t N, typename Trait>
 struct is_array_const_s<Array<T, ConstSubsetView<O, N, Trait>>> : std::bool_constant<std::is_same_v<Trait, ConstSubsetViewTrait>> {};
 template <typename T> inline constexpr bool is_array_const_s_v = is_array_const_s<T>::value;
 template <typename T> concept IsConstSubsetArray = is_array_const_s_v<T>;
+
+template <typename T>
+concept IsRangeArray = IsArray<T> && requires { typename T::DType::Trait; } &&
+  IS<typename T::DType::Trait, RangeTrait>;
 
 template <typename T> concept IsUnaryArray = IsArray<T> && IsUnary<typename T::DType>;
 template <typename T> concept IsBinaryArray = IsArray<T> && IsBinary<typename T::DType>;

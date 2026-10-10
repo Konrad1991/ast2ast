@@ -22,7 +22,7 @@ template <typename T> inline auto sort_impl(const T &inp, bool decreasing) {
     return decreasing ? (get_val(a) > get_val(b)) : (get_val(a) < get_val(b));
   });
   Array<Inner, Buffer<Inner, RBufferTrait>> res(SI{tmp.size()});
-  res.dim = std::vector<std::size_t>{tmp.size()};
+  res.dim = Dim{tmp.size()};
   for (std::size_t i = 0; i < tmp.size(); i++) res.set(i, tmp[i]);
   return res;
 }
@@ -40,7 +40,7 @@ inline auto sort(const T &inp) {
   Array<Inner, Buffer<Inner, RBufferTrait>> res;
   auto v = get_scalar_val(inp);
   if (!v.isNA()) res.push_back(v);
-  res.dim = std::vector<std::size_t>{res.size()};
+  res.dim = Dim{res.size()};
   return res;
 }
 template <typename T, typename U> requires IsScalarLike<Decayed<T>>

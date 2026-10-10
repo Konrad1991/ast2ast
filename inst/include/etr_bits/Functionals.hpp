@@ -58,7 +58,7 @@ inline auto map(const F &f, const First &first, const Rest &...rest) {
   const std::size_t n = map_size(first, rest...);
   if constexpr (IsScalarLike<Decayed<R>>) {
     Array<R, Buffer<R, RBufferTrait>> res(SI{n});
-    res.dim = std::vector<std::size_t>{n};
+    res.dim = Dim{n};
     for (std::size_t i = 0; i < n; i++) {
       res.set(i, f(map_at(first, i), map_at(rest, i)...));
     }
@@ -66,7 +66,7 @@ inline auto map(const F &f, const First &first, const Rest &...rest) {
   } else if constexpr (IsArray<Decayed<R>>) {
     using Inner = typename ExtractDataType<Decayed<R>>::value_type;
     Array<Inner, Buffer<Inner, RBufferTrait>> res;
-    std::vector<std::size_t> dim;
+    Dim dim;
     for (std::size_t i = 0; i < n; i++) {
       R temp = f(map_at(first, i), map_at(rest, i)...);
       if (i == 0) {
@@ -148,7 +148,7 @@ inline auto pmap(const F &f, const NC &ncores, const First &first, const Rest &.
   RcppThread::ThreadPool pool(nthr);
   if constexpr (IsScalarLike<Decayed<R>>) {
     Array<R, Buffer<R, RBufferTrait>> res(SI{n});
-    res.dim = std::vector<std::size_t>{n};
+    res.dim = Dim{n};
     pool.parallelFor(0, static_cast<int>(n), [&](auto i_) {
       const std::size_t i = static_cast<std::size_t>(i_);
       run_pmap_task(warns[i], [&] {
@@ -163,7 +163,7 @@ inline auto pmap(const F &f, const NC &ncores, const First &first, const Rest &.
     Array<Inner, Buffer<Inner, RBufferTrait>> res;
     if (n == 0) return res;
     // i == 0 serial: fixes dim and allocates res before the workers write into it
-    std::vector<std::size_t> dim;
+    Dim dim;
     std::size_t len = 0;
     {
       WarningScope ws(warns[0]);
@@ -230,7 +230,7 @@ inline auto filter(const F &f, const X &x) {
     if (static_cast<bool>(get_val(f(x.get(i))))) res.set(cnt++, x.get(i));
   }
   res.d.resize(cnt);
-  res.dim = std::vector<std::size_t>{cnt};
+  res.dim = Dim{cnt};
   return res;
 }
 
@@ -265,7 +265,7 @@ inline auto apply(const F &f, const D &d, const X &x) {
   // element (r, c) of an nr x nc matrix is at flat index c*nr + r
   auto slice_at = [&](std::size_t s) {
     Array<XT, Buffer<XT, RBufferTrait>> out(SI{slice_len});
-    out.dim = std::vector<std::size_t>{slice_len};
+    out.dim = Dim{slice_len};
     for (std::size_t k = 0; k < slice_len; k++) {
       const std::size_t r = (margin == 1) ? s : k;
       const std::size_t c = (margin == 1) ? k : s;
@@ -276,7 +276,7 @@ inline auto apply(const F &f, const D &d, const X &x) {
 
   if constexpr (IsScalarLike<Decayed<R>>) {
     Array<R, Buffer<R, RBufferTrait>> res(SI{n_slices});
-    res.dim = std::vector<std::size_t>{n_slices};
+    res.dim = Dim{n_slices};
     for (std::size_t s = 0; s < n_slices; s++) res.set(s, f(slice_at(s)));
     return res;
   } else if constexpr (IsArray<Decayed<R>>) {
@@ -288,7 +288,7 @@ inline auto apply(const F &f, const D &d, const X &x) {
       if (s == 0) {
         klen = tmp.size();
         res.d.resize(klen * n_slices);
-        res.dim = std::vector<std::size_t>{klen, n_slices};
+        res.dim = Dim{klen, n_slices};
       } else {
         ass<"apply: f results differ in length">(tmp.size() == klen);
       }

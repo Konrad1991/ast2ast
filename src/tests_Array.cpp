@@ -9,7 +9,7 @@ template<typename RealType> void test_array_buffer() {
     double TOL = 1e-12;
     return std::abs(l - r) < TOL;
   };
-  auto compare_dims = [](const std::vector<std::size_t>& l, const std::vector<std::size_t>& r) {
+  auto compare_dims = [](const Dim& l, const Dim& r) {
     if (l.size() != r.size()) return false;
     for (std::size_t i = 0; i < l.size(); i++) {
       if (l[i] != r[i]) return false;
@@ -69,7 +69,7 @@ template<typename RealType> void test_array_buffer() {
     b.set(3, 4.0);
     b.set(4, 5.0);
     b.set(5, 6.0);
-    const std::vector<std::size_t> dim{2, 3};
+    const Dim dim{2, 3};
     A a1(b, dim);
     ass<"get_dim">(compare_dims(dim, a1.get_dim()));
   }
@@ -221,7 +221,7 @@ template<typename RealType> void test_array_buffer() {
     for (std::size_t i = 0; i < owner.size(); i++) {
       owner[i] = static_cast<double>(i);
     }
-    std::vector<std::size_t> dim{2, 3, 2};
+    Dim dim{2, 3, 2};
     Array<RealType, Borrow<RealType, BorrowTrait>> a_borrow(owner.data(), owner.size(), dim);
     a = a_borrow;
     ass<"After assignment of Borrow">(a.size() == a_borrow.size());
@@ -348,7 +348,7 @@ template<typename RealType> void test_array_borrow() {
     double TOL = 1e-12;
     return std::abs(l - r) < TOL;
   };
-  auto compare_dims = [](const std::vector<std::size_t>& l, const std::vector<std::size_t>& r) {
+  auto compare_dims = [](const Dim& l, const Dim& r) {
     if (l.size() != r.size()) return false;
     for (std::size_t i = 0; i < l.size(); i++) {
       if (l[i] != r[i]) return false;
@@ -358,7 +358,7 @@ template<typename RealType> void test_array_borrow() {
   // Set and Get
   {
     std::vector<double> owner(3);
-    std::vector<std::size_t> dim{2, 3, 2};
+    Dim dim{2, 3, 2};
     Array<RealType, Borrow<RealType, BorrowTrait>> a(owner.data(), owner.size(), dim);
     a.set(0, 1.1);
     a.set(1, 2.2);
@@ -370,14 +370,14 @@ template<typename RealType> void test_array_borrow() {
   // Test (implicit) casts to scalar values
   {
     std::vector<double> owner1(1);
-    std::vector<std::size_t> dim1{1};
+    Dim dim1{1};
     Array<RealType, Borrow<RealType, BorrowTrait>> a1(owner1.data(), owner1.size(), dim1);
     a1.set(0, 1.1);
     if (a1) {
       ass<"Convert Array<RealType> to bool">(true);
     }
     std::vector<double> owner2(2);
-    std::vector<std::size_t> dim2{2};
+    Dim dim2{2};
     Array<RealType, Borrow<RealType, BorrowTrait>> a2(owner2.data(), owner2.size(), dim2);
     try {
       if (a2) {
@@ -393,7 +393,7 @@ template<typename RealType> void test_array_borrow() {
   // get_dim
   {
     std::vector<double> owner(12);
-    const std::vector<std::size_t> dim{2, 3, 2};
+    const Dim dim{2, 3, 2};
     Array<RealType, Borrow<RealType, BorrowTrait>> a(owner.data(), owner.size(), dim);
     ass<"get_dim">(compare_dims(dim, a.get_dim()));
   }
@@ -403,7 +403,7 @@ template<typename RealType> void test_array_borrow() {
     owner[0] = 1.0;
     owner[1] = 2.0;
     owner[2] = 3.0;
-    std::vector<std::size_t> dim{3};
+    Dim dim{3};
     Array<RealType, Borrow<RealType, BorrowTrait>> a(owner.data(), owner.size(), dim);
     RealType sum = 0.0;
     for (const auto it: a) sum = sum + it;
@@ -415,7 +415,7 @@ template<typename RealType> void test_array_borrow() {
     owner[0] = 1.0;
     owner[1] = 2.0;
     owner[2] = 3.0;
-    std::vector<std::size_t> dim{3};
+    Dim dim{3};
     Array<RealType, Borrow<RealType, BorrowTrait>> a(owner.data(), owner.size(), dim);
     a = RealType(3.14);
     ass<"After assignment of scalar">(a.size() == 1 && compare(get_val(a.get(0)), 3.14));
@@ -429,13 +429,13 @@ template<typename RealType> void test_array_borrow() {
     std::vector<double> owner1(2);
     owner1[0] = 1.0;
     owner1[1] = 2.0;
-    std::vector<std::size_t> dim1{2};
+    Dim dim1{2};
     Array<RealType, Borrow<RealType, BorrowTrait>> a1(owner1.data(), owner1.size(), dim1);
 
     std::vector<double> owner2(2);
     owner2[0] = 1.5;
     owner2[1] = 1.5;
-    std::vector<std::size_t> dim2{1};
+    Dim dim2{1};
     Array<RealType, Borrow<RealType, BorrowTrait>> a2(owner2.data(), owner2.size(), dim2);
 
     a1 = a2;
@@ -450,7 +450,7 @@ template<typename RealType> void test_array_borrow() {
     for (std::size_t i = 0; i < owner.size(); i++) {
       owner[i] = static_cast<double>(i);
     }
-    std::vector<std::size_t> dim{2, 3, 2};
+    Dim dim{2, 3, 2};
     Array<RealType, Borrow<RealType, BorrowTrait>> a(owner.data(), owner.size(), dim);
 
     Array<Integer, Buffer<Integer>> a_integer(SI{2});
@@ -489,7 +489,7 @@ template<typename RealType> void test_array_borrow() {
   // Assignment of R values
   {
     std::vector<double> owner{1.0, 2.0, 3.0, 4.0};
-    std::vector<std::size_t> dim{4};
+    Dim dim{4};
     Array<RealType, Borrow<RealType, BorrowTrait>> a(owner.data(), owner.size(), dim);
     auto create_r_array1 = []() {
       Array<RealType, Buffer<RealType, RBufferTrait>> a_r(SI{3});
@@ -623,7 +623,7 @@ template<typename RealType> void test_array_subset() {
     double TOL = 1e-12;
     return std::abs(l - r) < TOL;
   };
-  auto compare_dims = [](const std::vector<std::size_t>& l, const std::vector<std::size_t>& r) {
+  auto compare_dims = [](const Dim& l, const Dim& r) {
     if (l.size() != r.size()) return false;
     for (std::size_t i = 0; i < l.size(); i++) {
       if (l[i] != r[i]) return false;
@@ -655,7 +655,7 @@ template<typename RealType> void test_array_subset() {
     a.set(1, 2.2);
     a.set(2, 3.3);
     Array<Integer, Buffer<Integer, LBufferTrait>> indices(SI{3});
-    indices.dim = std::vector<std::size_t>{3};
+    indices.dim = Dim{3};
     indices.set(0, 1);
     indices.set(1, 3);
     indices.set(2, 2);
@@ -697,7 +697,7 @@ template<typename RealType> void test_array_subset() {
     b.set(3, 4.0);
     b.set(4, 5.0);
     b.set(5, 6.0);
-    const std::vector<std::size_t> dim{2, 3};
+    const Dim dim{2, 3};
     Array<RealType, Buffer<RealType, LBufferTrait>> a(b, dim);
 
     Array<Integer, Buffer<Integer, LBufferTrait>> indices1(SI{1});
@@ -707,7 +707,7 @@ template<typename RealType> void test_array_subset() {
     indices2.set(1, 2);
     auto sub = subset(a, indices1, indices2);
     const auto dim_sub = sub.get_dim();
-    const std::vector<std::size_t> expected_dim{1, 2};
+    const Dim expected_dim{1, 2};
     ass<"get_dim">(compare_dims(dim_sub, expected_dim));
   }
   // Iteration

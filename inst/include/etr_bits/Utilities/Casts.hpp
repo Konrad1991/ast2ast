@@ -39,7 +39,7 @@ template<typename T> requires IsArray<Decayed<T>> inline auto as_logical(const T
     return obj;
   } else {
     Array<Logical, Buffer<Logical, RBufferTrait>> res(SI{obj.size()});
-    res.dim = std::vector<std::size_t>{obj.size()}; // R's cast flattens
+    res.dim = Dim{obj.size()}; // R's cast flattens
     for (std::size_t i = 0; i < obj.size(); i++) {
       res.set(i, Logical(obj.get(i)));
     }
@@ -52,7 +52,7 @@ template<typename T> requires IsArray<Decayed<T>> inline auto as_integer(const T
     return obj;
   } else {
     Array<Integer, Buffer<Integer, RBufferTrait>> res(SI{obj.size()});
-    res.dim = std::vector<std::size_t>{obj.size()}; // R's cast flattens
+    res.dim = Dim{obj.size()}; // R's cast flattens
     for (std::size_t i = 0; i < obj.size(); i++) {
       res.set(i, Integer(obj.get(i)));
     }
@@ -65,7 +65,7 @@ template<typename RealType, typename T> requires IsArray<Decayed<T>> inline auto
     return obj;
   } else {
     Array<RealType, Buffer<RealType, RBufferTrait>> res(SI{obj.size()});
-    res.dim = std::vector<std::size_t>{obj.size()}; // R's cast flattens
+    res.dim = Dim{obj.size()}; // R's cast flattens
     for (std::size_t i = 0; i < obj.size(); i++) {
       res.set(i, RealType(obj.get(i)));
     }

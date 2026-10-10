@@ -77,7 +77,7 @@ template <typename... Args> inline auto c(Args &&...args) {
     args...);
 
   Array<cType, Buffer<cType, RBufferTrait>> ret(SI{size});
-  ret.dim = std::vector<std::size_t>{static_cast<std::size_t>(size)};
+  ret.dim = Dim{static_cast<std::size_t>(size)};
   std::size_t index = 0;
 
   forEachArg(
@@ -132,13 +132,6 @@ inline auto ConvertValueColon(const T& obj) {
   }
 }
 
-template <typename T>
-inline auto make_range(T start, Integer signed_len) {
-  using Op = BinaryOperation<T, Integer, RangeTrait>;
-  std::vector<std::size_t> dim{RangeTrait::size(start, signed_len)};
-  return Array<T, Op>(Op(std::move(start), std::move(signed_len)), std::move(dim));
-}
-
 template <typename A, typename O>
 inline auto colon(const A& start,const O& end) {
   auto s = ConvertValueColon(start);
@@ -150,7 +143,7 @@ inline auto colon(const A& start,const O& end) {
   ass<"result of colon(:) would be too long a vector">(len <= std::numeric_limits<int>::max());
   const int n = static_cast<int>(len);
   // copy, not ref: a:b is evaluated once as in R
-  return make_range(DataType(get_val(s)), Integer(d >= 0 ? n : -n));
+  return make_range(DataType(get_val(s)), d >= 0 ? 1L : -1L, static_cast<std::size_t>(n));
 }
 
 template<typename T>
@@ -183,7 +176,7 @@ inline auto length_seq(const T& obj) {
 }
 template<typename A>
 inline auto seq_len(const A& length) {
-  return make_range(Integer(1), Integer(length_seq(length)));
+  return make_range(Integer(1), 1L, static_cast<std::size_t>(get_val(Integer(length_seq(length)))));
 }
 template<typename A>
 inline auto seq_along(const A& obj) {
@@ -231,7 +224,7 @@ inline auto repInternal(const L &inp, const R& times) {
     std::size_t length = ConvertTimesRep(times);
     Array<L, Buffer<L, RBufferTrait>> ret(SI{length});
     for (std::size_t i = 0; i < ret.size(); i++) ret.set(i, inp);
-    ret.dim = std::vector<std::size_t>{length};
+    ret.dim = Dim{length};
     return ret;
   } else if constexpr (IsArray<L>) {
     std::size_t length = ConvertTimesRep(times) * inp.size();
@@ -272,11 +265,11 @@ template <typename Type, typename T> inline auto createRVec(T s) {
   ass<"invalid length argument">(size >= 0);
   if (size == 0) {
     Array<Type, Buffer<Type, RBufferTrait>> res;
-    res.dim = std::vector<std::size_t>(1, 0);
+    res.dim = Dim(1, 0);
     return res;
   }
   Array<Type, Buffer<Type, RBufferTrait>> res(SI{size});
-  res.dim = std::vector<std::size_t>{size};
+  res.dim = Dim{size};
   return res;
 
 }
@@ -302,7 +295,7 @@ template <typename Type, typename R, typename C> inline auto createRMat(const R&
   std::size_t nc = ConvertSizeVec(ncol);
   ass<"invalid length argument">((nr*nc)> 0);
   Array<Type, Buffer<Type, RBufferTrait>> res(SI{nc*nr});
-  res.dim = std::vector<std::size_t>{nr, nc};
+  res.dim = Dim{nr, nc};
   return res;
 }
 
@@ -329,15 +322,15 @@ inline auto matrix(const T& inp, const R& nrow, const C& ncol) {
   }
 }
 
-template<typename Dim>
-inline auto calc_dim(const Dim& dim) {
-  using DecayedDim = Decayed<Dim>;
+template<typename D>
+inline Dim calc_dim(const D& dim) {
+  using DecayedDim = Decayed<D>;
   constexpr bool is_scalar_dim = IsScalarLike<DecayedDim>;
   if constexpr (is_scalar_dim) {
     std::size_t size = ConvertSizeVec(dim);
-    return std::vector<std::size_t>{size};
+    return Dim{size};
   } else {
-    std::vector<std::size_t> dim_vec(dim.size());
+    Dim dim_vec(dim.size(), 0);
     for (std::size_t i = 0; i < dim_vec.size(); i++) {
       dim_vec[i] = ConvertSizeVec(dim.get(i));
     }
@@ -345,8 +338,8 @@ inline auto calc_dim(const Dim& dim) {
   }
 }
 
-template<typename T, typename Dim>
-inline auto array(const T& inp, const Dim& dim_inp) {
+template<typename T, typename D>
+inline auto array(const T& inp, const D& dim_inp) {
   const auto dim = calc_dim(dim_inp);
   std::size_t size = 1; for (std::size_t i = 0; i < dim.size(); i++) {
     size *= dim[i];
@@ -404,7 +397,7 @@ template <typename... Args> inline auto rbind(Args &&...args) {
 
   // N rows, ncols columns; column-major so [row, col] sits at col*N + row
   Array<cType, Buffer<cType, RBufferTrait>> ret(SI{N * ncols});
-  ret.dim = std::vector<std::size_t>{N, ncols};
+  ret.dim = Dim{N, ncols};
   std::size_t row = 0;
 
   forEachArg(
@@ -467,7 +460,7 @@ template <typename... Args> inline auto cbind(Args &&...args) {
 
   // N cols, nrows rows; column-major so [row, col] sits at col*nrows + row
   Array<cType, Buffer<cType, RBufferTrait>> ret(SI{N * nrows});
-  ret.dim = std::vector<std::size_t>{nrows, N};
+  ret.dim = Dim{nrows, N};
   std::size_t col = 0;
 
   forEachArg(

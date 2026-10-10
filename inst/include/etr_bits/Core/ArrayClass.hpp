@@ -3,6 +3,47 @@
 
 namespace etr {
 
+template <typename T>
+concept IsSoAScalar = IsDouble<T> || IsInteger<T> || IsLogical<T>;
+
+// NOTE: writes through __restrict pointers instead of temp.set(i, ...):
+// the stores then can't alias scalars inside `src` (e.g. dx^2 in x / dx^2),
+// so those are loaded once, not per element. n must fit the buffer.
+template <typename T, typename Src>
+inline void fill_soa(from_ast_scalar_t<T>* __restrict val, bool* __restrict na,
+                     const Src& src, std::size_t n) {
+  using SrcT = typename ReRef<Src>::type::value_type;
+  for (std::size_t i = 0; i < n; i++) {
+    T x;
+    if constexpr (IS<SrcT, T>) {
+      x = src.get(i);
+    } else {
+      x = cast_preserve_na<T>(src.get(i));
+    }
+    val[i] = x.val;
+    na[i] = x.is_na;
+  }
+}
+
+// temp.resize(n) + fill from src
+template <typename T, typename Src>
+inline void fill_temp(Buffer<T, LBufferTrait>& temp, const Src& src) {
+  const std::size_t n = src.size();
+  temp.resize(n);
+  if constexpr (IsSoAScalar<T>) {
+    fill_soa<T>(temp.p_val, temp.p_na, src, n);
+  } else {
+    using SrcT = typename ReRef<Src>::type::value_type;
+    for (std::size_t i = 0; i < n; i++) {
+      if constexpr (IS<SrcT, T>) {
+        temp.set(i, src.get(i));
+      } else {
+        temp.set(i, cast_preserve_na<T>(src.get(i)));
+      }
+    }
+  }
+}
+
 /*
 ---------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------
@@ -16,7 +57,7 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   using value_type = T;
   Buffer<T, LBufferTrait> d;
   Buffer<T, LBufferTrait> temp;
-  std::vector<std::size_t> dim;
+  Dim dim;
 
   // ======================= internal methods =================================================
   decltype(auto) get(std::size_t idx) const { return d.get(idx); }
@@ -36,21 +77,13 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   }
 
   std::size_t size() const { return d.size(); }
-  const std::vector<std::size_t>& get_dim() const { return dim; }
+  const Dim& get_dim() const { return dim; }
   auto begin() const { return d.begin(); }
   auto end() const { return d.end(); }
 
   template <typename OtherObj, typename DataTypeOtherObj>
   void copy_with_temp(const OtherObj& other_obj) {
-    const std::size_t n = other_obj.size();
-    temp.resize(n);
-    for (std::size_t i = 0; i < n; i++) {
-      if constexpr (IS<DataTypeOtherObj, T>) {
-        temp.set(i, other_obj.get(i));
-      } else {
-        temp.set(i, cast_preserve_na<T>(other_obj.get(i)));
-      }
-    }
+    fill_temp(temp, other_obj);
   }
   template<typename T2>
   void assign(const T2& other_obj) {
@@ -115,24 +148,24 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   }
 
   // Buffer
-  explicit Array(Buffer<T, LBufferTrait>&& inp, const std::vector<std::size_t>& dim_) noexcept : d(std::move(inp)), temp(), dim(dim_) {}
-  explicit Array(Buffer<T, LBufferTrait>& inp, const std::vector<std::size_t>& dim_) : d(inp), temp(), dim(dim_) {}
+  explicit Array(Buffer<T, LBufferTrait>&& inp, const Dim& dim_) noexcept : d(std::move(inp)), temp(), dim(dim_) {}
+  explicit Array(Buffer<T, LBufferTrait>& inp, const Dim& dim_) : d(inp), temp(), dim(dim_) {}
   explicit Array(Buffer<T, LBufferTrait>&& inp) noexcept : d(std::move(inp)), temp(), dim(1, d.size()) {}
   explicit Array(Buffer<T, LBufferTrait>& inp) : d(inp), temp(), dim(1, d.size()) {}
 
 #ifdef STANDALONE_ETR
 #else
-  std::vector<std::size_t> get_dims_from_sexp(SEXP s) {
+  Dim get_dims_from_sexp(SEXP s) {
     SEXP dim = Rf_getAttrib(s, R_DimSymbol);
     if (dim == R_NilValue) {
-      return std::vector<std::size_t>{
+      return Dim{
         static_cast<std::size_t>(Rf_length(s))
       };
     }
     int n = Rf_length(dim);
     int* p = INTEGER(dim);
 
-    std::vector<std::size_t> dims(n);
+    Dim dims(static_cast<std::size_t>(n), 0);
     for (int i = 0; i < n; ++i) {
       dims[i] = static_cast<std::size_t>(p[i]);
     }
@@ -144,7 +177,7 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
 #endif
 
   // Catches other stuff
-  template<typename...Args>
+  template<typename...Args> requires NoVectorDim<Args...>
   Array(Args...) {
     ass<"Constructor not supported">(sizeof(T) == 0);
   }
@@ -215,7 +248,7 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
   using DType = Buffer<T, RBufferTrait>;
   using value_type = T;
   Buffer<T, RBufferTrait> d;
-  std::vector<std::size_t> dim;
+  Dim dim;
 
   // ======================= internal methods =================================================
   void set(std::size_t idx, const T& val) { d.set(idx, val); }
@@ -238,7 +271,7 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
   }
 
   std::size_t size() const { return d.size(); }
-  const std::vector<std::size_t>& get_dim() const { return dim; }
+  const Dim& get_dim() const { return dim; }
   auto begin() const { return d.begin(); }
   auto end() const { return d.end(); }
 
@@ -253,7 +286,7 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
   Array(Array&& other) noexcept(std::is_nothrow_move_constructible_v<decltype(d)>)
   : d(std::move(other.d)), dim(std::move(other.get_dim())) {}
 
-  template<typename...Args>
+  template<typename...Args> requires NoVectorDim<Args...>
   Array(Args...) {
     ass<"Constructor not supported">(sizeof(T) == 0);
   }
@@ -287,7 +320,7 @@ template<typename T> requires (IsArithV<T> || IsReverseDouble<T>) struct Array<T
   using value_type = T;
   Borrow<T, BorrowTrait> d;
   Buffer<T, LBufferTrait> temp;
-  std::vector<std::size_t> dim;
+  Dim dim;
 
   // ======================= internal methods =================================================
   decltype(auto) get(std::size_t idx) const { return d.get(idx); }
@@ -307,21 +340,13 @@ template<typename T> requires (IsArithV<T> || IsReverseDouble<T>) struct Array<T
   }
 
   std::size_t size() const { return d.size(); }
-  const std::vector<std::size_t>& get_dim() const { return dim; }
+  const Dim& get_dim() const { return dim; }
   auto begin() const { return d.begin(); }
   auto end() const { return d.end(); }
 
   template <typename OtherObj, typename DataTypeOtherObj>
   void copy_with_temp(const OtherObj& other_obj) {
-    const std::size_t n = other_obj.size();
-    temp.resize(n);
-    for (std::size_t i = 0; i < n; i++) {
-      if constexpr (IS<DataTypeOtherObj, T>) {
-        temp.set(i, other_obj.get(i));
-      } else {
-        temp.set(i, cast_preserve_na<T>(other_obj.get(i)));
-      }
-    }
+    fill_temp(temp, other_obj);
   }
   template<typename T2>
   void assign(const T2& other_obj) {
@@ -337,25 +362,25 @@ template<typename T> requires (IsArithV<T> || IsReverseDouble<T>) struct Array<T
 
   // ======================= Constructors ===================================================
   template<typename T2>
-  explicit Array(T2 *ptr, std::size_t s, const std::vector<std::size_t>& dim_) : d(ptr, s), dim(dim_) {}
+  explicit Array(T2 *ptr, std::size_t s, const Dim& dim_) : d(ptr, s), dim(dim_) {}
 
   template<typename T2>
   requires IsDual<T>
-  explicit Array(T2 *ptr_val, T2* ptr_dot, std::size_t s, const std::vector<std::size_t>& dim_) : d(ptr_val, ptr_dot, s), dim(dim_) {}
+  explicit Array(T2 *ptr_val, T2* ptr_dot, std::size_t s, const Dim& dim_) : d(ptr_val, ptr_dot, s), dim(dim_) {}
 
 #ifdef STANDALONE_ETR
 #else
-  std::vector<std::size_t> get_dims_from_sexp(SEXP s) {
+  Dim get_dims_from_sexp(SEXP s) {
     SEXP dim = Rf_getAttrib(s, R_DimSymbol);
     if (dim == R_NilValue) {
-      return std::vector<std::size_t>{
+      return Dim{
         static_cast<std::size_t>(Rf_length(s))
       };
     }
     int n = Rf_length(dim);
     int* p = INTEGER(dim);
 
-    std::vector<std::size_t> dims(n);
+    Dim dims(static_cast<std::size_t>(n), 0);
     for (int i = 0; i < n; ++i) {
       dims[i] = static_cast<std::size_t>(p[i]);
     }
@@ -366,7 +391,7 @@ template<typename T> requires (IsArithV<T> || IsReverseDouble<T>) struct Array<T
   }
 #endif
 
-  template<typename...Args>
+  template<typename...Args> requires NoVectorDim<Args...>
   Array(Args... args) {
     ass<"Constructor not supported">(sizeof(T) == 0);
   }
@@ -436,7 +461,7 @@ template<typename T, typename I, typename Trait> struct Array<T, UnaryOperation<
   using DType = UnaryOperation<I, Trait>;
   using value_type = T;
   UnaryOperation<I, Trait> d;
-  ConstHolder<std::vector<std::size_t>> dim;
+  Dim dim;
 
   // ======================= internal methods =================================================
   decltype(auto) get(std::size_t idx) const { return d.get(idx); }
@@ -456,15 +481,15 @@ template<typename T, typename I, typename Trait> struct Array<T, UnaryOperation<
   }
 
   std::size_t size() const { return d.size(); }
-  const std::vector<std::size_t>& get_dim() const { return dim.get(); }
+  const Dim& get_dim() const { return dim; }
   auto begin() const { return d.begin(); }
   auto end() const { return d.end(); }
 
   template <typename L2, typename OperationTrait>
-  explicit Array(UnaryOperation<L2, OperationTrait> &&inp, std::vector<std::size_t>&& dim_) : d(std::move(inp)), dim(std::move(dim_)) {}
+  explicit Array(UnaryOperation<L2, OperationTrait> &&inp, Dim&& dim_) : d(std::move(inp)), dim(std::move(dim_)) {}
   template <typename L2, typename OperationTrait>
-  explicit Array(const UnaryOperation<L2, OperationTrait> &inp, const std::vector<std::size_t>& dim_) : d(inp), dim(dim_) {}
-  template<typename...Args>
+  explicit Array(const UnaryOperation<L2, OperationTrait> &inp, const Dim& dim_) : d(inp), dim(dim_) {}
+  template<typename...Args> requires NoVectorDim<Args...>
   Array(Args...) {
     ass<"Constructor not supported">(sizeof(T) == 0);
   }
@@ -496,7 +521,7 @@ template<typename T, typename L, typename R, typename Trait> struct Array<T, Bin
   using DType = BinaryOperation<L, R, Trait>;
   using value_type = T;
   BinaryOperation<L, R, Trait> d;
-  ConstHolder<std::vector<std::size_t>> dim;
+  Dim dim;
 
   // ======================= internal methods =================================================
   decltype(auto) get(std::size_t idx) const { return d.get(idx); }
@@ -516,15 +541,15 @@ template<typename T, typename L, typename R, typename Trait> struct Array<T, Bin
   }
 
   std::size_t size() const { return d.size(); }
-  const std::vector<std::size_t>& get_dim() const { return dim.get(); }
+  const Dim& get_dim() const { return dim; }
   auto begin() const { return d.begin(); }
   auto end() const { return d.end(); }
 
   template <typename L2, typename R2, typename OperationTrait>
-  explicit Array(BinaryOperation<L2, R2, OperationTrait> &&inp, std::vector<std::size_t>&& dim_) : d(std::move(inp)), dim(std::move(dim_)) {}
+  explicit Array(BinaryOperation<L2, R2, OperationTrait> &&inp, Dim&& dim_) : d(std::move(inp)), dim(std::move(dim_)) {}
   template <typename L2, typename R2, typename OperationTrait>
-  explicit Array(const BinaryOperation<L2, R2, OperationTrait> &inp, const std::vector<std::size_t>& dim_) : d(inp), dim(dim_) {}
-  template<typename...Args>
+  explicit Array(const BinaryOperation<L2, R2, OperationTrait> &inp, const Dim& dim_) : d(inp), dim(dim_) {}
+  template<typename...Args> requires NoVectorDim<Args...>
   Array(Args...) {
     ass<"Constructor not supported">(sizeof(T) == 0);
   }
@@ -562,7 +587,7 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   using value_type = T;
   SubsetView<O, N, Trait> d;
   Buffer<T, LBufferTrait> temp;
-  std::vector<std::size_t> dim;
+  Dim dim;
 
   // ======================= internal methods =================================================
   decltype(auto) get(std::size_t idx) const { return d.get(idx); }
@@ -582,21 +607,13 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   }
 
   std::size_t size() const { return d.size(); }
-  const std::vector<std::size_t>& get_dim() const { return dim; }
+  const Dim& get_dim() const { return dim; }
   auto begin() const { return d.begin(); }
   auto end() const { return d.end(); }
 
   template <typename OtherObj, typename DataTypeOtherObj>
   void copy_with_temp(const OtherObj& other_obj) {
-    const std::size_t n = other_obj.size();
-    temp.resize(n);
-    for (std::size_t i = 0; i < n; i++) {
-      if constexpr (IS<DataTypeOtherObj, T>) {
-        temp.set(i, other_obj.get(i));
-      } else {
-        temp.set(i, cast_preserve_na<T>(other_obj.get(i)));
-      }
-    }
+    fill_temp(temp, other_obj);
   }
   template<typename T2>
   void assign(const T2& other_obj) {
@@ -612,11 +629,11 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
 
   // ======================= Constructors ===================================================
   template <typename O2, std::size_t N2, typename Trait2>
-  explicit Array(SubsetView<O2, N2, Trait2> &&inp, std::vector<std::size_t>&& dim_) : d(std::move(inp)), dim(std::move(dim_)) {}
+  explicit Array(SubsetView<O2, N2, Trait2> &&inp, Dim&& dim_) : d(std::move(inp)), dim(std::move(dim_)) {}
   template <typename O2, std::size_t N2, typename Trait2>
-  explicit Array(SubsetView<O2, N2, Trait2> &inp, std::vector<std::size_t>&& dim_) : d(inp), dim(std::move(dim_)) {}
+  explicit Array(SubsetView<O2, N2, Trait2> &inp, Dim&& dim_) : d(inp), dim(std::move(dim_)) {}
 
-  template<typename...Args>
+  template<typename...Args> requires NoVectorDim<Args...>
   Array(Args...) {
     ass<"Constructor not supported">(sizeof(T) == 0);
   }
@@ -674,7 +691,7 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   using value_type = T;
   ConstSubsetView<O, N, Trait> d;
   Buffer<T, LBufferTrait> temp;
-  Holder<std::vector<std::size_t>> dim;
+  Dim dim;
 
   // ======================= internal methods =================================================
   decltype(auto) get(std::size_t idx) const { return d.get(idx); }
@@ -694,17 +711,17 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   }
 
   std::size_t size() const { return d.size(); }
-  const std::vector<std::size_t>& get_dim() const { return dim.get(); }
+  const Dim& get_dim() const { return dim; }
   auto begin() const { return d.begin(); }
   auto end() const { return d.end(); }
 
   // ======================= Constructors ===================================================
   template <typename O2, std::size_t N2, typename Trait2>
-  explicit Array(ConstSubsetView<O2, N2, Trait2> &&inp, std::vector<std::size_t>&& dim_) : d(std::move(inp)), dim(std::move(dim_)) {}
+  explicit Array(ConstSubsetView<O2, N2, Trait2> &&inp, Dim&& dim_) : d(std::move(inp)), dim(std::move(dim_)) {}
   template <typename O2, std::size_t N2, typename Trait2>
-  explicit Array(ConstSubsetView<O2, N2, Trait2> &inp, std::vector<std::size_t>&& dim_) : d(inp), dim(std::move(dim_)) {}
+  explicit Array(ConstSubsetView<O2, N2, Trait2> &inp, Dim&& dim_) : d(inp), dim(std::move(dim_)) {}
 
-  template<typename...Args>
+  template<typename...Args> requires NoVectorDim<Args...>
   Array(Args...) {
     ass<"Constructor not supported">(sizeof(T) == 0);
   }

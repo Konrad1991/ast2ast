@@ -63,7 +63,7 @@ template<typename T, typename I> requires IsDual<T> inline void unseed(T& obj, c
 
 template<typename T> requires IsDual<T> inline auto get_dot(const T& obj) {
   Array<Double, Buffer<Double, RBufferTrait>> res(SI{1});
-  res.dim = std::vector<std::size_t>{1};
+  res.dim = Dim{1};
   res.set(0, Double(obj.dot));
   return res;
 }
@@ -80,7 +80,7 @@ template<typename T> requires IsArray<T> inline auto get_dot(const T& obj) {
   for (std::size_t i = 0; i < res.size(); i++) {
     res.set(i, obj.d.get_dot(i));
   }
-  res.dim = std::vector<std::size_t>{obj.size()};
+  res.dim = Dim{obj.size()};
   return res;
 }
 
@@ -134,7 +134,7 @@ template<typename Of, typename Wrt> inline auto deriv(const Of& of, const Wrt& w
   using DecayedWrt = Decayed<Wrt>;
   if constexpr (IsReverseDouble<DecayedOf> && IsReverseDouble<DecayedWrt>) {
     Array<Double, Buffer<Double, RBufferTrait>> res(SI{1});
-    res.dim = std::vector<std::size_t>{1};
+    res.dim = Dim{1};
     TAPE_INTERN.reverse(of.id);
     res.set(0, Double(TAPE_INTERN.adj[static_cast<std::size_t>(w_inp.id)]));
     return res;
@@ -143,7 +143,7 @@ template<typename Of, typename Wrt> inline auto deriv(const Of& of, const Wrt& w
     using DataTypeOf = typename ExtractDataType<DecayedOf>::value_type;
     static_assert(IsReverseDouble<DataTypeOf>, "data type of of has to be ReverseDouble");
     Array<Double, Buffer<Double, RBufferTrait>> res(SI{of.size()});
-    res.dim = std::vector<std::size_t>{of.size()};
+    res.dim = Dim{of.size()};
     for (std::size_t j = 0; j < res.size(); j++) {
       TAPE_INTERN.reverse(of.get(j).id);
       res.set(j, Double(TAPE_INTERN.adj[static_cast<std::size_t>(w_inp.id)]));

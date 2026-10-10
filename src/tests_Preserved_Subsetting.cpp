@@ -23,7 +23,7 @@ auto compare_result(const T& etr, const std::vector<double>& expected) {
 }
 
 template<typename T>
-auto compare_result_ints(const T& etr, const std::vector<int>& expected, const std::vector<std::size_t>& expected_dim) {
+auto compare_result_ints(const T& etr, const std::vector<int>& expected, const Dim& expected_dim) {
   ass<"Size">(etr.size() == expected.size());
   for (std::size_t i = 0; i < etr.size(); i++) {
     ass<"Values">(etr.get(i).val == expected[i]);
@@ -46,7 +46,7 @@ void test_all_types_usuable_preserved_subsetting() {
     }
   };
   const std::size_t N = 60;
-  const std::vector<std::size_t> dim{N};
+  const Dim dim{N};
   Array<Double, Buffer<Double, LBufferTrait>> Double_arr(SI{N});
   Array<Logical, Buffer<Logical, LBufferTrait>> Logical_arr(SI{N});
   Array<Logical, Buffer<Logical, RBufferTrait>> Logical_r_arr(SI{N});
@@ -65,7 +65,7 @@ void test_all_types_usuable_preserved_subsetting() {
   Integer_arr.set(1, 10);
   Integer_arr.set(2, 60);
   std::vector<int> owner_integer{1, 10, 60};
-  std::vector<std::size_t> dim_integer{3};
+  Dim dim_integer{3};
   Array<Integer, Borrow<Integer, BorrowTrait>> Integer_borrowed_arr(
     owner_integer.data(), owner_integer.size(), dim_integer);
   Array<Integer, Buffer<Integer, RBufferTrait>> Integer_r_arr(SI{3});
@@ -83,14 +83,14 @@ void test_all_types_usuable_preserved_subsetting() {
   std::vector<double> owner_dual_val{1.1, 1.0, 10.0, 59.9, 60.0};
   std::vector<double> owner_dual_dot(5, 0.0);
   Array<Dual, Borrow<Dual, BorrowTrait>> Dual_borrowed_arr(owner_dual_val.data(), owner_dual_dot.data(),
-                                                           owner_dual_val.size(), std::vector<std::size_t>{5});
+                                                           owner_dual_val.size(), Dim{5});
   Array<Dual, Buffer<Dual, RBufferTrait>> Dual_r_arr(SI{5});
   Dual_r_arr.set(0, Dual(1.1, 0.0));
   Dual_r_arr.set(1, Dual(1.0, 0.0));
   Dual_r_arr.set(2, Dual(10.0, 0.0));
   Dual_r_arr.set(3, Dual(59.9, 0.0));
   Dual_r_arr.set(4, Dual(60.0, 0.0));
-  std::vector<std::size_t> dim_dual{5};
+  Dim dim_dual{5};
   Dual_r_arr.dim = dim_dual;
 
   Array<Double, Buffer<Double, LBufferTrait>> Double_arr2(SI{2});
@@ -102,7 +102,7 @@ void test_all_types_usuable_preserved_subsetting() {
   Double_arr3.set(2, 3.0);
   std::vector<double> owner_double{1.0, 2.0, 3.0};
   Array<Double, Borrow<Double, BorrowTrait>> Double_borrowed_arr(owner_double.data(),
-                                                                 owner_double.size(), std::vector<std::size_t>{3});
+                                                                 owner_double.size(), Dim{3});
   Array<Double, Buffer<Double, RBufferTrait>> Double_r_arr(SI{3});
   Double_r_arr.dim = dim_integer;
   Double_r_arr.set(0, 1.0);
@@ -297,7 +297,7 @@ void test_indices_preserved_subsetting() {
     }
   };
   const std::size_t N = 60;
-  std::vector<std::size_t> dim{3, 4, 5};
+  Dim dim{3, 4, 5};
   Array<Integer, Buffer<Integer, LBufferTrait>> What(SI{N});
   What.dim = dim;
   reset(What);
@@ -373,7 +373,7 @@ void test_indices_preserved_subsetting() {
   {
     subset(What, TRUE, TRUE, TRUE) = Integer(350);
     std::vector<int> expected(N, 350);
-    const std::vector<std::size_t> expected_dim = dim;
+    const Dim expected_dim = dim;
     compare_result_ints(subset(What, TRUE, TRUE, TRUE), expected, expected_dim);
     reset(What);
   }
@@ -391,7 +391,7 @@ void test_indices_preserved_subsetting() {
   // Subsetting various combinations
   {
     const std::size_t N = 18;
-    std::vector<std::size_t> dim{2, 3, 3};
+    Dim dim{2, 3, 3};
     Array<Integer, Buffer<Integer, LBufferTrait>> What(SI{N});
     What.dim = dim;
     reset(What);
@@ -399,7 +399,7 @@ void test_indices_preserved_subsetting() {
     Logical idx1_dim2(true);
     Logical idx1_dim3(true);
     std::vector<int> expected1{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18};
-    std::vector<std::size_t> expected_dim1{2, 3, 3};
+    Dim expected_dim1{2, 3, 3};
     compare_result_ints(subset(What, idx1_dim1, idx1_dim2, idx1_dim3), expected1, expected_dim1);
     Array<Logical, Buffer<Logical, LBufferTrait>> idx2_dim1(SI{2});
     idx2_dim1.set(0, Logical(true));
@@ -407,19 +407,19 @@ void test_indices_preserved_subsetting() {
     Logical idx2_dim2(true);
     Logical idx2_dim3(true);
     std::vector<int> expected2{1, 3, 5, 7, 9, 11, 13, 15, 17};
-    std::vector<std::size_t> expected_dim2{1, 3, 3};
+    Dim expected_dim2{1, 3, 3};
     compare_result_ints(subset(What, idx2_dim1, idx2_dim2, idx2_dim3), expected2, expected_dim2);
     Logical idx3_dim1(true);
     Logical idx3_dim2(true);
     Logical idx3_dim3(true);
     std::vector<int> expected3{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18};
-    std::vector<std::size_t> expected_dim3{2, 3, 3};
+    Dim expected_dim3{2, 3, 3};
     compare_result_ints(subset(What, idx3_dim1, idx3_dim2, idx3_dim3), expected3, expected_dim3);
     Integer idx4_dim1(2);
     Logical idx4_dim2(true);
     Logical idx4_dim3(true);
     std::vector<int> expected4{2, 4, 6, 8, 10, 12, 14, 16, 18};
-    std::vector<std::size_t> expected_dim4{1, 3, 3};
+    Dim expected_dim4{1, 3, 3};
     compare_result_ints(subset(What, idx4_dim1, idx4_dim2, idx4_dim3), expected4, expected_dim4);
     Array<Integer, Buffer<Integer, LBufferTrait>> idx5_dim1(SI{2});
     idx5_dim1.set(0, Integer(1));
@@ -427,7 +427,7 @@ void test_indices_preserved_subsetting() {
     Logical idx5_dim2(true);
     Logical idx5_dim3(true);
     std::vector<int> expected5{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18};
-    std::vector<std::size_t> expected_dim5{2, 3, 3};
+    Dim expected_dim5{2, 3, 3};
     compare_result_ints(subset(What, idx5_dim1, idx5_dim2, idx5_dim3), expected5, expected_dim5);
     Logical idx6_dim1(true);
     Array<Logical, Buffer<Logical, LBufferTrait>> idx6_dim2(SI{3});
@@ -436,7 +436,7 @@ void test_indices_preserved_subsetting() {
     idx6_dim2.set(2, Logical(true));
     Logical idx6_dim3(true);
     std::vector<int> expected6{1, 2, 5, 6, 7, 8, 11, 12, 13, 14, 17, 18};
-    std::vector<std::size_t> expected_dim6{2, 2, 3};
+    Dim expected_dim6{2, 2, 3};
     compare_result_ints(subset(What, idx6_dim1, idx6_dim2, idx6_dim3), expected6, expected_dim6);
     Logical idx7_dim1(true);
     Array<Logical, Buffer<Logical, LBufferTrait>> idx7_dim2(SI{2});
@@ -444,13 +444,13 @@ void test_indices_preserved_subsetting() {
     idx7_dim2.set(1, Logical(false));
     Logical idx7_dim3(true);
     std::vector<int> expected7{1, 2, 5, 6, 7, 8, 11, 12, 13, 14, 17, 18};
-    std::vector<std::size_t> expected_dim7{2, 2, 3};
+    Dim expected_dim7{2, 2, 3};
     compare_result_ints(subset(What, idx7_dim1, idx7_dim2, idx7_dim3), expected7, expected_dim7);
     Logical idx8_dim1(true);
     Integer idx8_dim2(2);
     Logical idx8_dim3(true);
     std::vector<int> expected8{3, 4, 9, 10, 15, 16};
-    std::vector<std::size_t> expected_dim8{2, 1, 3};
+    Dim expected_dim8{2, 1, 3};
     compare_result_ints(subset(What, idx8_dim1, idx8_dim2, idx8_dim3), expected8, expected_dim8);
     Logical idx9_dim1(true);
     Array<Integer, Buffer<Integer, LBufferTrait>> idx9_dim2(SI{2});
@@ -458,7 +458,7 @@ void test_indices_preserved_subsetting() {
     idx9_dim2.set(1, Integer(3));
     Logical idx9_dim3(true);
     std::vector<int> expected9{1, 2, 5, 6, 7, 8, 11, 12, 13, 14, 17, 18};
-    std::vector<std::size_t> expected_dim9{2, 2, 3};
+    Dim expected_dim9{2, 2, 3};
     compare_result_ints(subset(What, idx9_dim1, idx9_dim2, idx9_dim3), expected9, expected_dim9);
     Logical idx10_dim1(true);
     Logical idx10_dim2(true);
@@ -467,7 +467,7 @@ void test_indices_preserved_subsetting() {
     idx10_dim3.set(1, Logical(true));
     idx10_dim3.set(2, Logical(false));
     std::vector<int> expected10{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-    std::vector<std::size_t> expected_dim10{2, 3, 2};
+    Dim expected_dim10{2, 3, 2};
     compare_result_ints(subset(What, idx10_dim1, idx10_dim2, idx10_dim3), expected10, expected_dim10);
     Logical idx11_dim1(true);
     Logical idx11_dim2(true);
@@ -475,13 +475,13 @@ void test_indices_preserved_subsetting() {
     idx11_dim3.set(0, Logical(false));
     idx11_dim3.set(1, Logical(true));
     std::vector<int> expected11{7, 8, 9, 10, 11, 12};
-    std::vector<std::size_t> expected_dim11{2, 3, 1};
+    Dim expected_dim11{2, 3, 1};
     compare_result_ints(subset(What, idx11_dim1, idx11_dim2, idx11_dim3), expected11, expected_dim11);
     Logical idx12_dim1(true);
     Logical idx12_dim2(true);
     Integer idx12_dim3(1);
     std::vector<int> expected12{1, 2, 3, 4, 5, 6};
-    std::vector<std::size_t> expected_dim12{2, 3, 1};
+    Dim expected_dim12{2, 3, 1};
     compare_result_ints(subset(What, idx12_dim1, idx12_dim2, idx12_dim3), expected12, expected_dim12);
     Logical idx13_dim1(true);
     Logical idx13_dim2(true);
@@ -490,13 +490,13 @@ void test_indices_preserved_subsetting() {
     idx13_dim3.set(1, Integer(3));
     idx13_dim3.set(2, Integer(2));
     std::vector<int> expected13{1, 2, 3, 4, 5, 6, 13, 14, 15, 16, 17, 18, 7, 8, 9, 10, 11, 12};
-    std::vector<std::size_t> expected_dim13{2, 3, 3};
+    Dim expected_dim13{2, 3, 3};
     compare_result_ints(subset(What, idx13_dim1, idx13_dim2, idx13_dim3), expected13, expected_dim13);
     Logical idx14_dim1(true);
     Integer idx14_dim2(2);
     Logical idx14_dim3(true);
     std::vector<int> expected14{3, 4, 9, 10, 15, 16};
-    std::vector<std::size_t> expected_dim14{2, 1, 3};
+    Dim expected_dim14{2, 1, 3};
     compare_result_ints(subset(What, idx14_dim1, idx14_dim2, idx14_dim3), expected14, expected_dim14);
     Integer idx15_dim1(2);
     Array<Logical, Buffer<Logical, LBufferTrait>> idx15_dim2(SI{2});
@@ -504,7 +504,7 @@ void test_indices_preserved_subsetting() {
     idx15_dim2.set(1, Logical(false));
     Logical idx15_dim3(true);
     std::vector<int> expected15{2, 6, 8, 12, 14, 18};
-    std::vector<std::size_t> expected_dim15{1, 2, 3};
+    Dim expected_dim15{1, 2, 3};
     compare_result_ints(subset(What, idx15_dim1, idx15_dim2, idx15_dim3), expected15, expected_dim15);
     Array<Integer, Buffer<Integer, LBufferTrait>> idx16_dim1(SI{2});
     idx16_dim1.set(0, Integer(1));
@@ -514,7 +514,7 @@ void test_indices_preserved_subsetting() {
     idx16_dim2.set(1, Logical(false));
     Logical idx16_dim3(true);
     std::vector<int> expected16{1, 2, 5, 6, 7, 8, 11, 12, 13, 14, 17, 18};
-    std::vector<std::size_t> expected_dim16{2, 2, 3};
+    Dim expected_dim16{2, 2, 3};
     compare_result_ints(subset(What, idx16_dim1, idx16_dim2, idx16_dim3), expected16, expected_dim16);
     Array<Logical, Buffer<Logical, LBufferTrait>> idx17_dim1(SI{2});
     idx17_dim1.set(0, Logical(true));
@@ -524,7 +524,7 @@ void test_indices_preserved_subsetting() {
     idx17_dim2.set(1, Integer(3));
     Logical idx17_dim3(true);
     std::vector<int> expected17{1, 5, 7, 11, 13, 17};
-    std::vector<std::size_t> expected_dim17{1, 2, 3};
+    Dim expected_dim17{1, 2, 3};
     compare_result_ints(subset(What, idx17_dim1, idx17_dim2, idx17_dim3), expected17, expected_dim17);
     Array<Integer, Buffer<Integer, LBufferTrait>> idx18_dim1(SI{2});
     idx18_dim1.set(0, Integer(1));
@@ -535,7 +535,7 @@ void test_indices_preserved_subsetting() {
     idx18_dim2.set(2, Logical(true));
     Logical idx18_dim3(true);
     std::vector<int> expected18{1, 2, 5, 6, 7, 8, 11, 12, 13, 14, 17, 18};
-    std::vector<std::size_t> expected_dim18{2, 2, 3};
+    Dim expected_dim18{2, 2, 3};
     compare_result_ints(subset(What, idx18_dim1, idx18_dim2, idx18_dim3), expected18, expected_dim18);
     Logical idx19_dim1(true);
     Array<Logical, Buffer<Logical, LBufferTrait>> idx19_dim2(SI{2});
@@ -543,7 +543,7 @@ void test_indices_preserved_subsetting() {
     idx19_dim2.set(1, Logical(false));
     Logical idx19_dim3(true);
     std::vector<int> expected19{1, 2, 5, 6, 7, 8, 11, 12, 13, 14, 17, 18};
-    std::vector<std::size_t> expected_dim19{2, 2, 3};
+    Dim expected_dim19{2, 2, 3};
     compare_result_ints(subset(What, idx19_dim1, idx19_dim2, idx19_dim3), expected19, expected_dim19);
     Array<Integer, Buffer<Integer, LBufferTrait>> idx20_dim1(SI{2});
     idx20_dim1.set(0, Integer(1));
@@ -553,13 +553,13 @@ void test_indices_preserved_subsetting() {
     idx20_dim2.set(1, Integer(3));
     Logical idx20_dim3(true);
     std::vector<int> expected20{1, 2, 5, 6, 7, 8, 11, 12, 13, 14, 17, 18};
-    std::vector<std::size_t> expected_dim20{2, 2, 3};
+    Dim expected_dim20{2, 2, 3};
     compare_result_ints(subset(What, idx20_dim1, idx20_dim2, idx20_dim3), expected20, expected_dim20);
     Logical idx21_dim1(true);
     Logical idx21_dim2(true);
     Integer idx21_dim3(1);
     std::vector<int> expected21{1, 2, 3, 4, 5, 6};
-    std::vector<std::size_t> expected_dim21{2, 3, 1};
+    Dim expected_dim21{2, 3, 1};
     compare_result_ints(subset(What, idx21_dim1, idx21_dim2, idx21_dim3), expected21, expected_dim21);
     Array<Integer, Buffer<Integer, LBufferTrait>> idx22_dim1(SI{2});
     idx22_dim1.set(0, Integer(1));
@@ -569,7 +569,7 @@ void test_indices_preserved_subsetting() {
     idx22_dim3.set(0, Logical(false));
     idx22_dim3.set(1, Logical(true));
     std::vector<int> expected22{7, 8, 9, 10, 11, 12};
-    std::vector<std::size_t> expected_dim22{2, 3, 1};
+    Dim expected_dim22{2, 3, 1};
     compare_result_ints(subset(What, idx22_dim1, idx22_dim2, idx22_dim3), expected22, expected_dim22);
     Array<Logical, Buffer<Logical, LBufferTrait>> idx23_dim1(SI{2});
     idx23_dim1.set(0, Logical(true));
@@ -577,7 +577,7 @@ void test_indices_preserved_subsetting() {
     Integer idx23_dim2(2);
     Integer idx23_dim3(1);
     std::vector<int> expected23{3};
-    std::vector<std::size_t> expected_dim23{1, 1, 1};
+    Dim expected_dim23{1, 1, 1};
     compare_result_ints(subset(What, idx23_dim1, idx23_dim2, idx23_dim3), expected23, expected_dim23);
     Integer idx24_dim1(2);
     Array<Logical, Buffer<Logical, LBufferTrait>> idx24_dim2(SI{3});
@@ -589,7 +589,7 @@ void test_indices_preserved_subsetting() {
     idx24_dim3.set(1, Integer(3));
     idx24_dim3.set(2, Integer(2));
     std::vector<int> expected24{2, 6, 14, 18, 8, 12};
-    std::vector<std::size_t> expected_dim24{1, 2, 3};
+    Dim expected_dim24{1, 2, 3};
     compare_result_ints(subset(What, idx24_dim1, idx24_dim2, idx24_dim3), expected24, expected_dim24);
     Array<Integer, Buffer<Integer, LBufferTrait>> idx25_dim1(SI{2});
     idx25_dim1.set(0, Integer(1));
@@ -602,7 +602,7 @@ void test_indices_preserved_subsetting() {
     idx25_dim3.set(1, Integer(3));
     idx25_dim3.set(2, Integer(2));
     std::vector<int> expected25{1, 2, 5, 6, 13, 14, 17, 18, 7, 8, 11, 12};
-    std::vector<std::size_t> expected_dim25{2, 2, 3};
+    Dim expected_dim25{2, 2, 3};
     compare_result_ints(subset(What, idx25_dim1, idx25_dim2, idx25_dim3), expected25, expected_dim25);
     Logical idx26_dim1(true);
     Array<Logical, Buffer<Logical, LBufferTrait>> idx26_dim2(SI{2});
@@ -612,7 +612,7 @@ void test_indices_preserved_subsetting() {
     idx26_dim3.set(0, Logical(false));
     idx26_dim3.set(1, Logical(true));
     std::vector<int> expected26{7, 8, 11, 12};
-    std::vector<std::size_t> expected_dim26{2, 2, 1};
+    Dim expected_dim26{2, 2, 1};
     compare_result_ints(subset(What, idx26_dim1, idx26_dim2, idx26_dim3), expected26, expected_dim26);
     Logical idx27_dim1(true);
     Integer idx27_dim2(2);
@@ -620,7 +620,7 @@ void test_indices_preserved_subsetting() {
     idx27_dim3.set(0, Logical(false));
     idx27_dim3.set(1, Logical(true));
     std::vector<int> expected27{9, 10};
-    std::vector<std::size_t> expected_dim27{2, 1, 1};
+    Dim expected_dim27{2, 1, 1};
     compare_result_ints(subset(What, idx27_dim1, idx27_dim2, idx27_dim3), expected27, expected_dim27);
     Integer idx28_dim1(2);
     Array<Logical, Buffer<Logical, LBufferTrait>> idx28_dim2(SI{2});
@@ -630,7 +630,7 @@ void test_indices_preserved_subsetting() {
     idx28_dim3.set(0, Logical(false));
     idx28_dim3.set(1, Logical(true));
     std::vector<int> expected28{8, 12};
-    std::vector<std::size_t> expected_dim28{1, 2, 1};
+    Dim expected_dim28{1, 2, 1};
     compare_result_ints(subset(What, idx28_dim1, idx28_dim2, idx28_dim3), expected28, expected_dim28);
     Logical idx29_dim1(true);
     Logical idx29_dim2(true);
@@ -638,7 +638,7 @@ void test_indices_preserved_subsetting() {
     idx29_dim3.set(0, Logical(false));
     idx29_dim3.set(1, Logical(true));
     std::vector<int> expected29{7, 8, 9, 10, 11, 12};
-    std::vector<std::size_t> expected_dim29{2, 3, 1};
+    Dim expected_dim29{2, 3, 1};
     compare_result_ints(subset(What, idx29_dim1, idx29_dim2, idx29_dim3), expected29, expected_dim29);
     Logical idx30_dim1(true);
     Array<Logical, Buffer<Logical, LBufferTrait>> idx30_dim2(SI{2});
@@ -648,7 +648,7 @@ void test_indices_preserved_subsetting() {
     idx30_dim3.set(0, Logical(false));
     idx30_dim3.set(1, Logical(true));
     std::vector<int> expected30{7, 8, 11, 12};
-    std::vector<std::size_t> expected_dim30{2, 2, 1};
+    Dim expected_dim30{2, 2, 1};
     compare_result_ints(subset(What, idx30_dim1, idx30_dim2, idx30_dim3), expected30, expected_dim30);
     Logical idx31_dim1(true);
     Array<Logical, Buffer<Logical, LBufferTrait>> idx31_dim2(SI{3});
@@ -659,13 +659,13 @@ void test_indices_preserved_subsetting() {
     idx31_dim3.set(0, Logical(false));
     idx31_dim3.set(1, Logical(true));
     std::vector<int> expected31{7, 8, 11, 12};
-    std::vector<std::size_t> expected_dim31{2, 2, 1};
+    Dim expected_dim31{2, 2, 1};
     compare_result_ints(subset(What, idx31_dim1, idx31_dim2, idx31_dim3), expected31, expected_dim31);
   }
   // Subsetting + Assign various combinations
   {
     const std::size_t N = 18;
-    std::vector<std::size_t> dim{2, 3, 3};
+    Dim dim{2, 3, 3};
     Array<Integer, Buffer<Integer, LBufferTrait>> What(SI{N});
     What.dim = dim;
     reset(What);
@@ -674,7 +674,7 @@ void test_indices_preserved_subsetting() {
     Logical idx1_dim2(true);
     Logical idx1_dim3(true);
     std::vector<int> expected1{1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018};
-    std::vector<std::size_t> expected_dim1{2, 3, 3};
+    Dim expected_dim1{2, 3, 3};
     subset(What, idx1_dim1, idx1_dim2, idx1_dim3) = subset(What, idx1_dim1, idx1_dim2, idx1_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx1_dim1, idx1_dim2, idx1_dim3), expected1, expected_dim1);
@@ -686,7 +686,7 @@ void test_indices_preserved_subsetting() {
     Logical idx2_dim2(true);
     Logical idx2_dim3(true);
     std::vector<int> expected2{1001, 1003, 1005, 1007, 1009, 1011, 1013, 1015, 1017};
-    std::vector<std::size_t> expected_dim2{1, 3, 3};
+    Dim expected_dim2{1, 3, 3};
     subset(What, idx2_dim1, idx2_dim2, idx2_dim3) = subset(What, idx2_dim1, idx2_dim2, idx2_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx2_dim1, idx2_dim2, idx2_dim3), expected2, expected_dim2);
@@ -696,7 +696,7 @@ void test_indices_preserved_subsetting() {
     Logical idx3_dim2(true);
     Logical idx3_dim3(true);
     std::vector<int> expected3{1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018};
-    std::vector<std::size_t> expected_dim3{2, 3, 3};
+    Dim expected_dim3{2, 3, 3};
     subset(What, idx3_dim1, idx3_dim2, idx3_dim3) = subset(What, idx3_dim1, idx3_dim2, idx3_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx3_dim1, idx3_dim2, idx3_dim3), expected3, expected_dim3);
@@ -706,7 +706,7 @@ void test_indices_preserved_subsetting() {
     Logical idx4_dim2(true);
     Logical idx4_dim3(true);
     std::vector<int> expected4{1002, 1004, 1006, 1008, 1010, 1012, 1014, 1016, 1018};
-    std::vector<std::size_t> expected_dim4{1, 3, 3};
+    Dim expected_dim4{1, 3, 3};
     subset(What, idx4_dim1, idx4_dim2, idx4_dim3) = subset(What, idx4_dim1, idx4_dim2, idx4_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx4_dim1, idx4_dim2, idx4_dim3), expected4, expected_dim4);
@@ -718,7 +718,7 @@ void test_indices_preserved_subsetting() {
     Logical idx5_dim2(true);
     Logical idx5_dim3(true);
     std::vector<int> expected5{1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018};
-    std::vector<std::size_t> expected_dim5{2, 3, 3};
+    Dim expected_dim5{2, 3, 3};
     subset(What, idx5_dim1, idx5_dim2, idx5_dim3) = subset(What, idx5_dim1, idx5_dim2, idx5_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx5_dim1, idx5_dim2, idx5_dim3), expected5, expected_dim5);
@@ -731,7 +731,7 @@ void test_indices_preserved_subsetting() {
     idx6_dim2.set(2, Logical(true));
     Logical idx6_dim3(true);
     std::vector<int> expected6{1001, 1002, 1005, 1006, 1007, 1008, 1011, 1012, 1013, 1014, 1017, 1018};
-    std::vector<std::size_t> expected_dim6{2, 2, 3};
+    Dim expected_dim6{2, 2, 3};
     subset(What, idx6_dim1, idx6_dim2, idx6_dim3) = subset(What, idx6_dim1, idx6_dim2, idx6_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx6_dim1, idx6_dim2, idx6_dim3), expected6, expected_dim6);
@@ -743,7 +743,7 @@ void test_indices_preserved_subsetting() {
     idx7_dim2.set(1, Logical(false));
     Logical idx7_dim3(true);
     std::vector<int> expected7{1001, 1002, 1005, 1006, 1007, 1008, 1011, 1012, 1013, 1014, 1017, 1018};
-    std::vector<std::size_t> expected_dim7{2, 2, 3};
+    Dim expected_dim7{2, 2, 3};
     subset(What, idx7_dim1, idx7_dim2, idx7_dim3) = subset(What, idx7_dim1, idx7_dim2, idx7_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx7_dim1, idx7_dim2, idx7_dim3), expected7, expected_dim7);
@@ -753,7 +753,7 @@ void test_indices_preserved_subsetting() {
     Integer idx8_dim2(2);
     Logical idx8_dim3(true);
     std::vector<int> expected8{1003, 1004, 1009, 1010, 1015, 1016};
-    std::vector<std::size_t> expected_dim8{2, 1, 3};
+    Dim expected_dim8{2, 1, 3};
     subset(What, idx8_dim1, idx8_dim2, idx8_dim3) = subset(What, idx8_dim1, idx8_dim2, idx8_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx8_dim1, idx8_dim2, idx8_dim3), expected8, expected_dim8);
@@ -765,7 +765,7 @@ void test_indices_preserved_subsetting() {
     idx9_dim2.set(1, Integer(3));
     Logical idx9_dim3(true);
     std::vector<int> expected9{1001, 1002, 1005, 1006, 1007, 1008, 1011, 1012, 1013, 1014, 1017, 1018};
-    std::vector<std::size_t> expected_dim9{2, 2, 3};
+    Dim expected_dim9{2, 2, 3};
     subset(What, idx9_dim1, idx9_dim2, idx9_dim3) = subset(What, idx9_dim1, idx9_dim2, idx9_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx9_dim1, idx9_dim2, idx9_dim3), expected9, expected_dim9);
@@ -778,7 +778,7 @@ void test_indices_preserved_subsetting() {
     idx10_dim3.set(1, Logical(true));
     idx10_dim3.set(2, Logical(false));
     std::vector<int> expected10{1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010, 1011, 1012};
-    std::vector<std::size_t> expected_dim10{2, 3, 2};
+    Dim expected_dim10{2, 3, 2};
     subset(What, idx10_dim1, idx10_dim2, idx10_dim3) = subset(What, idx10_dim1, idx10_dim2, idx10_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx10_dim1, idx10_dim2, idx10_dim3), expected10, expected_dim10);
@@ -790,7 +790,7 @@ void test_indices_preserved_subsetting() {
     idx11_dim3.set(0, Logical(false));
     idx11_dim3.set(1, Logical(true));
     std::vector<int> expected11{1007, 1008, 1009, 1010, 1011, 1012};
-    std::vector<std::size_t> expected_dim11{2, 3, 1};
+    Dim expected_dim11{2, 3, 1};
     subset(What, idx11_dim1, idx11_dim2, idx11_dim3) = subset(What, idx11_dim1, idx11_dim2, idx11_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx11_dim1, idx11_dim2, idx11_dim3), expected11, expected_dim11);
@@ -800,7 +800,7 @@ void test_indices_preserved_subsetting() {
     Logical idx12_dim2(true);
     Integer idx12_dim3(1);
     std::vector<int> expected12{1001, 1002, 1003, 1004, 1005, 1006};
-    std::vector<std::size_t> expected_dim12{2, 3, 1};
+    Dim expected_dim12{2, 3, 1};
     subset(What, idx12_dim1, idx12_dim2, idx12_dim3) = subset(What, idx12_dim1, idx12_dim2, idx12_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx12_dim1, idx12_dim2, idx12_dim3), expected12, expected_dim12);
@@ -813,7 +813,7 @@ void test_indices_preserved_subsetting() {
     idx13_dim3.set(1, Integer(3));
     idx13_dim3.set(2, Integer(2));
     std::vector<int> expected13{1001, 1002, 1003, 1004, 1005, 1006, 1013, 1014, 1015, 1016, 1017, 1018, 1007, 1008, 1009, 1010, 1011, 1012};
-    std::vector<std::size_t> expected_dim13{2, 3, 3};
+    Dim expected_dim13{2, 3, 3};
     subset(What, idx13_dim1, idx13_dim2, idx13_dim3) = subset(What, idx13_dim1, idx13_dim2, idx13_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx13_dim1, idx13_dim2, idx13_dim3), expected13, expected_dim13);
@@ -823,7 +823,7 @@ void test_indices_preserved_subsetting() {
     Integer idx14_dim2(2);
     Logical idx14_dim3(true);
     std::vector<int> expected14{1003, 1004, 1009, 1010, 1015, 1016};
-    std::vector<std::size_t> expected_dim14{2, 1, 3};
+    Dim expected_dim14{2, 1, 3};
     subset(What, idx14_dim1, idx14_dim2, idx14_dim3) = subset(What, idx14_dim1, idx14_dim2, idx14_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx14_dim1, idx14_dim2, idx14_dim3), expected14, expected_dim14);
@@ -835,7 +835,7 @@ void test_indices_preserved_subsetting() {
     idx15_dim2.set(1, Logical(false));
     Logical idx15_dim3(true);
     std::vector<int> expected15{1002, 1006, 1008, 1012, 1014, 1018};
-    std::vector<std::size_t> expected_dim15{1, 2, 3};
+    Dim expected_dim15{1, 2, 3};
     subset(What, idx15_dim1, idx15_dim2, idx15_dim3) = subset(What, idx15_dim1, idx15_dim2, idx15_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx15_dim1, idx15_dim2, idx15_dim3), expected15, expected_dim15);
@@ -849,7 +849,7 @@ void test_indices_preserved_subsetting() {
     idx16_dim2.set(1, Logical(false));
     Logical idx16_dim3(true);
     std::vector<int> expected16{1001, 1002, 1005, 1006, 1007, 1008, 1011, 1012, 1013, 1014, 1017, 1018};
-    std::vector<std::size_t> expected_dim16{2, 2, 3};
+    Dim expected_dim16{2, 2, 3};
     subset(What, idx16_dim1, idx16_dim2, idx16_dim3) = subset(What, idx16_dim1, idx16_dim2, idx16_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx16_dim1, idx16_dim2, idx16_dim3), expected16, expected_dim16);
@@ -863,7 +863,7 @@ void test_indices_preserved_subsetting() {
     idx17_dim2.set(1, Integer(3));
     Logical idx17_dim3(true);
     std::vector<int> expected17{1001, 1005, 1007, 1011, 1013, 1017};
-    std::vector<std::size_t> expected_dim17{1, 2, 3};
+    Dim expected_dim17{1, 2, 3};
     subset(What, idx17_dim1, idx17_dim2, idx17_dim3) = subset(What, idx17_dim1, idx17_dim2, idx17_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx17_dim1, idx17_dim2, idx17_dim3), expected17, expected_dim17);
@@ -878,7 +878,7 @@ void test_indices_preserved_subsetting() {
     idx18_dim2.set(2, Logical(true));
     Logical idx18_dim3(true);
     std::vector<int> expected18{1001, 1002, 1005, 1006, 1007, 1008, 1011, 1012, 1013, 1014, 1017, 1018};
-    std::vector<std::size_t> expected_dim18{2, 2, 3};
+    Dim expected_dim18{2, 2, 3};
     subset(What, idx18_dim1, idx18_dim2, idx18_dim3) = subset(What, idx18_dim1, idx18_dim2, idx18_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx18_dim1, idx18_dim2, idx18_dim3), expected18, expected_dim18);
@@ -890,7 +890,7 @@ void test_indices_preserved_subsetting() {
     idx19_dim2.set(1, Logical(false));
     Logical idx19_dim3(true);
     std::vector<int> expected19{1001, 1002, 1005, 1006, 1007, 1008, 1011, 1012, 1013, 1014, 1017, 1018};
-    std::vector<std::size_t> expected_dim19{2, 2, 3};
+    Dim expected_dim19{2, 2, 3};
     subset(What, idx19_dim1, idx19_dim2, idx19_dim3) = subset(What, idx19_dim1, idx19_dim2, idx19_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx19_dim1, idx19_dim2, idx19_dim3), expected19, expected_dim19);
@@ -904,7 +904,7 @@ void test_indices_preserved_subsetting() {
     idx20_dim2.set(1, Integer(3));
     Logical idx20_dim3(true);
     std::vector<int> expected20{1001, 1002, 1005, 1006, 1007, 1008, 1011, 1012, 1013, 1014, 1017, 1018};
-    std::vector<std::size_t> expected_dim20{2, 2, 3};
+    Dim expected_dim20{2, 2, 3};
     subset(What, idx20_dim1, idx20_dim2, idx20_dim3) = subset(What, idx20_dim1, idx20_dim2, idx20_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx20_dim1, idx20_dim2, idx20_dim3), expected20, expected_dim20);
@@ -914,7 +914,7 @@ void test_indices_preserved_subsetting() {
     Logical idx21_dim2(true);
     Integer idx21_dim3(1);
     std::vector<int> expected21{1001, 1002, 1003, 1004, 1005, 1006};
-    std::vector<std::size_t> expected_dim21{2, 3, 1};
+    Dim expected_dim21{2, 3, 1};
     subset(What, idx21_dim1, idx21_dim2, idx21_dim3) = subset(What, idx21_dim1, idx21_dim2, idx21_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx21_dim1, idx21_dim2, idx21_dim3), expected21, expected_dim21);
@@ -928,7 +928,7 @@ void test_indices_preserved_subsetting() {
     idx22_dim3.set(0, Logical(false));
     idx22_dim3.set(1, Logical(true));
     std::vector<int> expected22{1007, 1008, 1009, 1010, 1011, 1012};
-    std::vector<std::size_t> expected_dim22{2, 3, 1};
+    Dim expected_dim22{2, 3, 1};
     subset(What, idx22_dim1, idx22_dim2, idx22_dim3) = subset(What, idx22_dim1, idx22_dim2, idx22_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx22_dim1, idx22_dim2, idx22_dim3), expected22, expected_dim22);
@@ -940,7 +940,7 @@ void test_indices_preserved_subsetting() {
     Integer idx23_dim2(2);
     Integer idx23_dim3(1);
     std::vector<int> expected23{1003};
-    std::vector<std::size_t> expected_dim23{1, 1, 1};
+    Dim expected_dim23{1, 1, 1};
     subset(What, idx23_dim1, idx23_dim2, idx23_dim3) = subset(What, idx23_dim1, idx23_dim2, idx23_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx23_dim1, idx23_dim2, idx23_dim3), expected23, expected_dim23);
@@ -956,7 +956,7 @@ void test_indices_preserved_subsetting() {
     idx24_dim3.set(1, Integer(3));
     idx24_dim3.set(2, Integer(2));
     std::vector<int> expected24{1002, 1006, 1014, 1018, 1008, 1012};
-    std::vector<std::size_t> expected_dim24{1, 2, 3};
+    Dim expected_dim24{1, 2, 3};
     subset(What, idx24_dim1, idx24_dim2, idx24_dim3) = subset(What, idx24_dim1, idx24_dim2, idx24_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx24_dim1, idx24_dim2, idx24_dim3), expected24, expected_dim24);
@@ -973,7 +973,7 @@ void test_indices_preserved_subsetting() {
     idx25_dim3.set(1, Integer(3));
     idx25_dim3.set(2, Integer(2));
     std::vector<int> expected25{1001, 1002, 1005, 1006, 1013, 1014, 1017, 1018, 1007, 1008, 1011, 1012};
-    std::vector<std::size_t> expected_dim25{2, 2, 3};
+    Dim expected_dim25{2, 2, 3};
     subset(What, idx25_dim1, idx25_dim2, idx25_dim3) = subset(What, idx25_dim1, idx25_dim2, idx25_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx25_dim1, idx25_dim2, idx25_dim3), expected25, expected_dim25);
@@ -987,7 +987,7 @@ void test_indices_preserved_subsetting() {
     idx26_dim3.set(0, Logical(false));
     idx26_dim3.set(1, Logical(true));
     std::vector<int> expected26{1007, 1008, 1011, 1012};
-    std::vector<std::size_t> expected_dim26{2, 2, 1};
+    Dim expected_dim26{2, 2, 1};
     subset(What, idx26_dim1, idx26_dim2, idx26_dim3) = subset(What, idx26_dim1, idx26_dim2, idx26_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx26_dim1, idx26_dim2, idx26_dim3), expected26, expected_dim26);
@@ -999,7 +999,7 @@ void test_indices_preserved_subsetting() {
     idx27_dim3.set(0, Logical(false));
     idx27_dim3.set(1, Logical(true));
     std::vector<int> expected27{1009, 1010};
-    std::vector<std::size_t> expected_dim27{2, 1, 1};
+    Dim expected_dim27{2, 1, 1};
     subset(What, idx27_dim1, idx27_dim2, idx27_dim3) = subset(What, idx27_dim1, idx27_dim2, idx27_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx27_dim1, idx27_dim2, idx27_dim3), expected27, expected_dim27);
@@ -1013,7 +1013,7 @@ void test_indices_preserved_subsetting() {
     idx28_dim3.set(0, Logical(false));
     idx28_dim3.set(1, Logical(true));
     std::vector<int> expected28{1008, 1012};
-    std::vector<std::size_t> expected_dim28{1, 2, 1};
+    Dim expected_dim28{1, 2, 1};
     subset(What, idx28_dim1, idx28_dim2, idx28_dim3) = subset(What, idx28_dim1, idx28_dim2, idx28_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx28_dim1, idx28_dim2, idx28_dim3), expected28, expected_dim28);
@@ -1025,7 +1025,7 @@ void test_indices_preserved_subsetting() {
     idx29_dim3.set(0, Logical(false));
     idx29_dim3.set(1, Logical(true));
     std::vector<int> expected29{1007, 1008, 1009, 1010, 1011, 1012};
-    std::vector<std::size_t> expected_dim29{2, 3, 1};
+    Dim expected_dim29{2, 3, 1};
     subset(What, idx29_dim1, idx29_dim2, idx29_dim3) = subset(What, idx29_dim1, idx29_dim2, idx29_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx29_dim1, idx29_dim2, idx29_dim3), expected29, expected_dim29);
@@ -1039,7 +1039,7 @@ void test_indices_preserved_subsetting() {
     idx30_dim3.set(0, Logical(false));
     idx30_dim3.set(1, Logical(true));
     std::vector<int> expected30{1007, 1008, 1011, 1012};
-    std::vector<std::size_t> expected_dim30{2, 2, 1};
+    Dim expected_dim30{2, 2, 1};
     subset(What, idx30_dim1, idx30_dim2, idx30_dim3) = subset(What, idx30_dim1, idx30_dim2, idx30_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx30_dim1, idx30_dim2, idx30_dim3), expected30, expected_dim30);
@@ -1054,7 +1054,7 @@ void test_indices_preserved_subsetting() {
     idx31_dim3.set(0, Logical(false));
     idx31_dim3.set(1, Logical(true));
     std::vector<int> expected31{1007, 1008, 1011, 1012};
-    std::vector<std::size_t> expected_dim31{2, 2, 1};
+    Dim expected_dim31{2, 2, 1};
     subset(What, idx31_dim1, idx31_dim2, idx31_dim3) = subset(What, idx31_dim1, idx31_dim2, idx31_dim3) + Integer(1000);
 
     compare_result_ints(subset(What, idx31_dim1, idx31_dim2, idx31_dim3), expected31, expected_dim31);
@@ -1077,7 +1077,7 @@ void test_range_subsetting() {
     Array<Integer, Buffer<Integer, LBufferTrait>> idx(SI{4});
     idx.set(0, 5); idx.set(1, 4); idx.set(2, 3); idx.set(3, 2);
     std::vector<int> expected{5, 4, 3, 2};
-    std::vector<std::size_t> expected_dim{4};
+    Dim expected_dim{4};
     compare_result_ints(subset(What, idx), expected, expected_dim);
   }
 
@@ -1088,7 +1088,7 @@ void test_range_subsetting() {
     Array<Integer, Buffer<Integer, LBufferTrait>> idx(SI{3});
     idx.set(0, 2); idx.set(1, 2); idx.set(2, 2);
     std::vector<int> expected{2, 2, 2};
-    std::vector<std::size_t> expected_dim{3};
+    Dim expected_dim{3};
     compare_result_ints(subset(What, idx), expected, expected_dim);
   }
 
@@ -1100,13 +1100,13 @@ void test_range_subsetting() {
     Array<Integer, Buffer<Integer, LBufferTrait>> idx(SI{4});
     idx.set(0, 1); idx.set(1, 2); idx.set(2, 3); idx.set(3, 4);
     std::vector<int> expected{1, 2, 3, 4};
-    std::vector<std::size_t> expected_dim{4};
+    Dim expected_dim{4};
     compare_result_ints(subset(What, idx), expected, expected_dim);
   }
 
   // Mixed: one range dimension, one irregular dimension.
   {
-    std::vector<std::size_t> dim{4, 5};
+    Dim dim{4, 5};
     Array<Integer, Buffer<Integer, LBufferTrait>> What(SI{20});
     What.dim = dim;
     reset(What);
@@ -1115,7 +1115,7 @@ void test_range_subsetting() {
     Array<Integer, Buffer<Integer, LBufferTrait>> idx_cols(SI{3}); // irregular
     idx_cols.set(0, 1); idx_cols.set(1, 3); idx_cols.set(2, 2);
     std::vector<int> expected{2, 3, 4, 10, 11, 12, 6, 7, 8};
-    std::vector<std::size_t> expected_dim{3, 3};
+    Dim expected_dim{3, 3};
     compare_result_ints(subset(What, idx_rows, idx_cols), expected, expected_dim);
   }
 
@@ -1137,7 +1137,7 @@ void test_range_subsetting() {
 
   // Assignment through a 2-D range subset.
   {
-    std::vector<std::size_t> dim{4, 5};
+    Dim dim{4, 5};
     Array<Integer, Buffer<Integer, LBufferTrait>> What(SI{20});
     What.dim = dim;
     reset(What);
@@ -1147,7 +1147,7 @@ void test_range_subsetting() {
     idx_cols.set(0, 1); idx_cols.set(1, 2);
     subset(What, idx_rows, idx_cols) = subset(What, idx_rows, idx_cols) + Integer(1000);
     std::vector<int> expected{1002, 1003, 1006, 1007};
-    std::vector<std::size_t> expected_dim{2, 2};
+    Dim expected_dim{2, 2};
     compare_result_ints(subset(What, idx_rows, idx_cols), expected, expected_dim);
   }
 
@@ -1155,7 +1155,7 @@ void test_range_subsetting() {
   // correct tape id (checked via deriv against the source variable), and
   // assigning back through the view must rebind it at the right slot.
   {
-    std::vector<std::size_t> dim{3, 3};
+    Dim dim{3, 3};
     Array<ReverseDouble, Buffer<ReverseDouble, LBufferTrait>> What(SI{9});
     What.dim = dim;
     for (std::size_t i = 0; i < 9; i++) What.set(i, ReverseDouble::Var(static_cast<double>(i) + 1.0));
@@ -1180,7 +1180,7 @@ void test_range_subsetting() {
 
   // Subset-of-subset with a range outer layer.
   {
-    std::vector<std::size_t> dim{5, 5};
+    Dim dim{5, 5};
     Array<Integer, Buffer<Integer, LBufferTrait>> What(SI{25});
     What.dim = dim;
     reset(What);
@@ -1197,7 +1197,7 @@ void test_range_subsetting() {
 
     // Picks original rows/cols {2,3}.
     std::vector<int> expected{7, 8, 12, 13};
-    std::vector<std::size_t> expected_dim{2, 2};
+    Dim expected_dim{2, 2};
     compare_result_ints(inner, expected, expected_dim);
   }
 }
@@ -1217,7 +1217,7 @@ void test_preserved_subsetting() {
   // Handling NA
   {
     const std::size_t N = 18;
-    std::vector<std::size_t> dim{2, 3, 3};
+    Dim dim{2, 3, 3};
     Array<Integer, Buffer<Integer, LBufferTrait>> What(SI{N});
     What.dim = dim;
     reset(What);
@@ -1381,7 +1381,7 @@ void test_preserved_subsetting() {
   // ===========================================================================
   {
     auto lclose = [](double l, double r) { return std::abs(l - r) < 1e-9; };
-    std::vector<std::size_t> dim{3, 4};
+    Dim dim{3, 4};
     Array<Double, Buffer<Double, LBufferTrait>> a(SI{12});
     a.dim = dim;
     for (std::size_t i = 0; i < 12; i++) a.set(i, static_cast<double>(i));

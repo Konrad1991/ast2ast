@@ -12,7 +12,7 @@ void test_solve() {
   auto make_A = [&](const double m[4]) {
     Array<Double, Buffer<Double>> M;
     M = c(Double(m[0]), Double(m[1]), Double(m[2]), Double(m[3]));
-    M.dim = std::vector<std::size_t>{2, 2};
+    M.dim = Dim{2, 2};
     return M;
   };
 
@@ -32,7 +32,7 @@ void test_solve() {
     auto a = make_A(Av);
     Array<Double, Buffer<Double>> B;
     B = c(Double(1.0), Double(0.0), Double(0.0), Double(1.0));
-    B.dim = std::vector<std::size_t>{2, 2};
+    B.dim = Dim{2, 2};
     auto x = solve(a, B);
     ass<"solve(A,mat) rank">(x.get_dim().size() == 2);
     ass<"solve(A,mat) nrow">(nrow(x) == Integer(2));
@@ -57,7 +57,7 @@ void test_solve() {
   {
     Array<Integer, Buffer<Integer>> ai;
     ai = c(Integer(4), Integer(2), Integer(2), Integer(3));
-    ai.dim = std::vector<std::size_t>{2, 2};
+    ai.dim = Dim{2, 2};
     auto inv = solve(ai);
     for (std::size_t k = 0; k < 4; ++k) {
       ass<"solve(int) vs known inverse">(std::abs(get_val(inv.get(k)) - inv_expected[k]) < 1e-9);
@@ -78,7 +78,7 @@ void test_solve() {
     Array<Dual, Buffer<Dual>> adual;
     adual = c(Dual(Av[0], Ad[0]), Dual(Av[1], Ad[1]),
               Dual(Av[2], Ad[2]), Dual(Av[3], Ad[3]));
-    adual.dim = std::vector<std::size_t>{2, 2};
+    adual.dim = Dim{2, 2};
     Array<Double, Buffer<Double>> b;
     b = c(Double(1.0), Double(1.0));
     auto xd = solve(adual, b);
@@ -108,7 +108,7 @@ void test_solve() {
     Array<ReverseDouble, Buffer<ReverseDouble>> A;
     A = c(ReverseDouble::Var(Av[0]), ReverseDouble::Var(Av[1]),
           ReverseDouble::Var(Av[2]), ReverseDouble::Var(Av[3]));
-    A.dim = std::vector<std::size_t>{2, 2};
+    A.dim = Dim{2, 2};
     Array<Double, Buffer<Double>> b;
     b = c(Double(1.0), Double(1.0));
     auto X = solve(A, b);

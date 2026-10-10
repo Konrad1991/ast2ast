@@ -10,7 +10,7 @@ void test_determinant() {
   auto make2 = [](const double m[4]) {
     Array<Double, Buffer<Double>> M;
     M = c(Double(m[0]), Double(m[1]), Double(m[2]), Double(m[3]));
-    M.dim = std::vector<std::size_t>{2, 2};
+    M.dim = Dim{2, 2};
     return M;
   };
   auto det2 = [&](const double m[4]) {
@@ -34,7 +34,7 @@ void test_determinant() {
     Array<Double, Buffer<Double>> M;
     M = c(Double(B[0]), Double(B[1]), Double(B[2]), Double(B[3]), Double(B[4]),
           Double(B[5]), Double(B[6]), Double(B[7]), Double(B[8]));
-    M.dim = std::vector<std::size_t>{3, 3};
+    M.dim = Dim{3, 3};
     ass<"det 3x3 == -3">(std::abs(get_val(determinant(M)) - (-3.0)) < 1e-8);
   }
   // ---- plain: finite singular -> 0 (no error) -----------------------
@@ -46,7 +46,7 @@ void test_determinant() {
   {
     Array<Double, Buffer<Double>> M;
     M = c(Double(1.0), Double(NA_REAL), Double(3.0), Double(4.0));
-    M.dim = std::vector<std::size_t>{2, 2};
+    M.dim = Dim{2, 2};
     bool threw = false;
     try {
       auto bad = determinant(M);
@@ -59,7 +59,7 @@ void test_determinant() {
     Array<Dual, Buffer<Dual>> adual;
     adual = c(Dual(Av[0], Ad[0]), Dual(Av[1], Ad[1]),
               Dual(Av[2], Ad[2]), Dual(Av[3], Ad[3]));
-    adual.dim = std::vector<std::size_t>{2, 2};
+    adual.dim = Dim{2, 2};
     auto dd = determinant(adual);
     ass<"det dual value == 8">(std::abs(dd.val - 8.0) < 1e-9);
 
@@ -76,7 +76,7 @@ void test_determinant() {
     Array<ReverseDouble, Buffer<ReverseDouble>> A;
     A = c(ReverseDouble::Var(Av[0]), ReverseDouble::Var(Av[1]),
           ReverseDouble::Var(Av[2]), ReverseDouble::Var(Av[3]));
-    A.dim = std::vector<std::size_t>{2, 2};
+    A.dim = Dim{2, 2};
     ReverseDouble d = determinant(A);
     ass<"det reverse value == 8">(std::abs(get_val(d) - 8.0) < 1e-9);
     auto g = deriv(d, A);
@@ -107,7 +107,7 @@ void test_determinant() {
     Array<ReverseDouble, Buffer<ReverseDouble>> A;
     A = c(ReverseDouble::Var(Cv[0]), ReverseDouble::Var(Cv[1]),
           ReverseDouble::Var(Cv[2]), ReverseDouble::Var(Cv[3]));
-    A.dim = std::vector<std::size_t>{2, 2};
+    A.dim = Dim{2, 2};
     ReverseDouble d = determinant(A);
     auto g = deriv(d, A);
 

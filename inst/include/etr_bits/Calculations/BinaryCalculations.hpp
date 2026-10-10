@@ -149,12 +149,54 @@ using BinaryArray =
 Array<T, BinaryOperation<L, R, Trait>>;
 
 
-inline std::vector<std::size_t> match_dims(const std::vector<std::size_t>& l_dim, const std::vector<std::size_t>& r_dim) {
+inline Dim match_dims(const Dim& l_dim, const Dim& r_dim) {
   ass<"encountered non-conformable arrays">(l_dim.size() == r_dim.size());
   for (std::size_t i = 0; i < l_dim.size(); i++) {
     if (l_dim[i] != r_dim[i]) ass<"encountered non-conformable arrays">(false);
   }
   return l_dim;
+}
+
+template <typename T>
+inline auto make_range(T start, long step, std::size_t len) {
+  using Op = BinaryOperation<T, RangeSpec, RangeTrait>;
+  return Array<T, Op>(Op(std::move(start), RangeSpec{step, len}), Dim{len});
+}
+
+template <typename T>
+concept IsIntRangeArray = IsRangeArray<T> && IsInteger<typename T::value_type>;
+
+template <typename S>
+concept IsIntScalar = IsScalarLike<S> && IsInteger<Decayed<decltype(get_scalar_val(std::declval<S>()))>>;
+
+template <typename LD, typename RD>
+concept IsIntRangeAndScalar =
+  (IsIntRangeArray<LD> && IsIntScalar<RD>) || (IsIntScalar<LD> && IsIntRangeArray<RD>);
+
+// range +-* integer scalar stays an affine range
+template <typename Trait, typename LD, typename RD>
+concept IsAffineRangeOp =
+  (IS<Trait, PlusTrait> || IS<Trait, MinusTrait> || IS<Trait, TimesTrait>) &&
+  IsIntRangeAndScalar<LD, RD>;
+
+template <typename Trait, bool range_left, typename Rng, typename S>
+inline auto affine_range_op(const Rng& rng, const S& s_) {
+  using V = typename Rng::value_type;
+  const V s = get_scalar_val(s_);
+  const V start = rng.d.l.get();
+  const RangeSpec spec = rng.d.r.get();
+  if constexpr (IS<Trait, PlusTrait>) {
+    return make_range(start + s, spec.step, spec.len);
+  } else if constexpr (IS<Trait, MinusTrait>) {
+    if constexpr (range_left) {
+      return make_range(start - s, spec.step, spec.len);
+    } else {
+      return make_range(s - start, -spec.step, spec.len);
+    }
+  } else {
+    // NA s: start becomes NA, so every element is NA regardless of step
+    return make_range(start * s, spec.step * static_cast<long>(get_val(s)), spec.len);
+  }
 }
 
 template <typename L, typename R, typename Trait>
@@ -164,7 +206,13 @@ inline auto create_bin_vec(L &&l,R &&r) {
   constexpr bool is_scalar_l = IsScalarLike<LD>;
   constexpr bool is_scalar_r = IsScalarLike<RD>;
   using T = decltype(determine_type_binary_op<LD, RD, Trait>());
-  if constexpr (!is_scalar_l && is_scalar_r) {
+  if constexpr (IsAffineRangeOp<Trait, LD, RD>) {
+    if constexpr (IsIntRangeArray<LD>) {
+      return affine_range_op<Trait, true>(l, r);
+    } else {
+      return affine_range_op<Trait, false>(r, l);
+    }
+  } else if constexpr (!is_scalar_l && is_scalar_r) {
     using Ld = std::decay_t<decltype(l.d)>;
     if constexpr(IsRvalueV<L&&>) {
       return BinaryArray<T, Ld, RD, Trait>(
