@@ -217,6 +217,29 @@ sort_args <- function(ast, function_registry) {
 
 # Infer types
 # ========================================================================
+# NOTE: inference is a single pass, but a range variable can be downgraded to
+# vec(int) after another variable was already inferred from it (j <- i; i <- c(1L)).
+# In C++ a vector cannot be assigned to an IntRange, so repeat until stable.
+settle_range_vars <- function(ast, env) {
+  repeat {
+    changed <- FALSE
+    traverse_ast(ast, function(node, ...) {
+      if (!inherits(node, "binary_node") || !(node$operator %in% c("<-", "=")) ||
+          !inherits(node$left_node, "variable_node")) {
+        return()
+      }
+      name <- deparse(node$left_node$name)
+      if (!is_range_type(env$vars_list[[name]])) return()
+      t <- infer(node$right_node, env$vars_list, env, env$function_registry)
+      if (!is_range_type(t)) {
+        env$vars_list[[name]] <- strip_range(env$vars_list[[name]])
+        changed <<- TRUE
+      }
+    })
+    if (!changed) break
+  }
+}
+
 infer_types <- function(ast, f, f_args, r_fct, real_type, function_registry, known_types = list(), extra_vars = list()) {
   vars_list <- create_vars_types_list(ast, f, f_args, r_fct, real_type, known_types)
   vars_list[names(extra_vars)] <- extra_vars
@@ -226,7 +249,10 @@ infer_types <- function(ast, f, f_args, r_fct, real_type, function_registry, kno
   env$real_type <- real_type
   env$function_registry <- function_registry
   env$known_types <- known_types
-  e <- try(traverse_ast(ast, type_infer_action, env), silent = TRUE)
+  e <- try({
+    traverse_ast(ast, type_infer_action, env)
+    settle_range_vars(ast, env)
+  }, silent = TRUE)
   if (inherits(e, "try-error")) {
     stop(sprintf("Error: Could not infer the types, caused by %s", as.character(e)))
   }

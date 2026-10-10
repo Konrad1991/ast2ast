@@ -323,6 +323,7 @@ make_inferred_type <- function(data_struct, base_type, r_fct, real_type) {
   ds <- switch(data_struct,
     scalar = scalar$new(),
     vector = vec$new(),
+    range = range_vec$new(),
     matrix = mat$new(),
     array = arr$new()
   )

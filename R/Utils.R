@@ -27,6 +27,7 @@ same_base_type <- function(is, should) {
 same_data_struct <- function(is, should) {
   correct <- function(ds) {
     if (ds == "vec") return("vector")
+    if (ds == "range") return("vector")
     if (ds == "borrow_vec") return("borrow_vector")
     if (ds == "mat") return("matrix")
     if (ds == "borrow_mat") return("borrow_matrix")

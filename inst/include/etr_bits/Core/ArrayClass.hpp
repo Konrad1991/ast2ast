@@ -571,6 +571,57 @@ template<typename T, typename L, typename R, typename Trait> struct Array<T, Bin
 
 /*
 ---------------------------------------------------------------------------------------------
+--------------------------------- Range (a:b, seq_len) --------------------------------------
+---------------------------------------------------------------------------------------------
+More specialized than the BinaryOperation Array above. A range is a value
+(start + RangeSpec), so unlike other expressions it can be default
+constructed, copied and assigned. That lets a variable hold one (IntRange).
+*/
+template<typename T> struct Array<T, BinaryOperation<T, RangeSpec, RangeTrait>> {
+  using Type = T;
+  using DType = BinaryOperation<T, RangeSpec, RangeTrait>;
+  using value_type = T;
+  DType d;
+  Dim dim;
+
+  decltype(auto) get(std::size_t idx) const { return d.get(idx); }
+  decltype(auto) get_unchecked(std::size_t idx) const { return d.get_unchecked(idx); }
+  template<typename V> void set(std::size_t, const V&) = delete;
+
+  explicit operator bool() const {
+    ass<"Error in if: the condition has length > 1">(this->size() == 1);
+    return static_cast<bool>(get_val(d.get(0)));
+  }
+  explicit operator value_type() const { return d.get(0); }
+
+  std::size_t size() const { return d.size(); }
+  const Dim& get_dim() const { return dim; }
+  auto begin() const { return d.begin(); }
+  auto end() const { return d.end(); }
+
+  Array() : d(T{}, RangeSpec{1, 0}), dim(Dim{0}) {}
+  explicit Array(DType&& inp, Dim&& dim_) : d(std::move(inp)), dim(std::move(dim_)) {}
+  explicit Array(const DType& inp, const Dim& dim_) : d(inp), dim(dim_) {}
+  Array(const Array& other) : d(other.d), dim(other.dim) {}
+  Array(Array&& other) noexcept : d(std::move(other.d)), dim(std::move(other.dim)) {}
+
+  Array& operator=(const Array& other) {
+    d.l = other.d.l;
+    d.r = other.d.r;
+    dim = other.dim;
+    return *this;
+  }
+  Array& operator=(Array&& other) noexcept {
+    d.l = std::move(other.d.l);
+    d.r = std::move(other.d.r);
+    dim = std::move(other.dim);
+    return *this;
+  }
+};
+using IntRange = Array<Integer, BinaryOperation<Integer, RangeSpec, RangeTrait>>;
+
+/*
+---------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------
 ----------------------------------SubsetView  -----------------------------------------------
 ---------------------------------------------------------------------------------------------

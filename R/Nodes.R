@@ -1111,6 +1111,7 @@ pre_type_node <- R6::R6Class(
       ds <- switch(data_struct,
         scalar = scalar$new(),
         vector = vec$new(),
+        range = range_vec$new(),
         matrix = mat$new(),
         array = arr$new()
       )
@@ -1286,6 +1287,35 @@ arr <- R6::R6Class(
     },
     get_data_struct_verbose = function() {
       "array"
+    }
+  )
+)
+# Lazy integer range (a:b, seq_len, range +- int). Inferred only, never
+# declared by the user; behaves as an integer vector everywhere else.
+# See development/Plans/range_type.md
+range_vec <- R6::R6Class(
+  "range_vec",
+  public = list(
+    base_type = "integer",
+    r_fct = NULL,
+    real_type = NULL,
+    print = function() {
+      cat("integer range", "\n")
+    },
+    stringify = function(indent = "") {
+      "etr::IntRange"
+    },
+    cast_fct = function() {
+      NULL
+    },
+    get_base_type = function() {
+      self$base_type
+    },
+    get_data_struct = function() {
+      "vector"
+    },
+    get_data_struct_verbose = function() {
+      "range"
     }
   )
 )

@@ -246,6 +246,29 @@ action_find_variables <- function(node, env) {
   env$variable_list <- c(env$variable_list, deparse(node$name))
 }
 
+# a range variable cannot bind to a ref() argument (range_type.md, decision 3)
+downgrade_ranges_passed_by_ref <- function(node, fn, info_env) {
+  if (!is.environment(info_env) || is.null(info_env$vars_list)) return()
+  call_args <- if (inherits(node, "unary_node")) {
+    list(node$obj)
+  } else if (inherits(node, "binary_node")) {
+    list(node$left_node, node$right_node)
+  } else if (inherits(node, "function_node")) {
+    node$args
+  } else {
+    list()
+  }
+  for (i in seq_along(call_args)) {
+    a <- call_args[[i]]
+    if (i > length(fn$args_f) || !inherits(a, "variable_node")) next
+    if (fn$args_f[[i]]$get_copy_or_ref() != "ref") next
+    name <- deparse(a$name)
+    if (is_range_type(info_env$vars_list[[name]])) {
+      info_env$vars_list[[name]] <- strip_range(info_env$vars_list[[name]])
+    }
+  }
+}
+
 # add fn_nodes to function_registry
 # ========================================================================
 action_update_function_registry <- function(node, function_registry) {
@@ -274,6 +297,7 @@ action_update_function_registry <- function(node, function_registry) {
 
   ret_type <- fn$return_type$clone()
   infer_fct <- function(node, vars_list, info_env, function_registry) {
+    downgrade_ranges_passed_by_ref(node, fn, info_env)
     node$internal_type <- ret_type
     return(ret_type)
   }

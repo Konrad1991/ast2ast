@@ -566,6 +566,24 @@ infer_unary_minus <- function(node, vars_list, info_env, function_registry) {
   node$internal_type <- t
   return(t)
 }
+is_range_type <- function(t) {
+  inherits(t, "pre_type_node") && inherits(t$data_struct, "range_vec")
+}
+strip_range <- function(t) {
+  if (!is_range_type(t)) return(t)
+  t <- t$clone(deep = TRUE)
+  t$set_data_struct("vector")
+  t
+}
+is_int_scalar_type <- function(t) {
+  inherits(t, "pre_type_node") && t$get_data_struct() == "scalar" &&
+    t$get_base_type() %in% c("int", "integer")
+}
+# mirrors IsAffineRangeOp in BinaryCalculations.hpp: range +-* int scalar stays a range
+is_affine_range_op <- function(operator, l, r) {
+  operator %in% c("+", "-", "*") &&
+    ((is_range_type(l) && is_int_scalar_type(r)) || (is_int_scalar_type(l) && is_range_type(r)))
+}
 infer_binary_math <- function(node, vars_list, info_env, function_registry) {
   left_type <- infer(node$left_node, vars_list, info_env, function_registry)
   err <- check_operand_type(left_type, node, "left")
@@ -573,8 +591,13 @@ infer_binary_math <- function(node, vars_list, info_env, function_registry) {
   right_type <- infer(node$right_node, vars_list, info_env, function_registry)
   err <- check_operand_type(right_type, node, "right")
   if (!is.null(err)) return(err)
-  l_type <- left_type$clone(deep = TRUE)
-  r_type <- right_type$clone(deep = TRUE)
+  if (is_affine_range_op(node$operator, left_type, right_type)) {
+    t <- make_inferred_type("range", "integer", info_env$r_fct, info_env$real_type)
+    node$internal_type <- t
+    return(t)
+  }
+  l_type <- strip_range(left_type)$clone(deep = TRUE)
+  r_type <- strip_range(right_type)$clone(deep = TRUE)
   if (l_type$get_base_type() == "logical") l_type$set_base_type("integer")
   if (r_type$get_base_type() == "logical") r_type$set_base_type("integer")
   if (node$operator %in% c("/", "^")) {
@@ -917,10 +940,12 @@ function_registry_global$add(
     if (left_base_type == "logical") left_base_type <- "integer"
     if (right_base_type == "logical") right_base_type <- "integer"
     common_type <- "integer"
+    data_struct <- "range"
     if (any(c(left_base_type, right_base_type) %in% c("double"))) {
       common_type <- "double"
+      data_struct <- "vector"
     }
-    t <- make_inferred_type("vector", common_type, info_env$r_fct, info_env$real_type)
+    t <- make_inferred_type(data_struct, common_type, info_env$r_fct, info_env$real_type)
     node$internal_type <- t
     return(t)
   },
@@ -933,7 +958,7 @@ function_registry_global$add(
     inner <- infer(node$obj, vars_list, info_env, function_registry)
     err <- check_operand_type(inner, node)
     if (!is.null(err)) return(err)
-    t <- make_inferred_type("vector", "integer", info_env$r_fct, info_env$real_type)
+    t <- make_inferred_type("range", "integer", info_env$r_fct, info_env$real_type)
     node$internal_type <- t
     return(t)
   },
@@ -950,7 +975,7 @@ function_registry_global$add(
     inner <- infer(node$obj, vars_list, info_env, function_registry)
     err <- check_operand_type(inner, node, allow_collection = TRUE)
     if (!is.null(err)) return(err)
-    t <- make_inferred_type("vector", "integer", info_env$r_fct, info_env$real_type)
+    t <- make_inferred_type("range", "integer", info_env$r_fct, info_env$real_type)
     node$internal_type <- t
     return(t)
   },

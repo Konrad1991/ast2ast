@@ -218,7 +218,7 @@ common_type <- function(type_old, type_new) {
 
   if (is.null(type_old$get_base_type()) && is.null(type_old$get_data_struct())) {
     type_old$set_base_type(type_new$get_base_type())
-    type_old$set_data_struct(type_new$get_data_struct())
+    type_old$set_data_struct(if (is_range_type(type_new)) "range" else type_new$get_data_struct())
     return(type_old)
   }
 
@@ -247,6 +247,10 @@ common_type <- function(type_old, type_new) {
     common_data_struct <- type_old$get_data_struct()
   } else {
     common_data_struct <- type_new$get_data_struct()
+  }
+  # range only survives a join with another range (range_type.md)
+  if (is_range_type(type_old) && is_range_type(type_new)) {
+    return(type_old)
   }
   type_old$set_base_type(common_base_type)
   type_old$set_data_struct(common_data_struct)

@@ -134,8 +134,8 @@ inline auto ConvertValueColon(const T& obj) {
 
 template <typename A, typename O>
 inline auto colon(const A& start,const O& end) {
-  auto s = ConvertValueColon(start);
-  auto e = ConvertValueColon(end);
+  auto s = get_scalar_val(ConvertValueColon(start));
+  auto e = get_scalar_val(ConvertValueColon(end));
   using DataType = typename common_type<decltype(s), decltype(e)>::type;
   const double d = static_cast<double>(get_val(e)) - static_cast<double>(get_val(s));
   // + eps as in R's seq_colon
