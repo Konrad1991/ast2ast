@@ -10,8 +10,8 @@ expect_equal(ast2ast:::determine_literal_type(NA), "NA")
 expect_equal(ast2ast:::determine_literal_type(NaN), "NaN")
 expect_equal(ast2ast:::determine_literal_type(Inf), "Inf")
 
-expect_equal(ast2ast:::t_literal("print", 1, "", "numeric", TRUE, "etr::Double"), "etr::Double(1.0)")
-expect_equal(ast2ast:::t_literal("<-", 1, "", "numeric", TRUE, "etr::Double"), "etr::Double(1.0)")
+expect_equal(ast2ast:::t_literal("print", 1, "", "numeric", TRUE, "etr::Double"), "ETR_REAL(1.0)")
+expect_equal(ast2ast:::t_literal("<-", 1, "", "numeric", TRUE, "etr::Double"), "ETR_REAL(1.0)")
 
 expect_equal(ast2ast:::t_literal("<-", 1L, "", "integer", TRUE, "etr::Double"), "etr::Integer(1)")
 expect_equal(ast2ast:::t_literal("print", 1L, "", "integer", TRUE, "etr::Double"), "etr::Integer(1)")
@@ -26,12 +26,12 @@ expect_equal(ast2ast:::t_literal("print", FALSE, "", "logical", TRUE, "etr::Doub
 expect_equal(ast2ast:::t_literal("<-", F, "", "logical", TRUE, "etr::Double"), "etr::Logical(false)")
 expect_equal(ast2ast:::t_literal("print", F, "", "logical", TRUE, "etr::Double"), "etr::Logical(false)")
 
-expect_equal(ast2ast:::t_literal("<-", NA, "", "NA", TRUE, "etr::Double"), "etr::Double::NA()")
-expect_equal(ast2ast:::t_literal("print", NA, "", "NA", TRUE, "etr::Double"), "etr::Double::NA()")
-expect_equal(ast2ast:::t_literal("<-", NaN, "", "NaN", TRUE, "etr::Double"), "etr::Double::NaN()")
-expect_equal(ast2ast:::t_literal("print", NaN, "", "NaN", TRUE, "etr::Double"), "etr::Double::NaN()")
-expect_equal(ast2ast:::t_literal("<-", Inf, "", "Inf", TRUE, "etr::Double"), "etr::Double::Inf()")
-expect_equal(ast2ast:::t_literal("print", Inf, "", "Inf", TRUE, "etr::Double"), "etr::Double::Inf()")
+expect_equal(ast2ast:::t_literal("<-", NA, "", "NA", TRUE, "etr::Double"), "ETR_REAL::NA()")
+expect_equal(ast2ast:::t_literal("print", NA, "", "NA", TRUE, "etr::Double"), "ETR_REAL::NA()")
+expect_equal(ast2ast:::t_literal("<-", NaN, "", "NaN", TRUE, "etr::Double"), "ETR_REAL::NaN()")
+expect_equal(ast2ast:::t_literal("print", NaN, "", "NaN", TRUE, "etr::Double"), "ETR_REAL::NaN()")
+expect_equal(ast2ast:::t_literal("<-", Inf, "", "Inf", TRUE, "etr::Double"), "ETR_REAL::Inf()")
+expect_equal(ast2ast:::t_literal("print", Inf, "", "Inf", TRUE, "etr::Double"), "ETR_REAL::Inf()")
 
 f <- function() {
   a <- NULL

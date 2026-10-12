@@ -557,7 +557,7 @@ unallowed_signs <- function(name) {
     # Thereby, one can easily create argument names nameSEXP and assign it to name
     # - the types of ast2ast: logical, integer, double, int cannot be used as names.
     # Thereby, all.vars can directly be used to find all variables
-    "\\.", "SEXP", "getXPtr", "fct_ptr", "__bound__"
+    "\\.", "SEXP", "getXPtr", "fct_ptr", "__bound__", "ETR_REAL"
   )
   sign_found <- 0
   for (i in seq_along(unallowed)) {
@@ -807,12 +807,7 @@ action_translate <- function(node, function_registry, real_type) {
       } else if (mode == "integer") {
         node$operator <- "etr::integer"
       } else if (mode == "numeric") {
-        op <- list(
-          "etr::Double" = "etr::numeric",
-          "etr::Dual" = "etr::numeric_dual",
-          "etr::ReverseDouble" = "etr::numeric_reverse_double"
-        )[[real_type]]
-        node$operator <- op
+        node$operator <- paste0("etr::numeric_of<", scalar_cpp(real_type), ">")
         node$args[[1]] <- NULL
         node$args <- Filter(Negate(is.null), node$args)
       } else if (inherits(node$internal_type, "pre_type_node") && node$internal_type$get_data_struct() == "collection") {
@@ -822,18 +817,13 @@ action_translate <- function(node, function_registry, real_type) {
       }
     }
     else if (inherits(node, "function_node") && node$operator == "diag") {
-      node$operator <- paste0("etr::diag<", real_type, ">")
+      node$operator <- paste0("etr::diag<", scalar_cpp(real_type), ">")
     }
     else if (inherits(node, "unary_node") && node$operator == "as.numeric") {
-      node$operator <- paste0("etr::as_numeric<", real_type, ">")
+      node$operator <- paste0("etr::as_numeric<", scalar_cpp(real_type), ">")
     }
     else if (inherits(node, "unary_node") && node$operator == "numeric") {
-      op <- list(
-        "etr::Double" = "etr::numeric",
-        "etr::Dual" = "etr::numeric_dual",
-        "etr::ReverseDouble" = "etr::numeric_reverse_double"
-      )[[real_type]]
-      node$operator <- op
+      node$operator <- paste0("etr::numeric_of<", scalar_cpp(real_type), ">")
     }
     else if (inherits(node, "binary_node") && node$operator %in% c("[[", "at") &&
              inherits(node$left_node$internal_type, "pre_type_node") &&

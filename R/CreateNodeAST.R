@@ -382,6 +382,7 @@ assemble_fn_def <- function(name_fct, vars_types_list, return_type, body, real_t
   if (struct_defs != "") {
     struct_defs <- paste0("namespace {\n", struct_defs, "\n}\n")
   }
+  struct_defs <- paste0("using ETR_REAL = ", real_type, ";\n", struct_defs)
 
   declarations <- lapply(vars_types_list, \(x) {
     res <- x$declare(indent = "")

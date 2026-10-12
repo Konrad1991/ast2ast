@@ -289,6 +289,10 @@ template <typename T> inline auto numeric_dual(const T &inp) {
 template <typename T> inline auto numeric_reverse_double(const T &inp) {
   return createRVec<ReverseDouble>(inp);
 }
+// numeric() for the scalar type of the translation (codegen: numeric_of<ETR_REAL>)
+template <typename Type, typename T> inline auto numeric_of(const T &inp) {
+  return createRVec<Type>(inp);
+}
 
 template <typename Type, typename R, typename C> inline auto createRMat(const R& nrow, const C& ncol) {
   std::size_t nr = ConvertSizeVec(nrow);

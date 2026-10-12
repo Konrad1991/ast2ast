@@ -101,7 +101,8 @@ check_borrow_ad_rejected("reverse", "XPtr", info = "reverse XPtr")
 
 # --- forward mode + XPtr: Dual memory can be borrowed ----------------------
 code <- ast2ast::translate(f, derivative = "forward", output = "XPtr", getsource = TRUE)
-expect_true(grepl("etr::Array<etr::Dual, etr::Borrow<etr::Dual>>", code, fixed = TRUE))
+expect_true(grepl("using ETR_REAL = etr::Dual;", code, fixed = TRUE))
+expect_true(grepl("etr::Array<ETR_REAL, etr::Borrow<ETR_REAL>>", code, fixed = TRUE))
 
 # inner fn with a borrowed Dual argument
 f <- function(a) {
@@ -120,7 +121,7 @@ f <- function(a) {
   return(g(a))
 }
 code <- ast2ast::translate(f, derivative = "forward", output = "XPtr", getsource = TRUE)
-expect_true(grepl("etr::Borrow<etr::Dual>", code, fixed = TRUE))
+expect_true(grepl("etr::Borrow<ETR_REAL>", code, fixed = TRUE))
 # Borrow<Dual> has to compile, not only translate
 fcpp <- ast2ast::translate(f, derivative = "forward", output = "XPtr")
 expect_true(inherits(fcpp, "XPtr"))
