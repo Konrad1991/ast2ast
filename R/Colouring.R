@@ -452,7 +452,7 @@ color_columns <- function(rows, n) {
   color
 }
 
-# --- jacobian(f, x, colouring = TRUE, n = <literal>) ----------------------
+# --- jacobian(f, x, colouring = "static", n = <literal>) ------------------
 
 is_return_of <- function(node) {
   inherits(node, "unary_node") && node$operator == "return"
@@ -543,7 +543,7 @@ colouring_cpp <- function(col, n) {
 # Takes colouring = / n = off jacobian's args (in place, they never reach C++).
 # Returns list(colouring, n) or an error string. Errors are returned before
 # the args are taken off: infer runs more than once, every pass has to fail.
-jacobian_colouring_args <- function(node, real_type) {
+jacobian_colouring_args <- function(node, real_type, vars_list) {
   nms <- names(node$args)
   if (is.null(nms)) nms <- rep("", length(node$args))
   bad <- setdiff(nms[nzchar(nms)], c("colouring", "n"))
@@ -554,12 +554,15 @@ jacobian_colouring_args <- function(node, real_type) {
   }
   col <- arg_of("colouring")
   nn <- arg_of("n")
-  res <- list(colouring = FALSE, n = NULL)
+  res <- list(colouring = "none", n = NULL)
   if (!is.null(col)) {
-    if (!inherits(col, "literal_node") || !(col$name %in% c("TRUE", "FALSE", "T", "F"))) {
-      return("jacobian: colouring has to be TRUE or FALSE")
+    mode <- if (inherits(col, "literal_node") && col$literal_type == "character") {
+      remove_double_quotes(col$name)
+    } else ""
+    if (!(mode %in% c("static", "runtime"))) {
+      return("jacobian: colouring has to be \"static\" or \"runtime\"")
     }
-    res$colouring <- col$name %in% c("TRUE", "T")
+    res$colouring <- mode
   }
   if (!is.null(nn)) {
     if (!inherits(nn, "literal_node") || !grepl("^[0-9]+L?$", nn$name) || lit_int(nn) < 1L) {
@@ -567,15 +570,134 @@ jacobian_colouring_args <- function(node, real_type) {
     }
     res$n <- lit_int(nn)
   }
-  if (res$colouring && is.null(res$n)) {
-    return("jacobian: colouring = TRUE needs the length of x as a literal, e.g. n = 100L")
+  if (res$colouring == "static" && is.null(res$n)) {
+    return("jacobian: colouring = \"static\" needs the length of x as a literal, e.g. n = 100L")
   }
-  if (!res$colouring && !is.null(res$n)) return("jacobian: n is only used with colouring = TRUE")
-  if (res$colouring && real_type != "etr::Dual") {
-    return("jacobian: colouring = TRUE requires translate(derivative = \"forward\")")
+  if (res$colouring != "static" && !is.null(res$n)) {
+    return("jacobian: n is only used with colouring = \"static\"")
+  }
+  if (res$colouring != "none" && real_type != "etr::Dual") {
+    return(sprintf("jacobian: colouring = \"%s\" requires translate(derivative = \"forward\")", res$colouring))
+  }
+  if (res$colouring == "runtime") {
+    err <- check_runtime_colouring(node$args[[1L]], vars_list)
+    if (!is.null(err)) return(err)
   }
   if (any(nzchar(nms))) node$args <- node$args[!nzchar(nms)]
   res
+}
+
+# --- jacobian(f, x, colouring = "runtime") ---------------------------------
+# The tape pass needs f and every fn it calls in ReverseDouble. All inner fns
+# g get a copy g_COLOURED (fn names inside renamed), translated with
+# ReverseDouble (action_transpile_inner_functions).
+
+coloured_name <- function(name) paste0(as.character(name), "_COLOURED")
+
+check_runtime_colouring <- function(f_arg, vars_list) {
+  if (!inherits(f_arg, "variable_node")) {
+    return("jacobian: colouring = \"runtime\" needs f as a named fn (f <- fn(...)), not an inline fn")
+  }
+  if (!inherits(vars_list[[coloured_name(f_arg$name)]], "fn_node")) {
+    return("jacobian: colouring = \"runtime\" needs f to be defined in the same function as the jacobian call")
+  }
+  NULL
+}
+
+is_fn_def <- function(e) {
+  is.call(e) && is.name(e[[1L]]) && as.character(e[[1L]]) %in% c("<-", "=") &&
+    is.name(e[[2L]]) && is.call(e[[3L]]) && is.name(e[[3L]][[1L]]) &&
+    as.character(e[[3L]][[1L]]) %in% c("fn", "function")
+}
+
+# indices of the args of a call, without empty ones (x[, 1])
+arg_idx <- function(e) {
+  idx <- seq_along(e)[-1L]
+  idx[!vapply(idx, function(i) identical(e[[i]], quote(expr = )), logical(1))]
+}
+
+has_runtime_jacobian <- function(e) {
+  if (!is.call(e)) return(FALSE)
+  nms <- names(e)
+  if (is.name(e[[1L]]) && identical(as.character(e[[1L]]), "jacobian") &&
+      "colouring" %in% nms && identical(e[[which(nms == "colouring")[[1L]]]], "runtime")) {
+    return(TRUE)
+  }
+  for (i in arg_idx(e)) if (has_runtime_jacobian(e[[i]])) return(TRUE)
+  FALSE
+}
+
+collect_fn_names <- function(e) {
+  if (!is.call(e)) return(character())
+  own <- if (is_fn_def(e)) as.character(e[[2L]]) else character()
+  c(own, unlist(lapply(arg_idx(e), function(i) collect_fn_names(e[[i]]))))
+}
+
+rename_fns <- function(e, fns) {
+  if (is.name(e)) {
+    nm <- as.character(e)
+    return(if (nm %in% fns) as.name(coloured_name(nm)) else e)
+  }
+  if (is.pairlist(e) && !is.null(e)) {
+    # formals of function(...): a fn may be passed in under its own name
+    nms <- names(e)
+    names(e) <- ifelse(nms %in% fns, coloured_name(nms), nms)
+    return(e)
+  }
+  if (!is.call(e)) return(e)
+  head <- e[[1L]]
+  if (is.name(head) && as.character(head) %in% c("$", "@")) {
+    e[[2L]] <- rename_fns(e[[2L]], fns)
+    return(e)
+  }
+  if (is.name(head) && identical(as.character(head), "argtypes") && !is.null(names(e))) {
+    nms <- names(e)
+    names(e) <- ifelse(nms %in% fns, coloured_name(nms), nms)
+  }
+  for (i in c(1L, arg_idx(e))) {
+    if (!is.null(e[[i]])) e[[i]] <- rename_fns(e[[i]], fns)
+  }
+  e
+}
+
+# NOTE: the copy is made from the unprocessed definition; copying after the
+# recursion would copy the nested copies again (h_COLOURED_COLOURED)
+add_copies <- function(e, fns) {
+  if (!is.call(e)) return(e)
+  if (is.name(e[[1L]]) && identical(as.character(e[[1L]]), "{")) {
+    out <- list()
+    for (s in as.list(e)[-1L]) {
+      if (is_fn_def(s)) {
+        out <- c(out, list(add_copies(s, fns), rename_fns(s, fns)))
+      } else {
+        out <- c(out, list(add_copies(s, fns)))
+      }
+    }
+    return(as.call(c(as.name("{"), out)))
+  }
+  for (i in arg_idx(e)) {
+    if (!is.null(e[[i]])) e[[i]] <- add_copies(e[[i]], fns)
+  }
+  e
+}
+
+add_coloured_copies <- function(b) {
+  if (!has_runtime_jacobian(b)) return(b)
+  if (any(endsWith(all.names(b), "_COLOURED"))) {
+    stop("names ending in _COLOURED are reserved for jacobian(..., colouring = \"runtime\")")
+  }
+  fns <- unique(collect_fn_names(b))
+  if (length(fns) == 0L) return(b)
+  add_copies(b, fns)
+}
+
+# errors in a _COLOURED copy: name the user's fn and why the copy exists
+coloured_error_message <- function(msg) {
+  if (!grepl("_COLOURED", msg, fixed = TRUE)) return(msg)
+  paste0(
+    "jacobian(..., colouring = \"runtime\") needs every inner fn in reverse mode: ",
+    gsub("_COLOURED", "", msg, fixed = TRUE)
+  )
 }
 
 # literal that stringifies to fixed C++ (the colouring data)

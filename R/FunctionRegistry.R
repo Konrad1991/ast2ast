@@ -2184,21 +2184,23 @@ function_registry_global$add(
 function_registry_global$add(
   name = "jacobian", num_args = c(2, 3, 4, 5), arg_names = c(NA, NA, NA),
   docu = paste0(
-    "jacobian(f, x[, data][, colouring = TRUE, n = <integer literal>])\n",
+    "jacobian(f, x[, data][, colouring = \"static\", n = <integer literal> | colouring = \"runtime\"])\n",
     "f: fn() taking a double vector (and optionally a second argument) and ",
     "returning a double vector; x: double vector.\n",
     "data is optional (any non-function, non-character value) and is passed to f ",
     "unchanged -- when given, f takes a second argument of that type.\n",
     "Returns the m-by-n Jacobian (m = length of f's result, n = length(x)).\n",
-    "colouring = TRUE (forward mode): sparsity pattern of f worked out at translation ",
+    "colouring = \"static\" (forward mode): sparsity pattern of f worked out at translation ",
     "for length(x) == n, one sweep per colour instead of per column.\n",
+    "colouring = \"runtime\" (forward mode): pattern recorded at every call from one ",
+    "reverse-mode run of f; f has to be a named fn.\n",
     "Requires translate(derivative = \"forward\") or \"reverse\"."
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     if (info_env$real_type == "etr::Double") {
       return("jacobian requires translate(derivative = \"forward\") or \"reverse\"")
     }
-    opts <- jacobian_colouring_args(node, info_env$real_type)
+    opts <- jacobian_colouring_args(node, info_env$real_type, vars_list)
     if (is.character(opts)) return(opts)
     coloured <- vapply(node$args, inherits, logical(1), "cpp_code_node")
     pos_args <- node$args[!coloured]
@@ -2250,16 +2252,22 @@ function_registry_global$add(
         ret$get_data_struct() != "vector") {
       return("the function passed to jacobian has to return a double vector")
     }
-    if (opts$colouring && !any(coloured)) {
+    if (opts$colouring == "static" && !any(coloured)) {
       col <- colouring_of_fn(f, opts$n, function_registry)
       if (is.character(col)) {
         warning(sprintf("jacobian: colouring not used (%s); one sweep per column instead", col),
           call. = FALSE)
       } else {
         node$args[[length(node$args) + 1L]] <- cpp_code_node$new(
-          colouring_cpp(col, opts$n), sprintf("colouring = TRUE, n = %dL", opts$n)
+          colouring_cpp(col, opts$n), sprintf("colouring = \"static\", n = %dL", opts$n)
         )
       }
+    }
+    if (opts$colouring == "runtime" && !any(coloured)) {
+      node$args[[length(node$args) + 1L]] <- cpp_code_node$new(
+        sprintf("etr::runtime_colouring(%s)", coloured_name(pos_args[[1L]]$name)),
+        "colouring = \"runtime\""
+      )
     }
     t <- make_inferred_type("matrix", "double", info_env$r_fct, info_env$real_type)
     node$internal_type <- t

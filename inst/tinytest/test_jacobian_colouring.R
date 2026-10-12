@@ -35,7 +35,7 @@ expect_equal(pattern(f, 2L), list(2L, 1:2))
 # Skipped on CRAN: forward AD compiles are expensive.
 if (!at_home()) exit_file("slow: AD compiles; runs at home / CI only")
 
-# jacobian(f, x, colouring = TRUE, n = <literal>): sparsity pattern and column
+# jacobian(f, x, colouring = "static", n = <literal>): sparsity pattern and column
 # colouring of f worked out at translation for length(x) == n; one forward
 # sweep per colour. Results must equal the plain jacobian.
 
@@ -65,11 +65,11 @@ f <- function(test, x, s) {
     return(vec(double)),
     { return(c(k * y[[1L]], k * y[[2L]] * y[[3L]], y[[3L]])) }
   )
-  if (test == 1L) return(jacobian(diffusion, x, colouring = TRUE, n = 8L))
+  if (test == 1L) return(jacobian(diffusion, x, colouring = "static", n = 8L))
   if (test == 2L) return(jacobian(diffusion, x))
-  if (test == 3L) return(jacobian(small, x, colouring = TRUE, n = 4L))
+  if (test == 3L) return(jacobian(small, x, colouring = "static", n = 4L))
   if (test == 4L) return(jacobian(small, x))
-  if (test == 5L) return(jacobian(scaled, x, s, colouring = TRUE, n = 3L))
+  if (test == 5L) return(jacobian(scaled, x, s, colouring = "static", n = 3L))
   return(jacobian(scaled, x, s))
 }
 
@@ -103,7 +103,7 @@ g <- function(x) {
       return(out)
     }
   )
-  return(jacobian(h, x, colouring = TRUE, n = 3L))
+  return(jacobian(h, x, colouring = "static", n = 3L))
 }
 expect_warning(gcpp <- ast2ast::translate(g, derivative = "forward"), "colouring not used")
 expect_equal(gcpp(c(1, 2, 3)), diag(2 * c(1, 2, 3)) + outer(rep(1, 3), c(1, 0, 0)))
@@ -113,6 +113,117 @@ expect_error(ast2ast::translate(g, derivative = "reverse"), "derivative = \"forw
 g2 <- function(x) {
   argtypes(x |> type(vec(double)))
   h <- fn(argtypes(y |> type(vec(double))), return(vec(double)), { return(y) })
-  return(jacobian(h, x, colouring = TRUE))
+  return(jacobian(h, x, colouring = "static"))
 }
 expect_error(ast2ast::translate(g2, derivative = "forward"), "needs the length of x")
+
+# --- jacobian(f, x, colouring = "runtime") ---------------------------------
+# pattern from one reverse-mode run of the f_COLOURED copy; must equal the
+# plain jacobian
+r <- function(test, x, s) {
+  argtypes(test |> type(int), x |> type(vec(double)), s |> type(double))
+  lap <- fn(
+    argtypes(y |> type(vec(double))),
+    return(vec(double)),
+    {
+      n <- length(y)
+      out <- numeric(n)
+      out[[1L]] <- y[[2L]] - 2 * y[[1L]]
+      for (i in 2L:(n - 1L)) out[[i]] <- y[[i - 1L]] - 2 * y[[i]] + y[[i + 1L]]
+      out[[n]] <- y[[n - 1L]] - 2 * y[[n]]
+      return(out)
+    }
+  )
+  rhs <- fn(argtypes(
+    y |> type(vec(double))
+  ),
+    return(vec(double)), { return(lap(y) + y * y) })
+  fill <- fn(
+    argtypes(out |> type(vec(double)) |> ref(), y |> type(vec(double)) |> ref() |> const()),
+    return(void),
+    { for (i in seq_len(length(y))) out[[i]] <- exp(y[[i]]) }
+  )
+  via_ref <- fn(argtypes(y |> type(vec(double))), return(vec(double)), {
+    out <- numeric(length(y))
+    fill(out, y)
+    return(out)
+  })
+  branch <- fn(argtypes(y |> type(vec(double))), return(vec(double)), {
+    if (y[[1L]] > 0) return(c(y[[1L]] * y[[2L]], y[[3L]]))
+    return(c(y[[1L]], y[[2L]] * y[[3L]]))
+  })
+  nested <- fn(argtypes(y |> type(vec(double))), return(vec(double)), {
+    sq <- fn(argtypes(v |> type(double) |> const()), return(double), { return(v * v) })
+    return(c(sq(y[[1L]]), y[[2L]] + sq(y[[3L]])))
+  })
+  scaled <- fn(
+    argtypes(y |> type(vec(double)), k |> type(double) |> const() |> ref()),
+    return(vec(double)),
+    { return(c(k * y[[1L]], k * y[[2L]] * y[[3L]], y[[3L]])) }
+  )
+  if (test == 1L) return(jacobian(rhs, x, colouring = "runtime"))
+  if (test == 2L) return(jacobian(rhs, x))
+  if (test == 3L) return(jacobian(via_ref, x, colouring = "runtime"))
+  if (test == 4L) return(jacobian(via_ref, x))
+  if (test == 5L) return(jacobian(branch, x, colouring = "runtime"))
+  if (test == 6L) return(jacobian(branch, x))
+  if (test == 7L) return(jacobian(nested, x, colouring = "runtime"))
+  if (test == 8L) return(jacobian(nested, x))
+  if (test == 9L) return(jacobian(scaled, x, s, colouring = "runtime"))
+  return(jacobian(scaled, x, s))
+}
+code <- ast2ast::translate(r, derivative = "forward", getsource = TRUE)
+expect_true(grepl("etr::runtime_colouring(rhs_COLOURED)", code, fixed = TRUE))
+expect_true(grepl("etr::ReverseDouble", code, fixed = TRUE))
+
+rcpp <- ast2ast::translate(r, derivative = "forward")
+x8 <- seq(0.1, 0.8, length.out = 8)
+expect_equal(rcpp(1L, x8, 0), rcpp(2L, x8, 0))
+expect_equal(rcpp(3L, x8, 0), rcpp(4L, x8, 0))
+# if on x: pattern per branch
+x3p <- c(0.3, 0.7, 1.1)
+x3n <- c(-0.3, 0.7, 1.1)
+expect_equal(rcpp(5L, x3p, 0), rcpp(6L, x3p, 0))
+expect_equal(rcpp(5L, x3n, 0), rcpp(6L, x3n, 0))
+expect_equal(rcpp(7L, x3p, 0), rcpp(8L, x3p, 0))
+expect_equal(rcpp(9L, x3p, 2.5), rcpp(10L, x3p, 2.5))
+
+# argument checks
+r2 <- function(x) {
+  argtypes(x |> type(vec(double)))
+  h <- fn(argtypes(y |> type(vec(double))), return(vec(double)), { return(y) })
+  return(jacobian(h, x, colouring = "runtime", n = 3L))
+}
+expect_error(ast2ast::translate(r2, derivative = "forward"), "n is only used")
+r3 <- function(x) {
+  argtypes(x |> type(vec(double)))
+  return(jacobian(
+    fn(
+      argtypes(
+        y |> type(vec(double))
+      ),
+      return(vec(double)),
+      { return(y) }
+    ),
+    x, colouring = "runtime")
+  )
+}
+expect_error(ast2ast::translate(r3, derivative = "forward"), "named fn")
+r4 <- function(x) {
+  argtypes(x |> type(vec(double)))
+  h_COLOURED <- fn(argtypes(y |> type(vec(double))), return(vec(double)), { return(y) })
+  return(jacobian(h_COLOURED, x, colouring = "runtime"))
+}
+expect_error(ast2ast::translate(r4, derivative = "forward"), "reserved")
+r6 <- function(x) {
+  argtypes(x |> type(vec(double)))
+  h <- fn(argtypes(y |> type(vec(double))), return(vec(double)), { return(y) })
+  return(jacobian(h, x, colouring = "runtime"))
+}
+expect_error(ast2ast::translate(r6, derivative = "reverse"), "derivative = \"forward\"")
+r5 <- function(x) {
+  argtypes(x |> type(vec(double)))
+  h <- fn(argtypes(y |> type(vec(double))), return(vec(double)), { return(y) })
+  return(jacobian(h, x, colouring = "dynamic"))
+}
+expect_error(ast2ast::translate(r5, derivative = "forward"), "\"static\" or \"runtime\"")

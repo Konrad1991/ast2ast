@@ -89,6 +89,10 @@ test_assign_array_to_scalar <- function() {
     invisible(.Call(`_ast2ast_test_assign_array_to_scalar`))
 }
 
+test_coloured_jacobian <- function() {
+    invisible(.Call(`_ast2ast_test_coloured_jacobian`))
+}
+
 test_crossprod <- function() {
     invisible(.Call(`_ast2ast_test_crossprod`))
 }

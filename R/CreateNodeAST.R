@@ -344,7 +344,10 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct, real_type, f
 # ========================================================================
 translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry, debug = TRUE, var_list) {
   code_string <- NULL
-  traverse_ast(ast, action_transpile_inner_functions, real_type, debug, var_list)
+  tryCatch(
+    traverse_ast(ast, action_transpile_inner_functions, real_type, debug, var_list),
+    error = function(e) stop(coloured_error_message(conditionMessage(e)), call. = FALSE)
+  )
   traverse_ast(ast, action_snapshot_lines, debug)
   traverse_ast(ast, action_set_true, r_fct, real_type)
   traverse_ast(ast, action_translate, function_registry, real_type)
@@ -559,7 +562,7 @@ translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, de
   if (any(is_ret)) {
     stop("returntype(...) must directly follow argtypes(...) as the first statement of the function body")
   }
-  b <- as.call(c(as.name("{"), stmts))
+  b <- as.call(c(as.name("{"), stmts)) |> add_coloured_copies()
 
   known_types <- make_known_types(types_fct, r_fct, real_type)
 

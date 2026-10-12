@@ -13,6 +13,11 @@ changes in ast2ast version 1.1
   `pso` can also be called inside `pmap`.
 - Faster subsetting and subset assignment; common subsetting patterns now
   run faster than in base R.
+- `jacobian` takes an optional `colouring` argument (forward mode): columns
+  that share no row are computed in one sweep. `colouring = "static", n = <literal>`
+  derives the sparsity pattern at translation time;
+  `colouring = "runtime"` records it at every call from one reverse-mode run
+  of `f`.
 - RcppThread is a new dependency (Imports and LinkingTo).
 - Borrowed arguments (`borrow_vec`, `borrow_mat`, `borrow_array`) can now be
   combined with forward-mode differentiation for inner functions and for

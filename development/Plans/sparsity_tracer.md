@@ -1,6 +1,20 @@
 # Runtime sparsity pattern for coloured jacobians
 
 Status: plan (2026-10-10), not started. Follows `coloured_forward_ad.md`.
+Decided (Konrad, 2026-10-10): B (reverse tape) + codegen option 1 (second copy
+of f and its callees for the pattern pass).
+Step 1 done (2026-10-10): `colouring_from_tape(x, f_rev)` and
+`jacobian_runtime_coloured(f, f_rev, x[, extra])` in Derivatives.hpp,
+`ReverseTape::rewind()`; C++ test `src/tests_coloured_jacobian.cpp`
+(helper with whole state n = 200: 3 colours; arrow: 2; if: exact per branch;
+matmul: conservative dense). Next: step 2 (R pre-pass, copies).
+Steps 2-3 done (2026-10-12), changed vs. below: API is
+`jacobian(f, x, colouring = "static", n = ...)` / `colouring = "runtime"`;
+greedy copies: every inner fn `g` -> `g_COLOURED` (ReverseDouble, by suffix)
+once a runtime jacobian exists (`add_coloured_copies`, R/Colouring.R); call
+emits `etr::runtime_colouring(f_COLOURED)` as last arg. Limits: copy that
+fails in reverse mode -> error (later: drop it); custom types (structs are
+emitted once with Dual) -> error.
 
 ## Why
 
@@ -73,6 +87,32 @@ current dense fallback + warning.
 
 B + option 1: no new scalar type, reuses tested reverse AD, smallest surface.
 A only if the tape walk turns out too slow for large `n`.
+
+## Implementation steps (B-1)
+
+Each step is self-contained and testable on its own.
+
+1. C++, no codegen: `pattern_from_tape(f_rev, x)`
+   - `x` as `ReverseDouble::Var`, record `f_rev(x)`
+   - per output: walk the tape back over the operands (`BlockOp`: all inputs
+     of the block), collect the reached `Var`s -> row of the pattern
+   - greedy colouring in C++ -> `etr::Colouring` -> existing sweeps
+   - test with hand-written C++ lambdas against plain `jacobian`
+2. R pre-pass: copies
+   - for `jacobian(f, x, colouring = TRUE)`: all inner fns `f` calls,
+     transitively
+   - a copy `name__pattern` of each, calls inside renamed to the copies
+     (R expression substitution on `fn$AST`); inline `fn(...)` the same way
+   - always emitted with `colouring = TRUE` (also with `n`): whether the
+     compile-time pattern resolves is only known after parsing; an unused
+     copy only costs compile time
+3. Translation
+   - a `fn_node` may carry its own `real_type` (`ReverseDouble`);
+     `action_transpile_inner_functions` uses it instead of the outer one
+     (already parametrised by `real_type`)
+   - the `jacobian` call gets the copy as an extra C++ argument
+4. Tests: helper fns, structs built from the state, `ref()` outputs, an
+   excerpt shaped like Jan's model; against plain `jacobian` and the harness
 
 ## Verify
 

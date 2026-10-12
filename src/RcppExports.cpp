@@ -210,6 +210,15 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_coloured_jacobian
+void test_coloured_jacobian();
+RcppExport SEXP _ast2ast_test_coloured_jacobian() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_coloured_jacobian();
+    return R_NilValue;
+END_RCPP
+}
 // test_crossprod
 void test_crossprod();
 RcppExport SEXP _ast2ast_test_crossprod() {
@@ -361,6 +370,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_uniroot_maxiter", (DL_FUNC) &_ast2ast_test_uniroot_maxiter, 0},
     {"_ast2ast_test_utilities", (DL_FUNC) &_ast2ast_test_utilities, 0},
     {"_ast2ast_test_assign_array_to_scalar", (DL_FUNC) &_ast2ast_test_assign_array_to_scalar, 0},
+    {"_ast2ast_test_coloured_jacobian", (DL_FUNC) &_ast2ast_test_coloured_jacobian, 0},
     {"_ast2ast_test_crossprod", (DL_FUNC) &_ast2ast_test_crossprod, 0},
     {"_ast2ast_test_diag", (DL_FUNC) &_ast2ast_test_diag, 0},
     {"_ast2ast_test_lbfgsb_quadratic_forward", (DL_FUNC) &_ast2ast_test_lbfgsb_quadratic_forward, 0},

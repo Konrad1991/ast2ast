@@ -74,6 +74,17 @@ struct ReverseTape {
     blocks.clear();
   }
 
+  // drops everything recorded after (size, nblocks); keeps capacity
+  inline void rewind(std::size_t size, std::size_t nblocks) {
+    op.resize(size);
+    a.resize(size);
+    b.resize(size);
+    val.resize(size);
+    adj.resize(size);
+    is_na.resize(size);
+    blocks.resize(nblocks);
+  }
+
   inline void reserve(std::size_t n) {
     op.reserve(n);
     a.reserve(n);

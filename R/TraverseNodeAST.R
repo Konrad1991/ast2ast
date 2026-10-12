@@ -127,6 +127,7 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, var_
   if (!inherits(node, "fn_node")) {
     return()
   }
+  if (endsWith(node$fct_name, "_COLOURED")) real_type <- "etr::ReverseDouble"
   outer_var_names <- names(var_list)
   r_fct <- FALSE # Inner functions
   code <- node$AST
@@ -199,6 +200,16 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, var_
     node$vars_types_list[[i]]$real_type <- real_type
   }
   node$return_type$real_type <- real_type
+  if (endsWith(node$fct_name, "_COLOURED")) {
+    # NOTE: structs are emitted once with the outer real_type (Dual)
+    uses_struct <- inherits(node$return_type, "new_type_node") ||
+      any(vapply(node$vars_types_list, inherits, logical(1), "new_type_node"))
+    if (uses_struct) {
+      stop(sprintf("In inner function %s: custom types (new_type) are not supported yet", node$fct_name))
+    }
+    # return type was parsed with the outer real_type
+    node$return_type$data_struct$real_type <- real_type
+  }
 
   if (!is.null(node$return_type$get_error())) {
     stop(sprintf("Wrong return type for function %s: %s", node$fct_name, node$return_type$get_error()))
