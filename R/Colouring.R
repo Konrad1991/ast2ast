@@ -600,10 +600,49 @@ runtime_colouring_fn <- function(f_arg, vars_list) {
 }
 
 check_runtime_colouring <- function(f_arg, vars_list) {
-  if (is.null(runtime_colouring_fn(f_arg, vars_list))) {
+  fn <- runtime_colouring_fn(f_arg, vars_list)
+  if (is.null(fn)) {
     return("jacobian: colouring = \"runtime\" needs f as a named fn (f <- fn(...)), not an inline fn")
   }
-  NULL
+  runtime_colouring_reverse_error(fn, vars_list)
+}
+
+# f is checked with Dual only, but also instantiated with ReverseDouble
+ad_only_fcts <- c("seed", "unseed", "get_dot", "deriv")
+borrow_fcts <- c("borrow_vec", "borrow_vector", "borrow_mat", "borrow_matrix", "borrow_array")
+
+# NOTE: R code, not nodes: inner fns are transpiled only after this check
+runtime_colouring_reverse_error <- function(fn, vars_list) {
+  visited <- character()
+  walk <- function(code) {
+    if (is.symbol(code)) {
+      name <- as.character(code)
+      used <- if (nzchar(name)) vars_list[[name]] else NULL
+      if (inherits(used, "fn_node") && !is.null(used$cpp_path)) return(visit(used))
+      return(NULL)
+    }
+    if (!is.call(code)) return(NULL)
+    head <- if (is.symbol(code[[1L]])) as.character(code[[1L]]) else ""
+    if (head %in% ad_only_fcts) {
+      return(sprintf("jacobian: colouring = \"runtime\" cannot be used when f (or a fn it uses) calls %s", head))
+    }
+    if (head %in% borrow_fcts) {
+      return("jacobian: colouring = \"runtime\" cannot be used when f (or a fn it uses) has borrow arguments")
+    }
+    for (el in as.list(code)) {
+      err <- walk(el)
+      if (!is.null(err)) return(err)
+    }
+    NULL
+  }
+  visit <- function(fn) {
+    if (fn$cpp_path %in% visited) return(NULL)
+    visited <<- c(visited, fn$cpp_path)
+    err <- walk(fn$args_f_raw)
+    if (!is.null(err)) return(err)
+    walk(fn$raw_body)
+  }
+  visit(fn)
 }
 
 runtime_colouring_cpp <- function(fn) {

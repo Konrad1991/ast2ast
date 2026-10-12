@@ -230,6 +230,65 @@ r6 <- function(x) {
   return(jacobian(h, x, colouring = "runtime"))
 }
 expect_error(ast2ast::translate(r6, derivative = "reverse"), "derivative = \"forward\"")
+# f is instantiated with ReverseDouble: forward-/reverse-only code is rejected
+r7 <- function(x) {
+  argtypes(x |> type(vec(double)))
+  h <- function(y) {
+    argtypes(y |> type(vec(double)))
+    returntype(vec(double))
+    seed(y, 1L)
+    return(y)
+  }
+  return(jacobian(h, x, colouring = "runtime"))
+}
+expect_error(ast2ast::translate(r7, derivative = "forward"), "calls seed")
+r8 <- function(x) {
+  argtypes(x |> type(vec(double)))
+  g <- function(y) {
+    argtypes(y |> type(vec(double)))
+    returntype(vec(double))
+    return(get_dot(y))
+  }
+  h <- function(y) {
+    argtypes(y |> type(vec(double)))
+    returntype(vec(double))
+    return(g(y))
+  }
+  return(jacobian(h, x, colouring = "runtime"))
+}
+expect_error(ast2ast::translate(r8, derivative = "forward"), "calls get_dot")
+r9 <- function(x) {
+  argtypes(x |> type(vec(double)))
+  h <- function(y) {
+    argtypes(y |> type(vec(double)))
+    returntype(vec(double))
+    inner <- function(v) {
+      argtypes(v |> type(borrow_vec(double)))
+      returntype(vec(double))
+      return(v)
+    }
+    return(inner(y))
+  }
+  return(jacobian(h, x, colouring = "runtime"))
+}
+expect_error(ast2ast::translate(r9, derivative = "forward"), "borrow arguments")
+# a fn not reachable from f may use them
+r10 <- function(x) {
+  argtypes(x |> type(vec(double)))
+  g <- function(y) {
+    argtypes(y |> type(vec(double)))
+    returntype(vec(double))
+    return(get_dot(y))
+  }
+  h <- function(y) {
+    argtypes(y |> type(vec(double)))
+    returntype(vec(double))
+    return(y * y)
+  }
+  print(g(x))
+  return(jacobian(h, x, colouring = "runtime"))
+}
+expect_true(is.character(ast2ast::translate(r10, derivative = "forward", getsource = TRUE)))
 # custom types: struct built from the state + struct as extra data
 # (Params<Dual> -> Params<ReverseDouble> via the converting ctor)
 types_f_state <- function() {

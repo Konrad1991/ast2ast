@@ -66,6 +66,7 @@ create_ast <- function(code, context, env, function_registry) {
     fn$args_f_raw <- args_call
     fn$return_type <- parse_return(return_call, FALSE, env$real_type, env$known_types)[[1]]
     fn$AST <- body_block |> wrap_in_block()
+    fn$raw_body <- body_block
     fn$context <- context
     # assigned fns get their real name at TypeInference (type$fct_name <- variable);
     # an inline fn (map/Reduce/Filter/uniroot arg) never does -- give it a label
@@ -94,6 +95,7 @@ create_ast <- function(code, context, env, function_registry) {
     fn$args_f_raw <- args_call
     fn$return_type <- parse_return(return_call, FALSE, env$real_type, env$known_types, TRUE)[[1]]
     fn$AST <- body |> wrap_in_block()
+    fn$raw_body <- body
     fn$context <- context
     # assigned fns get their real name at TypeInference (type$fct_name <- variable);
     # an inline fn (map/Reduce/Filter/uniroot arg) never does -- give it a label

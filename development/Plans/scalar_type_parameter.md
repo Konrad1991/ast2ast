@@ -145,7 +145,11 @@ logic, `coloured_from`, `coloured_error_message`.
    (struct as extra data). Extra data of any kind is converted inside the
    tape pass in `jacobian_runtime_coloured` (`SecondArgOf<FRev>` + `operator=`);
    `Collection` got a converting ctor between element types
-5. Reverse-mode check for runtime colouring (see open points)
+5. Reverse-mode check for runtime colouring (DONE 2026-10-12, untested):
+   f and every fn reachable from it must not use seed/unseed/get_dot/deriv
+   or borrow args (`runtime_colouring_reverse_error`, Colouring.R). Walks
+   the R code (`fn_node$raw_body`); fns defined inside f are checked even if
+   unused
 
 ## Open points
 

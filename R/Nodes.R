@@ -907,6 +907,8 @@ fn_node <- R6::R6Class(
     return_type = NULL,
     AST = NULL,
     parsed_AST = NULL,
+    # R body; AST becomes the node tree once transpiled
+    raw_body = NULL,
 
     real_type = NULL,
     vars_types_list = NULL,
