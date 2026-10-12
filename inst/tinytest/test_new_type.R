@@ -244,7 +244,8 @@ fcpp_src <- ast2ast::translate(
   output = "XPtr",
   getsource = TRUE
 )
-expect_true(grepl("const Point&", fcpp_src, fixed = TRUE))
+expect_true(grepl("const Point<ETR_REAL>&", fcpp_src, fixed = TRUE))
+expect_true(grepl("template<typename ETR_REAL>\nstruct Point", fcpp_src, fixed = TRUE))
 
 # a const Point argument rejects field mutation
 # (check_fct-level validation, which only runs in the full translate()
@@ -994,7 +995,7 @@ fcpp_src <- ast2ast::translate(
   output = "XPtr",
   getsource = TRUE
 )
-expect_true(grepl("const etr::Collection<Circle>&", fcpp_src, fixed = TRUE))
+expect_true(grepl("const etr::Collection<Circle<ETR_REAL>>&", fcpp_src, fixed = TRUE))
 
 # --- 17. is_data_structs() through struct-field access ("$") --------------------
 # nrow/ncol/dim/chol/crossprod/tcrossprod/get_diag/t/length/subsetting all

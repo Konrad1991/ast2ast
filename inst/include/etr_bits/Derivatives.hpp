@@ -400,9 +400,24 @@ inline auto jacobian_runtime_coloured(const F& f, const FRev& f_rev, const X& x)
   return jacobian_coloured_impl(x, c, [&f](const auto& xv) { return f(xv); });
 }
 
+// second parameter type of f_rev's operator(), without const/&
+template <typename F> struct SecondArgOf : SecondArgOf<decltype(&F::operator())> {};
+template <typename C, typename R, typename A1, typename A2> struct SecondArgOf<R (C::*)(A1, A2) const> {
+  using type = std::decay_t<A2>;
+};
+template <typename C, typename R, typename A1, typename A2> struct SecondArgOf<R (C::*)(A1, A2)> {
+  using type = std::decay_t<A2>;
+};
+
 template<typename F, typename FRev, typename X, typename E> requires (IsArray<Decayed<X>>)
 inline auto jacobian_runtime_coloured(const F& f, const FRev& f_rev, const X& x, const E& extra) {
-  const Colouring c = colouring_from_tape(x, [&f_rev, &extra](const auto& xv) { return f_rev(xv, extra); });
+  // NOTE: extra is converted (Dual -> ReverseDouble: scalar, array, struct,
+  // collection) inside the tape pass: its constants are rewound with the rest
+  const Colouring c = colouring_from_tape(x, [&f_rev, &extra](const auto& xv) {
+    typename SecondArgOf<FRev>::type extra_rev;
+    extra_rev = extra;
+    return f_rev(xv, extra_rev);
+  });
   return jacobian_coloured_impl(x, c, [&f, &extra](const auto& xv) { return f(xv, extra); });
 }
 

@@ -277,6 +277,12 @@ inline uniroot_result uniroot(const std::function<Double(Double, T)>& f, const B
   return res;
 }
 
+// translated fns are functors: forward as the matching std::function
+template<typename F, typename... Rest> requires (!IsStdFunction<F>)
+inline uniroot_result uniroot(const F& f, const Rest&... rest) {
+  return uniroot(as_std_function(f), rest...);
+}
+
 } // namespace etr
 
 #endif

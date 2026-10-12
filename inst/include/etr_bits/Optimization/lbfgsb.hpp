@@ -212,6 +212,12 @@ inline lbfgsb_result lbfgsb(const std::function<S(A, D)>& loss,
   return lbfgsb(wrapped, x0, lower, upper, maxit, factr, pgtol, lmm);
 }
 
+// translated fns are functors: S/A are deduced from the matching std::function
+template<typename F, typename... Rest> requires (!IsStdFunction<F>)
+inline lbfgsb_result lbfgsb(const F& loss, const Rest&... rest) {
+  return lbfgsb(as_std_function(loss), rest...);
+}
+
 } // namespace etr
 
 #endif // !STANDALONE_ETR

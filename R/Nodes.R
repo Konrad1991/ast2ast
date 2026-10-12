@@ -8,10 +8,13 @@ variable_node <- R6::R6Class(
     initialized = FALSE,
     field_name = FALSE,
     pre_translate_line = NULL,
+    # a named fn used as value (map(g, x)): its functor object
+    cpp_override = NULL,
     initialize = function(obj) {
       self$name <- obj
     },
     stringify = function(indent = "") {
+      if (!is.null(self$cpp_override)) return(paste0(indent, self$cpp_override))
       return(paste0(indent, self$name))
     },
     stringify_condition = function(indent = "") {
@@ -649,6 +652,11 @@ block_node <- R6::R6Class(
     stringify = function(indent = "") {
       result <- list()
       for (stmt in self$block) {
+        # g <- fn(...): emitted as functor at namespace level (define_functors)
+        if (inherits(stmt, "binary_node") && stmt$operator %in% c("<-", "=") &&
+            inherits(stmt$right_node, "fn_node")) {
+          next
+        }
         end <- ";"
         s <- stmt$stringify(indent = indent)
         if (inherits(stmt, c("repeat_node", "fn_node"))) {
@@ -891,6 +899,8 @@ fn_node <- R6::R6Class(
     context = NULL,
 
     fct_name = NULL,
+    # named fn: C++ path of its functor, e.g. f_impl::g_t (NULL for inline fns)
+    cpp_path = NULL,
     known_fcts = NULL,
     args_f = NULL,
     args_f_raw = NULL,
@@ -914,64 +924,64 @@ fn_node <- R6::R6Class(
     signature = function(indent = "") {
       ""
     },
+    # named fns are hoisted functors (define_functors), no local variable
     declare = function(indent = "") {
-      self$stringify_declaration(indent = indent, r_fct = FALSE)
+      ""
     },
-    stringify_declaration = function(indent = "", r_fct) {
+
+    # args, return type, local declarations and body, shared by the lambda
+    # (inline fn) and the functor (named fn)
+    parts = function(indent = "") {
+      args <- ""
       if (length(self$vars_types_list) >= 1L) {
         args <- lapply(self$vars_types_list, \(x) x$signature()) |> unlist() |> c()
         args <- args[args != ""]
-        args <- paste0(args, collapse = ", ")
-      } else {
-        args <- ""
       }
-      ret_type <- if (inherits(self$return_type, "new_type_node")) {
-        self$return_type$stringify("")
-      } else {
-        self$return_type$data_struct$stringify("")
-      }
-      paste0(indent, sprintf("std::function<%s(%s)>%s;\n", ret_type, args, self$fct_name))
-    },
-
-    stringify = function(indent = "") {
-      name <- self$fct_name
-      indent0 <- indent
-
-      if (length(self$vars_types_list) >= 1L) {
-        args <- lapply(self$vars_types_list, \(x) x$signature()) |> unlist() |> c()
-        args <- args[args != ""]
-      } else {
-        args <- ""
-      }
-      declarations <- lapply(names(self$vars_types_list), \(nm) {
-        if (nm %in% self$known_fcts) return("") # captured via [&], not a local
-        res <- self$vars_types_list[[nm]]$declare(indent = "")
+      declarations <- lapply(self$vars_types_list, \(x) {
+        res <- x$declare(indent = "")
+        if (res == "") return("")
         paste0(indent, "     ", res)
       }) |> unlist() |> c()
       declarations <- declarations[declarations != ""]
-      declarations <- paste0(declarations, collapse = "\n")
-
       ret_type <- if (inherits(self$return_type, "new_type_node")) {
         self$return_type$stringify("")
       } else {
         self$return_type$data_struct$stringify("")
       }
-
       body <- ""
       if (inherits(self$AST, "block_node")) {
         body <- self$AST$stringify(indent = paste0(indent, "    "))
       }
-      body <- paste0(body, collapse = "")
-      args <- paste0(args, collapse = ", ")
+      list(
+        args = paste0(args, collapse = ", "),
+        declarations = paste0(declarations, collapse = "\n"),
+        ret_type = ret_type,
+        body = paste0(body, collapse = "")
+      )
+    },
 
-      bracket_args <- paste0("&", self$known_fcts, collapse = ", ")
-      if (bracket_args == "&") bracket_args <- ""
-
+    # inline fn (map(fn(...), x)): lambda; it only uses other fns, which are
+    # functors -> nothing to capture by name
+    stringify = function(indent = "") {
+      p <- self$parts(indent)
       paste0(
-        paste0("[", bracket_args, "]( ", args, " ) -> ", ret_type, " {\n"),
-        indent, declarations, "\n",
-        body, "\n",
-        paste0(indent, "  }")
+        "[&]( ", p$args, " ) -> ", p$ret_type, " {\n",
+        indent, p$declarations, "\n",
+        p$body, "\n",
+        indent, "  }"
+      )
+    },
+
+    define_functor = function() {
+      p <- self$parts("")
+      paste0(
+        "template<typename ", SCALAR_CPP, ">\n",
+        "struct ", sub("^.*::", "", self$cpp_path), " {\n",
+        "  ", p$ret_type, " operator()( ", p$args, " ) const {\n",
+        p$declarations, "\n",
+        p$body, "\n",
+        "  }\n",
+        "};"
       )
     },
 
@@ -1422,8 +1432,6 @@ new_type_node <- R6::R6Class(
     # codegen'd into the translated .cpp's own anonymous namespace --
     # references to the type name need the etr:: qualifier.
     part_of_etr = FALSE,
-    # T_COLOURED (ReverseDouble copy for jacobian colouring = "runtime"): name of T
-    coloured_from = NULL,
     initialize = function(name) {
       self$name <- name
     },
@@ -1449,7 +1457,7 @@ new_type_node <- R6::R6Class(
           }
           res
         } else if (inherits(s, "new_type_node")) {
-          sprintf("%s(%s)", s$name, elt)
+          sprintf("%s(%s)", s$stringify(), elt)
         } else {
           # Handle error
         }
@@ -1498,21 +1506,17 @@ new_type_node <- R6::R6Class(
         "\t", n, "& operator=(", n, "&&) noexcept = default;\n"
       )
     },
-    # T_COLOURED never crosses the R boundary; it is only built from T
-    # (extra data passed to jacobian), implicit for the std::function call
-    create_constructor_coloured = function() {
+    # T<Dual> -> T<ReverseDouble>: a struct passed as extra data to
+    # jacobian(colouring = "runtime"); implicit, slots assigned one by one
+    create_constructor_converting = function() {
       fields <- vapply(self$slots, function(s) s$get_name(), character(1L))
-      sprintf("\t%s(const %s& o) { %s }\n", self$name, self$coloured_from,
+      sprintf("\ttemplate<typename %s_OTHER>\n\t%s(const %s<%s_OTHER>& o) { %s }\n",
+        SCALAR_CPP, self$name, self$name, SCALAR_CPP,
         paste0(fields, " = o.", fields, ";", collapse = " "))
     },
     define_type = function() {
-      if (is.null(self$coloured_from)) {
-        ctr <- self$create_constructor_SEXP()
-        cast <- self$create_cast_to_SEXP()
-      } else {
-        ctr <- self$create_constructor_coloured()
-        cast <- ""
-      }
+      ctr <- paste0(self$create_constructor_SEXP(), self$create_constructor_converting())
+      cast <- self$create_cast_to_SEXP()
       special <- self$create_special_member_functions()
       ts <- lapply(self$slots, function(s) {
         if (inherits(s, "new_type_node")) {
@@ -1522,7 +1526,7 @@ new_type_node <- R6::R6Class(
         }
       })
       paste0(
-        "struct ", self$name, "{\n",
+        "template<typename ", SCALAR_CPP, ">\nstruct ", self$name, "{\n",
         paste0(ts, collapse = "\n"),
         "\n",
         ctr,
@@ -1548,8 +1552,8 @@ new_type_node <- R6::R6Class(
         }
       }, character(1L))
       paste0(
-        "inline void print(const ", self$name, "& x) {\n",
-        "\tPRINT_STREAM << \"", if (is.null(self$coloured_from)) self$name else self$coloured_from, "\" << std::endl;\n",
+        "template<typename ", SCALAR_CPP, ">\ninline void print(const ", self$stringify(), "& x) {\n",
+        "\tPRINT_STREAM << \"", self$name, "\" << std::endl;\n",
         paste0(lines, collapse = "\n"), "\n",
         "}"
       )
@@ -1558,7 +1562,7 @@ new_type_node <- R6::R6Class(
       if (isTRUE(self$part_of_etr)) {
         return(paste0("etr::", self$name))
       }
-      self$name
+      paste0(self$name, "<", SCALAR_CPP, ">")
     },
     cast_fct = function() {
       self$stringify()
@@ -1648,6 +1652,9 @@ collection <- R6::R6Class(
       basic <- is_base_type(self$type)
       if (basic) {
         stop("collections cannot contain basic types")
+      }
+      if (inherits(self$element_type, "new_type_node")) {
+        return(sprintf("etr::Collection<%s>", self$element_type$stringify()))
       }
       sprintf("etr::Collection<%s>", self$type)
     },

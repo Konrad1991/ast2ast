@@ -588,146 +588,26 @@ jacobian_colouring_args <- function(node, real_type, vars_list) {
 }
 
 # --- jacobian(f, x, colouring = "runtime") ---------------------------------
-# The tape pass needs f and every fn it calls in ReverseDouble. All inner fns
-# g get a copy g_COLOURED (fn names inside renamed), translated with
-# ReverseDouble (action_transpile_inner_functions).
+# f is a functor (development/Plans/scalar_type_parameter.md): the tape pass
+# instantiates it with ReverseDouble, the sweeps with ETR_REAL.
 
-coloured_name <- function(name) paste0(as.character(name), "_COLOURED")
+runtime_colouring_fn <- function(f_arg, vars_list) {
+  if (!inherits(f_arg, "variable_node")) return(NULL)
+  name <- if (is.symbol(f_arg$name)) deparse(f_arg$name) else f_arg$name
+  fn <- vars_list[[name]]
+  if (!inherits(fn, "fn_node") || is.null(fn$cpp_path)) return(NULL)
+  fn
+}
 
 check_runtime_colouring <- function(f_arg, vars_list) {
-  if (!inherits(f_arg, "variable_node")) {
+  if (is.null(runtime_colouring_fn(f_arg, vars_list))) {
     return("jacobian: colouring = \"runtime\" needs f as a named fn (f <- fn(...)), not an inline fn")
-  }
-  if (!inherits(vars_list[[coloured_name(f_arg$name)]], "fn_node")) {
-    return("jacobian: colouring = \"runtime\" needs f to be defined in the same function as the jacobian call")
   }
   NULL
 }
 
-is_fn_def <- function(e) {
-  is.call(e) && is.name(e[[1L]]) && as.character(e[[1L]]) %in% c("<-", "=") &&
-    is.name(e[[2L]]) && is.call(e[[3L]]) && is.name(e[[3L]][[1L]]) &&
-    as.character(e[[3L]][[1L]]) %in% c("fn", "function")
-}
-
-# indices of the args of a call, without empty ones (x[, 1])
-arg_idx <- function(e) {
-  idx <- seq_along(e)[-1L]
-  idx[!vapply(idx, function(i) identical(e[[i]], quote(expr = )), logical(1))]
-}
-
-has_runtime_jacobian <- function(e) {
-  if (!is.call(e)) return(FALSE)
-  nms <- names(e)
-  if (is.name(e[[1L]]) && identical(as.character(e[[1L]]), "jacobian") &&
-      "colouring" %in% nms && identical(e[[which(nms == "colouring")[[1L]]]], "runtime")) {
-    return(TRUE)
-  }
-  for (i in arg_idx(e)) if (has_runtime_jacobian(e[[i]])) return(TRUE)
-  FALSE
-}
-
-collect_fn_names <- function(e) {
-  if (!is.call(e)) return(character())
-  own <- if (is_fn_def(e)) as.character(e[[2L]]) else character()
-  c(own, unlist(lapply(arg_idx(e), function(i) collect_fn_names(e[[i]]))))
-}
-
-rename_fns <- function(e, fns) {
-  if (is.name(e)) {
-    nm <- as.character(e)
-    return(if (nm %in% fns) as.name(coloured_name(nm)) else e)
-  }
-  if (is.pairlist(e) && !is.null(e)) {
-    # formals of function(...): a fn may be passed in under its own name
-    nms <- names(e)
-    names(e) <- ifelse(nms %in% fns, coloured_name(nms), nms)
-    return(e)
-  }
-  if (!is.call(e)) return(e)
-  head <- e[[1L]]
-  if (is.name(head) && as.character(head) %in% c("$", "@")) {
-    e[[2L]] <- rename_fns(e[[2L]], fns)
-    return(e)
-  }
-  if (is.name(head) && identical(as.character(head), "argtypes") && !is.null(names(e))) {
-    nms <- names(e)
-    names(e) <- ifelse(nms %in% fns, coloured_name(nms), nms)
-  }
-  # collection of structs: vector(mode = "T", n), the type is a string
-  if (is.name(head) && identical(as.character(head), "vector")) {
-    for (i in arg_idx(e)) {
-      if (is.character(e[[i]]) && e[[i]] %in% fns) e[[i]] <- coloured_name(e[[i]])
-    }
-  }
-  for (i in c(1L, arg_idx(e))) {
-    if (!is.null(e[[i]])) e[[i]] <- rename_fns(e[[i]], fns)
-  }
-  e
-}
-
-# NOTE: the copy is made from the unprocessed definition; copying after the
-# recursion would copy the nested copies again (h_COLOURED_COLOURED)
-add_copies <- function(e, fns) {
-  if (!is.call(e)) return(e)
-  if (is.name(e[[1L]]) && identical(as.character(e[[1L]]), "{")) {
-    out <- list()
-    for (s in as.list(e)[-1L]) {
-      if (is_fn_def(s)) {
-        out <- c(out, list(add_copies(s, fns), rename_fns(s, fns)))
-      } else {
-        out <- c(out, list(add_copies(s, fns)))
-      }
-    }
-    return(as.call(c(as.name("{"), out)))
-  }
-  for (i in arg_idx(e)) {
-    if (!is.null(e[[i]])) e[[i]] <- add_copies(e[[i]], fns)
-  }
-  e
-}
-
-user_type_names <- function(types_fct) {
-  if (is.null(types_fct)) return(character())
-  stmts <- as.list(wrap_in_block(body(types_fct)))[-1L]
-  is_def <- vapply(stmts, function(s) {
-    is.call(s) && identical(deparse(s[[1L]]), "new_type") && is.name(s[[2L]])
-  }, logical(1))
-  vapply(stmts[is_def], function(s) as.character(s[[2L]]), character(1))
-}
-
-# fns and custom types used in the copies get renamed (g -> g_COLOURED, T -> T_COLOURED)
-# NOTE: not in the unallowed list of check_variable_names: that runs after
-# this pre-pass and would reject the copies themselves
-add_coloured_copies <- function(b, types_fct) {
-  type_names <- user_type_names(types_fct)
-  if (any(endsWith(c(all.names(b), type_names), "_COLOURED"))) {
-    stop("names ending in _COLOURED are reserved for jacobian(..., colouring = \"runtime\")")
-  }
-  if (!has_runtime_jacobian(b)) return(b)
-  fns <- unique(collect_fn_names(b))
-  if (length(fns) == 0L) return(b)
-  add_copies(b, c(fns, type_names))
-}
-
-# T_COLOURED: every custom type T again, with ReverseDouble
-coloured_known_types <- function(b, types_fct, r_fct) {
-  type_names <- user_type_names(types_fct)
-  if (!has_runtime_jacobian(b) || length(type_names) == 0L) return(list())
-  types_block <- as.list(wrap_in_block(rename_fns(body(types_fct), type_names)))[-1L]
-  res <- parse_types(types_block, fct_input = FALSE, r_fct, "etr::ReverseDouble")
-  res <- Filter(function(t) inherits(t, "new_type_node"), res)
-  for (nm in names(res)) res[[nm]]$coloured_from <- sub("_COLOURED$", "", nm)
-  res
-}
-
-# errors in a _COLOURED copy: name the user's fn and why the copy exists
-coloured_error_message <- function(msg) {
-  if (!grepl("_COLOURED", msg, fixed = TRUE)) return(msg)
-  paste0(
-    "jacobian(..., colouring = \"runtime\") needs every inner fn in reverse mode: ",
-    gsub("_COLOURED", "", msg, fixed = TRUE)
-  )
+runtime_colouring_cpp <- function(fn) {
+  sprintf("etr::runtime_colouring(%s<etr::ReverseDouble>{})", fn$cpp_path)
 }
 
 # literal that stringifies to fixed C++ (the colouring data)

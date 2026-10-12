@@ -8,6 +8,8 @@ Step 1 done (2026-10-10): `colouring_from_tape(x, f_rev)` and
 `ReverseTape::rewind()`; C++ test `src/tests_coloured_jacobian.cpp`
 (helper with whole state n = 200: 3 colours; arrow: 2; if: exact per branch;
 matmul: conservative dense). Next: step 2 (R pre-pass, copies).
+2026-10-12 later: the `_COLOURED` copies below are REPLACED by functor
+instantiation (development/Plans/scalar_type_parameter.md); kept as history.
 Steps 2-3 done (2026-10-12), changed vs. below: API is
 `jacobian(f, x, colouring = "static", n = ...)` / `colouring = "runtime"`;
 greedy copies: every inner fn `g` -> `g_COLOURED` (ReverseDouble, by suffix)

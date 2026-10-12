@@ -43,6 +43,15 @@ public:
     data_.resize(static_cast<std::size_t>(get_val(n.get(0))));
   }
 
+  // Collection<Point<Dual>> -> Collection<Point<ReverseDouble>> (extra data of
+  // jacobian(colouring = "runtime")), element-wise via the struct's converting ctor
+  template <typename T2>
+    requires (!std::is_same_v<T, T2>)
+  Collection(const Collection<T2>& other) {
+    data_.reserve(other.size());
+    for (const auto& e : other) data_.emplace_back(e);
+  }
+
   explicit Collection(SEXP arg) {
     ass<"Expected a list to construct a Collection">(Rf_isNewList(arg));
     const R_xlen_t n = Rf_xlength(arg);

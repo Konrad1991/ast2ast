@@ -958,6 +958,23 @@ typename T::DType;
 requires IsOperationArray<T> || IsRArray<T>;
 };
 
+// Translated fns are functors (non-template operator()). APIs that deduce
+// their types from a std::function (lbfgsb, uniroot, pso with data) get the
+// matching std::function via as_std_function.
+template <typename T> struct StdFunctionOf : StdFunctionOf<decltype(&T::operator())> {};
+template <typename C, typename R, typename... A> struct StdFunctionOf<R (C::*)(A...) const> {
+  using type = std::function<R(A...)>;
+};
+template <typename C, typename R, typename... A> struct StdFunctionOf<R (C::*)(A...)> {
+  using type = std::function<R(A...)>;
+};
+template <typename F> inline auto as_std_function(const F& f) {
+  return typename StdFunctionOf<F>::type(f);
+}
+template <typename T> struct IsStdFunctionTrait : std::false_type {};
+template <typename R, typename... A> struct IsStdFunctionTrait<std::function<R(A...)>> : std::true_type {};
+template <typename T> concept IsStdFunction = IsStdFunctionTrait<Decayed<T>>::value;
+
 } // namespace etr
 
 #endif

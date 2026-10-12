@@ -226,6 +226,12 @@ inline auto pso(
   return pso(wrapped, lb_, ub_, ngen_, npop_, error_threshold_, global_, seed_);
 }
 
+// pso(f, ..., data) with a translated fn (functor): S/A/D from the std::function
+template<typename F, typename... Rest> requires (!IsStdFunction<F> && sizeof...(Rest) == 8)
+inline auto pso(const F& f, const Rest&... rest) {
+  return pso(as_std_function(f), rest...);
+}
+
 } // namespace etr
 
 #endif

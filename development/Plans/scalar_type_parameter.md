@@ -29,25 +29,28 @@ chooses it. `_COLOURED` disappears.
 ## Shape of the C++
 
 ```cpp
+using ETR_REAL = etr::Dual;
 namespace {
-template<typename R> struct Point { R x; R y; ... };       // structs
+template<typename ETR_REAL> struct Point { ETR_REAL x; ETR_REAL y; ... };
 }
-namespace f_impl {
-template<typename R> struct g_t;                          // 1. declare all
-template<typename R> struct k_t;
-namespace g_ns { template<typename R> struct h_t; }
+namespace f_impl { template<typename ETR_REAL> struct g_t; }              // 1. declare all
+namespace f_impl { template<typename ETR_REAL> struct k_t; }
+namespace f_impl::g_namespace { template<typename ETR_REAL> struct h_t; }
 
-template<typename R> struct g_t {                         // 2. define
-  etr::Array<R, etr::Buffer<R>> operator()(const etr::Array<R, etr::Buffer<R>>& y) const {
-    ... g_ns::h_t<R>{}(y) ...   // own nested fn: qualified
-    ... k_t<R>{}(y) ...         // anything else: unqualified, lookup goes outward
+namespace f_impl {                                                       // 2. define
+template<typename ETR_REAL> struct g_t {
+  etr::Array<ETR_REAL, etr::Buffer<ETR_REAL>> operator()( const etr::Array<ETR_REAL, etr::Buffer<ETR_REAL>>& y ) const {
+    ... f_impl::g_namespace::h_t<ETR_REAL>{}(y) ...
+    ... f_impl::k_t<ETR_REAL>{}(y) ...
   }
 };
 }
 SEXP f(SEXP xSEXP) {
-  ... f_impl::g_t<etr::Dual>{}(x) ...
+  ... f_impl::g_t<ETR_REAL>{}(x) ...
 }
 ```
+Every call uses the absolute path of the fn R's scoping resolved to
+(`cpp_path`, set when the fn is registered), so no relative lookup rules.
 
 Decisions:
 - **codegen writes the scalar type at the call site** (decided, Konrad
@@ -66,13 +69,13 @@ Decisions:
   (`map(g, ...)`, `jacobian(g, ...)`)
 - **declare all, then define**: recursion and mutual calls work, order of
   definition in R does not matter
-- **nested namespaces**: `f_impl` per outer fn, `<fn>_ns` per fn with nested
-  fns. C++ unqualified lookup goes outward = R's lexical scope. Calls to a
-  fn's own nested fns are qualified (`g_ns::`), all others unqualified
-- outer fn stays a plain (non-template) fn with its concrete real_type;
-  its calls are qualified `f_impl::`
-- inline fns (`map(fn(...), x)`) stay lambdas; inside a functor body their
-  types use `R`
+- **nested namespaces**: `f_impl` per outer fn, `<fn>_namespace` per fn
+  with nested fns (no abbreviations, Konrad). Same names in different scopes
+  never clash
+- outer fn stays a plain (non-template) fn
+- inline fns (`map(fn(...), x)`) stay lambdas (`[&]`, nothing to capture by
+  name); named fns inside an inline fn go into the enclosing namespace
+  (two sibling inline fns defining the same nested name would clash)
 
 ## The scalar type in C++: always `ETR_REAL` (decided 2026-10-12)
 
@@ -125,10 +128,23 @@ logic, `coloured_from`, `coloured_error_message`.
 1. Codegen writes `ETR_REAL` + global alias + `numeric_of` (DONE 2026-10-12,
    suite green except runtime colouring). Breaks the `_COLOURED` copies (they need two scalar types in
    one translation) until step 4 -- accepted by Konrad
-2. Structs as templates
-3. Hoist inner fns: functors in `f_impl` + nested namespaces, calls rewritten,
-   `std::function` declarations gone; std::function wrap for lbfgsb/uniroot/pso
-4. Runtime colouring via instantiation, remove `_COLOURED`
+2. Structs as templates (DONE 2026-10-12, untested): `template<typename
+   ETR_REAL> struct T`, uses `T<ETR_REAL>`, print as template, collections
+   `etr::Collection<T<ETR_REAL>>`; name constant `SCALAR_CPP` (Utils.R).
+   Converting ctor `T<R2> -> T<R>` deferred to step 4
+3. Hoist inner fns (DONE 2026-10-12, untested): `cpp_path` set in
+   `action_update_function_registry`, registry `cpp_name` =
+   `f_impl::g_t<ETR_REAL>{}`, `define_functors` (CreateNodeAST.R) emits
+   declarations + definitions, `g <- fn(...)` statements skipped in
+   block_node, fn values via `variable_node$cpp_override`. C++: generic
+   overloads of lbfgsb/uniroot/pso(data) forward via `as_std_function`
+   (Core/Types.hpp)
+4. Runtime colouring via instantiation, remove `_COLOURED` (DONE 2026-10-12,
+   untested): marker `etr::runtime_colouring(f_impl::f_t<etr::ReverseDouble>{})`;
+   structs get `template<typename ETR_REAL_OTHER> T(const T<ETR_REAL_OTHER>&)`
+   (struct as extra data). Extra data of any kind is converted inside the
+   tape pass in `jacobian_runtime_coloured` (`SecondArgOf<FRev>` + `operator=`);
+   `Collection` got a converting ctor between element types
 5. Reverse-mode check for runtime colouring (see open points)
 
 ## Open points

@@ -123,11 +123,12 @@ augment_outer_var_hint <- function(msg, outer_var_names) {
   msg
 }
 
-action_transpile_inner_functions <- function(node, real_type, debug = TRUE, var_list) {
+action_transpile_inner_functions <- function(node, real_type, debug = TRUE, var_list, namespace = "f_impl") {
   if (!inherits(node, "fn_node")) {
     return()
   }
-  if (endsWith(node$fct_name, "_COLOURED")) real_type <- "etr::ReverseDouble"
+  # fns defined inside g live in g_namespace; an inline fn opens no namespace of its own
+  inner_namespace <- if (is.null(node$cpp_path)) namespace else paste0(namespace, "::", node$fct_name, "_namespace")
   outer_var_names <- names(var_list)
   r_fct <- FALSE # Inner functions
   code <- node$AST
@@ -151,7 +152,7 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, var_
     error_string <- AST |> as.character()
     stop(sprintf("In inner function %s: Could not translate the function due to %s", node$fct_name, error_string))
   }
-  e <- try(traverse_ast(AST, action_update_function_registry, function_registry), silent = TRUE)
+  e <- try(traverse_ast(AST, action_update_function_registry, function_registry, inner_namespace), silent = TRUE)
   if (inherits(e, "try-error")) {
     error_string <- e |> as.character()
     stop(sprintf("In inner function %s: Could not update the function registry due to: %s", node$fct_name, error_string))
@@ -160,8 +161,9 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, var_
   known_from_inner <- node$function_registry$permitted_fcts()
   known_outer <- node$function_registry_outer$permitted_fcts()
   diffs <- setdiff(known_outer, known_from_inner)
-  temp <- collect_used_fcts(AST, var_list)
-  node$known_fcts <- intersect(diffs, collect_used_fcts(AST, var_list))
+  # NOTE: all fns of the enclosing scopes, not only the ones used here: a fn
+  # nested deeper may use them (functors, nothing is captured)
+  node$known_fcts <- intersect(diffs, names(var_list))
 
   for (i in diffs) {
     idx <- which(known_outer == i)
@@ -200,10 +202,6 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, var_
     node$vars_types_list[[i]]$real_type <- real_type
   }
   node$return_type$real_type <- real_type
-  if (endsWith(node$fct_name, "_COLOURED") && inherits(node$return_type, "pre_type_node")) {
-    # return type was parsed with the outer real_type
-    node$return_type$data_struct$real_type <- real_type
-  }
 
   if (!is.null(node$return_type$get_error())) {
     stop(sprintf("Wrong return type for function %s: %s", node$fct_name, node$return_type$get_error()))
@@ -232,7 +230,7 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, var_
 
   for (i in seq_along(AST$block)) {
     # var_list for nested fns is this fn's own scope (like the outer call passes `types`)
-    traverse_ast(AST$block[[i]], action_transpile_inner_functions, real_type, debug, node$vars_types_list)
+    traverse_ast(AST$block[[i]], action_transpile_inner_functions, real_type, debug, node$vars_types_list, inner_namespace)
   }
   traverse_ast(AST, action_snapshot_lines, debug)
   traverse_ast(AST, action_set_true, r_fct, real_type)
@@ -276,7 +274,8 @@ downgrade_ranges_passed_by_ref <- function(node, fn, info_env) {
 
 # add fn_nodes to function_registry
 # ========================================================================
-action_update_function_registry <- function(node, function_registry) {
+# namespace: C++ namespace of the scope the fn is defined in (f_impl, f_impl::g_namespace, ...)
+action_update_function_registry <- function(node, function_registry, namespace = "f_impl") {
   if (!inherits(node, "binary_node") ||
     !(node$operator %in% c("=", "<-")) ||
     !inherits(node$right_node, "fn_node")) {
@@ -287,6 +286,7 @@ action_update_function_registry <- function(node, function_registry) {
     stop(sprintf("The name %s is already in use by another function", name))
   }
   fn <- node$right_node
+  fn$cpp_path <- paste0(namespace, "::", name, "_t")
   num_args <- length(fn$args_f)
   if (num_args == 0L) {
     arg_names <- NA
@@ -366,9 +366,12 @@ action_update_function_registry <- function(node, function_registry) {
   function_registry$add(
     name = name, num_args = num_args, arg_names = arg_names,
     infer_fct = infer_fct, check_fct = check_fct,
-    group = node_type, cpp_name = name
+    group = node_type, cpp_name = functor_obj(fn$cpp_path)
   )
 }
+
+# a temporary of the hoisted functor, e.g. f_impl::g_t<ETR_REAL>{}
+functor_obj <- function(cpp_path) paste0(cpp_path, "<", SCALAR_CPP, ">{}")
 
 # Checks which have to be fulfilled:
 # - Function operators are part of: nullary_node, unary_node, binary_node and function_node.
@@ -557,7 +560,7 @@ unallowed_signs <- function(name) {
     # Thereby, one can easily create argument names nameSEXP and assign it to name
     # - the types of ast2ast: logical, integer, double, int cannot be used as names.
     # Thereby, all.vars can directly be used to find all variables
-    "\\.", "SEXP", "getXPtr", "fct_ptr", "__bound__", "ETR_REAL"
+    "\\.", "SEXP", "getXPtr", "fct_ptr", "__bound__", SCALAR_CPP
   )
   sign_found <- 0
   for (i in seq_along(unallowed)) {
@@ -788,6 +791,11 @@ action_set_true <- function(node, r_fct, real_type) {
   }
 }
 action_translate <- function(node, function_registry, real_type) {
+  if (inherits(node, "variable_node") && inherits(node$internal_type, "fn_node") &&
+      !is.null(node$internal_type$cpp_path)) {
+    node$cpp_override <- functor_obj(node$internal_type$cpp_path)
+    return()
+  }
   if (!inherits(node, "binary_node") &&
     !inherits(node, "unary_node") &&
     !inherits(node, "nullary_node") &&
@@ -811,7 +819,7 @@ action_translate <- function(node, function_registry, real_type) {
         node$args[[1]] <- NULL
         node$args <- Filter(Negate(is.null), node$args)
       } else if (inherits(node$internal_type, "pre_type_node") && node$internal_type$get_data_struct() == "collection") {
-        node$operator <- sprintf("etr::Collection<%s>", mode)
+        node$operator <- node$internal_type$data_struct$stringify()
         node$args[[1]] <- NULL
         node$args <- Filter(Negate(is.null), node$args)
       }

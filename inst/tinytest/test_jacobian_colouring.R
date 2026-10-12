@@ -118,7 +118,8 @@ g2 <- function(x) {
 expect_error(ast2ast::translate(g2, derivative = "forward"), "needs the length of x")
 
 # --- jacobian(f, x, colouring = "runtime") ---------------------------------
-# pattern from one reverse-mode run of the f_COLOURED copy; must equal the
+# pattern from one reverse-mode run of f (functor instantiated with
+# ReverseDouble); must equal the
 # plain jacobian
 r <- function(test, x, s) {
   argtypes(test |> type(int), x |> type(vec(double)), s |> type(double))
@@ -173,8 +174,7 @@ r <- function(test, x, s) {
   return(jacobian(scaled, x, s))
 }
 code <- ast2ast::translate(r, derivative = "forward", getsource = TRUE)
-expect_true(grepl("etr::runtime_colouring(rhs_COLOURED)", code, fixed = TRUE))
-expect_true(grepl("etr::ReverseDouble", code, fixed = TRUE))
+expect_true(grepl("etr::runtime_colouring(r_impl::rhs_t<etr::ReverseDouble>{})", code, fixed = TRUE))
 
 rcpp <- ast2ast::translate(r, derivative = "forward")
 x8 <- seq(0.1, 0.8, length.out = 8)
@@ -187,6 +187,21 @@ expect_equal(rcpp(5L, x3p, 0), rcpp(6L, x3p, 0))
 expect_equal(rcpp(5L, x3n, 0), rcpp(6L, x3n, 0))
 expect_equal(rcpp(7L, x3p, 0), rcpp(8L, x3p, 0))
 expect_equal(rcpp(9L, x3p, 2.5), rcpp(10L, x3p, 2.5))
+
+# extra data as vector: Array<Dual> -> Array<ReverseDouble> for the tape pass
+rw <- function(test, x, w) {
+  argtypes(test |> type(int), x |> type(vec(double)), w |> type(vec(double)))
+  weighted <- fn(
+    argtypes(y |> type(vec(double)), v |> type(vec(double)) |> const() |> ref()),
+    return(vec(double)),
+    { return(v * y * y) }
+  )
+  if (test == 1L) return(jacobian(weighted, x, w, colouring = "runtime"))
+  return(jacobian(weighted, x, w))
+}
+rwcpp <- ast2ast::translate(rw, derivative = "forward")
+w3 <- c(2, 3, 4)
+expect_equal(rwcpp(1L, x3p, w3), rwcpp(2L, x3p, w3))
 
 # argument checks
 r2 <- function(x) {
@@ -209,12 +224,6 @@ r3 <- function(x) {
   )
 }
 expect_error(ast2ast::translate(r3, derivative = "forward"), "named fn")
-r4 <- function(x) {
-  argtypes(x |> type(vec(double)))
-  h_COLOURED <- fn(argtypes(y |> type(vec(double))), return(vec(double)), { return(y) })
-  return(jacobian(h_COLOURED, x, colouring = "runtime"))
-}
-expect_error(ast2ast::translate(r4, derivative = "forward"), "reserved")
 r6 <- function(x) {
   argtypes(x |> type(vec(double)))
   h <- fn(argtypes(y |> type(vec(double))), return(vec(double)), { return(y) })
@@ -222,7 +231,7 @@ r6 <- function(x) {
 }
 expect_error(ast2ast::translate(r6, derivative = "reverse"), "derivative = \"forward\"")
 # custom types: struct built from the state + struct as extra data
-# (copies use Halves_COLOURED/Params_COLOURED; Params -> Params_COLOURED converts)
+# (Params<Dual> -> Params<ReverseDouble> via the converting ctor)
 types_f_state <- function() {
   new_type(Halves, slots(a |> type(vec(double)), b |> type(vec(double))))
   new_type(Params, slots(k |> type(double)))
@@ -244,14 +253,14 @@ st <- function(test, x, p) {
       return(c(q$k * h$a * h$b, h$a[[1L]] + h$b))
     }
   )
-  # collection of structs: vector(mode = "Point") -> "Point_COLOURED" in the copy
+  # collection of structs inside f
   coll <- fn(argtypes(y |> type(vec(double))), return(vec(double)), {
     pts <- vector(mode = "Point", 2L)
     pts[[1L]]$x <- y[[1L]] * y[[2L]]
     pts[[2L]]$x <- y[[3L]]
     return(c(pts[[1L]]$x, pts[[2L]]$x + y[[4L]]))
   })
-  # print of a struct inside the copy shows the user's name, not Halves_COLOURED
+  # print of a struct inside f (also instantiated with ReverseDouble)
   printed <- fn(argtypes(y |> type(vec(double))), return(vec(double)), {
     h <- unpack(y)
     print(h)
@@ -264,7 +273,7 @@ st <- function(test, x, p) {
   return(jacobian(printed, x, colouring = "runtime"))
 }
 code <- ast2ast::translate(st, types_f = types_f_state, derivative = "forward", getsource = TRUE)
-expect_true(grepl("Params_COLOURED(const Params& o)", code, fixed = TRUE))
+expect_true(grepl("Params(const Params<ETR_REAL_OTHER>& o)", code, fixed = TRUE))
 stcpp <- ast2ast::translate(st, types_f = types_f_state, derivative = "forward")
 p <- structure(list(k = 2.5), class = "Params")
 x4 <- c(0.3, 0.7, 1.1, 0.4)
@@ -273,7 +282,25 @@ expect_equal(stcpp(3L, x4, p), stcpp(4L, x4, p))
 out <- capture.output(J <- stcpp(5L, x4, p))
 expect_equal(J, rbind(c(x4[[3L]], 0, x4[[1L]], 0), c(0, x4[[4L]], 0, x4[[2L]])))
 expect_true(any(grepl("Halves", out)))
-expect_false(any(grepl("_COLOURED", out)))
+
+# collection of structs as extra data: converted element-wise for the tape pass
+sc <- function(test, x, pts) {
+  argtypes(test |> type(int), x |> type(vec(double)), pts |> type(collection(Point)))
+  shifted <- fn(
+    argtypes(y |> type(vec(double)), ps |> type(collection(Point)) |> const() |> ref()),
+    return(vec(double)),
+    { return(c(ps[[1L]]$x * y[[1L]], ps[[2L]]$y * y[[2L]] * y[[3L]])) }
+  )
+  if (test == 1L) return(jacobian(shifted, x, pts, colouring = "runtime"))
+  return(jacobian(shifted, x, pts))
+}
+sccpp <- ast2ast::translate(sc, types_f = types_f_state, derivative = "forward")
+pts <- list(
+  structure(list(x = 1.5, y = 2), class = "Point"),
+  structure(list(x = 3, y = 0.5), class = "Point")
+)
+x3 <- c(0.3, 0.7, 1.1)
+expect_equal(sccpp(1L, x3, pts), sccpp(2L, x3, pts))
 
 r5 <- function(x) {
   argtypes(x |> type(vec(double)))

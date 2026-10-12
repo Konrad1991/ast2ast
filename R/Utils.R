@@ -149,9 +149,10 @@ permitted_data_structs <- function(r_fct) {
 # C++ name of the scalar type. Always the alias ETR_REAL: outside of fns it is
 # the type of the translation (using ETR_REAL = etr::Dual; in assemble), inside
 # a fn functor its template parameter (development/Plans/scalar_type_parameter.md)
+SCALAR_CPP <- "ETR_REAL"
 scalar_cpp <- function(real_type) {
   if (is.null(real_type)) return(NULL)
-  "ETR_REAL"
+  SCALAR_CPP
 }
 
 convert_base_type <- function(r_type, real_type) {

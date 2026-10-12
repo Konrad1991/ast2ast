@@ -2265,7 +2265,7 @@ function_registry_global$add(
     }
     if (opts$colouring == "runtime" && !any(coloured)) {
       node$args[[length(node$args) + 1L]] <- cpp_code_node$new(
-        sprintf("etr::runtime_colouring(%s)", coloured_name(pos_args[[1L]]$name)),
+        runtime_colouring_cpp(runtime_colouring_fn(pos_args[[1L]], vars_list)),
         "colouring = \"runtime\""
       )
     }
