@@ -12,9 +12,10 @@ Steps 2-3 done (2026-10-12), changed vs. below: API is
 `jacobian(f, x, colouring = "static", n = ...)` / `colouring = "runtime"`;
 greedy copies: every inner fn `g` -> `g_COLOURED` (ReverseDouble, by suffix)
 once a runtime jacobian exists (`add_coloured_copies`, R/Colouring.R); call
-emits `etr::runtime_colouring(f_COLOURED)` as last arg. Limits: copy that
-fails in reverse mode -> error (later: drop it); custom types (structs are
-emitted once with Dual) -> error.
+emits `etr::runtime_colouring(f_COLOURED)` as last arg. Custom types: every
+`T` gets `T_COLOURED` (ReverseDouble slots, converting ctor from `T` instead
+of SEXP ctor/cast; `coloured_known_types`). `_COLOURED` is always reserved.
+Limit: copy that fails in reverse mode -> error (later: drop it).
 
 ## Why
 

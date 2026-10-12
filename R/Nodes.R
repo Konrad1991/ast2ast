@@ -1422,6 +1422,8 @@ new_type_node <- R6::R6Class(
     # codegen'd into the translated .cpp's own anonymous namespace --
     # references to the type name need the etr:: qualifier.
     part_of_etr = FALSE,
+    # T_COLOURED (ReverseDouble copy for jacobian colouring = "runtime"): name of T
+    coloured_from = NULL,
     initialize = function(name) {
       self$name <- name
     },
@@ -1496,9 +1498,21 @@ new_type_node <- R6::R6Class(
         "\t", n, "& operator=(", n, "&&) noexcept = default;\n"
       )
     },
+    # T_COLOURED never crosses the R boundary; it is only built from T
+    # (extra data passed to jacobian), implicit for the std::function call
+    create_constructor_coloured = function() {
+      fields <- vapply(self$slots, function(s) s$get_name(), character(1L))
+      sprintf("\t%s(const %s& o) { %s }\n", self$name, self$coloured_from,
+        paste0(fields, " = o.", fields, ";", collapse = " "))
+    },
     define_type = function() {
-      ctr <- self$create_constructor_SEXP()
-      cast <- self$create_cast_to_SEXP()
+      if (is.null(self$coloured_from)) {
+        ctr <- self$create_constructor_SEXP()
+        cast <- self$create_cast_to_SEXP()
+      } else {
+        ctr <- self$create_constructor_coloured()
+        cast <- ""
+      }
       special <- self$create_special_member_functions()
       ts <- lapply(self$slots, function(s) {
         if (inherits(s, "new_type_node")) {
@@ -1535,7 +1549,7 @@ new_type_node <- R6::R6Class(
       }, character(1L))
       paste0(
         "inline void print(const ", self$name, "& x) {\n",
-        "\tPRINT_STREAM << \"", self$name, "\" << std::endl;\n",
+        "\tPRINT_STREAM << \"", if (is.null(self$coloured_from)) self$name else self$coloured_from, "\" << std::endl;\n",
         paste0(lines, collapse = "\n"), "\n",
         "}"
       )

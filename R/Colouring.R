@@ -654,6 +654,12 @@ rename_fns <- function(e, fns) {
     nms <- names(e)
     names(e) <- ifelse(nms %in% fns, coloured_name(nms), nms)
   }
+  # collection of structs: vector(mode = "T", n), the type is a string
+  if (is.name(head) && identical(as.character(head), "vector")) {
+    for (i in arg_idx(e)) {
+      if (is.character(e[[i]]) && e[[i]] %in% fns) e[[i]] <- coloured_name(e[[i]])
+    }
+  }
   for (i in c(1L, arg_idx(e))) {
     if (!is.null(e[[i]])) e[[i]] <- rename_fns(e[[i]], fns)
   }
@@ -681,14 +687,38 @@ add_copies <- function(e, fns) {
   e
 }
 
-add_coloured_copies <- function(b) {
-  if (!has_runtime_jacobian(b)) return(b)
-  if (any(endsWith(all.names(b), "_COLOURED"))) {
+user_type_names <- function(types_fct) {
+  if (is.null(types_fct)) return(character())
+  stmts <- as.list(wrap_in_block(body(types_fct)))[-1L]
+  is_def <- vapply(stmts, function(s) {
+    is.call(s) && identical(deparse(s[[1L]]), "new_type") && is.name(s[[2L]])
+  }, logical(1))
+  vapply(stmts[is_def], function(s) as.character(s[[2L]]), character(1))
+}
+
+# fns and custom types used in the copies get renamed (g -> g_COLOURED, T -> T_COLOURED)
+# NOTE: not in the unallowed list of check_variable_names: that runs after
+# this pre-pass and would reject the copies themselves
+add_coloured_copies <- function(b, types_fct) {
+  type_names <- user_type_names(types_fct)
+  if (any(endsWith(c(all.names(b), type_names), "_COLOURED"))) {
     stop("names ending in _COLOURED are reserved for jacobian(..., colouring = \"runtime\")")
   }
+  if (!has_runtime_jacobian(b)) return(b)
   fns <- unique(collect_fn_names(b))
   if (length(fns) == 0L) return(b)
-  add_copies(b, fns)
+  add_copies(b, c(fns, type_names))
+}
+
+# T_COLOURED: every custom type T again, with ReverseDouble
+coloured_known_types <- function(b, types_fct, r_fct) {
+  type_names <- user_type_names(types_fct)
+  if (!has_runtime_jacobian(b) || length(type_names) == 0L) return(list())
+  types_block <- as.list(wrap_in_block(rename_fns(body(types_fct), type_names)))[-1L]
+  res <- parse_types(types_block, fct_input = FALSE, r_fct, "etr::ReverseDouble")
+  res <- Filter(function(t) inherits(t, "new_type_node"), res)
+  for (nm in names(res)) res[[nm]]$coloured_from <- sub("_COLOURED$", "", nm)
+  res
 }
 
 # errors in a _COLOURED copy: name the user's fn and why the copy exists

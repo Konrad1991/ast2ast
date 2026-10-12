@@ -325,7 +325,13 @@ type_infer_assignment <- function(node, info_env) {
     else {
       variable <- find_var_lhs(node)
 
-      if (inherits(info_env$vars_list[[variable]], "unknown_type")) {
+      if (inherits(type, "fn_node") && !inherits(node$right_node, "fn_node")) {
+        node$error <- sprintf(
+          "Cannot assign the function %s to the variable %s: functions can only be assigned when defined (%s <- fn(...))",
+          node$right_node$stringify(), variable, variable
+        )
+      }
+      else if (inherits(info_env$vars_list[[variable]], "unknown_type")) {
         if (inherits(type, "fn_node")) {
           type$fct_name <- variable
         }

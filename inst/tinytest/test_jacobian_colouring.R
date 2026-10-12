@@ -221,6 +221,60 @@ r6 <- function(x) {
   return(jacobian(h, x, colouring = "runtime"))
 }
 expect_error(ast2ast::translate(r6, derivative = "reverse"), "derivative = \"forward\"")
+# custom types: struct built from the state + struct as extra data
+# (copies use Halves_COLOURED/Params_COLOURED; Params -> Params_COLOURED converts)
+types_f_state <- function() {
+  new_type(Halves, slots(a |> type(vec(double)), b |> type(vec(double))))
+  new_type(Params, slots(k |> type(double)))
+  new_type(Point, slots(x |> type(double), y |> type(double)))
+}
+st <- function(test, x, p) {
+  argtypes(test |> type(int), x |> type(vec(double)), p |> type(Params))
+  unpack <- fn(argtypes(y |> type(vec(double))), return(Halves), {
+    h |> type(Halves)
+    h$a <- y[1L:2L]
+    h$b <- y[3L:4L]
+    return(h)
+  })
+  rhs <- fn(
+    argtypes(y |> type(vec(double)), q |> type(Params) |> const() |> ref()),
+    return(vec(double)),
+    {
+      h <- unpack(y)
+      return(c(q$k * h$a * h$b, h$a[[1L]] + h$b))
+    }
+  )
+  # collection of structs: vector(mode = "Point") -> "Point_COLOURED" in the copy
+  coll <- fn(argtypes(y |> type(vec(double))), return(vec(double)), {
+    pts <- vector(mode = "Point", 2L)
+    pts[[1L]]$x <- y[[1L]] * y[[2L]]
+    pts[[2L]]$x <- y[[3L]]
+    return(c(pts[[1L]]$x, pts[[2L]]$x + y[[4L]]))
+  })
+  # print of a struct inside the copy shows the user's name, not Halves_COLOURED
+  printed <- fn(argtypes(y |> type(vec(double))), return(vec(double)), {
+    h <- unpack(y)
+    print(h)
+    return(h$a * h$b)
+  })
+  if (test == 1L) return(jacobian(rhs, x, p, colouring = "runtime"))
+  if (test == 2L) return(jacobian(rhs, x, p))
+  if (test == 3L) return(jacobian(coll, x, colouring = "runtime"))
+  if (test == 4L) return(jacobian(coll, x))
+  return(jacobian(printed, x, colouring = "runtime"))
+}
+code <- ast2ast::translate(st, types_f = types_f_state, derivative = "forward", getsource = TRUE)
+expect_true(grepl("Params_COLOURED(const Params& o)", code, fixed = TRUE))
+stcpp <- ast2ast::translate(st, types_f = types_f_state, derivative = "forward")
+p <- structure(list(k = 2.5), class = "Params")
+x4 <- c(0.3, 0.7, 1.1, 0.4)
+expect_equal(stcpp(1L, x4, p), stcpp(2L, x4, p))
+expect_equal(stcpp(3L, x4, p), stcpp(4L, x4, p))
+out <- capture.output(J <- stcpp(5L, x4, p))
+expect_equal(J, rbind(c(x4[[3L]], 0, x4[[1L]], 0), c(0, x4[[4L]], 0, x4[[2L]])))
+expect_true(any(grepl("Halves", out)))
+expect_false(any(grepl("_COLOURED", out)))
+
 r5 <- function(x) {
   argtypes(x |> type(vec(double)))
   h <- fn(argtypes(y |> type(vec(double))), return(vec(double)), { return(y) })

@@ -562,9 +562,12 @@ translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, de
   if (any(is_ret)) {
     stop("returntype(...) must directly follow argtypes(...) as the first statement of the function body")
   }
-  b <- as.call(c(as.name("{"), stmts)) |> add_coloured_copies()
-
-  known_types <- make_known_types(types_fct, r_fct, real_type)
+  b <- as.call(c(as.name("{"), stmts))
+  known_types <- c(
+    make_known_types(types_fct, r_fct, real_type),
+    coloured_known_types(b, types_fct, r_fct)
+  )
+  b <- add_coloured_copies(b, types_fct)
 
   declared_return_type <- NULL
   if (!is.null(returntype_fct)) {
