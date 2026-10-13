@@ -19,6 +19,20 @@ wrap_in_block <- function(expr) {
   as.call(list(as.name("{"), expr))
 }
 
+srcref_location <- function(srcref) {
+  file <- utils::getSrcFilename(srcref)
+  if (length(file) == 0L || file %in% c("", "<text>")) return(NULL)
+  sprintf("%s:%d", file, srcref[1L])
+}
+
+# NOTE: rebuilding a block drops its srcrefs; valid only if the kept statements are the trailing ones of old_block
+keep_trailing_srcrefs <- function(new_block, old_block) {
+  refs <- attr(old_block, "srcref")
+  if (is.null(refs)) return(new_block)
+  attr(new_block, "srcref") <- c(refs[1L], utils::tail(refs, length(new_block) - 1L))
+  new_block
+}
+
 same_base_type <- function(is, should) {
   if (is == "int") is <- "integer"
   if (should == "int") should <- "integer"

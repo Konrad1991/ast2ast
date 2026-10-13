@@ -768,6 +768,9 @@ action_snapshot_lines <- function(node, debug = TRUE) {
     } else if (!inherits(stmt, c("repeat_node", "fn_node"))) {
       stmt$pre_translate_line <- stmt$stringify()
     }
+    if (!is.null(stmt$location) && !is.null(stmt$pre_translate_line)) {
+      stmt$pre_translate_line <- paste0(stmt$location, ": ", stmt$pre_translate_line)
+    }
   }
 }
 

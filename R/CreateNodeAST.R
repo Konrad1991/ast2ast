@@ -21,6 +21,15 @@ create_ast <- function(code, context, env, function_registry) {
     b_node$block <- lapply(code[-1], function(line) {
       process(line, operator, env, function_registry)
     })
+    refs <- attr(old_code, "srcref")
+    if (length(refs) == length(code)) {
+      # NOTE: stored on the node, not by index; later passes insert statements into the block
+      for (i in seq_along(b_node$block)) {
+        if ("location" %in% names(b_node$block[[i]])) {
+          b_node$block[[i]]$location <- srcref_location(refs[[i + 1L]])
+        }
+      }
+    }
     b_node$context <- context
     return(b_node)
   } else if (operator == "repeat") {
@@ -86,7 +95,7 @@ create_ast <- function(code, context, env, function_registry) {
     body(temp_f) <- body
     argtypes_match_formals(temp_f, args_call)
     return_call <- body[[3L]]
-    body <- body[c(-2, -3)]
+    body <- keep_trailing_srcrefs(body[c(-2, -3)], body)
     fn <- fn_node$new()
     fn$function_registry <- function_registry$clone(deep = TRUE)
     fn$function_registry_outer <- function_registry
@@ -584,7 +593,7 @@ translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, de
   if (any(is_ret)) {
     stop("returntype(...) must directly follow argtypes(...) as the first statement of the function body")
   }
-  b <- as.call(c(as.name("{"), stmts))
+  b <- keep_trailing_srcrefs(as.call(c(as.name("{"), stmts)), body(fct))
 
   known_types <- make_known_types(types_fct, r_fct, real_type)
 

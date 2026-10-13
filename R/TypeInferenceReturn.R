@@ -170,7 +170,11 @@ create_return_statement <- function(node, function_registry) {
       node$block[[1]] <- create_void_return()
       return(node)
     }
+    location <- node$block[[n]]$location
     repl <- create_return_statement(node$block[[n]], function_registry)
+    for (r in if (inherits(repl, "list")) repl else list(repl)) {
+      if ("location" %in% names(r) && is.null(r$location)) r$location <- location
+    }
     if (inherits(repl, "list")) {
       # void tail call: keep the call for its side effects, then return()
       node$block[[n]] <- repl[[1]]
