@@ -1,6 +1,6 @@
 library(tinytest)
 
-new_package <- function(files, namespace = NULL, entry_point = "f") {
+new_package <- function(files, namespace = NULL, entry_points = "f") {
   dir <- tempfile("pkg")
   dir.create(file.path(dir, "inst", "tools"), recursive = TRUE)
   name <- basename(dir)
@@ -15,7 +15,7 @@ new_package <- function(files, namespace = NULL, entry_point = "f") {
     namespace <- c(
       sprintf("useDynLib(%s, .registration = TRUE)", name),
       "importFrom(Rcpp, evalCpp)",
-      sprintf("export(%s)", entry_point)
+      sprintf("export(%s)", paste(entry_points, collapse = ", "))
     )
   }
   writeLines(namespace, file.path(dir, "NAMESPACE"))
@@ -111,8 +111,14 @@ expect_error(ast2ast::make_package(file.path("R", "entry.R"), "f", dir), "Files 
 dir <- new_package(all_files, namespace = character())
 expect_error(
   ast2ast::make_package(tools("types.R", "entry.R", "helpers.R"), "f", dir),
-  "useDynLib.*importFrom.*export\\(f\\)"
+  "useDynLib.*importFrom"
 )
+
+# entry points may stay internal: no export() required
+dir <- new_package(all_files)
+writeLines(c(sprintf("useDynLib(%s, .registration = TRUE)", basename(dir)), "importFrom(Rcpp, evalCpp)"),
+           file.path(dir, "NAMESPACE"))
+expect_silent(ast2ast::make_package(tools("types.R", "entry.R", "helpers.R"), "f", dir))
 
 # --- content of the files ----------------------------------------------------
 dir <- new_package(list("entry.R" = c(entry_file, "x <- 1")))
@@ -124,18 +130,59 @@ expect_error(ast2ast::make_package(tools("types.R", "more.R", "entry.R"), "f", d
 dir <- new_package(list("entry.R" = entry_file, "again.R" = entry_file))
 expect_error(ast2ast::make_package(tools("entry.R", "again.R"), "f", dir), "again.R:1: Function f is redefined")
 
-dir <- new_package(all_files, entry_point = "g")
-expect_error(ast2ast::make_package(tools("types.R", "entry.R", "helpers.R"), "g", dir), "Entry point g is not defined")
+dir <- new_package(all_files, entry_points = c("f", "g"))
+expect_error(ast2ast::make_package(tools("types.R", "entry.R", "helpers.R"), c("f", "g"), dir),
+             "Entry point\\(s\\) not defined in the files: g")
 
 dir <- new_package(list("entry.R" = c("f <- function(a) {", "  argtypes(a |> type(double))", "  a", "}")))
 expect_error(ast2ast::make_package(tools("entry.R"), "f", dir), "has to start with argtypes\\(...\\) and returntype\\(...\\)")
 
+# --- several entry points ----------------------------------------------------
+second_file <- c(
+  "g <- function(a, i) {",
+  "  argtypes(a |> type(double), i |> type(int))",
+  "  returntype(double)",
+  "  outer_helper(a, i)",
+  "}",
+  "outer_helper <- function(a, i) {",
+  "  argtypes(a |> type(double), i |> type(int))",
+  "  returntype(double)",
+  "  helper(a, i)",
+  "}",
+  "unused <- function(a) {",
+  "  argtypes(a |> type(double))",
+  "  returntype(double)",
+  "  a",
+  "}"
+)
+multi_files <- c(all_files, list("second.R" = second_file))
+dir <- new_package(multi_files, entry_points = c("f", "g"))
+expect_warning(
+  ast2ast::make_package(tools("types.R", "entry.R", "helpers.R", "second.R"), c("f", "g"), dir),
+  "not reachable from any entry point: unused"
+)
+cpp_f <- readLines(file.path(dir, "src", "ast2ast_f.cpp"))
+cpp_g <- readLines(file.path(dir, "src", "ast2ast_g.cpp"))
+expect_true(any(grepl("helper_t", cpp_f)))
+expect_false(any(grepl("outer_helper", cpp_f)))
+expect_true(any(grepl("outer_helper_t", cpp_g)))
+expect_true(any(grepl("g_impl::helper_t", cpp_g)))
+expect_false(any(grepl("unused", c(cpp_f, cpp_g))))
+
+# entry point g dropped: its generated cpp file is removed
+expect_warning(
+  ast2ast::make_package(tools("types.R", "entry.R", "helpers.R", "second.R"), "f", dir),
+  "not reachable from any entry point: g, outer_helper, unused"
+)
+expect_false(file.exists(file.path(dir, "src", "ast2ast_g.cpp")))
+expect_true(file.exists(file.path(dir, "src", "ast2ast_f.cpp")))
+
 # --- install and call --------------------------------------------------------
 if (!at_home()) exit_file("slow: installs a package; runs at home / CI only")
 
-dir <- new_package(all_files)
+dir <- new_package(multi_files, entry_points = c("f", "g"))
 name <- basename(dir)
-ast2ast::make_package(tools("types.R", "entry.R", "helpers.R"), "f", dir)
+suppressWarnings(ast2ast::make_package(tools("types.R", "entry.R", "helpers.R", "second.R"), c("f", "g"), dir))
 lib <- tempfile("lib")
 dir.create(lib)
 status <- system2(file.path(R.home("bin"), "R"), c("CMD", "INSTALL", "-l", shQuote(lib), shQuote(dir)),
@@ -146,3 +193,5 @@ p <- structure(list(x = 1, y = 2), class = "Point")
 expect_equal(f(p, 1L), 3)
 expect_false(exists("helper", envir = asNamespace(name), inherits = FALSE))
 expect_error(f(p, 5L), sprintf("%s: helpers.R:5 (helper)", name), fixed = TRUE)
+g <- getExportedValue(asNamespace(name), "g")
+expect_equal(g(1.5, 2L), 1.5)

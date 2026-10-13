@@ -2,10 +2,10 @@ News for package 'ast2ast'
 
 changes in ast2ast version 1.1
 
-- New function `make_package(files, entry_point, package_dir)`: translates
+- New function `make_package(files, entry_points, package_dir)`: translates
   R files into the C++ code of an existing package, like
-  `Rcpp::compileAttributes`. Only `entry_point` is exported; all other
-  functions in the files are internal. Runtime errors name package, file,
+  `Rcpp::compileAttributes`. Only `entry_points` are exported; all other
+  functions in the files are internal helpers. Runtime errors name package, file,
   line and function (`In 'mypkg: helpers.R:5 (helper): ...'`).
 - New functional `pmap(f, ncores, x, ...)`: like `map`, but the elements
   are processed in parallel on a thread pool (via RcppThread). Warnings

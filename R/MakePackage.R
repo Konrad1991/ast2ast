@@ -1,32 +1,69 @@
-make_package <- function(files, entry_point, package_dir = ".", overwrite = FALSE) {
+make_package <- function(files, entry_points, package_dir = ".", overwrite = FALSE) {
   stopifnot("files is not of type character" = is.character(files))
-  stopifnot("entry_point is not a single string" = is.character(entry_point) && length(entry_point) == 1L)
+  stopifnot("entry_points is not of type character" = is.character(entry_points) && length(entry_points) >= 1L)
+  stopifnot("entry_points contains duplicates" = anyDuplicated(entry_points) == 0L)
   stopifnot("package_dir is not a single string" = is.character(package_dir) && length(package_dir) == 1L)
   stopifnot("overwrite is not of type logical" = is.logical(overwrite) && length(overwrite) == 1L)
 
   files <- check_paths(files, package_dir)
   name <- package_name(package_dir)
-  check_package_setup(package_dir, name, entry_point)
+  check_package_setup(package_dir, name)
   code <- unlist(lapply(files, parse_with_srcrefs, name), recursive = FALSE)
 
   check_top_level_code(code)
   types_f <- pre_scan_for_types(code)
   definitions <- collect_functions(code)
-  if (!entry_point %in% names(definitions)) {
-    stop(sprintf("Entry point %s is not defined in the files", entry_point))
+  missing <- setdiff(entry_points, names(definitions))
+  if (length(missing) != 0L) {
+    stop(sprintf("Entry point(s) not defined in the files: %s", paste(missing, collapse = ", ")))
   }
-  combined <- combine_functions(definitions, entry_point)
-  cpp <- translate_internally(combined, types_f, NULL, entry_point, TRUE)
-  # NOTE: sourceCpp-only attributes; in a package the Makevars does this
-  cpp <- strsplit(cpp, "\n", fixed = TRUE)[[1]]
-  cpp <- cpp[!grepl("^// \\[\\[Rcpp::(depends|plugins)", cpp)]
 
-  cpp_file <- file.path(package_dir, "src", paste0("ast2ast_", entry_point, ".cpp"))
-  write_generated(cpp_file, cpp, "//", overwrite)
+  used_helpers <- character()
+  cpp_files <- character()
+  for (entry_point in entry_points) {
+    helpers <- reachable_helpers(entry_point, definitions)
+    used_helpers <- union(used_helpers, helpers)
+    combined <- combine_functions(definitions[c(entry_point, helpers)], entry_point)
+    cpp <- translate_internally(combined, types_f, NULL, entry_point, TRUE)
+    # NOTE: sourceCpp-only attributes; in a package the Makevars does this
+    cpp <- strsplit(cpp, "\n", fixed = TRUE)[[1]]
+    cpp <- cpp[!grepl("^// \\[\\[Rcpp::(depends|plugins)", cpp)]
+    cpp_file <- file.path(package_dir, "src", paste0("ast2ast_", entry_point, ".cpp"))
+    write_generated(cpp_file, cpp, "//", overwrite)
+    cpp_files <- c(cpp_files, cpp_file)
+  }
+  unused <- setdiff(names(definitions), c(entry_points, used_helpers))
+  if (length(unused) != 0L) {
+    warning(sprintf("Function(s) not reachable from any entry point: %s", paste(unused, collapse = ", ")),
+            call. = FALSE)
+  }
+
+  remove_stale_cpp_files(package_dir, cpp_files)
   copy_headers(package_dir)
   write_makevars(package_dir, overwrite)
   Rcpp::compileAttributes(package_dir)
   invisible(name)
+}
+
+# NOTE: all.names also finds fns passed as values, e.g. uniroot(equation_h, ...)
+reachable_helpers <- function(entry_point, definitions) {
+  helper_names <- setdiff(names(definitions), entry_point)
+  found <- character()
+  todo <- entry_point
+  while (length(todo) != 0L) {
+    used <- intersect(all.names(definitions[[todo[[1L]]]]$expr[[3]]), helper_names)
+    todo <- c(todo[-1L], setdiff(used, found))
+    found <- union(found, used)
+  }
+  found
+}
+
+# NOTE: a cpp file of a removed entry point would still be compiled
+remove_stale_cpp_files <- function(package_dir, cpp_files) {
+  existing <- list.files(file.path(package_dir, "src"), pattern = "^ast2ast_.*\\.cpp$", full.names = TRUE)
+  stale <- existing[!basename(existing) %in% basename(cpp_files)]
+  stale <- stale[vapply(stale, is_generated, logical(1L))]
+  unlink(stale)
 }
 
 # NOTE: the srcfile is named "<pkg>: <file>" so the runtime labels read "pkg: file.R:12 (fn)"
@@ -71,7 +108,7 @@ package_name <- function(package_dir) {
   name
 }
 
-check_package_setup <- function(package_dir, name, entry_point) {
+check_package_setup <- function(package_dir, name) {
   description <- read.dcf(file.path(package_dir, "DESCRIPTION"))[1, ]
   field_has <- function(field, package) {
     field %in% names(description) &&
@@ -89,10 +126,6 @@ check_package_setup <- function(package_dir, name, entry_point) {
   }
   if (!any(grepl("importFrom\\(\\s*Rcpp", namespace))) {
     missing <- c(missing, "NAMESPACE: importFrom(Rcpp, evalCpp)")
-  }
-  if (!any(grepl(sprintf("^\\s*export\\(.*\\b%s\\b", entry_point), namespace)) &&
-      !any(grepl("^\\s*exportPattern\\(", namespace))) {
-    missing <- c(missing, sprintf("NAMESPACE: export(%s)", entry_point))
   }
   if (length(missing) != 0L) {
     stop(sprintf("The package is not set up for make_package. Please add:\n%s",

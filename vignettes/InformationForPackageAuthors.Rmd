@@ -70,9 +70,9 @@ helper <- function(s) {
 ast2ast::make_package(c("inst/tools/types.R", "inst/tools/f.R"), "f")
 ```
 
-- Only `f` is exported; `helper` is internal.
+- Only `f` is exported; `helper` is internal. Several entry points: `make_package(files, c("f", "g"))`, one C++ file each.
 - The files may only contain `new_type(...)` and function definitions.
-- The package needs `Imports: Rcpp`, `LinkingTo: Rcpp, RcppThread` and in the NAMESPACE `useDynLib(<package>, .registration = TRUE)`, `importFrom(Rcpp, evalCpp)`, `export(f)`. `make_package` checks this and reports what is missing.
+- The package needs `Imports: Rcpp`, `LinkingTo: Rcpp, RcppThread` and in the NAMESPACE `useDynLib(<package>, .registration = TRUE)`, `importFrom(Rcpp, evalCpp)`. `make_package` checks this and reports what is missing. Add `export(f)` if users should call `f`.
 - Rerun `make_package` after changing the R files.
 - Runtime errors name package, file, line and function, e.g. `In 'mypkg: f.R:5 (f): ...'`.
 
