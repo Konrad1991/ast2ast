@@ -92,6 +92,69 @@ f <- function(a) {
 }
 ```
 
+# Three-valued logic and NA^0 differ from R, silently (found 2026-10-13, review)
+
+R: `NA & FALSE` is FALSE, `NA | TRUE` is TRUE, `NA^0` is 1. ast2ast gives NA
+for all three (runtime NA; NA literals are rejected at translation, on purpose).
+Fix in the operators `&`, `|`, `&&`, `||`, `^` (Logical/Double).
+```r
+f <- function(x, b) {
+  argtypes(x |> type(vec(double)), b |> type(vec(logical)))
+  returntype(vec(double))
+  r <- numeric(3L)
+  r[1L] <- as.numeric(b[[1L]] & FALSE)   # R: 0, ast2ast: NA
+  r[2L] <- as.numeric(b[[1L]] | TRUE)    # R: 1, ast2ast: NA
+  r[3L] <- x[[1L]]^0                     # R: 1, ast2ast: NA
+  r
+}
+translate(f)(c(NA_real_, 1), c(NA, TRUE))
+```
+
+# Empty subset: unclear error message (found 2026-10-13, review)
+
+Empty vectors are an error on purpose (Konrad). But `x[x > 0]` without a
+match depends on the data, not the code -- the message should say so.
+```r
+f <- function(n) {
+  argtypes(n |> type(int))
+  x <- numeric(n)
+  x[x > 0]   # "Empty index for at least one dimension"
+}
+translate(f)(3L)   # better: no element of x matches the condition
+```
+
+# Structs/collections from R are copied on every call (idea, 2026-10-13)
+
+At the R -> C++ boundary a new_type / collection argument is converted from the
+R list slot by slot (copy); ref() has no effect there (warning). Vectors have
+borrow_vec/borrow_mat, structs have nothing comparable. Costly when an outer fn
+with a large struct is called often from R. Inside (inner fns) ref() already
+works for structs and collections.
+Idea: a borrowed struct whose vector slots are Borrow views on the R list's vectors.
+```r
+f <- function(p) {
+  argtypes(p |> type(Big))   # every call copies all slots of p
+  p$x[[1L]]
+}
+```
+Plan: scalars copied, vector/matrix slots as Borrow on the list element SEXP,
+nested structs recursive. Issues: slot type must match exactly (no coercion),
+writes change the R object (like borrow_vec), struct template needs a second
+parameter for the storage (owned/borrowed).
+
+# FIXED — make_package: no derivative per entry point (found 2026-10-13)
+
+Fixed: make_package(..., derivative = list(g = "reverse")); test in test_make_package.R.
+
+R/MakePackage.R passes derivative = NULL -> every entry point is etr::Double.
+Already possible: one .cpp per entry point, own `using ETR_REAL`, helpers in
+`<entry>_impl`, structs in anonymous namespace -> no ODR clash.
+Missing: API for derivative per entry point + passing it to translate_internally.
+```r
+make_package("R/model.R", entry_points = c("loss", "grad"))
+# grad needs etr::Dual / etr::ReverseDouble, gets etr::Double
+```
+
 # is.na(NaN) is FALSE (found 2026-10-13, Randomization)
 
 R: `is.na(NaN)` is TRUE. ast2ast only flags R's NA (`ISNA`), owned and

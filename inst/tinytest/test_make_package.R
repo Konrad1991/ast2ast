@@ -177,6 +177,61 @@ expect_warning(
 expect_false(file.exists(file.path(dir, "src", "ast2ast_g.cpp")))
 expect_true(file.exists(file.path(dir, "src", "ast2ast_f.cpp")))
 
+# --- derivative per entry point ---------------------------------------------
+derivative_file <- c(
+  "fwd <- function(p, x) {",
+  "  argtypes(p |> type(Point), x |> type(vec(double)))",
+  "  returntype(vec(double))",
+  "  d <- numeric(length(x))",
+  "  one <- 1L",
+  "  for (i in 1L:length(x)) {",
+  "    seed(x, i)",
+  "    a <- x[[1L]]",
+  "    y <- p$x * a * x[[2L]] + helper(a, one)",
+  "    d[[i]] <- get_dot(y)",
+  "    unseed(x, i)",
+  "  }",
+  "  d",
+  "}",
+  "rev <- function(p, x) {",
+  "  argtypes(p |> type(Point), x |> type(vec(double)))",
+  "  returntype(mat(double))",
+  "  y <- numeric(1L)",
+  "  a <- x[[1L]]",
+  "  one <- 1L",
+  "  y[[1L]] <- p$x * a * x[[2L]] + helper(a, one)",
+  "  deriv(y, x)",
+  "}"
+)
+derivative_files <- c(all_files, list("derivative.R" = derivative_file))
+derivative_paths <- tools("types.R", "entry.R", "helpers.R", "derivative.R")
+derivative_entry_points <- c("f", "fwd", "rev")
+derivative <- list(fwd = "forward", rev = "reverse")
+dir <- new_package(derivative_files, entry_points = derivative_entry_points)
+ast2ast::make_package(derivative_paths, derivative_entry_points, dir, derivative = derivative)
+alias <- function(entry_point) {
+  cpp <- readLines(file.path(dir, "src", sprintf("ast2ast_%s.cpp", entry_point)))
+  grep("^using ETR_REAL", cpp, value = TRUE)
+}
+expect_equal(alias("f"), "using ETR_REAL = etr::Double;")
+expect_equal(alias("fwd"), "using ETR_REAL = etr::Dual;")
+expect_equal(alias("rev"), "using ETR_REAL = etr::ReverseDouble;")
+
+expect_error(ast2ast::make_package(derivative_paths, derivative_entry_points, dir, derivative = "forward"),
+             "derivative is not a list")
+expect_error(ast2ast::make_package(derivative_paths, derivative_entry_points, dir, derivative = list("forward")),
+             "has to be a named list")
+expect_error(ast2ast::make_package(derivative_paths, derivative_entry_points, dir,
+                                   derivative = list(fwd = "forward", fwd = "reverse")),
+             "more than once: fwd")
+expect_error(ast2ast::make_package(derivative_paths, derivative_entry_points, dir, derivative = list(h = "forward")),
+             "unknown entry point\\(s\\): h")
+expect_error(ast2ast::make_package(derivative_paths, derivative_entry_points, dir, derivative = list(fwd = "backward")),
+             "derivative of fwd is neither")
+# deriv() only exists in reverse mode
+expect_error(ast2ast::make_package(derivative_paths, derivative_entry_points, dir, derivative = list(fwd = "forward")),
+             "deriv can be only used when derivative is set to reverse")
+
 # --- install and call --------------------------------------------------------
 if (!at_home()) exit_file("slow: installs a package; runs at home / CI only")
 
@@ -195,3 +250,17 @@ expect_false(exists("helper", envir = asNamespace(name), inherits = FALSE))
 expect_error(f(p, 5L), sprintf("%s: helpers.R:5 (helper)", name), fixed = TRUE)
 g <- getExportedValue(asNamespace(name), "g")
 expect_equal(g(1.5, 2L), 1.5)
+
+# Double, Dual and ReverseDouble in one shared library; helper and Point in all three
+dir <- new_package(derivative_files, entry_points = derivative_entry_points)
+name <- basename(dir)
+ast2ast::make_package(derivative_paths, derivative_entry_points, dir, derivative = derivative)
+status <- system2(file.path(R.home("bin"), "R"), c("CMD", "INSTALL", "-l", shQuote(lib), shQuote(dir)),
+                  stdout = FALSE, stderr = FALSE)
+expect_equal(status, 0L)
+ns <- asNamespace(loadNamespace(name, lib.loc = lib))
+p <- structure(list(x = 2, y = 7), class = "Point")
+x <- c(3, 5)
+expect_equal(getExportedValue(ns, "f")(p, 1L), 9)
+expect_equal(getExportedValue(ns, "fwd")(p, x), c(11, 6))
+expect_equal(c(getExportedValue(ns, "rev")(p, x)), c(11, 6))

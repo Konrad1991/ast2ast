@@ -1,9 +1,10 @@
-make_package <- function(files, entry_points, package_dir = ".", overwrite = FALSE) {
+make_package <- function(files, entry_points, package_dir = ".", overwrite = FALSE, derivative = list()) {
   stopifnot("files is not of type character" = is.character(files))
   stopifnot("entry_points is not of type character" = is.character(entry_points) && length(entry_points) >= 1L)
   stopifnot("entry_points contains duplicates" = anyDuplicated(entry_points) == 0L)
   stopifnot("package_dir is not a single string" = is.character(package_dir) && length(package_dir) == 1L)
   stopifnot("overwrite is not of type logical" = is.logical(overwrite) && length(overwrite) == 1L)
+  check_derivative(derivative, entry_points)
 
   files <- check_paths(files, package_dir)
   name <- package_name(package_dir)
@@ -24,7 +25,7 @@ make_package <- function(files, entry_points, package_dir = ".", overwrite = FAL
     helpers <- reachable_helpers(entry_point, definitions)
     used_helpers <- union(used_helpers, helpers)
     combined <- combine_functions(definitions[c(entry_point, helpers)], entry_point)
-    cpp <- translate_internally(combined, types_f, NULL, entry_point, TRUE)
+    cpp <- translate_internally(combined, types_f, derivative[[entry_point]], entry_point, TRUE)
     # NOTE: sourceCpp-only attributes; in a package the Makevars does this
     cpp <- strsplit(cpp, "\n", fixed = TRUE)[[1]]
     cpp <- cpp[!grepl("^// \\[\\[Rcpp::(depends|plugins)", cpp)]
@@ -57,6 +58,27 @@ reachable_helpers <- function(entry_point, definitions) {
     found <- union(found, used)
   }
   found
+}
+
+check_derivative <- function(derivative, entry_points) {
+  stopifnot("derivative is not a list" = is.list(derivative))
+  if (length(derivative) == 0L) return(invisible())
+  keys <- names(derivative)
+  if (is.null(keys) || any(keys == "")) {
+    stop("derivative has to be a named list, e.g. list(f = \"forward\")")
+  }
+  if (anyDuplicated(keys) != 0L) {
+    stop(sprintf("derivative names an entry point more than once: %s", paste(unique(keys[duplicated(keys)]), collapse = ", ")))
+  }
+  unknown <- setdiff(keys, entry_points)
+  if (length(unknown) != 0L) {
+    stop(sprintf("derivative names unknown entry point(s): %s", paste(unknown, collapse = ", ")))
+  }
+  valid <- vapply(derivative, function(d) is.character(d) && length(d) == 1L && d %in% c("forward", "reverse"), logical(1L))
+  if (!all(valid)) {
+    stop(sprintf("derivative of %s is neither \"forward\" nor \"reverse\"", paste(keys[!valid], collapse = ", ")))
+  }
+  invisible()
 }
 
 # NOTE: a cpp file of a removed entry point would still be compiled
