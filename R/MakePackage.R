@@ -41,7 +41,8 @@ make_package <- function(files, entry_points, package_dir = ".", overwrite = FAL
   remove_stale_cpp_files(package_dir, cpp_files)
   copy_headers(package_dir)
   write_makevars(package_dir, overwrite)
-  Rcpp::compileAttributes(package_dir)
+  # NOTE: the RcppThread plugin cat()s its link flags (-latomic -lpthread)
+  utils::capture.output(Rcpp::compileAttributes(package_dir))
   invisible(name)
 }
 

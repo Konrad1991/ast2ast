@@ -94,11 +94,11 @@ template <typename... Args> inline auto c(Args &&...args) {
       } else {
         using InnerType = typename ReRef<decltype(arg)>::type::value_type;
         if constexpr (IS<InnerType, cType>) {
-          for (int i = 0; i < arg.size(); i++) {
+          for (std::size_t i = 0; i < arg.size(); i++) {
             ret.set(index + i, arg.get(i));
           }
         } else {
-          for (int i = 0; i < arg.size(); i++) {
+          for (std::size_t i = 0; i < arg.size(); i++) {
             ret.set(index + i, static_cast<cType>(arg.get(i)));
           }
         }

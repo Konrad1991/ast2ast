@@ -318,7 +318,6 @@ struct ReverseTape {
     }
 
     std::vector<double> out_vals(d * d, 0.0);
-    const int di = static_cast<int>(d);
     const int mi = static_cast<int>(m);
     const int ni = static_cast<int>(n);
     const double alpha = 1.0, beta = 0.0;
@@ -3008,7 +3007,6 @@ struct LogicalRef {
   inline LogicalRef(bool) = delete;
 
   template<typename T> requires IsArray<Decayed<T>> inline LogicalRef& operator=(const T& arr) {
-    using  inner = typename ExtractDataType<T>::value_type;
     ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
     *this = arr.get(0);
     return *this;
@@ -3084,7 +3082,6 @@ struct IntegerRef {
   inline IntegerRef(int) = delete;
 
   template<typename T> requires IsArray<Decayed<T>> inline IntegerRef& operator=(const T& arr) {
-    using  inner = typename ExtractDataType<T>::value_type;
     ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
     *this = arr.get(0);
     return *this;
@@ -3161,7 +3158,6 @@ struct DoubleRef {
   inline DoubleRef(Double) = delete;
   inline DoubleRef(double) = delete;
   template<typename T> requires IsArray<Decayed<T>> inline DoubleRef& operator=(const T& arr) {
-    using  inner = typename ExtractDataType<T>::value_type;
     ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
     *this = arr.get(0);
     return *this;
@@ -3252,7 +3248,6 @@ struct DualRef {
   inline DualRef(Dual) = delete;
   inline DualRef(double, double) = delete;
   template<typename T> requires IsArray<Decayed<T>> inline DualRef& operator=(const T& arr) {
-    using  inner = typename ExtractDataType<T>::value_type;
     ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
     *this = arr.get(0);
     return *this;
