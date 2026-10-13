@@ -77,3 +77,17 @@ reads `y[["prey"]]` not `y[[1L]]`. String index is always a literal (no
 character variables), so it's rewritten to an integer index at translation
 time — identical C++, bad name -> R `stop()`. Full doc + steps:
 `development/named_vector_layout.md`. Konrad implements, Claude advises.
+
+# Reserved names clash with generated C++ (found 2026-10-13, make_package)
+
+A user fn/type named `foo_t`, `foo_impl` or `foo_namespace` clashes with the
+names generated for a fn `foo` (functor `foo_t`, namespace `foo_impl`).
+Also today with `translate()`. Fix: reject these suffixes in fn/type names.
+```r
+f <- function(a) {
+  argtypes(a |> type(double))
+  g <- function(a) { argtypes(a |> type(double)); returntype(double); a }
+  g_t <- function(a) { argtypes(a |> type(double)); returntype(double); a }  # clashes with functor g_t
+  g(a) + g_t(a)
+}
+```

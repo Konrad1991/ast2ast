@@ -353,10 +353,10 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct, real_type, f
 
 # Translates the AST representation into C++ code
 # ========================================================================
-translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry, debug = TRUE, var_list, namespace = "f_impl") {
+translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry, debug = TRUE, var_list, namespace = "f_impl", function_name = NULL) {
   code_string <- NULL
   traverse_ast(ast, action_transpile_inner_functions, real_type, debug, var_list, namespace)
-  traverse_ast(ast, action_snapshot_lines, debug)
+  traverse_ast(ast, action_snapshot_lines, debug, function_name)
   traverse_ast(ast, action_set_true, r_fct, real_type)
   traverse_ast(ast, action_translate, function_registry, real_type)
   # Stringify ast
@@ -641,7 +641,7 @@ translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, de
   }
 
   # Translate
-  code_string <- translate_to_cpp_code(AST, r_fct, real_type, function_registry, debug, vars_types_list, namespace)
+  code_string <- translate_to_cpp_code(AST, r_fct, real_type, function_registry, debug, vars_types_list, namespace, as.character(name_fct))
   for (i in seq_along(vars_types_list)) {
     vars_types_list[[i]]$real_type <- real_type
   }

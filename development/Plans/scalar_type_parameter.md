@@ -1,6 +1,6 @@
 # Scalar type as a codegen parameter (Block 1 of make_package)
 
-Status: plan (2026-10-12), not started.
+Status: DONE (2026-10-12/13), steps 1-5 committed. Block 2 = `make_package.md`.
 
 ## Why
 

@@ -232,7 +232,7 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, var_
     # var_list for nested fns is this fn's own scope (like the outer call passes `types`)
     traverse_ast(AST$block[[i]], action_transpile_inner_functions, real_type, debug, node$vars_types_list, inner_namespace)
   }
-  traverse_ast(AST, action_snapshot_lines, debug)
+  traverse_ast(AST, action_snapshot_lines, debug, node$fct_name)
   traverse_ast(AST, action_set_true, r_fct, real_type)
   node$AST <- AST
 }
@@ -746,7 +746,7 @@ action_check_type_of_args <- function(node, variables, r_fct, real_type, functio
 # wrote, not the emitted C++ (wrap/handle_return/etc. all default to their
 # plain, unflagged rendering at this point).
 # ========================================================================
-action_snapshot_lines <- function(node, debug = TRUE) {
+action_snapshot_lines <- function(node, debug = TRUE, function_name = NULL) {
   if (!inherits(node, "block_node")) {
     return()
   }
@@ -769,7 +769,8 @@ action_snapshot_lines <- function(node, debug = TRUE) {
       stmt$pre_translate_line <- stmt$stringify()
     }
     if (!is.null(stmt$location) && !is.null(stmt$pre_translate_line)) {
-      stmt$pre_translate_line <- paste0(stmt$location, ": ", stmt$pre_translate_line)
+      fn <- if (is.null(function_name)) "" else sprintf(" (%s)", function_name)
+      stmt$pre_translate_line <- paste0(stmt$location, fn, ": ", stmt$pre_translate_line)
     }
   }
 }
