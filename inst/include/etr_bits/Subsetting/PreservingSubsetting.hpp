@@ -762,18 +762,51 @@ inline void subset_assign(ArrayType& arr, const RHS& rhs, const Args&... args) {
   }
 }
 
+// Constant subsets: gather the selected elements into an owned buffer
+// (see "Create constant subset" below for why no view)
+template <typename ArrayType, typename... Args>
+inline auto subset_gather(const ArrayType& arr, const Args&... args) {
+  using E = typename ExtractDataType<Decayed<ArrayType>>::value_type;
+
+  auto ol = create_indices(arr, args...);
+  const std::size_t S = ol.out.size();
+  Array<E, Buffer<E, RBufferTrait>> res(SI{S});
+  res.dim = std::move(ol.L);
+  for (std::size_t i = 0; i < S; i++) {
+    res.set(i, arr.d.get_unchecked(ol.out.get_unchecked(i)));
+  }
+  return res;
+}
+
+template <typename ArrayType, typename... Args>
+inline auto subset_gather_strided(const ArrayType& arr, const Args&... args) {
+  using E = typename ExtractDataType<Decayed<ArrayType>>::value_type;
+  const auto lay = make_strided_layout(arr, args...);
+  Array<E, Buffer<E, RBufferTrait>> res(SI{lay.size});
+  res.dim = dim_of(lay);
+  std::size_t i = 0;
+  for_each_strided(lay, [&](std::size_t off) { res.set(i++, arr.d.get_unchecked(off)); });
+  return res;
+}
+
 // Create mutable subset
 template <typename ArrayType, typename... Args>
 inline auto subset(ArrayType& arr, const Args&... args) {
-  using E = typename ExtractDataType<ArrayType>::value_type;
-  using DTYPE = Decayed<decltype(arr.d)>;
-  constexpr std::size_t N = sizeof...(Args);
+  // NOTE: a const array (const ref() argument) lands here too, since T& beats the
+  // T&& const overload below; a SubsetView needs a mutable Buffer, so gather instead
+  if constexpr (std::is_const_v<ArrayType>) {
+    return subset_gather(arr, args...);
+  } else {
+    using E = typename ExtractDataType<ArrayType>::value_type;
+    using DTYPE = Decayed<decltype(arr.d)>;
+    constexpr std::size_t N = sizeof...(Args);
 
-  auto ol = create_indices(arr, args...);
-  return Array<E, SubsetView<DTYPE, N, SubsetViewTrait>>(
-    SubsetView<DTYPE, N, SubsetViewTrait>{arr.d, std::move(ol.out)},
-    std::move(ol.L)
-  );
+    auto ol = create_indices(arr, args...);
+    return Array<E, SubsetView<DTYPE, N, SubsetViewTrait>>(
+      SubsetView<DTYPE, N, SubsetViewTrait>{arr.d, std::move(ol.out)},
+      std::move(ol.L)
+    );
+  }
 }
 
 // Fast path: subset(array, Scalars...)
@@ -799,30 +832,28 @@ inline decltype(auto) subset(ArrayType&& arr, const Args&... args) {
 template <typename ArrayType, typename... Args>
 requires AllStridedIndices<Args...>
 inline auto subset(ArrayType& arr, const Args&... args) {
-  using E = typename ExtractDataType<ArrayType>::value_type;
-  using DTYPE = Decayed<decltype(arr.d)>;
-  constexpr std::size_t N = sizeof...(Args);
-  const auto lay = make_strided_layout(arr, args...);
-  Buffer<int> out(lay.size);
-  std::size_t i = 0;
-  for_each_strided(lay, [&](std::size_t off) { out.set_unchecked(i++, static_cast<int>(off)); });
-  return Array<E, SubsetView<DTYPE, N, SubsetViewTrait>>(
-    SubsetView<DTYPE, N, SubsetViewTrait>{arr.d, std::move(out)},
-    dim_of(lay)
-  );
+  if constexpr (std::is_const_v<ArrayType>) {
+    return subset_gather_strided(arr, args...);
+  } else {
+    using E = typename ExtractDataType<ArrayType>::value_type;
+    using DTYPE = Decayed<decltype(arr.d)>;
+    constexpr std::size_t N = sizeof...(Args);
+    const auto lay = make_strided_layout(arr, args...);
+    Buffer<int> out(lay.size);
+    std::size_t i = 0;
+    for_each_strided(lay, [&](std::size_t off) { out.set_unchecked(i++, static_cast<int>(off)); });
+    return Array<E, SubsetView<DTYPE, N, SubsetViewTrait>>(
+      SubsetView<DTYPE, N, SubsetViewTrait>{arr.d, std::move(out)},
+      dim_of(lay)
+    );
+  }
 }
 
 // Fast path: constant strided subset, gathered like the general const subset below
 template <typename ArrayType, typename... Args>
 requires NotSubsetArray<ArrayType> && AllStridedIndices<Args...>
 inline auto subset(ArrayType&& arr, const Args&... args) {
-  using E = typename ExtractDataType<ArrayType>::value_type;
-  const auto lay = make_strided_layout(arr, args...);
-  Array<E, Buffer<E, RBufferTrait>> res(SI{lay.size});
-  res.dim = dim_of(lay);
-  std::size_t i = 0;
-  for_each_strided(lay, [&](std::size_t off) { res.set(i++, arr.d.get_unchecked(off)); });
-  return res;
+  return subset_gather_strided(arr, args...);
 }
 
 // Create subset of subset
@@ -853,16 +884,7 @@ inline auto subset(ArrayType&& arr, const Args&... args) {
 // ------------------------------------------------------------------
 template <typename ArrayType, typename... Args> requires NotSubsetArray<ArrayType> && HasNonScalarIndex<Args...>
 inline auto subset(ArrayType&& arr, const Args&... args) {
-  using E = typename ExtractDataType<ArrayType>::value_type;
-
-  auto ol = create_indices(arr, args...);
-  const std::size_t S = ol.out.size();
-  Array<E, Buffer<E, RBufferTrait>> res(SI{S});
-  res.dim = std::move(ol.L);
-  for (std::size_t i = 0; i < S; i++) {
-    res.set(i, arr.d.get_unchecked(ol.out.get_unchecked(i)));
-  }
-  return res;
+  return subset_gather(arr, args...);
 }
 
 } // namespace etr

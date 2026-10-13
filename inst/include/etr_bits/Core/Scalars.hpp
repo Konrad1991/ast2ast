@@ -3013,12 +3013,45 @@ struct LogicalRef {
   }
 };
 
+// NOTE: memory without NA flags (p_na == nullptr) is R's (borrow_vec/borrow_mat):
+// there NA is R's sentinel value inside the data itself
+inline bool is_r_na_sentinel(double x) {
+#ifdef STANDALONE_ETR
+  (void)x;
+  return false;
+#else
+  return ISNA(x);
+#endif
+}
+inline bool is_r_na_sentinel(int x) {
+#ifdef STANDALONE_ETR
+  (void)x;
+  return false;
+#else
+  return x == NA_INTEGER;
+#endif
+}
+inline void write_value_and_na(double* p_val, bool* p_na, double value, bool na) {
+  *p_val = value;
+  if (p_na) *p_na = na;
+#ifndef STANDALONE_ETR
+  else if (na) *p_val = NA_REAL;
+#endif
+}
+inline void write_value_and_na(int* p_val, bool* p_na, int value, bool na) {
+  *p_val = value;
+  if (p_na) *p_na = na;
+#ifndef STANDALONE_ETR
+  else if (na) *p_val = NA_INTEGER;
+#endif
+}
+
 struct IntegerRef {
   int* p_val;
   bool* p_na;
   operator Integer() const {
     Integer out(*p_val);
-    if (p_na) out.is_na = *p_na;
+    out.is_na = p_na ? *p_na : is_r_na_sentinel(*p_val);
     return out;
   }
   // Scalar operations, delegated to the referenced value via operator Integer().
@@ -3062,19 +3095,19 @@ struct IntegerRef {
   explicit inline operator bool() const { return static_cast<bool>(Integer(*this)); }
   IntegerRef& operator=(const IntegerRef& other) {
     if (this == &other) return *this;
-    *p_val = *other.p_val;
-    if (p_na) *p_na = other.p_na ? *other.p_na : false;
+    const Integer value(other);
+    write_value_and_na(p_val, p_na, *other.p_val, value.is_na);
     return *this;
   }
   IntegerRef& operator=(const Integer& x) {
-    *p_val = get_val(x);
-    if (p_na) *p_na = x.is_na;
+    write_value_and_na(p_val, p_na, get_val(x), x.is_na);
     return *this;
   }
   template<typename T> requires (IsArithV<T> || IsArithRefV<T>) IntegerRef& operator=(const T& x) {
     bool na = get_scalar_val(x).is_na;
-    *p_val = double_to_int_na(static_cast<double>(get_val(x)), na);
-    if (p_na) *p_na = na;
+    // NOTE: separate statement, double_to_int_na sets na for NaN
+    const int value = double_to_int_na(static_cast<double>(get_val(x)), na);
+    write_value_and_na(p_val, p_na, value, na);
     return *this;
   }
   explicit inline IntegerRef(int* v, bool* n = nullptr);
@@ -3092,7 +3125,7 @@ struct DoubleRef {
   bool*   p_na;
   operator Double() const {
     Double out(*p_val);
-    if (p_na) out.is_na = *p_na;
+    out.is_na = p_na ? *p_na : is_r_na_sentinel(*p_val);
     return out;
   }
   // Scalar operations, delegated to the referenced value via operator Double().
@@ -3140,18 +3173,16 @@ struct DoubleRef {
   explicit inline operator bool() const { return static_cast<bool>(Double(*this)); }
   DoubleRef& operator=(const DoubleRef& other) {
     if (this == &other) return *this;
-    *p_val = *other.p_val;
-    if (p_na) *p_na = other.p_na ? *other.p_na : false;
+    const Double value(other);
+    write_value_and_na(p_val, p_na, *other.p_val, value.is_na);
     return *this;
   }
   DoubleRef& operator=(const Double& x) {
-    *p_val = get_val(x);
-    if (p_na) *p_na = x.is_na;
+    write_value_and_na(p_val, p_na, get_val(x), x.is_na);
     return *this;
   }
   template<typename T> requires (IsArithV<T> || IsArithRefV<T>) DoubleRef& operator=(const T& x) {
-    *p_val = static_cast<double>(get_val(x));
-    if (p_na) *p_na = get_scalar_val(x).is_na;
+    write_value_and_na(p_val, p_na, static_cast<double>(get_val(x)), get_scalar_val(x).is_na);
     return *this;
   }
   explicit inline DoubleRef(double* v, bool* n = nullptr);

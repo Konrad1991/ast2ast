@@ -125,3 +125,23 @@ expect_true(grepl("etr::Borrow<ETR_REAL>", code, fixed = TRUE))
 # Borrow<Dual> has to compile, not only translate
 fcpp <- ast2ast::translate(f, derivative = "forward", output = "XPtr")
 expect_true(inherits(fcpp, "XPtr"))
+
+# --- NA in borrowed R memory: R's sentinel value, no separate NA flags ------
+# is.na() missed every NA and a written NA arrived as NaN
+borrow_na <- function(M, v, x) {
+  argtypes(
+    M |> type(borrow_mat(double)) |> const(),
+    v |> type(borrow_vec(int)) |> const(),
+    x |> type(borrow_vec(double))
+  )
+  returntype(int)
+  n <- 0L
+  for (i in seq_len(length(M))) if (is.na(M[[i]])) n <- n + 1L
+  for (i in seq_len(length(v))) if (is.na(v[[i]])) n <- n + 1L
+  x[[2L]] <- NA
+  return(n)
+}
+fcpp <- ast2ast::translate(borrow_na)
+x <- c(1, 2, 3)
+expect_equal(fcpp(matrix(c(1, NA, 3, NA), 2L, 2L), c(1L, NA, 3L), x), 3L)
+expect_true(is.na(x[[2L]]) && !is.nan(x[[2L]]))

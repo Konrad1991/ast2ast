@@ -128,33 +128,32 @@ template <typename T, typename BorrowTrait> struct Borrow {
   value_type get(std::size_t idx) const {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
-    value_type out = load(p[idx]);
-    if constexpr (IsArithV<value_type>) {
-      if (p_na) out.is_na = p_na[idx];
-    }
-    return out;
+    return get_unchecked(idx);
   }
   void set(std::size_t idx, const value_type& val) {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
-    p[idx] = store(val);
-    if constexpr (IsArithV<value_type>) {
-      if (p_na) p_na[idx] = val.is_na;
-    }
+    set_unchecked(idx, val);
   }
   // Skip both checks -- for callers that already proved idx is valid once,
   // up front, for the whole buffer.
   value_type get_unchecked(std::size_t idx) const {
     value_type out = load(p[idx]);
-    if constexpr (IsArithV<value_type>) {
+    if constexpr (IS<T, Double> || IS<T, Integer>) {
+      out.is_na = p_na ? p_na[idx] : is_r_na_sentinel(p[idx]);
+    } else if constexpr (IsArithV<value_type>) {
       if (p_na) out.is_na = p_na[idx];
     }
     return out;
   }
   void set_unchecked(std::size_t idx, const value_type& val) {
-    p[idx] = store(val);
-    if constexpr (IsArithV<value_type>) {
-      if (p_na) p_na[idx] = val.is_na;
+    if constexpr (IS<T, Double> || IS<T, Integer>) {
+      write_value_and_na(&p[idx], p_na ? &p_na[idx] : nullptr, store(val), val.is_na);
+    } else {
+      p[idx] = store(val);
+      if constexpr (IsArithV<value_type>) {
+        if (p_na) p_na[idx] = val.is_na;
+      }
     }
   }
 

@@ -92,6 +92,21 @@ f <- function(a) {
 }
 ```
 
+# is.na(NaN) is FALSE (found 2026-10-13, Randomization)
+
+R: `is.na(NaN)` is TRUE. ast2ast only flags R's NA (`ISNA`), owned and
+borrowed data alike.
+```r
+f <- function(x) {
+  argtypes(x |> type(vec(double)))
+  returntype(int)
+  n <- 0L
+  for (i in seq_len(length(x))) if (is.na(x[[i]])) n <- n + 1L
+  n
+}
+translate(f)(c(1, NA, NaN))   # 1, R gives sum(is.na(c(1, NA, NaN))) == 2
+```
+
 # FIXED — Type declaration without assignment emits `x;` (found 2026-10-13, tsf)
 
 Fixed in block_node$stringify (R/Nodes.R): statements with operator `type`
