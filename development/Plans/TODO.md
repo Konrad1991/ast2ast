@@ -91,3 +91,20 @@ f <- function(a) {
   g(a) + g_t(a)
 }
 ```
+
+# Type declaration without assignment emits `x;` (found 2026-10-13, tsf)
+
+A pure declaration `x |> type(double)` as a statement emits an empty C++
+statement -> `-Wunused-value` on every package install (hidden by
+sourceCpp's quiet output with translate()). Fix: block_node skips pure type
+declarations when stringifying (also the current_line label).
+```r
+f <- function(a) {
+  argtypes(a |> type(double))
+  for (i in 1L:3L) {
+    pred |> type(double)   # C++: "pred;" -> warning: statement has no effect
+    pred <- a * i
+  }
+  a
+}
+```

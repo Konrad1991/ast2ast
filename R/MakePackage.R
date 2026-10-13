@@ -84,8 +84,9 @@ check_paths <- function(files, package_dir) {
   if (length(missing) != 0L) {
     stop(sprintf("The following files do not exist:\n%s", paste(missing, collapse = "\n")))
   }
-  package_path <- normalizePath(package_dir)
-  normalized <- normalizePath(paths)
+  # NOTE: winslash = "/" so the startsWith checks below match file.path() on Windows
+  package_path <- normalizePath(package_dir, winslash = "/")
+  normalized <- normalizePath(paths, winslash = "/")
   outside <- paths[!startsWith(normalized, file.path(package_path, ""))]
   if (length(outside) != 0L) {
     stop(sprintf("The following files are not inside %s:\n%s", package_dir, paste(outside, collapse = "\n")))
