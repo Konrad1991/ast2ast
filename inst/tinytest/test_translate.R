@@ -67,3 +67,23 @@ src2 <- ast2ast::translate(
   output = "XPtr", getsource = TRUE
 )
 expect_true(grepl("new fct_ptr(&  named_xptr_fn ))", src2, fixed = TRUE))
+
+# a pure type declaration emits no C++ statement (was "pred;" -> -Wunused-value);
+# the typed assignment x |> type(T) <- v is still emitted
+declarations <- function(a) {
+  argtypes(a |> type(double))
+  b |> type(double)
+  for (i in 1L:3L) {
+    pred |> type(double)
+    pred <- a * i
+    c |> type(double) <- pred + 1
+    b <- c
+  }
+  b
+}
+src3 <- strsplit(ast2ast::translate(declarations, getsource = TRUE), "\n")[[1]]
+expect_false(any(grepl("^\\s*pred;", src3)))
+expect_false(any(grepl("type(pred, double)", src3, fixed = TRUE)))
+expect_false(any(grepl("type(b, double)", src3, fixed = TRUE)))
+expect_true(any(grepl("^\\s*c = pred \\+ ", src3)))
+expect_equal(ast2ast::translate(declarations)(2), 7)

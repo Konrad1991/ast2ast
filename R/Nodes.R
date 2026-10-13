@@ -664,6 +664,11 @@ block_node <- R6::R6Class(
             inherits(stmt$right_node, "fn_node")) {
           next
         }
+        # NOTE: only the pure declaration x |> type(T); x |> type(T) <- v is a `<-` node.
+        # x is already declared at the top of the fn, emitting it would give "x;"
+        if (inherits(stmt, "binary_node") && stmt$operator == "type") {
+          next
+        }
         end <- ";"
         s <- stmt$stringify(indent = indent)
         if (inherits(stmt, c("repeat_node", "fn_node"))) {

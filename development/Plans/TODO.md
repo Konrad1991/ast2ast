@@ -92,7 +92,10 @@ f <- function(a) {
 }
 ```
 
-# Type declaration without assignment emits `x;` (found 2026-10-13, tsf)
+# FIXED — Type declaration without assignment emits `x;` (found 2026-10-13, tsf)
+
+Fixed in block_node$stringify (R/Nodes.R): statements with operator `type`
+are skipped; test in test_translate.R.
 
 A pure declaration `x |> type(double)` as a statement emits an empty C++
 statement -> `-Wunused-value` on every package install (hidden by
