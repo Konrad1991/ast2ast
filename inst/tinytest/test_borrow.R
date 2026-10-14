@@ -1,6 +1,6 @@
 library(tinytest)
 
-# --- passing a borrowed vector where an owned vector is required -----------
+# --- borrowed vector where an owned vector is required: copy + warning ------
 f <- function(v) {
   argtypes(
     v |> type(borrow_vec(double))
@@ -16,9 +16,56 @@ f <- function(v) {
   )
   return(g(v))
 }
+expect_warning(
+  ast2ast::translate(f, getsource = TRUE),
+  pattern = "borrow_vector is copied into vector"
+)
+fcpp <- suppressWarnings(ast2ast::translate(f))
+expect_equal(fcpp(c(1, 2, 3)), c(1, 2, 3))
+
+# the callee writes into its copy; the caller's (borrowed) vector is unchanged
+f <- function(v) {
+  argtypes(
+    v |> type(borrow_vec(double))
+  )
+  g <- fn(
+    argtypes(
+      x |> type(vec(double))
+    ),
+    return(vec(double)),
+    {
+      x[[1L]] <- 0
+      return(x)
+    }
+  )
+  w <- g(v)
+  return(v[[1L]] + w[[1L]])
+}
+fcpp <- suppressWarnings(ast2ast::translate(f))
+x <- c(5, 2, 3)
+expect_equal(fcpp(x), 5)
+expect_equal(x, c(5, 2, 3))
+
+# a mutable ref() would bind to the temporary copy and lose the writes
+f <- function(v) {
+  argtypes(
+    v |> type(borrow_vec(double))
+  )
+  g <- fn(
+    argtypes(
+      x |> type(vec(double)) |> ref()
+    ),
+    return(void),
+    {
+      x[[1L]] <- 0
+    }
+  )
+  g(v)
+  return(v)
+}
 expect_error(
-  ast2ast::translate(f),
-  pattern = "Found borrow_vector but vector is required"
+  ast2ast::translate(f, getsource = TRUE),
+  pattern = "a copy would lose the writes"
 )
 
 # --- happy path: a borrowed argument materialized into an owned return -----

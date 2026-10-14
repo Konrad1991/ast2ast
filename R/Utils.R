@@ -38,18 +38,30 @@ same_base_type <- function(is, should) {
   if (should == "int") should <- "integer"
   should == is
 }
+normalize_data_struct <- function(ds) {
+  if (ds == "vec") return("vector")
+  if (ds == "range") return("vector")
+  if (ds == "borrow_vec") return("borrow_vector")
+  if (ds == "mat") return("matrix")
+  if (ds == "borrow_mat") return("borrow_matrix")
+  ds
+}
 same_data_struct <- function(is, should) {
-  correct <- function(ds) {
-    if (ds == "vec") return("vector")
-    if (ds == "range") return("vector")
-    if (ds == "borrow_vec") return("borrow_vector")
-    if (ds == "mat") return("matrix")
-    if (ds == "borrow_mat") return("borrow_matrix")
+  normalize_data_struct(is) == normalize_data_struct(should)
+}
+borrow_type_spelling <- function(ds) {
+  switch(normalize_data_struct(ds),
+    borrow_vector = "borrow_vec(...)",
+    borrow_matrix = "borrow_mat(...)",
+    borrow_array = "borrow_array(...)",
     ds
-  }
-  is <- correct(is)
-  should <- correct(should)
-  should == is
+  )
+}
+# NOTE: allowed for function arguments; the C++ converting constructor copies
+borrow_to_owned <- function(is, should) {
+  is <- normalize_data_struct(is)
+  should <- normalize_data_struct(should)
+  should %in% c("vector", "matrix", "array") && is == paste0("borrow_", should)
 }
 
 base_type_rank <- function(bt) {

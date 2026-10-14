@@ -324,9 +324,25 @@ action_update_function_registry <- function(node, function_registry, namespace =
     if (!same_base_type(is_type$get_base_type(), should_type$get_base_type())) {
       node$error <- sprintf("The argument Nr. %s to function %s has not the correct type. Found %s but %s is required", index, name, is_type$get_base_type(), should_type$get_base_type())
     }
-    if (!same_data_struct(is_type$get_data_struct_verbose(), should_type$get_data_struct_verbose())) {
-      node$error <- sprintf("The argument Nr. %s to function %s has not the correct data structure. Found %s but %s is required", index, name, is_type$get_data_struct_verbose(), should_type$get_data_struct_verbose())
+    is_ds <- is_type$get_data_struct_verbose()
+    should_ds <- should_type$get_data_struct_verbose()
+    if (same_data_struct(is_ds, should_ds)) return()
+    if (!borrow_to_owned(is_ds, should_ds)) {
+      node$error <- sprintf("The argument Nr. %s to function %s has not the correct data structure. Found %s but %s is required", index, name, is_ds, should_ds)
+      return()
     }
+    # NOTE: a mutable ref would bind to the temporary copy and lose the writes
+    if (should_type$get_copy_or_ref() == "ref" && should_type$get_const_or_mut() == "mutable") {
+      node$error <- sprintf(
+        "The argument Nr. %s to function %s is a mutable ref() to %s but %s was passed; a copy would lose the writes. Declare the parameter as %s |> ref()",
+        index, name, should_ds, is_ds, borrow_type_spelling(is_ds)
+      )
+      return()
+    }
+    warning(sprintf(
+      "The argument Nr. %s to function %s: %s is copied into %s. Declare the parameter as %s to avoid the copy",
+      index, name, is_ds, should_ds, borrow_type_spelling(is_ds)
+    ), call. = FALSE)
   }
   const_or_mut_check <- function(node, should_type, index, name) {
     is_variable <- inherits(node, "variable_node")
