@@ -31,6 +31,14 @@ changes in ast2ast version 1.1
   checked, returned named vectors carry their names; `vector("State")` and a
   declaration (`res |> type(named_vec(State))`) allocate one entry per name,
   `vector("State", n)` allocates n entries.
+- Layouts for matrices, arrays and collections: `new_mat_layout(L, double,
+  rownames = , colnames = )`, `new_array_layout(L, double, dimnames =
+  list(...))`, `new_collection_layout(L, Struct, names = )`, used as
+  `named_mat` / `named_borrow_mat`, `named_array` / `named_borrow_array`,
+  `named_collection`. Each names argument is an R expression, `NULL` (no names)
+  or an existing `new_layout()`. `m[["t1", "S30"]]` (also mixed with numbers)
+  and `pts[["p1"]]` are resolved at translation time; dimnames / names of R
+  arguments are checked and attached to returned objects.
 - A `borrow_vec`/`borrow_mat`/`borrow_array` can be passed to an inner
   function that expects `vec`/`mat`/`array` (by value or `const()`): it is
   copied, with a warning at translation time. A mutable `ref()` parameter

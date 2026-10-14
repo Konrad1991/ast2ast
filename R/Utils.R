@@ -49,8 +49,13 @@ normalize_data_struct <- function(ds) {
 same_data_struct <- function(is, should) {
   normalize_data_struct(is) == normalize_data_struct(should)
 }
+layout_holders <- c("vec", "borrow_vec", "mat", "borrow_mat", "arr", "borrow_arr", "collection")
 layout_of <- function(t) {
-  if (inherits(t, "pre_type_node") && inherits(t$data_struct, c("vec", "borrow_vec"))) t$data_struct$layout
+  if (inherits(t, "pre_type_node") && inherits(t$data_struct, layout_holders)) t$data_struct$layout
+}
+cpp_dimnames_list <- function(dimnames) {
+  dims <- vapply(dimnames, function(d) if (is.null(d)) "{}" else cpp_string_list(d), character(1L))
+  paste0("{", paste(dims, collapse = ", "), "}")
 }
 layout_allocator <- function(layout, real_type) {
   switch(layout$base_type,

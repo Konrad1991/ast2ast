@@ -306,7 +306,8 @@ warn_if_type_widened_by_subsetting <- function(variable, old_data_struct, new_da
 keep_layout <- function(old_type, new_type) {
   layout <- layout_of(old_type)
   if (is.null(layout) || !inherits(new_type, "pre_type_node") ||
-      !inherits(new_type$data_struct, c("vec", "borrow_vec")) || !is.null(new_type$data_struct$layout)) {
+      !inherits(new_type$data_struct, layout_holders) || !is.null(new_type$data_struct$layout) ||
+      new_type$get_data_struct() != layout$kind) {
     return(new_type)
   }
   new_type <- new_type$clone(deep = TRUE)

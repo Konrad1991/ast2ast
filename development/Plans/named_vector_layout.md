@@ -128,7 +128,11 @@ unusual; dimnames are the common way to name matrices and arrays.
 Not started (2026-10-14). In R, lists carry names: `l <- list(a = 1, b = "x")`,
 `l[["a"]]`. ast2ast collections (`collection(Point)`) come from unnamed R lists.
 
-## Later: layout constructors per data structure (decided 2026-10-14)
+## Layout constructors per data structure (decided and built 2026-10-14, main)
+
+Built: definitions, usage types, index rewrite (also mixed), dimnames/names
+check in and attach out. Not built: allocation by declaration / vector() for
+matrix, array and collection layouts (only vectors).
 
 One definition constructor per data structure; the definition carries the
 element type (for collections the struct type, not a base type):

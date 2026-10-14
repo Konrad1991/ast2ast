@@ -486,19 +486,58 @@ resolve_name_index <- function(node, left_type_node) {
     return(sprintf("String index %s is only allowed on a named_vec / named_borrow_vec in: %s",
                    idx_node$name, node$stringify()))
   }
+  if (layout$kind %in% c("matrix", "array")) {
+    return(sprintf("%s layout %s: index every dimension, e.g. m[[\"row\", \"col\"]], in: %s",
+                   layout$kind, layout$name, node$stringify()))
+  }
+  res <- name_to_index_node(idx_node, layout$names, layout, "", node)
+  if (is.character(res)) return(res)
+  node$right_node <- res
+  NULL
+}
+
+# a string literal -> integer literal node via the names of one dimension
+name_to_index_node <- function(idx_node, names, layout, where, node) {
   value_name <- remove_double_quotes(idx_node$name)
-  idx <- match(value_name, layout$names)
+  idx <- match(value_name, names)
   if (is.na(idx)) {
-    distance <- utils::adist(value_name, layout$names)[1L, ]
-    closest <- layout$names[which.min(distance)]
-    return(sprintf("Unknown name '%s' for layout %s. Did you mean '%s'? In: %s",
-                   value_name, layout$name, closest, node$stringify()))
+    distance <- utils::adist(value_name, names)[1L, ]
+    closest <- names[which.min(distance)]
+    return(sprintf("Unknown name '%s'%s for layout %s. Did you mean '%s'? In: %s",
+                   value_name, where, layout$name, closest, node$stringify()))
   }
   new_idx <- literal_node$new(as.integer(idx))
   for (field in c("context", "real_type", "pre_translate_line", "location", "wrap")) {
     new_idx[[field]] <- idx_node[[field]]
   }
-  node$right_node <- new_idx
+  new_idx
+}
+
+# m[["t1", "S30"]] / a[["b", i, "t3"]] on a named matrix/array: each string
+# literal is resolved with the names of its dimension
+resolve_dim_indices <- function(node, obj_type) {
+  idx_args <- seq_along(node$args)[-1L]
+  is_name <- vapply(node$args[idx_args], function(a) {
+    inherits(a, "literal_node") && a$literal_type == "character"
+  }, logical(1L))
+  if (!any(is_name)) return(NULL)
+  layout <- layout_of(obj_type)
+  if (is.null(layout) || !(layout$kind %in% c("matrix", "array"))) {
+    return(sprintf("String indices are only allowed on a named_mat / named_array in: %s", node$stringify()))
+  }
+  if (length(idx_args) != length(layout$dimnames)) {
+    return(sprintf("%s layout %s has %d dimensions, found %d indices in: %s",
+                   layout$kind, layout$name, length(layout$dimnames), length(idx_args), node$stringify()))
+  }
+  for (k in seq_along(idx_args)[is_name]) {
+    names_k <- layout$dimnames[[k]]
+    if (is.null(names_k)) {
+      return(sprintf("Dimension %d of layout %s has no names in: %s", k, layout$name, node$stringify()))
+    }
+    res <- name_to_index_node(node$args[[idx_args[[k]]]], names_k, layout, sprintf(" (dimension %d)", k), node)
+    if (is.character(res)) return(res)
+    node$args[[idx_args[[k]]]] <- res
+  }
   NULL
 }
 
@@ -534,6 +573,8 @@ infer_subsetting <- function(node, vars_list, info_env, function_registry) {
     node$internal_type <- t
     return(t)
   } else if (inherits(node, "function_node")) {
+    err <- resolve_dim_indices(node, infer(node$args[[1L]], vars_list, info_env, function_registry))
+    if (!is.null(err)) return(err)
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
     })
@@ -1268,6 +1309,10 @@ function_registry_global$add(
     if (!is.null(err)) return(err)
     mode_type <- node$args[[1]]$name |> remove_double_quotes()
     custom_type <- info_env$known_types[[mode_type]]
+    if (inherits(custom_type, "layout_def") && custom_type$kind != "vector") {
+      return(sprintf("vector(\"%s\"): %s is a %s layout, vector() only creates named vectors (new_layout)",
+                     mode_type, mode_type, custom_type$kind))
+    }
     if (!inherits(custom_type, "layout_def") && length(node$args) == 1L) {
       return("vector(mode, length) needs a length")
     }

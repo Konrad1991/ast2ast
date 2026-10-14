@@ -176,6 +176,77 @@ inline SEXP AttachNames(SEXP s, std::initializer_list<const char*> names) {
   return s;
 }
 
+// named_mat / named_array arguments: number of dimensions, each dimension at
+// least as long as its names and (if the R object has dimnames) the names have
+// to match; an empty list = a dimension without names
+inline void CheckDimNames(SEXP s, const char* arg, const char* type_name,
+                          std::initializer_list<std::initializer_list<const char*>> dims) {
+  SEXP dim = Rf_getAttrib(s, R_DimSymbol);
+  const int nd = static_cast<int>(dims.size());
+  if (Rf_length(dim) != nd) [[unlikely]] {
+    ass(false, std::string("'") + arg + "' has " + std::to_string(Rf_length(dim)) +
+                 " dimensions, layout " + type_name + " expects " + std::to_string(nd));
+  }
+  SEXP dimnames = Rf_getAttrib(s, R_DimNamesSymbol);
+  int k = 0;
+  for (const auto& names : dims) {
+    const int n = static_cast<int>(names.size());
+    const int len = INTEGER(dim)[k];
+    if (len < n) [[unlikely]] {
+      ass(false, std::string("Dimension ") + std::to_string(k + 1) + " of '" + arg +
+                   "' does not match layout " + type_name + ": expected at least " +
+                   std::to_string(n) + ", got " + std::to_string(len));
+    }
+    SEXP r_names = dimnames == R_NilValue ? R_NilValue : VECTOR_ELT(dimnames, k);
+    if (n > 0 && r_names != R_NilValue) {
+      int i = 0;
+      for (const char* expected : names) {
+        const char* found = CHAR(STRING_ELT(r_names, i));
+        if (std::strcmp(found, expected) != 0) [[unlikely]] {
+          ass(false, std::string("Dimnames of '") + arg + "' do not match layout " + type_name +
+                       ": dimension " + std::to_string(k + 1) + ", position " + std::to_string(i + 1) +
+                       " is '" + found + "', expected '" + expected + "'");
+        }
+        ++i;
+      }
+    }
+    ++k;
+  }
+}
+
+// named_mat / named_array return values: dimnames attached; entries beyond the
+// names get "", dimensions without names get NULL
+inline SEXP AttachDimNames(SEXP s, std::initializer_list<std::initializer_list<const char*>> dims) {
+  if (MAYBE_REFERENCED(s)) s = Rf_duplicate(s);
+  PROTECT(s);
+  SEXP dim = Rf_getAttrib(s, R_DimSymbol);
+  const int nd = static_cast<int>(dims.size());
+  if (Rf_length(dim) != nd) {
+    UNPROTECT(1);
+    return s;
+  }
+  SEXP dimnames = PROTECT(Rf_allocVector(VECSXP, nd));
+  int k = 0;
+  for (const auto& names : dims) {
+    if (names.size() > 0) {
+      const int len = INTEGER(dim)[k];
+      SEXP r_names = PROTECT(Rf_allocVector(STRSXP, len));
+      int i = 0;
+      for (const char* name : names) {
+        if (i >= len) break;
+        SET_STRING_ELT(r_names, i++, Rf_mkChar(name));
+      }
+      for (; i < len; ++i) SET_STRING_ELT(r_names, i, R_BlankString);
+      SET_VECTOR_ELT(dimnames, k, r_names);
+      UNPROTECT(1);
+    }
+    ++k;
+  }
+  Rf_setAttrib(s, R_DimNamesSymbol, dimnames);
+  UNPROTECT(2);
+  return s;
+}
+
 // Cast scalar elements to their SEXP equivalents
 // -----------------------------------------------------------------------------------------------------------
 inline int to_R(Integer x)  { return isNA(x) ? NA_INTEGER : get_val(x); }

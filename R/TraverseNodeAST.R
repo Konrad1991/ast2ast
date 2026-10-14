@@ -329,8 +329,8 @@ action_update_function_registry <- function(node, function_registry, namespace =
       is_layout <- layout_of(is_type)
       if (is.null(is_layout) || is_layout$name != should_layout$name) {
         node$error <- sprintf(
-          "The argument Nr. %s to function %s has to be named_vec(%s) or named_borrow_vec(%s), found %s",
-          index, name, should_layout$name, should_layout$name,
+          "The argument Nr. %s to function %s has to be %s, found %s",
+          index, name, layout_usage_text(should_layout),
           if (is.null(is_layout)) is_type$get_data_struct_verbose() else is_layout$name
         )
         return()
