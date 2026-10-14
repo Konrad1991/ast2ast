@@ -58,7 +58,7 @@ make_package(files, entry_points, package_dir = ".", overwrite = FALSE,
   this and reports what is missing:
   \itemize{
     \item \code{DESCRIPTION}: \code{Imports: Rcpp} and
-      \code{LinkingTo: Rcpp, RcppThread}.
+      \code{LinkingTo: Rcpp, RcppThread, sundials}.
     \item \code{NAMESPACE}: \code{useDynLib(<package>, .registration = TRUE)}
       and \code{importFrom(Rcpp, evalCpp)}.
   }
@@ -73,7 +73,7 @@ make_package(files, entry_points, package_dir = ".", overwrite = FALSE,
 dir <- file.path(tempdir(), "mypkg")
 dir.create(file.path(dir, "inst", "tools"), recursive = TRUE)
 writeLines(c("Package: mypkg", "Version: 0.0.1", "Title: Example",
-             "Imports: Rcpp", "LinkingTo: Rcpp, RcppThread"),
+             "Imports: Rcpp", "LinkingTo: Rcpp, RcppThread, sundials"),
            file.path(dir, "DESCRIPTION"))
 writeLines(c("useDynLib(mypkg, .registration = TRUE)",
              "importFrom(Rcpp, evalCpp)", "export(f)"),

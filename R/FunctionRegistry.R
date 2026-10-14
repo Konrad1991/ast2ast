@@ -2257,6 +2257,91 @@ function_registry_global$add(
  valid_fn_context = TRUE
 )
 function_registry_global$add(
+  name = "ida", num_args = 8, arg_names = c(NA, NA, NA, NA, NA, NA, NA, NA),
+  docu = paste0(
+    "ida(res, y0, yp0, times, params, reltol, abstol, id)\n",
+    "res: fn(t, y, yp, r, params) writing the residual r = F(t, y, yp) in place -- ",
+    "t a scalar double; y, yp, r double vectors (borrowed, ref); no return value.\n",
+    "params is passed through unchanged and may be any type; the res's 5th argument must match it.\n",
+    "y0, yp0, times, id: double vectors (times[1] is t0). id: 1 = differential, 0 = algebraic. ",
+    "yp0 and the algebraic part of y0 are corrected by IDACalcIC.\n",
+    "reltol, abstol: scalar doubles.\n",
+    "Returns a length(times) x length(y0) matrix; row k is the state at times[k]."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    all_types <- lapply(node$args, function(arg) {
+      infer(arg, vars_list, info_env, function_registry)
+    })
+    if (length(all_types) != 8L) {
+      return("ida expects 8 arguments")
+    }
+    if (!inherits(all_types[[1L]], "fn_node")) {
+      return("The first argument to ida has to be a function")
+    }
+    is_vec_double <- function(t) {
+      inherits(t, "pre_type_node") && t$get_data_struct() == "vector" &&
+        t$get_base_type() == "double"
+    }
+    is_scalar_double <- function(t) {
+      inherits(t, "pre_type_node") && t$get_data_struct() == "scalar" &&
+        t$get_base_type() == "double"
+    }
+    vector_args <- c(y0 = 2L, yp0 = 3L, times = 4L, id = 8L)
+    for (name in names(vector_args)) {
+      i <- vector_args[[name]]
+      if (!is_vec_double(all_types[[i]])) {
+        return(sprintf("ida: %s (argument %d) has to be a double vector", name, i))
+      }
+    }
+    if (inherits(all_types[[5L]], "fn_node")) {
+      return("ida: params (argument 5) cannot be a function")
+    }
+    if (!is_scalar_double(all_types[[6L]])) {
+      return("ida: reltol (argument 6) has to be a scalar double")
+    }
+    if (!is_scalar_double(all_types[[7L]])) {
+      return("ida: abstol (argument 7) has to be a scalar double")
+    }
+    make_inferred_type("matrix", "double", info_env$r_fct, info_env$real_type)
+  },
+  check_fct = function(node, vars_types_list, info_env) {
+    f <- node$args[[1L]]
+    if (!inherits(f, "fn_node")) f <- f$internal_type
+    if (!inherits(f, "fn_node")) return()
+    args_to_f <- f$args_f
+    if (length(args_to_f) != 5L) {
+      node$error <- "the function passed to ida has to accept exactly 5 arguments (t, y, yp, r, params)"
+      return()
+    }
+    t_arg <- args_to_f[[1L]]
+    if (inherits(t_arg, "pre_type_node") &&
+        !(t_arg$get_base_type() == "double" && t_arg$get_data_struct() == "scalar")) {
+      node$error <- "ida: the first res argument (t) has to be a scalar double"
+      return()
+    }
+    for (i in 2:4) {
+      ai <- args_to_f[[i]]
+      if (inherits(ai, "pre_type_node")) {
+        if (!(ai$get_data_struct_verbose() %in% c("borrow_vec", "borrow_vector"))) {
+          node$error <- "ida: res arguments y, yp and r have to be borrow_vec(double) (they view the solver's memory)"
+          return()
+        }
+        if (ai$get_base_type() != "double") {
+          node$error <- "ida: res arguments y, yp and r have to contain doubles"
+          return()
+        }
+      }
+    }
+    compare_types_passed_to_fn(node, args_to_f[[5L]], node$args[[5L]]$internal_type)
+    ret_from_f <- f$return_type
+    if (inherits(ret_from_f, "pre_type_node") && ret_from_f$get_base_type() != "void") {
+      node$error <- "the function passed to ida must not return a value (it writes r in place)"
+    }
+  },
+ group = "function_node", cpp_name = "a2a::ida_solve", deriv_possible = FALSE,
+ valid_fn_context = TRUE
+)
+function_registry_global$add(
   name = "nnls", num_args = 2, arg_names = c(NA, NA),
   docu = "nnls(a, b)  # both required; a: matrix, b: vector -> non-negative least-squares solution vector",
   infer_fct = function(node, vars_list, info_env, function_registry) {

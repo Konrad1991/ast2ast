@@ -1,5 +1,5 @@
 Package: testpkg
 Version: 0.0.1
 Title: Test Package for make_package
-LinkingTo: Rcpp, RcppThread
+LinkingTo: Rcpp, RcppThread, sundials
 Imports: Rcpp

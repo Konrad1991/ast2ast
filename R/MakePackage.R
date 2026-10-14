@@ -141,6 +141,7 @@ check_package_setup <- function(package_dir, name) {
   missing <- c(
     if (!field_has("LinkingTo", "Rcpp")) "DESCRIPTION: LinkingTo: Rcpp",
     if (!field_has("LinkingTo", "RcppThread")) "DESCRIPTION: LinkingTo: RcppThread",
+    if (!field_has("LinkingTo", "sundials")) "DESCRIPTION: LinkingTo: sundials",
     if (!field_has("Imports", "Rcpp")) "DESCRIPTION: Imports: Rcpp"
   )
   namespace_file <- file.path(package_dir, "NAMESPACE")
@@ -281,13 +282,21 @@ copy_headers <- function(package_dir) {
   ), file.path(target, "LICENSE_NOTE"))
 }
 
+# NOTE: sundials ships a static lib; its path is only known at install time
 write_makevars <- function(package_dir, overwrite) {
-  content <- c(
-    "CXX_STD = CXX20",
-    "PKG_CPPFLAGS = -I../inst/include/ast2ast",
-    "PKG_LIBS = $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)"
+  rscript <- c(
+    Makevars = '"${R_HOME}/bin/Rscript"',
+    Makevars.win = '"${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe"'
   )
-  for (file in c("Makevars", "Makevars.win")) {
+  for (file in names(rscript)) {
+    content <- c(
+      "CXX_STD = CXX20",
+      "PKG_CPPFLAGS = -I../inst/include/ast2ast",
+      sprintf(
+        "PKG_LIBS = $(shell %s -e \"sundials::LdFlags()\") $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)",
+        rscript[[file]]
+      )
+    )
     write_generated(file.path(package_dir, "src", file), content, "#", overwrite)
   }
 }
