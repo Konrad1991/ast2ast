@@ -158,7 +158,7 @@ check_package_setup <- function(package_dir, name) {
 }
 
 is_type_definition <- function(expr) {
-  is.call(expr) && identical(expr[[1]], quote(new_type))
+  is.call(expr) && (identical(expr[[1]], quote(new_type)) || identical(expr[[1]], quote(new_layout)))
 }
 
 is_function_definition <- function(expr) {

@@ -313,6 +313,13 @@ unary_node <- R6::R6Class(
               # This cast to SEXP and evals expressions which are not variables or literals
               self$string_obj(), "))"
             )
+            layout <- layout_of(self$obj$internal_type)
+            if (!is.null(layout)) {
+              ret <- paste0(
+                indent, self$operator, "(etr::AttachNames(etr::Cast(", self$string_obj(), "), ",
+                cpp_string_list(layout$names), "))"
+              )
+            }
           } else {
             ret <- paste0(
               indent, self$operator, "(etr::Evaluate(", self$string_obj(), "))"
@@ -1165,9 +1172,25 @@ pre_type_node <- R6::R6Class(
       if (!self$r_fct && self$fct_input) return("")
       if (self$r_fct && self$fct_input) {
         type_str <- self$data_struct$stringify(indent)
-        return(paste0(
+        decl <- paste0(
           indent, type_str, " ", self$name,
           "(etr::CheckSEXP<", type_str, ">(", self$name, "SEXP, \"", self$name, "\"));"
+        )
+        layout <- layout_of(self)
+        if (!is.null(layout)) {
+          decl <- paste0(
+            decl, "\n  ", indent, "etr::CheckNames(", self$name, "SEXP, \"", self$name, "\", \"",
+            layout$name, "\", ", cpp_string_list(layout$names), ");"
+          )
+        }
+        return(decl)
+      }
+      layout <- layout_of(self)
+      if (!is.null(layout) && inherits(self$data_struct, "vec")) {
+        # the names give the length, so the declaration allocates (zeros)
+        return(paste0(
+          indent, self$data_struct$stringify(indent), " ", self$name, " = ",
+          layout_allocator(layout, self$real_type), "(etr::Integer(", length(layout$names), "));"
         ))
       }
       paste0(indent, self$data_struct$stringify(indent), " ", self$name, ";")
@@ -1240,6 +1263,7 @@ vec <- R6::R6Class(
     base_type = NULL,
     r_fct = NULL,
     real_type = NULL,
+    layout = NULL, # layout_def or NULL
     print = function() {
       cat(sprintf("vector containing: %s", self$base_type), "\n")
     },
@@ -1351,6 +1375,7 @@ borrow_vec <- R6::R6Class(
     base_type = NULL,
     r_fct = NULL,
     real_type = NULL,
+    layout = NULL, # layout_def or NULL
     print = function() {
       cat(sprintf("vector (borrowed) containing: %s", self$base_type), "\n")
     },

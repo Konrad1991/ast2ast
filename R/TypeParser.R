@@ -84,6 +84,27 @@ create_type_tree <- function(code, env) {
     return(c)
   }
 
+  else if (operator %in% c("named_vec", "named_borrow_vec")) {
+    layout_name <- deparse(code[[2L]])
+    def <- env$list[[layout_name]]
+    if (!inherits(def, "layout_def")) {
+      add_error(env, sprintf("%s(%s): %s is not defined with new_layout()", operator, layout_name, layout_name))
+      u <- unresolved_node$new()
+      u$name <- operator
+      u$base_type <- NA_character_
+      return(u)
+    }
+    if (operator == "named_borrow_vec" && !env$fct_input) {
+      add_error(env, sprintf("borrow types only allowed in function inputs, found %s", operator))
+    }
+    v <- if (operator == "named_vec") vec$new() else borrow_vec$new()
+    v$base_type <- def$base_type
+    v$r_fct <- env$r_fct
+    v$real_type <- env$real_type
+    v$layout <- def
+    return(v)
+  }
+
   else if (operator %in% c("borrow_vec", "borrow_vector") && env$fct_input) {
     if ((env$r_fct && env$real_type %in% c("etr::Dual", "etr::ReverseDouble")) ||
         (!env$r_fct && env$real_type == "etr::ReverseDouble")) {
@@ -225,7 +246,51 @@ parse_new_type <- function(code, env) {
   }
 }
 
-parse_types <- function(block, fct_input, r_fct, real_type, known_types = list()) {
+# new_layout(name, type, names = <R expression>), used as named_vec(name) / named_borrow_vec(name)
+# NOTE: no C++ struct; at runtime it is a vec / borrow_vec, the names only
+# turn y[["name"]] into y[[index]] at translation time
+parse_new_layout <- function(code, env, eval_env) {
+  proto <- function(name, type, names) NULL
+  mc <- try(match.call(proto, code), silent = TRUE)
+  if (inherits(mc, "try-error") || is.null(mc$name) || is.null(mc$type) || is.null(mc$names)) {
+    stop(sprintf("new_layout expects (name, type, names = ...), found: %s", deparse1(code)))
+  }
+  name <- deparse(mc$name)
+  unallowed <- unallowed_signs(name)
+  if (!is.null(unallowed)) {
+    stop(paste0(unallowed, " found in ", name))
+  } else if (not_cpp_keyword(name)) {
+    stop(paste0("Invalid type name: is a C++ keyword --> ", name))
+  }
+  if (!is.null(env$list[[name]])) {
+    stop(paste0("Duplicated type name: ", name))
+  }
+  env$errors <- NULL
+  base_type <- resolve_base_type(mc$type, env)
+  if (length(env$errors) > 0) {
+    stop(sprintf("new_layout %s: %s", name, combine_strings(env$errors, "\n")))
+  }
+  value_names <- tryCatch(
+    eval(mc$names, eval_env),
+    error = function(e) stop(sprintf("new_layout %s: evaluating names failed: %s", name, conditionMessage(e)), call. = FALSE)
+  )
+  if (!is.character(value_names) || length(value_names) == 0L) {
+    stop(sprintf("new_layout %s: names has to be a non-empty character vector", name))
+  }
+  if (anyNA(value_names) || any(value_names == "")) {
+    stop(sprintf("new_layout %s: names contain NA or empty entries", name))
+  }
+  if (anyDuplicated(value_names) != 0L) {
+    stop(sprintf("new_layout %s: duplicated names: %s", name,
+                 paste(unique(value_names[duplicated(value_names)]), collapse = ", ")))
+  }
+  structure(
+    list(name = name, base_type = base_type, names = value_names, part_of_etr = TRUE),
+    class = "layout_def"
+  )
+}
+
+parse_types <- function(block, fct_input, r_fct, real_type, known_types = list(), eval_env = globalenv()) {
   env <- new.env(parent = emptyenv())
   env$list <- known_types
   env$fct_input <- fct_input
@@ -253,6 +318,9 @@ parse_types <- function(block, fct_input, r_fct, real_type, known_types = list()
       env$new_type$real_type <- real_type
       env$new_type$r_fct <- r_fct
       env$list[[env$new_type$name]] <- env$new_type
+    } else if (operator == "new_layout") {
+      def <- parse_new_layout(row, env, eval_env)
+      env$list[[def$name]] <- def
     } else {
       stop(sprintf("Found unsupported function %s in %s", operator, deparse(row)))
     }
@@ -373,7 +441,8 @@ make_known_types <- function(types_fct, r_fct, real_type) {
   }
   if (!is.null(types_fct)) {
     types_block <- as.list(wrap_in_block(body(types_fct)))[-1]
-    known_types <- c(known_types, parse_types(types_block, fct_input = FALSE, r_fct, real_type))
+    known_types <- c(known_types, parse_types(types_block, fct_input = FALSE, r_fct, real_type,
+                                              eval_env = environment(types_fct)))
   }
   known_types
 }

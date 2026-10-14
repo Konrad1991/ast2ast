@@ -477,10 +477,37 @@ check_matrix_arg <- function(node, vars_types_list, info_env) {
 
 # Infer functions
 # ===================================================================================
+# y[["S30"]] on a named_vec -> y[[13L]]; the literal node is replaced in place
+resolve_name_index <- function(node, left_type_node) {
+  idx_node <- node$right_node
+  if (!inherits(idx_node, "literal_node") || idx_node$literal_type != "character") return(NULL)
+  layout <- layout_of(left_type_node)
+  if (is.null(layout)) {
+    return(sprintf("String index %s is only allowed on a named_vec / named_borrow_vec in: %s",
+                   idx_node$name, node$stringify()))
+  }
+  value_name <- remove_double_quotes(idx_node$name)
+  idx <- match(value_name, layout$names)
+  if (is.na(idx)) {
+    distance <- utils::adist(value_name, layout$names)[1L, ]
+    closest <- layout$names[which.min(distance)]
+    return(sprintf("Unknown name '%s' for layout %s. Did you mean '%s'? In: %s",
+                   value_name, layout$name, closest, node$stringify()))
+  }
+  new_idx <- literal_node$new(as.integer(idx))
+  for (field in c("context", "real_type", "pre_translate_line", "location", "wrap")) {
+    new_idx[[field]] <- idx_node[[field]]
+  }
+  node$right_node <- new_idx
+  NULL
+}
+
 infer_subsetting <- function(node, vars_list, info_env, function_registry) {
   if (inherits(node, "binary_node")) {
     left_type_node <- infer(node$left_node, vars_list, info_env, function_registry)
     err <- check_operand_type(left_type_node, node, "left", allow_collection = TRUE)
+    if (!is.null(err)) return(err)
+    err <- resolve_name_index(node, left_type_node)
     if (!is.null(err)) return(err)
     right_type_node <- infer(node$right_node, vars_list, info_env, function_registry)
     err <- check_operand_type(right_type_node, node, "right")
@@ -1227,21 +1254,34 @@ function_registry_global$add(
   check_fct = mock, group = "unary_node", cpp_name = "return"
 )
 function_registry_global$add(
-  name = "vector", num_args = 2, arg_names = c("mode", "length"),
+  name = "vector", num_args = c(1, 2), arg_names = c("mode", "length"),
   docu = paste0(
     "vector(mode, length)  # mode: \"logical\" / \"integer\" / \"numeric\".\n",
     "For a new_type collection pass the type name as mode: ",
-    "vector(\"MyType\", n) -> a length-n collection of MyType"
+    "vector(\"MyType\", n) -> a length-n collection of MyType.\n",
+    "For a layout (new_layout) pass its name: vector(\"State\") (length = number of names) ",
+    "or vector(\"State\", n)"
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     left_type <- infer(node$args[[1]], vars_list, info_env, function_registry)
-    right_type <- infer(node$args[[2]], vars_list, info_env, function_registry)
     err <- check_operand_type(left_type, node, "left", allow_collection = TRUE, allow_char = TRUE)
-    if (!is.null(err)) return(err)
-    err <- check_operand_type(right_type, node, "right", allow_collection = TRUE)
     if (!is.null(err)) return(err)
     mode_type <- node$args[[1]]$name |> remove_double_quotes()
     custom_type <- info_env$known_types[[mode_type]]
+    if (!inherits(custom_type, "layout_def") && length(node$args) == 1L) {
+      return("vector(mode, length) needs a length")
+    }
+    if (length(node$args) == 2L) {
+      right_type <- infer(node$args[[2]], vars_list, info_env, function_registry)
+      err <- check_operand_type(right_type, node, "right", allow_collection = TRUE)
+      if (!is.null(err)) return(err)
+    }
+    if (inherits(custom_type, "layout_def")) {
+      t <- make_inferred_type("vector", custom_type$base_type, info_env$r_fct, info_env$real_type)
+      t$data_struct$layout <- custom_type
+      node$internal_type <- t
+      return(t)
+    }
     if (!is.null(custom_type) && inherits(custom_type, "new_type_node")) {
       coll <- collection$new()
       coll$r_fct <- info_env$r_fct
@@ -1269,11 +1309,12 @@ function_registry_global$add(
     }
     s <- remove_double_quotes(node$args[[1]]$name)
     custom_type <- info_env$known_types[[s]]
-    is_custom_type <- !is.null(custom_type) && inherits(custom_type, "new_type_node")
+    is_custom_type <- inherits(custom_type, c("new_type_node", "layout_def"))
     if (!is_custom_type && !(s %in% c("logical", "integer", "numeric"))) {
       node$error <- sprintf("Found unallowed mode %s in vector", s)
     }
-    if (!is_int(node$args[[2]], vars_types_list) && !is_num(node$args[[2]], vars_types_list)) {
+    if (length(node$args) == 2L &&
+        !is_int(node$args[[2]], vars_types_list) && !is_num(node$args[[2]], vars_types_list)) {
       node$error <- "Found unallowed length type in vector"
     }
   },

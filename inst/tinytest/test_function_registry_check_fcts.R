@@ -335,7 +335,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "print(a[\"Invalid\"])\nYou cannot use character/NA/NaN/Inf entries in right type in: a[\"Invalid\"]"
+"print(a[\"Invalid\"])\nString index \"Invalid\" is only allowed on a named_vec / named_borrow_vec in: a[\"Invalid\"]"
 )
 f <- function() {
   a <- numeric(10)
@@ -344,7 +344,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-  "print(a[[\"Invalid\"]])\nYou cannot use character/NA/NaN/Inf entries in right type in: a[[\"Invalid\"]]"
+"print(a[[\"Invalid\"]])\nString index \"Invalid\" is only allowed on a named_vec / named_borrow_vec in: a[[\"Invalid\"]]"
 )
 f <- function() {
   a <- numeric(10)
@@ -353,7 +353,7 @@ f <- function() {
 args_fct <- function() {}
 test_checks(
   f, args_fct, TRUE,
-"print(at(a, \"Invalid\"))\nYou cannot use character/NA/NaN/Inf entries in right type in: at(a, \"Invalid\")"
+"print(at(a, \"Invalid\"))\nString index \"Invalid\" is only allowed on a named_vec / named_borrow_vec in: at(a, \"Invalid\")"
 )
 
 # --- for loop --------------------------------------------------------------

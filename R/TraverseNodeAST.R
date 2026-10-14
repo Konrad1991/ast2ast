@@ -324,6 +324,18 @@ action_update_function_registry <- function(node, function_registry, namespace =
     if (!same_base_type(is_type$get_base_type(), should_type$get_base_type())) {
       node$error <- sprintf("The argument Nr. %s to function %s has not the correct type. Found %s but %s is required", index, name, is_type$get_base_type(), should_type$get_base_type())
     }
+    should_layout <- layout_of(should_type)
+    if (!is.null(should_layout)) {
+      is_layout <- layout_of(is_type)
+      if (is.null(is_layout) || is_layout$name != should_layout$name) {
+        node$error <- sprintf(
+          "The argument Nr. %s to function %s has to be named_vec(%s) or named_borrow_vec(%s), found %s",
+          index, name, should_layout$name, should_layout$name,
+          if (is.null(is_layout)) is_type$get_data_struct_verbose() else is_layout$name
+        )
+        return()
+      }
+    }
     is_ds <- is_type$get_data_struct_verbose()
     should_ds <- should_type$get_data_struct_verbose()
     if (same_data_struct(is_ds, should_ds)) return()
@@ -830,7 +842,21 @@ action_translate <- function(node, function_registry, real_type) {
   } else {
     if (inherits(node, "function_node") && node$operator == "vector") {
       mode <- remove_double_quotes(node$args[[1L]]$name)
-      if (mode == "logical") {
+      layout <- layout_of(node$internal_type)
+      if (!is.null(layout)) {
+        # layout: a plain vector of its base type; without length: number of names
+        if (length(node$args) == 1L) {
+          # NOTE: created after action_set_true, so wrap has to be set here
+          len <- literal_node$new(length(layout$names))
+          len$context <- node$args[[1L]]$context
+          len$real_type <- node$args[[1L]]$real_type
+          len$wrap <- TRUE
+          node$args[[2L]] <- len
+        }
+        node$operator <- layout_allocator(layout, real_type)
+        node$args <- node$args[-1L]
+      }
+      else if (mode == "logical") {
         node$operator <- "etr::logical"
       } else if (mode == "integer") {
         node$operator <- "etr::integer"

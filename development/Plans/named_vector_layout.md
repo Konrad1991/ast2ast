@@ -1,4 +1,7 @@
-# Named vectors (`named_vector()`)
+# Named vectors (`new_layout()`)
+
+Renamed 2026-10-14: `named_vector` -> `new_layout` (named_vector read like the
+long form of named_vec, but it is the definition, not a usage type).
 
 **Status:** design (2026-10-14), not started. Implementation on `main`.
 
@@ -16,17 +19,18 @@ zero runtime cost. Typo -> R `stop()` at translation time, node's source line.
 
 ```r
 types <- function() {
-  named_vector(State, double, names = metabolite_tags)               # length >= 169
-  named_vector(Pair, double, names = c("prey", "pred"), fixed = TRUE) # length == 2
+  new_layout(State, double, names = metabolite_tags)   # length >= 169
+  new_layout(Pair, double, names = c("prey", "pred"))
 }
 ```
 
-- own constructor `named_vector`, not `new_type` (later: `named_collection` etc.)
+- own constructor `new_layout`, not `new_type` (later: `named_collection` etc.)
 - `names`: any R expression, evaluated directly (env of `types_f`;
   make_package: relative paths depend on the working directory)
-- `fixed = FALSE`: length >= length(names); the names describe a prefix, the
-  rest is accessed numerically (Jan: ribosome positions, length known at runtime)
-- `fixed = TRUE`: length == length(names); later: stack storage (std::array)
+- length >= length(names); the names describe a prefix, the rest is accessed
+  numerically (Jan: ribosome positions, length known at runtime)
+- `fixed = TRUE` (exact length, stack storage via std::array): removed
+  2026-10-14, comes back together with stack storage
 - duplicate, empty or NA names -> error at definition
 
 ## Usage
@@ -35,7 +39,8 @@ types <- function() {
 y    |> type(named_vec(State))                  # own memory
 y    |> type(named_borrow_vec(State)) |> ref()  # R / SUNDIALS memory
 rate <- vector(mode = "State", length(y))       # local, zeros
-p    <- vector(mode = "Pair")                    # fixed = TRUE: length implied
+p    <- vector(mode = "Pair")                    # length = number of names
+res  |> type(named_vec(Pair))                    # declaration allocates too
 
 ydot[["EFG"]] <- -f[["EGT"]] - f[["EGD"]]
 ```
@@ -67,7 +72,7 @@ ydot[["EFG"]] <- -f[["EGT"]] - f[["EGD"]]
 ## R boundary
 
 - in: if the R vector has names, they must match (order!), e.g.
-  definition a, b but `c(b = 2, a = 1)` passed -> error; fixed = TRUE: exact length
+  definition a, b but `c(b = 2, a = 1)` passed -> error; at least length(names)
 - out: names attached
 
 ## Example (Jan's ode_rhs, inst/tools/dae.R)
@@ -91,11 +96,13 @@ ode_rhs <- function(t, y, ydot, p) {
 ## Steps
 
 0. borrow -> owned conversion with warning (see Conversions), independent
-1. Parser: `named_vector(name, elem_type, names = <expr>, fixed = FALSE)` in types_f
+Status 2026-10-14: steps 0-5 and 7 done on main; 6 open (sundials branch).
+
+1. Parser: `new_layout(name, elem_type, names = <expr>)` in types_f
 2. Types: `named_vec(T)`, `named_borrow_vec(T)`; `vector(mode = "T", n)`
 3. Traversal `[[` / `[`: string literal on a named base -> integer literal, or error
 4. Codegen: emit what `vec` / `borrow_vec(elem_type)` emits; no new struct
 5. R boundary: name check in, names out
 6. cvode/ida (sundials branch): accept named_borrow_vec(State) for y/ydot
 7. Tests: named read + write vs `[[1L]]` version; typo; duplicate names;
-   wrong order from R; fixed length; conversions
+   wrong order from R; length; conversions

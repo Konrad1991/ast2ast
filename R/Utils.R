@@ -49,6 +49,20 @@ normalize_data_struct <- function(ds) {
 same_data_struct <- function(is, should) {
   normalize_data_struct(is) == normalize_data_struct(should)
 }
+layout_of <- function(t) {
+  if (inherits(t, "pre_type_node") && inherits(t$data_struct, c("vec", "borrow_vec"))) t$data_struct$layout
+}
+layout_allocator <- function(layout, real_type) {
+  switch(layout$base_type,
+    double = paste0("etr::numeric_of<", scalar_cpp(real_type), ">"),
+    integer = "etr::integer",
+    logical = "etr::logical"
+  )
+}
+cpp_string_list <- function(x) {
+  paste0("{", paste(encodeString(x, quote = "\""), collapse = ", "), "}")
+}
+
 borrow_type_spelling <- function(ds) {
   switch(normalize_data_struct(ds),
     borrow_vector = "borrow_vec(...)",

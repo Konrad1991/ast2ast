@@ -2,6 +2,7 @@
 #define SEXPCONVERSION_ETR_HPP
 
 #include <cstring>
+#include <initializer_list>
 
 namespace etr {
 
@@ -132,6 +133,47 @@ inline decltype(auto) CheckSEXP(SEXP s, const char* name) {
     // own generated SEXP constructor validates class/fields itself.
     return s;
   }
+}
+
+// named_vec arguments: at least as long as the names and (if the R vector
+// has names) the names have to match the definition; unnamed is accepted
+inline void CheckNames(SEXP s, const char* arg, const char* type_name,
+                       std::initializer_list<const char*> names) {
+  const R_xlen_t n = static_cast<R_xlen_t>(names.size());
+  const R_xlen_t len = Rf_xlength(s);
+  if (len < n) [[unlikely]] {
+    ass(false, std::string("Length of '") + arg + "' does not match layout " + type_name +
+                 ": expected at least " + std::to_string(n) + ", got " + std::to_string(len));
+  }
+  SEXP r_names = Rf_getAttrib(s, R_NamesSymbol);
+  if (r_names == R_NilValue) return;
+  R_xlen_t i = 0;
+  for (const char* expected : names) {
+    const char* found = CHAR(STRING_ELT(r_names, i));
+    if (std::strcmp(found, expected) != 0) [[unlikely]] {
+      ass(false, std::string("Names of '") + arg + "' do not match layout " + type_name +
+                   ": position " + std::to_string(i + 1) + " is '" + found + "', expected '" + expected + "'");
+    }
+    ++i;
+  }
+}
+
+// named_vec return values: names attached; entries beyond the names get ""
+inline SEXP AttachNames(SEXP s, std::initializer_list<const char*> names) {
+  // NOTE: a borrowed argument returned as is must not get names in the caller
+  if (MAYBE_REFERENCED(s)) s = Rf_duplicate(s);
+  PROTECT(s);
+  const R_xlen_t len = Rf_xlength(s);
+  SEXP r_names = PROTECT(Rf_allocVector(STRSXP, len));
+  R_xlen_t i = 0;
+  for (const char* name : names) {
+    if (i >= len) break;
+    SET_STRING_ELT(r_names, i++, Rf_mkChar(name));
+  }
+  for (; i < len; ++i) SET_STRING_ELT(r_names, i, R_BlankString);
+  Rf_setAttrib(s, R_NamesSymbol, r_names);
+  UNPROTECT(2);
+  return s;
 }
 
 // Cast scalar elements to their SEXP equivalents

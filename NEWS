@@ -18,6 +18,13 @@ changes in ast2ast version 1.1
   `pso` can also be called inside `pmap`.
 - Faster subsetting and subset assignment; common subsetting patterns now
   run faster than in base R.
+- Named vectors: `new_layout(State, double, names = <R expression>)` in
+  `types_f`, used as `named_vec(State)` /
+  `named_borrow_vec(State)`. `y[["S30"]]` is resolved to an integer index at
+  translation time (typo -> error with a suggestion). Names of R arguments are
+  checked, returned named vectors carry their names; `vector("State")` and a
+  declaration (`res |> type(named_vec(State))`) allocate one entry per name,
+  `vector("State", n)` allocates n entries.
 - A `borrow_vec`/`borrow_mat`/`borrow_array` can be passed to an inner
   function that expects `vec`/`mat`/`array` (by value or `const()`): it is
   copied, with a warning at translation time. A mutable `ref()` parameter

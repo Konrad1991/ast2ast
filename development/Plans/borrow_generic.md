@@ -16,7 +16,7 @@ y |> type(borrow(State)) |> ref()
 ```
 
 ## Rules
-- borrow(T): T in vec/mat/arr(...) or a named_vector type
+- borrow(T): T in vec/mat/arr(...) or a layout (new_layout)
 - borrow_vec(double), named_borrow_vec(State) etc. stay valid as aliases
   (borrow_* are on CRAN and documented)
 - deprecation of the old names: decide later
