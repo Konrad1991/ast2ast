@@ -27,5 +27,6 @@ Suggests:
   ggplot2,
   RcppXPtrUtils,
   pkgbuild,
-  nnls
+  nnls,
+  Matrix
 Encoding: UTF-8

@@ -18,6 +18,12 @@ changes in ast2ast version 1.1
   `pso` can also be called inside `pmap`.
 - Faster subsetting and subset assignment; common subsetting patterns now
   run faster than in base R.
+- `jacobian_sparse(f, x[, data], colouring = ...)` and
+  `jacobian_banded(...)`: only the entries of f's sparsity pattern are
+  computed (one forward sweep per colour) and stored as SUNDIALS does (CSC,
+  0-based; LAPACK band layout with `mu`, `ml`, `ldim`). Fields are accessible
+  in translated code (`J$data`, `J$indexptrs`, `J$mu`, ...); returned to R as
+  a `Matrix::dgCMatrix` (Matrix is suggested).
 - Named vectors: `new_layout(State, double, names = <R expression>)` in
   `types_f`, used as `named_vec(State)` /
   `named_borrow_vec(State)`. `y[["S30"]]` is resolved to an integer index at

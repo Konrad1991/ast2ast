@@ -429,6 +429,28 @@ predefined_known_types <- quote({
       counts |> type(vec(int))
     )
   )
+  # slots must match etr::jacobian_sparse_result / jacobian_banded_result in
+  # etr_bits/Derivatives.hpp
+  new_type(
+    jacobian_sparse_result,
+    slots(
+      m |> type(int),
+      n |> type(int),
+      indexptrs |> type(vec(int)),
+      indexvals |> type(vec(int)),
+      data |> type(vec(double))
+    )
+  )
+  new_type(
+    jacobian_banded_result,
+    slots(
+      n |> type(int),
+      mu |> type(int),
+      ml |> type(int),
+      ldim |> type(int),
+      data |> type(vec(double))
+    )
+  )
 })
 
 make_known_types <- function(types_fct, r_fct, real_type) {

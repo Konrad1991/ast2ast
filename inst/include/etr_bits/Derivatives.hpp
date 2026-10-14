@@ -274,14 +274,13 @@ struct Colouring {
   std::vector<int> row_idx;
 };
 
-// one forward sweep per colour: seed all its columns at once, then scatter
-// J*v into the rows each column touches
-template<typename X, typename Call>
-inline auto jacobian_coloured_impl(const X& x, const Colouring& c, Call&& call_f) {
+// one forward sweep per colour: seed all its columns at once, then hand every
+// pattern entry (column j, CSC position p, row i, value) to store
+template<typename X, typename Call, typename Store>
+inline void coloured_sweeps(const X& x, const Colouring& c, Call&& call_f, Store&& store) {
   ass<"jacobian: length(x) differs from n given for colouring">(x.size() == c.n);
   Array<Dual, Buffer<Dual>> xd(SI{c.n});
   for (std::size_t i = 0; i < c.n; i++) xd.set(i, Dual(get_val(x.get(i)), 0.0));
-  auto jac = matrix(Double(0.0), Integer(static_cast<int>(c.m)), Integer(static_cast<int>(c.n)));
 
   std::vector<std::vector<std::size_t>> cols_of(c.ncolours);
   for (std::size_t j = 0; j < c.n; j++) cols_of[static_cast<std::size_t>(c.colour[j])].push_back(j);
@@ -293,11 +292,19 @@ inline auto jacobian_coloured_impl(const X& x, const Colouring& c, Call&& call_f
     for (std::size_t j : cols) {
       for (int p = c.col_ptr[j]; p < c.col_ptr[j + 1]; p++) {
         const std::size_t i = static_cast<std::size_t>(c.row_idx[static_cast<std::size_t>(p)]);
-        jac.set(j * c.m + i, y.d.get_dot(i));
+        store(j, static_cast<std::size_t>(p), i, y.d.get_dot(i));
       }
     }
     for (std::size_t j : cols) xd.d.set_dot(j, 0.0);
   }
+}
+
+template<typename X, typename Call>
+inline auto jacobian_coloured_impl(const X& x, const Colouring& c, Call&& call_f) {
+  auto jac = matrix(Double(0.0), Integer(static_cast<int>(c.m)), Integer(static_cast<int>(c.n)));
+  coloured_sweeps(x, c, call_f, [&](std::size_t j, std::size_t, std::size_t i, const Double& v) {
+    jac.set(j * c.m + i, v);
+  });
   return jac;
 }
 
@@ -393,13 +400,6 @@ inline auto jacobian(const F& f, const X& x) {
   return jacobian_impl(x, [&f](const auto& xv) { return f(xv); });
 }
 
-// coloured jacobian with the pattern from colouring_from_tape
-template<typename F, typename FRev, typename X> requires (IsArray<Decayed<X>>)
-inline auto jacobian_runtime_coloured(const F& f, const FRev& f_rev, const X& x) {
-  const Colouring c = colouring_from_tape(x, [&f_rev](const auto& xv) { return f_rev(xv); });
-  return jacobian_coloured_impl(x, c, [&f](const auto& xv) { return f(xv); });
-}
-
 // second parameter type of f_rev's operator(), without const/&
 template <typename F> struct SecondArgOf : SecondArgOf<decltype(&F::operator())> {};
 template <typename C, typename R, typename A1, typename A2> struct SecondArgOf<R (C::*)(A1, A2) const> {
@@ -409,16 +409,32 @@ template <typename C, typename R, typename A1, typename A2> struct SecondArgOf<R
   using type = std::decay_t<A2>;
 };
 
-template<typename F, typename FRev, typename X, typename E> requires (IsArray<Decayed<X>>)
-inline auto jacobian_runtime_coloured(const F& f, const FRev& f_rev, const X& x, const E& extra) {
+template<typename FRev, typename X>
+inline Colouring runtime_pattern(const FRev& f_rev, const X& x) {
+  return colouring_from_tape(x, [&f_rev](const auto& xv) { return f_rev(xv); });
+}
+
+template<typename FRev, typename X, typename E>
+inline Colouring runtime_pattern(const FRev& f_rev, const X& x, const E& extra) {
   // NOTE: extra is converted (Dual -> ReverseDouble: scalar, array, struct,
   // collection) inside the tape pass: its constants are rewound with the rest
-  const Colouring c = colouring_from_tape(x, [&f_rev, &extra](const auto& xv) {
+  return colouring_from_tape(x, [&f_rev, &extra](const auto& xv) {
     typename SecondArgOf<FRev>::type extra_rev;
     extra_rev = extra;
     return f_rev(xv, extra_rev);
   });
-  return jacobian_coloured_impl(x, c, [&f, &extra](const auto& xv) { return f(xv, extra); });
+}
+
+// coloured jacobian with the pattern from colouring_from_tape
+template<typename F, typename FRev, typename X> requires (IsArray<Decayed<X>>)
+inline auto jacobian_runtime_coloured(const F& f, const FRev& f_rev, const X& x) {
+  return jacobian_coloured_impl(x, runtime_pattern(f_rev, x), [&f](const auto& xv) { return f(xv); });
+}
+
+template<typename F, typename FRev, typename X, typename E> requires (IsArray<Decayed<X>>)
+inline auto jacobian_runtime_coloured(const F& f, const FRev& f_rev, const X& x, const E& extra) {
+  return jacobian_coloured_impl(x, runtime_pattern(f_rev, x, extra),
+                                [&f, &extra](const auto& xv) { return f(xv, extra); });
 }
 
 // jacobian(f, x, colouring = "runtime"): f_rev = the ReverseDouble copy of f
@@ -456,6 +472,173 @@ inline auto jacobian(const F& f, const X& x, const E& extra, const Colouring& c)
 template<typename F, typename X, typename E> requires (IsArray<Decayed<X>>)
 inline auto jacobian(const F& f, const X& x, const E& extra) {
   return jacobian_impl(x, [&f, &extra](const auto& xv) { return f(xv, extra); });
+}
+
+// jacobian_sparse / jacobian_banded: values only in the colouring's pattern,
+// stored as SUNDIALS does, so the result can later go to SUNMatrix as is:
+// sparse = CSC (0-based), banded = LAPACK band without LU scratch rows
+// (A(i, j) at data[j * ldim + mu + i - j], ldim = mu + ml + 1)
+
+#ifndef STANDALONE_ETR
+// Matrix::sparseMatrix from CSC; R_tryEvalSilent: an R error must not longjmp through C++
+inline SEXP csc_to_dgCMatrix(int m, int n, SEXP p, SEXP i, SEXP x) {
+  SEXP fn = PROTECT(Rf_lang3(Rf_install("::"), Rf_install("Matrix"), Rf_install("sparseMatrix")));
+  SEXP dims = PROTECT(Rf_allocVector(INTSXP, 2));
+  INTEGER(dims)[0] = m;
+  INTEGER(dims)[1] = n;
+  SEXP index1 = PROTECT(Rf_ScalarLogical(FALSE));
+  SEXP args = PROTECT(Rf_list5(i, p, x, dims, index1));
+  SEXP call = PROTECT(Rf_lcons(fn, args));
+  SEXP arg = args;
+  for (const char* tag : {"i", "p", "x", "dims", "index1"}) {
+    SET_TAG(arg, Rf_install(tag));
+    arg = CDR(arg);
+  }
+  int error = 0;
+  SEXP res = R_tryEvalSilent(call, R_GlobalEnv, &error);
+  UNPROTECT(5);
+  ass<"converting the jacobian to a Matrix::dgCMatrix failed (is the Matrix package installed?)">(error == 0);
+  return res;
+}
+#endif
+
+struct jacobian_sparse_result {
+  Integer m;
+  Integer n;
+  Array<Integer, Buffer<Integer>> indexptrs;
+  Array<Integer, Buffer<Integer>> indexvals;
+  Array<Double, Buffer<Double>> data;
+
+  jacobian_sparse_result() = default;
+#ifndef STANDALONE_ETR
+  SEXP to_SEXP() const {
+    SEXP p = PROTECT(etr::Cast(indexptrs));
+    SEXP i = PROTECT(etr::Cast(indexvals));
+    SEXP x = PROTECT(etr::Cast(data));
+    SEXP res = csc_to_dgCMatrix(get_val(m), get_val(n), p, i, x);
+    UNPROTECT(3);
+    return res;
+  }
+#endif
+};
+
+struct jacobian_banded_result {
+  Integer n;
+  Integer mu;
+  Integer ml;
+  Integer ldim;
+  Array<Double, Buffer<Double>> data;
+
+  jacobian_banded_result() = default;
+#ifndef STANDALONE_ETR
+  SEXP to_SEXP() const {
+    const int nn = get_val(n), up = get_val(mu), lo = get_val(ml), ld = get_val(ldim);
+    SEXP p = PROTECT(Rf_allocVector(INTSXP, nn + 1));
+    INTEGER(p)[0] = 0;
+    for (int j = 0; j < nn; j++) {
+      INTEGER(p)[j + 1] = INTEGER(p)[j] + (std::min(nn - 1, j + lo) - std::max(0, j - up) + 1);
+    }
+    SEXP i = PROTECT(Rf_allocVector(INTSXP, INTEGER(p)[nn]));
+    SEXP x = PROTECT(Rf_allocVector(REALSXP, INTEGER(p)[nn]));
+    int k = 0;
+    for (int j = 0; j < nn; j++) {
+      for (int r = std::max(0, j - up); r <= std::min(nn - 1, j + lo); r++, k++) {
+        INTEGER(i)[k] = r;
+        REAL(x)[k] = get_val(data.get(static_cast<std::size_t>(j * ld + up + r - j)));
+      }
+    }
+    SEXP res = csc_to_dgCMatrix(nn, nn, p, i, x);
+    UNPROTECT(3);
+    return res;
+  }
+#endif
+};
+
+inline void print(const jacobian_sparse_result& x) {
+  PRINT_STREAM << "jacobian_sparse_result: " << x.m << " x " << x.n << ", "
+               << x.data.size() << " entries (CSC)" << std::endl;
+}
+
+inline void print(const jacobian_banded_result& x) {
+  PRINT_STREAM << "jacobian_banded_result: " << x.n << " x " << x.n << ", mu = " << x.mu
+               << ", ml = " << x.ml << std::endl;
+}
+
+template<typename X, typename Call>
+inline jacobian_sparse_result jacobian_sparse_impl(const X& x, const Colouring& c, Call&& call_f) {
+  jacobian_sparse_result res;
+  res.m = Integer(static_cast<int>(c.m));
+  res.n = Integer(static_cast<int>(c.n));
+  res.indexptrs = Array<Integer, Buffer<Integer>>(SI{c.col_ptr.size()});
+  for (std::size_t k = 0; k < c.col_ptr.size(); k++) res.indexptrs.set(k, Integer(c.col_ptr[k]));
+  res.indexvals = Array<Integer, Buffer<Integer>>(SI{c.row_idx.size()});
+  for (std::size_t k = 0; k < c.row_idx.size(); k++) res.indexvals.set(k, Integer(c.row_idx[k]));
+  res.data = Array<Double, Buffer<Double>>(SI{c.row_idx.size()});
+  coloured_sweeps(x, c, call_f, [&](std::size_t, std::size_t p, std::size_t, const Double& v) {
+    res.data.set(p, v);
+  });
+  return res;
+}
+
+template<typename X, typename Call>
+inline jacobian_banded_result jacobian_banded_impl(const X& x, const Colouring& c, Call&& call_f) {
+  ass<"jacobian_banded: f has to return a vector as long as x (square jacobian)">(c.m == c.n);
+  int up = 0, lo = 0;
+  for (std::size_t j = 0; j < c.n; j++) {
+    for (int p = c.col_ptr[j]; p < c.col_ptr[j + 1]; p++) {
+      const int d = c.row_idx[static_cast<std::size_t>(p)] - static_cast<int>(j);
+      if (d < 0) up = std::max(up, -d);
+      if (d > 0) lo = std::max(lo, d);
+    }
+  }
+  const std::size_t ldim = static_cast<std::size_t>(up + lo + 1);
+  jacobian_banded_result res;
+  res.n = Integer(static_cast<int>(c.n));
+  res.mu = Integer(up);
+  res.ml = Integer(lo);
+  res.ldim = Integer(static_cast<int>(ldim));
+  res.data = Array<Double, Buffer<Double>>(SI{ldim * c.n});
+  for (std::size_t k = 0; k < ldim * c.n; k++) res.data.set(k, Double(0.0));
+  coloured_sweeps(x, c, call_f, [&](std::size_t j, std::size_t, std::size_t i, const Double& v) {
+    res.data.set(j * ldim + static_cast<std::size_t>(up) + i - j, v);
+  });
+  return res;
+}
+
+template<typename F, typename X> requires (IsArray<Decayed<X>>)
+inline auto jacobian_sparse(const F& f, const X& x, const Colouring& c) {
+  return jacobian_sparse_impl(x, c, [&f](const auto& xv) { return f(xv); });
+}
+template<typename F, typename X, typename E> requires (IsArray<Decayed<X>>)
+inline auto jacobian_sparse(const F& f, const X& x, const E& extra, const Colouring& c) {
+  return jacobian_sparse_impl(x, c, [&f, &extra](const auto& xv) { return f(xv, extra); });
+}
+template<typename F, typename X, typename FRev> requires (IsArray<Decayed<X>>)
+inline auto jacobian_sparse(const F& f, const X& x, const RuntimeColouring<FRev>& rc) {
+  return jacobian_sparse_impl(x, runtime_pattern(rc.f_rev, x), [&f](const auto& xv) { return f(xv); });
+}
+template<typename F, typename X, typename E, typename FRev> requires (IsArray<Decayed<X>>)
+inline auto jacobian_sparse(const F& f, const X& x, const E& extra, const RuntimeColouring<FRev>& rc) {
+  return jacobian_sparse_impl(x, runtime_pattern(rc.f_rev, x, extra),
+                              [&f, &extra](const auto& xv) { return f(xv, extra); });
+}
+
+template<typename F, typename X> requires (IsArray<Decayed<X>>)
+inline auto jacobian_banded(const F& f, const X& x, const Colouring& c) {
+  return jacobian_banded_impl(x, c, [&f](const auto& xv) { return f(xv); });
+}
+template<typename F, typename X, typename E> requires (IsArray<Decayed<X>>)
+inline auto jacobian_banded(const F& f, const X& x, const E& extra, const Colouring& c) {
+  return jacobian_banded_impl(x, c, [&f, &extra](const auto& xv) { return f(xv, extra); });
+}
+template<typename F, typename X, typename FRev> requires (IsArray<Decayed<X>>)
+inline auto jacobian_banded(const F& f, const X& x, const RuntimeColouring<FRev>& rc) {
+  return jacobian_banded_impl(x, runtime_pattern(rc.f_rev, x), [&f](const auto& xv) { return f(xv); });
+}
+template<typename F, typename X, typename E, typename FRev> requires (IsArray<Decayed<X>>)
+inline auto jacobian_banded(const F& f, const X& x, const E& extra, const RuntimeColouring<FRev>& rc) {
+  return jacobian_banded_impl(x, runtime_pattern(rc.f_rev, x, extra),
+                              [&f, &extra](const auto& xv) { return f(xv, extra); });
 }
 
 } // namespace etr
