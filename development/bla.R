@@ -15,11 +15,15 @@ f <- function(i) {
   argtypes(
     i |> type(Point)
   )
-  v <- c(1, 2, 3)
-  a <- t(diag(v))
+  g <- function(y) {
+    argtypes(y |> type(double))
+    returntype(double)
+    return(y)
+  }
+  d <- 3
+  g_t <- g(d)
+  g_t
 }
 fcpp <- translate(f, types_f = types, verbose = TRUE)
-
 i <- structure(list(x = 1, y = 2), class = "Point")
 fcpp(i)
-traceback()
