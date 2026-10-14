@@ -106,3 +106,62 @@ Status 2026-10-14: steps 0-5 and 7 done on main; 6 open (sundials branch).
 6. cvode/ida (sundials branch): accept named_borrow_vec(State) for y/ydot
 7. Tests: named read + write vs `[[1L]]` version; typo; duplicate names;
    wrong order from R; length; conversions
+
+## Later: matrices and arrays
+
+Not started (2026-10-14). In R, matrices and arrays carry `dimnames`, one
+character vector per dimension (each may be NULL):
+
+```r
+m <- matrix(1:4, 2, dimnames = list(c("a", "b"), c("x", "y")))
+m["a", "y"]                    # 3; rownames(m), colnames(m)
+a <- array(1:24, dim = c(2, 3, 4),
+           dimnames = list(c("a", "b"), c("x", "y", "z"), paste0("t", 1:4)))
+a["b", "y", "t3"]              # 16
+```
+
+`names()` per element also works (a matrix is a vector with dim), but is
+unusual; dimnames are the common way to name matrices and arrays.
+
+## Later: collections
+
+Not started (2026-10-14). In R, lists carry names: `l <- list(a = 1, b = "x")`,
+`l[["a"]]`. ast2ast collections (`collection(Point)`) come from unnamed R lists.
+
+## Later: layout constructors per data structure (decided 2026-10-14)
+
+One definition constructor per data structure; the definition carries the
+element type (for collections the struct type, not a base type):
+
+```r
+new_layout(State, double, names = state_tags)                                # vector
+new_mat_layout(Result, double, rownames = time_tags, colnames = state_tags)
+new_array_layout(Cube, double, dimnames = list(a_tags, b_tags, t_tags))       # like R's dimnames
+new_collection_layout(Seqs, SeqParams, names = seq_names)                    # element type = struct
+```
+
+Each names argument (`names`, `rownames`, `colnames`, the entries of
+`dimnames`) accepts
+- an R expression evaluated at translation time (as for `new_layout`)
+- `NULL`: this dimension has no names (numeric index only), as in R
+- the name of an existing vector layout: reuse its names, e.g. the columns of
+  the cvode result are the names of State:
+  ```r
+  new_mat_layout(Result, double, rownames = NULL, colnames = State)
+  ```
+
+Usage, mirroring named_vec / named_borrow_vec:
+
+```r
+m    |> type(named_mat(Result))          # also named_borrow_mat(Result)
+a    |> type(named_array(Cube))          # also named_borrow_array(Cube)
+seqs |> type(named_collection(Seqs))
+m[["t1", "S30"]]                         # -> m[[2L, 13L]]
+a[["b", "y", "t3"]]                      # -> a[[2L, 2L, 3L]]
+seqs[["rplL"]]$n_rib                     # -> seqs[[1L]]$n_rib
+```
+
+- mixed indices allowed: `m[[i, "S30"]]` (numeric row, named column)
+- R boundary: dimnames (matrix/array) or names (collection) checked in, attached out
+- use cases: cvode/ida result matrix (time points x states); Jan's model, one
+  SeqParams per sequence
