@@ -189,3 +189,11 @@ f <- function(a) {
   a
 }
 ```
+
+# cvode/ida: max steps as argument (2026-10-14, branch sundials)
+
+SUNDIALS default is 500 steps per output interval; Jan's model hit
+`IDA_TOO_MUCH_WORK` at t = 0.036. Now hardcoded `a2a::max_num_steps = 1e6`
+in `inst/include/a2a_sundials.hpp` (not disabled: the solver loop cannot be
+interrupted from R). Later: optional argument, e.g. `maxsteps` like deSolve
+(default 5000) -> needs variable arity (`num_args = c(7, 8)` / `c(8, 9)`).

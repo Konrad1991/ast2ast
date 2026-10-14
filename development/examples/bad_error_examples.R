@@ -26,3 +26,13 @@ f <- function(i) {
   # seq_along(v[[1]]) # leaks compiler error
   seq_along(f) # --> nice error from R transpiler
 }
+
+# iterator reused as a plain variable: each message is printed twice and
+# "Found uninitialized variable: x" is only a follow-up error
+f <- function() {
+  for (k in 1L:3L) {}
+  k <- 2L
+  x <- k * 2L
+  return(x)
+}
+fcpp <- ast2ast::translate(f)

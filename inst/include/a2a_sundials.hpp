@@ -4,14 +4,105 @@
 #include <cvodes/cvodes.h>
 #include <idas/idas.h>
 #include <nvector/nvector_serial.h>
-#include <sunlinsol/sunlinsol_dense.h>
+#include <sundials/sundials_linearsolver.h>
 #include <sunmatrix/sunmatrix_dense.h>
 
+#include <cstdlib>
+#include <string>
 #include <vector>
 
 namespace a2a {
 
 using BorrowVec = etr::Array<etr::Double, etr::Borrow<etr::Double>>;
+
+// NOTE: SUNDIALS default is 500 steps per output interval; ode15s has no limit.
+// Not disabled (< 0), because the solver loop cannot be interrupted from R
+inline constexpr long int max_num_steps = 1000000;
+
+// Dense linear solver backed by LAPACK (dgetrf/dgetrs), same interface as
+// SUNLinSol_Dense.
+// NOTE: SUNDIALS' own dense LU is unblocked and single threaded; for n ~ 2000
+// it is 10-20x slower than LAPACK, which dominates stiff runs
+struct lapack_dense_content {
+  std::vector<int> ipiv;
+  sunindextype last_flag = 0;
+};
+
+inline lapack_dense_content *lapack_content(SUNLinearSolver S) {
+  return static_cast<lapack_dense_content *>(S->content);
+}
+
+inline SUNLinearSolver_Type lapack_dense_gettype(SUNLinearSolver) {
+  return SUNLINEARSOLVER_DIRECT;
+}
+
+inline SUNLinearSolver_ID lapack_dense_getid(SUNLinearSolver) {
+  return SUNLINEARSOLVER_CUSTOM;
+}
+
+inline SUNErrCode lapack_dense_initialize(SUNLinearSolver S) {
+  lapack_content(S)->last_flag = 0;
+  return SUN_SUCCESS;
+}
+
+inline int lapack_dense_setup(SUNLinearSolver S, SUNMatrix A) {
+  auto *content = lapack_content(S);
+  int n = static_cast<int>(SUNDenseMatrix_Rows(A));
+  int info = 0;
+  content->ipiv.resize(static_cast<std::size_t>(n));
+  F77_CALL(dgetrf)(&n, &n, SUNDenseMatrix_Data(A), &n, content->ipiv.data(), &info);
+  content->last_flag = info;
+  // info > 0: zero pivot, recoverable (the integrator retries with a smaller step)
+  if (info > 0) return SUNLS_LUFACT_FAIL;
+  if (info < 0) return SUN_ERR_ARG_CORRUPT;
+  return SUN_SUCCESS;
+}
+
+inline int lapack_dense_solve(SUNLinearSolver S, SUNMatrix A, N_Vector x, N_Vector b,
+                              sunrealtype) {
+  auto *content = lapack_content(S);
+  N_VScale(SUN_RCONST(1.0), b, x);
+  int n = static_cast<int>(SUNDenseMatrix_Rows(A));
+  int nrhs = 1;
+  int info = 0;
+  F77_CALL(dgetrs)("N", &n, &nrhs, SUNDenseMatrix_Data(A), &n, content->ipiv.data(),
+                   N_VGetArrayPointer(x), &n, &info FCONE);
+  content->last_flag = info;
+  return info == 0 ? SUN_SUCCESS : SUN_ERR_ARG_CORRUPT;
+}
+
+inline sunindextype lapack_dense_lastflag(SUNLinearSolver S) {
+  return lapack_content(S)->last_flag;
+}
+
+inline SUNErrCode lapack_dense_free(SUNLinearSolver S) {
+  if (S == nullptr) return SUN_SUCCESS;
+  delete lapack_content(S);
+  S->content = nullptr;
+  SUNLinSolFreeEmpty(S);
+  return SUN_SUCCESS;
+}
+
+inline SUNLinearSolver lapack_dense_solver(SUNContext ctx) {
+  SUNLinearSolver S = SUNLinSolNewEmpty(ctx);
+  if (S == nullptr) return nullptr;
+  S->ops->gettype = lapack_dense_gettype;
+  S->ops->getid = lapack_dense_getid;
+  S->ops->initialize = lapack_dense_initialize;
+  S->ops->setup = lapack_dense_setup;
+  S->ops->solve = lapack_dense_solve;
+  S->ops->lastflag = lapack_dense_lastflag;
+  S->ops->free = lapack_dense_free;
+  S->content = new lapack_dense_content();
+  return S;
+}
+
+// NOTE: the *GetReturnFlagName functions return malloc'ed memory
+inline std::string flag_name(char *name) {
+  std::string out = name ? name : "unknown flag";
+  std::free(name);
+  return out;
+}
 
 // RHS: functor f(t, y, ydot, params). params is an opaque passthrough (double
 // vector, scalar, or a new_type struct) -- cvode_solve never inspects it.
@@ -92,12 +183,13 @@ inline auto cvode_solve(const RHS &rhs, const Y &y0, const T &times,
   etr::ass<"cvode: CVodeInit failed">(CVodeInit(w.mem, &rhs_trampoline<RHS, P>, t0, w.y) == CV_SUCCESS);
   etr::ass<"cvode: CVodeSStolerances failed">(CVodeSStolerances(w.mem, etr::get_val(reltol), etr::get_val(abstol)) == CV_SUCCESS);
   etr::ass<"cvode: CVodeSetUserData failed">(CVodeSetUserData(w.mem, &ctx) == CV_SUCCESS);
+  etr::ass<"cvode: CVodeSetMaxNumSteps failed">(CVodeSetMaxNumSteps(w.mem, max_num_steps) == CV_SUCCESS);
 
   w.A = SUNDenseMatrix(static_cast<sunindextype>(neq),
                        static_cast<sunindextype>(neq), w.ctx);
   etr::ass<"cvode: SUNDenseMatrix failed">(w.A != nullptr);
-  w.LS = SUNLinSol_Dense(w.y, w.A, w.ctx);
-  etr::ass<"cvode: SUNLinSol_Dense failed">(w.LS != nullptr);
+  w.LS = lapack_dense_solver(w.ctx);
+  etr::ass<"cvode: creating the LAPACK dense linear solver failed">(w.LS != nullptr);
   etr::ass<"cvode: CVodeSetLinearSolver failed">(
     CVodeSetLinearSolver(w.mem, w.LS, w.A) == CV_SUCCESS);
 
@@ -109,7 +201,9 @@ inline auto cvode_solve(const RHS &rhs, const Y &y0, const T &times,
   for (std::size_t k = 1; k < nt; ++k) {
     sunrealtype tret = 0.0;
     int flag = CVode(w.mem, etr::get_val(times.get(k)), w.y, &tret, CV_NORMAL);
-    etr::ass<"cvode: integration failed before an output time">(flag == CV_SUCCESS);
+    etr::ass(flag == CV_SUCCESS,
+             std::string("cvode: integration failed at t = ") + std::to_string(tret) + ": " +
+               flag_name(CVodeGetReturnFlagName(flag)));
     for (std::size_t j = 0; j < neq; ++j) {
       res.set(j * nt + k, etr::Double(yp[j]));
     }
@@ -212,15 +306,18 @@ inline auto ida_solve(const RES &res_fct, const Y &y0, const YP &yp0, const T &t
   etr::ass<"ida: IDASStolerances failed">(IDASStolerances(w.mem, etr::get_val(reltol), etr::get_val(abstol)) == IDA_SUCCESS);
   etr::ass<"ida: IDASetUserData failed">(IDASetUserData(w.mem, &ctx) == IDA_SUCCESS);
   etr::ass<"ida: IDASetId failed">(IDASetId(w.mem, w.id) == IDA_SUCCESS);
+  etr::ass<"ida: IDASetMaxNumSteps failed">(IDASetMaxNumSteps(w.mem, max_num_steps) == IDA_SUCCESS);
 
   w.A = SUNDenseMatrix(n, n, w.ctx);
   etr::ass<"ida: SUNDenseMatrix failed">(w.A != nullptr);
-  w.LS = SUNLinSol_Dense(w.y, w.A, w.ctx);
-  etr::ass<"ida: SUNLinSol_Dense failed">(w.LS != nullptr);
+  w.LS = lapack_dense_solver(w.ctx);
+  etr::ass<"ida: creating the LAPACK dense linear solver failed">(w.LS != nullptr);
   etr::ass<"ida: IDASetLinearSolver failed">(IDASetLinearSolver(w.mem, w.LS, w.A) == IDA_SUCCESS);
 
-  etr::ass<"ida: IDACalcIC failed (no consistent initial values found)">(
-    IDACalcIC(w.mem, IDA_YA_YDP_INIT, etr::get_val(times.get(1))) == IDA_SUCCESS);
+  int ic_flag = IDACalcIC(w.mem, IDA_YA_YDP_INIT, etr::get_val(times.get(1)));
+  etr::ass(ic_flag == IDA_SUCCESS,
+           std::string("ida: IDACalcIC failed (no consistent initial values found): ") +
+             flag_name(IDAGetReturnFlagName(ic_flag)));
   etr::ass<"ida: IDAGetConsistentIC failed">(IDAGetConsistentIC(w.mem, w.y, w.yp) == IDA_SUCCESS);
 
   sunrealtype *y_ptr = N_VGetArrayPointer(w.y);
@@ -232,7 +329,9 @@ inline auto ida_solve(const RES &res_fct, const Y &y0, const YP &yp0, const T &t
   for (std::size_t k = 1; k < nt; ++k) {
     sunrealtype tret = 0.0;
     int flag = IDASolve(w.mem, etr::get_val(times.get(k)), &tret, w.y, w.yp, IDA_NORMAL);
-    etr::ass<"ida: integration failed before an output time">(flag == IDA_SUCCESS);
+    etr::ass(flag == IDA_SUCCESS,
+             std::string("ida: integration failed at t = ") + std::to_string(tret) + ": " +
+               flag_name(IDAGetReturnFlagName(flag)));
     for (std::size_t j = 0; j < neq; ++j) {
       res.set(j * nt + k, etr::Double(y_ptr[j]));
     }
