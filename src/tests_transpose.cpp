@@ -10,7 +10,7 @@ void test_transpose() {
       ass<"Equal elements in transpose">(std::abs(expected[i] - got[i]) < TOL);
     }
   };
-  auto check_dim = [](const auto& got, const std::vector<std::size_t>& dim) {
+  auto check_dim = [](const auto& got, const Dim& dim) {
     std::size_t n = 1;
     for (std::size_t d : dim) n *= d;
     ass<"transpose size">(got.size() == n);

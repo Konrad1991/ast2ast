@@ -16,7 +16,7 @@ namespace etr {
 // ---------- shape helpers --------------------------------------------------
 // RHS B is n x k. A vector (rank < 2) is an n x 1 column; the result then
 // drops back to a rank-1 vector, matching R.
-inline std::pair<std::size_t, std::size_t> solve_rhs_shape(const std::vector<std::size_t>& dim, std::size_t sz) {
+inline std::pair<std::size_t, std::size_t> solve_rhs_shape(const Dim& dim, std::size_t sz) {
   if (dim.size() >= 2) return {dim[0], dim[1]};
   return {sz, 1};
 }

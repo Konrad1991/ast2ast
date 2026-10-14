@@ -433,7 +433,7 @@ void test_utilities() {
   {
     Array<Double, Buffer<Double>> a;
     a = c(Double(4.0), Double(2.0), Double(2.0), Double(3.0));
-    a.dim = std::vector<std::size_t>{2, 2};
+    a.dim = Dim{2, 2};
     auto r = chol(a);
     ass<"chol nrow">(nrow(r) == Integer(2));
     ass<"chol ncol">(ncol(r) == Integer(2));
@@ -444,14 +444,14 @@ void test_utilities() {
     // non-positive-definite input errors
     Array<Double, Buffer<Double>> b;
     b = c(Double(1.0), Double(2.0), Double(2.0), Double(1.0));
-    b.dim = std::vector<std::size_t>{2, 2};
+    b.dim = Dim{2, 2};
     bool threw = false;
     try { auto bad = chol(b); } catch (...) { threw = true; }
     ass<"chol non-PD throws">(threw);
     // integer matrix is cast to double; same factorization
     Array<Integer, Buffer<Integer>> ai;
     ai = c(Integer(4), Integer(2), Integer(2), Integer(3));
-    ai.dim = std::vector<std::size_t>{2, 2};
+    ai.dim = Dim{2, 2};
     auto ri = chol(ai);
     ass<"chol(int) R[0,0]=2">(get_val(ri.get(0)) == 2.0);
     ass<"chol(int) R[0,1]=1">(get_val(ri.get(2)) == 1.0);
@@ -464,14 +464,14 @@ void test_utilities() {
     Array<Dual, Buffer<Dual>> adual;
     adual = c(Dual(Av[0], Ad[0]), Dual(Av[1], Ad[1]),
               Dual(Av[2], Ad[2]), Dual(Av[3], Ad[3]));
-    adual.dim = std::vector<std::size_t>{2, 2};
+    adual.dim = Dim{2, 2};
     auto rd = chol(adual);
     ass<"chol dual value R[0,0]=2">(rd.get(0).val == 2.0);
 
     auto chol_d = [](const double m[4]) {
       Array<Double, Buffer<Double>> A;
       A = c(Double(m[0]), Double(m[1]), Double(m[2]), Double(m[3]));
-      A.dim = std::vector<std::size_t>{2, 2};
+      A.dim = Dim{2, 2};
       return chol(A);
     };
     const double h = 1e-6;
@@ -491,7 +491,7 @@ void test_utilities() {
     Array<ReverseDouble, Buffer<ReverseDouble>> A;
     A = c(ReverseDouble::Var(Av[0]), ReverseDouble::Var(Av[1]),
           ReverseDouble::Var(Av[2]), ReverseDouble::Var(Av[3]));
-    A.dim = std::vector<std::size_t>{2, 2};
+    A.dim = Dim{2, 2};
     auto R = chol(A);
     ReverseDouble loss = R.get(0) + R.get(1) + R.get(2) + R.get(3);
     auto g = deriv(loss, A);
@@ -499,7 +499,7 @@ void test_utilities() {
     auto loss_d = [](const double m[4]) {
       Array<Double, Buffer<Double>> M;
       M = c(Double(m[0]), Double(m[1]), Double(m[2]), Double(m[3]));
-      M.dim = std::vector<std::size_t>{2, 2};
+      M.dim = Dim{2, 2};
       auto rr = chol(M);
       return get_val(rr.get(0)) + get_val(rr.get(1)) + get_val(rr.get(2)) + get_val(rr.get(3));
     };

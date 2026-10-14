@@ -74,6 +74,17 @@ struct ReverseTape {
     blocks.clear();
   }
 
+  // drops everything recorded after (size, nblocks); keeps capacity
+  inline void rewind(std::size_t size, std::size_t nblocks) {
+    op.resize(size);
+    a.resize(size);
+    b.resize(size);
+    val.resize(size);
+    adj.resize(size);
+    is_na.resize(size);
+    blocks.resize(nblocks);
+  }
+
   inline void reserve(std::size_t n) {
     op.reserve(n);
     a.reserve(n);
@@ -307,7 +318,6 @@ struct ReverseTape {
     }
 
     std::vector<double> out_vals(d * d, 0.0);
-    const int di = static_cast<int>(d);
     const int mi = static_cast<int>(m);
     const int ni = static_cast<int>(n);
     const double alpha = 1.0, beta = 0.0;
@@ -1847,9 +1857,16 @@ inline Integer Integer::operator+(const Integer& other) const {
   if (is_na || other.is_na) return Integer::NA();
   return Integer(val + other.val);
 }
+// NOTE: branchless on purpose (no `if (is_na) return NA()`): NA branches between
+// the FP ops kept the CPU from overlapping e.g. divisions (diffuse.R, perf).
+// NA result still gets val = NaN, like Double::NA().
+inline Double double_na_select(double v, bool na) {
+  Double r(na ? std::numeric_limits<double>::quiet_NaN() : v);
+  r.is_na = na;
+  return r;
+}
 inline Double Double::operator+(const Double& other) const {
-  if (is_na || other.is_na) return Double::NA();
-  return Double(val + other.val);
+  return double_na_select(val + other.val, is_na | other.is_na);
 }
 inline Dual Dual::operator+(const Dual& other) const {
   if (is_na || other.is_na) return Dual::NA();
@@ -1870,8 +1887,7 @@ inline Integer Integer::operator-(const Integer& other) const {
   return Integer(val - other.val);
 }
 inline Double Double::operator-(const Double& other) const {
-  if (is_na || other.is_na) return Double::NA();
-  return Double(val - other.val);
+  return double_na_select(val - other.val, is_na | other.is_na);
 }
 inline Dual Dual::operator-(const Dual& other) const {
   if (is_na || other.is_na) return Dual::NA();
@@ -1947,8 +1963,7 @@ inline Integer Integer::operator*(const Integer& other) const {
   return Integer(val * other.val);
 }
 inline Double Double::operator*(const Double& other) const {
-  if (is_na || other.is_na) return Double::NA();
-  return Double(val * other.val);
+  return double_na_select(val * other.val, is_na | other.is_na);
 }
 inline Dual Dual::operator*(const Dual& other) const {
   if (is_na || other.is_na) return Dual::NA();
@@ -1969,8 +1984,7 @@ inline Double Integer::operator/(const Integer& other) const {
   return Double(static_cast<double>(val) / static_cast<double>(other.val));
 }
 inline Double Double::operator/(const Double& other) const {
-  if (is_na || other.is_na) return Double::NA();
-  return Double(val / other.val);
+  return double_na_select(val / other.val, is_na | other.is_na);
 }
 inline Dual Dual::operator/(const Dual& other) const {
   if (is_na || other.is_na) return Dual::NA();
@@ -2593,8 +2607,7 @@ inline Integer Integer::operator-() const {
   return Integer(-val);
 }
 inline Double Double::operator-() const {
-  if (is_na) return Double::NA();
-  return Double(-val);
+  return double_na_select(-val, is_na);
 }
 inline Dual Dual::operator-() const {
   if (is_na) return Dual::NA();
@@ -2994,19 +3007,51 @@ struct LogicalRef {
   inline LogicalRef(bool) = delete;
 
   template<typename T> requires IsArray<Decayed<T>> inline LogicalRef& operator=(const T& arr) {
-    using  inner = typename ExtractDataType<T>::value_type;
     ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
     *this = arr.get(0);
     return *this;
   }
 };
 
+// NOTE: memory without NA flags (p_na == nullptr) is R's (borrow_vec/borrow_mat):
+// there NA is R's sentinel value inside the data itself
+inline bool is_r_na_sentinel(double x) {
+#ifdef STANDALONE_ETR
+  (void)x;
+  return false;
+#else
+  return ISNA(x);
+#endif
+}
+inline bool is_r_na_sentinel(int x) {
+#ifdef STANDALONE_ETR
+  (void)x;
+  return false;
+#else
+  return x == NA_INTEGER;
+#endif
+}
+inline void write_value_and_na(double* p_val, bool* p_na, double value, bool na) {
+  *p_val = value;
+  if (p_na) *p_na = na;
+#ifndef STANDALONE_ETR
+  else if (na) *p_val = NA_REAL;
+#endif
+}
+inline void write_value_and_na(int* p_val, bool* p_na, int value, bool na) {
+  *p_val = value;
+  if (p_na) *p_na = na;
+#ifndef STANDALONE_ETR
+  else if (na) *p_val = NA_INTEGER;
+#endif
+}
+
 struct IntegerRef {
   int* p_val;
   bool* p_na;
   operator Integer() const {
     Integer out(*p_val);
-    if (p_na) out.is_na = *p_na;
+    out.is_na = p_na ? *p_na : is_r_na_sentinel(*p_val);
     return out;
   }
   // Scalar operations, delegated to the referenced value via operator Integer().
@@ -3050,19 +3095,19 @@ struct IntegerRef {
   explicit inline operator bool() const { return static_cast<bool>(Integer(*this)); }
   IntegerRef& operator=(const IntegerRef& other) {
     if (this == &other) return *this;
-    *p_val = *other.p_val;
-    if (p_na) *p_na = other.p_na ? *other.p_na : false;
+    const Integer value(other);
+    write_value_and_na(p_val, p_na, *other.p_val, value.is_na);
     return *this;
   }
   IntegerRef& operator=(const Integer& x) {
-    *p_val = get_val(x);
-    if (p_na) *p_na = x.is_na;
+    write_value_and_na(p_val, p_na, get_val(x), x.is_na);
     return *this;
   }
   template<typename T> requires (IsArithV<T> || IsArithRefV<T>) IntegerRef& operator=(const T& x) {
     bool na = get_scalar_val(x).is_na;
-    *p_val = double_to_int_na(static_cast<double>(get_val(x)), na);
-    if (p_na) *p_na = na;
+    // NOTE: separate statement, double_to_int_na sets na for NaN
+    const int value = double_to_int_na(static_cast<double>(get_val(x)), na);
+    write_value_and_na(p_val, p_na, value, na);
     return *this;
   }
   explicit inline IntegerRef(int* v, bool* n = nullptr);
@@ -3070,7 +3115,6 @@ struct IntegerRef {
   inline IntegerRef(int) = delete;
 
   template<typename T> requires IsArray<Decayed<T>> inline IntegerRef& operator=(const T& arr) {
-    using  inner = typename ExtractDataType<T>::value_type;
     ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
     *this = arr.get(0);
     return *this;
@@ -3081,7 +3125,7 @@ struct DoubleRef {
   bool*   p_na;
   operator Double() const {
     Double out(*p_val);
-    if (p_na) out.is_na = *p_na;
+    out.is_na = p_na ? *p_na : is_r_na_sentinel(*p_val);
     return out;
   }
   // Scalar operations, delegated to the referenced value via operator Double().
@@ -3129,25 +3173,22 @@ struct DoubleRef {
   explicit inline operator bool() const { return static_cast<bool>(Double(*this)); }
   DoubleRef& operator=(const DoubleRef& other) {
     if (this == &other) return *this;
-    *p_val = *other.p_val;
-    if (p_na) *p_na = other.p_na ? *other.p_na : false;
+    const Double value(other);
+    write_value_and_na(p_val, p_na, *other.p_val, value.is_na);
     return *this;
   }
   DoubleRef& operator=(const Double& x) {
-    *p_val = get_val(x);
-    if (p_na) *p_na = x.is_na;
+    write_value_and_na(p_val, p_na, get_val(x), x.is_na);
     return *this;
   }
   template<typename T> requires (IsArithV<T> || IsArithRefV<T>) DoubleRef& operator=(const T& x) {
-    *p_val = static_cast<double>(get_val(x));
-    if (p_na) *p_na = get_scalar_val(x).is_na;
+    write_value_and_na(p_val, p_na, static_cast<double>(get_val(x)), get_scalar_val(x).is_na);
     return *this;
   }
   explicit inline DoubleRef(double* v, bool* n = nullptr);
   inline DoubleRef(Double) = delete;
   inline DoubleRef(double) = delete;
   template<typename T> requires IsArray<Decayed<T>> inline DoubleRef& operator=(const T& arr) {
-    using  inner = typename ExtractDataType<T>::value_type;
     ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
     *this = arr.get(0);
     return *this;
@@ -3238,7 +3279,6 @@ struct DualRef {
   inline DualRef(Dual) = delete;
   inline DualRef(double, double) = delete;
   template<typename T> requires IsArray<Decayed<T>> inline DualRef& operator=(const T& arr) {
-    using  inner = typename ExtractDataType<T>::value_type;
     ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
     *this = arr.get(0);
     return *this;

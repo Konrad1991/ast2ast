@@ -44,7 +44,8 @@ translate <- function(f,
     ), call. = FALSE)
   }
 
-  cpp_code <- translate_internally(f, types_f, derivative, name_f, r_fct, debug)
+  # NOTE: file:line labels only for make_package
+  cpp_code <- translate_internally(utils::removeSource(f), types_f, derivative, name_f, r_fct, debug)
   if (getsource) return(cpp_code)
 
   compile(cpp_code, r_fct, verbose, as.character(name_f))

@@ -378,3 +378,31 @@ xv2 <- c(10.0, 20.0, 30.0, 40.0, 50.0, 60.0)
 expected_grad <- rep(0, 6)
 expected_grad[2:4] <- 1
 expect_equal(c(g_range(xv2)), expected_grad)
+
+# =============================================================================
+# non-scalar index on a const ref() argument of an inner function (logical,
+# strided and matrix row selection) -- picked the mutable SubsetView overload
+# and failed to compile ("binding reference ... discards qualifiers")
+# =============================================================================
+const_ref_subsets <- function(x, M) {
+  argtypes(
+    x |> type(vec(int)),
+    M |> type(mat(double))
+  )
+  pick <- function(x, M) {
+    argtypes(
+      x |> type(vec(int)) |> ref() |> const(),
+      M |> type(mat(double)) |> ref() |> const()
+    )
+    returntype(double)
+    by_mask <- x[x > 2L]
+    by_range <- x[2L:3L]
+    rows <- M[x[1L:2L], ]
+    return(sum(by_mask) + sum(by_range) + sum(rows))
+  }
+  return(pick(x, M))
+}
+fcpp <- ast2ast::translate(const_ref_subsets)
+x <- c(1L, 2L, 3L, 4L)
+M <- matrix(as.double(1:8), 4L, 2L)
+expect_equal(fcpp(x, M), sum(x[x > 2L]) + sum(x[2:3]) + sum(M[x[1:2], ]))

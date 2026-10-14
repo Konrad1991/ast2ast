@@ -63,7 +63,7 @@ template<typename T, typename I> requires IsDual<T> inline void unseed(T& obj, c
 
 template<typename T> requires IsDual<T> inline auto get_dot(const T& obj) {
   Array<Double, Buffer<Double, RBufferTrait>> res(SI{1});
-  res.dim = std::vector<std::size_t>{1};
+  res.dim = Dim{1};
   res.set(0, Double(obj.dot));
   return res;
 }
@@ -80,7 +80,7 @@ template<typename T> requires IsArray<T> inline auto get_dot(const T& obj) {
   for (std::size_t i = 0; i < res.size(); i++) {
     res.set(i, obj.d.get_dot(i));
   }
-  res.dim = std::vector<std::size_t>{obj.size()};
+  res.dim = Dim{obj.size()};
   return res;
 }
 
@@ -134,7 +134,7 @@ template<typename Of, typename Wrt> inline auto deriv(const Of& of, const Wrt& w
   using DecayedWrt = Decayed<Wrt>;
   if constexpr (IsReverseDouble<DecayedOf> && IsReverseDouble<DecayedWrt>) {
     Array<Double, Buffer<Double, RBufferTrait>> res(SI{1});
-    res.dim = std::vector<std::size_t>{1};
+    res.dim = Dim{1};
     TAPE_INTERN.reverse(of.id);
     res.set(0, Double(TAPE_INTERN.adj[static_cast<std::size_t>(w_inp.id)]));
     return res;
@@ -143,7 +143,7 @@ template<typename Of, typename Wrt> inline auto deriv(const Of& of, const Wrt& w
     using DataTypeOf = typename ExtractDataType<DecayedOf>::value_type;
     static_assert(IsReverseDouble<DataTypeOf>, "data type of of has to be ReverseDouble");
     Array<Double, Buffer<Double, RBufferTrait>> res(SI{of.size()});
-    res.dim = std::vector<std::size_t>{of.size()};
+    res.dim = Dim{of.size()};
     for (std::size_t j = 0; j < res.size(); j++) {
       TAPE_INTERN.reverse(of.get(j).id);
       res.set(j, Double(TAPE_INTERN.adj[static_cast<std::size_t>(w_inp.id)]));
@@ -262,9 +262,195 @@ inline auto jacobian_impl(const X& x, Call&& call_f) {
   }
 }
 
+// Sparsity pattern + column colouring of f, built at translation
+// (R/Colouring.R) for length(x) == n. Per column (CSC, 0-based): its colour
+// and the rows it touches. Columns of one colour share no row.
+struct Colouring {
+  std::size_t n;
+  std::size_t m;
+  std::size_t ncolours;
+  std::vector<int> colour;
+  std::vector<int> col_ptr;
+  std::vector<int> row_idx;
+};
+
+// one forward sweep per colour: seed all its columns at once, then scatter
+// J*v into the rows each column touches
+template<typename X, typename Call>
+inline auto jacobian_coloured_impl(const X& x, const Colouring& c, Call&& call_f) {
+  ass<"jacobian: length(x) differs from n given for colouring">(x.size() == c.n);
+  Array<Dual, Buffer<Dual>> xd(SI{c.n});
+  for (std::size_t i = 0; i < c.n; i++) xd.set(i, Dual(get_val(x.get(i)), 0.0));
+  auto jac = matrix(Double(0.0), Integer(static_cast<int>(c.m)), Integer(static_cast<int>(c.n)));
+
+  std::vector<std::vector<std::size_t>> cols_of(c.ncolours);
+  for (std::size_t j = 0; j < c.n; j++) cols_of[static_cast<std::size_t>(c.colour[j])].push_back(j);
+
+  for (const auto& cols : cols_of) {
+    for (std::size_t j : cols) xd.d.set_dot(j, 1.0);
+    auto y = call_f(xd);
+    ass<"jacobian: f returned another length than the colouring assumes">(y.size() == c.m);
+    for (std::size_t j : cols) {
+      for (int p = c.col_ptr[j]; p < c.col_ptr[j + 1]; p++) {
+        const std::size_t i = static_cast<std::size_t>(c.row_idx[static_cast<std::size_t>(p)]);
+        jac.set(j * c.m + i, y.d.get_dot(i));
+      }
+    }
+    for (std::size_t j : cols) xd.d.set_dot(j, 0.0);
+  }
+  return jac;
+}
+
+// Runtime pattern (development/Plans/sparsity_tracer.md): record f once on the
+// reverse tape (f_rev = f translated with ReverseDouble), walk back from every
+// output to the inputs it reaches. Exact for the branch taken at x. Block ops
+// (matmul, solve, ...) count as depending on all of their inputs.
+// Then greedy column colouring. The tape is rewound afterwards.
+template<typename X, typename CallRev>
+inline Colouring colouring_from_tape(const X& x, CallRev&& call_rev) {
+  auto& tape = TAPE_INTERN;
+  const std::size_t tape_start = tape.size();
+  const std::size_t blocks_start = tape.blocks.size();
+  const std::size_t n = x.size();
+
+  Array<ReverseDouble, Buffer<ReverseDouble>> xr(SI{n});
+  for (std::size_t j = 0; j < n; j++) xr.set(j, ReverseDouble::Var(get_val(x.get(j))));
+  auto y = call_rev(xr);
+  const std::size_t m = y.size();
+
+  std::vector<int> col_of(tape.size(), -1);
+  for (std::size_t j = 0; j < n; j++) col_of[static_cast<std::size_t>(xr.get(j).id)] = static_cast<int>(j);
+
+  // stamp = row being walked, so the visited marks need no reset per row
+  std::vector<int> stamp(tape.size(), -1);
+  std::vector<int> block_stamp(tape.blocks.size(), -1);
+  std::vector<int> stack;
+  std::vector<std::vector<int>> rows(m);
+  auto push = [&](int id) { if (id >= 0) stack.push_back(id); };
+  for (std::size_t r = 0; r < m; r++) {
+    const int row = static_cast<int>(r);
+    push(y.get(r).id);
+    while (!stack.empty()) {
+      const std::size_t id = static_cast<std::size_t>(stack.back());
+      stack.pop_back();
+      if (stamp[id] == row) continue;
+      stamp[id] = row;
+      if (col_of[id] >= 0) {
+        rows[r].push_back(col_of[id]);
+        continue;
+      }
+      const ROp op = tape.op[id];
+      const bool is_block = op == ROp::MatMul || op == ROp::BlockSlot || op == ROp::Chol ||
+                            op == ROp::Solve || op == ROp::CrossProd || op == ROp::TriSolve ||
+                            op == ROp::Det;
+      if (is_block) {
+        // a[] holds the block index here, not a tape id
+        const std::size_t k = static_cast<std::size_t>(tape.a[id]);
+        if (block_stamp[k] == row) continue;
+        block_stamp[k] = row;
+        for (int in : tape.blocks[k].a_ids) push(in);
+        for (int in : tape.blocks[k].b_ids) push(in);
+      } else {
+        push(tape.a[id]);
+        push(tape.b[id]);
+      }
+    }
+    std::sort(rows[r].begin(), rows[r].end());
+  }
+  tape.rewind(tape_start, blocks_start);
+
+  // CSC: rows touched by each column
+  std::vector<int> col_ptr(n + 1, 0);
+  for (const auto& rw : rows) for (int j : rw) col_ptr[static_cast<std::size_t>(j) + 1]++;
+  for (std::size_t j = 0; j < n; j++) col_ptr[j + 1] += col_ptr[j];
+  std::vector<int> row_idx(static_cast<std::size_t>(col_ptr[n]));
+  std::vector<int> fill(col_ptr.begin(), col_ptr.end() - 1);
+  for (std::size_t r = 0; r < m; r++) {
+    for (int j : rows[r]) row_idx[static_cast<std::size_t>(fill[static_cast<std::size_t>(j)]++)] = static_cast<int>(r);
+  }
+
+  // greedy, natural column order: smallest colour no column sharing a row has
+  std::vector<int> colour(n, -1);
+  std::vector<std::size_t> forbidden(n + 1, n);
+  std::size_t ncolours = 0;
+  for (std::size_t j = 0; j < n; j++) {
+    for (int p = col_ptr[j]; p < col_ptr[j + 1]; p++) {
+      for (int k : rows[static_cast<std::size_t>(row_idx[static_cast<std::size_t>(p)])]) {
+        const int ck = colour[static_cast<std::size_t>(k)];
+        if (ck >= 0) forbidden[static_cast<std::size_t>(ck)] = j;
+      }
+    }
+    std::size_t c = 0;
+    while (forbidden[c] == j) c++;
+    colour[j] = static_cast<int>(c);
+    if (c + 1 > ncolours) ncolours = c + 1;
+  }
+  return Colouring{n, m, ncolours, std::move(colour), std::move(col_ptr), std::move(row_idx)};
+}
+
 template<typename F, typename X> requires (IsArray<Decayed<X>>)
 inline auto jacobian(const F& f, const X& x) {
   return jacobian_impl(x, [&f](const auto& xv) { return f(xv); });
+}
+
+// coloured jacobian with the pattern from colouring_from_tape
+template<typename F, typename FRev, typename X> requires (IsArray<Decayed<X>>)
+inline auto jacobian_runtime_coloured(const F& f, const FRev& f_rev, const X& x) {
+  const Colouring c = colouring_from_tape(x, [&f_rev](const auto& xv) { return f_rev(xv); });
+  return jacobian_coloured_impl(x, c, [&f](const auto& xv) { return f(xv); });
+}
+
+// second parameter type of f_rev's operator(), without const/&
+template <typename F> struct SecondArgOf : SecondArgOf<decltype(&F::operator())> {};
+template <typename C, typename R, typename A1, typename A2> struct SecondArgOf<R (C::*)(A1, A2) const> {
+  using type = std::decay_t<A2>;
+};
+template <typename C, typename R, typename A1, typename A2> struct SecondArgOf<R (C::*)(A1, A2)> {
+  using type = std::decay_t<A2>;
+};
+
+template<typename F, typename FRev, typename X, typename E> requires (IsArray<Decayed<X>>)
+inline auto jacobian_runtime_coloured(const F& f, const FRev& f_rev, const X& x, const E& extra) {
+  // NOTE: extra is converted (Dual -> ReverseDouble: scalar, array, struct,
+  // collection) inside the tape pass: its constants are rewound with the rest
+  const Colouring c = colouring_from_tape(x, [&f_rev, &extra](const auto& xv) {
+    typename SecondArgOf<FRev>::type extra_rev;
+    extra_rev = extra;
+    return f_rev(xv, extra_rev);
+  });
+  return jacobian_coloured_impl(x, c, [&f, &extra](const auto& xv) { return f(xv, extra); });
+}
+
+// jacobian(f, x, colouring = "runtime"): f_rev = the ReverseDouble copy of f
+template<typename FRev>
+struct RuntimeColouring {
+  const FRev& f_rev;
+};
+
+// helper instead of CTAD: aggregate CTAD is missing in older Apple Clang
+template<typename FRev>
+inline RuntimeColouring<FRev> runtime_colouring(const FRev& f_rev) {
+  return RuntimeColouring<FRev>{f_rev};
+}
+
+template<typename F, typename X, typename FRev> requires (IsArray<Decayed<X>>)
+inline auto jacobian(const F& f, const X& x, const RuntimeColouring<FRev>& rc) {
+  return jacobian_runtime_coloured(f, rc.f_rev, x);
+}
+
+template<typename F, typename X, typename E, typename FRev> requires (IsArray<Decayed<X>>)
+inline auto jacobian(const F& f, const X& x, const E& extra, const RuntimeColouring<FRev>& rc) {
+  return jacobian_runtime_coloured(f, rc.f_rev, x, extra);
+}
+
+template<typename F, typename X> requires (IsArray<Decayed<X>>)
+inline auto jacobian(const F& f, const X& x, const Colouring& c) {
+  return jacobian_coloured_impl(x, c, [&f](const auto& xv) { return f(xv); });
+}
+
+template<typename F, typename X, typename E> requires (IsArray<Decayed<X>>)
+inline auto jacobian(const F& f, const X& x, const E& extra, const Colouring& c) {
+  return jacobian_coloured_impl(x, c, [&f, &extra](const auto& xv) { return f(xv, extra); });
 }
 
 template<typename F, typename X, typename E> requires (IsArray<Decayed<X>>)

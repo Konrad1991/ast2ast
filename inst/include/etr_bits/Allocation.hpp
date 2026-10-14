@@ -65,7 +65,7 @@ template <typename... Args> inline auto c(Args &&...args) {
   int size = 0;
 
   forEachArg(
-    [&](auto arg) {
+    [&](const auto& arg) {
       using testType = Decayed<decltype(arg)>;
       constexpr bool is_scalar = IsScalarLike<testType>;
       if constexpr (is_scalar) {
@@ -77,7 +77,7 @@ template <typename... Args> inline auto c(Args &&...args) {
     args...);
 
   Array<cType, Buffer<cType, RBufferTrait>> ret(SI{size});
-  ret.dim = std::vector<std::size_t>{static_cast<std::size_t>(size)};
+  ret.dim = Dim{static_cast<std::size_t>(size)};
   std::size_t index = 0;
 
   forEachArg(
@@ -94,11 +94,11 @@ template <typename... Args> inline auto c(Args &&...args) {
       } else {
         using InnerType = typename ReRef<decltype(arg)>::type::value_type;
         if constexpr (IS<InnerType, cType>) {
-          for (int i = 0; i < arg.size(); i++) {
+          for (std::size_t i = 0; i < arg.size(); i++) {
             ret.set(index + i, arg.get(i));
           }
         } else {
-          for (int i = 0; i < arg.size(); i++) {
+          for (std::size_t i = 0; i < arg.size(); i++) {
             ret.set(index + i, static_cast<cType>(arg.get(i)));
           }
         }
@@ -132,42 +132,18 @@ inline auto ConvertValueColon(const T& obj) {
   }
 }
 
-template <typename DataType, typename S, typename E> inline auto colonInternal(S& startScalar, E& endScalar) {
-  auto start = get_val(startScalar);
-  const auto end = get_val(endScalar);
-  if (start < end) {
-    std::size_t length = static_cast<std::size_t>(end - start + 1);
-    ass<"invalid start or end values as argument to colon(:)">(length >= 1);
-    Array<DataType, Buffer<DataType, RBufferTrait>> ret(SI{length});
-    ret.dim = std::vector<std::size_t>{length};
-    std::size_t counter = 0;
-    while (start <= end) {
-      ret.d.set(counter, DataType(start));
-      start++;
-      counter++;
-    }
-    return ret;
-  } else {
-    std::size_t length = static_cast<std::size_t>(start - end + 1);
-    ass<"invalid start or end values as argument to colon(:)">(length >= 1);
-    Array<DataType, Buffer<DataType, RBufferTrait>> ret(SI{length});
-    ret.dim = std::vector<std::size_t>{length};
-    std::size_t counter = 0;
-    while (end <= start) {
-      ret.d.set(counter, DataType(start));
-      start--;
-      counter++;
-    }
-    return ret;
-  }
-}
-
 template <typename A, typename O>
 inline auto colon(const A& start,const O& end) {
-  auto s = ConvertValueColon(start);
-  auto e = ConvertValueColon(end);
+  auto s = get_scalar_val(ConvertValueColon(start));
+  auto e = get_scalar_val(ConvertValueColon(end));
   using DataType = typename common_type<decltype(s), decltype(e)>::type;
-  return colonInternal<DataType>(s, e);
+  const double d = static_cast<double>(get_val(e)) - static_cast<double>(get_val(s));
+  // + eps as in R's seq_colon
+  const double len = std::abs(d) + 1.0 + std::numeric_limits<float>::epsilon();
+  ass<"result of colon(:) would be too long a vector">(len <= std::numeric_limits<int>::max());
+  const int n = static_cast<int>(len);
+  // copy, not ref: a:b is evaluated once as in R
+  return make_range(DataType(get_val(s)), d >= 0 ? 1L : -1L, static_cast<std::size_t>(n));
 }
 
 template<typename T>
@@ -200,12 +176,7 @@ inline auto length_seq(const T& obj) {
 }
 template<typename A>
 inline auto seq_len(const A& length) {
-  const Integer ub = length_seq(length);
-  if (ub == Integer(0)) {
-    return Array<Integer, Buffer<Integer, RBufferTrait>>();
-  } else {
-    return colon(Integer(1), length_seq(length));
-  }
+  return make_range(Integer(1), 1L, static_cast<std::size_t>(get_val(Integer(length_seq(length)))));
 }
 template<typename A>
 inline auto seq_along(const A& obj) {
@@ -218,6 +189,17 @@ inline auto seq_along(const A& obj) {
   }
 }
 
+// checks before the cast: NaN/Inf/negative -> size_t is UB, negative int wraps
+template<string_literal msg, typename S>
+inline std::size_t checked_size(const S& s) {
+  const auto sv = get_scalar_val(s);
+  ass<msg>(!sv.isNA());
+  const double v = static_cast<double>(get_val(sv));
+  ass<msg>(std::isfinite(v) && v >= 0.0);
+  ass<msg>(v < static_cast<double>(std::numeric_limits<std::size_t>::max()));
+  return static_cast<std::size_t>(v);
+}
+
 // ---------------------------------------------------------------------
 // rep -----------------------------------------------------------------
 // ---------------------------------------------------------------------
@@ -225,18 +207,15 @@ template<typename T>
 inline std::size_t ConvertTimesRep(const T& times) {
   using DecayedT = Decayed<T>;
   constexpr bool is_scalar = IsScalarLike<DecayedT>;
+  std::size_t res = 0;
   if constexpr(is_scalar) {
-    const auto v = get_val(times);
-    std::size_t res = static_cast<std::size_t>(v);
-    ass<"times in fct rep has to be a positive integer">(res >= 1);
-    return res;
+    res = checked_size<"times in fct rep has to be a positive integer">(times);
   } else {
     ass<"times in rep has to be a vector of length 1">(times.size() == 1);
-    const auto v = get_val(times.get(0));
-    std::size_t res = static_cast<std::size_t>(v);
-    ass<"times in fct rep has to be a positive integer">(res >= 1);
-    return res;
+    res = checked_size<"times in fct rep has to be a positive integer">(times.get(0));
   }
+  ass<"times in fct rep has to be a positive integer">(res >= 1);
+  return res;
 }
 
 template <typename L, typename R>
@@ -245,7 +224,7 @@ inline auto repInternal(const L &inp, const R& times) {
     std::size_t length = ConvertTimesRep(times);
     Array<L, Buffer<L, RBufferTrait>> ret(SI{length});
     for (std::size_t i = 0; i < ret.size(); i++) ret.set(i, inp);
-    ret.dim = std::vector<std::size_t>{length};
+    ret.dim = Dim{length};
     return ret;
   } else if constexpr (IsArray<L>) {
     std::size_t length = ConvertTimesRep(times) * inp.size();
@@ -274,16 +253,10 @@ inline std::size_t ConvertSizeVec(const T& s) {
   using DecayedT = Decayed<T>;
   constexpr bool is_scalar = IsScalarLike<DecayedT>;
   if constexpr(is_scalar) {
-    const auto v = get_val(s);
-    ass<"size in fct vector/logical/integer/numeric/matrix/array has to be an integer >= 0">(v >= 0);
-    std::size_t res = static_cast<std::size_t>(v);
-    return res;
+    return checked_size<"size in fct vector/logical/integer/numeric/matrix/array has to be an integer >= 0">(s);
   } else {
     ass<"size in fct vector/logical/integer/numeric/matrix/array has to be a vector of length 1">(s.size() == 1);
-    const auto v = get_val(s.get(0));
-    ass<"size in fct vector/logical/integer/numeric/matrix/array has to be an integer >= 0">(v >= 0);
-    std::size_t res = static_cast<std::size_t>(v);
-    return res;
+    return checked_size<"size in fct vector/logical/integer/numeric/matrix/array has to be an integer >= 0">(s.get(0));
   }
 }
 
@@ -292,11 +265,11 @@ template <typename Type, typename T> inline auto createRVec(T s) {
   ass<"invalid length argument">(size >= 0);
   if (size == 0) {
     Array<Type, Buffer<Type, RBufferTrait>> res;
-    res.dim = std::vector<std::size_t>(1, 0);
+    res.dim = Dim(1, 0);
     return res;
   }
   Array<Type, Buffer<Type, RBufferTrait>> res(SI{size});
-  res.dim = std::vector<std::size_t>{size};
+  res.dim = Dim{size};
   return res;
 
 }
@@ -316,13 +289,17 @@ template <typename T> inline auto numeric_dual(const T &inp) {
 template <typename T> inline auto numeric_reverse_double(const T &inp) {
   return createRVec<ReverseDouble>(inp);
 }
+// numeric() for the scalar type of the translation (codegen: numeric_of<ETR_REAL>)
+template <typename Type, typename T> inline auto numeric_of(const T &inp) {
+  return createRVec<Type>(inp);
+}
 
 template <typename Type, typename R, typename C> inline auto createRMat(const R& nrow, const C& ncol) {
   std::size_t nr = ConvertSizeVec(nrow);
   std::size_t nc = ConvertSizeVec(ncol);
   ass<"invalid length argument">((nr*nc)> 0);
   Array<Type, Buffer<Type, RBufferTrait>> res(SI{nc*nr});
-  res.dim = std::vector<std::size_t>{nr, nc};
+  res.dim = Dim{nr, nc};
   return res;
 }
 
@@ -349,15 +326,15 @@ inline auto matrix(const T& inp, const R& nrow, const C& ncol) {
   }
 }
 
-template<typename Dim>
-inline auto calc_dim(const Dim& dim) {
-  using DecayedDim = Decayed<Dim>;
+template<typename D>
+inline Dim calc_dim(const D& dim) {
+  using DecayedDim = Decayed<D>;
   constexpr bool is_scalar_dim = IsScalarLike<DecayedDim>;
   if constexpr (is_scalar_dim) {
     std::size_t size = ConvertSizeVec(dim);
-    return std::vector<std::size_t>{size};
+    return Dim{size};
   } else {
-    std::vector<std::size_t> dim_vec(dim.size());
+    Dim dim_vec(dim.size(), 0);
     for (std::size_t i = 0; i < dim_vec.size(); i++) {
       dim_vec[i] = ConvertSizeVec(dim.get(i));
     }
@@ -365,8 +342,8 @@ inline auto calc_dim(const Dim& dim) {
   }
 }
 
-template<typename T, typename Dim>
-inline auto array(const T& inp, const Dim& dim_inp) {
+template<typename T, typename D>
+inline auto array(const T& inp, const D& dim_inp) {
   const auto dim = calc_dim(dim_inp);
   std::size_t size = 1; for (std::size_t i = 0; i < dim.size(); i++) {
     size *= dim[i];
@@ -407,7 +384,7 @@ template <typename... Args> inline auto rbind(Args &&...args) {
   std::size_t ncols = 0;
 
   forEachArg(
-    [&](auto arg) {
+    [&](const auto& arg) {
       using testType = Decayed<decltype(arg)>;
       constexpr bool is_scalar = IsScalarLike<testType>;
       if constexpr (is_scalar) {
@@ -424,7 +401,7 @@ template <typename... Args> inline auto rbind(Args &&...args) {
 
   // N rows, ncols columns; column-major so [row, col] sits at col*N + row
   Array<cType, Buffer<cType, RBufferTrait>> ret(SI{N * ncols});
-  ret.dim = std::vector<std::size_t>{N, ncols};
+  ret.dim = Dim{N, ncols};
   std::size_t row = 0;
 
   forEachArg(
@@ -470,7 +447,7 @@ template <typename... Args> inline auto cbind(Args &&...args) {
   std::size_t nrows = 0;
 
   forEachArg(
-    [&](auto arg) {
+    [&](const auto& arg) {
       using testType = Decayed<decltype(arg)>;
       constexpr bool is_scalar = IsScalarLike<testType>;
       if constexpr (is_scalar) {
@@ -487,7 +464,7 @@ template <typename... Args> inline auto cbind(Args &&...args) {
 
   // N cols, nrows rows; column-major so [row, col] sits at col*nrows + row
   Array<cType, Buffer<cType, RBufferTrait>> ret(SI{N * nrows});
-  ret.dim = std::vector<std::size_t>{nrows, N};
+  ret.dim = Dim{nrows, N};
   std::size_t col = 0;
 
   forEachArg(

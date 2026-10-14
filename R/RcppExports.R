@@ -89,6 +89,10 @@ test_assign_array_to_scalar <- function() {
     invisible(.Call(`_ast2ast_test_assign_array_to_scalar`))
 }
 
+test_coloured_jacobian <- function() {
+    invisible(.Call(`_ast2ast_test_coloured_jacobian`))
+}
+
 test_crossprod <- function() {
     invisible(.Call(`_ast2ast_test_crossprod`))
 }
@@ -119,6 +123,10 @@ test_lbfgsb_bound_length_error <- function() {
 
 test_nnls <- function() {
     invisible(.Call(`_ast2ast_test_nnls`))
+}
+
+test_pmap_warnings <- function(n) {
+    invisible(.Call(`_ast2ast_test_pmap_warnings`, n))
 }
 
 test_scalars <- function() {

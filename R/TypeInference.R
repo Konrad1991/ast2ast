@@ -218,7 +218,7 @@ common_type <- function(type_old, type_new) {
 
   if (is.null(type_old$get_base_type()) && is.null(type_old$get_data_struct())) {
     type_old$set_base_type(type_new$get_base_type())
-    type_old$set_data_struct(type_new$get_data_struct())
+    type_old$set_data_struct(if (is_range_type(type_new)) "range" else type_new$get_data_struct())
     return(type_old)
   }
 
@@ -247,6 +247,10 @@ common_type <- function(type_old, type_new) {
     common_data_struct <- type_old$get_data_struct()
   } else {
     common_data_struct <- type_new$get_data_struct()
+  }
+  # range only survives a join with another range (range_type.md)
+  if (is_range_type(type_old) && is_range_type(type_new)) {
+    return(type_old)
   }
   type_old$set_base_type(common_base_type)
   type_old$set_data_struct(common_data_struct)
@@ -321,7 +325,13 @@ type_infer_assignment <- function(node, info_env) {
     else {
       variable <- find_var_lhs(node)
 
-      if (inherits(info_env$vars_list[[variable]], "unknown_type")) {
+      if (inherits(type, "fn_node") && !inherits(node$right_node, "fn_node")) {
+        node$error <- sprintf(
+          "Cannot assign the function %s to the variable %s: functions can only be assigned when defined (%s <- fn(...))",
+          node$right_node$stringify(), variable, variable
+        )
+      }
+      else if (inherits(info_env$vars_list[[variable]], "unknown_type")) {
         if (inherits(type, "fn_node")) {
           type$fct_name <- variable
         }
@@ -620,7 +630,7 @@ type_infer_action <- function(node, info_env) {
     }
     # e.g. print(b) with b never assigned: print's own infer_fct doesn't look at
     # its argument's type, so this is the only place that sees the error
-    else if (is.null(node$error) && is.character(obj_type)) {
+    else if (is.null(node$error) && is.character(obj_type) && inherits(node$obj, "variable_node")) {
       node$error <- obj_type
     }
   }

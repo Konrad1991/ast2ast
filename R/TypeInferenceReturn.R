@@ -111,6 +111,8 @@ reconcile_return_types <- function(value_types, r_fct) {
   # has no concrete C++ type for the XPtr interface. A lone string return is
   # left for translate_internally to reject; a string mixed with other returns
   # is caught here (common_type cannot combine it).
+  # a range is internal, never a function's return type
+  value_types <- lapply(value_types, strip_range)
   Reduce(function(acc, t) {
     if (inherits(acc, "pre_type_node") && inherits(t, "pre_type_node")) {
       if (identical(acc$get_base_type(), "character") || identical(t$get_base_type(), "character")) {
@@ -168,7 +170,11 @@ create_return_statement <- function(node, function_registry) {
       node$block[[1]] <- create_void_return()
       return(node)
     }
+    location <- node$block[[n]]$location
     repl <- create_return_statement(node$block[[n]], function_registry)
+    for (r in if (inherits(repl, "list")) repl else list(repl)) {
+      if ("location" %in% names(r) && is.null(r$location)) r$location <- location
+    }
     if (inherits(repl, "list")) {
       # void tail call: keep the call for its side effects, then return()
       node$block[[n]] <- repl[[1]]

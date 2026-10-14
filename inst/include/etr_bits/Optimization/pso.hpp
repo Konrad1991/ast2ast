@@ -58,9 +58,9 @@ inline auto pso(
   ass<"npop has to be at least 5">(npop >= Integer(5));
   ass<"ngen has to be at least 10">(ngen >= Integer(10));
   Array<R, Buffer<R>> swarm(SI{npop_t * npar_t});
-  swarm.dim = std::vector<std::size_t>{npar_t, npop_t};
+  swarm.dim = Dim{npar_t, npop_t};
   Array<R, Buffer<R>> v(SI{npop_t * npar_t});
-  v.dim = std::vector<std::size_t>{npar_t, npop_t};
+  v.dim = Dim{npar_t, npop_t};
   Array<R, Buffer<R>> swarm_bests = numeric(npop);
   Array<R, Buffer<R>> swarm_errors = numeric(npop);
   const Double initial_cog = Double(2.5);
@@ -78,7 +78,7 @@ inline auto pso(
       swarm.set(i*npar_t + j, rng.runif(get_val(lb.get(j)), get_val(ub.get(j))));
     }
     Array<R, Borrow<R, BorrowTrait>> particle(
-      &swarm.d.p_val[i * npar_t], npar_t, std::vector<std::size_t>{npar_t}
+      &swarm.d.p_val[i * npar_t], npar_t, Dim{npar_t}
     );
     swarm_errors.set(i, f(particle));
     swarm_bests.set(i, swarm_errors.get(i));
@@ -96,7 +96,7 @@ inline auto pso(
   const std::size_t k_t = static_cast<std::size_t>(get_val(k));
 
   [[maybe_unused]] Array<Integer, Buffer<Integer>> neighberhood(SI{k_t * npop_t});
-  neighberhood.dim = std::vector<std::size_t>{k_t, npop_t};
+  neighberhood.dim = Dim{k_t, npop_t};
   std::vector<int> pool(npop_t);
   const auto calc_neighberhood = [&]() {
     for (std::size_t c = 0; c < npop_t; c++) {
@@ -128,21 +128,27 @@ inline auto pso(
 
   for (std::size_t idx = 0; idx < npar_t * npop_t; idx++) v.set(idx, R(0.0));
   Array<R, Buffer<R>> swarm_best_params(SI{npar_t * npop_t});
-  swarm_best_params.dim = std::vector<std::size_t>{npar_t, npop_t};
+  swarm_best_params.dim = Dim{npar_t, npop_t};
   for (std::size_t idx = 0; idx < npar_t * npop_t; idx++)
     swarm_best_params.set(idx, R(swarm.d.p_val[idx]));
   Array<R, Buffer<R>> global_best_vec(SI{npar_t});
-  global_best_vec.dim = std::vector<std::size_t>{npar_t};
+  global_best_vec.dim = Dim{npar_t};
   for (std::size_t d = 0; d < npar_t; d++)
     global_best_vec.set(d, R(swarm.d.p_val[static_cast<std::size_t>(get_val(global_best)) * npar_t + d]));
 
-  Integer convergence_check = Integer(0);
-  Integer no_improvement = Integer(0);
+  // SPSO-2011 renews the topology after every stagnating iteration; 50 is gentler
+  constexpr int max_stagnation = 50;
+  int stagnation = 0;
+  bool improved = false;
   const double ngen_d = static_cast<double>(get_val(ngen));
   const bool use_global = static_cast<bool>(global);
 
   for (int iter = 1; iter < static_cast<int>(get_val(ngen)); iter++) {
-    if (iter == 1 || get_val(convergence_check) != 0) calc_neighberhood();
+    if (stagnation >= max_stagnation) {
+      calc_neighberhood();
+      stagnation = 0;
+    }
+    improved = false;
 
     w = Double(get_val(w_max) - iter * (get_val(w_max) - get_val(w_min)) / ngen_d);
     const double cog = get_val(initial_cog)
@@ -180,7 +186,7 @@ inline auto pso(
       correct_above_ub(pos);
 
       Array<R, Borrow<R, BorrowTrait>> particle(
-        pos, npar_t, std::vector<std::size_t>{npar_t}
+        pos, npar_t, Dim{npar_t}
       );
       const double err = get_val(f(particle));
       const bool ok = std::isfinite(err);
@@ -193,12 +199,10 @@ inline auto pso(
         global_best = Integer(static_cast<int>(i));
         for (std::size_t d = 0; d < npar_t; d++) global_best_vec.set(d, R(pos[d]));
         global_best_error = Double(err);
-        no_improvement = Integer(0);
-      } else {
-        no_improvement = no_improvement + Integer(1);
+        improved = true;
       }
-      convergence_check = convergence_check + Integer(1);
     }
+    stagnation = improved ? 0 : stagnation + 1;
 
     if (static_cast<bool>(global_best_error < error_threshold)) break;
   }
@@ -220,6 +224,12 @@ inline auto pso(
   std::function<S(A)> wrapped =
     [&f, &data](const A& particle) -> S { return f(particle, data); };
   return pso(wrapped, lb_, ub_, ngen_, npop_, error_threshold_, global_, seed_);
+}
+
+// pso(f, ..., data) with a translated fn (functor): S/A/D from the std::function
+template<typename F, typename... Rest> requires (!IsStdFunction<F> && sizeof...(Rest) == 8)
+inline auto pso(const F& f, const Rest&... rest) {
+  return pso(as_std_function(f), rest...);
 }
 
 } // namespace etr

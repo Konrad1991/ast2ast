@@ -19,6 +19,20 @@ wrap_in_block <- function(expr) {
   as.call(list(as.name("{"), expr))
 }
 
+srcref_location <- function(srcref) {
+  file <- utils::getSrcFilename(srcref)
+  if (length(file) == 0L || file %in% c("", "<text>")) return(NULL)
+  sprintf("%s:%d", file, srcref[1L])
+}
+
+# NOTE: rebuilding a block drops its srcrefs; valid only if the kept statements are the trailing ones of old_block
+keep_trailing_srcrefs <- function(new_block, old_block) {
+  refs <- attr(old_block, "srcref")
+  if (is.null(refs)) return(new_block)
+  attr(new_block, "srcref") <- c(refs[1L], utils::tail(refs, length(new_block) - 1L))
+  new_block
+}
+
 same_base_type <- function(is, should) {
   if (is == "int") is <- "integer"
   if (should == "int") should <- "integer"
@@ -27,6 +41,7 @@ same_base_type <- function(is, should) {
 same_data_struct <- function(is, should) {
   correct <- function(ds) {
     if (ds == "vec") return("vector")
+    if (ds == "range") return("vector")
     if (ds == "borrow_vec") return("borrow_vector")
     if (ds == "mat") return("matrix")
     if (ds == "borrow_mat") return("borrow_matrix")
@@ -145,6 +160,15 @@ permitted_data_structs <- function(r_fct) {
   }
 }
 
+# C++ name of the scalar type. Always the alias ETR_REAL: outside of fns it is
+# the type of the translation (using ETR_REAL = etr::Dual; in assemble), inside
+# a fn functor its template parameter (development/Plans/scalar_type_parameter.md)
+SCALAR_CPP <- "ETR_REAL"
+scalar_cpp <- function(real_type) {
+  if (is.null(real_type)) return(NULL)
+  SCALAR_CPP
+}
+
 convert_base_type <- function(r_type, real_type) {
   type_list <- list(
     "void" = "void",
@@ -152,7 +176,7 @@ convert_base_type <- function(r_type, real_type) {
     "logical" = "etr::Logical",
     "bool" = "etr::Logical",
     "integer" = "etr::Integer", "int" = "etr::Integer",
-    "double" = real_type)
+    "double" = scalar_cpp(real_type))
   type_list[[r_type]]
 }
 
@@ -209,7 +233,7 @@ r_fct_sig <- function() {
   combine_strings(
     c(
       "#include <Rcpp.h>",
-      "// [[Rcpp::depends(ast2ast)]]",
+      "// [[Rcpp::depends(ast2ast, RcppThread)]]",
       "// [[Rcpp::plugins(cpp2a)]]",
       '#include "etr.hpp"',
       '#include "a2a_sundials.hpp"',
@@ -220,7 +244,7 @@ xptr_sig <- function() {
   combine_strings(
     c(
       "#include <Rcpp.h>",
-      "// [[Rcpp::depends(ast2ast)]]",
+      "// [[Rcpp::depends(ast2ast, RcppThread)]]",
       "// [[Rcpp::plugins(cpp2a)]]",
       '#include "etr.hpp"',
       '#include "a2a_sundials.hpp"',
@@ -242,6 +266,22 @@ remove_empty_strings <- function(l) {
 
 remove_double_quotes <- function(s) {
   gsub('"', "", s)
+}
+
+# RcppThread::LdFlags() cat()s the link flags on every sourceCpp
+# sink instead of capture.output: keeps the compiler errors if sourceCpp fails
+source_cpp_quiet <- function(code, verbose, env) {
+  out <- character()
+  con <- textConnection("out", "w", local = TRUE)
+  sink(con)
+  ok <- FALSE
+  on.exit({
+    sink()
+    close(con)
+    if (verbose || !ok) cat(out, sep = "\n")
+  })
+  Rcpp::sourceCpp(code = code, verbose = verbose, env = env)
+  ok <- TRUE
 }
 
 compile <- function(fct_code, r_fct,
@@ -288,7 +328,7 @@ compile <- function(fct_code, r_fct,
           cat(fct)
         }
         env <- new.env()
-        Rcpp::sourceCpp(code = fct, verbose = verbose, env = env)
+        source_cpp_quiet(fct, verbose, env)
         fct_ret <- env$getXPtr()
         attributes(fct_ret) <- list(class = "XPtr")
       },
@@ -308,7 +348,7 @@ compile <- function(fct_code, r_fct,
     tryCatch(
       expr = {
         env <- new.env()
-        res <- Rcpp::sourceCpp(code = fct, verbose = verbose, env = env)
+        source_cpp_quiet(fct, verbose, env)
         fct_ret <- env[[name_f]]
       },
       error = function(e) {

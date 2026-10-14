@@ -102,7 +102,7 @@ expect_true(!("bla" %in% fr_foo_outer))
 fr_bar_outer <- types$bar$function_registry$permitted_fcts()
 expect_equal(tail(fr_bar_outer, 3L), c("bla", "foo", "bar"))
 fr_bar_inner <- types$bar$vars_types_list
-expect_equal(names(fr_bar_inner), c("bla", "foo"))
+expect_equal(names(fr_bar_inner), c("bla", "foo", "bar"))
 fr_bla <- fr_bar_inner$bla$function_registry$permitted_fcts()
 expect_equal(tail(fr_bar_outer, 3L), c("bla", "foo", "bar"))
 fr_foo_inner <- fr_bar_inner$foo$function_registry$permitted_fcts()

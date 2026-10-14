@@ -8,7 +8,9 @@ namespace etr {
 // Evaluation: this is required as the lifetime for some objects do not survive the function itself
 // -----------------------------------------------------------------------------------------------------------
 template<typename T>
-inline auto Evaluate(T && obj) {
+// NOTE: decltype(auto), not auto: auto decays the forwarded reference and
+// copies a concrete array (alloc + per-element copy) on every Cast.
+inline decltype(auto) Evaluate(T && obj) {
   constexpr bool is_scalar = IsScalarLike<Decayed<T>>;
   // Materialize lazy expression views (BinaryOp, SubsetView, ...) into a
   // concrete RBuffer. Concrete arrays — LBuffer, RBuffer, Borrow — already
@@ -26,7 +28,7 @@ inline auto Evaluate(T && obj) {
     res.dim = std::move(obj.get_dim());
     return res;
   } else {
-    return std::forward<decltype(obj)>(obj);
+    return std::forward<T>(obj);
   }
 }
 inline auto Evaluate() {
@@ -49,9 +51,10 @@ inline Logical SEXP2Scalar<Logical>(SEXP s) {
   ass<"R object is not of type logical">(Rf_isLogical(s));
   const R_xlen_t sz = Rf_xlength(s);
   ass<"Argument has length > 1">(sz == 1);
-  const bool b = LOGICAL(s)[0];
+  // int, not bool: NA_LOGICAL (INT_MIN) would collapse to true
+  const int b = LOGICAL(s)[0];
   ass<"NA logical not allowed">(b != NA_LOGICAL);
-  return Logical(b != 0); // R bool is int
+  return Logical(b != 0);
 }
 template<>
 inline Integer SEXP2Scalar<Integer>(SEXP s) {
@@ -156,36 +159,36 @@ inline SEXP Cast(const char *res) { return Rf_mkString(res); }
 // struct's declared slot order.
 // -----------------------------------------------------------------------------------------------------------
 inline SEXP checked_elt(SEXP arg, const char* field_name, int expected_length, const char* expected_class) {
+  const std::string cls_name(expected_class);
   SEXP cls = Rf_getAttrib(arg, R_ClassSymbol);
-  if (cls == R_NilValue || std::strcmp(CHAR(STRING_ELT(cls, 0)), expected_class) != 0) {
-    Rf_error("Expected an object of class '%s'", expected_class);
-  }
-  if (Rf_length(arg) != expected_length) {
-    Rf_error("Expected an object of class '%s' with %d fields, but got %d", expected_class, expected_length, (int)Rf_length(arg));
-  }
+  ass(cls != R_NilValue && std::strcmp(CHAR(STRING_ELT(cls, 0)), expected_class) == 0,
+      "Expected an object of class '" + cls_name + "'");
+  ass(Rf_length(arg) == expected_length,
+      "Expected an object of class '" + cls_name + "' with " + std::to_string(expected_length) +
+      " fields, but got " + std::to_string(Rf_length(arg)));
   SEXP names = Rf_getAttrib(arg, R_NamesSymbol);
-  if (names == R_NilValue) {
-    Rf_error("Expected a named list for class '%s'", expected_class);
-  }
+  ass(names != R_NilValue, "Expected a named list for class '" + cls_name + "'");
   int n = Rf_length(names);
   for (int i = 0; i < n; i++) {
     if (std::strcmp(CHAR(STRING_ELT(names, i)), field_name) == 0) {
       return VECTOR_ELT(arg, i);
     }
   }
-  Rf_error("Expected an object of class '%s' to have a field named '%s'", expected_class, field_name);
+  ass(false, "Expected an object of class '" + cls_name + "' to have a field named '" + field_name + "'");
+  return R_NilValue;
 }
 
 // Cast Array
 // -----------------------------------------------------------------------------------------------------------
-inline void set_dim_attrib(SEXP x, const std::vector<std::size_t>& dim) {
+inline void set_dim_attrib(SEXP x, const Dim& dim) {
   if (dim.empty()) return;           // no dim => plain vector
   if (dim.size() == 1) return;       // 1D dim => leave as a plain R vector, not a 1D array
+  // R stores dims as int
+  for (std::size_t d : dim) {
+    ass<"Dimension too large for R integer dim.">(d <= (std::size_t)std::numeric_limits<int>::max());
+  }
   SEXP dimS = PROTECT(Rf_allocVector(INTSXP, dim.size()));
   for (R_xlen_t i = 0; i < (R_xlen_t)dim.size(); ++i) {
-    // be safe: R stores dims as int
-    if (dim[i] > (std::size_t)std::numeric_limits<int>::max())
-      Rf_error("Dimension too large for R integer dim.");
     INTEGER(dimS)[i] = static_cast<int>(dim[i]);
   }
   Rf_setAttrib(x, R_DimSymbol, dimS);
@@ -221,7 +224,7 @@ inline auto cast_na_ptr(const A& a) {
 template <typename T>
 requires IsArray<Decayed<T>>
 inline SEXP Cast(const T &res_) {
-  auto res = Evaluate(res_);
+  const auto& res = Evaluate(res_);
   const auto dim = dim_view(res.get_dim());
   using vtype = typename ExtractDataType<Decayed<decltype(res)>>::value_type;
   const R_xlen_t N = static_cast<R_xlen_t>(res.size());

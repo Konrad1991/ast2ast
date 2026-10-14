@@ -1,3 +1,5 @@
+argtypes <- function(...) {}
+returntype <- function(ReturnValue) {}
 library(ast2ast)
 library(microbenchmark)
 
@@ -7,14 +9,14 @@ set.seed(1234)
 # 1. plain forward matmul: ast2ast vs base R
 # ---------------------------------------------------------------------------
 f_plain <- function(A, B) {
+  argtypes(
+    A |> type(borrow_mat(double)),
+    B |> type(borrow_mat(double))
+  )
   res <- A %*% B
   return(res)
 }
-fp_args <- function(A, B) {
-  A |> type(mat(double)) |> ref()
-  B |> type(mat(double)) |> ref()
-}
-fp_cpp <- ast2ast::translate(f_plain, fp_args, verbose = TRUE)
+fp_cpp <- ast2ast::translate(f_plain, debug = FALSE)
 
 # Correctness check at one size before benchmarking.
 {
@@ -54,6 +56,10 @@ for (N in c(10, 50, 200, 500, 1000)) {
 # differs from the back_deriv.R example.
 
 f_rev <- function(A, B) {
+  argtypes(
+    A |> type(mat(double)),
+    B |> type(mat(double))
+  )
   C <- c(A %*% B)
   s <- 0.0
   for(i in seq_len(length(C))) {
@@ -62,12 +68,7 @@ f_rev <- function(A, B) {
   res <- deriv(s, A)
   return(res)
 }
-fr_args <- function(A, B) {
-  A |> type(mat(double))
-  B |> type(mat(double))
-}
-fr_cpp <- ast2ast::translate(f_rev, fr_args, derivative = "reverse",
-                             verbose = FALSE)
+fr_cpp <- ast2ast::translate(f_rev, derivative = "reverse", verbose = FALSE)
 
 bench_reverse <- function(N) {
   A <- matrix(rnorm(N * N), N, N)

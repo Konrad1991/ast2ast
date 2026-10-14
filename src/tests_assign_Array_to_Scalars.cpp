@@ -41,7 +41,7 @@ void test_assign_array_to_scalar() {
   // Assign array to ScalarRef
   {
     std::vector<double> owner{1, 2, 3};
-    etr::Array<etr::Double, etr::Borrow<etr::Double>> b(owner.data(), owner.size(), std::vector<std::size_t>{3});
+    etr::Array<etr::Double, etr::Borrow<etr::Double>> b(owner.data(), owner.size(), etr::Dim{3});
     etr::at(b, etr::Integer(1)) = etr::c(etr::Double(10));
     etr::ass<"Assign double array to Double">(compare(etr::get_val(b.get(0)), 10.0));
   }
@@ -49,9 +49,9 @@ void test_assign_array_to_scalar() {
   // Assign array of ScalarRefs to ScalarRef
   {
     std::vector<double> owner1{1, 2, 3};
-    etr::Array<etr::Double, etr::Borrow<etr::Double>> b1(owner1.data(), owner1.size(), std::vector<std::size_t>{3});
+    etr::Array<etr::Double, etr::Borrow<etr::Double>> b1(owner1.data(), owner1.size(), etr::Dim{3});
     std::vector<double> owner2{7};
-    etr::Array<etr::Double, etr::Borrow<etr::Double>> b2(owner2.data(), owner2.size(), std::vector<std::size_t>{1});
+    etr::Array<etr::Double, etr::Borrow<etr::Double>> b2(owner2.data(), owner2.size(), etr::Dim{1});
     etr::at(b1, etr::Integer(1)) = b2;
     etr::ass<"Assign double array to Double">(compare(etr::get_val(b1.get(0)), 7.0));
   }

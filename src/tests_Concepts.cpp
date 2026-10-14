@@ -14,7 +14,7 @@ void test_concepts() {
   b.set(1, 2.1);
   b.set(2, 3.1);
   Array<Double, Buffer<Double>> a(b);
-  a.dim = std::vector<std::size_t>{3};
+  a.dim = Dim{3};
   auto unary = -a;
   static_assert(IsUnary<decltype(unary.d)>, "Is unary");
   auto binary = a + a;
@@ -37,7 +37,7 @@ void test_concepts() {
 
   double* ptr = nullptr;
   std::size_t sz = 0;
-  std::vector<std::size_t> dim;
+  Dim dim;
   Array<Double, Borrow<Double, BorrowTrait>> a_borrow(ptr, sz, dim);
   Array<Double, Buffer<Double, RBufferTrait>> a_rbuf(SI{3});
   auto sub = subset(a, true);

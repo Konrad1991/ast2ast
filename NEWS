@@ -1,5 +1,33 @@
 News for package 'ast2ast'
 
+changes in ast2ast version 1.1
+
+- New function `make_package(files, entry_points, package_dir)`: translates
+  R files into the C++ code of an existing package, like
+  `Rcpp::compileAttributes`. Only `entry_points` are exported; all other
+  functions in the files are internal helpers. Runtime errors name package, file,
+  line and function (`In 'mypkg: helpers.R:5 (helper): ...'`).
+- New functional `pmap(f, ncores, x, ...)`: like `map`, but the elements
+  are processed in parallel on a thread pool (via RcppThread). Warnings
+  raised inside `f` are reported in element order; errors report the line
+  inside `f`. Functions that use the R API internally (currently `lbfgsb`)
+  cannot be called inside `pmap` and are rejected at translation time.
+- `pso` uses its own Mersenne-Twister RNG instead of R's RNG and takes a new
+  `seed` argument: `pso(f, lower, upper, ngen, npop, error_threshold, global,
+  seed[, data])`. Results are reproducible and independent of R's RNG state;
+  `pso` can also be called inside `pmap`.
+- Faster subsetting and subset assignment; common subsetting patterns now
+  run faster than in base R.
+- `jacobian` takes an optional `colouring` argument (forward mode): columns
+  that share no row are computed in one sweep. `colouring = "static", n = <literal>`
+  derives the sparsity pattern at translation time;
+  `colouring = "runtime"` records it at every call from one reverse-mode run
+  of `f`.
+- RcppThread is a new dependency (Imports and LinkingTo).
+- Borrowed arguments (`borrow_vec`, `borrow_mat`, `borrow_array`) can now be
+  combined with forward-mode differentiation for inner functions and for
+  `output = "XPtr"`.
+
 changes in ast2ast version 1.0
 
 - Major release, and the first since the package was archived on CRAN.

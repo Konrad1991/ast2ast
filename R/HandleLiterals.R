@@ -31,6 +31,7 @@ determine_literal_type <- function(obj) {
 }
 
 t_literal <- function(context, obj, indent, type, wrap, real_type) {
+  real_type <- scalar_cpp(real_type)
   if (type == "NA") {
     if (!wrap) return("NA") else return(paste0(real_type, "::NA()"))
   } else if (type == "NaN") {

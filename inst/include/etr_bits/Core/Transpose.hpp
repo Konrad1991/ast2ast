@@ -15,7 +15,7 @@ template<typename A> requires(IsArray<Decayed<A>>) inline auto transpose(const A
 
   if (dim.size() == 1) { // vector
     Array<Type, Buffer<Type, RBufferTrait>> res(SI{arr.size()});
-    res.dim = std::vector<std::size_t>{1, arr.size()};
+    res.dim = Dim{1, arr.size()};
     for (std::size_t i = 0; i < arr.size(); i++) {
       res.set(i, arr.get(i));
     }
@@ -26,7 +26,7 @@ template<typename A> requires(IsArray<Decayed<A>>) inline auto transpose(const A
     const std::size_t nc = dim[1];
 
     Array<Type, Buffer<Type, RBufferTrait>> res(SI{arr.size()});
-    res.dim = std::vector<std::size_t>{nc, nr};
+    res.dim = Dim{nc, nr};
 
     for (std::size_t r = 0; r < nr; r++) {
       for (std::size_t c = 0; c < nc; c++) {

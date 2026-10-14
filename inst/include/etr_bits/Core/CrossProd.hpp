@@ -17,7 +17,7 @@
 namespace etr {
 
 // 1-D (or scalar) input is a column vector (R convention: crossprod(v) = vᵀv).
-inline std::pair<std::size_t, std::size_t> crossprod_shape_of(const std::vector<std::size_t>& dim, std::size_t sz) {
+inline std::pair<std::size_t, std::size_t> crossprod_shape_of(const Dim& dim, std::size_t sz) {
   if (dim.size() >= 2) return {dim[0], dim[1]};
   return {sz, 1};
 }

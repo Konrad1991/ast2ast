@@ -83,7 +83,7 @@ void test_simplified_subsetting() {
     Array<Double, Buffer<Double>> a(SI{12});
     fill_0_11(a);
 
-    a.dim = std::vector<std::size_t>{2, 3, 2};
+    a.dim = Dim{2, 3, 2};
 
     ass<"at 3D first (1,1,1) -> 0">(
       compare(get_val(at(a, Integer(1), Integer(1), Integer(1))), 0.0)
@@ -127,7 +127,7 @@ void test_simplified_subsetting() {
     ass<"at(expr, Integer(3)) works">(compare(get_val(at(expr, Integer(3))), get_val(a.get(2)) + 1.0));
 
     std::vector<double> owner(5); for (std::size_t i = 0; i < owner.size(); i++) owner[i] = static_cast<double>(i);
-    Array<Double, Borrow<Double>> a_borrow(owner.data(), owner.size(), std::vector<std::size_t>{owner.size()});
+    Array<Double, Borrow<Double>> a_borrow(owner.data(), owner.size(), Dim{owner.size()});
     at(a_borrow, Integer(2)) = Double(123.0);
     ass<"at() mutable overload allows assignment of borrow">(compare(get_val(a_borrow.get(1)), 123.0));
     at(a_borrow, Integer(2)) = Integer(223.0);
@@ -141,7 +141,7 @@ void test_simplified_subsetting() {
   };
   {
     std::vector<double> owner(4, 0.0);
-    std::vector<std::size_t> dim{4};
+    Dim dim{4};
     Array<Double, Borrow<Double>> a_borrow(owner.data(), owner.size(), dim);
 
     at(a_borrow, Integer(1)) = Integer(7);
@@ -173,7 +173,7 @@ void test_simplified_subsetting() {
   };
   {
     std::vector<double> owner(4, 0.0);
-    std::vector<std::size_t> dim{4};
+    Dim dim{4};
     Array<Double, Borrow<Double>> a_borrow(owner.data(), owner.size(), dim);
 
     at(a_borrow, Integer(1)) = Integer(7);
@@ -201,7 +201,7 @@ void test_simplified_subsetting() {
   {
     std::vector<double> val{1.0, 2.0, 3.0};
     std::vector<double> dot{10.0, 20.0, 30.0};
-    std::vector<std::size_t> dim{3};
+    Dim dim{3};
     Array<Dual, Borrow<Dual>> a(val.data(), dot.data(), val.size(), dim);
     Dual d1 = at(a, Integer(1));
     Dual d3 = at(a, Integer(3));
@@ -216,7 +216,7 @@ void test_simplified_subsetting() {
   // Single index on a rank>1 array -> column-major linear access (R's m[i])
   // ===========================================================================
   {
-    std::vector<std::size_t> dim{3, 4};
+    Dim dim{3, 4};
     Array<Double, Buffer<Double, LBufferTrait>> a(SI{12});
     a.dim = dim;
     fill_0_11(a); // a[k] == k

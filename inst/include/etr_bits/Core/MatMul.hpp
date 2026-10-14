@@ -23,7 +23,7 @@
 namespace etr {
 
 // ---------- shape helpers --------------------------------------------------
-inline std::pair<std::size_t, std::size_t> matmul_shape_of(const std::vector<std::size_t>& dim, std::size_t sz, bool is_left) {
+inline std::pair<std::size_t, std::size_t> matmul_shape_of(const Dim& dim, std::size_t sz, bool is_left) {
   if (sz == 1) return {1, 1};
   if (dim.size() >= 2) return {dim[0], dim[1]};
   return is_left ? std::pair<std::size_t, std::size_t>{1, sz}

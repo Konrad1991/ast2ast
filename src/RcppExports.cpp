@@ -2,6 +2,7 @@
 // Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #include "../inst/include/ast2ast_types.h"
+#include <RcppThread.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;
@@ -209,6 +210,15 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_coloured_jacobian
+void test_coloured_jacobian();
+RcppExport SEXP _ast2ast_test_coloured_jacobian() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    test_coloured_jacobian();
+    return R_NilValue;
+END_RCPP
+}
 // test_crossprod
 void test_crossprod();
 RcppExport SEXP _ast2ast_test_crossprod() {
@@ -281,6 +291,16 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_pmap_warnings
+void test_pmap_warnings(int n);
+RcppExport SEXP _ast2ast_test_pmap_warnings(SEXP nSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    test_pmap_warnings(n);
+    return R_NilValue;
+END_RCPP
+}
 // test_scalars
 void test_scalars();
 RcppExport SEXP _ast2ast_test_scalars() {
@@ -350,6 +370,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_uniroot_maxiter", (DL_FUNC) &_ast2ast_test_uniroot_maxiter, 0},
     {"_ast2ast_test_utilities", (DL_FUNC) &_ast2ast_test_utilities, 0},
     {"_ast2ast_test_assign_array_to_scalar", (DL_FUNC) &_ast2ast_test_assign_array_to_scalar, 0},
+    {"_ast2ast_test_coloured_jacobian", (DL_FUNC) &_ast2ast_test_coloured_jacobian, 0},
     {"_ast2ast_test_crossprod", (DL_FUNC) &_ast2ast_test_crossprod, 0},
     {"_ast2ast_test_diag", (DL_FUNC) &_ast2ast_test_diag, 0},
     {"_ast2ast_test_lbfgsb_quadratic_forward", (DL_FUNC) &_ast2ast_test_lbfgsb_quadratic_forward, 0},
@@ -358,6 +379,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ast2ast_test_lbfgsb_rosenbrock", (DL_FUNC) &_ast2ast_test_lbfgsb_rosenbrock, 0},
     {"_ast2ast_test_lbfgsb_bound_length_error", (DL_FUNC) &_ast2ast_test_lbfgsb_bound_length_error, 0},
     {"_ast2ast_test_nnls", (DL_FUNC) &_ast2ast_test_nnls, 0},
+    {"_ast2ast_test_pmap_warnings", (DL_FUNC) &_ast2ast_test_pmap_warnings, 1},
     {"_ast2ast_test_scalars", (DL_FUNC) &_ast2ast_test_scalars, 0},
     {"_ast2ast_test_scalar_assignment", (DL_FUNC) &_ast2ast_test_scalar_assignment, 0},
     {"_ast2ast_test_solve", (DL_FUNC) &_ast2ast_test_solve, 0},

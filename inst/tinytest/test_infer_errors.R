@@ -37,7 +37,7 @@ f <- function() {
 }
 args_f <- function() {}
 test_checks(f, args_f, types_f, TRUE,
-  "a <- c(3.14, p)\nFound unexpected type Point for variable p which is not supported in 'c'"
+  "a <- c(3.14, p)\nFound unsupported type Point in: c(3.14, p)"
 )
 
 f <- function() {
@@ -45,7 +45,7 @@ f <- function() {
   a <- c(3.14, c)
 }
 test_checks(f, args_f, types_f, TRUE,
-"a <- c(3.14, c)\nFound unexpected type collection containing Point for variable c"
+"a <- c(3.14, c)\nFound unsupported type collection(Point) in: c(3.14, c)"
 )
 
 # ==========================================================================

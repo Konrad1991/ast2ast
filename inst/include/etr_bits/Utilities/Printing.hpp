@@ -5,7 +5,7 @@ namespace etr {
 #ifdef STANDALONE_ETR
 #define PRINT_STREAM std::cout
 #else
-#define PRINT_STREAM Rcpp::Rcout
+#define PRINT_STREAM RcppThread::Rcout
 #endif
 
 inline void print() { PRINT_STREAM << std::endl; }

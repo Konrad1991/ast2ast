@@ -50,7 +50,7 @@ f <- function(x) {
   return(sum(x))
 }
 code <- ast2ast::translate(f, output = "XPtr", getsource = TRUE)
-expect_true(grepl("etr::Double f(", code, fixed = TRUE))
+expect_true(grepl("ETR_REAL f(", code, fixed = TRUE))
 
 f <- function(x) {
   argtypes(x |> type(double))
