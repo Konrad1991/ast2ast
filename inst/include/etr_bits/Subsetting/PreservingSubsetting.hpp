@@ -265,8 +265,6 @@ inline void fill_index_lists(const Dim& dim,
     [&](const auto& arg) {
       using A = std::decay_t<decltype(arg)>;
       if constexpr (IsArray<A>) {
-        ass<"Too many index arguments for at least one dimension">(dim[counter] >= arg.size());
-
         using arg_val_type = typename ExtractDataType<A>::value_type;
         // --- Case 1.1: Array<Integer> (L value)
         // arg.d is only ever read here, into a freshly-allocated `out` that
@@ -285,6 +283,8 @@ inline void fill_index_lists(const Dim& dim,
         }
         // --- Case 2: Array<Logical>
         else if constexpr (IsArray<A> && IsLogical<arg_val_type>) {
+          // only logicals are bound to the dim length; c(1L, 2L, 2L) is fine
+          ass<"Logical subscript too long">(dim[counter] >= arg.size());
           const std::size_t n = dim[counter];
           auto& v = converted_arrays[counter_converted++];
           for (std::size_t b = 0; b < n; b++) {

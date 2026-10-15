@@ -82,7 +82,65 @@ f <- function(pts) {
 fcpp <- ast2ast::translate(f, types_f = types)
 expect_equal(names(fcpp(unname(pts))), c("p1", "p2"))
 
+# --- c() of names -------------------------------------------------------------------
+f <- function(p) {
+  argtypes(p |> type(named_vec(State)))
+  return(p[c("b", "a", 2L)])
+}
+fcpp <- ast2ast::translate(f, types_f = types)
+expect_equal(fcpp(c(a = 1, b = 2)), c(2, 1, 2))
+
+f <- function(m) {
+  argtypes(m |> type(named_mat(Result)))
+  return(m[c("t1", "t0"), "b"])
+}
+fcpp <- ast2ast::translate(f, types_f = types)
+expect_equal(fcpp(m), unname(m[c("t1", "t0"), "b", drop = FALSE]))
+
+f <- function(m) {
+  argtypes(m |> type(named_mat(Result)))
+  return(m[c("t1", "t0", "t1"), c("b", 1L)])
+}
+fcpp <- ast2ast::translate(f, types_f = types)
+expect_equal(fcpp(m), unname(m[c("t1", "t0", "t1"), c("b", "a")]))
+
+f <- function(a) {
+  argtypes(a |> type(named_array(Cube)))
+  return(a[c("b", "a"), 2L, "t2"])
+}
+fcpp <- ast2ast::translate(f, types_f = types)
+expect_equal(fcpp(a), a[c(2L, 1L), 2L, 2L, drop = FALSE])
+
+# c() without strings on a plain vector stays a normal index
+f <- function(x) {
+  argtypes(x |> type(vec(double)))
+  return(x[c(1L, 2L, 2L)])
+}
+fcpp <- ast2ast::translate(f)
+expect_equal(fcpp(c(1, 2)), c(1, 2, 2))
+
+f <- function(x) {
+  argtypes(x |> type(vec(double)))
+  return(x[c(TRUE, TRUE, TRUE)])
+}
+fcpp <- ast2ast::translate(f)
+expect_error(fcpp(c(1, 2)), pattern = "Logical subscript too long")
+
 # --- translation errors -------------------------------------------------------------
+f <- function(m) {
+  argtypes(m |> type(named_mat(Result)))
+  return(m[c("t1", "tt0"), "a"])
+}
+expect_error(ast2ast::translate(f, types_f = types, getsource = TRUE),
+             pattern = "Unknown name 'tt0' (dimension 1) for layout Result. Did you mean 't0'?", fixed = TRUE)
+
+f <- function(p) {
+  argtypes(p |> type(named_vec(State)))
+  return(p[c("a", "c")])
+}
+expect_error(ast2ast::translate(f, types_f = types, getsource = TRUE),
+             pattern = "Unknown name 'c' for layout State")
+
 f <- function(m) {
   argtypes(m |> type(named_mat(Result)))
   return(m[["tt1", "a"]])
