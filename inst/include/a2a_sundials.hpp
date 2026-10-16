@@ -246,6 +246,27 @@ struct ida_workspace {
   }
 };
 
+// NOTE: env var instead of an ida() argument until the ida() options are designed
+inline void print_ida_stats(void *mem) {
+  const char *env = std::getenv("A2A_IDA_STATS");
+  if (env == nullptr || std::string(env) != "1") return;
+  long int steps = 0, res_evals = 0, jac_evals = 0, jac_res_evals = 0, lu_setups = 0,
+           newton_iters = 0, newton_fails = 0, error_test_fails = 0;
+  IDAGetNumSteps(mem, &steps);
+  IDAGetNumResEvals(mem, &res_evals);
+  IDAGetNumJacEvals(mem, &jac_evals);
+  IDAGetNumLinResEvals(mem, &jac_res_evals);
+  IDAGetNumLinSolvSetups(mem, &lu_setups);
+  IDAGetNumNonlinSolvIters(mem, &newton_iters);
+  IDAGetNumNonlinSolvConvFails(mem, &newton_fails);
+  IDAGetNumErrTestFails(mem, &error_test_fails);
+  Rprintf("ida stats: steps %ld | residual calls %ld (+ %ld for the jacobian) | "
+          "jacobians %ld | LU setups %ld | newton iterations %ld | newton fails %ld | "
+          "error test fails %ld\n",
+          steps, res_evals, jac_res_evals, jac_evals, lu_setups, newton_iters, newton_fails,
+          error_test_fails);
+}
+
 template <typename Vec>
 void copy_to_nvector(const Vec &src, N_Vector dst, std::size_t n) {
   sunrealtype *ptr = N_VGetArrayPointer(dst);
@@ -336,6 +357,7 @@ inline auto ida_solve(const RES &res_fct, const Y &y0, const YP &yp0, const T &t
       res.set(j * nt + k, etr::Double(y_ptr[j]));
     }
   }
+  print_ida_stats(w.mem);
   return res;
 }
 
