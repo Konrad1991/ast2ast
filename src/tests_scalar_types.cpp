@@ -964,11 +964,5 @@ void test_scalar_assignment() {
     IntegerRef ir(&iv, &ina);
     ir = Double::NaN();
     ass<"NaN through IntegerRef assignment becomes NA">(ina);
-
-    // TEMP: sanity check that sanitize.sh actually fires on this UB pattern.
-    // Remove once confirmed.
-    volatile double raw_nan = std::numeric_limits<double>::quiet_NaN();
-    int raw_cast = static_cast<int>(raw_nan);
-    (void)raw_cast;
   }
 }
