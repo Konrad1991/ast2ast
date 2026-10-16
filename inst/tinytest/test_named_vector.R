@@ -134,6 +134,38 @@ x <- c(1, 2)
 expect_equal(fcpp(x), c(prey = 1, pred = 2))
 expect_null(names(x))
 
+# a copy of a named_borrow_vec keeps the layout (named_vec)
+f <- function(y) {
+  argtypes(y |> type(named_borrow_vec(State)))
+  double_prey <- function(v) {
+    argtypes(v |> type(named_vec(State)))
+    returntype(double)
+    return(v[["prey"]] * 2)
+  }
+  y_copy <- y
+  y_copy[["pred"]] <- 10
+  return(double_prey(y_copy) + y_copy[["pred"]])
+}
+fcpp <- ast2ast::translate(f, types_f = types)
+x <- c(1, 2)
+expect_equal(fcpp(x), 12)
+expect_equal(x, c(1, 2))
+
+# owned to owned keeps the layout too
+f <- function(y) {
+  argtypes(y |> type(named_vec(State)))
+  get_prey <- function(v) {
+    argtypes(v |> type(named_vec(State)))
+    returntype(double)
+    return(v[["prey"]])
+  }
+  v2 <- y
+  v3 <- v2
+  return(get_prey(v3))
+}
+fcpp <- ast2ast::translate(f, types_f = types)
+expect_equal(fcpp(c(3, 4)), 3)
+
 # --- vector(mode = <layout>) ---------------------------------------------------------------
 f <- function(n) {
   argtypes(n |> type(int))

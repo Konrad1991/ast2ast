@@ -355,7 +355,9 @@ type_infer_assignment <- function(node, info_env) {
           type$set_fct_input(FALSE)
           type$set_iterator(FALSE) # Dont propagate iterator
           if (grepl("borrow", type$get_data_struct_verbose())) { # a new local var cannot itself be borrow-typed
+            layout <- layout_of(type)
             type$set_data_struct(type$get_data_struct())
+            if (!is.null(layout)) type$data_struct$layout <- layout
           }
           type$set_name(variable)
         }
