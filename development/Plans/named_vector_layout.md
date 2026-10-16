@@ -3,7 +3,11 @@
 Renamed 2026-10-14: `named_vector` -> `new_layout` (named_vector read like the
 long form of named_vec, but it is the definition, not a usage type).
 
-**Status:** design (2026-10-14), not started. Implementation on `main`.
+**Status (2026-10-16, main):** built for vectors, matrices, arrays and
+collections (see "Layout constructors per data structure"); `c()` of names
+(`v[c("a", "b")]`, `m[c("t1", "t0"), "b"]`) built. Blocks like `y[["T3", tr]]`
+via a matrix layout, not vector blocks. Open: cvode/ida (step 6), allocation
+for non-vector layouts.
 
 Access a vector by name: `y[["S30"]]` instead of `y[[13L]]`.
 Motivation: Jan's translation model (169 metabolite tags); index bookkeeping
@@ -109,7 +113,7 @@ Status 2026-10-14: steps 0-5 and 7 done on main; 6 open (sundials branch).
 
 ## Later: matrices and arrays
 
-Not started (2026-10-14). In R, matrices and arrays carry `dimnames`, one
+Built 2026-10-14, see below. In R, matrices and arrays carry `dimnames`, one
 character vector per dimension (each may be NULL):
 
 ```r
@@ -125,7 +129,7 @@ unusual; dimnames are the common way to name matrices and arrays.
 
 ## Later: collections
 
-Not started (2026-10-14). In R, lists carry names: `l <- list(a = 1, b = "x")`,
+Built 2026-10-14, see below. In R, lists carry names: `l <- list(a = 1, b = "x")`,
 `l[["a"]]`. ast2ast collections (`collection(Point)`) come from unnamed R lists.
 
 ## Layout constructors per data structure (decided and built 2026-10-14, main)

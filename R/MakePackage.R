@@ -1,9 +1,11 @@
-make_package <- function(files, entry_points, package_dir = ".", overwrite = FALSE, derivative = list()) {
+make_package <- function(files, entry_points, package_dir = ".", overwrite = FALSE, derivative = list(),
+                         debug = TRUE) {
   stopifnot("files is not of type character" = is.character(files))
   stopifnot("entry_points is not of type character" = is.character(entry_points) && length(entry_points) >= 1L)
   stopifnot("entry_points contains duplicates" = anyDuplicated(entry_points) == 0L)
   stopifnot("package_dir is not a single string" = is.character(package_dir) && length(package_dir) == 1L)
   stopifnot("overwrite is not of type logical" = is.logical(overwrite) && length(overwrite) == 1L)
+  stopifnot("debug is not of type logical" = is.logical(debug) && length(debug) == 1L && !is.na(debug))
   check_derivative(derivative, entry_points)
 
   files <- check_paths(files, package_dir)
@@ -25,7 +27,7 @@ make_package <- function(files, entry_points, package_dir = ".", overwrite = FAL
     helpers <- reachable_helpers(entry_point, definitions)
     used_helpers <- union(used_helpers, helpers)
     combined <- combine_functions(definitions[c(entry_point, helpers)], entry_point)
-    cpp <- translate_internally(combined, types_f, derivative[[entry_point]], entry_point, TRUE)
+    cpp <- translate_internally(combined, types_f, derivative[[entry_point]], entry_point, TRUE, debug)
     # NOTE: sourceCpp-only attributes; in a package the Makevars does this
     cpp <- strsplit(cpp, "\n", fixed = TRUE)[[1]]
     cpp <- cpp[!grepl("^// \\[\\[Rcpp::(depends|plugins)", cpp)]

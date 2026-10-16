@@ -7,6 +7,7 @@ changes in ast2ast version 1.1
   `Rcpp::compileAttributes`. Only `entry_points` are exported; all other
   functions in the files are internal helpers. Runtime errors name package, file,
   line and function (`In 'mypkg: helpers.R:5 (helper): ...'`).
+  `debug = FALSE` drops this line tracking for speed, as in `translate`.
 - New functional `pmap(f, ncores, x, ...)`: like `map`, but the elements
   are processed in parallel on a thread pool (via RcppThread). Warnings
   raised inside `f` are reported in element order; errors report the line
