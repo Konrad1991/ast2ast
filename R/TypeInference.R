@@ -302,6 +302,19 @@ warn_if_type_widened_by_subsetting <- function(variable, old_data_struct, new_da
   )
 }
 
+# a variable keeps its layout when common_type() rebuilds its type
+keep_layout <- function(old_type, new_type) {
+  layout <- layout_of(old_type)
+  if (is.null(layout) || !inherits(new_type, "pre_type_node") ||
+      !inherits(new_type$data_struct, layout_holders) || !is.null(new_type$data_struct$layout) ||
+      new_type$get_data_struct() != layout$kind) {
+    return(new_type)
+  }
+  new_type <- new_type$clone(deep = TRUE)
+  new_type$data_struct$layout <- layout
+  new_type
+}
+
 type_infer_assignment <- function(node, info_env) {
   if (inherits(node, "binary_node") && node$operator %in% c("=", "<-")) {
     infer(node, info_env$vars_list, info_env, info_env$function_registry)
@@ -371,6 +384,7 @@ type_infer_assignment <- function(node, info_env) {
           } else {
             detected_type <- detected_type |> flatten_type()
             detected_type <- detected_type$clone()
+            detected_type <- keep_layout(info_env$vars_list[[variable]], detected_type)
             detected_type$set_iterator(FALSE) # Don't propagate iterator
             detected_type$set_name(variable)
             warn_if_type_widened(variable, info_env$vars_list[[variable]], detected_type)
@@ -410,6 +424,7 @@ type_infer_assignment <- function(node, info_env) {
               node$error <- detected_type
             } else {
               detected_type <- detected_type |> flatten_type()
+              detected_type <- keep_layout(info_env$vars_list[[variable]], detected_type)
               detected_type$set_name(variable)
               warn_if_type_widened(variable, info_env$vars_list[[variable]], detected_type)
               info_env$vars_list[[variable]] <- detected_type

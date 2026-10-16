@@ -13,6 +13,8 @@ Safety (bounds checks, `current_line()`) is an existing pillar.
 Pitch: "Write numerical models in R; ast2ast compiles them and derives
 gradients and Jacobians for optimizers and stiff solvers."
 
+ast2ast takes care that its output can be used by C and C++ libraries.
+
 ## Short term
 
 1. sundials package -> CRAN

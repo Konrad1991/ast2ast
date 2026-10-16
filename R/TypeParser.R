@@ -84,6 +84,39 @@ create_type_tree <- function(code, env) {
     return(c)
   }
 
+  else if (operator %in% names(layout_usages)) {
+    kind <- layout_usages[[operator]]
+    layout_name <- deparse(code[[2L]])
+    def <- env$list[[layout_name]]
+    if (!inherits(def, "layout_def") || def$kind != kind) {
+      add_error(env, sprintf("%s(%s): %s is not defined with %s()",
+                             operator, layout_name, layout_name, layout_constructors[[kind]]))
+      u <- unresolved_node$new()
+      u$name <- operator
+      u$base_type <- NA_character_
+      return(u)
+    }
+    if (startsWith(operator, "named_borrow_") && !env$fct_input) {
+      add_error(env, sprintf("borrow types only allowed in function inputs, found %s", operator))
+    }
+    ds <- switch(operator,
+      named_vec = vec$new(), named_borrow_vec = borrow_vec$new(),
+      named_mat = mat$new(), named_borrow_mat = borrow_mat$new(),
+      named_array = arr$new(), named_borrow_array = borrow_arr$new(),
+      named_collection = collection$new()
+    )
+    if (kind == "collection") {
+      ds$type <- def$element_type
+      ds$element_type <- env$list[[def$element_type]]
+    } else {
+      ds$base_type <- def$base_type
+    }
+    ds$r_fct <- env$r_fct
+    ds$real_type <- env$real_type
+    ds$layout <- def
+    return(ds)
+  }
+
   else if (operator %in% c("borrow_vec", "borrow_vector") && env$fct_input) {
     if ((env$r_fct && env$real_type %in% c("etr::Dual", "etr::ReverseDouble")) ||
         (!env$r_fct && env$real_type == "etr::ReverseDouble")) {
@@ -225,7 +258,145 @@ parse_new_type <- function(code, env) {
   }
 }
 
-parse_types <- function(block, fct_input, r_fct, real_type, known_types = list()) {
+# Layouts: names for the entries of a vector, the dimensions of a matrix/array
+# or the elements of a collection. Used as named_vec / named_mat / named_array /
+# named_collection (+ named_borrow_*).
+# NOTE: no C++ struct; at runtime they are the plain data structures, the names
+# only turn y[["name"]] into y[[index]] at translation time
+layout_constructors <- c(
+  vector = "new_layout", matrix = "new_mat_layout",
+  array = "new_array_layout", collection = "new_collection_layout"
+)
+layout_usages <- c(
+  named_vec = "vector", named_borrow_vec = "vector",
+  named_mat = "matrix", named_borrow_mat = "matrix",
+  named_array = "array", named_borrow_array = "array",
+  named_collection = "collection"
+)
+layout_usage_text <- function(layout) {
+  switch(layout$kind,
+    vector = sprintf("named_vec(%s) or named_borrow_vec(%s)", layout$name, layout$name),
+    matrix = sprintf("named_mat(%s) or named_borrow_mat(%s)", layout$name, layout$name),
+    array = sprintf("named_array(%s) or named_borrow_array(%s)", layout$name, layout$name),
+    collection = sprintf("named_collection(%s)", layout$name)
+  )
+}
+
+layout_def <- function(name, kind, base_type, element_type, dimnames) {
+  structure(
+    list(name = name, kind = kind, base_type = base_type, element_type = element_type,
+         dimnames = dimnames, names = dimnames[[1L]], part_of_etr = TRUE),
+    class = "layout_def"
+  )
+}
+
+check_layout_name <- function(name, env) {
+  unallowed <- unallowed_signs(name)
+  if (!is.null(unallowed)) {
+    stop(paste0(unallowed, " found in ", name))
+  } else if (not_cpp_keyword(name)) {
+    stop(paste0("Invalid type name: is a C++ keyword --> ", name))
+  }
+  if (!is.null(env$list[[name]])) {
+    stop(paste0("Duplicated type name: ", name))
+  }
+}
+
+# one names argument: NULL (no names), the name of a vector layout (reuse its
+# names) or an R expression evaluated now
+layout_names_arg <- function(expr, what, prefix, env, eval_env) {
+  if (is.null(expr)) return(NULL)
+  if (is.symbol(expr)) {
+    def <- env$list[[as.character(expr)]]
+    if (inherits(def, "layout_def")) {
+      if (def$kind != "vector") {
+        stop(sprintf("%s: %s can only reuse a new_layout() layout, %s is a %s layout",
+                     prefix, what, def$name, def$kind))
+      }
+      return(def$names)
+    }
+  }
+  value <- tryCatch(
+    eval(expr, eval_env),
+    error = function(e) stop(sprintf("%s: evaluating %s failed: %s", prefix, what, conditionMessage(e)), call. = FALSE)
+  )
+  if (is.null(value)) return(NULL)
+  if (!is.character(value) || length(value) == 0L) {
+    stop(sprintf("%s: %s has to be a non-empty character vector", prefix, what))
+  }
+  if (anyNA(value) || any(value == "")) {
+    stop(sprintf("%s: %s contain NA or empty entries", prefix, what))
+  }
+  if (anyDuplicated(value) != 0L) {
+    stop(sprintf("%s: duplicated %s: %s", prefix, what,
+                 paste(unique(value[duplicated(value)]), collapse = ", ")))
+  }
+  value
+}
+
+parse_layout <- function(code, env, eval_env) {
+  constructor <- deparse(code[[1L]])
+  kind <- names(layout_constructors)[layout_constructors == constructor]
+  proto <- switch(kind,
+    vector = function(name, type, names) NULL,
+    matrix = function(name, type, rownames = NULL, colnames = NULL) NULL,
+    array = function(name, type, dimnames) NULL,
+    collection = function(name, type, names) NULL
+  )
+  mc <- try(match.call(proto, code), silent = TRUE)
+  if (inherits(mc, "try-error") || is.null(mc$name) || is.null(mc$type)) {
+    stop(sprintf("%s expects (%s), found: %s", constructor,
+                 paste(names(formals(proto)), collapse = ", "), deparse1(code)))
+  }
+  name <- deparse(mc$name)
+  check_layout_name(name, env)
+  prefix <- paste(constructor, name)
+
+  element_type <- NULL
+  base_type <- NULL
+  if (kind == "collection") {
+    element_type <- deparse(mc$type)
+    if (!inherits(env$list[[element_type]], "new_type_node")) {
+      stop(sprintf("%s: %s is not a type defined with new_type()", prefix, element_type))
+    }
+  } else {
+    env$errors <- NULL
+    base_type <- resolve_base_type(mc$type, env)
+    if (length(env$errors) > 0) {
+      stop(sprintf("%s: %s", prefix, combine_strings(env$errors, "\n")))
+    }
+  }
+
+  dimnames <- switch(kind,
+    vector = ,
+    collection = {
+      if (is.null(mc$names)) stop(sprintf("%s: names is required", prefix))
+      list(layout_names_arg(mc$names, "names", prefix, env, eval_env))
+    },
+    matrix = list(
+      layout_names_arg(mc$rownames, "rownames", prefix, env, eval_env),
+      layout_names_arg(mc$colnames, "colnames", prefix, env, eval_env)
+    ),
+    array = {
+      dn <- mc$dimnames
+      if (!is.call(dn) || !identical(dn[[1L]], quote(list)) || length(dn) < 2L) {
+        stop(sprintf("%s: dimnames has to be written as list(...), one entry per dimension", prefix))
+      }
+      lapply(seq_len(length(dn) - 1L), function(k) {
+        layout_names_arg(dn[[k + 1L]], sprintf("dimnames[[%d]]", k), prefix, env, eval_env)
+      })
+    }
+  )
+  if (kind %in% c("vector", "collection") && is.null(dimnames[[1L]])) {
+    stop(sprintf("%s: names has to be a non-empty character vector", prefix))
+  }
+  if (all(vapply(dimnames, is.null, logical(1L)))) {
+    stop(sprintf("%s: at least one dimension needs names", prefix))
+  }
+  layout_def(name, kind, base_type, element_type, dimnames)
+}
+
+parse_types <- function(block, fct_input, r_fct, real_type, known_types = list(), eval_env = globalenv()) {
   env <- new.env(parent = emptyenv())
   env$list <- known_types
   env$fct_input <- fct_input
@@ -253,6 +424,9 @@ parse_types <- function(block, fct_input, r_fct, real_type, known_types = list()
       env$new_type$real_type <- real_type
       env$new_type$r_fct <- r_fct
       env$list[[env$new_type$name]] <- env$new_type
+    } else if (operator %in% layout_constructors) {
+      def <- parse_layout(row, env, eval_env)
+      env$list[[def$name]] <- def
     } else {
       stop(sprintf("Found unsupported function %s in %s", operator, deparse(row)))
     }
@@ -361,6 +535,28 @@ predefined_known_types <- quote({
       counts |> type(vec(int))
     )
   )
+  # slots must match etr::jacobian_sparse_result / jacobian_banded_result in
+  # etr_bits/Derivatives.hpp
+  new_type(
+    jacobian_sparse_result,
+    slots(
+      m |> type(int),
+      n |> type(int),
+      indexptrs |> type(vec(int)),
+      indexvals |> type(vec(int)),
+      data |> type(vec(double))
+    )
+  )
+  new_type(
+    jacobian_banded_result,
+    slots(
+      n |> type(int),
+      mu |> type(int),
+      ml |> type(int),
+      ldim |> type(int),
+      data |> type(vec(double))
+    )
+  )
 })
 
 make_known_types <- function(types_fct, r_fct, real_type) {
@@ -373,7 +569,8 @@ make_known_types <- function(types_fct, r_fct, real_type) {
   }
   if (!is.null(types_fct)) {
     types_block <- as.list(wrap_in_block(body(types_fct)))[-1]
-    known_types <- c(known_types, parse_types(types_block, fct_input = FALSE, r_fct, real_type))
+    known_types <- c(known_types, parse_types(types_block, fct_input = FALSE, r_fct, real_type,
+                                              eval_env = environment(types_fct)))
   }
   known_types
 }

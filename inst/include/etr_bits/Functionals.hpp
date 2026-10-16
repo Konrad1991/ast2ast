@@ -122,8 +122,11 @@ inline void run_pmap_task(std::vector<std::string>& warn_slot, Body&& body) {
   }
 }
 
-inline void pmap_wait(RcppThread::ThreadPool& pool) {
+// push() inside parallelFor already rethrows a failed task -> loop also in the try
+template <typename Loop>
+inline void pmap_run(RcppThread::ThreadPool& pool, Loop&& loop) {
   try {
+    loop();
     pool.wait();
   } catch (const WorkerError& e) {
     current_line() = e.line;
@@ -149,13 +152,14 @@ inline auto pmap(const F &f, const NC &ncores, const First &first, const Rest &.
   if constexpr (IsScalarLike<Decayed<R>>) {
     Array<R, Buffer<R, RBufferTrait>> res(SI{n});
     res.dim = Dim{n};
-    pool.parallelFor(0, static_cast<int>(n), [&](auto i_) {
-      const std::size_t i = static_cast<std::size_t>(i_);
-      run_pmap_task(warns[i], [&] {
-        res.set(i, f(map_at(first, i), map_at(rest, i)...));
+    pmap_run(pool, [&] {
+      pool.parallelFor(0, static_cast<int>(n), [&](auto i_) {
+        const std::size_t i = static_cast<std::size_t>(i_);
+        run_pmap_task(warns[i], [&] {
+          res.set(i, f(map_at(first, i), map_at(rest, i)...));
+        });
       });
     });
-    pmap_wait(pool);
     flush_warnings(warns);
     return res;
   } else if constexpr (IsArray<Decayed<R>>) {
@@ -175,19 +179,20 @@ inline auto pmap(const F &f, const NC &ncores, const First &first, const Rest &.
       res.dim.push_back(n);
       for (std::size_t j = 0; j < len; j++) res.set(j, temp.get(j));
     }
-    pool.parallelFor(1, static_cast<int>(n), [&](auto i_) {
-      const std::size_t i = static_cast<std::size_t>(i_);
-      run_pmap_task(warns[i], [&] {
-        R temp = f(map_at(first, i), map_at(rest, i)...);
-        const auto temp_dim = temp.get_dim();
-        ass<"pmap: results of the mapped function differ in rank">(temp_dim.size() == dim.size());
-        for (std::size_t d = 0; d < dim.size(); d++) {
-          ass<"pmap: results of the mapped function differ in extent">(temp_dim[d] == dim[d]);
-        }
-        for (std::size_t j = 0; j < len; j++) res.set(i * len + j, temp.get(j));
+    pmap_run(pool, [&] {
+      pool.parallelFor(1, static_cast<int>(n), [&](auto i_) {
+        const std::size_t i = static_cast<std::size_t>(i_);
+        run_pmap_task(warns[i], [&] {
+          R temp = f(map_at(first, i), map_at(rest, i)...);
+          const auto temp_dim = temp.get_dim();
+          ass<"pmap: results of the mapped function differ in rank">(temp_dim.size() == dim.size());
+          for (std::size_t d = 0; d < dim.size(); d++) {
+            ass<"pmap: results of the mapped function differ in extent">(temp_dim[d] == dim[d]);
+          }
+          for (std::size_t j = 0; j < len; j++) res.set(i * len + j, temp.get(j));
+        });
       });
     });
-    pmap_wait(pool);
     flush_warnings(warns);
     return res;
   } else { // is a new_type --> assured at the R side
@@ -196,13 +201,14 @@ inline auto pmap(const F &f, const NC &ncores, const First &first, const Rest &.
       "pmap: the mapped function may not return a collection - wrap it in a new_type"
     );
     Collection<R> res(n);
-    pool.parallelFor(0, static_cast<int>(n), [&](auto i_) {
-      const std::size_t i = static_cast<std::size_t>(i_);
-      run_pmap_task(warns[i], [&] {
-        res[i] = f(map_at(first, i), map_at(rest, i)...);
+    pmap_run(pool, [&] {
+      pool.parallelFor(0, static_cast<int>(n), [&](auto i_) {
+        const std::size_t i = static_cast<std::size_t>(i_);
+        run_pmap_task(warns[i], [&] {
+          res[i] = f(map_at(first, i), map_at(rest, i)...);
+        });
       });
     });
-    pmap_wait(pool);
     flush_warnings(warns);
     return res;
   }

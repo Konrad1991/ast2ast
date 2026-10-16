@@ -7,6 +7,7 @@ changes in ast2ast version 1.1
   `Rcpp::compileAttributes`. Only `entry_points` are exported; all other
   functions in the files are internal helpers. Runtime errors name package, file,
   line and function (`In 'mypkg: helpers.R:5 (helper): ...'`).
+  `debug = FALSE` drops this line tracking for speed, as in `translate`.
 - New functional `pmap(f, ncores, x, ...)`: like `map`, but the elements
   are processed in parallel on a thread pool (via RcppThread). Warnings
   raised inside `f` are reported in element order; errors report the line
@@ -18,6 +19,31 @@ changes in ast2ast version 1.1
   `pso` can also be called inside `pmap`.
 - Faster subsetting and subset assignment; common subsetting patterns now
   run faster than in base R.
+- `jacobian_sparse(f, x[, data], colouring = ...)` and
+  `jacobian_banded(...)`: only the entries of f's sparsity pattern are
+  computed (one forward sweep per colour) and stored as SUNDIALS does (CSC,
+  0-based; LAPACK band layout with `mu`, `ml`, `ldim`). Fields are accessible
+  in translated code (`J$data`, `J$indexptrs`, `J$mu`, ...); returned to R as
+  a `Matrix::dgCMatrix` (Matrix is suggested).
+- Named vectors: `new_layout(State, double, names = <R expression>)` in
+  `types_f`, used as `named_vec(State)` /
+  `named_borrow_vec(State)`. `y[["S30"]]` is resolved to an integer index at
+  translation time (typo -> error with a suggestion). Names of R arguments are
+  checked, returned named vectors carry their names; `vector("State")` and a
+  declaration (`res |> type(named_vec(State))`) allocate one entry per name,
+  `vector("State", n)` allocates n entries.
+- Layouts for matrices, arrays and collections: `new_mat_layout(L, double,
+  rownames = , colnames = )`, `new_array_layout(L, double, dimnames =
+  list(...))`, `new_collection_layout(L, Struct, names = )`, used as
+  `named_mat` / `named_borrow_mat`, `named_array` / `named_borrow_array`,
+  `named_collection`. Each names argument is an R expression, `NULL` (no names)
+  or an existing `new_layout()`. `m[["t1", "S30"]]` (also mixed with numbers)
+  and `pts[["p1"]]` are resolved at translation time; dimnames / names of R
+  arguments are checked and attached to returned objects.
+- A `borrow_vec`/`borrow_mat`/`borrow_array` can be passed to an inner
+  function that expects `vec`/`mat`/`array` (by value or `const()`): it is
+  copied, with a warning at translation time. A mutable `ref()` parameter
+  still requires the borrowed type.
 - `jacobian` takes an optional `colouring` argument (forward mode): columns
   that share no row are computed in one sweep. `colouring = "static", n = <literal>`
   derives the sparsity pattern at translation time;

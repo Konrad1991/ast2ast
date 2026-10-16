@@ -1,50 +1,175 @@
-# Named vector layout (`layout()`)
+# Named vectors (`new_layout()`)
 
-**Status:** design only, not started.
+Renamed 2026-10-14: `named_vector` -> `new_layout` (named_vector read like the
+long form of named_vec, but it is the definition, not a usage type).
 
-Access an ODE state vector by name: `y[["prey"]]` instead of `y[[1L]]`.
+**Status (2026-10-16, main):** built for vectors, matrices, arrays and
+collections (see "Layout constructors per data structure"); `c()` of names
+(`v[c("a", "b")]`, `m[c("t1", "t0"), "b"]`) built. Blocks like `y[["T3", tr]]`
+via a matrix layout, not vector blocks. Open: cvode/ida (step 6), allocation
+for non-vector layouts.
+
+Access a vector by name: `y[["S30"]]` instead of `y[[13L]]`.
+Motivation: Jan's translation model (169 metabolite tags); index bookkeeping
+was the main error source of the port.
 
 ## Idea
 
 String indices are always literals (the DSL has no character variables), so
-`y[["prey"]]` is rewritten to `y[[1L]]` during AST traversal -> identical C++,
+`y[["S30"]]` is rewritten to `y[[13L]]` during AST traversal -> identical C++,
 zero runtime cost. Typo -> R `stop()` at translation time, node's source line.
 
-## Syntax
-
-`layout()` = sibling of `slots()`: one element type, carries names, stays a vector.
+## Definition
 
 ```r
-new_type(State, layout(double, names = c("prey", "pred")))
+types <- function() {
+  new_layout(State, double, names = metabolite_tags)   # length >= 169
+  new_layout(Pair, double, names = c("prey", "pred"))
+}
 ```
+
+- own constructor `new_layout`, not `new_type` (later: `named_collection` etc.)
+- `names`: any R expression, evaluated directly (env of `types_f`;
+  make_package: relative paths depend on the working directory)
+- length >= length(names); the names describe a prefix, the rest is accessed
+  numerically (Jan: ribosome positions, length known at runtime)
+- `fixed = TRUE` (exact length, stack storage via std::array): removed
+  2026-10-14, comes back together with stack storage
+- duplicate, empty or NA names -> error at definition
+
+## Usage
 
 ```r
-y    |> type(borrow(State)) |> ref(),
-ydot |> type(borrow(State)) |> ref(),
+y    |> type(named_vec(State))                  # own memory
+y    |> type(named_borrow_vec(State)) |> ref()  # R / SUNDIALS memory
+rate <- vector(mode = "State", length(y))       # local, zeros
+p    <- vector(mode = "Pair")                    # length = number of names
+res  |> type(named_vec(Pair))                    # declaration allocates too
 
-ydot[["prey"]] <- y[["prey"]]*params$a - ...
+ydot[["EFG"]] <- -f[["EGT"]] - f[["EGD"]]
 ```
 
-## Rules
+- `named_vec` / `named_borrow_vec` mirror `vec` / `borrow_vec`; both refer to
+  the same definition. Generic `borrow(...)`: later, see `borrow_generic.md`
+- `y[["S30"]]` / `y["S30"]` -> integer literal; numeric index still allowed; no `$`
+- v1: names only; blocks (`y[["T3", tr]]` -> `y[[131L + tr]]`) later
+- otherwise behaves like a normal vector (arithmetic, length(), ...);
+  arithmetic results are plain vectors
+- typo -> translation error with source line and "did you mean ...?"
 
-- A string index (`y[["prey"]]` / `y["prey"]`) is always a literal — the DSL
-  has no character variables — so it's resolved to an integer at translation time.
-- Name not found -> R `stop()` at translation time (node's source line).
-- Rewrite is pre-codegen, so `ydot[["prey"]] <- expr` just works.
-- Numeric index still allowed. No `$` (base R reserves it for lists).
-- `borrow(State)` has the same runtime repr as `borrow_vec(double)`.
+## Conversions
+
+- named_vec(State) -> vec(double): allowed
+- vec(double) -> named_vec(State): error (no names to check)
+- borrow -> owned (decided 2026-10-14, applies to borrow_vec -> vec and
+  named_borrow_vec -> named_vec):
+  - value or `const()` parameter: allowed, copy + translation-time warning, e.g.
+    "argument 1 of met_rhs: borrow_vec copied into vec (declare the parameter as
+    borrow_vec to avoid the copy)"
+  - `ref()` parameter: error (a ref to a temporary copy would lose writes)
+  - C++ already has the converting constructor (ArrayClass.hpp, `Array(const Array<T2, R2>&)`
+    for `IsBorrow<R2>`); only the R type check rejects it today
+    (TraverseNodeAST.R "has not the correct data structure"); the rejection was
+    pure caution, `test_borrow.R` asserts it and has to be updated
+  - independent of named vectors, can be done first
+
+## R boundary
+
+- in: if the R vector has names, they must match (order!), e.g.
+  definition a, b but `c(b = 2, a = 1)` passed -> error; at least length(names)
+- out: names attached
+
+## Example (Jan's ode_rhs, inst/tools/dae.R)
+
+```r
+ode_rhs <- function(t, y, ydot, p) {
+  argtypes(
+    t |> type(double) |> ref(),
+    y |> type(named_borrow_vec(State)) |> ref(),
+    ydot |> type(named_borrow_vec(State)) |> ref(),
+    p |> type(DaeParams) |> ref()
+  )
+  ...
+  y_copy[["EFD"]] <- y_copy[["Eut"]] - y_copy[["EFT"]] - T3sum
+  y_copy[["EFG"]] <- p$met$c_EFG_t - y_copy[["EGT"]] - y_copy[["EGD"]]
+  ...
+  ydot[["EFG"]] <- -f[["EGT"]] - f[["EGD"]]
+}
+```
 
 ## Steps
 
-1. Parser: recognise `layout(elem_type, names = c(...))` in `new_type`.
-2. Traversal `[[` / `[`: string literal on a layout base -> integer literal, or error.
-3. Codegen: emit what `borrow_vec(elem_type)` emits. No new struct.
-4. Tests: named read + write vs the `[[1L]]` version; typo -> error.
+0. borrow -> owned conversion with warning (see Conversions), independent
+Status 2026-10-14: steps 0-5 and 7 done on main; 6 open (sundials branch).
 
-R-side, separate: `colnames(res) <- c("time", <names>)` in the cvode wrapper.
+1. Parser: `new_layout(name, elem_type, names = <expr>)` in types_f
+2. Types: `named_vec(T)`, `named_borrow_vec(T)`; `vector(mode = "T", n)`
+3. Traversal `[[` / `[`: string literal on a named base -> integer literal, or error
+4. Codegen: emit what `vec` / `borrow_vec(elem_type)` emits; no new struct
+5. R boundary: name check in, names out
+6. cvode/ida (sundials branch): accept named_borrow_vec(State) for y/ydot
+7. Tests: named read + write vs `[[1L]]` version; typo; duplicate names;
+   wrong order from R; length; conversions
 
-## Locked
+## Later: matrices and arrays
 
-- `layout()` its own constructor, not overloaded `slots()`.
-- `[[ ]]` / `[ ]` with string literal, not `$`.
-- Resolved at translation time to an integer literal.
+Built 2026-10-14, see below. In R, matrices and arrays carry `dimnames`, one
+character vector per dimension (each may be NULL):
+
+```r
+m <- matrix(1:4, 2, dimnames = list(c("a", "b"), c("x", "y")))
+m["a", "y"]                    # 3; rownames(m), colnames(m)
+a <- array(1:24, dim = c(2, 3, 4),
+           dimnames = list(c("a", "b"), c("x", "y", "z"), paste0("t", 1:4)))
+a["b", "y", "t3"]              # 16
+```
+
+`names()` per element also works (a matrix is a vector with dim), but is
+unusual; dimnames are the common way to name matrices and arrays.
+
+## Later: collections
+
+Built 2026-10-14, see below. In R, lists carry names: `l <- list(a = 1, b = "x")`,
+`l[["a"]]`. ast2ast collections (`collection(Point)`) come from unnamed R lists.
+
+## Layout constructors per data structure (decided and built 2026-10-14, main)
+
+Built: definitions, usage types, index rewrite (also mixed), dimnames/names
+check in and attach out. Not built: allocation by declaration / vector() for
+matrix, array and collection layouts (only vectors).
+
+One definition constructor per data structure; the definition carries the
+element type (for collections the struct type, not a base type):
+
+```r
+new_layout(State, double, names = state_tags)                                # vector
+new_mat_layout(Result, double, rownames = time_tags, colnames = state_tags)
+new_array_layout(Cube, double, dimnames = list(a_tags, b_tags, t_tags))       # like R's dimnames
+new_collection_layout(Seqs, SeqParams, names = seq_names)                    # element type = struct
+```
+
+Each names argument (`names`, `rownames`, `colnames`, the entries of
+`dimnames`) accepts
+- an R expression evaluated at translation time (as for `new_layout`)
+- `NULL`: this dimension has no names (numeric index only), as in R
+- the name of an existing vector layout: reuse its names, e.g. the columns of
+  the cvode result are the names of State:
+  ```r
+  new_mat_layout(Result, double, rownames = NULL, colnames = State)
+  ```
+
+Usage, mirroring named_vec / named_borrow_vec:
+
+```r
+m    |> type(named_mat(Result))          # also named_borrow_mat(Result)
+a    |> type(named_array(Cube))          # also named_borrow_array(Cube)
+seqs |> type(named_collection(Seqs))
+m[["t1", "S30"]]                         # -> m[[2L, 13L]]
+a[["b", "y", "t3"]]                      # -> a[[2L, 2L, 3L]]
+seqs[["rplL"]]$n_rib                     # -> seqs[[1L]]$n_rib
+```
+
+- mixed indices allowed: `m[[i, "S30"]]` (numeric row, named column)
+- R boundary: dimnames (matrix/array) or names (collection) checked in, attached out
+- use cases: cvode/ida result matrix (time points x states); Jan's model, one
+  SeqParams per sequence

@@ -3,7 +3,7 @@
 \title{Translate R files into the C++ code of an existing package}
 \usage{
 make_package(files, entry_points, package_dir = ".", overwrite = FALSE,
-             derivative = list())
+             derivative = list(), debug = TRUE)
 }
 \arguments{
   \item{files}{Character vector of R files, relative to \code{package_dir}.
@@ -22,6 +22,8 @@ make_package(files, entry_points, package_dir = ".", overwrite = FALSE,
     entry point, \code{"forward"} or \code{"reverse"} (see
     \code{\link{translate}}). Entry points not listed need no derivatives.
     E.g. \code{list(g = "reverse")}.}
+  \item{debug}{Logical, as in \code{\link{translate}}: \code{TRUE} reports
+    the failing statement on runtime errors. \code{FALSE} is faster.}
 }
 \value{The package name, invisibly.}
 \description{

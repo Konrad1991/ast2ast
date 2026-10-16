@@ -477,10 +477,100 @@ check_matrix_arg <- function(node, vars_types_list, info_env) {
 
 # Infer functions
 # ===================================================================================
+# y[["S30"]] on a named_vec -> y[[13L]]; the literal node is replaced in place
+resolve_name_index <- function(node, left_type_node) {
+  idx_node <- node$right_node
+  if (!is_name_index(idx_node)) return(NULL)
+  layout <- layout_of(left_type_node)
+  if (is.null(layout)) {
+    return(sprintf("String index %s is only allowed on a named_vec / named_borrow_vec in: %s",
+                   idx_node$stringify(), node$stringify()))
+  }
+  if (layout$kind %in% c("matrix", "array")) {
+    return(sprintf("%s layout %s: index every dimension, e.g. m[[\"row\", \"col\"]], in: %s",
+                   layout$kind, layout$name, node$stringify()))
+  }
+  res <- resolve_names(idx_node, layout$names, layout, "", node)
+  if (is.character(res)) return(res)
+  node$right_node <- res
+  NULL
+}
+
+is_character_literal <- function(node) {
+  inherits(node, "literal_node") && node$literal_type == "character"
+}
+
+# "a" or c("a", "b", 3L); a c() without strings stays a plain index
+is_name_index <- function(idx_node) {
+  if (is_character_literal(idx_node)) return(TRUE)
+  inherits(idx_node, "function_node") && idx_node$operator == "c" &&
+    any(vapply(idx_node$args, is_character_literal, logical(1L)))
+}
+
+# returns the resolved index node or an error string
+resolve_names <- function(idx_node, names, layout, where, node) {
+  if (is_character_literal(idx_node)) {
+    return(name_to_index_node(idx_node, names, layout, where, node))
+  }
+  for (i in seq_along(idx_node$args)) {
+    if (!is_character_literal(idx_node$args[[i]])) next
+    res <- name_to_index_node(idx_node$args[[i]], names, layout, where, node)
+    if (is.character(res)) return(res)
+    idx_node$args[[i]] <- res
+  }
+  idx_node
+}
+
+# m[["t1", "S30"]] / a[["b", i, "t3"]] / m[c("t1", "t2"), "S30"] on a named
+# matrix/array: each string is resolved with the names of its dimension
+resolve_dim_indices <- function(node, obj_type) {
+  idx_args <- seq_along(node$args)[-1L]
+  is_name <- vapply(node$args[idx_args], is_name_index, logical(1L))
+  if (!any(is_name)) return(NULL)
+  layout <- layout_of(obj_type)
+  if (is.null(layout) || !(layout$kind %in% c("matrix", "array"))) {
+    return(sprintf("String indices are only allowed on a named_mat / named_array in: %s", node$stringify()))
+  }
+  if (length(idx_args) != length(layout$dimnames)) {
+    return(sprintf("%s layout %s has %d dimensions, found %d indices in: %s",
+                   layout$kind, layout$name, length(layout$dimnames), length(idx_args), node$stringify()))
+  }
+  for (k in seq_along(idx_args)[is_name]) {
+    names_k <- layout$dimnames[[k]]
+    if (is.null(names_k)) {
+      return(sprintf("Dimension %d of layout %s has no names in: %s", k, layout$name, node$stringify()))
+    }
+    res <- resolve_names(node$args[[idx_args[[k]]]], names_k, layout, sprintf(" (dimension %d)", k), node)
+    if (is.character(res)) return(res)
+    node$args[[idx_args[[k]]]] <- res
+  }
+  NULL
+}
+
+# a string literal -> integer literal node via the names of one dimension
+name_to_index_node <- function(idx_node, names, layout, where, node) {
+  value_name <- remove_double_quotes(idx_node$name)
+  idx <- match(value_name, names)
+  if (is.na(idx)) {
+    distance <- utils::adist(value_name, names)[1L, ]
+    closest <- names[which.min(distance)]
+    return(sprintf("Unknown name '%s'%s for layout %s. Did you mean '%s'? In: %s",
+                   value_name, where, layout$name, closest, node$stringify()))
+  }
+  new_idx <- literal_node$new(as.integer(idx))
+  for (field in c("context", "real_type", "pre_translate_line", "location", "wrap")) {
+    new_idx[[field]] <- idx_node[[field]]
+  }
+  new_idx
+}
+
+
 infer_subsetting <- function(node, vars_list, info_env, function_registry) {
   if (inherits(node, "binary_node")) {
     left_type_node <- infer(node$left_node, vars_list, info_env, function_registry)
     err <- check_operand_type(left_type_node, node, "left", allow_collection = TRUE)
+    if (!is.null(err)) return(err)
+    err <- resolve_name_index(node, left_type_node)
     if (!is.null(err)) return(err)
     right_type_node <- infer(node$right_node, vars_list, info_env, function_registry)
     err <- check_operand_type(right_type_node, node, "right")
@@ -507,6 +597,8 @@ infer_subsetting <- function(node, vars_list, info_env, function_registry) {
     node$internal_type <- t
     return(t)
   } else if (inherits(node, "function_node")) {
+    err <- resolve_dim_indices(node, infer(node$args[[1L]], vars_list, info_env, function_registry))
+    if (!is.null(err)) return(err)
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
     })
@@ -1227,21 +1319,38 @@ function_registry_global$add(
   check_fct = mock, group = "unary_node", cpp_name = "return"
 )
 function_registry_global$add(
-  name = "vector", num_args = 2, arg_names = c("mode", "length"),
+  name = "vector", num_args = c(1, 2), arg_names = c("mode", "length"),
   docu = paste0(
     "vector(mode, length)  # mode: \"logical\" / \"integer\" / \"numeric\".\n",
     "For a new_type collection pass the type name as mode: ",
-    "vector(\"MyType\", n) -> a length-n collection of MyType"
+    "vector(\"MyType\", n) -> a length-n collection of MyType.\n",
+    "For a layout (new_layout) pass its name: vector(\"State\") (length = number of names) ",
+    "or vector(\"State\", n)"
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     left_type <- infer(node$args[[1]], vars_list, info_env, function_registry)
-    right_type <- infer(node$args[[2]], vars_list, info_env, function_registry)
     err <- check_operand_type(left_type, node, "left", allow_collection = TRUE, allow_char = TRUE)
-    if (!is.null(err)) return(err)
-    err <- check_operand_type(right_type, node, "right", allow_collection = TRUE)
     if (!is.null(err)) return(err)
     mode_type <- node$args[[1]]$name |> remove_double_quotes()
     custom_type <- info_env$known_types[[mode_type]]
+    if (inherits(custom_type, "layout_def") && custom_type$kind != "vector") {
+      return(sprintf("vector(\"%s\"): %s is a %s layout, vector() only creates named vectors (new_layout)",
+                     mode_type, mode_type, custom_type$kind))
+    }
+    if (!inherits(custom_type, "layout_def") && length(node$args) == 1L) {
+      return("vector(mode, length) needs a length")
+    }
+    if (length(node$args) == 2L) {
+      right_type <- infer(node$args[[2]], vars_list, info_env, function_registry)
+      err <- check_operand_type(right_type, node, "right", allow_collection = TRUE)
+      if (!is.null(err)) return(err)
+    }
+    if (inherits(custom_type, "layout_def")) {
+      t <- make_inferred_type("vector", custom_type$base_type, info_env$r_fct, info_env$real_type)
+      t$data_struct$layout <- custom_type
+      node$internal_type <- t
+      return(t)
+    }
     if (!is.null(custom_type) && inherits(custom_type, "new_type_node")) {
       coll <- collection$new()
       coll$r_fct <- info_env$r_fct
@@ -1269,11 +1378,12 @@ function_registry_global$add(
     }
     s <- remove_double_quotes(node$args[[1]]$name)
     custom_type <- info_env$known_types[[s]]
-    is_custom_type <- !is.null(custom_type) && inherits(custom_type, "new_type_node")
+    is_custom_type <- inherits(custom_type, c("new_type_node", "layout_def"))
     if (!is_custom_type && !(s %in% c("logical", "integer", "numeric"))) {
       node$error <- sprintf("Found unallowed mode %s in vector", s)
     }
-    if (!is_int(node$args[[2]], vars_types_list) && !is_num(node$args[[2]], vars_types_list)) {
+    if (length(node$args) == 2L &&
+        !is_int(node$args[[2]], vars_types_list) && !is_num(node$args[[2]], vars_types_list)) {
       node$error <- "Found unallowed length type in vector"
     }
   },
@@ -2362,6 +2472,115 @@ function_registry_global$add(
   check_fct = mock,
  group = "function_node", cpp_name = "etr::nnls", deriv_possible = FALSE
 )
+
+# jacobian, jacobian_sparse, jacobian_banded; the structured ones need a
+# sparsity pattern, so colouring is required and a missing pattern is an error
+infer_jacobian <- function(node, vars_list, info_env, function_registry, fname) {
+  structured <- fname != "jacobian"
+  if (info_env$real_type == "etr::Double") {
+    return(sprintf("%s requires translate(derivative = \"forward\") or \"reverse\"", fname))
+  }
+  opts <- jacobian_colouring_args(node, info_env$real_type, vars_list)
+  if (is.character(opts)) return(opts)
+  coloured <- vapply(node$args, inherits, logical(1), "cpp_code_node")
+  if (structured && opts$colouring == "none" && !any(coloured)) {
+    return(sprintf("%s needs colouring = \"static\", n = <integer literal> or colouring = \"runtime\"", fname))
+  }
+  pos_args <- node$args[!coloured]
+  all_types <- lapply(pos_args, function(arg) {
+    infer(arg, vars_list, info_env, function_registry)
+  })
+  if (!(length(all_types) %in% c(2L, 3L))) {
+    return(sprintf("%s expects 2 or 3 arguments", fname))
+  }
+  if (!inherits(all_types[[1L]], "fn_node")) {
+    return(sprintf("The first argument to %s has to be a function", fname))
+  }
+  x_type <- all_types[[2L]]
+  if (!inherits(x_type, "pre_type_node")) {
+    return(sprintf("Found unexpected type of argument 2 to %s", fname))
+  }
+  if (x_type$get_data_struct() != "vector") {
+    return(sprintf("The second argument to %s has to be a vector", fname))
+  }
+  if (x_type$get_base_type() != "double") {
+    return(sprintf("The second argument to %s has to be a vector containing doubles", fname))
+  }
+  has_extra <- length(pos_args) == 3L
+  if (has_extra) {
+    extra_type <- all_types[[3L]]
+    if (inherits(extra_type, "fn_node")) {
+      return(sprintf("The third argument to %s (data passed to the function) cannot itself be a function", fname))
+    }
+    if (inherits(extra_type, "pre_type_node") && extra_type$get_base_type() == "character") {
+      return(sprintf("The third argument to %s (data passed to the function) cannot be a character/string", fname))
+    }
+  }
+  f <- all_types[[1L]]
+  expected_n <- if (has_extra) 2L else 1L
+  if (length(f$args_f) != expected_n) {
+    return(sprintf(
+      "the function passed to %s has to accept exactly %d argument%s%s",
+      fname, expected_n, if (expected_n == 1L) "" else "s",
+      if (has_extra) " (the vector, then the extra data argument)" else ""
+    ))
+  }
+  a1 <- f$args_f[[1L]]
+  if (!inherits(a1, "pre_type_node") || a1$get_base_type() != "double" ||
+      a1$get_data_struct() != "vector") {
+    return(sprintf("the function passed to %s has to accept a double vector as its first argument", fname))
+  }
+  ret <- f$return_type
+  if (!inherits(ret, "pre_type_node") || ret$get_base_type() != "double" ||
+      ret$get_data_struct() != "vector") {
+    return(sprintf("the function passed to %s has to return a double vector", fname))
+  }
+  if (opts$colouring == "static" && !any(coloured)) {
+    col <- colouring_of_fn(f, opts$n, function_registry)
+    if (is.character(col) && structured) {
+      return(sprintf("%s: no static sparsity pattern for f (%s); use colouring = \"runtime\"", fname, col))
+    }
+    if (is.character(col)) {
+      warning(sprintf("jacobian: colouring not used (%s); one sweep per column instead", col),
+        call. = FALSE)
+    } else {
+      node$args[[length(node$args) + 1L]] <- cpp_code_node$new(
+        colouring_cpp(col, opts$n), sprintf("colouring = \"static\", n = %dL", opts$n)
+      )
+    }
+  }
+  if (opts$colouring == "runtime" && !any(coloured)) {
+    node$args[[length(node$args) + 1L]] <- cpp_code_node$new(
+      runtime_colouring_cpp(runtime_colouring_fn(pos_args[[1L]], vars_list)),
+      "colouring = \"runtime\""
+    )
+  }
+  if (structured) {
+    t <- info_env$known_types[[paste0(fname, "_result")]]
+    if (is.null(t)) {
+      return(sprintf("Did not find %s_result type which is required as return type for %s", fname, fname))
+    }
+  } else {
+    t <- make_inferred_type("matrix", "double", info_env$r_fct, info_env$real_type)
+  }
+  node$internal_type <- t
+  return(t)
+}
+
+check_jacobian <- function(node, vars_types_list, info_env) {
+  # inline fn: the arg is the fn_node itself; named fn: infer() cached it as internal_type
+  f <- node$args[[1L]]
+  if (!inherits(f, "fn_node")) f <- f$internal_type
+  if (!inherits(f, "fn_node")) return()
+  args_to_f <- f$args_f
+  arg1 <- node$args[[2L]]
+  compare_types_passed_to_fn(node, args_to_f[[1L]], arg1$internal_type)
+  if (length(args_to_f) == 2L) {
+    arg2 <- node$args[[3L]]
+    compare_types_passed_to_fn(node, args_to_f[[2L]], arg2$internal_type)
+  }
+}
+
 function_registry_global$add(
   name = "jacobian", num_args = c(2, 3, 4, 5), arg_names = c(NA, NA, NA),
   docu = paste0(
@@ -2378,96 +2597,41 @@ function_registry_global$add(
     "Requires translate(derivative = \"forward\") or \"reverse\"."
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
-    if (info_env$real_type == "etr::Double") {
-      return("jacobian requires translate(derivative = \"forward\") or \"reverse\"")
-    }
-    opts <- jacobian_colouring_args(node, info_env$real_type, vars_list)
-    if (is.character(opts)) return(opts)
-    coloured <- vapply(node$args, inherits, logical(1), "cpp_code_node")
-    pos_args <- node$args[!coloured]
-    all_types <- lapply(pos_args, function(arg) {
-      infer(arg, vars_list, info_env, function_registry)
-    })
-    if (!(length(all_types) %in% c(2L, 3L))) {
-      return("jacobian expects 2 or 3 arguments")
-    }
-    if (!inherits(all_types[[1L]], "fn_node")) {
-      return("The first argument to jacobian has to be a function")
-    }
-    x_type <- all_types[[2L]]
-    if (!inherits(x_type, "pre_type_node")) {
-      return("Found unexpected type of argument 2 to jacobian")
-    }
-    if (x_type$get_data_struct() != "vector") {
-      return("The second argument to jacobian has to be a vector")
-    }
-    if (x_type$get_base_type() != "double") {
-      return("The second argument to jacobian has to be a vector containing doubles")
-    }
-    has_extra <- length(pos_args) == 3L
-    if (has_extra) {
-      extra_type <- all_types[[3L]]
-      if (inherits(extra_type, "fn_node")) {
-        return("The third argument to jacobian (data passed to the function) cannot itself be a function")
-      }
-      if (inherits(extra_type, "pre_type_node") && extra_type$get_base_type() == "character") {
-        return("The third argument to jacobian (data passed to the function) cannot be a character/string")
-      }
-    }
-    f <- all_types[[1L]]
-    expected_n <- if (has_extra) 2L else 1L
-    if (length(f$args_f) != expected_n) {
-      return(sprintf(
-        "the function passed to jacobian has to accept exactly %d argument%s%s",
-        expected_n, if (expected_n == 1L) "" else "s",
-        if (has_extra) " (the vector, then the extra data argument)" else ""
-      ))
-    }
-    a1 <- f$args_f[[1L]]
-    if (!inherits(a1, "pre_type_node") || a1$get_base_type() != "double" ||
-        a1$get_data_struct() != "vector") {
-      return("the function passed to jacobian has to accept a double vector as its first argument")
-    }
-    ret <- f$return_type
-    if (!inherits(ret, "pre_type_node") || ret$get_base_type() != "double" ||
-        ret$get_data_struct() != "vector") {
-      return("the function passed to jacobian has to return a double vector")
-    }
-    if (opts$colouring == "static" && !any(coloured)) {
-      col <- colouring_of_fn(f, opts$n, function_registry)
-      if (is.character(col)) {
-        warning(sprintf("jacobian: colouring not used (%s); one sweep per column instead", col),
-          call. = FALSE)
-      } else {
-        node$args[[length(node$args) + 1L]] <- cpp_code_node$new(
-          colouring_cpp(col, opts$n), sprintf("colouring = \"static\", n = %dL", opts$n)
-        )
-      }
-    }
-    if (opts$colouring == "runtime" && !any(coloured)) {
-      node$args[[length(node$args) + 1L]] <- cpp_code_node$new(
-        runtime_colouring_cpp(runtime_colouring_fn(pos_args[[1L]], vars_list)),
-        "colouring = \"runtime\""
-      )
-    }
-    t <- make_inferred_type("matrix", "double", info_env$r_fct, info_env$real_type)
-    node$internal_type <- t
-    return(t)
+    infer_jacobian(node, vars_list, info_env, function_registry, "jacobian")
   },
-  check_fct = function(node, vars_types_list, info_env) {
-    # inline fn: the arg is the fn_node itself; named fn: infer() cached it as internal_type
-    f <- node$args[[1L]]
-    if (!inherits(f, "fn_node")) f <- f$internal_type
-    if (!inherits(f, "fn_node")) return()
-    args_to_f <- f$args_f
-    arg1 <- node$args[[2L]]
-    compare_types_passed_to_fn(node, args_to_f[[1L]], arg1$internal_type)
-    if (length(args_to_f) == 2L) {
-      arg2 <- node$args[[3L]]
-      compare_types_passed_to_fn(node, args_to_f[[2L]], arg2$internal_type)
-    }
-  },
+  check_fct = check_jacobian,
   group = "function_node", cpp_name = "etr::jacobian", valid_fn_context = TRUE
+)
+function_registry_global$add(
+  name = "jacobian_sparse", num_args = c(2, 3, 4, 5), arg_names = c(NA, NA, NA),
+  docu = paste0(
+    "jacobian_sparse(f, x[, data], colouring = \"static\", n = <integer literal> | colouring = \"runtime\")\n",
+    "Like jacobian, but only the entries of f's sparsity pattern are computed and stored ",
+    "(CSC, 0-based, as SUNDIALS' SUNMatrix_Sparse).\n",
+    "Returns a jacobian_sparse_result with $m, $n, $indexptrs, $indexvals, $data; ",
+    "returned to R as a Matrix::dgCMatrix."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    infer_jacobian(node, vars_list, info_env, function_registry, "jacobian_sparse")
+  },
+  check_fct = check_jacobian,
+  group = "function_node", cpp_name = "etr::jacobian_sparse", valid_fn_context = TRUE
+)
+function_registry_global$add(
+  name = "jacobian_banded", num_args = c(2, 3, 4, 5), arg_names = c(NA, NA, NA),
+  docu = paste0(
+    "jacobian_banded(f, x[, data], colouring = \"static\", n = <integer literal> | colouring = \"runtime\")\n",
+    "Like jacobian for a square jacobian, but stored as band matrix (as SUNDIALS' ",
+    "SUNMatrix_Band without LU scratch): mu/ml from f's sparsity pattern, ",
+    "A(i, j) at data[j * ldim + mu + i - j] (0-based), ldim = mu + ml + 1.\n",
+    "Returns a jacobian_banded_result with $n, $mu, $ml, $ldim, $data; ",
+    "returned to R as a Matrix::dgCMatrix."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    infer_jacobian(node, vars_list, info_env, function_registry, "jacobian_banded")
+  },
+  check_fct = check_jacobian,
+  group = "function_node", cpp_name = "etr::jacobian_banded", valid_fn_context = TRUE
 )
 function_registry_global$add(
   name = "lbfgsb", num_args = c(8, 9), arg_names = c(NA, NA, NA, NA, NA, NA, NA, NA, NA),

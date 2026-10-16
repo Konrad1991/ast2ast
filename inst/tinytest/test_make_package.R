@@ -75,6 +75,14 @@ expect_true(any(grepl("^f <- function", readLines(file.path(dir, "R", "RcppExpor
 # rerun: own generated files are overwritten without asking
 expect_silent(ast2ast::make_package(tools("types.R", "entry.R", "helpers.R"), "f", dir))
 
+# debug = FALSE: no line tracking, also not in the helpers
+expect_true(any(grepl("etr::current_line()", cpp, fixed = TRUE)))
+ast2ast::make_package(tools("types.R", "entry.R", "helpers.R"), "f", dir, debug = FALSE)
+cpp_no_debug <- readLines(file.path(dir, "src", "ast2ast_f.cpp"))
+expect_false(any(grepl("etr::current_line()", cpp_no_debug, fixed = TRUE)))
+expect_error(ast2ast::make_package(tools("entry.R"), "f", dir, debug = NA), pattern = "debug is not of type logical")
+ast2ast::make_package(tools("types.R", "entry.R", "helpers.R"), "f", dir)
+
 # no types at all
 dir_no_types <- new_package(list("entry.R" = c(
   "f <- function(a) {",

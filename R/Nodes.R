@@ -302,6 +302,13 @@ unary_node <- R6::R6Class(
               indent, self$operator, "(",
               self$string_obj(), ".to_SEXP())"
             )
+            layout <- layout_of(self$obj$internal_type)
+            if (!is.null(layout)) {
+              ret <- paste0(
+                indent, self$operator, "(etr::AttachNames(", self$string_obj(), ".to_SEXP(), ",
+                cpp_string_list(layout$names), "))"
+              )
+            }
           } else if (needs_to_SEXP_path(self$obj$internal_type)) {
             ret <- paste0(
               indent, self$operator, "(",
@@ -313,6 +320,18 @@ unary_node <- R6::R6Class(
               # This cast to SEXP and evals expressions which are not variables or literals
               self$string_obj(), "))"
             )
+            layout <- layout_of(self$obj$internal_type)
+            if (!is.null(layout) && layout$kind %in% c("matrix", "array")) {
+              ret <- paste0(
+                indent, self$operator, "(etr::AttachDimNames(etr::Cast(", self$string_obj(), "), ",
+                cpp_dimnames_list(layout$dimnames), "))"
+              )
+            } else if (!is.null(layout)) {
+              ret <- paste0(
+                indent, self$operator, "(etr::AttachNames(etr::Cast(", self$string_obj(), "), ",
+                cpp_string_list(layout$names), "))"
+              )
+            }
           } else {
             ret <- paste0(
               indent, self$operator, "(etr::Evaluate(", self$string_obj(), "))"
@@ -1165,9 +1184,29 @@ pre_type_node <- R6::R6Class(
       if (!self$r_fct && self$fct_input) return("")
       if (self$r_fct && self$fct_input) {
         type_str <- self$data_struct$stringify(indent)
-        return(paste0(
+        decl <- paste0(
           indent, type_str, " ", self$name,
           "(etr::CheckSEXP<", type_str, ">(", self$name, "SEXP, \"", self$name, "\"));"
+        )
+        layout <- layout_of(self)
+        if (!is.null(layout)) {
+          check <- if (layout$kind %in% c("matrix", "array")) {
+            paste0("etr::CheckDimNames(", self$name, "SEXP, \"", self$name, "\", \"",
+                   layout$name, "\", ", cpp_dimnames_list(layout$dimnames), ");")
+          } else {
+            paste0("etr::CheckNames(", self$name, "SEXP, \"", self$name, "\", \"",
+                   layout$name, "\", ", cpp_string_list(layout$names), ");")
+          }
+          decl <- paste0(decl, "\n  ", indent, check)
+        }
+        return(decl)
+      }
+      layout <- layout_of(self)
+      if (!is.null(layout) && layout$kind == "vector" && inherits(self$data_struct, "vec")) {
+        # the names give the length, so the declaration allocates (zeros)
+        return(paste0(
+          indent, self$data_struct$stringify(indent), " ", self$name, " = ",
+          layout_allocator(layout, self$real_type), "(etr::Integer(", length(layout$names), "));"
         ))
       }
       paste0(indent, self$data_struct$stringify(indent), " ", self$name, ";")
@@ -1240,6 +1279,7 @@ vec <- R6::R6Class(
     base_type = NULL,
     r_fct = NULL,
     real_type = NULL,
+    layout = NULL, # layout_def or NULL
     print = function() {
       cat(sprintf("vector containing: %s", self$base_type), "\n")
     },
@@ -1268,6 +1308,7 @@ mat <- R6::R6Class(
     base_type = NULL,
     r_fct = NULL,
     real_type = NULL,
+    layout = NULL, # layout_def or NULL
     print = function() {
       cat(sprintf("matrix containing: %s", self$base_type), "\n")
     },
@@ -1295,6 +1336,7 @@ arr <- R6::R6Class(
     base_type = NULL,
     r_fct = NULL,
     real_type = NULL,
+    layout = NULL, # layout_def or NULL
     print = function() {
       cat(sprintf("array containing: %s", self$base_type), "\n")
     },
@@ -1351,6 +1393,7 @@ borrow_vec <- R6::R6Class(
     base_type = NULL,
     r_fct = NULL,
     real_type = NULL,
+    layout = NULL, # layout_def or NULL
     print = function() {
       cat(sprintf("vector (borrowed) containing: %s", self$base_type), "\n")
     },
@@ -1379,6 +1422,7 @@ borrow_mat <- R6::R6Class(
     base_type = NULL,
     r_fct = NULL,
     real_type = NULL,
+    layout = NULL, # layout_def or NULL
     print = function() {
       cat(sprintf("matrix (borrowed) containing: %s", self$base_type), "\n")
     },
@@ -1406,6 +1450,7 @@ borrow_arr <- R6::R6Class(
     base_type = NULL,
     r_fct = NULL,
     real_type = NULL,
+    layout = NULL, # layout_def or NULL
     print = function() {
       cat(sprintf("array (borrowed) containing: %s", self$base_type), "\n")
     },
@@ -1661,6 +1706,7 @@ collection <- R6::R6Class(
     element_type = NULL,
     r_fct = NULL,
     real_type = NULL,
+    layout = NULL, # layout_def or NULL
     print = function() {
       cat(sprintf("collection containing: %s", self$type), "\n")
     },
