@@ -1201,7 +1201,6 @@ struct Logical {
     return is_na;
   }
   template<typename T> requires IsArray<Decayed<T>> inline Logical& operator=(const T& arr) {
-    using  inner = typename ExtractDataType<T>::value_type;
     ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
     const auto arr_val = get_scalar_val(arr.get(0));
     *this = Logical(arr_val);

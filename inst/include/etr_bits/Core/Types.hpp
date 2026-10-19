@@ -334,15 +334,13 @@ struct SI {
   std::size_t sz{0};
 
   SI() = default;
-  explicit SI(std::size_t n) : sz(n) {
-    ass<"Size has to be larger than 0!">(sz >= 1);
-  }
+  explicit SI(std::size_t n) : sz(n) {}
   // signed integers (e.g., int, long long)
   // NOTE: std::signed_integral (<concepts>) is missing on some CRAN clang/libc++
   // combos; std::is_integral_v/is_signed_v (<type_traits>) is the portable equivalent.
   template <typename I> requires (std::is_integral_v<I> && std::is_signed_v<I>)
   explicit SI(I n) {
-    ass<"Size has to be larger than 0!">(n >= 1);
+    ass<"Size must not be negative">(n >= 0);
     using U = std::make_unsigned_t<I>;
     const U un = static_cast<U>(n);
     ass<"Requested size too large">(un <= static_cast<U>(std::numeric_limits<std::size_t>::max()));
@@ -353,7 +351,7 @@ struct SI {
   explicit SI(F n) {
     ass<"Size is not finite">(std::isfinite(n));
     const F f = std::floor(n);
-    ass<"Size has to be larger than 0!">(f >= static_cast<F>(1));
+    ass<"Size must not be negative">(f >= static_cast<F>(0));
     const long double ld = static_cast<long double>(f);
     ass<"Requested size too large">(ld <= static_cast<long double>(std::numeric_limits<std::size_t>::max()));
     sz = static_cast<std::size_t>(ld);

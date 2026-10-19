@@ -51,7 +51,7 @@ template<>
 inline Logical SEXP2Scalar<Logical>(SEXP s) {
   ass<"R object is not of type logical">(Rf_isLogical(s));
   const R_xlen_t sz = Rf_xlength(s);
-  ass<"Argument has length > 1">(sz == 1);
+  ass<"Argument has to be of length 1">(sz == 1);
   // int, not bool: NA_LOGICAL (INT_MIN) would collapse to true
   const int b = LOGICAL(s)[0];
   if (b == NA_LOGICAL) return Logical::NA();
@@ -61,7 +61,7 @@ template<>
 inline Integer SEXP2Scalar<Integer>(SEXP s) {
   ass<"R object is not of type integer">(Rf_isInteger(s));
   const R_xlen_t sz = Rf_xlength(s);
-  ass<"Argument has length > 1">(sz == 1);
+  ass<"Argument has to be of length 1">(sz == 1);
   const int i = INTEGER(s)[0];
   if (i == NA_INTEGER) return Integer::NA();
   return Integer(i);
@@ -70,7 +70,7 @@ template<>
 inline Double SEXP2Scalar<Double>(SEXP s) {
   ass<"R object is not of type double">(Rf_isReal(s));
   const R_xlen_t sz = Rf_xlength(s);
-  ass<"Argument has length > 1">(sz == 1);
+  ass<"Argument has to be of length 1">(sz == 1);
   const double d = REAL(s)[0];
   Double res(d);
   res.is_na = ISNA(d);
@@ -80,7 +80,7 @@ template<>
 inline Dual SEXP2Scalar<Dual>(SEXP s) {
   ass<"R object is not of type double">(Rf_isReal(s));
   const R_xlen_t sz = Rf_xlength(s);
-  ass<"Argument has length > 1">(sz == 1);
+  ass<"Argument has to be of length 1">(sz == 1);
   const double d = REAL(s)[0];
   Dual res(d, 0.0);
   res.is_na = ISNA(d);
@@ -90,7 +90,7 @@ template<>
 inline ReverseDouble SEXP2Scalar<ReverseDouble>(SEXP s) {
   ass<"R object is not of type double">(Rf_isReal(s));
   const R_xlen_t sz = Rf_xlength(s);
-  ass<"Argument has length > 1">(sz == 1);
+  ass<"Argument has to be of length 1">(sz == 1);
   const double d = REAL(s)[0];
   ReverseDouble res = ReverseDouble::Var(d);
   res.is_na = static_cast<uint8_t>(ISNA(d));
@@ -110,16 +110,27 @@ inline const char* r_type_name(SEXP s) {
 // T(double)/T(int) via 0's null-pointer-constant conversion), so this
 // extracts the value itself for those; arrays/borrows/structs already have
 // one, so this only validates and hands s back unchanged.
+inline void check_scalar_length(SEXP s, const char* name, const char* type_name) {
+  const R_xlen_t len = Rf_xlength(s);
+  if (len != 1) [[unlikely]] {
+    ass(false, std::string("Argument '") + name + "' must be a scalar " + type_name + ", got length " +
+                 std::to_string(len));
+  }
+}
+
 template <typename T>
 inline decltype(auto) CheckSEXP(SEXP s, const char* name) {
   if constexpr (IsDouble<T> || IsDual<T> || IsReverseDouble<T>) {
     ass(Rf_isReal(s), std::string("Type mismatch for '") + name + "': expected double, got " + r_type_name(s));
+    check_scalar_length(s, name, "double");
     return SEXP2Scalar<T>(s);
   } else if constexpr (IsInteger<T>) {
     ass(Rf_isInteger(s), std::string("Type mismatch for '") + name + "': expected integer, got " + r_type_name(s));
+    check_scalar_length(s, name, "integer");
     return SEXP2Scalar<T>(s);
   } else if constexpr (IsLogical<T>) {
     ass(Rf_isLogical(s), std::string("Type mismatch for '") + name + "': expected logical, got " + r_type_name(s));
+    check_scalar_length(s, name, "logical");
     return SEXP2Scalar<T>(s);
   } else if constexpr (IsArray<T>) {
     using ElemT = typename ExtractDataType<T>::value_type;

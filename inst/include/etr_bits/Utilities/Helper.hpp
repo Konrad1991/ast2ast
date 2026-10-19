@@ -129,10 +129,24 @@ template <typename T> requires IsArray<T> inline Integer ncol(const T& inp) {
 
 // max & min -- return the selected element (keeps AD); any NA -> NA (na.rm = FALSE)
 // -----------------------------------------------------------------------------------------------------------
+// R: max/min of numeric(0) is -Inf/Inf with a warning; for int/logical R returns a double, so error here
+template <typename Type> inline Type empty_extreme(double v, const char* msg) {
+  if constexpr (IS<Type, Integer> || IS<Type, Logical>) {
+    ass(false, std::string("Error in ") + msg + ": argument is of length 0");
+    return Type{};
+  } else {
+    raise_warning(std::string("no non-missing arguments to ") + msg + "; returning " + (v < 0 ? "-Inf" : "Inf"));
+    if constexpr (IS<Type, Dual>) {
+      return Dual(v, 0.0);
+    } else {
+      return Type(v);
+    }
+  }
+}
 template <typename T> requires IsScalarLike<T> inline auto max(const T inp) { return inp; }
 template <typename T> requires IsArray<T> inline auto max(const T &inp) {
   using Type = typename ExtractDataType<Decayed<T>>::value_type;
-  ass<"Error in max: argument is of length 0">(inp.size() > 0);
+  if (inp.size() == 0) [[unlikely]] return empty_extreme<Type>(-std::numeric_limits<double>::infinity(), "max");
   Type res = inp.get(0);
   if (get_scalar_val(res).isNA()) return res;
   for (std::size_t i = 1; i < inp.size(); i++) {
@@ -145,7 +159,7 @@ template <typename T> requires IsArray<T> inline auto max(const T &inp) {
 template <typename T> requires IsScalarLike<T> inline auto min(const T inp) { return inp; }
 template <typename T> requires IsArray<T> inline auto min(const T &inp) {
   using Type = typename ExtractDataType<Decayed<T>>::value_type;
-  ass<"Error in min: argument is of length 0">(inp.size() > 0);
+  if (inp.size() == 0) [[unlikely]] return empty_extreme<Type>(std::numeric_limits<double>::infinity(), "min");
   Type res = inp.get(0);
   if (get_scalar_val(res).isNA()) return res;
   for (std::size_t i = 1; i < inp.size(); i++) {

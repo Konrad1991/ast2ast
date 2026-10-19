@@ -60,14 +60,12 @@ template <typename T, typename BorrowTrait> struct Borrow {
     if constexpr (IS<value_type, Double>) {
       ass<"R object is not of type numeric">(Rf_isReal(s));
       sz = static_cast<std::size_t>(Rf_length(s));
-      ass<"R object seems to be empty">(sz >= 1);
       capacity = static_cast<std::size_t>(sz);
       p = REAL(s);
       allocated = true;
     } else if constexpr (IS<value_type, Integer>) {
       ass<"R object is not of type integer">(Rf_isInteger(s));
       sz = static_cast<std::size_t>(Rf_length(s));
-      ass<"R object seems to be empty">(sz >= 1);
       capacity = static_cast<std::size_t>(sz);
       p = INTEGER(s);
       allocated = true;
@@ -244,8 +242,6 @@ template <typename BorrowTrait> struct Borrow<Dual, BorrowTrait> {
     ass<"R object is not of type numeric">(Rf_isReal(s_dot));
     std::size_t sz_val = static_cast<std::size_t>(Rf_length(s_val));
     std::size_t sz_dot = static_cast<std::size_t>(Rf_length(s_dot));
-    ass<"R object seems to be empty">(sz_val >= 1);
-    ass<"R object seems to be empty">(sz_dot >= 1);
     ass<"Lengths of Value object and Derivative object do not match">(sz_dot == sz_val);
     capacity = static_cast<std::size_t>(sz_val);
     sz = capacity;

@@ -191,6 +191,8 @@ template<typename A, typename B> requires(IsArray<Decayed<A>> && IsArray<Decayed
   const std::size_t M = sa.first;
   const std::size_t K = sa.second;
   const std::size_t N = sb.second;
+  // BLAS needs leading dimensions >= 1
+  ass<"mat_mul: matrices with a zero dimension are not supported">(M > 0 && K > 0 && N > 0);
 
   if      constexpr (IS<TC, ReverseDouble>) return matmul_reverse(a, b, M, K, N);
   else if constexpr (IS<TC, Dual>)          return matmul_forward(a, b, M, K, N);

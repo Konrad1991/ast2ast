@@ -83,6 +83,7 @@ template<typename A> requires(IsArray<Decayed<A>>) inline auto chol(const A& a) 
   const auto& dim = a.get_dim();
   ass<"chol: argument has to be a square matrix">(dim.size() == 2 && dim[0] == dim[1]);
   const std::size_t n = dim[0];
+  ass<"chol: 'a' must have dims > 0">(n > 0);
   if constexpr (IS<T, ReverseDouble>) {
     return chol_reverse(a, n);
   } else if constexpr (IS<T, Dual>) {

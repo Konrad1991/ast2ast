@@ -92,6 +92,7 @@ template<typename A> requires(IsArray<Decayed<A>>) inline auto crossprod_impl(co
   const auto s = crossprod_shape_of(a.get_dim(), a.size());
   const std::size_t m = s.first;
   const std::size_t n = s.second;
+  ass<"crossprod: matrices with a zero dimension are not supported">(m > 0 && n > 0);
   if      constexpr (IS<T, ReverseDouble>) return crossprod_reverse(a, m, n, transposed);
   else if constexpr (IS<T, Dual>)          return crossprod_forward(a, m, n, transposed);
   else                                      return crossprod_plain  (a, m, n, transposed);

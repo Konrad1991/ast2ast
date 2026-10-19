@@ -102,6 +102,7 @@ inline auto trisolve(const A& a, const B& b, bool upper) {
   const auto sb = solve_rhs_shape(b.get_dim(), b.size());
   ass<"backsolve/forwardsolve: 'b' must have as many rows as 'a'">(sb.first == n);
   const std::size_t k = sb.second;
+  ass<"backsolve/forwardsolve: matrices with a zero dimension are not supported">(n > 0 && k > 0);
   const bool vec_result = b.get_dim().size() < 2;
 
   if constexpr (IS<TC, ReverseDouble>) {

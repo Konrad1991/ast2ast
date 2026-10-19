@@ -59,7 +59,6 @@ template <> struct Buffer<int, LBufferTrait> {
   ~Buffer() { delete[] p; }
 
   void init(std::size_t size) {
-    ass<"Size has to be larger than 0!">(size > 0);
     delete[] p;
     p = new int[size];
     sz = size;
@@ -179,7 +178,6 @@ template <typename BufferTrait> struct Buffer<ReverseDouble, BufferTrait> {
   void initSEXP(SEXP s) {
     ass<"R object is not of type numeric">(Rf_isReal(s));
     std::size_t sz_ = static_cast<std::size_t>(Rf_length(s));
-    ass<"R object seems to be empty">(sz_ >= 1);
     data.clear();
     data.reserve(sz_);
     for (std::size_t i = 0; i < sz_; i++) data.emplace_back(REAL(s)[i]);
@@ -199,7 +197,6 @@ template <typename BufferTrait> struct Buffer<ReverseDouble, BufferTrait> {
   // Each default-constructed ReverseDouble pushes its own const-0 node, so
   // every element starts on an independent tape node.
   void init(std::size_t size) {
-    ass<"Size has to be larger than 0!">(size > 0);
     data.clear();
     data.resize(size);   // resize value-inits each element separately -> own node
     allocated = true;
@@ -337,7 +334,6 @@ struct SoABuffer {
   }
 
   SoABuffer(std::size_t sz_) {
-    ass<"Size has to be larger than 0!">(sz_ > 0);
     init(sz_);
   }
 
@@ -537,7 +533,6 @@ struct Buffer<Double, BufferTrait> : SoABuffer<Double, BufferTrait> {
     }
     ass<"R object is not of type numeric">(Rf_isReal(s));
     sz = static_cast<std::size_t>(Rf_length(s));
-    ass<"R object seems to be empty">(sz >= 1);
     capacity = sz;
     p_val = new double[capacity];
     p_na  = new bool[capacity];
@@ -577,7 +572,6 @@ struct Buffer<Integer, BufferTrait> : SoABuffer<Integer, BufferTrait> {
     }
     ass<"R object is not of type integer">(Rf_isInteger(s));
     sz = static_cast<std::size_t>(Rf_length(s));
-    ass<"R object seems to be empty">(sz >= 1);
     capacity = sz;
     p_val = new int[capacity];
     p_na  = new bool[capacity];
@@ -617,7 +611,6 @@ struct Buffer<Logical, BufferTrait> : SoABuffer<Logical, BufferTrait> {
     }
     ass<"R object is not of type logical">(Rf_isLogical(s));
     sz = static_cast<std::size_t>(Rf_length(s));
-    ass<"R object seems to be empty">(sz >= 1);
     capacity = sz;
     p_val = new bool[capacity];
     p_na  = new bool[capacity];
@@ -715,7 +708,6 @@ struct Buffer<Dual, BufferTrait> {
   }
 
   Buffer(std::size_t sz_) {
-    ass<"Size has to be larger than 0!">(sz_ > 0);
     init(sz_);
   }
 
@@ -923,7 +915,6 @@ struct Buffer<Dual, BufferTrait> {
     }
     ass<"R object is not of type numeric">(Rf_isReal(s));
     sz = static_cast<std::size_t>(Rf_length(s));
-    ass<"R object seems to be empty">(sz >= 1);
     capacity = sz;
     p_val    = new double[capacity];
     p_dot    = new double[capacity];

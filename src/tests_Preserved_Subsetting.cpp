@@ -309,11 +309,9 @@ void test_indices_preserved_subsetting() {
     Array<Logical, Buffer<Logical, LBufferTrait>> Logical_dim1(SI{2});
     Logical_dim1.set(0, FALSE);
     Logical_dim1.set(1, FALSE);
-    try {
-      subset(What, Logical_dim1, TRUE, TRUE);
-    } catch (const std::exception& e) {
-      ass<"Reisze with new size = 0">(std::strcmp(e.what(), "Empty index for at least one dimension") == 0);
-    }
+    // empty selection is allowed, as in R
+    auto empty = subset(What, Logical_dim1, TRUE, TRUE);
+    ass<"all-FALSE subset should be empty">(empty.size() == 0);
     reset(What);
   }
   // Using scalar FALSE

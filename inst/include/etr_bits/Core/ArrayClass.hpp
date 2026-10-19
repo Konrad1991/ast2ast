@@ -64,6 +64,7 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
   explicit operator bool() const {
+    ass<"Error in if: argument is of length zero">(this->size() != 0);
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
     return static_cast<bool>(get_scalar_val(d.get(0)));
   }
@@ -258,6 +259,7 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
   void push_back(const T& val) { d.push_back(val); }
 
   explicit operator bool() const {
+    ass<"Error in if: argument is of length zero">(this->size() != 0);
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
     return static_cast<bool>(get_scalar_val(d.get(0)));
   }
@@ -327,6 +329,7 @@ template<typename T> requires (IsArithV<T> || IsReverseDouble<T>) struct Array<T
   void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
   explicit operator bool() const {
+    ass<"Error in if: argument is of length zero">(this->size() != 0);
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
     return static_cast<bool>(get_scalar_val(d.get(0)));
   }
@@ -468,6 +471,7 @@ template<typename T, typename I, typename Trait> struct Array<T, UnaryOperation<
   void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
   explicit operator bool() const {
+    ass<"Error in if: argument is of length zero">(this->size() != 0);
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
     return static_cast<bool>(get_scalar_val(d.get(0)));
   }
@@ -528,6 +532,7 @@ template<typename T, typename L, typename R, typename Trait> struct Array<T, Bin
   void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
   explicit operator bool() const {
+    ass<"Error in if: argument is of length zero">(this->size() != 0);
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
     return static_cast<bool>(get_scalar_val(d.get(0)));
   }
@@ -589,6 +594,7 @@ template<typename T> struct Array<T, BinaryOperation<T, RangeSpec, RangeTrait>> 
   template<typename V> void set(std::size_t, const V&) = delete;
 
   explicit operator bool() const {
+    ass<"Error in if: argument is of length zero">(this->size() != 0);
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
     return static_cast<bool>(get_scalar_val(d.get(0)));
   }
@@ -645,6 +651,7 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
   explicit operator bool() const {
+    ass<"Error in if: argument is of length zero">(this->size() != 0);
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
     return static_cast<bool>(get_scalar_val(d.get(0)));
   }
@@ -749,6 +756,7 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
   explicit operator bool() const {
+    ass<"Error in if: argument is of length zero">(this->size() != 0);
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
     return static_cast<bool>(get_scalar_val(d.get(0)));
   }

@@ -383,9 +383,7 @@ inline out_L create_indices(const ArrayType& arr, const Args&... args) {
 
   Dim L(N, 0);
   for (std::size_t k = 0; k < N; k++) {
-    if (!index_lists[k] || (index_lists[k]->size() == 0)) {
-      ass<"Empty index for at least one dimension">(false);
-    }
+    ass<"Empty index for at least one dimension">(index_lists[k] != nullptr);
     L[k] = index_lists[k]->size();
   }
 
@@ -446,29 +444,20 @@ inline out_L create_indices(const ArrayType& arr, const Args&... args) {
     }
     return out_L{std::move(out), std::move(L)};
   } else {
+    // NOTE: counted up to S, so S == 0 never reads vals[k][0]
     std::array<std::size_t, N> pos{};
-
-    std::size_t offset = 0;
-    std::size_t k = 0;
-    std::size_t counter = 0;
-    for (;;) {
-      offset = 1;
+    for (std::size_t counter = 0; counter < S; counter++) {
+      std::size_t offset = 1;
       for (std::size_t k = 0; k < N; k++) {
         offset += (static_cast<std::size_t>(vals[k][pos[k]]) - 1) * stride[k];
       }
-      out.set_unchecked(counter++, offset - 1);
-
-      k = 0;
-      for (;;) {
-        pos[k] += 1;
-        if (pos[k] < L[k]) break;
+      out.set_unchecked(counter, offset - 1);
+      for (std::size_t k = 0; k < N; k++) {
+        if (++pos[k] < L[k]) break;
         pos[k] = 0;
-        k++;
-        if (k == N) {
-          return out_L{std::move(out), std::move(L)};
-        }
       }
     }
+    return out_L{std::move(out), std::move(L)};
   }
 }
 
@@ -509,9 +498,7 @@ inline void subset_assign(ArrayType& arr, const RHS& rhs, const Args&... args) {
 
   std::array<std::size_t, N> L{};
   for (std::size_t k = 0; k < N; k++) {
-    if (!index_lists[k] || (index_lists[k]->size() == 0)) {
-      ass<"Empty index for at least one dimension">(false);
-    }
+    ass<"Empty index for at least one dimension">(index_lists[k] != nullptr);
     L[k] = index_lists[k]->size();
   }
 
@@ -519,6 +506,8 @@ inline void subset_assign(ArrayType& arr, const RHS& rhs, const Args&... args) {
 
   std::size_t S = 1;
   for (std::size_t k = 0; k < N; k++) S *= L[k];
+  // R: an empty selection replaces nothing, whatever the rhs length
+  if (S == 0) return;
 
   // Validate each subscript ONCE, same as create_indices -- see its comment
   // for why the write loop below then needs no bounds/NA checks, and for
@@ -622,7 +611,7 @@ inline AxisSpec checked_range(const Idx& idx, std::size_t extent) {
   const long s = get_val(start);
   const long step = idx.d.r.get().step;
   const long len = static_cast<long>(idx.size());
-  ass<"Empty index for at least one dimension">(len > 0);
+  if (len == 0) return AxisSpec{0, step, 0};
   const long last = s + step * (len - 1);
   ass<"Zero and negative indices are not supported">(std::min(s, last) >= 1);
   ass<"Error: out of boundaries">(static_cast<std::size_t>(std::max(s, last)) <= extent);
@@ -715,6 +704,7 @@ inline Dim dim_of(const StridedLayout<N>& lay) {
 // calls f(flat_parent_offset) for every element in column-major order; no div
 template <std::size_t N, typename F>
 inline void for_each_strided(const StridedLayout<N>& lay, F&& f) {
+  if (lay.size == 0) return;
   if constexpr (N == 1) {
     long off = static_cast<long>(lay.offset);
     for (std::size_t i = 0; i < lay.len[0]; i++, off += lay.vstride[0]) f(static_cast<std::size_t>(off));
@@ -748,6 +738,8 @@ requires AllStridedIndices<Args...>
 inline void subset_assign(ArrayType& arr, const RHS& rhs, const Args&... args) {
   using E = typename ExtractDataType<ArrayType>::value_type;
   const auto lay = make_strided_layout(arr, args...);
+  // R: an empty selection replaces nothing, whatever the rhs length
+  if (lay.size == 0) return;
   if constexpr (IsScalarLike<RHS>) {
     // copy first: rhs can be a ref into arr (x[1:3] <- x[[2]])
     const E val = static_cast<E>(rhs);

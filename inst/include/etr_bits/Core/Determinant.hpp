@@ -10,6 +10,7 @@ inline auto determinant(const A& arr) {
   ass<"Error in determinant: argument is not a matrix">(dim.size() == 2);
   ass<"Matrix is not quadratic">(dim[0] == dim[1]);
   const int n = static_cast<int>(dim[0]);
+  ass<"determinant: matrices with a zero dimension are not supported">(n > 0);
 
   if constexpr (IS<T, ReverseDouble>) {
     if (n == 0) return ReverseDouble(1.0);
