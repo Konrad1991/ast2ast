@@ -281,7 +281,7 @@ template <typename T> requires IsArray<T> inline auto sum(const T &inp) {
     std::int64_t acc = 0;
     for (std::size_t i = 0; i < inp.size(); i++) {
       const auto v = get_scalar_val(inp.get(i));
-      if (v.is_na) return Integer::NA();
+      if (v.isNA()) return Integer::NA();
       acc += v.val;
     }
     if (acc > std::numeric_limits<int>::max() || acc < -std::numeric_limits<int>::max()) {

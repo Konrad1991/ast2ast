@@ -47,6 +47,7 @@ extern "C" void dgetrs_(const char* trans, const int* n, const int* nrhs,
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <algorithm>
 #include <array>
 #include <ios>
@@ -407,13 +408,14 @@ inline std::size_t safe_index_from_int(long x) {
 class Dim {
   static constexpr std::size_t N_INLINE = 7;
   std::size_t rank_ = 0;
-  union {
-    std::size_t inline_[N_INLINE];
-    std::size_t* heap_; // only rank_ > N_INLINE
-  };
-  bool on_heap() const noexcept { return rank_ > N_INLINE; }
+  // NOTE: not a union with inline_: GCC then warned (-Wfree-nonheap-object)
+  // that delete[] might hit inline storage. nullptr unless rank_ > N_INLINE.
+  std::size_t* heap_ = nullptr;
+  std::size_t inline_[N_INLINE];
+  bool on_heap() const noexcept { return heap_ != nullptr; }
   void release() noexcept {
-    if (on_heap()) delete[] heap_;
+    delete[] heap_;
+    heap_ = nullptr;
     rank_ = 0;
   }
   void copy_from(const Dim& o) {
@@ -428,6 +430,7 @@ class Dim {
   void move_from(Dim& o) noexcept {
     if (o.on_heap()) {
       heap_ = o.heap_;
+      o.heap_ = nullptr;
     } else {
       std::copy_n(o.inline_, o.rank_, inline_);
     }
@@ -483,9 +486,9 @@ public:
   void resize(std::size_t n, std::size_t value = 0) {
     if (n <= N_INLINE) {
       if (on_heap()) {
-        std::size_t* h = heap_;
-        std::copy_n(h, n, inline_);
-        delete[] h;
+        std::copy_n(heap_, n, inline_);
+        delete[] heap_;
+        heap_ = nullptr;
       } else {
         for (std::size_t i = rank_; i < n; ++i) inline_[i] = value;
       }
@@ -496,7 +499,7 @@ public:
     const std::size_t keep = rank_ < n ? rank_ : n;
     std::copy_n(data(), keep, h);
     std::fill(h + keep, h + n, value);
-    if (on_heap()) delete[] heap_;
+    delete[] heap_;
     heap_ = h;
     rank_ = n;
   }

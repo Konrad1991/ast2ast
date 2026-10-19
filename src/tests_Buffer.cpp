@@ -284,15 +284,13 @@ void test_buffer() {
     for (std::size_t i = 0; i < b.size(); i++)
       ass<"fill sets every element">(compare(get_val(b.get(i)), 7.0));
   }
-  // NA flag round-trip through set/get
+  // NA round-trip through set/get
   {
     Buffer<RealType> b(2);
-    RealType na_val(1.0);
-    na_val.is_na = true;
-    b.set(0, na_val);
+    b.set(0, RealType::NA());
     b.set(1, RealType(2.0));
-    ass<"NA flag stored">(b.get(0).is_na == true);
-    ass<"non-NA flag clear">(b.get(1).is_na == false);
+    ass<"NA stored">(b.get(0).isNA());
+    ass<"non-NA stays">(!b.get(1).isNA());
   }
   // Stress testing
   {
@@ -477,15 +475,14 @@ void test_buffer_integer() {
     const int* raw = b.data();
     ass<"int data() contiguous">(raw[0] == 5 && raw[1] == 6 && raw[2] == 7);
   }
-  // NA flag round-trip through set/get and the parallel na_data() array
+  // NA round-trip through set/get; NA is R's sentinel in data()
   {
     Buffer<Integer> b(2);
-    Integer na(1); na.is_na = true;
-    b.set(0, na);
+    b.set(0, Integer::NA());
     b.set(1, Integer(3));
-    ass<"int NA flag stored">(b.get(0).is_na == true);
-    ass<"int non-NA flag">(b.get(1).is_na == false);
-    ass<"int na_data() reflects flag">(b.na_data()[0] == true && b.na_data()[1] == false);
+    ass<"int NA stored">(b.get(0).isNA());
+    ass<"int non-NA">(!b.get(1).isNA());
+    ass<"int data() holds NA_INT">(b.data()[0] == NA_INT && b.data()[1] == 3);
   }
   // iteration
   {
@@ -641,15 +638,14 @@ void test_buffer_logical() {
     for (std::size_t i = 0; i < b.size(); i++)
       ass<"logical fill">(get_val(b.get(i)) == true);
   }
-  // NA flag round-trip through set/get and the parallel na_data() array
+  // NA round-trip through set/get; NA is R's sentinel in data()
   {
     Buffer<Logical> b(2);
-    Logical na(true); na.is_na = true;
-    b.set(0, na);
+    b.set(0, Logical::NA());
     b.set(1, Logical(false));
-    ass<"logical NA flag stored">(b.get(0).is_na == true);
-    ass<"logical non-NA flag">(b.get(1).is_na == false);
-    ass<"logical na_data() reflects flag">(b.na_data()[0] == true && b.na_data()[1] == false);
+    ass<"logical NA stored">(b.get(0).isNA());
+    ass<"logical non-NA">(!b.get(1).isNA());
+    ass<"logical data() holds NA_INT">(b.data()[0] == NA_INT && b.data()[1] == 0);
   }
   // iteration (Logical + Logical -> Integer, so count trues with an int)
   {
@@ -663,23 +659,20 @@ void test_buffer_logical() {
   }
 }
 
-// Raw data()/na_data() pointers are the reason the Double buffer uses SoA
-// storage; assert they expose the contiguous value and NA arrays and alias the
-// same storage get()/set() use. ReverseDouble has no such accessor.
+// The raw data() pointer is in R's layout; assert it exposes the contiguous
+// values (NA as R's NA_real_) and aliases the storage get()/set() use.
+// ReverseDouble has no such accessor.
 void test_buffer_raw_double() {
   Buffer<Double> b(3);
   b.set(0, Double(1.5));
   b.set(1, Double(2.5));
-  Double na(3.5); na.is_na = true;
-  b.set(2, na);
+  b.set(2, Double::NA());
 
   const double* v = b.data();
-  const bool*   n = b.na_data();
   ass<"double data() values">(
     std::abs(v[0] - 1.5) < 1E-9 &&
-    std::abs(v[1] - 2.5) < 1E-9 &&
-    std::abs(v[2] - 3.5) < 1E-9);
-  ass<"double na_data() flags">(n[0] == false && n[1] == false && n[2] == true);
+    std::abs(v[1] - 2.5) < 1E-9);
+  ass<"double data() holds NA_real_">(is_na_real(v[2]));
 
   b.set(0, Double(9.0));
   ass<"double data() aliases storage">(std::abs(v[0] - 9.0) < 1E-9);
@@ -716,39 +709,32 @@ void test_buffer_dual_dot() {
     b.set_dot(0, 42.0);
     ass<"set_dot updates dot">(eq(b.get(0).dot, 42.0));
     ass<"set_dot keeps value">(eq(b.get(0).val, 7.0));
-    ass<"set_dot clears dot NA">(b.get(0).is_na_dot == false);
+    ass<"set_dot dot is not NA">(!b.get(0).isNADot());
   }
-  // raw value / dot / NA pointer accessors expose the parallel arrays
+  // raw value / dot pointer accessors expose the arrays (NA as NA_real_)
   {
     Buffer<Dual> b(3);
     b.set(0, Dual(1.0, 10.0));
     b.set(1, Dual(2.0, 20.0));
-    Dual na(3.0, 30.0); na.is_na = true; na.is_na_dot = true;
-    b.set(2, na);
+    b.set(2, Dual::NA());
 
     const double* v  = b.data();
     const double* d  = b.dot_data();
-    const bool*   nv = b.na_data();
-    const bool*   nd = b.dot_na_data();
-    ass<"dual data() values">(eq(v[0], 1.0) && eq(v[1], 2.0) && eq(v[2], 3.0));
-    ass<"dual dot_data() values">(eq(d[0], 10.0) && eq(d[1], 20.0) && eq(d[2], 30.0));
-    ass<"dual na_data() flags">(nv[0] == false && nv[2] == true);
-    ass<"dual dot_na_data() flags">(nd[0] == false && nd[2] == true);
+    ass<"dual data() values">(eq(v[0], 1.0) && eq(v[1], 2.0));
+    ass<"dual dot_data() values">(eq(d[0], 10.0) && eq(d[1], 20.0));
+    ass<"dual NA in data() and dot_data()">(is_na_real(v[2]) && is_na_real(d[2]));
 
     // accessors must alias live storage, not a copy
     b.set_dot(0, 99.0);
     ass<"dual dot_data() aliases storage">(eq(d[0], 99.0));
   }
-  // value and dot NA flags round-trip independently through set/get
+  // value and dot NA round-trip independently through set/get
   {
     Buffer<Dual> b(1);
-    Dual x(4.0, 8.0);
-    x.is_na     = false;   // value defined
-    x.is_na_dot = true;    // derivative NA
-    b.set(0, x);
-    ass<"dual value NA flag">(b.get(0).is_na == false);
-    ass<"dual dot NA flag">(b.get(0).is_na_dot == true);
-    ass<"get_dot carries dot NA">(b.get_dot(0).is_na == true);
+    b.set(0, Dual(4.0, na_real())); // value defined, derivative NA
+    ass<"dual value not NA">(!b.get(0).isNA());
+    ass<"dual dot NA">(b.get(0).isNADot());
+    ass<"get_dot carries dot NA">(b.get_dot(0).isNA());
   }
   // iteration carries the dot, not just the value
   {

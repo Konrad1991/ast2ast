@@ -233,7 +233,9 @@ inline auto filter(const F &f, const X &x) {
   res.d.resize(n);
   std::size_t cnt = 0;
   for (std::size_t i = 0; i < n; i++) {
-    if (static_cast<bool>(get_val(f(x.get(i))))) res.set(cnt++, x.get(i));
+    // R drops elements where f gives NA
+    const Logical keep(get_scalar_val(f(x.get(i))));
+    if (!keep.isNA() && keep.val != 0) res.set(cnt++, x.get(i));
   }
   res.d.resize(cnt);
   res.dim = Dim{cnt};

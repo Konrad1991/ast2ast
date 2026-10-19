@@ -51,7 +51,7 @@ void test_all_types_usuable_preserved_subsetting() {
   Array<Logical, Buffer<Logical, LBufferTrait>> Logical_arr(SI{N});
   Array<Logical, Buffer<Logical, RBufferTrait>> Logical_r_arr(SI{N});
   Logical_r_arr.dim = dim;
-  std::array<bool, N> owner_logical;
+  std::array<int, N> owner_logical;
   Array<Logical, Borrow<Logical, BorrowTrait>> Logical_borrowed_arr(owner_logical.data(), N, dim);
   for (std::size_t i = 0; i < N; i++) {
     Double_arr.set(i, static_cast<double>(i) + 0.1);
@@ -1255,7 +1255,7 @@ void test_preserved_subsetting() {
     } catch (const std::exception& e) {
       NA_in_log = e.what();
     }
-    ass<"NA in scalar Logical">(std::strcmp(NA_in_log.c_str(), "Bool subsetting is only with TRUE possible") == 0);
+    ass<"NA in scalar Logical">(std::strcmp(NA_in_log.c_str(), "Found NA value in subsetting (within a logical object)") == 0);
 
     // NA in integer
     try {

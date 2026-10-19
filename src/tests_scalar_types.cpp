@@ -6,19 +6,13 @@ using namespace etr;
 const double NaN = std::numeric_limits<double>::quiet_NaN();
 
 Logical create_logical(const bool val, const bool is_na) {
-  Logical res(val);
-  res.is_na = is_na;
-  return res;
+  return is_na ? Logical::NA() : Logical(val);
 }
 Integer create_integer(const int val, const bool is_na) {
-  Integer res(val);
-  res.is_na = is_na;
-  return res;
+  return is_na ? Integer::NA() : Integer(val);
 }
 Double create_double(const double val, const bool is_na) {
-  Double res(val);
-  res.is_na = is_na;
-  return res;
+  return is_na ? Double::NA() : Double(val);
 }
 ReverseDouble create_reverse_double(const double val, const bool is_na) {
   ReverseDouble res(val);
@@ -26,10 +20,7 @@ ReverseDouble create_reverse_double(const double val, const bool is_na) {
   return res;
 }
 Dual create_dual(const double val, const double dot, const bool is_na, const bool is_na_dot) {
-  Dual res(val, dot);
-  res.is_na = is_na;
-  res.is_na_dot = is_na_dot;
-  return res;
+  return Dual(is_na ? na_real() : val, is_na_dot ? na_real() : dot);
 }
 
 template<typename L, typename R> void compare(const L& l, const R& r) {
@@ -57,18 +48,11 @@ template<typename L, typename R> void compare(const L& l, const R& r) {
   if constexpr (IS<Decayed<L>, Dual> || IS<Decayed<L>, DualRef>) {
     Dual dl = l;
     Dual dr = r;
-    if (dl.isNaNDot() && dr.isNaNDot()) {
-      ass<"both derivatives are NaN">(true);
-      return;
-    } else if (dl.isNaNDot() && !dr.isNaNDot()) {
-      ass<"both derivatives should be NaN">(false);
-      return;
-    }
-    if (dl.isNADot() && dr.isNADot()) {
-      ass<"both derivatives are NA">(true);
-      return;
-    } else if (dl.isNADot() && !dr.isNADot()) {
-      ass<"both derivatives should be NA">(false);
+    // NOTE: NA vs NaN in the derivative is not compared: the hardware keeps
+    // the NA payload through arithmetic, the old NA flag turned it into NaN
+    const bool l_nan = std::isnan(dl.dot), r_nan = std::isnan(dr.dot);
+    if (l_nan || r_nan) {
+      ass<"both derivatives should be NA or NaN">(l_nan && r_nan);
       return;
     }
     Double diff_dot;
@@ -187,61 +171,41 @@ void test_scalars() {
   double d = 3.0;
   double d_dot = 4.0;
   Dual dua1(d, d_dot);
-  Dual dua2(d, d_dot);
-  dua2.is_na = true;
-  dua2.is_na_dot = true;
-  Dual dua3(d, d_dot);
-  dua3.is_na = true;
-  dua3.is_na_dot = false;
-  Dual dua4(d, d_dot);
-  dua4.is_na = false;
-  dua4.is_na_dot = true;
+  Dual dua2(na_real(), na_real());
+  Dual dua3(na_real(), d_dot);
+  Dual dua4(d, na_real());
 
   ReverseDouble revd1(5.0);
   ReverseDouble revd2 = d2;
   ReverseDouble revd3 = d3;
 
-  bool lref_val1 = true;
-  bool lref_na1 = false;
-  LogicalRef lr_owned1(&lref_val1, &lref_na1);
-  bool lref_val2 = true;
-  bool lref_na2 = true;
-  LogicalRef lr_owned2(&lref_val2, &lref_na2);
+  int lref_val1 = 1;
+  LogicalRef lr_owned1(&lref_val1);
+  int lref_val2 = NA_INT;
+  LogicalRef lr_owned2(&lref_val2);
 
   int iref_val1 = 7;
-  bool iref_na1 = false;
-  IntegerRef ir_owned1(&iref_val1, &iref_na1);
-  int iref_val2 = 7;
-  bool iref_na2 = true;
-  IntegerRef ir_owned2(&iref_val2, &iref_na2);
+  IntegerRef ir_owned1(&iref_val1);
+  int iref_val2 = NA_INT;
+  IntegerRef ir_owned2(&iref_val2);
 
   double dref_val1 = 20.0;
-  bool dref_na1 = false;
-  DoubleRef dr_owned1(&dref_val1, &dref_na1);
-  double dref_val2 = 20.0;
-  bool dref_na2 = true;
-  DoubleRef dr_owned2(&dref_val2, &dref_na2);
+  DoubleRef dr_owned1(&dref_val1);
+  double dref_val2 = na_real();
+  DoubleRef dr_owned2(&dref_val2);
 
   double dualref_val1 = 2.0;
   double dualref_dot1 = 1.0;
-  bool dualref_na1 = false;
-  bool dualref_na_dot1 = false;
-  DualRef duar_owned1(&dualref_val1, &dualref_dot1, &dualref_na1, &dualref_na_dot1);
-  double dualref_val2 = 2.0;
-  double dualref_dot2 = 1.0;
-  bool dualref_na2 = true;
-  bool dualref_na_dot2 = true;
-  DualRef duar_owned2(&dualref_val2, &dualref_dot2, &dualref_na2, &dualref_na_dot2);
+  DualRef duar_owned1(&dualref_val1, &dualref_dot1);
+  double dualref_val2 = na_real();
+  double dualref_dot2 = na_real();
+  DualRef duar_owned2(&dualref_val2, &dualref_dot2);
   double dualref_val3 = 3.0;
-  double dualref_dot3 = 1.0;
-  bool dualref_na3 = false;
-  bool dualref_na_dot3 = true;
-  DualRef duar_owned3(&dualref_val3, &dualref_dot3, &dualref_na3, &dualref_na_dot3);
-  double dualref_val4 = 4.0;
+  double dualref_dot3 = na_real();
+  DualRef duar_owned3(&dualref_val3, &dualref_dot3);
+  double dualref_val4 = na_real();
   double dualref_dot4 = 1.0;
-  bool dualref_na4 = true;
-  bool dualref_na_dot4 = false;
-  DualRef duar_owned4(&dualref_val4, &dualref_dot4, &dualref_na4, &dualref_na_dot4);
+  DualRef duar_owned4(&dualref_val4, &dualref_dot4);
 
   // ReverseDouble has no reference wrapper; use plain ReverseDouble values.
   ReverseDouble revdr_owned1 = create_reverse_double(9.0, false);
@@ -892,17 +856,17 @@ void check_assign_all(const Src& s, double v, double dot, bool na) {
   ReverseDouble aRD; aRD = s; compare(aRD, create_reverse_double(v, na));
 
   // reference targets: assignment writes through the referenced slot
-  bool lv = false, lna = false;
-  LogicalRef aLR(&lv, &lna); aLR = s; compare(Logical(aLR), create_logical(bv, na));
+  int lv = 0;
+  LogicalRef aLR(&lv); aLR = s; compare(Logical(aLR), create_logical(bv, na));
 
-  int iiv = 0; bool iina = false;
-  IntegerRef aIR(&iiv, &iina); aIR = s; compare(Integer(aIR), create_integer(iv, na));
+  int iiv = 0;
+  IntegerRef aIR(&iiv); aIR = s; compare(Integer(aIR), create_integer(iv, na));
 
-  double ddv = 0.0; bool ddna = false;
-  DoubleRef aDR(&ddv, &ddna); aDR = s; compare(Double(aDR), create_double(v, na));
+  double ddv = 0.0;
+  DoubleRef aDR(&ddv); aDR = s; compare(Double(aDR), create_double(v, na));
 
-  double duv = 0.0, dudot = 0.0; bool duna = false, dunadot = false;
-  DualRef aDuR(&duv, &dudot, &duna, &dunadot); aDuR = s;
+  double duv = 0.0, dudot = 0.0;
+  DualRef aDuR(&duv, &dudot); aDuR = s;
   compare(Dual(aDuR), create_dual(v, dot, na, na));
 
   // ReverseDouble has no reference wrapper
@@ -927,24 +891,24 @@ void test_scalar_assignment() {
   check_assign_all(ReverseDouble::NA(), 0.0, 0.0, true);
 
   {
-    bool sv = true, sna = false, dv = false, dna = true;
-    LogicalRef src(&sv, &sna), dst(&dv, &dna);
+    int sv = 1, dv = NA_INT;
+    LogicalRef src(&sv), dst(&dv);
     dst = src; compare(Logical(dst), create_logical(true, false));
   }
   {
-    int sv = 42; bool sna = false; int dv = 0; bool dna = true;
-    IntegerRef src(&sv, &sna), dst(&dv, &dna);
+    int sv = 42, dv = NA_INT;
+    IntegerRef src(&sv), dst(&dv);
     dst = src; compare(Integer(dst), create_integer(42, false));
   }
   {
-    double sv = 3.25; bool sna = false; double dv = 0.0; bool dna = true;
-    DoubleRef src(&sv, &sna), dst(&dv, &dna);
+    double sv = 3.25, dv = na_real();
+    DoubleRef src(&sv), dst(&dv);
     dst = src; compare(Double(dst), create_double(3.25, false));
   }
   {
-    double sv = 2.0, sdot = 5.0; bool sna = false, snd = false;
-    double dv = 0.0, ddot = 0.0; bool dna = true, dnd = true;
-    DualRef src(&sv, &sdot, &sna, &snd), dst(&dv, &ddot, &dna, &dnd);
+    double sv = 2.0, sdot = 5.0;
+    double dv = na_real(), ddot = na_real();
+    DualRef src(&sv, &sdot), dst(&dv, &ddot);
     dst = src; compare(Dual(dst), create_dual(2.0, 5.0, false, false));
   }
   {
@@ -953,16 +917,27 @@ void test_scalar_assignment() {
     dst = src; compare(dst, create_reverse_double(9.0, false));
   }
 
-  // real NaN (is_na == false, val == NaN) converting to Integer must become
+  // real NaN (not NA) converting to Integer must become
   // NA instead of UB-casting (CRAN M1 UBSan caught this, see Scalars.hpp).
   {
     compare(Integer(Double::NaN()), Integer::NA());
     compare(Integer(Dual::NaN()), Integer::NA());
     compare(Integer(ReverseDouble::NaN()), Integer::NA());
 
-    int iv = 7; bool ina = false;
-    IntegerRef ir(&iv, &ina);
+    int iv = 7;
+    IntegerRef ir(&iv);
     ir = Double::NaN();
-    ass<"NaN through IntegerRef assignment becomes NA">(ina);
+    ass<"NaN through IntegerRef assignment becomes NA">(iv == NA_INT);
+  }
+  // R's sentinels: NA vs NaN for doubles, NA_INT for integer/logical
+  {
+    ass<"na_real is NA">(Double::NA().isNA() && !Double::NA().isNaN());
+    ass<"NaN is not NA">(Double::NaN().isNaN() && !Double::NaN().isNA());
+    ass<"NA survives arithmetic">((Double::NA() + Double(1.0)).isNA());
+    ass<"NA == 1 is NA">((Double::NA() == Double(1.0)).isNA());
+    ass<"NaN < 1 is NA">((Double::NaN() < Double(1.0)).isNA());
+    ass<"Logical(NA_INT) is NA">(Logical(NA_INT).isNA());
+    ass<"Double(Integer NA) is NA">(Double(Integer::NA()).isNA());
+    ass<"Integer(Double NA) is NA">(Integer(Double::NA()).isNA());
   }
 }
