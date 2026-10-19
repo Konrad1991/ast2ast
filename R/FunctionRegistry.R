@@ -1,3 +1,73 @@
+# Argument names for matching named arguments like R (#48): R's names,
+# reduced to the arguments ast2ast supports, in ast2ast's positional order.
+# Not listed: no named arguments. "...": the function reads its names itself.
+r_arg_names <- list(
+  # allocation / sequences
+  "vector" = c("mode", "length"),
+  "numeric" = "length", "integer" = "length", "logical" = "length",
+  "matrix" = c("data", "nrow", "ncol"),
+  "array" = c("data", "dim"),
+  "rep" = c("x", "times"),
+  "seq_len" = "length.out",
+  "seq_along" = "along.with",
+  "c" = "...",
+  # one-argument math / helpers
+  "sin" = "x", "asin" = "x", "sinh" = "x", "cos" = "x", "acos" = "x", "cosh" = "x",
+  "tan" = "x", "atan" = "x", "tanh" = "x", "log" = "x", "sqrt" = "x", "abs" = "x",
+  "sign" = "x", "exp" = "x", "floor" = "x", "ceiling" = "x", "trunc" = "x", "round" = "x",
+  "length" = "x", "dim" = "x", "nrow" = "x", "ncol" = "x",
+  "is.na" = "x", "is.nan" = "x", "is.infinite" = "x", "is.finite" = "x",
+  "as.numeric" = "x", "as.integer" = "x", "as.logical" = "x",
+  "print" = "x",
+  # reductions / transforms
+  "mean" = "x", "cumsum" = "x", "rev" = "x", "which" = "x", "which.max" = "x", "which.min" = "x",
+  "colSums" = "x", "rowSums" = "x", "colMeans" = "x", "rowMeans" = "x",
+  "sort" = c("x", "decreasing"),
+  "ifelse" = c("test", "yes", "no"),
+  # linear algebra
+  "t" = "x", "chol" = "x", "crossprod" = "x", "tcrossprod" = "x", "det" = "x",
+  "diag" = c("x", "nrow", "ncol"),
+  "get_diag" = "x",
+  "solve" = c("a", "b"),
+  "backsolve" = c("r", "x"),
+  "forwardsolve" = c("l", "x"),
+  # interpolation / solvers / optimizers
+  "cmr" = c("point", "x", "y"),
+  "uniroot" = c("f", "interval", "tol", "maxiter", "data"),
+  "nnls" = c("a", "b"),
+  "lbfgsb" = c("f", "x", "lower", "upper", "maxit", "factr", "pgtol", "lmm", "data"),
+  "pso" = c("f", "lower", "upper", "ngen", "npop", "error_threshold", "global", "seed", "data"),
+  "jacobian" = "...", "jacobian_sparse" = "...", "jacobian_banded" = "...",
+  # functionals
+  "Reduce" = c("f", "x"),
+  "Filter" = c("f", "x"),
+  "apply" = c("f", "MARGIN", "x")
+)
+
+# R-like matching (#48): exact names fill their slot, the unnamed rest fills
+# the free slots in order. Returns the new argument order or an error string.
+match_call_args <- function(fct, given, expected) {
+  n <- length(given)
+  if (is.null(given) || all(given == "") || identical(expected, "...")) return(seq_len(n))
+  if (all(is.na(expected))) return(sprintf("%s does not take named arguments", fct))
+  slots <- rep(NA_integer_, max(length(expected), n))
+  for (i in which(given != "")) {
+    idx <- match(given[[i]], expected)
+    if (is.na(idx)) {
+      return(sprintf("Unknown argument '%s' for %s%s", given[[i]], fct, did_you_mean(given[[i]], expected)))
+    }
+    if (!is.na(slots[idx])) return(sprintf("Argument '%s' of %s is given twice", given[[i]], fct))
+    slots[idx] <- i
+  }
+  for (i in which(given == "")) slots[which(is.na(slots))[1L]] <- i
+  order <- slots[seq_len(n)]
+  if (anyNA(order)) {
+    return(sprintf("Argument '%s' of %s is missing, but a later argument is given",
+                   expected[which(is.na(order))[1L]], fct))
+  }
+  order
+}
+
 # Singleton class holding all information of a function required
 # ========================================================================
 Functions <- R6::R6Class(
@@ -38,6 +108,7 @@ Functions <- R6::R6Class(
       self$number_of_args[which(self$function_names == name)]
     },
     expected_arg_names = function(name) {
+      if (name %in% names(r_arg_names)) return(r_arg_names[[name]])
       self$arg_names[which(self$function_names == name)][[1]]
     },
     check_fct = function(name) {

@@ -224,21 +224,21 @@ f <- function() {
 }
 test_action_error(
   f,
-  "vector(\"integer\", 2L)\nFound wrong named argument for: vector"
+  "vector(\"integer\", 2L)\nUnknown argument 'mod' for vector. Did you mean 'mode'?"
 )
 f <- function() {
   vector(mode = "integer", lengt = 2L)
 }
 test_action_error(
   f,
-  "vector(\"integer\", 2L)\nFound wrong named argument for: vector"
+  "vector(\"integer\", 2L)\nUnknown argument 'lengt' for vector. Did you mean 'length'?"
 )
 f <- function() {
   vector(mde = "integer", lengt = 2L)
 }
 test_action_error(
   f,
-  "vector(\"integer\", 2L)\nFound wrong named argument for: vector"
+  "vector(\"integer\", 2L)\nUnknown argument 'mde' for vector. Did you mean 'mode'?"
 )
 
 f <- function() {
@@ -246,49 +246,49 @@ f <- function() {
 }
 test_action_error(
   f,
-  "matrix(3.0, 2.0, 2.0)\nFound wrong named argument for: matrix"
+  "matrix(3.0, 2.0, 2.0)\nUnknown argument 'dat' for matrix. Did you mean 'data'?"
 )
 f <- function() {
   matrix(data = 3, now = 2, ncol = 2)
 }
 test_action_error(
   f,
-  "matrix(3.0, 2.0, 2.0)\nFound wrong named argument for: matrix"
+  "matrix(3.0, 2.0, 2.0)\nUnknown argument 'now' for matrix. Did you mean 'nrow'?"
 )
 f <- function() {
   matrix(dta = 3, nrw = 2, ncol = 2)
 }
 test_action_error(
   f,
-  "matrix(3.0, 2.0, 2.0)\nFound wrong named argument for: matrix"
+  "matrix(3.0, 2.0, 2.0)\nUnknown argument 'dta' for matrix. Did you mean 'data'?"
 )
 f <- function() {
   matrix(data = 3, nrow = 2, ncl = 2)
 }
 test_action_error(
   f,
-  "matrix(3.0, 2.0, 2.0)\nFound wrong named argument for: matrix"
+  "matrix(3.0, 2.0, 2.0)\nUnknown argument 'ncl' for matrix. Did you mean 'ncol'?"
 )
 f <- function() {
   matrix(dta = 3, nrow = 2, ncl = 2)
 }
 test_action_error(
   f,
-  "matrix(3.0, 2.0, 2.0)\nFound wrong named argument for: matrix"
+  "matrix(3.0, 2.0, 2.0)\nUnknown argument 'dta' for matrix. Did you mean 'data'?"
 )
 f <- function() {
   matrix(data = 3, now = 2, ncl = 2)
 }
 test_action_error(
   f,
-  "matrix(3.0, 2.0, 2.0)\nFound wrong named argument for: matrix"
+  "matrix(3.0, 2.0, 2.0)\nUnknown argument 'now' for matrix. Did you mean 'nrow'?"
 )
 f <- function() {
   matrix(daa = 3, now = 2, ncl = 2)
 }
 test_action_error(
   f,
-  "matrix(3.0, 2.0, 2.0)\nFound wrong named argument for: matrix"
+  "matrix(3.0, 2.0, 2.0)\nUnknown argument 'daa' for matrix. Did you mean 'data'?"
 )
 
 # --- break/next only inside a loop -----------------------------------------

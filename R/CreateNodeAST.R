@@ -147,6 +147,7 @@ create_ast <- function(code, context, env, function_registry) {
     fn$args <- lapply(code[-1], function(x) {
       process(x, operator, env, function_registry)
     })
+    fn$call_arg_names <- names(code)[-1]
     fn$context <- context
     return(fn)
   } else if (length(code) == 3) {
@@ -169,6 +170,7 @@ create_ast <- function(code, context, env, function_registry) {
     bn$left_node <- code[[2]] |> process(operator, env, function_registry)
     bn$context <- context
     bn$is_infix <- operator %in% infix_ops
+    bn$call_arg_names <- names(code)[-1]
     if (operator == "$" && inherits(bn$right_node, "variable_node")) {
       bn$right_node$field_name <- TRUE
     }
@@ -178,6 +180,7 @@ create_ast <- function(code, context, env, function_registry) {
     un$operator <- operator
     un$obj <- code[[2]] |> process(operator, env, function_registry)
     un$context <- context
+    un$call_arg_names <- names(code)[-1]
     return(un)
   } else if (length(code) == 1) {
     nn <- nullary_node$new()

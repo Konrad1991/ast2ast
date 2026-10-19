@@ -512,25 +512,6 @@ check_operator <- function(node, function_registry) {
     fct %in% function_registry$permitted_fcts()
   }
 
-  check_named_args <- function(node, function_registry) {
-    fct <- node$operator
-    expected_args <- function_registry$expected_arg_names(fct)
-    if (inherits(node, "function_node")) {
-      if (!all(is.na(expected_args))) {
-        args_names <- names(node$args)
-        args_names <- args_names[args_names != ""]
-        for (i in seq_along(args_names)) {
-          if (!(args_names[[i]] %in% expected_args)) {
-            return(FALSE)
-          }
-        }
-      } else {
-        return(TRUE)
-      }
-    }
-    return(TRUE)
-  }
-
   check_lhs_operation <- function(node, function_registry) {
     if (inherits(node, "binary_node")) {
       if (node$operator == "<-" || node$operator == "=") {
@@ -556,17 +537,16 @@ check_operator <- function(node, function_registry) {
     return()
   }
 
-  arity <- check_arity(node, function_registry)
-  if (!isTRUE(arity)) {
-    node$error <- arity
+  # before the arity check: log(x, base = 2) is an unknown name, not a wrong count
+  named <- match_named_args(node, function_registry)
+  if (!isTRUE(named)) {
+    node$error <- paste0(named, signature_hint(node$operator, function_registry))
     return()
   }
 
-  if (!check_named_args(node, function_registry)) {
-    node$error <- paste0(
-      "Found wrong named argument for: ", node$operator,
-      signature_hint(node$operator, function_registry)
-    )
+  arity <- check_arity(node, function_registry)
+  if (!isTRUE(arity)) {
+    node$error <- arity
     return()
   }
 
@@ -716,26 +696,26 @@ action_check_break_next <- function(node, info_env) {
 
 # Sort arguments
 # ========================================================================
+match_named_args <- function(node, function_registry) {
+  if (!inherits(node, c("unary_node", "binary_node", "function_node"))) return(TRUE)
+  order <- match_call_args(node$operator, node$call_arg_names,
+                           function_registry$expected_arg_names(node$operator))
+  if (is.character(order)) order else TRUE
+}
+
+# errors were already reported by action_error (match_named_args)
 action_sort_args <- function(node, function_registry) {
-  if (!inherits(node, "function_node")) {
-    return()
-  }
-  fct <- node$operator
-  expected_args <- function_registry$expected_arg_names(fct)
-  if (!all(is.na(expected_args))) {
-    args_names <- names(node$args)
-    unnamed_args <- which(!(args_names %in% expected_args))
-    counter <- 1
-    args <- list()
-    for (i in seq_along(expected_args)) {
-      idx <- which(expected_args[[i]] == args_names)
-      if (length(idx) == 1) {
-        args[[i]] <- node$args[[idx]]
-      } else if (length(idx) == 0) {
-        args[[i]] <- node$args[[unnamed_args[counter]]]
-        counter <- counter + 1
-      }
-    }
+  if (!inherits(node, c("unary_node", "binary_node", "function_node"))) return()
+  order <- match_call_args(node$operator, node$call_arg_names,
+                           function_registry$expected_arg_names(node$operator))
+  node$call_arg_names <- NULL
+  if (is.character(order) || identical(order, seq_along(order))) return()
+  if (inherits(node, "binary_node")) {
+    left <- node$left_node
+    node$left_node <- node$right_node
+    node$right_node <- left
+  } else if (inherits(node, "function_node")) {
+    args <- node$args[order]
     # NOTE: the loop is a requirement.
     # Thereby, the references (especially the args list in function nodes)
     # in "variables" are still valid otherwise the list is empty
