@@ -50,6 +50,8 @@ changes in ast2ast version 1.1
   derives the sparsity pattern at translation time;
   `colouring = "runtime"` records it at every call from one reverse-mode run
   of `f`.
+- `c(Inf, NaN, NA)` returned `NA NA NA` (the vector was inferred as logical);
+  `Inf`/`NaN` in `c()` now make it double. `-Inf` is accepted inside `c()`.
 - RcppThread is a new dependency (Imports and LinkingTo).
 - Borrowed arguments (`borrow_vec`, `borrow_mat`, `borrow_array`) can now be
   combined with forward-mode differentiation for inner functions and for

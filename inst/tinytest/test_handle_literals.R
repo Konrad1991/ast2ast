@@ -26,8 +26,8 @@ expect_equal(ast2ast:::t_literal("print", FALSE, "", "logical", TRUE, "etr::Doub
 expect_equal(ast2ast:::t_literal("<-", F, "", "logical", TRUE, "etr::Double"), "etr::Logical(false)")
 expect_equal(ast2ast:::t_literal("print", F, "", "logical", TRUE, "etr::Double"), "etr::Logical(false)")
 
-expect_equal(ast2ast:::t_literal("<-", NA, "", "NA", TRUE, "etr::Double"), "ETR_REAL::NA()")
-expect_equal(ast2ast:::t_literal("print", NA, "", "NA", TRUE, "etr::Double"), "ETR_REAL::NA()")
+expect_equal(ast2ast:::t_literal("<-", NA, "", "NA", TRUE, "etr::Double"), "etr::Logical::NA()")
+expect_equal(ast2ast:::t_literal("print", NA, "", "NA", TRUE, "etr::Double"), "etr::Logical::NA()")
 expect_equal(ast2ast:::t_literal("<-", NaN, "", "NaN", TRUE, "etr::Double"), "ETR_REAL::NaN()")
 expect_equal(ast2ast:::t_literal("print", NaN, "", "NaN", TRUE, "etr::Double"), "ETR_REAL::NaN()")
 expect_equal(ast2ast:::t_literal("<-", Inf, "", "Inf", TRUE, "etr::Double"), "ETR_REAL::Inf()")

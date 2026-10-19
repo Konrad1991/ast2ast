@@ -650,7 +650,8 @@ infer_unary_math <- function(node, vars_list, info_env, function_registry) {
 }
 infer_unary_minus <- function(node, vars_list, info_env, function_registry) {
   inner_type <- infer(node$obj, vars_list, info_env, function_registry)
-  err <- check_operand_type(inner_type, node)
+  # -Inf inside c(); a bare scalar Inf is still rejected by type_list_checks
+  err <- check_operand_type(inner_type, node, allow_NA_NaN_Inf = TRUE)
   if (!is.null(err)) return(err)
   base_type <- inner_type$get_base_type()
   if (base_type == "logical") base_type <- "int"
@@ -1003,7 +1004,7 @@ function_registry_global$add(
     if (any(types_of_args %in% c("int", "integer"))) {
       common_type <- "integer"
     }
-    if (any(types_of_args %in% c("double", "numeric"))) {
+    if (any(types_of_args %in% c("double", "numeric", "Inf", "NaN"))) {
       common_type <- "double"
     }
     t <- make_inferred_type("vector", common_type, info_env$r_fct, info_env$real_type)
