@@ -6,6 +6,26 @@ process <- function(code, context, env, function_registry) {
   return(var)
 }
 
+# NOTE: R keeps srcrefs only inside `{`; unbraced bodies like if (c) stop() take the line of their parent
+inherit_location <- function(node, location) {
+  if (is.null(location)) return()
+  blocks <- list()
+  if (inherits(node, "if_node")) {
+    blocks <- c(list(node$true_node, node$false_node), lapply(node$else_if_nodes, function(n) n$true_node))
+  } else if (inherits(node, c("for_node", "while_node", "repeat_node"))) {
+    blocks <- list(node$block)
+  }
+  for (b in blocks) {
+    if (!inherits(b, "block_node")) next
+    for (stmt in b$block) {
+      if ("location" %in% names(stmt) && is.null(stmt$location)) {
+        stmt$location <- location
+        inherit_location(stmt, location)
+      }
+    }
+  }
+}
+
 create_ast <- function(code, context, env, function_registry) {
   old_code <- code
   code <- as.list(code)
@@ -27,6 +47,7 @@ create_ast <- function(code, context, env, function_registry) {
       for (i in seq_along(b_node$block)) {
         if ("location" %in% names(b_node$block[[i]])) {
           b_node$block[[i]]$location <- srcref_location(refs[[i + 1L]])
+          inherit_location(b_node$block[[i]], b_node$block[[i]]$location)
         }
       }
     }
