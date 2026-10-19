@@ -1899,15 +1899,22 @@ inline ReverseDouble ReverseDouble::operator-(const ReverseDouble& r) const {
 }
 
 // modulo: R's x %% y = x - floor(x/y) * y (result sign follows the divisor)
+// NOTE: integer only; the double floor() version was ~18% of spectral_norm.R
+inline int floor_mod(int x, int y) {
+  const int r = x % y;
+  return (r != 0 && ((r < 0) != (y < 0))) ? r + y : r;
+}
+inline int floor_div(int x, int y) {
+  const int q = x / y;
+  return (x % y != 0 && ((x < 0) != (y < 0))) ? q - 1 : q;
+}
 inline Integer Logical::operator%(const Logical& other) const {
   if (is_na || other.is_na || other.val == 0) return Integer::NA();
-  const double x = static_cast<double>(val), y = static_cast<double>(other.val);
-  return Integer(static_cast<int>(x - std::floor(x / y) * y));
+  return Integer(floor_mod(val, other.val));
 }
 inline Integer Integer::operator%(const Integer& other) const {
   if (is_na || other.is_na || other.val == 0) return Integer::NA();
-  const double x = static_cast<double>(val), y = static_cast<double>(other.val);
-  return Integer(static_cast<int>(x - std::floor(x / y) * y));
+  return Integer(floor_mod(val, other.val));
 }
 inline Double Double::operator%(const Double& other) const {
   if (is_na || other.is_na) return Double::NA();
@@ -1932,13 +1939,11 @@ inline ReverseDouble ReverseDouble::operator%(const ReverseDouble& r) const {
 // derivative is 0 (Dual dot = 0, ReverseDouble emitted as a tape constant).
 inline Integer Logical::idiv(const Logical& other) const {
   if (is_na || other.is_na || other.val == 0) return Integer::NA();
-  const double x = static_cast<double>(val), y = static_cast<double>(other.val);
-  return Integer(static_cast<int>(std::floor(x / y)));
+  return Integer(floor_div(val, other.val));
 }
 inline Integer Integer::idiv(const Integer& other) const {
   if (is_na || other.is_na || other.val == 0) return Integer::NA();
-  const double x = static_cast<double>(val), y = static_cast<double>(other.val);
-  return Integer(static_cast<int>(std::floor(x / y)));
+  return Integer(floor_div(val, other.val));
 }
 inline Double Double::idiv(const Double& other) const {
   if (is_na || other.is_na) return Double::NA();

@@ -53,3 +53,13 @@ expect_warning(res <- scpp(c(max_int, 1L)), "integer overflow - use sum\\(as.num
 expect_identical(res, NA_integer_)
 expect_identical(scpp(c(max_int, 1L, -2L)), max_int - 1L)
 expect_identical(scpp(c(1L, NA_integer_)), NA_integer_)
+
+# integer %/% and %% follow R's floor semantics for every sign combination
+d <- function(x, y) {
+  argtypes(x |> type(vec(int)), y |> type(vec(int)))
+  return(c(x %/% y, x %% y))
+}
+dcpp <- ast2ast::translate(d)
+x <- c(7L, -7L, 7L, -7L, 6L, -6L, 0L, 1L, max_int, -max_int, NA_integer_, 5L)
+y <- c(2L, 2L, -2L, -2L, 3L, -3L, 5L, 7L, 2L, 3L, 2L, 0L)
+expect_identical(dcpp(x, y), c(x %/% y, x %% y))
