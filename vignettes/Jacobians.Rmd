@@ -1,0 +1,119 @@
+---
+title: "Jacobians: Dense, Coloured, Sparse and Banded"
+author: "Konrad Kraemer"
+output: html_document
+
+vignette: >
+  %\VignetteIndexEntry{Jacobians: Dense, Coloured, Sparse and Banded}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+## Overview
+
+| Function | Result | Colouring | Derivative mode |
+| --- | --- | --- | --- |
+| `jacobian` | dense matrix | optional | forward or reverse |
+| `jacobian_sparse` | CSC sparse matrix | required | forward |
+| `jacobian_banded` | band matrix | required | forward |
+
+All three take an inner function `f` mapping a double vector to a double
+vector, the point `x` and an optional `data` argument passed to `f` unchanged.
+
+## Example function
+
+A 1-D diffusion term: every output depends only on its neighbours, so the
+Jacobian is tridiagonal.
+
+```{r}
+f <- function(x) {
+  argtypes(x |> type(vec(double)))
+  diffusion <- function(y) {
+    argtypes(y |> type(vec(double)))
+    returntype(vec(double))
+    n <- length(y)
+    out <- numeric(n)
+    out[[1L]] <- y[[2L]] - y[[1L]]
+    for (i in 2L:(n - 1L)) {
+      out[[i]] <- y[[i - 1L]] - 2 * y[[i]] * y[[i]] + y[[i + 1L]]
+    }
+    out[[n]] <- y[[n - 1L]] - y[[n]]
+    return(out)
+  }
+  return(jacobian(diffusion, x))
+}
+fcpp <- ast2ast::translate(f, derivative = "forward")
+fcpp(c(0.3, 0.7, 1.1, 0.2, 0.9, 1.4))
+```
+
+## Dense
+
+`jacobian(f, x)` returns the `m`-by-`n` matrix. In forward mode it needs one
+sweep per column, in reverse mode one sweep per row.
+
+## Colouring
+
+Columns that share no row can be computed in one forward sweep. For the
+tridiagonal example three sweeps are enough, independent of `length(x)`.
+
+- `colouring = "static", n = 6L`: the sparsity pattern is derived at
+  translation time for `length(x) == 6`. `n` has to be an integer literal.
+  If the pattern can not be derived, `jacobian` warns and falls back to one
+  sweep per column.
+- `colouring = "runtime"`: the pattern is recorded at every call from one
+  reverse-mode run of `f`. Works for any `length(x)`; `f` has to be a named
+  function.
+
+```{r}
+return(jacobian(diffusion, x, colouring = "static", n = 6L))
+return(jacobian(diffusion, x, colouring = "runtime"))
+```
+
+Colouring requires `derivative = "forward"`.
+
+## Sparse and banded
+
+`jacobian_sparse` and `jacobian_banded` compute and store only the entries of
+the sparsity pattern. Thus, `colouring` is required:
+
+```{r}
+J <- jacobian_sparse(diffusion, x, colouring = "static", n = 6L)
+J <- jacobian_banded(diffusion, x, colouring = "runtime")
+```
+
+Without it the translation fails:
+
+```
+jacobian_sparse needs colouring = "static", n = <integer literal> or colouring = "runtime"
+```
+
+### Layouts
+
+Both are stored as in SUNDIALS, so they can be handed to its solvers directly.
+
+- `jacobian_sparse`: CSC, 0-based (`SUNMatrix_Sparse`).
+  Fields `J$m`, `J$n`, `J$indexptrs`, `J$indexvals`, `J$data`.
+- `jacobian_banded`: square, LAPACK band layout (`SUNMatrix_Band`).
+  Fields `J$n`, `J$mu`, `J$ml`, `J$ldim`, `J$data`;
+  `A(i, j)` is at `data[j * ldim + mu + i - j]` (0-based),
+  `ldim = mu + ml + 1`.
+
+For the tridiagonal 6 x 6 example: `mu = ml = 1`, `ldim = 3`,
+`length(J$data) = 18`.
+
+### Returned to R
+
+Both are returned to R as a `Matrix::dgCMatrix` (package Matrix has to be
+installed):
+
+```{r}
+# f from above with return(jacobian_sparse(diffusion, x, colouring = "runtime"))
+J <- fcpp(c(0.3, 0.7, 1.1, 0.2, 0.9, 1.4))
+class(J)
+# [1] "dgCMatrix"
+as.matrix(J)
+```
