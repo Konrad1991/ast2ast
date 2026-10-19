@@ -538,7 +538,9 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   attributes(e)[["condition"]]$message,
-  "a <- b + 1.0\nFound uninitialized variable: b"
+  paste0("a <- b + 1.0\nFound uninitialized variable: b\n",
+         "b is never assigned inside the function. Variables from the enclosing environment ",
+         "are not captured; pass b as an argument.")
 )
 
 # --- print --------------------------------------------------------------
@@ -1113,7 +1115,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   attributes(e)[["condition"]]$message,
-  "\ntype(a, invalid)\nFound unsupported base type: invalid"
+  "type(a, invalid)\nFound unsupported base type: invalid"
 )
 f <- function() {
   a |> type(vector(invalid))
@@ -1121,7 +1123,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   attributes(e)[["condition"]]$message,
-  "\ntype(a, vector(invalid))\nFound unsupported base type: invalid")
+  "type(a, vector(invalid))\nFound unsupported base type: invalid")
 
 f <- function() {
   a |> type(invalid(double))
@@ -1129,7 +1131,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   attributes(e)[["condition"]]$message,
-  "\ntype(a, invalid(double))\nFound unsupported data structure: invalid"
+  "type(a, invalid(double))\nFound unsupported data structure: invalid"
 )
 
 f <- function() {
@@ -1138,7 +1140,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   attributes(e)[["condition"]]$message,
-  "\ntype(a, invalid(invalid2))\nFound unsupported base type: invalid2\nFound unsupported data structure: invalid"
+  "type(a, invalid(invalid2))\nFound unsupported base type: invalid2\nFound unsupported data structure: invalid"
 )
 
 # --- literals ---------------------------------------------------------------

@@ -352,8 +352,9 @@ check_assignment <- function(node, vars_types_list, info_env) {
       line <- try(node$stringify(), silent = TRUE)
       if (inherits(line, "try-error")) line <- ""
       warning(sprintf(
-        "%s\nTypes do not match perfectly: On the left side: %s(%s) and on the right side: %s(%s)",
-        line, type$get_data_struct(), type$get_base_type(), right_node_type$get_data_struct(), right_node_type$get_base_type()
+        "%s\nVariable %s has the fixed type %s(%s), but a %s(%s) is assigned to it",
+        line, find_var_lhs(node), type$get_data_struct(), type$get_base_type(),
+        right_node_type$get_data_struct(), right_node_type$get_base_type()
       ))
     }
   }
@@ -558,7 +559,7 @@ name_to_index_node <- function(idx_node, names, layout, where, node) {
                    value_name, where, layout$name, closest, node$stringify()))
   }
   new_idx <- literal_node$new(as.integer(idx))
-  for (field in c("context", "real_type", "pre_translate_line", "location", "wrap")) {
+  for (field in c("context", "real_type", "pre_translate_line", "location", "source_line", "wrap")) {
     new_idx[[field]] <- idx_node[[field]]
   }
   new_idx

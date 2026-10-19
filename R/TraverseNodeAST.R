@@ -794,7 +794,7 @@ action_snapshot_lines <- function(node, debug = TRUE, function_name = NULL) {
       # caused the error instead of pointing at the wrong branch.
       stmt$pre_translate_line <- stmt$string_summary_line()
     } else if (!inherits(stmt, c("repeat_node", "fn_node"))) {
-      stmt$pre_translate_line <- stmt$stringify()
+      stmt$pre_translate_line <- if (is.null(stmt$source_line)) stmt$stringify() else stmt$source_line
     }
     if (!is.null(stmt$location) && !is.null(stmt$pre_translate_line)) {
       fn <- if (is.null(function_name)) "" else sprintf(" (%s)", function_name)

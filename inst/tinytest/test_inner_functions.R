@@ -112,7 +112,7 @@ f <- function(x) {
 }
 expect_error(
   ast2ast::translate(f, getsource = TRUE),
-  pattern = "In inner function h: Could not run checks on AST due to: \nbreak;\nbreak used outside of a loop"
+  pattern = "In inner function h: Could not run checks on AST due to: break;\nbreak used outside of a loop"
 )
 
 # break inside a loop that itself lives inside the inner fn() body is fine

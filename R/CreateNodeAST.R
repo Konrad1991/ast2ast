@@ -41,6 +41,12 @@ create_ast <- function(code, context, env, function_registry) {
     b_node$block <- lapply(code[-1], function(line) {
       process(line, operator, env, function_registry)
     })
+    # the user's code for runtime error labels; stringify() shows normalised code (x[3.0], true)
+    for (i in seq_along(b_node$block)) {
+      if ("source_line" %in% names(b_node$block[[i]])) {
+        b_node$block[[i]]$source_line <- paste(trimws(deparse(code[[i + 1L]], width.cutoff = 500L)), collapse = " ")
+      }
+    }
     refs <- attr(old_code, "srcref")
     if (length(refs) == length(code)) {
       # NOTE: stored on the node, not by index; later passes insert statements into the block
@@ -209,7 +215,7 @@ update_function_registry <- function(ast, function_registry, namespace = "f_impl
     stop("error: Could not stringify the AST")
   }
   if (err_found(line)) {
-    stop(paste0("\n", line))
+    stop(line)
   }
 }
 
@@ -231,7 +237,7 @@ run_checks <- function(ast, r_fct, function_registry, known_types = list()) {
     stop("error: Could not stringify the AST")
   }
   if (err_found(line)) {
-    stop(paste0("\n", line))
+    stop(line)
   }
 }
 
@@ -302,7 +308,7 @@ infer_types <- function(ast, f, f_args, r_fct, real_type, function_registry, kno
   # here: the NA/NaN/Inf base-type check needs later passes to have run first.
   unresolved <- names(env$vars_list)[vapply(env$vars_list, inherits, logical(1), "unknown_type")]
   if (length(unresolved)) {
-    stop(sprintf("Found uninitialized variable: %s", unresolved[[1L]]))
+    stop(uninitialized_msg(unresolved[[1L]]))
   }
   return(env$vars_list)
 }

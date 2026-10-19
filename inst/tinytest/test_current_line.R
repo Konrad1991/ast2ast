@@ -60,3 +60,13 @@ expect_equal(
   attributes(e)$condition[[1]],
   "In 'if (a[[1L]] < 0.0) {...} else if (b[[1L]] > 0.0) {...} else {...}': Error: out of boundaries"
 )
+
+# plain statements show the user's code, not the normalised one (#52)
+f <- function(x) {
+  argtypes(x |> type(vec(double)))
+  y <- x
+  y[3] <- 5
+  return(y)
+}
+e <- try(ast2ast::translate(f)(c(1, 2)), silent = TRUE)
+expect_equal(attributes(e)$condition[[1]], "In 'y[3] <- 5': Error: out of boundaries")

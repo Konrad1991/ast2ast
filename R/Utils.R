@@ -135,7 +135,7 @@ infix_ops <- c(
   "+","-","*","/","^","%%", "%/%",
   "==","!=","<","<=",">",">=",
   "&","&&","|","||","!","<-","=",
-  "[","[[", ":", "$"
+  "[","[[", ":", "$", "%in%"
 )
 
 not_infix_in_cpp <- c(
@@ -439,7 +439,7 @@ resolve_type_collection <- function(code, env) {
     if (!is.null(env$new_type) && identical(env$new_type$name, elem)) {
       add_error(env, sprintf("Self-referencing types are not supported: %s cannot reference itself in its own slot definition", elem))
     } else {
-      add_error(env, sprintf("Found unsupported base type: %s", elem))
+      add_error(env, sprintf("Found unsupported base type: %s%s", elem, did_you_mean(elem, ops)))
     }
   }
   if (elem == "int") {
@@ -448,10 +448,17 @@ resolve_type_collection <- function(code, env) {
   elem
 }
 
+did_you_mean <- function(elem, candidates) {
+  if (length(candidates) == 0L) return("")
+  distance <- utils::adist(elem, candidates)[1L, ]
+  if (min(distance) > 2L) return("")
+  sprintf(". Did you mean '%s'?", candidates[which.min(distance)])
+}
+
 resolve_base_type <- function(code, env) {
   elem <- deparse(code)
   if (!(elem %in% permitted_base_types())) {
-    add_error(env, sprintf("Found unsupported base type: %s", elem))
+    add_error(env, sprintf("Found unsupported base type: %s%s", elem, did_you_mean(elem, permitted_base_types())))
   }
   if (elem == "int") {
     return("integer")

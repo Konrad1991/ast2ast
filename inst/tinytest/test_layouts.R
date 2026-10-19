@@ -181,9 +181,8 @@ f <- function(m) {
   argtypes(m |> type(named_mat(State)))
   return(m)
 }
-output <- capture.output(e <- try(ast2ast::translate(f, types_f = types, getsource = TRUE), silent = TRUE))
-expect_true(inherits(e, "try-error"))
-expect_true(any(grepl("named_mat(State): State is not defined with new_mat_layout()", output, fixed = TRUE)))
+expect_error(ast2ast::translate(f, types_f = types, getsource = TRUE),
+             pattern = "named_mat(State): State is not defined with new_mat_layout()", fixed = TRUE)
 
 # invalid definitions
 g <- function(y) {

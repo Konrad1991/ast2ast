@@ -440,16 +440,19 @@ parse_types <- function(block, fct_input, r_fct, real_type, known_types = list()
 # =====================================================================
 parse_types_with_check <- function(args, fct_input, r_fct, real_type, known_types = list()) {
   l <- parse_types(args, fct_input, r_fct, real_type, known_types)
-  wrong_input <- FALSE
-  for (i in seq_len(length(l))) {
-    e <- l[[i]]$error
-    if (!is.null(e) && e != "") {
-      print(sprintf("%s, for variable: %s", l[[i]]$error, l[[i]]$get_name()))
-      wrong_input <- TRUE
+  stop_on_type_errors(l)
+  l
+}
+
+stop_on_type_errors <- function(l) {
+  msgs <- character(0)
+  for (t in l) {
+    e <- t$error
+    if (!is.null(e) && any(e != "")) {
+      msgs <- c(msgs, sprintf("%s, for variable: %s", paste(e[e != ""], collapse = "; "), t$get_name()))
     }
   }
-  if (wrong_input) stop("Types for arguments are invalid")
-  l
+  if (length(msgs)) stop(paste(c("Types for arguments are invalid:", msgs), collapse = "\n"), call. = FALSE)
 }
 
 parse_argtypes <- function(obj, fct_input, r_fct, real_type, known_types = list()) {
