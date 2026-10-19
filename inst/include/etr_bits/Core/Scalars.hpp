@@ -1385,9 +1385,7 @@ struct Double {
 };
 
 struct Dual {
-  double val, dot;
-  bool is_na;
-  bool is_na_dot;
+  double val, dot; // NA is na_real(), in val and in dot independently
   inline Dual();
   inline Dual(double v, double d);
   inline Dual(Logical v);
@@ -1436,11 +1434,7 @@ struct Dual {
   inline Logical operator!() const;
   inline friend std::ostream& operator<<(std::ostream&, const Dual&);
   inline static Dual NA() {
-    Dual x(std::numeric_limits<double>::quiet_NaN(),
-           std::numeric_limits<double>::quiet_NaN());
-    x.is_na = true;
-    x.is_na_dot = true;
-    return x;
+    return Dual(na_real(), na_real());
   }
   inline static Dual NaN() {
     return Dual (std::numeric_limits<double>::quiet_NaN(),
@@ -1451,52 +1445,40 @@ struct Dual {
                 std::numeric_limits<double>::infinity());
   }
   inline bool isNA() const noexcept {
-    return is_na;
+    return is_na_real(val);
   }
   inline bool isNADot() const noexcept {
-    return is_na_dot;
+    return is_na_real(dot);
   }
   inline bool isNaN() const noexcept {
-    return !is_na && std::isnan(val);
+    return std::isnan(val) && !is_na_real(val);
   }
   inline bool isNaNDot() const noexcept {
-    return !is_na_dot && std::isnan(dot);
+    return std::isnan(dot) && !is_na_real(dot);
   }
   inline bool isFinite() const noexcept {
-    return !is_na && std::isfinite(val);
+    return std::isfinite(val);
   }
   inline bool isInfinite() const noexcept {
-    return !is_na && !isNaN() && !std::isfinite(val);
+    return std::isinf(val);
   }
   inline bool isFiniteDot() const noexcept {
-    return !is_na_dot && std::isfinite(dot);
+    return std::isfinite(dot);
   }
   inline bool isInfiniteDot() const noexcept {
-    return !is_na_dot && !isNaNDot() && !std::isfinite(dot);
+    return std::isinf(dot);
   }
   // condition context (if/while) tests the value part only; matches R
   explicit inline operator bool() const {
-    ass<"missing value where TRUE/FALSE needed">(!is_na);
-    ass<"argument is not interpretable as logical">(!std::isnan(val));
+    if (std::isnan(val)) [[unlikely]] {
+      ass<"missing value where TRUE/FALSE needed">(!is_na_real(val));
+      ass<"argument is not interpretable as logical">(false);
+    }
     return val != 0.0;
   }
   template<typename T> requires IsArray<Decayed<T>> inline Dual& operator=(const T& arr) {
-    using  inner = typename ExtractDataType<T>::value_type;
     ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
-    const auto arr_val = get_scalar_val(arr.get(0));
-    if constexpr(IS<inner, Dual>) {
-      val = arr_val.val;
-      is_na = arr_val.is_na;
-      dot = arr_val.dot;
-      is_na_dot = arr_val.is_na_dot;
-    } else if constexpr(IS<inner, ReverseDouble>) {
-      val = arr_val.get_val_from_tape();
-      is_na = arr_val.is_na;
-      dot = 0;
-      is_na_dot = false;
-    } else {
-      *this = Dual(arr_val);
-    }
+    *this = Dual(get_scalar_val(arr.get(0)));
     return *this;
   }
   // scalar-ref RHS: DoubleRef -> Double -> Dual would be two user conversions
@@ -1662,7 +1644,7 @@ inline Logical::Logical(int v) : val(v == NA_INT ? NA_INT : (v != 0)) {}
 inline Logical::Logical(double v) : val(std::isnan(v) ? NA_INT : (v != 0.0)) {}
 inline Logical::Logical(Integer v) : Logical(v.val) {}
 inline Logical::Logical(Double v) : Logical(v.val) {}
-inline Logical::Logical(Dual v) : val((v.is_na || std::isnan(v.val)) ? NA_INT : (v.val != 0.0)) {}
+inline Logical::Logical(Dual v) : Logical(v.val) {}
 inline Logical::Logical(ReverseDouble v)
     : val((v.is_na || std::isnan(v.get_val_from_tape())) ? NA_INT : (v.get_val_from_tape() != 0.0)) {}
 
@@ -1670,24 +1652,24 @@ inline Integer::Integer() : val(0) {}
 inline Integer::Integer(int v) : val(v) {}
 inline Integer::Integer(Logical v) : val(v.val) {}
 inline Integer::Integer(Double v) : val(double_to_int_na(v.val)) {}
-inline Integer::Integer(Dual v) : val(v.is_na ? NA_INT : double_to_int_na(v.val)) {}
+inline Integer::Integer(Dual v) : val(double_to_int_na(v.val)) {}
 inline Integer::Integer(ReverseDouble v) : val(v.is_na ? NA_INT : double_to_int_na(v.get_val_from_tape())) {}
 
 inline Double::Double() : val(0.0) {}
 inline Double::Double(double v) : val(v) {}
 inline Double::Double(Logical v) : val(v.val == NA_INT ? na_real() : static_cast<double>(v.val)) {}
 inline Double::Double(Integer v) : val(v.val == NA_INT ? na_real() : static_cast<double>(v.val)) {}
-inline Double::Double(Dual v) : val(v.is_na ? na_real() : v.val) {}
+inline Double::Double(Dual v) : val(v.val) {}
 inline Double::Double(ReverseDouble v) : val(v.is_na ? na_real() : v.get_val_from_tape()) {}
 
-inline Dual::Dual() : val(0.0), dot(0.0), is_na(false), is_na_dot(false) {}
-inline Dual::Dual(double v, double d) : val(v), dot(d), is_na(false), is_na_dot(false) {}
-inline Dual::Dual(Logical v) : val(Double(v).val), dot(0.0), is_na(v.isNA()), is_na_dot(false) {}
-inline Dual::Dual(Integer v) : val(Double(v).val), dot(0.0), is_na(v.isNA()), is_na_dot(false) {}
-inline Dual::Dual(Double v) : val(v.val), dot(0.0), is_na(v.isNA()), is_na_dot(false) {}
-inline Dual::Dual(ReverseDouble v) : val(v.get_val_from_tape()), dot(0.0), is_na(v.is_na), is_na_dot(false) {}
+inline Dual::Dual() : val(0.0), dot(0.0) {}
+inline Dual::Dual(double v, double d) : val(v), dot(d) {}
+inline Dual::Dual(Logical v) : val(Double(v).val), dot(0.0) {}
+inline Dual::Dual(Integer v) : val(Double(v).val), dot(0.0) {}
+inline Dual::Dual(Double v) : val(v.val), dot(0.0) {}
+inline Dual::Dual(ReverseDouble v) : val(Double(v).val), dot(0.0) {}
 template<typename T> requires std::is_arithmetic_v<T>
-inline Dual::Dual(T v) : val(static_cast<double>(v)), dot(0.0), is_na(std::isnan(v)), is_na_dot(false) {}
+inline Dual::Dual(T v) : val(static_cast<double>(v)), dot(0.0) {}
 
 inline ReverseDouble::ReverseDouble() { id = TAPE_INTERN.push_const(0.0, 0); }
 inline ReverseDouble::ReverseDouble(double v) { id = TAPE_INTERN.push_const(v, 0); }
@@ -1707,7 +1689,7 @@ inline ReverseDouble::ReverseDouble(Double v) {
   id = TAPE_INTERN.push_const(v.val, is_na);
 }
 inline ReverseDouble::ReverseDouble(Dual v) {
-  is_na = static_cast<uint8_t>(v.is_na);
+  is_na = static_cast<uint8_t>(v.isNA());
   id = TAPE_INTERN.push_const(v.val, is_na);
 }
 
@@ -1784,35 +1766,26 @@ inline Double& Double::operator/=(const Double& r) {
   val /= r.val;
   return *this;
 }
+// NOTE: a NA/NaN value makes the derivative NA/NaN too (keeps NA in jacobians);
+// one check on the result instead of NA flags on every operand
+inline Dual dual_of(double v, double d) {
+  return std::isnan(v) ? Dual(v, v) : Dual(v, d);
+}
+// non-finite value: derivative undefined (NaN), NA stays NA
+inline Dual dual_nonfinite(double v) {
+  return Dual(v, std::isnan(v) ? v : std::numeric_limits<double>::quiet_NaN());
+}
 inline Dual& Dual::operator+=(const Dual& r) {
-  if (is_na || r.is_na) return *this = Dual::NA();
-  val += r.val;
-  if (is_na_dot || r.is_na_dot) return *this = Dual::NA();
-  dot += r.dot;
-  return *this;
+  return *this = *this + r;
 }
 inline Dual& Dual::operator-=(const Dual& r) {
-  if (is_na || r.is_na) return *this = Dual::NA();
-  val -= r.val;
-  if (is_na_dot || r.is_na_dot) return *this = Dual::NA();
-  dot -= r.dot;
-  return *this;
+  return *this = *this - r;
 }
 inline Dual& Dual::operator*=(const Dual& r) {
-  if (is_na || r.is_na) return *this = Dual::NA();
-  if (is_na_dot || r.is_na_dot) return *this = Dual::NA();
-  const double new_dot = dot * r.val + val * r.dot; // product rule, old val
-  val *= r.val;
-  dot = new_dot;
-  return *this;
+  return *this = *this * r;
 }
 inline Dual& Dual::operator/=(const Dual& r) {
-  if (is_na || r.is_na) return *this = Dual::NA();
-  if (is_na_dot || r.is_na_dot) return *this = Dual::NA();
-  const double new_dot = (dot * r.val - val * r.dot) / (r.val * r.val); // quotient rule, old val
-  val /= r.val;
-  dot = new_dot;
-  return *this;
+  return *this = *this / r;
 }
 inline ReverseDouble& ReverseDouble::operator+=(const ReverseDouble& r) {
   return *this = (*this + r);
@@ -1850,10 +1823,7 @@ inline Double Double::operator+(const Double& other) const {
   return Double(val + other.val);
 }
 inline Dual Dual::operator+(const Dual& other) const {
-  if (is_na || other.is_na) return Dual::NA();
-  const double v = val + other.val;
-  if (is_na_dot || other.is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
-  return Dual(v, dot + other.dot);
+  return dual_of(val + other.val, dot + other.dot);
 }
 inline ReverseDouble ReverseDouble::operator+(const ReverseDouble& r) const {
   return binary_(ROp::Add, r);
@@ -1871,10 +1841,7 @@ inline Double Double::operator-(const Double& other) const {
   return Double(val - other.val);
 }
 inline Dual Dual::operator-(const Dual& other) const {
-  if (is_na || other.is_na) return Dual::NA();
-  const double v = val - other.val;
-  if (is_na_dot || other.is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
-  return Dual(v, dot - other.dot);
+  return dual_of(val - other.val, dot - other.dot);
 }
 inline ReverseDouble ReverseDouble::operator-(const ReverseDouble& r) const {
   return binary_(ROp::Sub, r);
@@ -1902,11 +1869,8 @@ inline Double Double::operator%(const Double& other) const {
   return Double(val - std::floor(val / other.val) * other.val);
 }
 inline Dual Dual::operator%(const Dual& other) const {
-  if (is_na || other.is_na) return Dual::NA();
   const double q = std::floor(val / other.val);
-  const double v = val - q * other.val;
-  if (is_na_dot || other.is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
-  return Dual(v, dot - q * other.dot);
+  return dual_of(val - q * other.val, dot - q * other.dot);
 }
 // floor(x/y) is constant under differentiation, so x %% y = x - q*y composes
 // from the existing Sub/Mul tape ops -- no dedicated ROp needed.
@@ -1930,8 +1894,7 @@ inline Double Double::idiv(const Double& other) const {
   return Double(std::floor(val / other.val));
 }
 inline Dual Dual::idiv(const Dual& other) const {
-  if (is_na || other.is_na) return Dual::NA();
-  return Dual(std::floor(val / other.val), 0.0);
+  return dual_of(std::floor(val / other.val), 0.0);
 }
 inline ReverseDouble ReverseDouble::idiv(const ReverseDouble& r) const {
   if (is_na || r.is_na) return NA();
@@ -1950,10 +1913,7 @@ inline Double Double::operator*(const Double& other) const {
   return Double(val * other.val);
 }
 inline Dual Dual::operator*(const Dual& other) const {
-  if (is_na || other.is_na) return Dual::NA();
-  const double v = val * other.val;
-  if (is_na_dot || other.is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
-  return Dual(v, dot * other.val + val * other.dot);
+  return dual_of(val * other.val, dot * other.val + val * other.dot);
 }
 inline ReverseDouble ReverseDouble::operator*(const ReverseDouble& r) const {
   return binary_(ROp::Mul, r);
@@ -1971,10 +1931,7 @@ inline Double Double::operator/(const Double& other) const {
   return Double(val / other.val);
 }
 inline Dual Dual::operator/(const Dual& other) const {
-  if (is_na || other.is_na) return Dual::NA();
-  const double v = val / other.val;
-  if (is_na_dot || other.is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
-  return Dual(v, (dot * other.val - val * other.dot) / (other.val * other.val));
+  return dual_of(val / other.val, (dot * other.val - val * other.dot) / (other.val * other.val));
 }
 inline ReverseDouble ReverseDouble::operator/(const ReverseDouble& r) const {
   return binary_(ROp::Div, r);
@@ -1991,10 +1948,8 @@ inline Double Double::pow(const Double& other) const {
   return Double(std::pow(val, other.val));
 }
 inline Dual Dual::pow(const Dual& other) const {
-  if (is_na || other.is_na) return Dual::NA();
   const double f = std::pow(val, other.val);
-  if (!std::isfinite(f) || is_na_dot || other.is_na_dot)
-    return Dual(f, std::numeric_limits<double>::quiet_NaN());
+  if (!std::isfinite(f)) return dual_nonfinite(f);
   // base term: d/dt via base = y * x^(y-1) * xdot   (no division by x)
   double d = 0.0;
   if (dot != 0.0)
@@ -2025,7 +1980,7 @@ inline Logical Double::operator==(const Double& other) const {
   return Logical(val == other.val);
 }
 inline Logical Dual::operator==(const Dual& other) const {
-  if ( is_na || other.is_na) return Logical::NA();
+  if (std::isnan(val) || std::isnan(other.val)) return Logical::NA();
   return Logical(val == other.val);
 }
 inline Logical ReverseDouble::operator==(const ReverseDouble& r) const {
@@ -2046,7 +2001,7 @@ inline Logical Double::operator<(const Double& other) const {
   return Logical(val < other.val);
 }
 inline Logical Dual::operator<(const Dual& other) const {
-  if (is_na || other.is_na) return Logical::NA();
+  if (std::isnan(val) || std::isnan(other.val)) return Logical::NA();
   return Logical(val < other.val);
 }
 inline Logical ReverseDouble::operator<(const ReverseDouble& r) const {
@@ -2067,7 +2022,7 @@ inline Logical Double::operator<=(const Double& other) const {
   return Logical(val <= other.val);
 }
 inline Logical Dual::operator<=(const Dual& other) const {
-  if (is_na || other.is_na) return Logical::NA();
+  if (std::isnan(val) || std::isnan(other.val)) return Logical::NA();
   return Logical(val <= other.val);
 }
 inline Logical ReverseDouble::operator<=(const ReverseDouble& r) const {
@@ -2088,7 +2043,7 @@ inline Logical Double::operator>(const Double& other) const {
   return Logical(val > other.val);
 }
 inline Logical Dual::operator>(const Dual& other) const {
-  if (is_na || other.is_na) return Logical::NA();
+  if (std::isnan(val) || std::isnan(other.val)) return Logical::NA();
   return Logical(val > other.val);
 }
 inline Logical ReverseDouble::operator>(const ReverseDouble& r) const {
@@ -2109,7 +2064,7 @@ inline Logical Double::operator>=(const Double& other) const {
   return Logical(val >= other.val);
 }
 inline Logical Dual::operator>=(const Dual& other) const {
-  if (is_na || other.is_na) return Logical::NA();
+  if (std::isnan(val) || std::isnan(other.val)) return Logical::NA();
   return Logical(val >= other.val);
 }
 inline Logical ReverseDouble::operator>=(const ReverseDouble& r) const {
@@ -2130,7 +2085,7 @@ inline Logical Double::operator!=(const Double& other) const {
   return Logical(val != other.val);
 }
 inline Logical Dual::operator!=(const Dual& other) const {
-  if (is_na || other.is_na) return Logical::NA();
+  if (std::isnan(val) || std::isnan(other.val)) return Logical::NA();
   return Logical(val != other.val);
 }
 inline Logical ReverseDouble::operator!=(const ReverseDouble& r) const {
@@ -2160,11 +2115,7 @@ inline Logical Double::operator&&(const Double& other) const {
   return Logical(*this) && Logical(other);
 }
 inline Logical Dual::operator&&(const Dual& other) const {
-  bool l_false = !is_na && !val;
-  bool r_false = !other.is_na && !other.val;
-  if (l_false || r_false) return Logical(false);
-  if (is_na || other.is_na) return Logical::NA();
-  return Logical(true);
+  return Logical(*this) && Logical(other);
 }
 inline Logical ReverseDouble::operator&&(const ReverseDouble& r) const {
   bool l_val = get_val_from_tape() != 0.0;
@@ -2190,11 +2141,7 @@ inline Logical Double::operator||(const Double& other) const {
   return Logical(*this) || Logical(other);
 }
 inline Logical Dual::operator||(const Dual& other) const {
-  bool l_true = !is_na && val;
-  bool r_true = !other.is_na && other.val;
-  if (l_true || r_true) return Logical(true);
-  if (is_na || other.is_na) return Logical::NA();
-  return Logical(false);
+  return Logical(*this) || Logical(other);
 }
 inline Logical ReverseDouble::operator||(const ReverseDouble& r) const {
   bool l_val = get_val_from_tape() != 0.0;
@@ -2219,8 +2166,7 @@ inline Logical Double::operator&(const Double& other) const {
   return Logical(val != 0.0 && other.val != 0.0);
 }
 inline Logical Dual::operator&(const Dual& other) const {
-  if (is_na || other.is_na) return Logical::NA();
-  return Logical(val && other.val);
+  return Double(*this) & Double(other);
 }
 inline Logical ReverseDouble::operator&(const ReverseDouble& r) const {
   if (is_na || r.is_na) return Logical::NA();
@@ -2240,8 +2186,7 @@ inline Logical Double::operator|(const Double& other) const {
   return Logical(val != 0.0 || other.val != 0.0);
 }
 inline Logical Dual::operator|(const Dual& other) const {
-  if (is_na || other.is_na) return Logical::NA();
-  return Logical(val || other.val);
+  return Double(*this) | Double(other);
 }
 inline Logical ReverseDouble::operator|(const ReverseDouble& r) const {
   if (is_na || r.is_na) return Logical::NA();
@@ -2264,9 +2209,8 @@ inline Double Double::sin() const {
   return Double(std::sin(val));
 }
 inline Dual Dual::sin() const {
-  if (is_na) return Dual::NA();
   const double v = std::sin(val);
-  if (is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  if (std::isnan(v)) return Dual(v, v);
   return Dual(v, std::cos(val) * dot);
 }
 inline ReverseDouble ReverseDouble::sin() const {
@@ -2286,9 +2230,8 @@ inline Double Double::sinh() const {
   return Double(std::sinh(val));
 }
 inline Dual Dual::sinh() const {
-  if (is_na) return Dual::NA();
   const double v = std::sinh(val);
-  if (is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  if (std::isnan(v)) return Dual(v, v);
   return Dual(v, std::cosh(val) * dot);
 }
 inline ReverseDouble ReverseDouble::sinh() const {
@@ -2308,9 +2251,8 @@ inline Double Double::asin() const {
   return Double(std::asin(val));
 }
 inline Dual Dual::asin() const {
-  if (is_na) return Dual::NA();
   const double v = std::asin(val);
-  if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  if (!std::isfinite(v)) return dual_nonfinite(v);
   return Dual(v, dot / std::sqrt(1.0 - val * val));
 }
 inline ReverseDouble ReverseDouble::asin() const {
@@ -2330,9 +2272,8 @@ inline Double Double::cos() const {
   return Double(std::cos(val));
 }
 inline Dual Dual::cos() const {
-  if (is_na) return Dual::NA();
   const double v = std::cos(val);
-  if (is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  if (std::isnan(v)) return Dual(v, v);
   return Dual(v, -std::sin(val) * dot);
 }
 inline ReverseDouble ReverseDouble::cos() const {
@@ -2352,9 +2293,8 @@ inline Double Double::cosh() const {
   return Double(std::cosh(val));
 }
 inline Dual Dual::cosh() const {
-  if (is_na) return Dual::NA();
   const double v = std::cosh(val);
-  if (is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  if (std::isnan(v)) return Dual(v, v);
   return Dual(v, std::sinh(val) * dot);
 }
 inline ReverseDouble ReverseDouble::cosh() const {
@@ -2374,9 +2314,8 @@ inline Double Double::acos() const {
   return Double(std::acos(val));
 }
 inline Dual Dual::acos() const {
-  if (is_na) return Dual::NA();
   const double v = std::acos(val);
-  if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  if (!std::isfinite(v)) return dual_nonfinite(v);
   return Dual(v, -dot / std::sqrt(1.0 - val * val));
 }
 inline ReverseDouble ReverseDouble::acos() const {
@@ -2396,9 +2335,8 @@ inline Double Double::tan() const {
   return Double(std::tan(val));
 }
 inline Dual Dual::tan() const {
-  if (is_na) return Dual::NA();
   const double v = std::tan(val);
-  if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  if (!std::isfinite(v)) return dual_nonfinite(v);
   return Dual(v, dot / (std::cos(val) * std::cos(val)));
 }
 inline ReverseDouble ReverseDouble::tan() const {
@@ -2418,9 +2356,8 @@ inline Double Double::tanh() const {
   return Double(std::tanh(val));
 }
 inline Dual Dual::tanh() const {
-  if (is_na) return Dual::NA();
   const double t = std::tanh(val);
-  if (is_na_dot) return Dual(t, std::numeric_limits<double>::quiet_NaN());
+  if (std::isnan(t)) return Dual(t, t);
   return Dual(t, (1.0 - t * t) * dot);
 }
 inline ReverseDouble ReverseDouble::tanh() const {
@@ -2440,9 +2377,8 @@ inline Double Double::atan() const {
   return Double(std::atan(val));
 }
 inline Dual Dual::atan() const {
-  if (is_na) return Dual::NA();
   const double v = std::atan(val);
-  if (is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  if (std::isnan(v)) return Dual(v, v);
   return Dual(v, dot / (1.0 + val * val));
 }
 inline ReverseDouble ReverseDouble::atan() const {
@@ -2465,9 +2401,8 @@ inline Double Double::exp() const {
   return Double(std::exp(val));
 }
 inline Dual Dual::exp() const {
-  if (is_na) return Dual::NA();
   const double v = std::exp(val);
-  if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  if (!std::isfinite(v)) return dual_nonfinite(v);
   return Dual(v, v * dot);
 }
 inline ReverseDouble ReverseDouble::exp() const {
@@ -2487,9 +2422,8 @@ inline Double Double::log() const {
   return Double(std::log(val));
 }
 inline Dual Dual::log() const {
-  if (is_na) return Dual::NA();
   const double v = std::log(val);
-  if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  if (!std::isfinite(v)) return dual_nonfinite(v);
   return Dual(v, dot / val);
 }
 inline ReverseDouble ReverseDouble::log() const {
@@ -2509,9 +2443,8 @@ inline Double Double::log10() const {
   return Double(std::log10(val));
 }
 inline Dual Dual::log10() const {
-  if (is_na) return Dual::NA();
   const double v = std::log10(val);
-  if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  if (!std::isfinite(v)) return dual_nonfinite(v);
   return Dual(v, dot / (val * std::log(10.0)));
 }
 inline ReverseDouble ReverseDouble::log10() const {
@@ -2531,9 +2464,8 @@ inline Double Double::sqrt() const {
   return Double(std::sqrt(val));
 }
 inline Dual Dual::sqrt() const {
-  if (is_na) return Dual::NA();
   const double v = std::sqrt(val);
-  if (!std::isfinite(v) || is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  if (!std::isfinite(v)) return dual_nonfinite(v);
   return Dual(v, (0.5 / v) * dot);
 }
 inline ReverseDouble ReverseDouble::sqrt() const {
@@ -2555,9 +2487,8 @@ inline Double Double::abs() const {
   return Double(std::abs(val));
 }
 inline Dual Dual::abs() const {
-  if (is_na) return Dual::NA();
   const double v = std::abs(val);
-  if (is_na_dot) return Dual(v, std::numeric_limits<double>::quiet_NaN());
+  if (std::isnan(v)) return Dual(v, v);
   const double s = (val >= 0.0) ? 1.0 : -1.0; // d/dx |x| = sign(x)
   return Dual(v, dot * s);
 }
@@ -2577,9 +2508,7 @@ inline Double Double::operator-() const {
   return Double(-val);
 }
 inline Dual Dual::operator-() const {
-  if (is_na) return Dual::NA();
-  if (is_na_dot) return Dual(-val, std::numeric_limits<double>::quiet_NaN());
-  return Dual(-val, -dot);
+  return dual_of(-val, -dot);
 }
 inline ReverseDouble ReverseDouble::operator-() const {
   if (is_na) return NA();
@@ -2604,7 +2533,7 @@ inline Logical Double::operator!() const {
   return Logical(val == 0.0);
 }
 inline Logical Dual::operator!() const {
-  if (is_na || std::isnan(val)) return Logical::NA();
+  if (std::isnan(val)) return Logical::NA();
   return Logical(val == 0.0);
 }
 inline Logical ReverseDouble::operator!() const {
@@ -3115,13 +3044,8 @@ struct DoubleRef {
 struct DualRef {
   double* p_val;
   double* p_dot;
-  bool*   p_na;
-  bool*   p_na_dot;
   operator Dual() const {
-    Dual out(*p_val, *p_dot);
-    if (p_na)     out.is_na     = *p_na;
-    if (p_na_dot) out.is_na_dot = *p_na_dot;
-    return out;
+    return Dual(*p_val, *p_dot);
   }
   // Scalar operations, delegated to the referenced value via operator Dual().
   inline Dual operator+(const Dual& o) const { return Dual(*this) + o; }
@@ -3174,26 +3098,19 @@ struct DualRef {
     if (this == &other) return *this;
     *p_val = *other.p_val;
     *p_dot = *other.p_dot;
-    if (p_na)     *p_na     = other.p_na     ? *other.p_na     : false;
-    if (p_na_dot) *p_na_dot = other.p_na_dot ? *other.p_na_dot : false;
     return *this;
   }
   DualRef& operator=(const Dual& x) {
-    *p_val = get_val(x);
+    *p_val = x.val;
     *p_dot = x.dot;
-    if (p_na)     *p_na     = x.is_na;
-    if (p_na_dot) *p_na_dot = x.is_na_dot;
     return *this;
   }
   template<typename T> requires (IsArithV<T> || IsArithRefV<T>) DualRef& operator=(const T& x) {
-    const Dual d(get_scalar_val(x));
-    *p_val    = d.val;
+    *p_val    = Dual(get_scalar_val(x)).val;
     *p_dot    = 0.0;
-    if (p_na)     *p_na     = d.is_na;
-    if (p_na_dot) *p_na_dot = false;
     return *this;
   }
-  explicit inline DualRef(double* v, double* d, bool* n = nullptr, bool* nd = nullptr);
+  explicit inline DualRef(double* v, double* d);
   inline DualRef(Dual) = delete;
   inline DualRef(double, double) = delete;
   template<typename T> requires IsArray<Decayed<T>> inline DualRef& operator=(const T& arr) {
@@ -3206,7 +3123,7 @@ struct DualRef {
 inline LogicalRef::LogicalRef(int*    v) : p_val(v) {}
 inline IntegerRef::IntegerRef(int*    v) : p_val(v) {}
 inline DoubleRef ::DoubleRef (double* v) : p_val(v) {}
-inline DualRef   ::DualRef   (double* v, double* d, bool* n, bool* nd) : p_val(v), p_dot(d), p_na(n), p_na_dot(nd) {}
+inline DualRef   ::DualRef   (double* v, double* d) : p_val(v), p_dot(d) {}
 
 
 } // namespace etr

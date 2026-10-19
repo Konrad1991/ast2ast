@@ -60,12 +60,7 @@ template<typename A> inline auto crossprod_forward(const A& a, std::size_t m, st
   Array<Dual, Buffer<Dual, LBufferTrait>> result(SI{d * d});
   result.dim = {d, d};
   for (std::size_t k = 0; k < d * d; ++k) {
-    Dual val;
-    val.val       = s_vals[k];
-    val.dot       = s_dot[k];
-    val.is_na     = std::isnan(s_vals[k]);
-    val.is_na_dot = std::isnan(s_dot[k]);
-    result.set(k, val);
+    result.set(k, Dual(s_vals[k], s_dot[k]));
   }
   return result;
 }

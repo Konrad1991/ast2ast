@@ -56,9 +56,12 @@ On a branch; nothing compiles in between.
    - comparisons (`==`, `<`, ...) check NaN / `INT_MIN` explicitly -> `NA == 1` is NA
    - casts: int NA -> double NA, double NaN -> int NA
    - Refs (`DoubleRef`, ...), `Borrow`, `SEXPConversions`, C++ tests
-2. Dual and ReverseDouble (own buffers)
-   - Dual: `val` / `dot` NaN, drop `is_na_dot`
-   - ReverseDouble: NA in the tape value, drop the `uint8_t` flag
+2. Dual (own buffer)
+   - `val` / `dot` NaN, drop `is_na` / `is_na_dot`
+   - ReverseDouble keeps its flag (decided 2026-10-19): the backward pass
+     skips NA nodes via the tape's `is_na`; BLAS/LAPACK block ops may not
+     keep the NaN payload (platform dependent), so a lost NA would silently
+     turn a 0 gradient into NaN. Small gain, real risk.
 3. Measure: full suite + `development/Benchmarks/run_all.R` before / after
 
 ## Guard

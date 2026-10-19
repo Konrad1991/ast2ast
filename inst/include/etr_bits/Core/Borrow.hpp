@@ -181,10 +181,8 @@ template <typename BorrowTrait> struct Borrow<Dual, BorrowTrait> {
   std::size_t sz = 0;
   std::size_t capacity = 0;
   bool allocated = false;
-  double *p_val    = nullptr; // values
-  double *p_dot    = nullptr; // derivatives
-  bool   *p_na     = nullptr; // optional NA flags for value
-  bool   *p_na_dot = nullptr; // optional NA flags for derivative
+  double *p_val    = nullptr; // values, NA is na_real()
+  double *p_dot    = nullptr; // derivatives, NA is na_real()
 
   std::size_t size() const noexcept { return allocated ? sz : 0; }
 
@@ -196,15 +194,11 @@ template <typename BorrowTrait> struct Borrow<Dual, BorrowTrait> {
     : sz(other.sz), capacity(other.capacity), allocated(other.allocated) {
     p_val    = other.p_val;
     p_dot    = other.p_dot;
-    p_na     = other.p_na;
-    p_na_dot = other.p_na_dot;
   }
   // Copy assignment
   Borrow &operator=(const Borrow<Dual> &other) {
     p_val    = other.p_val;
     p_dot    = other.p_dot;
-    p_na     = other.p_na;
-    p_na_dot = other.p_na_dot;
     sz = other.sz;
     capacity = other.capacity;
     allocated = other.allocated;
@@ -234,24 +228,19 @@ template <typename BorrowTrait> struct Borrow<Dual, BorrowTrait> {
   };
 #endif
 
-  void init(double* val_p_, double* dot_p_, std::size_t sz_,
-            bool* na_p_ = nullptr, bool* na_dot_p_ = nullptr) {
+  void init(double* val_p_, double* dot_p_, std::size_t sz_) {
     ass<"null pointer with positive size">(val_p_ != nullptr || dot_p_ != nullptr || sz_ == 0);
     p_val    = val_p_;
     p_dot    = dot_p_;
-    p_na     = na_p_;
-    p_na_dot = na_dot_p_;
     sz = sz_;
     capacity = sz;
     allocated = true;
   }
-  Borrow(double *val_p_, double* dot_p_, std::size_t sz_,
-         bool* na_p_ = nullptr, bool* na_dot_p_ = nullptr) {
-    init(val_p_, dot_p_, sz_, na_p_, na_dot_p_);
+  Borrow(double *val_p_, double* dot_p_, std::size_t sz_) {
+    init(val_p_, dot_p_, sz_);
   }
-  Borrow(double *val_p_, double* dot_p_, int sz_,
-         bool* na_p_ = nullptr, bool* na_dot_p_ = nullptr) {
-    init(val_p_, dot_p_, sz_, na_p_, na_dot_p_);
+  Borrow(double *val_p_, double* dot_p_, int sz_) {
+    init(val_p_, dot_p_, sz_);
   }
 
   ~Borrow() {}
@@ -265,43 +254,32 @@ template <typename BorrowTrait> struct Borrow<Dual, BorrowTrait> {
   value_type get(std::size_t idx) const {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
-    Dual out{ p_val[idx], p_dot[idx] };
-    if (p_na)     out.is_na     = p_na[idx];
-    if (p_na_dot) out.is_na_dot = p_na_dot[idx];
-    return out;
+    return Dual(p_val[idx], p_dot[idx]);
   }
   Double get_dot(std::size_t idx) const {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
-    return Double((p_na_dot && p_na_dot[idx]) ? na_real() : p_dot[idx]);
+    return Double(p_dot[idx]);
   }
   void set(std::size_t idx, const Dual& d) {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
     p_val[idx] = d.val;
     p_dot[idx] = d.dot;
-    if (p_na)     p_na[idx]     = d.is_na;
-    if (p_na_dot) p_na_dot[idx] = d.is_na_dot;
   }
   // Skip both checks -- for callers that already proved idx is valid once,
   // up front, for the whole buffer.
   value_type get_unchecked(std::size_t idx) const {
-    Dual out{ p_val[idx], p_dot[idx] };
-    if (p_na)     out.is_na     = p_na[idx];
-    if (p_na_dot) out.is_na_dot = p_na_dot[idx];
-    return out;
+    return Dual(p_val[idx], p_dot[idx]);
   }
   void set_unchecked(std::size_t idx, const Dual& d) {
     p_val[idx] = d.val;
     p_dot[idx] = d.dot;
-    if (p_na)     p_na[idx]     = d.is_na;
-    if (p_na_dot) p_na_dot[idx] = d.is_na_dot;
   }
   void set_dot(std::size_t idx, const double& d) {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
     p_dot[idx] = d;
-    if (p_na_dot) p_na_dot[idx] = false;
   }
 
   struct Iterator {

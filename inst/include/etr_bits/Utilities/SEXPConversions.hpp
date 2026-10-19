@@ -74,10 +74,7 @@ inline Dual SEXP2Scalar<Dual>(SEXP s) {
   ass<"R object is not of type double">(Rf_isReal(s));
   const R_xlen_t sz = Rf_xlength(s);
   ass<"Argument has to be of length 1">(sz == 1);
-  const double d = REAL(s)[0];
-  Dual res(d, 0.0);
-  res.is_na = ISNA(d);
-  return res;
+  return Dual(REAL(s)[0], 0.0);
 }
 template<>
 inline ReverseDouble SEXP2Scalar<ReverseDouble>(SEXP s) {
@@ -327,7 +324,7 @@ inline void set_dimnames_attrib(SEXP x, SEXP dimnames /* must be a VECSXP of len
 // Storage layout we exploit:
 //   Buffer<T,LBufferTrait> / Buffer<T,RBufferTrait>  → p_val (NA is R's sentinel)
 //   Borrow<T,BorrowTrait>                            → p
-//   Buffer<Dual,*>  is always SoA: p_val, p_dot, p_na, p_na_dot
+//   Buffer<Dual,*>  is always SoA: p_val, p_dot
 //   ReverseDouble has no contiguous double buffer (each handle's value lives
 //   on the tape), so it stays on the per-element path.
 template <typename A>
@@ -360,11 +357,7 @@ inline SEXP Cast(const T &res_) {
     SEXP ret = PROTECT(Rf_allocVector(REALSXP, N));
     double*       dst = REAL(ret);
     const double* src = res.d.p_val;
-    const bool*   na  = res.d.p_na;
     if (N > 0) std::memcpy(dst, src, static_cast<std::size_t>(N) * sizeof(double));
-    if (na) {
-      for (R_xlen_t i = 0; i < N; ++i) if (na[i]) dst[i] = NA_REAL;
-    }
     set_dim_attrib(ret, dim);
     UNPROTECT(1);
     return ret;

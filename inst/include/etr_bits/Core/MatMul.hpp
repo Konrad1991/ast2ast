@@ -137,12 +137,7 @@ template<typename A, typename B> inline auto matmul_forward(const A& a, const B&
   Array<Dual, Buffer<Dual, LBufferTrait>> result(SI{M * N});
   result.dim = {M, N};
   for (std::size_t k = 0; k < M * N; ++k) {
-    Dual d;
-    d.val       = c_vals[k];
-    d.dot       = c_dot[k];
-    d.is_na     = std::isnan(c_vals[k]);
-    d.is_na_dot = std::isnan(c_dot[k]);
-    result.set(k, d);
+    result.set(k, Dual(c_vals[k], c_dot[k]));
   }
   return result;
 }

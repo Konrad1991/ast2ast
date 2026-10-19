@@ -20,10 +20,7 @@ ReverseDouble create_reverse_double(const double val, const bool is_na) {
   return res;
 }
 Dual create_dual(const double val, const double dot, const bool is_na, const bool is_na_dot) {
-  Dual res(val, dot);
-  res.is_na = is_na;
-  res.is_na_dot = is_na_dot;
-  return res;
+  return Dual(is_na ? na_real() : val, is_na_dot ? na_real() : dot);
 }
 
 template<typename L, typename R> void compare(const L& l, const R& r) {
@@ -51,18 +48,11 @@ template<typename L, typename R> void compare(const L& l, const R& r) {
   if constexpr (IS<Decayed<L>, Dual> || IS<Decayed<L>, DualRef>) {
     Dual dl = l;
     Dual dr = r;
-    if (dl.isNaNDot() && dr.isNaNDot()) {
-      ass<"both derivatives are NaN">(true);
-      return;
-    } else if (dl.isNaNDot() && !dr.isNaNDot()) {
-      ass<"both derivatives should be NaN">(false);
-      return;
-    }
-    if (dl.isNADot() && dr.isNADot()) {
-      ass<"both derivatives are NA">(true);
-      return;
-    } else if (dl.isNADot() && !dr.isNADot()) {
-      ass<"both derivatives should be NA">(false);
+    // NOTE: NA vs NaN in the derivative is not compared: the hardware keeps
+    // the NA payload through arithmetic, the old NA flag turned it into NaN
+    const bool l_nan = std::isnan(dl.dot), r_nan = std::isnan(dr.dot);
+    if (l_nan || r_nan) {
+      ass<"both derivatives should be NA or NaN">(l_nan && r_nan);
       return;
     }
     Double diff_dot;
@@ -181,15 +171,9 @@ void test_scalars() {
   double d = 3.0;
   double d_dot = 4.0;
   Dual dua1(d, d_dot);
-  Dual dua2(d, d_dot);
-  dua2.is_na = true;
-  dua2.is_na_dot = true;
-  Dual dua3(d, d_dot);
-  dua3.is_na = true;
-  dua3.is_na_dot = false;
-  Dual dua4(d, d_dot);
-  dua4.is_na = false;
-  dua4.is_na_dot = true;
+  Dual dua2(na_real(), na_real());
+  Dual dua3(na_real(), d_dot);
+  Dual dua4(d, na_real());
 
   ReverseDouble revd1(5.0);
   ReverseDouble revd2 = d2;
@@ -212,24 +196,16 @@ void test_scalars() {
 
   double dualref_val1 = 2.0;
   double dualref_dot1 = 1.0;
-  bool dualref_na1 = false;
-  bool dualref_na_dot1 = false;
-  DualRef duar_owned1(&dualref_val1, &dualref_dot1, &dualref_na1, &dualref_na_dot1);
-  double dualref_val2 = 2.0;
-  double dualref_dot2 = 1.0;
-  bool dualref_na2 = true;
-  bool dualref_na_dot2 = true;
-  DualRef duar_owned2(&dualref_val2, &dualref_dot2, &dualref_na2, &dualref_na_dot2);
+  DualRef duar_owned1(&dualref_val1, &dualref_dot1);
+  double dualref_val2 = na_real();
+  double dualref_dot2 = na_real();
+  DualRef duar_owned2(&dualref_val2, &dualref_dot2);
   double dualref_val3 = 3.0;
-  double dualref_dot3 = 1.0;
-  bool dualref_na3 = false;
-  bool dualref_na_dot3 = true;
-  DualRef duar_owned3(&dualref_val3, &dualref_dot3, &dualref_na3, &dualref_na_dot3);
-  double dualref_val4 = 4.0;
+  double dualref_dot3 = na_real();
+  DualRef duar_owned3(&dualref_val3, &dualref_dot3);
+  double dualref_val4 = na_real();
   double dualref_dot4 = 1.0;
-  bool dualref_na4 = true;
-  bool dualref_na_dot4 = false;
-  DualRef duar_owned4(&dualref_val4, &dualref_dot4, &dualref_na4, &dualref_na_dot4);
+  DualRef duar_owned4(&dualref_val4, &dualref_dot4);
 
   // ReverseDouble has no reference wrapper; use plain ReverseDouble values.
   ReverseDouble revdr_owned1 = create_reverse_double(9.0, false);
@@ -889,8 +865,8 @@ void check_assign_all(const Src& s, double v, double dot, bool na) {
   double ddv = 0.0;
   DoubleRef aDR(&ddv); aDR = s; compare(Double(aDR), create_double(v, na));
 
-  double duv = 0.0, dudot = 0.0; bool duna = false, dunadot = false;
-  DualRef aDuR(&duv, &dudot, &duna, &dunadot); aDuR = s;
+  double duv = 0.0, dudot = 0.0;
+  DualRef aDuR(&duv, &dudot); aDuR = s;
   compare(Dual(aDuR), create_dual(v, dot, na, na));
 
   // ReverseDouble has no reference wrapper
@@ -930,9 +906,9 @@ void test_scalar_assignment() {
     dst = src; compare(Double(dst), create_double(3.25, false));
   }
   {
-    double sv = 2.0, sdot = 5.0; bool sna = false, snd = false;
-    double dv = 0.0, ddot = 0.0; bool dna = true, dnd = true;
-    DualRef src(&sv, &sdot, &sna, &snd), dst(&dv, &ddot, &dna, &dnd);
+    double sv = 2.0, sdot = 5.0;
+    double dv = na_real(), ddot = na_real();
+    DualRef src(&sv, &sdot), dst(&dv, &ddot);
     dst = src; compare(Dual(dst), create_dual(2.0, 5.0, false, false));
   }
   {
