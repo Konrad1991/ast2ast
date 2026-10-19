@@ -16,15 +16,8 @@ template <typename T, typename BorrowTrait> struct Borrow {
   std::size_t capacity = 0;
   bool allocated = false;
   // T can thus be only Logical, Integer or Double!
-  // But a raw C pointer is borrowed of bool*, int* or double*
+  // But a raw C pointer is borrowed of int* or double*; NA is R's sentinel inside the data
   from_ast_scalar_t<T> *p = nullptr;
-  // Optional NA flags, shared (not deep-copied) across Borrow copies so
-  // copying stays cheap. Null when the borrowed memory has no parallel NA
-  // array (e.g. SEXP-backed Borrow, where R encodes NA via sentinel values
-  // inside `p` itself, not in a separate buffer). When constructed from an
-  // externally-owned bool*, wrapped with a no-op deleter -- that memory is
-  // never Borrow's to free.
-  std::shared_ptr<bool[]> p_na;
 
   std::size_t size() const noexcept { return allocated ? sz : 0; }
 
@@ -35,12 +28,10 @@ template <typename T, typename BorrowTrait> struct Borrow {
   Borrow(const Borrow<T> &other)
     : sz(other.sz), capacity(other.capacity), allocated(other.allocated) {
     p = other.p;
-    p_na = other.p_na;
   }
   // Copy assignment
   Borrow &operator=(const Borrow<T> &other) {
     p = other.p;
-    p_na = other.p_na;
     sz = other.sz;
     capacity = other.capacity;
     allocated = other.allocated;
@@ -70,7 +61,11 @@ template <typename T, typename BorrowTrait> struct Borrow {
       p = INTEGER(s);
       allocated = true;
     } else if constexpr (IS<value_type, Logical>) {
-      ass<"You cannot borrow logical objects">(false);
+      ass<"R object is not of type logical">(Rf_isLogical(s));
+      sz = static_cast<std::size_t>(Rf_length(s));
+      capacity = static_cast<std::size_t>(sz);
+      p = LOGICAL(s);
+      allocated = true;
     } else {
       static_assert(sizeof(T) == 0, "Unsupported type found");
     }
@@ -82,31 +77,21 @@ template <typename T, typename BorrowTrait> struct Borrow {
 
   // Raw C++ pointer
   template<typename T2>
-  void init(T2 *p_, std::size_t sz_, bool *na_p_ = nullptr) {
+  void init(T2 *p_, std::size_t sz_) {
     ass<"null pointer with positive size">(p_ != nullptr || sz_ == 0);
     this->p    = p_;
-    this->p_na = na_p_ ? std::shared_ptr<bool[]>(na_p_, [](bool*){}) : std::shared_ptr<bool[]>();
     this->sz = sz_;
     capacity = sz;
     this->allocated = true;
   }
-  // T is Scalar Type
-  template<typename T2> requires (IS<to_ast_scalar_t<T2>, T> && IsArithV<T>)
-  Borrow(T2 *p_, std::size_t sz_, bool *na_p_ = nullptr) {
-    init(p_, sz_, na_p_);
+  // T2 is the raw storage of T: double* for Double/ReverseDouble, int* for Integer/Logical
+  template<typename T2> requires (IS<T2, from_ast_scalar_t<T>> && IsArithV<T>)
+  Borrow(T2 *p_, std::size_t sz_) {
+    init(p_, sz_);
   }
-  template<typename T2> requires (IS<to_ast_scalar_t<T2>, T> && IsArithV<T>)
-  Borrow(T2 *p_, int sz_, bool *na_p_ = nullptr) {
-    init(p_, sz_, na_p_);
-  }
-  // T is ReverseDouble — accept double-typed ast scalars (Double / DoubleRef).
-  template<typename T2> requires (IS<to_ast_scalar_t<T2>, Double> && IS<T, ReverseDouble>)
-  Borrow(T2 *p_, std::size_t sz_, bool *na_p_ = nullptr) {
-    init(p_, sz_, na_p_);
-  }
-  template<typename T2> requires (IS<to_ast_scalar_t<T2>, Double> && IS<T, ReverseDouble>)
-  Borrow(T2 *p_, int sz_, bool *na_p_ = nullptr) {
-    init(p_, sz_, na_p_);
+  template<typename T2> requires (IS<T2, from_ast_scalar_t<T>> && IsArithV<T>)
+  Borrow(T2 *p_, int sz_) {
+    init(p_, sz_);
   }
 
   ~Borrow() {}
@@ -136,22 +121,17 @@ template <typename T, typename BorrowTrait> struct Borrow {
   // Skip both checks -- for callers that already proved idx is valid once,
   // up front, for the whole buffer.
   value_type get_unchecked(std::size_t idx) const {
-    value_type out = load(p[idx]);
-    if constexpr (IS<T, Double> || IS<T, Integer>) {
-      out.is_na = p_na ? p_na[idx] : is_r_na_sentinel(p[idx]);
-    } else if constexpr (IsArithV<value_type>) {
-      if (p_na) out.is_na = p_na[idx];
+    if constexpr (IS<T, ReverseDouble>) {
+      return is_na_real(p[idx]) ? ReverseDouble::NA() : load(p[idx]);
+    } else {
+      return load(p[idx]);
     }
-    return out;
   }
   void set_unchecked(std::size_t idx, const value_type& val) {
-    if constexpr (IS<T, Double> || IS<T, Integer>) {
-      write_value_and_na(&p[idx], p_na ? &p_na[idx] : nullptr, store(val), val.is_na);
+    if constexpr (IS<T, ReverseDouble>) {
+      p[idx] = val.isNA() ? na_real() : store(val);
     } else {
       p[idx] = store(val);
-      if constexpr (IsArithV<value_type>) {
-        if (p_na) p_na[idx] = val.is_na;
-      }
     }
   }
 
@@ -293,9 +273,7 @@ template <typename BorrowTrait> struct Borrow<Dual, BorrowTrait> {
   Double get_dot(std::size_t idx) const {
     ass<"No memory was allocated">(allocated);
     ass<"Error: out of boundaries">(idx < sz);
-    Double out(p_dot[idx]);
-    if (p_na_dot) out.is_na = p_na_dot[idx];
-    return out;
+    return Double((p_na_dot && p_na_dot[idx]) ? na_real() : p_dot[idx]);
   }
   void set(std::size_t idx, const Dual& d) {
     ass<"No memory was allocated">(allocated);

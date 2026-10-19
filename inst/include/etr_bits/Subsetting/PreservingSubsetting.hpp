@@ -332,17 +332,24 @@ inline void fill_index_lists(const Dim& dim,
       }
       // --- Case 5: Scalars
       else if constexpr (IsScalarLike<A>) {
-        // get_val() drops the is_na flag, and an NA Integer carries val == 0,
-        // which would otherwise trip the zero-index guard downstream instead
-        // of reporting the NA. (NA Double/Dual carry NaN and are caught by
+        // NA has to be reported here: downstream an NA_INT index would trip the
+        // zero/negative guard. (NA Double/Dual carry NaN and are caught by
         // safe_index_from_double as "invalid index argument".)
-        using V = std::decay_t<decltype(get_val(arg))>;
-        if constexpr (std::is_integral_v<V> && !std::is_same_v<V, bool>) {
-          ass<"Found NA value in subsetting (within an integer object)">(!arg.isNA());
+        // NOTE: Logical stores int now, so pass it on as bool explicitly
+        if constexpr (IsLogical<A> || IsLogicalRef<A>) {
+          ass<"Found NA value in subsetting (within a logical object)">(!arg.isNA());
+          fill_scalars_in_index_lists<N>(dim, converted_arrays,
+                                         index_lists, get_val(arg) != 0,
+                                         counter, counter_converted);
+        } else {
+          using V = std::decay_t<decltype(get_val(arg))>;
+          if constexpr (std::is_integral_v<V>) {
+            ass<"Found NA value in subsetting (within an integer object)">(!arg.isNA());
+          }
+          fill_scalars_in_index_lists<N>(dim, converted_arrays,
+                                         index_lists, get_val(arg),
+                                         counter, counter_converted);
         }
-        fill_scalars_in_index_lists<N>(dim, converted_arrays,
-                                       index_lists, get_val(arg),
-                                       counter, counter_converted);
       }
       else {
         static_assert(!sizeof(A*), "Unsupported index type");

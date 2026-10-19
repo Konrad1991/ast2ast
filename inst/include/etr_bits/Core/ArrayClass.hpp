@@ -10,7 +10,7 @@ concept IsSoAScalar = IsDouble<T> || IsInteger<T> || IsLogical<T>;
 // the stores then can't alias scalars inside `src` (e.g. dx^2 in x / dx^2),
 // so those are loaded once, not per element. n must fit the buffer.
 template <typename T, typename Src>
-inline void fill_soa(from_ast_scalar_t<T>* __restrict val, bool* __restrict na,
+inline void fill_soa(from_ast_scalar_t<T>* __restrict val,
                      const Src& src, std::size_t n) {
   using SrcT = typename ReRef<Src>::type::value_type;
   for (std::size_t i = 0; i < n; i++) {
@@ -21,7 +21,6 @@ inline void fill_soa(from_ast_scalar_t<T>* __restrict val, bool* __restrict na,
       x = cast_preserve_na<T>(src.get(i));
     }
     val[i] = x.val;
-    na[i] = x.is_na;
   }
 }
 
@@ -31,7 +30,7 @@ inline void fill_temp(Buffer<T, LBufferTrait>& temp, const Src& src) {
   const std::size_t n = src.size();
   temp.resize(n);
   if constexpr (IsSoAScalar<T>) {
-    fill_soa<T>(temp.p_val, temp.p_na, src, n);
+    fill_soa<T>(temp.p_val, src, n);
   } else {
     using SrcT = typename ReRef<Src>::type::value_type;
     for (std::size_t i = 0; i < n; i++) {
