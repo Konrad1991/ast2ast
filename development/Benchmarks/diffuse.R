@@ -34,7 +34,39 @@ diffuse_heat <- function(nx, ny, dx, dy, dt, k, steps) {
   }
   temp
 }
-quick_diffuse_heat <- quickr::quick(diffuse_heat)
+has_quickr <- requireNamespace("quickr", quietly = TRUE)
+if (has_quickr) quick_diffuse_heat <- quickr::quick(diffuse_heat)
+
+# plain loop; `old` keeps the previous step like R's vectorised update does
+Rcpp::cppFunction("
+NumericMatrix diffuse_heat_rcpp(int nx, int ny, int dx, int dy, double dt, double k, int steps) {
+  NumericMatrix temp(nx, ny);
+  NumericMatrix old(nx, ny);
+  temp(nx / 2 - 1, ny / 2 - 1) = 100.0;
+  const double dx2 = std::pow(static_cast<double>(dx), 2.0);
+  const double dy2 = std::pow(static_cast<double>(dy), 2.0);
+  for (int step = 0; step < steps; step++) {
+    for (int j = 0; j < ny; j++) {
+      temp(0, j) = 0.0;
+      temp(nx - 1, j) = 0.0;
+    }
+    for (int i = 0; i < nx; i++) {
+      temp(i, 0) = 0.0;
+      temp(i, ny - 1) = 0.0;
+    }
+    std::copy(temp.begin(), temp.end(), old.begin());
+    for (int j = 1; j < ny - 1; j++) {
+      for (int i = 1; i < nx - 1; i++) {
+        const double laplacian =
+          (old(i + 1, j) - 2 * old(i, j) + old(i - 1, j)) / dx2 +
+          (old(i, j + 1) - 2 * old(i, j) + old(i, j - 1)) / dy2;
+        temp(i, j) = old(i, j) + k * dt * laplacian;
+      }
+    }
+  }
+  return temp;
+}
+")
 
 diffuse_heat_a2a <- function(nx, ny, dx, dy, dt, k, steps) {
   argtypes(
@@ -283,13 +315,20 @@ identical(
   diffuse_heat(nx, ny, dx, dy, dt, k, steps),
   fcpp_inline(nx, ny, dx, dy, dt, k, steps)
 )
+identical(
+  diffuse_heat(nx, ny, dx, dy, dt, k, steps),
+  diffuse_heat_rcpp(nx, ny, dx, dy, dt, k, steps)
+)
 
-microbenchmark::microbenchmark(
+# R / ast2ast / rcpp go into run_all.R; the other variants are for a direct look
+bench <- alist(
+  R = diffuse_heat(nx, ny, dx, dy, dt, k, steps),
   ast2ast = fcpp(nx, ny, dx, dy, dt, k, steps),
+  rcpp = diffuse_heat_rcpp(nx, ny, dx, dy, dt, k, steps),
   ast2ast_inline = fcpp_inline(nx, ny, dx, dy, dt, k, steps),
   ast2ast_loop = fcpp_loop(nx, ny, dx, dy, dt, k, steps),
-  ast2ast_hoisted = fcpp_loop_hoisted(nx, ny, dx, dy, dt, k, steps),
-  diffuse_heat = diffuse_heat(nx, ny, dx, dy, dt, k, steps),
-  quick_diffuse_heat = quick_diffuse_heat(nx, ny, dx, dy, dt, k, steps),
-  times = 20L
+  ast2ast_hoisted = fcpp_loop_hoisted(nx, ny, dx, dy, dt, k, steps)
 )
+if (has_quickr) bench$quickr <- quote(quick_diffuse_heat(nx, ny, dx, dy, dt, k, steps))
+res <- microbenchmark::microbenchmark(list = bench, times = 20L)
+res
