@@ -65,7 +65,7 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
 
   explicit operator bool() const {
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(get_val(d.get(0)));
+    return static_cast<bool>(get_scalar_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -259,7 +259,7 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
 
   explicit operator bool() const {
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(get_val(d.get(0)));
+    return static_cast<bool>(get_scalar_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -328,7 +328,7 @@ template<typename T> requires (IsArithV<T> || IsReverseDouble<T>) struct Array<T
 
   explicit operator bool() const {
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(get_val(d.get(0)));
+    return static_cast<bool>(get_scalar_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -469,7 +469,7 @@ template<typename T, typename I, typename Trait> struct Array<T, UnaryOperation<
 
   explicit operator bool() const {
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(get_val(d.get(0)));
+    return static_cast<bool>(get_scalar_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -529,7 +529,7 @@ template<typename T, typename L, typename R, typename Trait> struct Array<T, Bin
 
   explicit operator bool() const {
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(get_val(d.get(0)));
+    return static_cast<bool>(get_scalar_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -590,7 +590,7 @@ template<typename T> struct Array<T, BinaryOperation<T, RangeSpec, RangeTrait>> 
 
   explicit operator bool() const {
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(get_val(d.get(0)));
+    return static_cast<bool>(get_scalar_val(d.get(0)));
   }
   explicit operator value_type() const { return d.get(0); }
 
@@ -646,7 +646,7 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
 
   explicit operator bool() const {
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(get_val(d.get(0)));
+    return static_cast<bool>(get_scalar_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -750,7 +750,7 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
 
   explicit operator bool() const {
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(get_val(d.get(0)));
+    return static_cast<bool>(get_scalar_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {

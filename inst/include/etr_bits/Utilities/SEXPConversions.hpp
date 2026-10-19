@@ -54,7 +54,7 @@ inline Logical SEXP2Scalar<Logical>(SEXP s) {
   ass<"Argument has length > 1">(sz == 1);
   // int, not bool: NA_LOGICAL (INT_MIN) would collapse to true
   const int b = LOGICAL(s)[0];
-  ass<"NA logical not allowed">(b != NA_LOGICAL);
+  if (b == NA_LOGICAL) return Logical::NA();
   return Logical(b != 0);
 }
 template<>
@@ -63,7 +63,7 @@ inline Integer SEXP2Scalar<Integer>(SEXP s) {
   const R_xlen_t sz = Rf_xlength(s);
   ass<"Argument has length > 1">(sz == 1);
   const int i = INTEGER(s)[0];
-  ass<"NA integer not allowed">(i != NA_INTEGER);
+  if (i == NA_INTEGER) return Integer::NA();
   return Integer(i);
 }
 template<>
@@ -72,8 +72,9 @@ inline Double SEXP2Scalar<Double>(SEXP s) {
   const R_xlen_t sz = Rf_xlength(s);
   ass<"Argument has length > 1">(sz == 1);
   const double d = REAL(s)[0];
-  ass<"NA/NaN double not allowed">(!ISNA(d) && !ISNAN(d));
-  return Double(d);
+  Double res(d);
+  res.is_na = ISNA(d);
+  return res;
 }
 template<>
 inline Dual SEXP2Scalar<Dual>(SEXP s) {
@@ -81,8 +82,9 @@ inline Dual SEXP2Scalar<Dual>(SEXP s) {
   const R_xlen_t sz = Rf_xlength(s);
   ass<"Argument has length > 1">(sz == 1);
   const double d = REAL(s)[0];
-  ass<"NA/NaN double not allowed">(!ISNA(d) && !ISNAN(d));
-  return Dual(d, 0.0);
+  Dual res(d, 0.0);
+  res.is_na = ISNA(d);
+  return res;
 }
 template<>
 inline ReverseDouble SEXP2Scalar<ReverseDouble>(SEXP s) {
@@ -90,8 +92,9 @@ inline ReverseDouble SEXP2Scalar<ReverseDouble>(SEXP s) {
   const R_xlen_t sz = Rf_xlength(s);
   ass<"Argument has length > 1">(sz == 1);
   const double d = REAL(s)[0];
-  ass<"NA/NaN double not allowed">(!ISNA(d) && !ISNAN(d));
-  return ReverseDouble::Var(d);
+  ReverseDouble res = ReverseDouble::Var(d);
+  res.is_na = static_cast<uint8_t>(ISNA(d));
+  return res;
 }
 
 inline const char* r_type_name(SEXP s) {

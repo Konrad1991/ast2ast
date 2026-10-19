@@ -1204,16 +1204,7 @@ struct Logical {
     using  inner = typename ExtractDataType<T>::value_type;
     ass<"You cannot assign an array with length > 1 to a scalar variable">(arr.size() == 1);
     const auto arr_val = get_scalar_val(arr.get(0));
-    if constexpr(IS<inner, Logical>) {
-      val = arr_val.val;
-      is_na = arr_val.is_na;
-    } else if constexpr(IS<inner, ReverseDouble>) {
-      val = static_cast<bool>(arr_val.get_val_from_tape());
-      is_na = arr_val.is_na;
-    } else {
-      val = static_cast<bool>(arr_val.val);
-      is_na = arr_val.is_na;
-    }
+    *this = Logical(arr_val);
     return *this;
   }
   // scalar-ref RHS: DoubleRef -> Double -> Logical would be two user conversions
@@ -1677,9 +1668,11 @@ Constructors for scalar values
 inline Logical::Logical() : val(false), is_na(false) {}
 inline Logical::Logical(bool v) : val(v), is_na(false) {}
 inline Logical::Logical(Integer v) : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
-inline Logical::Logical(Double v) : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
-inline Logical::Logical(Dual v) : val(static_cast<bool>(v.val)), is_na(v.is_na) {}
-inline Logical::Logical(ReverseDouble v) : val(static_cast<bool>(v.get_val_from_tape())), is_na(v.is_na) {}
+// as.logical(NaN) is NA in R
+inline Logical::Logical(Double v) : val(static_cast<bool>(v.val)), is_na(v.is_na || std::isnan(v.val)) {}
+inline Logical::Logical(Dual v) : val(static_cast<bool>(v.val)), is_na(v.is_na || std::isnan(v.val)) {}
+inline Logical::Logical(ReverseDouble v)
+    : val(static_cast<bool>(v.get_val_from_tape())), is_na(v.is_na || std::isnan(v.get_val_from_tape())) {}
 
 inline Integer::Integer() : val(0), is_na(false) {}
 inline Integer::Integer(int v) : val(v), is_na(false) {}
@@ -2996,8 +2989,9 @@ struct LogicalRef {
   // overloads for it (extracting through *p_val / the Ref's own conversion
   // operator), so this one template handles every source type uniformly.
   template<typename T> requires (IsArithV<T> || IsArithRefV<T>) LogicalRef& operator=(const T& x) {
-    *p_val = static_cast<bool>(get_val(x));
-    if (p_na) *p_na = get_scalar_val(x).is_na;
+    const Logical l(get_scalar_val(x));
+    *p_val = l.val;
+    if (p_na) *p_na = l.is_na;
     return *this;
   }
   // delegate to Logical so the NA guard applies, like every other method here
