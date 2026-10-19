@@ -129,10 +129,11 @@ identical(res, heat(n, steps))
 identical(res, heat_rcpp(n, steps))
 identical(res, heat_checked(n, steps))
 
-microbenchmark::microbenchmark(
-  heat(n, steps),
-  fcpp(n, steps),
-  heat_checked(n, steps),
-  heat_rcpp(n, steps),
+res <- microbenchmark::microbenchmark(
+  R = heat(n, steps),
+  ast2ast = fcpp(n, steps),
+  rcpp_checked = heat_checked(n, steps),
+  rcpp = heat_rcpp(n, steps),
   times = 20
 )
+res

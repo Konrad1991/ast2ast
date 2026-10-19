@@ -59,10 +59,65 @@ spectral_norm <- function(n) {
   return(sqrt(vBv / vv))
 }
 
-fcpp <- translate(spectral_norm)
+fcpp <- translate(spectral_norm, debug = FALSE)
+
+Rcpp::cppFunction("
+double spectral_norm_rcpp(int n) {
+  NumericVector u(n, 1.0);
+  NumericVector v(n);
+  NumericVector tmp(n);
+  for (int iter = 1; iter <= 10; iter++) {
+    for (int i = 1; i <= n; i++) {
+      double acc = 0.0;
+      for (int j = 1; j <= n; j++) {
+        int s = i + j - 2;
+        acc += u[j - 1] / ((s * (s + 1)) / 2 + i);
+      }
+      tmp[i - 1] = acc;
+    }
+    for (int i = 1; i <= n; i++) {
+      double acc = 0.0;
+      for (int j = 1; j <= n; j++) {
+        int s = i + j - 2;
+        acc += tmp[j - 1] / ((s * (s + 1)) / 2 + j);
+      }
+      v[i - 1] = acc;
+    }
+    for (int i = 1; i <= n; i++) {
+      double acc = 0.0;
+      for (int j = 1; j <= n; j++) {
+        int s = i + j - 2;
+        acc += v[j - 1] / ((s * (s + 1)) / 2 + i);
+      }
+      tmp[i - 1] = acc;
+    }
+    for (int i = 1; i <= n; i++) {
+      double acc = 0.0;
+      for (int j = 1; j <= n; j++) {
+        int s = i + j - 2;
+        acc += tmp[j - 1] / ((s * (s + 1)) / 2 + j);
+      }
+      u[i - 1] = acc;
+    }
+  }
+  double vBv = 0.0, vv = 0.0;
+  for (int i = 0; i < n; i++) {
+    vBv += u[i] * v[i];
+    vv += v[i] * v[i];
+  }
+  return std::sqrt(vBv / vv);
+}
+")
 
 n <- 100L
 identical(fcpp(n), spectral_norm(n))
-microbenchmark::microbenchmark(
-  fcpp(n), spectral_norm(n)
+identical(fcpp(n), spectral_norm_rcpp(n))
+res <- microbenchmark::microbenchmark(
+  ast2ast = fcpp(n), R = spectral_norm(n), rcpp = spectral_norm_rcpp(n)
 )
+res
+fold <- function(res) {
+  temp <- aggregate(time ~ expr, res, mean)
+  temp$time[[2]] / temp$time[[1]]
+}
+fold(res)

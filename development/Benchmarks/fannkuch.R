@@ -75,12 +75,65 @@ fannkuch <- function(n) {
   return(c(checksum, max_flips))
 }
 
-fcpp <- translate(fannkuch)
+fcpp <- translate(fannkuch, debug = FALSE)
+
+Rcpp::cppFunction("
+IntegerVector fannkuch_rcpp(int n) {
+  IntegerVector perm1(n), perm(n), count(n);
+  for (int i = 0; i < n; i++) perm1[i] = i + 1;
+  int max_flips = 0, checksum = 0, nperm = 0, r = n;
+  bool done = false;
+  while (!done) {
+    while (r > 1) {
+      count[r - 1] = r;
+      r--;
+    }
+    for (int i = 0; i < n; i++) perm[i] = perm1[i];
+    int flips = 0;
+    int k = perm[0];
+    while (k != 1) {
+      int lo = 1, hi = k;
+      while (lo < hi) {
+        int tmp = perm[lo - 1];
+        perm[lo - 1] = perm[hi - 1];
+        perm[hi - 1] = tmp;
+        lo++;
+        hi--;
+      }
+      flips++;
+      k = perm[0];
+    }
+    if (flips > max_flips) max_flips = flips;
+    if (nperm % 2 == 0) checksum += flips; else checksum -= flips;
+    while (true) {
+      if (r == n) {
+        done = true;
+        break;
+      }
+      int perm0 = perm1[0];
+      for (int i = 1; i <= r; i++) perm1[i - 1] = perm1[i];
+      perm1[r] = perm0;
+      count[r] = count[r] - 1;
+      if (count[r] > 0) break;
+      r++;
+    }
+    nperm++;
+  }
+  return IntegerVector::create(checksum, max_flips);
+}
+")
 
 n <- 8L
 res <- fcpp(n)
 res_r <- fannkuch(n)
 identical(res, res_r)
-microbenchmark::microbenchmark(
-  fcpp(n), fannkuch(n)
+identical(res, fannkuch_rcpp(n))
+res <- microbenchmark::microbenchmark(
+  ast2ast = fcpp(n), R = fannkuch(n), rcpp = fannkuch_rcpp(n)
 )
+res
+fold <- function(res) {
+  temp <- aggregate(time ~ expr, res, mean)
+  temp$time[[2]] / temp$time[[1]]
+}
+fold(res)

@@ -49,6 +49,28 @@ mat_subset_a2a <- function(M, i_idx, j_idx, reps) {
 }
 fcpp_mat <- ast2ast::translate(mat_subset_a2a, debug = FALSE)
 
+# clone: Rcpp would otherwise modify the caller's x / M in place
+Rcpp::cppFunction("
+NumericVector vec_subset_rcpp(NumericVector x, IntegerVector idx, int reps) {
+  NumericVector out = clone(x);
+  for (int r = 0; r < reps; r++) {
+    for (int k = 0; k < idx.size(); k++) out[idx[k] - 1] += 1.0;
+  }
+  return out;
+}
+")
+Rcpp::cppFunction("
+NumericMatrix mat_subset_rcpp(NumericMatrix M, IntegerVector i_idx, IntegerVector j_idx, int reps) {
+  NumericMatrix out = clone(M);
+  for (int r = 0; r < reps; r++) {
+    for (int b = 0; b < j_idx.size(); b++) {
+      for (int a = 0; a < i_idx.size(); a++) out(i_idx[a] - 1, j_idx[b] - 1) += 1.0;
+    }
+  }
+  return out;
+}
+")
+
 # ---- setup ----
 set.seed(1234)
 n <- 5000L
@@ -78,22 +100,32 @@ stopifnot(identical(mat_subset_r(M0, i_regular, j_irregular, reps),   fcpp_mat(M
 stopifnot(identical(mat_subset_r(M0, i_irregular, j_regular, reps),   fcpp_mat(M0, i_irregular, j_regular, reps)))
 stopifnot(identical(mat_subset_r(M0, i_irregular, j_irregular, reps), fcpp_mat(M0, i_irregular, j_irregular, reps)))
 
+stopifnot(identical(vec_subset_r(x0, idx_irregular, reps), vec_subset_rcpp(x0, idx_irregular, reps)))
+stopifnot(identical(mat_subset_r(M0, i_irregular, j_irregular, reps), mat_subset_rcpp(M0, i_irregular, j_irregular, reps)))
+
 # ---- benchmark ----
-microbenchmark::microbenchmark(
+res <- microbenchmark::microbenchmark(
   vec_contig_r        = vec_subset_r(x0, idx_contig, reps),
   vec_contig_a2a      = fcpp_vec(x0, idx_contig, reps),
+  vec_contig_rcpp     = vec_subset_rcpp(x0, idx_contig, reps),
   vec_strided_r       = vec_subset_r(x0, idx_strided, reps),
   vec_strided_a2a     = fcpp_vec(x0, idx_strided, reps),
+  vec_strided_rcpp    = vec_subset_rcpp(x0, idx_strided, reps),
   vec_irregular_r     = vec_subset_r(x0, idx_irregular, reps),
   vec_irregular_a2a   = fcpp_vec(x0, idx_irregular, reps),
+  vec_irregular_rcpp  = vec_subset_rcpp(x0, idx_irregular, reps),
 
   mat_reg_reg_r       = mat_subset_r(M0, i_regular, j_regular, reps),
   mat_reg_reg_a2a     = fcpp_mat(M0, i_regular, j_regular, reps),
+  mat_reg_reg_rcpp    = mat_subset_rcpp(M0, i_regular, j_regular, reps),
   mat_reg_irr_r       = mat_subset_r(M0, i_regular, j_irregular, reps),
   mat_reg_irr_a2a     = fcpp_mat(M0, i_regular, j_irregular, reps),
+  mat_reg_irr_rcpp    = mat_subset_rcpp(M0, i_regular, j_irregular, reps),
   mat_irr_reg_r       = mat_subset_r(M0, i_irregular, j_regular, reps),
   mat_irr_reg_a2a     = fcpp_mat(M0, i_irregular, j_regular, reps),
+  mat_irr_reg_rcpp    = mat_subset_rcpp(M0, i_irregular, j_regular, reps),
   mat_irr_irr_r       = mat_subset_r(M0, i_irregular, j_irregular, reps),
   mat_irr_irr_a2a     = fcpp_mat(M0, i_irregular, j_irregular, reps),
+  mat_irr_irr_rcpp    = mat_subset_rcpp(M0, i_irregular, j_irregular, reps),
   times = 100L
 )
