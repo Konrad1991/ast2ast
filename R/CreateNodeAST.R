@@ -80,10 +80,10 @@ create_ast <- function(code, context, env, function_registry) {
   } else if (operator == "fn") {
     parts <- as.list(code)[-1]
     if (!is.null(names(parts)) && any(nzchar(names(parts)))) {
-      stop("fn() takes no named arguments -- use fn(argtypes(...), return(spec), { ... })")
+      stop("fn() takes no named arguments -- use fn(argtypes(...), return(spec), { ... })", call. = FALSE)
     }
     if (length(parts) != 3L) {
-      stop("fn() takes exactly three parts: argtypes(...), return(spec), and a { } block")
+      stop("fn() takes exactly three parts: argtypes(...), return(spec), and a { } block", call. = FALSE)
     }
     args_call <- parts[[1L]]
     return_call <- parts[[2L]]
@@ -114,7 +114,7 @@ create_ast <- function(code, context, env, function_registry) {
   } else if (operator == "function") {
     body <- code[[3L]] |> wrap_in_block()
     if (length(body) < 4L) {
-      stop("function() requires the definition of: argtypes(...), returntype(...) followed by the function body itself")
+      stop("function() requires the definition of: argtypes(...), returntype(...) followed by the function body itself", call. = FALSE)
     }
     args_call <- body[[2L]]
     temp_f <- function() {}
@@ -188,7 +188,7 @@ create_ast <- function(code, context, env, function_registry) {
     nn$context <- context
     return(nn)
   } else {
-    stop("Unexpected error during AST creation. Please create an issue on https://github.com/Konrad1991/ast2ast")
+    stop("Unexpected error during AST creation. Please create an issue on https://github.com/Konrad1991/ast2ast", call. = FALSE)
   }
 }
 
@@ -199,8 +199,8 @@ parse_body <- function(b, env, function_registry) {
     process(b, "Start", env, function_registry)
   }, silent = TRUE)
   if (inherits(ast, "try-error")) {
-    error_string <- ast |> as.character()
-    stop(sprintf("Could not translate the function due to %s", error_string))
+    error_string <- try_message(ast)
+    stop(sprintf("Could not translate the function due to %s", error_string), call. = FALSE)
   }
   return(ast)
 }
@@ -210,15 +210,15 @@ parse_body <- function(b, env, function_registry) {
 update_function_registry <- function(ast, function_registry, namespace = "f_impl") {
   e <- try(traverse_ast(ast, action_update_function_registry, function_registry, namespace), silent = TRUE)
   if (inherits(e, "try-error")) {
-    error_string <- e |> as.character()
-    stop(sprintf("Could not update the function registry due to: %s", error_string))
+    error_string <- try_message(e)
+    stop(sprintf("Could not update the function registry due to: %s", error_string), call. = FALSE)
   }
   line <- try( { ast$stringify_error_line() }, silent = TRUE)
   if (inherits(line, "try-error")) {
-    stop("error: Could not stringify the AST")
+    stop("error: Could not stringify the AST", call. = FALSE)
   }
   if (err_found(line)) {
-    stop(line)
+    stop(line, call. = FALSE)
   }
 }
 
@@ -227,20 +227,20 @@ update_function_registry <- function(ast, function_registry, namespace = "f_impl
 run_checks <- function(ast, r_fct, function_registry, known_types = list()) {
   e <- try(traverse_ast(ast, action_error, r_fct, function_registry, known_types), silent = TRUE)
   if (inherits(e, "try-error")) {
-    stop("error: Could not run checks on AST")
+    stop("error: Could not run checks on AST", call. = FALSE)
   }
   info_env <- new.env(parent = emptyenv())
   info_env$in_loop <- FALSE
   e <- try(traverse_ast(ast, action_check_break_next, info_env), silent = TRUE)
   if (inherits(e, "try-error")) {
-    stop("error: Could not run checks on AST")
+    stop("error: Could not run checks on AST", call. = FALSE)
   }
   line <- try( { ast$stringify_error_line() }, silent = TRUE)
   if (inherits(line, "try-error")) {
-    stop("error: Could not stringify the AST")
+    stop("error: Could not stringify the AST", call. = FALSE)
   }
   if (err_found(line)) {
-    stop(line)
+    stop(line, call. = FALSE)
   }
 }
 
@@ -251,7 +251,7 @@ sort_args <- function(ast, function_registry) {
     traverse_ast(ast, action_sort_args, function_registry)
   )
   if (inherits(e, "try-error")) {
-    stop("error: Could not sort the arguments")
+    stop("error: Could not sort the arguments", call. = FALSE)
   }
   return(ast)
 }
@@ -295,14 +295,14 @@ infer_types <- function(ast, f, f_args, r_fct, real_type, function_registry, kno
     settle_range_vars(ast, env)
   }, silent = TRUE)
   if (inherits(e, "try-error")) {
-    stop(sprintf("Error: Could not infer the types, caused by %s", as.character(e)))
+    stop(sprintf("Could not infer the types, caused by %s", try_message(e)), call. = FALSE)
   }
   line <- try( { ast$stringify_error_line() }, silent = TRUE)
   if (inherits(line, "try-error")) {
-    stop("error: Could not stringify the AST")
+    stop("error: Could not stringify the AST", call. = FALSE)
   }
   if (err_found(line)) {
-    stop(line)
+    stop(line, call. = FALSE)
   }
   # a variable only ever read, never assigned, stays unknown_type here; catch it
   # now with the same message type_checking()'s type_list_checks() would give
@@ -311,7 +311,7 @@ infer_types <- function(ast, f, f_args, r_fct, real_type, function_registry, kno
   # here: the NA/NaN/Inf base-type check needs later passes to have run first.
   unresolved <- names(env$vars_list)[vapply(env$vars_list, inherits, logical(1), "unknown_type")]
   if (length(unresolved)) {
-    stop(uninitialized_msg(unresolved[[1L]]))
+    stop(uninitialized_msg(unresolved[[1L]]), call. = FALSE)
   }
   return(env$vars_list)
 }
@@ -323,14 +323,14 @@ type_checking <- function(ast, vars_types_list, r_fct, real_type, function_regis
   type_list_checks(vars_types_list)
   e <- try(traverse_ast(ast, action_check_type_of_args, vars_types_list, r_fct, real_type, function_registry, known_types))
   if (inherits(e, "try-error")) {
-    stop("Could not check the type of the arguments to functions")
+    stop("Could not check the type of the arguments to functions", call. = FALSE)
   }
   line <- try( { ast$stringify_error_line() }, silent = TRUE)
   if (inherits(line, "try-error")) {
-    stop("error: Could not stringify the AST")
+    stop("error: Could not stringify the AST", call. = FALSE)
   }
   if (err_found(line)) {
-    stop(line)
+    stop(line, call. = FALSE)
   }
 }
 
@@ -355,21 +355,21 @@ determine_types_of_returns <- function(ast, vars_types_list, r_fct, real_type, f
     ast, type_infer_return_action, env
   ), silent = TRUE)
   if (inherits(e, "try-error")) {
-    stop("Error: Could not infer the return type")
+    stop("Error: Could not infer the return type", call. = FALSE)
   }
   line <- try( { ast$stringify_error_line() }, silent = TRUE)
   if (inherits(line, "try-error")) {
-    stop("error: Could not stringify the AST")
+    stop("error: Could not stringify the AST", call. = FALSE)
   }
   if (err_found(line)) {
-    stop(line)
+    stop(line, call. = FALSE)
   }
   # r_fct returns SEXP, so a valueless path (return()/NULL) and a value return
   # mix fine. XPtr has one concrete return type -> the two cannot coexist,
   # whether the valueless path is user-written or inserted by
   # create_return_statement for a fall-through.
   if (!r_fct && env$found_void_return && env$found_non_void_return) {
-    stop("An XPtr function must return a value on every path, or on none: found both a valueless path and a value return")
+    stop("An XPtr function must return a value on every path, or on none: found both a valueless path and a value return", call. = FALSE)
   }
   # Reduce the value returns to one type; character entries are void markers
   # ("R_NilValue" / "void"). r_fct returns SEXP so nothing is reconciled.
@@ -392,7 +392,7 @@ translate_to_cpp_code <- function(ast, r_fct, real_type, function_registry, debu
   # Stringify ast
   e <- try({code_string <- ast$stringify("  ")}, silent = TRUE)
   if (inherits(e, "error")) {
-    stop("error: Could not stringify the AST")
+    stop("error: Could not stringify the AST", call. = FALSE)
   }
   c(code_string, "\n")
 }
@@ -513,7 +513,7 @@ resolve_derivative <- function(derivative) {
 # the nested-fn check in process().
 argtypes_arg_names <- function(argtypes) {
   if (!is.call(argtypes) || !identical(deparse(argtypes[[1L]]), "argtypes")) {
-    stop("expected an argtypes(...) block")
+    stop("expected an argtypes(...) block", call. = FALSE)
   }
   entries <- as.list(argtypes)[-1L] # drop the `argtypes` head
   if (length(entries) == 0L) return(character(0L))
@@ -526,7 +526,7 @@ argtypes_arg_names <- function(argtypes) {
     }
     if (!is.call(x) || !identical(as.character(x[[1L]]), "type")) {
       stop(sprintf("argtypes() entry %s is not of the form `<name> |> type(...)`",
-        deparse(x)))
+        deparse(x)), call. = FALSE)
     }
     as.character(x[[2L]])
   }
@@ -535,7 +535,7 @@ argtypes_arg_names <- function(argtypes) {
   dups <- unique(at_names[duplicated(at_names)])
   if (length(dups) > 0L) {
     stop(sprintf("argtypes() declares %s more than once",
-      paste0("'", dups, "'", collapse = ", ")))
+      paste0("'", dups, "'", collapse = ", ")), call. = FALSE)
   }
   at_names
 }
@@ -550,7 +550,7 @@ argtypes_match_formals <- function(f, argtypes) {
   at_names <- argtypes_arg_names(argtypes)
   if (length(at_names) == 0L) {
     if (length(formal_args) == 0L) return(invisible())
-    stop("argtypes() is empty, which is only valid for a function with no arguments")
+    stop("argtypes() is empty, which is only valid for a function with no arguments", call. = FALSE)
   }
 
   extra <- setdiff(at_names, formal_args)
@@ -565,21 +565,21 @@ argtypes_match_formals <- function(f, argtypes) {
         msg <- paste0(msg, sprintf(" (did you mean '%s'?)", formal_args[which.min(d)]))
       }
     }
-    stop(msg)
+    stop(msg, call. = FALSE)
   }
 
   missing <- setdiff(formal_args, at_names)
   if (length(missing) > 0L) {
     stop(sprintf(
       "argtypes() gives no type for %s -- every argument must be typed when argtypes() is present",
-      paste0("'", missing, "'", collapse = ", ")))
+      paste0("'", missing, "'", collapse = ", ")), call. = FALSE)
   }
 
   # same set of names now -- the order must match the function signature
   if (!identical(at_names, formal_args)) {
     stop(sprintf(
       "argtypes() must list the arguments in the same order as the function: expected (%s), got (%s)",
-      paste(formal_args, collapse = ", "), paste(at_names, collapse = ", ")))
+      paste(formal_args, collapse = ", "), paste(at_names, collapse = ", ")), call. = FALSE)
   }
 
   invisible()
@@ -602,7 +602,7 @@ translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, de
     is_args <- is_args[-1L]
   }
   if (any(is_args)) {
-    stop("argtypes(...) must be the first statement of the function body")
+    stop("argtypes(...) must be the first statement of the function body", call. = FALSE)
   }
   if (!is.null(args_fct)) {
     argtypes_match_formals(fct, args_fct)
@@ -621,7 +621,7 @@ translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, de
     is_ret <- is_ret[-1L]
   }
   if (any(is_ret)) {
-    stop("returntype(...) must directly follow argtypes(...) as the first statement of the function body")
+    stop("returntype(...) must directly follow argtypes(...) as the first statement of the function body", call. = FALSE)
   }
   b <- keep_trailing_srcrefs(as.call(c(as.name("{"), stmts)), body(fct))
 
@@ -632,7 +632,7 @@ translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, de
     declared_return_type <- parse_return(returntype_fct, r_fct, real_type, known_types, TRUE)[[1]]
     declared_return_type$real_type <- real_type
     if (!is.null(declared_return_type$get_error())) {
-      stop(sprintf("Wrong return type for function %s: %s", name_fct, declared_return_type$get_error()))
+      stop(sprintf("Wrong return type for function %s: %s", name_fct, declared_return_type$get_error()), call. = FALSE)
     }
   }
 
@@ -667,7 +667,7 @@ translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, de
   # has no C++ type for the XPtr signature -- reject before it hits the compiler.
   if (!r_fct && inherits(return_type, "pre_type_node") &&
       identical(return_type$get_base_type(), "character")) {
-    stop("An XPtr function cannot return a string")
+    stop("An XPtr function cannot return a string", call. = FALSE)
   }
 
   # Translate

@@ -242,7 +242,7 @@ f <- function(a) {
 }
 check_error(
   f, TRUE, "etr::Double",
-  "Could not update the function registry due to: Error in action(node, ...) : \n  The name b is already in use by another function\n"
+  "Could not update the function registry due to: The name b is already in use by another function"
 )
 
 # Using a function as numeric variable results in error
@@ -274,7 +274,7 @@ f <- function(a) {
 }
 check_error(
   f, TRUE, "etr::Double",
-  "Error: Could not infer the types, caused by Error in type_infer_assignment(node, info_env) : \n  You cannot reassign a function to the variable b, that was previously declared as scalar of type double\n"
+  "Could not infer the types, caused by You cannot reassign a function to the variable b, that was previously declared as scalar of type double"
 )
 
 # Simple example of inner function

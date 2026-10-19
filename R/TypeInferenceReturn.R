@@ -116,7 +116,7 @@ reconcile_return_types <- function(value_types, r_fct) {
   Reduce(function(acc, t) {
     if (inherits(acc, "pre_type_node") && inherits(t, "pre_type_node")) {
       if (identical(acc$get_base_type(), "character") || identical(t$get_base_type(), "character")) {
-        stop("An XPtr function cannot return a string")
+        stop("An XPtr function cannot return a string", call. = FALSE)
       }
       return(common_type(acc, t) |> flatten_type())
     }
@@ -126,7 +126,7 @@ reconcile_return_types <- function(value_types, r_fct) {
     if (same_custom) {
       return(acc)
     }
-    stop("An XPtr function must return the same type on every path")
+    stop("An XPtr function must return the same type on every path", call. = FALSE)
   }, value_types)
 }
 
@@ -139,25 +139,25 @@ validate_declared_return_type <- function(declared, value_types, found_void_retu
   is_void <- inherits(declared, "pre_type_node") && identical(declared$get_base_type(), "void")
   if (is_void) {
     if (found_non_void_return) {
-      stop(sprintf("%s is declared with returntype(void) but returns a value on at least one path", label))
+      stop(sprintf("%s is declared with returntype(void) but returns a value on at least one path", label), call. = FALSE)
     }
     return(declared)
   }
   if (found_void_return) {
-    stop(sprintf("%s has a declared return type but returns nothing (NULL/void) on at least one path", label))
+    stop(sprintf("%s has a declared return type but returns nothing (NULL/void) on at least one path", label), call. = FALSE)
   }
   for (t in value_types) {
     if (!same_base_type(t$get_base_type(), declared$get_base_type())) {
       stop(sprintf(
         "Specified return type does not match the detected return type for %s. Desired base type is %s but found %s",
         label, declared$get_base_type(), t$get_base_type()
-      ))
+      ), call. = FALSE)
     }
     if (!same_data_struct(t$get_data_struct(), declared$get_data_struct())) {
       stop(sprintf(
         "Specified return type does not match the detected return type for %s. Desired data structure is %s but found %s",
         label, declared$get_data_struct(), t$get_data_struct()
-      ))
+      ), call. = FALSE)
     }
   }
   declared

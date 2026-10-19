@@ -5,6 +5,11 @@ is_symbol <- function (x) {
   return(TRUE)
 }
 
+# message of a try-error without R's "Error in <internal call> :" prefix (#56)
+try_message <- function(e) {
+  conditionMessage(attr(e, "condition"))
+}
+
 err_found <- function(string) {
   if (is.null(string)) return(FALSE)
   string <- gsub("\n|\t| ", "", string)
@@ -221,20 +226,20 @@ convert_types_to_etr_types <- function(base_type, data_struct, r_fct, real_type,
   }
   else if (any(data_struct == c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat", "borrow_array")) && !r_fct) {
     if (real_type == "etr::ReverseDouble") {
-      stop("You cannot use borrowed data structures in combination with reverse mode automatic differentiation")
+      stop("You cannot use borrowed data structures in combination with reverse mode automatic differentiation", call. = FALSE)
     }
     if (real_type == "etr::Dual") {
-      stop("You cannot use borrowed data structures in combination with forward mode automatic differentiation")
+      stop("You cannot use borrowed data structures in combination with forward mode automatic differentiation", call. = FALSE)
     }
     data_struct <- "etr::Array"
     return(paste0(indent, data_struct, "<", convert_base_type(base_type, real_type), ", etr::Borrow<", convert_base_type(base_type, real_type), ">>"))
   }
   else if (any(data_struct == c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat", "borrow_array")) && r_fct) {
     if (real_type == "etr::ReverseDouble") {
-      stop("You cannot use borrowed data structures in combination with reverse mode automatic differentiation")
+      stop("You cannot use borrowed data structures in combination with reverse mode automatic differentiation", call. = FALSE)
     }
     if (real_type == "etr::Dual") {
-      stop("You cannot use borrowed data structures in combination with forward mode automatic differentiation")
+      stop("You cannot use borrowed data structures in combination with forward mode automatic differentiation", call. = FALSE)
     }
     data_struct <- "etr::Array"
     return(paste0(indent, data_struct, "<", convert_base_type(base_type, real_type), ", etr::Borrow<", convert_base_type(base_type, real_type), ">>"))
@@ -353,7 +358,7 @@ compile <- function(fct_code, r_fct,
       },
       error = function(e) {
         print(e)
-        stop("Sorry compilation failed!")
+        stop("Sorry compilation failed!", call. = FALSE)
       }
     )
   } else {
@@ -372,7 +377,7 @@ compile <- function(fct_code, r_fct,
       },
       error = function(e) {
         print(e)
-        stop("Sorry compilation failed!")
+        stop("Sorry compilation failed!", call. = FALSE)
       }
     )
 

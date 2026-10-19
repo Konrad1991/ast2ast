@@ -212,7 +212,7 @@ binary_node <- R6::R6Class(
           self$operator, " ",
           self$string_left(),
           " ", self$string_right()
-        ))
+        ), call. = FALSE)
       }
       if (self$context == "Start") {
         ret <- paste0(ret, ";")
@@ -1725,7 +1725,7 @@ collection <- R6::R6Class(
     stringify = function(indent = "") {
       basic <- is_base_type(self$type)
       if (basic) {
-        stop("collections cannot contain basic types")
+        stop("collections cannot contain basic types", call. = FALSE)
       }
       if (inherits(self$element_type, "new_type_node")) {
         return(sprintf("etr::Collection<%s>", self$element_type$stringify()))

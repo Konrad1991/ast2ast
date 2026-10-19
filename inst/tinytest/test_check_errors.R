@@ -463,6 +463,18 @@ expect_true(inherits(e, "try-error"))
 expect_true(grepl("Unary '+' is not supported",
   attributes(e)[["condition"]]$message, fixed = TRUE))
 
+# --- no internal calls in translation errors (#56)
+f <- function(x) {
+  argtypes(x |> type(double))
+  g <- function(y) y + 1
+  return(g(x))
+}
+e <- tryCatch(ast2ast::translate(f, getsource = TRUE), error = identity)
+expect_null(conditionCall(e))
+expect_false(grepl("create_ast", conditionMessage(e), fixed = TRUE))
+expect_false(grepl("Error in", conditionMessage(e), fixed = TRUE))
+expect_true(grepl("function() requires the definition of", conditionMessage(e), fixed = TRUE))
+
 # --- typo in an argument type: the reason is in the error, with a suggestion (#52)
 f <- function(x) {
   argtypes(x |> type(vec(dobule)))

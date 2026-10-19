@@ -67,7 +67,7 @@ traverse_colouring <- function(node, action, ...) {
   } else if (inherits(node, "literal_node")) {
     action(node, ...)
   } else {
-    stop("Unknown node type: ", class(node))
+    stop("Unknown node type: ", class(node), call. = FALSE)
   }
 }
 

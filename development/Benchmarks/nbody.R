@@ -1,157 +1,133 @@
 library(ast2ast)
-library(quickr)
-library(microbenchmark)
 
-nbody_r <- function(x, y, vx, vy, m, steps, dt, eps2) {
-  n <- length(x)
-  # work on local copies: quickr forbids writing back into array args
-  xs <- x; ys <- y; vxs <- vx; vys <- vy
-  for (s in seq_len(steps)) {
-    for (i in seq_len(n)) {
-      ax <- 0.0
-      ay <- 0.0
-      for (j in seq_len(n)) {
-        dx <- xs[j] - xs[i]
-        dy <- ys[j] - ys[i]
-        d2 <- dx * dx + dy * dy + eps2
-        inv <- 1.0 / (d2 * sqrt(d2))
-        f <- m[j] * inv
-        ax <- ax + f * dx
-        ay <- ay + f * dy
-      }
-      vxs[i] <- vxs[i] + dt * ax
-      vys[i] <- vys[i] + dt * ay
-    }
-    for (i in seq_len(n)) {
-      xs[i] <- xs[i] + dt * vxs[i]
-      ys[i] <- ys[i] + dt * vys[i]
-    }
-  }
-  sum(xs) + sum(ys) + sum(vxs) + sum(vys)
-}
+argtypes <- function(...) {}
+returntype <- function(ReturnValue) {}
 
-nbody_ast2ast <- function(x, y, vx, vy, m, steps, dt, eps2) {
+nbody <- function(n) {
   argtypes(
-    x |> type(borrow_vec(double)),
-    y |> type(borrow_vec(double)),
-    vx |> type(borrow_vec(double)),
-    vy |> type(borrow_vec(double)),
-    m |> type(borrow_vec(double)),
-    steps |> type(int),
-    dt |> type(double),
-    eps2 |> type(double)
+    n |> type(int)
   )
-  n <- length(x)
-  xs <- x; ys <- y; vxs <- vx; vys <- vy
-  for (s in seq_len(steps)) {
-    for (i in seq_len(n)) {
-      ax <- 0.0
-      ay <- 0.0
-      for (j in seq_len(n)) {
-        dx <- xs[j] - xs[i]
-        dy <- ys[j] - ys[i]
-        d2 <- dx * dx + dy * dy + eps2
-        inv <- 1.0 / (d2 * sqrt(d2))
-        f <- m[j] * inv
-        ax <- ax + f * dx
-        ay <- ay + f * dy
-      }
-      vxs[i] <- vxs[i] + dt * ax
-      vys[i] <- vys[i] + dt * ay
-    }
-    for (i in seq_len(n)) {
-      xs[i] <- xs[i] + dt * vxs[i]
-      ys[i] <- ys[i] + dt * vys[i]
-    }
-  }
-  sum(xs) + sum(ys) + sum(vxs) + sum(vys)
-}
-fcpp <- ast2ast::translate(nbody_ast2ast, debug = FALSE)
+  pi_val <- 3.141592653589793
+  solar_mass <- 4.0 * pi_val * pi_val
+  dpy <- 365.24
+  dt <- 0.01
+  nb <- 5L
 
-nbody_quickr <- quick(function(x, y, vx, vy, m, steps, dt, eps2) {
-  declare(
-    type(x = double(NA)), type(y = double(NA)),
-    type(vx = double(NA)), type(vy = double(NA)),
-    type(m = double(NA)),
-    type(steps = integer(1)), type(dt = double(1)), type(eps2 = double(1))
+  # sun, jupiter, saturn, uranus, neptune
+  x <- c(
+    0.0,
+    4.84143144246472090e+00,
+    8.34336671824457987e+00,
+    1.28943695621391310e+01,
+    1.53796971148509165e+01
   )
-  n <- length(x)
-  xs <- x; ys <- y; vxs <- vx; vys <- vy
-  for (s in seq_len(steps)) {
-    for (i in seq_len(n)) {
-      ax <- 0.0
-      ay <- 0.0
-      for (j in seq_len(n)) {
-        dx <- xs[j] - xs[i]
-        dy <- ys[j] - ys[i]
-        d2 <- dx * dx + dy * dy + eps2
-        inv <- 1.0 / (d2 * sqrt(d2))
-        f <- m[j] * inv
-        ax <- ax + f * dx
-        ay <- ay + f * dy
-      }
-      vxs[i] <- vxs[i] + dt * ax
-      vys[i] <- vys[i] + dt * ay
-    }
-    for (i in seq_len(n)) {
-      xs[i] <- xs[i] + dt * vxs[i]
-      ys[i] <- ys[i] + dt * vys[i]
-    }
-  }
-  sum(xs) + sum(ys) + sum(vxs) + sum(vys)
-})
+  y <- c(
+    0.0,
+    -1.16032004402742839e+00,
+    4.12479856412430479e+00,
+    -1.51111514016986312e+01,
+    -2.59193146099879641e+01
+  )
+  z <- c(
+    0.0,
+    -1.03622044471123109e-01,
+    -4.03523417114321381e-01,
+    -2.23307578892655734e-01,
+    1.79258772950371181e-01
+  )
+  vx <- c(
+    0.0,
+    1.66007664274403694e-03 * dpy,
+    -2.76742510726862411e-03 * dpy,
+    2.96460137564761618e-03 * dpy,
+    2.68067772490389322e-03 * dpy
+  )
+  vy <- c(
+    0.0,
+    7.69901118419740425e-03 * dpy,
+    4.99852801234917238e-03 * dpy,
+    2.37847173959480950e-03 * dpy,
+    1.62824170038242295e-03 * dpy
+  )
+  vz <- c(
+    0.0,
+    -6.90460016972063023e-05 * dpy,
+    2.30417297573763929e-05 * dpy,
+    -2.96589568540237556e-05 * dpy,
+    -9.51592254519715870e-05 * dpy
+  )
+  mass <- c(
+    solar_mass,
+    9.54791938424326609e-04 * solar_mass,
+    2.85885980666130812e-04 * solar_mass,
+    4.36624404335156298e-05 * solar_mass,
+    5.15138902046611451e-05 * solar_mass
+  )
 
-nbody_c <- inline::cfunction(
-  sig = c(x = "SEXP", y = "SEXP", vx = "SEXP", vy = "SEXP", m = "SEXP",
-          steps = "SEXP", dt = "SEXP", eps2 = "SEXP"),
-  body = r"({
-    int n = Rf_length(x), nsteps = Rf_asInteger(steps);
-    double h = Rf_asReal(dt), e2 = Rf_asReal(eps2);
-    SEXP sx = PROTECT(Rf_duplicate(x)),  sy = PROTECT(Rf_duplicate(y));
-    SEXP svx = PROTECT(Rf_duplicate(vx)), svy = PROTECT(Rf_duplicate(vy));
-    double *X = REAL(sx), *Y = REAL(sy), *VX = REAL(svx), *VY = REAL(svy), *M = REAL(m);
-    for (int s = 0; s < nsteps; s++) {
-      for (int i = 0; i < n; i++) {
-        double ax = 0.0, ay = 0.0;
-        for (int j = 0; j < n; j++) {
-          double dx = X[j] - X[i], dy = Y[j] - Y[i];
-          double d2 = dx*dx + dy*dy + e2;
-          double inv = 1.0 / (d2 * sqrt(d2));
-          double f = M[j] * inv;
-          ax += f * dx; ay += f * dy;
+  # offset momentum so the system's centre of mass is at rest
+  vx[[1L]] <- -sum(vx * mass) / solar_mass
+  vy[[1L]] <- -sum(vy * mass) / solar_mass
+  vz[[1L]] <- -sum(vz * mass) / solar_mass
+
+  energies <- numeric(2L)
+
+  for (phase in seq_len(2L)) {
+    # energy
+    e <- 0.0
+    for (i in seq_len(nb)) {
+      e <- e + 0.5 * mass[[i]] *
+        (vx[[i]] * vx[[i]] + vy[[i]] * vy[[i]] + vz[[i]] * vz[[i]])
+      if (i < nb) {
+        j <- i + 1L
+        while(j <= nb) {
+          dx <- x[[i]] - x[[j]]
+          dy <- y[[i]] - y[[j]]
+          dz <- z[[i]] - z[[j]]
+          e <- e - (mass[[i]] * mass[[j]]) / sqrt(dx * dx + dy * dy + dz * dz)
+          j <- j + 1L
         }
-        VX[i] += h * ax; VY[i] += h * ay;
       }
-      for (int i = 0; i < n; i++) { X[i] += h * VX[i]; Y[i] += h * VY[i]; }
     }
-    double acc = 0.0;
-    for (int i = 0; i < n; i++) acc += X[i] + Y[i] + VX[i] + VY[i];
-    UNPROTECT(4);
-    return Rf_ScalarReal(acc);
-})")
+    energies[[phase]] <- e
 
-# Parameters
-set.seed(42)
-n <- 250L
-x <- runif(n, -1, 1)
-y <- runif(n, -1, 1)
-vx <- numeric(n)
-vy <- numeric(n)
-m <- rep(1.0, n)
-steps <- 10L
-dt <- 1e-3
-eps2 <- 1e-4
+    # advance n steps after the first energy only
+    if (phase == 1L) {
+      for (step in seq_len(n)) {
+        for (i in seq_len(nb - 1L)) {
+          j <- i + 1L
+          while(j <= nb) {
+            dx <- x[[i]] - x[[j]]
+            dy <- y[[i]] - y[[j]]
+            dz <- z[[i]] - z[[j]]
+            d2 <- dx * dx + dy * dy + dz * dz
+            mag <- dt / (d2 * sqrt(d2))
+            vx[[i]] <- vx[[i]] - dx * mass[[j]] * mag
+            vy[[i]] <- vy[[i]] - dy * mass[[j]] * mag
+            vz[[i]] <- vz[[i]] - dz * mass[[j]] * mag
+            vx[[j]] <- vx[[j]] + dx * mass[[i]] * mag
+            vy[[j]] <- vy[[j]] + dy * mass[[i]] * mag
+            vz[[j]] <- vz[[j]] + dz * mass[[i]] * mag
+            j <- j + 1L
+          }
+        }
+        for (i in seq_len(nb)) {
+          x[[i]] <- x[[i]] + dt * vx[[i]]
+          y[[i]] <- y[[i]] + dt * vy[[i]]
+          z[[i]] <- z[[i]] + dt * vz[[i]]
+        }
+      }
+    }
+  }
 
-cat("--- correctness ---\n")
-cat("R       =", nbody_r(x, y, vx, vy, m, steps, dt, eps2), "\n")
-cat("ast2ast =", fcpp(x, y, vx, vy, m, steps, dt, eps2), "\n")
-cat("quickr  =", nbody_quickr(x, y, vx, vy, m, steps, dt, eps2), "\n")
-cat("c       =", nbody_c(x, y, vx, vy, m, steps, dt, eps2), "\n\n")
+  return(energies)
+}
 
-print(microbenchmark(
-  ast2ast = fcpp(x, y, vx, vy, m, steps, dt, eps2),
-  r       = nbody_r(x, y, vx, vy, m, steps, dt, eps2),
-  quickr  = nbody_quickr(x, y, vx, vy, m, steps, dt, eps2),
-  c       = nbody_c(x, y, vx, vy, m, steps, dt, eps2),
-  times = 10L
-))
+fcpp <- translate(nbody, debug = FALSE)
+n <- 1000L
+res <- fcpp(n)
+print(res, digits = 10)
+max(nbody(n) - fcpp(n)) < 1e-10
+
+microbenchmark::microbenchmark(
+  nbody(n), fcpp(n)
+)

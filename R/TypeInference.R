@@ -23,7 +23,7 @@ check_input_args <- function(variables) {
   for (i in seq_along(variables)) {
     if (!is.null(variables[[i]]$type$error)) {
       lapply(variables[[i]]$type$error, print)
-      stop()
+      stop(, call. = FALSE)
     }
   }
 }
@@ -89,7 +89,7 @@ check_orphan_type_annotations <- function(ast, arguments) {
     stop(sprintf(
       "type() annotation for %s, which is never used as a variable",
       paste(sprintf("'%s'", orphans), collapse = ", ")
-    ))
+    ), call. = FALSE)
   }
   invisible()
 }
@@ -382,7 +382,7 @@ type_infer_assignment <- function(node, info_env) {
           if (inherits(type, "fn_node")) {
             old_type <-info_env$vars_list[[variable]]
             stop(sprintf("You cannot reassign a function to the variable %s, that was previously declared as %s of type %s",
-              old_type$get_name(), old_type$get_data_struct(), old_type$get_base_type()))
+              old_type$get_name(), old_type$get_data_struct(), old_type$get_base_type()), call. = FALSE)
           }
           detected_type <- common_type(info_env$vars_list[[variable]], type)
           if (is.character(detected_type)) {
@@ -694,11 +694,11 @@ type_list_checks <- function(l) {
   lapply(names(l), function(name) {
     var <- l[[name]]
     if (inherits(var, "unknown_type")) {
-      stop(uninitialized_msg(name))
+      stop(uninitialized_msg(name), call. = FALSE)
     }
     else if (inherits(var, "pre_type_node")) {
       if (any(var$get_base_type() == c("NA", "NaN", "Inf"))) {
-        stop(sprintf("Found unallowed base type %s, for the variable %s", var$get_base_type(), var$get_name()))
+        stop(sprintf("Found unallowed base type %s, for the variable %s", var$get_base_type(), var$get_name()), call. = FALSE)
       }
     }
   })

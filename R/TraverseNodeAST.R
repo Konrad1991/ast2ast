@@ -52,7 +52,7 @@ traverse_ast <- function(node, action, ...) {
   } else if (inherits(node, "literal_node")) {
     action(node, ...)
   } else {
-    stop("Unknown node type: ", class(node))
+    stop("Unknown node type: ", class(node), call. = FALSE)
   }
 }
 
@@ -149,13 +149,13 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, var_
   info_env$known_types <- node$known_types
   AST <- try(parse_body(body(f) |> wrap_in_block(), info_env, function_registry), silent = TRUE)
   if (inherits(AST, "try-error")) {
-    error_string <- AST |> as.character()
-    stop(sprintf("In inner function %s: Could not translate the function due to %s", node$fct_name, error_string))
+    error_string <- try_message(AST)
+    stop(sprintf("In inner function %s: Could not translate the function due to %s", node$fct_name, error_string), call. = FALSE)
   }
   e <- try(traverse_ast(AST, action_update_function_registry, function_registry, inner_namespace), silent = TRUE)
   if (inherits(e, "try-error")) {
-    error_string <- e |> as.character()
-    stop(sprintf("In inner function %s: Could not update the function registry due to: %s", node$fct_name, error_string))
+    error_string <- try_message(e)
+    stop(sprintf("In inner function %s: Could not update the function registry due to: %s", node$fct_name, error_string), call. = FALSE)
   }
 
   known_from_inner <- node$function_registry$permitted_fcts()
@@ -182,14 +182,14 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, var_
 
   e <- try(run_checks(AST, r_fct, function_registry, node$known_types), silent = TRUE)
   if (!is.null(e) && inherits(e, "try-error")) {
-    stop(sprintf("In inner function %s: Could not run checks on AST due to: %s", node$fct_name, attributes(e)[["condition"]]$message))
+    stop(sprintf("In inner function %s: Could not run checks on AST due to: %s", node$fct_name, attributes(e)[["condition"]]$message), call. = FALSE)
   }
   line <- try( {AST$stringify_error_line() }, silent = TRUE)
   if (inherits(line, "try-error")) {
-    stop(sprintf("In inner function %s: Could not stringify the AST", node$fct_name))
+    stop(sprintf("In inner function %s: Could not stringify the AST", node$fct_name), call. = FALSE)
   }
   if (err_found(line)) {
-    stop(sprintf("In inner function %s:\n%s", node$fct_name, line))
+    stop(sprintf("In inner function %s:\n%s", node$fct_name, line), call. = FALSE)
   }
   AST <- sort_args(AST, function_registry)
   node$vars_types_list <- tryCatch(
@@ -204,7 +204,7 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, var_
   node$return_type$real_type <- real_type
 
   if (!is.null(node$return_type$get_error())) {
-    stop(sprintf("Wrong return type for function %s: %s", node$fct_name, node$return_type$get_error()))
+    stop(sprintf("Wrong return type for function %s: %s", node$fct_name, node$return_type$get_error()), call. = FALSE)
   }
 
   trash <- with_fct_error_context(node$fct_name,
@@ -213,19 +213,19 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, var_
     determine_types_of_returns(AST, node$vars_types_list, r_fct, real_type, function_registry, node$known_types))
   if (is.character(return_type)) {
     if (return_type != "void") {
-      stop(sprintf("Found invalid return type %s in function %s", return_type, node$fct_name))
+      stop(sprintf("Found invalid return type %s in function %s", return_type, node$fct_name), call. = FALSE)
     }
     return_type <- make_inferred_type("scalar", "void", r_fct, real_type)
   }
   if (!same_base_type(return_type$get_base_type(), node$return_type$get_base_type())) {
     stop(sprintf(
       "Specified return type does not match the detected return type for function %s. Desired base type is %s but found %s", node$fct_name, node$return_type$get_base_type(), return_type$get_base_type()
-    ))
+    ), call. = FALSE)
   }
   if (!same_data_struct(return_type$get_data_struct(), node$return_type$get_data_struct())) {
     stop(sprintf(
       "Specified return type does not match the detected return type for function %s. Desired data structure is %s but found %s", node$fct_name, node$return_type$get_data_struct(), return_type$get_data_struct()
-    ))
+    ), call. = FALSE)
   }
 
   for (i in seq_along(AST$block)) {
@@ -283,7 +283,7 @@ action_update_function_registry <- function(node, function_registry, namespace =
   }
   name <- deparse(node$left_node$name)
   if (name %in% function_registry$permitted_fcts()) {
-    stop(sprintf("The name %s is already in use by another function", name))
+    stop(sprintf("The name %s is already in use by another function", name), call. = FALSE)
   }
   fn <- node$right_node
   fn$cpp_path <- paste0(namespace, "::", name, "_t")
