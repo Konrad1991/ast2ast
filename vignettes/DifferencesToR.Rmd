@@ -21,6 +21,7 @@ the generated C++ is statically typed:
 - variables from the enclosing environment are not captured
 - vectors are not recycled
 - `int` arguments need integer input (`200L`)
+- `sum()` of an integer vector gives `NA` on overflow, not a double
 - `Inf`, `NaN` and `NA` are created via `c()`
 
 ## No access to the enclosing environment
@@ -85,6 +86,23 @@ fcpp(200L)
 
 The same holds inside `f`: a bare `1` is a double. Use `1L` or `1L:3L` for
 integers.
+
+## Integer sum
+
+Integer overflow gives `NA` with a warning, as in R. Only `sum()` differs:
+R returns a double if the sum of an integer vector does not fit into an
+integer. In ast2ast the type is fixed at translation time, so the result is
+`NA` with a warning.
+
+```{r}
+f <- function(x) {
+  argtypes(x |> type(vec(int)))
+  return(sum(x))
+}
+translate(f)(c(.Machine$integer.max, 1L))
+# [1] NA
+# Warning: integer overflow - use sum(as.numeric(.))
+```
 
 ## Inf, NaN and NA
 

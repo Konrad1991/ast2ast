@@ -1761,20 +1761,19 @@ inline std::ostream& operator<<(std::ostream& os, const ReverseDouble& x) {
 /*
 Apply arithmetic and assign
 */
+// INT_MIN is NA_integer_ in R, so it counts as overflow too
+[[gnu::cold]] inline Integer integer_overflow_na() {
+  raise_warning("NAs produced by integer overflow");
+  return Integer::NA();
+}
 inline Integer& Integer::operator+=(const Integer& r) {
-  if (is_na || r.is_na) return *this = Integer::NA();
-  val += r.val;
-  return *this;
+  return *this = *this + r;
 }
 inline Integer& Integer::operator-=(const Integer& r) {
-  if (is_na || r.is_na) return *this = Integer::NA();
-  val -= r.val;
-  return *this;
+  return *this = *this - r;
 }
 inline Integer& Integer::operator*=(const Integer& r) {
-  if (is_na || r.is_na) return *this = Integer::NA();
-  val *= r.val;
-  return *this;
+  return *this = *this * r;
 }
 inline Double& Double::operator+=(const Double& r) {
   if (is_na || r.is_na) return *this = Double::NA();
@@ -1848,7 +1847,11 @@ inline Integer Logical::operator+(const Logical& other) const {
 }
 inline Integer Integer::operator+(const Integer& other) const {
   if (is_na || other.is_na) return Integer::NA();
-  return Integer(val + other.val);
+  int res;
+  if (__builtin_add_overflow(val, other.val, &res) || res == std::numeric_limits<int>::min()) [[unlikely]] {
+    return integer_overflow_na();
+  }
+  return Integer(res);
 }
 // NOTE: branchless on purpose (no `if (is_na) return NA()`): NA branches between
 // the FP ops kept the CPU from overlapping e.g. divisions (diffuse.R, perf).
@@ -1877,7 +1880,11 @@ inline Integer Logical::operator-(const Logical& other) const {
 }
 inline Integer Integer::operator-(const Integer& other) const {
   if (is_na || other.is_na) return Integer::NA();
-  return Integer(val - other.val);
+  int res;
+  if (__builtin_sub_overflow(val, other.val, &res) || res == std::numeric_limits<int>::min()) [[unlikely]] {
+    return integer_overflow_na();
+  }
+  return Integer(res);
 }
 inline Double Double::operator-(const Double& other) const {
   return double_na_select(val - other.val, is_na | other.is_na);
@@ -1953,7 +1960,11 @@ inline Integer Logical::operator*(const Logical& other) const {
 }
 inline Integer Integer::operator*(const Integer& other) const {
   if (is_na || other.is_na) return Integer::NA();
-  return Integer(val * other.val);
+  int res;
+  if (__builtin_mul_overflow(val, other.val, &res) || res == std::numeric_limits<int>::min()) [[unlikely]] {
+    return integer_overflow_na();
+  }
+  return Integer(res);
 }
 inline Double Double::operator*(const Double& other) const {
   return double_na_select(val * other.val, is_na | other.is_na);

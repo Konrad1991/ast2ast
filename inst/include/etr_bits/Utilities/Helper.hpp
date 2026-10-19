@@ -262,12 +262,19 @@ template <typename T> requires IsScalarLike<T> inline auto sum(const T inp) {
 }
 template <typename T> requires IsArray<T> inline auto sum(const T &inp) {
   using Inner = typename ExtractDataType<Decayed<T>>::value_type;
-  if constexpr (IS<Inner, Logical>) {
-    Integer acc(0);
+  if constexpr (IS<Inner, Logical> || IS<Inner, Integer>) {
+    // int64 like R; R would return a double on overflow, but the type is fixed at translation time
+    std::int64_t acc = 0;
     for (std::size_t i = 0; i < inp.size(); i++) {
-      acc = acc + inp.get(i);
+      const auto v = get_scalar_val(inp.get(i));
+      if (v.is_na) return Integer::NA();
+      acc += v.val;
     }
-    return acc;
+    if (acc > std::numeric_limits<int>::max() || acc < -std::numeric_limits<int>::max()) {
+      raise_warning("integer overflow - use sum(as.numeric(.))");
+      return Integer::NA();
+    }
+    return Integer(static_cast<int>(acc));
   } else {
     Inner acc(0);
     for (std::size_t i = 0; i < inp.size(); i++) {
