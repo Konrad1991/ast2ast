@@ -1,0 +1,111 @@
+---
+title: "Differences to R"
+author: "Konrad Kraemer"
+output: html_document
+
+vignette: >
+  %\VignetteIndexEntry{Differences to R}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+## Overview
+
+ast2ast follows R wherever possible. A few things work differently because
+the generated C++ is statically typed:
+
+- variables from the enclosing environment are not captured
+- vectors are not recycled
+- `int` arguments need integer input (`200L`)
+- `Inf`, `NaN` and `NA` are created via `c()`
+
+## No access to the enclosing environment
+
+A translated function only sees its arguments and its own variables.
+Everything else has to be passed as an argument.
+
+```{r}
+k <- 2
+f <- function(x) {
+  argtypes(x |> type(vec(double)))
+  return(x * k)
+}
+translate(f)
+# return(x * k)
+# Found uninitialized variable: k
+```
+
+Fix: pass `k` as argument.
+
+```{r}
+f <- function(x, k) {
+  argtypes(
+    x |> type(vec(double)),
+    k |> type(double)
+  )
+  return(x * k)
+}
+```
+
+## No recycling
+
+Both operands must have the same length, or one of them must be a scalar.
+R would recycle the shorter vector.
+
+```{r}
+f <- function() {
+  return(c(1, 2, 3, 4) + c(10, 20))
+}
+fcpp <- translate(f)
+fcpp()
+# In 'return(c(1.0, 2.0, 3.0, 4.0) + c(10.0, 20.0))': encountered non-conformable arrays
+```
+
+Fix: build the vector with the full length, e.g. `rep(c(10, 20), 2L)`.
+
+## Integer arguments
+
+An argument of type `int` only accepts integers. A double is not converted.
+
+```{r}
+f <- function(n) {
+  argtypes(n |> type(int))
+  return(n + 1L)
+}
+fcpp <- translate(f)
+fcpp(200)
+# Type mismatch for 'n': expected integer, got double
+fcpp(200L)
+# [1] 201
+```
+
+The same holds inside `f`: a bare `1` is a double. Use `1L` or `1L:3L` for
+integers.
+
+## Inf, NaN and NA
+
+A bare `Inf` or `NaN` as a scalar is rejected. Wrap the value in `c()`:
+
+```{r}
+f <- function() {
+  y <- -Inf
+  return(y)
+}
+translate(f)
+# Found unallowed base type Inf, for the variable y
+
+f <- function() {
+  y <- c(-Inf)
+  z <- c(1, Inf, NaN, NA)
+  return(z)
+}
+translate(f)()
+# [1]   1 Inf NaN  NA
+```
+
+As in R, `c(NA)` alone is logical; together with a double it becomes a
+double `NA`.
