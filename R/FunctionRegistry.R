@@ -1,3 +1,73 @@
+# Argument names for matching named arguments like R (#48): R's names,
+# reduced to the arguments ast2ast supports, in ast2ast's positional order.
+# Not listed: no named arguments. "...": the function reads its names itself.
+r_arg_names <- list(
+  # allocation / sequences
+  "vector" = c("mode", "length"),
+  "numeric" = "length", "integer" = "length", "logical" = "length",
+  "matrix" = c("data", "nrow", "ncol"),
+  "array" = c("data", "dim"),
+  "rep" = c("x", "times"),
+  "seq_len" = "length.out",
+  "seq_along" = "along.with",
+  "c" = "...",
+  # one-argument math / helpers
+  "sin" = "x", "asin" = "x", "sinh" = "x", "cos" = "x", "acos" = "x", "cosh" = "x",
+  "tan" = "x", "atan" = "x", "tanh" = "x", "log" = "x", "sqrt" = "x", "abs" = "x",
+  "sign" = "x", "exp" = "x", "floor" = "x", "ceiling" = "x", "trunc" = "x", "round" = "x",
+  "length" = "x", "dim" = "x", "nrow" = "x", "ncol" = "x",
+  "is.na" = "x", "is.nan" = "x", "is.infinite" = "x", "is.finite" = "x",
+  "as.numeric" = "x", "as.integer" = "x", "as.logical" = "x",
+  "print" = "x",
+  # reductions / transforms
+  "mean" = "x", "cumsum" = "x", "rev" = "x", "which" = "x", "which.max" = "x", "which.min" = "x",
+  "colSums" = "x", "rowSums" = "x", "colMeans" = "x", "rowMeans" = "x",
+  "sort" = c("x", "decreasing"),
+  "ifelse" = c("test", "yes", "no"),
+  # linear algebra
+  "t" = "x", "chol" = "x", "crossprod" = "x", "tcrossprod" = "x", "det" = "x",
+  "diag" = c("x", "nrow", "ncol"),
+  "get_diag" = "x",
+  "solve" = c("a", "b"),
+  "backsolve" = c("r", "x"),
+  "forwardsolve" = c("l", "x"),
+  # interpolation / solvers / optimizers
+  "cmr" = c("point", "x", "y"),
+  "uniroot" = c("f", "interval", "tol", "maxiter", "data"),
+  "nnls" = c("a", "b"),
+  "lbfgsb" = c("f", "x", "lower", "upper", "maxit", "factr", "pgtol", "lmm", "data"),
+  "pso" = c("f", "lower", "upper", "ngen", "npop", "error_threshold", "global", "seed", "data"),
+  "jacobian" = "...", "jacobian_sparse" = "...", "jacobian_banded" = "...",
+  # functionals
+  "Reduce" = c("f", "x"),
+  "Filter" = c("f", "x"),
+  "apply" = c("f", "MARGIN", "x")
+)
+
+# R-like matching (#48): exact names fill their slot, the unnamed rest fills
+# the free slots in order. Returns the new argument order or an error string.
+match_call_args <- function(fct, given, expected) {
+  n <- length(given)
+  if (is.null(given) || all(given == "") || identical(expected, "...")) return(seq_len(n))
+  if (all(is.na(expected))) return(sprintf("%s does not take named arguments", fct))
+  slots <- rep(NA_integer_, max(length(expected), n))
+  for (i in which(given != "")) {
+    idx <- match(given[[i]], expected)
+    if (is.na(idx)) {
+      return(sprintf("Unknown argument '%s' for %s%s", given[[i]], fct, did_you_mean(given[[i]], expected)))
+    }
+    if (!is.na(slots[idx])) return(sprintf("Argument '%s' of %s is given twice", given[[i]], fct))
+    slots[idx] <- i
+  }
+  for (i in which(given == "")) slots[which(is.na(slots))[1L]] <- i
+  order <- slots[seq_len(n)]
+  if (anyNA(order)) {
+    return(sprintf("Argument '%s' of %s is missing, but a later argument is given",
+                   expected[which(is.na(order))[1L]], fct))
+  }
+  order
+}
+
 # Singleton class holding all information of a function required
 # ========================================================================
 Functions <- R6::R6Class(
@@ -38,6 +108,7 @@ Functions <- R6::R6Class(
       self$number_of_args[which(self$function_names == name)]
     },
     expected_arg_names = function(name) {
+      if (name %in% names(r_arg_names)) return(r_arg_names[[name]])
       self$arg_names[which(self$function_names == name)][[1]]
     },
     check_fct = function(name) {
@@ -352,8 +423,9 @@ check_assignment <- function(node, vars_types_list, info_env) {
       line <- try(node$stringify(), silent = TRUE)
       if (inherits(line, "try-error")) line <- ""
       warning(sprintf(
-        "%s\nTypes do not match perfectly: On the left side: %s(%s) and on the right side: %s(%s)",
-        line, type$get_data_struct(), type$get_base_type(), right_node_type$get_data_struct(), right_node_type$get_base_type()
+        "%s\nVariable %s has the fixed type %s(%s), but a %s(%s) is assigned to it",
+        line, find_var_lhs(node), type$get_data_struct(), type$get_base_type(),
+        right_node_type$get_data_struct(), right_node_type$get_base_type()
       ))
     }
   }
@@ -558,7 +630,7 @@ name_to_index_node <- function(idx_node, names, layout, where, node) {
                    value_name, where, layout$name, closest, node$stringify()))
   }
   new_idx <- literal_node$new(as.integer(idx))
-  for (field in c("context", "real_type", "pre_translate_line", "location", "wrap")) {
+  for (field in c("context", "real_type", "pre_translate_line", "location", "source_line", "wrap")) {
     new_idx[[field]] <- idx_node[[field]]
   }
   new_idx
@@ -650,7 +722,8 @@ infer_unary_math <- function(node, vars_list, info_env, function_registry) {
 }
 infer_unary_minus <- function(node, vars_list, info_env, function_registry) {
   inner_type <- infer(node$obj, vars_list, info_env, function_registry)
-  err <- check_operand_type(inner_type, node)
+  # -Inf inside c(); a bare scalar Inf is still rejected by type_list_checks
+  err <- check_operand_type(inner_type, node, allow_NA_NaN_Inf = TRUE)
   if (!is.null(err)) return(err)
   base_type <- inner_type$get_base_type()
   if (base_type == "logical") base_type <- "int"
@@ -1003,7 +1076,7 @@ function_registry_global$add(
     if (any(types_of_args %in% c("int", "integer"))) {
       common_type <- "integer"
     }
-    if (any(types_of_args %in% c("double", "numeric"))) {
+    if (any(types_of_args %in% c("double", "numeric", "Inf", "NaN"))) {
       common_type <- "double"
     }
     t <- make_inferred_type("vector", common_type, info_env$r_fct, info_env$real_type)
@@ -2547,6 +2620,13 @@ infer_jacobian <- function(node, vars_list, info_env, function_registry, fname) 
       node$args[[length(node$args) + 1L]] <- cpp_code_node$new(
         colouring_cpp(col, opts$n), sprintf("colouring = \"static\", n = %dL", opts$n)
       )
+      split <- dense_row_split(col$rows, opts$n)
+      if (fname != "jacobian_banded" && split$k > 0L) {
+        warning(sprintf(
+          "%s: %d dense row%s; colouring = \"runtime\" needs %d sweeps instead of %d",
+          fname, split$k, if (split$k == 1L) "" else "s", split$sweeps, max(c(0L, col$color))
+        ), call. = FALSE)
+      }
     }
   }
   if (opts$colouring == "runtime" && !any(coloured)) {

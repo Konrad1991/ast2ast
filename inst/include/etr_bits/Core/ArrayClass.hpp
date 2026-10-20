@@ -10,7 +10,7 @@ concept IsSoAScalar = IsDouble<T> || IsInteger<T> || IsLogical<T>;
 // the stores then can't alias scalars inside `src` (e.g. dx^2 in x / dx^2),
 // so those are loaded once, not per element. n must fit the buffer.
 template <typename T, typename Src>
-inline void fill_soa(from_ast_scalar_t<T>* __restrict val, bool* __restrict na,
+inline void fill_soa(from_ast_scalar_t<T>* __restrict val,
                      const Src& src, std::size_t n) {
   using SrcT = typename ReRef<Src>::type::value_type;
   for (std::size_t i = 0; i < n; i++) {
@@ -21,7 +21,6 @@ inline void fill_soa(from_ast_scalar_t<T>* __restrict val, bool* __restrict na,
       x = cast_preserve_na<T>(src.get(i));
     }
     val[i] = x.val;
-    na[i] = x.is_na;
   }
 }
 
@@ -31,7 +30,7 @@ inline void fill_temp(Buffer<T, LBufferTrait>& temp, const Src& src) {
   const std::size_t n = src.size();
   temp.resize(n);
   if constexpr (IsSoAScalar<T>) {
-    fill_soa<T>(temp.p_val, temp.p_na, src, n);
+    fill_soa<T>(temp.p_val, src, n);
   } else {
     using SrcT = typename ReRef<Src>::type::value_type;
     for (std::size_t i = 0; i < n; i++) {
@@ -64,8 +63,9 @@ template<typename T> struct Array<T, Buffer<T, LBufferTrait>> {
   void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
   explicit operator bool() const {
+    ass<"Error in if: argument is of length zero">(this->size() != 0);
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(get_val(d.get(0)));
+    return static_cast<bool>(get_scalar_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -258,8 +258,9 @@ template<typename T> struct Array<T, Buffer<T, RBufferTrait>> {
   void push_back(const T& val) { d.push_back(val); }
 
   explicit operator bool() const {
+    ass<"Error in if: argument is of length zero">(this->size() != 0);
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(get_val(d.get(0)));
+    return static_cast<bool>(get_scalar_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -327,8 +328,9 @@ template<typename T> requires (IsArithV<T> || IsReverseDouble<T>) struct Array<T
   void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
   explicit operator bool() const {
+    ass<"Error in if: argument is of length zero">(this->size() != 0);
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(get_val(d.get(0)));
+    return static_cast<bool>(get_scalar_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -468,8 +470,9 @@ template<typename T, typename I, typename Trait> struct Array<T, UnaryOperation<
   void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
   explicit operator bool() const {
+    ass<"Error in if: argument is of length zero">(this->size() != 0);
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(get_val(d.get(0)));
+    return static_cast<bool>(get_scalar_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -528,8 +531,9 @@ template<typename T, typename L, typename R, typename Trait> struct Array<T, Bin
   void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
   explicit operator bool() const {
+    ass<"Error in if: argument is of length zero">(this->size() != 0);
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(get_val(d.get(0)));
+    return static_cast<bool>(get_scalar_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -589,8 +593,9 @@ template<typename T> struct Array<T, BinaryOperation<T, RangeSpec, RangeTrait>> 
   template<typename V> void set(std::size_t, const V&) = delete;
 
   explicit operator bool() const {
+    ass<"Error in if: argument is of length zero">(this->size() != 0);
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(get_val(d.get(0)));
+    return static_cast<bool>(get_scalar_val(d.get(0)));
   }
   explicit operator value_type() const { return d.get(0); }
 
@@ -645,8 +650,9 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
   explicit operator bool() const {
+    ass<"Error in if: argument is of length zero">(this->size() != 0);
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(get_val(d.get(0)));
+    return static_cast<bool>(get_scalar_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {
@@ -749,8 +755,9 @@ template<typename T, typename O, std::size_t N, typename Trait> struct Array<T, 
   void set(std::size_t idx, const value_type& val) { d.set(idx, val); }
 
   explicit operator bool() const {
+    ass<"Error in if: argument is of length zero">(this->size() != 0);
     ass<"Error in if: the condition has length > 1">(this->size() == 1);
-    return static_cast<bool>(get_val(d.get(0)));
+    return static_cast<bool>(get_scalar_val(d.get(0)));
   }
   explicit operator value_type() const {
     if constexpr (IS<value_type, bool>) {

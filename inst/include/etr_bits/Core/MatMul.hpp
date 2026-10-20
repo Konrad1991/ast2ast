@@ -137,12 +137,7 @@ template<typename A, typename B> inline auto matmul_forward(const A& a, const B&
   Array<Dual, Buffer<Dual, LBufferTrait>> result(SI{M * N});
   result.dim = {M, N};
   for (std::size_t k = 0; k < M * N; ++k) {
-    Dual d;
-    d.val       = c_vals[k];
-    d.dot       = c_dot[k];
-    d.is_na     = std::isnan(c_vals[k]);
-    d.is_na_dot = std::isnan(c_dot[k]);
-    result.set(k, d);
+    result.set(k, Dual(c_vals[k], c_dot[k]));
   }
   return result;
 }
@@ -191,6 +186,8 @@ template<typename A, typename B> requires(IsArray<Decayed<A>> && IsArray<Decayed
   const std::size_t M = sa.first;
   const std::size_t K = sa.second;
   const std::size_t N = sb.second;
+  // BLAS needs leading dimensions >= 1
+  ass<"mat_mul: matrices with a zero dimension are not supported">(M > 0 && K > 0 && N > 0);
 
   if      constexpr (IS<TC, ReverseDouble>) return matmul_reverse(a, b, M, K, N);
   else if constexpr (IS<TC, Dual>)          return matmul_forward(a, b, M, K, N);

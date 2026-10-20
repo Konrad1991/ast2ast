@@ -26,10 +26,10 @@ translate <- function(f,
 
   unallowed <- unallowed_signs(name_f)
   if (!is.null(unallowed)) {
-    stop(sprintf("The function name is not valid as it contains: %s", unallowed))
+    stop(sprintf("The function name is not valid as it contains: %s", unallowed), call. = FALSE)
   }
   if (not_cpp_keyword(name_f)) {
-    stop("The function name is not valid as it is a C++ keyword")
+    stop("The function name is not valid as it is a C++ keyword", call. = FALSE)
   }
 
   # default argument values are dropped -- the wrapper's formals carry no

@@ -91,6 +91,10 @@ par(op)
 
 ![Mandelbrot set rendered from the translated function](development/examples/Mandelbrot/mandelbrot.png)
 
+Note the `L` in `1200L` and `500L`: `int` arguments need integer input, `mb(1200, ...)` is an error.
+More differences to R (no recycling, no access to the enclosing environment, `Inf`/`NaN`/`NA`)
+are listed in `vignette("DifferencesToR")`.
+
 Same source, same result, timed against plain R:
 
 ```r

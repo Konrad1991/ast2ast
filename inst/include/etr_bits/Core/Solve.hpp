@@ -120,6 +120,8 @@ inline auto solve(const A& a, const B& b) {
   const auto sb = solve_rhs_shape(b.get_dim(), b.size());
   ass<"solve: 'b' must have as many rows as 'a'">(sb.first == n);
   const std::size_t k = sb.second;
+  ass<"solve: 'a' is 0-diml">(n > 0);
+  ass<"solve: matrices with a zero dimension are not supported">(k > 0);
   const bool vec_result = b.get_dim().size() < 2;
 
   if constexpr (IS<TC, ReverseDouble>) {
@@ -144,6 +146,7 @@ inline auto solve(const A& a) {
   const auto& da = a.get_dim();
   ass<"solve: 'a' has to be a square matrix">(da.size() == 2 && da[0] == da[1]);
   const std::size_t n = da[0];
+  ass<"solve: 'a' is 0-diml">(n > 0);
 
   if constexpr (IS<TA, ReverseDouble>) {
     // B = identity, a constant (no gradient flows back through it)

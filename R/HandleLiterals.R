@@ -33,7 +33,7 @@ determine_literal_type <- function(obj) {
 t_literal <- function(context, obj, indent, type, wrap, real_type) {
   real_type <- scalar_cpp(real_type)
   if (type == "NA") {
-    if (!wrap) return("NA") else return(paste0(real_type, "::NA()"))
+    if (!wrap) return("NA") else return("etr::Logical::NA()")
   } else if (type == "NaN") {
     if (!wrap) return ("NaN") else return(paste0(real_type, "::NaN()"))
   } else if (type == "Inf") {

@@ -91,9 +91,8 @@ f <- function(y) {
   argtypes(y |> type(named_vec(Nope)))
   return(y)
 }
-# expect_error fails as the error message is printed and then stop is called with another message
-output <- capture.output(try(ast2ast::translate(f, types_f = types, getsource = TRUE), silent = TRUE))
-expect_equal(output, "[1] \"named_vec(Nope): Nope is not defined with new_layout(), for variable: y\"")
+expect_error(ast2ast::translate(f, types_f = types, getsource = TRUE),
+             pattern = "named_vec(Nope): Nope is not defined with new_layout(), for variable: y", fixed = TRUE)
 
 # invalid definitions
 f <- function(y) {

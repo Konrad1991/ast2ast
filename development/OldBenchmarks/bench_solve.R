@@ -4,7 +4,7 @@ SH <- system.file(ifelse(.Platform$OS.type == "windows", "libs", "lib"), .Platfo
                   package = "StanHeaders", mustWork = TRUE)
 Sys.setenv(PKG_LIBS = paste0(StanHeaders:::LdFlags(as_character = TRUE),
                              " -L", shQuote(SH), " -lStanHeaders"))
-Rcpp::sourceCpp("/home/konrad/Documents/ast2ast/development/Benchmarks/stan_solve.cpp")
+Rcpp::sourceCpp("/home/konrad/Documents/ast2ast/development/OldBenchmarks/stan_solve.cpp")
 
 library(ast2ast)
 library(microbenchmark)

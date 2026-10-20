@@ -50,6 +50,35 @@ fields <- ast2ast::translate(body_with(
 ), derivative = "forward")(x)
 expect_equal(fields, c(6, 6, 16, 0, 16))
 
+# bidirectional: dense row 1 via a reverse sweep, its entries still in the CSC
+g <- function(x) {
+  argtypes(x |> type(vec(double)))
+  dense_row <- function(y) {
+    argtypes(y |> type(vec(double)))
+    returntype(vec(double))
+    out <- y * y
+    out[[1L]] <- sum(y)
+    return(out)
+  }
+  return(jacobian(dense_row, x))
+}
+g_with <- function(...) {
+  h <- g
+  stmts <- as.list(body(g))
+  body(h) <- as.call(c(stmts[-length(stmts)], list(...)))
+  h
+}
+dense_g <- ast2ast::translate(g, derivative = "forward")(x)
+J <- ast2ast::translate(g_with(quote(return(jacobian_sparse(dense_row, x, colouring = "runtime")))),
+                        derivative = "forward")(x)
+expect_equal(as.matrix(J), dense_g, check.attributes = FALSE)
+# 6 entries in row 1 + 5 on the diagonal
+fields <- ast2ast::translate(g_with(
+  quote(J <- jacobian_sparse(dense_row, x, colouring = "runtime")),
+  quote(return(c(length(J$data), J$indexptrs[[7L]])))
+), derivative = "forward")(x)
+expect_equal(fields, c(11, 11))
+
 # --- banded ---------------------------------------------------------------------
 J <- ast2ast::translate(body_with(quote(return(jacobian_banded(diffusion, x, colouring = "static", n = 6L)))),
                         derivative = "forward")(x)

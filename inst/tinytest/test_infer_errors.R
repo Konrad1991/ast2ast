@@ -101,16 +101,15 @@ f <- function(p) {
 runs_clean(f, function(p) p |> type(Point), types_f)
 
 # --- C3: a fixed type()/argument reassigned an incompatible type -------
-# one "Types do not match perfectly" warning, no promotion, no hard error
-mismatch <- "Types do not match perfectly"
+# one "has the fixed type" warning, no promotion, no hard error
+mismatch <- "has the fixed type"
 
 w <- warnings_of(function(a) {
   a <- a + 1
   a <- matrix(0, 2, 2)
   return(a)
 }, function(a) a |> type(vec(double)))
-expect_true(has_w(w, paste0(mismatch,
-  ": On the left side: vector(double) and on the right side: matrix(double)")))
+expect_true(has_w(w, "Variable a has the fixed type vector(double), but a matrix(double) is assigned to it"))
 expect_false(has_w(w, "Promoted the type of variable"))
 
 w <- warnings_of(function(a) {
@@ -118,16 +117,14 @@ w <- warnings_of(function(a) {
   a <- c(1.0, 2.0, 3.0)
   return(a)
 }, function(a) a |> type(mat(double)))
-expect_true(has_w(w, paste0(mismatch,
-  ": On the left side: matrix(double) and on the right side: vector(double)")))
+expect_true(has_w(w, "Variable a has the fixed type matrix(double), but a vector(double) is assigned to it"))
 
 # lossy base narrowing on a fixed scalar still warns
 w <- warnings_of(function(a) {
   a <- 2.5
   return(a)
 }, function(a) a |> type(int))
-expect_true(has_w(w, paste0(mismatch,
-  ": On the left side: scalar(integer) and on the right side: scalar(double)")))
+expect_true(has_w(w, "Variable a has the fixed type scalar(integer), but a scalar(double) is assigned to it"))
 
 # --- C3: no false positives -------------------------------------------
 # inferred scalar widened to matrix -> only the promotion warning
@@ -204,3 +201,26 @@ test_checks(function(a) { b |> type(double); return(a) },
 runs_clean(function() { v |> type(vec(double)); v <- 3.0; return(v) }, function() {})
 # the `x |> type(t) <- v` form counts as a use
 runs_clean(function() { w |> type(int) <- 3L; return(w) }, function() {})
+
+# --- narrower value assigned to an inferred variable warns too (#52) ----
+# y <- TRUE; y <- 1.5 promotes; the reverse order converts TRUE, both warn
+w <- warnings_of(function() {
+  y <- 1.5
+  y <- TRUE
+  return(y)
+}, function() {})
+expect_true(has_w(w, "Variable y is scalar double; the logical value assigned here is converted to double"))
+expect_false(has_w(w, "Promoted the type of variable"))
+w <- warnings_of(function() {
+  y <- TRUE
+  y <- 1.5
+  return(y)
+}, function() {})
+expect_true(has_w(w, "Promoted the type of variable y from scalar logical to scalar double"))
+# same base type, no warning
+w <- warnings_of(function() {
+  y <- 1.5
+  y <- 2.5
+  return(y)
+}, function() {})
+expect_identical(w, character(0))

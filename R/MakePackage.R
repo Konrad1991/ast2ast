@@ -18,7 +18,7 @@ make_package <- function(files, entry_points, package_dir = ".", overwrite = FAL
   definitions <- collect_functions(code)
   missing <- setdiff(entry_points, names(definitions))
   if (length(missing) != 0L) {
-    stop(sprintf("Entry point(s) not defined in the files: %s", paste(missing, collapse = ", ")))
+    stop(sprintf("Entry point(s) not defined in the files: %s", paste(missing, collapse = ", ")), call. = FALSE)
   }
 
   used_helpers <- character()
@@ -67,18 +67,18 @@ check_derivative <- function(derivative, entry_points) {
   if (length(derivative) == 0L) return(invisible())
   keys <- names(derivative)
   if (is.null(keys) || any(keys == "")) {
-    stop("derivative has to be a named list, e.g. list(f = \"forward\")")
+    stop("derivative has to be a named list, e.g. list(f = \"forward\")", call. = FALSE)
   }
   if (anyDuplicated(keys) != 0L) {
-    stop(sprintf("derivative names an entry point more than once: %s", paste(unique(keys[duplicated(keys)]), collapse = ", ")))
+    stop(sprintf("derivative names an entry point more than once: %s", paste(unique(keys[duplicated(keys)]), collapse = ", ")), call. = FALSE)
   }
   unknown <- setdiff(keys, entry_points)
   if (length(unknown) != 0L) {
-    stop(sprintf("derivative names unknown entry point(s): %s", paste(unknown, collapse = ", ")))
+    stop(sprintf("derivative names unknown entry point(s): %s", paste(unknown, collapse = ", ")), call. = FALSE)
   }
   valid <- vapply(derivative, function(d) is.character(d) && length(d) == 1L && d %in% c("forward", "reverse"), logical(1L))
   if (!all(valid)) {
-    stop(sprintf("derivative of %s is neither \"forward\" nor \"reverse\"", paste(keys[!valid], collapse = ", ")))
+    stop(sprintf("derivative of %s is neither \"forward\" nor \"reverse\"", paste(keys[!valid], collapse = ", ")), call. = FALSE)
   }
   invisible()
 }
@@ -102,26 +102,26 @@ parse_with_srcrefs <- function(file, package_name) {
 
 check_paths <- function(files, package_dir) {
   if (!file.exists(file.path(package_dir, "DESCRIPTION"))) {
-    stop(sprintf("%s is not a package: DESCRIPTION is missing", package_dir))
+    stop(sprintf("%s is not a package: DESCRIPTION is missing", package_dir), call. = FALSE)
   }
   paths <- file.path(package_dir, files)
   missing <- paths[!file.exists(paths)]
   if (length(missing) != 0L) {
-    stop(sprintf("The following files do not exist:\n%s", paste(missing, collapse = "\n")))
+    stop(sprintf("The following files do not exist:\n%s", paste(missing, collapse = "\n")), call. = FALSE)
   }
   # NOTE: winslash = "/" so the startsWith checks below match file.path() on Windows
   package_path <- normalizePath(package_dir, winslash = "/")
   normalized <- normalizePath(paths, winslash = "/")
   outside <- paths[!startsWith(normalized, file.path(package_path, ""))]
   if (length(outside) != 0L) {
-    stop(sprintf("The following files are not inside %s:\n%s", package_dir, paste(outside, collapse = "\n")))
+    stop(sprintf("The following files are not inside %s:\n%s", package_dir, paste(outside, collapse = "\n")), call. = FALSE)
   }
   in_r <- paths[startsWith(normalized, file.path(package_path, "R", ""))]
   if (length(in_r) != 0L) {
     stop(sprintf(
       "Files in R/ are sourced when the package is installed; move them e.g. to inst/tools/:\n%s",
       paste(in_r, collapse = "\n")
-    ))
+    ), call. = FALSE)
   }
   paths
 }
@@ -129,7 +129,7 @@ check_paths <- function(files, package_dir) {
 package_name <- function(package_dir) {
   name <- unname(read.dcf(file.path(package_dir, "DESCRIPTION"), fields = "Package")[1, 1])
   if (is.na(name)) {
-    stop("DESCRIPTION has no Package field")
+    stop("DESCRIPTION has no Package field", call. = FALSE)
   }
   name
 }
@@ -156,7 +156,7 @@ check_package_setup <- function(package_dir, name) {
   }
   if (length(missing) != 0L) {
     stop(sprintf("The package is not set up for make_package. Please add:\n%s",
-                 paste(missing, collapse = "\n")))
+                 paste(missing, collapse = "\n")), call. = FALSE)
   }
 }
 
@@ -188,7 +188,7 @@ check_top_level_code <- function(code) {
         "Found the following not supported expressions:\n%s",
         paste(unsupported, collapse = "\n")
       )
-    )
+    , call. = FALSE)
   }
 }
 
@@ -198,7 +198,7 @@ duplicate_type_definitions <- function(types) {
   }, character(1L))
   if (anyDuplicated(type_names) != 0) {
     duplicate <- anyDuplicated(type_names)
-    stop(sprintf("%s: Type %s is redefined", srcref_location(types[[duplicate]]$srcref), type_names[duplicate]))
+    stop(sprintf("%s: Type %s is redefined", srcref_location(types[[duplicate]]$srcref), type_names[duplicate]), call. = FALSE)
   }
 }
 
@@ -220,7 +220,7 @@ collect_functions <- function(code) {
   }, character(1L))
   if (anyDuplicated(function_names) != 0) {
     duplicate <- anyDuplicated(function_names)
-    stop(sprintf("%s: Function %s is redefined", srcref_location(definitions[[duplicate]]$srcref), function_names[duplicate]))
+    stop(sprintf("%s: Function %s is redefined", srcref_location(definitions[[duplicate]]$srcref), function_names[duplicate]), call. = FALSE)
   }
   names(definitions) <- function_names
   definitions
@@ -236,7 +236,7 @@ combine_functions <- function(definitions, entry_point) {
       !is_call_to(statements[[1]], "argtypes") ||
       !is_call_to(statements[[2]], "returntype")) {
     stop(sprintf("%s: The entry point %s has to start with argtypes(...) and returntype(...)",
-                 srcref_location(entry$srcref), entry_point))
+                 srcref_location(entry$srcref), entry_point), call. = FALSE)
   }
   helper_definitions <- definitions[names(definitions) != entry_point]
   helpers <- lapply(helper_definitions, `[[`, "expr")
@@ -258,10 +258,10 @@ check_overwrite <- function(path, overwrite) {
     return()
   }
   if (!interactive()) {
-    stop(sprintf("%s was not generated by make_package; use overwrite = TRUE to replace it", path))
+    stop(sprintf("%s was not generated by make_package; use overwrite = TRUE to replace it", path), call. = FALSE)
   }
   if (!isTRUE(utils::askYesNo(sprintf("%s was not generated by make_package. Overwrite it?", path), default = FALSE))) {
-    stop(sprintf("Aborted: %s was not overwritten", path))
+    stop(sprintf("Aborted: %s was not overwritten", path), call. = FALSE)
   }
 }
 

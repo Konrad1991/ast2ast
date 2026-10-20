@@ -99,22 +99,16 @@ requires (IsLBufferArray<ArrayType> || IsBorrowArray<ArrayType>)
   if constexpr (IsReverseDouble<DataType>) {
     return arr.d.get(idx);
   } else if constexpr (IsDouble<DataType>) {
-    if constexpr (IsBuf) return DoubleRef{ &arr.d.p_val[idx], &arr.d.p_na[idx] };
-    else                 return DoubleRef{ &arr.d.p[idx], arr.d.p_na ? &arr.d.p_na[idx] : nullptr };
+    if constexpr (IsBuf) return DoubleRef{ &arr.d.p_val[idx] };
+    else                 return DoubleRef{ &arr.d.p[idx] };
   } else if constexpr (IsInteger<DataType>) {
-    if constexpr (IsBuf) return IntegerRef{ &arr.d.p_val[idx], &arr.d.p_na[idx] };
-    else                 return IntegerRef{ &arr.d.p[idx], arr.d.p_na ? &arr.d.p_na[idx] : nullptr };
+    if constexpr (IsBuf) return IntegerRef{ &arr.d.p_val[idx] };
+    else                 return IntegerRef{ &arr.d.p[idx] };
   } else if constexpr (IsLogical<DataType>) {
-    if constexpr (IsBuf) return LogicalRef{ &arr.d.p_val[idx], &arr.d.p_na[idx] };
-    else                 return LogicalRef{ &arr.d.p[idx], arr.d.p_na ? &arr.d.p_na[idx] : nullptr };
+    if constexpr (IsBuf) return LogicalRef{ &arr.d.p_val[idx] };
+    else                 return LogicalRef{ &arr.d.p[idx] };
   } else if constexpr (IsDual<DataType>) {
-    if constexpr (IsBuf)
-      return DualRef{ &arr.d.p_val[idx], &arr.d.p_dot[idx],
-                      &arr.d.p_na[idx],  &arr.d.p_na_dot[idx] };
-    else
-      return DualRef{ &arr.d.p_val[idx], &arr.d.p_dot[idx],
-                      arr.d.p_na     ? &arr.d.p_na[idx]     : nullptr,
-                      arr.d.p_na_dot ? &arr.d.p_na_dot[idx] : nullptr };
+    return DualRef{ &arr.d.p_val[idx], &arr.d.p_dot[idx] };
   } else {
     ass<"Borrow/Buffer at(): unsupported datatype">(false);
     return DoubleRef{nullptr};
@@ -137,22 +131,16 @@ inline decltype(auto) at_linear(Obj& obj, std::size_t idx) {
     if constexpr (IsReverseDouble<DataType>) {
       return obj.get(idx);
     } else if constexpr (IsDouble<DataType>) {
-      if constexpr (IsBuf) return DoubleRef{ &obj.p_val[idx], &obj.p_na[idx] };
-      else                 return DoubleRef{ &obj.p[idx], obj.p_na ? &obj.p_na[idx] : nullptr };
+      if constexpr (IsBuf) return DoubleRef{ &obj.p_val[idx] };
+      else                 return DoubleRef{ &obj.p[idx] };
     } else if constexpr (IsInteger<DataType>) {
-      if constexpr (IsBuf) return IntegerRef{ &obj.p_val[idx], &obj.p_na[idx] };
-      else                 return IntegerRef{ &obj.p[idx], obj.p_na ? &obj.p_na[idx] : nullptr };
+      if constexpr (IsBuf) return IntegerRef{ &obj.p_val[idx] };
+      else                 return IntegerRef{ &obj.p[idx] };
     } else if constexpr (IsLogical<DataType>) {
-      if constexpr (IsBuf) return LogicalRef{ &obj.p_val[idx], &obj.p_na[idx] };
-      else                 return LogicalRef{ &obj.p[idx], obj.p_na ? &obj.p_na[idx] : nullptr };
+      if constexpr (IsBuf) return LogicalRef{ &obj.p_val[idx] };
+      else                 return LogicalRef{ &obj.p[idx] };
     } else if constexpr (IsDual<DataType>) {
-      if constexpr (IsBuf)
-        return DualRef{ &obj.p_val[idx], &obj.p_dot[idx],
-                        &obj.p_na[idx],  &obj.p_na_dot[idx] };
-      else
-        return DualRef{ &obj.p_val[idx], &obj.p_dot[idx],
-                        obj.p_na     ? &obj.p_na[idx]     : nullptr,
-                        obj.p_na_dot ? &obj.p_na_dot[idx] : nullptr };
+      return DualRef{ &obj.p_val[idx], &obj.p_dot[idx] };
     } else {
       ass<"at_linear(): unsupported datatype">(false);
       return DoubleRef{nullptr};

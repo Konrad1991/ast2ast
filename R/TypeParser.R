@@ -7,7 +7,7 @@ create_type_tree <- function(code, env) {
   n_errors_before <- length(env$errors)
   arity_check(code, env)
   if (length(env$errors) > n_errors_before) {
-    stop(env$errors[[length(env$errors)]])
+    stop(env$errors[[length(env$errors)]], call. = FALSE)
   }
 
   if (operator == "type") {
@@ -293,12 +293,12 @@ layout_def <- function(name, kind, base_type, element_type, dimnames) {
 check_layout_name <- function(name, env) {
   unallowed <- unallowed_signs(name)
   if (!is.null(unallowed)) {
-    stop(paste0(unallowed, " found in ", name))
+    stop(paste0(unallowed, " found in ", name), call. = FALSE)
   } else if (not_cpp_keyword(name)) {
-    stop(paste0("Invalid type name: is a C++ keyword --> ", name))
+    stop(paste0("Invalid type name: is a C++ keyword --> ", name), call. = FALSE)
   }
   if (!is.null(env$list[[name]])) {
-    stop(paste0("Duplicated type name: ", name))
+    stop(paste0("Duplicated type name: ", name), call. = FALSE)
   }
 }
 
@@ -311,7 +311,7 @@ layout_names_arg <- function(expr, what, prefix, env, eval_env) {
     if (inherits(def, "layout_def")) {
       if (def$kind != "vector") {
         stop(sprintf("%s: %s can only reuse a new_layout() layout, %s is a %s layout",
-                     prefix, what, def$name, def$kind))
+                     prefix, what, def$name, def$kind), call. = FALSE)
       }
       return(def$names)
     }
@@ -322,14 +322,14 @@ layout_names_arg <- function(expr, what, prefix, env, eval_env) {
   )
   if (is.null(value)) return(NULL)
   if (!is.character(value) || length(value) == 0L) {
-    stop(sprintf("%s: %s has to be a non-empty character vector", prefix, what))
+    stop(sprintf("%s: %s has to be a non-empty character vector", prefix, what), call. = FALSE)
   }
   if (anyNA(value) || any(value == "")) {
-    stop(sprintf("%s: %s contain NA or empty entries", prefix, what))
+    stop(sprintf("%s: %s contain NA or empty entries", prefix, what), call. = FALSE)
   }
   if (anyDuplicated(value) != 0L) {
     stop(sprintf("%s: duplicated %s: %s", prefix, what,
-                 paste(unique(value[duplicated(value)]), collapse = ", ")))
+                 paste(unique(value[duplicated(value)]), collapse = ", ")), call. = FALSE)
   }
   value
 }
@@ -346,7 +346,7 @@ parse_layout <- function(code, env, eval_env) {
   mc <- try(match.call(proto, code), silent = TRUE)
   if (inherits(mc, "try-error") || is.null(mc$name) || is.null(mc$type)) {
     stop(sprintf("%s expects (%s), found: %s", constructor,
-                 paste(names(formals(proto)), collapse = ", "), deparse1(code)))
+                 paste(names(formals(proto)), collapse = ", "), deparse1(code)), call. = FALSE)
   }
   name <- deparse(mc$name)
   check_layout_name(name, env)
@@ -357,20 +357,20 @@ parse_layout <- function(code, env, eval_env) {
   if (kind == "collection") {
     element_type <- deparse(mc$type)
     if (!inherits(env$list[[element_type]], "new_type_node")) {
-      stop(sprintf("%s: %s is not a type defined with new_type()", prefix, element_type))
+      stop(sprintf("%s: %s is not a type defined with new_type()", prefix, element_type), call. = FALSE)
     }
   } else {
     env$errors <- NULL
     base_type <- resolve_base_type(mc$type, env)
     if (length(env$errors) > 0) {
-      stop(sprintf("%s: %s", prefix, combine_strings(env$errors, "\n")))
+      stop(sprintf("%s: %s", prefix, combine_strings(env$errors, "\n")), call. = FALSE)
     }
   }
 
   dimnames <- switch(kind,
     vector = ,
     collection = {
-      if (is.null(mc$names)) stop(sprintf("%s: names is required", prefix))
+      if (is.null(mc$names)) stop(sprintf("%s: names is required", prefix), call. = FALSE)
       list(layout_names_arg(mc$names, "names", prefix, env, eval_env))
     },
     matrix = list(
@@ -380,7 +380,7 @@ parse_layout <- function(code, env, eval_env) {
     array = {
       dn <- mc$dimnames
       if (!is.call(dn) || !identical(dn[[1L]], quote(list)) || length(dn) < 2L) {
-        stop(sprintf("%s: dimnames has to be written as list(...), one entry per dimension", prefix))
+        stop(sprintf("%s: dimnames has to be written as list(...), one entry per dimension", prefix), call. = FALSE)
       }
       lapply(seq_len(length(dn) - 1L), function(k) {
         layout_names_arg(dn[[k + 1L]], sprintf("dimnames[[%d]]", k), prefix, env, eval_env)
@@ -388,10 +388,10 @@ parse_layout <- function(code, env, eval_env) {
     }
   )
   if (kind %in% c("vector", "collection") && is.null(dimnames[[1L]])) {
-    stop(sprintf("%s: names has to be a non-empty character vector", prefix))
+    stop(sprintf("%s: names has to be a non-empty character vector", prefix), call. = FALSE)
   }
   if (all(vapply(dimnames, is.null, logical(1L)))) {
-    stop(sprintf("%s: at least one dimension needs names", prefix))
+    stop(sprintf("%s: at least one dimension needs names", prefix), call. = FALSE)
   }
   layout_def(name, kind, base_type, element_type, dimnames)
 }
@@ -406,7 +406,7 @@ parse_types <- function(block, fct_input, r_fct, real_type, known_types = list()
     row <- block[[i]]
     operator <- try(deparse(row[[1L]]), silent = TRUE)
     if (inherits(operator, "try-error")) {
-      stop(sprintf("Cannot resolve type of: %s", deparse(row)))
+      stop(sprintf("Cannot resolve type of: %s", deparse(row)), call. = FALSE)
     }
     if (operator %in% c("type", "ref", "const")) {
       env$errors <- NULL
@@ -419,7 +419,7 @@ parse_types <- function(block, fct_input, r_fct, real_type, known_types = list()
       env$errors <- NULL
       parse_new_type(row, env)
       if (length(env$errors) > 0) {
-        stop(combine_strings(env$errors, "\n"))
+        stop(combine_strings(env$errors, "\n"), call. = FALSE)
       }
       env$new_type$real_type <- real_type
       env$new_type$r_fct <- r_fct
@@ -428,7 +428,7 @@ parse_types <- function(block, fct_input, r_fct, real_type, known_types = list()
       def <- parse_layout(row, env, eval_env)
       env$list[[def$name]] <- def
     } else {
-      stop(sprintf("Found unsupported function %s in %s", operator, deparse(row)))
+      stop(sprintf("Found unsupported function %s in %s", operator, deparse(row)), call. = FALSE)
     }
   }
   env$list[setdiff(names(env$list), names(known_types))]
@@ -440,16 +440,19 @@ parse_types <- function(block, fct_input, r_fct, real_type, known_types = list()
 # =====================================================================
 parse_types_with_check <- function(args, fct_input, r_fct, real_type, known_types = list()) {
   l <- parse_types(args, fct_input, r_fct, real_type, known_types)
-  wrong_input <- FALSE
-  for (i in seq_len(length(l))) {
-    e <- l[[i]]$error
-    if (!is.null(e) && e != "") {
-      print(sprintf("%s, for variable: %s", l[[i]]$error, l[[i]]$get_name()))
-      wrong_input <- TRUE
+  stop_on_type_errors(l)
+  l
+}
+
+stop_on_type_errors <- function(l) {
+  msgs <- character(0)
+  for (t in l) {
+    e <- t$error
+    if (!is.null(e) && any(e != "")) {
+      msgs <- c(msgs, sprintf("%s, for variable: %s", paste(e[e != ""], collapse = "; "), t$get_name()))
     }
   }
-  if (wrong_input) stop("Types for arguments are invalid")
-  l
+  if (length(msgs)) stop(paste(c("Types for arguments are invalid:", msgs), collapse = "\n"), call. = FALSE)
 }
 
 parse_argtypes <- function(obj, fct_input, r_fct, real_type, known_types = list()) {
@@ -473,7 +476,7 @@ parse_return <- function(obj, r_fct, real_type, known_types = list(), is_functio
       sprintf(
         "Expected '%s' as second entry to %s", target, what
       )
-    )
+    , call. = FALSE)
   }
   args <- obj[-1]
   if (length(args) != 1L) {
@@ -481,7 +484,7 @@ parse_return <- function(obj, r_fct, real_type, known_types = list(), is_functio
       sprintf(
         "%s can only contain one expression", target
       )
-    )
+    , call. = FALSE)
   }
   # keep the node's $error -- it is reported later as a "Wrong return type" message,
   # not stopped here

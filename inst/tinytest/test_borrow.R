@@ -118,21 +118,14 @@ f <- function(a) {
   a[[1L]] <- a[[1L]] * a[[1L]]
   return(a)
 }
-# create_vars_types_list() print()s the specific message and only throws the
-# generic "Types for arguments are invalid" as the condition itself.
 check_borrow_ad_rejected <- function(derivative, output = "R", info = "") {
-  e <- capture.output(
-    error <- try(
-      ast2ast::translate(f, derivative = derivative, output = output, getsource = TRUE),
-      silent = TRUE
-    )
+  error <- try(
+    ast2ast::translate(f, derivative = derivative, output = output, getsource = TRUE),
+    silent = TRUE
   )
   expect_true(inherits(error, "try-error"), info = info)
   expect_true(
-    any(
-      grepl("borrow types cannot be used together with automatic differentiation",
-        e)
-    ),
+    grepl("borrow types cannot be used together with automatic differentiation", error),
     info = info
   )
 }

@@ -9,6 +9,7 @@ variable_node <- R6::R6Class(
     field_name = FALSE,
     pre_translate_line = NULL,
     location = NULL,
+    source_line = NULL,
     # a named fn used as value (map(g, x)): its functor object
     cpp_override = NULL,
     initialize = function(obj) {
@@ -42,6 +43,7 @@ literal_node <- R6::R6Class(
     real_type = NULL,
     pre_translate_line = NULL,
     location = NULL,
+    source_line = NULL,
     initialize = function(obj) {
       self$literal_type <- determine_literal_type(obj)
       self$name <- deparse(obj)
@@ -122,8 +124,10 @@ binary_node <- R6::R6Class(
     remove_type_decl = FALSE,
     type = NULL,
     is_infix = NULL,
+    call_arg_names = NULL,
     pre_translate_line = NULL,
     location = NULL,
+    source_line = NULL,
     initialize = function() {},
     string_left = function() {
       return(self$left_node$stringify())
@@ -208,7 +212,7 @@ binary_node <- R6::R6Class(
           self$operator, " ",
           self$string_left(),
           " ", self$string_right()
-        ))
+        ), call. = FALSE)
       }
       if (self$context == "Start") {
         ret <- paste0(ret, ";")
@@ -277,8 +281,10 @@ unary_node <- R6::R6Class(
     internal_type = NULL,
     handle_return = FALSE,
     output_is_r_fct = TRUE,
+    call_arg_names = NULL,
     pre_translate_line = NULL,
     location = NULL,
+    source_line = NULL,
     initialize = function() {},
     string_obj = function() {
       return(self$obj$stringify())
@@ -384,6 +390,7 @@ nullary_node <- R6::R6Class(
     output_is_r_fct = TRUE,
     pre_translate_line = NULL,
     location = NULL,
+    source_line = NULL,
     initialize = function() {},
     stringify_condition = function(indent = "") {
       paste0(indent, "static_cast<bool>(", self$stringify(""), ")")
@@ -429,8 +436,10 @@ function_node <- R6::R6Class(
     context = NULL,
     internal_type = NULL,
     args = list(),
+    call_arg_names = NULL,
     pre_translate_line = NULL,
     location = NULL,
+    source_line = NULL,
     initialize = function() {},
     create_r_subsetting_string = function(indent = "", obj_string, args_string) {
       if (self$operator == "[") {
@@ -499,6 +508,7 @@ if_node <- R6::R6Class(
     internal_type = NULL,
     pre_translate_line = NULL,
     location = NULL,
+    source_line = NULL,
 
     initialize = function() {},
     string_condition = function(indent) {
@@ -750,6 +760,7 @@ for_node <- R6::R6Class(
     internal_type = NULL,
     pre_translate_line = NULL,
     location = NULL,
+    source_line = NULL,
     initialize = function() {},
     stringify = function(indent = "") {
       idx <- self$i$stringify("")
@@ -833,6 +844,7 @@ while_node <- R6::R6Class(
     internal_type = NULL,
     pre_translate_line = NULL,
     location = NULL,
+    source_line = NULL,
     initialize = function() {},
     stringify = function(indent = "") {
       cond <- self$condition$stringify_condition(indent)
@@ -1713,7 +1725,7 @@ collection <- R6::R6Class(
     stringify = function(indent = "") {
       basic <- is_base_type(self$type)
       if (basic) {
-        stop("collections cannot contain basic types")
+        stop("collections cannot contain basic types", call. = FALSE)
       }
       if (inherits(self$element_type, "new_type_node")) {
         return(sprintf("etr::Collection<%s>", self$element_type$stringify()))

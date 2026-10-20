@@ -32,6 +32,24 @@ f <- function(out, y) {
 }
 expect_equal(pattern(f, 2L), list(2L, 1:2))
 
+# dense rows: same greedy split as the runtime colouring
+arrow <- c(list(1:6), as.list(2:6))
+expect_equal(ast2ast:::dense_row_split(arrow, 6L), list(k = 1L, sweeps = 2L))
+expect_equal(ast2ast:::dense_row_split(list(1L, 1:2, 2:3), 3L), list(k = 0L, sweeps = 2L))
+expect_equal(ast2ast:::dense_row_split(list(1:4, 1:4), 4L), list(k = 2L, sweeps = 2L))
+# static colouring stays forward-only: dense rows -> hint to "runtime"
+f <- function(x) {
+  argtypes(x |> type(vec(double)))
+  h <- fn(argtypes(y |> type(vec(double))), return(vec(double)), {
+    return(c(y[[1L]] + y[[2L]] + y[[3L]] + y[[4L]], y[[2L]] * y[[2L]], sin(y[[3L]]), y[[4L]]))
+  })
+  return(jacobian(h, x, colouring = "static", n = 4L))
+}
+expect_warning(
+  ast2ast::translate(f, derivative = "forward", getsource = TRUE),
+  "1 dense row; colouring = \"runtime\" needs 2 sweeps instead of 4", fixed = TRUE
+)
+
 # Skipped on CRAN: forward AD compiles are expensive.
 if (!at_home()) exit_file("slow: AD compiles; runs at home / CI only")
 
@@ -202,6 +220,35 @@ rw <- function(test, x, w) {
 rwcpp <- ast2ast::translate(rw, derivative = "forward")
 w3 <- c(2, 3, 4)
 expect_equal(rwcpp(1L, x3p, w3), rwcpp(2L, x3p, w3))
+
+# bidirectional: dense rows via reverse sweeps, rest coloured
+rd <- function(test, x, s) {
+  argtypes(test |> type(int), x |> type(vec(double)), s |> type(double))
+  # row 1 depends on all of y, the rest is diagonal
+  dense_row <- function(y) {
+    argtypes(y |> type(vec(double)))
+    returntype(vec(double))
+    out <- y * y
+    out[[1L]] <- sum(y)
+    return(out)
+  }
+  # only dense rows: no forward sweep left
+  two_rows <- function(y, k) {
+    argtypes(y |> type(vec(double)), k |> type(double) |> const() |> ref())
+    returntype(vec(double))
+    return(c(k * sum(y), sum(y * y)))
+  }
+  if (test == 1L) return(jacobian(dense_row, x, colouring = "runtime"))
+  if (test == 2L) return(jacobian(dense_row, x))
+  if (test == 3L) return(jacobian(two_rows, x, s, colouring = "runtime"))
+  return(jacobian(two_rows, x, s))
+}
+rdcpp <- ast2ast::translate(rd, derivative = "forward")
+x20 <- seq(0.1, 2, length.out = 20)
+expect_equal(rdcpp(1L, x20, 0), rdcpp(2L, x20, 0))
+expect_equal(rdcpp(1L, x20, 0), diag(2 * x20) + rbind(c(1 - 2 * x20[[1L]], rep(1, 19)), matrix(0, 19, 20)))
+expect_equal(rdcpp(3L, x20, 2.5), rdcpp(4L, x20, 2.5))
+expect_equal(rdcpp(3L, x20, 2.5), rbind(rep(2.5, 20), 2 * x20))
 
 # argument checks
 r2 <- function(x) {

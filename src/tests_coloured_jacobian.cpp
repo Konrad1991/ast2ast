@@ -101,4 +101,39 @@ void test_coloured_jacobian() {
     return out;
   };
   check_case(f_mat, make_x({0.3, 0.4, 0.5, 0.6, 0.7, 0.8}), 6, 36);
+
+  // bidirectional: row 0 sums all y -> 1 reverse sweep + 1 colour for the diagonal
+  auto f_dense = [](const auto& y) {
+    using T = ValT<decltype(y)>;
+    const std::size_t n = y.size();
+    Vec<T> out(SI{n});
+    T s = y.get(0);
+    for (std::size_t i = 1; i < n; i++) s = s + y.get(i);
+    out.set(0, s);
+    for (std::size_t i = 1; i < n; i++) out.set(i, y.get(i) * y.get(i));
+    return out;
+  };
+  check_case(f_dense, make_x(big), 200, 399);
+  const Colouring cd = colouring_from_tape(make_x(big), f_dense, true);
+  ass<"one dense row, row 0">(cd.dense_rows.size() == 1 && cd.dense_rows[0] == 0);
+  ass<"diagonal rest needs one colour">(cd.ncolours == 1);
+
+  // only dense rows: no forward sweep left
+  auto f_two = [](const auto& y) {
+    using T = ValT<decltype(y)>;
+    Vec<T> out(SI{2});
+    T s = y.get(0);
+    T q = y.get(0) * y.get(0);
+    for (std::size_t i = 1; i < y.size(); i++) {
+      s = s + y.get(i);
+      q = q + y.get(i) * y.get(i);
+    }
+    out.set(0, s);
+    out.set(1, q);
+    return out;
+  };
+  check_case(f_two, make_x(big), 200, 400);
+  const Colouring c2 = colouring_from_tape(make_x(big), f_two, true);
+  ass<"two dense rows">(c2.dense_rows.size() == 2);
+  ass<"no colour left">(c2.ncolours == 0);
 }

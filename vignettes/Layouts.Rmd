@@ -1,0 +1,82 @@
+---
+title: "Named Vectors and Layouts"
+author: "Konrad Kraemer"
+output: html_document
+
+vignette: >
+  %\VignetteIndexEntry{Named Vectors and Layouts}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+## Overview
+
+A layout attaches names to a vector, matrix, array or collection. Name
+indices like `y[["pred"]]` are resolved to integer indices at translation
+time, so they cost nothing at runtime. A typo is a translation error with a
+suggestion.
+
+Layouts are declared in `types_f`, like custom types:
+
+| Declaration | Type | Borrowed type |
+| --- | --- | --- |
+| `new_layout(L, double, names = )` | `named_vec(L)` | `named_borrow_vec(L)` |
+| `new_mat_layout(L, double, rownames = , colnames = )` | `named_mat(L)` | `named_borrow_mat(L)` |
+| `new_array_layout(L, double, dimnames = list(...))` | `named_array(L)` | `named_borrow_array(L)` |
+| `new_collection_layout(L, Struct, names = )` | `named_collection(L)` | |
+
+Each names argument is an R expression, `NULL` (no names) or an existing
+`new_layout()`.
+
+## Named vectors
+
+```{r}
+types <- function() {
+  new_layout(State, double, names = c("prey", "pred"))
+}
+f <- function(y) {
+  argtypes(y |> type(named_vec(State)))
+  y[["pred"]] <- y[["prey"]] * 2
+  return(y)
+}
+fcpp <- ast2ast::translate(f, types_f = types)
+fcpp(c(3, 0))
+# prey pred
+#    3    6
+```
+
+- Names of R arguments are checked; returned vectors carry their names.
+- The names describe a prefix: longer vectors are allowed, extra entries
+  get the name `""`.
+- `vector("State")` or a declaration (`res |> type(named_vec(State))`)
+  allocates one entry per name; `vector("State", n)` allocates `n` entries.
+
+Names can come from an R expression:
+
+```{r}
+state_names <- c("a", "b", "c")
+types <- function() {
+  new_layout(Abc, double, names = state_names)
+}
+```
+
+## Matrices, arrays and collections
+
+```{r}
+types <- function() {
+  new_layout(State, double, names = c("prey", "pred"))
+  new_mat_layout(Result, double, rownames = c("t0", "t1"), colnames = State)
+  new_array_layout(Cube, double, dimnames = list(c("a", "b"), NULL, c("t1", "t2")))
+  new_type(Point, slots(x |> type(double), y |> type(double)))
+  new_collection_layout(Pts, Point, names = c("p1", "p2"))
+}
+```
+
+- `colnames = State` reuses the names of an existing layout.
+- `m[["t1", "pred"]]`, also mixed with numbers (`m[["t1", 2L]]`).
+- `pts[["p1"]]$x` for collections.
+- Dimnames of R arguments are checked and attached to returned objects.

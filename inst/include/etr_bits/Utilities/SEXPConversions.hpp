@@ -51,47 +51,40 @@ template<>
 inline Logical SEXP2Scalar<Logical>(SEXP s) {
   ass<"R object is not of type logical">(Rf_isLogical(s));
   const R_xlen_t sz = Rf_xlength(s);
-  ass<"Argument has length > 1">(sz == 1);
-  // int, not bool: NA_LOGICAL (INT_MIN) would collapse to true
-  const int b = LOGICAL(s)[0];
-  ass<"NA logical not allowed">(b != NA_LOGICAL);
-  return Logical(b != 0);
+  ass<"Argument has to be of length 1">(sz == 1);
+  // Logical(int) keeps NA_LOGICAL (INT_MIN) as NA
+  return Logical(LOGICAL(s)[0]);
 }
 template<>
 inline Integer SEXP2Scalar<Integer>(SEXP s) {
   ass<"R object is not of type integer">(Rf_isInteger(s));
   const R_xlen_t sz = Rf_xlength(s);
-  ass<"Argument has length > 1">(sz == 1);
-  const int i = INTEGER(s)[0];
-  ass<"NA integer not allowed">(i != NA_INTEGER);
-  return Integer(i);
+  ass<"Argument has to be of length 1">(sz == 1);
+  return Integer(INTEGER(s)[0]);
 }
 template<>
 inline Double SEXP2Scalar<Double>(SEXP s) {
   ass<"R object is not of type double">(Rf_isReal(s));
   const R_xlen_t sz = Rf_xlength(s);
-  ass<"Argument has length > 1">(sz == 1);
-  const double d = REAL(s)[0];
-  ass<"NA/NaN double not allowed">(!ISNA(d) && !ISNAN(d));
-  return Double(d);
+  ass<"Argument has to be of length 1">(sz == 1);
+  return Double(REAL(s)[0]);
 }
 template<>
 inline Dual SEXP2Scalar<Dual>(SEXP s) {
   ass<"R object is not of type double">(Rf_isReal(s));
   const R_xlen_t sz = Rf_xlength(s);
-  ass<"Argument has length > 1">(sz == 1);
-  const double d = REAL(s)[0];
-  ass<"NA/NaN double not allowed">(!ISNA(d) && !ISNAN(d));
-  return Dual(d, 0.0);
+  ass<"Argument has to be of length 1">(sz == 1);
+  return Dual(REAL(s)[0], 0.0);
 }
 template<>
 inline ReverseDouble SEXP2Scalar<ReverseDouble>(SEXP s) {
   ass<"R object is not of type double">(Rf_isReal(s));
   const R_xlen_t sz = Rf_xlength(s);
-  ass<"Argument has length > 1">(sz == 1);
+  ass<"Argument has to be of length 1">(sz == 1);
   const double d = REAL(s)[0];
-  ass<"NA/NaN double not allowed">(!ISNA(d) && !ISNAN(d));
-  return ReverseDouble::Var(d);
+  ReverseDouble res = ReverseDouble::Var(d);
+  res.is_na = static_cast<uint8_t>(ISNA(d));
+  return res;
 }
 
 inline const char* r_type_name(SEXP s) {
@@ -107,16 +100,27 @@ inline const char* r_type_name(SEXP s) {
 // T(double)/T(int) via 0's null-pointer-constant conversion), so this
 // extracts the value itself for those; arrays/borrows/structs already have
 // one, so this only validates and hands s back unchanged.
+inline void check_scalar_length(SEXP s, const char* name, const char* type_name) {
+  const R_xlen_t len = Rf_xlength(s);
+  if (len != 1) [[unlikely]] {
+    ass(false, std::string("Argument '") + name + "' must be a scalar " + type_name + ", got length " +
+                 std::to_string(len));
+  }
+}
+
 template <typename T>
 inline decltype(auto) CheckSEXP(SEXP s, const char* name) {
   if constexpr (IsDouble<T> || IsDual<T> || IsReverseDouble<T>) {
     ass(Rf_isReal(s), std::string("Type mismatch for '") + name + "': expected double, got " + r_type_name(s));
+    check_scalar_length(s, name, "double");
     return SEXP2Scalar<T>(s);
   } else if constexpr (IsInteger<T>) {
     ass(Rf_isInteger(s), std::string("Type mismatch for '") + name + "': expected integer, got " + r_type_name(s));
+    check_scalar_length(s, name, "integer");
     return SEXP2Scalar<T>(s);
   } else if constexpr (IsLogical<T>) {
     ass(Rf_isLogical(s), std::string("Type mismatch for '") + name + "': expected logical, got " + r_type_name(s));
+    check_scalar_length(s, name, "logical");
     return SEXP2Scalar<T>(s);
   } else if constexpr (IsArray<T>) {
     using ElemT = typename ExtractDataType<T>::value_type;
@@ -318,20 +322,15 @@ inline void set_dimnames_attrib(SEXP x, SEXP dimnames /* must be a VECSXP of len
 // magnitude faster than the scalar loop for large arrays.
 //
 // Storage layout we exploit:
-//   Buffer<T,LBufferTrait> / Buffer<T,RBufferTrait>  → SoA: p_val, p_na
-//   Borrow<T,BorrowTrait>                            → p,     p_na (shared_ptr)
-//   Buffer<Dual,*>  is always SoA: p_val, p_dot, p_na, p_na_dot
+//   Buffer<T,LBufferTrait> / Buffer<T,RBufferTrait>  → p_val (NA is R's sentinel)
+//   Borrow<T,BorrowTrait>                            → p
+//   Buffer<Dual,*>  is always SoA: p_val, p_dot
 //   ReverseDouble has no contiguous double buffer (each handle's value lives
 //   on the tape), so it stays on the per-element path.
 template <typename A>
 inline auto cast_value_ptr(const A& a) {
   if constexpr (IsBorrowArray<Decayed<A>>) return a.d.p;
   else                                      return a.d.p_val;
-}
-template <typename A>
-inline auto cast_na_ptr(const A& a) {
-  if constexpr (IsBorrowArray<Decayed<A>>) return a.d.p_na.get();
-  else                                      return a.d.p_na;
 }
 
 template <typename T>
@@ -346,12 +345,8 @@ inline SEXP Cast(const T &res_) {
     SEXP ret = PROTECT(Rf_allocVector(REALSXP, N));
     double*       dst = REAL(ret);
     const double* src = cast_value_ptr(res);
-    const bool*   na  = cast_na_ptr(res);
     // src is null for an empty result; memcpy(_, null, 0) is UB (nonnull args)
     if (N > 0) std::memcpy(dst, src, static_cast<std::size_t>(N) * sizeof(double));
-    if (na) {
-      for (R_xlen_t i = 0; i < N; ++i) if (na[i]) dst[i] = NA_REAL;
-    }
     set_dim_attrib(ret, dim);
     UNPROTECT(1);
     return ret;
@@ -362,11 +357,7 @@ inline SEXP Cast(const T &res_) {
     SEXP ret = PROTECT(Rf_allocVector(REALSXP, N));
     double*       dst = REAL(ret);
     const double* src = res.d.p_val;
-    const bool*   na  = res.d.p_na;
     if (N > 0) std::memcpy(dst, src, static_cast<std::size_t>(N) * sizeof(double));
-    if (na) {
-      for (R_xlen_t i = 0; i < N; ++i) if (na[i]) dst[i] = NA_REAL;
-    }
     set_dim_attrib(ret, dim);
     UNPROTECT(1);
     return ret;
@@ -386,26 +377,17 @@ inline SEXP Cast(const T &res_) {
     SEXP ret = PROTECT(Rf_allocVector(INTSXP, N));
     int*        dst = INTEGER(ret);
     const int*  src = cast_value_ptr(res);
-    const bool* na  = cast_na_ptr(res);
     if (N > 0) std::memcpy(dst, src, static_cast<std::size_t>(N) * sizeof(int));
-    if (na) {
-      for (R_xlen_t i = 0; i < N; ++i) if (na[i]) dst[i] = NA_INTEGER;
-    }
     set_dim_attrib(ret, dim);
     UNPROTECT(1);
     return ret;
   }
   else if constexpr (IsLogical<vtype>) {
-    // R stores logicals as int (LGLSXP is INTSXP under the hood). Source is
-    // bool*; widen with a tight loop the compiler will vectorize.
+    // same int layout as R's LGLSXP
     SEXP ret = PROTECT(Rf_allocVector(LGLSXP, N));
-    int*        dst = LOGICAL(ret);
-    const bool* src = cast_value_ptr(res);
-    const bool* na  = cast_na_ptr(res);
-    for (R_xlen_t i = 0; i < N; ++i) dst[i] = src[i] ? 1 : 0;
-    if (na) {
-      for (R_xlen_t i = 0; i < N; ++i) if (na[i]) dst[i] = NA_LOGICAL;
-    }
+    int*       dst = LOGICAL(ret);
+    const int* src = cast_value_ptr(res);
+    if (N > 0) std::memcpy(dst, src, static_cast<std::size_t>(N) * sizeof(int));
     set_dim_attrib(ret, dim);
     UNPROTECT(1);
     return ret;

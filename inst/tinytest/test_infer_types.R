@@ -242,7 +242,7 @@ f <- function(a) {
 }
 check_error(
   f, TRUE, "etr::Double",
-  "Could not update the function registry due to: Error in action(node, ...) : \n  The name b is already in use by another function\n"
+  "Could not update the function registry due to: The name b is already in use by another function"
 )
 
 # Using a function as numeric variable results in error
@@ -274,7 +274,7 @@ f <- function(a) {
 }
 check_error(
   f, TRUE, "etr::Double",
-  "Error: Could not infer the types, caused by Error in type_infer_assignment(node, info_env) : \n  You cannot reassign a function to the variable b, that was previously declared as scalar of type double\n"
+  "Could not infer the types, caused by You cannot reassign a function to the variable b, that was previously declared as scalar of type double"
 )
 
 # Simple example of inner function
@@ -538,7 +538,9 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   attributes(e)[["condition"]]$message,
-  "a <- b + 1.0\nFound uninitialized variable: b"
+  paste0("a <- b + 1.0\nFound uninitialized variable: b\n",
+         "b is never assigned inside the function. Variables from the enclosing environment ",
+         "are not captured; pass b as an argument.")
 )
 
 # --- print --------------------------------------------------------------
@@ -1113,7 +1115,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   attributes(e)[["condition"]]$message,
-  "\ntype(a, invalid)\nFound unsupported base type: invalid"
+  "type(a, invalid)\nFound unsupported base type: invalid"
 )
 f <- function() {
   a |> type(vector(invalid))
@@ -1121,7 +1123,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   attributes(e)[["condition"]]$message,
-  "\ntype(a, vector(invalid))\nFound unsupported base type: invalid")
+  "type(a, vector(invalid))\nFound unsupported base type: invalid")
 
 f <- function() {
   a |> type(invalid(double))
@@ -1129,7 +1131,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   attributes(e)[["condition"]]$message,
-  "\ntype(a, invalid(double))\nFound unsupported data structure: invalid"
+  "type(a, invalid(double))\nFound unsupported data structure: invalid"
 )
 
 f <- function() {
@@ -1138,7 +1140,7 @@ f <- function() {
 e <- try(get_types(f), silent = TRUE)
 expect_equal(
   attributes(e)[["condition"]]$message,
-  "\ntype(a, invalid(invalid2))\nFound unsupported base type: invalid2\nFound unsupported data structure: invalid"
+  "type(a, invalid(invalid2))\nFound unsupported base type: invalid2\nFound unsupported data structure: invalid"
 )
 
 # --- literals ---------------------------------------------------------------

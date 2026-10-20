@@ -5,6 +5,11 @@ is_symbol <- function (x) {
   return(TRUE)
 }
 
+# message of a try-error without R's "Error in <internal call> :" prefix (#56)
+try_message <- function(e) {
+  conditionMessage(attr(e, "condition"))
+}
+
 err_found <- function(string) {
   if (is.null(string)) return(FALSE)
   string <- gsub("\n|\t| ", "", string)
@@ -135,7 +140,7 @@ infix_ops <- c(
   "+","-","*","/","^","%%", "%/%",
   "==","!=","<","<=",">",">=",
   "&","&&","|","||","!","<-","=",
-  "[","[[", ":", "$"
+  "[","[[", ":", "$", "%in%"
 )
 
 not_infix_in_cpp <- c(
@@ -221,20 +226,20 @@ convert_types_to_etr_types <- function(base_type, data_struct, r_fct, real_type,
   }
   else if (any(data_struct == c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat", "borrow_array")) && !r_fct) {
     if (real_type == "etr::ReverseDouble") {
-      stop("You cannot use borrowed data structures in combination with reverse mode automatic differentiation")
+      stop("You cannot use borrowed data structures in combination with reverse mode automatic differentiation", call. = FALSE)
     }
     if (real_type == "etr::Dual") {
-      stop("You cannot use borrowed data structures in combination with forward mode automatic differentiation")
+      stop("You cannot use borrowed data structures in combination with forward mode automatic differentiation", call. = FALSE)
     }
     data_struct <- "etr::Array"
     return(paste0(indent, data_struct, "<", convert_base_type(base_type, real_type), ", etr::Borrow<", convert_base_type(base_type, real_type), ">>"))
   }
   else if (any(data_struct == c("borrow_vector", "borrow_matrix", "borrow_vec", "borrow_mat", "borrow_array")) && r_fct) {
     if (real_type == "etr::ReverseDouble") {
-      stop("You cannot use borrowed data structures in combination with reverse mode automatic differentiation")
+      stop("You cannot use borrowed data structures in combination with reverse mode automatic differentiation", call. = FALSE)
     }
     if (real_type == "etr::Dual") {
-      stop("You cannot use borrowed data structures in combination with forward mode automatic differentiation")
+      stop("You cannot use borrowed data structures in combination with forward mode automatic differentiation", call. = FALSE)
     }
     data_struct <- "etr::Array"
     return(paste0(indent, data_struct, "<", convert_base_type(base_type, real_type), ", etr::Borrow<", convert_base_type(base_type, real_type), ">>"))
@@ -365,7 +370,7 @@ compile <- function(fct_code, r_fct,
       },
       error = function(e) {
         print(e)
-        stop("Sorry compilation failed!")
+        stop("Sorry compilation failed!", call. = FALSE)
       }
     )
   } else {
@@ -384,7 +389,7 @@ compile <- function(fct_code, r_fct,
       },
       error = function(e) {
         print(e)
-        stop("Sorry compilation failed!")
+        stop("Sorry compilation failed!", call. = FALSE)
       }
     )
 
@@ -451,7 +456,7 @@ resolve_type_collection <- function(code, env) {
     if (!is.null(env$new_type) && identical(env$new_type$name, elem)) {
       add_error(env, sprintf("Self-referencing types are not supported: %s cannot reference itself in its own slot definition", elem))
     } else {
-      add_error(env, sprintf("Found unsupported base type: %s", elem))
+      add_error(env, sprintf("Found unsupported base type: %s%s", elem, did_you_mean(elem, ops)))
     }
   }
   if (elem == "int") {
@@ -460,10 +465,17 @@ resolve_type_collection <- function(code, env) {
   elem
 }
 
+did_you_mean <- function(elem, candidates) {
+  if (length(candidates) == 0L) return("")
+  distance <- utils::adist(elem, candidates)[1L, ]
+  if (min(distance) > 2L) return("")
+  sprintf(". Did you mean '%s'?", candidates[which.min(distance)])
+}
+
 resolve_base_type <- function(code, env) {
   elem <- deparse(code)
   if (!(elem %in% permitted_base_types())) {
-    add_error(env, sprintf("Found unsupported base type: %s", elem))
+    add_error(env, sprintf("Found unsupported base type: %s%s", elem, did_you_mean(elem, permitted_base_types())))
   }
   if (elem == "int") {
     return("integer")
