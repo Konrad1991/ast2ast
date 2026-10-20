@@ -143,7 +143,91 @@ expect_equal(res[, 2], 1 - exp(-0.7 * times), tolerance = 1e-6)
 expect_error(fcpp(c(1, 0), c(0, 0), times, 0.7, c(1, 0.5)), pattern = "id entries must be 0")
 expect_error(fcpp(c(1, 0), c(0, 0), times, 0.7, c(1, 0, 1)), pattern = "same length")
 
+# --- ida with jac: Robertson as DAE (y3 algebraic) ----------------------------
+
+robertson_dae <- function(y0, yp0, times, k, id, with_jac) {
+  argtypes(
+    y0 |> type(vec(double)), yp0 |> type(vec(double)), times |> type(vec(double)),
+    k |> type(vec(double)), id |> type(vec(double)), with_jac |> type(logical)
+  )
+  residual <- function(t, y, yp, r, k) {
+    argtypes(
+      t |> type(double) |> ref(),
+      y |> type(borrow_vec(double)) |> ref(),
+      yp |> type(borrow_vec(double)) |> ref(),
+      r |> type(borrow_vec(double)) |> ref(),
+      k |> type(vec(double)) |> ref()
+    )
+    returntype(void)
+    r[[1L]] <- yp[[1L]] + k[[1L]] * y[[1L]] - k[[2L]] * y[[2L]] * y[[3L]]
+    r[[2L]] <- yp[[2L]] - k[[1L]] * y[[1L]] + k[[2L]] * y[[2L]] * y[[3L]] + k[[3L]] * y[[2L]] * y[[2L]]
+    r[[3L]] <- y[[1L]] + y[[2L]] + y[[3L]] - 1
+  }
+  jac <- function(t, cj, y, yp, J, k) {
+    argtypes(
+      t |> type(double) |> ref(),
+      cj |> type(double) |> ref(),
+      y |> type(borrow_vec(double)) |> ref(),
+      yp |> type(borrow_vec(double)) |> ref(),
+      J |> type(borrow_mat(double)) |> ref(),
+      k |> type(vec(double)) |> ref()
+    )
+    returntype(void)
+    print("jac")
+    J[1L, 1L] <- k[[1L]] + cj
+    J[1L, 2L] <- -k[[2L]] * y[[3L]]
+    J[1L, 3L] <- -k[[2L]] * y[[2L]]
+    J[2L, 1L] <- -k[[1L]]
+    J[2L, 2L] <- k[[2L]] * y[[3L]] + 2 * k[[3L]] * y[[2L]] + cj
+    J[2L, 3L] <- k[[2L]] * y[[2L]]
+    J[3L, 1L] <- 1
+    J[3L, 2L] <- 1
+    J[3L, 3L] <- 1
+  }
+  if (with_jac) return(ida(residual, y0, yp0, times, k, 1e-8, 1e-12, id, jac))
+  return(ida(residual, y0, yp0, times, k, 1e-8, 1e-12, id))
+}
+rcpp <- ast2ast::translate(robertson_dae)
+k <- c(0.04, 1e4, 3e7)
+times <- c(0, 0.4, 4, 40)
+args <- list(c(1, 0, 0), c(-0.04, 0.04, 0), times, k, c(1, 1, 0))
+out <- capture.output(res_jac <- do.call(rcpp, c(args, TRUE)))
+expect_true(length(out) > 0L) # jac was called
+res_dq <- do.call(rcpp, c(args, FALSE))
+expect_equal(res_jac, res_dq, tolerance = 1e-6)
+expect_equal(rowSums(res_jac), rep(1, 4), tolerance = 1e-8)
+
 # --- ida: translation errors -------------------------------------------------
+
+# jac without cj
+f <- function(y0, times, id) {
+  argtypes(y0 |> type(vec(double)), times |> type(vec(double)), id |> type(vec(double)))
+  residual <- function(t, y, yp, r, p) {
+    argtypes(
+      t |> type(double) |> ref(),
+      y |> type(borrow_vec(double)) |> ref(),
+      yp |> type(borrow_vec(double)) |> ref(),
+      r |> type(borrow_vec(double)) |> ref(),
+      p |> type(double) |> ref()
+    )
+    returntype(void)
+    r[[1L]] <- yp[[1L]] + y[[1L]]
+  }
+  jac <- function(t, y, yp, J, p) {
+    argtypes(
+      t |> type(double) |> ref(),
+      y |> type(borrow_vec(double)) |> ref(),
+      yp |> type(borrow_vec(double)) |> ref(),
+      J |> type(borrow_mat(double)) |> ref(),
+      p |> type(double) |> ref()
+    )
+    returntype(void)
+    J[1L, 1L] <- 1
+  }
+  res <- ida(residual, y0, y0, times, 1.0, 1e-8, 1e-10, id, jac)
+  return(res)
+}
+expect_error(ast2ast::translate(f, getsource = TRUE), pattern = "exactly 6 arguments \\(t, cj, y, yp, J, params\\)")
 
 f <- function(y0, times, id) {
   argtypes(y0 |> type(vec(double)), times |> type(vec(double)), id |> type(vec(double)))

@@ -2343,36 +2343,46 @@ function_registry_global$add(
  group = "function_node", cpp_name = "etr::uniroot", deriv_possible = FALSE,
  valid_fn_context = TRUE
 )
-# cvode's optional 8th argument: jac(t, y, J, params)
-check_cvode_jac <- function(node) {
-  jac <- node$args[[8L]]
+# optional jac argument of cvode / ida. kinds per jac argument: scalar
+# (double), vec / mat (borrowed double), params (same type as the solver's)
+check_solver_jac <- function(node, solver, jac_pos, params_pos, kinds) {
+  jac <- node$args[[jac_pos]]
   if (!inherits(jac, "fn_node")) jac <- jac$internal_type
   if (!inherits(jac, "fn_node")) return()
   args_to_jac <- jac$args_f
-  if (length(args_to_jac) != 4L) {
-    node$error <- "the jac function passed to cvode has to accept exactly 4 arguments (t, y, J, params)"
+  if (length(args_to_jac) != length(kinds)) {
+    node$error <- sprintf(
+      "the jac function passed to %s has to accept exactly %d arguments (%s)",
+      solver, length(kinds), paste(names(kinds), collapse = ", ")
+    )
     return()
   }
-  t_arg <- args_to_jac[[1L]]
-  if (inherits(t_arg, "pre_type_node") &&
-      !(t_arg$get_base_type() == "double" && t_arg$get_data_struct() == "scalar")) {
-    node$error <- "cvode: the first jac argument (t) has to be a scalar double"
-    return()
-  }
-  expected <- list(list(i = 2L, ds = c("borrow_vec", "borrow_vector"), what = "y has to be borrow_vec(double)"),
-                   list(i = 3L, ds = c("borrow_mat", "borrow_matrix"), what = "J has to be borrow_mat(double)"))
-  for (e in expected) {
-    ai <- args_to_jac[[e$i]]
-    if (inherits(ai, "pre_type_node") &&
-        (!(ai$get_data_struct_verbose() %in% e$ds) || ai$get_base_type() != "double")) {
-      node$error <- sprintf("cvode: jac argument %s (it views the solver's memory)", e$what)
+  expected <- c(
+    scalar = "a scalar double",
+    vec = "borrow_vec(double) (it views the solver's memory)",
+    mat = "borrow_mat(double) (it views the solver's memory)"
+  )
+  for (i in seq_along(kinds)) {
+    ai <- args_to_jac[[i]]
+    kind <- kinds[[i]]
+    if (kind == "params") {
+      compare_types_passed_to_fn(node, ai, node$args[[params_pos]]$internal_type)
+      next
+    }
+    if (!inherits(ai, "pre_type_node")) next
+    ok <- ai$get_base_type() == "double" && switch(kind,
+      scalar = ai$get_data_struct() == "scalar",
+      vec = ai$get_data_struct_verbose() %in% c("borrow_vec", "borrow_vector"),
+      mat = ai$get_data_struct_verbose() %in% c("borrow_mat", "borrow_matrix")
+    )
+    if (!ok) {
+      node$error <- sprintf("%s: jac argument %s has to be %s", solver, names(kinds)[[i]], expected[[kind]])
       return()
     }
   }
-  compare_types_passed_to_fn(node, args_to_jac[[4L]], node$args[[4L]]$internal_type)
   ret <- jac$return_type
   if (inherits(ret, "pre_type_node") && ret$get_base_type() != "void") {
-    node$error <- "the jac function passed to cvode must not return a value (it writes J in place)"
+    node$error <- sprintf("the jac function passed to %s must not return a value (it writes J in place)", solver)
   }
 }
 function_registry_global$add(
@@ -2472,29 +2482,38 @@ function_registry_global$add(
       node$error <- "the function passed to cvode must not return a value (it writes ydot in place)"
       return()
     }
-    if (length(node$args) == 8L) check_cvode_jac(node)
+    if (length(node$args) == 8L) {
+      check_solver_jac(node, "cvode", 8L, 4L,
+                       c(t = "scalar", y = "vec", J = "mat", params = "params"))
+    }
   },
  group = "function_node", cpp_name = "a2a::cvode_solve", deriv_possible = FALSE,
  valid_fn_context = TRUE
 )
 function_registry_global$add(
-  name = "ida", num_args = 8, arg_names = c(NA, NA, NA, NA, NA, NA, NA, NA),
+  name = "ida", num_args = c(8, 9), arg_names = c(NA, NA, NA, NA, NA, NA, NA, NA, NA),
   docu = paste0(
-    "ida(res, y0, yp0, times, params, reltol, abstol, id)\n",
+    "ida(res, y0, yp0, times, params, reltol, abstol, id, jac)\n",
     "res: fn(t, y, yp, r, params) writing the residual r = F(t, y, yp) in place -- ",
     "t a scalar double; y, yp, r double vectors (borrowed, ref); no return value.\n",
     "params is passed through unchanged and may be any type; the res's 5th argument must match it.\n",
     "y0, yp0, times, id: double vectors (times[1] is t0). id: 1 = differential, 0 = algebraic. ",
     "yp0 and the algebraic part of y0 are corrected by IDACalcIC.\n",
     "reltol, abstol: scalar doubles.\n",
+    "jac (optional): fn(t, cj, y, yp, J, params) writing J = dF/dy + cj * dF/dyp in place -- ",
+    "t, cj scalar doubles; J a borrow_mat(double), zeroed before each call; no return value. ",
+    "Without jac the Jacobian comes from difference quotients.\n",
     "Returns a length(times) x length(y0) matrix; row k is the state at times[k]."
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
     })
-    if (length(all_types) != 8L) {
-      return("ida expects 8 arguments")
+    if (!(length(all_types) %in% c(8L, 9L))) {
+      return("ida expects 8 or 9 arguments")
+    }
+    if (length(all_types) == 9L && !inherits(all_types[[9L]], "fn_node")) {
+      return("ida: jac (argument 9) has to be a function")
     }
     if (!inherits(all_types[[1L]], "fn_node")) {
       return("The first argument to ida has to be a function")
@@ -2557,6 +2576,11 @@ function_registry_global$add(
     ret_from_f <- f$return_type
     if (inherits(ret_from_f, "pre_type_node") && ret_from_f$get_base_type() != "void") {
       node$error <- "the function passed to ida must not return a value (it writes r in place)"
+      return()
+    }
+    if (length(node$args) == 9L) {
+      check_solver_jac(node, "ida", 9L, 5L,
+                       c(t = "scalar", cj = "scalar", y = "vec", yp = "vec", J = "mat", params = "params"))
     }
   },
  group = "function_node", cpp_name = "a2a::ida_solve", deriv_possible = FALSE,

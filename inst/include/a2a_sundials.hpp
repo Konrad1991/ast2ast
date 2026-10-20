@@ -265,6 +265,25 @@ int res_trampoline(sunrealtype t, N_Vector y, N_Vector yp, N_Vector r, void *use
   return 0;
 }
 
+// J = dF/dy + cj * dF/dyp, dense column-major; SUNDIALS zeroes it before the call
+template <typename Ctx>
+int ida_jac_trampoline(sunrealtype t, sunrealtype cj, N_Vector y, N_Vector yp, N_Vector,
+                       SUNMatrix J, void *user_data, N_Vector, N_Vector, N_Vector) {
+  auto *ctx = static_cast<Ctx *>(user_data);
+  sunrealtype *y_ptr = N_VGetArrayPointer(y);
+  sunrealtype *yp_ptr = N_VGetArrayPointer(yp);
+  sunrealtype *j_ptr = SUNDenseMatrix_Data(J);
+  if (y_ptr == nullptr || yp_ptr == nullptr || j_ptr == nullptr) return -1;
+  const std::size_t n = static_cast<std::size_t>(NV_LENGTH_S(y));
+  BorrowVec yv(y_ptr, n, etr::Dim{n});
+  BorrowVec ypv(yp_ptr, n, etr::Dim{n});
+  BorrowVec jv(j_ptr, n * n, etr::Dim{n, n});
+  etr::Double tt = static_cast<double>(t);
+  etr::Double cjj = static_cast<double>(cj);
+  (*ctx->jac)(tt, cjj, yv, ypv, jv, *ctx->params);
+  return 0;
+}
+
 struct ida_workspace {
   SUNContext ctx = nullptr;
   N_Vector y = nullptr;
@@ -315,17 +334,18 @@ void copy_to_nvector(const Vec &src, N_Vector dst, std::size_t n) {
   }
 }
 
-// ida(res, y0, yp0, times, params, reltol, abstol, id) -> length(times) x
+// ida(res, y0, yp0, times, params, reltol, abstol, id[, jac]) -> length(times) x
 // length(y0) matrix of y. id: 1 = differential, 0 = algebraic.
 // yp0 (and the algebraic part of y0) is made consistent via IDACalcIC.
-template <typename RES, typename Y, typename YP, typename T, typename P, typename ID>
+// Jacobian from jac or difference quotients.
+template <typename JAC, typename RES, typename Y, typename YP, typename T, typename P, typename ID>
 requires(
 etr::IsArray<etr::Decayed<Y>> && etr::IsArray<etr::Decayed<YP>> &&
 etr::IsArray<etr::Decayed<T>> && etr::IsArray<etr::Decayed<ID>>
 )
-inline auto ida_solve(const RES &res_fct, const Y &y0, const YP &yp0, const T &times,
-                      const P &params, etr::Double reltol, etr::Double abstol,
-                      const ID &id) {
+inline auto ida_impl(const RES &res_fct, const JAC *jac, const Y &y0, const YP &yp0,
+                     const T &times, const P &params, etr::Double reltol,
+                     etr::Double abstol, const ID &id) {
   const std::size_t neq = y0.size();
   const std::size_t nt = times.size();
   etr::ass<"ida: need at least one initial state">(neq > 0);
@@ -337,7 +357,8 @@ inline auto ida_solve(const RES &res_fct, const Y &y0, const YP &yp0, const T &t
     etr::get_val(abstol) > 0.0);
 
   P p_local = params;
-  fct_ctx<RES, P> ctx{&res_fct, &p_local};
+  using Ctx = fct_ctx<RES, P, JAC>;
+  Ctx ctx{&res_fct, &p_local, jac};
 
   ida_workspace w;
   etr::ass<"ida: SUNContext_Create failed">(SUNContext_Create(SUN_COMM_NULL, &w.ctx) == 0);
@@ -361,7 +382,7 @@ inline auto ida_solve(const RES &res_fct, const Y &y0, const YP &yp0, const T &t
   etr::ass<"ida: IDACreate failed">(w.mem != nullptr);
 
   double t0 = etr::get_val(times.get(0));
-  etr::ass<"ida: IDAInit failed">(IDAInit(w.mem, &res_trampoline<fct_ctx<RES, P>>, t0, w.y, w.yp) == IDA_SUCCESS);
+  etr::ass<"ida: IDAInit failed">(IDAInit(w.mem, &res_trampoline<Ctx>, t0, w.y, w.yp) == IDA_SUCCESS);
   etr::ass<"ida: IDASStolerances failed">(IDASStolerances(w.mem, etr::get_val(reltol), etr::get_val(abstol)) == IDA_SUCCESS);
   etr::ass<"ida: IDASetUserData failed">(IDASetUserData(w.mem, &ctx) == IDA_SUCCESS);
   etr::ass<"ida: IDASetId failed">(IDASetId(w.mem, w.id) == IDA_SUCCESS);
@@ -372,6 +393,9 @@ inline auto ida_solve(const RES &res_fct, const Y &y0, const YP &yp0, const T &t
   w.LS = lapack_dense_solver(w.ctx);
   etr::ass<"ida: creating the LAPACK dense linear solver failed">(w.LS != nullptr);
   etr::ass<"ida: IDASetLinearSolver failed">(IDASetLinearSolver(w.mem, w.LS, w.A) == IDA_SUCCESS);
+  if constexpr (!std::is_same_v<JAC, no_jac>) {
+    etr::ass<"ida: IDASetJacFn failed">(IDASetJacFn(w.mem, &ida_jac_trampoline<Ctx>) == IDA_SUCCESS);
+  }
 
   int ic_flag = IDACalcIC(w.mem, IDA_YA_YDP_INIT, etr::get_val(times.get(1)));
   etr::ass(ic_flag == IDA_SUCCESS,
@@ -397,6 +421,21 @@ inline auto ida_solve(const RES &res_fct, const Y &y0, const YP &yp0, const T &t
   }
   print_ida_stats(w.mem);
   return res;
+}
+
+template <typename RES, typename Y, typename YP, typename T, typename P, typename ID>
+inline auto ida_solve(const RES &res_fct, const Y &y0, const YP &yp0, const T &times,
+                      const P &params, etr::Double reltol, etr::Double abstol,
+                      const ID &id) {
+  return ida_impl<no_jac>(res_fct, nullptr, y0, yp0, times, params, reltol, abstol, id);
+}
+
+template <typename RES, typename Y, typename YP, typename T, typename P, typename ID,
+          typename JAC>
+inline auto ida_solve(const RES &res_fct, const Y &y0, const YP &yp0, const T &times,
+                      const P &params, etr::Double reltol, etr::Double abstol,
+                      const ID &id, const JAC &jac) {
+  return ida_impl(res_fct, &jac, y0, yp0, times, params, reltol, abstol, id);
 }
 
 } // namespace a2a
