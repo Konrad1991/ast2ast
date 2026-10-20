@@ -452,6 +452,34 @@ color_columns <- function(rows, n) {
   color
 }
 
+# rows "runtime" would take by reverse sweeps: same greedy rule as
+# choose_dense_rows in Derivatives.hpp. Returns list(k, sweeps)
+dense_row_split <- function(rows, n) {
+  ncolours <- function(r) {
+    used <- unique(unlist(r))
+    if (length(used) == 0L) 0L else max(color_columns(r, n)[used])
+  }
+  nnz <- lengths(rows)
+  ord <- order(nnz, decreasing = TRUE)
+  best <- ncolours(rows)
+  best_k <- 0L
+  rest <- rows
+  k <- 1L
+  while (k <= length(rows) && k < best) {
+    rest[ord[k]] <- list(integer(0))
+    left <- if (k < length(rows)) nnz[ord[k + 1L]] else 0L
+    if (k + left < best) {
+      cost <- k + ncolours(rest)
+      if (cost < best) {
+        best <- cost
+        best_k <- k
+      }
+    }
+    k <- k + 1L
+  }
+  list(k = best_k, sweeps = best)
+}
+
 # --- jacobian(f, x, colouring = "static", n = <literal>) ------------------
 
 is_return_of <- function(node) {

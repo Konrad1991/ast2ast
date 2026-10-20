@@ -32,6 +32,24 @@ f <- function(out, y) {
 }
 expect_equal(pattern(f, 2L), list(2L, 1:2))
 
+# dense rows: same greedy split as the runtime colouring
+arrow <- c(list(1:6), as.list(2:6))
+expect_equal(ast2ast:::dense_row_split(arrow, 6L), list(k = 1L, sweeps = 2L))
+expect_equal(ast2ast:::dense_row_split(list(1L, 1:2, 2:3), 3L), list(k = 0L, sweeps = 2L))
+expect_equal(ast2ast:::dense_row_split(list(1:4, 1:4), 4L), list(k = 2L, sweeps = 2L))
+# static colouring stays forward-only: dense rows -> hint to "runtime"
+f <- function(x) {
+  argtypes(x |> type(vec(double)))
+  h <- fn(argtypes(y |> type(vec(double))), return(vec(double)), {
+    return(c(y[[1L]] + y[[2L]] + y[[3L]] + y[[4L]], y[[2L]] * y[[2L]], sin(y[[3L]]), y[[4L]]))
+  })
+  return(jacobian(h, x, colouring = "static", n = 4L))
+}
+expect_warning(
+  ast2ast::translate(f, derivative = "forward", getsource = TRUE),
+  "1 dense row; colouring = \"runtime\" needs 2 sweeps instead of 4", fixed = TRUE
+)
+
 # Skipped on CRAN: forward AD compiles are expensive.
 if (!at_home()) exit_file("slow: AD compiles; runs at home / CI only")
 
