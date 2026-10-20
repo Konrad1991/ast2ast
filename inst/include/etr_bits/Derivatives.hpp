@@ -272,6 +272,9 @@ struct Colouring {
   std::vector<int> colour;
   std::vector<int> col_ptr;
   std::vector<int> row_idx;
+  // rows taken by reverse sweeps (runtime only): values row-wise, n per row
+  std::vector<int> dense_rows;
+  std::vector<double> dense_vals;
 };
 
 // one forward sweep per colour: seed all its columns at once, then hand every
@@ -283,7 +286,10 @@ inline void coloured_sweeps(const X& x, const Colouring& c, Call&& call_f, Store
   for (std::size_t i = 0; i < c.n; i++) xd.set(i, Dual(get_val(x.get(i)), 0.0));
 
   std::vector<std::vector<std::size_t>> cols_of(c.ncolours);
-  for (std::size_t j = 0; j < c.n; j++) cols_of[static_cast<std::size_t>(c.colour[j])].push_back(j);
+
+  for (std::size_t j = 0; j < c.n; j++) {
+    if (c.colour[j] >= 0) cols_of[static_cast<std::size_t>(c.colour[j])].push_back(j);
+  }
 
   for (const auto& cols : cols_of) {
     for (std::size_t j : cols) xd.d.set_dot(j, 1.0);
@@ -305,7 +311,70 @@ inline auto jacobian_coloured_impl(const X& x, const Colouring& c, Call&& call_f
   coloured_sweeps(x, c, call_f, [&](std::size_t j, std::size_t, std::size_t i, const Double& v) {
     jac.set(j * c.m + i, v);
   });
+  for (std::size_t k = 0; k < c.dense_rows.size(); k++) {
+    const std::size_t i = static_cast<std::size_t>(c.dense_rows[k]);
+    for (std::size_t j = 0; j < c.n; j++) jac.set(j * c.m + i, Double(c.dense_vals[k * c.n + j]));
+  }
   return jac;
+}
+
+// CSC of the pattern + greedy colouring, natural column order: smallest colour
+// no column sharing a row has. Columns without entries get no colour (-1).
+inline Colouring colour_columns(std::size_t n, const std::vector<std::vector<int>>& rows) {
+  const std::size_t m = rows.size();
+  std::vector<int> col_ptr(n + 1, 0);
+  for (const auto& rw : rows) for (int j : rw) col_ptr[static_cast<std::size_t>(j) + 1]++;
+  for (std::size_t j = 0; j < n; j++) col_ptr[j + 1] += col_ptr[j];
+  std::vector<int> row_idx(static_cast<std::size_t>(col_ptr[n]));
+  std::vector<int> fill(col_ptr.begin(), col_ptr.end() - 1);
+  for (std::size_t r = 0; r < m; r++) {
+    for (int j : rows[r]) row_idx[static_cast<std::size_t>(fill[static_cast<std::size_t>(j)]++)] = static_cast<int>(r);
+  }
+
+  std::vector<int> colour(n, -1);
+  std::vector<std::size_t> forbidden(n + 1, n);
+  std::size_t ncolours = 0;
+  for (std::size_t j = 0; j < n; j++) {
+    if (col_ptr[j] == col_ptr[j + 1]) continue;
+    for (int p = col_ptr[j]; p < col_ptr[j + 1]; p++) {
+      for (int k : rows[static_cast<std::size_t>(row_idx[static_cast<std::size_t>(p)])]) {
+        const int ck = colour[static_cast<std::size_t>(k)];
+        if (ck >= 0) forbidden[static_cast<std::size_t>(ck)] = j;
+      }
+    }
+    std::size_t c = 0;
+    while (forbidden[c] == j) c++;
+    colour[j] = static_cast<int>(c);
+    if (c + 1 > ncolours) ncolours = c + 1;
+  }
+  return Colouring{n, m, ncolours, std::move(colour), std::move(col_ptr), std::move(row_idx), {}, {}};
+}
+
+// Bidirectional split (#54): drop the k densest rows (reverse sweeps) where
+// k + #colours of the rest is smallest. Cost >= k stops the search; a
+// colouring is only tried if k + nnz of the densest remaining row can win.
+inline std::vector<int> choose_dense_rows(std::size_t n, const std::vector<std::vector<int>>& rows) {
+  const std::size_t m = rows.size();
+  std::vector<int> order(m);
+  std::iota(order.begin(), order.end(), 0);
+  std::stable_sort(order.begin(), order.end(), [&rows](int a, int b) {
+    return rows[static_cast<std::size_t>(a)].size() > rows[static_cast<std::size_t>(b)].size();
+  });
+
+  std::vector<std::vector<int>> rest = rows;
+  std::size_t best_cost = colour_columns(n, rest).ncolours;
+  std::size_t best_k = 0;
+  for (std::size_t k = 1; k <= m && k < best_cost; k++) {
+    rest[static_cast<std::size_t>(order[k - 1])].clear();
+    const std::size_t densest_left = k < m ? rows[static_cast<std::size_t>(order[k])].size() : 0;
+    if (k + densest_left >= best_cost) continue;
+    const std::size_t cost = k + colour_columns(n, rest).ncolours;
+    if (cost < best_cost) {
+      best_cost = cost;
+      best_k = k;
+    }
+  }
+  return std::vector<int>(order.begin(), order.begin() + static_cast<std::ptrdiff_t>(best_k));
 }
 
 // Runtime pattern (development/Plans/sparsity_tracer.md): record f once on the
@@ -313,8 +382,9 @@ inline auto jacobian_coloured_impl(const X& x, const Colouring& c, Call&& call_f
 // output to the inputs it reaches. Exact for the branch taken at x. Block ops
 // (matmul, solve, ...) count as depending on all of their inputs.
 // Then greedy column colouring. The tape is rewound afterwards.
+// split_dense: only for the dense result; sparse/banded need the full pattern
 template<typename X, typename CallRev>
-inline Colouring colouring_from_tape(const X& x, CallRev&& call_rev) {
+inline Colouring colouring_from_tape(const X& x, CallRev&& call_rev, bool split_dense = false) {
   auto& tape = TAPE_INTERN;
   const std::size_t tape_start = tape.size();
   const std::size_t blocks_start = tape.blocks.size();
@@ -364,35 +434,24 @@ inline Colouring colouring_from_tape(const X& x, CallRev&& call_rev) {
     }
     std::sort(rows[r].begin(), rows[r].end());
   }
+
+  // dense rows: VJP with e_r on the tape just recorded, values exact at x
+  std::vector<int> dense;
+  if (split_dense) dense = choose_dense_rows(n, rows);
+  std::vector<double> dense_vals(dense.size() * n);
+  for (std::size_t k = 0; k < dense.size(); k++) {
+    tape.reverse(y.get(static_cast<std::size_t>(dense[k])).id);
+    for (std::size_t j = 0; j < n; j++) {
+      dense_vals[k * n + j] = tape.adj[static_cast<std::size_t>(xr.get(j).id)];
+    }
+    rows[static_cast<std::size_t>(dense[k])].clear();
+  }
   tape.rewind(tape_start, blocks_start);
 
-  // CSC: rows touched by each column
-  std::vector<int> col_ptr(n + 1, 0);
-  for (const auto& rw : rows) for (int j : rw) col_ptr[static_cast<std::size_t>(j) + 1]++;
-  for (std::size_t j = 0; j < n; j++) col_ptr[j + 1] += col_ptr[j];
-  std::vector<int> row_idx(static_cast<std::size_t>(col_ptr[n]));
-  std::vector<int> fill(col_ptr.begin(), col_ptr.end() - 1);
-  for (std::size_t r = 0; r < m; r++) {
-    for (int j : rows[r]) row_idx[static_cast<std::size_t>(fill[static_cast<std::size_t>(j)]++)] = static_cast<int>(r);
-  }
-
-  // greedy, natural column order: smallest colour no column sharing a row has
-  std::vector<int> colour(n, -1);
-  std::vector<std::size_t> forbidden(n + 1, n);
-  std::size_t ncolours = 0;
-  for (std::size_t j = 0; j < n; j++) {
-    for (int p = col_ptr[j]; p < col_ptr[j + 1]; p++) {
-      for (int k : rows[static_cast<std::size_t>(row_idx[static_cast<std::size_t>(p)])]) {
-        const int ck = colour[static_cast<std::size_t>(k)];
-        if (ck >= 0) forbidden[static_cast<std::size_t>(ck)] = j;
-      }
-    }
-    std::size_t c = 0;
-    while (forbidden[c] == j) c++;
-    colour[j] = static_cast<int>(c);
-    if (c + 1 > ncolours) ncolours = c + 1;
-  }
-  return Colouring{n, m, ncolours, std::move(colour), std::move(col_ptr), std::move(row_idx)};
+  Colouring c = colour_columns(n, rows);
+  c.dense_rows = std::move(dense);
+  c.dense_vals = std::move(dense_vals);
+  return c;
 }
 
 template<typename F, typename X> requires (IsArray<Decayed<X>>)
@@ -409,12 +468,12 @@ template <typename C, typename R, typename A1, typename A2> struct SecondArgOf<R
   using type = std::decay_t<A2>;
 };
 
-template<typename FRev, typename X>
+template<bool SplitDense = false, typename FRev, typename X>
 inline Colouring runtime_pattern(const FRev& f_rev, const X& x) {
-  return colouring_from_tape(x, [&f_rev](const auto& xv) { return f_rev(xv); });
+  return colouring_from_tape(x, [&f_rev](const auto& xv) { return f_rev(xv); }, SplitDense);
 }
 
-template<typename FRev, typename X, typename E>
+template<bool SplitDense = false, typename FRev, typename X, typename E>
 inline Colouring runtime_pattern(const FRev& f_rev, const X& x, const E& extra) {
   // NOTE: extra is converted (Dual -> ReverseDouble: scalar, array, struct,
   // collection) inside the tape pass: its constants are rewound with the rest
@@ -422,18 +481,18 @@ inline Colouring runtime_pattern(const FRev& f_rev, const X& x, const E& extra) 
     typename SecondArgOf<FRev>::type extra_rev;
     extra_rev = extra;
     return f_rev(xv, extra_rev);
-  });
+  }, SplitDense);
 }
 
 // coloured jacobian with the pattern from colouring_from_tape
 template<typename F, typename FRev, typename X> requires (IsArray<Decayed<X>>)
 inline auto jacobian_runtime_coloured(const F& f, const FRev& f_rev, const X& x) {
-  return jacobian_coloured_impl(x, runtime_pattern(f_rev, x), [&f](const auto& xv) { return f(xv); });
+  return jacobian_coloured_impl(x, runtime_pattern<true>(f_rev, x), [&f](const auto& xv) { return f(xv); });
 }
 
 template<typename F, typename FRev, typename X, typename E> requires (IsArray<Decayed<X>>)
 inline auto jacobian_runtime_coloured(const F& f, const FRev& f_rev, const X& x, const E& extra) {
-  return jacobian_coloured_impl(x, runtime_pattern(f_rev, x, extra),
+  return jacobian_coloured_impl(x, runtime_pattern<true>(f_rev, x, extra),
                                 [&f, &extra](const auto& xv) { return f(xv, extra); });
 }
 

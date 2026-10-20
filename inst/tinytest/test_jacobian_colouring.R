@@ -203,6 +203,35 @@ rwcpp <- ast2ast::translate(rw, derivative = "forward")
 w3 <- c(2, 3, 4)
 expect_equal(rwcpp(1L, x3p, w3), rwcpp(2L, x3p, w3))
 
+# bidirectional: dense rows via reverse sweeps, rest coloured
+rd <- function(test, x, s) {
+  argtypes(test |> type(int), x |> type(vec(double)), s |> type(double))
+  # row 1 depends on all of y, the rest is diagonal
+  dense_row <- function(y) {
+    argtypes(y |> type(vec(double)))
+    returntype(vec(double))
+    out <- y * y
+    out[[1L]] <- sum(y)
+    return(out)
+  }
+  # only dense rows: no forward sweep left
+  two_rows <- function(y, k) {
+    argtypes(y |> type(vec(double)), k |> type(double) |> const() |> ref())
+    returntype(vec(double))
+    return(c(k * sum(y), sum(y * y)))
+  }
+  if (test == 1L) return(jacobian(dense_row, x, colouring = "runtime"))
+  if (test == 2L) return(jacobian(dense_row, x))
+  if (test == 3L) return(jacobian(two_rows, x, s, colouring = "runtime"))
+  return(jacobian(two_rows, x, s))
+}
+rdcpp <- ast2ast::translate(rd, derivative = "forward")
+x20 <- seq(0.1, 2, length.out = 20)
+expect_equal(rdcpp(1L, x20, 0), rdcpp(2L, x20, 0))
+expect_equal(rdcpp(1L, x20, 0), diag(2 * x20) + rbind(c(1 - 2 * x20[[1L]], rep(1, 19)), matrix(0, 19, 20)))
+expect_equal(rdcpp(3L, x20, 2.5), rdcpp(4L, x20, 2.5))
+expect_equal(rdcpp(3L, x20, 2.5), rbind(rep(2.5, 20), 2 * x20))
+
 # argument checks
 r2 <- function(x) {
   argtypes(x |> type(vec(double)))
