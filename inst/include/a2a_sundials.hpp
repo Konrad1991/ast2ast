@@ -104,16 +104,20 @@ inline std::string flag_name(char *name) {
   return out;
 }
 
+struct no_jac {};
+
 // RHS: functor f(t, y, ydot, params). params is an opaque passthrough (double
 // vector, scalar, or a new_type struct) -- cvode_solve never inspects it.
-template <typename F, typename P> struct fct_ctx {
+// jac: optional functor jac(t, y, J, params), nullptr -> difference quotients
+template <typename F, typename P, typename J = no_jac> struct fct_ctx {
   const F *f;
   P *params;
+  const J *jac = nullptr;
 };
 
-template <typename F, typename P>
+template <typename Ctx>
 int rhs_trampoline(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {
-  auto *ctx = static_cast<fct_ctx<F, P> *>(user_data);
+  auto *ctx = static_cast<Ctx *>(user_data);
   sunrealtype *yp = N_VGetArrayPointer(y);
   sunrealtype *ydp = N_VGetArrayPointer(ydot);
   if (yp == nullptr || ydp == nullptr) return -1;
@@ -122,6 +126,22 @@ int rhs_trampoline(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {
   BorrowVec ydv(ydp, n, etr::Dim{n});
   etr::Double tt = static_cast<double>(t);
   (*ctx->f)(tt, yv, ydv, *ctx->params);
+  return 0;
+}
+
+// J: dense, column-major n x n like an R matrix; SUNDIALS zeroes it before the call
+template <typename Ctx>
+int cvode_jac_trampoline(sunrealtype t, N_Vector y, N_Vector, SUNMatrix J, void *user_data,
+                         N_Vector, N_Vector, N_Vector) {
+  auto *ctx = static_cast<Ctx *>(user_data);
+  sunrealtype *y_ptr = N_VGetArrayPointer(y);
+  sunrealtype *j_ptr = SUNDenseMatrix_Data(J);
+  if (y_ptr == nullptr || j_ptr == nullptr) return -1;
+  const std::size_t n = static_cast<std::size_t>(NV_LENGTH_S(y));
+  BorrowVec yv(y_ptr, n, etr::Dim{n});
+  BorrowVec jv(j_ptr, n * n, etr::Dim{n, n});
+  etr::Double tt = static_cast<double>(t);
+  (*ctx->jac)(tt, yv, jv, *ctx->params);
   return 0;
 }
 
@@ -140,17 +160,18 @@ struct cvode_workspace {
   }
 };
 
-// cvode(rhs, y0, times, params, reltol, abstol, stiff) -> length(times) x
+// cvode(rhs, y0, times, params, reltol, abstol, stiff[, jac]) -> length(times) x
 // length(y0) matrix, row k = state at times[k] (row 0 = y0, times[0] = t0).
-// stiff != 0 -> BDF, else ADAMS. Dense Newton, difference-quotient Jacobian.
-template <typename RHS, typename Y, typename T, typename P, typename StiffT>
+// stiff != 0 -> BDF, else ADAMS. Dense Newton (both), Jacobian from jac or
+// difference quotients.
+template <typename JAC, typename RHS, typename Y, typename T, typename P, typename StiffT>
 requires(
 etr::IsArray<etr::Decayed<Y>> && etr::IsArray<etr::Decayed<T>> &&
 etr::IsScalarLike<etr::Decayed<StiffT>>
 )
-inline auto cvode_solve(const RHS &rhs, const Y &y0, const T &times,
-                        const P &params, etr::Double reltol, etr::Double abstol,
-                        StiffT stiff) {
+inline auto cvode_impl(const RHS &rhs, const JAC *jac, const Y &y0, const T &times,
+                       const P &params, etr::Double reltol, etr::Double abstol,
+                       StiffT stiff) {
   const std::size_t neq = y0.size();
   const std::size_t nt = times.size();
   etr::ass<"cvode: need at least one initial state">(neq > 0);
@@ -160,7 +181,8 @@ inline auto cvode_solve(const RHS &rhs, const Y &y0, const T &times,
     etr::get_val(abstol) > 0.0);
 
   P p_local = params; // fixed for the whole integration
-  fct_ctx<RHS, P> ctx{&rhs, &p_local};
+  using Ctx = fct_ctx<RHS, P, JAC>;
+  Ctx ctx{&rhs, &p_local, jac};
 
   cvode_workspace w;
   etr::ass<"cvode: SUNContext_Create failed">(SUNContext_Create(SUN_COMM_NULL, &w.ctx) == 0);
@@ -180,7 +202,7 @@ inline auto cvode_solve(const RHS &rhs, const Y &y0, const T &times,
   etr::ass<"cvode: CVodeCreate failed">(w.mem != nullptr);
 
   double t0 = etr::get_val(times.get(0));
-  etr::ass<"cvode: CVodeInit failed">(CVodeInit(w.mem, &rhs_trampoline<RHS, P>, t0, w.y) == CV_SUCCESS);
+  etr::ass<"cvode: CVodeInit failed">(CVodeInit(w.mem, &rhs_trampoline<Ctx>, t0, w.y) == CV_SUCCESS);
   etr::ass<"cvode: CVodeSStolerances failed">(CVodeSStolerances(w.mem, etr::get_val(reltol), etr::get_val(abstol)) == CV_SUCCESS);
   etr::ass<"cvode: CVodeSetUserData failed">(CVodeSetUserData(w.mem, &ctx) == CV_SUCCESS);
   etr::ass<"cvode: CVodeSetMaxNumSteps failed">(CVodeSetMaxNumSteps(w.mem, max_num_steps) == CV_SUCCESS);
@@ -192,6 +214,10 @@ inline auto cvode_solve(const RHS &rhs, const Y &y0, const T &times,
   etr::ass<"cvode: creating the LAPACK dense linear solver failed">(w.LS != nullptr);
   etr::ass<"cvode: CVodeSetLinearSolver failed">(
     CVodeSetLinearSolver(w.mem, w.LS, w.A) == CV_SUCCESS);
+  if constexpr (!std::is_same_v<JAC, no_jac>) {
+    etr::ass<"cvode: CVodeSetJacFn failed">(
+      CVodeSetJacFn(w.mem, &cvode_jac_trampoline<Ctx>) == CV_SUCCESS);
+  }
 
   etr::Array<etr::Double, etr::Buffer<etr::Double, etr::RBufferTrait>> res(etr::SI{neq * nt});
   res.dim = etr::Dim{nt, neq};
@@ -211,9 +237,21 @@ inline auto cvode_solve(const RHS &rhs, const Y &y0, const T &times,
   return res;
 }
 
-template <typename F, typename P>
+template <typename RHS, typename Y, typename T, typename P, typename StiffT>
+inline auto cvode_solve(const RHS &rhs, const Y &y0, const T &times, const P &params,
+                        etr::Double reltol, etr::Double abstol, StiffT stiff) {
+  return cvode_impl<no_jac>(rhs, nullptr, y0, times, params, reltol, abstol, stiff);
+}
+
+template <typename RHS, typename Y, typename T, typename P, typename StiffT, typename JAC>
+inline auto cvode_solve(const RHS &rhs, const Y &y0, const T &times, const P &params,
+                        etr::Double reltol, etr::Double abstol, StiffT stiff, const JAC &jac) {
+  return cvode_impl(rhs, &jac, y0, times, params, reltol, abstol, stiff);
+}
+
+template <typename Ctx>
 int res_trampoline(sunrealtype t, N_Vector y, N_Vector yp, N_Vector r, void *user_data) {
-  auto *ctx = static_cast<fct_ctx<F, P> *>(user_data);
+  auto *ctx = static_cast<Ctx *>(user_data);
   sunrealtype *y_ptr = N_VGetArrayPointer(y);
   sunrealtype *yp_ptr = N_VGetArrayPointer(yp);
   sunrealtype *r_ptr = N_VGetArrayPointer(r);
@@ -323,7 +361,7 @@ inline auto ida_solve(const RES &res_fct, const Y &y0, const YP &yp0, const T &t
   etr::ass<"ida: IDACreate failed">(w.mem != nullptr);
 
   double t0 = etr::get_val(times.get(0));
-  etr::ass<"ida: IDAInit failed">(IDAInit(w.mem, &res_trampoline<RES, P>, t0, w.y, w.yp) == IDA_SUCCESS);
+  etr::ass<"ida: IDAInit failed">(IDAInit(w.mem, &res_trampoline<fct_ctx<RES, P>>, t0, w.y, w.yp) == IDA_SUCCESS);
   etr::ass<"ida: IDASStolerances failed">(IDASStolerances(w.mem, etr::get_val(reltol), etr::get_val(abstol)) == IDA_SUCCESS);
   etr::ass<"ida: IDASetUserData failed">(IDASetUserData(w.mem, &ctx) == IDA_SUCCESS);
   etr::ass<"ida: IDASetId failed">(IDASetId(w.mem, w.id) == IDA_SUCCESS);
