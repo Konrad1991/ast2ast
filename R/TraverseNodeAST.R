@@ -399,7 +399,14 @@ action_update_function_registry <- function(node, function_registry, namespace =
 }
 
 # a temporary of the hoisted functor, e.g. f_impl::g_t<ETR_REAL>{}
-functor_obj <- function(cpp_path) paste0(cpp_path, "<", SCALAR_CPP, ">{}")
+functor_obj <- function(cpp_path, scalar = NULL) {
+  paste0(cpp_path, "<", if (is.null(scalar)) SCALAR_CPP else dependent_scalar(scalar), ">{}")
+}
+
+# a fixed scalar type, still dependent on the template parameter
+dependent_scalar <- function(scalar) {
+  sprintf("typename etr::dependent_type<%s, %s>::type", scalar, SCALAR_CPP)
+}
 
 # Checks which have to be fulfilled:
 # - Function operators are part of: nullary_node, unary_node, binary_node and function_node.
@@ -805,7 +812,7 @@ action_set_true <- function(node, r_fct, real_type) {
 action_translate <- function(node, function_registry, real_type) {
   if (inherits(node, "variable_node") && inherits(node$internal_type, "fn_node") &&
       !is.null(node$internal_type$cpp_path)) {
-    node$cpp_override <- functor_obj(node$internal_type$cpp_path)
+    node$cpp_override <- functor_obj(node$internal_type$cpp_path, node$functor_scalar)
     return()
   }
   if (!inherits(node, "binary_node") &&

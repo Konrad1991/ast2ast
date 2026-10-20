@@ -596,6 +596,9 @@ struct ReverseTape {
       if (is_na[ii] && op[ii] != ROp::MatMul && op[ii] != ROp::CrossProd) continue;
       const double w = adj[ii];
       const ROp op_i = op[ii];
+      // NOTE: zero adjoint -> skip: a node not reaching the output would add
+      // 0 * Inf = NaN (e.g. 1 / x at x = 0). Block heads read all their cells.
+      if (w == 0.0 && op_i < ROp::MatMul) continue;
       const int ai = a[ii];
       const int bi = b[ii];
       switch (op_i) {
@@ -1663,7 +1666,12 @@ inline Double::Double(Dual v) : val(v.val) {}
 inline Double::Double(ReverseDouble v) : val(v.is_na ? na_real() : v.get_val_from_tape()) {}
 
 inline Dual::Dual() : val(0.0), dot(0.0) {}
-inline Dual::Dual(double v, double d) : val(v), dot(d) {}
+inline Dual::Dual(double v, double d) : val(v), dot(d) {
+  if (DUAL_PROBE_ACTIVE.load(std::memory_order_relaxed)) [[unlikely]] {
+    const char* none = nullptr;
+    if (std::isfinite(v) && !std::isfinite(d)) DUAL_PROBE_LINE.compare_exchange_strong(none, current_line());
+  }
+}
 inline Dual::Dual(Logical v) : val(Double(v).val), dot(0.0) {}
 inline Dual::Dual(Integer v) : val(Double(v).val), dot(0.0) {}
 inline Dual::Dual(Double v) : val(v.val), dot(0.0) {}

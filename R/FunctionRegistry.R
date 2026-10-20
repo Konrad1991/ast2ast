@@ -2612,9 +2612,6 @@ function_registry_global$add(
 # sparsity pattern, so colouring is required and a missing pattern is an error
 infer_jacobian <- function(node, vars_list, info_env, function_registry, fname) {
   structured <- fname != "jacobian"
-  if (info_env$real_type == "etr::Double") {
-    return(sprintf("%s requires translate(derivative = \"forward\") or \"reverse\"", fname))
-  }
   opts <- jacobian_colouring_args(node, info_env$real_type, vars_list)
   if (is.character(opts)) return(opts)
   coloured <- vapply(node$args, inherits, logical(1), "cpp_code_node")
@@ -2650,6 +2647,19 @@ infer_jacobian <- function(node, vars_list, info_env, function_registry, fname) 
     if (inherits(extra_type, "pre_type_node") && extra_type$get_base_type() == "character") {
       return(sprintf("The third argument to %s (data passed to the function) cannot be a character/string", fname))
     }
+  }
+  # plain double translation: f alone runs with Dual (forward mode)
+  if (info_env$real_type == "etr::Double") {
+    fn <- runtime_colouring_fn(pos_args[[1L]], vars_list)
+    if (is.null(fn)) {
+      return(sprintf("%s: without translate(derivative = ...) f has to be a named fn, not an inline fn", fname))
+    }
+    no_ad <- function_registry$function_names[!function_registry$deriv_possibles]
+    err <- runtime_colouring_reverse_error(
+      fn, vars_list, sprintf("%s without translate(derivative = ...)", fname), c(ad_only_fcts, no_ad)
+    )
+    if (!is.null(err)) return(err)
+    pos_args[[1L]]$functor_scalar <- "etr::Dual"
   }
   f <- all_types[[1L]]
   expected_n <- if (has_extra) 2L else 1L
@@ -2736,7 +2746,8 @@ function_registry_global$add(
     "for length(x) == n, one sweep per colour instead of per column.\n",
     "colouring = \"runtime\" (forward mode): pattern recorded at every call from one ",
     "reverse-mode run of f; f has to be a named fn.\n",
-    "Requires translate(derivative = \"forward\") or \"reverse\"."
+    "Without translate(derivative = ...) only f runs in forward mode (f has to be a named fn ",
+    "without borrow arguments); the rest of the translation stays plain double."
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     infer_jacobian(node, vars_list, info_env, function_registry, "jacobian")

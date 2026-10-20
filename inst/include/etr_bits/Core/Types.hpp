@@ -50,6 +50,7 @@ extern "C" void dgetrs_(const char* trans, const int* n, const int* nrhs,
 #include <cstring>
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <ios>
 #include <iostream>
 #include <iterator>
@@ -83,6 +84,12 @@ inline const char*& current_line() {
   thread_local const char* line = "";
   return line;
 }
+
+// probe sweep after a non-finite jacobian entry (Derivatives.hpp): the first
+// line where a Dual gets a finite value but a non-finite derivative.
+// NOTE: atomics, not thread_local: checked in every Dual ctor, set only there
+inline std::atomic<bool> DUAL_PROBE_ACTIVE{false};
+inline std::atomic<const char*> DUAL_PROBE_LINE{nullptr};
 
 // https://ctrpeach.io/posts/cpp20-string-literal-template-parameters/
 template <std::size_t N> struct string_literal {

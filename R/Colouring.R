@@ -604,8 +604,8 @@ jacobian_colouring_args <- function(node, real_type, vars_list) {
   if (res$colouring != "static" && !is.null(res$n)) {
     return("jacobian: n is only used with colouring = \"static\"")
   }
-  if (res$colouring != "none" && real_type != "etr::Dual") {
-    return(sprintf("jacobian: colouring = \"%s\" requires translate(derivative = \"forward\")", res$colouring))
+  if (res$colouring != "none" && real_type == "etr::ReverseDouble") {
+    return(sprintf("jacobian: colouring = \"%s\" requires translate(derivative = \"forward\") or no derivative", res$colouring))
   }
   if (res$colouring == "runtime") {
     err <- check_runtime_colouring(node$args[[1L]], vars_list)
@@ -635,12 +635,14 @@ check_runtime_colouring <- function(f_arg, vars_list) {
   runtime_colouring_reverse_error(fn, vars_list)
 }
 
-# f is checked with Dual only, but also instantiated with ReverseDouble
+# f is checked with one scalar type, but also instantiated with others
+# (ReverseDouble for the runtime pattern, Dual in a plain double translation)
 ad_only_fcts <- c("seed", "unseed", "get_dot", "deriv")
 borrow_fcts <- c("borrow_vec", "borrow_vector", "borrow_mat", "borrow_matrix", "borrow_array")
 
 # NOTE: R code, not nodes: inner fns are transpiled only after this check
-runtime_colouring_reverse_error <- function(fn, vars_list) {
+runtime_colouring_reverse_error <- function(fn, vars_list, context = "jacobian: colouring = \"runtime\"",
+                                            forbidden = ad_only_fcts) {
   visited <- character()
   walk <- function(code) {
     if (is.symbol(code)) {
@@ -651,11 +653,11 @@ runtime_colouring_reverse_error <- function(fn, vars_list) {
     }
     if (!is.call(code)) return(NULL)
     head <- if (is.symbol(code[[1L]])) as.character(code[[1L]]) else ""
-    if (head %in% ad_only_fcts) {
-      return(sprintf("jacobian: colouring = \"runtime\" cannot be used when f (or a fn it uses) calls %s", head))
+    if (head %in% forbidden) {
+      return(sprintf("%s cannot be used when f (or a fn it uses) calls %s", context, head))
     }
     if (head %in% borrow_fcts) {
-      return("jacobian: colouring = \"runtime\" cannot be used when f (or a fn it uses) has borrow arguments")
+      return(sprintf("%s cannot be used when f (or a fn it uses) has borrow arguments", context))
     }
     for (el in as.list(code)) {
       err <- walk(el)
@@ -674,7 +676,7 @@ runtime_colouring_reverse_error <- function(fn, vars_list) {
 }
 
 runtime_colouring_cpp <- function(fn) {
-  sprintf("etr::runtime_colouring(%s<etr::ReverseDouble>{})", fn$cpp_path)
+  sprintf("etr::runtime_colouring(%s<%s>{})", fn$cpp_path, dependent_scalar("etr::ReverseDouble"))
 }
 
 # literal that stringifies to fixed C++ (the colouring data)

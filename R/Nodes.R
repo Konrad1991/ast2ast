@@ -12,6 +12,8 @@ variable_node <- R6::R6Class(
     source_line = NULL,
     # a named fn used as value (map(g, x)): its functor object
     cpp_override = NULL,
+    # scalar type of that functor, NULL -> the translation's
+    functor_scalar = NULL,
     initialize = function(obj) {
       self$name <- obj
     },

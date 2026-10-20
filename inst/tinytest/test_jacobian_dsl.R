@@ -92,10 +92,11 @@ expect_equal(rev(3L, c(2, 3), p_in), matrix(c(5, 0, 0, 7), 2, 2))
 # --- 4. inline (anonymous) fn ----------------------------------------
 expect_equal(fwd(4L, c(2, 3), p_in), matrix(c(3, 1, 2, 6), 2, 2))
 
-# --- 5. rejected without a derivative mode --------------------------
+# --- 5. without a derivative mode f runs alone in forward mode, so it
+# has to be a named fn (TU contains the inline fn of case 4) -------------
 expect_error(
   translate(TU, types_f = types_scale, getsource = TRUE),
-  pattern = "jacobian requires"
+  pattern = "without translate\\(derivative = \\.\\.\\.\\) f has to be a named fn"
 )
 
 # --- 6. first argument must be a function -------------------------

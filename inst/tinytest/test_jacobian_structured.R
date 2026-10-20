@@ -103,8 +103,6 @@ expect_error(
                      derivative = "forward", getsource = TRUE),
   pattern = "jacobian_sparse needs colouring"
 )
-expect_error(
-  ast2ast::translate(body_with(quote(return(jacobian_banded(diffusion, x, colouring = "static", n = 6L)))),
-                     getsource = TRUE),
-  pattern = "jacobian_banded requires translate\\(derivative"
-)
+# without translate(derivative = ...): f alone runs in forward mode
+J <- ast2ast::translate(body_with(quote(return(jacobian_banded(diffusion, x, colouring = "static", n = 6L)))))(x)
+expect_equal(as.matrix(J), dense, check.attributes = FALSE)

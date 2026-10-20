@@ -196,6 +196,54 @@ void jacobian_backward(J& jac, const Fun& fct, Args&&... args) {
   }
 }
 
+// Non-finite entry (i, j) of a forward/coloured jacobian: one probe sweep with
+// column j seeded finds the first line where a value is finite but its
+// derivative is not. f[i] itself non-finite: the NaN stays, as in R.
+template<typename X, typename Call>
+[[gnu::cold]] inline void nonfinite_jacobian_error(const X& x, Call& call_f, std::size_t i, std::size_t j) {
+  const std::size_t n = x.size();
+  Array<Dual, Buffer<Dual>> xd(SI{n});
+  for (std::size_t k = 0; k < n; k++) xd.set(k, Dual(get_val(x.get(k)), 0.0));
+  xd.d.set_dot(j, 1.0);
+  const char* caller_line = current_line();
+  DUAL_PROBE_LINE.store(nullptr);
+  DUAL_PROBE_ACTIVE.store(true);
+  struct ProbeOff {
+    const char* line;
+    ~ProbeOff() {
+      DUAL_PROBE_ACTIVE.store(false);
+      current_line() = line;
+    }
+  } probe_off{caller_line};
+  auto y = call_f(xd);
+  if (!std::isfinite(get_val(y.get(i)))) return;
+  const char* line = DUAL_PROBE_LINE.load();
+  const std::string fi = "f[" + std::to_string(i + 1) + "]";
+  std::string msg = "jacobian: d " + fi + " / d x[" + std::to_string(j + 1) + "] is not finite, although " +
+                    fi + " is. ";
+  if (line != nullptr && *line != '\0') {
+    msg += "The first non-finite derivative appears in '" + std::string(line) + "'. ";
+  } else {
+    msg += "It comes from a reverse sweep (dense row of the colouring). ";
+  }
+  msg += "Typical cause: a division by a (nearly) zero state, e.g. vmax / (1 + K / c); "
+         "the same value as vmax * c / (c + K) has a finite derivative.";
+  throw std::runtime_error(msg);
+}
+
+// first non-finite entry of a column-major m x n jacobian
+template<typename J>
+inline bool first_nonfinite(const J& jac, std::size_t m, std::size_t& i, std::size_t& j) {
+  for (std::size_t k = 0; k < jac.size(); k++) {
+    if (!std::isfinite(get_val(jac.get(k)))) {
+      i = k % m;
+      j = k / m;
+      return true;
+    }
+  }
+  return false;
+}
+
 // jacobian(f, x[, extra]): m-by-n Jacobian of f at x, column-major like R.
 // Dispatch on x's scalar type -- forward mode for Dual, reverse mode for
 // ReverseDouble. `extra` is threaded through to f unchanged (as in uniroot).
@@ -249,6 +297,8 @@ inline auto jacobian_impl(const X& x, Call&& call_f) {
         for (std::size_t j = 0; j < nrow; j++) jac.set(i * nrow + j, y.d.get_dot(j));
         unseed(xd, i);
       }
+      std::size_t bi = 0, bj = 0;
+      if (first_nonfinite(jac, nrow, bi, bj)) [[unlikely]] nonfinite_jacobian_error(x, call_f, bi, bj);
       return jac;
     } else {
       auto jac = matrix(Double(0.0), Integer(1), Integer(static_cast<int>(ncol)));
@@ -319,6 +369,8 @@ inline auto jacobian_coloured_impl(const X& x, const Colouring& c, Call&& call_f
     const std::size_t i = static_cast<std::size_t>(c.dense_rows[k]);
     for (std::size_t j = 0; j < c.n; j++) jac.set(j * c.m + i, Double(c.dense_vals[k * c.n + j]));
   }
+  std::size_t bi = 0, bj = 0;
+  if (first_nonfinite(jac, c.m, bi, bj)) [[unlikely]] nonfinite_jacobian_error(x, call_f, bi, bj);
   return jac;
 }
 
@@ -381,6 +433,23 @@ inline std::vector<int> choose_dense_rows(std::size_t n, const std::vector<std::
   return std::vector<int>(order.begin(), order.begin() + static_cast<std::ptrdiff_t>(best_k));
 }
 
+// full pattern in the CSC, colours only from the rows left for the sweeps;
+// dense_vals is filled per call
+inline Colouring split_colouring(std::size_t n, const std::vector<std::vector<int>>& rows, bool split_dense) {
+  Colouring c = colour_columns(n, rows);
+  if (!split_dense) return c;
+  std::vector<int> dense = choose_dense_rows(n, rows);
+  if (!dense.empty()) {
+    std::vector<std::vector<int>> rest = rows;
+    for (int r : dense) rest[static_cast<std::size_t>(r)].clear();
+    Colouring rc = colour_columns(n, rest);
+    c.ncolours = rc.ncolours;
+    c.colour = std::move(rc.colour);
+  }
+  c.dense_rows = std::move(dense);
+  return c;
+}
+
 // Runtime pattern (development/Plans/sparsity_tracer.md): record f once on the
 // reverse tape (f_rev = f translated with ReverseDouble), walk back from every
 // output to the inputs it reaches. Exact for the branch taken at x. Block ops
@@ -439,28 +508,33 @@ inline Colouring colouring_from_tape(const X& x, CallRev&& call_rev, bool split_
     std::sort(rows[r].begin(), rows[r].end());
   }
 
+  // NOTE: cached per f, recoloured only when the pattern changes (other
+  // branch taken). Split + colouring were 54 % of jac in Jan's model.
+  struct Cache {
+    bool valid = false;
+    bool split_dense = false;
+    std::vector<std::vector<int>> rows;
+    Colouring colouring;
+  };
+  static thread_local Cache cache;
+  if (!cache.valid || cache.split_dense != split_dense || cache.rows != rows) {
+    cache.colouring = split_colouring(n, rows, split_dense);
+    cache.rows = std::move(rows);
+    cache.split_dense = split_dense;
+    cache.valid = true;
+  }
+  Colouring c = cache.colouring;
+
   // dense rows: VJP with e_r on the tape just recorded, values exact at x
-  std::vector<int> dense;
-  if (split_dense) dense = choose_dense_rows(n, rows);
-  std::vector<double> dense_vals(dense.size() * n);
+  const auto& dense = c.dense_rows;
+  c.dense_vals.assign(dense.size() * n, 0.0);
   for (std::size_t k = 0; k < dense.size(); k++) {
     tape.reverse(y.get(static_cast<std::size_t>(dense[k])).id);
     for (std::size_t j = 0; j < n; j++) {
-      dense_vals[k * n + j] = tape.adj[static_cast<std::size_t>(xr.get(j).id)];
+      c.dense_vals[k * n + j] = tape.adj[static_cast<std::size_t>(xr.get(j).id)];
     }
   }
   tape.rewind(tape_start, blocks_start);
-
-  // full pattern in the CSC, colours only from the rows left for the sweeps
-  Colouring c = colour_columns(n, rows);
-  if (!dense.empty()) {
-    for (int r : dense) rows[static_cast<std::size_t>(r)].clear();
-    Colouring rest = colour_columns(n, rows);
-    c.ncolours = rest.ncolours;
-    c.colour = std::move(rest.colour);
-  }
-  c.dense_rows = std::move(dense);
-  c.dense_vals = std::move(dense_vals);
   return c;
 }
 
@@ -477,6 +551,25 @@ template <typename C, typename R, typename A1, typename A2> struct SecondArgOf<R
 template <typename C, typename R, typename A1, typename A2> struct SecondArgOf<R (C::*)(A1, A2)> {
   using type = std::decay_t<A2>;
 };
+
+// extra as the type f takes, converted once: in a plain double translation f
+// is instantiated with Dual, extra is not
+template<typename F, typename E, typename Body>
+inline auto with_extra_as_arg_of(const E& extra, Body&& body) {
+  // generic lambdas have no single operator(): extra as is
+  if constexpr (requires { &F::operator(); }) {
+    using Want = typename SecondArgOf<F>::type;
+    if constexpr (std::is_same_v<Want, std::decay_t<E>>) {
+      return body(extra);
+    } else {
+      Want converted;
+      converted = extra;
+      return body(static_cast<const Want&>(converted));
+    }
+  } else {
+    return body(extra);
+  }
+}
 
 template<bool SplitDense = false, typename FRev, typename X>
 inline Colouring runtime_pattern(const FRev& f_rev, const X& x) {
@@ -502,9 +595,18 @@ inline auto jacobian_runtime_coloured(const F& f, const FRev& f_rev, const X& x)
 
 template<typename F, typename FRev, typename X, typename E> requires (IsArray<Decayed<X>>)
 inline auto jacobian_runtime_coloured(const F& f, const FRev& f_rev, const X& x, const E& extra) {
-  return jacobian_coloured_impl(x, runtime_pattern<true>(f_rev, x, extra),
-                                [&f, &extra](const auto& xv) { return f(xv, extra); });
+  return with_extra_as_arg_of<F>(extra, [&](const auto& e) {
+    return jacobian_coloured_impl(x, runtime_pattern<true>(f_rev, x, extra),
+                                  [&f, &e](const auto& xv) { return f(xv, e); });
+  });
 }
+
+// T, but dependent on S: inside a fn functor f_t<etr::Dual> would otherwise
+// need f_t complete where the functor is defined, not where it is used
+template<typename T, typename S>
+struct dependent_type {
+  using type = T;
+};
 
 // jacobian(f, x, colouring = "runtime"): f_rev = the ReverseDouble copy of f
 template<typename FRev>
@@ -535,12 +637,16 @@ inline auto jacobian(const F& f, const X& x, const Colouring& c) {
 
 template<typename F, typename X, typename E> requires (IsArray<Decayed<X>>)
 inline auto jacobian(const F& f, const X& x, const E& extra, const Colouring& c) {
-  return jacobian_coloured_impl(x, c, [&f, &extra](const auto& xv) { return f(xv, extra); });
+  return with_extra_as_arg_of<F>(extra, [&](const auto& e) {
+    return jacobian_coloured_impl(x, c, [&f, &e](const auto& xv) { return f(xv, e); });
+  });
 }
 
 template<typename F, typename X, typename E> requires (IsArray<Decayed<X>>)
 inline auto jacobian(const F& f, const X& x, const E& extra) {
-  return jacobian_impl(x, [&f, &extra](const auto& xv) { return f(xv, extra); });
+  return with_extra_as_arg_of<F>(extra, [&](const auto& e) {
+    return jacobian_impl(x, [&f, &e](const auto& xv) { return f(xv, e); });
+  });
 }
 
 // jacobian_sparse / jacobian_banded: values only in the colouring's pattern,
@@ -656,6 +762,14 @@ inline jacobian_sparse_result jacobian_sparse_impl(const X& x, const Colouring& 
       }
     }
   }
+  for (std::size_t j = 0; j < c.n; j++) {
+    for (int p = c.col_ptr[j]; p < c.col_ptr[j + 1]; p++) {
+      if (!std::isfinite(get_val(res.data.get(static_cast<std::size_t>(p))))) [[unlikely]] {
+        nonfinite_jacobian_error(x, call_f, static_cast<std::size_t>(c.row_idx[static_cast<std::size_t>(p)]), j);
+        return res;
+      }
+    }
+  }
   return res;
 }
 
@@ -681,6 +795,13 @@ inline jacobian_banded_result jacobian_banded_impl(const X& x, const Colouring& 
   coloured_sweeps(x, c, call_f, [&](std::size_t j, std::size_t, std::size_t i, const Double& v) {
     res.data.set(j * ldim + static_cast<std::size_t>(up) + i - j, v);
   });
+  for (std::size_t k = 0; k < ldim * c.n; k++) {
+    if (!std::isfinite(get_val(res.data.get(k)))) [[unlikely]] {
+      const std::size_t j = k / ldim;
+      nonfinite_jacobian_error(x, call_f, k % ldim + j - static_cast<std::size_t>(up), j);
+      return res;
+    }
+  }
   return res;
 }
 
@@ -690,7 +811,9 @@ inline auto jacobian_sparse(const F& f, const X& x, const Colouring& c) {
 }
 template<typename F, typename X, typename E> requires (IsArray<Decayed<X>>)
 inline auto jacobian_sparse(const F& f, const X& x, const E& extra, const Colouring& c) {
-  return jacobian_sparse_impl(x, c, [&f, &extra](const auto& xv) { return f(xv, extra); });
+  return with_extra_as_arg_of<F>(extra, [&](const auto& e) {
+    return jacobian_sparse_impl(x, c, [&f, &e](const auto& xv) { return f(xv, e); });
+  });
 }
 template<typename F, typename X, typename FRev> requires (IsArray<Decayed<X>>)
 inline auto jacobian_sparse(const F& f, const X& x, const RuntimeColouring<FRev>& rc) {
@@ -698,8 +821,10 @@ inline auto jacobian_sparse(const F& f, const X& x, const RuntimeColouring<FRev>
 }
 template<typename F, typename X, typename E, typename FRev> requires (IsArray<Decayed<X>>)
 inline auto jacobian_sparse(const F& f, const X& x, const E& extra, const RuntimeColouring<FRev>& rc) {
-  return jacobian_sparse_impl(x, runtime_pattern<true>(rc.f_rev, x, extra),
-                              [&f, &extra](const auto& xv) { return f(xv, extra); });
+  return with_extra_as_arg_of<F>(extra, [&](const auto& e) {
+    return jacobian_sparse_impl(x, runtime_pattern<true>(rc.f_rev, x, extra),
+                                [&f, &e](const auto& xv) { return f(xv, e); });
+  });
 }
 
 template<typename F, typename X> requires (IsArray<Decayed<X>>)
@@ -708,7 +833,9 @@ inline auto jacobian_banded(const F& f, const X& x, const Colouring& c) {
 }
 template<typename F, typename X, typename E> requires (IsArray<Decayed<X>>)
 inline auto jacobian_banded(const F& f, const X& x, const E& extra, const Colouring& c) {
-  return jacobian_banded_impl(x, c, [&f, &extra](const auto& xv) { return f(xv, extra); });
+  return with_extra_as_arg_of<F>(extra, [&](const auto& e) {
+    return jacobian_banded_impl(x, c, [&f, &e](const auto& xv) { return f(xv, e); });
+  });
 }
 template<typename F, typename X, typename FRev> requires (IsArray<Decayed<X>>)
 inline auto jacobian_banded(const F& f, const X& x, const RuntimeColouring<FRev>& rc) {
@@ -716,8 +843,10 @@ inline auto jacobian_banded(const F& f, const X& x, const RuntimeColouring<FRev>
 }
 template<typename F, typename X, typename E, typename FRev> requires (IsArray<Decayed<X>>)
 inline auto jacobian_banded(const F& f, const X& x, const E& extra, const RuntimeColouring<FRev>& rc) {
-  return jacobian_banded_impl(x, runtime_pattern(rc.f_rev, x, extra),
-                              [&f, &extra](const auto& xv) { return f(xv, extra); });
+  return with_extra_as_arg_of<F>(extra, [&](const auto& e) {
+    return jacobian_banded_impl(x, runtime_pattern(rc.f_rev, x, extra),
+                                [&f, &e](const auto& xv) { return f(xv, e); });
+  });
 }
 
 } // namespace etr

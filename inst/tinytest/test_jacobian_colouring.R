@@ -192,7 +192,8 @@ r <- function(test, x, s) {
   return(jacobian(scaled, x, s))
 }
 code <- ast2ast::translate(r, derivative = "forward", getsource = TRUE)
-expect_true(grepl("etr::runtime_colouring(r_impl::rhs_t<etr::ReverseDouble>{})", code, fixed = TRUE))
+expect_true(grepl("etr::runtime_colouring(r_impl::rhs_t<typename etr::dependent_type<etr::ReverseDouble, ETR_REAL>::type>{})",
+                  code, fixed = TRUE))
 
 rcpp <- ast2ast::translate(r, derivative = "forward")
 x8 <- seq(0.1, 0.8, length.out = 8)
@@ -407,6 +408,107 @@ pts <- list(
 )
 x3 <- c(0.3, 0.7, 1.1)
 expect_equal(sccpp(1L, x3, pts), sccpp(2L, x3, pts))
+
+# --- without translate(derivative = ...): f alone runs in forward mode --------
+# the struct passed as data is converted once (Params<Double> -> Params<Dual>)
+pl <- function(test, x, p) {
+  argtypes(test |> type(int), x |> type(vec(double)), p |> type(Params))
+  rhs <- function(y, q) {
+    argtypes(y |> type(vec(double)), q |> type(Params) |> const() |> ref())
+    returntype(vec(double))
+    out <- q$k * y * y
+    out[[1L]] <- sum(y)
+    return(out)
+  }
+  if (test == 1L) return(jacobian(rhs, x, p))
+  return(jacobian(rhs, x, p, colouring = "runtime"))
+}
+code <- ast2ast::translate(pl, types_f = types_f_state, getsource = TRUE)
+expect_true(grepl("etr::jacobian(pl_impl::rhs_t<typename etr::dependent_type<etr::Dual, ETR_REAL>::type>{}",
+                  code, fixed = TRUE))
+plcpp <- ast2ast::translate(pl, types_f = types_f_state)
+expected <- diag(2 * 2.5 * x4)
+expected[1L, ] <- 1
+expect_equal(plcpp(1L, x4, p), expected)
+expect_equal(plcpp(2L, x4, p), expected)
+# jacobian inside a fn functor: f_t<Dual> must not need f_t complete there
+pw <- function(x) {
+  argtypes(x |> type(vec(double)))
+  rhs <- function(y) {
+    argtypes(y |> type(vec(double)))
+    returntype(vec(double))
+    out <- y * y
+    out[[1L]] <- sum(y)
+    return(out)
+  }
+  wrap <- function(y) {
+    argtypes(y |> type(vec(double)))
+    returntype(mat(double))
+    return(jacobian(rhs, y, colouring = "runtime") + jacobian(rhs, y))
+  }
+  return(wrap(x))
+}
+expected <- diag(2 * x4)
+expected[1L, ] <- 1
+expect_equal(ast2ast::translate(pw)(x4), 2 * expected)
+
+# non-finite derivative although f is finite: error with the line where it starts
+nf <- function(test, x) {
+  argtypes(test |> type(int), x |> type(vec(double)))
+  mm <- function(y) {
+    argtypes(y |> type(vec(double)))
+    returntype(vec(double))
+    out <- y * y
+    out[[1L]] <- 1 / (1 + 1 / y[[1L]])
+    return(out)
+  }
+  undefined <- function(y) {
+    argtypes(y |> type(vec(double)))
+    returntype(vec(double))
+    return(y / (y - y))
+  }
+  if (test == 1L) return(jacobian(mm, x))
+  if (test == 2L) return(jacobian(mm, x, colouring = "runtime"))
+  return(jacobian(undefined, x))
+}
+nfcpp <- ast2ast::translate(nf)
+x_tiny <- c(1e-200, 0.5, 0.7)
+expect_error(nfcpp(1L, x_tiny), "d f\\[1\\] / d x\\[1\\] is not finite.*out\\[\\[1L\\]\\] <- 1/\\(1 \\+ 1/y\\[\\[1L\\]\\]\\)")
+expect_error(nfcpp(2L, x_tiny), "is not finite, although f\\[1\\] is")
+# f itself NaN: the jacobian is NaN too, as in R
+expect_true(all(is.nan(nfcpp(3L, c(0.3, 0.7)))))
+
+pl_error <- function(body_f) {
+  g <- function(x) {
+    argtypes(x |> type(vec(double)))
+    h <- H
+    return(jacobian(h, x))
+  }
+  body(g) <- do.call(substitute, list(body(g), list(H = body_f)))
+  g
+}
+h_borrow <- quote(function(y) {
+  argtypes(y |> type(vec(double)))
+  returntype(vec(double))
+  inner <- function(v) {
+    argtypes(v |> type(borrow_vec(double)))
+    returntype(vec(double))
+    return(v)
+  }
+  return(inner(y))
+})
+expect_error(ast2ast::translate(pl_error(h_borrow), getsource = TRUE), "has borrow arguments")
+h_sort <- quote(function(y) {
+  argtypes(y |> type(vec(double)))
+  returntype(vec(double))
+  return(sort(y))
+})
+expect_error(ast2ast::translate(pl_error(h_sort), getsource = TRUE), "calls sort")
+r_inline <- function(x) {
+  argtypes(x |> type(vec(double)))
+  return(jacobian(fn(argtypes(y |> type(vec(double))), return(vec(double)), { return(y) }), x))
+}
+expect_error(ast2ast::translate(r_inline, getsource = TRUE), "has to be a named fn")
 
 r5 <- function(x) {
   argtypes(x |> type(vec(double)))

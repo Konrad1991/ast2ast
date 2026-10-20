@@ -136,4 +136,33 @@ void test_coloured_jacobian() {
   const Colouring c2 = colouring_from_tape(make_x(big), f_two, true);
   ass<"two dense rows">(c2.dense_rows.size() == 2);
   ass<"no colour left">(c2.ncolours == 0);
+
+  // dead node 1 / y[2] at y[2] = 0: its zero adjoint must not give 0 * Inf = NaN
+  auto f_dead = [](const auto& y) {
+    using T = ValT<decltype(y)>;
+    const std::size_t n = y.size();
+    Vec<T> out(SI{n});
+    T dead = T(1.0) / y.get(1);
+    (void)dead;
+    T s = y.get(0);
+    for (std::size_t i = 1; i < n; i++) s = s + y.get(i);
+    out.set(0, s);
+    for (std::size_t i = 1; i < n; i++) out.set(i, y.get(i) * y.get(i));
+    return out;
+  };
+  std::vector<double> with_zero = big;
+  with_zero[1] = 0.0;
+  check_case(f_dead, make_x(with_zero), 200, 399);
+
+  // cached colouring: same pattern at another x, values still from this x
+  std::vector<double> shifted = big;
+  for (double& v : shifted) v += 0.5;
+  for (const auto& xv : {big, shifted, big}) {
+    const auto xs = make_x(xv);
+    auto Jc = jacobian_runtime_coloured(f_dense, f_dense, xs);
+    auto Jd = jacobian(f_dense, xs);
+    for (std::size_t k = 0; k < Jd.size(); k++) {
+      ass<"cached colouring: values of the current x">(get_val(Jc.get(k)) == get_val(Jd.get(k)));
+    }
+  }
 }
