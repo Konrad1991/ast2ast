@@ -37,13 +37,13 @@ rows <- lapply(files, function(f) {
 result <- do.call(rbind, rows)
 result
 
-# commit <- system("git rev-parse --short HEAD", intern = TRUE)
-# dirty <- length(system("git status --porcelain -- R inst/include src", intern = TRUE)) > 0
-# result <- data.frame(date = format(Sys.time(), "%Y-%m-%d %H:%M"),
-#                      commit = paste0(commit, if (dirty) "+dirty" else ""), result)
-#
-# print(result[, c("benchmark", "case", "r_ms", "a2a_ms", "speedup", "vs_rcpp")], digits = 3, row.names = FALSE)
-#
-# csv <- file.path(bench_dir, "results.csv")
-# utils::write.table(result, csv, sep = ",", row.names = FALSE,
-#                    col.names = !file.exists(csv), append = file.exists(csv))
+commit <- system("git rev-parse --short HEAD", intern = TRUE)
+dirty <- length(system("git status --porcelain -- R inst/include src", intern = TRUE)) > 0
+result <- data.frame(date = format(Sys.time(), "%Y-%m-%d %H:%M"),
+                     commit = paste0(commit, if (dirty) "+dirty" else ""), result)
+
+print(result[, c("benchmark", "case", "r_ms", "a2a_ms", "speedup", "vs_rcpp")], digits = 3, row.names = FALSE)
+
+csv <- file.path(bench_dir, "results.csv")
+utils::write.table(result, csv, sep = ",", row.names = FALSE,
+                   col.names = !file.exists(csv), append = file.exists(csv))
