@@ -286,6 +286,9 @@ inline void coloured_sweeps(const X& x, const Colouring& c, Call&& call_f, Store
   for (std::size_t i = 0; i < c.n; i++) xd.set(i, Dual(get_val(x.get(i)), 0.0));
 
   std::vector<std::vector<std::size_t>> cols_of(c.ncolours);
+  // dense rows come from reverse sweeps (colouring_from_tape)
+  std::vector<char> is_dense(c.m, 0);
+  for (int r : c.dense_rows) is_dense[static_cast<std::size_t>(r)] = 1;
 
   for (std::size_t j = 0; j < c.n; j++) {
     if (c.colour[j] >= 0) cols_of[static_cast<std::size_t>(c.colour[j])].push_back(j);
@@ -298,6 +301,7 @@ inline void coloured_sweeps(const X& x, const Colouring& c, Call&& call_f, Store
     for (std::size_t j : cols) {
       for (int p = c.col_ptr[j]; p < c.col_ptr[j + 1]; p++) {
         const std::size_t i = static_cast<std::size_t>(c.row_idx[static_cast<std::size_t>(p)]);
+        if (is_dense[i]) continue;
         store(j, static_cast<std::size_t>(p), i, y.d.get_dot(i));
       }
     }
@@ -444,11 +448,17 @@ inline Colouring colouring_from_tape(const X& x, CallRev&& call_rev, bool split_
     for (std::size_t j = 0; j < n; j++) {
       dense_vals[k * n + j] = tape.adj[static_cast<std::size_t>(xr.get(j).id)];
     }
-    rows[static_cast<std::size_t>(dense[k])].clear();
   }
   tape.rewind(tape_start, blocks_start);
 
+  // full pattern in the CSC, colours only from the rows left for the sweeps
   Colouring c = colour_columns(n, rows);
+  if (!dense.empty()) {
+    for (int r : dense) rows[static_cast<std::size_t>(r)].clear();
+    Colouring rest = colour_columns(n, rows);
+    c.ncolours = rest.ncolours;
+    c.colour = std::move(rest.colour);
+  }
   c.dense_rows = std::move(dense);
   c.dense_vals = std::move(dense_vals);
   return c;
@@ -636,6 +646,16 @@ inline jacobian_sparse_result jacobian_sparse_impl(const X& x, const Colouring& 
   coloured_sweeps(x, c, call_f, [&](std::size_t, std::size_t p, std::size_t, const Double& v) {
     res.data.set(p, v);
   });
+  if (!c.dense_rows.empty()) {
+    std::vector<int> slot(c.m, -1);
+    for (std::size_t k = 0; k < c.dense_rows.size(); k++) slot[static_cast<std::size_t>(c.dense_rows[k])] = static_cast<int>(k);
+    for (std::size_t j = 0; j < c.n; j++) {
+      for (int p = c.col_ptr[j]; p < c.col_ptr[j + 1]; p++) {
+        const int k = slot[static_cast<std::size_t>(c.row_idx[static_cast<std::size_t>(p)])];
+        if (k >= 0) res.data.set(static_cast<std::size_t>(p), Double(c.dense_vals[static_cast<std::size_t>(k) * c.n + j]));
+      }
+    }
+  }
   return res;
 }
 
@@ -674,11 +694,11 @@ inline auto jacobian_sparse(const F& f, const X& x, const E& extra, const Colour
 }
 template<typename F, typename X, typename FRev> requires (IsArray<Decayed<X>>)
 inline auto jacobian_sparse(const F& f, const X& x, const RuntimeColouring<FRev>& rc) {
-  return jacobian_sparse_impl(x, runtime_pattern(rc.f_rev, x), [&f](const auto& xv) { return f(xv); });
+  return jacobian_sparse_impl(x, runtime_pattern<true>(rc.f_rev, x), [&f](const auto& xv) { return f(xv); });
 }
 template<typename F, typename X, typename E, typename FRev> requires (IsArray<Decayed<X>>)
 inline auto jacobian_sparse(const F& f, const X& x, const E& extra, const RuntimeColouring<FRev>& rc) {
-  return jacobian_sparse_impl(x, runtime_pattern(rc.f_rev, x, extra),
+  return jacobian_sparse_impl(x, runtime_pattern<true>(rc.f_rev, x, extra),
                               [&f, &extra](const auto& xv) { return f(xv, extra); });
 }
 

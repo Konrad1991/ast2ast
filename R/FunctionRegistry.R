@@ -2440,10 +2440,10 @@ infer_jacobian <- function(node, vars_list, info_env, function_registry, fname) 
         colouring_cpp(col, opts$n), sprintf("colouring = \"static\", n = %dL", opts$n)
       )
       split <- dense_row_split(col$rows, opts$n)
-      if (!structured && split$k > 0L) {
+      if (fname != "jacobian_banded" && split$k > 0L) {
         warning(sprintf(
-          "jacobian: %d dense row%s; colouring = \"runtime\" needs %d sweeps instead of %d",
-          split$k, if (split$k == 1L) "" else "s", split$sweeps, max(c(0L, col$color))
+          "%s: %d dense row%s; colouring = \"runtime\" needs %d sweeps instead of %d",
+          fname, split$k, if (split$k == 1L) "" else "s", split$sweeps, max(c(0L, col$color))
         ), call. = FALSE)
       }
     }
