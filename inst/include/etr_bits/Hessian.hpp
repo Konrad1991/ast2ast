@@ -102,15 +102,181 @@ struct HessianSweep {
     }
   }
 
-  static inline bool is_block(ROp op) {
-    return op == ROp::MatMul || op == ROp::BlockSlot || op == ROp::Chol || op == ROp::Solve ||
-           op == ROp::CrossProd || op == ROp::TriSolve || op == ROp::Det;
+  static inline bool is_unsupported_block(ROp op) {
+    return op == ROp::Chol || op == ROp::Solve || op == ROp::TriSolve || op == ROp::Det;
+  }
+
+  // C = op(A) op(B) + beta C, column-major
+  static inline void gemm(const char* ta, const char* tb, int M, int N, int K,
+                          const double* A, int lda, const double* B, int ldb,
+                          double beta, double* C, int ldc) {
+    if (M == 0 || N == 0) return;
+    const double one = 1.0;
+    F77_CALL(dgemm)(ta, tb, &M, &N, &K, &one, A, &lda, B, &ldb, &beta, C, &ldc FCONE FCONE);
+  }
+
+  // values and tangents of one block side; constants (vals) have tangent 0
+  inline void gather(const std::vector<int>& ids, const std::vector<double>& vals,
+                     std::vector<double>& v, std::vector<double>& v_dot) const {
+    if (ids.empty()) {
+      v = vals;
+      v_dot.assign(vals.size(), 0.0);
+      return;
+    }
+    v.resize(ids.size());
+    v_dot.resize(ids.size());
+    for (std::size_t k = 0; k < ids.size(); k++) {
+      v[k] = value(ids[k]);
+      v_dot[k] = tangent(ids[k]);
+    }
+  }
+
+  // output adjoints (and their tangents) of a block; NA cells have no sensitivity
+  inline bool block_adjoints(std::size_t out0, std::size_t size,
+                             std::vector<double>& bar, std::vector<double>& bar_dot) const {
+    bar.assign(size, 0.0);
+    bar_dot.assign(size, 0.0);
+    bool any = false;
+    for (std::size_t k = 0; k < size; k++) {
+      if (tape.is_na[out0 + k]) continue;
+      bar[k] = adj[out0 + k - start];
+      bar_dot[k] = adj_dot[out0 + k - start];
+      any = any || bar[k] != 0.0 || bar_dot[k] != 0.0;
+    }
+    return any;
+  }
+
+  inline void add_side(const std::vector<int>& ids, const std::vector<double>& g,
+                       const std::vector<double>& g_dot) {
+    for (std::size_t k = 0; k < ids.size(); k++) add(ids[k], g[k], g_dot[k]);
+  }
+
+  // C = A B: C_dot = A_dot B + A B_dot
+  inline void matmul_forward(const BlockOp& blk) {
+    const int M = static_cast<int>(blk.rows_a);
+    const int K = static_cast<int>(blk.cols_a);
+    const int N = static_cast<int>(blk.cols_b);
+    std::vector<double> A, A_dot, B, B_dot;
+    gather(blk.a_ids, blk.a_vals, A, A_dot);
+    gather(blk.b_ids, blk.b_vals, B, B_dot);
+    std::vector<double> C_dot(blk.rows_a * blk.cols_b, 0.0);
+    gemm("N", "N", M, N, K, A_dot.data(), M, B.data(), K, 0.0, C_dot.data(), M);
+    gemm("N", "N", M, N, K, A.data(), M, B_dot.data(), K, 1.0, C_dot.data(), M);
+    write_block_tangent(static_cast<std::size_t>(blk.out_tape_id_first), C_dot);
+  }
+
+  // A_bar = C_bar B^T,  A_bar_dot = C_bar_dot B^T + C_bar B_dot^T
+  // B_bar = A^T C_bar,  B_bar_dot = A^T C_bar_dot + A_dot^T C_bar
+  inline void matmul_reverse(const BlockOp& blk) {
+    const int M = static_cast<int>(blk.rows_a);
+    const int K = static_cast<int>(blk.cols_a);
+    const int N = static_cast<int>(blk.cols_b);
+    std::vector<double> C_bar, C_bar_dot;
+    if (!block_adjoints(static_cast<std::size_t>(blk.out_tape_id_first), blk.rows_a * blk.cols_b, C_bar, C_bar_dot)) return;
+    std::vector<double> A, A_dot, B, B_dot;
+    gather(blk.a_ids, blk.a_vals, A, A_dot);
+    gather(blk.b_ids, blk.b_vals, B, B_dot);
+    if (!blk.a_ids.empty()) {
+      std::vector<double> g(blk.rows_a * blk.cols_a, 0.0), g_dot(g.size(), 0.0);
+      gemm("N", "T", M, K, N, C_bar.data(), M, B.data(), K, 0.0, g.data(), M);
+      gemm("N", "T", M, K, N, C_bar_dot.data(), M, B.data(), K, 0.0, g_dot.data(), M);
+      gemm("N", "T", M, K, N, C_bar.data(), M, B_dot.data(), K, 1.0, g_dot.data(), M);
+      add_side(blk.a_ids, g, g_dot);
+    }
+    if (!blk.b_ids.empty()) {
+      std::vector<double> g(blk.cols_a * blk.cols_b, 0.0), g_dot(g.size(), 0.0);
+      gemm("T", "N", K, N, M, A.data(), M, C_bar.data(), M, 0.0, g.data(), K);
+      gemm("T", "N", K, N, M, A.data(), M, C_bar_dot.data(), M, 0.0, g_dot.data(), K);
+      gemm("T", "N", K, N, M, A_dot.data(), M, C_bar.data(), M, 1.0, g_dot.data(), K);
+      add_side(blk.b_ids, g, g_dot);
+    }
+  }
+
+  // crossprod S = X^T X: S_dot = X_dot^T X + X^T X_dot
+  // tcrossprod S = X X^T: S_dot = X_dot X^T + X X_dot^T
+  inline void crossprod_forward(const BlockOp& blk) {
+    if (blk.a_ids.empty()) return;
+    const bool tr = blk.kind == BlockOp::Kind::TCrossProd;
+    const int m = static_cast<int>(blk.rows_a);
+    const int n = static_cast<int>(blk.cols_a);
+    const int d = tr ? m : n;
+    std::vector<double> X, X_dot;
+    gather(blk.a_ids, blk.a_vals, X, X_dot);
+    std::vector<double> S_dot(static_cast<std::size_t>(d) * d, 0.0);
+    if (tr) {
+      gemm("N", "T", m, m, n, X_dot.data(), m, X.data(), m, 0.0, S_dot.data(), m);
+      gemm("N", "T", m, m, n, X.data(), m, X_dot.data(), m, 1.0, S_dot.data(), m);
+    } else {
+      gemm("T", "N", n, n, m, X_dot.data(), m, X.data(), m, 0.0, S_dot.data(), n);
+      gemm("T", "N", n, n, m, X.data(), m, X_dot.data(), m, 1.0, S_dot.data(), n);
+    }
+    write_block_tangent(static_cast<std::size_t>(blk.out_tape_id_first), S_dot);
+  }
+
+  // G = S_bar + S_bar^T, G_dot = S_bar_dot + S_bar_dot^T
+  // crossprod:  X_bar = X G,  X_bar_dot = X_dot G + X G_dot
+  // tcrossprod: X_bar = G X,  X_bar_dot = G X_dot + G_dot X
+  inline void crossprod_reverse(const BlockOp& blk) {
+    if (blk.a_ids.empty()) return;
+    const bool tr = blk.kind == BlockOp::Kind::TCrossProd;
+    const int m = static_cast<int>(blk.rows_a);
+    const int n = static_cast<int>(blk.cols_a);
+    const int d = tr ? m : n;
+    const std::size_t dd = static_cast<std::size_t>(d) * d;
+    std::vector<double> S_bar, S_bar_dot;
+    if (!block_adjoints(static_cast<std::size_t>(blk.out_tape_id_first), dd, S_bar, S_bar_dot)) return;
+    std::vector<double> G(dd), G_dot(dd);
+    for (int j = 0; j < d; j++) {
+      for (int i = 0; i < d; i++) {
+        G[j * d + i] = S_bar[j * d + i] + S_bar[i * d + j];
+        G_dot[j * d + i] = S_bar_dot[j * d + i] + S_bar_dot[i * d + j];
+      }
+    }
+    std::vector<double> X, X_dot;
+    gather(blk.a_ids, blk.a_vals, X, X_dot);
+    std::vector<double> g(X.size(), 0.0), g_dot(X.size(), 0.0);
+    if (tr) {
+      gemm("N", "N", m, n, m, G.data(), m, X.data(), m, 0.0, g.data(), m);
+      gemm("N", "N", m, n, m, G.data(), m, X_dot.data(), m, 0.0, g_dot.data(), m);
+      gemm("N", "N", m, n, m, G_dot.data(), m, X.data(), m, 1.0, g_dot.data(), m);
+    } else {
+      gemm("N", "N", m, n, n, X.data(), m, G.data(), n, 0.0, g.data(), m);
+      gemm("N", "N", m, n, n, X_dot.data(), m, G.data(), n, 0.0, g_dot.data(), m);
+      gemm("N", "N", m, n, n, X.data(), m, G_dot.data(), n, 1.0, g_dot.data(), m);
+    }
+    add_side(blk.a_ids, g, g_dot);
+  }
+
+  inline void write_block_tangent(std::size_t out0, const std::vector<double>& out_dot) {
+    for (std::size_t k = 0; k < out_dot.size(); k++) {
+      dot[out0 + k - start] = tape.is_na[out0 + k] ? 0.0 : out_dot[k];
+    }
+  }
+
+  // block heads carry the whole block (all output cells); slots are inert
+  inline bool block_forward(std::size_t i) {
+    const ROp op = tape.op[i];
+    if (op == ROp::BlockSlot) return true;
+    if (op != ROp::MatMul && op != ROp::CrossProd) return false;
+    const BlockOp& blk = tape.blocks[static_cast<std::size_t>(tape.a[i])];
+    if (op == ROp::MatMul) matmul_forward(blk); else crossprod_forward(blk);
+    return true;
+  }
+
+  inline bool block_reverse(std::size_t i) {
+    const ROp op = tape.op[i];
+    if (op == ROp::BlockSlot) return true;
+    if (op != ROp::MatMul && op != ROp::CrossProd) return false;
+    const BlockOp& blk = tape.blocks[static_cast<std::size_t>(tape.a[i])];
+    if (op == ROp::MatMul) matmul_reverse(blk); else crossprod_reverse(blk);
+    return true;
   }
 
   inline void forward(const std::vector<int>& x_ids, const double* v) {
     std::fill(dot.begin(), dot.end(), 0.0);
     for (std::size_t k = 0; k < x_ids.size(); k++) dot[static_cast<std::size_t>(x_ids[k]) - start] = v[k];
     for (std::size_t i = start; i < end; i++) {
+      if (block_forward(i)) continue;
       const ROp op = tape.op[i];
       if (op == ROp::Var || op == ROp::Const || tape.is_na[i]) continue;
       const int ai = tape.a[i];
@@ -132,6 +298,7 @@ struct HessianSweep {
     std::fill(adj_dot.begin(), adj_dot.end(), 0.0);
     add(out, 1.0, 0.0);
     for (std::size_t i = end; i-- > start;) {
+      if (block_reverse(i)) continue;
       const ROp op = tape.op[i];
       if (op == ROp::Var || op == ROp::Const || tape.is_na[i]) continue;
       const double w = adj[i - start];
@@ -167,8 +334,8 @@ inline auto with_recorded_scalar_f(const X& x, Call&& call_f, Body&& body) {
   for (std::size_t j = 0; j < n; j++) xr.set(j, ReverseDouble::Var(get_val(x.get(j))));
   const ReverseDouble y = call_f(xr);
   for (std::size_t i = tape_start; i < tape.size(); i++) {
-    ass<"hessian: matrix operations (%*%, solve, chol, det, crossprod, backsolve) are not supported in hessian yet">(
-      !HessianSweep::is_block(tape.op[i]));
+    ass<"hessian: solve, chol, det, backsolve and forwardsolve are not supported in hessian yet">(
+      !HessianSweep::is_unsupported_block(tape.op[i]));
   }
   std::vector<int> x_ids(n);
   for (std::size_t j = 0; j < n; j++) x_ids[j] = xr.get(j).id;

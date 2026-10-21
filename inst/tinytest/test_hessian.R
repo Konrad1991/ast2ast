@@ -109,12 +109,66 @@ f <- function(x) {
     argtypes(x |> type(vec(double)))
     returntype(double)
     m <- matrix(x, 2L, 2L)
-    s <- m %*% m
+    s <- solve(m)
     s[[1L]]
   }
   hessian(h, x)
 }
 expect_error(ast2ast::translate(f)(c(1, 2, 3, 4)), pattern = "not supported in hessian yet")
+
+# --- block ops: %*%, crossprod, tcrossprod vs finite differences ----------------
+
+f <- function(x, test) {
+  argtypes(x |> type(vec(double)), test |> type(int))
+  mm <- function(x) {
+    argtypes(x |> type(vec(double)))
+    returntype(double)
+    a <- matrix(x[1L:6L], 2L, 3L)
+    b <- matrix(x[3L:8L], 3L, 2L)
+    k <- matrix(c(1, -2, 0.5, 3, 1.5, -1), 3L, 2L)
+    p <- a %*% b
+    q <- a %*% k
+    p[[1L]] * p[[4L]] - p[[2L]] * p[[3L]] + q[[2L]] * q[[3L]]
+  }
+  cp <- function(x) {
+    argtypes(x |> type(vec(double)))
+    returntype(double)
+    m <- matrix(x[1L:6L], 3L, 2L)
+    s <- crossprod(m)
+    s[[1L]] * s[[4L]] - s[[2L]] * s[[3L]] + exp(s[[2L]] / 10)
+  }
+  tcp <- function(x) {
+    argtypes(x |> type(vec(double)))
+    returntype(double)
+    m <- matrix(x[1L:6L], 2L, 3L)
+    s <- tcrossprod(m)
+    s[[1L]] * s[[4L]] + sin(s[[3L]])
+  }
+  if (test == 1L) return(hessian(mm, x))
+  if (test == 2L) return(hessian(cp, x))
+  return(hessian(tcp, x))
+}
+mm_r <- function(x) {
+  a <- matrix(x[1:6], 2, 3)
+  b <- matrix(x[3:8], 3, 2)
+  k <- matrix(c(1, -2, 0.5, 3, 1.5, -1), 3, 2)
+  p <- a %*% b
+  q <- a %*% k
+  p[1] * p[4] - p[2] * p[3] + q[2] * q[3]
+}
+cp_r <- function(x) {
+  s <- crossprod(matrix(x[1:6], 3, 2))
+  s[1] * s[4] - s[2] * s[3] + exp(s[2] / 10)
+}
+tcp_r <- function(x) {
+  s <- tcrossprod(matrix(x[1:6], 2, 3))
+  s[1] * s[4] + sin(s[3])
+}
+fcpp <- ast2ast::translate(f)
+x8 <- c(0.3, -0.7, 1.1, 0.4, -0.2, 0.9, 0.6, -1.3)
+expect_equal(fcpp(x8, 1L), hessian_fd(mm_r, x8), tolerance = 1e-5)
+expect_equal(fcpp(x8[1:6], 2L), hessian_fd(cp_r, x8[1:6]), tolerance = 1e-5)
+expect_equal(fcpp(x8[1:6], 3L), hessian_fd(tcp_r, x8[1:6]), tolerance = 1e-5)
 
 f <- function(x) {
   argtypes(x |> type(vec(double)))
