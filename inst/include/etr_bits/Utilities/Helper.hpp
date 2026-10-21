@@ -5,19 +5,25 @@ namespace etr {
 
 // is.na
 // -----------------------------------------------------------------------------------------------------------
+// R: is.na(NaN) is TRUE; the isNA() member only checks the NA sentinel
+template <typename V> inline bool is_na_or_nan(const V& v) {
+  if constexpr (requires { v.isNaN(); }) {
+    return v.isNA() || v.isNaN();
+  } else {
+    return v.isNA();
+  }
+}
 template <typename T> requires IsArithV<T> inline Logical isNA(const T inp) {
-  const auto val = get_scalar_val(inp);
-  return val.isNA();
+  return is_na_or_nan(get_scalar_val(inp));
 }
 template <typename T> requires IsArithRefV<T> inline Logical isNA(const T inp) {
-  const auto val = get_scalar_val(inp);
-  return val.isNA();
+  return is_na_or_nan(get_scalar_val(inp));
 }
 template <typename T> requires IsArray<T> inline auto isNA(const T &inp) {
   Array<Logical, Buffer<Logical, RBufferTrait>> res( SI{inp.size()});
   res.dim = Dim{inp.size()};
   for (std::size_t i = 0; i < res.size(); i++) {
-    res.set(i, get_scalar_val(inp.get(i)).isNA());
+    res.set(i, is_na_or_nan(get_scalar_val(inp.get(i))));
   }
   return res;
 }

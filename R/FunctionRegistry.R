@@ -316,6 +316,11 @@ compare_types_passed_to_fn <- function(node, type1, type2) {
     if (type1$get_data_struct() != type2$get_data_struct()) {
       node$error <- sprintf("Found a type mismatch: expected %s got %s", type1$get_data_struct(), type2$get_data_struct())
     }
+    # NOTE: no borrow_to_owned as for fn calls; uniroot & co. deduce one T from fn and data
+    else if (!same_data_struct(type2$get_data_struct_verbose(), type1$get_data_struct_verbose())) {
+      node$error <- sprintf("Found a type mismatch: expected %s got %s",
+        normalize_data_struct(type1$get_data_struct_verbose()), normalize_data_struct(type2$get_data_struct_verbose()))
+    }
     else if (type1$get_data_struct() == "collection" && type2$get_data_struct() == "collection") {
       nt_t1 <- type1$data_struct$type
       nt_t2 <- type2$data_struct$type
@@ -1677,7 +1682,7 @@ function_registry_global$add(
       node$error <- "The third argument of cmr has to be a vector"
     }
   },
- group = "function_node", cpp_name = "etr::cmr", deriv_possible = FALSE
+ group = "function_node", cpp_name = "etr::cmr", deriv_possible = TRUE
 )
 
 function_registry_global$add(

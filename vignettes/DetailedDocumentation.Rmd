@@ -150,7 +150,7 @@ For arguments, you can additionally control how values are passed:
 
 - `borrow_vec(...)`, `borrow_mat(...)`: borrow memory (no copy)
 - `const()`: disallow modification
-- `ref()`: pass by reference (only valid when `output = "XPtr"`)
+- `ref()`: pass by reference; changes persist after the call. Works for inner functions, and for the outer function only with `output = "XPtr"` (with `output = "R"` arguments arrive as R objects and are always converted)
 
 Example:
 
@@ -169,7 +169,7 @@ Notes:
 
 - Borrowed arguments are useful for avoiding allocations and modifying inputs in place.
 - `const()` is enforced by the static checker at translation time ("You cannot assign to a constant variable"), before any C++ compilation happens.
-- `ref()` is primarily intended for the external pointer interface.
+- `ref()` on an inner function argument avoids copying the object; see the vignette "MemoryModel".
 
 ---
 

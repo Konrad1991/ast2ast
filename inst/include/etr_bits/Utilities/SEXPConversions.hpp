@@ -253,11 +253,12 @@ inline SEXP AttachDimNames(SEXP s, std::initializer_list<std::initializer_list<c
 
 // Cast scalar elements to their SEXP equivalents
 // -----------------------------------------------------------------------------------------------------------
-inline int to_R(Integer x)  { return isNA(x) ? NA_INTEGER : get_val(x); }
-inline int to_R(Logical x)  { return isNA(x) ? NA_LOGICAL : (get_val(x) ? 1 : 0); }
-inline double to_R(Double x){ return isNA(x) ? NA_REAL : get_val(x); }
-inline double to_R(Dual x)  { return isNA(x) ? NA_REAL : get_val(x); }
-inline double to_R(ReverseDouble x){ return isNA(x) ? NA_REAL : get_val(x); }
+// member isNA(): the free isNA() is is.na() and also TRUE for NaN
+inline int to_R(Integer x)  { return x.isNA() ? NA_INTEGER : get_val(x); }
+inline int to_R(Logical x)  { return x.isNA() ? NA_LOGICAL : (get_val(x) ? 1 : 0); }
+inline double to_R(Double x){ return x.isNA() ? NA_REAL : get_val(x); }
+inline double to_R(Dual x)  { return x.isNA() ? NA_REAL : get_val(x); }
+inline double to_R(ReverseDouble x){ return x.isNA() ? NA_REAL : get_val(x); }
 
 inline SEXP Cast() { return R_NilValue; }
 inline SEXP Cast(Integer res) { return Rf_ScalarInteger(to_R(res)); }

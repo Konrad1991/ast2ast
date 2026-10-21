@@ -131,7 +131,8 @@ translate(
         modifying them in place. Passed to an inner function expecting \code{vec}/\code{mat}/\code{array}
         they are copied (with a warning); a mutable \code{ref()} parameter requires the borrowed type.
       \item \code{const()}: disallow modification of inputs.
-      \item \code{ref()}: pass by reference (only valid when \code{output = "XPtr"}).
+      \item \code{ref()}: pass by reference; changes persist after the call. Works for inner
+        functions, and for the arguments of \code{f} only with \code{output = "XPtr"}.
     }
   }
   \subsection{Return type}{
