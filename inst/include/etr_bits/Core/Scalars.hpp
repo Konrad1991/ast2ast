@@ -2153,44 +2153,37 @@ inline Logical ReverseDouble::operator||(const ReverseDouble& r) const {
   return Logical(false);
 }
 
+// R: & and | use the same NA truth table as && and || (NA & FALSE is FALSE)
 inline Logical Logical::operator&(const Logical& other) const {
-  if (isNA() || other.isNA()) return Logical::NA();
-  return Logical(val && other.val);
+  return *this && other;
 }
 inline Logical Integer::operator&(const Integer& other) const {
-  if (isNA() || other.isNA()) return Logical::NA();
-  return Logical(val && other.val);
+  return *this && other;
 }
 inline Logical Double::operator&(const Double& other) const {
-  if (std::isnan(val) || std::isnan(other.val)) return Logical::NA();
-  return Logical(val != 0.0 && other.val != 0.0);
+  return *this && other;
 }
 inline Logical Dual::operator&(const Dual& other) const {
-  return Double(*this) & Double(other);
+  return *this && other;
 }
 inline Logical ReverseDouble::operator&(const ReverseDouble& r) const {
-  if (is_na || r.is_na) return Logical::NA();
-  return Logical{get_val_from_tape() != 0.0 && r.get_val_from_tape() != 0.0};
+  return *this && r;
 }
 
 inline Logical Logical::operator|(const Logical& other) const {
-  if (isNA() || other.isNA()) return Logical::NA();
-  return Logical(val || other.val);
+  return *this || other;
 }
 inline Logical Integer::operator|(const Integer& other) const {
-  if (isNA() || other.isNA()) return Logical::NA();
-  return Logical(val || other.val);
+  return *this || other;
 }
 inline Logical Double::operator|(const Double& other) const {
-  if (std::isnan(val) || std::isnan(other.val)) return Logical::NA();
-  return Logical(val != 0.0 || other.val != 0.0);
+  return *this || other;
 }
 inline Logical Dual::operator|(const Dual& other) const {
-  return Double(*this) | Double(other);
+  return *this || other;
 }
 inline Logical ReverseDouble::operator|(const ReverseDouble& r) const {
-  if (is_na || r.is_na) return Logical::NA();
-  return Logical{get_val_from_tape() != 0.0 || r.get_val_from_tape() != 0.0};
+  return *this || r;
 }
 
 /*

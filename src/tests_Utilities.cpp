@@ -16,10 +16,10 @@ void test_utilities() {
           );
     auto res = isNA(a);
     std::vector<bool> expected_is_na{
-      true, false, false, false,
+      true, true, false, false,
       true, false,
       true, false,
-      true, false, false, false,
+      true, true, false, false,
       true, false
     };
     for (std::size_t i = 0; i < expected_is_na.size(); i++) {

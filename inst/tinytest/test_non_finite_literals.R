@@ -80,3 +80,32 @@ kcpp <- ast2ast::translate(k)
 expect_error(kcpp(NaN), "argument is not interpretable as logical")
 expect_error(kcpp(NA_real_), "missing value where TRUE/FALSE needed")
 expect_identical(kcpp(2), 1)
+
+# is.na(NaN) is TRUE, as in R
+p <- function(x, s) {
+  argtypes(x |> type(vec(double)), s |> type(double))
+  returntype(vec(logical))
+  r <- is.na(x)
+  r[[1L]] <- is.na(s)
+  r
+}
+pcpp <- ast2ast::translate(p)
+expect_identical(pcpp(c(1, NA, NaN), NaN), c(TRUE, TRUE, TRUE))
+expect_identical(pcpp(c(1, NA, NaN), 1), c(FALSE, TRUE, TRUE))
+
+# & and | with NA use R's truth table
+q <- function(b, x) {
+  argtypes(b |> type(vec(logical)), x |> type(vec(double)))
+  returntype(vec(logical))
+  r <- logical(6L)
+  r[[1L]] <- b[[1L]] & FALSE
+  r[[2L]] <- b[[1L]] | TRUE
+  r[[3L]] <- b[[1L]] & TRUE
+  r[[4L]] <- b[[1L]] | FALSE
+  r[[5L]] <- x[[1L]] & 0
+  r[[6L]] <- x[[1L]] | 1
+  r
+}
+qcpp <- ast2ast::translate(q)
+expect_identical(qcpp(NA, NaN), c(FALSE, TRUE, NA, NA, FALSE, TRUE))
+expect_identical(qcpp(TRUE, 2), c(FALSE, TRUE, TRUE, TRUE, FALSE, TRUE))
