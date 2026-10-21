@@ -1,7 +1,7 @@
 # Hessian
 
 Status (2026-10-21): steps 1-5 done (etr_bits/Hessian.hpp, test_hessian.R,
-all block ops, full suite green); open: vignette + NEWS. Branch `dev-1.2`.
+all block ops, full suite green), vignette Hessians.Rmd, NEWS. DONE. Branch `dev-1.2`.
 
 Goal: `H = d2 f / dx2` of a scalar `f`, exact (no finite differences).
 Use cases: standard errors / confidence intervals after a likelihood fit
