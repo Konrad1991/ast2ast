@@ -1,0 +1,82 @@
+---
+title: "Hessians and Hessian-vector products"
+author: "Konrad Kraemer"
+output: html_document
+
+vignette: >
+  %\VignetteIndexEntry{Hessians and Hessian-vector products}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+## Overview
+
+| Function | Result | Cost |
+| --- | --- | --- |
+| `hessian(f, x[, data])` | n x n matrix | n sweeps over the tape |
+| `hvp(f, x, v[, data])` | `H %*% v`, vector of length n | one sweep |
+
+`f` is an inner function mapping a double vector to a scalar double. `data`
+is passed to `f` unchanged, as for `jacobian`. Both are exact (no finite
+differences) and work in every translation: plain, `derivative = "forward"`
+and `derivative = "reverse"`.
+
+## Example: standard errors of a logistic regression
+
+```{r}
+se <- function(beta, data) {
+  argtypes(beta |> type(vec(double)), data |> type(mat(double)))
+  nll <- function(beta, data) {
+    argtypes(beta |> type(vec(double)), data |> type(mat(double)))
+    returntype(double)
+    s <- 0
+    for (i in 1L:nrow(data)) {
+      eta <- beta[[1L]] * data[i, 1L] + beta[[2L]] * data[i, 2L]
+      s <- s + data[i, 3L] * eta - log(1 + exp(eta))
+    }
+    -s
+  }
+  H <- hessian(nll, beta, data)
+  sqrt(get_diag(solve(H)))
+}
+se_cpp <- ast2ast::translate(se)
+
+X <- cbind(1, c(-1, -0.5, 0, 0.5, 1, 1.5))
+y <- c(0, 0, 1, 0, 1, 1)
+beta_hat <- coef(glm(y ~ X[, 2], family = binomial))
+se_cpp(beta_hat, cbind(X, y))
+```
+
+## Hessian-vector products
+
+`hvp` gives `H %*% v` for the cost of about one gradient, without building `H`.
+It is the building block of Newton-CG and other methods where n is too large
+for the full Hessian.
+
+```{r}
+f <- function(x, v) {
+  argtypes(x |> type(vec(double)), v |> type(vec(double)))
+  rosen <- function(x) {
+    argtypes(x |> type(vec(double)))
+    returntype(double)
+    100 * (x[[2L]] - x[[1L]]^2)^2 + (1 - x[[1L]])^2
+  }
+  hvp(rosen, x, v)
+}
+ast2ast::translate(f)(c(-1.2, 1), c(1, 0))
+```
+
+## Notes
+
+- `f` is recorded once with reverse mode; each direction then runs a tangent
+  sweep and a second-order reverse sweep over that recording
+  (forward-over-reverse).
+- Without `translate(derivative = "reverse")`, `f` has to be a named inner
+  function (as for `jacobian` in a plain translation).
+- All matrix operations are supported: `%*%`, `crossprod`, `tcrossprod`,
+  `solve`, `backsolve`, `forwardsolve`, `chol`, `det`.
+- As for every reverse-mode derivative, `if` branches are the ones taken at `x`.

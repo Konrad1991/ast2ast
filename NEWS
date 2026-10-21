@@ -2,6 +2,10 @@ News for package 'ast2ast'
 
 changes in ast2ast version 1.2
 
+- New `hessian(f, x[, data])` and `hvp(f, x, v[, data])`: exact Hessian and
+  Hessian-vector product of a scalar `f` (forward-over-reverse on the tape).
+  Work in every translation and with all matrix operations (`%*%`, `solve`,
+  `chol`, `det`, ...). See the vignette "Hessians and Hessian-vector products".
 - Random numbers without global state: `e <- mersenne_twister(seed)`,
   `d <- normal(e, mean, sd)` / `uniform(e, min, max)` and `draw(d, n)` give
   the same numbers as `set.seed(seed)` + `rnorm` / `runif`. A distribution owns
