@@ -68,6 +68,25 @@ match_call_args <- function(fct, given, expected) {
   order
 }
 
+# Appends name = default for every slot that is neither named nor filled by an
+# unnamed argument; match_call_args sorts them afterwards
+fill_default_args <- function(code, operator, function_registry) {
+  defaults <- function_registry$get_defaults(operator)
+  if (is.null(defaults)) return(code)
+  expected <- function_registry$expected_arg_names(operator)
+  given <- names(code)[-1L]
+  if (is.null(given)) given <- rep("", length(code) - 1L)
+  filled <- rep(FALSE, length(expected))
+  idx <- match(given[given != ""], expected)
+  filled[idx[!is.na(idx)]] <- TRUE
+  free <- which(!filled)
+  filled[free[seq_len(min(sum(given == ""), length(free)))]] <- TRUE
+  for (nm in names(defaults)) {
+    if (!filled[[match(nm, expected)]]) code[[nm]] <- defaults[[nm]]
+  }
+  code
+}
+
 # Singleton class holding all information of a function required
 # ========================================================================
 Functions <- R6::R6Class(
@@ -84,11 +103,14 @@ Functions <- R6::R6Class(
     thread_safes = NULL,
     valid_fn_contexts = NULL,
     docus = list(),
+    defaults = list(),
 
     initialize = function() {},
     add = function(name, num_args, arg_names, infer_fct,
                    check_fct, group, cpp_name, deriv_possible = TRUE,
-                   valid_fn_context = FALSE, docu = NULL, thread_safe = TRUE) {
+                   valid_fn_context = FALSE, docu = NULL, thread_safe = TRUE,
+                   defaults = NULL) {
+      if (!is.null(defaults)) self$defaults[[name]] <- defaults
       self$function_names <- c(self$function_names, name)
       self$number_of_args[[length(self$number_of_args) + 1]] <- num_args
       self$arg_names[[length(self$arg_names) + 1]] <- arg_names
@@ -119,6 +141,10 @@ Functions <- R6::R6Class(
     },
     get_cpp_name = function(name) {
       self$cpp_names[which(self$function_names == name)]
+    },
+    # named list: argument name -> R expression filled in when the argument is missing
+    get_defaults = function(name) {
+      self$defaults[[name]]
     },
     get_docu = function(name) {
       idx <- which(self$function_names == name)
@@ -2390,16 +2416,75 @@ check_solver_jac <- function(node, solver, jac_pos, params_pos, kinds) {
     node$error <- sprintf("the jac function passed to %s must not return a value (it writes J in place)", solver)
   }
 }
+# cvode_options() / ida_options(): constructors of the predefined option structs
+is_scalar_of <- function(t, base_types) {
+  inherits(t, "pre_type_node") && t$get_data_struct() == "scalar" &&
+    t$get_base_type() %in% base_types
+}
+infer_solver_options <- function(node, vars_list, info_env, function_registry, type_name, kinds) {
+  all_types <- lapply(node$args, function(arg) {
+    infer(arg, vars_list, info_env, function_registry)
+  })
+  numeric_types <- c("double", "integer", "int")
+  for (i in seq_along(kinds)) {
+    ok <- switch(kinds[[i]],
+      double = is_scalar_of(all_types[[i]], numeric_types),
+      int = is_scalar_of(all_types[[i]], numeric_types),
+      logical = is_scalar_of(all_types[[i]], c("logical", "bool", numeric_types))
+    )
+    if (!ok) {
+      return(sprintf("%s: %s has to be a scalar %s", type_name, names(kinds)[[i]], kinds[[i]]))
+    }
+  }
+  t <- info_env$known_types[[type_name]]
+  if (is.null(t)) return(sprintf("Did not find the predefined type %s", type_name))
+  node$internal_type <- t
+  t
+}
+is_options_type <- function(t, type_name) {
+  inherits(t, "new_type_node") && identical(t$name, type_name)
+}
+cvode_option_kinds <- c(reltol = "double", abstol = "double", stiff = "logical",
+                        max_steps = "int", stats = "logical")
 function_registry_global$add(
-  name = "cvode", num_args = c(7, 8), arg_names = c(NA, NA, NA, NA, NA, NA, NA, NA),
+  name = "cvode_options", num_args = 5, arg_names = names(cvode_option_kinds),
+  defaults = list(reltol = 1e-6, abstol = 1e-6, stiff = TRUE, max_steps = 1000000L, stats = FALSE),
   docu = paste0(
-    "cvode(rhs, y0, times, params, reltol, abstol, stiff, jac)\n",
+    "cvode_options(reltol = 1e-6, abstol = 1e-6, stiff = TRUE, max_steps = 1000000L, stats = FALSE)\n",
+    "Options for cvode; every argument is optional. stiff: TRUE -> BDF, FALSE -> ADAMS. ",
+    "max_steps: maximum number of steps per output interval. stats: print solver statistics."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    infer_solver_options(node, vars_list, info_env, function_registry, "cvode_options", cvode_option_kinds)
+  },
+  check_fct = mock,
+  group = "function_node", cpp_name = "etr::cvode_options", deriv_possible = FALSE
+)
+ida_option_kinds <- c(reltol = "double", abstol = "double", max_steps = "int", stats = "logical")
+function_registry_global$add(
+  name = "ida_options", num_args = 4, arg_names = names(ida_option_kinds),
+  defaults = list(reltol = 1e-6, abstol = 1e-6, max_steps = 1000000L, stats = FALSE),
+  docu = paste0(
+    "ida_options(reltol = 1e-6, abstol = 1e-6, max_steps = 1000000L, stats = FALSE)\n",
+    "Options for ida; every argument is optional. ",
+    "max_steps: maximum number of steps per output interval. stats: print solver statistics."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    infer_solver_options(node, vars_list, info_env, function_registry, "ida_options", ida_option_kinds)
+  },
+  check_fct = mock,
+  group = "function_node", cpp_name = "etr::ida_options", deriv_possible = FALSE
+)
+function_registry_global$add(
+  name = "cvode", num_args = c(5, 6), arg_names = c("rhs", "y0", "times", "params", "options", "jac"),
+  defaults = list(options = quote(cvode_options())),
+  docu = paste0(
+    "cvode(rhs, y0, times, params, options = cvode_options(), jac)\n",
     "rhs: fn(t, y, ydot, params) writing ydot in place -- t a scalar double; ",
     "y, ydot double vectors (borrowed, ref); no return value.\n",
     "params is passed through unchanged and may be any type (double vector, ",
     "scalar, new_type struct); the rhs's 4th argument must match it.\n",
-    "y0, times: double vectors (times[1] is t0). reltol, abstol: scalar doubles. ",
-    "stiff: scalar, non-zero -> BDF, else ADAMS.\n",
+    "y0, times: double vectors (times[1] is t0). options: see cvode_options().\n",
     "jac (optional): fn(t, y, J, params) writing J = d ydot / d y in place -- ",
     "J a borrow_mat(double), zeroed before each call; no return value. ",
     "Without jac the Jacobian comes from difference quotients.\n",
@@ -2409,21 +2494,17 @@ function_registry_global$add(
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
     })
-    if (!(length(all_types) %in% c(7L, 8L))) {
-      return("cvode expects 7 or 8 arguments")
+    if (!(length(all_types) %in% c(5L, 6L))) {
+      return("cvode expects 4 to 6 arguments")
     }
-    if (length(all_types) == 8L && !inherits(all_types[[8L]], "fn_node")) {
-      return("cvode: jac (argument 8) has to be a function")
+    if (length(all_types) == 6L && !inherits(all_types[[6L]], "fn_node")) {
+      return("cvode: jac (argument 6) has to be a function")
     }
     if (!inherits(all_types[[1L]], "fn_node")) {
       return("The first argument to cvode has to be a function")
     }
     is_vec_double <- function(t) {
       inherits(t, "pre_type_node") && t$get_data_struct() == "vector" &&
-        t$get_base_type() == "double"
-    }
-    is_scalar_double <- function(t) {
-      inherits(t, "pre_type_node") && t$get_data_struct() == "scalar" &&
         t$get_base_type() == "double"
     }
     if (!is_vec_double(all_types[[2L]])) {
@@ -2436,17 +2517,8 @@ function_registry_global$add(
     if (inherits(all_types[[4L]], "fn_node")) {
       return("cvode: params (argument 4) cannot be a function")
     }
-    if (!is_scalar_double(all_types[[5L]])) {
-      return("cvode: reltol (argument 5) has to be a scalar double")
-    }
-    if (!is_scalar_double(all_types[[6L]])) {
-      return("cvode: abstol (argument 6) has to be a scalar double")
-    }
-    stiff_ok <- inherits(all_types[[7L]], "pre_type_node") &&
-      all_types[[7L]]$get_data_struct() == "scalar" &&
-      all_types[[7L]]$get_base_type() %in% c("double", "integer", "int", "logical", "bool")
-    if (!stiff_ok) {
-      return("cvode: stiff (argument 7) has to be a scalar integer, double or logical")
+    if (!is_options_type(all_types[[5L]], "cvode_options")) {
+      return("cvode: options (argument 5) has to be created by cvode_options()")
     }
     make_inferred_type("matrix", "double", info_env$r_fct, info_env$real_type)
   },
@@ -2487,8 +2559,8 @@ function_registry_global$add(
       node$error <- "the function passed to cvode must not return a value (it writes ydot in place)"
       return()
     }
-    if (length(node$args) == 8L) {
-      check_solver_jac(node, "cvode", 8L, 4L,
+    if (length(node$args) == 6L) {
+      check_solver_jac(node, "cvode", 6L, 4L,
                        c(t = "scalar", y = "vec", J = "mat", params = "params"))
     }
   },
@@ -2496,15 +2568,17 @@ function_registry_global$add(
  valid_fn_context = TRUE
 )
 function_registry_global$add(
-  name = "ida", num_args = c(8, 9), arg_names = c(NA, NA, NA, NA, NA, NA, NA, NA, NA),
+  name = "ida", num_args = c(7, 8),
+  arg_names = c("res", "y0", "yp0", "times", "params", "id", "options", "jac"),
+  defaults = list(options = quote(ida_options())),
   docu = paste0(
-    "ida(res, y0, yp0, times, params, reltol, abstol, id, jac)\n",
+    "ida(res, y0, yp0, times, params, id, options = ida_options(), jac)\n",
     "res: fn(t, y, yp, r, params) writing the residual r = F(t, y, yp) in place -- ",
     "t a scalar double; y, yp, r double vectors (borrowed, ref); no return value.\n",
     "params is passed through unchanged and may be any type; the res's 5th argument must match it.\n",
     "y0, yp0, times, id: double vectors (times[1] is t0). id: 1 = differential, 0 = algebraic. ",
     "yp0 and the algebraic part of y0 are corrected by IDACalcIC.\n",
-    "reltol, abstol: scalar doubles.\n",
+    "options: see ida_options().\n",
     "jac (optional): fn(t, cj, y, yp, J, params) writing J = dF/dy + cj * dF/dyp in place -- ",
     "t, cj scalar doubles; J a borrow_mat(double), zeroed before each call; no return value. ",
     "Without jac the Jacobian comes from difference quotients.\n",
@@ -2514,11 +2588,11 @@ function_registry_global$add(
     all_types <- lapply(node$args, function(arg) {
       infer(arg, vars_list, info_env, function_registry)
     })
-    if (!(length(all_types) %in% c(8L, 9L))) {
-      return("ida expects 8 or 9 arguments")
+    if (!(length(all_types) %in% c(7L, 8L))) {
+      return("ida expects 6 to 8 arguments")
     }
-    if (length(all_types) == 9L && !inherits(all_types[[9L]], "fn_node")) {
-      return("ida: jac (argument 9) has to be a function")
+    if (length(all_types) == 8L && !inherits(all_types[[8L]], "fn_node")) {
+      return("ida: jac (argument 8) has to be a function")
     }
     if (!inherits(all_types[[1L]], "fn_node")) {
       return("The first argument to ida has to be a function")
@@ -2527,11 +2601,7 @@ function_registry_global$add(
       inherits(t, "pre_type_node") && t$get_data_struct() == "vector" &&
         t$get_base_type() == "double"
     }
-    is_scalar_double <- function(t) {
-      inherits(t, "pre_type_node") && t$get_data_struct() == "scalar" &&
-        t$get_base_type() == "double"
-    }
-    vector_args <- c(y0 = 2L, yp0 = 3L, times = 4L, id = 8L)
+    vector_args <- c(y0 = 2L, yp0 = 3L, times = 4L, id = 6L)
     for (name in names(vector_args)) {
       i <- vector_args[[name]]
       if (!is_vec_double(all_types[[i]])) {
@@ -2541,11 +2611,8 @@ function_registry_global$add(
     if (inherits(all_types[[5L]], "fn_node")) {
       return("ida: params (argument 5) cannot be a function")
     }
-    if (!is_scalar_double(all_types[[6L]])) {
-      return("ida: reltol (argument 6) has to be a scalar double")
-    }
-    if (!is_scalar_double(all_types[[7L]])) {
-      return("ida: abstol (argument 7) has to be a scalar double")
+    if (!is_options_type(all_types[[7L]], "ida_options")) {
+      return("ida: options (argument 7) has to be created by ida_options()")
     }
     make_inferred_type("matrix", "double", info_env$r_fct, info_env$real_type)
   },
@@ -2583,8 +2650,8 @@ function_registry_global$add(
       node$error <- "the function passed to ida must not return a value (it writes r in place)"
       return()
     }
-    if (length(node$args) == 9L) {
-      check_solver_jac(node, "ida", 9L, 5L,
+    if (length(node$args) == 8L) {
+      check_solver_jac(node, "ida", 8L, 5L,
                        c(t = "scalar", cj = "scalar", y = "vec", yp = "vec", J = "mat", params = "params"))
     }
   },

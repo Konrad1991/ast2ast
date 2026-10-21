@@ -142,6 +142,7 @@ create_ast <- function(code, context, env, function_registry) {
     return(fn)
   } else if (function_registry$is_group_functions(operator) || length(code) > 3) {
     # by adding length(code) > 3 also wrong fcts are added to the AST
+    code <- fill_default_args(code, operator, function_registry)
     fn <- function_node$new()
     fn$operator <- operator
     fn$args <- lapply(code[-1], function(x) {

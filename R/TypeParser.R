@@ -560,6 +560,26 @@ predefined_known_types <- quote({
       data |> type(vec(double))
     )
   )
+  # slots must match etr::cvode_options / etr::ida_options in a2a_sundials.hpp
+  new_type(
+    cvode_options,
+    slots(
+      reltol |> type(double),
+      abstol |> type(double),
+      stiff |> type(logical),
+      max_steps |> type(int),
+      stats |> type(logical)
+    )
+  )
+  new_type(
+    ida_options,
+    slots(
+      reltol |> type(double),
+      abstol |> type(double),
+      max_steps |> type(int),
+      stats |> type(logical)
+    )
+  )
 })
 
 make_known_types <- function(types_fct, r_fct, real_type) {

@@ -311,7 +311,7 @@ ode_file <- c(
   "solve_decay <- function(y0, times, k) {",
   "  argtypes(y0 |> type(vec(double)), times |> type(vec(double)), k |> type(vec(double)))",
   "  returntype(mat(double))",
-  "  res <- cvode(decay, y0, times, k, 1e-8, 1e-10, TRUE)",
+  "  res <- cvode(decay, y0, times, k, cvode_options(reltol = 1e-8, abstol = 1e-10))",
   "  return(res)",
   "}"
 )
