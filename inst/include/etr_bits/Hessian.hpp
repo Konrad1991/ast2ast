@@ -102,8 +102,138 @@ struct HessianSweep {
     }
   }
 
-  static inline bool is_unsupported_block(ROp op) {
-    return op == ROp::Chol || op == ROp::Det;
+  // B = alpha op(A)^-1 B (side L) or B op(A)^-1 (side R), A upper triangular n x n, B n x n
+  static inline void trsm_upper(const char* side, const char* trans, int n,
+                                const double* A, double* B) {
+    if (n == 0) return;
+    const double one = 1.0;
+    F77_CALL(dtrsm)(side, "U", trans, "N", &n, &n, &one, A, &n, B, &n FCONE FCONE FCONE FCONE);
+  }
+
+  // Phi_U: strictly lower -> 0, diagonal halved
+  static inline void phi_upper(std::vector<double>& M, std::size_t n) {
+    for (std::size_t c = 0; c < n; c++) {
+      M[c * n + c] *= 0.5;
+      for (std::size_t r = c + 1; r < n; r++) M[c * n + r] = 0.0;
+    }
+  }
+
+  // input adjoint of chol: strictly-upper(X + X^T) + diag(X), lower stays 0
+  static inline std::vector<double> fold_upper(const std::vector<double>& X, std::size_t n) {
+    std::vector<double> g(n * n, 0.0);
+    for (std::size_t c = 0; c < n; c++) {
+      for (std::size_t r = 0; r <= c; r++) {
+        g[c * n + r] = (r == c) ? X[c * n + r] : X[c * n + r] + X[r * n + c];
+      }
+    }
+    return g;
+  }
+
+  // R = chol(A), A = R^T R; dpotrf reads only the upper triangle of A:
+  // S = R^-T sym(A_dot) R^-1, R_dot = Phi_U(S) R
+  inline void chol_forward(const BlockOp& blk) {
+    const std::size_t out0 = static_cast<std::size_t>(blk.out_tape_id_first);
+    if (blk.a_ids.empty() || tape.is_na[out0]) return;
+    const std::size_t n = blk.rows_a;
+    const int ni = static_cast<int>(n);
+    std::vector<double> A, A_dot, R, R_dot;
+    gather(blk.a_ids, blk.a_vals, A, A_dot);
+    block_outputs(out0, n * n, R, R_dot);
+    std::vector<double> S(n * n);
+    for (std::size_t c = 0; c < n; c++) {
+      for (std::size_t r = 0; r < n; r++) S[c * n + r] = r <= c ? A_dot[c * n + r] : A_dot[r * n + c];
+    }
+    trsm_upper("L", "T", ni, R.data(), S.data());
+    trsm_upper("R", "N", ni, R.data(), S.data());
+    phi_upper(S, n);
+    std::vector<double> out_dot(n * n, 0.0);
+    gemm("N", "N", ni, ni, ni, S.data(), ni, R.data(), ni, 0.0, out_dot.data(), ni);
+    write_block_tangent(out0, out_dot);
+  }
+
+  // first order:  M = Phi_U(R_bar R^T), X = R^-1 M R^-T, A_bar = fold(X)
+  // second order: M_dot = Phi_U(R_bar_dot R^T + R_bar R_dot^T),
+  //               X_dot = R^-1 M_dot R^-T - R^-1 R_dot X - X R_dot^T R^-T, A_bar_dot = fold(X_dot)
+  inline void chol_reverse(const BlockOp& blk) {
+    const std::size_t out0 = static_cast<std::size_t>(blk.out_tape_id_first);
+    if (blk.a_ids.empty() || tape.is_na[out0]) return;
+    const std::size_t n = blk.rows_a;
+    const int ni = static_cast<int>(n);
+    std::vector<double> R_bar, R_bar_dot;
+    if (!block_adjoints(out0, n * n, R_bar, R_bar_dot)) return;
+    // lower R is a structural zero
+    for (std::size_t c = 0; c < n; c++) {
+      for (std::size_t r = c + 1; r < n; r++) R_bar[c * n + r] = R_bar_dot[c * n + r] = 0.0;
+    }
+    std::vector<double> R, R_dot;
+    block_outputs(out0, n * n, R, R_dot);
+
+    std::vector<double> X(n * n, 0.0);
+    gemm("N", "T", ni, ni, ni, R_bar.data(), ni, R.data(), ni, 0.0, X.data(), ni);
+    phi_upper(X, n);
+    trsm_upper("L", "N", ni, R.data(), X.data());
+    trsm_upper("R", "T", ni, R.data(), X.data());
+
+    std::vector<double> X_dot(n * n, 0.0);
+    gemm("N", "T", ni, ni, ni, R_bar_dot.data(), ni, R.data(), ni, 0.0, X_dot.data(), ni);
+    gemm("N", "T", ni, ni, ni, R_bar.data(), ni, R_dot.data(), ni, 1.0, X_dot.data(), ni);
+    phi_upper(X_dot, n);
+    trsm_upper("L", "N", ni, R.data(), X_dot.data());
+    trsm_upper("R", "T", ni, R.data(), X_dot.data());
+    std::vector<double> T1(n * n, 0.0), T2(n * n, 0.0);
+    gemm("N", "N", ni, ni, ni, R_dot.data(), ni, X.data(), ni, 0.0, T1.data(), ni);
+    trsm_upper("L", "N", ni, R.data(), T1.data());
+    gemm("N", "T", ni, ni, ni, X.data(), ni, R_dot.data(), ni, 0.0, T2.data(), ni);
+    trsm_upper("R", "T", ni, R.data(), T2.data());
+    for (std::size_t k = 0; k < n * n; k++) X_dot[k] -= T1[k] + T2[k];
+
+    add_side(blk.a_ids, fold_upper(X, n), fold_upper(X_dot, n));
+  }
+
+  // W = A^-T from the cached LU (empty for a singular A: no derivatives, as reverse())
+  inline std::vector<double> inverse_transposed(const BlockOp& blk) const {
+    const std::size_t n = blk.rows_a;
+    std::vector<double> W(n * n, 0.0);
+    for (std::size_t d = 0; d < n; d++) W[d * n + d] = 1.0;
+    int ni = static_cast<int>(n);
+    int info = 0;
+    F77_CALL(dgetrs)("T", &ni, &ni, blk.lu.data(), &ni, blk.ipiv.data(), W.data(), &ni, &info FCONE);
+    ass<"hessian: triangular solve failed">(info == 0);
+    return W;
+  }
+
+  // d = det(A): d_dot = d <W, A_dot>, W = A^-T
+  inline void det_forward(const BlockOp& blk, std::size_t i) {
+    if (blk.lu.empty() || blk.rows_a == 0) return;
+    std::vector<double> A, A_dot;
+    gather(blk.a_ids, blk.a_vals, A, A_dot);
+    const std::vector<double> W = inverse_transposed(blk);
+    double s = 0.0;
+    for (std::size_t k = 0; k < W.size(); k++) s += W[k] * A_dot[k];
+    dot[i - start] = tape.val[i] * s;
+  }
+
+  // A_bar = w d W, A_bar_dot = (w_dot d + w d_dot) W + w d W_dot, W_dot = -W A_dot^T W
+  inline void det_reverse(const BlockOp& blk, std::size_t i) {
+    if (blk.lu.empty() || blk.rows_a == 0) return;
+    const double w = adj[i - start];
+    const double w_dot = adj_dot[i - start];
+    if (w == 0.0 && w_dot == 0.0) return;
+    const int ni = static_cast<int>(blk.rows_a);
+    const double d = tape.val[i];
+    const double d_dot = dot[i - start];
+    std::vector<double> A, A_dot;
+    gather(blk.a_ids, blk.a_vals, A, A_dot);
+    const std::vector<double> W = inverse_transposed(blk);
+    std::vector<double> T(W.size(), 0.0), W_dot(W.size(), 0.0);
+    gemm("N", "T", ni, ni, ni, W.data(), ni, A_dot.data(), ni, 0.0, T.data(), ni);
+    gemm("N", "N", ni, ni, ni, T.data(), ni, W.data(), ni, 0.0, W_dot.data(), ni, -1.0);
+    std::vector<double> g(W.size()), g_dot(W.size());
+    for (std::size_t k = 0; k < W.size(); k++) {
+      g[k] = w * d * W[k];
+      g_dot[k] = (w_dot * d + w * d_dot) * W[k] + w * d * W_dot[k];
+    }
+    add_side(blk.a_ids, g, g_dot);
   }
 
   // C = alpha op(A) op(B) + beta C, column-major
@@ -347,25 +477,38 @@ struct HessianSweep {
   }
 
   // block heads carry the whole block (all output cells); slots are inert
+  static inline bool is_block(ROp op) {
+    return op == ROp::MatMul || op == ROp::BlockSlot || op == ROp::Chol || op == ROp::Solve ||
+           op == ROp::CrossProd || op == ROp::TriSolve || op == ROp::Det;
+  }
+
   inline bool block_forward(std::size_t i) {
     const ROp op = tape.op[i];
+    if (!is_block(op)) return false;
     if (op == ROp::BlockSlot) return true;
-    if (op != ROp::MatMul && op != ROp::CrossProd && op != ROp::Solve && op != ROp::TriSolve) return false;
     const BlockOp& blk = tape.blocks[static_cast<std::size_t>(tape.a[i])];
-    if (op == ROp::MatMul) matmul_forward(blk);
-    else if (op == ROp::CrossProd) crossprod_forward(blk);
-    else solve_forward(blk);
+    switch (op) {
+      case ROp::MatMul: matmul_forward(blk); break;
+      case ROp::CrossProd: crossprod_forward(blk); break;
+      case ROp::Chol: chol_forward(blk); break;
+      case ROp::Det: det_forward(blk, i); break;
+      default: solve_forward(blk);
+    }
     return true;
   }
 
   inline bool block_reverse(std::size_t i) {
     const ROp op = tape.op[i];
+    if (!is_block(op)) return false;
     if (op == ROp::BlockSlot) return true;
-    if (op != ROp::MatMul && op != ROp::CrossProd && op != ROp::Solve && op != ROp::TriSolve) return false;
     const BlockOp& blk = tape.blocks[static_cast<std::size_t>(tape.a[i])];
-    if (op == ROp::MatMul) matmul_reverse(blk);
-    else if (op == ROp::CrossProd) crossprod_reverse(blk);
-    else solve_reverse(blk);
+    switch (op) {
+      case ROp::MatMul: matmul_reverse(blk); break;
+      case ROp::CrossProd: crossprod_reverse(blk); break;
+      case ROp::Chol: chol_reverse(blk); break;
+      case ROp::Det: det_reverse(blk, i); break;
+      default: solve_reverse(blk);
+    }
     return true;
   }
 
@@ -430,10 +573,6 @@ inline auto with_recorded_scalar_f(const X& x, Call&& call_f, Body&& body) {
   Array<ReverseDouble, Buffer<ReverseDouble>> xr(SI{n});
   for (std::size_t j = 0; j < n; j++) xr.set(j, ReverseDouble::Var(get_val(x.get(j))));
   const ReverseDouble y = call_f(xr);
-  for (std::size_t i = tape_start; i < tape.size(); i++) {
-    ass<"hessian: chol and det are not supported in hessian yet">(
-      !HessianSweep::is_unsupported_block(tape.op[i]));
-  }
   std::vector<int> x_ids(n);
   for (std::size_t j = 0; j < n; j++) x_ids[j] = xr.get(j).id;
   HessianSweep sweep(tape, tape_start);
