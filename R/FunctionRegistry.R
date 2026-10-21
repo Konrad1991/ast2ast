@@ -2862,6 +2862,113 @@ function_registry_global$add(
   check_fct = check_jacobian,
   group = "function_node", cpp_name = "etr::jacobian_banded", valid_fn_context = TRUE
 )
+
+# hessian(f, x[, data]) / hvp(f, x, v[, data]): f is always recorded with
+# ReverseDouble on its own part of the tape (forward-over-reverse)
+infer_hessian <- function(node, vars_list, info_env, function_registry, fname) {
+  n_vectors <- if (fname == "hvp") 2L else 1L
+  all_types <- lapply(node$args, function(arg) {
+    infer(arg, vars_list, info_env, function_registry)
+  })
+  if (!(length(all_types) %in% (1L + n_vectors + 0:1))) {
+    return(sprintf("%s expects %d or %d arguments", fname, 1L + n_vectors, 2L + n_vectors))
+  }
+  if (!inherits(all_types[[1L]], "fn_node")) {
+    return(sprintf("The first argument to %s has to be a function", fname))
+  }
+  for (i in 1L + seq_len(n_vectors)) {
+    t <- all_types[[i]]
+    if (!inherits(t, "pre_type_node") || t$get_data_struct() != "vector" || t$get_base_type() != "double") {
+      return(sprintf("Argument %d to %s has to be a double vector", i, fname))
+    }
+  }
+  has_extra <- length(all_types) == 2L + n_vectors
+  if (has_extra) {
+    extra_type <- all_types[[2L + n_vectors]]
+    if (inherits(extra_type, "fn_node")) {
+      return(sprintf("The data passed to %s cannot itself be a function", fname))
+    }
+    if (inherits(extra_type, "pre_type_node") && extra_type$get_base_type() == "character") {
+      return(sprintf("The data passed to %s cannot be a character/string", fname))
+    }
+  }
+  if (info_env$real_type == "etr::ReverseDouble") {
+    fn <- runtime_colouring_fn(node$args[[1L]], vars_list)
+    if (!is.null(fn)) {
+      err <- runtime_colouring_reverse_error(fn, vars_list, fname, ad_only_fcts)
+      if (!is.null(err)) return(err)
+    }
+  } else {
+    fn <- runtime_colouring_fn(node$args[[1L]], vars_list)
+    if (is.null(fn)) {
+      return(sprintf("%s: f has to be a named fn, not an inline fn (unless translate(derivative = \"reverse\"))", fname))
+    }
+    no_ad <- function_registry$function_names[!function_registry$deriv_possibles]
+    err <- runtime_colouring_reverse_error(fn, vars_list, fname, c(ad_only_fcts, no_ad))
+    if (!is.null(err)) return(err)
+    node$args[[1L]]$functor_scalar <- "etr::ReverseDouble"
+  }
+  f <- all_types[[1L]]
+  expected_n <- if (has_extra) 2L else 1L
+  if (length(f$args_f) != expected_n) {
+    return(sprintf(
+      "the function passed to %s has to accept exactly %d argument%s%s",
+      fname, expected_n, if (expected_n == 1L) "" else "s",
+      if (has_extra) " (the vector, then the extra data argument)" else ""
+    ))
+  }
+  a1 <- f$args_f[[1L]]
+  if (!inherits(a1, "pre_type_node") || a1$get_base_type() != "double" ||
+      a1$get_data_struct() != "vector") {
+    return(sprintf("the function passed to %s has to accept a double vector as its first argument", fname))
+  }
+  ret <- f$return_type
+  if (!inherits(ret, "pre_type_node") || ret$get_base_type() != "double" ||
+      ret$get_data_struct() != "scalar") {
+    return(sprintf("the function passed to %s has to return a scalar double", fname))
+  }
+  t <- make_inferred_type(if (fname == "hvp") "vector" else "matrix", "double", info_env$r_fct, info_env$real_type)
+  node$internal_type <- t
+  t
+}
+check_hessian <- function(node, extra_pos) {
+  f <- node$args[[1L]]
+  if (!inherits(f, "fn_node")) f <- f$internal_type
+  if (!inherits(f, "fn_node")) return()
+  args_to_f <- f$args_f
+  # x is copied onto the tape anyway
+  compare_types_passed_to_fn(node, args_to_f[[1L]], node$args[[2L]]$internal_type, allow_borrow_to_owned = TRUE)
+  if (length(args_to_f) == 2L && length(node$args) >= extra_pos) {
+    compare_types_passed_to_fn(node, args_to_f[[2L]], node$args[[extra_pos]]$internal_type)
+  }
+}
+function_registry_global$add(
+  name = "hessian", num_args = c(2, 3), arg_names = c("f", "x", "data"),
+  docu = paste0(
+    "hessian(f, x[, data])\n",
+    "n x n Hessian of a scalar f at x (forward-over-reverse, exact). f: named fn taking a ",
+    "double vector (and optionally data) and returning a scalar double. Works in every ",
+    "translation; an inline fn only with translate(derivative = \"reverse\")."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    infer_hessian(node, vars_list, info_env, function_registry, "hessian")
+  },
+  check_fct = function(node, vars_types_list, info_env) check_hessian(node, 3L),
+  group = "function_node", cpp_name = "etr::hessian", valid_fn_context = TRUE
+)
+function_registry_global$add(
+  name = "hvp", num_args = c(3, 4), arg_names = c("f", "x", "v", "data"),
+  docu = paste0(
+    "hvp(f, x, v[, data])\n",
+    "Hessian-vector product H %*% v of a scalar f at x, one sweep. Arguments as hessian; ",
+    "v: double vector of length(x)."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    infer_hessian(node, vars_list, info_env, function_registry, "hvp")
+  },
+  check_fct = function(node, vars_types_list, info_env) check_hessian(node, 4L),
+  group = "function_node", cpp_name = "etr::hvp", valid_fn_context = TRUE
+)
 function_registry_global$add(
   name = "lbfgsb", num_args = c(8, 9), arg_names = c(NA, NA, NA, NA, NA, NA, NA, NA, NA),
   docu = paste0(
