@@ -272,3 +272,14 @@ u_borrow_to_owned <- function(interval, p) {
   uniroot(g, interval, 1e-10, 1000, p)$root
 }
 expect_error(ast2ast::translate(u_borrow_to_owned), "expected vector got borrow_vector")
+# x of jacobian is copied anyway: borrow_vec into a vec parameter is fine
+j_borrow_x <- function(x) {
+  argtypes(x |> type(borrow_vec(double)))
+  g <- function(y) {
+    argtypes(y |> type(vec(double)))
+    returntype(vec(double))
+    y * y
+  }
+  jacobian(g, x)
+}
+expect_true(is.character(ast2ast::translate(j_borrow_x, derivative = "forward", output = "XPtr", getsource = TRUE)))

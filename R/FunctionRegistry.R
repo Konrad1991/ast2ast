@@ -333,17 +333,20 @@ is_array_internal_type <- function(node, vars_types_list) {
   TRUE 
 }
 
-compare_types_passed_to_fn <- function(node, type1, type2) {
+compare_types_passed_to_fn <- function(node, type1, type2, allow_borrow_to_owned = FALSE) {
 
   # nothing to compare against -- infer_fct already flagged the real problem
   if (is.null(type1) || is.null(type2)) return()
 
   if (inherits(type1, "pre_type_node") && inherits(type2, "pre_type_node")) {
+    is_ds <- type2$get_data_struct_verbose()
+    should_ds <- type1$get_data_struct_verbose()
     if (type1$get_data_struct() != type2$get_data_struct()) {
       node$error <- sprintf("Found a type mismatch: expected %s got %s", type1$get_data_struct(), type2$get_data_struct())
     }
-    # NOTE: no borrow_to_owned as for fn calls; uniroot & co. deduce one T from fn and data
-    else if (!same_data_struct(type2$get_data_struct_verbose(), type1$get_data_struct_verbose())) {
+    # NOTE: no borrow_to_owned by default; uniroot & co. deduce one T from fn and data
+    else if (!same_data_struct(is_ds, should_ds) &&
+      !(allow_borrow_to_owned && borrow_to_owned(is_ds, should_ds))) {
       node$error <- sprintf("Found a type mismatch: expected %s got %s",
         normalize_data_struct(type1$get_data_struct_verbose()), normalize_data_struct(type2$get_data_struct_verbose()))
     }
@@ -2798,7 +2801,8 @@ check_jacobian <- function(node, vars_types_list, info_env) {
   if (!inherits(f, "fn_node")) return()
   args_to_f <- f$args_f
   arg1 <- node$args[[2L]]
-  compare_types_passed_to_fn(node, args_to_f[[1L]], arg1$internal_type)
+  # x is copied into the Dual / tape vector anyway
+  compare_types_passed_to_fn(node, args_to_f[[1L]], arg1$internal_type, allow_borrow_to_owned = TRUE)
   if (length(args_to_f) == 2L) {
     arg2 <- node$args[[3L]]
     compare_types_passed_to_fn(node, args_to_f[[2L]], arg2$internal_type)
