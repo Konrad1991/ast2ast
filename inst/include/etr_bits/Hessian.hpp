@@ -103,16 +103,109 @@ struct HessianSweep {
   }
 
   static inline bool is_unsupported_block(ROp op) {
-    return op == ROp::Chol || op == ROp::Solve || op == ROp::TriSolve || op == ROp::Det;
+    return op == ROp::Chol || op == ROp::Det;
   }
 
-  // C = op(A) op(B) + beta C, column-major
+  // C = alpha op(A) op(B) + beta C, column-major
   static inline void gemm(const char* ta, const char* tb, int M, int N, int K,
                           const double* A, int lda, const double* B, int ldb,
-                          double beta, double* C, int ldc) {
+                          double beta, double* C, int ldc, double alpha = 1.0) {
     if (M == 0 || N == 0) return;
-    const double one = 1.0;
-    F77_CALL(dgemm)(ta, tb, &M, &N, &K, &one, A, &lda, B, &ldb, &beta, C, &ldc FCONE FCONE);
+    F77_CALL(dgemm)(ta, tb, &M, &N, &K, &alpha, A, &lda, B, &ldb, &beta, C, &ldc FCONE FCONE);
+  }
+
+  // solution X and its tangent from the block's output cells
+  inline void block_outputs(std::size_t out0, std::size_t size,
+                            std::vector<double>& X, std::vector<double>& X_dot) const {
+    X.resize(size);
+    X_dot.resize(size);
+    for (std::size_t k = 0; k < size; k++) {
+      X[k] = tape.val[out0 + k];
+      X_dot[k] = dot[out0 + k - start];
+    }
+  }
+
+  // solves op(A) Y = Y in place: LU of solve() or the triangle of backsolve / forwardsolve
+  static inline void solve_in_place(const BlockOp& blk, const std::vector<double>& A,
+                                    bool transposed, std::vector<double>& Y) {
+    int n = static_cast<int>(blk.rows_a);
+    int k = static_cast<int>(blk.cols_b);
+    if (n == 0 || k == 0) return;
+    if (blk.kind == BlockOp::Kind::Solve) {
+      int info = 0;
+      F77_CALL(dgetrs)(transposed ? "T" : "N", &n, &k, blk.lu.data(), &n, blk.ipiv.data(),
+                       Y.data(), &n, &info FCONE);
+      ass<"hessian: triangular solve failed">(info == 0);
+    } else {
+      const double one = 1.0;
+      const bool upper = blk.kind == BlockOp::Kind::BackSolve;
+      F77_CALL(dtrsm)("L", upper ? "U" : "L", transposed ? "T" : "N", "N", &n, &k, &one,
+                      A.data(), &n, Y.data(), &n FCONE FCONE FCONE FCONE);
+    }
+  }
+
+  // backsolve / forwardsolve read only one triangle of A
+  static inline void mask_triangle(const BlockOp& blk, std::vector<double>& M) {
+    if (blk.kind == BlockOp::Kind::Solve) return;
+    const bool upper = blk.kind == BlockOp::Kind::BackSolve;
+    const std::size_t n = blk.rows_a;
+    for (std::size_t c = 0; c < n; c++) {
+      for (std::size_t r = 0; r < n; r++) {
+        if (upper ? (r > c) : (r < c)) M[c * n + r] = 0.0;
+      }
+    }
+  }
+
+  // NA in A or B poisons the whole solution: no tangent, no adjoints
+  inline bool solve_is_na(const BlockOp& blk) const {
+    return tape.is_na[static_cast<std::size_t>(blk.out_tape_id_first)] != 0;
+  }
+
+  // X = A^-1 B: X_dot = A^-1 (B_dot - A_dot X)
+  inline void solve_forward(const BlockOp& blk) {
+    if (solve_is_na(blk)) return;
+    const int n = static_cast<int>(blk.rows_a);
+    const int k = static_cast<int>(blk.cols_b);
+    const std::size_t out0 = static_cast<std::size_t>(blk.out_tape_id_first);
+    std::vector<double> A, A_dot, B, B_dot, X, X_dot;
+    gather(blk.a_ids, blk.a_vals, A, A_dot);
+    gather(blk.b_ids, blk.b_vals, B, B_dot);
+    mask_triangle(blk, A_dot);
+    block_outputs(out0, blk.rows_a * blk.cols_b, X, X_dot);
+    std::vector<double> R = B_dot;
+    gemm("N", "N", n, k, n, A_dot.data(), n, X.data(), n, 1.0, R.data(), n, -1.0);
+    solve_in_place(blk, A, false, R);
+    write_block_tangent(out0, R);
+  }
+
+  // G = A^-T X_bar,                    G_dot = A^-T (X_bar_dot - A_dot^T G)
+  // B_bar += G,                        B_bar_dot += G_dot
+  // A_bar += -G X^T,                   A_bar_dot += -(G_dot X^T + G X_dot^T)
+  inline void solve_reverse(const BlockOp& blk) {
+    if (solve_is_na(blk)) return;
+    if (blk.a_ids.empty() && blk.b_ids.empty()) return;
+    const int n = static_cast<int>(blk.rows_a);
+    const int k = static_cast<int>(blk.cols_b);
+    const std::size_t out0 = static_cast<std::size_t>(blk.out_tape_id_first);
+    std::vector<double> G, G_dot;
+    if (!block_adjoints(out0, blk.rows_a * blk.cols_b, G, G_dot)) return;
+    std::vector<double> A, A_dot, X, X_dot;
+    gather(blk.a_ids, blk.a_vals, A, A_dot);
+    mask_triangle(blk, A_dot);
+    block_outputs(out0, blk.rows_a * blk.cols_b, X, X_dot);
+    solve_in_place(blk, A, true, G);
+    gemm("T", "N", n, k, n, A_dot.data(), n, G.data(), n, 1.0, G_dot.data(), n, -1.0);
+    solve_in_place(blk, A, true, G_dot);
+    if (!blk.b_ids.empty()) add_side(blk.b_ids, G, G_dot);
+    if (!blk.a_ids.empty()) {
+      std::vector<double> g(blk.rows_a * blk.rows_a, 0.0), g_dot(g.size(), 0.0);
+      gemm("N", "T", n, n, k, G.data(), n, X.data(), n, 0.0, g.data(), n, -1.0);
+      gemm("N", "T", n, n, k, G_dot.data(), n, X.data(), n, 0.0, g_dot.data(), n, -1.0);
+      gemm("N", "T", n, n, k, G.data(), n, X_dot.data(), n, 1.0, g_dot.data(), n, -1.0);
+      mask_triangle(blk, g);
+      mask_triangle(blk, g_dot);
+      add_side(blk.a_ids, g, g_dot);
+    }
   }
 
   // values and tangents of one block side; constants (vals) have tangent 0
@@ -257,18 +350,22 @@ struct HessianSweep {
   inline bool block_forward(std::size_t i) {
     const ROp op = tape.op[i];
     if (op == ROp::BlockSlot) return true;
-    if (op != ROp::MatMul && op != ROp::CrossProd) return false;
+    if (op != ROp::MatMul && op != ROp::CrossProd && op != ROp::Solve && op != ROp::TriSolve) return false;
     const BlockOp& blk = tape.blocks[static_cast<std::size_t>(tape.a[i])];
-    if (op == ROp::MatMul) matmul_forward(blk); else crossprod_forward(blk);
+    if (op == ROp::MatMul) matmul_forward(blk);
+    else if (op == ROp::CrossProd) crossprod_forward(blk);
+    else solve_forward(blk);
     return true;
   }
 
   inline bool block_reverse(std::size_t i) {
     const ROp op = tape.op[i];
     if (op == ROp::BlockSlot) return true;
-    if (op != ROp::MatMul && op != ROp::CrossProd) return false;
+    if (op != ROp::MatMul && op != ROp::CrossProd && op != ROp::Solve && op != ROp::TriSolve) return false;
     const BlockOp& blk = tape.blocks[static_cast<std::size_t>(tape.a[i])];
-    if (op == ROp::MatMul) matmul_reverse(blk); else crossprod_reverse(blk);
+    if (op == ROp::MatMul) matmul_reverse(blk);
+    else if (op == ROp::CrossProd) crossprod_reverse(blk);
+    else solve_reverse(blk);
     return true;
   }
 
@@ -334,7 +431,7 @@ inline auto with_recorded_scalar_f(const X& x, Call&& call_f, Body&& body) {
   for (std::size_t j = 0; j < n; j++) xr.set(j, ReverseDouble::Var(get_val(x.get(j))));
   const ReverseDouble y = call_f(xr);
   for (std::size_t i = tape_start; i < tape.size(); i++) {
-    ass<"hessian: solve, chol, det, backsolve and forwardsolve are not supported in hessian yet">(
+    ass<"hessian: chol and det are not supported in hessian yet">(
       !HessianSweep::is_unsupported_block(tape.op[i]));
   }
   std::vector<int> x_ids(n);

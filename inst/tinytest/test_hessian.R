@@ -109,7 +109,7 @@ f <- function(x) {
     argtypes(x |> type(vec(double)))
     returntype(double)
     m <- matrix(x, 2L, 2L)
-    s <- solve(m)
+    s <- chol(crossprod(m))
     s[[1L]]
   }
   hessian(h, x)
@@ -169,6 +169,60 @@ x8 <- c(0.3, -0.7, 1.1, 0.4, -0.2, 0.9, 0.6, -1.3)
 expect_equal(fcpp(x8, 1L), hessian_fd(mm_r, x8), tolerance = 1e-5)
 expect_equal(fcpp(x8[1:6], 2L), hessian_fd(cp_r, x8[1:6]), tolerance = 1e-5)
 expect_equal(fcpp(x8[1:6], 3L), hessian_fd(tcp_r, x8[1:6]), tolerance = 1e-5)
+
+# --- block ops: solve, backsolve, forwardsolve vs finite differences -----------
+# the unused triangle of backsolve / forwardsolve depends on x too: it must not count
+
+f <- function(x, test) {
+  argtypes(x |> type(vec(double)), test |> type(int))
+  sv <- function(x) {
+    argtypes(x |> type(vec(double)))
+    returntype(double)
+    a <- matrix(x[1L:4L], 2L, 2L)
+    b <- matrix(x[3L:6L], 2L, 2L)
+    s <- solve(a, b)
+    v <- solve(a, c(1, 2))
+    s[[1L]] * s[[4L]] + s[[2L]] + v[[1L]] * v[[2L]]
+  }
+  bs <- function(x) {
+    argtypes(x |> type(vec(double)))
+    returntype(double)
+    r <- matrix(x[1L:4L], 2L, 2L)
+    b <- matrix(x[3L:6L], 2L, 2L)
+    s <- backsolve(r, b)
+    s[[1L]] * s[[4L]] + exp(s[[3L]] / 5)
+  }
+  fs <- function(x) {
+    argtypes(x |> type(vec(double)))
+    returntype(double)
+    l <- matrix(x[1L:4L], 2L, 2L)
+    b <- matrix(x[3L:6L], 2L, 2L)
+    s <- forwardsolve(l, b)
+    s[[1L]] * s[[4L]] - s[[2L]] * s[[2L]]
+  }
+  if (test == 1L) return(hessian(sv, x))
+  if (test == 2L) return(hessian(bs, x))
+  return(hessian(fs, x))
+}
+sv_r <- function(x) {
+  a <- matrix(x[1:4], 2, 2)
+  s <- solve(a, matrix(x[3:6], 2, 2))
+  v <- solve(a, c(1, 2))
+  s[1] * s[4] + s[2] + v[1] * v[2]
+}
+bs_r <- function(x) {
+  s <- backsolve(matrix(x[1:4], 2, 2), matrix(x[3:6], 2, 2))
+  s[1] * s[4] + exp(s[3] / 5)
+}
+fs_r <- function(x) {
+  s <- forwardsolve(matrix(x[1:4], 2, 2), matrix(x[3:6], 2, 2))
+  s[1] * s[4] - s[2] * s[2]
+}
+fcpp <- ast2ast::translate(f)
+x6 <- c(2.1, 0.4, -0.3, 1.7, 0.8, -0.6)
+expect_equal(fcpp(x6, 1L), hessian_fd(sv_r, x6), tolerance = 1e-5)
+expect_equal(fcpp(x6, 2L), hessian_fd(bs_r, x6), tolerance = 1e-5)
+expect_equal(fcpp(x6, 3L), hessian_fd(fs_r, x6), tolerance = 1e-5)
 
 f <- function(x) {
   argtypes(x |> type(vec(double)))
