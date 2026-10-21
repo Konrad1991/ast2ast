@@ -103,19 +103,6 @@ f <- function(x) {
 }
 expect_error(ast2ast::translate(f), pattern = "has to return a scalar double")
 
-f <- function(x) {
-  argtypes(x |> type(vec(double)))
-  h <- function(x) {
-    argtypes(x |> type(vec(double)))
-    returntype(double)
-    m <- matrix(x, 2L, 2L)
-    s <- chol(crossprod(m))
-    s[[1L]]
-  }
-  hessian(h, x)
-}
-expect_error(ast2ast::translate(f)(c(1, 2, 3, 4)), pattern = "not supported in hessian yet")
-
 # --- block ops: %*%, crossprod, tcrossprod vs finite differences ----------------
 
 f <- function(x, test) {
@@ -223,6 +210,45 @@ x6 <- c(2.1, 0.4, -0.3, 1.7, 0.8, -0.6)
 expect_equal(fcpp(x6, 1L), hessian_fd(sv_r, x6), tolerance = 1e-5)
 expect_equal(fcpp(x6, 2L), hessian_fd(bs_r, x6), tolerance = 1e-5)
 expect_equal(fcpp(x6, 3L), hessian_fd(fs_r, x6), tolerance = 1e-5)
+
+# --- block ops: chol, det vs finite differences ---------------------------------
+# chol reads only the upper triangle: x[[2L]] in the lower one of a must not count
+
+f <- function(x, test) {
+  argtypes(x |> type(vec(double)), test |> type(int))
+  ch <- function(x) {
+    argtypes(x |> type(vec(double)))
+    returntype(double)
+    m <- matrix(x[1L:6L], 3L, 2L)
+    r <- chol(crossprod(m))
+    a <- matrix(c(x[[1L]] + 5, x[[2L]], x[[3L]], x[[4L]] + 5), 2L, 2L)
+    r2 <- chol(a)
+    r[[1L]] * r[[4L]] + r[[3L]]^2 + r2[[4L]] * r2[[3L]]
+  }
+  dt <- function(x) {
+    argtypes(x |> type(vec(double)))
+    returntype(double)
+    a <- matrix(x[1L:9L], 3L, 3L)
+    det(a) * det(a) + exp(det(matrix(x[1L:4L], 2L, 2L)) / 10)
+  }
+  if (test == 1L) return(hessian(ch, x))
+  return(hessian(dt, x))
+}
+ch_r <- function(x) {
+  r <- chol(crossprod(matrix(x[1:6], 3, 2)))
+  r2 <- chol(matrix(c(x[1] + 5, x[2], x[3], x[4] + 5), 2, 2))
+  r[1] * r[4] + r[3]^2 + r2[4] * r2[3]
+}
+dt_r <- function(x) {
+  a <- matrix(x[1:9], 3, 3)
+  det(a) * det(a) + exp(det(matrix(x[1:4], 2, 2)) / 10)
+}
+fcpp <- ast2ast::translate(f)
+x9 <- c(1.2, -0.4, 0.7, 0.3, 1.5, -0.8, 0.6, 0.2, -1.1)
+H_ch <- fcpp(x9[1:6], 1L)
+expect_equal(H_ch, hessian_fd(ch_r, x9[1:6]), tolerance = 1e-5)
+expect_equal(H_ch, t(H_ch))
+expect_equal(fcpp(x9, 2L), hessian_fd(dt_r, x9), tolerance = 1e-5)
 
 f <- function(x) {
   argtypes(x |> type(vec(double)))
