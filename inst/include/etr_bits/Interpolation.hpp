@@ -3,8 +3,12 @@
 
 namespace etr {
 
-template <typename B, typename C>
-inline Double cmrInternal(const double& t, const B& timeVec, const C& parVec) {
+// t and the values of parVec carry derivatives; the time knots and the segment search stay double
+template <typename S, typename B, typename C>
+inline auto cmrInternal(const S& tInp, const B& timeVec, const C& parVec) {
+  using P = decltype(get_scalar_val(parVec.get(0)));
+  using T = common_type_t<common_type_t<S, P>, Double>;
+  auto y_at = [&](std::size_t i) { return T(get_scalar_val(parVec.get(i))); };
 
   ass<"time_vec and param_vec differ in length in cmr">(timeVec.size() == parVec.size());
   ass<"time and parameter require at least 4 elements">(timeVec.size() >= 4);
@@ -18,19 +22,22 @@ inline Double cmrInternal(const double& t, const B& timeVec, const C& parVec) {
     );
   }
 
+  const T t = T(tInp);
+  const double t_val = static_cast<double>(get_val(tInp));
+
   // Clamp outside domain
   const double t_first = get_val(timeVec.get(0));
   const double t_last  = get_val(timeVec.get(n - 1));
 
-  if (t <= t_first) return Double(get_val(parVec.get(0)));
-  if (t >= t_last)  return Double(get_val(parVec.get(n - 1)));
+  if (t_val <= t_first) return y_at(0);
+  if (t_val >= t_last)  return y_at(n - 1);
 
   // Find segment i such that time[i] <= t < time[i+1], with i in [0, n-2]
   std::size_t i_seg = 0;
   for (std::size_t i = 0; i + 1 < n; i++) {
     const double ti  = get_val(timeVec.get(i));
     const double tip = get_val(timeVec.get(i + 1));
-    if (t >= ti && t < tip) { i_seg = i; break; }
+    if (t_val >= ti && t_val < tip) { i_seg = i; break; }
   }
 
   // Indices for the segment
@@ -39,75 +46,62 @@ inline Double cmrInternal(const double& t, const B& timeVec, const C& parVec) {
 
   // Values at idx1/idx2
   const double t1 = get_val(timeVec.get(idx1));
-  const double y1 = get_val(parVec.get(idx1));
+  const T y1 = y_at(idx1);
   const double t2 = get_val(timeVec.get(idx2));
-  const double y2 = get_val(parVec.get(idx2));
+  const T y2 = y_at(idx2);
 
   // Endpoint handling (non-periodic): "ghost" points via linear extrapolation
-  double t0, y0, t3, y3;
+  double t0, t3;
+  T y0, y3;
 
   if (idx1 == 0) {
     // left ghost from first two points
-    const double tA = get_val(timeVec.get(0));
-    const double yA = get_val(parVec.get(0));
-    const double tB = get_val(timeVec.get(1));
-    const double yB = get_val(parVec.get(1));
-    t0 = 2.0 * tA - tB;
-    y0 = 2.0 * yA - yB;
+    t0 = 2.0 * get_val(timeVec.get(0)) - get_val(timeVec.get(1));
+    y0 = Double(2.0) * y_at(0) - y_at(1);
   } else {
     t0 = get_val(timeVec.get(idx1 - 1));
-    y0 = get_val(parVec.get(idx1 - 1));
+    y0 = y_at(idx1 - 1);
   }
 
   if (idx2 + 1 >= n) {
     // right ghost from last two points
-    const double tA = get_val(timeVec.get(n - 1));
-    const double yA = get_val(parVec.get(n - 1));
-    const double tB = get_val(timeVec.get(n - 2));
-    const double yB = get_val(parVec.get(n - 2));
-    t3 = 2.0 * tA - tB;
-    y3 = 2.0 * yA - yB;
+    t3 = 2.0 * get_val(timeVec.get(n - 1)) - get_val(timeVec.get(n - 2));
+    y3 = Double(2.0) * y_at(n - 1) - y_at(n - 2);
   } else {
     t3 = get_val(timeVec.get(idx2 + 1));
-    y3 = get_val(parVec.get(idx2 + 1));
+    y3 = y_at(idx2 + 1);
   }
 
   // Hermite form with slopes from neighbors (Catmull–Rom style)
-  const double x  = (t - t1) / (t2 - t1);
-  const double m1 = (y2 - y0) / (t2 - t0);
-  const double m2 = (y3 - y1) / (t3 - t1);
+  const T x  = (t - Double(t1)) / Double(t2 - t1);
+  const T m1 = (y2 - y0) / Double(t2 - t0);
+  const T m2 = (y3 - y1) / Double(t3 - t1);
 
-  const double x2 = x * x;
-  const double x3 = x2 * x;
+  const T x2 = x * x;
+  const T x3 = x2 * x;
+  const Double h(t2 - t1);
 
-  const double res =
-      (2.0 * x3 - 3.0 * x2 + 1.0) * y1 +
-      (x3 - 2.0 * x2 + x) * (t2 - t1) * m1 +
-      (-2.0 * x3 + 3.0 * x2) * y2 +
-      (x3 - x2) * (t2 - t1) * m2;
-
-  return Double(res);
+  return T(
+      (Double(2.0) * x3 - Double(3.0) * x2 + Double(1.0)) * y1 +
+      (x3 - Double(2.0) * x2 + x) * h * m1 +
+      (Double(-2.0) * x3 + Double(3.0) * x2) * y2 +
+      (x3 - x2) * h * m2);
 }
 template <typename A, typename B, typename C>
   requires IsArray<A>
-inline Double cmr(const A &tInp, const B &timeVec, const C &parVec) {
+inline auto cmr(const A &tInp, const B &timeVec, const C &parVec) {
   static_assert(IsArray<B>, "time vector has to be a vector");
   static_assert(IsArray<C>, "parameter vector has to be a vector");
   ass<"In cmr: the first argument cannot have more than one element">(tInp.size() <= 1);
-  return cmrInternal(get_val(tInp.get(0)), timeVec, parVec);
+  return cmr(get_scalar_val(tInp.get(0)), timeVec, parVec);
 }
 
 template <typename A, typename B, typename C>
 requires (!IsArray<A>)
-inline Double cmr(A tInp, const B &timeVec, const C &parVec) {
+inline auto cmr(A tInp, const B &timeVec, const C &parVec) {
   static_assert(IsArray<B>, "time vector has to be a vector");
   static_assert(IsArray<C>, "parameter vector has to be a vector");
-  if constexpr (!IsDouble<A>) {
-    double val = static_cast<double>(get_val(tInp));
-    return cmrInternal(val, timeVec, parVec);
-  } else {
-    return cmrInternal(get_val(tInp), timeVec, parVec);
-  }
+  return cmrInternal(get_scalar_val(tInp), timeVec, parVec);
 }
 
 } // namespace etr

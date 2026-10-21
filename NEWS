@@ -2,6 +2,10 @@ News for package 'ast2ast'
 
 changes in ast2ast version 1.1
 
+- Functions can be written as plain R functions: the body starts with
+  `argtypes(...)`, optionally followed by `returntype(...)` (checked against
+  the returned value). Inner functions `g <- function(...) { argtypes(...);
+  returntype(...); ... }` need both. `fn()` stays available.
 - New function `make_package(files, entry_points, package_dir)`: translates
   R files into the C++ code of an existing package, like
   `Rcpp::compileAttributes`. Only `entry_points` are exported; all other

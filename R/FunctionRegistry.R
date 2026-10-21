@@ -1682,7 +1682,7 @@ function_registry_global$add(
       node$error <- "The third argument of cmr has to be a vector"
     }
   },
- group = "function_node", cpp_name = "etr::cmr", deriv_possible = FALSE
+ group = "function_node", cpp_name = "etr::cmr", deriv_possible = TRUE
 )
 
 function_registry_global$add(
