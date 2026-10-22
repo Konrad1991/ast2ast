@@ -203,6 +203,11 @@ parse_type_tree <- function(code, env) {
   s
 }
 
+# layouts are part_of_etr too, but user-defined
+is_builtin_type <- function(t) {
+  inherits(t, "new_type_node") && isTRUE(t$part_of_etr)
+}
+
 parse_new_type <- function(code, env) {
   code <- as.list(code)
   operator <- deparse(code[[1L]])
@@ -214,7 +219,9 @@ parse_new_type <- function(code, env) {
     } else if (not_cpp_keyword(name)) {
       add_error(env, paste0("Invalid type name: is a C++ keyword --> ", name))
     }
-    if (!is.null(env$list[[name]])) {
+    if (is_builtin_type(env$list[[name]])) {
+      add_error(env, paste0("Invalid type name: is a built-in type --> ", name))
+    } else if (!is.null(env$list[[name]])) {
       add_error(env, paste0("Duplicated type name: ", name))
     }
     env$new_type <- new_type_node$new(name)
@@ -296,6 +303,9 @@ check_layout_name <- function(name, env) {
     stop(paste0(unallowed, " found in ", name), call. = FALSE)
   } else if (not_cpp_keyword(name)) {
     stop(paste0("Invalid type name: is a C++ keyword --> ", name), call. = FALSE)
+  }
+  if (is_builtin_type(env$list[[name]])) {
+    stop(paste0("Invalid layout name: is a built-in type --> ", name), call. = FALSE)
   }
   if (!is.null(env$list[[name]])) {
     stop(paste0("Duplicated type name: ", name), call. = FALSE)
@@ -580,7 +590,31 @@ predefined_known_types <- quote({
       stats |> type(logical)
     )
   )
+  # slots must match etr_bits/Random/{MersenneTwister,Distributions}.hpp
+  new_type(
+    mersenne_twister,
+    slots(
+      seed |> type(int)
+    )
+  )
+  new_type(
+    normal,
+    slots(
+      mean |> type(double),
+      sd |> type(double)
+    )
+  )
+  new_type(
+    uniform,
+    slots(
+      min |> type(double),
+      max |> type(double)
+    )
+  )
 })
+
+# engine state lives outside the slots: slots read-only, no conversion from/to R
+random_types <- c("mersenne_twister", "normal", "uniform")
 
 make_known_types <- function(types_fct, r_fct, real_type) {
   types_block <- as.list(wrap_in_block(predefined_known_types))[-1]
@@ -588,12 +622,16 @@ make_known_types <- function(types_fct, r_fct, real_type) {
   for (nm in names(known_types)) {
     if (inherits(known_types[[nm]], "new_type_node")) {
       known_types[[nm]]$part_of_etr <- TRUE
+      if (nm %in% random_types) {
+        known_types[[nm]]$read_only <- TRUE
+        known_types[[nm]]$r_transferable <- FALSE
+      }
     }
   }
   if (!is.null(types_fct)) {
     types_block <- as.list(wrap_in_block(body(types_fct)))[-1]
     known_types <- c(known_types, parse_types(types_block, fct_input = FALSE, r_fct, real_type,
-                                              eval_env = environment(types_fct)))
+                                              known_types = known_types, eval_env = environment(types_fct)))
   }
   known_types
 }

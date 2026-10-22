@@ -1,7 +1,7 @@
 #ifndef PSO_ETR_HPP
 #define PSO_ETR_HPP
 
-#include "MersenneTwister.hpp"
+#include "../Random/MersenneTwister.hpp"
 
 namespace etr {
 
@@ -71,7 +71,7 @@ inline auto pso(
   const Double w_max = Double(0.9);
   const Double w_min = Double(0.4);
 
-  MersenneTwister rng(get_val(seed));
+  mersenne_twister rng(get_val(seed));
 
   for (std::size_t i = 0; i < npop_t; i++) {
     for (std::size_t j = 0; j < npar_t; j++) {

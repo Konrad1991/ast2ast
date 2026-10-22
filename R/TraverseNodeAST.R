@@ -336,6 +336,14 @@ action_update_function_registry <- function(node, function_registry, namespace =
         return()
       }
     }
+    # NOTE: the copy's engine advances alone; the caller draws the same numbers again
+    if (inherits(should_type, "new_type_node") && should_type$name %in% random_types &&
+        should_type$get_copy_or_ref() == "copy" && should_type$get_const_or_mut() == "mutable") {
+      warning(sprintf(
+        "The argument Nr. %s to function %s: %s is copied, so its draws are repeated by the caller. Declare the parameter as %s |> ref() to avoid this",
+        index, name, should_type$name, should_type$name
+      ), call. = FALSE)
+    }
     is_ds <- is_type$get_data_struct_verbose()
     should_ds <- should_type$get_data_struct_verbose()
     if (same_data_struct(is_ds, should_ds)) return()

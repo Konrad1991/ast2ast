@@ -6,6 +6,12 @@ changes in ast2ast version 1.2
   Hessian-vector product of a scalar `f` (forward-over-reverse on the tape).
   Work in every translation and with all matrix operations (`%*%`, `solve`,
   `chol`, `det`, ...). See the vignette "Hessians and Hessian-vector products".
+- Random numbers without global state: `e <- mersenne_twister(seed)`,
+  `d <- normal(e, mean, sd)` / `uniform(e, min, max)` and `draw(d, n)` give
+  the same numbers as `set.seed(seed)` + `rnorm` / `runif`. A distribution owns
+  a copy of its engine; its fields (`d$mean`, ...) are read-only.
+- `pso` samples neighbourhoods like R's `sample()` (sample.kind "Rejection");
+  results for a given `seed` differ from 1.1.
 
 changes in ast2ast version 1.1
 

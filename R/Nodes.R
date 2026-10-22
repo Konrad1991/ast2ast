@@ -1507,6 +1507,8 @@ new_type_node <- R6::R6Class(
     # codegen'd into the translated .cpp's own anonymous namespace --
     # references to the type name need the etr:: qualifier.
     part_of_etr = FALSE,
+    read_only = FALSE,
+    r_transferable = TRUE,
     initialize = function(name) {
       self$name <- name
     },

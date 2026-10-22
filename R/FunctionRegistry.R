@@ -2478,6 +2478,97 @@ function_registry_global$add(
   check_fct = mock,
   group = "function_node", cpp_name = "etr::ida_options", deriv_possible = FALSE
 )
+# mersenne_twister() / normal() / uniform(): constructors of the predefined random types
+infer_random_constructor <- function(node, vars_list, info_env, function_registry, type_name, kinds) {
+  all_types <- lapply(node$args, function(arg) {
+    infer(arg, vars_list, info_env, function_registry)
+  })
+  for (i in seq_along(kinds)) {
+    if (is.character(all_types[[i]])) return(all_types[[i]])
+    ok <- switch(kinds[[i]],
+      double = is_scalar_of(all_types[[i]], c("double", "integer", "int")),
+      mersenne_twister = is_options_type(all_types[[i]], "mersenne_twister")
+    )
+    if (!ok) {
+      what <- if (kinds[[i]] == "mersenne_twister") "created by mersenne_twister()" else "a scalar double"
+      return(sprintf("%s: %s has to be %s", type_name, names(kinds)[[i]], what))
+    }
+  }
+  t <- info_env$known_types[[type_name]]
+  if (is.null(t)) return(sprintf("Did not find the predefined type %s", type_name))
+  node$internal_type <- t
+  t
+}
+function_registry_global$add(
+  name = "mersenne_twister", num_args = 1, arg_names = "seed",
+  docu = paste0(
+    "mersenne_twister(seed)\n",
+    "Random number engine; the same numbers as set.seed(seed) with R's default RNGkind(). ",
+    "Pass it to normal() or uniform()."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    infer_random_constructor(node, vars_list, info_env, function_registry, "mersenne_twister", c(seed = "double"))
+  },
+  check_fct = mock,
+  group = "function_node", cpp_name = "etr::make_mersenne_twister", deriv_possible = TRUE
+)
+function_registry_global$add(
+  name = "normal", num_args = 3, arg_names = c("engine", "mean", "sd"),
+  defaults = list(mean = 0, sd = 1),
+  docu = paste0(
+    "normal(engine, mean = 0, sd = 1)\n",
+    "Normal distribution owning a copy of engine. draw(dist, n) gives the same numbers as rnorm(n, mean, sd). ",
+    "dist$mean and dist$sd are read-only."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    infer_random_constructor(node, vars_list, info_env, function_registry, "normal",
+                             c(engine = "mersenne_twister", mean = "double", sd = "double"))
+  },
+  check_fct = mock,
+  group = "function_node", cpp_name = "etr::make_normal", deriv_possible = TRUE
+)
+function_registry_global$add(
+  name = "uniform", num_args = 3, arg_names = c("engine", "min", "max"),
+  defaults = list(min = 0, max = 1),
+  docu = paste0(
+    "uniform(engine, min = 0, max = 1)\n",
+    "Uniform distribution owning a copy of engine. draw(dist, n) gives the same numbers as runif(n, min, max). ",
+    "dist$min and dist$max are read-only."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    infer_random_constructor(node, vars_list, info_env, function_registry, "uniform",
+                             c(engine = "mersenne_twister", min = "double", max = "double"))
+  },
+  check_fct = mock,
+  group = "function_node", cpp_name = "etr::make_uniform", deriv_possible = TRUE
+)
+function_registry_global$add(
+  name = "draw", num_args = 2, arg_names = c(NA, NA),
+  docu = paste0(
+    "draw(dist, n)\n",
+    "n random numbers of dist (created by normal() or uniform()); advances the engine of dist."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    dist <- infer(node$args[[1L]], vars_list, info_env, function_registry)
+    if (is.character(dist)) return(dist)
+    if (!(inherits(dist, "new_type_node") && dist$name %in% c("normal", "uniform"))) {
+      return("draw: dist has to be created by normal() or uniform()")
+    }
+    if (dist$get_const_or_mut() == "const") {
+      return("draw: dist cannot be const (drawing advances its engine)")
+    }
+    n <- infer(node$args[[2L]], vars_list, info_env, function_registry)
+    if (is.character(n)) return(n)
+    if (!is_scalar_of(n, c("double", "integer", "int"))) {
+      return("draw: n has to be a scalar integer")
+    }
+    t <- make_inferred_type("vector", "double", info_env$r_fct, info_env$real_type)
+    node$internal_type <- t
+    t
+  },
+  check_fct = mock,
+  group = "function_node", cpp_name = "etr::draw", deriv_possible = TRUE
+)
 function_registry_global$add(
   name = "cvode", num_args = c(5, 6), arg_names = c("rhs", "y0", "times", "params", "options", "jac"),
   defaults = list(options = quote(cvode_options())),
