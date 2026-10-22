@@ -14,6 +14,8 @@ changes in ast2ast version 1.2
   the same results as `set.seed(seed)` + `sample` / `sample.int`, including
   `prob` (Walker's alias method) and `sample(5)` meaning `sample(1:5)`. Only
   for `n > 1e7` without `replace` and `prob` R uses hashing and the results differ.
+- `dnorm(x, mean, sd, log)` and `dunif(x, min, max, log)`: the same values as
+  in R (recycled like R); derivatives in all AD modes, `jacobian`, `hessian`.
 - `pso` samples neighbourhoods like R's `sample()` (sample.kind "Rejection");
   results for a given `seed` differ from 1.1.
 

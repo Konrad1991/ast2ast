@@ -2639,6 +2639,51 @@ function_registry_global$add(
   check_fct = mock,
   group = "function_node", cpp_name = "etr::sample_int", deriv_possible = TRUE
 )
+# dnorm / dunif: recycled like R; scalar if all three numbers are scalars
+infer_density <- function(node, vars_list, info_env, function_registry, fname, kinds) {
+  all_types <- lapply(node$args, function(arg) {
+    infer(arg, vars_list, info_env, function_registry)
+  })
+  for (t in all_types) if (is.character(t)) return(t)
+  for (i in 1:3) {
+    if (!is_sample_operand(all_types[[i]], c("double", "integer", "int"))) {
+      return(sprintf("%s: %s has to be a double vector or scalar", fname, kinds[[i]]))
+    }
+  }
+  if (!is_scalar_of(all_types[[4L]], c("logical", "bool"))) {
+    return(sprintf("%s: log has to be a scalar logical", fname))
+  }
+  all_scalar <- all(vapply(all_types[1:3], function(t) t$get_data_struct() == "scalar", logical(1L)))
+  t <- make_inferred_type(if (all_scalar) "scalar" else "vector", "double", info_env$r_fct, info_env$real_type)
+  node$internal_type <- t
+  t
+}
+function_registry_global$add(
+  name = "dnorm", num_args = 4, arg_names = c("x", "mean", "sd", "log"),
+  defaults = list(mean = 0, sd = 1, log = FALSE),
+  docu = paste0(
+    "dnorm(x, mean = 0, sd = 1, log = FALSE)\n",
+    "Density of the normal distribution, like R's dnorm. Derivatives w.r.t. x, mean and sd."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    infer_density(node, vars_list, info_env, function_registry, "dnorm", c("x", "mean", "sd"))
+  },
+  check_fct = mock,
+  group = "function_node", cpp_name = "etr::normal_density", deriv_possible = TRUE
+)
+function_registry_global$add(
+  name = "dunif", num_args = 4, arg_names = c("x", "min", "max", "log"),
+  defaults = list(min = 0, max = 1, log = FALSE),
+  docu = paste0(
+    "dunif(x, min = 0, max = 1, log = FALSE)\n",
+    "Density of the uniform distribution, like R's dunif. Derivatives w.r.t. min and max."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    infer_density(node, vars_list, info_env, function_registry, "dunif", c("x", "min", "max"))
+  },
+  check_fct = mock,
+  group = "function_node", cpp_name = "etr::uniform_density", deriv_possible = TRUE
+)
 function_registry_global$add(
   name = "cvode", num_args = c(5, 6), arg_names = c("rhs", "y0", "times", "params", "options", "jac"),
   defaults = list(options = quote(cvode_options())),
