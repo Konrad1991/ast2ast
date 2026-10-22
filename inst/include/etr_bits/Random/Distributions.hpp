@@ -5,13 +5,15 @@
 #include <limits>
 #include "MersenneTwister.hpp"
 #include "Sample.hpp"
+#include "Density.hpp"
 
 namespace etr {
 
 namespace nmath {
 
-// R's qnorm5 (nmath/qnorm.c, Wichura AS241 + asymptotic expansion for r > 27)
-inline double qnorm(double p, double mu, double sigma, bool lower_tail, bool log_p) {
+// R's qnorm5 (nmath/qnorm.c, Wichura AS241 + asymptotic expansion for r > 27).
+// NOTE: not named qnorm: Rmath.h #defines qnorm, dnorm, dunif, ...
+inline double normal_quantile(double p, double mu, double sigma, bool lower_tail, bool log_p) {
   constexpr double nan = std::numeric_limits<double>::quiet_NaN();
   constexpr double inf = std::numeric_limits<double>::infinity();
   constexpr double sqrt2 = 1.414213562373095048801688724210;
@@ -126,7 +128,7 @@ template <typename Engine> struct normal_distribution {
     constexpr double big = 134217728; // 2^27
     double u1 = engine.runif();
     u1 = static_cast<int>(big * u1) + engine.runif();
-    return nmath::qnorm(u1 / big, 0.0, 1.0, true, false);
+    return nmath::normal_quantile(u1 / big, 0.0, 1.0, true, false);
   }
   // R's rnorm(mu, sigma) (nmath/rnorm.c)
   double draw_one() {

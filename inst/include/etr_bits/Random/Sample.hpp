@@ -235,9 +235,10 @@ inline std::vector<int> draw_indices(E& engine, double dn, double size, bool rep
   }
 }
 
+// value type: references such as DualRef have no default constructor
 template <typename X> inline auto data_type_of() {
   if constexpr (IsScalarLike<Decayed<X>>) {
-    return Decayed<X>{};
+    return Decayed<decltype(get_scalar_val(std::declval<const Decayed<X>&>()))>{};
   } else {
     return typename ExtractDataType<Decayed<X>>::value_type{};
   }
