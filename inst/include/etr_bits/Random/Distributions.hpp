@@ -4,6 +4,7 @@
 #include <cmath>
 #include <limits>
 #include "MersenneTwister.hpp"
+#include "Sample.hpp"
 
 namespace etr {
 

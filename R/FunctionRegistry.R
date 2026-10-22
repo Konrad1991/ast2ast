@@ -2569,6 +2569,76 @@ function_registry_global$add(
   check_fct = mock,
   group = "function_node", cpp_name = "etr::draw", deriv_possible = TRUE
 )
+# sample(e, x, ...) / sample_int(e, n, ...): a missing size / prob is the default literal NA
+is_missing_default <- function(arg) {
+  inherits(arg, "literal_node") && identical(as.character(arg$name), "NA")
+}
+is_sample_operand <- function(t, base_types) {
+  inherits(t, "pre_type_node") && t$get_base_type() %in% base_types &&
+    (t$get_data_struct() %in% c("scalar", "vector") || is_range_type(t))
+}
+infer_sample <- function(node, vars_list, info_env, function_registry, fname) {
+  all_types <- lapply(node$args, function(arg) {
+    infer(arg, vars_list, info_env, function_registry)
+  })
+  for (t in all_types) if (is.character(t)) return(t)
+  numeric_types <- c("double", "integer", "int")
+  engine <- all_types[[1L]]
+  if (!is_options_type(engine, "mersenne_twister")) {
+    return(sprintf("%s: engine has to be created by mersenne_twister()", fname))
+  }
+  if (engine$get_const_or_mut() == "const") {
+    return(sprintf("%s: engine cannot be const (sampling advances it)", fname))
+  }
+  x <- all_types[[2L]]
+  if (fname == "sample_int") {
+    if (!is_scalar_of(x, numeric_types)) return("sample_int: n has to be a scalar integer")
+  } else if (!is_sample_operand(x, c(numeric_types, "logical"))) {
+    return("sample: x has to be a vector or scalar of type double, integer or logical")
+  }
+  if (!is_missing_default(node$args[[3L]]) && !is_scalar_of(all_types[[3L]], numeric_types)) {
+    return(sprintf("%s: size has to be a scalar integer", fname))
+  }
+  if (!is_scalar_of(all_types[[4L]], c("logical", numeric_types))) {
+    return(sprintf("%s: replace has to be a scalar logical", fname))
+  }
+  if (!is_missing_default(node$args[[5L]]) && !is_sample_operand(all_types[[5L]], numeric_types)) {
+    return(sprintf("%s: prob has to be a double vector", fname))
+  }
+  base_type <- if (fname == "sample_int") "integer" else x$get_base_type()
+  t <- make_inferred_type("vector", base_type, info_env$r_fct, info_env$real_type)
+  node$internal_type <- t
+  t
+}
+function_registry_global$add(
+  name = "sample", num_args = 5, arg_names = c("engine", "x", "size", "replace", "prob"),
+  defaults = list(size = NA, replace = FALSE, prob = NA),
+  docu = paste0(
+    "sample(engine, x, size = length(x), replace = FALSE, prob = NULL)\n",
+    "Like R's sample() after set.seed(seed) for engine = mersenne_twister(seed); advances engine. ",
+    "As in R, a single number x >= 1 means sample(1:x). ",
+    "Differs from R for x > 1e7 without replace and prob and size <= x / 2 (R then uses hashing)."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    infer_sample(node, vars_list, info_env, function_registry, "sample")
+  },
+  check_fct = mock,
+  group = "function_node", cpp_name = "etr::sample", deriv_possible = TRUE
+)
+function_registry_global$add(
+  name = "sample_int", num_args = 5, arg_names = c("engine", "n", "size", "replace", "prob"),
+  defaults = list(size = NA, replace = FALSE, prob = NA),
+  docu = paste0(
+    "sample_int(engine, n, size = n, replace = FALSE, prob = NULL)\n",
+    "Like R's sample.int() after set.seed(seed) for engine = mersenne_twister(seed); advances engine. ",
+    "Differs from R for n > 1e7 without replace and prob and size <= n / 2 (R then uses hashing)."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    infer_sample(node, vars_list, info_env, function_registry, "sample_int")
+  },
+  check_fct = mock,
+  group = "function_node", cpp_name = "etr::sample_int", deriv_possible = TRUE
+)
 function_registry_global$add(
   name = "cvode", num_args = c(5, 6), arg_names = c("rhs", "y0", "times", "params", "options", "jac"),
   defaults = list(options = quote(cvode_options())),

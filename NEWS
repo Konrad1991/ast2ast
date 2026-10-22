@@ -10,6 +10,10 @@ changes in ast2ast version 1.2
   `d <- normal(e, mean, sd)` / `uniform(e, min, max)` and `draw(d, n)` give
   the same numbers as `set.seed(seed)` + `rnorm` / `runif`. A distribution owns
   a copy of its engine; its fields (`d$mean`, ...) are read-only.
+- `sample(e, x, size, replace, prob)` and `sample_int(e, n, size, replace, prob)`:
+  the same results as `set.seed(seed)` + `sample` / `sample.int`, including
+  `prob` (Walker's alias method) and `sample(5)` meaning `sample(1:5)`. Only
+  for `n > 1e7` without `replace` and `prob` R uses hashing and the results differ.
 - `pso` samples neighbourhoods like R's `sample()` (sample.kind "Rejection");
   results for a given `seed` differ from 1.1.
 
