@@ -43,8 +43,13 @@ M <- do.call(mb, p)
 M_R <- do.call(mandelbrot, p)
 identical(M, M_R)
 
-microbenchmark::microbenchmark(
+res <- microbenchmark::microbenchmark(
   do.call(mb, p),
   do.call(mandelbrot, p),
   times = 5L
 )
+fold <- function(res) {
+  temp <- aggregate(time ~ expr, res, mean)
+  temp$time[[2]] / temp$time[[1]]
+}
+fold(res)

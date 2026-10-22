@@ -1407,3 +1407,43 @@ f <- function() {
 }
 fcpp <- ast2ast::translate(f, types_f = types_f_slot_shadow)
 expect_equal(fcpp(), 6)
+
+# --- inner function as constructor: build a struct inside and return it -----
+f <- function(a, b) {
+  argtypes(a |> type(double), b |> type(double))
+  make_point <- function(x, y) {
+    argtypes(x |> type(double) |> const(), y |> type(double) |> const())
+    returntype(Point)
+    p |> type(Point)
+    p$x <- x
+    p$y <- y
+    return(p)
+  }
+  p1 <- make_point(a, b)
+  p2 <- make_point(a * 2, b * 2)
+  p1$x <- p1$x + p2$x
+  return(p1)
+}
+fcpp <- ast2ast::translate(f, types_f = types_f_point)
+res <- fcpp(1, 2)
+expect_equal(res$x, 3)
+expect_equal(res$y, 2)
+
+# nested: constructor returns a struct holding another struct
+f <- function(a) {
+  argtypes(a |> type(double))
+  make_area <- function(x) {
+    argtypes(x |> type(double))
+    returntype(Area)
+    p |> type(Point)
+    p$x <- x
+    p$y <- x + 1
+    ar |> type(Area)
+    ar$x <- p
+    return(ar)
+  }
+  ar <- make_area(a)
+  return(ar$x$y)
+}
+fcpp <- ast2ast::translate(f, types_f = types_f_area)
+expect_equal(fcpp(3), 4)

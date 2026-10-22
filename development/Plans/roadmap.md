@@ -15,6 +15,12 @@ gradients and Jacobians for optimizers and stiff solvers."
 
 ast2ast takes care that its output can be used by C and C++ libraries.
 
+## Versions (decided 2026-10-21)
+
+- 1.1: TODO.md A-C (bugs, small issues, docs)
+- 1.1.1: sundials as dependency (cvode, ida) incl. TODO.md D2 options
+- 1.2: new areas (below) + CVODES, IDAS, ARKODE; branch `dev-1.2` (from `sundials`, 2026-10-21)
+
 ## Short term
 
 1. sundials package -> CRAN
@@ -117,3 +123,28 @@ Krylov (matrix-free, no Jacobian type):
 - Jv via forward AD: one dual sweep, exact
 - user-defined Jv function -> returns vector
 - needs preconditioner for stiff systems; start with `CVBandPrecInit`
+
+## New areas (decided 2026-10-20)
+
+Prerequisite: RNGs + distributions (`rng_distributions.md`).
+
+Order:
+1. Hessian (forward-over-reverse AD)
+   - standard errors / confidence intervals after a likelihood fit, Newton
+2. HMC / NUTS sampler
+   - needs only the gradient (reverse AD) + RNG
+3. Random-effects models
+   - user writes the joint negative log-likelihood in R
+   - random effects integrated out via Laplace approximation
+     (AD gradient + Hessian of the inner problem)
+   - large models need a sparse Hessian (see banded/sparse above)
+4. ODE events (CVODE rootfinding)
+   - only for state-dependent events; known times (spline knots,
+     dosing) -> integrate piecewise and restart
+
+Later / maybe:
+- stochastic simulation (Gillespie, Euler-Maruyama)
+- method of lines for PDEs (-> banded Jacobian)
+- constrained optimization (augmented Lagrangian around `lbfgsb()`)
+- quadrature / FFT via R's C API (`Rdqags`, `fft_work`),
+  only worth it inside compiled loops

@@ -27,3 +27,24 @@ dae(res, y0, yp0, times, params, ...)   # residual form -> IDA
 
 ## Later
 - paropt could be re-expressed on top of this instead of vendoring its own CVODE.
+
+## Sensitivities via CVODES / IDAS (idea, 2026-10-16)
+
+Forward sensitivities: `etr::Double` only, no AD.
+- CVODES/IDAS build the sensitivity RHS by difference quotients when no `fS`
+  is given; same user RHS as `cvode()`, result dy/dtheta
+- params have to be a double vector (`CVodeSetSensParams(p, pbar, plist)`
+  perturbs `p[i]` directly); structs need a way to mark which slots are theta
+- cost: n_theta extra systems -> fine for few parameters
+
+Adjoint: reverse AD.
+- backward RHS needs `J^T lambda` = one reverse sweep: record f(y(t)) on the
+  tape, seed the outputs with lambda, sweep back; copy the adjoints from the
+  tape into the `N_Vector` (O(n))
+- same sweep gives `(df/dtheta)^T lambda` for the gradient quadrature if theta
+  is on the tape
+- RHS instantiated twice via the functor template (`ETR_REAL`): `etr::Double`
+  for the forward solve, `ReverseDouble` for the backward one (as runtime
+  colouring); `ReverseTape::rewind()` per call
+- stiff backward problem needs `-J^T`: forward-AD J transposed, not n reverse sweeps
+- memory: CVODES checkpoints of the forward solution
