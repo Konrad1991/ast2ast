@@ -437,7 +437,9 @@ type_infer_assignment <- function(node, info_env) {
             }
           }
         } else if (inherits(info_env$vars_list[[variable]], "new_type_node")) {
-          if (identical(node$left_node$operator, "$")) {
+          if (identical(node$left_node$operator, "$") && isTRUE(info_env$vars_list[[variable]]$read_only)) {
+            node$error <- sprintf("The fields of %s are read-only", info_env$vars_list[[variable]]$name)
+          } else if (identical(node$left_node$operator, "$")) {
             incompatible <- FALSE
             if (inherits(type, "fn_node")) {
               incompatible <- TRUE

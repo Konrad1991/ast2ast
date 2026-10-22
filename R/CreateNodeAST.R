@@ -586,6 +586,17 @@ argtypes_match_formals <- function(f, argtypes) {
   invisible()
 }
 
+check_r_transferable <- function(vars_types_list, return_type) {
+  for (t in vars_types_list) {
+    if (inherits(t, "new_type_node") && isTRUE(t$get_fct_input()) && !t$r_transferable) {
+      stop(sprintf("%s cannot be passed from R (argument %s); create it inside the function", t$name, t$get_name()), call. = FALSE)
+    }
+  }
+  if (inherits(return_type, "new_type_node") && !return_type$r_transferable) {
+    stop(sprintf("%s cannot be returned to R", return_type$name), call. = FALSE)
+  }
+}
+
 translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, debug = TRUE) {
   code_string <- list()
   real_type <- resolve_derivative(derivative)
@@ -670,6 +681,7 @@ translate_internally <- function(fct, types_fct, derivative, name_fct, r_fct, de
       identical(return_type$get_base_type(), "character")) {
     stop("An XPtr function cannot return a string", call. = FALSE)
   }
+  if (r_fct) check_r_transferable(vars_types_list, return_type)
 
   # Translate
   code_string <- translate_to_cpp_code(AST, r_fct, real_type, function_registry, debug, vars_types_list, namespace, as.character(name_fct))

@@ -1,5 +1,14 @@
 News for package 'ast2ast'
 
+changes in ast2ast version 1.2
+
+- Random numbers without global state: `e <- mersenne_twister(seed)`,
+  `d <- normal(e, mean, sd)` / `uniform(e, min, max)` and `draw(d, n)` give
+  the same numbers as `set.seed(seed)` + `rnorm` / `runif`. A distribution owns
+  a copy of its engine; its fields (`d$mean`, ...) are read-only.
+- `pso` samples neighbourhoods like R's `sample()` (sample.kind "Rejection");
+  results for a given `seed` differ from 1.1.
+
 changes in ast2ast version 1.1.2
 
 - Fixed: bus error on macOS x86_64 (r-oldrel-macos-x86_64) when a range

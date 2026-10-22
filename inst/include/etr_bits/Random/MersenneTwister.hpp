@@ -1,6 +1,7 @@
 #ifndef MERSENNETWISTER_ETR_HPP
 #define MERSENNETWISTER_ETR_HPP
 
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 
@@ -9,7 +10,7 @@ namespace etr {
 // vendored from Konrad1991/Random (src/MersenneTwister.cpp): same algorithm
 // R uses for RNGkind("Mersenne-Twister"), reimplemented so pso() does not
 // need R's global RNG state (GetRNGstate/PutRNGstate) or an external package.
-class MersenneTwister {
+class mersenne_twister {
   static constexpr int N = 624;
   static constexpr int M = 397;
   static constexpr std::uint32_t MATRIX_A = 0x9908b0df;
@@ -93,9 +94,23 @@ class MersenneTwister {
     return static_cast<double>(y) * 2.3283064365386963e-10;
   }
 
+  // R's rbits(): non-negative integer < 2^bits in 16 bit chunks
+  double rbits(int bits) {
+    std::int_least64_t v = 0;
+    for (int n = 0; n <= bits; n += 16) {
+      const int v1 = static_cast<int>(std::floor(runif() * 65536));
+      v = 65536 * v + v1;
+    }
+    const std::int_least64_t one64 = 1L;
+    return static_cast<double>(v & ((one64 << bits) - 1));
+  }
+
 public:
-  explicit MersenneTwister(int seed) : initial(true) {
-    rng_init(init_scrambling(static_cast<std::uint32_t>(seed)));
+  Integer seed;
+
+  mersenne_twister() : mersenne_twister(0) {}
+  explicit mersenne_twister(int seed_) : initial(true), seed(seed_) {
+    rng_init(init_scrambling(static_cast<std::uint32_t>(seed_)));
     fixup_seeds();
   }
 
@@ -105,10 +120,14 @@ public:
     return lower + (upper - lower) * runif();
   }
 
-  // matches R_unif_index's contract (uniform integer in [0, n)) without
-  // R's rejection-sampling machinery; fine for pso's neighborhood sampling
+  // R_unif_index with sample.kind = "Rejection" (R's default): uniform integer in [0, n)
   std::size_t unif_index(std::size_t n) {
-    return static_cast<std::size_t>(runif() * static_cast<double>(n));
+    const double dn = static_cast<double>(n);
+    if (dn <= 0) return 0;
+    const int bits = static_cast<int>(std::ceil(std::log2(dn)));
+    double dv;
+    do { dv = rbits(bits); } while (dn <= dv);
+    return static_cast<std::size_t>(dv);
   }
 };
 
