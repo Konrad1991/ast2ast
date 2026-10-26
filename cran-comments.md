@@ -1,3 +1,9 @@
+## Resubmission
+
+The pretest failed on Debian (clang-23): undefined symbol
+__atomic_compare_exchange. The package now links libatomic via
+RcppThread::LdFlags() in src/Makevars.
+
 ## Submission
 
 Update from 1.0.2 to 1.1.1.
@@ -14,7 +20,7 @@ Update from 1.0.2 to 1.1.1.
   * ubuntu-latest, R-devel, R-release, R-oldrel-1
   * macos-latest, R-release
   * windows-latest, R-release
-* rhub: clang-asan, clang-ubsan, gcc-asan, m1-san (R-devel)
+* rhub: clang23, clang-asan, clang-ubsan, gcc-asan, m1-san (R-devel)
 
 ## R CMD check results
 
