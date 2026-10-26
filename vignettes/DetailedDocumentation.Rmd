@@ -15,6 +15,7 @@ vignette: >
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+library(ast2ast)
 ```
 
 ```{css echo=FALSE}
