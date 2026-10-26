@@ -9,7 +9,7 @@ output: html_document
 
 vignette: >
   %\VignetteIndexEntry{Detailed Documentation}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::rmarkdown_notangle}
   \usepackage{UTF-8}
 ---
 

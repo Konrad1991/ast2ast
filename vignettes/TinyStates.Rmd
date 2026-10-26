@@ -5,7 +5,7 @@ output: html_document
 
 vignette: >
   %\VignetteIndexEntry{Derivatives at Tiny States: Michaelis-Menten}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::rmarkdown_notangle}
   \usepackage{UTF-8}
 ---
 

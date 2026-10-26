@@ -5,7 +5,7 @@ output: html_document
 
 vignette: >
   %\VignetteIndexEntry{Differences to R}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::rmarkdown_notangle}
   \usepackage{UTF-8}
 ---
 

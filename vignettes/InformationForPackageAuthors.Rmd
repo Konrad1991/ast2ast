@@ -5,7 +5,7 @@ output: html_document
 
 vignette: >
   %\VignetteIndexEntry{Information for package authors}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::rmarkdown_notangle}
   \usepackage{UTF-8}
 ---
 
