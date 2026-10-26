@@ -9,10 +9,11 @@ if (!file.exists(".github/workflows/rhub.yaml")) {
 
 # usethis::create_github_token()
 rhub_doctor()
-gitcreds::gitcreds_set()
+# gitcreds::gitcreds_set()
 
 # gcc-asan = CRAN's fedora-gcc-devel ASAN + UBSAN setup
-platforms <- c("gcc-asan", "clang-asan", "clang-ubsan")
+# m1-san = CRAN's M1 mac ASAN + UBSAN (rejected 1.0.1)
+platforms <- c("gcc-asan", "clang-asan", "clang-ubsan", "m1-san")
 available <- rhub_platforms()$name
 stopifnot(all(platforms %in% available))
 
