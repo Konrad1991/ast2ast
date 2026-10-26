@@ -1,0 +1,158 @@
+* installing to library ‘/Users/runner/work/_temp/Library’
+* installing *source* package ‘ast2ast’ ...
+** this is package ‘ast2ast’ version ‘1.1.1’
+** using staged installation
+** libs
+specified C++20
+using C++ compiler: ‘Apple clang version 17.0.0 (clang-1700.0.13.5)’
+using C++20
+using SDK: ‘MacOSX15.5.sdk’
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c RcppExports.cpp -o RcppExports.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_ADArrayOps.cpp -o tests_ADArrayOps.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_Allocation.cpp -o tests_Allocation.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_Array.cpp -o tests_Array.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_Borrow.cpp -o tests_Borrow.o
+tests_Borrow.cpp:256:18: warning: unused variable 'test' [-Wunused-variable]
+  256 |       const auto test = empty_borrow.get(0);
+      |                  ^~~~
+tests_Borrow.cpp:373:3: note: in instantiation of function template specialization 'test_borrow<etr::Double>' requested here
+  373 |   test_borrow<Double>();
+      |   ^
+tests_Borrow.cpp:275:18: warning: unused variable 'test' [-Wunused-variable]
+  275 |       const auto test = b.get(-1);
+      |                  ^~~~
+tests_Borrow.cpp:281:18: warning: unused variable 'test' [-Wunused-variable]
+  281 |       const auto test = b.get(2);
+      |                  ^~~~
+tests_Borrow.cpp:287:18: warning: unused variable 'test' [-Wunused-variable]
+  287 |       const auto test = b.get(100);
+      |                  ^~~~
+tests_Borrow.cpp:305:18: warning: unused variable 'test' [-Wunused-variable]
+  305 |       const auto test = b.get(100);
+      |                  ^~~~
+tests_Borrow.cpp:256:18: warning: unused variable 'test' [-Wunused-variable]
+  256 |       const auto test = empty_borrow.get(0);
+      |                  ^~~~
+tests_Borrow.cpp:375:3: note: in instantiation of function template specialization 'test_borrow<etr::ReverseDouble>' requested here
+  375 |   test_borrow<ReverseDouble>();
+      |   ^
+tests_Borrow.cpp:275:18: warning: unused variable 'test' [-Wunused-variable]
+  275 |       const auto test = b.get(-1);
+      |                  ^~~~
+tests_Borrow.cpp:281:18: warning: unused variable 'test' [-Wunused-variable]
+  281 |       const auto test = b.get(2);
+      |                  ^~~~
+tests_Borrow.cpp:287:18: warning: unused variable 'test' [-Wunused-variable]
+  287 |       const auto test = b.get(100);
+      |                  ^~~~
+tests_Borrow.cpp:305:18: warning: unused variable 'test' [-Wunused-variable]
+  305 |       const auto test = b.get(100);
+      |                  ^~~~
+10 warnings generated.
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_Buffer.cpp -o tests_Buffer.o
+tests_Buffer.cpp:132:18: warning: unused variable 'test' [-Wunused-variable]
+  132 |       const auto test = b.get(0);
+      |                  ^~~~
+tests_Buffer.cpp:901:3: note: in instantiation of function template specialization 'test_buffer<etr::Double>' requested here
+  901 |   test_buffer<Double>();
+      |   ^
+tests_Buffer.cpp:151:18: warning: unused variable 'test' [-Wunused-variable]
+  151 |       const auto test = b.get(-1);
+      |                  ^~~~
+tests_Buffer.cpp:157:18: warning: unused variable 'test' [-Wunused-variable]
+  157 |       const auto test = b.get(2);
+      |                  ^~~~
+tests_Buffer.cpp:163:18: warning: unused variable 'test' [-Wunused-variable]
+  163 |       const auto test = b.get(100);
+      |                  ^~~~
+tests_Buffer.cpp:181:18: warning: unused variable 'test' [-Wunused-variable]
+  181 |       const auto test = b.get(100);
+      |                  ^~~~
+tests_Buffer.cpp:132:18: warning: unused variable 'test' [-Wunused-variable]
+  132 |       const auto test = b.get(0);
+      |                  ^~~~
+tests_Buffer.cpp:903:3: note: in instantiation of function template specialization 'test_buffer<etr::ReverseDouble>' requested here
+  903 |   test_buffer<ReverseDouble>();
+      |   ^
+tests_Buffer.cpp:151:18: warning: unused variable 'test' [-Wunused-variable]
+  151 |       const auto test = b.get(-1);
+      |                  ^~~~
+tests_Buffer.cpp:157:18: warning: unused variable 'test' [-Wunused-variable]
+  157 |       const auto test = b.get(2);
+      |                  ^~~~
+tests_Buffer.cpp:163:18: warning: unused variable 'test' [-Wunused-variable]
+  163 |       const auto test = b.get(100);
+      |                  ^~~~
+tests_Buffer.cpp:181:18: warning: unused variable 'test' [-Wunused-variable]
+  181 |       const auto test = b.get(100);
+      |                  ^~~~
+tests_Buffer.cpp:132:18: warning: unused variable 'test' [-Wunused-variable]
+  132 |       const auto test = b.get(0);
+      |                  ^~~~
+tests_Buffer.cpp:904:3: note: in instantiation of function template specialization 'test_buffer<etr::Dual>' requested here
+  904 |   test_buffer<Dual>();
+      |   ^
+tests_Buffer.cpp:151:18: warning: unused variable 'test' [-Wunused-variable]
+  151 |       const auto test = b.get(-1);
+      |                  ^~~~
+tests_Buffer.cpp:157:18: warning: unused variable 'test' [-Wunused-variable]
+  157 |       const auto test = b.get(2);
+      |                  ^~~~
+tests_Buffer.cpp:163:18: warning: unused variable 'test' [-Wunused-variable]
+  163 |       const auto test = b.get(100);
+      |                  ^~~~
+tests_Buffer.cpp:181:18: warning: unused variable 'test' [-Wunused-variable]
+  181 |       const auto test = b.get(100);
+      |                  ^~~~
+15 warnings generated.
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_CMR.cpp -o tests_CMR.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_Collection.cpp -o tests_Collection.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_Concepts.cpp -o tests_Concepts.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_Determinant.cpp -o tests_Determinant.o
+tests_Determinant.cpp:52:12: warning: unused variable 'bad' [-Wunused-variable]
+   52 |       auto bad = determinant(M);
+      |            ^~~
+1 warning generated.
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_FirstDispatchLayer.cpp -o tests_FirstDispatchLayer.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_Jac.cpp -o tests_Jac.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_MatMul.cpp -o tests_MatMul.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_MatMulBlock.cpp -o tests_MatMulBlock.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_Preserved_Subsetting.cpp -o tests_Preserved_Subsetting.o
+tests_Preserved_Subsetting.cpp:290:8: warning: unused variable 'compare' [-Wunused-variable]
+  290 |   auto compare = [](double l, double r) {
+      |        ^~~~~~~
+1 warning generated.
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_SecondDispatchLayer.cpp -o tests_SecondDispatchLayer.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_SimplifiedSubsetting.cpp -o tests_SimplifiedSubsetting.o
+tests_SimplifiedSubsetting.cpp:169:8: warning: unused variable 'expect_dual_at' [-Wunused-variable]
+  169 |   auto expect_dual_at = [&](auto& arr, std::size_t one_based_idx, double expected_val, double expected_dot) {
+      |        ^~~~~~~~~~~~~~
+1 warning generated.
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_TriSolveZeroDiag.cpp -o tests_TriSolveZeroDiag.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_Uniroot.cpp -o tests_Uniroot.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_Utilities.cpp -o tests_Utilities.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_assign_Array_to_Scalars.cpp -o tests_assign_Array_to_Scalars.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_coloured_jacobian.cpp -o tests_coloured_jacobian.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_crossprod.cpp -o tests_crossprod.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_diag.cpp -o tests_diag.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_lbfgsb.cpp -o tests_lbfgsb.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_nnls.cpp -o tests_nnls.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_pmap.cpp -o tests_pmap.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_scalar_types.cpp -o tests_scalar_types.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_solve.cpp -o tests_solve.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_transpose.cpp -o tests_transpose.o
+clang++ -arch x86_64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Users/runner/work/_temp/Library/Rcpp/include' -I'/Users/runner/work/_temp/Library/RcppThread/include' -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c tests_trisolve.cpp -o tests_trisolve.o
+clang++ -arch x86_64 -std=gnu++20 -dynamiclib -Wl,-headerpad_max_install_names -undefined dynamic_lookup -L/Library/Frameworks/R.framework/Resources/lib -L/opt/R/x86_64/lib -o ast2ast.so RcppExports.o tests_ADArrayOps.o tests_Allocation.o tests_Array.o tests_Borrow.o tests_Buffer.o tests_CMR.o tests_Collection.o tests_Concepts.o tests_Determinant.o tests_FirstDispatchLayer.o tests_Jac.o tests_MatMul.o tests_MatMulBlock.o tests_Preserved_Subsetting.o tests_SecondDispatchLayer.o tests_SimplifiedSubsetting.o tests_TriSolveZeroDiag.o tests_Uniroot.o tests_Utilities.o tests_assign_Array_to_Scalars.o tests_coloured_jacobian.o tests_crossprod.o tests_diag.o tests_lbfgsb.o tests_nnls.o tests_pmap.o tests_scalar_types.o tests_solve.o tests_transpose.o tests_trisolve.o -lpthread -L/Library/Frameworks/R.framework/Resources/lib -lRlapack -L/Library/Frameworks/R.framework/Resources/lib -lRblas -L/opt/gfortran/lib/gcc/x86_64-apple-darwin20.0/14.2.0 -L/opt/gfortran/lib -lemutls_w -lheapt_w -lgfortran -lquadmath -F/Library/Frameworks/R.framework/.. -framework R
+installing to /Users/runner/work/_temp/Library/00LOCK-ast2ast/00new/ast2ast/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (ast2ast)

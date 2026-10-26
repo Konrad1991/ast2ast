@@ -1,0 +1,43 @@
+[repro] variant: no_reassign 
+[repro] generated code: 
+#include <Rcpp.h>
+// [[Rcpp::depends(ast2ast, RcppThread)]]
+// [[Rcpp::plugins(cpp2a)]]
+#include "etr.hpp"
+#include "a2a_sundials.hpp"
+using ETR_REAL = etr::Double;
+// [[Rcpp::export]]
+SEXP f(SEXP nSEXP) {
+  etr::Integer n(etr::CheckSEXP<etr::Integer>(nSEXP, "n"));
+  etr::IntRange i;
+  etr::Integer s;
+  
+  
+try {
+  etr::current_line() = "i <- 1L:n";
+  i = etr::colon(etr::Integer(1), n);
+  etr::current_line() = "s <- 0L";
+  s = etr::Integer(0);
+  etr::current_line() = "for (r in 1L : 3L)";
+  for(const auto r : etr::colon(etr::Integer(1), etr::Integer(3))) {
+   etr::current_line() = "for (v in i)";
+   for(const auto v : i) {
+    etr::current_line() = "s <- s + v";
+    s = s + v;
+   }
+  }
+  etr::current_line() = "return(s)";
+  return(etr::Cast(s));
+} catch (const std::exception& e) {
+  Rcpp::stop(std::string("In '") + etr::current_line() + "': " + e.what());
+}
+try {
+} catch (const std::exception& e) {
+  Rcpp::stop(std::string("In '") + etr::current_line() + "': " + e.what());
+}
+} 
+[repro] compiling 
+[repro] calling fcpp(4L) 
+[repro] result: 30 
+[repro] 50 repeated calls OK 
+exit code: 0

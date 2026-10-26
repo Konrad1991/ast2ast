@@ -1,0 +1,27 @@
+[repro] variant: trivial 
+[repro] generated code: 
+#include <Rcpp.h>
+// [[Rcpp::depends(ast2ast, RcppThread)]]
+// [[Rcpp::plugins(cpp2a)]]
+#include "etr.hpp"
+#include "a2a_sundials.hpp"
+using ETR_REAL = etr::Double;
+// [[Rcpp::export]]
+SEXP f(SEXP nSEXP) {
+  etr::Integer n(etr::CheckSEXP<etr::Integer>(nSEXP, "n"));
+try {
+  etr::current_line() = "return(n + 1L)";
+  return(etr::Cast(n + etr::Integer(1)));
+} catch (const std::exception& e) {
+  Rcpp::stop(std::string("In '") + etr::current_line() + "': " + e.what());
+}
+try {
+} catch (const std::exception& e) {
+  Rcpp::stop(std::string("In '") + etr::current_line() + "': " + e.what());
+}
+} 
+[repro] compiling 
+[repro] calling fcpp(4L) 
+[repro] result: 5 
+[repro] 50 repeated calls OK 
+exit code: 0
