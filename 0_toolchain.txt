@@ -1,0 +1,30 @@
+ProductName:		macOS
+ProductVersion:		15.7.9
+BuildVersion:		24G830
+x86_64
+R version 4.5.3 (2026-03-11) -- "Reassured Reassurer"
+Apple clang version 17.0.0 (clang-1700.0.13.5)
+Target: x86_64-apple-darwin24.6.0
+Thread model: posix
+InstalledDir: /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+clang++ -arch x86_64
+-falign-functions=64 -Wall -g -O2
+R version 4.5.3 (2026-03-11)
+Platform: x86_64-apple-darwin20
+Running under: macOS Sequoia 15.7.9
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.5-x86_64/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.5-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: UTC
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+loaded via a namespace (and not attached):
+[1] compiler_4.5.3

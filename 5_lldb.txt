@@ -1,0 +1,4 @@
+*** Further command line arguments ('--vanilla -f .github/debug/repro_range.R --args range') disregarded
+*** (maybe use 'run --vanilla -f .github/debug/repro_range.R --args range' from *inside* lldb)
+
+error: invalid architecture in the -a or --arch option: '$pc"'
