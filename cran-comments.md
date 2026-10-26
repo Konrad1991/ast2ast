@@ -15,7 +15,6 @@ Update from 1.0.2 to 1.1.1.
   * macos-latest, R-release
   * windows-latest, R-release
 * rhub: clang-asan, clang-ubsan, gcc-asan, m1-san (R-devel)
-* win-builder, R-release / R-devel / R-oldrelease
 
 ## R CMD check results
 
