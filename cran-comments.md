@@ -1,14 +1,11 @@
 ## Submission
 
-This is a resubmission of ast2ast, which was archived on CRAN on
-2025-12-01 at my request. The package has been substantially extended
-since the last CRAN release and is now ready to return.
+Update from 1.0.2 to 1.1.1.
 
-This resubmission fixes an undefined-behaviour finding from the M1 mac
-UBSan check on the previous submission: `static_cast<int>` on a `double`
-that could be NaN in the scalar type conversions
-(`inst/include/etr_bits/Core/Scalars.hpp`). NaN now converts to NA instead,
-matching R's own `as.integer(NaN)` behaviour. A regression test was added.
+* New features (see NEWS), including ODE/DAE solvers via the CRAN package
+  'sundials', which is a new Imports dependency.
+* Fixes an UBSan finding on zero-length vectors (copy from R's dummy data
+  pointer).
 
 ## Test environments
 
@@ -17,39 +14,12 @@ matching R's own `as.integer(NaN)` behaviour. A regression test was added.
   * ubuntu-latest, R-devel, R-release, R-oldrel-1
   * macos-latest, R-release
   * windows-latest, R-release
+* rhub: clang-asan, clang-ubsan, gcc-asan, m1-san
 * win-builder, R-release / R-devel / R-oldrelease
-
-## Additional checks
-
-The full test suite, including the slower tests that are skipped on CRAN, was
-run locally on Ubuntu Linux under:
-
-* valgrind (memcheck): no errors
-* g++ 13, -fsanitize=undefined: no runtime errors
-* g++ 13, -fsanitize=address: no errors
-
-These exercise the C++ code, including the automatic-differentiation tape and
-the linear-algebra routines.
 
 ## R CMD check results
 
-There were no ERRORs or WARNINGs.
-
-There was one NOTE:
-
-* Maintainer: 'Krämer Konrad <konrad_kraemer@yahoo.de>'
-  New submission
-  Package was archived on CRAN
-  CRAN repository db overrides:
-    X-CRAN-Comment: Archived on 2025-12-01 at the maintainer's request.
-
-  This is expected: the package was archived at my request and is now
-  being resubmitted.
-
-On the local machine an additional NOTE is shown about the non-portable
-compilation flag `-mno-omit-leaf-frame-pointer`. This flag comes from the
-Debian/Ubuntu `r-base` `etc/Makeconf`, not from the package, and does not
-appear on the other test environments.
+There were no ERRORs, WARNINGs or NOTEs.
 
 ## Downstream dependencies
 

@@ -1,4 +1,5 @@
 library(tinytest)
+if (!at_home()) exit_file("slow: outer returntype parsing")
 
 # --- returntype() on the outer function passed to translate() ------------
 # mirrors argtypes(): an optional leading statement (directly following

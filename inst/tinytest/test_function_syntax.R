@@ -1,4 +1,5 @@
 library(tinytest)
+if (!at_home()) exit_file("slow: alternative function compilation")
 
 # --- inner functions written as `function(...)` + argtypes()/returntype() ---
 # the new spelling of a nested fn(): the argument types and return type are the

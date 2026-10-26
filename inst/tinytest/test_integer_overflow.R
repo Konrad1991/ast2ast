@@ -1,4 +1,5 @@
 library(tinytest)
+if (!at_home()) exit_file("slow: integer overflow compiles; runs at home / CI only")
 
 # integer overflow gives NA with a warning, as in R (#49)
 f <- function(a, b, op) {

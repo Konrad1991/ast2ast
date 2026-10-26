@@ -45,6 +45,8 @@ f <- function(m) {
 fcpp <- ast2ast::translate(f, types_f = types)
 expect_equal(dimnames(fcpp(matrix(1, 3, 2))), list(NULL, c("x", "y")))
 
+if (!at_home()) exit_file("slow: compiles; runs at home / CI only")
+
 # --- array --------------------------------------------------------------------------
 a <- array(as.numeric(1:8), c(2, 2, 2))
 f <- function(a) {

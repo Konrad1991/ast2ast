@@ -1,0 +1,21 @@
+#ifndef CORE_ETR_HPP
+#define CORE_ETR_HPP
+
+// this is sorted by clang format be careful
+#include "./Core/Types.hpp"
+#include "./Core/Scalars.hpp"
+// #include "./Core/Reflection.hpp"
+#include "./Core/Buffer.hpp"
+#include "./Core/Borrow.hpp"
+#include "./Core/ArrayClass.hpp"
+#include "./Core/MatMul.hpp"
+#include "./Core/CrossProd.hpp"
+#include "./Core/Chol.hpp"
+#include "./Core/Solve.hpp"
+#include "./Core/Determinant.hpp"
+#include "./Core/TriSolve.hpp"
+#include "./Core/Transpose.hpp"
+#include "./Core/Diag.hpp"
+#include "./Core/nnls.hpp"
+
+#endif

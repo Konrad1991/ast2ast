@@ -69,6 +69,8 @@ f <- function(y0) {
 }
 expect_error(ast2ast::translate(f), pattern = "Unknown argument 'rtol'")
 
+if (!at_home()) exit_file("slow: compiles; runs at home / CI only")
+
 # --- cvode with jac: Robertson (stiff) ---------------------------------------
 
 robertson <- function(y0, times, k, with_jac) {

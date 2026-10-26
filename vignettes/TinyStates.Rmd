@@ -1,0 +1,125 @@
+---
+title: "Derivatives at Tiny States: Michaelis-Menten"
+author: "Konrad Kraemer"
+output: html_document
+
+vignette: >
+  %\VignetteIndexEntry{Derivatives at Tiny States: Michaelis-Menten}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+library(ast2ast)
+```
+
+## The problem in one sentence
+
+Two ways of writing the same rate law can give the same value but a different
+derivative in floating point: the one with a state in the denominator of a
+denominator breaks down when that state gets tiny.
+
+## Michaelis-Menten
+
+The Michaelis-Menten rate of an enzyme with substrate concentration `S`:
+
+$$v = \frac{v_{max} \, S}{K_m + S}$$
+
+Dividing numerator and denominator by `S` gives a form often found in model
+code:
+
+$$v = \frac{v_{max}}{1 + K_m / S}$$
+
+Mathematically both are the same function, and its derivative
+
+$$\frac{dv}{dS} = \frac{v_{max} \, K_m}{(K_m + S)^2}$$
+
+is finite for every `S >= 0`.
+
+## What goes wrong at tiny `S`
+
+In ODE and DAE models concentrations can become very small, e.g. `S = 1e-200`,
+or exactly 0. For the second form:
+
+- value: `Km / S = 5e199`, so `v = vmax / (1 + 5e199)`, a tiny finite number.
+  Nothing unusual.
+- derivative (forward or reverse automatic differentiation applies the chain
+  rule to every operation):
+  - `d(Km / S) = -Km / S^2`, and `S^2 = 1e-400` underflows to 0, giving `-Inf`
+  - `d(1 / D) = -dD / D^2`, and `D^2 = 2.5e399` overflows to `Inf`, giving
+    `Inf / Inf = NaN`
+
+At `S = 0` exactly, `Km / 0 = Inf`, the value is still `vmax / Inf = 0`, and the
+derivative is again `NaN`.
+
+Difference quotients do not see this, because they only use values. It shows up
+as soon as a Jacobian comes from automatic differentiation, e.g. a `jac`
+function for `ida()` / `cvode()` built with `jacobian()`.
+
+## What ast2ast reports
+
+```{r}
+f <- function(S) {
+  argtypes(S |> type(vec(double)))
+  rate <- function(s) {
+    argtypes(s |> type(vec(double)))
+    returntype(vec(double))
+    vmax <- 2
+    Km <- 0.5
+    return(vmax / (1 + Km / s))
+  }
+  return(jacobian(rate, S))
+}
+fcpp <- ast2ast::translate(f)
+fcpp(c(1e-200, 0.3))
+```
+
+```
+Error: In 'return(vmax/(1 + Km/s))': jacobian: d f[1] / d x[1] is not finite,
+although f[1] is. The first non-finite derivative appears in
+'return(vmax/(1 + Km/s))'. Typical cause: a division by a (nearly) zero state,
+e.g. vmax / (1 + K / c); the same value as vmax * c / (c + K) has a finite
+derivative.
+```
+
+The check runs when a Jacobian contains a non-finite entry while the function
+value is finite: one extra sweep finds the first line where a derivative stops
+being finite. If the function value itself is `NaN`, the Jacobian is `NaN` too
+and no error is raised, as in R.
+
+## The fix: multiply through
+
+Multiply numerator and denominator by the state that sits in the inner
+denominator:
+
+```{r}
+return(vmax * s / (Km + s))
+```
+
+The value is the same, and `S` now only appears multiplied, so nothing becomes
+huge: at `S = 1e-200` and at `S = 0` the derivative is just `vmax / Km`.
+
+```
+     [,1]   [,2]
+[1,]    4 0.0000
+[2,]    0 1.5625
+```
+
+## Rule of thumb
+
+> If a state sits in the denominator of a denominator, multiply numerator and
+> denominator by that state.
+
+With several substrates, multiply by all of them:
+
+```{r}
+# vmax / (1 + K1 / a + K2 / b)
+vmax * a * b / (a * b + K1 * b + K2 * a)
+
+# vmax / (1 + K1 / a + K2 / b + K1 * K2 / (a * b))   (random-order bi-substrate)
+vmax * a * b / (a * b + K1 * b + K2 * a + K1 * K2)
+```
+
+The multiplied-through form is usually the textbook form anyway; the form with
+the double fraction tends to come from code that was written for values only.

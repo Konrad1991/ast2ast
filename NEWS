@@ -1,5 +1,20 @@
 News for package 'ast2ast'
 
+changes in ast2ast version 1.1.1
+
+- New ODE/DAE solvers via the 'sundials' package (now in Imports):
+  `cvode(rhs, y0, times, params, options = cvode_options(), jac)` and
+  `ida(res, y0, yp0, times, params, id, options = ida_options(), jac)`.
+  `params` may be any type (vector, scalar, `new_type` struct). Without `jac`
+  the Jacobian comes from difference quotients. Both return a
+  `length(times) x length(y0)` matrix.
+- `cvode_options(reltol, abstol, stiff, max_steps, stats)` and
+  `ida_options(reltol, abstol, max_steps, stats)`: every argument is optional;
+  `stats = TRUE` prints solver statistics.
+- `jacobian`: `x` may be a `borrow_vec` for a `vec` parameter.
+- Fixed: zero-length R vectors passed to translated functions no longer
+  trigger an undefined-behaviour report (copy from R's dummy data pointer).
+
 changes in ast2ast version 1.1
 
 - Functions can be written as plain R functions: the body starts with

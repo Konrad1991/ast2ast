@@ -1,4 +1,5 @@
 library(tinytest)
+if (!at_home()) exit_file("slow: compiles; runs at home / CI only")
 
 # mean, round, sign, cumsum, colSums, rowSums, colMeans, rowMeans, sort, ifelse
 # One dispatch TU per (mode) instead of one translate() per case. The unused

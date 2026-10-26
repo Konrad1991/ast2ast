@@ -1,4 +1,5 @@
 library(tinytest)
+if (!at_home()) exit_file("slow: optimizer compiles; runs at home / CI only")
 library(ast2ast)
 
 # pso(f, lower, upper, ngen, npop, error_threshold, global, seed): derivative-free

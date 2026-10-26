@@ -1,0 +1,980 @@
+#ifndef TYPES_ETR_H
+#define TYPES_ETR_H
+
+#include <cmath>
+#include <limits>
+
+#ifdef STANDALONE_ETR
+#include "stddef.h"
+#include <cxxabi.h>
+// Standalone mode still uses BLAS for matmul; link to openblas required
+extern "C" void dgemm_(const char* transa, const char* transb,
+                       const int* m, const int* n, const int* k,
+                       const double* alpha, const double* a, const int* lda,
+                       const double* b, const int* ldb,
+                       const double* beta, double* c, const int* ldc);
+// Cholesky factorisation (LAPACK); link to openblas/lapack required
+extern "C" void dpotrf_(const char* uplo, const int* n, double* a,
+                        const int* lda, int* info);
+// Triangular solve (BLAS), used by forward-mode chol
+extern "C" void dtrsm_(const char* side, const char* uplo, const char* transa,
+                       const char* diag, const int* m, const int* n,
+                       const double* alpha, const double* a, const int* lda,
+                       double* b, const int* ldb);
+// LU factorisation + solve (LAPACK), used by solve()
+extern "C" void dgetrf_(const int* m, const int* n, double* a, const int* lda,
+                        int* ipiv, int* info);
+extern "C" void dgetrs_(const char* trans, const int* n, const int* nrhs,
+                        const double* a, const int* lda, const int* ipiv,
+                        double* b, const int* ldb, int* info);
+#define F77_CALL(x) x##_
+#define FCONE
+#else
+// R's BLAS/LAPACK are Fortran: each char* flag (uplo/trans/side/diag) takes a
+// hidden trailing length arg. USE_FC_LEN_T makes the headers declare those and
+// FCONE (from RS.h) expand to `,(FC_LEN_T)1` so call sites pass them -- required
+// to match R's runtime ABI. Without it FCONE is empty and the lengths are read
+// from garbage; reference/OpenBLAS tolerate it, R's LAPACK does not.
+#define USE_FC_LEN_T
+#include <RcppThread.h>
+#include <R_ext/BLAS.h>
+#include <R_ext/Lapack.h>
+#include <R_ext/RS.h>
+#ifndef FCONE
+#define FCONE
+#endif
+#endif
+
+#include <cstddef>
+#include <cstdint>
+#include <algorithm>
+#include <array>
+#include <ios>
+#include <iostream>
+#include <iterator>
+#include <math.h>
+#include <memory>
+#include <optional>
+#include <sstream>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <variant>
+#include <vector>
+#include <functional>
+#include <numeric>
+
+namespace etr {
+
+/*
+--------------------------------------------------------------------------------------------------------------
+Messages/Warnings and Errors
+--------------------------------------------------------------------------------------------------------------
+*/
+// no Rcpp::stop: must be callable from worker threads; the pool / .Call boundary rethrows
+inline void ass(bool inp, const std::string &message) {
+  if (!inp)
+    throw std::runtime_error(message);
+}
+
+// bare inline thread_local at namespace scope breaks under MinGW
+inline const char*& current_line() {
+  thread_local const char* line = "";
+  return line;
+}
+
+// https://ctrpeach.io/posts/cpp20-string-literal-template-parameters/
+template <std::size_t N> struct string_literal {
+  constexpr string_literal(const char (&str)[N]) {
+    std::copy_n(str, N, value.begin());
+  }
+  std::array<char, N> value;
+};
+
+// throw kept out of line: otherwise callers like at() grow too big to inline
+[[noreturn, gnu::cold, gnu::noinline]]
+inline void ass_fail(const char* msg) {
+  throw std::runtime_error(msg);
+}
+
+template <string_literal msg> inline void ass(bool inp) {
+  if (!inp) [[unlikely]] ass_fail(msg.value.data());
+}
+
+// Rcpp::warning touches the R API: a pmap task writes into its own slot,
+// the main thread emits after the pool finished
+// bare inline thread_local at namespace scope breaks under MinGW
+inline std::vector<std::string>*& warning_slot() {
+  thread_local std::vector<std::string>* slot = nullptr;
+  return slot;
+}
+// set for the duration of one pmap task; restores the previous slot for nested pmap
+struct WarningScope {
+  std::vector<std::string>* prev;
+  explicit WarningScope(std::vector<std::string>& s) : prev(warning_slot()) { warning_slot() = &s; }
+  ~WarningScope() { warning_slot() = prev; }
+  WarningScope(const WarningScope&) = delete;
+  WarningScope& operator=(const WarningScope&) = delete;
+};
+
+inline void emit_warning(const std::string& msg) {
+#ifdef STANDALONE_ETR
+  std::cerr << msg << std::endl;
+#else
+  Rcpp::warning("%s", msg.c_str());
+#endif
+}
+
+inline void raise_warning(std::string msg) {
+  if (auto* slot = warning_slot()) {
+    slot->push_back(std::move(msg));
+  } else {
+    emit_warning(msg);
+  }
+}
+
+// after wait(); slot order = task order = serial map order.
+// raise_warning: a nested pmap forwards into the slot of its outer task
+inline void flush_warnings(const std::vector<std::vector<std::string>>& slots) {
+  for (const auto& slot : slots) {
+    for (const auto& msg : slot) raise_warning(msg);
+  }
+}
+
+inline void warn(bool inp, std::string message) {
+  if (!inp) raise_warning("Warning: " + message);
+}
+
+template <string_literal msg> inline void warn(bool inp) {
+  if (!inp) raise_warning(msg.value.data());
+}
+
+/*
+-----------------------------------------------------------------------------------------------------------
+Holder stores references to L values.
+Instead R values are kept alive by storing them on the heap using ConstHolder
+-----------------------------------------------------------------------------------------------------------
+*/
+template <class T> class ConstHolder {
+  // Rvalue construction needs the referent to outlive this ConstHolder's own
+  // copies. For a trivially copyable T (a scalar) storing it inline and
+  // deep-copying on ConstHolder-copy is cheap and needs no allocation. For
+  // anything else (an owning/reference-wrapping type -- e.g. a Buffer moved
+  // in as an rvalue) a shared_ptr keeps ConstHolder-copies O(1) instead of
+  // duplicating the underlying data; its copy/move already do the right
+  // thing via the pointee's address staying constant across copies, unlike
+  // std::optional's.
+  std::optional<T> val;
+  std::shared_ptr<T> owned;
+  const T* ptr = nullptr;
+
+public:
+  ConstHolder(const T& ref) : ptr(&ref) {}
+
+  ConstHolder(T&& r) {
+    if constexpr (std::is_trivially_copyable_v<T>) {
+      val.emplace(std::move(r));
+      ptr = &val.value();
+    } else {
+      owned = std::make_shared<T>(std::move(r));
+      ptr = owned.get();
+    }
+  }
+
+  ConstHolder(const ConstHolder& other) {
+    if constexpr (std::is_trivially_copyable_v<T>) {
+      if (other.val.has_value()) {
+        val.emplace(*other.val);
+        ptr = &val.value();
+      } else {
+        ptr = other.ptr;
+      }
+    } else {
+      owned = other.owned;
+      ptr = other.ptr;
+    }
+  }
+  ConstHolder(ConstHolder&& other) noexcept {
+    if constexpr (std::is_trivially_copyable_v<T>) {
+      if (other.val.has_value()) {
+        val.emplace(std::move(*other.val));
+        ptr = &val.value();
+      } else {
+        ptr = other.ptr;
+      }
+    } else {
+      owned = std::move(other.owned);
+      ptr = other.ptr;
+    }
+  }
+  ConstHolder& operator=(const ConstHolder& other) {
+    if (this != &other) {
+      if constexpr (std::is_trivially_copyable_v<T>) {
+        if (other.val.has_value()) {
+          val.emplace(*other.val);
+          ptr = &val.value();
+        } else {
+          val.reset();
+          ptr = other.ptr;
+        }
+      } else {
+        owned = other.owned;
+        ptr = other.ptr;
+      }
+    }
+    return *this;
+  }
+  ConstHolder& operator=(ConstHolder&& other) noexcept {
+    if (this != &other) {
+      if constexpr (std::is_trivially_copyable_v<T>) {
+        if (other.val.has_value()) {
+          val.emplace(std::move(*other.val));
+          ptr = &val.value();
+        } else {
+          val.reset();
+          ptr = other.ptr;
+        }
+      } else {
+        owned = std::move(other.owned);
+        ptr = other.ptr;
+      }
+    }
+    return *this;
+  }
+
+  const T& get() const { return *ptr; }
+
+  // Debug-only inspectors, not for production use -- confirm at runtime
+  // which storage path is active instead of assuming from reading the
+  // constructor branches.
+  bool debug_owns_via_shared_ptr() const { return static_cast<bool>(owned); }
+  bool debug_owns_via_inline_value() const { return val.has_value(); }
+};
+
+
+template <typename T> class Holder {
+  std::optional<T> val;
+  T* ptr = nullptr;
+public:
+  // Construct from lvalue
+  Holder(T& ref) : ptr(&ref) {}
+  // Construct from rvalue
+  Holder(T&& r) {
+    val.emplace(std::move(r));
+    ptr = &val.value();
+  }
+  // Copy constructor
+  Holder(const Holder& other) {
+    if (other.val.has_value()) {
+      val.emplace(*other.val);
+      ptr = &val.value();
+    } else {
+      ptr = other.ptr;
+    }
+  }
+  // Copy assignment
+  Holder& operator=(const Holder& other) {
+    if (this != &other) {
+      if (other.val.has_value()) {
+        val.emplace(std::move(*other.val));  // avoid operator=
+        ptr = &val.value();
+      } else {
+        val.reset();
+        ptr = other.ptr;
+      }
+    }
+    return *this;
+  }
+  // Move constructor
+  Holder(Holder&& other) noexcept {
+    if (other.val.has_value()) {
+      val.emplace(std::move(*other.val));
+      ptr = &val.value();
+    } else {
+      ptr = other.ptr;
+    }
+  }
+  // Move assignment
+  Holder& operator=(Holder&& other) noexcept {
+    if (this != &other) {
+      if (other.val.has_value()) {
+        val.emplace(std::move(*other.val));  // avoid operator=
+        ptr = &val.value();
+      } else {
+        val.reset();
+        ptr = other.ptr;
+      }
+    }
+    return *this;
+  }
+  T& get() const {
+    return *ptr;
+  }
+};
+
+/*
+-----------------------------------------------------------------------------------------------------------
+Helper:
+-----------------------------------------------------------------------------------------------------------
+*/
+// 1. some own names for members of the type trait library
+template <typename T, typename U> inline constexpr bool IS = std::is_same_v<T, U>;
+
+template <typename T> using IsCppArith = std::is_arithmetic<T>;
+template <typename T> constexpr bool IsCppArithV = std::is_arithmetic_v<T>;
+
+template <typename T> using Decayed = std::decay_t<T>;
+
+template <typename T> using ReRef = std::remove_reference<T>;
+
+template <typename T> constexpr bool IsRvalueV = std::is_rvalue_reference_v<T>;
+
+// 2. The struct SI which is used to initialize Arrays of a respective size
+struct SI {
+  std::size_t sz{0};
+
+  SI() = default;
+  explicit SI(std::size_t n) : sz(n) {
+    ass<"Size has to be larger than 0!">(sz >= 1);
+  }
+  // signed integers (e.g., int, long long)
+  // NOTE: std::signed_integral (<concepts>) is missing on some CRAN clang/libc++
+  // combos; std::is_integral_v/is_signed_v (<type_traits>) is the portable equivalent.
+  template <typename I> requires (std::is_integral_v<I> && std::is_signed_v<I>)
+  explicit SI(I n) {
+    ass<"Size has to be larger than 0!">(n >= 1);
+    using U = std::make_unsigned_t<I>;
+    const U un = static_cast<U>(n);
+    ass<"Requested size too large">(un <= static_cast<U>(std::numeric_limits<std::size_t>::max()));
+    sz = static_cast<std::size_t>(un);
+  }
+  // floating point (floor, then validate)
+  template <typename F> requires std::is_floating_point_v<F>
+  explicit SI(F n) {
+    ass<"Size is not finite">(std::isfinite(n));
+    const F f = std::floor(n);
+    ass<"Size has to be larger than 0!">(f >= static_cast<F>(1));
+    const long double ld = static_cast<long double>(f);
+    ass<"Requested size too large">(ld <= static_cast<long double>(std::numeric_limits<std::size_t>::max()));
+    sz = static_cast<std::size_t>(ld);
+  }
+};
+
+// 3. safe modulo which works for std::size_t --> used in preserved subsetting
+inline std::size_t safe_modulo(std::size_t idx, std::size_t sz) {
+  return sz ? (idx % sz) : 0;  // no UB if n==0
+}
+
+// 4. helper to loop over variadic templates 
+// Used in preserved and simplified subsetting and in allocation::c
+template <class F, class... Args> inline F forEachArg(F f, Args &&...args) {
+  (f(std::forward<Args>(args)), ...); return f;
+}
+
+// 5. extract dimension from an array instance
+// Used in subsetting and printing
+template<typename D> auto&& dim_view(D& d) {
+  if constexpr (requires { d.get(); }) {
+    return d.get();
+  } else {
+    return d;
+  }
+}
+
+// 6. conversion of double to an index
+inline std::size_t safe_index_from_double(double x) {
+  ass<"invalid index argument">(std::isfinite(x));
+  double t = std::trunc(x);
+  ass<"Zero and negative indices are not supported">(t >= 1);
+  return static_cast<std::size_t>(t);
+}
+
+inline std::size_t safe_index_from_double_lower_bound_0(double x) {
+  ass<"invalid index argument">(std::isfinite(x));
+  double t = std::trunc(x);
+  ass<"Negative indices are not supported">(t >= 0);
+  return static_cast<std::size_t>(t);
+}
+
+// integer index -> 1-based bounds check, mirroring safe_index_from_double.
+// NA_INTEGER is INT_MIN, so the >= 1 test also rejects an NA index.
+inline std::size_t safe_index_from_int(long x) {
+  ass<"Zero and negative indices are not supported">(x >= 1);
+  return static_cast<std::size_t>(x);
+}
+
+// 7. Dim: dims of an array. Replaces std::vector<std::size_t>.
+// NOTE: no ctor from std::vector on purpose; see NoVectorDim.
+// Up to 7 dims inline -> no malloc when expression dims are copied.
+class Dim {
+  static constexpr std::size_t N_INLINE = 7;
+  std::size_t rank_ = 0;
+  union {
+    std::size_t inline_[N_INLINE];
+    std::size_t* heap_; // only rank_ > N_INLINE
+  };
+  bool on_heap() const noexcept { return rank_ > N_INLINE; }
+  void release() noexcept {
+    if (on_heap()) delete[] heap_;
+    rank_ = 0;
+  }
+  void copy_from(const Dim& o) {
+    if (o.on_heap()) {
+      heap_ = new std::size_t[o.rank_];
+      std::copy_n(o.heap_, o.rank_, heap_);
+    } else {
+      std::copy_n(o.inline_, o.rank_, inline_);
+    }
+    rank_ = o.rank_;
+  }
+  void move_from(Dim& o) noexcept {
+    if (o.on_heap()) {
+      heap_ = o.heap_;
+    } else {
+      std::copy_n(o.inline_, o.rank_, inline_);
+    }
+    rank_ = o.rank_;
+    o.rank_ = 0;
+  }
+  template <typename It> void assign_range(It first, std::size_t n) {
+    resize(n);
+    std::copy_n(first, n, data());
+  }
+
+public:
+  using value_type = std::size_t;
+  using iterator = std::size_t*;
+  using const_iterator = const std::size_t*;
+
+  Dim() noexcept {}
+  // same semantics as std::vector(count, value)
+  Dim(std::size_t count, std::size_t value) { resize(count, value); }
+  Dim(std::initializer_list<std::size_t> l) { assign_range(l.begin(), l.size()); }
+  Dim(const Dim& o) { copy_from(o); }
+  Dim(Dim&& o) noexcept { move_from(o); }
+  ~Dim() { release(); }
+
+  Dim& operator=(const Dim& o) {
+    if (this != &o) {
+      release();
+      copy_from(o);
+    }
+    return *this;
+  }
+  Dim& operator=(Dim&& o) noexcept {
+    if (this != &o) {
+      release();
+      move_from(o);
+    }
+    return *this;
+  }
+
+  std::size_t size() const noexcept { return rank_; }
+  bool empty() const noexcept { return rank_ == 0; }
+  std::size_t* data() noexcept { return on_heap() ? heap_ : inline_; }
+  const std::size_t* data() const noexcept { return on_heap() ? heap_ : inline_; }
+  std::size_t& operator[](std::size_t i) noexcept { return data()[i]; }
+  std::size_t operator[](std::size_t i) const noexcept { return data()[i]; }
+  std::size_t* begin() noexcept { return data(); }
+  std::size_t* end() noexcept { return data() + rank_; }
+  const std::size_t* begin() const noexcept { return data(); }
+  const std::size_t* end() const noexcept { return data() + rank_; }
+  std::size_t& back() noexcept { return data()[rank_ - 1]; }
+  std::size_t back() const noexcept { return data()[rank_ - 1]; }
+
+  void resize(std::size_t n, std::size_t value = 0) {
+    if (n <= N_INLINE) {
+      if (on_heap()) {
+        std::size_t* h = heap_;
+        std::copy_n(h, n, inline_);
+        delete[] h;
+      } else {
+        for (std::size_t i = rank_; i < n; ++i) inline_[i] = value;
+      }
+      rank_ = n;
+      return;
+    }
+    std::size_t* h = new std::size_t[n];
+    const std::size_t keep = rank_ < n ? rank_ : n;
+    std::copy_n(data(), keep, h);
+    std::fill(h + keep, h + n, value);
+    if (on_heap()) delete[] heap_;
+    heap_ = h;
+    rank_ = n;
+  }
+  void push_back(std::size_t v) {
+    resize(rank_ + 1);
+    back() = v;
+  }
+
+  friend bool operator==(const Dim& l, const Dim& r) noexcept {
+    return l.rank_ == r.rank_ && std::equal(l.begin(), l.end(), r.begin());
+  }
+  friend bool operator!=(const Dim& l, const Dim& r) noexcept { return !(l == r); }
+};
+
+// excluded from the Array(Args...) catch-all: otherwise an old-style
+// std::vector dim compiles and only fails at runtime
+template <typename... Args>
+concept NoVectorDim = (!IS<Decayed<Args>, std::vector<std::size_t>> && ...);
+
+/*
+--------------------------------------------------------------------------------------------------
+Traits (third dispatch layer)
+These are the traits used in the operator overloads in 
+Calculations/UnaryCalculations.hpp and Calculations/BinaryCalculations.hpp
+--------------------------------------------------------------------------------------------------
+*/
+struct ComparisonTrait { using value_type = bool; };
+struct LBufferTrait {};
+struct RBufferTrait {};
+struct SubsetViewTrait {};
+struct ConstSubsetViewTrait {};
+struct BorrowTrait {};
+struct BinaryTrait {};
+struct UnaryTrait {};
+
+struct PlusTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l + r;
+  }
+};
+struct MinusTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l - r;
+  }
+};
+// lazy affine sequence (a:b, seq_len, range +-* scalar): l = start, r = RangeSpec
+// element i = start + step * i
+struct RangeSpec {
+  long step;
+  std::size_t len;
+};
+struct RangeTrait {
+  template <typename L>
+  static inline L f(const L& l, const RangeSpec& r, std::size_t i) {
+    if (l.isNA()) return l;
+    const auto s = get_val(l);
+    using V = std::decay_t<decltype(s)>;
+    if constexpr (std::is_integral_v<V>) {
+      return L(static_cast<V>(static_cast<long>(s) + r.step * static_cast<long>(i)));
+    } else {
+      return L(s + static_cast<V>(r.step) * static_cast<V>(i));
+    }
+  }
+  template <typename L>
+  static inline std::size_t size(const L&, const RangeSpec& r) {
+    return r.len;
+  }
+};
+struct TimesTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l * r;
+  }
+};
+struct DivideTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l / r;
+  }
+};
+struct PowTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return pow(l, r);
+  }
+};
+struct ModTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l % r;
+  }
+};
+struct IDivTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return idiv(l, r);
+  }
+};
+struct EqualTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l == r;
+  }
+};
+struct SmallerTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l < r;
+  }
+};
+struct SmallerEqualTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l <= r;
+  }
+};
+struct LargerTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l > r;
+  }
+};
+struct LargerEqualTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l >= r;
+  }
+};
+struct UnEqualTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l != r;
+  }
+};
+struct AndTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l && r;
+  }
+};
+struct OrTrait {
+  template <typename L, typename R>
+  static inline auto f(const L& l, const R& r) {
+    return l || r;
+  }
+};
+struct SinusTrait {
+  template <typename L> static inline auto f(L a) { return sin(a); }
+};
+struct ASinusTrait {
+  template <typename L> static inline auto f(L a) { return asin(a); }
+};
+struct SinusHTrait {
+  template <typename L> static inline auto f(L a) { return sinh(a); }
+};
+struct CosinusTrait {
+  template <typename L> static inline auto f(L a) { return cos(a); }
+};
+struct ACosinusTrait {
+  template <typename L> static inline auto f(L a) { return acos(a); }
+};
+struct CosinusHTrait {
+  template <typename L> static inline auto f(L a) { return cosh(a); }
+};
+struct TangensTrait {
+  template <typename L> static inline auto f(L a) { return tan(a); }
+};
+struct ATangensTrait {
+  template <typename L> static inline auto f(L a) { return atan(a); }
+};
+struct TangensHTrait {
+  template <typename L> static inline auto f(L a) { return tanh(a); }
+};
+struct ExpTrait {
+  template <typename L> static inline auto f(L a) { return exp(a); }
+};
+struct LogTrait {
+  template <typename L> static inline auto f(L a) { return log(a); }
+};
+struct SquareRootTrait {
+  template <typename L> static inline auto f(L a) { return sqrt(a); }
+};
+struct MinusUnaryTrait {
+  template <typename L> static inline auto f(L a) { return -a; }
+};
+struct NotUnaryTrait {
+  template <typename L> static inline auto f(L a) { return !a; }
+};
+struct AbsTrait {
+  template <typename L> static inline auto f(L a) { return abs(a); }
+};
+
+/*
+-----------------------------------------------------------------------------------------------------------
+Inner data structs Buffer, Borrow, UnaryOperation, etc.
+-----------------------------------------------------------------------------------------------------------
+Each inner data struct requires:
+- copy constructor
+- copy assignment
+- move constructor
+- move assignment
+- size
+- const auto& operator[]
+- auto& operator[]
+- begin and end
+- Trait
+- value_type
+Classes Buffer, Borrow, UnaryOperation, BinaryOperation, SubsetView
+*/
+template <typename T, typename Trait = LBufferTrait> struct Buffer;
+template <typename T, typename Trait = BorrowTrait> struct Borrow;
+template <typename L, typename Trait = UnaryTrait> struct UnaryOperation;
+template <typename L, typename R, typename Trait = BinaryTrait> struct BinaryOperation;
+template<typename O, std::size_t N, typename Trait = SubsetViewTrait> struct SubsetView;
+template<typename O, std::size_t N, typename Trait = ConstSubsetViewTrait> struct ConstSubsetView;
+
+/*
+-----------------------------------------------------------------------------------------------------------
+Outer data structs
+Array which wraps one of the inner data structs
+-----------------------------------------------------------------------------------------------------------
+*/
+template<typename T, typename R>
+struct Array { static_assert(sizeof(R) == 0, "No generic Array<T,R> implementation"); };
+template <typename T, typename Trait> struct Array<T, Buffer<T, Trait>>;
+template <typename T, typename Trait> struct Array<T, Borrow<T, Trait>>;
+template <typename T, typename I, typename Trait> struct Array<T, UnaryOperation<I, Trait>>;
+template <typename T, typename L, typename R, typename Trait> struct Array<T, BinaryOperation<L, R, Trait>>;
+template <typename T, typename O, std::size_t N, typename Trait> struct Array<T, SubsetView<O, N, Trait>>;
+template <typename T, typename O, std::size_t N, typename Trait> struct Array<T, ConstSubsetView<O, N, Trait>>;
+
+/*
+-----------------------------------------------------------------------------------------------------------
+Extract data type from outer data structs
+-----------------------------------------------------------------------------------------------------------
+*/
+template <typename T> struct ExtractDataType;
+template <typename T, typename R>
+struct ExtractDataType<Array<T, R>> {
+  using value_type = T;
+};
+template <typename T, typename R>
+struct ExtractDataType<const Array<T, R>> {
+  using value_type = T const;
+};
+template <typename T> using ExtractedTypeData = typename ExtractDataType<T>::value_type;
+
+/*
+-----------------------------------------------------------------------------------------------------------
+Determine type for literal bools, ints or doubles
+-----------------------------------------------------------------------------------------------------------
+*/
+// Float
+template <typename T> struct is_float_type : std::is_floating_point<T> {};
+template <typename T> struct is_float_type_with_type : is_float_type<typename T::Type> {};
+template <typename T, typename = void> struct is_float_dispatch : is_float_type<T> {};
+template <typename T> struct is_float_dispatch<T, std::void_t<typename T::Type>> : is_float_type_with_type<T> {};
+template <typename T> inline constexpr bool IsCppDouble = is_float_dispatch<T>::value;
+// Integer
+template <typename T> struct is_integer_type : std::is_integral<T> {};
+template <typename T> struct is_integer_type_with_type : is_integer_type<typename T::Type> {};
+template <typename T, typename = void> struct is_integer_dispatch : is_integer_type<T> {};
+template <typename T> struct is_integer_dispatch<T, std::void_t<typename T::Type>> : is_integer_type_with_type<T> {};
+template <typename T> inline constexpr bool IsCppInteger = is_integer_dispatch<T>::value;
+// Bool (exactly bool, not all integrals)
+template <typename T> struct is_bool_type : std::is_same<T, bool> {};
+template <typename T> struct is_bool_type_with_type : is_bool_type<typename T::Type> {};
+template <typename T, typename = void> struct is_bool_dispatch : is_bool_type<T> {};
+template <typename T> struct is_bool_dispatch<T, std::void_t<typename T::Type>> : is_bool_type_with_type<T> {};
+template <typename T> inline constexpr bool IsCppLogical = is_bool_dispatch<T>::value;
+
+/*
+-----------------------------------------------------------------------------------------------------------
+Concepts to check whether object is:
+* unary operation
+* binary operation
+* comparison
+* subset
+* const subset
+* L buffer
+* R buffer
+* Borrow
+-----------------------------------------------------------------------------------------------------------
+*/
+template <typename T> concept IsUnary = requires {
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, SinusTrait> ||
+IS<typename ReRef<T>::type::Trait, ASinusTrait> ||
+IS<typename ReRef<T>::type::Trait, SinusHTrait> ||
+IS<typename ReRef<T>::type::Trait, CosinusTrait> ||
+IS<typename ReRef<T>::type::Trait, ACosinusTrait> ||
+IS<typename ReRef<T>::type::Trait, CosinusHTrait> ||
+IS<typename ReRef<T>::type::Trait, TangensTrait> ||
+IS<typename ReRef<T>::type::Trait, ATangensTrait> ||
+IS<typename ReRef<T>::type::Trait, TangensHTrait> ||
+IS<typename ReRef<T>::type::Trait, ExpTrait> ||
+IS<typename ReRef<T>::type::Trait, LogTrait> ||
+IS<typename ReRef<T>::type::Trait, SquareRootTrait> ||
+IS<typename ReRef<T>::type::Trait, MinusUnaryTrait> ||
+IS<typename ReRef<T>::type::Trait, NotUnaryTrait> ||
+IS<typename ReRef<T>::type::Trait, AbsTrait>;
+};
+template <typename T> concept IsBinary = requires {
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, PlusTrait> ||
+IS<typename ReRef<T>::type::Trait, MinusTrait> ||
+IS<typename ReRef<T>::type::Trait, TimesTrait> ||
+IS<typename ReRef<T>::type::Trait, DivideTrait> ||
+IS<typename ReRef<T>::type::Trait, PowTrait> ||
+IS<typename ReRef<T>::type::Trait, ModTrait> ||
+IS<typename ReRef<T>::type::Trait, IDivTrait> ||
+IS<typename ReRef<T>::type::Trait, RangeTrait> ||
+IS<typename ReRef<T>::type::Trait, EqualTrait> ||
+IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
+IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
+IS<typename ReRef<T>::type::Trait, LargerTrait> ||
+IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
+IS<typename ReRef<T>::type::Trait, UnEqualTrait>;
+};
+template <typename T> concept IsComparison = requires {
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, EqualTrait> ||
+IS<typename ReRef<T>::type::Trait, SmallerTrait> ||
+IS<typename ReRef<T>::type::Trait, SmallerEqualTrait> ||
+IS<typename ReRef<T>::type::Trait, LargerTrait> ||
+IS<typename ReRef<T>::type::Trait, LargerEqualTrait> ||
+IS<typename ReRef<T>::type::Trait, UnEqualTrait> ||
+IS<typename ReRef<T>::type::Trait, AndTrait> ||
+IS<typename ReRef<T>::type::Trait, OrTrait>;
+};
+template <typename T>
+concept IsComparisonTrait = requires(T t) { // required as in binary operation the trait is directly tested
+typename T;
+requires IS<T, EqualTrait> ||
+IS<T, SmallerTrait> ||
+IS<T, SmallerEqualTrait> ||
+IS<T, LargerTrait> ||
+IS<T, LargerEqualTrait> ||
+IS<T, UnEqualTrait> ||
+IS<T, AndTrait> ||
+IS<T, OrTrait>;
+};
+// Mutable subset view
+// -------------------------------------------------------------------
+template <typename T>
+concept IsSubsetView = requires {
+typename ReRef<T>::type::TypeTrait;
+requires IS<typename ReRef<T>::type::TypeTrait, SubsetViewTrait>;
+};
+// extract N from SubsetView
+template<typename T>
+struct subsetview_traits;
+
+template<typename O, std::size_t N, typename Trait>
+struct subsetview_traits<SubsetView<O, N, Trait>> {
+  static constexpr std::size_t value = N;
+};
+// Const subset view
+// -------------------------------------------------------------------
+template <typename T>
+concept IsConstSubsetView = requires {
+typename ReRef<T>::type::TypeTrait;
+requires IS<typename ReRef<T>::type::TypeTrait, ConstSubsetViewTrait>;
+};
+// extract N from ConstSubsetView
+template<typename T>
+struct const_subsetview_traits;
+
+template <typename T>
+concept IsLBuffer = requires {
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, LBufferTrait>;
+};
+template <typename T>
+concept IsRBuffer = requires {
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, RBufferTrait>;
+};
+template <typename T>
+concept IsBorrow = requires {
+typename ReRef<T>::type::Trait;
+requires IS<typename ReRef<T>::type::Trait, BorrowTrait>;
+};
+
+/*
+-----------------------------------------------------------------------------------------------------------
+Concepts to check what type of array is object:
+* is array
+* is L Buffer array
+* is R Buffer array
+* is Borrow array
+* is subset array
+* is const subset array
+* is unary operation array
+* is binary operation array
+* is comparison operation array
+* is operation array
+    * unary | binary | comparison | subset | const subset
+* is r or calculation
+    * is operation array or r buffer array
+-----------------------------------------------------------------------------------------------------------
+*/
+template <typename T> struct is_any_array : std::false_type {};
+template <typename T, typename R> struct is_any_array<Array<T, R>> : std::true_type {};
+template <typename T> inline constexpr bool is_any_array_v = is_any_array<T>::value;
+template <typename T> concept IsArray = is_any_array_v<T>;
+
+template <typename T> struct is_array_l : std::false_type {};
+template <typename T> struct is_array_l<Array<T, Buffer<T, LBufferTrait>>> : std::true_type {};
+template <typename T> inline constexpr bool is_array_l_v = is_array_l<T>::value;
+template <typename T> concept IsLBufferArray = is_array_l_v<T>;
+
+template <typename T> struct is_array_r : std::false_type {};
+template <typename T> struct is_array_r<Array<T, Buffer<T, RBufferTrait>>> : std::true_type {};
+template <typename T> inline constexpr bool is_array_r_v = is_array_r<T>::value;
+template <typename T> concept IsRArray = is_array_r_v<T>;
+
+template <typename T> struct is_array_b : std::false_type {};
+template <typename T> struct is_array_b<Array<T, Borrow<T, BorrowTrait>>> : std::true_type {};
+template <typename T> inline constexpr bool is_array_b_v = is_array_b<T>::value;
+template <typename T> concept IsBorrowArray = is_array_b_v<T>;
+
+template <typename T> struct is_array_s : std::false_type {};
+template <typename T, typename O, std::size_t N, typename Trait>
+struct is_array_s<Array<T, SubsetView<O, N, Trait>>> : std::bool_constant<std::is_same_v<Trait, SubsetViewTrait>> {};
+template <typename T> inline constexpr bool is_array_s_v = is_array_s<T>::value;
+template <typename T> concept IsSubsetArray = is_array_s_v<T>;
+
+template <typename T> struct is_array_const_s : std::false_type {};
+template <typename T, typename O, std::size_t N, typename Trait>
+struct is_array_const_s<Array<T, ConstSubsetView<O, N, Trait>>> : std::bool_constant<std::is_same_v<Trait, ConstSubsetViewTrait>> {};
+template <typename T> inline constexpr bool is_array_const_s_v = is_array_const_s<T>::value;
+template <typename T> concept IsConstSubsetArray = is_array_const_s_v<T>;
+
+template <typename T>
+concept IsRangeArray = IsArray<T> && requires { typename T::DType::Trait; } &&
+  IS<typename T::DType::Trait, RangeTrait>;
+
+template <typename T> concept IsUnaryArray = IsArray<T> && IsUnary<typename T::DType>;
+template <typename T> concept IsBinaryArray = IsArray<T> && IsBinary<typename T::DType>;
+template <typename T> concept IsComparisonArray = IsArray<T> && IsComparison<typename T::DType>;
+
+template <typename T>
+concept IsOperationArray =
+IsArray<T> && (
+IsUnary<typename T::DType> ||
+IsBinary<typename T::DType> ||
+IsComparison<typename T::DType> ||
+IsSubsetView<typename T::DType> ||
+IsConstSubsetView<typename T::DType>
+    );
+template <typename T>
+concept IsROrCalculationArray = requires(T t) {
+typename T::DType;
+requires IsOperationArray<T> || IsRArray<T>;
+};
+
+// Translated fns are functors (non-template operator()). APIs that deduce
+// their types from a std::function (lbfgsb, uniroot, pso with data) get the
+// matching std::function via as_std_function.
+template <typename T> struct StdFunctionOf : StdFunctionOf<decltype(&T::operator())> {};
+template <typename C, typename R, typename... A> struct StdFunctionOf<R (C::*)(A...) const> {
+  using type = std::function<R(A...)>;
+};
+template <typename C, typename R, typename... A> struct StdFunctionOf<R (C::*)(A...)> {
+  using type = std::function<R(A...)>;
+};
+template <typename F> inline auto as_std_function(const F& f) {
+  return typename StdFunctionOf<F>::type(f);
+}
+template <typename T> struct IsStdFunctionTrait : std::false_type {};
+template <typename R, typename... A> struct IsStdFunctionTrait<std::function<R(A...)>> : std::true_type {};
+template <typename T> concept IsStdFunction = IsStdFunctionTrait<Decayed<T>>::value;
+
+} // namespace etr
+
+#endif

@@ -1,4 +1,5 @@
 library(tinytest)
+if (!at_home()) exit_file("slow: compiles; runs at home / CI only")
 library(ast2ast)
 
 # Regression test for if_node$string_else_if() (R/Nodes.R): with 2+ "else if"

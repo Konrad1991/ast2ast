@@ -56,6 +56,8 @@ expect_equal(
   tolerance = 1e-6
 )
 
+if (!at_home()) exit_file("slow: compiles; runs at home / CI only")
+
 # --- nnls ----------------------------------------------------------------
 
 if (!requireNamespace("nnls", quietly = TRUE)) {

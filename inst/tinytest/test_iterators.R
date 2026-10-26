@@ -1,4 +1,5 @@
 library(tinytest)
+if (!at_home()) exit_file("slow: compiles; runs at home / CI only")
 
 # The translate()-and-run cases all go through one dispatch TU (one compile).
 # The three expect_error(translate(...)) cases below fail during type checking,
