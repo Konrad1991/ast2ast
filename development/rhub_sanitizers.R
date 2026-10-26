@@ -13,7 +13,7 @@ rhub_doctor()
 
 # gcc-asan = CRAN's fedora-gcc-devel ASAN + UBSAN setup
 # m1-san = CRAN's M1 mac ASAN + UBSAN (rejected 1.0.1)
-platforms <- c("gcc-asan", "clang-asan", "clang-ubsan", "m1-san")
+platforms <- c("gcc-asan", "clang-asan", "clang-ubsan", "m1-san", "clang23")
 available <- rhub_platforms()$name
 stopifnot(all(platforms %in% available))
 
