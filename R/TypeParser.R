@@ -568,7 +568,8 @@ predefined_known_types <- quote({
       abstol |> type(double),
       stiff |> type(logical),
       max_steps |> type(int),
-      stats |> type(logical)
+      stats |> type(logical),
+      linear_solver |> type(int)
     )
   )
   new_type(
@@ -577,7 +578,8 @@ predefined_known_types <- quote({
       reltol |> type(double),
       abstol |> type(double),
       max_steps |> type(int),
-      stats |> type(logical)
+      stats |> type(logical),
+      linear_solver |> type(int)
     )
   )
 })

@@ -5,7 +5,9 @@
 #include <idas/idas.h>
 #include <nvector/nvector_serial.h>
 #include <sundials/sundials_linearsolver.h>
+#include <sunlinsol/sunlinsol_dense.h>
 #include <sunmatrix/sunmatrix_dense.h>
+#include <sunnonlinsol/sunnonlinsol_fixedpoint.h>
 
 #include <cstdlib>
 #include <string>
@@ -15,34 +17,47 @@ namespace etr {
 
 // slots must match predefined_known_types in R/TypeParser.R;
 // the defaults live in the registry (cvode_options() / ida_options())
+// linear_solver: 1 = SUNDIALS dense LU, 2 = LAPACK (linear_solvers in FunctionRegistry.R)
+inline const char *linear_solver_name(const Integer &code) {
+  if (code.isNA()) return "NA";
+  const int c = get_val(code);
+  return c == 1 ? "sundials" : c == 2 ? "lapack" : "unknown";
+}
+
 struct cvode_options {
   Double reltol;
   Double abstol;
   Logical stiff;
   Integer max_steps;
   Logical stats;
-  cvode_options(Double reltol_, Double abstol_, Logical stiff_, Integer max_steps_, Logical stats_)
-    : reltol(reltol_), abstol(abstol_), stiff(stiff_), max_steps(max_steps_), stats(stats_) {}
+  Integer linear_solver;
+  cvode_options(Double reltol_, Double abstol_, Logical stiff_, Integer max_steps_, Logical stats_,
+                Integer linear_solver_)
+    : reltol(reltol_), abstol(abstol_), stiff(stiff_), max_steps(max_steps_), stats(stats_),
+      linear_solver(linear_solver_) {}
 #ifndef STANDALONE_ETR
   explicit cvode_options(SEXP arg) :
-    reltol(SEXP2Scalar<Double>(checked_elt(arg, "reltol", 5, "cvode_options"))),
-    abstol(SEXP2Scalar<Double>(checked_elt(arg, "abstol", 5, "cvode_options"))),
-    stiff(SEXP2Scalar<Logical>(checked_elt(arg, "stiff", 5, "cvode_options"))),
-    max_steps(SEXP2Scalar<Integer>(checked_elt(arg, "max_steps", 5, "cvode_options"))),
-    stats(SEXP2Scalar<Logical>(checked_elt(arg, "stats", 5, "cvode_options"))) {}
+    reltol(SEXP2Scalar<Double>(checked_elt(arg, "reltol", 6, "cvode_options"))),
+    abstol(SEXP2Scalar<Double>(checked_elt(arg, "abstol", 6, "cvode_options"))),
+    stiff(SEXP2Scalar<Logical>(checked_elt(arg, "stiff", 6, "cvode_options"))),
+    max_steps(SEXP2Scalar<Integer>(checked_elt(arg, "max_steps", 6, "cvode_options"))),
+    stats(SEXP2Scalar<Logical>(checked_elt(arg, "stats", 6, "cvode_options"))),
+    linear_solver(SEXP2Scalar<Integer>(checked_elt(arg, "linear_solver", 6, "cvode_options"))) {}
   SEXP to_SEXP() const {
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 5));
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 6));
     SET_VECTOR_ELT(res, 0, Cast(reltol));
     SET_VECTOR_ELT(res, 1, Cast(abstol));
     SET_VECTOR_ELT(res, 2, Cast(stiff));
     SET_VECTOR_ELT(res, 3, Cast(max_steps));
     SET_VECTOR_ELT(res, 4, Cast(stats));
-    SEXP names = PROTECT(Rf_allocVector(STRSXP, 5));
+    SET_VECTOR_ELT(res, 5, Cast(linear_solver));
+    SEXP names = PROTECT(Rf_allocVector(STRSXP, 6));
     SET_STRING_ELT(names, 0, Rf_mkChar("reltol"));
     SET_STRING_ELT(names, 1, Rf_mkChar("abstol"));
     SET_STRING_ELT(names, 2, Rf_mkChar("stiff"));
     SET_STRING_ELT(names, 3, Rf_mkChar("max_steps"));
     SET_STRING_ELT(names, 4, Rf_mkChar("stats"));
+    SET_STRING_ELT(names, 5, Rf_mkChar("linear_solver"));
     Rf_setAttrib(res, R_NamesSymbol, names);
     Rf_setAttrib(res, R_ClassSymbol, Rf_mkString("cvode_options"));
     UNPROTECT(2);
@@ -63,6 +78,7 @@ inline void print(const cvode_options& x) {
   PRINT_STREAM << "  stiff: " << x.stiff << std::endl;
   PRINT_STREAM << "  max_steps: " << x.max_steps << std::endl;
   PRINT_STREAM << "  stats: " << x.stats << std::endl;
+  PRINT_STREAM << "  linear_solver: " << linear_solver_name(x.linear_solver) << std::endl;
 }
 
 struct ida_options {
@@ -70,25 +86,31 @@ struct ida_options {
   Double abstol;
   Integer max_steps;
   Logical stats;
-  ida_options(Double reltol_, Double abstol_, Integer max_steps_, Logical stats_)
-    : reltol(reltol_), abstol(abstol_), max_steps(max_steps_), stats(stats_) {}
+  Integer linear_solver;
+  ida_options(Double reltol_, Double abstol_, Integer max_steps_, Logical stats_,
+              Integer linear_solver_)
+    : reltol(reltol_), abstol(abstol_), max_steps(max_steps_), stats(stats_),
+      linear_solver(linear_solver_) {}
 #ifndef STANDALONE_ETR
   explicit ida_options(SEXP arg) :
-    reltol(SEXP2Scalar<Double>(checked_elt(arg, "reltol", 4, "ida_options"))),
-    abstol(SEXP2Scalar<Double>(checked_elt(arg, "abstol", 4, "ida_options"))),
-    max_steps(SEXP2Scalar<Integer>(checked_elt(arg, "max_steps", 4, "ida_options"))),
-    stats(SEXP2Scalar<Logical>(checked_elt(arg, "stats", 4, "ida_options"))) {}
+    reltol(SEXP2Scalar<Double>(checked_elt(arg, "reltol", 5, "ida_options"))),
+    abstol(SEXP2Scalar<Double>(checked_elt(arg, "abstol", 5, "ida_options"))),
+    max_steps(SEXP2Scalar<Integer>(checked_elt(arg, "max_steps", 5, "ida_options"))),
+    stats(SEXP2Scalar<Logical>(checked_elt(arg, "stats", 5, "ida_options"))),
+    linear_solver(SEXP2Scalar<Integer>(checked_elt(arg, "linear_solver", 5, "ida_options"))) {}
   SEXP to_SEXP() const {
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 4));
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 5));
     SET_VECTOR_ELT(res, 0, Cast(reltol));
     SET_VECTOR_ELT(res, 1, Cast(abstol));
     SET_VECTOR_ELT(res, 2, Cast(max_steps));
     SET_VECTOR_ELT(res, 3, Cast(stats));
-    SEXP names = PROTECT(Rf_allocVector(STRSXP, 4));
+    SET_VECTOR_ELT(res, 4, Cast(linear_solver));
+    SEXP names = PROTECT(Rf_allocVector(STRSXP, 5));
     SET_STRING_ELT(names, 0, Rf_mkChar("reltol"));
     SET_STRING_ELT(names, 1, Rf_mkChar("abstol"));
     SET_STRING_ELT(names, 2, Rf_mkChar("max_steps"));
     SET_STRING_ELT(names, 3, Rf_mkChar("stats"));
+    SET_STRING_ELT(names, 4, Rf_mkChar("linear_solver"));
     Rf_setAttrib(res, R_NamesSymbol, names);
     Rf_setAttrib(res, R_ClassSymbol, Rf_mkString("ida_options"));
     UNPROTECT(2);
@@ -108,6 +130,7 @@ inline void print(const ida_options& x) {
   PRINT_STREAM << "  abstol: " << x.abstol << std::endl;
   PRINT_STREAM << "  max_steps: " << x.max_steps << std::endl;
   PRINT_STREAM << "  stats: " << x.stats << std::endl;
+  PRINT_STREAM << "  linear_solver: " << linear_solver_name(x.linear_solver) << std::endl;
 }
 
 } // namespace etr
@@ -121,6 +144,12 @@ template <typename Opt> inline long int checked_max_steps(const Opt &opt, const 
   etr::ass(!opt.max_steps.isNA() && etr::get_val(opt.max_steps) > 0,
            std::string(solver) + ": max_steps must be a positive integer");
   return static_cast<long int>(etr::get_val(opt.max_steps));
+}
+template <typename Opt> inline int checked_linear_solver(const Opt &opt, const char *solver) {
+  const int code = opt.linear_solver.isNA() ? 0 : etr::get_val(opt.linear_solver);
+  etr::ass(code == 1 || code == 2,
+           std::string(solver) + ": linear_solver must be \"sundials\" or \"lapack\"");
+  return code;
 }
 template <typename Opt> inline void check_tolerances(const Opt &opt, const char *solver) {
   etr::ass(!opt.reltol.isNA() && !opt.abstol.isNA() && etr::get_val(opt.reltol) > 0.0 &&
@@ -206,6 +235,12 @@ inline SUNLinearSolver lapack_dense_solver(SUNContext ctx) {
   return S;
 }
 
+// NOTE: SUNDIALS' LU is the default; with OpenBLAS, concurrent dgetrf calls
+// serialise, so LAPACK does not scale inside pmap
+inline SUNLinearSolver dense_solver(int code, N_Vector y, SUNMatrix A, SUNContext ctx) {
+  return code == 2 ? lapack_dense_solver(ctx) : SUNLinSol_Dense(y, A, ctx);
+}
+
 // NOTE: the *GetReturnFlagName functions return malloc'ed memory
 inline std::string flag_name(char *name) {
   std::string out = name ? name : "unknown flag";
@@ -259,9 +294,11 @@ struct cvode_workspace {
   N_Vector y = nullptr;
   SUNMatrix A = nullptr;
   SUNLinearSolver LS = nullptr;
+  SUNNonlinearSolver NLS = nullptr;
   void *mem = nullptr;
   ~cvode_workspace() {
     if (mem) CVodeFree(&mem);
+    if (NLS) SUNNonlinSolFree(NLS);
     if (LS) SUNLinSolFree(LS);
     if (A) SUNMatDestroy(A);
     if (y) N_VDestroy(y);
@@ -289,8 +326,8 @@ inline void print_cvode_stats(void *mem) {
 
 // cvode(rhs, y0, times, params, options[, jac]) -> length(times) x
 // length(y0) matrix, row k = state at times[k] (row 0 = y0, times[0] = t0).
-// options$stiff -> BDF, else ADAMS. Dense Newton (both), Jacobian from jac or
-// difference quotients.
+// options$stiff -> BDF with dense Newton (Jacobian from jac or difference
+// quotients), else ADAMS with fixed-point iteration (no Jacobian, as deSolve's adams).
 template <typename JAC, typename RHS, typename Y, typename T, typename P>
 requires(
 etr::IsArray<etr::Decayed<Y>> && etr::IsArray<etr::Decayed<T>>
@@ -305,6 +342,7 @@ inline auto cvode_impl(const RHS &rhs, const JAC *jac, const Y &y0, const T &tim
   const long int max_steps = checked_max_steps(opt, "cvode");
   etr::ass<"cvode: stiff must be TRUE or FALSE">(!opt.stiff.isNA());
   etr::ass<"cvode: stats must be TRUE or FALSE">(!opt.stats.isNA());
+  const int linear_solver = checked_linear_solver(opt, "cvode");
 
   P p_local = params; // fixed for the whole integration
   using Ctx = fct_ctx<RHS, P, JAC>;
@@ -323,8 +361,8 @@ inline auto cvode_impl(const RHS &rhs, const JAC *jac, const Y &y0, const T &tim
     yp[i] = etr::get_val(yi);
   }
 
-  const int lmm = etr::get_val(opt.stiff) ? CV_BDF : CV_ADAMS;
-  w.mem = CVodeCreate(lmm, w.ctx);
+  const bool stiff = etr::get_val(opt.stiff);
+  w.mem = CVodeCreate(stiff ? CV_BDF : CV_ADAMS, w.ctx);
   etr::ass<"cvode: CVodeCreate failed">(w.mem != nullptr);
 
   double t0 = etr::get_val(times.get(0));
@@ -333,16 +371,23 @@ inline auto cvode_impl(const RHS &rhs, const JAC *jac, const Y &y0, const T &tim
   etr::ass<"cvode: CVodeSetUserData failed">(CVodeSetUserData(w.mem, &ctx) == CV_SUCCESS);
   etr::ass<"cvode: CVodeSetMaxNumSteps failed">(CVodeSetMaxNumSteps(w.mem, max_steps) == CV_SUCCESS);
 
-  w.A = SUNDenseMatrix(static_cast<sunindextype>(neq),
-                       static_cast<sunindextype>(neq), w.ctx);
-  etr::ass<"cvode: SUNDenseMatrix failed">(w.A != nullptr);
-  w.LS = lapack_dense_solver(w.ctx);
-  etr::ass<"cvode: creating the LAPACK dense linear solver failed">(w.LS != nullptr);
-  etr::ass<"cvode: CVodeSetLinearSolver failed">(
-    CVodeSetLinearSolver(w.mem, w.LS, w.A) == CV_SUCCESS);
-  if constexpr (!std::is_same_v<JAC, no_jac>) {
-    etr::ass<"cvode: CVodeSetJacFn failed">(
-      CVodeSetJacFn(w.mem, &cvode_jac_trampoline<Ctx>) == CV_SUCCESS);
+  if (stiff) {
+    w.A = SUNDenseMatrix(static_cast<sunindextype>(neq),
+                         static_cast<sunindextype>(neq), w.ctx);
+    etr::ass<"cvode: SUNDenseMatrix failed">(w.A != nullptr);
+    w.LS = dense_solver(linear_solver, w.y, w.A, w.ctx);
+    etr::ass<"cvode: creating the dense linear solver failed">(w.LS != nullptr);
+    etr::ass<"cvode: CVodeSetLinearSolver failed">(
+      CVodeSetLinearSolver(w.mem, w.LS, w.A) == CV_SUCCESS);
+    if constexpr (!std::is_same_v<JAC, no_jac>) {
+      etr::ass<"cvode: CVodeSetJacFn failed">(
+        CVodeSetJacFn(w.mem, &cvode_jac_trampoline<Ctx>) == CV_SUCCESS);
+    }
+  } else {
+    w.NLS = SUNNonlinSol_FixedPoint(w.y, 0, w.ctx);
+    etr::ass<"cvode: creating the fixed-point solver failed">(w.NLS != nullptr);
+    etr::ass<"cvode: CVodeSetNonlinearSolver failed">(
+      CVodeSetNonlinearSolver(w.mem, w.NLS) == CV_SUCCESS);
   }
 
   etr::Array<etr::Double, etr::Buffer<etr::Double, etr::RBufferTrait>> res(etr::SI{neq * nt});
@@ -479,6 +524,7 @@ inline auto ida_impl(const RES &res_fct, const JAC *jac, const Y &y0, const YP &
   check_tolerances(opt, "ida");
   const long int max_steps = checked_max_steps(opt, "ida");
   etr::ass<"ida: stats must be TRUE or FALSE">(!opt.stats.isNA());
+  const int linear_solver = checked_linear_solver(opt, "ida");
 
   P p_local = params;
   using Ctx = fct_ctx<RES, P, JAC>;
@@ -514,8 +560,8 @@ inline auto ida_impl(const RES &res_fct, const JAC *jac, const Y &y0, const YP &
 
   w.A = SUNDenseMatrix(n, n, w.ctx);
   etr::ass<"ida: SUNDenseMatrix failed">(w.A != nullptr);
-  w.LS = lapack_dense_solver(w.ctx);
-  etr::ass<"ida: creating the LAPACK dense linear solver failed">(w.LS != nullptr);
+  w.LS = dense_solver(linear_solver, w.y, w.A, w.ctx);
+  etr::ass<"ida: creating the dense linear solver failed">(w.LS != nullptr);
   etr::ass<"ida: IDASetLinearSolver failed">(IDASetLinearSolver(w.mem, w.LS, w.A) == IDA_SUCCESS);
   if constexpr (!std::is_same_v<JAC, no_jac>) {
     etr::ass<"ida: IDASetJacFn failed">(IDASetJacFn(w.mem, &ida_jac_trampoline<Ctx>) == IDA_SUCCESS);

@@ -8,9 +8,14 @@ changes in ast2ast version 1.1.1
   `params` may be any type (vector, scalar, `new_type` struct). Without `jac`
   the Jacobian comes from difference quotients. Both return a
   `length(times) x length(y0)` matrix.
-- `cvode_options(reltol, abstol, stiff, max_steps, stats)` and
-  `ida_options(reltol, abstol, max_steps, stats)`: every argument is optional;
-  `stats = TRUE` prints solver statistics.
+- `cvode_options(reltol, abstol, stiff, max_steps, stats, linear_solver)` and
+  `ida_options(reltol, abstol, max_steps, stats, linear_solver)`: every argument
+  is optional; `stats = TRUE` prints solver statistics.
+  `stiff = FALSE` uses ADAMS with fixed-point iteration (no Jacobian).
+  `linear_solver = "sundials"` (default) or `"lapack"` (faster for large
+  systems; with OpenBLAS it does not run in parallel inside `pmap`).
+- `cvode` / `ida`: a vector `params` has to be a variable; an expression like
+  `c(0.7)` is rejected at translation time.
 - `jacobian`: `x` may be a `borrow_vec` for a `vec` parameter.
 - Fixed: zero-length R vectors passed to translated functions no longer
   trigger an undefined-behaviour report (copy from R's dummy data pointer).

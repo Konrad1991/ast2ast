@@ -2424,7 +2424,12 @@ is_scalar_of <- function(t, base_types) {
   inherits(t, "pre_type_node") && t$get_data_struct() == "scalar" &&
     t$get_base_type() %in% base_types
 }
+linear_solvers <- c(sundials = 1L, lapack = 2L)
 infer_solver_options <- function(node, vars_list, info_env, function_registry, type_name, kinds) {
+  # infer runs more than once; a successful earlier pass already converted the string
+  converted <- is_options_type(node$internal_type, type_name)
+  i_solver <- match("solver", kinds)
+  if (!is.na(i_solver) && converted) kinds[[i_solver]] <- "int"
   all_types <- lapply(node$args, function(arg) {
     infer(arg, vars_list, info_env, function_registry)
   })
@@ -2433,11 +2438,24 @@ infer_solver_options <- function(node, vars_list, info_env, function_registry, t
     ok <- switch(kinds[[i]],
       double = is_scalar_of(all_types[[i]], numeric_types),
       int = is_scalar_of(all_types[[i]], numeric_types),
-      logical = is_scalar_of(all_types[[i]], c("logical", "bool", numeric_types))
+      logical = is_scalar_of(all_types[[i]], c("logical", "bool", numeric_types)),
+      solver = TRUE
     )
     if (!ok) {
       return(sprintf("%s: %s has to be a scalar %s", type_name, names(kinds)[[i]], kinds[[i]]))
     }
+  }
+  # NOTE: converted last, so a failing pass leaves the string for the next one
+  if (!is.na(i_solver) && !converted) {
+    arg <- node$args[[i_solver]]
+    value <- if (inherits(arg, "literal_node") && arg$literal_type == "character") {
+      remove_double_quotes(arg$name)
+    } else ""
+    if (!(value %in% names(linear_solvers))) {
+      return(sprintf("%s: linear_solver has to be \"sundials\" or \"lapack\"", type_name))
+    }
+    arg$name <- paste0(linear_solvers[[value]], "L")
+    arg$literal_type <- "integer"
   }
   t <- info_env$known_types[[type_name]]
   if (is.null(t)) return(sprintf("Did not find the predefined type %s", type_name))
@@ -2447,15 +2465,30 @@ infer_solver_options <- function(node, vars_list, info_env, function_registry, t
 is_options_type <- function(t, type_name) {
   inherits(t, "new_type_node") && identical(t$name, type_name)
 }
+# NOTE: c(0.7) yields a temporary (RBufferTrait): only a const ref binds to it,
+# and that converting constructor fails at runtime ("Constructor not supported")
+check_solver_params_variable <- function(node, t, solver, pos) {
+  if (inherits(t, "pre_type_node") && t$get_data_struct() %in% c("vector", "matrix", "array") &&
+      !inherits(node$args[[pos]], "variable_node")) {
+    return(sprintf("%s: params (argument %d) has to be a variable, e.g. p <- c(0.7) and then pass p",
+                   solver, pos))
+  }
+  NULL
+}
 cvode_option_kinds <- c(reltol = "double", abstol = "double", stiff = "logical",
-                        max_steps = "int", stats = "logical")
+                        max_steps = "int", stats = "logical", linear_solver = "solver")
 function_registry_global$add(
-  name = "cvode_options", num_args = 5, arg_names = names(cvode_option_kinds),
-  defaults = list(reltol = 1e-6, abstol = 1e-6, stiff = TRUE, max_steps = 1000000L, stats = FALSE),
+  name = "cvode_options", num_args = 6, arg_names = names(cvode_option_kinds),
+  defaults = list(reltol = 1e-6, abstol = 1e-6, stiff = TRUE, max_steps = 1000000L, stats = FALSE,
+                  linear_solver = "sundials"),
   docu = paste0(
-    "cvode_options(reltol = 1e-6, abstol = 1e-6, stiff = TRUE, max_steps = 1000000L, stats = FALSE)\n",
-    "Options for cvode; every argument is optional. stiff: TRUE -> BDF, FALSE -> ADAMS. ",
-    "max_steps: maximum number of steps per output interval. stats: print solver statistics."
+    "cvode_options(reltol = 1e-6, abstol = 1e-6, stiff = TRUE, max_steps = 1000000L, stats = FALSE, ",
+    "linear_solver = \"sundials\")\n",
+    "Options for cvode; every argument is optional. stiff: TRUE -> BDF with Newton iteration, ",
+    "FALSE -> ADAMS with fixed-point iteration (no Jacobian, jac is not used). ",
+    "max_steps: maximum number of steps per output interval. stats: print solver statistics. ",
+    "linear_solver (stiff = TRUE): \"sundials\" (dense LU of SUNDIALS) or \"lapack\" ",
+    "(faster for large systems; with OpenBLAS it does not run in parallel inside pmap)."
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     infer_solver_options(node, vars_list, info_env, function_registry, "cvode_options", cvode_option_kinds)
@@ -2463,14 +2496,19 @@ function_registry_global$add(
   check_fct = mock,
   group = "function_node", cpp_name = "etr::cvode_options", deriv_possible = FALSE
 )
-ida_option_kinds <- c(reltol = "double", abstol = "double", max_steps = "int", stats = "logical")
+ida_option_kinds <- c(reltol = "double", abstol = "double", max_steps = "int", stats = "logical",
+                      linear_solver = "solver")
 function_registry_global$add(
-  name = "ida_options", num_args = 4, arg_names = names(ida_option_kinds),
-  defaults = list(reltol = 1e-6, abstol = 1e-6, max_steps = 1000000L, stats = FALSE),
+  name = "ida_options", num_args = 5, arg_names = names(ida_option_kinds),
+  defaults = list(reltol = 1e-6, abstol = 1e-6, max_steps = 1000000L, stats = FALSE,
+                  linear_solver = "sundials"),
   docu = paste0(
-    "ida_options(reltol = 1e-6, abstol = 1e-6, max_steps = 1000000L, stats = FALSE)\n",
+    "ida_options(reltol = 1e-6, abstol = 1e-6, max_steps = 1000000L, stats = FALSE, ",
+    "linear_solver = \"sundials\")\n",
     "Options for ida; every argument is optional. ",
-    "max_steps: maximum number of steps per output interval. stats: print solver statistics."
+    "max_steps: maximum number of steps per output interval. stats: print solver statistics. ",
+    "linear_solver: \"sundials\" (dense LU of SUNDIALS) or \"lapack\" ",
+    "(faster for large systems; with OpenBLAS it does not run in parallel inside pmap)."
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     infer_solver_options(node, vars_list, info_env, function_registry, "ida_options", ida_option_kinds)
@@ -2520,6 +2558,8 @@ function_registry_global$add(
     if (inherits(all_types[[4L]], "fn_node")) {
       return("cvode: params (argument 4) cannot be a function")
     }
+    err <- check_solver_params_variable(node, all_types[[4L]], "cvode", 4L)
+    if (!is.null(err)) return(err)
     if (!is_options_type(all_types[[5L]], "cvode_options")) {
       return("cvode: options (argument 5) has to be created by cvode_options()")
     }
@@ -2614,6 +2654,8 @@ function_registry_global$add(
     if (inherits(all_types[[5L]], "fn_node")) {
       return("ida: params (argument 5) cannot be a function")
     }
+    err <- check_solver_params_variable(node, all_types[[5L]], "ida", 5L)
+    if (!is.null(err)) return(err)
     if (!is_options_type(all_types[[7L]], "ida_options")) {
       return("ida: options (argument 7) has to be created by ida_options()")
     }
@@ -3190,6 +3232,8 @@ function_registry_global$add(
   docu = paste0(
     "pmap(f, ncores, x, ...)  # like map, but the elements are processed in parallel.\n",
     "ncores: scalar int or double, clamped to [1, number of cores].\n",
+    "Worker i is pinned to logical CPU i; with hyperthreading two workers can share\n",
+    "one physical core, so memory-heavy f may scale with about half of ncores.\n",
     "f may not call functions that use the R API (e.g. lbfgsb)."
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {

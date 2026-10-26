@@ -58,7 +58,7 @@ expect_identical(out, character()) # stats = FALSE by default
 
 f <- function(y0) {
   argtypes(y0 |> type(vec(double)))
-  opts <- cvode_options(stiff = c(TRUE, FALSE))
+  opts <- cvode_options(stiff = c(TRUE, FALSE), linear_solver = "sundials")
   return(y0)
 }
 expect_error(ast2ast::translate(f), pattern = "cvode_options: stiff has to be a scalar logical")
@@ -68,15 +68,60 @@ f <- function(y0) {
   return(y0)
 }
 expect_error(ast2ast::translate(f), pattern = "Unknown argument 'rtol'")
+f <- function(y0) {
+  argtypes(y0 |> type(vec(double)))
+  opts <- cvode_options(linear_solver = "klu")
+  return(y0)
+}
+expect_error(ast2ast::translate(f), pattern = "linear_solver has to be \"sundials\" or \"lapack\"")
+f <- function(y0) {
+  argtypes(y0 |> type(vec(double)))
+  opts <- ida_options(linear_solver = 2L)
+  return(y0)
+}
+expect_error(ast2ast::translate(f), pattern = "linear_solver has to be \"sundials\" or \"lapack\"")
+
+# --- params as an expression is rejected ------------------------------------------
+f <- function(y0, times) {
+  argtypes(y0 |> type(vec(double)), times |> type(vec(double)))
+  decay <- function(t, y, ydot, k) {
+    argtypes(
+      t |> type(double) |> ref(),
+      y |> type(borrow_vec(double)) |> ref(),
+      ydot |> type(borrow_vec(double)) |> ref(),
+      k |> type(vec(double)) |> ref() |> const()
+    )
+    returntype(void)
+    ydot[[1]] <- -k[[1]] * y[[1]]
+  }
+  return(cvode(decay, y0, times, c(0.7)))
+}
+expect_error(ast2ast::translate(f, getsource = TRUE), pattern = "cvode: params \\(argument 4\\) has to be a variable")
+f <- function(y0, times, id) {
+  argtypes(y0 |> type(vec(double)), times |> type(vec(double)), id |> type(vec(double)))
+  residual <- function(t, y, yp, r, k) {
+    argtypes(
+      t |> type(double) |> ref(),
+      y |> type(borrow_vec(double)) |> ref(),
+      yp |> type(borrow_vec(double)) |> ref(),
+      r |> type(borrow_vec(double)) |> ref(),
+      k |> type(vec(double)) |> ref()
+    )
+    returntype(void)
+    r[[1]] <- yp[[1]] + k[[1]] * y[[1]]
+  }
+  return(ida(residual, y0, y0, times, c(0.7), id))
+}
+expect_error(ast2ast::translate(f, getsource = TRUE), pattern = "ida: params \\(argument 5\\) has to be a variable")
 
 if (!at_home()) exit_file("slow: compiles; runs at home / CI only")
 
 # --- cvode with jac: Robertson (stiff) ---------------------------------------
 
-robertson <- function(y0, times, k, with_jac) {
+robertson <- function(y0, times, k, with_jac, lapack) {
   argtypes(
     y0 |> type(vec(double)), times |> type(vec(double)), k |> type(vec(double)),
-    with_jac |> type(logical)
+    with_jac |> type(logical), lapack |> type(logical)
   )
   rhs <- function(t, y, ydot, k) {
     argtypes(
@@ -108,17 +153,21 @@ robertson <- function(y0, times, k, with_jac) {
     J[2L, 3L] <- -k[[2L]] * y[[2L]]
   }
   opts <- cvode_options(reltol = 1e-8, abstol = 1e-12)
+  opts_lapack <- cvode_options(reltol = 1e-8, abstol = 1e-12, linear_solver = "lapack")
+  if (lapack) return(cvode(rhs, y0, times, k, opts_lapack, jac))
   if (with_jac) return(cvode(rhs, y0, times, k, opts, jac))
   return(cvode(rhs, y0, times, k, opts))
 }
 rcpp <- ast2ast::translate(robertson)
 k <- c(0.04, 1e4, 3e7)
 times <- c(0, 0.4, 4, 40)
-out <- capture.output(res_jac <- rcpp(c(1, 0, 0), times, k, TRUE))
+out <- capture.output(res_jac <- rcpp(c(1, 0, 0), times, k, TRUE, FALSE))
 expect_true(length(out) > 0L) # jac was called
-res_dq <- rcpp(c(1, 0, 0), times, k, FALSE)
+res_dq <- rcpp(c(1, 0, 0), times, k, FALSE, FALSE)
 expect_equal(res_jac, res_dq, tolerance = 1e-6)
 expect_equal(rowSums(res_jac), rep(1, 4), tolerance = 1e-8)
+out <- capture.output(res_lapack <- rcpp(c(1, 0, 0), times, k, TRUE, TRUE))
+expect_equal(res_lapack, res_jac, tolerance = 1e-6)
 
 # --- cvode: jac translation errors -------------------------------------------
 
@@ -224,10 +273,11 @@ expect_error(fcpp(c(1, 0), c(0, 0), times, 0.7, c(1, 0, 1)), pattern = "same len
 
 # --- ida with jac: Robertson as DAE (y3 algebraic) ----------------------------
 
-robertson_dae <- function(y0, yp0, times, k, id, with_jac) {
+robertson_dae <- function(y0, yp0, times, k, id, with_jac, lapack) {
   argtypes(
     y0 |> type(vec(double)), yp0 |> type(vec(double)), times |> type(vec(double)),
-    k |> type(vec(double)), id |> type(vec(double)), with_jac |> type(logical)
+    k |> type(vec(double)), id |> type(vec(double)), with_jac |> type(logical),
+    lapack |> type(logical)
   )
   residual <- function(t, y, yp, r, k) {
     argtypes(
@@ -264,6 +314,8 @@ robertson_dae <- function(y0, yp0, times, k, id, with_jac) {
     J[3L, 3L] <- 1
   }
   opts <- ida_options(reltol = 1e-8, abstol = 1e-12)
+  opts_lapack <- ida_options(reltol = 1e-8, abstol = 1e-12, linear_solver = "lapack")
+  if (lapack) return(ida(residual, y0, yp0, times, k, id, opts_lapack, jac))
   if (with_jac) return(ida(residual, y0, yp0, times, k, id, opts, jac))
   return(ida(residual, y0, yp0, times, k, id, opts))
 }
@@ -271,11 +323,13 @@ rcpp <- ast2ast::translate(robertson_dae)
 k <- c(0.04, 1e4, 3e7)
 times <- c(0, 0.4, 4, 40)
 args <- list(c(1, 0, 0), c(-0.04, 0.04, 0), times, k, c(1, 1, 0))
-out <- capture.output(res_jac <- do.call(rcpp, c(args, TRUE)))
+out <- capture.output(res_jac <- do.call(rcpp, c(args, TRUE, FALSE)))
 expect_true(length(out) > 0L) # jac was called
-res_dq <- do.call(rcpp, c(args, FALSE))
+res_dq <- do.call(rcpp, c(args, FALSE, FALSE))
 expect_equal(res_jac, res_dq, tolerance = 1e-6)
 expect_equal(rowSums(res_jac), rep(1, 4), tolerance = 1e-8)
+out <- capture.output(res_lapack <- do.call(rcpp, c(args, TRUE, TRUE)))
+expect_equal(res_lapack, res_jac, tolerance = 1e-6)
 
 # --- ida: translation errors -------------------------------------------------
 

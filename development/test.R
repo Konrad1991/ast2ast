@@ -15,6 +15,7 @@ parallel::stopCluster(cl)
 
 tinytest::run_test_file("./inst/tinytest/test_inner_functions.R")
 tinytest::run_test_file("./inst/tinytest/test_hoisted_functions.R")
+tinytest::run_test_file("./inst/tinytest/test_sundials.R")
 
 files <- list.files("./R", full.names = TRUE)
 invisible(lapply(files, source))
