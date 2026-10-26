@@ -58,24 +58,6 @@
    }
    ```
 
-## B. Smaller issues
-
-1. `make_package`: stray `-latomic -lpthread` output during the run
-2. `compare_types_passed_to_fn` does not distinguish `borrow_vec` from `vec`
-   (`get_data_struct()` is "vector" for both; `get_data_struct_verbose()` would)
-
-## C. Documentation
-
-1. `pmap`
-2. `function()` syntax (`argtypes()` / `returntype()`): vignette, README, NEWS
-3. borrow / ref: docs say "XPtr only", wrong for inner fns
-
-## D. Release / design
-
-1. ast2ast 1.1 after the sundials CRAN feedback (run `development/sanitize.sh` first)
-2. Design the `ida()` / `cvode()` options: max steps (now hardcoded
-   `a2a::max_num_steps = 1e6`), solver statistics (now env var `A2A_IDA_STATS=1`)
-
 ## E. Postponed
 
 - string type (`string_type.md`)
