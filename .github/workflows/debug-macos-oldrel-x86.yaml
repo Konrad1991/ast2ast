@@ -1,0 +1,98 @@
+# Temporary workflow: reproduce the CRAN r-oldrel-macos-x86_64 bus error
+# in test_range_type.R. Delete together with the debug/macos-oldrel-x86 branch.
+on:
+  push:
+    branches: [debug/macos-oldrel-x86]
+  workflow_dispatch:
+
+name: debug-macos-oldrel-x86
+
+jobs:
+  repro:
+    runs-on: ${{ matrix.config.os }}
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: macos-15-intel, r: 'oldrel-1'}
+          - {os: macos-15-intel, r: 'release'}
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      _R_CHECK_FORCE_SUGGESTS_: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck, any::tinytest
+          needs: check
+
+      - name: Toolchain info
+        run: |
+          sw_vers
+          uname -m
+          R --version | head -1
+          clang++ --version
+          R CMD config CXX20
+          R CMD config CXX20FLAGS
+          Rscript -e 'sessionInfo()'
+
+      - name: Install ast2ast
+        run: R CMD INSTALL .
+
+      # 1) Isolated: only the failing function, plus control variants.
+      - name: Isolated repro (variants)
+        continue-on-error: true
+        run: |
+          for v in trivial literal_seq no_reassign range; do
+            echo "::group::variant $v"
+            Rscript .github/debug/repro_range.R $v; echo "exit code: $?"
+            echo "::endgroup::"
+          done
+
+      # 2) Only test_range_type.R, as CRAN runs it (not at home).
+      - name: test_range_type.R alone
+        continue-on-error: true
+        run: |
+          Rscript -e 'library(tinytest); library(ast2ast); print(run_test_file(system.file("tinytest", "test_range_type.R", package = "ast2ast"), at_home = FALSE, verbose = 2))'
+
+      # 3) Full test suite in CRAN order: does it depend on earlier files?
+      - name: Full tinytest suite (CRAN mode)
+        continue-on-error: true
+        run: |
+          Rscript -e 'library(tinytest); print(test_package("ast2ast", at_home = FALSE))'
+
+      # 4) Same failing case under lldb to get the native frames.
+      - name: lldb backtrace
+        continue-on-error: true
+        run: |
+          R -d lldb --debugger-args='--batch -o run -k "bt all" -k "register read" -k "image lookup -a $pc" -k "disassemble -p -c 12"' --vanilla -f .github/debug/repro_range.R --args range
+
+      # 5) R CMD check --as-cran, like CRAN.
+      - name: R CMD check --as-cran
+        continue-on-error: true
+        run: |
+          R CMD build --no-build-vignettes --no-manual .
+          R CMD check --as-cran --no-manual --ignore-vignettes ast2ast_*.tar.gz
+
+      - name: Collect crash reports
+        if: always()
+        run: |
+          mkdir -p crash
+          cp ~/Library/Logs/DiagnosticReports/* crash/ 2>/dev/null || true
+          cp ast2ast.Rcheck/tests/*.Rout* crash/ 2>/dev/null || true
+          cp ast2ast.Rcheck/00check.log crash/ 2>/dev/null || true
+          ls -la crash
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: crash-${{ matrix.config.os }}-${{ matrix.config.r }}
+          path: crash
