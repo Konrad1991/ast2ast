@@ -17,6 +17,8 @@ jobs:
         config:
           - {os: macos-15-intel, r: 'oldrel-1'}
           - {os: macos-15-intel, r: 'release'}
+    permissions:
+      contents: write
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       _R_CHECK_FORCE_SUGGESTS_: false
@@ -36,6 +38,8 @@ jobs:
 
       - name: Toolchain info
         run: |
+          mkdir -p out
+          exec > >(tee out/0_toolchain.txt) 2>&1
           sw_vers
           uname -m
           R --version | head -1
@@ -45,7 +49,7 @@ jobs:
           Rscript -e 'sessionInfo()'
 
       - name: Install ast2ast
-        run: R CMD INSTALL .
+        run: R CMD INSTALL . 2>&1 | tee out/1_install.txt
 
       # 1) Isolated: only the failing function, plus control variants.
       - name: Isolated repro (variants)
@@ -53,7 +57,7 @@ jobs:
         run: |
           for v in trivial literal_seq no_reassign range; do
             echo "::group::variant $v"
-            Rscript .github/debug/repro_range.R $v; echo "exit code: $?"
+            Rscript .github/debug/repro_range.R $v > out/2_variant_$v.txt 2>&1; echo "exit code: $?" >> out/2_variant_$v.txt; cat out/2_variant_$v.txt
             echo "::endgroup::"
           done
 
@@ -61,38 +65,54 @@ jobs:
       - name: test_range_type.R alone
         continue-on-error: true
         run: |
-          Rscript -e 'library(tinytest); library(ast2ast); print(run_test_file(system.file("tinytest", "test_range_type.R", package = "ast2ast"), at_home = FALSE, verbose = 2))'
+          Rscript -e 'library(tinytest); library(ast2ast); print(run_test_file(system.file("tinytest", "test_range_type.R", package = "ast2ast"), at_home = FALSE, verbose = 2))' 2>&1 | tee out/3_range_type_alone.txt
 
       # 3) Full test suite in CRAN order: does it depend on earlier files?
       - name: Full tinytest suite (CRAN mode)
         continue-on-error: true
         run: |
-          Rscript -e 'library(tinytest); print(test_package("ast2ast", at_home = FALSE))'
+          Rscript -e 'library(tinytest); print(test_package("ast2ast", at_home = FALSE))' 2>&1 | tee out/4_full_suite.txt
 
       # 4) Same failing case under lldb to get the native frames.
       - name: lldb backtrace
         continue-on-error: true
         run: |
-          R -d lldb --debugger-args='--batch -o run -k "bt all" -k "register read" -k "image lookup -a $pc" -k "disassemble -p -c 12"' --vanilla -f .github/debug/repro_range.R --args range
+          R -d lldb --debugger-args='--batch -o run -k "bt all" -k "register read" -k "image lookup -a $pc" -k "disassemble -p -c 12"' --vanilla -f .github/debug/repro_range.R --args range 2>&1 | tee out/5_lldb.txt
 
       # 5) R CMD check --as-cran, like CRAN.
       - name: R CMD check --as-cran
         continue-on-error: true
         run: |
           R CMD build --no-build-vignettes --no-manual .
-          R CMD check --as-cran --no-manual --ignore-vignettes ast2ast_*.tar.gz
+          R CMD check --as-cran --no-manual --ignore-vignettes ast2ast_*.tar.gz 2>&1 | tee out/6_check.txt
 
       - name: Collect crash reports
         if: always()
         run: |
-          mkdir -p crash
-          cp ~/Library/Logs/DiagnosticReports/* crash/ 2>/dev/null || true
-          cp ast2ast.Rcheck/tests/*.Rout* crash/ 2>/dev/null || true
-          cp ast2ast.Rcheck/00check.log crash/ 2>/dev/null || true
-          ls -la crash
+          mkdir -p out/crash
+          cp ~/Library/Logs/DiagnosticReports/* out/crash/ 2>/dev/null || true
+          cp ast2ast.Rcheck/tests/*.Rout* out/crash/ 2>/dev/null || true
+          cp ast2ast.Rcheck/00check.log out/crash/ 2>/dev/null || true
+          ls -la out out/crash
+
+      # Push the outputs to a branch so they can be read with plain git.
+      - name: Push results branch
+        if: always()
+        run: |
+          B="debug-results/${{ matrix.config.r }}"
+          mv out /tmp/out
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout --orphan "$B"
+          git rm -rqf .
+          git clean -fdxq
+          cp -R /tmp/out/. .
+          git add -A
+          git commit -qm "debug results ${{ matrix.config.r }} (${{ github.sha }})"
+          git push -f origin "$B"
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: crash-${{ matrix.config.os }}-${{ matrix.config.r }}
-          path: crash
+          path: /tmp/out
