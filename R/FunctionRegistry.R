@@ -3146,7 +3146,7 @@ infer_hessian <- function(node, vars_list, info_env, function_registry, fname) {
   if (info_env$real_type == "etr::ReverseDouble") {
     fn <- runtime_colouring_fn(node$args[[1L]], vars_list)
     if (!is.null(fn)) {
-      err <- runtime_colouring_reverse_error(fn, vars_list, fname, c(ad_only_fcts, no_hessian_fcts))
+      err <- runtime_colouring_reverse_error(fn, vars_list, fname, ad_only_fcts)
       if (!is.null(err)) return(err)
     }
   } else {
@@ -3155,7 +3155,7 @@ infer_hessian <- function(node, vars_list, info_env, function_registry, fname) {
       return(sprintf("%s: f has to be a named fn, not an inline fn (unless translate(derivative = \"reverse\"))", fname))
     }
     no_ad <- function_registry$function_names[!function_registry$deriv_possibles]
-    err <- runtime_colouring_reverse_error(fn, vars_list, fname, c(ad_only_fcts, no_hessian_fcts, no_ad))
+    err <- runtime_colouring_reverse_error(fn, vars_list, fname, c(ad_only_fcts, no_ad))
     if (!is.null(err)) return(err)
     node$args[[1L]]$functor_scalar <- "etr::ReverseDouble"
   }

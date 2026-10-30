@@ -69,7 +69,15 @@ in isolation. Possible: b) internally as building blocks, a) on top.
    - forward with sensitivities, backward CVodeInitBS (depends on yS)
    - lambda^T f_yy s_i via hvp
    - done when: matches FD of gradient from 3
-   Status 2026-10-30: DONE, full suite green (cvodes_reverse_impl + cvode_adjoint_state,
+   Status step 4 2026-10-30: DONE, full suite green.
+   BlockOp.tangent / backward2 (std::function), HessianSweep custom_forward /
+   custom_reverse + reverse_seeded. cvode_adjoint_state::tangent = CVODES
+   forward with 1 sensitivity (rhs_t<Dual>, p dot = pdot) + CVodeAdjInit;
+   backward2 = CVodeInitBS / QuadInitBS on [lambda; mu], [q; q2];
+   vjp2 = HessianSweep over a locally recorded rhs_t<ReverseDouble>.
+   Per Hessian direction one forward + one backward solve (no reuse yet).
+   R: no_hessian_fcts removed; runtime check allows borrow fns as cvode args.
+   Status step 3 2026-10-30: DONE, full suite green (cvodes_reverse_impl + cvode_adjoint_state,
    Borrow<ReverseDouble> specialisation (handles, get() by reference),
    ROp::Custom + push_custom + reverse_range, reverse_borrow_error in R,
    tests inst/tinytest/test_cvodes_adjoint.R). D3 done via C++ rebind_scalar

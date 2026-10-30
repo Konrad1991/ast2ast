@@ -781,6 +781,300 @@ template <typename RHS_R, typename JAC_R> struct cvode_adjoint_state {
     y0bar.assign(lam, lam + neq);
     pbar.assign(q, q + np);
   }
+
+  // ---------- second order (HessianSweep), one direction d = (y0dot, pdot) ----------
+  // tangent:   forward solve with one sensitivity s = dy/dd, rhs_t<Dual> (p carries pdot)
+  // backward2: backward state [lambda; mu], quadrature [q; q2]
+  //   lambda' = -f_y^T lambda
+  //   mu'     = -f_y^T mu - (f_yy s + f_yp pdot)^T lambda
+  //   q'      = -f_p^T lambda
+  //   q2'     = -f_p^T mu - (f_py s + f_pp pdot)^T lambda
+  //   jumps lambda += ybar(t_k), mu += ybar_dot(t_k)
+  // both terms: one forward-over-reverse sweep of rhs_t<ReverseDouble> (vjp2)
+  using RHS_Dual = typename rebind_scalar<RHS_R, etr::Dual>::type;
+  using JAC_Dual = typename rebind_scalar<JAC_R, etr::Dual>::type;
+  using DualVec = etr::Array<etr::Dual, etr::Buffer<etr::Dual>>;
+  using DualCtx = dual_fct_ctx<RHS_Dual, DualVec, JAC_Dual>;
+
+  struct second_order {
+    cvodes_workspace w;
+    N_Vector yB = nullptr;
+    N_Vector qB = nullptr;
+    SUNMatrix AB = nullptr;
+    SUNLinearSolver LSB = nullptr;
+    SUNNonlinearSolver NLSB = nullptr;
+    int which = -1;
+    RHS_Dual rhs{};
+    JAC_Dual jac{};
+    DualVec p_dual;
+    DualCtx ctx{};
+    std::vector<double> pdot;
+    ~second_order() {
+      if (w.mem) CVodeFree(&w.mem);
+      if (NLSB) SUNNonlinSolFree(NLSB);
+      if (LSB) SUNLinSolFree(LSB);
+      if (AB) SUNMatDestroy(AB);
+      if (qB) N_VDestroy(qB);
+      if (yB) N_VDestroy(yB);
+    }
+  };
+  std::unique_ptr<second_order> so;
+  std::vector<double> y0_vals;
+
+  // vjp2 cache, key = (t, y, s, lambda, mu)
+  double vjp2_t = 0.0;
+  std::vector<double> vjp2_key, vjp2_ay, vjp2_by, vjp2_ap, vjp2_bp;
+  bool vjp2_valid = false;
+
+  // a = f^T lambda, b = f^T mu + (f'' [s, pdot])^T lambda, split into y and p parts
+  void vjp2(double t, const double *y, const double *s, const double *lambda, const double *mu) {
+    const std::size_t np = p_vals.size();
+    std::vector<double> key;
+    key.reserve(4 * neq);
+    key.insert(key.end(), y, y + neq);
+    key.insert(key.end(), s, s + neq);
+    key.insert(key.end(), lambda, lambda + neq);
+    key.insert(key.end(), mu, mu + neq);
+    if (vjp2_valid && t == vjp2_t && key == vjp2_key) return;
+    auto &tape = etr::TAPE_INTERN_ref();
+    const std::size_t start = tape.size();
+    const std::size_t nblocks = tape.blocks.size();
+    std::vector<etr::ReverseDouble> y_leaves(neq);
+    std::vector<etr::ReverseDouble> ydot(neq);
+    std::vector<int> x_ids(neq + np);
+    for (std::size_t i = 0; i < neq; ++i) {
+      x_ids[i] = tape.push_var(y[i]);
+      y_leaves[i] = etr::ReverseDouble(etr::from_tape_id_t{}, x_ids[i], 0);
+    }
+    RevVec p_local(etr::SI{np});
+    for (std::size_t i = 0; i < np; ++i) {
+      x_ids[neq + i] = tape.push_var(p_vals[i]);
+      p_local.set(i, etr::ReverseDouble(etr::from_tape_id_t{}, x_ids[neq + i], 0));
+    }
+    etr::ReverseDouble tt(t);
+    RevBorrowVec yv(y_leaves.data(), neq, etr::Dim{neq});
+    RevBorrowVec ydv(ydot.data(), neq, etr::Dim{neq});
+    rhs_r(tt, yv, ydv, p_local);
+    std::vector<int> outs(neq);
+    for (std::size_t i = 0; i < neq; ++i) outs[i] = ydot[i].id;
+    std::vector<double> dir(neq + np);
+    std::copy(s, s + neq, dir.begin());
+    std::copy(so->pdot.begin(), so->pdot.end(), dir.begin() + static_cast<std::ptrdiff_t>(neq));
+    {
+      etr::HessianSweep sweep(tape, start);
+      sweep.forward(x_ids, dir.data());
+      sweep.reverse_seeded(outs, lambda, mu);
+      vjp2_ay.resize(neq);
+      vjp2_by.resize(neq);
+      vjp2_ap.resize(np);
+      vjp2_bp.resize(np);
+      for (std::size_t i = 0; i < neq; ++i) {
+        const std::size_t k = static_cast<std::size_t>(x_ids[i]) - start;
+        vjp2_ay[i] = sweep.adj[k];
+        vjp2_by[i] = sweep.adj_dot[k];
+      }
+      for (std::size_t i = 0; i < np; ++i) {
+        const std::size_t k = static_cast<std::size_t>(x_ids[neq + i]) - start;
+        vjp2_ap[i] = sweep.adj[k];
+        vjp2_bp[i] = sweep.adj_dot[k];
+      }
+    }
+    tape.rewind(start, nblocks);
+    vjp2_t = t;
+    vjp2_key = std::move(key);
+    vjp2_valid = true;
+  }
+
+  static int rhs_bs(sunrealtype t, N_Vector y, N_Vector *yS, N_Vector yB, N_Vector yBdot,
+                    void *user_data) {
+    auto *s = static_cast<cvode_adjoint_state *>(user_data);
+    const sunrealtype *b = N_VGetArrayPointer(yB);
+    s->vjp2(t, N_VGetArrayPointer(y), N_VGetArrayPointer(yS[0]), b, b + s->neq);
+    sunrealtype *out = N_VGetArrayPointer(yBdot);
+    for (std::size_t i = 0; i < s->neq; ++i) {
+      out[i] = -s->vjp2_ay[i];
+      out[s->neq + i] = -s->vjp2_by[i];
+    }
+    return 0;
+  }
+
+  static int quad_bs(sunrealtype t, N_Vector y, N_Vector *yS, N_Vector yB, N_Vector qBdot,
+                     void *user_data) {
+    auto *s = static_cast<cvode_adjoint_state *>(user_data);
+    const sunrealtype *b = N_VGetArrayPointer(yB);
+    s->vjp2(t, N_VGetArrayPointer(y), N_VGetArrayPointer(yS[0]), b, b + s->neq);
+    const std::size_t np = s->p_vals.size();
+    sunrealtype *out = N_VGetArrayPointer(qBdot);
+    for (std::size_t i = 0; i < np; ++i) {
+      out[i] = -s->vjp2_ap[i];
+      out[np + i] = -s->vjp2_bp[i];
+    }
+    return 0;
+  }
+
+  // in_dot = (y0dot, pdot); out_dot = s(t_k), column-major nt x neq
+  void tangent(const std::vector<double> &in_dot, std::vector<double> &out_dot) {
+    const std::size_t np = p_vals.size();
+    so = std::make_unique<second_order>();
+    second_order &o = *so;
+    o.pdot.assign(in_dot.begin() + static_cast<std::ptrdiff_t>(neq), in_dot.end());
+    o.p_dual = DualVec(etr::SI{np});
+    for (std::size_t i = 0; i < np; ++i) o.p_dual.set(i, etr::Dual(p_vals[i], o.pdot[i]));
+    o.ctx.f = &o.rhs;
+    o.ctx.params = &o.p_dual;
+    if constexpr (!std::is_same_v<JAC_R, no_jac>) {
+      o.ctx.jac = &o.jac;
+      o.ctx.jac_dot.assign(neq * neq, 0.0);
+    }
+    o.ctx.zero_dot.assign(neq, 0.0);
+    o.ctx.sink_dot.assign(neq, 0.0);
+    o.ctx.sink_val.assign(neq, 0.0);
+
+    cvodes_workspace &w = o.w;
+    etr::ass<"hessian (cvode): SUNContext_Create failed">(SUNContext_Create(SUN_COMM_NULL, &w.ctx) == 0);
+    SUNContext_ClearErrHandlers(w.ctx);
+    w.y = N_VNew_Serial(static_cast<sunindextype>(neq), w.ctx);
+    etr::ass<"hessian (cvode): N_VNew_Serial failed">(w.y != nullptr);
+    w.yS = N_VCloneVectorArray(1, w.y);
+    etr::ass<"hessian (cvode): N_VCloneVectorArray failed">(w.yS != nullptr);
+    sunrealtype *yp = N_VGetArrayPointer(w.y);
+    sunrealtype *sp = N_VGetArrayPointer(w.yS[0]);
+    for (std::size_t i = 0; i < neq; ++i) {
+      yp[i] = y0_vals[i];
+      sp[i] = in_dot[i];
+    }
+    w.mem = CVodeCreate(stiff ? CV_BDF : CV_ADAMS, w.ctx);
+    etr::ass<"hessian (cvode): CVodeCreate failed">(w.mem != nullptr);
+    etr::ass<"hessian (cvode): CVodeInit failed">(
+      CVodeInit(w.mem, &dual_rhs_trampoline<DualCtx>, times[0], w.y) == CV_SUCCESS);
+    etr::ass<"hessian (cvode): CVodeSStolerances failed">(CVodeSStolerances(w.mem, reltol, abstol) == CV_SUCCESS);
+    etr::ass<"hessian (cvode): CVodeSetUserData failed">(CVodeSetUserData(w.mem, &o.ctx) == CV_SUCCESS);
+    etr::ass<"hessian (cvode): CVodeSetMaxNumSteps failed">(CVodeSetMaxNumSteps(w.mem, max_steps) == CV_SUCCESS);
+    if (stiff) {
+      w.A = SUNDenseMatrix(static_cast<sunindextype>(neq), static_cast<sunindextype>(neq), w.ctx);
+      etr::ass<"hessian (cvode): SUNDenseMatrix failed">(w.A != nullptr);
+      w.LS = dense_solver(linear_solver, w.y, w.A, w.ctx);
+      etr::ass<"hessian (cvode): creating the dense linear solver failed">(w.LS != nullptr);
+      etr::ass<"hessian (cvode): CVodeSetLinearSolver failed">(CVodeSetLinearSolver(w.mem, w.LS, w.A) == CV_SUCCESS);
+      if constexpr (!std::is_same_v<JAC_R, no_jac>) {
+        etr::ass<"hessian (cvode): CVodeSetJacFn failed">(
+          CVodeSetJacFn(w.mem, &dual_jac_trampoline<DualCtx>) == CV_SUCCESS);
+      }
+    } else {
+      w.NLS = SUNNonlinSol_FixedPoint(w.y, 0, w.ctx);
+      etr::ass<"hessian (cvode): creating the fixed-point solver failed">(w.NLS != nullptr);
+      etr::ass<"hessian (cvode): CVodeSetNonlinearSolver failed">(CVodeSetNonlinearSolver(w.mem, w.NLS) == CV_SUCCESS);
+    }
+    etr::ass<"hessian (cvode): CVodeSensInit failed">(
+      CVodeSensInit(w.mem, 1, CV_STAGGERED, &sens_rhs_trampoline<DualCtx>, w.yS) == CV_SUCCESS);
+    etr::ass<"hessian (cvode): CVodeSensEEtolerances failed">(CVodeSensEEtolerances(w.mem) == CV_SUCCESS);
+    etr::ass<"hessian (cvode): CVodeSetSensErrCon failed">(CVodeSetSensErrCon(w.mem, SUNTRUE) == CV_SUCCESS);
+    if (!stiff) {
+      w.NLS_sens = SUNNonlinSol_FixedPointSens(1, w.y, 0, w.ctx);
+      etr::ass<"hessian (cvode): creating the fixed-point sensitivity solver failed">(w.NLS_sens != nullptr);
+      etr::ass<"hessian (cvode): CVodeSetNonlinearSolverSensStg failed">(
+        CVodeSetNonlinearSolverSensStg(w.mem, w.NLS_sens) == CV_SUCCESS);
+    }
+    etr::ass<"hessian (cvode): CVodeAdjInit failed">(CVodeAdjInit(w.mem, 100, CV_HERMITE) == CV_SUCCESS);
+
+    out_dot.assign(neq * nt, 0.0);
+    for (std::size_t j = 0; j < neq; ++j) out_dot[j * nt] = sp[j];
+    for (std::size_t k = 1; k < nt; ++k) {
+      sunrealtype tret = 0.0;
+      int ncheck = 0;
+      int flag = CVodeF(w.mem, times[k], w.y, &tret, CV_NORMAL, &ncheck);
+      etr::ass(flag == CV_SUCCESS, std::string("hessian (cvode): integration failed at t = ") +
+                                     std::to_string(tret) + ": " +
+                                     flag_name(CVodeGetReturnFlagName(flag)));
+      flag = CVodeGetSens(w.mem, &tret, w.yS);
+      etr::ass(flag == CV_SUCCESS, std::string("hessian (cvode): CVodeGetSens failed: ") +
+                                     flag_name(CVodeGetReturnFlagName(flag)));
+      for (std::size_t j = 0; j < neq; ++j) out_dot[j * nt + k] = sp[j];
+    }
+  }
+
+  void init_backward2(second_order &o) {
+    const std::size_t np = p_vals.size();
+    const std::size_t nb = 2 * neq;
+    cvodes_workspace &w = o.w;
+    o.yB = N_VNew_Serial(static_cast<sunindextype>(nb), w.ctx);
+    o.qB = N_VNew_Serial(static_cast<sunindextype>(2 * np), w.ctx);
+    etr::ass<"hessian (cvode): N_VNew_Serial failed">(o.yB != nullptr && o.qB != nullptr);
+    N_VConst(0.0, o.yB);
+    N_VConst(0.0, o.qB);
+    etr::ass<"hessian (cvode): CVodeCreateB failed">(
+      CVodeCreateB(w.mem, stiff ? CV_BDF : CV_ADAMS, &o.which) == CV_SUCCESS);
+    etr::ass<"hessian (cvode): CVodeInitBS failed">(
+      CVodeInitBS(w.mem, o.which, &rhs_bs, times[nt - 1], o.yB) == CV_SUCCESS);
+    etr::ass<"hessian (cvode): CVodeSStolerancesB failed">(
+      CVodeSStolerancesB(w.mem, o.which, reltol, abstol) == CV_SUCCESS);
+    etr::ass<"hessian (cvode): CVodeSetUserDataB failed">(
+      CVodeSetUserDataB(w.mem, o.which, this) == CV_SUCCESS);
+    etr::ass<"hessian (cvode): CVodeSetMaxNumStepsB failed">(
+      CVodeSetMaxNumStepsB(w.mem, o.which, max_steps) == CV_SUCCESS);
+    if (stiff) {
+      o.AB = SUNDenseMatrix(static_cast<sunindextype>(nb), static_cast<sunindextype>(nb), w.ctx);
+      etr::ass<"hessian (cvode): SUNDenseMatrix failed">(o.AB != nullptr);
+      o.LSB = dense_solver(linear_solver, o.yB, o.AB, w.ctx);
+      etr::ass<"hessian (cvode): creating the dense linear solver failed">(o.LSB != nullptr);
+      etr::ass<"hessian (cvode): CVodeSetLinearSolverB failed">(
+        CVodeSetLinearSolverB(w.mem, o.which, o.LSB, o.AB) == CV_SUCCESS);
+    } else {
+      o.NLSB = SUNNonlinSol_FixedPoint(o.yB, 0, w.ctx);
+      etr::ass<"hessian (cvode): creating the fixed-point solver failed">(o.NLSB != nullptr);
+      etr::ass<"hessian (cvode): CVodeSetNonlinearSolverB failed">(
+        CVodeSetNonlinearSolverB(w.mem, o.which, o.NLSB) == CV_SUCCESS);
+    }
+    etr::ass<"hessian (cvode): CVodeQuadInitBS failed">(
+      CVodeQuadInitBS(w.mem, o.which, &quad_bs, o.qB) == CV_SUCCESS);
+    etr::ass<"hessian (cvode): CVodeQuadSStolerancesB failed">(
+      CVodeQuadSStolerancesB(w.mem, o.which, reltol, abstol) == CV_SUCCESS);
+    etr::ass<"hessian (cvode): CVodeSetQuadErrConB failed">(
+      CVodeSetQuadErrConB(w.mem, o.which, SUNTRUE) == CV_SUCCESS);
+  }
+
+  // out_bar / out_bar_dot: column-major nt x neq; in_* = (y0 part, p part)
+  void backward2(const std::vector<double> &out_bar, const std::vector<double> &out_bar_dot,
+                 std::vector<double> &in_bar, std::vector<double> &in_bar_dot) {
+    etr::ass<"hessian (cvode): backward pass without a tangent pass">(so != nullptr);
+    second_order &o = *so;
+    const std::size_t np = p_vals.size();
+    if (o.which < 0) init_backward2(o);
+    sunrealtype *b = N_VGetArrayPointer(o.yB);
+    sunrealtype *q = N_VGetArrayPointer(o.qB);
+    for (std::size_t j = 0; j < neq; ++j) {
+      b[j] = out_bar[j * nt + (nt - 1)];
+      b[neq + j] = out_bar_dot[j * nt + (nt - 1)];
+    }
+    N_VConst(0.0, o.qB);
+    for (std::size_t k = nt - 1; k >= 1; --k) {
+      vjp2_valid = false;
+      etr::ass<"hessian (cvode): CVodeReInitB failed">(
+        CVodeReInitB(o.w.mem, o.which, times[k], o.yB) == CV_SUCCESS);
+      etr::ass<"hessian (cvode): CVodeQuadReInitB failed">(
+        CVodeQuadReInitB(o.w.mem, o.which, o.qB) == CV_SUCCESS);
+      int flag = CVodeB(o.w.mem, times[k - 1], CV_NORMAL);
+      etr::ass(flag >= 0, std::string("hessian (cvode): backward integration failed at t = ") +
+                            std::to_string(times[k]) + ": " +
+                            flag_name(CVodeGetReturnFlagName(flag)));
+      sunrealtype tret = 0.0;
+      etr::ass<"hessian (cvode): CVodeGetB failed">(CVodeGetB(o.w.mem, o.which, &tret, o.yB) == CV_SUCCESS);
+      etr::ass<"hessian (cvode): CVodeGetQuadB failed">(
+        CVodeGetQuadB(o.w.mem, o.which, &tret, o.qB) == CV_SUCCESS);
+      for (std::size_t j = 0; j < neq; ++j) {
+        b[j] += out_bar[j * nt + (k - 1)];
+        b[neq + j] += out_bar_dot[j * nt + (k - 1)];
+      }
+    }
+    for (std::size_t i = 0; i < neq; ++i) {
+      in_bar[i] = b[i];
+      in_bar_dot[i] = b[neq + i];
+    }
+    for (std::size_t i = 0; i < np; ++i) {
+      in_bar[neq + i] = q[i];
+      in_bar_dot[neq + i] = q[np + i];
+    }
+  }
 };
 
 template <typename JAC, typename RHS, typename Y, typename T, typename P>
@@ -835,10 +1129,12 @@ inline auto cvodes_reverse_impl(const RHS &, const JAC *, const Y &y0, const T &
   etr::ass<"cvode: N_VNew_Serial failed">(w.y != nullptr);
   sunrealtype *yp = N_VGetArrayPointer(w.y);
   s->y0_ids.resize(neq);
+  s->y0_vals.resize(neq);
   for (std::size_t i = 0; i < neq; ++i) {
     etr::ReverseDouble yi = y0.get(i);
     etr::ass<"cvode: NA in initial state">(!yi.isNA());
     yp[i] = etr::get_val(yi);
+    s->y0_vals[i] = yp[i];
     s->y0_ids[i] = yi.id;
   }
 
@@ -902,6 +1198,13 @@ inline auto cvodes_reverse_impl(const RHS &, const JAC *, const Y &y0, const T &
       for (std::size_t i = 0; i < pbar.size(); ++i) {
         tape.adj[static_cast<std::size_t>(s->p_ids[i])] += pbar[i];
       }
+    },
+    [s](const std::vector<double> &in_dot, std::vector<double> &out_dot) {
+      s->tangent(in_dot, out_dot);
+    },
+    [s](const std::vector<double> &out_bar, const std::vector<double> &out_bar_dot,
+        std::vector<double> &in_bar, std::vector<double> &in_bar_dot) {
+      s->backward2(out_bar, out_bar_dot, in_bar, in_bar_dot);
     });
 
   etr::Array<etr::ReverseDouble, etr::Buffer<etr::ReverseDouble, etr::LBufferTrait>> res(etr::SI{neq * nt});

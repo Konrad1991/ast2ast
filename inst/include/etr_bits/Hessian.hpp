@@ -470,6 +470,30 @@ struct HessianSweep {
     add_side(blk.a_ids, g, g_dot);
   }
 
+  // callbacks copied: they record on the tape, blocks may reallocate
+  inline void custom_forward(const BlockOp& blk) {
+    ass<"hessian: this block has no second-order derivative">(static_cast<bool>(blk.tangent));
+    auto tangent_fct = blk.tangent;
+    const std::size_t out0 = static_cast<std::size_t>(blk.out_tape_id_first);
+    const std::size_t n_out = blk.rows_a;
+    std::vector<double> in_dot(blk.a_ids.size());
+    for (std::size_t k = 0; k < in_dot.size(); k++) in_dot[k] = tangent(blk.a_ids[k]);
+    std::vector<double> out_dot(n_out, 0.0);
+    tangent_fct(in_dot, out_dot);
+    write_block_tangent(out0, out_dot);
+  }
+
+  inline void custom_reverse(const BlockOp& blk) {
+    ass<"hessian: this block has no second-order derivative">(static_cast<bool>(blk.backward2));
+    auto backward2_fct = blk.backward2;
+    const std::vector<int> in_ids = blk.a_ids;
+    std::vector<double> bar, bar_dot;
+    if (!block_adjoints(static_cast<std::size_t>(blk.out_tape_id_first), blk.rows_a, bar, bar_dot)) return;
+    std::vector<double> in_bar(in_ids.size(), 0.0), in_bar_dot(in_ids.size(), 0.0);
+    backward2_fct(bar, bar_dot, in_bar, in_bar_dot);
+    add_side(in_ids, in_bar, in_bar_dot);
+  }
+
   inline void write_block_tangent(std::size_t out0, const std::vector<double>& out_dot) {
     for (std::size_t k = 0; k < out_dot.size(); k++) {
       dot[out0 + k - start] = tape.is_na[out0 + k] ? 0.0 : out_dot[k];
@@ -486,9 +510,9 @@ struct HessianSweep {
     const ROp op = tape.op[i];
     if (!is_block(op)) return false;
     if (op == ROp::BlockSlot) return true;
-    ass<"hessian: not supported through cvode yet">(op != ROp::Custom);
     const BlockOp& blk = tape.blocks[static_cast<std::size_t>(tape.a[i])];
     switch (op) {
+      case ROp::Custom: custom_forward(blk); break;
       case ROp::MatMul: matmul_forward(blk); break;
       case ROp::CrossProd: crossprod_forward(blk); break;
       case ROp::Chol: chol_forward(blk); break;
@@ -504,6 +528,7 @@ struct HessianSweep {
     if (op == ROp::BlockSlot) return true;
     const BlockOp& blk = tape.blocks[static_cast<std::size_t>(tape.a[i])];
     switch (op) {
+      case ROp::Custom: custom_reverse(blk); break;
       case ROp::MatMul: matmul_reverse(blk); break;
       case ROp::CrossProd: crossprod_reverse(blk); break;
       case ROp::Chol: chol_reverse(blk); break;
@@ -538,6 +563,18 @@ struct HessianSweep {
     std::fill(adj.begin(), adj.end(), 0.0);
     std::fill(adj_dot.begin(), adj_dot.end(), 0.0);
     add(out, 1.0, 0.0);
+    sweep_back();
+  }
+
+  // several outputs: adj = w, adj_dot = w_dot (cvode second-order adjoint)
+  inline void reverse_seeded(const std::vector<int>& outs, const double* w, const double* w_dot) {
+    std::fill(adj.begin(), adj.end(), 0.0);
+    std::fill(adj_dot.begin(), adj_dot.end(), 0.0);
+    for (std::size_t k = 0; k < outs.size(); k++) add(outs[k], w[k], w_dot[k]);
+    sweep_back();
+  }
+
+  inline void sweep_back() {
     for (std::size_t i = end; i-- > start;) {
       if (block_reverse(i)) continue;
       const ROp op = tape.op[i];

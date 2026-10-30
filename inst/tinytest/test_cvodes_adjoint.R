@@ -169,7 +169,16 @@ f <- function(x) {
 }
 expect_error(ast2ast::translate(f, derivative = "reverse"), "borrow arguments")
 
-# no hessian through cvode yet
+# --- hessian through cvode (second-order adjoint) --------------------------------
+
+# L = sum_t y0 exp(-k t), theta = c(k, y0)
+times <- c(0, 1, 2)
+expected <- matrix(c(
+  y0 * sum(times^2 * exp(-k * times)), -sum(times * exp(-k * times)),
+  -sum(times * exp(-k * times)), 0
+), 2L, 2L)
+
+# stiff (BDF, Newton)
 f <- function(theta) {
   argtypes(theta |> type(vec(double)))
   loss <- function(theta) {
@@ -187,8 +196,73 @@ f <- function(theta) {
     }
     k <- c(theta[[1L]])
     y0 <- c(theta[[2L]])
-    sum(cvode(decay, y0, c(0, 1), k))
+    sum(cvode(decay, y0, c(0, 1, 2), k, cvode_options(reltol = 1e-10, abstol = 1e-12)))
   }
   hessian(loss, theta)
 }
-expect_error(ast2ast::translate(f), "hessian")
+fcpp <- ast2ast::translate(f)
+expect_equal(unname(fcpp(c(k, y0))), expected, tolerance = 1e-6)
+
+# non-stiff (ADAMS, fixed point)
+f <- function(theta) {
+  argtypes(theta |> type(vec(double)))
+  loss <- function(theta) {
+    argtypes(theta |> type(vec(double)))
+    returntype(double)
+    decay <- function(t, y, ydot, k) {
+      argtypes(
+        t |> type(double) |> ref(),
+        y |> type(borrow_vec(double)) |> ref(),
+        ydot |> type(borrow_vec(double)) |> ref(),
+        k |> type(vec(double)) |> ref()
+      )
+      returntype(void)
+      ydot[[1L]] <- -k[[1L]] * y[[1L]]
+    }
+    k <- c(theta[[1L]])
+    y0 <- c(theta[[2L]])
+    sum(cvode(decay, y0, c(0, 1, 2), k, cvode_options(reltol = 1e-10, abstol = 1e-12, stiff = FALSE)))
+  }
+  hessian(loss, theta)
+}
+fcpp <- ast2ast::translate(f)
+expect_equal(unname(fcpp(c(k, y0))), expected, tolerance = 1e-6)
+
+# Lotka-Volterra loss: hessian vs finite differences of the adjoint gradient
+lv_hess <- function(theta, data) {
+  argtypes(theta |> type(vec(double)), data |> type(vec(double)))
+  loss <- function(theta, data) {
+    argtypes(theta |> type(vec(double)), data |> type(vec(double)))
+    returntype(double)
+    lv <- function(t, y, ydot, p) {
+      argtypes(
+        t |> type(double) |> ref(),
+        y |> type(borrow_vec(double)) |> ref(),
+        ydot |> type(borrow_vec(double)) |> ref(),
+        p |> type(vec(double)) |> ref()
+      )
+      returntype(void)
+      ydot[[1L]] <- p[[1L]] * y[[1L]] - p[[2L]] * y[[1L]] * y[[2L]]
+      ydot[[2L]] <- p[[4L]] * y[[1L]] * y[[2L]] - p[[3L]] * y[[2L]]
+    }
+    p <- theta[1L:4L]
+    y0 <- theta[5L:6L]
+    times <- c(0, 1, 2, 3, 4, 5)
+    sol <- c(cvode(lv, y0, times, p, cvode_options(reltol = 1e-10, abstol = 1e-12)))
+    sum((sol - data)^2)
+  }
+  hessian(loss, theta, data)
+}
+lv_hess_cpp <- ast2ast::translate(lv_hess)
+
+h <- 1e-5
+fd <- vapply(seq_along(theta), function(i) {
+  tp <- theta
+  tm <- theta
+  tp[[i]] <- tp[[i]] + h
+  tm[[i]] <- tm[[i]] - h
+  c(lv_grad_cpp(tp, data) - lv_grad_cpp(tm, data)) / (2 * h)
+}, numeric(length(theta)))
+H <- lv_hess_cpp(theta, data)
+expect_equal(unname(H), fd, tolerance = 1e-4)
+expect_equal(H, t(H), tolerance = 1e-6)

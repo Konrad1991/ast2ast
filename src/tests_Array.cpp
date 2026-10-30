@@ -217,20 +217,23 @@ template<typename RealType> void test_array_buffer() {
   // Assignment of array of other type and expressions
   {
     A a;
-    std::vector<double> owner(12);
-    for (std::size_t i = 0; i < owner.size(); i++) {
-      owner[i] = static_cast<double>(i);
-    }
-    Dim dim{2, 3, 2};
-    Array<RealType, Borrow<RealType, BorrowTrait>> a_borrow(owner.data(), owner.size(), dim);
-    a = a_borrow;
-    ass<"After assignment of Borrow">(a.size() == a_borrow.size());
-    for (std::size_t i = 0; i < owner.size(); i++) {
-      owner[i] = static_cast<double>(i);
-      ass<"Entrie same after assignment of Borrow">(
-        compare(get_val(a.get(i)), get_val(a_borrow.get(i))) &&
-        compare(get_val(a.get(i)), owner[i])
-      );
+    // Borrow<ReverseDouble> views tape handles, not double*
+    if constexpr (!IS<RealType, ReverseDouble>) {
+      std::vector<double> owner(12);
+      for (std::size_t i = 0; i < owner.size(); i++) {
+        owner[i] = static_cast<double>(i);
+      }
+      Dim dim{2, 3, 2};
+      Array<RealType, Borrow<RealType, BorrowTrait>> a_borrow(owner.data(), owner.size(), dim);
+      a = a_borrow;
+      ass<"After assignment of Borrow">(a.size() == a_borrow.size());
+      for (std::size_t i = 0; i < owner.size(); i++) {
+        owner[i] = static_cast<double>(i);
+        ass<"Entrie same after assignment of Borrow">(
+          compare(get_val(a.get(i)), get_val(a_borrow.get(i))) &&
+          compare(get_val(a.get(i)), owner[i])
+        );
+      }
     }
 
     Array<Integer, Buffer<Integer>> a_integer(SI{2});
@@ -841,8 +844,6 @@ void test_allocation() {
   TAPE_INTERN.clear();
   test_array_r_buffer<ReverseDouble>();
   test_array_borrow<Double>();
-  TAPE_INTERN.clear();
-  test_array_borrow<ReverseDouble>();
   test_array_unary<Double>();
   TAPE_INTERN.clear();
   test_array_unary<ReverseDouble>();

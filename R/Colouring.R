@@ -638,8 +638,6 @@ check_runtime_colouring <- function(f_arg, vars_list) {
 # f is checked with one scalar type, but also instantiated with others
 # (ReverseDouble for the runtime pattern, Dual in a plain double translation)
 ad_only_fcts <- c("seed", "unseed", "get_dot", "deriv")
-# no forward-over-reverse (HessianSweep) yet
-no_hessian_fcts <- c("cvode")
 
 has_borrow_args <- function(fn) {
   any(vapply(fn$args_f, function(a) {
@@ -688,11 +686,22 @@ borrow_fcts <- c("borrow_vec", "borrow_vector", "borrow_mat", "borrow_matrix", "
 runtime_colouring_reverse_error <- function(fn, vars_list, context = "jacobian: colouring = \"runtime\"",
                                             forbidden = ad_only_fcts) {
   visited <- character()
-  walk <- function(code) {
+  cvode_args <- character()
+  collect_cvode_args <- function(code) {
+    if (!is.call(code)) return(invisible())
+    if (identical(code[[1L]], as.name("cvode"))) {
+      for (el in as.list(code)[-1L]) {
+        if (is.symbol(el)) cvode_args <<- c(cvode_args, as.character(el))
+      }
+    }
+    for (el in as.list(code)) collect_cvode_args(el)
+  }
+  # borrow args only for fns passed to cvode (cvode builds the views itself)
+  walk <- function(code, allow_borrow = FALSE) {
     if (is.symbol(code)) {
       name <- as.character(code)
       used <- if (nzchar(name)) vars_list[[name]] else NULL
-      if (inherits(used, "fn_node") && !is.null(used$cpp_path)) return(visit(used))
+      if (inherits(used, "fn_node") && !is.null(used$cpp_path)) return(visit(used, allow_borrow))
       return(NULL)
     }
     if (!is.call(code)) return(NULL)
@@ -700,19 +709,26 @@ runtime_colouring_reverse_error <- function(fn, vars_list, context = "jacobian: 
     if (head %in% forbidden) {
       return(sprintf("%s cannot be used when f (or a fn it uses) calls %s", context, head))
     }
-    if (head %in% borrow_fcts) {
+    if (head %in% borrow_fcts && !allow_borrow) {
       return(sprintf("%s cannot be used when f (or a fn it uses) has borrow arguments", context))
     }
+    # rhs <- function(...) defined inline and passed to cvode
+    if (head %in% c("<-", "=") && length(code) == 3L && is.symbol(code[[2L]]) &&
+        as.character(code[[2L]]) %in% cvode_args) {
+      return(walk(code[[3L]], TRUE))
+    }
     for (el in as.list(code)) {
-      err <- walk(el)
+      err <- walk(el, allow_borrow || identical(head, "cvode"))
       if (!is.null(err)) return(err)
     }
     NULL
   }
-  visit <- function(fn) {
-    if (fn$cpp_path %in% visited) return(NULL)
-    visited <<- c(visited, fn$cpp_path)
-    err <- walk(fn$args_f_raw)
+  visit <- function(fn, allow_borrow = FALSE) {
+    key <- paste(fn$cpp_path, allow_borrow)
+    if (key %in% visited) return(NULL)
+    visited <<- c(visited, key)
+    collect_cvode_args(fn$raw_body)
+    err <- walk(fn$args_f_raw, allow_borrow)
     if (!is.null(err)) return(err)
     walk(fn$raw_body)
   }

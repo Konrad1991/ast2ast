@@ -57,6 +57,12 @@ struct BlockOp {
   int out_tape_id_first{-1}; // tape id of the head node; outputs occupy [out_tape_id_first, out_tape_id_first + rows_a*cols_b)
   // Custom only: reads the output adjoints, adds to the input adjoints
   std::function<void(ReverseTape&, int out0)> backward;
+  // Custom only, for HessianSweep (inputs in a_ids order):
+  // tangent: input tangents -> output tangents
+  // backward2: output adjoints + their tangents -> input adjoints + their tangents
+  std::function<void(const std::vector<double>& in_dot, std::vector<double>& out_dot)> tangent;
+  std::function<void(const std::vector<double>& out_bar, const std::vector<double>& out_bar_dot,
+                     std::vector<double>& in_bar, std::vector<double>& in_bar_dot)> backward2;
 };
 
 struct ReverseTape {
@@ -596,7 +602,9 @@ struct ReverseTape {
   // input_ids: every output may depend on every input (sparsity walk)
   inline int push_custom(const std::vector<double>& vals, const std::vector<uint8_t>& na,
                          std::vector<int> input_ids,
-                         std::function<void(ReverseTape&, int out0)> backward) {
+                         std::function<void(ReverseTape&, int out0)> backward,
+                         decltype(BlockOp::tangent) tangent = {},
+                         decltype(BlockOp::backward2) backward2 = {}) {
     ass<"push_custom: no outputs">(!vals.empty() && vals.size() == na.size());
     const int block_idx = static_cast<int>(blocks.size());
     const int head_id = push_node(ROp::Custom, block_idx, -1, vals[0], na[0] != 0);
@@ -611,6 +619,8 @@ struct ReverseTape {
     blk.a_ids = std::move(input_ids);
     blk.out_tape_id_first = head_id;
     blk.backward = std::move(backward);
+    blk.tangent = std::move(tangent);
+    blk.backward2 = std::move(backward2);
     blocks.push_back(std::move(blk));
     return head_id;
   }
