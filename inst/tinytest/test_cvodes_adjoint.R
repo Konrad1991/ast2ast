@@ -263,6 +263,34 @@ fd <- vapply(seq_along(theta), function(i) {
   tm[[i]] <- tm[[i]] - h
   c(lv_grad_cpp(tp, data) - lv_grad_cpp(tm, data)) / (2 * h)
 }, numeric(length(theta)))
+# gradient() in a plain translation: adjoint through cvode
+lv_gradient <- function(theta, data) {
+  argtypes(theta |> type(vec(double)), data |> type(vec(double)))
+  loss <- function(theta, data) {
+    argtypes(theta |> type(vec(double)), data |> type(vec(double)))
+    returntype(double)
+    lv <- function(t, y, ydot, p) {
+      argtypes(
+        t |> type(double) |> ref(),
+        y |> type(borrow_vec(double)) |> ref(),
+        ydot |> type(borrow_vec(double)) |> ref(),
+        p |> type(vec(double)) |> ref()
+      )
+      returntype(void)
+      ydot[[1L]] <- p[[1L]] * y[[1L]] - p[[2L]] * y[[1L]] * y[[2L]]
+      ydot[[2L]] <- p[[4L]] * y[[1L]] * y[[2L]] - p[[3L]] * y[[2L]]
+    }
+    p <- theta[1L:4L]
+    y0 <- theta[5L:6L]
+    times <- c(0, 1, 2, 3, 4, 5)
+    sol <- c(cvode(lv, y0, times, p, cvode_options(reltol = 1e-10, abstol = 1e-12)))
+    sum((sol - data)^2)
+  }
+  gradient(loss, theta, data)
+}
+lv_gradient_cpp <- ast2ast::translate(lv_gradient)
+expect_equal(lv_gradient_cpp(theta, data), c(lv_grad_cpp(theta, data)), tolerance = 1e-6)
+
 H <- lv_hess_cpp(theta, data)
 expect_equal(unname(H), fd, tolerance = 1e-4)
 expect_equal(H, t(H), tolerance = 1e-6)

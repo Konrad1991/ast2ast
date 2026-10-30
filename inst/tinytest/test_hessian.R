@@ -25,6 +25,23 @@ x <- c(-1.2, 1.0)
 expect_equal(fcpp(x, x, 1L), rosenbrock_hessian(x))
 expect_equal(c(fcpp(x, c(0.3, -2), 2L)), c(rosenbrock_hessian(x) %*% c(0.3, -2)))
 
+# --- gradient: plain, forward and reverse translations -------------------------
+
+f <- function(x) {
+  argtypes(x |> type(vec(double)))
+  rosen <- function(x) {
+    argtypes(x |> type(vec(double)))
+    returntype(double)
+    100 * (x[[2L]] - x[[1L]]^2)^2 + (1 - x[[1L]])^2
+  }
+  gradient(rosen, x)
+}
+x <- c(-1.2, 1.0)
+rosenbrock_gradient <- c(-400 * x[[1]] * (x[[2]] - x[[1]]^2) - 2 * (1 - x[[1]]), 200 * (x[[2]] - x[[1]]^2))
+expect_equal(ast2ast::translate(f)(x), rosenbrock_gradient)
+expect_equal(ast2ast::translate(f, derivative = "forward")(x), rosenbrock_gradient)
+expect_equal(ast2ast::translate(f, derivative = "reverse")(x), rosenbrock_gradient)
+
 # --- elementwise functions vs finite differences of an analytic gradient ------
 
 g <- function(x) {

@@ -3114,8 +3114,8 @@ function_registry_global$add(
   group = "function_node", cpp_name = "etr::jacobian_banded", valid_fn_context = TRUE
 )
 
-# hessian(f, x[, data]) / hvp(f, x, v[, data]): f is always recorded with
-# ReverseDouble on its own part of the tape (forward-over-reverse)
+# gradient / hessian(f, x[, data]) / hvp(f, x, v[, data]): f is always recorded with
+# ReverseDouble on its own part of the tape (reverse / forward-over-reverse)
 infer_hessian <- function(node, vars_list, info_env, function_registry, fname) {
   n_vectors <- if (fname == "hvp") 2L else 1L
   all_types <- lapply(node$args, function(arg) {
@@ -3178,7 +3178,7 @@ infer_hessian <- function(node, vars_list, info_env, function_registry, fname) {
       ret$get_data_struct() != "scalar") {
     return(sprintf("the function passed to %s has to return a scalar double", fname))
   }
-  t <- make_inferred_type(if (fname == "hvp") "vector" else "matrix", "double", info_env$r_fct, info_env$real_type)
+  t <- make_inferred_type(if (fname == "hessian") "matrix" else "vector", "double", info_env$r_fct, info_env$real_type)
   node$internal_type <- t
   t
 }
@@ -3193,6 +3193,20 @@ check_hessian <- function(node, extra_pos) {
     compare_types_passed_to_fn(node, args_to_f[[2L]], node$args[[extra_pos]]$internal_type)
   }
 }
+function_registry_global$add(
+  name = "gradient", num_args = c(2, 3), arg_names = c("f", "x", "data"),
+  docu = paste0(
+    "gradient(f, x[, data])\n",
+    "Gradient of a scalar f at x (reverse mode, one sweep, exact). f: named fn taking a ",
+    "double vector (and optionally data) and returning a scalar double. Through cvode() ",
+    "the adjoint (CVODES) is used: cost independent of length(x)."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    infer_hessian(node, vars_list, info_env, function_registry, "gradient")
+  },
+  check_fct = function(node, vars_types_list, info_env) check_hessian(node, 3L),
+  group = "function_node", cpp_name = "etr::gradient", valid_fn_context = TRUE
+)
 function_registry_global$add(
   name = "hessian", num_args = c(2, 3), arg_names = c("f", "x", "data"),
   docu = paste0(

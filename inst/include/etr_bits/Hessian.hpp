@@ -681,6 +681,45 @@ inline auto call_with_extra(const F& f, const E& extra) {
   };
 }
 
+// plain reverse sweep over the local part of the tape (cvode: adjoint block)
+template<typename X, typename Call>
+inline auto gradient_impl(const X& x, Call&& call_f) {
+  auto& tape = TAPE_INTERN;
+  const std::size_t tape_start = tape.size();
+  const std::size_t blocks_start = tape.blocks.size();
+  const std::size_t n = x.size();
+  Array<ReverseDouble, Buffer<ReverseDouble>> xr(SI{n});
+  for (std::size_t j = 0; j < n; j++) xr.set(j, ReverseDouble::Var(get_val(x.get(j))));
+  const ReverseDouble y = call_f(xr);
+  Array<Double, Buffer<Double, RBufferTrait>> res(SI{n});
+  res.dim = Dim{n};
+  if (y.isNA()) {
+    for (std::size_t j = 0; j < n; j++) res.set(j, Double::NA());
+  } else if (y.id < static_cast<int>(tape_start)) {
+    for (std::size_t j = 0; j < n; j++) res.set(j, Double(0.0));
+  } else {
+    const std::size_t tape_end = tape.size();
+    std::fill(tape.adj.begin() + static_cast<std::ptrdiff_t>(tape_start), tape.adj.end(), 0.0);
+    tape.adj[static_cast<std::size_t>(y.id)] = 1.0;
+    tape.reverse_range(tape_end, tape_start);
+    for (std::size_t j = 0; j < n; j++) {
+      res.set(j, Double(tape.adj[static_cast<std::size_t>(xr.get(j).id)]));
+    }
+  }
+  tape.rewind(tape_start, blocks_start);
+  return res;
+}
+
+template<typename F, typename X> requires (IsArray<Decayed<X>>)
+inline auto gradient(const F& f, const X& x) {
+  return gradient_impl(x, [&f](const auto& xv) { return f(xv); });
+}
+
+template<typename F, typename X, typename E> requires (IsArray<Decayed<X>>)
+inline auto gradient(const F& f, const X& x, const E& extra) {
+  return gradient_impl(x, call_with_extra(f, extra));
+}
+
 template<typename F, typename X> requires (IsArray<Decayed<X>>)
 inline auto hessian(const F& f, const X& x) {
   return hessian_impl(x, [&f](const auto& xv) { return f(xv); });
