@@ -50,7 +50,7 @@ hmc <- function(theta0, data, n_warm, n_iter, n_leap, eps_warm, eps, seed) {
     p <- exp(theta)
     y0 <- c(10, 5)
     times <- c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-    sol <- c(cvode(lv, y0, times, p, cvode_options(reltol = 1e-8, abstol = 1e-10)))
+    sol <- c(cvode(lv, y0, times, p, cvode_options(reltol = 1e-6, abstol = 1e-8)))
 
     sigma <- 0.5
     prior_mean <- c(log(1.1), log(0.4), log(0.4), log(0.1))

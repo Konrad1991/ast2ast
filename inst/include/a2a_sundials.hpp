@@ -646,6 +646,9 @@ template <typename RHS_R, typename JAC_R> struct cvode_adjoint_state {
   double vjp_t = 0.0;
   std::vector<double> vjp_y, vjp_lambda, vjp_out_y, vjp_out_p;
   bool vjp_valid = false;
+  std::vector<etr::ReverseDouble> vjp_y_leaves, vjp_ydot;
+  std::vector<int> vjp_y_ids, vjp_p_ids;
+  RevVec vjp_p_local;
 
   ~cvode_adjoint_state() {
     if (w.mem) CVodeFree(&w.mem);
@@ -666,31 +669,37 @@ template <typename RHS_R, typename JAC_R> struct cvode_adjoint_state {
     const std::size_t start = tape.size();
     const std::size_t nblocks = tape.blocks.size();
     const std::size_t np = p_vals.size();
-    std::vector<etr::ReverseDouble> y_leaves(neq);
-    std::vector<etr::ReverseDouble> ydot(neq);
-    std::vector<int> y_ids(neq), pl_ids(np);
-    for (std::size_t i = 0; i < neq; ++i) {
-      y_ids[i] = tape.push_var(y[i]);
-      y_leaves[i] = etr::ReverseDouble(etr::from_tape_id_t{}, y_ids[i], 0);
+    // buffers reused: vjp runs per backward rhs call
+    if (vjp_y_leaves.size() != neq) {
+      vjp_y_leaves.resize(neq);
+      vjp_ydot.resize(neq);
+      vjp_y_ids.resize(neq);
+      vjp_p_ids.resize(np);
+      vjp_p_local = RevVec(etr::SI{np});
     }
-    RevVec p_local(etr::SI{np});
+    for (std::size_t i = 0; i < neq; ++i) {
+      vjp_y_ids[i] = tape.push_var(y[i]);
+      vjp_y_leaves[i] = etr::ReverseDouble(etr::from_tape_id_t{}, vjp_y_ids[i], 0);
+      // stale ids would point into the new segment if rhs skips an entry
+      vjp_ydot[i] = etr::ReverseDouble();
+    }
     for (std::size_t i = 0; i < np; ++i) {
-      pl_ids[i] = tape.push_var(p_vals[i]);
-      p_local.set(i, etr::ReverseDouble(etr::from_tape_id_t{}, pl_ids[i], 0));
+      vjp_p_ids[i] = tape.push_var(p_vals[i]);
+      vjp_p_local.set(i, etr::ReverseDouble(etr::from_tape_id_t{}, vjp_p_ids[i], 0));
     }
     etr::ReverseDouble tt(t);
-    RevBorrowVec yv(y_leaves.data(), neq, etr::Dim{neq});
-    RevBorrowVec ydv(ydot.data(), neq, etr::Dim{neq});
-    rhs_r(tt, yv, ydv, p_local);
+    RevBorrowVec yv(vjp_y_leaves.data(), neq, etr::Dim{neq});
+    RevBorrowVec ydv(vjp_ydot.data(), neq, etr::Dim{neq});
+    rhs_r(tt, yv, ydv, vjp_p_local);
     const std::size_t end = tape.size();
     std::fill(tape.adj.begin() + static_cast<std::ptrdiff_t>(start), tape.adj.end(), 0.0);
     for (std::size_t i = 0; i < neq; ++i) {
-      const int id = ydot[i].id;
+      const int id = vjp_ydot[i].id;
       if (id >= static_cast<int>(start)) tape.adj[static_cast<std::size_t>(id)] += lambda[i];
     }
     tape.reverse_range(end, start);
-    for (std::size_t i = 0; i < neq; ++i) vjp_out_y[i] = tape.adj[static_cast<std::size_t>(y_ids[i])];
-    for (std::size_t i = 0; i < np; ++i) vjp_out_p[i] = tape.adj[static_cast<std::size_t>(pl_ids[i])];
+    for (std::size_t i = 0; i < neq; ++i) vjp_out_y[i] = tape.adj[static_cast<std::size_t>(vjp_y_ids[i])];
+    for (std::size_t i = 0; i < np; ++i) vjp_out_p[i] = tape.adj[static_cast<std::size_t>(vjp_p_ids[i])];
     tape.rewind(start, nblocks);
     vjp_t = t;
     std::copy(y, y + neq, vjp_y.begin());

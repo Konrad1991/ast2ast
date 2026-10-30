@@ -22,6 +22,21 @@ A1 gradient via adjoint for scalar output
    - Status 2026-10-30: gradient() implemented (etr::gradient_impl in
      Hessian.hpp, registry reuses infer_hessian), tests in test_hessian.R +
      test_cvodes_adjoint.R, HMC example switched; DONE, suite green
+A0/A1 measurements 2026-10-30 (HMC example, 2000 it, L = 12, gradient()):
+   - tol 1e-8/1e-10: 42.5 s, tol 1e-6/1e-8: 25.9 s, posterior equal (3 digits)
+   - forward jacobian() at 1e-8/1e-10 was 36 s -> adjoint ~10 % slower at Np = 4
+   - callgrind (tol 1e-6, 180 it): gradient() 99.5 %; inside: CVodeF ~8 %,
+     CVodeB ~88 %; vjp 61 % of total
+   - per gradient: ~300 forward rhs calls, ~850 vjp calls (rhs_b 479,
+     quad_b 370; vjp cache hit only ~4 %)
+   - per vjp ~7400 instructions for a 6-flop rhs: recording (push_node),
+     TLS lookups of TAPE_INTERN (__tls_get_addr 6.5 % of total), per-call
+     std::vector allocations (~12 %), reverse sweep, rewind
+   - DQ backward Jacobian (D6) negligible (cvLsDQJac rare)
+   - backward restarts (CVodeReInitB) at every observation time -> more
+     steps than the forward solve
+   - vjp buffers reused (no per-call allocation): 25.9 s -> 21.0 s
+     (total 42.5 s -> 21.0 s with the looser tolerances)
 A2 all Np directions in one CVODES solve (Ns = Np)
    - y integrated once, Newton matrix shared by all sensitivities
    - needs a multi-direction Dual (DualN, dot[N]) or a block call
