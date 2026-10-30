@@ -585,7 +585,8 @@ predefined_known_types <- quote({
       stiff |> type(logical),
       max_steps |> type(int),
       stats |> type(logical),
-      linear_solver |> type(int)
+      linear_solver |> type(int),
+      sensitivity |> type(int)
     )
   )
   new_type(

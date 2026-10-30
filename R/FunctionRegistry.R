@@ -2425,11 +2425,16 @@ is_scalar_of <- function(t, base_types) {
     t$get_base_type() %in% base_types
 }
 linear_solvers <- c(sundials = 1L, lapack = 2L)
+# codes as etr::sensitivity_* in a2a_sundials.hpp
+sensitivity_modes <- c(auto = 0L, forward = 1L, adjoint = 2L)
+# option kinds given as a string literal, converted to an integer code
+string_option_codes <- list(solver = linear_solvers, sensitivity = sensitivity_modes)
 infer_solver_options <- function(node, vars_list, info_env, function_registry, type_name, kinds) {
-  # infer runs more than once; a successful earlier pass already converted the string
+  # infer runs more than once; a successful earlier pass already converted the strings
   converted <- is_options_type(node$internal_type, type_name)
-  i_solver <- match("solver", kinds)
-  if (!is.na(i_solver) && converted) kinds[[i_solver]] <- "int"
+  i_strings <- which(kinds %in% names(string_option_codes))
+  string_kinds <- kinds[i_strings]
+  if (converted) kinds[i_strings] <- "int"
   all_types <- lapply(node$args, function(arg) {
     infer(arg, vars_list, info_env, function_registry)
   })
@@ -2439,23 +2444,32 @@ infer_solver_options <- function(node, vars_list, info_env, function_registry, t
       double = is_scalar_of(all_types[[i]], numeric_types),
       int = is_scalar_of(all_types[[i]], numeric_types),
       logical = is_scalar_of(all_types[[i]], c("logical", "bool", numeric_types)),
-      solver = TRUE
+      TRUE
     )
     if (!ok) {
       return(sprintf("%s: %s has to be a scalar %s", type_name, names(kinds)[[i]], kinds[[i]]))
     }
   }
-  # NOTE: converted last, so a failing pass leaves the string for the next one
-  if (!is.na(i_solver) && !converted) {
-    arg <- node$args[[i_solver]]
-    value <- if (inherits(arg, "literal_node") && arg$literal_type == "character") {
-      remove_double_quotes(arg$name)
-    } else ""
-    if (!(value %in% names(linear_solvers))) {
-      return(sprintf("%s: linear_solver has to be \"sundials\" or \"lapack\"", type_name))
+  # NOTE: converted last, so a failing pass leaves the strings for the next one
+  if (!converted) {
+    for (k in seq_along(i_strings)) {
+      i <- i_strings[[k]]
+      codes <- string_option_codes[[string_kinds[[k]]]]
+      arg <- node$args[[i]]
+      value <- if (inherits(arg, "literal_node") && arg$literal_type == "character") {
+        remove_double_quotes(arg$name)
+      } else ""
+      if (!(value %in% names(codes))) {
+        return(sprintf("%s: %s has to be %s", type_name, names(kinds)[[i]],
+                       paste0("\"", names(codes), "\"", collapse = " or ")))
+      }
     }
-    arg$name <- paste0(linear_solvers[[value]], "L")
-    arg$literal_type <- "integer"
+    for (k in seq_along(i_strings)) {
+      arg <- node$args[[i_strings[[k]]]]
+      codes <- string_option_codes[[string_kinds[[k]]]]
+      arg$name <- paste0(codes[[remove_double_quotes(arg$name)]], "L")
+      arg$literal_type <- "integer"
+    }
   }
   t <- info_env$known_types[[type_name]]
   if (is.null(t)) return(sprintf("Did not find the predefined type %s", type_name))
@@ -2476,19 +2490,23 @@ check_solver_params_variable <- function(node, t, solver, pos) {
   NULL
 }
 cvode_option_kinds <- c(reltol = "double", abstol = "double", stiff = "logical",
-                        max_steps = "int", stats = "logical", linear_solver = "solver")
+                        max_steps = "int", stats = "logical", linear_solver = "solver",
+                        sensitivity = "sensitivity")
 function_registry_global$add(
-  name = "cvode_options", num_args = 6, arg_names = names(cvode_option_kinds),
+  name = "cvode_options", num_args = 7, arg_names = names(cvode_option_kinds),
   defaults = list(reltol = 1e-6, abstol = 1e-6, stiff = TRUE, max_steps = 1000000L, stats = FALSE,
-                  linear_solver = "sundials"),
+                  linear_solver = "sundials", sensitivity = "auto"),
   docu = paste0(
     "cvode_options(reltol = 1e-6, abstol = 1e-6, stiff = TRUE, max_steps = 1000000L, stats = FALSE, ",
-    "linear_solver = \"sundials\")\n",
+    "linear_solver = \"sundials\", sensitivity = \"auto\")\n",
     "Options for cvode; every argument is optional. stiff: TRUE -> BDF with Newton iteration, ",
     "FALSE -> ADAMS with fixed-point iteration (no Jacobian, jac is not used). ",
     "max_steps: maximum number of steps per output interval. stats: print solver statistics. ",
     "linear_solver (stiff = TRUE): \"sundials\" (dense LU of SUNDIALS) or \"lapack\" ",
-    "(faster for large systems; with OpenBLAS it does not run in parallel inside pmap)."
+    "(faster for large systems; with OpenBLAS it does not run in parallel inside pmap). ",
+    "sensitivity (gradient() / reverse mode through cvode): \"forward\" (forward sensitivities, ",
+    "cost grows with the number of inputs), \"adjoint\" (one backward solve), \"auto\" ",
+    "(forward up to 20 inputs y0/params that depend on x, adjoint above)."
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     infer_solver_options(node, vars_list, info_env, function_registry, "cvode_options", cvode_option_kinds)

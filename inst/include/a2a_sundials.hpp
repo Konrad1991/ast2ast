@@ -26,6 +26,19 @@ inline const char *linear_solver_name(const Integer &code) {
   return c == 1 ? "sundials" : c == 2 ? "lapack" : "unknown";
 }
 
+// sensitivity (gradient through cvode): codes as sensitivity_modes in FunctionRegistry.R
+inline constexpr int sensitivity_auto = 0;
+inline constexpr int sensitivity_forward = 1;
+inline constexpr int sensitivity_adjoint = 2;
+// auto: forward sensitivities up to this many active inputs, adjoint above
+inline constexpr std::size_t forward_sens_max_inputs = 20;
+inline const char *sensitivity_name(const Integer &code) {
+  if (code.isNA()) return "NA";
+  const int c = get_val(code);
+  return c == sensitivity_auto ? "auto" : c == sensitivity_forward ? "forward" :
+         c == sensitivity_adjoint ? "adjoint" : "unknown";
+}
+
 struct cvode_options {
   Double reltol;
   Double abstol;
@@ -33,33 +46,37 @@ struct cvode_options {
   Integer max_steps;
   Logical stats;
   Integer linear_solver;
+  Integer sensitivity;
   cvode_options(Double reltol_, Double abstol_, Logical stiff_, Integer max_steps_, Logical stats_,
-                Integer linear_solver_)
+                Integer linear_solver_, Integer sensitivity_)
     : reltol(reltol_), abstol(abstol_), stiff(stiff_), max_steps(max_steps_), stats(stats_),
-      linear_solver(linear_solver_) {}
+      linear_solver(linear_solver_), sensitivity(sensitivity_) {}
 #ifndef STANDALONE_ETR
   explicit cvode_options(SEXP arg) :
-    reltol(SEXP2Scalar<Double>(checked_elt(arg, "reltol", 6, "cvode_options"))),
-    abstol(SEXP2Scalar<Double>(checked_elt(arg, "abstol", 6, "cvode_options"))),
-    stiff(SEXP2Scalar<Logical>(checked_elt(arg, "stiff", 6, "cvode_options"))),
-    max_steps(SEXP2Scalar<Integer>(checked_elt(arg, "max_steps", 6, "cvode_options"))),
-    stats(SEXP2Scalar<Logical>(checked_elt(arg, "stats", 6, "cvode_options"))),
-    linear_solver(SEXP2Scalar<Integer>(checked_elt(arg, "linear_solver", 6, "cvode_options"))) {}
+    reltol(SEXP2Scalar<Double>(checked_elt(arg, "reltol", 7, "cvode_options"))),
+    abstol(SEXP2Scalar<Double>(checked_elt(arg, "abstol", 7, "cvode_options"))),
+    stiff(SEXP2Scalar<Logical>(checked_elt(arg, "stiff", 7, "cvode_options"))),
+    max_steps(SEXP2Scalar<Integer>(checked_elt(arg, "max_steps", 7, "cvode_options"))),
+    stats(SEXP2Scalar<Logical>(checked_elt(arg, "stats", 7, "cvode_options"))),
+    linear_solver(SEXP2Scalar<Integer>(checked_elt(arg, "linear_solver", 7, "cvode_options"))),
+    sensitivity(SEXP2Scalar<Integer>(checked_elt(arg, "sensitivity", 7, "cvode_options"))) {}
   SEXP to_SEXP() const {
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 6));
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 7));
     SET_VECTOR_ELT(res, 0, Cast(reltol));
     SET_VECTOR_ELT(res, 1, Cast(abstol));
     SET_VECTOR_ELT(res, 2, Cast(stiff));
     SET_VECTOR_ELT(res, 3, Cast(max_steps));
     SET_VECTOR_ELT(res, 4, Cast(stats));
     SET_VECTOR_ELT(res, 5, Cast(linear_solver));
-    SEXP names = PROTECT(Rf_allocVector(STRSXP, 6));
+    SET_VECTOR_ELT(res, 6, Cast(sensitivity));
+    SEXP names = PROTECT(Rf_allocVector(STRSXP, 7));
     SET_STRING_ELT(names, 0, Rf_mkChar("reltol"));
     SET_STRING_ELT(names, 1, Rf_mkChar("abstol"));
     SET_STRING_ELT(names, 2, Rf_mkChar("stiff"));
     SET_STRING_ELT(names, 3, Rf_mkChar("max_steps"));
     SET_STRING_ELT(names, 4, Rf_mkChar("stats"));
     SET_STRING_ELT(names, 5, Rf_mkChar("linear_solver"));
+    SET_STRING_ELT(names, 6, Rf_mkChar("sensitivity"));
     Rf_setAttrib(res, R_NamesSymbol, names);
     Rf_setAttrib(res, R_ClassSymbol, Rf_mkString("cvode_options"));
     UNPROTECT(2);
@@ -81,6 +98,7 @@ inline void print(const cvode_options& x) {
   PRINT_STREAM << "  max_steps: " << x.max_steps << std::endl;
   PRINT_STREAM << "  stats: " << x.stats << std::endl;
   PRINT_STREAM << "  linear_solver: " << linear_solver_name(x.linear_solver) << std::endl;
+  PRINT_STREAM << "  sensitivity: " << sensitivity_name(x.sensitivity) << std::endl;
 }
 
 struct ida_options {
@@ -485,13 +503,14 @@ struct cvodes_workspace {
   SUNNonlinearSolver NLS = nullptr;
   SUNNonlinearSolver NLS_sens = nullptr;
   void *mem = nullptr;
+  int ns = 1;
   ~cvodes_workspace() {
     if (mem) CVodeFree(&mem);
     if (NLS_sens) SUNNonlinSolFree(NLS_sens);
     if (NLS) SUNNonlinSolFree(NLS);
     if (LS) SUNLinSolFree(LS);
     if (A) SUNMatDestroy(A);
-    if (yS) N_VDestroyVectorArray(yS, 1);
+    if (yS) N_VDestroyVectorArray(yS, ns);
     if (y) N_VDestroy(y);
     if (ctx) SUNContext_Free(&ctx);
   }
@@ -1084,6 +1103,139 @@ template <typename RHS_R, typename JAC_R> struct cvode_adjoint_state {
       in_bar_dot[neq + i] = q[np + i];
     }
   }
+
+  // ---------- first order via forward sensitivities (small number of inputs) ----------
+  // one CVODES solve: y with rhs_t<Double>, all Ns sensitivities with rhs_t<Dual>
+  // (fS calls rhs_t<Dual> once per direction, p dot = direction).
+  // Backward: input_bar_i = sum_k S_i(t_k)^T ybar(t_k), no backward solve, no tape.
+  cvodes_workspace wf;
+  std::unique_ptr<DualCtx> fs_ctx;
+  RHS_Dual fs_rhs{};
+  JAC_Dual fs_jac{};
+  DualVec fs_p_dual;
+  std::vector<int> active;   // input index (0..neq-1: y0, neq..: p)
+  std::vector<double> sens;  // S_i(t_k)[j] at (k * Ns + i) * neq + j
+
+  static int fwd_rhs(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {
+    return rhs_trampoline<Ctx>(t, y, ydot, &static_cast<cvode_adjoint_state *>(user_data)->ctx);
+  }
+  static int fwd_jac(sunrealtype t, N_Vector y, N_Vector fy, SUNMatrix J, void *user_data,
+                     N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) {
+    return cvode_jac_trampoline<Ctx>(t, y, fy, J, &static_cast<cvode_adjoint_state *>(user_data)->ctx,
+                                     tmp1, tmp2, tmp3);
+  }
+  static int fwd_sens(int Ns, sunrealtype t, N_Vector y, N_Vector ydot, N_Vector *yS,
+                      N_Vector *ySdot, void *user_data, N_Vector tmp1, N_Vector tmp2) {
+    auto *s = static_cast<cvode_adjoint_state *>(user_data);
+    const std::size_t np = s->p_vals.size();
+    for (int i = 0; i < Ns; ++i) {
+      const int a = s->active[static_cast<std::size_t>(i)];
+      for (std::size_t m = 0; m < np; ++m) {
+        const double d = a == static_cast<int>(s->neq + m) ? 1.0 : 0.0;
+        s->fs_p_dual.set(m, etr::Dual(s->p_vals[m], d));
+      }
+      const int flag = sens_rhs_trampoline<DualCtx>(1, t, y, ydot, &yS[i], &ySdot[i], s->fs_ctx.get(),
+                                                    tmp1, tmp2);
+      if (flag != 0) return flag;
+    }
+    return 0;
+  }
+
+  // vals: column-major nt x neq (the cvode result)
+  void solve_forward_sens(std::vector<double> &vals) {
+    const std::size_t np = p_vals.size();
+    const int ns = static_cast<int>(active.size());
+    fs_p_dual = DualVec(etr::SI{np});
+    for (std::size_t m = 0; m < np; ++m) fs_p_dual.set(m, etr::Dual(p_vals[m], 0.0));
+    fs_ctx = std::make_unique<DualCtx>();
+    fs_ctx->f = &fs_rhs;
+    fs_ctx->params = &fs_p_dual;
+    fs_ctx->zero_dot.assign(neq, 0.0);
+    fs_ctx->sink_dot.assign(neq, 0.0);
+    fs_ctx->sink_val.assign(neq, 0.0);
+
+    cvodes_workspace &v = wf;
+    etr::ass<"cvode: SUNContext_Create failed">(SUNContext_Create(SUN_COMM_NULL, &v.ctx) == 0);
+    SUNContext_ClearErrHandlers(v.ctx);
+    v.y = N_VNew_Serial(static_cast<sunindextype>(neq), v.ctx);
+    etr::ass<"cvode: N_VNew_Serial failed">(v.y != nullptr);
+    v.yS = N_VCloneVectorArray(ns, v.y);
+    etr::ass<"cvode: N_VCloneVectorArray failed">(v.yS != nullptr);
+    v.ns = ns;
+    sunrealtype *yp = N_VGetArrayPointer(v.y);
+    for (std::size_t j = 0; j < neq; ++j) yp[j] = y0_vals[j];
+    for (int i = 0; i < ns; ++i) {
+      N_VConst(0.0, v.yS[i]);
+      const int a = active[static_cast<std::size_t>(i)];
+      if (a < static_cast<int>(neq)) N_VGetArrayPointer(v.yS[i])[a] = 1.0;
+    }
+    v.mem = CVodeCreate(stiff ? CV_BDF : CV_ADAMS, v.ctx);
+    etr::ass<"cvode: CVodeCreate failed">(v.mem != nullptr);
+    etr::ass<"cvode: CVodeInit failed">(CVodeInit(v.mem, &fwd_rhs, times[0], v.y) == CV_SUCCESS);
+    etr::ass<"cvode: CVodeSStolerances failed">(CVodeSStolerances(v.mem, reltol, abstol) == CV_SUCCESS);
+    etr::ass<"cvode: CVodeSetUserData failed">(CVodeSetUserData(v.mem, this) == CV_SUCCESS);
+    etr::ass<"cvode: CVodeSetMaxNumSteps failed">(CVodeSetMaxNumSteps(v.mem, max_steps) == CV_SUCCESS);
+    if (stiff) {
+      v.A = SUNDenseMatrix(static_cast<sunindextype>(neq), static_cast<sunindextype>(neq), v.ctx);
+      etr::ass<"cvode: SUNDenseMatrix failed">(v.A != nullptr);
+      v.LS = dense_solver(linear_solver, v.y, v.A, v.ctx);
+      etr::ass<"cvode: creating the dense linear solver failed">(v.LS != nullptr);
+      etr::ass<"cvode: CVodeSetLinearSolver failed">(CVodeSetLinearSolver(v.mem, v.LS, v.A) == CV_SUCCESS);
+      if constexpr (!std::is_same_v<JAC_R, no_jac>) {
+        etr::ass<"cvode: CVodeSetJacFn failed">(CVodeSetJacFn(v.mem, &fwd_jac) == CV_SUCCESS);
+      }
+    } else {
+      v.NLS = SUNNonlinSol_FixedPoint(v.y, 0, v.ctx);
+      etr::ass<"cvode: creating the fixed-point solver failed">(v.NLS != nullptr);
+      etr::ass<"cvode: CVodeSetNonlinearSolver failed">(CVodeSetNonlinearSolver(v.mem, v.NLS) == CV_SUCCESS);
+    }
+    etr::ass<"cvode: CVodeSensInit failed">(
+      CVodeSensInit(v.mem, ns, CV_STAGGERED, &fwd_sens, v.yS) == CV_SUCCESS);
+    etr::ass<"cvode: CVodeSensEEtolerances failed">(CVodeSensEEtolerances(v.mem) == CV_SUCCESS);
+    etr::ass<"cvode: CVodeSetSensErrCon failed">(CVodeSetSensErrCon(v.mem, SUNTRUE) == CV_SUCCESS);
+    if (!stiff) {
+      v.NLS_sens = SUNNonlinSol_FixedPointSens(ns, v.y, 0, v.ctx);
+      etr::ass<"cvode: creating the fixed-point sensitivity solver failed">(v.NLS_sens != nullptr);
+      etr::ass<"cvode: CVodeSetNonlinearSolverSensStg failed">(
+        CVodeSetNonlinearSolverSensStg(v.mem, v.NLS_sens) == CV_SUCCESS);
+    }
+
+    const std::size_t nsz = static_cast<std::size_t>(ns);
+    sens.assign(nt * nsz * neq, 0.0);
+    auto store = [&](std::size_t k) {
+      for (std::size_t j = 0; j < neq; ++j) vals[j * nt + k] = yp[j];
+      for (std::size_t i = 0; i < nsz; ++i) {
+        const sunrealtype *sp = N_VGetArrayPointer(v.yS[i]);
+        std::copy(sp, sp + neq, sens.begin() + static_cast<std::ptrdiff_t>((k * nsz + i) * neq));
+      }
+    };
+    store(0);
+    for (std::size_t k = 1; k < nt; ++k) {
+      sunrealtype tret = 0.0;
+      int flag = CVode(v.mem, times[k], v.y, &tret, CV_NORMAL);
+      etr::ass(flag == CV_SUCCESS, std::string("cvode: integration failed at t = ") +
+                                     std::to_string(tret) + ": " +
+                                     flag_name(CVodeGetReturnFlagName(flag)));
+      flag = CVodeGetSens(v.mem, &tret, v.yS);
+      etr::ass(flag == CV_SUCCESS, std::string("cvode: CVodeGetSens failed: ") +
+                                     flag_name(CVodeGetReturnFlagName(flag)));
+      store(k);
+    }
+  }
+
+  // in_bar_i = sum_k S_i(t_k)^T ybar(t_k), ybar column-major nt x neq
+  void backward_forward_sens(const std::vector<double> &ybar, std::vector<double> &in_bar) const {
+    const std::size_t nsz = active.size();
+    in_bar.assign(nsz, 0.0);
+    for (std::size_t k = 0; k < nt; ++k) {
+      for (std::size_t i = 0; i < nsz; ++i) {
+        const double *S = sens.data() + (k * nsz + i) * neq;
+        double acc = 0.0;
+        for (std::size_t j = 0; j < neq; ++j) acc += S[j] * ybar[j * nt + k];
+        in_bar[i] += acc;
+      }
+    }
+  }
 };
 
 template <typename JAC, typename RHS, typename Y, typename T, typename P>
@@ -1147,49 +1299,69 @@ inline auto cvodes_reverse_impl(const RHS &, const JAC *, const Y &y0, const T &
     s->y0_ids[i] = yi.id;
   }
 
-  w.mem = CVodeCreate(s->stiff ? CV_BDF : CV_ADAMS, w.ctx);
-  etr::ass<"cvode: CVodeCreate failed">(w.mem != nullptr);
-  using Ctx = typename State::Ctx;
-  etr::ass<"cvode: CVodeInit failed">(CVodeInit(w.mem, &rhs_trampoline<Ctx>, s->times[0], w.y) == CV_SUCCESS);
-  etr::ass<"cvode: CVodeSStolerances failed">(CVodeSStolerances(w.mem, s->reltol, s->abstol) == CV_SUCCESS);
-  etr::ass<"cvode: CVodeSetUserData failed">(CVodeSetUserData(w.mem, &s->ctx) == CV_SUCCESS);
-  etr::ass<"cvode: CVodeSetMaxNumSteps failed">(CVodeSetMaxNumSteps(w.mem, s->max_steps) == CV_SUCCESS);
-  if (s->stiff) {
-    w.A = SUNDenseMatrix(static_cast<sunindextype>(neq), static_cast<sunindextype>(neq), w.ctx);
-    etr::ass<"cvode: SUNDenseMatrix failed">(w.A != nullptr);
-    w.LS = dense_solver(s->linear_solver, w.y, w.A, w.ctx);
-    etr::ass<"cvode: creating the dense linear solver failed">(w.LS != nullptr);
-    etr::ass<"cvode: CVodeSetLinearSolver failed">(CVodeSetLinearSolver(w.mem, w.LS, w.A) == CV_SUCCESS);
-    if constexpr (!std::is_same_v<JAC, no_jac>) {
-      etr::ass<"cvode: CVodeSetJacFn failed">(
-        CVodeSetJacFn(w.mem, &cvode_jac_trampoline<Ctx>) == CV_SUCCESS);
-    }
-  } else {
-    w.NLS = SUNNonlinSol_FixedPoint(w.y, 0, w.ctx);
-    etr::ass<"cvode: creating the fixed-point solver failed">(w.NLS != nullptr);
-    etr::ass<"cvode: CVodeSetNonlinearSolver failed">(CVodeSetNonlinearSolver(w.mem, w.NLS) == CV_SUCCESS);
+  // inputs that are tape constants (e.g. a literal y0) get no sensitivity
+  const auto &tape_ops = etr::TAPE_INTERN_ref().op;
+  auto is_active = [&tape_ops](int id) {
+    return id >= 0 && tape_ops[static_cast<std::size_t>(id)] != etr::ROp::Const;
+  };
+  for (std::size_t i = 0; i < neq; ++i) {
+    if (is_active(s->y0_ids[i])) s->active.push_back(static_cast<int>(i));
   }
-  // checkpoint every 100 steps, Hermite interpolation of the forward solution
-  etr::ass<"cvode: CVodeAdjInit failed">(CVodeAdjInit(w.mem, 100, CV_HERMITE) == CV_SUCCESS);
+  for (std::size_t i = 0; i < np; ++i) {
+    if (is_active(s->p_ids[i])) s->active.push_back(static_cast<int>(neq + i));
+  }
+  const int mode = etr::get_val(opt.sensitivity);
+  const bool forward_sens = mode == etr::sensitivity_forward ||
+    (mode == etr::sensitivity_auto && s->active.size() <= etr::forward_sens_max_inputs);
 
   std::vector<double> vals(neq * nt);
   std::vector<uint8_t> na(neq * nt, 0);
-  for (std::size_t j = 0; j < neq; ++j) vals[j * nt] = yp[j];
-  for (std::size_t k = 1; k < nt; ++k) {
-    sunrealtype tret = 0.0;
-    int ncheck = 0;
-    int flag = CVodeF(w.mem, s->times[k], w.y, &tret, CV_NORMAL, &ncheck);
-    etr::ass(flag == CV_SUCCESS,
-             std::string("cvode: integration failed at t = ") + std::to_string(tret) + ": " +
-               flag_name(CVodeGetReturnFlagName(flag)));
-    for (std::size_t j = 0; j < neq; ++j) vals[j * nt + k] = yp[j];
+  if (forward_sens) {
+    s->solve_forward_sens(vals);
+    if (etr::get_val(opt.stats)) print_cvode_stats(s->wf.mem);
+  } else {
+    w.mem = CVodeCreate(s->stiff ? CV_BDF : CV_ADAMS, w.ctx);
+    etr::ass<"cvode: CVodeCreate failed">(w.mem != nullptr);
+    using Ctx = typename State::Ctx;
+    etr::ass<"cvode: CVodeInit failed">(CVodeInit(w.mem, &rhs_trampoline<Ctx>, s->times[0], w.y) == CV_SUCCESS);
+    etr::ass<"cvode: CVodeSStolerances failed">(CVodeSStolerances(w.mem, s->reltol, s->abstol) == CV_SUCCESS);
+    etr::ass<"cvode: CVodeSetUserData failed">(CVodeSetUserData(w.mem, &s->ctx) == CV_SUCCESS);
+    etr::ass<"cvode: CVodeSetMaxNumSteps failed">(CVodeSetMaxNumSteps(w.mem, s->max_steps) == CV_SUCCESS);
+    if (s->stiff) {
+      w.A = SUNDenseMatrix(static_cast<sunindextype>(neq), static_cast<sunindextype>(neq), w.ctx);
+      etr::ass<"cvode: SUNDenseMatrix failed">(w.A != nullptr);
+      w.LS = dense_solver(s->linear_solver, w.y, w.A, w.ctx);
+      etr::ass<"cvode: creating the dense linear solver failed">(w.LS != nullptr);
+      etr::ass<"cvode: CVodeSetLinearSolver failed">(CVodeSetLinearSolver(w.mem, w.LS, w.A) == CV_SUCCESS);
+      if constexpr (!std::is_same_v<JAC, no_jac>) {
+        etr::ass<"cvode: CVodeSetJacFn failed">(
+          CVodeSetJacFn(w.mem, &cvode_jac_trampoline<Ctx>) == CV_SUCCESS);
+      }
+    } else {
+      w.NLS = SUNNonlinSol_FixedPoint(w.y, 0, w.ctx);
+      etr::ass<"cvode: creating the fixed-point solver failed">(w.NLS != nullptr);
+      etr::ass<"cvode: CVodeSetNonlinearSolver failed">(CVodeSetNonlinearSolver(w.mem, w.NLS) == CV_SUCCESS);
+    }
+    // checkpoint every 100 steps, Hermite interpolation of the forward solution
+    etr::ass<"cvode: CVodeAdjInit failed">(CVodeAdjInit(w.mem, 100, CV_HERMITE) == CV_SUCCESS);
+
+    for (std::size_t j = 0; j < neq; ++j) vals[j * nt] = yp[j];
+    for (std::size_t k = 1; k < nt; ++k) {
+      sunrealtype tret = 0.0;
+      int ncheck = 0;
+      int flag = CVodeF(w.mem, s->times[k], w.y, &tret, CV_NORMAL, &ncheck);
+      etr::ass(flag == CV_SUCCESS,
+               std::string("cvode: integration failed at t = ") + std::to_string(tret) + ": " +
+                 flag_name(CVodeGetReturnFlagName(flag)));
+      for (std::size_t j = 0; j < neq; ++j) vals[j * nt + k] = yp[j];
+    }
+    if (etr::get_val(opt.stats)) print_cvode_stats(w.mem);
   }
-  if (etr::get_val(opt.stats)) print_cvode_stats(w.mem);
 
   std::vector<int> input_ids = s->y0_ids;
   input_ids.insert(input_ids.end(), s->p_ids.begin(), s->p_ids.end());
   const int head = etr::TAPE_INTERN_ref().push_custom(vals, na, std::move(input_ids),
-    [s](etr::ReverseTape &tape, int out0) {
+    [s, forward_sens](etr::ReverseTape &tape, int out0) {
       const std::size_t n_out = s->neq * s->nt;
       std::vector<double> ybar(n_out);
       bool any = false;
@@ -1199,6 +1371,16 @@ inline auto cvodes_reverse_impl(const RHS &, const JAC *, const Y &y0, const T &
         if (ybar[i] != 0.0) any = true;
       }
       if (!any) return;
+      if (forward_sens) {
+        std::vector<double> in_bar;
+        s->backward_forward_sens(ybar, in_bar);
+        for (std::size_t i = 0; i < in_bar.size(); ++i) {
+          const std::size_t a = static_cast<std::size_t>(s->active[i]);
+          const int id = a < s->neq ? s->y0_ids[a] : s->p_ids[a - s->neq];
+          tape.adj[static_cast<std::size_t>(id)] += in_bar[i];
+        }
+        return;
+      }
       std::vector<double> y0bar, pbar;
       s->backward(ybar, y0bar, pbar);
       for (std::size_t i = 0; i < s->neq; ++i) {

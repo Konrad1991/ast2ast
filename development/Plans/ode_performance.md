@@ -38,6 +38,12 @@ A0/A1 measurements 2026-10-30 (HMC example, 2000 it, L = 12, gradient()):
    - vjp buffers reused (no per-call allocation): 25.9 s -> 21.0 s
      (total 42.5 s -> 21.0 s with the looser tolerances)
 A2 all Np directions in one CVODES solve (Ns = Np)
+   - DONE 2026-10-30 (decided: inside the cvode tape block, no DualN):
+     cvode_options(sensitivity = "auto" / "forward" / "adjoint"), auto =
+     forward up to 20 active inputs (non-Const tape ids); forward pass solves
+     y (rhs_t<Double>) + Ns sensitivities (fS = rhs_t<Dual> per direction),
+     backward = sum_k S(t_k)^T ybar(t_k). Hessian stays adjoint (step 4).
+     HMC example: 21.0 s -> 10.3 s. Suite green (1938).
    - y integrated once, Newton matrix shared by all sensitivities
    - needs a multi-direction Dual (DualN, dot[N]) or a block call
      f(Dual(y, S[:, i])) per direction inside one fS callback

@@ -27,7 +27,7 @@ f <- function(theta, times) {
     }
     k <- c(theta[[1L]])
     y0 <- c(theta[[2L]])
-    c(cvode(decay, y0, times, k, cvode_options(reltol = 1e-10, abstol = 1e-12)))
+    c(cvode(decay, y0, times, k, cvode_options(reltol = 1e-10, abstol = 1e-12, sensitivity = "adjoint")))
   }
   jacobian(solution, theta, times)
 }
@@ -52,7 +52,7 @@ f <- function(theta, times) {
     }
     k <- c(theta[[1L]])
     y0 <- c(theta[[2L]])
-    c(cvode(decay, y0, times, k, cvode_options(reltol = 1e-10, abstol = 1e-12, stiff = FALSE)))
+    c(cvode(decay, y0, times, k, cvode_options(reltol = 1e-10, abstol = 1e-12, stiff = FALSE, sensitivity = "adjoint")))
   }
   jacobian(solution, theta, times)
 }
@@ -87,7 +87,7 @@ f <- function(theta, times) {
     }
     k <- c(theta[[1L]])
     y0 <- c(theta[[2L]])
-    c(cvode(decay, y0, times, k, cvode_options(reltol = 1e-10, abstol = 1e-12), decay_jac))
+    c(cvode(decay, y0, times, k, cvode_options(reltol = 1e-10, abstol = 1e-12, sensitivity = "adjoint"), decay_jac))
   }
   jacobian(solution, theta, times)
 }
@@ -136,7 +136,7 @@ lv_grad <- function(theta, data) {
     p <- theta[1L:4L]
     y0 <- theta[5L:6L]
     times <- c(0, 1, 2, 3, 4, 5)
-    sol <- c(cvode(lv, y0, times, p, cvode_options(reltol = 1e-10, abstol = 1e-12)))
+    sol <- c(cvode(lv, y0, times, p, cvode_options(reltol = 1e-10, abstol = 1e-12, sensitivity = "adjoint")))
     c(sum((sol - data)^2))
   }
   jacobian(loss, theta, data)
@@ -263,7 +263,8 @@ fd <- vapply(seq_along(theta), function(i) {
   tm[[i]] <- tm[[i]] - h
   c(lv_grad_cpp(tp, data) - lv_grad_cpp(tm, data)) / (2 * h)
 }, numeric(length(theta)))
-# gradient() in a plain translation: adjoint through cvode
+# gradient() in a plain translation: sensitivity = "auto" -> forward sensitivities (6 inputs),
+# compared with the adjoint gradient of lv_grad_cpp
 lv_gradient <- function(theta, data) {
   argtypes(theta |> type(vec(double)), data |> type(vec(double)))
   loss <- function(theta, data) {
@@ -290,6 +291,39 @@ lv_gradient <- function(theta, data) {
 }
 lv_gradient_cpp <- ast2ast::translate(lv_gradient)
 expect_equal(lv_gradient_cpp(theta, data), c(lv_grad_cpp(theta, data)), tolerance = 1e-6)
+
+# sensitivity = "forward", non-stiff, y0 constant: only k is active
+f <- function(theta) {
+  argtypes(theta |> type(vec(double)))
+  loss <- function(theta) {
+    argtypes(theta |> type(vec(double)))
+    returntype(double)
+    decay <- function(t, y, ydot, k) {
+      argtypes(
+        t |> type(double) |> ref(),
+        y |> type(borrow_vec(double)) |> ref(),
+        ydot |> type(borrow_vec(double)) |> ref(),
+        k |> type(vec(double)) |> ref()
+      )
+      returntype(void)
+      ydot[[1L]] <- -k[[1L]] * y[[1L]]
+    }
+    k <- c(theta[[1L]])
+    y0 <- c(2)
+    sum(cvode(decay, y0, c(0, 1, 2), k,
+              cvode_options(reltol = 1e-10, abstol = 1e-12, stiff = FALSE, sensitivity = "forward")))
+  }
+  gradient(loss, theta)
+}
+fcpp <- ast2ast::translate(f)
+expect_equal(fcpp(0.7), -2 * sum(c(0, 1, 2) * exp(-0.7 * c(0, 1, 2))), tolerance = 1e-6)
+
+# unknown sensitivity mode
+f <- function() {
+  opts <- cvode_options(sensitivity = "backward")
+  opts$reltol
+}
+expect_error(ast2ast::translate(f), "sensitivity has to be \"auto\" or \"forward\" or \"adjoint\"")
 
 H <- lv_hess_cpp(theta, data)
 expect_equal(unname(H), fd, tolerance = 1e-4)
