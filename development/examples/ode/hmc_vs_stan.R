@@ -1,6 +1,6 @@
 # =============================================================================
-# Benchmark: hand-written HMC (ast2ast) vs Stan NUTS (rstan) on the same
-# Bayesian Lotka-Volterra model (hmc_lotka_volterra.R).
+# Benchmark: hand-written HMC and NUTS (ast2ast) vs Stan NUTS (rstan) on the
+# same Bayesian Lotka-Volterra model (hmc_lotka_volterra.R, nuts_lotka_volterra.R).
 #
 # Both: BDF + CVODES forward sensitivities, reltol 1e-6, abstol 1e-8,
 # 500 warmup + 1500 sampling iterations, 1 chain, several seeds, start at truth.
@@ -13,6 +13,8 @@ library(rstan)
 library(posterior)
 
 src <- readLines("development/examples/ode/hmc_lotka_volterra.R")
+eval(parse(text = src[seq_len(grep("^# --- run", src) - 1L)]))
+src <- readLines("development/examples/ode/nuts_lotka_volterra.R")
 eval(parse(text = src[seq_len(grep("^# --- run", src) - 1L)]))
 
 stan_code <- "
@@ -62,6 +64,16 @@ for (seed in seeds) {
   ess <- apply(post, 2, ess_bulk)
   res[[length(res) + 1L]] <- data.frame(
     sampler = "ast2ast HMC", seed = seed, seconds = timing, min_ess = min(ess),
+    ess_per_s = min(ess) / timing, mean_a = mean(exp(post[, 1]))
+  )
+
+  timing <- system.time(
+    draws <- nuts_cpp(log(truth), data, n_warm, n_iter, 0.01, 10L, seed)
+  )[["elapsed"]]
+  post <- draws[-seq_len(n_warm), 1:4]
+  ess <- apply(post, 2, ess_bulk)
+  res[[length(res) + 1L]] <- data.frame(
+    sampler = "ast2ast NUTS", seed = seed, seconds = timing, min_ess = min(ess),
     ess_per_s = min(ess) / timing, mean_a = mean(exp(post[, 1]))
   )
 

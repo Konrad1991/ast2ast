@@ -63,8 +63,9 @@ Stan comparison 2026-10-30 (development/examples/ode/hmc_vs_stan.R, rstan
    - Stan ~43 leapfrog steps / iteration (treedepth ~4.6), ast2ast 12
    - random Stan inits ran > 25 min (very stiff regions, max_num_steps 1e6)
    -> missing vs Stan: NUTS + step size adaptation, not raw speed
-   - NOTE: that Stan run still had prior_mean = log(truth); not rerun after the
-     prior change to log(c(1, 0.5, 0.5, 0.1))
+   - rerun with the same prior log(c(1, 0.5, 0.5, 0.1)), incl. ast2ast NUTS
+     (median of 3 seeds): HMC 9.1 s / ESS 100 / 11.0 ESS/s,
+     NUTS 29.5 s / 289 / 9.4 ESS/s, Stan 39.9 s / 331 / 8.1 ESS/s
 
 NUTS in the DSL 2026-10-30 (development/examples/ode/nuts_lotka_volterra.R):
    - recursive build_tree returning a Tree struct (new_type), multinomial

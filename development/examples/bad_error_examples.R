@@ -36,3 +36,30 @@ f <- function() {
   return(x)
 }
 fcpp <- ast2ast::translate(f)
+
+# struct returned straight from an inner fn result: "An XPtr function must return
+# the same type on every path" (also wrong: count is an inner fn, not an XPtr fn).
+# Works with a double, and with `node |> type(Node); node <- left; return(node)`.
+# Found while writing development/examples/ode/nuts_lotka_volterra.R (2026-10-30)
+types <- function() new_type(Node, slots(x |> type(double)))
+f <- function(n) {
+  argtypes(n |> type(int))
+  base <- function(n) {
+    argtypes(n |> type(int) |> const())
+    returntype(Node)
+    node |> type(Node)
+    node$x <- 0
+    return(node)
+  }
+  count <- function(n) {
+    argtypes(n |> type(int) |> const())
+    returntype(Node)
+    left <- base(n)
+    if (left$x > 100) return(left)
+    right <- base(n)
+    return(right)
+  }
+  res <- count(n)
+  res$x
+}
+fcpp <- ast2ast::translate(f, types_f = types)
