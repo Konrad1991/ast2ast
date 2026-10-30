@@ -1,0 +1,429 @@
+#ifndef HELPER_ETR_HPP
+#define HELPER_ETR_HPP
+
+namespace etr {
+
+// is.na
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsArithV<T> inline Logical isNA(const T inp) {
+  const auto val = get_scalar_val(inp);
+  return val.isNA();
+}
+template <typename T> requires IsArithRefV<T> inline Logical isNA(const T inp) {
+  const auto val = get_scalar_val(inp);
+  return val.isNA();
+}
+template <typename T> requires IsArray<T> inline auto isNA(const T &inp) {
+  Array<Logical, Buffer<Logical, RBufferTrait>> res( SI{inp.size()});
+  res.dim = Dim{inp.size()};
+  for (std::size_t i = 0; i < res.size(); i++) {
+    res.set(i, get_scalar_val(inp.get(i)).isNA());
+  }
+  return res;
+}
+// is.nan
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsArithV<T> inline Logical isNaN(const T inp) {
+  if constexpr (IsLogical<T> || IsInteger<T>) {
+    return Logical(false);
+  } else {
+    return inp.isNaN();
+  }
+}
+template <typename T> requires IsArithRefV<T> inline Logical isNaN(const T inp) {
+  const auto val = get_scalar_val(inp);
+  return val.isNaN();
+}
+template <typename T> requires IsArray<T> inline auto isNaN(const T &inp) {
+  Array<Logical, Buffer<Logical, RBufferTrait>> res( SI{inp.size()});
+  res.dim = Dim{inp.size()};
+  for (std::size_t i = 0; i < res.size(); i++) {
+    res.set(i, inp.get(i).isNaN());
+  }
+  return res;
+}
+// is.infinite
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsArithV<T> inline Logical isInfinite(const T inp) {
+  if constexpr (IsLogical<T> || IsInteger<T>) {
+    return Logical(false);
+  } else {
+    return Logical(inp.isInfinite());
+  }
+}
+template <typename T> requires IsArithRefV<T> inline Logical isInfinite(const T inp) {
+  const auto val = get_scalar_val(inp);
+  return Logical(val.isInfinite());
+}
+template <typename T> requires IsArray<T> inline auto isInfinite(const T &inp) {
+  Array<Logical, Buffer<Logical, RBufferTrait>> res( SI{inp.size()});
+  res.dim = Dim{inp.size()};
+  for (std::size_t i = 0; i < res.size(); i++) {
+    res.set(i, inp.get(i).isInfinite());
+  }
+  return res;
+}
+
+// is.finite
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsArithV<T> inline Logical isFinite(const T inp) {
+  if constexpr (IsLogical<T> || IsInteger<T>) {
+    return Logical(false);
+  } else {
+    return Logical(inp.isFinite());
+  }
+}
+template <typename T> requires IsArithRefV<T> inline Logical isFinite(const T inp) {
+  const auto val = get_scalar_val(inp);
+  return Logical(val.isFinite());
+}
+template <typename T> requires IsArray<T> inline auto isFinite(const T &inp) {
+  Array<Logical, Buffer<Logical, RBufferTrait>> res( SI{inp.size()});
+  res.dim = Dim{inp.size()};
+  for (std::size_t i = 0; i < res.size(); i++) {
+    res.set(i, inp.get(i).isFinite());
+  }
+  return res;
+}
+
+// length
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires (!IsArray<T> && !IsCollection<T>) inline Integer length(const T inp) {
+  return Integer(1);
+}
+template <typename T> requires IsArray<T> inline Integer length(const T &inp) {
+  return Integer(static_cast<int>(inp.size()));
+}
+// dim
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires (!IsArray<T> && !IsCollection<T>) inline Integer dim(T inp) {
+  return Integer(1);
+}
+template <typename T> requires IsArray<T> inline auto dim(const T &inp) {
+  const auto d = dim_view(inp.get_dim());
+  Array<Integer, Buffer<Integer, RBufferTrait>> res(SI{d.size()});
+  for (std::size_t i = 0; i < res.size(); i++) {
+    res.set(i, Integer(static_cast<int>(d[i])));
+  }
+  res.dim = Dim{2};
+  return res;
+}
+// ncol & nrow
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires (!IsArray<T> && !IsCollection<T>) inline Integer nrow(T inp) {
+  return Integer(0);
+}
+template <typename T> requires (!IsArray<T> && !IsCollection<T>) inline Integer ncol(T inp) {
+  return Integer(0);
+}
+template <typename T> requires IsArray<T> inline Integer nrow(const T& inp) {
+  const auto d = dim_view(inp.get_dim());
+  if (d.size() < 1) return Integer(0);
+  return Integer(d[0]);
+}
+template <typename T> requires IsArray<T> inline Integer ncol(const T& inp) {
+  const auto d = dim_view(inp.get_dim());
+  if (d.size() < 2) return Integer(0);
+  return Integer(d[1]);
+}
+
+// max & min -- return the selected element (keeps AD); any NA -> NA (na.rm = FALSE)
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsScalarLike<T> inline auto max(const T inp) { return inp; }
+template <typename T> requires IsArray<T> inline auto max(const T &inp) {
+  using Type = typename ExtractDataType<Decayed<T>>::value_type;
+  ass<"Error in max: argument is of length 0">(inp.size() > 0);
+  Type res = inp.get(0);
+  if (get_scalar_val(res).isNA()) return res;
+  for (std::size_t i = 1; i < inp.size(); i++) {
+    Type cur = inp.get(i);
+    if (get_scalar_val(cur).isNA()) return cur;
+    if (get_val(cur) > get_val(res)) res = cur;
+  }
+  return res;
+}
+template <typename T> requires IsScalarLike<T> inline auto min(const T inp) { return inp; }
+template <typename T> requires IsArray<T> inline auto min(const T &inp) {
+  using Type = typename ExtractDataType<Decayed<T>>::value_type;
+  ass<"Error in min: argument is of length 0">(inp.size() > 0);
+  Type res = inp.get(0);
+  if (get_scalar_val(res).isNA()) return res;
+  for (std::size_t i = 1; i < inp.size(); i++) {
+    Type cur = inp.get(i);
+    if (get_scalar_val(cur).isNA()) return cur;
+    if (get_val(cur) < get_val(res)) res = cur;
+  }
+  return res;
+}
+
+// which.max & which.min -- 1-based index of first extreme, NA skipped
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsScalarLike<T> inline Integer which_max(const T inp) { return Integer(1); }
+template <typename T> requires IsArray<T> inline Integer which_max(const T &inp) {
+  ass<"Error in which.max: argument is of length 0">(inp.size() > 0);
+  bool found = false;
+  std::size_t best_idx = 0;
+  double best_val = 0.0;
+  for (std::size_t i = 0; i < inp.size(); i++) {
+    const auto cur = get_scalar_val(inp.get(i));
+    if (cur.isNA()) continue;
+    const double v = static_cast<double>(get_val(cur));
+    if (!found || v > best_val) {
+      found = true;
+      best_idx = i;
+      best_val = v;
+    }
+  }
+  ass<"Error in which.max: all elements are NA">(found);
+  return Integer(static_cast<int>(best_idx + 1));
+}
+template <typename T> requires IsScalarLike<T> inline Integer which_min(const T inp) { return Integer(1); }
+template <typename T> requires IsArray<T> inline Integer which_min(const T &inp) {
+  ass<"Error in which.min: argument is of length 0">(inp.size() > 0);
+  bool found = false;
+  std::size_t best_idx = 0;
+  double best_val = 0.0;
+  for (std::size_t i = 0; i < inp.size(); i++) {
+    const auto cur = get_scalar_val(inp.get(i));
+    if (cur.isNA()) continue;
+    const double v = static_cast<double>(get_val(cur));
+    if (!found || v < best_val) {
+      found = true;
+      best_idx = i;
+      best_val = v;
+    }
+  }
+  ass<"Error in which.min: all elements are NA">(found);
+  return Integer(static_cast<int>(best_idx + 1));
+}
+
+// which -- 1-based indices of truthy elements, always returns a vector (even
+// for a scalar input, matching R); NA is skipped (not selected), not an error
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsScalarLike<T> inline auto which(const T inp) {
+  const auto v = get_scalar_val(inp);
+  Array<Integer, Buffer<Integer, RBufferTrait>> ret;
+  if (!v.isNA() && get_val(v) != 0) ret.push_back(Integer(1));
+  ret.dim = Dim{ret.size()};
+  return ret;
+}
+template <typename T> requires IsArray<T> inline auto which(const T &inp) {
+  Array<Integer, Buffer<Integer, RBufferTrait>> ret;
+  for (std::size_t i = 0; i < inp.size(); i++) {
+    const auto cur = get_scalar_val(inp.get(i));
+    if (!cur.isNA() && get_val(cur) != 0) {
+      ret.push_back(Integer(static_cast<int>(i + 1)));
+    }
+  }
+  ret.dim = Dim{ret.size()};
+  return ret;
+}
+
+// all & any -- three-valued logic, matches R (empty all -> TRUE, empty any -> FALSE)
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsScalarLike<T> inline Logical all(const T inp) {
+  if (get_scalar_val(inp).isNA()) return Logical::NA();
+  return Logical(get_val(inp) != 0);
+}
+template <typename T> requires IsArray<T> inline Logical all(const T &inp) {
+  bool seen_na = false;
+  for (std::size_t i = 0; i < inp.size(); i++) {
+    const auto cur = get_scalar_val(inp.get(i));
+    if (cur.isNA()) { seen_na = true; continue; }
+    if (get_val(cur) == 0) return Logical(false);
+  }
+  if (seen_na) return Logical::NA();
+  return Logical(true);
+}
+template <typename T> requires IsScalarLike<T> inline Logical any(const T inp) {
+  if (get_scalar_val(inp).isNA()) return Logical::NA();
+  return Logical(get_val(inp) != 0);
+}
+template <typename T> requires IsArray<T> inline Logical any(const T &inp) {
+  bool seen_na = false;
+  for (std::size_t i = 0; i < inp.size(); i++) {
+    const auto cur = get_scalar_val(inp.get(i));
+    if (cur.isNA()) { seen_na = true; continue; }
+    if (get_val(cur) != 0) return Logical(true);
+  }
+  if (seen_na) return Logical::NA();
+  return Logical(false);
+}
+
+// sum -- keeps base type (logical -> integer); NA propagates; empty -> 0
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsScalarLike<T> inline auto sum(const T inp) {
+  auto v = get_scalar_val(inp);
+  if constexpr (IS<Decayed<decltype(v)>, Logical>) {
+    return Integer(v); // R: sum of logical is integer
+  } else {
+    return v;
+  }
+}
+template <typename T> requires IsArray<T> inline auto sum(const T &inp) {
+  using Inner = typename ExtractDataType<Decayed<T>>::value_type;
+  if constexpr (IS<Inner, Logical>) {
+    Integer acc(0);
+    for (std::size_t i = 0; i < inp.size(); i++) {
+      acc = acc + inp.get(i);
+    }
+    return acc;
+  } else {
+    Inner acc(0);
+    for (std::size_t i = 0; i < inp.size(); i++) {
+      acc = acc + inp.get(i);
+    }
+    return acc;
+  }
+}
+
+// prod -- always double-family; NA propagates; empty -> 1. Built from scalar Mul
+// ops, so reverse-mode gradients use the chain rule (no division by zero)
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsScalarLike<T> inline auto prod(const T inp) {
+  auto v = get_scalar_val(inp);
+  using V = Decayed<decltype(v)>;
+  if constexpr (IS<V, Dual> || IS<V, ReverseDouble>) {
+    return v; // already the AD double type
+  } else {
+    return Double(v);
+  }
+}
+template <typename T> requires IsArray<T> inline auto prod(const T &inp) {
+  using Inner = typename ExtractDataType<Decayed<T>>::value_type;
+  if constexpr (IS<Inner, Dual> || IS<Inner, ReverseDouble>) {
+    Inner acc(1);
+    for (std::size_t i = 0; i < inp.size(); i++) {
+      acc = acc * inp.get(i);
+    }
+    return acc;
+  } else {
+    Double acc(1);
+    for (std::size_t i = 0; i < inp.size(); i++) {
+      acc = acc * inp.get(i);
+    }
+    return acc;
+  }
+}
+
+// mean -- always double-family (like R, even for an integer input); NA
+// propagates; empty -> NaN. Built from scalar Add + Div so reverse/forward AD
+// gradients use the chain rule.
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsScalarLike<T> inline auto mean(const T inp) {
+  auto v = get_scalar_val(inp);
+  using V = Decayed<decltype(v)>;
+  if constexpr (IS<V, Dual> || IS<V, ReverseDouble>) {
+    return v;
+  } else {
+    return Double(v);
+  }
+}
+template <typename T> requires IsArray<T> inline auto mean(const T &inp) {
+  using Inner = typename ExtractDataType<Decayed<T>>::value_type;
+  const double n = static_cast<double>(inp.size());
+  if constexpr (IS<Inner, Dual> || IS<Inner, ReverseDouble>) {
+    Inner acc(0);
+    for (std::size_t i = 0; i < inp.size(); i++) acc = acc + inp.get(i);
+    return acc / Double(n);
+  } else {
+    Double acc(0);
+    for (std::size_t i = 0; i < inp.size(); i++) acc = acc + inp.get(i);
+    return acc / Double(n);
+  }
+}
+
+// cumsum -- running total, length-preserving; logical -> integer, otherwise the
+// input type is kept. NA propagates from its first occurrence on (like R).
+// Built from scalar Add so AD gradients use the chain rule.
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsScalarLike<T> inline auto cumsum(const T inp) {
+  auto v = get_scalar_val(inp);
+  using V = Decayed<decltype(v)>;
+  if constexpr (IS<V, Logical>) {
+    Array<Integer, Buffer<Integer, RBufferTrait>> res(SI{1});
+    res.dim = Dim{1};
+    res.set(0, Integer(v));
+    return res;
+  } else {
+    Array<V, Buffer<V, RBufferTrait>> res(SI{1});
+    res.dim = Dim{1};
+    res.set(0, v);
+    return res;
+  }
+}
+template <typename T> requires IsArray<T> inline auto cumsum(const T &inp) {
+  using Inner = typename ExtractDataType<Decayed<T>>::value_type;
+  if constexpr (IS<Inner, Logical>) {
+    Array<Integer, Buffer<Integer, RBufferTrait>> res(SI{inp.size()});
+    res.dim = Dim{inp.size()};
+    Integer acc(0);
+    for (std::size_t i = 0; i < inp.size(); i++) { acc = acc + inp.get(i); res.set(i, acc); }
+    return res;
+  } else {
+    Array<Inner, Buffer<Inner, RBufferTrait>> res(SI{inp.size()});
+    res.dim = Dim{inp.size()};
+    Inner acc(0);
+    for (std::size_t i = 0; i < inp.size(); i++) { acc = acc + inp.get(i); res.set(i, acc); }
+    return res;
+  }
+}
+
+// colSums / rowSums / colMeans / rowMeans -- matrix margin reductions, always
+// double-family (like R). `byRow` picks the margin, `doMean` divides by the
+// margin length. Built from scalar Add + Div so AD gradients use the chain rule.
+// Column-major storage: element (r, c) sits at c * nr + r.
+// -----------------------------------------------------------------------------------------------------------
+template <typename T> requires IsArray<T>
+inline auto margin_reduce(const T &inp, bool byRow, bool doMean) {
+  const auto d = dim_view(inp.get_dim());
+  ass<"Error in colSums/rowSums/colMeans/rowMeans: a matrix is required">(d.size() == 2);
+  const std::size_t nr = d[0];
+  const std::size_t nc = d[1];
+  const std::size_t nOut = byRow ? nr : nc;
+  const std::size_t nIn = byRow ? nc : nr;
+  using Inner = typename ExtractDataType<Decayed<T>>::value_type;
+  if constexpr (IS<Inner, Dual> || IS<Inner, ReverseDouble>) {
+    Array<Inner, Buffer<Inner, RBufferTrait>> res(SI{nOut});
+    res.dim = Dim{nOut};
+    for (std::size_t o = 0; o < nOut; o++) {
+      Inner acc(0);
+      for (std::size_t k = 0; k < nIn; k++) {
+        const std::size_t r = byRow ? o : k;
+        const std::size_t c = byRow ? k : o;
+        acc = acc + inp.get(c * nr + r);
+      }
+      if (doMean) acc = acc / Double(static_cast<double>(nIn));
+      res.set(o, acc);
+    }
+    return res;
+  } else {
+    Array<Double, Buffer<Double, RBufferTrait>> res(SI{nOut});
+    res.dim = Dim{nOut};
+    for (std::size_t o = 0; o < nOut; o++) {
+      Double acc(0);
+      for (std::size_t k = 0; k < nIn; k++) {
+        const std::size_t r = byRow ? o : k;
+        const std::size_t c = byRow ? k : o;
+        acc = acc + inp.get(c * nr + r);
+      }
+      if (doMean) acc = acc / Double(static_cast<double>(nIn));
+      res.set(o, acc);
+    }
+    return res;
+  }
+}
+template <typename T> requires IsArray<T> inline auto colSums(const T &inp)  { return margin_reduce(inp, false, false); }
+template <typename T> requires IsArray<T> inline auto rowSums(const T &inp)  { return margin_reduce(inp, true, false); }
+template <typename T> requires IsArray<T> inline auto colMeans(const T &inp) { return margin_reduce(inp, false, true); }
+template <typename T> requires IsArray<T> inline auto rowMeans(const T &inp) { return margin_reduce(inp, true, true); }
+
+// stop -- abort with a message
+// -----------------------------------------------------------------------------------------------------------
+[[noreturn]] inline void stop(const char *msg) {
+  throw std::runtime_error(msg);
+}
+[[noreturn]] inline void stop(const std::string &msg) { stop(msg.c_str()); }
+
+} // namespace etr
+#endif

@@ -1,4 +1,5 @@
 library(tinytest)
+if (!at_home()) exit_file("slow: compiles; runs at home / CI only")
 library(ast2ast)
 
 # map(f, x, ...): elementwise apply, scalars broadcast, results wrapped by the

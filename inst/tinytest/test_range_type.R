@@ -54,6 +54,8 @@ expect_equal(decl_of(code, "i"), "range")
 fcpp <- ast2ast::translate(f)
 expect_equal(fcpp(4L), sum(1:4) + sum(2:5) + sum(3:6))
 
+if (!at_home()) exit_file("slow: compiles; runs at home / CI only")
+
 # --- downgrade to vec(int) -----------------------------------------------
 # a non-range assignment; j depends on i, so it follows (fixpoint)
 f <- function(n) {
@@ -161,8 +163,7 @@ fcpp <- ast2ast::translate(f)
 expect_equal(fcpp(as.double(1:6)), c(4, 5, 6))
 expect_error(fcpp(as.double(1:5)))
 
-# --- ranges as indices with AD (slow compiles, at home only) ---------------
-if (!at_home()) exit_file("AD part runs at home / CI only")
+# --- ranges as indices with AD ---------------------------------------------
 jac_expected <- matrix(c(0, 0, 4, 0, 0, 6), 2, 3)
 
 f <- function(y, x) {

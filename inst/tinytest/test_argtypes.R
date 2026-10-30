@@ -1,4 +1,5 @@
 library(tinytest)
+if (!at_home()) exit_file("slow: compiles; runs at home / CI only")
 
 # --- argtypes() is validated against the function's formals -----------------
 

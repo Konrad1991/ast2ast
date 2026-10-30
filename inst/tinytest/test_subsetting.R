@@ -156,6 +156,8 @@ fcpp <- ast2ast::translate(TU_const_mat)
 expect_error(fcpp(1L, matrix(0.0, 2L, 2L)), pattern = "out of boundaries")
 expect_equal(fcpp(2L, matrix(c(1.0, 2.0, 3.0, 4.0), 2L, 2L)), 4)
 
+if (!at_home()) exit_file("slow: compiles; runs at home / CI only")
+
 # =============================================================================
 # borrow_mat -- exercises the Borrow-array at() overload
 # =============================================================================

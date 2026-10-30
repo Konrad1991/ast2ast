@@ -1,4 +1,5 @@
 library(tinytest)
+if (!at_home()) exit_file("slow: rare cases testing")
 
 # Inf/NaN/NA are built via c(); c() of only non-finite values was logical (#47)
 f <- function(idx) {

@@ -5,12 +5,13 @@ output: html_document
 
 vignette: >
   %\VignetteIndexEntry{Information for package authors}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::rmarkdown_notangle}
   \usepackage{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE, cache = FALSE)
+library(ast2ast)
 ```
 
 

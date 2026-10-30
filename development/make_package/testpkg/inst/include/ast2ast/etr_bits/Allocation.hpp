@@ -1,0 +1,505 @@
+#ifndef ALLOCATION_ETR_HPP
+#define ALLOCATION_ETR_HPP
+
+namespace etr {
+
+// ---------------------------------------------------------------------
+// Concatenate ---------------------------------------------------------
+// ---------------------------------------------------------------------
+inline auto determine_type(const auto &rest) {
+  using restType = Decayed<decltype(rest)>;
+  if constexpr (!IsArray<restType>) {
+    return typename ReRef<decltype(rest)>::type{};
+  } else {
+    return typename ExtractDataType<restType>::value_type{};
+  }
+};
+
+inline auto determine_type(const auto &first, const auto &rest) {
+  using firstType = Decayed<decltype(first)>;
+  using restType = Decayed<decltype(rest)>;
+  if constexpr (!IsArray<firstType> && !IsArray<restType>) {
+    return typename common_type<firstType, restType>::type{};
+  }
+  else if constexpr (IsArray<firstType> && !IsArray<restType>) {
+    using firstInner = typename ExtractDataType<firstType>::value_type;
+    return typename common_type<firstInner, restType>::type{};
+  }
+  else if constexpr (!IsArray<firstType> && IsArray<restType>) {
+    using restInner = typename ExtractDataType<restType>::value_type;
+    return typename common_type<firstType, restInner>::type{};
+  }
+  else if constexpr (IsArray<firstType> && IsArray<restType>) {
+    using firstInner = typename ExtractDataType<firstType>::value_type;
+    using restInner = typename ExtractDataType<restType>::value_type;
+    return typename common_type<firstInner, restInner>::type{};
+  }
+}
+
+inline auto determine_type(const auto &first, const auto &...rest) {
+  using firstType = Decayed<decltype(first)>;
+  using restType = decltype(determine_type(rest...));
+  if constexpr (!IsArray<firstType> && !IsArray<restType>) {
+    return typename common_type<firstType, restType>::type{};
+  }
+  else if constexpr (IsArray<firstType> && !IsArray<restType>) {
+    using firstInner = typename ExtractDataType<firstType>::value_type;
+    return typename common_type<firstInner, restType>::type{};
+  }
+  else if constexpr (!IsArray<firstType> && IsArray<restType>) {
+    using restInner = typename ExtractDataType<restType>::value_type;
+    return typename common_type<firstType, restInner>::type{};
+  }
+  else if constexpr (IsArray<firstType> && IsArray<restType>) {
+    using firstInner = typename ExtractDataType<firstType>::value_type;
+    using restInner = typename ExtractDataType<restType>::value_type;
+    return typename common_type<firstInner, restInner>::type{};
+  }
+}
+
+template <typename... Args> inline auto c(Args &&...args) {
+  static_assert(sizeof...(Args) > 0,
+  "\n\n[etr::c Error]\nYou cannot use c() without any arguments\n");
+
+  using cType = decltype(determine_type(args...));
+  int size = 0;
+
+  forEachArg(
+    [&](const auto& arg) {
+      using testType = Decayed<decltype(arg)>;
+      constexpr bool is_scalar = IsScalarLike<testType>;
+      if constexpr (is_scalar) {
+        size++;
+      } else {
+        size += arg.size();
+      }
+    },
+    args...);
+
+  Array<cType, Buffer<cType, RBufferTrait>> ret(SI{size});
+  ret.dim = Dim{static_cast<std::size_t>(size)};
+  std::size_t index = 0;
+
+  forEachArg(
+    [&](const auto &arg) {
+      using testType = Decayed<decltype(arg)>;
+      constexpr bool is_scalar = IsScalarLike<testType>;
+      if constexpr (is_scalar) {
+        if constexpr (IS<testType, cType>) {
+          ret.set(index, arg);
+        } else {
+          ret.set(index, static_cast<cType>(arg));
+        }
+        index++;
+      } else {
+        using InnerType = typename ReRef<decltype(arg)>::type::value_type;
+        if constexpr (IS<InnerType, cType>) {
+          for (int i = 0; i < arg.size(); i++) {
+            ret.set(index + i, arg.get(i));
+          }
+        } else {
+          for (int i = 0; i < arg.size(); i++) {
+            ret.set(index + i, static_cast<cType>(arg.get(i)));
+          }
+        }
+        index += arg.size();
+      }
+    },
+    args...);
+  return ret;
+}
+
+// ---------------------------------------------------------------------
+// Colon ---------------------------------------------------------------
+// ---------------------------------------------------------------------
+template<typename T>
+inline auto ConvertValueColon(const T& obj) {
+  using DecayedT = Decayed<T>;
+
+  static_assert(!IsLogical<DecayedT>,
+  "\n\n[etr::colon error]\n"
+  "You passed a logical value to the ':' operator.\n"
+  "This is not allowed in R and not supported here.\n"
+  "Please use integer or double values only.\n\n");
+
+  constexpr bool is_scalar = IsScalarLike<DecayedT>;
+
+  if constexpr(is_scalar) {
+    return obj;
+  } else {
+    ass<": accepts only vector of length 1">(obj.size() == 1);
+    return obj.get(0);
+  }
+}
+
+template <typename A, typename O>
+inline auto colon(const A& start,const O& end) {
+  auto s = get_scalar_val(ConvertValueColon(start));
+  auto e = get_scalar_val(ConvertValueColon(end));
+  using DataType = typename common_type<decltype(s), decltype(e)>::type;
+  const double d = static_cast<double>(get_val(e)) - static_cast<double>(get_val(s));
+  // + eps as in R's seq_colon
+  const double len = std::abs(d) + 1.0 + std::numeric_limits<float>::epsilon();
+  ass<"result of colon(:) would be too long a vector">(len <= std::numeric_limits<int>::max());
+  const int n = static_cast<int>(len);
+  // copy, not ref: a:b is evaluated once as in R
+  return make_range(DataType(get_val(s)), d >= 0 ? 1L : -1L, static_cast<std::size_t>(n));
+}
+
+template<typename T>
+inline auto length_seq(const T& obj) {
+  using DecayedT = Decayed<T>;
+
+  constexpr bool is_scalar = IsScalarLike<DecayedT>;
+  if constexpr(is_scalar) {
+    using sType = Decayed<decltype(obj)>;
+    static_assert(!IsLogical<sType>, "seq_len cannot handle logical values");
+    ass<"seq_len requires integer arguments >= 0">(obj >= Integer(0));
+    constexpr bool is_int = IsInteger<sType>;
+    if constexpr (is_int) {
+      return obj;
+    } else if constexpr(!is_int) {
+      return Integer(safe_index_from_double_lower_bound_0(get_val(obj)));
+    }
+  } else {
+    ass<"seq_len accepts only vector of length 1">(obj.size() == 1);
+    ass<"seq_len requires integer arguments >= 0">(obj.get(0) >= 0);
+    using E = typename ExtractDataType<DecayedT>::value_type;
+    static_assert(!IsLogical<E>, "seq_len cannot handle logical values");
+    constexpr bool is_int = IsInteger<E>;
+    if constexpr (is_int) {
+      return obj.get(0);
+    } else if constexpr(!is_int) {
+      return Integer(safe_index_from_double_lower_bound_0(get_val(obj.get(0))));
+    }
+  }
+}
+template<typename A>
+inline auto seq_len(const A& length) {
+  return make_range(Integer(1), 1L, static_cast<std::size_t>(get_val(Integer(length_seq(length)))));
+}
+template<typename A>
+inline auto seq_along(const A& obj) {
+  using DecayedT = Decayed<A>;
+  constexpr bool is_scalar = IsScalarLike<DecayedT>;
+  if constexpr(is_scalar) {
+    return seq_len(Integer(1));
+  } else {
+    return seq_len(length(obj));
+  }
+}
+
+// checks before the cast: NaN/Inf/negative -> size_t is UB, negative int wraps
+template<string_literal msg, typename S>
+inline std::size_t checked_size(const S& s) {
+  const auto sv = get_scalar_val(s);
+  ass<msg>(!sv.isNA());
+  const double v = static_cast<double>(get_val(sv));
+  ass<msg>(std::isfinite(v) && v >= 0.0);
+  ass<msg>(v < static_cast<double>(std::numeric_limits<std::size_t>::max()));
+  return static_cast<std::size_t>(v);
+}
+
+// ---------------------------------------------------------------------
+// rep -----------------------------------------------------------------
+// ---------------------------------------------------------------------
+template<typename T>
+inline std::size_t ConvertTimesRep(const T& times) {
+  using DecayedT = Decayed<T>;
+  constexpr bool is_scalar = IsScalarLike<DecayedT>;
+  std::size_t res = 0;
+  if constexpr(is_scalar) {
+    res = checked_size<"times in fct rep has to be a positive integer">(times);
+  } else {
+    ass<"times in rep has to be a vector of length 1">(times.size() == 1);
+    res = checked_size<"times in fct rep has to be a positive integer">(times.get(0));
+  }
+  ass<"times in fct rep has to be a positive integer">(res >= 1);
+  return res;
+}
+
+template <typename L, typename R>
+inline auto repInternal(const L &inp, const R& times) {
+  if constexpr (!IsArray<L>) {
+    std::size_t length = ConvertTimesRep(times);
+    Array<L, Buffer<L, RBufferTrait>> ret(SI{length});
+    for (std::size_t i = 0; i < ret.size(); i++) ret.set(i, inp);
+    ret.dim = Dim{length};
+    return ret;
+  } else if constexpr (IsArray<L>) {
+    std::size_t length = ConvertTimesRep(times) * inp.size();
+    using DataType = typename ExtractDataType<Decayed<L>>::value_type;
+    Array<DataType, Buffer<DataType, RBufferTrait>> ret(SI{length});
+    std::size_t counter = 0;
+    for (std::size_t i = 0; i < ret.size(); i++) {
+      ret.set(i, inp.get(counter));
+      counter++;
+      if (counter >= inp.size())
+        counter = 0;
+    }
+    return ret;
+  }
+}
+
+template <typename L, typename R> inline auto rep(L &&inp, R &&times) {
+  return repInternal(inp, times);
+}
+
+// ---------------------------------------------------------------------
+// vector, matrix and array --------------------------------------------
+// ---------------------------------------------------------------------
+template<typename T>
+inline std::size_t ConvertSizeVec(const T& s) {
+  using DecayedT = Decayed<T>;
+  constexpr bool is_scalar = IsScalarLike<DecayedT>;
+  if constexpr(is_scalar) {
+    return checked_size<"size in fct vector/logical/integer/numeric/matrix/array has to be an integer >= 0">(s);
+  } else {
+    ass<"size in fct vector/logical/integer/numeric/matrix/array has to be a vector of length 1">(s.size() == 1);
+    return checked_size<"size in fct vector/logical/integer/numeric/matrix/array has to be an integer >= 0">(s.get(0));
+  }
+}
+
+template <typename Type, typename T> inline auto createRVec(T s) {
+  std::size_t size = ConvertSizeVec(s);
+  ass<"invalid length argument">(size >= 0);
+  if (size == 0) {
+    Array<Type, Buffer<Type, RBufferTrait>> res;
+    res.dim = Dim(1, 0);
+    return res;
+  }
+  Array<Type, Buffer<Type, RBufferTrait>> res(SI{size});
+  res.dim = Dim{size};
+  return res;
+
+}
+
+template <typename T> inline auto logical(const T &inp) {
+  return createRVec<Logical>(inp);
+}
+template <typename T> inline auto integer(const T &inp) {
+  return createRVec<Integer>(inp);
+}
+template <typename T> inline auto numeric(const T &inp) {
+  return createRVec<Double>(inp);
+}
+template <typename T> inline auto numeric_dual(const T &inp) {
+  return createRVec<Dual>(inp);
+}
+template <typename T> inline auto numeric_reverse_double(const T &inp) {
+  return createRVec<ReverseDouble>(inp);
+}
+// numeric() for the scalar type of the translation (codegen: numeric_of<ETR_REAL>)
+template <typename Type, typename T> inline auto numeric_of(const T &inp) {
+  return createRVec<Type>(inp);
+}
+
+template <typename Type, typename R, typename C> inline auto createRMat(const R& nrow, const C& ncol) {
+  std::size_t nr = ConvertSizeVec(nrow);
+  std::size_t nc = ConvertSizeVec(ncol);
+  ass<"invalid length argument">((nr*nc)> 0);
+  Array<Type, Buffer<Type, RBufferTrait>> res(SI{nc*nr});
+  res.dim = Dim{nr, nc};
+  return res;
+}
+
+template<typename T, typename R, typename C>
+inline auto matrix(const T& inp, const R& nrow, const C& ncol) {
+  std::size_t nr = ConvertSizeVec(nrow);
+  std::size_t nc = ConvertSizeVec(ncol);
+  using DecayedT = Decayed<T>;
+  constexpr bool is_scalar = IsScalarLike<DecayedT>;
+  if constexpr(is_scalar) {
+    auto res = createRMat<Decayed<T>>(nrow, ncol);
+    for (std::size_t i = 0; i < res.size(); i++) {
+      res.set(i, inp);
+    }
+    return res;
+  } else {
+    using DataType = typename ExtractDataType<Decayed<T>>::value_type;
+    auto res = createRMat<DataType>(nrow, ncol);
+    ass<"Input for matrix does not match size (nrow * ncol)">(inp.size() == (nr * nc));
+    for (std::size_t i = 0; i < res.size(); i++) {
+      res.set(i, inp.get(i));
+    }
+    return res;
+  }
+}
+
+template<typename D>
+inline Dim calc_dim(const D& dim) {
+  using DecayedDim = Decayed<D>;
+  constexpr bool is_scalar_dim = IsScalarLike<DecayedDim>;
+  if constexpr (is_scalar_dim) {
+    std::size_t size = ConvertSizeVec(dim);
+    return Dim{size};
+  } else {
+    Dim dim_vec(dim.size(), 0);
+    for (std::size_t i = 0; i < dim_vec.size(); i++) {
+      dim_vec[i] = ConvertSizeVec(dim.get(i));
+    }
+    return dim_vec;
+  }
+}
+
+template<typename T, typename D>
+inline auto array(const T& inp, const D& dim_inp) {
+  const auto dim = calc_dim(dim_inp);
+  std::size_t size = 1; for (std::size_t i = 0; i < dim.size(); i++) {
+    size *= dim[i];
+  }
+  using DecayedT = Decayed<T>;
+  constexpr bool is_scalar = IsScalarLike<DecayedT>;
+  if constexpr (is_scalar) {
+    ass<"invalid length argument">(size > 0);
+    Array<DecayedT, Buffer<DecayedT, RBufferTrait>> res(SI{size});
+    for (std::size_t i = 0; i < res.size(); i++) {
+      res.set(i, inp);
+    }
+    res.dim = std::move(dim);
+    return res;
+  } else {
+    using DataType = typename ExtractDataType<Decayed<T>>::value_type;
+    ass<"invalid length argument">(size > 0);
+    Array<DataType, Buffer<DataType, RBufferTrait>> res(SI{size});
+    ass<"Input for array does not match size (prod(dims))">(inp.size() == size);
+    for (std::size_t i = 0; i < res.size(); i++) {
+      res.set(i, inp.get(i));
+    }
+    res.dim = std::move(dim);
+    return res;
+  }
+
+}
+
+// ---------------------------------------------------------------------
+// rbind and cbind -----------------------------------------------------
+// ---------------------------------------------------------------------
+template <typename... Args> inline auto rbind(Args &&...args) {
+  constexpr std::size_t N = sizeof...(Args);
+  static_assert(N > 0,
+  "\n\n[etr::rbind Error]\nYou cannot use rbind() without any arguments\n");
+
+  using cType = decltype(determine_type(args...));
+  std::size_t ncols = 0;
+
+  forEachArg(
+    [&](const auto& arg) {
+      using testType = Decayed<decltype(arg)>;
+      constexpr bool is_scalar = IsScalarLike<testType>;
+      if constexpr (is_scalar) {
+        if (ncols < 1) {
+          ncols = 1;
+        }
+      } else {
+        if (ncols < arg.size()) {
+          ncols = arg.size();
+        }
+      }
+    },
+    args...);
+
+  // N rows, ncols columns; column-major so [row, col] sits at col*N + row
+  Array<cType, Buffer<cType, RBufferTrait>> ret(SI{N * ncols});
+  ret.dim = Dim{N, ncols};
+  std::size_t row = 0;
+
+  forEachArg(
+    [&](const auto &arg) {
+      using testType = Decayed<decltype(arg)>;
+      constexpr bool is_scalar = IsScalarLike<testType>;
+      if constexpr (is_scalar) {
+        if constexpr (IS<testType, cType>) {
+          for (int i = 0; i < ncols; i++) {
+            ret.set(i * N + row, arg);
+          }
+        } else {
+          for (int i = 0; i < ncols; i++) {
+            ret.set(i * N + row, static_cast<cType>(arg));
+          }
+        }
+        row++;
+      } else {
+        using InnerType = typename ReRef<decltype(arg)>::type::value_type;
+        if constexpr (IS<InnerType, cType>) {
+          for (int i = 0; i < ncols; i++) {
+            ret.set(i * N + row, arg.get(safe_modulo(i, arg.size())));
+          }
+        } else {
+          for (int i = 0; i < ncols; i++) {
+            ret.set(i * N + row, static_cast<cType>(arg.get(safe_modulo(i, arg.size()))));
+          }
+        }
+        row++;
+      }
+    },
+    args...);
+
+  return ret;
+}
+
+template <typename... Args> inline auto cbind(Args &&...args) {
+  constexpr std::size_t N = sizeof...(Args);
+  static_assert(N > 0,
+  "\n\n[etr::cbind Error]\nYou cannot use cbind() without any arguments\n");
+
+  using cType = decltype(determine_type(args...));
+  std::size_t nrows = 0;
+
+  forEachArg(
+    [&](const auto& arg) {
+      using testType = Decayed<decltype(arg)>;
+      constexpr bool is_scalar = IsScalarLike<testType>;
+      if constexpr (is_scalar) {
+        if (nrows < 1) {
+          nrows = 1;
+        }
+      } else {
+        if (nrows < arg.size()) {
+          nrows = arg.size();
+        }
+      }
+    },
+    args...);
+
+  // N cols, nrows rows; column-major so [row, col] sits at col*nrows + row
+  Array<cType, Buffer<cType, RBufferTrait>> ret(SI{N * nrows});
+  ret.dim = Dim{nrows, N};
+  std::size_t col = 0;
+
+  forEachArg(
+    [&](const auto &arg) {
+      using testType = Decayed<decltype(arg)>;
+      constexpr bool is_scalar = IsScalarLike<testType>;
+      if constexpr (is_scalar) {
+        if constexpr (IS<testType, cType>) {
+          for (int i = 0; i < nrows; i++) {
+            ret.set(col * nrows + i, arg);
+          }
+        } else {
+          for (int i = 0; i < nrows; i++) {
+            ret.set(col * nrows + i, static_cast<cType>(arg));
+          }
+        }
+        col++;
+      } else {
+        using InnerType = typename ReRef<decltype(arg)>::type::value_type;
+        if constexpr (IS<InnerType, cType>) {
+          for (int i = 0; i < nrows; i++) {
+            ret.set(col * nrows + i, arg.get(safe_modulo(i, arg.size())));
+          }
+        } else {
+          for (int i = 0; i < nrows; i++) {
+            ret.set(col * nrows + i, static_cast<cType>(arg.get(safe_modulo(i, arg.size()))));
+          }
+        }
+        col++;
+      }
+    },
+    args...);
+
+  return ret;
+}
+
+} // namespace etr
+#endif

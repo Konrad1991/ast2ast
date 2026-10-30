@@ -68,6 +68,8 @@ expect_error(
   pattern = "a copy would lose the writes"
 )
 
+if (!at_home()) exit_file("slow: compiles; runs at home / CI only")
+
 # --- happy path: a borrowed argument materialized into an owned return -----
 # TODO: hopefully we can bundle this compilation together with other tests
 f <- function(v) {

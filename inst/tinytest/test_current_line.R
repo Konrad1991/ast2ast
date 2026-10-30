@@ -1,4 +1,5 @@
 library(tinytest)
+if (!at_home()) exit_file("slow: compiles; runs at home / CI only")
 # NOTE: compilation units are already united in this file
 
 TU <- function(test) {

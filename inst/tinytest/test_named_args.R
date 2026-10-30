@@ -1,4 +1,5 @@
 library(tinytest)
+if (!at_home()) exit_file("slow: named args to slow compilation")
 
 # named arguments are matched like R (#48)
 err_of <- function(f) {

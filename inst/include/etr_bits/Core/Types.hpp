@@ -420,9 +420,13 @@ class Dim {
   std::size_t* heap_ = nullptr;
   std::size_t inline_[N_INLINE];
   bool on_heap() const noexcept { return heap_ != nullptr; }
+  // NOTE: guard is redundant by the standard, but fixes a bus error on CRAN
+  // r-oldrel-macos-x86_64 (Apple clang 14.0.3)
   void release() noexcept {
-    delete[] heap_;
-    heap_ = nullptr;
+    if (heap_ != nullptr) {
+      delete[] heap_;
+      heap_ = nullptr;
+    }
     rank_ = 0;
   }
   void copy_from(const Dim& o) {
@@ -506,7 +510,7 @@ public:
     const std::size_t keep = rank_ < n ? rank_ : n;
     std::copy_n(data(), keep, h);
     std::fill(h + keep, h + n, value);
-    delete[] heap_;
+    if (heap_ != nullptr) delete[] heap_;
     heap_ = h;
     rank_ = n;
   }

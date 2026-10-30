@@ -1,4 +1,5 @@
 library(tinytest)
+if (!at_home()) exit_file("slow: compiles; runs at home / CI only")
 library(ast2ast)
 
 # pmap(f, ncores, x, ...): like map, iterations run on a thread pool.

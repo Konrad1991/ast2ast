@@ -1,4 +1,5 @@
 library(tinytest)
+if (!at_home()) exit_file("slow: empty argument compilation")
 
 # zero-length arguments (#51)
 f <- function(x) {

@@ -1,4 +1,5 @@
 library(tinytest)
+if (!at_home()) exit_file("slow: named vecs to slow compilation")
 
 types <- function() {
   new_layout(State, double, names = c("prey", "pred"))

@@ -55,3 +55,44 @@ f <- function(seed) {
 }
 fcpp <- translate(f)
 fcpp(1234L)
+
+argtypes <- function(...) {}
+returntype <- function(...) {}
+type <- function(...) {}
+f <- function(v, target) {
+  argtypes(
+    v |> type(borrow_vec(double)),
+    target |> type(double)
+  )
+  returntype(int)
+  bin_search <- function(v, low, high, target) {
+    argtypes(
+      v |> type(borrow_vec(double)) |> ref() |> const(),
+      low |> type(int) |> const(),
+      high |> type(int) |> const(),
+      target |> type(double) |> const() |> ref()
+    )
+    returntype(int)
+    if (high >= low) {
+      mid |> type(int)
+      mid <- as.integer(low + (high - low) / 2L)
+      if (v[mid] == target) return(mid)
+      if (v[mid] > target) {
+        return(bin_search(v, low, mid - 1L, target))
+      }
+      return(bin_search(v, mid + 1L, high, target))
+    }
+    return(-1L)
+  }
+  bin_search(v, 1L, length(v), target)
+}
+fcpp <- translate(f, verbose = FALSE, debug = FALSE)
+n <- 1e5
+v <- sample(1:n, n) |> sort() |> as.numeric()
+target <- 940
+f(v, target)
+fcpp(v, target)
+microbenchmark::microbenchmark(
+  R = f(v, target),
+  cpp = fcpp(v, target)
+)

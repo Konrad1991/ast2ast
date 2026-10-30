@@ -9,12 +9,13 @@ output: html_document
 
 vignette: >
   %\VignetteIndexEntry{Detailed Documentation}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::rmarkdown_notangle}
   \usepackage{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+library(ast2ast)
 ```
 
 ```{css echo=FALSE}

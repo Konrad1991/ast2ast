@@ -500,7 +500,8 @@ struct Buffer<Double, BufferTrait> : SoABuffer<Double, BufferTrait> {
     sz = static_cast<std::size_t>(Rf_length(s));
     capacity = sz;
     p_val = new double[capacity];
-    std::copy_n(REAL(s), sz, p_val);
+    // R-devel returns dummy pointer 0x1 for zero-length vectors (UBSan)
+    if (sz > 0) std::copy_n(REAL(s), sz, p_val);
     allocated = true;
   }
   Buffer(SEXP s) { initSEXP(s); }
@@ -532,7 +533,7 @@ struct Buffer<Integer, BufferTrait> : SoABuffer<Integer, BufferTrait> {
     sz = static_cast<std::size_t>(Rf_length(s));
     capacity = sz;
     p_val = new int[capacity];
-    std::copy_n(INTEGER(s), sz, p_val);
+    if (sz > 0) std::copy_n(INTEGER(s), sz, p_val);
     allocated = true;
   }
   Buffer(SEXP s) { initSEXP(s); }
@@ -564,7 +565,7 @@ struct Buffer<Logical, BufferTrait> : SoABuffer<Logical, BufferTrait> {
     sz = static_cast<std::size_t>(Rf_length(s));
     capacity = sz;
     p_val = new int[capacity];
-    std::copy_n(LOGICAL(s), sz, p_val);
+    if (sz > 0) std::copy_n(LOGICAL(s), sz, p_val);
     allocated = true;
   }
   Buffer(SEXP s) { initSEXP(s); }
@@ -804,7 +805,7 @@ struct Buffer<Dual, BufferTrait> {
     capacity = sz;
     p_val    = new double[capacity];
     p_dot    = new double[capacity];
-    std::copy_n(REAL(s), sz, p_val);
+    if (sz > 0) std::copy_n(REAL(s), sz, p_val);
     std::fill(p_dot, p_dot + sz, 0.0);
     allocated = true;
   }

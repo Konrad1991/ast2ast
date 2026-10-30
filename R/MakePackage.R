@@ -295,8 +295,8 @@ write_makevars <- function(package_dir, overwrite) {
       "CXX_STD = CXX20",
       "PKG_CPPFLAGS = -I../inst/include/ast2ast",
       sprintf(
-        "PKG_LIBS = $(shell %s -e \"sundials::LdFlags()\") $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)",
-        rscript[[file]]
+        "PKG_LIBS = $(shell %s -e \"sundials::LdFlags()\") $(shell %s -e \"RcppThread::LdFlags()\") $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)",
+        rscript[[file]], rscript[[file]]
       )
     )
     write_generated(file.path(package_dir, "src", file), content, "#", overwrite)
