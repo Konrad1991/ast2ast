@@ -69,6 +69,34 @@ in isolation. Possible: b) internally as building blocks, a) on top.
    - forward with sensitivities, backward CVodeInitBS (depends on yS)
    - lambda^T f_yy s_i via hvp
    - done when: matches FD of gradient from 3
+   Status 2026-10-30: DONE, full suite green (cvodes_reverse_impl + cvode_adjoint_state,
+   Borrow<ReverseDouble> specialisation (handles, get() by reference),
+   ROp::Custom + push_custom + reverse_range, reverse_borrow_error in R,
+   tests inst/tinytest/test_cvodes_adjoint.R). D3 done via C++ rebind_scalar
+   (rhs_t<ReverseDouble> -> rhs_t<Double>), no codegen change.
+   Design (2026-10-30, decided by Konrad; std::function, no virtual):
+   - cvode = one block on TAPE_INTERN: outputs y(t_j) as ReverseDouble,
+     inputs y0 ids + p ids. Backward gets ybar(t_j) = adj of the outputs.
+   - D1 DECIDED tape: BlockOp::Kind::Custom + type-erased backward
+     (std::function<void(ReverseTape&, const BlockOp&)>), because reverse()
+     is not a template and cannot know rhs_t
+   - D2 VJP inside the backward: own local sweep over a fresh tape segment
+     (like HessianSweep, own adj vector), NOT TAPE_INTERN.reverse()
+     (that zeroes the whole adj); record rhs_t<ReverseDouble>(t, y_leaves,
+     ydot, p_leaves), seed ydot with lambda, read adj of y_leaves (J^T lambda)
+     and p_leaves (f_p^T lambda), rewind
+   - D3 codegen passes two functors: rhs_t<Double> (forward solve, cheap)
+     and rhs_t<ReverseDouble> (VJP), via functor_obj(path, scalar)
+   - D4 DECIDED params: vec(double) only in reverse mode; structs later
+   - D5 type check: allow borrow args for fns passed to cvode in reverse
+     translations (Borrow<ReverseDouble> over a local std::vector)
+   - D6 DECIDED stiff backward: jacB by difference quotients first;
+     later -J^T from forward-AD J
+   - backward loop: CVodeF to t_end (checkpoints), then for j = nt..2:
+     lambda += ybar(t_j), CVodeReInitB, CVodeB to t_{j-1}, accumulate quadrature;
+     at t0: y0bar = lambda + ybar(t0), pbar = quadrature
+   - risk: recording on TAPE_INTERN while reverse() iterates it
+     (index based -> ok if rewound before returning)
 5. IDAS: repeat 2-4 for ida() (residual form, F_y + cj F_y')
 6. plan only: sparse Hessian (star colouring + HVP per colour)
 

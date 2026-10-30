@@ -1,0 +1,516 @@
+% Literature for ast2ast development
+% note = what to read and why. DOIs only where certain; otherwise search the title.
+%
+% Sections:
+%   1. R side: AST, metaprogramming, R internals, Rcpp
+%   2. Compiler / type system
+%   3. C++ design (expression templates)
+%   4. Automatic differentiation (forward, reverse/tape, Hessians, matrix rules)
+%   5. Sparse derivatives: colouring
+%   6. ODE / DAE solving and sensitivities (cvode, ida, CVODES, IDAS)
+%   7. Linear algebra
+%   8. Optimization and root finding (lbfgsb, nmmin, pso, uniroot, nnls)
+%   9. Random numbers and densities
+%  10. Interpolation
+%  11. Parallelism
+%  12. Planned: Bayesian inference / Laplace (HMC, NUTS, TMB)
+
+% === 1. R side ================================================================
+
+@book{wickham2019advanced,
+  author    = {Wickham, Hadley},
+  title     = {Advanced {R}},
+  edition   = {2},
+  publisher = {Chapman and Hall/CRC},
+  year      = {2019},
+  url       = {https://adv-r.hadley.nz},
+  note      = {Metaprogramming chapters (expressions, quasiquotation, evaluation):
+               how R code becomes the AST that ast2ast walks.}
+}
+
+@manual{r_internals,
+  title        = {{R} Internals},
+  author       = {{R Core Team}},
+  organization = {R Foundation for Statistical Computing},
+  url          = {https://cran.r-project.org/doc/manuals/r-release/R-ints.html},
+  note         = {SEXPs, NA representation, attributes; what CheckSEXP / Cast deal with.}
+}
+
+@article{eddelbuettel2011rcpp,
+  author  = {Eddelbuettel, Dirk and Fran{\c{c}}ois, Romain},
+  title   = {{Rcpp}: Seamless {R} and {C++} Integration},
+  journal = {Journal of Statistical Software},
+  volume  = {40},
+  number  = {8},
+  pages   = {1--18},
+  year    = {2011},
+  doi     = {10.18637/jss.v040.i08},
+  note    = {Compilation path of translate() (sourceCpp, XPtr output).}
+}
+
+@book{eddelbuettel2013seamless,
+  author    = {Eddelbuettel, Dirk},
+  title     = {Seamless {R} and {C++} Integration with {Rcpp}},
+  publisher = {Springer},
+  year      = {2013},
+  doi       = {10.1007/978-1-4614-6868-4},
+  note      = {Longer version of the Rcpp paper.}
+}
+
+% === 2. Compiler / type system ================================================
+
+@book{aho2006compilers,
+  author    = {Aho, Alfred V. and Lam, Monica S. and Sethi, Ravi and Ullman, Jeffrey D.},
+  title     = {Compilers: Principles, Techniques, and Tools},
+  edition   = {2},
+  publisher = {Addison-Wesley},
+  year      = {2006},
+  note      = {"Dragon book". Syntax trees, tree traversal, type checking, code generation:
+               the traverse_ast / infer / codegen passes.}
+}
+
+@book{pierce2002types,
+  author    = {Pierce, Benjamin C.},
+  title     = {Types and Programming Languages},
+  publisher = {MIT Press},
+  year      = {2002},
+  note      = {Type checking and type inference in general (TypeInference.R, TypeParser.R).}
+}
+
+@inproceedings{damas1982principal,
+  author    = {Damas, Luis and Milner, Robin},
+  title     = {Principal Type-Schemes for Functional Programs},
+  booktitle = {Proceedings of the 9th ACM SIGPLAN-SIGACT Symposium on Principles of
+               Programming Languages (POPL)},
+  pages     = {207--212},
+  year      = {1982},
+  note      = {Hindley-Milner inference. Background only: ast2ast infers forward through
+               the AST, not by unification.}
+}
+
+% === 3. C++ design ============================================================
+
+@article{veldhuizen1995expression,
+  author  = {Veldhuizen, Todd},
+  title   = {Expression Templates},
+  journal = {C++ Report},
+  volume  = {7},
+  number  = {5},
+  pages   = {26--31},
+  year    = {1995},
+  note    = {Lazy array expressions without temporaries: the idea behind etr's
+             UnaryCalculations / BinaryCalculations.}
+}
+
+% === 4. Automatic differentiation =============================================
+
+@book{griewank2008evaluating,
+  author    = {Griewank, Andreas and Walther, Andrea},
+  title     = {Evaluating Derivatives: Principles and Techniques of Algorithmic Differentiation},
+  edition   = {2},
+  publisher = {SIAM},
+  year      = {2008},
+  doi       = {10.1137/1.9780898717761},
+  note      = {THE AD reference: forward (Dual), reverse mode / tapes / VJP (ReverseTape,
+               vjp() in a2a_sundials.hpp), forward-over-reverse Hessians, checkpointing,
+               sparse derivatives.}
+}
+
+@article{baydin2018automatic,
+  author  = {Baydin, At{\i}l{\i}m G{\"u}ne{\c{s}} and Pearlmutter, Barak A. and
+             Radul, Alexey Andreyevich and Siskind, Jeffrey Mark},
+  title   = {Automatic Differentiation in Machine Learning: a Survey},
+  journal = {Journal of Machine Learning Research},
+  volume  = {18},
+  number  = {153},
+  pages   = {1--43},
+  year    = {2018},
+  note    = {Short, readable overview of forward vs reverse mode. Good first read.}
+}
+
+@misc{carpenter2015stan,
+  author        = {Carpenter, Bob and Hoffman, Matthew D. and Brubaker, Marcus and
+                   Lee, Daniel and Li, Peter and Betancourt, Michael},
+  title         = {The {Stan} Math Library: Reverse-Mode Automatic Differentiation in {C++}},
+  year          = {2015},
+  eprint        = {1509.07164},
+  archivePrefix = {arXiv},
+  note          = {Closest relative of etr's tape (vari/var vs ReverseDouble), block ops for
+                   matrix functions, nested AD.}
+}
+
+@article{pearlmutter1994fast,
+  author  = {Pearlmutter, Barak A.},
+  title   = {Fast Exact Multiplication by the {H}essian},
+  journal = {Neural Computation},
+  volume  = {6},
+  number  = {1},
+  pages   = {147--160},
+  year    = {1994},
+  note    = {Hessian-vector product in O(cost of f): hvp() / HessianSweep.}
+}
+
+@incollection{giles2008collected,
+  author    = {Giles, Mike B.},
+  title     = {Collected Matrix Derivative Results for Forward and Reverse Mode
+               Algorithmic Differentiation},
+  booktitle = {Advances in Automatic Differentiation},
+  series    = {Lecture Notes in Computational Science and Engineering},
+  volume    = {64},
+  publisher = {Springer},
+  pages     = {35--44},
+  year      = {2008},
+  note      = {Forward/reverse rules for matmul, inverse, solve, det: the block ops
+               (MatMul, Solve, Det) in Scalars.hpp.}
+}
+
+@misc{murray2016cholesky,
+  author        = {Murray, Iain},
+  title         = {Differentiation of the {C}holesky Decomposition},
+  year          = {2016},
+  eprint        = {1602.07527},
+  archivePrefix = {arXiv},
+  note          = {Reverse rule of chol() (ROp::Chol).}
+}
+
+% === 5. Sparse derivatives: colouring =========================================
+
+@article{curtis1974estimation,
+  author  = {Curtis, A. R. and Powell, M. J. D. and Reid, J. K.},
+  title   = {On the Estimation of Sparse {J}acobian Matrices},
+  journal = {IMA Journal of Applied Mathematics},
+  volume  = {13},
+  number  = {1},
+  pages   = {117--119},
+  year    = {1974},
+  note    = {Origin of column grouping (CPR): compressed Jacobian with #colours sweeps.}
+}
+
+@article{coleman1983estimation,
+  author  = {Coleman, Thomas F. and Mor{\'e}, Jorge J.},
+  title   = {Estimation of Sparse {J}acobian Matrices and Graph Coloring Problems},
+  journal = {SIAM Journal on Numerical Analysis},
+  volume  = {20},
+  number  = {1},
+  pages   = {187--209},
+  year    = {1983},
+  note    = {Colouring as graph problem, greedy orderings: R/Colouring.R, colour_columns.}
+}
+
+@article{coleman1998efficient,
+  author  = {Coleman, Thomas F. and Verma, Arun},
+  title   = {The Efficient Computation of Sparse {J}acobian Matrices Using
+             Automatic Differentiation},
+  journal = {SIAM Journal on Scientific Computing},
+  volume  = {19},
+  number  = {4},
+  pages   = {1210--1233},
+  year    = {1998},
+  note    = {Bidirectional (row + column) colouring: dense-row split (#54) and
+             star bicolouring plan (development/Plans/star_bicolouring.md).}
+}
+
+@article{gebremedhin2005color,
+  author  = {Gebremedhin, Assefaw Hadish and Manne, Fredrik and Pothen, Alex},
+  title   = {What Color Is Your {J}acobian? {G}raph Coloring for Computing Derivatives},
+  journal = {SIAM Review},
+  volume  = {47},
+  number  = {4},
+  pages   = {629--705},
+  year    = {2005},
+  doi     = {10.1137/S0036144504444711},
+  note    = {Survey of all colouring variants. Sparse Hessian (plan item 6): star /
+             acyclic colouring, one HVP per colour, decompression.}
+}
+
+@article{gebremedhin2007star,
+  author  = {Gebremedhin, Assefaw H. and Tarafdar, Arijit and Manne, Fredrik and Pothen, Alex},
+  title   = {New Acyclic and Star Coloring Algorithms with Application to Computing {H}essians},
+  journal = {SIAM Journal on Scientific Computing},
+  volume  = {29},
+  number  = {3},
+  pages   = {1042--1072},
+  year    = {2007},
+  note    = {Concrete star colouring algorithm + Hessian recovery (plan item 6).}
+}
+
+% === 6. ODE / DAE solving and sensitivities ===================================
+
+@book{hairer1993solving1,
+  author    = {Hairer, Ernst and N{\o}rsett, Syvert P. and Wanner, Gerhard},
+  title     = {Solving Ordinary Differential Equations {I}: Nonstiff Problems},
+  edition   = {2},
+  publisher = {Springer},
+  year      = {1993},
+  note      = {Adams methods (cvode stiff = FALSE).}
+}
+
+@book{hairer1996solving2,
+  author    = {Hairer, Ernst and Wanner, Gerhard},
+  title     = {Solving Ordinary Differential Equations {II}: Stiff and
+               Differential-Algebraic Problems},
+  edition   = {2},
+  publisher = {Springer},
+  year      = {1996},
+  note      = {BDF, Newton iteration, why stiff solvers need J (cvode stiff = TRUE, ida).}
+}
+
+@book{brenan1996numerical,
+  author    = {Brenan, K. E. and Campbell, S. L. and Petzold, L. R.},
+  title     = {Numerical Solution of Initial-Value Problems in
+               Differential-Algebraic Equations},
+  publisher = {SIAM},
+  year      = {1996},
+  note      = {DAE theory, index, consistent initial values (ida, IDACalcIC).}
+}
+
+@article{hindmarsh2005sundials,
+  author  = {Hindmarsh, Alan C. and Brown, Peter N. and Grant, Keith E. and Lee, Steven L.
+             and Serban, Radu and Shumaker, Dan E. and Woodward, Carol S.},
+  title   = {{SUNDIALS}: Suite of Nonlinear and Differential/Algebraic Equation Solvers},
+  journal = {ACM Transactions on Mathematical Software},
+  volume  = {31},
+  number  = {3},
+  pages   = {363--396},
+  year    = {2005},
+  doi     = {10.1145/1089014.1089020},
+  note    = {Overview, citation for SUNDIALS.}
+}
+
+@manual{cvodes_guide,
+  title        = {User Documentation for {CVODES}},
+  author       = {Hindmarsh, Alan C. and Serban, Radu and others},
+  organization = {Lawrence Livermore National Laboratory},
+  url          = {https://sundials.readthedocs.io/en/latest/cvodes/},
+  note         = {START HERE for sensitivities. Chapter "Mathematical Considerations":
+                  forward (s' = J s + f_p) and adjoint (lambda' = -J^T lambda, quadrature,
+                  jumps at data points, checkpointing), ca. 5 pages. Steps 2 + 3.
+                  Section on second-order sensitivity -> step 4.}
+}
+
+@manual{idas_guide,
+  title        = {User Documentation for {IDAS}},
+  author       = {Serban, Radu and Petra, Cosmin and Hindmarsh, Alan C. and others},
+  organization = {Lawrence Livermore National Laboratory},
+  url          = {https://sundials.readthedocs.io/en/latest/idas/},
+  note         = {Same chapter for DAEs (step 5). Read after CVODES.}
+}
+
+@article{cao2003adjoint,
+  author  = {Cao, Yang and Li, Shengtai and Petzold, Linda and Serban, Radu},
+  title   = {Adjoint Sensitivity Analysis for Differential-Algebraic Equations:
+             The Adjoint {DAE} System and Its Numerical Solution},
+  journal = {SIAM Journal on Scientific Computing},
+  volume  = {24},
+  number  = {3},
+  pages   = {1076--1089},
+  year    = {2003},
+  doi     = {10.1137/S1064827501380630},
+  note    = {Derivation of the adjoint system, ODE and DAE; theory behind IDAS (step 5).}
+}
+
+@article{ozyurt2005second,
+  author  = {{\"O}zyurt, Derya B. and Barton, Paul I.},
+  title   = {Cheap Second Order Directional Derivatives of Stiff {ODE} Embedded Functionals},
+  journal = {SIAM Journal on Scientific Computing},
+  volume  = {26},
+  number  = {5},
+  pages   = {1725--1743},
+  year    = {2005},
+  note    = {Step 4: Hessian of a loss through an ODE = forward sensitivities +
+             second-order adjoint. Basis of CVODES example cvsHessian_ASA_FSA.
+             Needed for thermosimfit uncertainty.}
+}
+
+% === 7. Linear algebra ========================================================
+
+@book{golub2013matrix,
+  author    = {Golub, Gene H. and Van Loan, Charles F.},
+  title     = {Matrix Computations},
+  edition   = {4},
+  publisher = {Johns Hopkins University Press},
+  year      = {2013},
+  note      = {LU (solve, det), Cholesky (chol), triangular solves (backsolve /
+               forwardsolve), QR, banded matrices.}
+}
+
+@book{anderson1999lapack,
+  author    = {Anderson, E. and Bai, Z. and Bischof, C. and Blackford, S. and Demmel, J.
+               and Dongarra, J. and Du Croz, J. and Greenbaum, A. and Hammarling, S.
+               and McKenney, A. and Sorensen, D.},
+  title     = {{LAPACK} Users' Guide},
+  edition   = {3},
+  publisher = {SIAM},
+  year      = {1999},
+  url       = {https://www.netlib.org/lapack/lug/},
+  note      = {dgetrf/dgetrs/dpotrf/dtrsm/dgemm as called in etr.}
+}
+
+% === 8. Optimization and root finding =========================================
+
+@book{nocedal2006numerical,
+  author    = {Nocedal, Jorge and Wright, Stephen J.},
+  title     = {Numerical Optimization},
+  edition   = {2},
+  publisher = {Springer},
+  year      = {2006},
+  note      = {Quasi-Newton / BFGS / L-BFGS, line search, conjugate gradients, Newton-CG
+               (vmmin, cgmin, Hessian-vector products).}
+}
+
+@article{byrd1995limited,
+  author  = {Byrd, Richard H. and Lu, Peihuang and Nocedal, Jorge and Zhu, Ciyou},
+  title   = {A Limited Memory Algorithm for Bound Constrained Optimization},
+  journal = {SIAM Journal on Scientific Computing},
+  volume  = {16},
+  number  = {5},
+  pages   = {1190--1208},
+  year    = {1995},
+  note    = {L-BFGS-B: lbfgsb().}
+}
+
+@article{nelder1965simplex,
+  author  = {Nelder, John A. and Mead, Roger},
+  title   = {A Simplex Method for Function Minimization},
+  journal = {The Computer Journal},
+  volume  = {7},
+  number  = {4},
+  pages   = {308--313},
+  year    = {1965},
+  note    = {nmmin (planned, R's C API).}
+}
+
+@inproceedings{kennedy1995particle,
+  author    = {Kennedy, James and Eberhart, Russell},
+  title     = {Particle Swarm Optimization},
+  booktitle = {Proceedings of ICNN'95 -- International Conference on Neural Networks},
+  volume    = {4},
+  pages     = {1942--1948},
+  year      = {1995},
+  note      = {pso().}
+}
+
+@book{brent1973algorithms,
+  author    = {Brent, Richard P.},
+  title     = {Algorithms for Minimization without Derivatives},
+  publisher = {Prentice-Hall},
+  year      = {1973},
+  note      = {Brent's root finder (uniroot) and 1-D minimizer (optimize).}
+}
+
+@book{lawson1974solving,
+  author    = {Lawson, Charles L. and Hanson, Richard J.},
+  title     = {Solving Least Squares Problems},
+  publisher = {Prentice-Hall},
+  year      = {1974},
+  note      = {Active-set NNLS algorithm: nnls(). SIAM reprint 1995.}
+}
+
+% === 9. Random numbers and densities ==========================================
+
+@article{matsumoto1998mersenne,
+  author  = {Matsumoto, Makoto and Nishimura, Takuji},
+  title   = {Mersenne Twister: A 623-Dimensionally Equidistributed Uniform
+             Pseudo-Random Number Generator},
+  journal = {ACM Transactions on Modeling and Computer Simulation},
+  volume  = {8},
+  number  = {1},
+  pages   = {3--30},
+  year    = {1998},
+  doi     = {10.1145/272991.272995},
+  note    = {mersenne_twister(), R's default RNGkind.}
+}
+
+@article{wichura1988algorithm,
+  author  = {Wichura, Michael J.},
+  title   = {Algorithm {AS} 241: The Percentage Points of the Normal Distribution},
+  journal = {Journal of the Royal Statistical Society. Series C (Applied Statistics)},
+  volume  = {37},
+  number  = {3},
+  pages   = {477--484},
+  year    = {1988},
+  note    = {qnorm used by R's default normal generator (inversion): normal() / draw().}
+}
+
+@article{walker1977efficient,
+  author  = {Walker, Alastair J.},
+  title   = {An Efficient Method for Generating Discrete Random Variables with
+             General Distributions},
+  journal = {ACM Transactions on Mathematical Software},
+  volume  = {3},
+  number  = {3},
+  pages   = {253--256},
+  year    = {1977},
+  note    = {Alias method: sample(..., prob) with replacement.}
+}
+
+% === 10. Interpolation ========================================================
+
+@incollection{catmull1974class,
+  author    = {Catmull, Edwin and Rom, Raphael},
+  title     = {A Class of Local Interpolating Splines},
+  booktitle = {Computer Aided Geometric Design},
+  editor    = {Barnhill, Robert E. and Riesenfeld, Richard F.},
+  publisher = {Academic Press},
+  pages     = {317--326},
+  year      = {1974},
+  note      = {cmr() (Catmull-Rom spline).}
+}
+
+% === 11. Parallelism ==========================================================
+
+@article{nagler2021rcppthread,
+  author  = {Nagler, Thomas},
+  title   = {{R}-Friendly Multi-Threading in {C++}},
+  journal = {Journal of Statistical Software, Code Snippets},
+  volume  = {97},
+  number  = {1},
+  pages   = {1--18},
+  year    = {2021},
+  doi     = {10.18637/jss.v097.c01},
+  note    = {RcppThread: thread pool behind pmap().}
+}
+
+% === 12. Planned: Bayesian inference / Laplace ================================
+
+@book{mcelreath2020statistical,
+  author    = {McElreath, Richard},
+  title     = {Statistical Rethinking: A {B}ayesian Course with Examples in {R} and {Stan}},
+  edition   = {2},
+  publisher = {Chapman and Hall/CRC},
+  year      = {2020},
+  note      = {Currently reading. Motivation for HMC/NUTS and Laplace in ast2ast.}
+}
+
+@misc{betancourt2017conceptual,
+  author        = {Betancourt, Michael},
+  title         = {A Conceptual Introduction to {H}amiltonian {M}onte {C}arlo},
+  year          = {2017},
+  eprint        = {1701.02434},
+  archivePrefix = {arXiv},
+  note          = {Best intuition for HMC before implementing it (needs gradients = reverse AD).}
+}
+
+@article{hoffman2014nuts,
+  author  = {Hoffman, Matthew D. and Gelman, Andrew},
+  title   = {The No-{U}-Turn Sampler: Adaptively Setting Path Lengths in
+             {H}amiltonian {M}onte {C}arlo},
+  journal = {Journal of Machine Learning Research},
+  volume  = {15},
+  pages   = {1593--1623},
+  year    = {2014},
+  note    = {NUTS algorithm (planned after Hessian).}
+}
+
+@article{kristensen2016tmb,
+  author  = {Kristensen, Kasper and Nielsen, Anders and Berg, Casper W. and
+             Skaug, Hans and Bell, Bradley M.},
+  title   = {{TMB}: Automatic Differentiation and {L}aplace Approximation},
+  journal = {Journal of Statistical Software},
+  volume  = {70},
+  number  = {5},
+  pages   = {1--21},
+  year    = {2016},
+  doi     = {10.18637/jss.v070.i05},
+  note    = {Laplace approximation with AD + sparse Hessians (planned; OpenStats idea).}
+}

@@ -193,7 +193,8 @@ action_transpile_inner_functions <- function(node, real_type, debug = TRUE, var_
   }
   AST <- sort_args(AST, function_registry)
   node$vars_types_list <- tryCatch(
-    infer_types(AST, f, args_f_raw, r_fct, real_type, function_registry, node$known_types, extra_vars = var_list[node$known_fcts]),
+    infer_types(AST, f, args_f_raw, r_fct, real_type, function_registry, node$known_types, extra_vars = var_list[node$known_fcts],
+                inner_fct = TRUE),
     error = function(e) stop(sprintf("In inner function %s: %s", node$fct_name,
       augment_outer_var_hint(conditionMessage(e), outer_var_names)), call. = FALSE)
   )

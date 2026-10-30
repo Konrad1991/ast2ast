@@ -48,9 +48,11 @@ non_fct_args <- function(ast, f, r_fct) {
   )
 }
 
-create_vars_types_list <- function(ast, f, f_args, r_fct, real_type, known_types = list()) {
+create_vars_types_list <- function(ast, f, f_args, r_fct, real_type, known_types = list(),
+                                   inner_fct = FALSE) {
   input_args <- resolve_args_f(f, f_args)
-  input_args <- parse_types(input_args, fct_input = TRUE, r_fct, real_type, known_types)
+  input_args <- parse_types(input_args, fct_input = TRUE, r_fct, real_type, known_types,
+                            inner_fct = inner_fct)
   stop_on_type_errors(input_args)
 
   check_orphan_type_annotations(ast, names(formals(f)))
@@ -138,11 +140,9 @@ infer <- function(node, vars_list, info_env, function_registry) {
         node$operator
       ))
     }
-    if (info_env$real_type == "etr::ReverseDouble" && node$operator %in% forward_only_fcts) {
-      return(sprintf(
-        "%s does not support reverse mode yet -- only translate(derivative = \"forward\")",
-        node$operator
-      ))
+    if (info_env$real_type == "etr::ReverseDouble") {
+      err <- reverse_borrow_error(node, vars_list)
+      if (!is.null(err)) return(err)
     }
     ifct <- function_registry$infer_fct(node$operator)
     t <- ifct(node, vars_list, info_env, function_registry)

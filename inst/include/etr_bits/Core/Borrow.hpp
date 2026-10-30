@@ -305,6 +305,90 @@ template <typename BorrowTrait> struct Borrow<Dual, BorrowTrait> {
   void push_back(Dual input) = delete;
 };
 
+//------------------------------------------------------------------------------
+// Borrow specialisation for ReverseDouble: views tape handles, not doubles,
+// so reads keep the tape id and writes rebind it (cvode adjoint rhs)
+//------------------------------------------------------------------------------
+template <typename BorrowTrait> struct Borrow<ReverseDouble, BorrowTrait> {
+  using value_type = ReverseDouble;
+  using Type = ReverseDouble;
+  using Trait = BorrowTrait;
+  using TypeTrait = BorrowTrait;
+
+  std::size_t sz = 0;
+  std::size_t capacity = 0;
+  bool allocated = false;
+  ReverseDouble *p = nullptr;
+
+  std::size_t size() const noexcept { return allocated ? sz : 0; }
+
+  Borrow() {};
+  Borrow(const Borrow<ReverseDouble> &other)
+    : sz(other.sz), capacity(other.capacity), allocated(other.allocated), p(other.p) {}
+  Borrow &operator=(const Borrow<ReverseDouble> &other) {
+    p = other.p;
+    sz = other.sz;
+    capacity = other.capacity;
+    allocated = other.allocated;
+    return *this;
+  }
+  Borrow(Borrow&&) noexcept = default;
+  Borrow& operator=(Borrow&&) noexcept = default;
+
+  Borrow(std::size_t i) = delete;
+
+  void init(ReverseDouble *p_, std::size_t sz_) {
+    ass<"null pointer with positive size">(p_ != nullptr || sz_ == 0);
+    p = p_;
+    sz = sz_;
+    capacity = sz;
+    allocated = true;
+  }
+  Borrow(ReverseDouble *p_, std::size_t sz_) { init(p_, sz_); }
+  Borrow(ReverseDouble *p_, int sz_) { init(p_, static_cast<std::size_t>(sz_)); }
+
+  ~Borrow() {}
+
+  void init(std::size_t size) = delete;
+  void resize(std::size_t newSize) {
+    ass<"cannot resize borrowed array beyond original memory">(newSize <= capacity);
+    sz = newSize;
+  }
+
+  // references like Buffer<ReverseDouble>: `at(a, i) = expr` rebinds the id
+  ReverseDouble& get(std::size_t idx) {
+    ass<"No memory was allocated">(allocated);
+    ass<"Error: out of boundaries">(idx < sz);
+    return p[idx];
+  }
+  const ReverseDouble& get(std::size_t idx) const {
+    ass<"No memory was allocated">(allocated);
+    ass<"Error: out of boundaries">(idx < sz);
+    return p[idx];
+  }
+  void set(std::size_t idx, const value_type& val) {
+    ass<"No memory was allocated">(allocated);
+    ass<"Error: out of boundaries">(idx < sz);
+    p[idx] = val;
+  }
+  ReverseDouble& get_unchecked(std::size_t idx) { return p[idx]; }
+  const ReverseDouble& get_unchecked(std::size_t idx) const { return p[idx]; }
+  void set_unchecked(std::size_t idx, const value_type& val) { p[idx] = val; }
+
+  const ReverseDouble *begin() const {
+    ass<"No memory was allocated">(allocated);
+    return p;
+  }
+  const ReverseDouble *end() const {
+    ass<"No memory was allocated">(allocated);
+    return p + sz;
+  }
+  template <typename L2> void moveit(L2 &other) = delete;
+
+  void realloc(int new_size) = delete;
+  void push_back(ReverseDouble input) = delete;
+};
+
 } // namespace etr
 
 #endif

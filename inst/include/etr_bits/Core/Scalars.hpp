@@ -25,12 +25,16 @@ enum class ROp : uint8_t {
   // M*N-1 nodes are tagged BlockSlot and are no-ops in reverse(). Both
   // node kinds store block_idx (index into ReverseTape::blocks) in a[],
   // NOT a tape id.
-  MatMul, BlockSlot, Chol, Solve, CrossProd, TriSolve, Det
+  MatMul, BlockSlot, Chol, Solve, CrossProd, TriSolve, Det,
+  // backward pass is a type-erased callback (cvode adjoint)
+  Custom
 };
+
+struct ReverseTape;
 
 struct BlockOp {
   enum class Kind : uint8_t {
-    MatMul, Chol, Solve, CrossProd, TCrossProd, BackSolve, ForwardSolve, Det
+    MatMul, Chol, Solve, CrossProd, TCrossProd, BackSolve, ForwardSolve, Det, Custom
   };
   Kind kind;
   std::size_t rows_a;
@@ -51,6 +55,8 @@ struct BlockOp {
   std::vector<double> lu;
   std::vector<int> ipiv;
   int out_tape_id_first{-1}; // tape id of the head node; outputs occupy [out_tape_id_first, out_tape_id_first + rows_a*cols_b)
+  // Custom only: reads the output adjoints, adds to the input adjoints
+  std::function<void(ReverseTape&, int out0)> backward;
 };
 
 struct ReverseTape {
@@ -586,10 +592,38 @@ struct ReverseTape {
     return head_id;
   }
 
+  // vals.size() output nodes (head Custom, rest BlockSlot); returns the head id.
+  // input_ids: every output may depend on every input (sparsity walk)
+  inline int push_custom(const std::vector<double>& vals, const std::vector<uint8_t>& na,
+                         std::vector<int> input_ids,
+                         std::function<void(ReverseTape&, int out0)> backward) {
+    ass<"push_custom: no outputs">(!vals.empty() && vals.size() == na.size());
+    const int block_idx = static_cast<int>(blocks.size());
+    const int head_id = push_node(ROp::Custom, block_idx, -1, vals[0], na[0] != 0);
+    for (std::size_t i = 1; i < vals.size(); ++i) {
+      push_node(ROp::BlockSlot, block_idx, -1, vals[i], na[i] != 0);
+    }
+    BlockOp blk;
+    blk.kind = BlockOp::Kind::Custom;
+    blk.rows_a = vals.size();
+    blk.cols_a = 0;
+    blk.cols_b = 1;
+    blk.a_ids = std::move(input_ids);
+    blk.out_tape_id_first = head_id;
+    blk.backward = std::move(backward);
+    blocks.push_back(std::move(blk));
+    return head_id;
+  }
+
   void reverse(int out) {
     std::fill(adj.begin(), adj.end(), 0.0);
     adj[static_cast<std::size_t>(out)] = 1.0;
-    for (std::size_t ii = size(); ii-- > 0;) {
+    reverse_range(size(), 0);
+  }
+
+  // sweeps the nodes [lo, hi) backwards; adj has to be seeded by the caller
+  void reverse_range(std::size_t hi, std::size_t lo) {
+    for (std::size_t ii = hi; ii-- > lo;) {
       // MatMul head nodes must always fire — the head propagates adjoints
       // for ALL output cells of the block, not just its own cell.
       // Per-cell NA is handled inside the case by reading is_na per output id.
@@ -965,6 +999,12 @@ struct ReverseTape {
               }
             }
           }
+          break;
+        }
+        case ROp::Custom: {
+          // copy: the callback records on this tape, blocks may reallocate
+          auto backward = blocks[static_cast<std::size_t>(ai)].backward;
+          backward(*this, static_cast<int>(ii));
           break;
         }
         case ROp::BlockSlot:

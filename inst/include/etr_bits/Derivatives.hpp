@@ -492,7 +492,7 @@ inline Colouring colouring_from_tape(const X& x, CallRev&& call_rev, bool split_
       const ROp op = tape.op[id];
       const bool is_block = op == ROp::MatMul || op == ROp::BlockSlot || op == ROp::Chol ||
                             op == ROp::Solve || op == ROp::CrossProd || op == ROp::TriSolve ||
-                            op == ROp::Det;
+                            op == ROp::Det || op == ROp::Custom;
       if (is_block) {
         // a[] holds the block index here, not a tape id
         const std::size_t k = static_cast<std::size_t>(tape.a[id]);

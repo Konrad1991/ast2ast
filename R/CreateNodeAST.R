@@ -98,7 +98,7 @@ create_ast <- function(code, context, env, function_registry) {
     fn$function_registry <- function_registry$clone(deep = TRUE)
     fn$function_registry_outer <- function_registry
     fn$known_types <- env$known_types
-    fn$args_f <- parse_argtypes(args_call, TRUE, FALSE, env$real_type, env$known_types)
+    fn$args_f <- parse_argtypes(args_call, TRUE, FALSE, env$real_type, env$known_types, inner_fct = TRUE)
     fn$args_f_raw <- args_call
     fn$return_type <- parse_return(return_call, FALSE, env$real_type, env$known_types)[[1]]
     fn$AST <- body_block |> wrap_in_block()
@@ -127,7 +127,7 @@ create_ast <- function(code, context, env, function_registry) {
     fn$function_registry <- function_registry$clone(deep = TRUE)
     fn$function_registry_outer <- function_registry
     fn$known_types <- env$known_types
-    fn$args_f <- parse_argtypes(args_call, TRUE, FALSE, env$real_type, env$known_types)
+    fn$args_f <- parse_argtypes(args_call, TRUE, FALSE, env$real_type, env$known_types, inner_fct = TRUE)
     fn$args_f_raw <- args_call
     fn$return_type <- parse_return(return_call, FALSE, env$real_type, env$known_types, TRUE)[[1]]
     fn$AST <- body |> wrap_in_block()
@@ -282,8 +282,9 @@ settle_range_vars <- function(ast, env) {
   }
 }
 
-infer_types <- function(ast, f, f_args, r_fct, real_type, function_registry, known_types = list(), extra_vars = list()) {
-  vars_list <- create_vars_types_list(ast, f, f_args, r_fct, real_type, known_types)
+infer_types <- function(ast, f, f_args, r_fct, real_type, function_registry, known_types = list(), extra_vars = list(),
+                        inner_fct = FALSE) {
+  vars_list <- create_vars_types_list(ast, f, f_args, r_fct, real_type, known_types, inner_fct = inner_fct)
   vars_list[names(extra_vars)] <- extra_vars
   env <- new.env(parent = emptyenv())
   env$vars_list <- vars_list

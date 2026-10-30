@@ -118,8 +118,9 @@ create_type_tree <- function(code, env) {
   }
 
   else if (operator %in% c("borrow_vec", "borrow_vector") && env$fct_input) {
+    # inner fns: checked at the use site (reverse_borrow_error)
     if ((env$r_fct && env$real_type %in% c("etr::Dual", "etr::ReverseDouble")) ||
-        (!env$r_fct && env$real_type == "etr::ReverseDouble")) {
+        (!env$inner_fct && !env$r_fct && env$real_type == "etr::ReverseDouble")) {
       add_error(env, "borrow types cannot be used together with automatic differentiation (reverse; forward only when output = \"R\")")
     }
     v <- borrow_vec$new()
@@ -129,8 +130,9 @@ create_type_tree <- function(code, env) {
     return(v)
   }
   else if (operator %in% c("borrow_mat", "borrow_matrix") && env$fct_input) {
+    # inner fns: checked at the use site (reverse_borrow_error)
     if ((env$r_fct && env$real_type %in% c("etr::Dual", "etr::ReverseDouble")) ||
-        (!env$r_fct && env$real_type == "etr::ReverseDouble")) {
+        (!env$inner_fct && !env$r_fct && env$real_type == "etr::ReverseDouble")) {
       add_error(env, "borrow types cannot be used together with automatic differentiation (reverse; forward only when output = \"R\")")
     }
     m <- borrow_mat$new()
@@ -140,8 +142,9 @@ create_type_tree <- function(code, env) {
     return(m)
   }
   else if (operator == "borrow_array" && env$fct_input) {
+    # inner fns: checked at the use site (reverse_borrow_error)
     if ((env$r_fct && env$real_type %in% c("etr::Dual", "etr::ReverseDouble")) ||
-        (!env$r_fct && env$real_type == "etr::ReverseDouble")) {
+        (!env$inner_fct && !env$r_fct && env$real_type == "etr::ReverseDouble")) {
       add_error(env, "borrow types cannot be used together with automatic differentiation (reverse; forward only when output = \"R\")")
     }
     a <- borrow_arr$new()
@@ -406,10 +409,12 @@ parse_layout <- function(code, env, eval_env) {
   layout_def(name, kind, base_type, element_type, dimnames)
 }
 
-parse_types <- function(block, fct_input, r_fct, real_type, known_types = list(), eval_env = globalenv()) {
+parse_types <- function(block, fct_input, r_fct, real_type, known_types = list(), eval_env = globalenv(),
+                        inner_fct = FALSE) {
   env <- new.env(parent = emptyenv())
   env$list <- known_types
   env$fct_input <- fct_input
+  env$inner_fct <- inner_fct
   env$r_fct <- r_fct
   env$real_type <- real_type
   for (i in seq_len(length(block))) {
@@ -448,8 +453,9 @@ parse_types <- function(block, fct_input, r_fct, real_type, known_types = list()
 # fn() surface: argtypes(...) / return(spec)
 # parse_types + report every entry that failed to resolve
 # =====================================================================
-parse_types_with_check <- function(args, fct_input, r_fct, real_type, known_types = list()) {
-  l <- parse_types(args, fct_input, r_fct, real_type, known_types)
+parse_types_with_check <- function(args, fct_input, r_fct, real_type, known_types = list(),
+                                   inner_fct = FALSE) {
+  l <- parse_types(args, fct_input, r_fct, real_type, known_types, inner_fct = inner_fct)
   stop_on_type_errors(l)
   l
 }
@@ -465,12 +471,12 @@ stop_on_type_errors <- function(l) {
   if (length(msgs)) stop(paste(c("Types for arguments are invalid:", msgs), collapse = "\n"), call. = FALSE)
 }
 
-parse_argtypes <- function(obj, fct_input, r_fct, real_type, known_types = list()) {
+parse_argtypes <- function(obj, fct_input, r_fct, real_type, known_types = list(), inner_fct = FALSE) {
   obj <- as.list(obj)
   stopifnot("Expected 'argtypes' as first entry to fn" = deparse(obj[[1]]) == "argtypes")
   # drop srcref etc. -- parse_types matches on deparse(row[[1]])
   annotations <- lapply(obj[-1], function(x) { attributes(x) <- NULL; x })
-  parse_types_with_check(annotations, fct_input, r_fct, real_type, known_types)
+  parse_types_with_check(annotations, fct_input, r_fct, real_type, known_types, inner_fct = inner_fct)
 }
 
 parse_return <- function(obj, r_fct, real_type, known_types = list(), is_function = FALSE) {

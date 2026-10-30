@@ -2766,6 +2766,9 @@ function_registry_global$add(
     }
     err <- check_solver_params_variable(node, all_types[[4L]], "cvode", 4L)
     if (!is.null(err)) return(err)
+    if (info_env$real_type == "etr::ReverseDouble" && !is_vec_double(all_types[[4L]])) {
+      return("cvode: in reverse mode params (argument 4) has to be a double vector")
+    }
     if (!is_options_type(all_types[[5L]], "cvode_options")) {
       return("cvode: options (argument 5) has to be created by cvode_options()")
     }
@@ -3143,7 +3146,7 @@ infer_hessian <- function(node, vars_list, info_env, function_registry, fname) {
   if (info_env$real_type == "etr::ReverseDouble") {
     fn <- runtime_colouring_fn(node$args[[1L]], vars_list)
     if (!is.null(fn)) {
-      err <- runtime_colouring_reverse_error(fn, vars_list, fname, ad_only_fcts)
+      err <- runtime_colouring_reverse_error(fn, vars_list, fname, c(ad_only_fcts, no_hessian_fcts))
       if (!is.null(err)) return(err)
     }
   } else {
@@ -3152,7 +3155,7 @@ infer_hessian <- function(node, vars_list, info_env, function_registry, fname) {
       return(sprintf("%s: f has to be a named fn, not an inline fn (unless translate(derivative = \"reverse\"))", fname))
     }
     no_ad <- function_registry$function_names[!function_registry$deriv_possibles]
-    err <- runtime_colouring_reverse_error(fn, vars_list, fname, c(ad_only_fcts, forward_only_fcts, no_ad))
+    err <- runtime_colouring_reverse_error(fn, vars_list, fname, c(ad_only_fcts, no_hessian_fcts, no_ad))
     if (!is.null(err)) return(err)
     node$args[[1L]]$functor_scalar <- "etr::ReverseDouble"
   }

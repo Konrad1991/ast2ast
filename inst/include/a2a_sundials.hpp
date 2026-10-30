@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -598,13 +599,326 @@ inline auto cvodes_forward_impl(const RHS &rhs, const JAC *jac, const Y &y0, con
   return res;
 }
 
+// ---------- reverse mode (ReverseDouble): CVODES adjoint ---------------------
+// cvode is one Custom block on the tape. Forward: solve with rhs_t<Double>,
+// checkpoints via CVodeAdjInit. Backward (per reverse sweep):
+//   lambda' = -J^T lambda, qB' = -f_p^T lambda, lambda += ybar(t_k) at each t_k
+//   y0bar = lambda(t0), pbar = qB(t0)
+// J^T lambda and f_p^T lambda: rhs_t<ReverseDouble> recorded on a fresh tape
+// segment, swept with reverse_range, rewound.
+
+// f_t<ReverseDouble> -> f_t<Double>
+template <typename F, typename S> struct rebind_scalar { using type = F; };
+template <template <typename> class F, typename T, typename S> struct rebind_scalar<F<T>, S> {
+  using type = F<S>;
+};
+
+using RevBorrowVec = etr::Array<etr::ReverseDouble, etr::Borrow<etr::ReverseDouble>>;
+using DoubleVec = etr::Array<etr::Double, etr::Buffer<etr::Double>>;
+using RevVec = etr::Array<etr::ReverseDouble, etr::Buffer<etr::ReverseDouble>>;
+
+template <typename RHS_R, typename JAC_R> struct cvode_adjoint_state {
+  using RHS_D = typename rebind_scalar<RHS_R, etr::Double>::type;
+  using JAC_D = typename rebind_scalar<JAC_R, etr::Double>::type;
+  using Ctx = fct_ctx<RHS_D, DoubleVec, JAC_D>;
+
+  cvode_workspace w;
+  N_Vector yB = nullptr;
+  N_Vector qB = nullptr;
+  SUNMatrix AB = nullptr;
+  SUNLinearSolver LSB = nullptr;
+  SUNNonlinearSolver NLSB = nullptr;
+  int which = -1;
+
+  RHS_D rhs_d{};
+  JAC_D jac_d{};
+  RHS_R rhs_r{};
+  DoubleVec p_double;
+  Ctx ctx{};
+  std::vector<double> p_vals, times;
+  std::vector<int> y0_ids, p_ids;
+  std::size_t neq = 0, nt = 0;
+  bool stiff = true;
+  double reltol = 0.0, abstol = 0.0;
+  long int max_steps = 0;
+  int linear_solver = 1;
+  // vjp cache: fB and fQB are called with the same (t, y, lambda)
+  double vjp_t = 0.0;
+  std::vector<double> vjp_y, vjp_lambda, vjp_out_y, vjp_out_p;
+  bool vjp_valid = false;
+
+  ~cvode_adjoint_state() {
+    if (w.mem) CVodeFree(&w.mem);
+    if (NLSB) SUNNonlinSolFree(NLSB);
+    if (LSB) SUNLinSolFree(LSB);
+    if (AB) SUNMatDestroy(AB);
+    if (qB) N_VDestroy(qB);
+    if (yB) N_VDestroy(yB);
+  }
+
+  // out_y = J^T lambda, out_p = f_p^T lambda at (t, y)
+  void vjp(double t, const double *y, const double *lambda) {
+    if (vjp_valid && t == vjp_t &&
+        std::equal(y, y + neq, vjp_y.begin()) && std::equal(lambda, lambda + neq, vjp_lambda.begin())) {
+      return;
+    }
+    auto &tape = etr::TAPE_INTERN_ref();
+    const std::size_t start = tape.size();
+    const std::size_t nblocks = tape.blocks.size();
+    const std::size_t np = p_vals.size();
+    std::vector<etr::ReverseDouble> y_leaves(neq);
+    std::vector<etr::ReverseDouble> ydot(neq);
+    std::vector<int> y_ids(neq), pl_ids(np);
+    for (std::size_t i = 0; i < neq; ++i) {
+      y_ids[i] = tape.push_var(y[i]);
+      y_leaves[i] = etr::ReverseDouble(etr::from_tape_id_t{}, y_ids[i], 0);
+    }
+    RevVec p_local(etr::SI{np});
+    for (std::size_t i = 0; i < np; ++i) {
+      pl_ids[i] = tape.push_var(p_vals[i]);
+      p_local.set(i, etr::ReverseDouble(etr::from_tape_id_t{}, pl_ids[i], 0));
+    }
+    etr::ReverseDouble tt(t);
+    RevBorrowVec yv(y_leaves.data(), neq, etr::Dim{neq});
+    RevBorrowVec ydv(ydot.data(), neq, etr::Dim{neq});
+    rhs_r(tt, yv, ydv, p_local);
+    const std::size_t end = tape.size();
+    std::fill(tape.adj.begin() + static_cast<std::ptrdiff_t>(start), tape.adj.end(), 0.0);
+    for (std::size_t i = 0; i < neq; ++i) {
+      const int id = ydot[i].id;
+      if (id >= static_cast<int>(start)) tape.adj[static_cast<std::size_t>(id)] += lambda[i];
+    }
+    tape.reverse_range(end, start);
+    for (std::size_t i = 0; i < neq; ++i) vjp_out_y[i] = tape.adj[static_cast<std::size_t>(y_ids[i])];
+    for (std::size_t i = 0; i < np; ++i) vjp_out_p[i] = tape.adj[static_cast<std::size_t>(pl_ids[i])];
+    tape.rewind(start, nblocks);
+    vjp_t = t;
+    std::copy(y, y + neq, vjp_y.begin());
+    std::copy(lambda, lambda + neq, vjp_lambda.begin());
+    vjp_valid = true;
+  }
+
+  static int rhs_b(sunrealtype t, N_Vector y, N_Vector yB, N_Vector yBdot, void *user_data) {
+    auto *s = static_cast<cvode_adjoint_state *>(user_data);
+    s->vjp(t, N_VGetArrayPointer(y), N_VGetArrayPointer(yB));
+    sunrealtype *out = N_VGetArrayPointer(yBdot);
+    for (std::size_t i = 0; i < s->neq; ++i) out[i] = -s->vjp_out_y[i];
+    return 0;
+  }
+
+  static int quad_b(sunrealtype t, N_Vector y, N_Vector yB, N_Vector qBdot, void *user_data) {
+    auto *s = static_cast<cvode_adjoint_state *>(user_data);
+    s->vjp(t, N_VGetArrayPointer(y), N_VGetArrayPointer(yB));
+    sunrealtype *out = N_VGetArrayPointer(qBdot);
+    for (std::size_t i = 0; i < s->p_vals.size(); ++i) out[i] = -s->vjp_out_p[i];
+    return 0;
+  }
+
+  void init_backward() {
+    const std::size_t np = p_vals.size();
+    yB = N_VNew_Serial(static_cast<sunindextype>(neq), w.ctx);
+    qB = N_VNew_Serial(static_cast<sunindextype>(np), w.ctx);
+    etr::ass<"cvode (adjoint): N_VNew_Serial failed">(yB != nullptr && qB != nullptr);
+    N_VConst(0.0, yB);
+    N_VConst(0.0, qB);
+    etr::ass<"cvode (adjoint): CVodeCreateB failed">(
+      CVodeCreateB(w.mem, stiff ? CV_BDF : CV_ADAMS, &which) == CV_SUCCESS);
+    etr::ass<"cvode (adjoint): CVodeInitB failed">(
+      CVodeInitB(w.mem, which, &rhs_b, times[nt - 1], yB) == CV_SUCCESS);
+    etr::ass<"cvode (adjoint): CVodeSStolerancesB failed">(
+      CVodeSStolerancesB(w.mem, which, reltol, abstol) == CV_SUCCESS);
+    etr::ass<"cvode (adjoint): CVodeSetUserDataB failed">(
+      CVodeSetUserDataB(w.mem, which, this) == CV_SUCCESS);
+    etr::ass<"cvode (adjoint): CVodeSetMaxNumStepsB failed">(
+      CVodeSetMaxNumStepsB(w.mem, which, max_steps) == CV_SUCCESS);
+    if (stiff) {
+      // no jacB: difference quotients of rhs_b
+      AB = SUNDenseMatrix(static_cast<sunindextype>(neq), static_cast<sunindextype>(neq), w.ctx);
+      etr::ass<"cvode (adjoint): SUNDenseMatrix failed">(AB != nullptr);
+      LSB = dense_solver(linear_solver, yB, AB, w.ctx);
+      etr::ass<"cvode (adjoint): creating the dense linear solver failed">(LSB != nullptr);
+      etr::ass<"cvode (adjoint): CVodeSetLinearSolverB failed">(
+        CVodeSetLinearSolverB(w.mem, which, LSB, AB) == CV_SUCCESS);
+    } else {
+      NLSB = SUNNonlinSol_FixedPoint(yB, 0, w.ctx);
+      etr::ass<"cvode (adjoint): creating the fixed-point solver failed">(NLSB != nullptr);
+      etr::ass<"cvode (adjoint): CVodeSetNonlinearSolverB failed">(
+        CVodeSetNonlinearSolverB(w.mem, which, NLSB) == CV_SUCCESS);
+    }
+    etr::ass<"cvode (adjoint): CVodeQuadInitB failed">(
+      CVodeQuadInitB(w.mem, which, &quad_b, qB) == CV_SUCCESS);
+    etr::ass<"cvode (adjoint): CVodeQuadSStolerancesB failed">(
+      CVodeQuadSStolerancesB(w.mem, which, reltol, abstol) == CV_SUCCESS);
+    etr::ass<"cvode (adjoint): CVodeSetQuadErrConB failed">(
+      CVodeSetQuadErrConB(w.mem, which, SUNTRUE) == CV_SUCCESS);
+  }
+
+  // ybar: column-major nt x neq (adjoints of the cvode result)
+  void backward(const std::vector<double> &ybar, std::vector<double> &y0bar,
+                std::vector<double> &pbar) {
+    const std::size_t np = p_vals.size();
+    if (which < 0) init_backward();
+    sunrealtype *lam = N_VGetArrayPointer(yB);
+    sunrealtype *q = N_VGetArrayPointer(qB);
+    for (std::size_t j = 0; j < neq; ++j) lam[j] = ybar[j * nt + (nt - 1)];
+    N_VConst(0.0, qB);
+    for (std::size_t k = nt - 1; k >= 1; --k) {
+      vjp_valid = false;
+      etr::ass<"cvode (adjoint): CVodeReInitB failed">(
+        CVodeReInitB(w.mem, which, times[k], yB) == CV_SUCCESS);
+      etr::ass<"cvode (adjoint): CVodeQuadReInitB failed">(
+        CVodeQuadReInitB(w.mem, which, qB) == CV_SUCCESS);
+      int flag = CVodeB(w.mem, times[k - 1], CV_NORMAL);
+      etr::ass(flag >= 0, std::string("cvode (adjoint): backward integration failed at t = ") +
+                            std::to_string(times[k]) + ": " +
+                            flag_name(CVodeGetReturnFlagName(flag)));
+      sunrealtype tret = 0.0;
+      etr::ass<"cvode (adjoint): CVodeGetB failed">(CVodeGetB(w.mem, which, &tret, yB) == CV_SUCCESS);
+      etr::ass<"cvode (adjoint): CVodeGetQuadB failed">(
+        CVodeGetQuadB(w.mem, which, &tret, qB) == CV_SUCCESS);
+      for (std::size_t j = 0; j < neq; ++j) lam[j] += ybar[j * nt + (k - 1)];
+    }
+    y0bar.assign(lam, lam + neq);
+    pbar.assign(q, q + np);
+  }
+};
+
+template <typename JAC, typename RHS, typename Y, typename T, typename P>
+requires(etr::IsArray<etr::Decayed<Y>> && etr::IsArray<etr::Decayed<T>>)
+inline auto cvodes_reverse_impl(const RHS &, const JAC *, const Y &y0, const T &times,
+                                const P &params, const etr::cvode_options &opt) {
+  static_assert(etr::IsArray<etr::Decayed<P>>,
+                "cvode: in reverse mode params has to be a double vector");
+  using State = cvode_adjoint_state<RHS, JAC>;
+  const std::size_t neq = y0.size();
+  const std::size_t nt = times.size();
+  const std::size_t np = params.size();
+  etr::ass<"cvode: need at least one initial state">(neq > 0);
+  etr::ass<"cvode: need at least two time points">(nt >= 2);
+  etr::ass<"cvode: in reverse mode params needs at least one element">(np > 0);
+  check_tolerances(opt, "cvode");
+  etr::ass<"cvode: stiff must be TRUE or FALSE">(!opt.stiff.isNA());
+  etr::ass<"cvode: stats must be TRUE or FALSE">(!opt.stats.isNA());
+
+  auto s = std::make_shared<State>();
+  s->neq = neq;
+  s->nt = nt;
+  s->max_steps = checked_max_steps(opt, "cvode");
+  s->linear_solver = checked_linear_solver(opt, "cvode");
+  s->stiff = etr::get_val(opt.stiff);
+  s->reltol = etr::get_val(opt.reltol);
+  s->abstol = etr::get_val(opt.abstol);
+  s->times.resize(nt);
+  for (std::size_t k = 0; k < nt; ++k) s->times[k] = etr::get_val(times.get(k));
+  s->p_vals.resize(np);
+  s->p_ids.resize(np);
+  s->p_double = DoubleVec(etr::SI{np});
+  for (std::size_t i = 0; i < np; ++i) {
+    etr::ReverseDouble pi = params.get(i);
+    etr::ass<"cvode: NA in params">(!pi.isNA());
+    s->p_vals[i] = etr::get_val(pi);
+    s->p_ids[i] = pi.id;
+    s->p_double.set(i, etr::Double(s->p_vals[i]));
+  }
+  s->vjp_y.resize(neq);
+  s->vjp_lambda.resize(neq);
+  s->vjp_out_y.resize(neq);
+  s->vjp_out_p.resize(np);
+  s->ctx.f = &s->rhs_d;
+  s->ctx.params = &s->p_double;
+  if constexpr (!std::is_same_v<JAC, no_jac>) s->ctx.jac = &s->jac_d;
+
+  cvode_workspace &w = s->w;
+  etr::ass<"cvode: SUNContext_Create failed">(SUNContext_Create(SUN_COMM_NULL, &w.ctx) == 0);
+  SUNContext_ClearErrHandlers(w.ctx);
+  w.y = N_VNew_Serial(static_cast<sunindextype>(neq), w.ctx);
+  etr::ass<"cvode: N_VNew_Serial failed">(w.y != nullptr);
+  sunrealtype *yp = N_VGetArrayPointer(w.y);
+  s->y0_ids.resize(neq);
+  for (std::size_t i = 0; i < neq; ++i) {
+    etr::ReverseDouble yi = y0.get(i);
+    etr::ass<"cvode: NA in initial state">(!yi.isNA());
+    yp[i] = etr::get_val(yi);
+    s->y0_ids[i] = yi.id;
+  }
+
+  w.mem = CVodeCreate(s->stiff ? CV_BDF : CV_ADAMS, w.ctx);
+  etr::ass<"cvode: CVodeCreate failed">(w.mem != nullptr);
+  using Ctx = typename State::Ctx;
+  etr::ass<"cvode: CVodeInit failed">(CVodeInit(w.mem, &rhs_trampoline<Ctx>, s->times[0], w.y) == CV_SUCCESS);
+  etr::ass<"cvode: CVodeSStolerances failed">(CVodeSStolerances(w.mem, s->reltol, s->abstol) == CV_SUCCESS);
+  etr::ass<"cvode: CVodeSetUserData failed">(CVodeSetUserData(w.mem, &s->ctx) == CV_SUCCESS);
+  etr::ass<"cvode: CVodeSetMaxNumSteps failed">(CVodeSetMaxNumSteps(w.mem, s->max_steps) == CV_SUCCESS);
+  if (s->stiff) {
+    w.A = SUNDenseMatrix(static_cast<sunindextype>(neq), static_cast<sunindextype>(neq), w.ctx);
+    etr::ass<"cvode: SUNDenseMatrix failed">(w.A != nullptr);
+    w.LS = dense_solver(s->linear_solver, w.y, w.A, w.ctx);
+    etr::ass<"cvode: creating the dense linear solver failed">(w.LS != nullptr);
+    etr::ass<"cvode: CVodeSetLinearSolver failed">(CVodeSetLinearSolver(w.mem, w.LS, w.A) == CV_SUCCESS);
+    if constexpr (!std::is_same_v<JAC, no_jac>) {
+      etr::ass<"cvode: CVodeSetJacFn failed">(
+        CVodeSetJacFn(w.mem, &cvode_jac_trampoline<Ctx>) == CV_SUCCESS);
+    }
+  } else {
+    w.NLS = SUNNonlinSol_FixedPoint(w.y, 0, w.ctx);
+    etr::ass<"cvode: creating the fixed-point solver failed">(w.NLS != nullptr);
+    etr::ass<"cvode: CVodeSetNonlinearSolver failed">(CVodeSetNonlinearSolver(w.mem, w.NLS) == CV_SUCCESS);
+  }
+  // checkpoint every 100 steps, Hermite interpolation of the forward solution
+  etr::ass<"cvode: CVodeAdjInit failed">(CVodeAdjInit(w.mem, 100, CV_HERMITE) == CV_SUCCESS);
+
+  std::vector<double> vals(neq * nt);
+  std::vector<uint8_t> na(neq * nt, 0);
+  for (std::size_t j = 0; j < neq; ++j) vals[j * nt] = yp[j];
+  for (std::size_t k = 1; k < nt; ++k) {
+    sunrealtype tret = 0.0;
+    int ncheck = 0;
+    int flag = CVodeF(w.mem, s->times[k], w.y, &tret, CV_NORMAL, &ncheck);
+    etr::ass(flag == CV_SUCCESS,
+             std::string("cvode: integration failed at t = ") + std::to_string(tret) + ": " +
+               flag_name(CVodeGetReturnFlagName(flag)));
+    for (std::size_t j = 0; j < neq; ++j) vals[j * nt + k] = yp[j];
+  }
+  if (etr::get_val(opt.stats)) print_cvode_stats(w.mem);
+
+  std::vector<int> input_ids = s->y0_ids;
+  input_ids.insert(input_ids.end(), s->p_ids.begin(), s->p_ids.end());
+  const int head = etr::TAPE_INTERN_ref().push_custom(vals, na, std::move(input_ids),
+    [s](etr::ReverseTape &tape, int out0) {
+      const std::size_t n_out = s->neq * s->nt;
+      std::vector<double> ybar(n_out);
+      bool any = false;
+      for (std::size_t i = 0; i < n_out; ++i) {
+        const std::size_t id = static_cast<std::size_t>(out0) + i;
+        ybar[i] = tape.is_na[id] ? 0.0 : tape.adj[id];
+        if (ybar[i] != 0.0) any = true;
+      }
+      if (!any) return;
+      std::vector<double> y0bar, pbar;
+      s->backward(ybar, y0bar, pbar);
+      for (std::size_t i = 0; i < s->neq; ++i) {
+        tape.adj[static_cast<std::size_t>(s->y0_ids[i])] += y0bar[i];
+      }
+      for (std::size_t i = 0; i < pbar.size(); ++i) {
+        tape.adj[static_cast<std::size_t>(s->p_ids[i])] += pbar[i];
+      }
+    });
+
+  etr::Array<etr::ReverseDouble, etr::Buffer<etr::ReverseDouble, etr::LBufferTrait>> res(etr::SI{neq * nt});
+  res.dim = etr::Dim{nt, neq};
+  for (std::size_t i = 0; i < neq * nt; ++i) {
+    res.set(i, etr::ReverseDouble(etr::from_tape_id_t{}, head + static_cast<int>(i), 0));
+  }
+  return res;
+}
+
 template <typename JAC, typename RHS, typename Y, typename T, typename P>
 inline auto cvode_dispatch(const RHS &rhs, const JAC *jac, const Y &y0, const T &times,
                            const P &params, const etr::cvode_options &opt) {
   using TY = typename etr::ExtractDataType<etr::Decayed<Y>>::value_type;
-  static_assert(!etr::IS<TY, etr::ReverseDouble>,
-                "cvode: reverse mode (ReverseDouble) is not supported yet");
-  if constexpr (etr::IS<TY, etr::Dual>) {
+  if constexpr (etr::IS<TY, etr::ReverseDouble>) {
+    return cvodes_reverse_impl(rhs, jac, y0, times, params, opt);
+  } else if constexpr (etr::IS<TY, etr::Dual>) {
     return cvodes_forward_impl(rhs, jac, y0, times, params, opt);
   } else {
     return cvode_impl(rhs, jac, y0, times, params, opt);

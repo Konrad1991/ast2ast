@@ -638,13 +638,55 @@ check_runtime_colouring <- function(f_arg, vars_list) {
 # f is checked with one scalar type, but also instantiated with others
 # (ReverseDouble for the runtime pattern, Dual in a plain double translation)
 ad_only_fcts <- c("seed", "unseed", "get_dot", "deriv")
-# Dual version only, no ReverseDouble yet
-forward_only_fcts <- c("cvode", "cvode_options")
+# no forward-over-reverse (HessianSweep) yet
+no_hessian_fcts <- c("cvode")
+
+has_borrow_args <- function(fn) {
+  any(vapply(fn$args_f, function(a) {
+    inherits(a, "pre_type_node") && startsWith(a$get_data_struct_verbose(), "borrow")
+  }, logical(1L)))
+}
+
+# reverse mode: fns with borrow args only as rhs / jac of cvode
+# (cvode builds the Borrow<ReverseDouble> views itself)
+reverse_borrow_error <- function(node, vars_list) {
+  borrow_fn <- function(name) {
+    fn <- if (nzchar(name)) vars_list[[name]] else NULL
+    inherits(fn, "fn_node") && has_borrow_args(fn)
+  }
+  if (borrow_fn(node$operator)) {
+    return(sprintf(
+      "%s has borrow arguments: in reverse mode such a function can only be passed to cvode, not called",
+      node$operator
+    ))
+  }
+  if (identical(node$operator, "cvode")) return(NULL)
+  args <- if (inherits(node, "unary_node")) {
+    list(node$obj)
+  } else if (inherits(node, "binary_node")) {
+    list(node$left_node, node$right_node)
+  } else if (inherits(node, "function_node")) {
+    node$args
+  } else {
+    list()
+  }
+  for (a in args) {
+    if (!inherits(a, "variable_node")) next
+    name <- if (is.symbol(a$name)) deparse(a$name) else a$name
+    if (borrow_fn(name)) {
+      return(sprintf(
+        "%s has borrow arguments: in reverse mode such a function can only be passed to cvode, not to %s",
+        name, node$operator
+      ))
+    }
+  }
+  NULL
+}
 borrow_fcts <- c("borrow_vec", "borrow_vector", "borrow_mat", "borrow_matrix", "borrow_array")
 
 # NOTE: R code, not nodes: inner fns are transpiled only after this check
 runtime_colouring_reverse_error <- function(fn, vars_list, context = "jacobian: colouring = \"runtime\"",
-                                            forbidden = c(ad_only_fcts, forward_only_fcts)) {
+                                            forbidden = ad_only_fcts) {
   visited <- character()
   walk <- function(code) {
     if (is.symbol(code)) {

@@ -479,13 +479,14 @@ struct HessianSweep {
   // block heads carry the whole block (all output cells); slots are inert
   static inline bool is_block(ROp op) {
     return op == ROp::MatMul || op == ROp::BlockSlot || op == ROp::Chol || op == ROp::Solve ||
-           op == ROp::CrossProd || op == ROp::TriSolve || op == ROp::Det;
+           op == ROp::CrossProd || op == ROp::TriSolve || op == ROp::Det || op == ROp::Custom;
   }
 
   inline bool block_forward(std::size_t i) {
     const ROp op = tape.op[i];
     if (!is_block(op)) return false;
     if (op == ROp::BlockSlot) return true;
+    ass<"hessian: not supported through cvode yet">(op != ROp::Custom);
     const BlockOp& blk = tape.blocks[static_cast<std::size_t>(tape.a[i])];
     switch (op) {
       case ROp::MatMul: matmul_forward(blk); break;

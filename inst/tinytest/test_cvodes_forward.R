@@ -150,7 +150,3 @@ fd <- vapply(seq_along(theta), function(i) {
   (lv_plain_cpp(tp, times) - lv_plain_cpp(tm, times)) / (2 * h)
 }, numeric(length(times) * 2L))
 expect_equal(unname(lv_jac_cpp(theta, times)), fd, tolerance = 1e-5)
-
-# --- reverse mode is not supported yet ------------------------------------------
-
-expect_error(ast2ast::translate(lv_jac, derivative = "reverse"), "reverse")
