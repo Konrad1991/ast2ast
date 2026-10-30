@@ -138,6 +138,12 @@ infer <- function(node, vars_list, info_env, function_registry) {
         node$operator
       ))
     }
+    if (info_env$real_type == "etr::ReverseDouble" && node$operator %in% forward_only_fcts) {
+      return(sprintf(
+        "%s does not support reverse mode yet -- only translate(derivative = \"forward\")",
+        node$operator
+      ))
+    }
     ifct <- function_registry$infer_fct(node$operator)
     t <- ifct(node, vars_list, info_env, function_registry)
     t <- flatten_type(t)

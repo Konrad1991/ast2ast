@@ -9,7 +9,7 @@ namespace etr {
 inline auto determine_type(const auto &rest) {
   using restType = Decayed<decltype(rest)>;
   if constexpr (!IsArray<restType>) {
-    return typename ReRef<decltype(rest)>::type{};
+    return to_ast_scalar_t<restType>{};
   } else {
     return typename ExtractDataType<restType>::value_type{};
   }

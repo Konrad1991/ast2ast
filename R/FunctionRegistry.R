@@ -2494,7 +2494,7 @@ function_registry_global$add(
     infer_solver_options(node, vars_list, info_env, function_registry, "cvode_options", cvode_option_kinds)
   },
   check_fct = mock,
-  group = "function_node", cpp_name = "etr::cvode_options", deriv_possible = FALSE
+  group = "function_node", cpp_name = "etr::cvode_options", deriv_possible = TRUE
 )
 ida_option_kinds <- c(reltol = "double", abstol = "double", max_steps = "int", stats = "logical",
                       linear_solver = "solver")
@@ -2813,7 +2813,7 @@ function_registry_global$add(
                        c(t = "scalar", y = "vec", J = "mat", params = "params"))
     }
   },
- group = "function_node", cpp_name = "a2a::cvode_solve", deriv_possible = FALSE,
+ group = "function_node", cpp_name = "a2a::cvode_solve", deriv_possible = TRUE,
  valid_fn_context = TRUE
 )
 function_registry_global$add(
@@ -3152,7 +3152,7 @@ infer_hessian <- function(node, vars_list, info_env, function_registry, fname) {
       return(sprintf("%s: f has to be a named fn, not an inline fn (unless translate(derivative = \"reverse\"))", fname))
     }
     no_ad <- function_registry$function_names[!function_registry$deriv_possibles]
-    err <- runtime_colouring_reverse_error(fn, vars_list, fname, c(ad_only_fcts, no_ad))
+    err <- runtime_colouring_reverse_error(fn, vars_list, fname, c(ad_only_fcts, forward_only_fcts, no_ad))
     if (!is.null(err)) return(err)
     node$args[[1L]]$functor_scalar <- "etr::ReverseDouble"
   }

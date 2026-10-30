@@ -638,11 +638,13 @@ check_runtime_colouring <- function(f_arg, vars_list) {
 # f is checked with one scalar type, but also instantiated with others
 # (ReverseDouble for the runtime pattern, Dual in a plain double translation)
 ad_only_fcts <- c("seed", "unseed", "get_dot", "deriv")
+# Dual version only, no ReverseDouble yet
+forward_only_fcts <- c("cvode", "cvode_options")
 borrow_fcts <- c("borrow_vec", "borrow_vector", "borrow_mat", "borrow_matrix", "borrow_array")
 
 # NOTE: R code, not nodes: inner fns are transpiled only after this check
 runtime_colouring_reverse_error <- function(fn, vars_list, context = "jacobian: colouring = \"runtime\"",
-                                            forbidden = ad_only_fcts) {
+                                            forbidden = c(ad_only_fcts, forward_only_fcts)) {
   visited <- character()
   walk <- function(code) {
     if (is.symbol(code)) {
