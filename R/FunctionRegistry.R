@@ -3196,6 +3196,12 @@ infer_hessian <- function(node, vars_list, info_env, function_registry, fname) {
       ret$get_data_struct() != "scalar") {
     return(sprintf("the function passed to %s has to return a scalar double", fname))
   }
+  if (fname == "value_and_gradient") {
+    t <- info_env$known_types[["value_and_gradient_result"]]
+    if (is.null(t)) return("Did not find the predefined type value_and_gradient_result")
+    node$internal_type <- t
+    return(t)
+  }
   t <- make_inferred_type(if (fname == "hessian") "matrix" else "vector", "double", info_env$r_fct, info_env$real_type)
   node$internal_type <- t
   t
@@ -3224,6 +3230,19 @@ function_registry_global$add(
   },
   check_fct = function(node, vars_types_list, info_env) check_hessian(node, 3L),
   group = "function_node", cpp_name = "etr::gradient", valid_fn_context = TRUE
+)
+function_registry_global$add(
+  name = "value_and_gradient", num_args = c(2, 3), arg_names = c("f", "x", "data"),
+  docu = paste0(
+    "value_and_gradient(f, x[, data])\n",
+    "Like gradient, but also returns f(x) from the same evaluation: a value_and_gradient_result ",
+    "with $value (double) and $gradient (double vector); returned to R as a list."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    infer_hessian(node, vars_list, info_env, function_registry, "value_and_gradient")
+  },
+  check_fct = function(node, vars_types_list, info_env) check_hessian(node, 3L),
+  group = "function_node", cpp_name = "etr::value_and_gradient", valid_fn_context = TRUE
 )
 function_registry_global$add(
   name = "hessian", num_args = c(2, 3), arg_names = c("f", "x", "data"),

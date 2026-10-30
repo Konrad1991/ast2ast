@@ -6,10 +6,11 @@ rm(list = ls())
 #   dv/dt = d*u*v - g*v
 #
 # theta = log(a, b, d, g), y0 known, Gaussian noise (sigma known),
-# prior theta ~ N(log(truth), 1).
+# prior theta ~ N(log(c(1, 0.5, 0.5, 0.1)), 1).
 #
 #  * log_post: cvode + log density, written in the DSL
-#  * gradient: gradient(log_post, theta, data) -> CVODES adjoint (1 forward + 1 backward solve)
+#  * gradient: value_and_gradient(log_post, theta, data) -> value + gradient
+#              from one CVODES solve with forward sensitivities
 #  * HMC:      leapfrog + Metropolis step, RNG = mersenne_twister / normal /
 #              uniform; whole sampler is one compiled function
 #  * warmup:   unit mass matrix, then diagonal mass matrix = posterior variance
@@ -53,7 +54,8 @@ hmc <- function(theta0, data, n_warm, n_iter, n_leap, eps_warm, eps, seed) {
     sol <- c(cvode(lv, y0, times, p, cvode_options(reltol = 1e-6, abstol = 1e-8)))
 
     sigma <- 0.5
-    prior_mean <- c(log(1.1), log(0.4), log(0.4), log(0.1))
+    # rough orders of magnitude, not the truth
+    prior_mean <- c(log(1), log(0.5), log(0.5), log(0.1))
     ll <- -0.5 * sum(((sol - data) / sigma)^2)
     lp <- -0.5 * sum((theta - prior_mean)^2)
     ll + lp
@@ -67,8 +69,10 @@ hmc <- function(theta0, data, n_warm, n_iter, n_leap, eps_warm, eps, seed) {
   n_total <- n_warm + n_iter
   draws <- matrix(0, n_total, n_par)
   theta <- theta0
-  lp <- log_post(theta, data)
-  grad <- gradient(log_post, theta, data)
+  vg <- value_and_gradient(log_post, theta, data)
+  lp <- vg$value
+  grad <- vg$gradient
+  lp_new <- lp
   # inverse mass matrix (diagonal): 1 in warmup, posterior variance afterwards
   m_inv <- theta0
   for (j in 1L:n_par) {
@@ -108,14 +112,15 @@ hmc <- function(theta0, data, n_warm, n_iter, n_leap, eps_warm, eps, seed) {
         if (abs(th[[j]] - theta[[j]]) > 10.0 * sqrt(m_inv[[j]])) divergent <- TRUE
       }
       if (divergent) break
-      g <- gradient(log_post, th, data)
+      vg <- value_and_gradient(log_post, th, data)
+      g <- vg$gradient
+      lp_new <- vg$value
       if (l < n_leap) r_new <- r_new + step * g
     }
     if (divergent) {
       n_divergent <- n_divergent + 1L
     } else {
       r_new <- r_new + 0.5 * step * g
-      lp_new <- log_post(th, data)
       # H = -log_post + r^T M^-1 r / 2
       log_alpha <- (lp_new - 0.5 * sum(m_inv * r_new^2)) - (lp - 0.5 * sum(m_inv * r^2))
     }

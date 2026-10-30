@@ -292,6 +292,35 @@ lv_gradient <- function(theta, data) {
 lv_gradient_cpp <- ast2ast::translate(lv_gradient)
 expect_equal(lv_gradient_cpp(theta, data), c(lv_grad_cpp(theta, data)), tolerance = 1e-6)
 
+# value_and_gradient through cvode: value == plain loss
+lv_value_and_gradient <- function(theta, data) {
+  argtypes(theta |> type(vec(double)), data |> type(vec(double)))
+  loss <- function(theta, data) {
+    argtypes(theta |> type(vec(double)), data |> type(vec(double)))
+    returntype(double)
+    lv <- function(t, y, ydot, p) {
+      argtypes(
+        t |> type(double) |> ref(),
+        y |> type(borrow_vec(double)) |> ref(),
+        ydot |> type(borrow_vec(double)) |> ref(),
+        p |> type(vec(double)) |> ref()
+      )
+      returntype(void)
+      ydot[[1L]] <- p[[1L]] * y[[1L]] - p[[2L]] * y[[1L]] * y[[2L]]
+      ydot[[2L]] <- p[[4L]] * y[[1L]] * y[[2L]] - p[[3L]] * y[[2L]]
+    }
+    p <- theta[1L:4L]
+    y0 <- theta[5L:6L]
+    times <- c(0, 1, 2, 3, 4, 5)
+    sol <- c(cvode(lv, y0, times, p, cvode_options(reltol = 1e-10, abstol = 1e-12)))
+    sum((sol - data)^2)
+  }
+  value_and_gradient(loss, theta, data)
+}
+res <- ast2ast::translate(lv_value_and_gradient)(theta, data)
+expect_equal(res$value, lv_loss_cpp(theta, data), tolerance = 1e-8)
+expect_equal(res$gradient, lv_gradient_cpp(theta, data), tolerance = 1e-8)
+
 # sensitivity = "forward", non-stiff, y0 constant: only k is active
 f <- function(theta) {
   argtypes(theta |> type(vec(double)))

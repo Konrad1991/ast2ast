@@ -681,9 +681,36 @@ inline auto call_with_extra(const F& f, const E& extra) {
   };
 }
 
+struct value_and_gradient_result {
+  Double value;
+  Array<Double, Buffer<Double>> gradient;
+
+  value_and_gradient_result() = default;
+#ifndef STANDALONE_ETR
+  SEXP to_SEXP() const {
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 2));
+    SET_VECTOR_ELT(res, 0, Cast(value));
+    SET_VECTOR_ELT(res, 1, Cast(gradient));
+    SEXP names = PROTECT(Rf_allocVector(STRSXP, 2));
+    SET_STRING_ELT(names, 0, Rf_mkChar("value"));
+    SET_STRING_ELT(names, 1, Rf_mkChar("gradient"));
+    Rf_setAttrib(res, R_NamesSymbol, names);
+    Rf_setAttrib(res, R_ClassSymbol, Rf_mkString("value_and_gradient_result"));
+    UNPROTECT(2);
+    return res;
+  }
+#endif
+};
+
+inline void print(const value_and_gradient_result& x) {
+  PRINT_STREAM << "value_and_gradient_result" << std::endl;
+  PRINT_STREAM << "  value: " << x.value << std::endl;
+  PRINT_STREAM << "  gradient: " << x.gradient.size() << " entries" << std::endl;
+}
+
 // plain reverse sweep over the local part of the tape (cvode: adjoint block)
 template<typename X, typename Call>
-inline auto gradient_impl(const X& x, Call&& call_f) {
+inline value_and_gradient_result value_and_gradient_impl(const X& x, Call&& call_f) {
   auto& tape = TAPE_INTERN;
   const std::size_t tape_start = tape.size();
   const std::size_t blocks_start = tape.blocks.size();
@@ -691,22 +718,36 @@ inline auto gradient_impl(const X& x, Call&& call_f) {
   Array<ReverseDouble, Buffer<ReverseDouble>> xr(SI{n});
   for (std::size_t j = 0; j < n; j++) xr.set(j, ReverseDouble::Var(get_val(x.get(j))));
   const ReverseDouble y = call_f(xr);
-  Array<Double, Buffer<Double, RBufferTrait>> res(SI{n});
-  res.dim = Dim{n};
+  value_and_gradient_result res;
+  res.gradient = Array<Double, Buffer<Double>>(SI{n});
+  res.gradient.dim = Dim{n};
   if (y.isNA()) {
-    for (std::size_t j = 0; j < n; j++) res.set(j, Double::NA());
+    res.value = Double::NA();
+    for (std::size_t j = 0; j < n; j++) res.gradient.set(j, Double::NA());
   } else if (y.id < static_cast<int>(tape_start)) {
-    for (std::size_t j = 0; j < n; j++) res.set(j, Double(0.0));
+    res.value = Double(tape.val[static_cast<std::size_t>(y.id)]);
+    for (std::size_t j = 0; j < n; j++) res.gradient.set(j, Double(0.0));
   } else {
+    res.value = Double(tape.val[static_cast<std::size_t>(y.id)]);
     const std::size_t tape_end = tape.size();
     std::fill(tape.adj.begin() + static_cast<std::ptrdiff_t>(tape_start), tape.adj.end(), 0.0);
     tape.adj[static_cast<std::size_t>(y.id)] = 1.0;
     tape.reverse_range(tape_end, tape_start);
     for (std::size_t j = 0; j < n; j++) {
-      res.set(j, Double(tape.adj[static_cast<std::size_t>(xr.get(j).id)]));
+      res.gradient.set(j, Double(tape.adj[static_cast<std::size_t>(xr.get(j).id)]));
     }
   }
   tape.rewind(tape_start, blocks_start);
+  return res;
+}
+
+template<typename X, typename Call>
+inline auto gradient_impl(const X& x, Call&& call_f) {
+  value_and_gradient_result vg = value_and_gradient_impl(x, std::forward<Call>(call_f));
+  const std::size_t n = vg.gradient.size();
+  Array<Double, Buffer<Double, RBufferTrait>> res(SI{n});
+  res.dim = Dim{n};
+  for (std::size_t j = 0; j < n; j++) res.set(j, vg.gradient.get(j));
   return res;
 }
 
@@ -718,6 +759,16 @@ inline auto gradient(const F& f, const X& x) {
 template<typename F, typename X, typename E> requires (IsArray<Decayed<X>>)
 inline auto gradient(const F& f, const X& x, const E& extra) {
   return gradient_impl(x, call_with_extra(f, extra));
+}
+
+template<typename F, typename X> requires (IsArray<Decayed<X>>)
+inline value_and_gradient_result value_and_gradient(const F& f, const X& x) {
+  return value_and_gradient_impl(x, [&f](const auto& xv) { return f(xv); });
+}
+
+template<typename F, typename X, typename E> requires (IsArray<Decayed<X>>)
+inline value_and_gradient_result value_and_gradient(const F& f, const X& x, const E& extra) {
+  return value_and_gradient_impl(x, call_with_extra(f, extra));
 }
 
 template<typename F, typename X> requires (IsArray<Decayed<X>>)

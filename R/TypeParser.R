@@ -554,6 +554,14 @@ predefined_known_types <- quote({
       counts |> type(vec(int))
     )
   )
+  # slots must match etr::value_and_gradient_result in etr_bits/Hessian.hpp
+  new_type(
+    value_and_gradient_result,
+    slots(
+      value |> type(double),
+      gradient |> type(vec(double))
+    )
+  )
   # slots must match etr::jacobian_sparse_result / jacobian_banded_result in
   # etr_bits/Derivatives.hpp
   new_type(

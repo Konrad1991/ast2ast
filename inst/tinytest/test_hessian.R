@@ -42,6 +42,35 @@ expect_equal(ast2ast::translate(f)(x), rosenbrock_gradient)
 expect_equal(ast2ast::translate(f, derivative = "forward")(x), rosenbrock_gradient)
 expect_equal(ast2ast::translate(f, derivative = "reverse")(x), rosenbrock_gradient)
 
+# --- value_and_gradient: slots in the DSL, list in R --------------------------
+
+f <- function(x) {
+  argtypes(x |> type(vec(double)))
+  rosen <- function(x) {
+    argtypes(x |> type(vec(double)))
+    returntype(double)
+    100 * (x[[2L]] - x[[1L]]^2)^2 + (1 - x[[1L]])^2
+  }
+  vg <- value_and_gradient(rosen, x)
+  c(vg$value, vg$gradient)
+}
+rosenbrock_value <- 100 * (x[[2]] - x[[1]]^2)^2 + (1 - x[[1]])^2
+expect_equal(ast2ast::translate(f)(x), c(rosenbrock_value, rosenbrock_gradient))
+expect_equal(ast2ast::translate(f, derivative = "reverse")(x), c(rosenbrock_value, rosenbrock_gradient))
+
+f <- function(x) {
+  argtypes(x |> type(vec(double)))
+  rosen <- function(x) {
+    argtypes(x |> type(vec(double)))
+    returntype(double)
+    100 * (x[[2L]] - x[[1L]]^2)^2 + (1 - x[[1L]])^2
+  }
+  value_and_gradient(rosen, x)
+}
+res <- ast2ast::translate(f)(x)
+expect_equal(res$value, rosenbrock_value)
+expect_equal(res$gradient, rosenbrock_gradient)
+
 # --- elementwise functions vs finite differences of an analytic gradient ------
 
 g <- function(x) {

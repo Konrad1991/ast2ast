@@ -51,6 +51,18 @@ A2 all Np directions in one CVODES solve (Ns = Np)
    - wins for forward mode / jacobian of vector outputs (also helps colouring)
 A3 the value from the gradient sweep: gradient() returns value too -> no extra
    log_post call per iteration (~5 %)
+   - DONE 2026-10-30 (decided: separate function, not an attribute):
+     value_and_gradient(f, x[, data]) -> value_and_gradient_result
+     ($value, $gradient). HMC example 10.3 s -> 9.8 s.
+
+Stan comparison 2026-10-30 (development/examples/ode/hmc_vs_stan.R, rstan
+2.32, same model/data/tolerances, start at truth, 500 + 1500 it, 3 seeds):
+   - ast2ast HMC (hand-tuned eps/L): 10.0 s, min ESS 113, 11.2 ESS/s
+   - Stan NUTS: 46.5 s, min ESS 352, 7.2 ESS/s
+   - per gradient about equal: Stan 0.47 ms, ast2ast ~0.4 ms
+   - Stan ~43 leapfrog steps / iteration (treedepth ~4.6), ast2ast 12
+   - random Stan inits ran > 25 min (very stiff regions, max_num_steps 1e6)
+   -> missing vs Stan: NUTS + step size adaptation, not raw speed
 
 ## Part B: large ODEs (n = 1e3 .. 1e5, e.g. PDE semi-discretisation, Jan's model)
 
