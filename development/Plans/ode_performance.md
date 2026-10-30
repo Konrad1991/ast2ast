@@ -63,6 +63,17 @@ Stan comparison 2026-10-30 (development/examples/ode/hmc_vs_stan.R, rstan
    - Stan ~43 leapfrog steps / iteration (treedepth ~4.6), ast2ast 12
    - random Stan inits ran > 25 min (very stiff regions, max_num_steps 1e6)
    -> missing vs Stan: NUTS + step size adaptation, not raw speed
+   - NOTE: that Stan run still had prior_mean = log(truth); not rerun after the
+     prior change to log(c(1, 0.5, 0.5, 0.1))
+
+NUTS in the DSL 2026-10-30 (development/examples/ode/nuts_lotka_volterra.R):
+   - recursive build_tree returning a Tree struct (new_type), multinomial
+     sampling, U-turn with M^-1, dual averaging, Stan-like windows (15/75/10 %)
+   - 3 seeds: 29.7-30.0 s, min ESS 194-360, 6.5-12.0 ESS/s (median 9.7),
+     ~37 leapfrog steps / iteration, 0 divergences; Stan median 7.2 ESS/s
+   - divergence guard (parameters far from the start, protects cvode): 5 sd cut
+     good trajectories (ESS 222 vs 360), now 20 sd
+   - open: cvode failure should reject instead of error (library option?)
 
 ## Part B: large ODEs (n = 1e3 .. 1e5, e.g. PDE semi-discretisation, Jan's model)
 
