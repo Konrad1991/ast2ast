@@ -23,6 +23,9 @@ tinytest::run_test_file("./inst/tinytest/test_handle_literals.R")
 tinytest::run_test_file("./inst/tinytest/test_integer_overflow.R")
 tinytest::run_test_file("./inst/tinytest/test_zero_length.R")
 
+tinytest::run_test_file("./inst/tinytest/test_cvodes_forward.R")
+tinytest::run_test_file("./inst/tinytest/test_cvodes_adjoint.R")
+
 tinytest::run_test_file("./inst/tinytest/test_numeric_methods.R")
 
 tinytest::run_test_file("./inst/tinytest/test_cpp_code.R")
@@ -96,3 +99,34 @@ microbenchmark::microbenchmark(
   R = f(v, target),
   cpp = fcpp(v, target)
 )
+
+library(ast2ast)
+types <- function() {
+  new_type(
+    Point,
+    slots(
+      x |> type(double),
+      y |> type(double)
+    )
+  )
+}
+f <- function(p) {
+  argtypes(
+    p |> type(Point)
+  )
+  loss <- function(a) {
+    argtypes(a |> type(vec(double)))
+    returntype(vec(double))
+    a^2
+  }
+  x <- c(1, 2, 3)
+  jacobian(loss, x)
+  list_point <- vector(mode = "Point", 3)
+  list_point
+}
+fcpp <- translate(f, types_f = types, verbose = TRUE)
+p <- structure(list(x = 1, y = 2), class = "Point")
+res <- fcpp(p)
+res
+v <- numeric(3)
+v[[4]]

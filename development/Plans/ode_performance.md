@@ -103,6 +103,80 @@ B5 Hessian for large Np: HVP only (Newton-CG), see ode_sensitivities.md step 6
 B6 taping cost per rhs call (adjoint, Hessian): record once per call today;
    later: reuse a recorded tape if rhs has no value-dependent branches
 
+## Part C: inference for large ODEs (decided 2026-10-30)
+
+No HMC/NUTS for large ODEs: ~40 gradients per iteration x 2000 iterations
+= ~80000 solves (1 s per solve -> ~22 h). Nobody does this routinely.
+
+Others:
+- Stan: ode_adjoint_tol_ctl, dense Jacobian (nested reverse AD), dense
+  linear solver only -> limit ~ hundreds of states
+- TMB: no ODE solver; discretise in the template, or states as random
+  effects + Laplace with sparse Hessian (no MCMC)
+- Julia SciML (+ Turing): adjoints, sparsity detection + colouring,
+  band/Krylov -> closest to what we build
+- AMICI: SBML -> C++ -> CVODES/IDAS fwd + adjoint, KLU
+- hIPPYlib / MUQ (PDEs): Laplace + low-rank Hessian from HVPs, pCN/DILI MCMC
+- 4D-Var (weather): adjoint, MAP only
+
+Approach for ast2ast = Laplace (same item as in the new-areas list):
+C1 MAP: lbfgsb + adjoint gradient (1 forward + 1 backward per iteration)
+C2 posterior ~ N(MAP, H^-1)
+   - small Np: dense Hessian (second-order adjoint, exists)
+   - large Np: low-rank H from HVPs (ode_sensitivities.md step 6)
+C3 prediction uncertainty: draws from N(MAP, H^-1) -> ODE solves via pmap
+C4 optional: importance sampling correction (weights p / q, solves only)
+C5 TMB-style Laplace (random effects integrated out, nested optimisation,
+   needs derivative of log det H) -> general case, C2 = special case
+   without random effects
+Alternative (derivative-free): ensemble Kalman inversion, population of
+solves; only for near-Gaussian posteriors; not planned.
+
+Prerequisites for large n: B1 + B2 + B4 (band/GMRES, J^T from colouring);
+large Np additionally B5.
+Today already possible for small Np: C1-C3 as an example (no new C++).
+
+Review 2026-10-30:
+- theory corrections
+  - C2 large Np: low-rank of the prior-preconditioned misfit Hessian
+    Gpr^1/2 H_misfit Gpr^1/2 (prior is full rank), not of H
+  - C2 variant: Gauss-Newton J^T Sigma^-1 J (J = d outputs / d theta), always
+    PSD, first derivatives only (A2 forward sens)
+  - C4 only for small Np (weights degenerate), PSIS k-hat as diagnostic
+  - full Hessian at a badly converged MAP can be indefinite (GN cannot)
+  - limit: non-Gaussian ODE posteriors (identifiability, banana, multimodal)
+  - Laplace is not reparametrisation invariant -> log scale (done)
+  - "C2 = special case of C5" is correct
+  - new C0: validate Laplace vs NUTS on LV (nuts_lotka_volterra.R)
+- design weaknesses (severe only)
+  1. AD order max 2: forward-over-reverse, cvode block only tangent /
+     backward2 (Scalars.hpp). C5 needs d/dtheta log det H = 3rd order,
+     also through cvode -> C5 with ODEs: outer gradient by FD for now
+  2. everything dense: SUNDenseMatrix, generated Jacobian, Hessian; no sparse
+     type / sparse Cholesky; colouring not wired into cvode
+  3. adjoint backward Jacobian by DQ (D6) = n vjp calls, each retapes (B6)
+  4. errors abort: cvode failure in an lbfgsb line search ends the run
+     -> try_catch.md is a prerequisite
+  - fine: lbfgsb, chol/det/solve, hvp, pmap; missing: dsyev for the k x k
+    projection in C2
+  - known: pmap + OpenBLAS serialises dgetrf (C3 with the lapack solver)
+- C5 third order with cvode (decided 2026-10-30: B)
+  - goal: efficient 3rd derivatives, also through cvode; needed quantity
+    tr(H^-1 dH/dtheta_k) for all k (n_u random effects, Ntheta hyperparams)
+  - A: reverse + 2 tangents (HessianSweep with d3, cvode backward3):
+    n_u * (4 + 4 c_b) S, independent of Ntheta
+  - B: pure forward Dual3, ODE as y + 7 extra components via CVODES fS
+    (shared Newton matrix): 8 n_u Ntheta S, no tape, no checkpoints
+  - C: FD on hvp: 4 n_u Ntheta (1 + c_b) S, inexact -> test only
+  - S = one forward solve (y only); c_b = backward cost per component,
+    today ~5-10 (rhs retaped per vjp, B6)
+  - A cheaper than B when Ntheta > (1 + c_b) / 2 (~3 for c_b = 5)
+  - decision: B (Laplace usually has few hyperparams, simplest, test
+    oracle for A); A later if Ntheta grows or B6 lowers c_b
+  - B needs fS for 7 components (not a naive 8n system: (8n)^3 dense LU)
+- validity: C1-C3 small Np high; large n medium (B1/B2/B4 not started);
+  large Np medium-high; C5 with ODEs low without 3rd order
+
 ## Order (proposal)
 A0 -> A1 -> A2 -> B1 (band, then GMRES) + B2 -> B4 -> B5
 

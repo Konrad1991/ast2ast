@@ -337,6 +337,7 @@ inline void print_cvode_stats(void *mem) {
   CVodeGetNumNonlinSolvIters(mem, &newton_iters);
   CVodeGetNumNonlinSolvConvFails(mem, &newton_fails);
   CVodeGetNumErrTestFails(mem, &error_test_fails);
+  // TODO: why the hell is Rprintf used and not etr::print?
   Rprintf("cvode stats: steps %ld | rhs calls %ld (+ %ld for the jacobian) | "
           "jacobians %ld | LU setups %ld | newton iterations %ld | newton fails %ld | "
           "error test fails %ld\n",
@@ -349,9 +350,7 @@ inline void print_cvode_stats(void *mem) {
 // options$stiff -> BDF with dense Newton (Jacobian from jac or difference
 // quotients), else ADAMS with fixed-point iteration (no Jacobian, as deSolve's adams).
 template <typename JAC, typename RHS, typename Y, typename T, typename P>
-requires(
-etr::IsArray<etr::Decayed<Y>> && etr::IsArray<etr::Decayed<T>>
-)
+requires(etr::IsArray<etr::Decayed<Y>> && etr::IsArray<etr::Decayed<T>>)
 inline auto cvode_impl(const RHS &rhs, const JAC *jac, const Y &y0, const T &times,
                        const P &params, const etr::cvode_options &opt) {
   const std::size_t neq = y0.size();
@@ -1496,6 +1495,7 @@ inline void print_ida_stats(void *mem) {
   IDAGetNumNonlinSolvIters(mem, &newton_iters);
   IDAGetNumNonlinSolvConvFails(mem, &newton_fails);
   IDAGetNumErrTestFails(mem, &error_test_fails);
+  // TODO: see above
   Rprintf("ida stats: steps %ld | residual calls %ld (+ %ld for the jacobian) | "
           "jacobians %ld | LU setups %ld | newton iterations %ld | newton fails %ld | "
           "error test fails %ld\n",

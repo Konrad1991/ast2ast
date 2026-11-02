@@ -1,0 +1,98 @@
+#+title: High-level AD: local tape, no derivative
+
+Status: planned 2026-10-29. Target: dev-1.2 (builds on ~hessian~ / ~hvp~ there).
+
+* Motivation
+
+~development/mnist/mnist.R~: the training loop has to stay in C++, so the
+backward pass is written by hand today.
+
+With ~translate(derivative = "reverse")~ the whole function is ReverseDouble.
+Everything between two gradient calls (batch copy, adam step, ...) is recorded
+on the global tape too. It grows every iteration; a rewind inside ~jacobian~
+alone does not fix this.
+
+#+begin_src R
+library(ast2ast)
+f <- function(p, epochs) {
+  for (e in 1L:epochs) {
+    g <- jacobian(loss, p)  # could rewind
+    p <- p - 0.01 * g       # ReverseDouble -> new nodes, never rewound
+  }
+}
+translate(f, derivative = "reverse")
+#+end_src
+
+#+RESULTS:
+
+* Decision
+
+Two separate APIs:
+
+| ~translate(derivative = ...)~ | allowed                                                    |
+|-------------------------------+------------------------------------------------------------|
+| ~"forward"~ / ~"reverse"~     | low level: ~seed~, ~unseed~, ~get_dot~, ~deriv~            |
+| ~NULL~                        | high level: ~jacobian~, ~gradient~, ~hessian~, ~hvp~       |
+
+- High-level functions under ~derivative~ set -> error.
+- Low-level functions without ~derivative~ -> error (already the case).
+- High-level functions own their tape: mark start, record ~f~, sweep, ~rewind~.
+  The outer function stays ~double~; only ~f~ is instantiated with the AD
+  scalar (~functor_scalar~), like runtime colouring and ~hessian~.
+
+* API
+
+#+begin_src R
+g <- gradient(f, x[, data])  # reverse, f returns scalar double -> vec(double)
+J <- jacobian(f, x[, data])  # forward (+ colouring), f returns vec(double)
+H <- hessian(f, x[, data])   # forward-over-reverse
+v <- hvp(f, x, v[, data])
+#+end_src
+
+- ~gradient~: always reverse, one sweep. Result is a vector, not a 1 x n matrix.
+- ~jacobian~: always forward. A reverse jacobian for m << n only if someone
+  needs it.
+
+* Implementation
+** C++
+- ~gradient_impl~: reuse ~with_recorded_scalar_f~ from ~Hessian.hpp~
+  (records, rewinds); body = one ~tape.reverse(y.id)~, read ~adj~ of ~x_ids~.
+- ~jacobian_impl~: reverse branch is no longer reachable -> remove it.
+- Overloads with ~extra~: ~call_with_extra~ as in ~hessian~.
+
+** R
+- New registry entry ~gradient~: same path as ~infer_hessian~,
+  ~functor_scalar <- "etr::ReverseDouble"~, ~runtime_colouring_reverse_error~
+  check, return ~vec(double)~.
+- ~infer_jacobian~, ~infer_hessian~: if ~info_env$real_type != "etr::Double"~
+  -> error (after the deprecation phase, see below).
+- ~infer_hessian~: remove the ~derivative = "reverse"~ branch (inline fn only
+  allowed there).
+- Inline fns: give them an internal name instead of the error
+  "f has to be a named fn".
+- ~lbfgsb~: without ~derivative~ use ~gradient~ instead of central differences;
+  with ~derivative~ -> same error as the other high-level functions.
+
+** Deprecation
+~jacobian~ under ~derivative~ is on CRAN. First release: warning, next: error.
+~hessian~ / ~hvp~ / ~gradient~ are new -> error immediately.
+
+* Open points
+- ~data~ is converted to f's argument type: in mnist the batch (784 x 32)
+  becomes ~25k ReverseDouble constants per call. Rewound, but still costs.
+  Later: keep non-differentiated arguments ~double~?
+- ~x~ has to be a single ~vec(double)~: mnist packs W1, b1, W2, b2 into one
+  vector and copies them out per batch. Structs/collections as ~x~ later?
+- Other users of ~jacobian~ under ~derivative~ (cvode/ida ~jac~, ...):
+  check and decide one by one.
+
+* Tests
+- [ ] ~gradient~ vs finite differences (scalar, matrix ops, ~data~).
+- [ ] Tape size before == after a ~gradient~ / ~jacobian~ / ~hessian~ call in a loop.
+- [ ] Error messages: high level under ~derivative~, low level without.
+- [ ] mnist: hand-written backward pass vs ~gradient~ (same losses, timing).
+
+* Done when
+- [ ] mnist runs with ~gradient~ instead of the hand-written backward pass.
+- [ ] High-level functions under ~derivative~ give an error (jacobian: warning).
+- [ ] ~lbfgsb~ without ~derivative~ uses the exact gradient.
