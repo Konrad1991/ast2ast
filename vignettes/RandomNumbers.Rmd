@@ -1,0 +1,172 @@
+---
+title: "Random numbers"
+author: "Konrad Kraemer"
+output: html_document
+
+vignette: >
+  %\VignetteIndexEntry{Random numbers}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+## Overview
+
+ast2ast has no global seed. Random numbers come from engine and distribution
+objects that live inside the translated function. The numbers are the same as
+those of R after `set.seed(seed)` with the default `RNGkind()`.
+
+| Function | Result | R equivalent |
+| --- | --- | --- |
+| `mersenne_twister(seed)` | engine | `set.seed(seed)` |
+| `normal(engine, mean = 0, sd = 1)` | distribution | |
+| `uniform(engine, min = 0, max = 1)` | distribution | |
+| `draw(dist, n)` | double vector of length `n` | `rnorm(n, mean, sd)` / `runif(n, min, max)` |
+| `sample(engine, x, size, replace, prob)` | vector, base type of `x` | `sample(...)` |
+| `sample_int(engine, n, size, replace, prob)` | integer vector | `sample.int(...)` |
+| `dnorm(x, mean, sd, log)` | density | `dnorm(...)` |
+| `dunif(x, min, max, log)` | density | `dunif(...)` |
+
+## Drawing numbers
+
+```{r}
+f <- function(seed) {
+  argtypes(seed |> type(int))
+  e <- mersenne_twister(seed)
+  d <- normal(e, mean = 2, sd = 0.5)
+  draw(d, 5L)
+}
+fcpp <- ast2ast::translate(f)
+fcpp(1L)
+
+set.seed(1)
+rnorm(5, 2, 0.5) # identical
+```
+
+Every `draw()` advances the engine of the distribution, so two calls give
+different numbers, exactly as two calls of `rnorm`.
+
+`mean`, `sd`, `min`, `max` and `seed` can be read with `$`
+(`d$mean`, `e$seed`) but not written.
+
+## Sampling
+
+`sample` and `sample_int` take the engine as first argument. All three
+variants of R are supported: without replacement, with replacement and with
+`prob`.
+
+```{r}
+f <- function(x, p) {
+  argtypes(x |> type(vec(double)), p |> type(vec(double)))
+  e <- mersenne_twister(6L)
+  sample(e, x, 10L, TRUE, p)
+}
+x <- c(1.5, 2.5, 3.5, 4.5, 5.5)
+p <- c(1, 1, 2, 2, 1)
+ast2ast::translate(f)(x, p)
+
+set.seed(6)
+sample(x, 10, TRUE, p) # identical
+```
+
+As in R, a single number `x >= 1` means `sample(1:x)`.
+
+## Densities
+
+`dnorm` and `dunif` are recycled as in R; the result is a scalar if `x` and
+the parameters are scalars. They work in every translation; `dnorm` has
+derivatives w.r.t. `x`, `mean` and `sd`, `dunif` w.r.t. `min` and `max`.
+This makes them usable in log-likelihoods for `lbfgsb`, `hessian` or HMC.
+
+```{r}
+nll <- function(theta, y) {
+  argtypes(theta |> type(vec(double)), y |> type(vec(double)))
+  -sum(dnorm(y, theta[[1L]], exp(theta[[2L]]), log = TRUE))
+}
+fcpp <- ast2ast::translate(nll, derivative = "reverse")
+
+set.seed(1)
+y <- rnorm(50, mean = 3, sd = 2)
+theta <- c(3, log(2))
+fcpp(theta, y)
+-sum(dnorm(y, 3, 2, log = TRUE)) # same value
+```
+
+## Each distribution owns its engine
+
+`normal(e)` and `uniform(e)` store a **copy** of `e`. Consequences:
+
+- Two distributions created from the same engine produce the same stream.
+
+  ```{r}
+  f <- function() {
+    e <- mersenne_twister(3L)
+    a <- normal(e)
+    b <- normal(e)
+    c(draw(a, 3L), draw(b, 3L)) # rep(rnorm(3), 2) after set.seed(3)
+  }
+  ```
+
+  Use different seeds for independent streams.
+- Drawing from `a` does not advance `e`, and `sample(e, ...)` does not
+  advance `a`.
+- Mixing distributions is therefore not identical to R. In R,
+  `rnorm(2); runif(2)` share one stream; in ast2ast each distribution has its
+  own.
+
+## Passing to inner functions
+
+Pass engines and distributions with `ref()`. Passed by value, the inner
+function draws from a copy, and the caller later draws the same numbers again.
+ast2ast warns at translation time in this case.
+
+```{r}
+f <- function() {
+  g <- function(d) {
+    argtypes(d |> type(normal) |> ref())
+    returntype(vec(double))
+    draw(d, 2L)
+  }
+  d <- normal(mersenne_twister(9L))
+  c(g(d), g(d)) # rnorm(4) after set.seed(9)
+}
+```
+
+A `const()` parameter is an error, since drawing changes the object.
+
+## Order of evaluation
+
+C++ does not specify the order in which function arguments are evaluated
+(GCC evaluates right to left); R evaluates left to right. With several draws
+in one expression the result can therefore differ from R:
+
+```{r}
+f <- function() {
+  d <- normal(mersenne_twister(1L))
+  c(draw(d, 2L), draw(d, 2L)) # the two halves may be swapped
+}
+```
+
+Assign each draw to a variable first:
+
+```{r}
+f <- function() {
+  d <- normal(mersenne_twister(1L))
+  a <- draw(d, 2L)
+  b <- draw(d, 2L)
+  c(a, b) # rnorm(4) after set.seed(1)
+}
+```
+
+## Limitations
+
+- Engines and distributions cannot be passed from R or returned to R.
+- The type names `mersenne_twister`, `normal` and `uniform` are reserved;
+  `new_type()` cannot reuse them.
+- Only the Mersenne-Twister engine and the normal and uniform distribution
+  are available. No `p*`/`q*` functions yet.
+- `sample` without replacement and without `prob` differs from R for
+  `x > 1e7` and `size <= x / 2` (R then uses hashing).
