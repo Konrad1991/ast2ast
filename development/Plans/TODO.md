@@ -11,6 +11,27 @@
   API: `method = c("auto", "quick", "radix")`; quick -> `std::sort`;
   "shell" -> clear error (not implemented, no silent substitute).
   Values only, no names -> stability irrelevant, `std::sort` suffices
+- ida adjoint: check in the R transpiler that the residual is linear in yp
+  (yp only as summand or times a factor without yp); see ode_sensitivities.md step 5
+- suspected bug (not reproduced, 2026-11-04): cvode in reverse mode with no
+  active input. y0 and params are tape constants -> `active` is empty ->
+  sensitivity "auto" picks forward (0 <= 20) -> `solve_forward_sens` with
+  ns = 0 -> `N_VCloneVectorArray(0, ...)` / `CVodeSensInit(Ns = 0)` fail.
+  Fix: `active.empty()` -> plain solve, backward is a no-op (as in idas_reverse_impl).
+  ```r
+  f <- function(x) {
+    argtypes(x |> type(vec(double)))
+    loss <- function(x) {
+      argtypes(x |> type(vec(double)))
+      returntype(double)
+      lv <- function(t, y, ydot, p) { ... }   # as in test_cvodes_adjoint.R
+      y0 <- c(10, 5)
+      p <- c(1.1, 0.4, 0.4, 0.1)
+      sum(cvode(lv, y0, c(0, 1, 2), p)) + x[[1L]]
+    }
+    gradient(loss, x)   # expected c(1), suspected: "cvode: N_VCloneVectorArray failed"
+  }
+  ```
 
 ## F. Evaluation order of arguments
 

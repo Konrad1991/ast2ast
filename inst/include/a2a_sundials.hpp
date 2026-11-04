@@ -107,30 +107,34 @@ struct ida_options {
   Integer max_steps;
   Logical stats;
   Integer linear_solver;
+  Integer sensitivity;
   ida_options(Double reltol_, Double abstol_, Integer max_steps_, Logical stats_,
-              Integer linear_solver_)
+              Integer linear_solver_, Integer sensitivity_)
     : reltol(reltol_), abstol(abstol_), max_steps(max_steps_), stats(stats_),
-      linear_solver(linear_solver_) {}
+      linear_solver(linear_solver_), sensitivity(sensitivity_) {}
 #ifndef STANDALONE_ETR
   explicit ida_options(SEXP arg) :
-    reltol(SEXP2Scalar<Double>(checked_elt(arg, "reltol", 5, "ida_options"))),
-    abstol(SEXP2Scalar<Double>(checked_elt(arg, "abstol", 5, "ida_options"))),
-    max_steps(SEXP2Scalar<Integer>(checked_elt(arg, "max_steps", 5, "ida_options"))),
-    stats(SEXP2Scalar<Logical>(checked_elt(arg, "stats", 5, "ida_options"))),
-    linear_solver(SEXP2Scalar<Integer>(checked_elt(arg, "linear_solver", 5, "ida_options"))) {}
+    reltol(SEXP2Scalar<Double>(checked_elt(arg, "reltol", 6, "ida_options"))),
+    abstol(SEXP2Scalar<Double>(checked_elt(arg, "abstol", 6, "ida_options"))),
+    max_steps(SEXP2Scalar<Integer>(checked_elt(arg, "max_steps", 6, "ida_options"))),
+    stats(SEXP2Scalar<Logical>(checked_elt(arg, "stats", 6, "ida_options"))),
+    linear_solver(SEXP2Scalar<Integer>(checked_elt(arg, "linear_solver", 6, "ida_options"))),
+    sensitivity(SEXP2Scalar<Integer>(checked_elt(arg, "sensitivity", 6, "ida_options"))) {}
   SEXP to_SEXP() const {
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 5));
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 6));
     SET_VECTOR_ELT(res, 0, Cast(reltol));
     SET_VECTOR_ELT(res, 1, Cast(abstol));
     SET_VECTOR_ELT(res, 2, Cast(max_steps));
     SET_VECTOR_ELT(res, 3, Cast(stats));
     SET_VECTOR_ELT(res, 4, Cast(linear_solver));
-    SEXP names = PROTECT(Rf_allocVector(STRSXP, 5));
+    SET_VECTOR_ELT(res, 5, Cast(sensitivity));
+    SEXP names = PROTECT(Rf_allocVector(STRSXP, 6));
     SET_STRING_ELT(names, 0, Rf_mkChar("reltol"));
     SET_STRING_ELT(names, 1, Rf_mkChar("abstol"));
     SET_STRING_ELT(names, 2, Rf_mkChar("max_steps"));
     SET_STRING_ELT(names, 3, Rf_mkChar("stats"));
     SET_STRING_ELT(names, 4, Rf_mkChar("linear_solver"));
+    SET_STRING_ELT(names, 5, Rf_mkChar("sensitivity"));
     Rf_setAttrib(res, R_NamesSymbol, names);
     Rf_setAttrib(res, R_ClassSymbol, Rf_mkString("ida_options"));
     UNPROTECT(2);
@@ -151,6 +155,7 @@ inline void print(const ida_options& x) {
   PRINT_STREAM << "  max_steps: " << x.max_steps << std::endl;
   PRINT_STREAM << "  stats: " << x.stats << std::endl;
   PRINT_STREAM << "  linear_solver: " << linear_solver_name(x.linear_solver) << std::endl;
+  PRINT_STREAM << "  sensitivity: " << sensitivity_name(x.sensitivity) << std::endl;
 }
 
 } // namespace etr
@@ -1603,10 +1608,829 @@ inline auto ida_impl(const RES &res_fct, const JAC *jac, const Y &y0, const YP &
   return res;
 }
 
+// ---------- IDAS forward sensitivities -----------------------------------------
+// resS_i = F_y s_i + F_yp s_i' + F_p pdot_i = dot part of F(Dual(y, s_i), Dual(yp, s_i'), p).
+// IDACalcIC also makes s(t0), s'(t0) consistent: only differential y0 components
+// and params influence the solution, yp0 and algebraic y0 are initial guesses.
+template <typename F, typename P, typename J = no_jac> struct dual_res_ctx {
+  const F *f;
+  P *params;
+  const J *jac = nullptr;
+  std::vector<double> zero_dot_y, zero_dot_yp, sink_dot, sink_val, jac_dot;
+};
+
+template <typename Ctx>
+int dual_res_trampoline(sunrealtype t, N_Vector y, N_Vector yp, N_Vector r, void *user_data) {
+  auto *ctx = static_cast<Ctx *>(user_data);
+  sunrealtype *y_ptr = N_VGetArrayPointer(y);
+  sunrealtype *yp_ptr = N_VGetArrayPointer(yp);
+  sunrealtype *r_ptr = N_VGetArrayPointer(r);
+  if (y_ptr == nullptr || yp_ptr == nullptr || r_ptr == nullptr) return -1;
+  const std::size_t n = static_cast<std::size_t>(NV_LENGTH_S(y));
+  // refilled: res may write into y or yp
+  std::fill(ctx->zero_dot_y.begin(), ctx->zero_dot_y.end(), 0.0);
+  std::fill(ctx->zero_dot_yp.begin(), ctx->zero_dot_yp.end(), 0.0);
+  DualBorrowVec yv(y_ptr, ctx->zero_dot_y.data(), n, etr::Dim{n});
+  DualBorrowVec ypv(yp_ptr, ctx->zero_dot_yp.data(), n, etr::Dim{n});
+  DualBorrowVec rv(r_ptr, ctx->sink_dot.data(), n, etr::Dim{n});
+  etr::Dual tt(static_cast<double>(t), 0.0);
+  (*ctx->f)(tt, yv, ypv, rv, *ctx->params);
+  return 0;
+}
+
+template <typename Ctx>
+int sens_res_trampoline(int Ns, sunrealtype t, N_Vector y, N_Vector yp, N_Vector, N_Vector *yS,
+                        N_Vector *ypS, N_Vector *resS, void *user_data, N_Vector, N_Vector,
+                        N_Vector) {
+  auto *ctx = static_cast<Ctx *>(user_data);
+  sunrealtype *y_ptr = N_VGetArrayPointer(y);
+  sunrealtype *yp_ptr = N_VGetArrayPointer(yp);
+  if (y_ptr == nullptr || yp_ptr == nullptr) return -1;
+  const std::size_t n = static_cast<std::size_t>(NV_LENGTH_S(y));
+  etr::Dual tt(static_cast<double>(t), 0.0);
+  for (int i = 0; i < Ns; ++i) {
+    sunrealtype *s_ptr = N_VGetArrayPointer(yS[i]);
+    sunrealtype *sp_ptr = N_VGetArrayPointer(ypS[i]);
+    sunrealtype *rs_ptr = N_VGetArrayPointer(resS[i]);
+    if (s_ptr == nullptr || sp_ptr == nullptr || rs_ptr == nullptr) return -1;
+    DualBorrowVec yv(y_ptr, s_ptr, n, etr::Dim{n});
+    DualBorrowVec ypv(yp_ptr, sp_ptr, n, etr::Dim{n});
+    DualBorrowVec rv(ctx->sink_val.data(), rs_ptr, n, etr::Dim{n});
+    (*ctx->f)(tt, yv, ypv, rv, *ctx->params);
+  }
+  return 0;
+}
+
+template <typename Ctx>
+int dual_ida_jac_trampoline(sunrealtype t, sunrealtype cj, N_Vector y, N_Vector yp, N_Vector,
+                            SUNMatrix J, void *user_data, N_Vector, N_Vector, N_Vector) {
+  auto *ctx = static_cast<Ctx *>(user_data);
+  sunrealtype *y_ptr = N_VGetArrayPointer(y);
+  sunrealtype *yp_ptr = N_VGetArrayPointer(yp);
+  sunrealtype *j_ptr = SUNDenseMatrix_Data(J);
+  if (y_ptr == nullptr || yp_ptr == nullptr || j_ptr == nullptr) return -1;
+  const std::size_t n = static_cast<std::size_t>(NV_LENGTH_S(y));
+  std::fill(ctx->zero_dot_y.begin(), ctx->zero_dot_y.end(), 0.0);
+  std::fill(ctx->zero_dot_yp.begin(), ctx->zero_dot_yp.end(), 0.0);
+  DualBorrowVec yv(y_ptr, ctx->zero_dot_y.data(), n, etr::Dim{n});
+  DualBorrowVec ypv(yp_ptr, ctx->zero_dot_yp.data(), n, etr::Dim{n});
+  DualBorrowVec jv(j_ptr, ctx->jac_dot.data(), n * n, etr::Dim{n, n});
+  etr::Dual tt(static_cast<double>(t), 0.0);
+  etr::Dual cjj(static_cast<double>(cj), 0.0);
+  (*ctx->jac)(tt, cjj, yv, ypv, jv, *ctx->params);
+  return 0;
+}
+
+template <typename Ctx> void dual_res_ctx_init(Ctx &ctx, std::size_t neq, bool with_jac) {
+  ctx.zero_dot_y.assign(neq, 0.0);
+  ctx.zero_dot_yp.assign(neq, 0.0);
+  ctx.sink_dot.assign(neq, 0.0);
+  ctx.sink_val.assign(neq, 0.0);
+  if (with_jac) ctx.jac_dot.assign(neq * neq, 0.0);
+}
+
+struct idas_workspace {
+  SUNContext ctx = nullptr;
+  N_Vector y = nullptr;
+  N_Vector yp = nullptr;
+  N_Vector id = nullptr;
+  N_Vector *yS = nullptr;
+  N_Vector *ypS = nullptr;
+  SUNMatrix A = nullptr;
+  SUNLinearSolver LS = nullptr;
+  void *mem = nullptr;
+  int ns = 0;
+  ~idas_workspace() {
+    if (mem) IDAFree(&mem);
+    if (LS) SUNLinSolFree(LS);
+    if (A) SUNMatDestroy(A);
+    if (ypS) N_VDestroyVectorArray(ypS, ns);
+    if (yS) N_VDestroyVectorArray(yS, ns);
+    if (id) N_VDestroy(id);
+    if (yp) N_VDestroy(yp);
+    if (y) N_VDestroy(y);
+    if (ctx) SUNContext_Free(&ctx);
+  }
+};
+
+// values only (Double, Dual or ReverseDouble)
+template <typename Vec> void values_to_nvector(const Vec &src, N_Vector dst, std::size_t n) {
+  sunrealtype *ptr = N_VGetArrayPointer(dst);
+  for (std::size_t i = 0; i < n; ++i) {
+    auto v = src.get(i);
+    etr::ass<"ida: NA in y0, yp0 or id">(!v.isNA());
+    ptr[i] = etr::get_val(v);
+  }
+}
+
+inline void check_ida_id(N_Vector id, std::size_t n) {
+  const sunrealtype *id_ptr = N_VGetArrayPointer(id);
+  for (std::size_t i = 0; i < n; ++i) {
+    etr::ass<"ida: id entries must be 0 (algebraic) or 1 (differential)">(
+      id_ptr[i] == 0.0 || id_ptr[i] == 1.0);
+  }
+}
+
+// IDA memory with tolerances, id, max_steps and the dense linear solver; y, yp, id filled
+template <typename ResFn, typename JacFn>
+inline void idas_setup(idas_workspace &w, ResFn res, JacFn jac_fn, void *user_data, double t0,
+                       double reltol, double abstol, long int max_steps, int linear_solver) {
+  w.mem = IDACreate(w.ctx);
+  etr::ass<"ida: IDACreate failed">(w.mem != nullptr);
+  etr::ass<"ida: IDAInit failed">(IDAInit(w.mem, res, t0, w.y, w.yp) == IDA_SUCCESS);
+  etr::ass<"ida: IDASStolerances failed">(IDASStolerances(w.mem, reltol, abstol) == IDA_SUCCESS);
+  etr::ass<"ida: IDASetUserData failed">(IDASetUserData(w.mem, user_data) == IDA_SUCCESS);
+  etr::ass<"ida: IDASetId failed">(IDASetId(w.mem, w.id) == IDA_SUCCESS);
+  etr::ass<"ida: IDASetMaxNumSteps failed">(IDASetMaxNumSteps(w.mem, max_steps) == IDA_SUCCESS);
+  const auto n = NV_LENGTH_S(w.y);
+  w.A = SUNDenseMatrix(n, n, w.ctx);
+  etr::ass<"ida: SUNDenseMatrix failed">(w.A != nullptr);
+  w.LS = dense_solver(linear_solver, w.y, w.A, w.ctx);
+  etr::ass<"ida: creating the dense linear solver failed">(w.LS != nullptr);
+  etr::ass<"ida: IDASetLinearSolver failed">(IDASetLinearSolver(w.mem, w.LS, w.A) == IDA_SUCCESS);
+  if (jac_fn != nullptr) {
+    etr::ass<"ida: IDASetJacFn failed">(IDASetJacFn(w.mem, jac_fn) == IDA_SUCCESS);
+  }
+}
+
+template <typename SensFn> inline void idas_sens_init(idas_workspace &w, SensFn sens_fn) {
+  etr::ass<"ida: IDASensInit failed">(
+    IDASensInit(w.mem, w.ns, IDA_STAGGERED, sens_fn, w.yS, w.ypS) == IDA_SUCCESS);
+  etr::ass<"ida: IDASensEEtolerances failed">(IDASensEEtolerances(w.mem) == IDA_SUCCESS);
+  etr::ass<"ida: IDASetSensErrCon failed">(IDASetSensErrCon(w.mem, SUNTRUE) == IDA_SUCCESS);
+}
+
+// IDACalcIC towards t1, also for the sensitivities when they are initialised
+inline void idas_consistent_ic(idas_workspace &w, double t1) {
+  int ic_flag = IDACalcIC(w.mem, IDA_YA_YDP_INIT, t1);
+  etr::ass(ic_flag == IDA_SUCCESS,
+           std::string("ida: IDACalcIC failed (no consistent initial values found): ") +
+             flag_name(IDAGetReturnFlagName(ic_flag)));
+  etr::ass<"ida: IDAGetConsistentIC failed">(IDAGetConsistentIC(w.mem, w.y, w.yp) == IDA_SUCCESS);
+  if (w.ns > 0) {
+    etr::ass<"ida: IDAGetSensConsistentIC failed">(
+      IDAGetSensConsistentIC(w.mem, w.yS, w.ypS) == IDA_SUCCESS);
+  }
+}
+
+inline void idas_step(idas_workspace &w, double t) {
+  sunrealtype tret = 0.0;
+  int flag = IDASolve(w.mem, t, &tret, w.y, w.yp, IDA_NORMAL);
+  etr::ass(flag == IDA_SUCCESS, std::string("ida: integration failed at t = ") +
+                                  std::to_string(tret) + ": " +
+                                  flag_name(IDAGetReturnFlagName(flag)));
+  if (w.ns > 0) {
+    flag = IDAGetSens(w.mem, &tret, w.yS);
+    etr::ass(flag == IDA_SUCCESS,
+             std::string("ida: IDAGetSens failed: ") + flag_name(IDAGetReturnFlagName(flag)));
+  }
+}
+
+// ---------- forward mode (Dual): one sensitivity, s(t0) = y0dot ----------------
+template <typename JAC, typename RES, typename Y, typename YP, typename T, typename P, typename ID>
+requires(
+etr::IsArray<etr::Decayed<Y>> && etr::IsArray<etr::Decayed<YP>> &&
+etr::IsArray<etr::Decayed<T>> && etr::IsArray<etr::Decayed<ID>>
+)
+inline auto idas_forward_impl(const RES &res_fct, const JAC *jac, const Y &y0, const YP &yp0,
+                              const T &times, const P &params, const ID &id,
+                              const etr::ida_options &opt) {
+  const std::size_t neq = y0.size();
+  const std::size_t nt = times.size();
+  etr::ass<"ida: need at least one initial state">(neq > 0);
+  etr::ass<"ida: y0, yp0 and id must have the same length">(
+    yp0.size() == neq && id.size() == neq);
+  etr::ass<"ida: need at least two time points">(nt >= 2);
+  check_tolerances(opt, "ida");
+  const long int max_steps = checked_max_steps(opt, "ida");
+  etr::ass<"ida: stats must be TRUE or FALSE">(!opt.stats.isNA());
+  const int linear_solver = checked_linear_solver(opt, "ida");
+
+  P p_local = params;
+  using Ctx = dual_res_ctx<RES, P, JAC>;
+  Ctx ctx{&res_fct, &p_local, jac};
+  dual_res_ctx_init(ctx, neq, !std::is_same_v<JAC, no_jac>);
+
+  idas_workspace w;
+  etr::ass<"ida: SUNContext_Create failed">(SUNContext_Create(SUN_COMM_NULL, &w.ctx) == 0);
+  SUNContext_ClearErrHandlers(w.ctx);
+  const auto n = static_cast<sunindextype>(neq);
+  w.y = N_VNew_Serial(n, w.ctx);
+  w.yp = N_VNew_Serial(n, w.ctx);
+  w.id = N_VNew_Serial(n, w.ctx);
+  etr::ass<"ida: N_VNew_Serial failed">(w.y != nullptr && w.yp != nullptr && w.id != nullptr);
+  w.yS = N_VCloneVectorArray(1, w.y);
+  w.ypS = N_VCloneVectorArray(1, w.y);
+  etr::ass<"ida: N_VCloneVectorArray failed">(w.yS != nullptr && w.ypS != nullptr);
+  w.ns = 1;
+  values_to_nvector(id, w.id, neq);
+  check_ida_id(w.id, neq);
+  sunrealtype *y_ptr = N_VGetArrayPointer(w.y);
+  sunrealtype *yp_ptr = N_VGetArrayPointer(w.yp);
+  sunrealtype *s_ptr = N_VGetArrayPointer(w.yS[0]);
+  sunrealtype *sp_ptr = N_VGetArrayPointer(w.ypS[0]);
+  for (std::size_t i = 0; i < neq; ++i) {
+    etr::Dual yi = y0.get(i);
+    etr::Dual ypi = yp0.get(i);
+    etr::ass<"ida: NA in y0, yp0 or id">(!yi.isNA() && !ypi.isNA());
+    y_ptr[i] = yi.val;
+    s_ptr[i] = yi.dot;
+    yp_ptr[i] = ypi.val;
+    sp_ptr[i] = ypi.dot;
+  }
+
+  if constexpr (std::is_same_v<JAC, no_jac>) {
+    idas_setup(w, &dual_res_trampoline<Ctx>, IDALsJacFn{nullptr}, &ctx,
+               etr::get_val(times.get(0)), etr::get_val(opt.reltol), etr::get_val(opt.abstol),
+               max_steps, linear_solver);
+  } else {
+    idas_setup(w, &dual_res_trampoline<Ctx>, &dual_ida_jac_trampoline<Ctx>, &ctx,
+               etr::get_val(times.get(0)), etr::get_val(opt.reltol), etr::get_val(opt.abstol),
+               max_steps, linear_solver);
+  }
+  idas_sens_init(w, &sens_res_trampoline<Ctx>);
+  idas_consistent_ic(w, etr::get_val(times.get(1)));
+
+  etr::Array<etr::Dual, etr::Buffer<etr::Dual, etr::RBufferTrait>> res(etr::SI{neq * nt});
+  res.dim = etr::Dim{nt, neq};
+  for (std::size_t j = 0; j < neq; ++j) res.set(j * nt, etr::Dual(y_ptr[j], s_ptr[j]));
+  for (std::size_t k = 1; k < nt; ++k) {
+    idas_step(w, etr::get_val(times.get(k)));
+    for (std::size_t j = 0; j < neq; ++j) res.set(j * nt + k, etr::Dual(y_ptr[j], s_ptr[j]));
+  }
+  if (etr::get_val(opt.stats)) print_ida_stats(w.mem);
+  return res;
+}
+
+// ---------- reverse mode (ReverseDouble) ------------------------------------------
+// ida is one Custom block on the tape. Forward with res_t<Double>; derivatives either
+// - forward sensitivities: one per active input (y0 or params) with res_t<Dual>,
+//   input_bar_i = sum_k S_i(t_k)^T ybar(t_k), no backward solve
+// - adjoint: backward DAE (M^T lambda)' - F_y^T lambda = 0, M = F_yp, with a jump
+//   at every t_k that projects ybar onto the algebraic components.
+//   Theory: development/Plans/ode_sensitivities.md, step 5a.
+//   NOTE: exact only for F linear in yp (d/dt M needs y' only)
+template <typename RES_R, typename JAC_R> struct ida_sens_state {
+  using RES_D = typename rebind_scalar<RES_R, etr::Double>::type;
+  using JAC_D = typename rebind_scalar<JAC_R, etr::Double>::type;
+  using RES_Dual = typename rebind_scalar<RES_R, etr::Dual>::type;
+  using DualVec = etr::Array<etr::Dual, etr::Buffer<etr::Dual>>;
+  using Ctx = fct_ctx<RES_D, DoubleVec, JAC_D>;
+  using DualCtx = dual_res_ctx<RES_Dual, DualVec>;
+
+  idas_workspace w;
+  RES_D res_d{};
+  JAC_D jac_d{};
+  RES_Dual res_dual{};
+  RES_R res_r{};
+  DoubleVec p_double;
+  DualVec p_dual;
+  Ctx ctx{};
+  DualCtx dual_ctx{};
+  std::vector<double> p_vals;
+  std::vector<int> y0_ids, p_ids;
+  std::vector<int> active;   // input index (0..neq-1: y0, neq..: p)
+  std::vector<double> sens;  // S_i(t_k)[j] at (k * Ns + i) * neq + j
+  std::size_t neq = 0, nt = 0;
+
+  // adjoint
+  std::vector<double> times, id_vals;
+  std::vector<double> ys, yps;  // y(t_k), y'(t_k) at k * neq + j
+  double reltol = 0.0, abstol = 0.0;
+  long int max_steps = 0;
+  int linear_solver = 1;
+  N_Vector yB = nullptr, ypB = nullptr, qB = nullptr, idB = nullptr;
+  N_Vector y_k = nullptr, yp_k = nullptr;
+  SUNMatrix AB = nullptr;
+  SUNLinearSolver LSB = nullptr;
+  int which = -1;
+  std::vector<double> idB_vals;
+
+  ~ida_sens_state() {
+    if (w.mem) IDAFree(&w.mem);
+    if (LSB) SUNLinSolFree(LSB);
+    if (AB) SUNMatDestroy(AB);
+    for (N_Vector v : {yB, ypB, qB, idB, y_k, yp_k}) {
+      if (v) N_VDestroy(v);
+    }
+  }
+
+  // one forward-over-reverse sweep of res_t<ReverseDouble> at (t, y, yp, p):
+  // direction (t: 1, y: yp, yp: 0, p: 0), seeds (wgt, wgt_dot) on the residual
+  //   adj_y = F_y^T wgt, adj_yp = M^T wgt, adj_p = F_p^T wgt
+  //   adj_dot_yp = M^T wgt_dot + (dM/dt)^T wgt
+  std::vector<double> adj_y, adj_yp, adj_p, adj_dot_yp;
+  std::vector<double> sweep_key;
+  bool sweep_valid = false;
+
+  void sweep(double t, const double *y, const double *yp, const double *wgt,
+             const double *wgt_dot) {
+    const std::size_t np = p_vals.size();
+    std::vector<double> key;
+    key.reserve(1 + 4 * neq);
+    key.push_back(t);
+    key.insert(key.end(), y, y + neq);
+    key.insert(key.end(), yp, yp + neq);
+    key.insert(key.end(), wgt, wgt + neq);
+    key.insert(key.end(), wgt_dot, wgt_dot + neq);
+    if (sweep_valid && key == sweep_key) return;
+    auto &tape = etr::TAPE_INTERN_ref();
+    const std::size_t start = tape.size();
+    const std::size_t nblocks = tape.blocks.size();
+    // x = (t, y, yp, p)
+    std::vector<int> x_ids(1 + 2 * neq + np);
+    x_ids[0] = tape.push_var(t);
+    etr::ReverseDouble tt(etr::from_tape_id_t{}, x_ids[0], 0);
+    std::vector<etr::ReverseDouble> y_leaves(neq), yp_leaves(neq), r(neq);
+    for (std::size_t i = 0; i < neq; ++i) {
+      x_ids[1 + i] = tape.push_var(y[i]);
+      y_leaves[i] = etr::ReverseDouble(etr::from_tape_id_t{}, x_ids[1 + i], 0);
+      x_ids[1 + neq + i] = tape.push_var(yp[i]);
+      yp_leaves[i] = etr::ReverseDouble(etr::from_tape_id_t{}, x_ids[1 + neq + i], 0);
+    }
+    RevVec p_local(etr::SI{np});
+    for (std::size_t i = 0; i < np; ++i) {
+      x_ids[1 + 2 * neq + i] = tape.push_var(p_vals[i]);
+      p_local.set(i, etr::ReverseDouble(etr::from_tape_id_t{}, x_ids[1 + 2 * neq + i], 0));
+    }
+    RevBorrowVec yv(y_leaves.data(), neq, etr::Dim{neq});
+    RevBorrowVec ypv(yp_leaves.data(), neq, etr::Dim{neq});
+    RevBorrowVec rv(r.data(), neq, etr::Dim{neq});
+    res_r(tt, yv, ypv, rv, p_local);
+    std::vector<int> outs(neq);
+    for (std::size_t i = 0; i < neq; ++i) outs[i] = r[i].id;
+    std::vector<double> dir(x_ids.size(), 0.0);
+    dir[0] = 1.0;
+    std::copy(yp, yp + neq, dir.begin() + 1);
+    {
+      etr::HessianSweep hs(tape, start);
+      hs.forward(x_ids, dir.data());
+      hs.reverse_seeded(outs, wgt, wgt_dot);
+      auto at = [&](std::size_t x) { return static_cast<std::size_t>(x_ids[x]) - start; };
+      adj_y.resize(neq);
+      adj_yp.resize(neq);
+      adj_dot_yp.resize(neq);
+      adj_p.resize(np);
+      for (std::size_t i = 0; i < neq; ++i) {
+        adj_y[i] = hs.adj[at(1 + i)];
+        adj_yp[i] = hs.adj[at(1 + neq + i)];
+        adj_dot_yp[i] = hs.adj_dot[at(1 + neq + i)];
+      }
+      for (std::size_t i = 0; i < np; ++i) adj_p[i] = hs.adj[at(1 + 2 * neq + i)];
+    }
+    tape.rewind(start, nblocks);
+    sweep_key = std::move(key);
+    sweep_valid = true;
+  }
+
+  static int res_b(sunrealtype t, N_Vector y, N_Vector yp, N_Vector yB_, N_Vector ypB_,
+                   N_Vector rrB, void *user_data) {
+    auto *s = static_cast<ida_sens_state *>(user_data);
+    s->sweep(t, N_VGetArrayPointer(y), N_VGetArrayPointer(yp), N_VGetArrayPointer(yB_),
+             N_VGetArrayPointer(ypB_));
+    sunrealtype *out = N_VGetArrayPointer(rrB);
+    for (std::size_t i = 0; i < s->neq; ++i) out[i] = s->adj_dot_yp[i] - s->adj_y[i];
+    return 0;
+  }
+
+  static int quad_b(sunrealtype t, N_Vector y, N_Vector yp, N_Vector yB_, N_Vector ypB_,
+                    N_Vector qBdot, void *user_data) {
+    auto *s = static_cast<ida_sens_state *>(user_data);
+    s->sweep(t, N_VGetArrayPointer(y), N_VGetArrayPointer(yp), N_VGetArrayPointer(yB_),
+             N_VGetArrayPointer(ypB_));
+    sunrealtype *out = N_VGetArrayPointer(qBdot);
+    for (std::size_t i = 0; i < s->p_vals.size(); ++i) out[i] = s->adj_p[i];
+    return 0;
+  }
+
+  // E = M D + F_y A at t_k, column-major; one res_t<Dual> evaluation per column.
+  // Also checks M A = 0 and records the non-zero rows of M (backward id).
+  std::vector<double> E;
+  std::vector<int> E_piv;
+
+  void build_E(std::size_t k) {
+    const std::size_t np = p_vals.size();
+    for (std::size_t m = 0; m < np; ++m) p_dual.set(m, etr::Dual(p_vals[m], 0.0));
+    std::vector<double> y_val(neq), yp_val(neq), y_dot(neq), yp_dot(neq), r_val(neq), r_dot(neq);
+    auto column = [&](std::size_t j, bool wrt_yp) {
+      std::copy(ys.begin() + static_cast<std::ptrdiff_t>(k * neq),
+                ys.begin() + static_cast<std::ptrdiff_t>((k + 1) * neq), y_val.begin());
+      std::copy(yps.begin() + static_cast<std::ptrdiff_t>(k * neq),
+                yps.begin() + static_cast<std::ptrdiff_t>((k + 1) * neq), yp_val.begin());
+      std::fill(y_dot.begin(), y_dot.end(), 0.0);
+      std::fill(yp_dot.begin(), yp_dot.end(), 0.0);
+      std::fill(r_dot.begin(), r_dot.end(), 0.0);
+      (wrt_yp ? yp_dot : y_dot)[j] = 1.0;
+      DualBorrowVec yv(y_val.data(), y_dot.data(), neq, etr::Dim{neq});
+      DualBorrowVec ypv(yp_val.data(), yp_dot.data(), neq, etr::Dim{neq});
+      DualBorrowVec rv(r_val.data(), r_dot.data(), neq, etr::Dim{neq});
+      etr::Dual tt(times[k], 0.0);
+      res_dual(tt, yv, ypv, rv, p_dual);
+    };
+    E.assign(neq * neq, 0.0);
+    if (idB_vals.empty()) idB_vals.assign(neq, 0.0);
+    for (std::size_t j = 0; j < neq; ++j) {
+      const bool differential = id_vals[j] == 1.0;
+      column(j, true);
+      if (differential) {
+        for (std::size_t i = 0; i < neq; ++i) {
+          E[j * neq + i] = r_dot[i];
+          if (r_dot[i] != 0.0) idB_vals[i] = 1.0;
+        }
+      } else {
+        for (std::size_t i = 0; i < neq; ++i) {
+          etr::ass<"ida (adjoint): an algebraic variable (id = 0) appears with its derivative yp in the residual">(
+            r_dot[i] == 0.0);
+        }
+        column(j, false);
+        for (std::size_t i = 0; i < neq; ++i) E[j * neq + i] = r_dot[i];
+      }
+    }
+    int n = static_cast<int>(neq);
+    int info = 0;
+    E_piv.resize(neq);
+    F77_CALL(dgetrf)(&n, &n, E.data(), &n, E_piv.data(), &info);
+    etr::ass<"ida (adjoint): singular matrix [F_yp (differential) | F_y (algebraic)]; is the DAE of index 1?">(
+      info == 0);
+  }
+
+  // b <- E^-T b
+  void solve_Et(std::vector<double> &b) {
+    int n = static_cast<int>(neq);
+    int nrhs = 1;
+    int info = 0;
+    F77_CALL(dgetrs)("T", &n, &nrhs, E.data(), &n, E_piv.data(), b.data(), &n, &info FCONE);
+    etr::ass<"ida (adjoint): dgetrs failed">(info == 0);
+  }
+
+  // jump at t_k: lambda += delta, pbar_direct -= F_p^T r
+  void jump(std::size_t k, const std::vector<double> &ybar, std::vector<double> &lambda,
+            std::vector<double> &pbar_direct) {
+    build_E(k);
+    std::vector<double> r(neq), u(neq);
+    for (std::size_t j = 0; j < neq; ++j) r[j] = id_vals[j] == 1.0 ? 0.0 : ybar[j * nt + k];
+    solve_Et(r);
+    const std::vector<double> zeros(neq, 0.0);
+    sweep_valid = false;
+    sweep(times[k], ys.data() + k * neq, yps.data() + k * neq, r.data(), zeros.data());
+    for (std::size_t j = 0; j < neq; ++j) {
+      u[j] = id_vals[j] == 1.0 ? ybar[j * nt + k] - adj_y[j] : 0.0;
+    }
+    solve_Et(u);
+    for (std::size_t j = 0; j < neq; ++j) lambda[j] += u[j];
+    for (std::size_t m = 0; m < p_vals.size(); ++m) pbar_direct[m] -= adj_p[m];
+  }
+
+  void init_backward() {
+    const std::size_t np = p_vals.size();
+    const auto n = static_cast<sunindextype>(neq);
+    yB = N_VNew_Serial(n, w.ctx);
+    ypB = N_VNew_Serial(n, w.ctx);
+    idB = N_VNew_Serial(n, w.ctx);
+    y_k = N_VNew_Serial(n, w.ctx);
+    yp_k = N_VNew_Serial(n, w.ctx);
+    qB = N_VNew_Serial(static_cast<sunindextype>(np), w.ctx);
+    etr::ass<"ida (adjoint): N_VNew_Serial failed">(yB && ypB && idB && y_k && yp_k && qB);
+    N_VConst(0.0, yB);
+    N_VConst(0.0, ypB);
+    N_VConst(0.0, qB);
+    std::copy(idB_vals.begin(), idB_vals.end(), N_VGetArrayPointer(idB));
+    etr::ass<"ida (adjoint): IDACreateB failed">(IDACreateB(w.mem, &which) == IDA_SUCCESS);
+    etr::ass<"ida (adjoint): IDAInitB failed">(
+      IDAInitB(w.mem, which, &res_b, times[nt - 1], yB, ypB) == IDA_SUCCESS);
+    etr::ass<"ida (adjoint): IDASStolerancesB failed">(
+      IDASStolerancesB(w.mem, which, reltol, abstol) == IDA_SUCCESS);
+    etr::ass<"ida (adjoint): IDASetUserDataB failed">(
+      IDASetUserDataB(w.mem, which, this) == IDA_SUCCESS);
+    etr::ass<"ida (adjoint): IDASetMaxNumStepsB failed">(
+      IDASetMaxNumStepsB(w.mem, which, max_steps) == IDA_SUCCESS);
+    etr::ass<"ida (adjoint): IDASetIdB failed">(IDASetIdB(w.mem, which, idB) == IDA_SUCCESS);
+    // no jacB: difference quotients of res_b
+    AB = SUNDenseMatrix(n, n, w.ctx);
+    etr::ass<"ida (adjoint): SUNDenseMatrix failed">(AB != nullptr);
+    LSB = dense_solver(linear_solver, yB, AB, w.ctx);
+    etr::ass<"ida (adjoint): creating the dense linear solver failed">(LSB != nullptr);
+    etr::ass<"ida (adjoint): IDASetLinearSolverB failed">(
+      IDASetLinearSolverB(w.mem, which, LSB, AB) == IDA_SUCCESS);
+    etr::ass<"ida (adjoint): IDAQuadInitB failed">(
+      IDAQuadInitB(w.mem, which, &quad_b, qB) == IDA_SUCCESS);
+    etr::ass<"ida (adjoint): IDAQuadSStolerancesB failed">(
+      IDAQuadSStolerancesB(w.mem, which, reltol, abstol) == IDA_SUCCESS);
+    etr::ass<"ida (adjoint): IDASetQuadErrConB failed">(
+      IDASetQuadErrConB(w.mem, which, SUNTRUE) == IDA_SUCCESS);
+  }
+
+  // ybar: column-major nt x neq; y0bar = D M^T lambda(t0), pbar = qB(t0) - sum_k F_p^T r_k
+  void backward_adjoint(const std::vector<double> &ybar, std::vector<double> &y0bar,
+                        std::vector<double> &pbar) {
+    const std::size_t np = p_vals.size();
+    std::vector<double> lambda(neq, 0.0), pbar_direct(np, 0.0);
+    jump(nt - 1, ybar, lambda, pbar_direct);
+    if (which < 0) init_backward();
+    sunrealtype *lam = N_VGetArrayPointer(yB);
+    N_VConst(0.0, qB);
+    for (std::size_t k = nt - 1; k >= 1; --k) {
+      std::copy(lambda.begin(), lambda.end(), lam);
+      N_VConst(0.0, ypB);
+      sweep_valid = false;
+      etr::ass<"ida (adjoint): IDAReInitB failed">(
+        IDAReInitB(w.mem, which, times[k], yB, ypB) == IDA_SUCCESS);
+      etr::ass<"ida (adjoint): IDAQuadReInitB failed">(
+        IDAQuadReInitB(w.mem, which, qB) == IDA_SUCCESS);
+      std::copy(ys.begin() + static_cast<std::ptrdiff_t>(k * neq),
+                ys.begin() + static_cast<std::ptrdiff_t>((k + 1) * neq), N_VGetArrayPointer(y_k));
+      std::copy(yps.begin() + static_cast<std::ptrdiff_t>(k * neq),
+                yps.begin() + static_cast<std::ptrdiff_t>((k + 1) * neq), N_VGetArrayPointer(yp_k));
+      int flag = IDACalcICB(w.mem, which, times[k - 1], y_k, yp_k);
+      etr::ass(flag == IDA_SUCCESS,
+               std::string("ida (adjoint): IDACalcICB failed at t = ") + std::to_string(times[k]) +
+                 ": " + flag_name(IDAGetReturnFlagName(flag)));
+      etr::ass<"ida (adjoint): IDAGetConsistentICB failed">(
+        IDAGetConsistentICB(w.mem, which, yB, ypB) == IDA_SUCCESS);
+      flag = IDASolveB(w.mem, times[k - 1], IDA_NORMAL);
+      etr::ass(flag >= 0, std::string("ida (adjoint): backward integration failed at t = ") +
+                            std::to_string(times[k]) + ": " + flag_name(IDAGetReturnFlagName(flag)));
+      sunrealtype tret = 0.0;
+      etr::ass<"ida (adjoint): IDAGetB failed">(IDAGetB(w.mem, which, &tret, yB, ypB) == IDA_SUCCESS);
+      etr::ass<"ida (adjoint): IDAGetQuadB failed">(
+        IDAGetQuadB(w.mem, which, &tret, qB) == IDA_SUCCESS);
+      lambda.assign(lam, lam + neq);
+      jump(k - 1, ybar, lambda, pbar_direct);
+    }
+    const std::vector<double> zeros(neq, 0.0);
+    sweep_valid = false;
+    sweep(times[0], ys.data(), yps.data(), lambda.data(), zeros.data());
+    y0bar.resize(neq);
+    for (std::size_t j = 0; j < neq; ++j) y0bar[j] = id_vals[j] == 1.0 ? adj_yp[j] : 0.0;
+    const sunrealtype *q = N_VGetArrayPointer(qB);
+    pbar.resize(np);
+    for (std::size_t m = 0; m < np; ++m) pbar[m] = q[m] + pbar_direct[m];
+  }
+
+  static int fwd_res(sunrealtype t, N_Vector y, N_Vector yp, N_Vector r, void *user_data) {
+    return res_trampoline<Ctx>(t, y, yp, r, &static_cast<ida_sens_state *>(user_data)->ctx);
+  }
+  static int fwd_jac(sunrealtype t, sunrealtype cj, N_Vector y, N_Vector yp, N_Vector r,
+                     SUNMatrix J, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) {
+    return ida_jac_trampoline<Ctx>(t, cj, y, yp, r, J,
+                                   &static_cast<ida_sens_state *>(user_data)->ctx, tmp1, tmp2, tmp3);
+  }
+  static int fwd_sens(int Ns, sunrealtype t, N_Vector y, N_Vector yp, N_Vector r, N_Vector *yS,
+                      N_Vector *ypS, N_Vector *resS, void *user_data, N_Vector tmp1,
+                      N_Vector tmp2, N_Vector tmp3) {
+    auto *s = static_cast<ida_sens_state *>(user_data);
+    const std::size_t np = s->p_vals.size();
+    for (int i = 0; i < Ns; ++i) {
+      const int a = s->active[static_cast<std::size_t>(i)];
+      for (std::size_t m = 0; m < np; ++m) {
+        const double d = a == static_cast<int>(s->neq + m) ? 1.0 : 0.0;
+        s->p_dual.set(m, etr::Dual(s->p_vals[m], d));
+      }
+      const int flag = sens_res_trampoline<DualCtx>(1, t, y, yp, r, &yS[i], &ypS[i], &resS[i],
+                                                    &s->dual_ctx, tmp1, tmp2, tmp3);
+      if (flag != 0) return flag;
+    }
+    return 0;
+  }
+
+  void store(std::vector<double> &vals, std::size_t k) {
+    const sunrealtype *y_ptr = N_VGetArrayPointer(w.y);
+    for (std::size_t j = 0; j < neq; ++j) vals[j * nt + k] = y_ptr[j];
+    const std::size_t ns = active.size();
+    for (std::size_t i = 0; i < ns; ++i) {
+      const sunrealtype *sp = N_VGetArrayPointer(w.yS[i]);
+      std::copy(sp, sp + neq, sens.begin() + static_cast<std::ptrdiff_t>((k * ns + i) * neq));
+    }
+  }
+
+  // in_bar_i = sum_k S_i(t_k)^T ybar(t_k), ybar column-major nt x neq
+  void backward(const std::vector<double> &ybar, std::vector<double> &in_bar) const {
+    const std::size_t ns = active.size();
+    in_bar.assign(ns, 0.0);
+    for (std::size_t k = 0; k < nt; ++k) {
+      for (std::size_t i = 0; i < ns; ++i) {
+        const double *S = sens.data() + (k * ns + i) * neq;
+        double acc = 0.0;
+        for (std::size_t j = 0; j < neq; ++j) acc += S[j] * ybar[j * nt + k];
+        in_bar[i] += acc;
+      }
+    }
+  }
+};
+
+template <typename JAC, typename RES, typename Y, typename YP, typename T, typename P, typename ID>
+requires(
+etr::IsArray<etr::Decayed<Y>> && etr::IsArray<etr::Decayed<YP>> &&
+etr::IsArray<etr::Decayed<T>> && etr::IsArray<etr::Decayed<ID>>
+)
+inline auto idas_reverse_impl(const RES &, const JAC *, const Y &y0, const YP &yp0,
+                              const T &times, const P &params, const ID &id,
+                              const etr::ida_options &opt) {
+  static_assert(etr::IsArray<etr::Decayed<P>>,
+                "ida: in reverse mode params has to be a double vector");
+  using State = ida_sens_state<RES, JAC>;
+  const std::size_t neq = y0.size();
+  const std::size_t nt = times.size();
+  const std::size_t np = params.size();
+  etr::ass<"ida: need at least one initial state">(neq > 0);
+  etr::ass<"ida: y0, yp0 and id must have the same length">(
+    yp0.size() == neq && id.size() == neq);
+  etr::ass<"ida: need at least two time points">(nt >= 2);
+  etr::ass<"ida: in reverse mode params needs at least one element">(np > 0);
+  check_tolerances(opt, "ida");
+  const long int max_steps = checked_max_steps(opt, "ida");
+  etr::ass<"ida: stats must be TRUE or FALSE">(!opt.stats.isNA());
+  const int linear_solver = checked_linear_solver(opt, "ida");
+
+  auto s = std::make_shared<State>();
+  s->neq = neq;
+  s->nt = nt;
+  s->p_vals.resize(np);
+  s->p_ids.resize(np);
+  s->p_double = DoubleVec(etr::SI{np});
+  s->p_dual = typename State::DualVec(etr::SI{np});
+  for (std::size_t i = 0; i < np; ++i) {
+    etr::ReverseDouble pi = params.get(i);
+    etr::ass<"ida: NA in params">(!pi.isNA());
+    s->p_vals[i] = etr::get_val(pi);
+    s->p_ids[i] = pi.id;
+    s->p_double.set(i, etr::Double(s->p_vals[i]));
+    s->p_dual.set(i, etr::Dual(s->p_vals[i], 0.0));
+  }
+  s->ctx.f = &s->res_d;
+  s->ctx.params = &s->p_double;
+  if constexpr (!std::is_same_v<JAC, no_jac>) s->ctx.jac = &s->jac_d;
+  s->dual_ctx.f = &s->res_dual;
+  s->dual_ctx.params = &s->p_dual;
+  dual_res_ctx_init(s->dual_ctx, neq, false);
+
+  idas_workspace &w = s->w;
+  etr::ass<"ida: SUNContext_Create failed">(SUNContext_Create(SUN_COMM_NULL, &w.ctx) == 0);
+  SUNContext_ClearErrHandlers(w.ctx);
+  const auto n = static_cast<sunindextype>(neq);
+  w.y = N_VNew_Serial(n, w.ctx);
+  w.yp = N_VNew_Serial(n, w.ctx);
+  w.id = N_VNew_Serial(n, w.ctx);
+  etr::ass<"ida: N_VNew_Serial failed">(w.y != nullptr && w.yp != nullptr && w.id != nullptr);
+  values_to_nvector(y0, w.y, neq);
+  values_to_nvector(yp0, w.yp, neq);
+  values_to_nvector(id, w.id, neq);
+  check_ida_id(w.id, neq);
+  s->y0_ids.resize(neq);
+  for (std::size_t i = 0; i < neq; ++i) {
+    etr::ReverseDouble yi = y0.get(i);
+    s->y0_ids[i] = yi.id;
+  }
+
+  // inputs that are tape constants get no sensitivity
+  const auto &tape_ops = etr::TAPE_INTERN_ref().op;
+  auto is_active = [&tape_ops](int tape_id) {
+    return tape_id >= 0 && tape_ops[static_cast<std::size_t>(tape_id)] != etr::ROp::Const;
+  };
+  for (std::size_t i = 0; i < neq; ++i) {
+    if (is_active(s->y0_ids[i])) s->active.push_back(static_cast<int>(i));
+  }
+  for (std::size_t i = 0; i < np; ++i) {
+    if (is_active(s->p_ids[i])) s->active.push_back(static_cast<int>(neq + i));
+  }
+  const int mode = etr::get_val(opt.sensitivity);
+  const bool adjoint = mode == etr::sensitivity_adjoint ||
+    (mode == etr::sensitivity_auto && s->active.size() > etr::forward_sens_max_inputs);
+  if (adjoint) {
+    s->active.clear();
+    s->times.resize(nt);
+    for (std::size_t k = 0; k < nt; ++k) s->times[k] = etr::get_val(times.get(k));
+    s->id_vals.assign(N_VGetArrayPointer(w.id), N_VGetArrayPointer(w.id) + neq);
+    s->reltol = etr::get_val(opt.reltol);
+    s->abstol = etr::get_val(opt.abstol);
+    s->max_steps = max_steps;
+    s->linear_solver = linear_solver;
+  }
+  const int ns = static_cast<int>(s->active.size());
+  if (ns > 0) {
+    w.yS = N_VCloneVectorArray(ns, w.y);
+    w.ypS = N_VCloneVectorArray(ns, w.y);
+    etr::ass<"ida: N_VCloneVectorArray failed">(w.yS != nullptr && w.ypS != nullptr);
+    w.ns = ns;
+    for (int i = 0; i < ns; ++i) {
+      N_VConst(0.0, w.yS[i]);
+      N_VConst(0.0, w.ypS[i]);
+      const int a = s->active[static_cast<std::size_t>(i)];
+      if (a < static_cast<int>(neq)) N_VGetArrayPointer(w.yS[i])[a] = 1.0;
+    }
+  }
+
+  if constexpr (std::is_same_v<JAC, no_jac>) {
+    idas_setup(w, &State::fwd_res, IDALsJacFn{nullptr}, s.get(), etr::get_val(times.get(0)),
+               etr::get_val(opt.reltol), etr::get_val(opt.abstol), max_steps, linear_solver);
+  } else {
+    idas_setup(w, &State::fwd_res, &State::fwd_jac, s.get(), etr::get_val(times.get(0)),
+               etr::get_val(opt.reltol), etr::get_val(opt.abstol), max_steps, linear_solver);
+  }
+  if (ns > 0) idas_sens_init(w, &State::fwd_sens);
+  // checkpoint every 100 steps, Hermite interpolation of the forward solution
+  if (adjoint) {
+    etr::ass<"ida: IDAAdjInit failed">(IDAAdjInit(w.mem, 100, IDA_HERMITE) == IDA_SUCCESS);
+  }
+  idas_consistent_ic(w, etr::get_val(times.get(1)));
+
+  std::vector<double> vals(neq * nt);
+  std::vector<uint8_t> na(neq * nt, 0);
+  s->sens.assign(nt * static_cast<std::size_t>(ns) * neq, 0.0);
+  if (adjoint) {
+    s->ys.resize(nt * neq);
+    s->yps.resize(nt * neq);
+  }
+  auto store = [&](std::size_t k) {
+    s->store(vals, k);
+    if (!adjoint) return;
+    const sunrealtype *y_ptr = N_VGetArrayPointer(w.y);
+    const sunrealtype *yp_ptr = N_VGetArrayPointer(w.yp);
+    std::copy(y_ptr, y_ptr + neq, s->ys.begin() + static_cast<std::ptrdiff_t>(k * neq));
+    std::copy(yp_ptr, yp_ptr + neq, s->yps.begin() + static_cast<std::ptrdiff_t>(k * neq));
+  };
+  store(0);
+  for (std::size_t k = 1; k < nt; ++k) {
+    if (adjoint) {
+      sunrealtype tret = 0.0;
+      int ncheck = 0;
+      int flag = IDASolveF(w.mem, etr::get_val(times.get(k)), &tret, w.y, w.yp, IDA_NORMAL, &ncheck);
+      etr::ass(flag == IDA_SUCCESS, std::string("ida: integration failed at t = ") +
+                                      std::to_string(tret) + ": " +
+                                      flag_name(IDAGetReturnFlagName(flag)));
+    } else {
+      idas_step(w, etr::get_val(times.get(k)));
+    }
+    store(k);
+  }
+  if (etr::get_val(opt.stats)) print_ida_stats(w.mem);
+
+  std::vector<int> input_ids = s->y0_ids;
+  input_ids.insert(input_ids.end(), s->p_ids.begin(), s->p_ids.end());
+  const int head = etr::TAPE_INTERN_ref().push_custom(vals, na, std::move(input_ids),
+    [s, adjoint](etr::ReverseTape &tape, int out0) {
+      const std::size_t n_out = s->neq * s->nt;
+      std::vector<double> ybar(n_out);
+      bool any = false;
+      for (std::size_t i = 0; i < n_out; ++i) {
+        const std::size_t tape_id = static_cast<std::size_t>(out0) + i;
+        ybar[i] = tape.is_na[tape_id] ? 0.0 : tape.adj[tape_id];
+        if (ybar[i] != 0.0) any = true;
+      }
+      if (!any) return;
+      if (adjoint) {
+        std::vector<double> y0bar, pbar;
+        s->backward_adjoint(ybar, y0bar, pbar);
+        for (std::size_t i = 0; i < s->neq; ++i) {
+          if (s->y0_ids[i] >= 0) tape.adj[static_cast<std::size_t>(s->y0_ids[i])] += y0bar[i];
+        }
+        for (std::size_t i = 0; i < pbar.size(); ++i) {
+          if (s->p_ids[i] >= 0) tape.adj[static_cast<std::size_t>(s->p_ids[i])] += pbar[i];
+        }
+        return;
+      }
+      std::vector<double> in_bar;
+      s->backward(ybar, in_bar);
+      for (std::size_t i = 0; i < in_bar.size(); ++i) {
+        const std::size_t a = static_cast<std::size_t>(s->active[i]);
+        const int tape_id = a < s->neq ? s->y0_ids[a] : s->p_ids[a - s->neq];
+        tape.adj[static_cast<std::size_t>(tape_id)] += in_bar[i];
+      }
+    },
+    [](const std::vector<double> &, std::vector<double> &) {
+      etr::ass<"hessian: not supported through ida (only through cvode)">(false);
+    },
+    [](const std::vector<double> &, const std::vector<double> &, std::vector<double> &,
+       std::vector<double> &) {
+      etr::ass<"hessian: not supported through ida (only through cvode)">(false);
+    });
+
+  etr::Array<etr::ReverseDouble, etr::Buffer<etr::ReverseDouble, etr::LBufferTrait>> res(etr::SI{neq * nt});
+  res.dim = etr::Dim{nt, neq};
+  for (std::size_t i = 0; i < neq * nt; ++i) {
+    res.set(i, etr::ReverseDouble(etr::from_tape_id_t{}, head + static_cast<int>(i), 0));
+  }
+  return res;
+}
+
+template <typename JAC, typename RES, typename Y, typename YP, typename T, typename P, typename ID>
+inline auto ida_dispatch(const RES &res_fct, const JAC *jac, const Y &y0, const YP &yp0,
+                         const T &times, const P &params, const ID &id,
+                         const etr::ida_options &opt) {
+  using TY = typename etr::ExtractDataType<etr::Decayed<Y>>::value_type;
+  if constexpr (etr::IS<TY, etr::ReverseDouble>) {
+    return idas_reverse_impl(res_fct, jac, y0, yp0, times, params, id, opt);
+  } else if constexpr (etr::IS<TY, etr::Dual>) {
+    return idas_forward_impl(res_fct, jac, y0, yp0, times, params, id, opt);
+  } else {
+    return ida_impl(res_fct, jac, y0, yp0, times, params, id, opt);
+  }
+}
+
 template <typename RES, typename Y, typename YP, typename T, typename P, typename ID>
 inline auto ida_solve(const RES &res_fct, const Y &y0, const YP &yp0, const T &times,
                       const P &params, const ID &id, const etr::ida_options &opt) {
-  return ida_impl<no_jac>(res_fct, nullptr, y0, yp0, times, params, id, opt);
+  return ida_dispatch<no_jac>(res_fct, nullptr, y0, yp0, times, params, id, opt);
 }
 
 template <typename RES, typename Y, typename YP, typename T, typename P, typename ID,
@@ -1614,7 +2438,7 @@ template <typename RES, typename Y, typename YP, typename T, typename P, typenam
 inline auto ida_solve(const RES &res_fct, const Y &y0, const YP &yp0, const T &times,
                       const P &params, const ID &id, const etr::ida_options &opt,
                       const JAC &jac) {
-  return ida_impl(res_fct, &jac, y0, yp0, times, params, id, opt);
+  return ida_dispatch(res_fct, &jac, y0, yp0, times, params, id, opt);
 }
 
 } // namespace a2a

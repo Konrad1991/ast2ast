@@ -2515,24 +2515,28 @@ function_registry_global$add(
   group = "function_node", cpp_name = "etr::cvode_options", deriv_possible = TRUE
 )
 ida_option_kinds <- c(reltol = "double", abstol = "double", max_steps = "int", stats = "logical",
-                      linear_solver = "solver")
+                      linear_solver = "solver", sensitivity = "sensitivity")
 function_registry_global$add(
-  name = "ida_options", num_args = 5, arg_names = names(ida_option_kinds),
+  name = "ida_options", num_args = 6, arg_names = names(ida_option_kinds),
   defaults = list(reltol = 1e-6, abstol = 1e-6, max_steps = 1000000L, stats = FALSE,
-                  linear_solver = "sundials"),
+                  linear_solver = "sundials", sensitivity = "auto"),
   docu = paste0(
     "ida_options(reltol = 1e-6, abstol = 1e-6, max_steps = 1000000L, stats = FALSE, ",
-    "linear_solver = \"sundials\")\n",
+    "linear_solver = \"sundials\", sensitivity = \"auto\")\n",
     "Options for ida; every argument is optional. ",
     "max_steps: maximum number of steps per output interval. stats: print solver statistics. ",
     "linear_solver: \"sundials\" (dense LU of SUNDIALS) or \"lapack\" ",
-    "(faster for large systems; with OpenBLAS it does not run in parallel inside pmap)."
+    "(faster for large systems; with OpenBLAS it does not run in parallel inside pmap). ",
+    "sensitivity (gradient() / reverse mode through ida): \"forward\" (forward sensitivities, ",
+    "cost grows with the number of inputs), \"adjoint\" (one backward solve; the residual has to be ",
+    "linear in yp and algebraic variables must not appear with yp), \"auto\" ",
+    "(forward up to 20 inputs y0/params that depend on x, adjoint above)."
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
     infer_solver_options(node, vars_list, info_env, function_registry, "ida_options", ida_option_kinds)
   },
   check_fct = mock,
-  group = "function_node", cpp_name = "etr::ida_options", deriv_possible = FALSE
+  group = "function_node", cpp_name = "etr::ida_options", deriv_possible = TRUE
 )
 # mersenne_twister() / normal() / uniform(): constructors of the predefined random types
 infer_random_constructor <- function(node, vars_list, info_env, function_registry, type_name, kinds) {
@@ -2852,6 +2856,12 @@ function_registry_global$add(
     "jac (optional): fn(t, cj, y, yp, J, params) writing J = dF/dy + cj * dF/dyp in place -- ",
     "t, cj scalar doubles; J a borrow_mat(double), zeroed before each call; no return value. ",
     "Without jac the Jacobian comes from difference quotients.\n",
+    "Derivatives (forward / reverse, jacobian(), gradient()) w.r.t. y0 and params via IDAS ",
+    "forward sensitivities or the adjoint (options$sensitivity); in reverse mode params has to be ",
+    "a double vector. The adjoint needs a residual linear in yp (r = M(t, y) yp - f(t, y)) ",
+    "in which algebraic variables appear without yp. ",
+    "yp0 and the algebraic part of y0 are only initial guesses and get no derivative. ",
+    "No hessian() through ida yet.\n",
     "Returns a length(times) x length(y0) matrix; row k is the state at times[k]."
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
@@ -2883,6 +2893,9 @@ function_registry_global$add(
     }
     err <- check_solver_params_variable(node, all_types[[5L]], "ida", 5L)
     if (!is.null(err)) return(err)
+    if (info_env$real_type == "etr::ReverseDouble" && !is_vec_double(all_types[[5L]])) {
+      return("ida: in reverse mode params (argument 5) has to be a double vector")
+    }
     if (!is_options_type(all_types[[7L]], "ida_options")) {
       return("ida: options (argument 7) has to be created by ida_options()")
     }
@@ -2927,7 +2940,7 @@ function_registry_global$add(
                        c(t = "scalar", cj = "scalar", y = "vec", yp = "vec", J = "mat", params = "params"))
     }
   },
- group = "function_node", cpp_name = "a2a::ida_solve", deriv_possible = FALSE,
+ group = "function_node", cpp_name = "a2a::ida_solve", deriv_possible = TRUE,
  valid_fn_context = TRUE
 )
 function_registry_global$add(

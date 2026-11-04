@@ -639,14 +639,16 @@ check_runtime_colouring <- function(f_arg, vars_list) {
 # (ReverseDouble for the runtime pattern, Dual in a plain double translation)
 ad_only_fcts <- c("seed", "unseed", "get_dot", "deriv")
 
+ode_solvers <- c("cvode", "ida")
+
 has_borrow_args <- function(fn) {
   any(vapply(fn$args_f, function(a) {
     inherits(a, "pre_type_node") && startsWith(a$get_data_struct_verbose(), "borrow")
   }, logical(1L)))
 }
 
-# reverse mode: fns with borrow args only as rhs / jac of cvode
-# (cvode builds the Borrow<ReverseDouble> views itself)
+# reverse mode: fns with borrow args only as rhs / res / jac of cvode or ida
+# (the solver builds the Borrow<ReverseDouble> views itself)
 reverse_borrow_error <- function(node, vars_list) {
   borrow_fn <- function(name) {
     fn <- if (nzchar(name)) vars_list[[name]] else NULL
@@ -654,11 +656,11 @@ reverse_borrow_error <- function(node, vars_list) {
   }
   if (borrow_fn(node$operator)) {
     return(sprintf(
-      "%s has borrow arguments: in reverse mode such a function can only be passed to cvode, not called",
+      "%s has borrow arguments: in reverse mode such a function can only be passed to cvode or ida, not called",
       node$operator
     ))
   }
-  if (identical(node$operator, "cvode")) return(NULL)
+  if (node$operator %in% ode_solvers) return(NULL)
   args <- if (inherits(node, "unary_node")) {
     list(node$obj)
   } else if (inherits(node, "binary_node")) {
@@ -673,7 +675,7 @@ reverse_borrow_error <- function(node, vars_list) {
     name <- if (is.symbol(a$name)) deparse(a$name) else a$name
     if (borrow_fn(name)) {
       return(sprintf(
-        "%s has borrow arguments: in reverse mode such a function can only be passed to cvode, not to %s",
+        "%s has borrow arguments: in reverse mode such a function can only be passed to cvode or ida, not to %s",
         name, node$operator
       ))
     }
@@ -689,14 +691,14 @@ runtime_colouring_reverse_error <- function(fn, vars_list, context = "jacobian: 
   cvode_args <- character()
   collect_cvode_args <- function(code) {
     if (!is.call(code)) return(invisible())
-    if (identical(code[[1L]], as.name("cvode"))) {
+    if (is.symbol(code[[1L]]) && as.character(code[[1L]]) %in% ode_solvers) {
       for (el in as.list(code)[-1L]) {
         if (is.symbol(el)) cvode_args <<- c(cvode_args, as.character(el))
       }
     }
     for (el in as.list(code)) collect_cvode_args(el)
   }
-  # borrow args only for fns passed to cvode (cvode builds the views itself)
+  # borrow args only for fns passed to cvode / ida (the solver builds the views itself)
   walk <- function(code, allow_borrow = FALSE) {
     if (is.symbol(code)) {
       name <- as.character(code)
@@ -712,13 +714,13 @@ runtime_colouring_reverse_error <- function(fn, vars_list, context = "jacobian: 
     if (head %in% borrow_fcts && !allow_borrow) {
       return(sprintf("%s cannot be used when f (or a fn it uses) has borrow arguments", context))
     }
-    # rhs <- function(...) defined inline and passed to cvode
+    # rhs <- function(...) defined inline and passed to cvode / ida
     if (head %in% c("<-", "=") && length(code) == 3L && is.symbol(code[[2L]]) &&
         as.character(code[[2L]]) %in% cvode_args) {
       return(walk(code[[3L]], TRUE))
     }
     for (el in as.list(code)) {
-      err <- walk(el, allow_borrow || identical(head, "cvode"))
+      err <- walk(el, allow_borrow || head %in% ode_solvers)
       if (!is.null(err)) return(err)
     }
     NULL

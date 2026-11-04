@@ -106,6 +106,51 @@ in isolation. Possible: b) internally as building blocks, a) on top.
    - risk: recording on TAPE_INTERN while reverse() iterates it
      (index based -> ok if rewound before returning)
 5. IDAS: repeat 2-4 for ida() (residual form, F_y + cj F_y')
+   Status 2026-11-04: forward sensitivities DONE (untested by Konrad):
+   - Dual: idas_forward_impl, one direction, IDACalcIC also makes s(t0), s'(t0) consistent
+   - reverse / gradient(): idas_reverse_impl = forward sensitivities per active input
+     (like cvode sensitivity = "forward"), no backward solve
+   - tests inst/tinytest/test_idas.R
+   OPEN (decision Konrad): adjoint + hessian. Not a 1:1 copy of cvode:
+   - adjoint DAE: d/dt(F_yp^T lambda) - F_y^T lambda = 0 needs d/dt F_yp
+     (forward-over-reverse with direction (t: 1, y: y'); exact only if F is linear in yp)
+   - jump lambda += ybar(t_k) is wrong for algebraic components (F_yp singular):
+     semi-explicit index 1: ybar^T s = (ybar_d - g_d^T g_a^-T ybar_a)^T s_d - ybar_a^T g_a^-1 g_p
+   - hessian through ida currently: runtime error "not supported through ida"
+   DECIDED 2026-11-04: adjoint (and hessian) through ida only for residuals linear
+   in yp, F = M(t, y, p) yp - f(t, y, p). Then d/dt F_yp needs y' only (no y'').
+   Document in the ida docu / vignette once the adjoint exists.
+   ```r
+   r[[1L]] <- y[[2L]] * yp[[1L]] - f1   # ok: M depends on y
+   r[[1L]] <- exp(yp[[1L]]) - y[[1L]]   # not linear in yp -> adjoint wrong
+   ```
+   TODO: maybe check in the R transpiler (res body: yp only in linear positions)
+   DECIDED 2026-11-04: option 1 (adjoint) before step 6.
+   5a adjoint + gradient (stop point afterwards), 5b hessian.
+
+   Theory 5a. F = M yp - f, M = F_yp, s = dy/dtheta, sensitivity eq.
+   F_y s + M s' + F_p = 0. D = diag(id), A = I - D. Requirement: M A = 0
+   (algebraic variables appear without yp, checked at runtime).
+   - adjoint DAE on (t_{k-1}, t_k): (M^T lambda)' - F_y^T lambda = 0
+     => d/dt(lambda^T M s) = -lambda^T F_p
+   - residual for IDAS: resB = M^T lambda' + (dM/dt)^T lambda - F_y^T lambda
+     = adj_dot_yp - adj_y of one forward-over-reverse sweep of res_t<ReverseDouble>
+     with direction (t: 1, y: y', yp: 0, p: 0) and seeds (lambda, lambda')
+   - jump at t_k (ybar = output adjoint at t_k), E = M D + F_y A (index 1: regular)
+     E^T r = A ybar                       (r in null(M^T): r^T M = 0)
+     E^T delta = D (ybar - F_y^T r)       (M^T delta = D ybar - D F_y^T r)
+     lambda += delta, pbar -= F_p^T r
+     because ybar^T s = delta^T M s + r^T F_y s and r^T F_y s = -r^T F_p
+     E: n Dual evaluations of res_t<Dual> per t_k (+ n_a for the check M A = 0)
+   - quadrature fQB = F_p^T lambda -> qB(t0) = -int F_p^T lambda dt
+   - result: y0bar = D M^T lambda(t0), pbar = qB(t0) - sum_k F_p(t_k)^T r_k
+   - backward id: lambda_j differential iff row j of M is non-zero;
+     consistent lambda' via IDACalcICB after every jump
+   - ODE check (M = I, D = I): r = 0, delta = ybar, resB = lambda' + f_y^T lambda (= cvode)
+   Status 5a 2026-11-04: DONE, test_idas.R green (full suite run by Konrad). ida_options(sensitivity =
+   "auto" | "forward" | "adjoint") as cvode; ida_sens_state::{sweep, build_E, jump,
+   backward_adjoint}; tests in test_idas.R (LV + algebraic product, equation order
+   != variable order with M(y), check M A = 0).
 6. plan only: sparse Hessian (star colouring + HVP per colour)
 
 Stop points: after 2 (forward usable), after 3 (gradient usable).

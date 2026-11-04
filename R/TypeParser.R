@@ -604,7 +604,8 @@ predefined_known_types <- quote({
       abstol |> type(double),
       max_steps |> type(int),
       stats |> type(logical),
-      linear_solver |> type(int)
+      linear_solver |> type(int),
+      sensitivity |> type(int)
     )
   )
   # slots must match etr_bits/Random/{MersenneTwister,Distributions}.hpp
