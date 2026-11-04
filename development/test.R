@@ -42,6 +42,8 @@ tinytest::run_test_file("./inst/tinytest/test_density.R")
 
 for (k in 1:200) tinytest::run_test_file("inst/tinytest/test_pmap.R")
 
+tinytest::run_test_file("inst/tinytest/test_new_type.R")
+
 files <- list.files("./R", full.names = TRUE)
 invisible(lapply(files, source))
 

@@ -128,6 +128,62 @@ train <- function(X, y, perm, W1, b1, W2, b2, epochs, batch_size, lr) {
     }
   }
 
+  get_batch <- function(X, y, perm, e, start, xb, yb) {
+    argtypes(
+      X |> type(borrow_mat(double)) |> ref() |> const(),
+      y |> type(vec(int)) |> ref() |> const(),
+      perm |> type(mat(int)) |> ref() |> const(),
+      e |> type(int),
+      start |> type(int),
+      xb |> type(mat(double)) |> ref(),
+      yb |> type(vec(int)) |> ref()
+    )
+    returntype(void)
+    for (j in 1L:ncol(xb)) {
+      sample_index <- perm[start + j - 1L, e]
+      yb[[j]] <- y[[sample_index]]
+      for (i in 1L:nrow(X)) {
+        xb[i, j] <- X[i, sample_index]
+      }
+    }
+  }
+
+  forward <- function(W1, b1, W2, b2, xb, h, z) {
+    argtypes(
+      W1 |> type(borrow_mat(double)) |> ref() |> const(),
+      b1 |> type(borrow_mat(double)) |> ref() |> const(),
+      W2 |> type(borrow_mat(double)) |> ref() |> const(),
+      b2 |> type(borrow_mat(double)) |> ref() |> const(),
+      xb |> type(mat(double)) |> ref() |> const(),
+      h |> type(mat(double)) |> ref(),
+      z |> type(mat(double)) |> ref()
+    )
+    returntype(void)
+    h <- dense(W1, b1, xb)
+    relu(h)
+    z <- dense(W2, b2, h)
+  }
+
+  backward <- function(W2, xb, h, dz, g_W1, g_b1, g_W2, g_b2) {
+    argtypes(
+      W2 |> type(borrow_mat(double)) |> ref() |> const(),
+      xb |> type(mat(double)) |> ref() |> const(),
+      h |> type(mat(double)) |> ref() |> const(),
+      dz |> type(mat(double)) |> ref() |> const(),
+      g_W1 |> type(mat(double)) |> ref(),
+      g_b1 |> type(mat(double)) |> ref(),
+      g_W2 |> type(mat(double)) |> ref(),
+      g_b2 |> type(mat(double)) |> ref()
+    )
+    returntype(void)
+    g_W2 <- dz %*% t(h)
+    g_b2 <- row_sums(dz)
+    dh <- t(W2) %*% dz
+    relu_backward(dh, h)
+    g_W1 <- dh %*% t(xb)
+    g_b1 <- row_sums(dh)
+  }
+
   m_W1 <- matrix(0.0, nrow(W1), ncol(W1))
   v_W1 <- matrix(0.0, nrow(W1), ncol(W1))
   m_b1 <- matrix(0.0, nrow(b1), ncol(b1))
@@ -136,6 +192,11 @@ train <- function(X, y, perm, W1, b1, W2, b2, epochs, batch_size, lr) {
   v_W2 <- matrix(0.0, nrow(W2), ncol(W2))
   m_b2 <- matrix(0.0, nrow(b2), ncol(b2))
   v_b2 <- matrix(0.0, nrow(b2), ncol(b2))
+
+  g_W1 <- matrix(0.0, nrow(W1), ncol(W1))
+  g_b1 <- matrix(0.0, nrow(b1), ncol(b1))
+  g_W2 <- matrix(0.0, nrow(W2), ncol(W2))
+  g_b2 <- matrix(0.0, nrow(b2), ncol(b2))
 
   n <- ncol(X)
   losses <- numeric(epochs)
@@ -148,26 +209,16 @@ train <- function(X, y, perm, W1, b1, W2, b2, epochs, batch_size, lr) {
 
       xb <- matrix(0.0, nrow(X), nb)
       yb <- integer(nb)
-      for (j in 1L:nb) {
-        sample_index <- perm[start + j - 1L, e]
-        yb[[j]] <- y[[sample_index]]
-        for (i in 1L:nrow(X)) {
-          xb[i, j] <- X[i, sample_index]
-        }
-      }
+      get_batch(X, y, perm, e, start, xb, yb)
 
-      h <- dense(W1, b1, xb)
-      relu(h)
-      z <- dense(W2, b2, h)
-      dz <- matrix(0.0, nrow(z), nb)
+      h <- matrix(0.0, nrow(W1), nb)
+      z <- matrix(0.0, nrow(W2), nb)
+      forward(W1, b1, W2, b2, xb, h, z)
+
+      dz <- matrix(0.0, nrow(W2), nb)
       losses[[e]] <- losses[[e]] + softmax_cross_entropy(z, yb, dz)
 
-      g_W2 <- dz %*% t(h)
-      g_b2 <- row_sums(dz)
-      dh <- t(W2) %*% dz
-      relu_backward(dh, h)
-      g_W1 <- dh %*% t(xb)
-      g_b1 <- row_sums(dh)
+      backward(W2, xb, h, dz, g_W1, g_b1, g_W2, g_b2)
 
       step <- step + 1L
       adam_step(W1, g_W1, m_W1, v_W1, step, lr)

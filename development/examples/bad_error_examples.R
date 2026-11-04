@@ -63,3 +63,40 @@ f <- function(n) {
   res$x
 }
 fcpp <- ast2ast::translate(f, types_f = types)
+
+# local variable named like a sibling fn: "Reassignment to variable loss to which
+# is marked as function" + repeated "Found unsupported left type" follow-ups.
+# Should not clash at all: loss is local to helper.
+# Found while writing development/mnist/mnist_ad.R (2026-11-02)
+f <- function(x) {
+  argtypes(x |> type(double))
+  helper <- function(x) {
+    argtypes(x |> type(double))
+    returntype(double)
+    loss <- 0.0
+    loss <- loss + x
+    return(loss)
+  }
+  loss <- function(x) {
+    argtypes(x |> type(double))
+    returntype(double)
+    return(helper(x))
+  }
+  return(loss(x))
+}
+fcpp <- ast2ast::translate(f)
+
+# empty index inside a fn passed to gradient(): internal R error
+# 'argument "el" is missing, with no default'.
+# Cause: R/Colouring.R walk() binds the empty arg in `for (el in as.list(code))`.
+# Found while writing development/mnist/mnist_ad.R (2026-11-02)
+f <- function(t, b) {
+  argtypes(t |> type(vec(double)), b |> type(mat(double)))
+  loss <- function(theta, batch) {
+    argtypes(theta |> type(vec(double)), batch |> type(mat(double)))
+    returntype(double)
+    return(sum(theta) + sum(batch[1L, ]))
+  }
+  gradient(loss, t, b)
+}
+fcpp <- ast2ast::translate(f)

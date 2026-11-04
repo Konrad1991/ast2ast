@@ -76,6 +76,8 @@ translate(
       \item Functionals (take an \code{fn()}): \code{map}, \code{Reduce}, \code{Filter}, \code{apply}
       \item Optimizers / derivatives of an \code{fn()}: \code{jacobian}, \code{jacobian_sparse},
         \code{jacobian_banded}, \code{lbfgsb}, \code{pso}
+      \item Random numbers: \code{mersenne_twister}, \code{normal}, \code{uniform}, \code{draw},
+        \code{sample}, \code{sample_int}, \code{dnorm}, \code{dunif}, see below
       \item Casts: \code{as.numeric}, \code{as.integer}, \code{as.logical}
       \item Sequences: \code{seq_len}, \code{seq_along}
       \item Concatenation: \code{c}
@@ -239,6 +241,41 @@ translate(
     For \code{lbfgsb} and \code{pso} the optional trailing \code{data} argument
     (any non-function, non-character value) is passed to \code{f} unchanged as a
     second argument.
+  }
+  \subsection{Random numbers}{
+    There is no global seed. Engines and distributions are objects; the numbers
+    equal those of R after \code{set.seed(seed)} with the default \code{RNGkind()}.
+    \itemize{
+      \item \code{mersenne_twister(seed)}: random number engine.
+      \item \code{normal(engine, mean = 0, sd = 1)}, \code{uniform(engine, min = 0, max = 1)}:
+        distributions. Each stores a copy of \code{engine}; the parameters and
+        \code{engine$seed} are read-only fields.
+      \item \code{draw(dist, n)}: \code{n} numbers as \code{rnorm(n, mean, sd)} /
+        \code{runif(n, min, max)}; advances the engine of \code{dist}.
+      \item \code{sample(engine, x, size, replace, prob)},
+        \code{sample_int(engine, n, size, replace, prob)}: as R's \code{sample} /
+        \code{sample.int}; advance \code{engine}.
+      \item \code{dnorm(x, mean, sd, log)}, \code{dunif(x, min, max, log)}: densities,
+        differentiable in forward and reverse mode.
+    }
+    \preformatted{
+      f <- function() {
+        d <- normal(mersenne_twister(1L))
+        draw(d, 10L)   # set.seed(1); rnorm(10)
+      }
+    }
+    Notes:
+    \itemize{
+      \item Distributions created from the same engine produce the same stream;
+        mixing distributions is not identical to R, where all share one stream.
+      \item Pass engines and distributions to inner functions with \code{ref()};
+        a copy repeats the draws in the caller (warning at translation time).
+      \item C++ does not fix the evaluation order of function arguments, so
+        \code{c(draw(d, 2L), draw(d, 2L))} may differ from R; assign each draw
+        to a variable first.
+      \item Engines and distributions cannot be passed from or returned to R.
+    }
+    See \code{vignette("RandomNumbers", package = "ast2ast")}.
   }
   \subsection{Custom types}{
     User-defined struct types are declared in a \code{types_f} helper function

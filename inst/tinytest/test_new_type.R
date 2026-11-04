@@ -1447,3 +1447,34 @@ f <- function(a) {
 }
 fcpp <- ast2ast::translate(f, types_f = types_f_area)
 expect_equal(fcpp(3), 4)
+
+# --- slot access binds to a mutable ref() argument -----------------------------
+f <- function(ar) {
+  argtypes(ar |> type(Area))
+  bump <- function(x) {
+    argtypes(x |> type(double) |> ref())
+    returntype(void)
+    x <- x + 1
+  }
+  bump(ar$x$x)
+  bump(ar$x$y)
+  return(ar)
+}
+fcpp <- ast2ast::translate(f, types_f = types_f_area)
+pt <- structure(list(x = 1, y = 5), class = "Point")
+res <- fcpp(structure(list(x = pt), class = "Area"))
+expect_equal(res$x$x, 2)
+expect_equal(res$x$y, 6)
+
+# an expression on a slot is still no lvalue
+f <- function(p) {
+  argtypes(p |> type(Point))
+  bump <- function(x) {
+    argtypes(x |> type(double) |> ref())
+    returntype(void)
+    x <- x + 1
+  }
+  bump(p$x + 1)
+  return(p)
+}
+expect_error(ast2ast::translate(f, types_f = types_f_point), "accepts only variables")

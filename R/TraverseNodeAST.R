@@ -365,8 +365,13 @@ action_update_function_registry <- function(node, function_registry, namespace =
       index, name, is_ds, should_ds, borrow_type_spelling(is_ds)
     ), call. = FALSE)
   }
+  # NOTE: a slot access (p$x, p$a$b) is an lvalue in C++, so it binds to a mutable ref
+  is_lvalue <- function(node) {
+    if (inherits(node, "variable_node")) return(TRUE)
+    inherits(node, "binary_node") && identical(node$operator, "$") && is_lvalue(node$left_node)
+  }
   const_or_mut_check <- function(node, should_type, index, name) {
-    is_variable <- inherits(node, "variable_node")
+    is_variable <- is_lvalue(node)
     mut_arg <- should_type$get_const_or_mut() == "mutable"
     if (!is_variable && mut_arg) {
       node$error <- sprintf(
