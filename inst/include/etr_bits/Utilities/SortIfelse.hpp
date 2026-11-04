@@ -2,36 +2,64 @@
 #define SORT_IFELSE_ETR_HPP
 
 #include <algorithm>
+#include "./RadixSort.hpp"
+#include "./ShellSort.hpp"
 
 namespace etr {
 
-// sort -- ascending by default; drops NA (R's na.last = NA); returns a flat
-// vector keeping the input base type. std::stable_sort keeps ties in order.
+// sort -- ascending by default; drops NA and NaN (R's na.last = NA); returns a
+// flat vector keeping the input base type.
+// method: the R side maps "auto", "shell", "quick", "radix" to 0..3.
 // Registered deriv_possible = FALSE, so only the plain (non-AD) types arrive.
 // -----------------------------------------------------------------------------------------------------------
-template <typename T> inline auto sort_impl(const T &inp, bool decreasing) {
+enum class SortMethod { Auto = 0, Shell = 1, Quick = 2, Radix = 3 };
+// below this, radix passes + buffers cost more than insertion sort
+inline constexpr std::size_t sort_insertion_threshold = 64;
+
+template <typename T> inline auto sort_impl(const T &inp, bool decreasing, SortMethod method) {
   using Inner = typename ExtractDataType<Decayed<T>>::value_type;
-  std::vector<Inner> tmp;
-  tmp.reserve(inp.size());
+  using Raw = decltype(get_val(Inner{}));
+  std::vector<Raw> values;
+  values.reserve(inp.size());
   for (std::size_t i = 0; i < inp.size(); i++) {
-    Inner cur = inp.get(i);
-    if (get_scalar_val(cur).isNA()) continue;
-    tmp.push_back(cur);
+    const auto current = get_scalar_val(inp.get(i));
+    if (is_na_or_nan(current)) continue;
+    values.push_back(get_val(current));
   }
-  std::stable_sort(tmp.begin(), tmp.end(), [decreasing](const Inner &a, const Inner &b) {
-    return decreasing ? (get_val(a) > get_val(b)) : (get_val(a) < get_val(b));
-  });
-  Array<Inner, Buffer<Inner, RBufferTrait>> res(SI{tmp.size()});
-  res.dim = Dim{tmp.size()};
-  for (std::size_t i = 0; i < tmp.size(); i++) res.set(i, tmp[i]);
+  auto less = [decreasing](const Raw &a, const Raw &b) { return decreasing ? a > b : a < b; };
+  switch (method) {
+  case SortMethod::Auto:
+    if (values.size() < sort_insertion_threshold) {
+      insertion_sort(values, less);
+    } else {
+      radix_sort(values, decreasing);
+    }
+    break;
+  case SortMethod::Shell: shell_sort(values, less); break;
+  case SortMethod::Quick: std::sort(values.begin(), values.end(), less); break;
+  case SortMethod::Radix: radix_sort(values, decreasing); break;
+  }
+  Array<Inner, Buffer<Inner, RBufferTrait>> res(SI{values.size()});
+  res.dim = Dim{values.size()};
+  for (std::size_t i = 0; i < values.size(); i++) res.set(i, Inner(values[i]));
   return res;
 }
 
+template <typename M> inline SortMethod to_sort_method(const M &method) {
+  const int m = get_val(get_scalar_val(method));
+  ass<"Error in sort: unknown method">(m >= 0 && m <= 3);
+  return static_cast<SortMethod>(m);
+}
+
 template <typename T> requires IsArray<Decayed<T>>
-inline auto sort(const T &inp) { return sort_impl(inp, false); }
+inline auto sort(const T &inp) { return sort_impl(inp, false, SortMethod::Auto); }
 template <typename T, typename U> requires IsArray<Decayed<T>>
 inline auto sort(const T &inp, const U &decreasing) {
-  return sort_impl(inp, static_cast<bool>(get_val(get_scalar_val(decreasing))));
+  return sort_impl(inp, static_cast<bool>(get_val(get_scalar_val(decreasing))), SortMethod::Auto);
+}
+template <typename T, typename U, typename M> requires IsArray<Decayed<T>>
+inline auto sort(const T &inp, const U &decreasing, const M &method) {
+  return sort_impl(inp, static_cast<bool>(get_val(get_scalar_val(decreasing))), to_sort_method(method));
 }
 
 template <typename T> requires IsScalarLike<Decayed<T>>
@@ -45,6 +73,11 @@ inline auto sort(const T &inp) {
 }
 template <typename T, typename U> requires IsScalarLike<Decayed<T>>
 inline auto sort(const T &inp, const U &) { return sort(inp); }
+template <typename T, typename U, typename M> requires IsScalarLike<Decayed<T>>
+inline auto sort(const T &inp, const U &, const M &method) {
+  to_sort_method(method);
+  return sort(inp);
+}
 
 // ifelse(test, yes, no) -- elementwise select, vectorised over `test`. `yes` /
 // `no` must be a scalar or exactly length(test): no recycling. NA in `test`
