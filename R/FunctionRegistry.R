@@ -2528,8 +2528,8 @@ function_registry_global$add(
     "linear_solver: \"sundials\" (dense LU of SUNDIALS) or \"lapack\" ",
     "(faster for large systems; with OpenBLAS it does not run in parallel inside pmap). ",
     "sensitivity (gradient() / reverse mode through ida): \"forward\" (forward sensitivities, ",
-    "cost grows with the number of inputs), \"adjoint\" (one backward solve; the residual has to be ",
-    "linear in yp and algebraic variables must not appear with yp), \"auto\" ",
+    "cost grows with the number of inputs), \"adjoint\" (one backward solve; ",
+    "algebraic variables must not appear with yp), \"auto\" ",
     "(forward up to 20 inputs y0/params that depend on x, adjoint above)."
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {
@@ -2857,11 +2857,10 @@ function_registry_global$add(
     "t, cj scalar doubles; J a borrow_mat(double), zeroed before each call; no return value. ",
     "Without jac the Jacobian comes from difference quotients.\n",
     "Derivatives (forward / reverse, jacobian(), gradient()) w.r.t. y0 and params via IDAS ",
-    "forward sensitivities or the adjoint (options$sensitivity); in reverse mode params has to be ",
-    "a double vector. The adjoint needs a residual linear in yp (r = M(t, y) yp - f(t, y)) ",
-    "in which algebraic variables appear without yp. ",
-    "yp0 and the algebraic part of y0 are only initial guesses and get no derivative. ",
-    "No hessian() through ida yet.\n",
+    "forward sensitivities or the adjoint (options$sensitivity); hessian() via the second-order ",
+    "adjoint. In reverse mode params has to be a double vector. The adjoint and hessian() need ",
+    "a DAE of index 1 in which algebraic variables (id = 0) appear without yp. ",
+    "yp0 and the algebraic part of y0 are only initial guesses and get no derivative.\n",
     "Returns a length(times) x length(y0) matrix; row k is the state at times[k]."
   ),
   infer_fct = function(node, vars_list, info_env, function_registry) {

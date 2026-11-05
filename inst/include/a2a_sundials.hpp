@@ -1866,17 +1866,22 @@ inline auto idas_forward_impl(const RES &res_fct, const JAC *jac, const Y &y0, c
 // ida is one Custom block on the tape. Forward with res_t<Double>; derivatives either
 // - forward sensitivities: one per active input (y0 or params) with res_t<Dual>,
 //   input_bar_i = sum_k S_i(t_k)^T ybar(t_k), no backward solve
-// - adjoint: backward DAE (M^T lambda)' - F_y^T lambda = 0, M = F_yp, with a jump
-//   at every t_k that projects ybar onto the algebraic components.
-//   Theory: development/Plans/ode_sensitivities.md, step 5a.
-//   NOTE: exact only for F linear in yp (d/dt M needs y' only)
+// - adjoint: backward DAE (M^T lambda)' - F_y^T lambda = 0, M = F_yp, written with
+//   nu = (M^T lambda)_d so that only first derivatives of F appear:
+//     nu' = (F_y^T lambda)_d,  (M^T lambda)_d = nu,  (F_y^T lambda)_a = 0
+//   lambda algebraic, nu differential; index 1 (matrix w.r.t. lambda = E^T).
+//   Jump at every t_k projects ybar onto the algebraic components.
+//   hessian: the same system differentiated along a direction (second-order adjoint).
+//   Theory: development/Plans/ode_sensitivities.md, step 5.
 template <typename RES_R, typename JAC_R> struct ida_sens_state {
   using RES_D = typename rebind_scalar<RES_R, etr::Double>::type;
   using JAC_D = typename rebind_scalar<JAC_R, etr::Double>::type;
   using RES_Dual = typename rebind_scalar<RES_R, etr::Dual>::type;
+  using JAC_Dual = typename rebind_scalar<JAC_R, etr::Dual>::type;
   using DualVec = etr::Array<etr::Dual, etr::Buffer<etr::Dual>>;
   using Ctx = fct_ctx<RES_D, DoubleVec, JAC_D>;
   using DualCtx = dual_res_ctx<RES_Dual, DualVec>;
+  using DualJacCtx = dual_res_ctx<RES_Dual, DualVec, JAC_Dual>;
 
   idas_workspace w;
   RES_D res_d{};
@@ -1894,129 +1899,201 @@ template <typename RES_R, typename JAC_R> struct ida_sens_state {
   std::size_t neq = 0, nt = 0;
 
   // adjoint
-  std::vector<double> times, id_vals;
+  std::vector<double> times, id_vals, y0_vals, yp0_vals;
+  std::vector<int> diff_idx;    // variable index of nu_m
+  std::vector<int> diff_pos;    // position of variable i in nu, -1 if algebraic
   std::vector<double> ys, yps;  // y(t_k), y'(t_k) at k * neq + j
   double reltol = 0.0, abstol = 0.0;
   long int max_steps = 0;
   int linear_solver = 1;
   N_Vector yB = nullptr, ypB = nullptr, qB = nullptr, idB = nullptr;
-  N_Vector y_k = nullptr, yp_k = nullptr;
   SUNMatrix AB = nullptr;
   SUNLinearSolver LSB = nullptr;
   int which = -1;
-  std::vector<double> idB_vals;
 
   ~ida_sens_state() {
     if (w.mem) IDAFree(&w.mem);
     if (LSB) SUNLinSolFree(LSB);
     if (AB) SUNMatDestroy(AB);
-    for (N_Vector v : {yB, ypB, qB, idB, y_k, yp_k}) {
+    for (N_Vector v : {yB, ypB, qB, idB}) {
       if (v) N_VDestroy(v);
     }
   }
 
-  // one forward-over-reverse sweep of res_t<ReverseDouble> at (t, y, yp, p):
-  // direction (t: 1, y: yp, yp: 0, p: 0), seeds (wgt, wgt_dot) on the residual
-  //   adj_y = F_y^T wgt, adj_yp = M^T wgt, adj_p = F_p^T wgt
-  //   adj_dot_yp = M^T wgt_dot + (dM/dt)^T wgt
-  std::vector<double> adj_y, adj_yp, adj_p, adj_dot_yp;
-  std::vector<double> sweep_key;
-  bool sweep_valid = false;
+  void set_layout() {
+    diff_idx.clear();
+    diff_pos.assign(neq, -1);
+    for (std::size_t i = 0; i < neq; ++i) {
+      if (id_vals[i] == 1.0) {
+        diff_pos[i] = static_cast<int>(diff_idx.size());
+        diff_idx.push_back(static_cast<int>(i));
+      }
+    }
+  }
+  std::size_t nd() const { return diff_idx.size(); }
 
-  void sweep(double t, const double *y, const double *yp, const double *wgt,
-             const double *wgt_dot) {
+  // x = (y, yp, p) as leaves on a fresh tape segment, residual recorded; returns start
+  std::vector<int> x_ids, out_ids;
+  std::size_t record(double t, const double *y, const double *yp) {
     const std::size_t np = p_vals.size();
-    std::vector<double> key;
-    key.reserve(1 + 4 * neq);
-    key.push_back(t);
-    key.insert(key.end(), y, y + neq);
-    key.insert(key.end(), yp, yp + neq);
-    key.insert(key.end(), wgt, wgt + neq);
-    key.insert(key.end(), wgt_dot, wgt_dot + neq);
-    if (sweep_valid && key == sweep_key) return;
     auto &tape = etr::TAPE_INTERN_ref();
     const std::size_t start = tape.size();
-    const std::size_t nblocks = tape.blocks.size();
-    // x = (t, y, yp, p)
-    std::vector<int> x_ids(1 + 2 * neq + np);
-    x_ids[0] = tape.push_var(t);
-    etr::ReverseDouble tt(etr::from_tape_id_t{}, x_ids[0], 0);
+    x_ids.resize(2 * neq + np);
     std::vector<etr::ReverseDouble> y_leaves(neq), yp_leaves(neq), r(neq);
     for (std::size_t i = 0; i < neq; ++i) {
-      x_ids[1 + i] = tape.push_var(y[i]);
-      y_leaves[i] = etr::ReverseDouble(etr::from_tape_id_t{}, x_ids[1 + i], 0);
-      x_ids[1 + neq + i] = tape.push_var(yp[i]);
-      yp_leaves[i] = etr::ReverseDouble(etr::from_tape_id_t{}, x_ids[1 + neq + i], 0);
+      x_ids[i] = tape.push_var(y[i]);
+      y_leaves[i] = etr::ReverseDouble(etr::from_tape_id_t{}, x_ids[i], 0);
+      x_ids[neq + i] = tape.push_var(yp[i]);
+      yp_leaves[i] = etr::ReverseDouble(etr::from_tape_id_t{}, x_ids[neq + i], 0);
     }
     RevVec p_local(etr::SI{np});
     for (std::size_t i = 0; i < np; ++i) {
-      x_ids[1 + 2 * neq + i] = tape.push_var(p_vals[i]);
-      p_local.set(i, etr::ReverseDouble(etr::from_tape_id_t{}, x_ids[1 + 2 * neq + i], 0));
+      x_ids[2 * neq + i] = tape.push_var(p_vals[i]);
+      p_local.set(i, etr::ReverseDouble(etr::from_tape_id_t{}, x_ids[2 * neq + i], 0));
     }
+    etr::ReverseDouble tt(t);
     RevBorrowVec yv(y_leaves.data(), neq, etr::Dim{neq});
     RevBorrowVec ypv(yp_leaves.data(), neq, etr::Dim{neq});
     RevBorrowVec rv(r.data(), neq, etr::Dim{neq});
     res_r(tt, yv, ypv, rv, p_local);
-    std::vector<int> outs(neq);
-    for (std::size_t i = 0; i < neq; ++i) outs[i] = r[i].id;
-    std::vector<double> dir(x_ids.size(), 0.0);
-    dir[0] = 1.0;
-    std::copy(yp, yp + neq, dir.begin() + 1);
+    out_ids.resize(neq);
+    for (std::size_t i = 0; i < neq; ++i) out_ids[i] = r[i].id;
+    return start;
+  }
+
+  // vjp seeded wgt: adj_y = F_y^T wgt, adj_yp = M^T wgt, adj_p = F_p^T wgt
+  std::vector<double> adj_y, adj_yp, adj_p;
+  std::vector<double> vjp_key;
+  bool vjp_valid = false;
+
+  void vjp(double t, const double *y, const double *yp, const double *wgt) {
+    std::vector<double> key;
+    key.reserve(1 + 3 * neq);
+    key.push_back(t);
+    key.insert(key.end(), y, y + neq);
+    key.insert(key.end(), yp, yp + neq);
+    key.insert(key.end(), wgt, wgt + neq);
+    if (vjp_valid && key == vjp_key) return;
+    const std::size_t np = p_vals.size();
+    auto &tape = etr::TAPE_INTERN_ref();
+    const std::size_t nblocks = tape.blocks.size();
+    const std::size_t start = record(t, y, yp);
+    const std::size_t end = tape.size();
+    std::fill(tape.adj.begin() + static_cast<std::ptrdiff_t>(start), tape.adj.end(), 0.0);
+    for (std::size_t i = 0; i < neq; ++i) {
+      const int id = out_ids[i];
+      if (id >= static_cast<int>(start)) tape.adj[static_cast<std::size_t>(id)] += wgt[i];
+    }
+    tape.reverse_range(end, start);
+    adj_y.resize(neq);
+    adj_yp.resize(neq);
+    adj_p.resize(np);
+    for (std::size_t i = 0; i < neq; ++i) {
+      adj_y[i] = tape.adj[static_cast<std::size_t>(x_ids[i])];
+      adj_yp[i] = tape.adj[static_cast<std::size_t>(x_ids[neq + i])];
+    }
+    for (std::size_t i = 0; i < np; ++i) adj_p[i] = tape.adj[static_cast<std::size_t>(x_ids[2 * neq + i])];
+    tape.rewind(start, nblocks);
+    vjp2_valid = false;
+    vjp_key = std::move(key);
+    vjp_valid = true;
+  }
+
+  // forward-over-reverse along (y: s, yp: sp, p: pdot), seeds (wgt, wgt_dot):
+  // adj_* as vjp, adj_dot_x = F_x^T wgt_dot + (d/de F_x)^T wgt
+  std::vector<double> adj_dot_y, adj_dot_yp, adj_dot_p;
+  std::vector<double> vjp2_key;
+  bool vjp2_valid = false;
+
+  void vjp2(double t, const double *y, const double *yp, const double *s, const double *sp,
+            const double *pdot, const double *wgt, const double *wgt_dot) {
+    const std::size_t np = p_vals.size();
+    std::vector<double> key;
+    key.reserve(1 + 6 * neq + np);
+    key.push_back(t);
+    for (const double *v : {y, yp, s, sp, wgt, wgt_dot}) key.insert(key.end(), v, v + neq);
+    key.insert(key.end(), pdot, pdot + np);
+    if (vjp2_valid && key == vjp2_key) return;
+    auto &tape = etr::TAPE_INTERN_ref();
+    const std::size_t nblocks = tape.blocks.size();
+    const std::size_t start = record(t, y, yp);
+    std::vector<double> dir(2 * neq + np);
+    std::copy(s, s + neq, dir.begin());
+    std::copy(sp, sp + neq, dir.begin() + static_cast<std::ptrdiff_t>(neq));
+    std::copy(pdot, pdot + np, dir.begin() + static_cast<std::ptrdiff_t>(2 * neq));
     {
       etr::HessianSweep hs(tape, start);
       hs.forward(x_ids, dir.data());
-      hs.reverse_seeded(outs, wgt, wgt_dot);
+      hs.reverse_seeded(out_ids, wgt, wgt_dot);
       auto at = [&](std::size_t x) { return static_cast<std::size_t>(x_ids[x]) - start; };
       adj_y.resize(neq);
       adj_yp.resize(neq);
-      adj_dot_yp.resize(neq);
       adj_p.resize(np);
+      adj_dot_y.resize(neq);
+      adj_dot_yp.resize(neq);
+      adj_dot_p.resize(np);
       for (std::size_t i = 0; i < neq; ++i) {
-        adj_y[i] = hs.adj[at(1 + i)];
-        adj_yp[i] = hs.adj[at(1 + neq + i)];
-        adj_dot_yp[i] = hs.adj_dot[at(1 + neq + i)];
+        adj_y[i] = hs.adj[at(i)];
+        adj_yp[i] = hs.adj[at(neq + i)];
+        adj_dot_y[i] = hs.adj_dot[at(i)];
+        adj_dot_yp[i] = hs.adj_dot[at(neq + i)];
       }
-      for (std::size_t i = 0; i < np; ++i) adj_p[i] = hs.adj[at(1 + 2 * neq + i)];
+      for (std::size_t i = 0; i < np; ++i) {
+        adj_p[i] = hs.adj[at(2 * neq + i)];
+        adj_dot_p[i] = hs.adj_dot[at(2 * neq + i)];
+      }
     }
     tape.rewind(start, nblocks);
-    sweep_key = std::move(key);
-    sweep_valid = true;
+    vjp_valid = false;
+    vjp2_key = std::move(key);
+    vjp2_valid = true;
   }
 
-  static int res_b(sunrealtype t, N_Vector y, N_Vector yp, N_Vector yB_, N_Vector ypB_,
+  // residual of [lambda; nu] from gy = F_y^T lambda, gyp = M^T lambda
+  void adjoint_residual(const double *gy, const double *gyp, const double *nu,
+                        const double *nu_p, double *out) const {
+    for (std::size_t i = 0; i < neq; ++i) {
+      const int m = diff_pos[i];
+      out[i] = m >= 0 ? gyp[i] - nu[m] : gy[i];
+    }
+    for (std::size_t m = 0; m < nd(); ++m) {
+      out[neq + m] = nu_p[m] - gy[static_cast<std::size_t>(diff_idx[m])];
+    }
+  }
+
+  static int res_b(sunrealtype t, N_Vector y, N_Vector yp, N_Vector zB, N_Vector zpB,
                    N_Vector rrB, void *user_data) {
     auto *s = static_cast<ida_sens_state *>(user_data);
-    s->sweep(t, N_VGetArrayPointer(y), N_VGetArrayPointer(yp), N_VGetArrayPointer(yB_),
-             N_VGetArrayPointer(ypB_));
-    sunrealtype *out = N_VGetArrayPointer(rrB);
-    for (std::size_t i = 0; i < s->neq; ++i) out[i] = s->adj_dot_yp[i] - s->adj_y[i];
+    const sunrealtype *z = N_VGetArrayPointer(zB);
+    const sunrealtype *zp = N_VGetArrayPointer(zpB);
+    s->vjp(t, N_VGetArrayPointer(y), N_VGetArrayPointer(yp), z);
+    s->adjoint_residual(s->adj_y.data(), s->adj_yp.data(), z + s->neq, zp + s->neq,
+                        N_VGetArrayPointer(rrB));
     return 0;
   }
 
-  static int quad_b(sunrealtype t, N_Vector y, N_Vector yp, N_Vector yB_, N_Vector ypB_,
+  // qB(t0) = -int F_p^T lambda dt
+  static int quad_b(sunrealtype t, N_Vector y, N_Vector yp, N_Vector zB, N_Vector,
                     N_Vector qBdot, void *user_data) {
     auto *s = static_cast<ida_sens_state *>(user_data);
-    s->sweep(t, N_VGetArrayPointer(y), N_VGetArrayPointer(yp), N_VGetArrayPointer(yB_),
-             N_VGetArrayPointer(ypB_));
+    s->vjp(t, N_VGetArrayPointer(y), N_VGetArrayPointer(yp), N_VGetArrayPointer(zB));
     sunrealtype *out = N_VGetArrayPointer(qBdot);
     for (std::size_t i = 0; i < s->p_vals.size(); ++i) out[i] = s->adj_p[i];
     return 0;
   }
 
-  // E = M D + F_y A at t_k, column-major; one res_t<Dual> evaluation per column.
-  // Also checks M A = 0 and records the non-zero rows of M (backward id).
+  // E = M D + F_y A at (t, y, yp), column-major; one res_t<Dual> evaluation per column.
+  // Also checks M A = 0.
   std::vector<double> E;
   std::vector<int> E_piv;
 
-  void build_E(std::size_t k) {
+  void build_E(double t, const double *y, const double *yp) {
     const std::size_t np = p_vals.size();
     for (std::size_t m = 0; m < np; ++m) p_dual.set(m, etr::Dual(p_vals[m], 0.0));
     std::vector<double> y_val(neq), yp_val(neq), y_dot(neq), yp_dot(neq), r_val(neq), r_dot(neq);
     auto column = [&](std::size_t j, bool wrt_yp) {
-      std::copy(ys.begin() + static_cast<std::ptrdiff_t>(k * neq),
-                ys.begin() + static_cast<std::ptrdiff_t>((k + 1) * neq), y_val.begin());
-      std::copy(yps.begin() + static_cast<std::ptrdiff_t>(k * neq),
-                yps.begin() + static_cast<std::ptrdiff_t>((k + 1) * neq), yp_val.begin());
+      std::copy(y, y + neq, y_val.begin());
+      std::copy(yp, yp + neq, yp_val.begin());
       std::fill(y_dot.begin(), y_dot.end(), 0.0);
       std::fill(yp_dot.begin(), yp_dot.end(), 0.0);
       std::fill(r_dot.begin(), r_dot.end(), 0.0);
@@ -2024,19 +2101,15 @@ template <typename RES_R, typename JAC_R> struct ida_sens_state {
       DualBorrowVec yv(y_val.data(), y_dot.data(), neq, etr::Dim{neq});
       DualBorrowVec ypv(yp_val.data(), yp_dot.data(), neq, etr::Dim{neq});
       DualBorrowVec rv(r_val.data(), r_dot.data(), neq, etr::Dim{neq});
-      etr::Dual tt(times[k], 0.0);
+      etr::Dual tt(t, 0.0);
       res_dual(tt, yv, ypv, rv, p_dual);
     };
     E.assign(neq * neq, 0.0);
-    if (idB_vals.empty()) idB_vals.assign(neq, 0.0);
     for (std::size_t j = 0; j < neq; ++j) {
       const bool differential = id_vals[j] == 1.0;
       column(j, true);
       if (differential) {
-        for (std::size_t i = 0; i < neq; ++i) {
-          E[j * neq + i] = r_dot[i];
-          if (r_dot[i] != 0.0) idB_vals[i] = 1.0;
-        }
+        for (std::size_t i = 0; i < neq; ++i) E[j * neq + i] = r_dot[i];
       } else {
         for (std::size_t i = 0; i < neq; ++i) {
           etr::ass<"ida (adjoint): an algebraic variable (id = 0) appears with its derivative yp in the residual">(
@@ -2063,108 +2136,384 @@ template <typename RES_R, typename JAC_R> struct ida_sens_state {
     etr::ass<"ida (adjoint): dgetrs failed">(info == 0);
   }
 
-  // jump at t_k: lambda += delta, pbar_direct -= F_p^T r
-  void jump(std::size_t k, const std::vector<double> &ybar, std::vector<double> &lambda,
+  // jump at t_k: E^T r = A ybar, nu += (ybar - F_y^T r)_d, pbar_direct -= F_p^T r;
+  // lambda is made consistent afterwards by consistent_first
+  void jump(std::size_t k, const std::vector<double> &ybar, double *nu,
             std::vector<double> &pbar_direct) {
-    build_E(k);
-    std::vector<double> r(neq), u(neq);
+    const double *y = ys.data() + k * neq;
+    const double *yp = yps.data() + k * neq;
+    build_E(times[k], y, yp);
+    std::vector<double> r(neq);
     for (std::size_t j = 0; j < neq; ++j) r[j] = id_vals[j] == 1.0 ? 0.0 : ybar[j * nt + k];
     solve_Et(r);
-    const std::vector<double> zeros(neq, 0.0);
-    sweep_valid = false;
-    sweep(times[k], ys.data() + k * neq, yps.data() + k * neq, r.data(), zeros.data());
-    for (std::size_t j = 0; j < neq; ++j) {
-      u[j] = id_vals[j] == 1.0 ? ybar[j * nt + k] - adj_y[j] : 0.0;
+    vjp(times[k], y, yp, r.data());
+    for (std::size_t m = 0; m < nd(); ++m) {
+      const std::size_t i = static_cast<std::size_t>(diff_idx[m]);
+      nu[m] += ybar[i * nt + k] - adj_y[i];
     }
-    solve_Et(u);
-    for (std::size_t j = 0; j < neq; ++j) lambda[j] += u[j];
     for (std::size_t m = 0; m < p_vals.size(); ++m) pbar_direct[m] -= adj_p[m];
   }
 
+  // consistent [lambda; nu] and [lambda'; nu'] at t_k (E of t_k is factorised by jump):
+  // E^T lambda = [nu; 0], nu' = (F_y^T lambda)_d.
+  // NOTE: not IDACalcICB: its difference-quotient Newton fails for tight abstol
+  void consistent_first(std::size_t k, double *z, double *zp) {
+    const double *y = ys.data() + k * neq;
+    const double *yp = yps.data() + k * neq;
+    for (std::size_t i = 0; i < neq; ++i) {
+      const int m = diff_pos[i];
+      z[i] = m >= 0 ? z[neq + static_cast<std::size_t>(m)] : 0.0;
+    }
+    std::vector<double> lam(z, z + neq);
+    solve_Et(lam);
+    std::copy(lam.begin(), lam.end(), z);
+    vjp(times[k], y, yp, z);
+    std::fill(zp, zp + neq + nd(), 0.0);
+    for (std::size_t m = 0; m < nd(); ++m) zp[neq + m] = adj_y[static_cast<std::size_t>(diff_idx[m])];
+  }
+
+  // backward vectors; nb unknowns, idB: lambda 0, nu 1 (repeated per block)
+  void new_backward_vectors(SUNContext sctx, std::size_t nb, std::size_t nq, std::size_t blocks,
+                            N_Vector &zB, N_Vector &zpB, N_Vector &id_out, N_Vector &q_out) {
+    zB = N_VNew_Serial(static_cast<sunindextype>(nb), sctx);
+    zpB = N_VNew_Serial(static_cast<sunindextype>(nb), sctx);
+    id_out = N_VNew_Serial(static_cast<sunindextype>(nb), sctx);
+    q_out = N_VNew_Serial(static_cast<sunindextype>(nq), sctx);
+    etr::ass<"ida (adjoint): N_VNew_Serial failed">(zB && zpB && id_out && q_out);
+    N_VConst(0.0, zB);
+    N_VConst(0.0, zpB);
+    N_VConst(0.0, q_out);
+    sunrealtype *idp = N_VGetArrayPointer(id_out);
+    const std::size_t block = neq + nd();
+    for (std::size_t b = 0; b < blocks; ++b) {
+      for (std::size_t i = 0; i < block; ++i) idp[b * block + i] = i < neq ? 0.0 : 1.0;
+    }
+  }
+
+  void setup_backward(void *mem, int which_, N_Vector zB, N_Vector idv, SUNMatrix &A_out,
+                      SUNLinearSolver &LS_out, SUNContext sctx) {
+    const auto nb = NV_LENGTH_S(zB);
+    etr::ass<"ida (adjoint): IDASStolerancesB failed">(
+      IDASStolerancesB(mem, which_, reltol, abstol) == IDA_SUCCESS);
+    etr::ass<"ida (adjoint): IDASetUserDataB failed">(
+      IDASetUserDataB(mem, which_, this) == IDA_SUCCESS);
+    etr::ass<"ida (adjoint): IDASetMaxNumStepsB failed">(
+      IDASetMaxNumStepsB(mem, which_, max_steps) == IDA_SUCCESS);
+    etr::ass<"ida (adjoint): IDASetIdB failed">(IDASetIdB(mem, which_, idv) == IDA_SUCCESS);
+    // NOTE: lambda follows the interpolated forward yp, which has kinks at every
+    // forward step (M depending on yp) -> repeated error test failures otherwise
+    etr::ass<"ida (adjoint): IDASetSuppressAlgB failed">(
+      IDASetSuppressAlgB(mem, which_, SUNTRUE) == IDA_SUCCESS);
+    // no jacB: difference quotients of the backward residual
+    A_out = SUNDenseMatrix(nb, nb, sctx);
+    etr::ass<"ida (adjoint): SUNDenseMatrix failed">(A_out != nullptr);
+    LS_out = dense_solver(linear_solver, zB, A_out, sctx);
+    etr::ass<"ida (adjoint): creating the dense linear solver failed">(LS_out != nullptr);
+    etr::ass<"ida (adjoint): IDASetLinearSolverB failed">(
+      IDASetLinearSolverB(mem, which_, LS_out, A_out) == IDA_SUCCESS);
+    etr::ass<"ida (adjoint): IDAQuadSStolerancesB failed">(
+      IDAQuadSStolerancesB(mem, which_, reltol, abstol) == IDA_SUCCESS);
+    etr::ass<"ida (adjoint): IDASetQuadErrConB failed">(
+      IDASetQuadErrConB(mem, which_, SUNTRUE) == IDA_SUCCESS);
+  }
+
   void init_backward() {
-    const std::size_t np = p_vals.size();
-    const auto n = static_cast<sunindextype>(neq);
-    yB = N_VNew_Serial(n, w.ctx);
-    ypB = N_VNew_Serial(n, w.ctx);
-    idB = N_VNew_Serial(n, w.ctx);
-    y_k = N_VNew_Serial(n, w.ctx);
-    yp_k = N_VNew_Serial(n, w.ctx);
-    qB = N_VNew_Serial(static_cast<sunindextype>(np), w.ctx);
-    etr::ass<"ida (adjoint): N_VNew_Serial failed">(yB && ypB && idB && y_k && yp_k && qB);
-    N_VConst(0.0, yB);
-    N_VConst(0.0, ypB);
-    N_VConst(0.0, qB);
-    std::copy(idB_vals.begin(), idB_vals.end(), N_VGetArrayPointer(idB));
+    new_backward_vectors(w.ctx, neq + nd(), p_vals.size(), 1, yB, ypB, idB, qB);
     etr::ass<"ida (adjoint): IDACreateB failed">(IDACreateB(w.mem, &which) == IDA_SUCCESS);
     etr::ass<"ida (adjoint): IDAInitB failed">(
       IDAInitB(w.mem, which, &res_b, times[nt - 1], yB, ypB) == IDA_SUCCESS);
-    etr::ass<"ida (adjoint): IDASStolerancesB failed">(
-      IDASStolerancesB(w.mem, which, reltol, abstol) == IDA_SUCCESS);
-    etr::ass<"ida (adjoint): IDASetUserDataB failed">(
-      IDASetUserDataB(w.mem, which, this) == IDA_SUCCESS);
-    etr::ass<"ida (adjoint): IDASetMaxNumStepsB failed">(
-      IDASetMaxNumStepsB(w.mem, which, max_steps) == IDA_SUCCESS);
-    etr::ass<"ida (adjoint): IDASetIdB failed">(IDASetIdB(w.mem, which, idB) == IDA_SUCCESS);
-    // no jacB: difference quotients of res_b
-    AB = SUNDenseMatrix(n, n, w.ctx);
-    etr::ass<"ida (adjoint): SUNDenseMatrix failed">(AB != nullptr);
-    LSB = dense_solver(linear_solver, yB, AB, w.ctx);
-    etr::ass<"ida (adjoint): creating the dense linear solver failed">(LSB != nullptr);
-    etr::ass<"ida (adjoint): IDASetLinearSolverB failed">(
-      IDASetLinearSolverB(w.mem, which, LSB, AB) == IDA_SUCCESS);
     etr::ass<"ida (adjoint): IDAQuadInitB failed">(
       IDAQuadInitB(w.mem, which, &quad_b, qB) == IDA_SUCCESS);
-    etr::ass<"ida (adjoint): IDAQuadSStolerancesB failed">(
-      IDAQuadSStolerancesB(w.mem, which, reltol, abstol) == IDA_SUCCESS);
-    etr::ass<"ida (adjoint): IDASetQuadErrConB failed">(
-      IDASetQuadErrConB(w.mem, which, SUNTRUE) == IDA_SUCCESS);
+    setup_backward(w.mem, which, yB, idB, AB, LSB, w.ctx);
   }
 
-  // ybar: column-major nt x neq; y0bar = D M^T lambda(t0), pbar = qB(t0) - sum_k F_p^T r_k
+  void check_backward_flag(int flag, const char *what, double t) {
+    etr::ass(flag >= 0, std::string("ida (adjoint): ") + what + " failed at t = " +
+                          std::to_string(t) + ": " + flag_name(IDAGetReturnFlagName(flag)));
+  }
+
+  // ybar: column-major nt x neq; y0bar = nu(t0) (differential), pbar = qB(t0) - sum_k F_p^T r_k
   void backward_adjoint(const std::vector<double> &ybar, std::vector<double> &y0bar,
                         std::vector<double> &pbar) {
     const std::size_t np = p_vals.size();
-    std::vector<double> lambda(neq, 0.0), pbar_direct(np, 0.0);
-    jump(nt - 1, ybar, lambda, pbar_direct);
     if (which < 0) init_backward();
-    sunrealtype *lam = N_VGetArrayPointer(yB);
+    sunrealtype *z = N_VGetArrayPointer(yB);
+    N_VConst(0.0, yB);
     N_VConst(0.0, qB);
+    std::vector<double> pbar_direct(np, 0.0);
+    jump(nt - 1, ybar, z + neq, pbar_direct);
     for (std::size_t k = nt - 1; k >= 1; --k) {
-      std::copy(lambda.begin(), lambda.end(), lam);
-      N_VConst(0.0, ypB);
-      sweep_valid = false;
+      consistent_first(k, z, N_VGetArrayPointer(ypB));
+      vjp_valid = false;
       etr::ass<"ida (adjoint): IDAReInitB failed">(
         IDAReInitB(w.mem, which, times[k], yB, ypB) == IDA_SUCCESS);
       etr::ass<"ida (adjoint): IDAQuadReInitB failed">(
         IDAQuadReInitB(w.mem, which, qB) == IDA_SUCCESS);
-      std::copy(ys.begin() + static_cast<std::ptrdiff_t>(k * neq),
-                ys.begin() + static_cast<std::ptrdiff_t>((k + 1) * neq), N_VGetArrayPointer(y_k));
-      std::copy(yps.begin() + static_cast<std::ptrdiff_t>(k * neq),
-                yps.begin() + static_cast<std::ptrdiff_t>((k + 1) * neq), N_VGetArrayPointer(yp_k));
-      int flag = IDACalcICB(w.mem, which, times[k - 1], y_k, yp_k);
-      etr::ass(flag == IDA_SUCCESS,
-               std::string("ida (adjoint): IDACalcICB failed at t = ") + std::to_string(times[k]) +
-                 ": " + flag_name(IDAGetReturnFlagName(flag)));
-      etr::ass<"ida (adjoint): IDAGetConsistentICB failed">(
-        IDAGetConsistentICB(w.mem, which, yB, ypB) == IDA_SUCCESS);
-      flag = IDASolveB(w.mem, times[k - 1], IDA_NORMAL);
-      etr::ass(flag >= 0, std::string("ida (adjoint): backward integration failed at t = ") +
-                            std::to_string(times[k]) + ": " + flag_name(IDAGetReturnFlagName(flag)));
+      check_backward_flag(IDASolveB(w.mem, times[k - 1], IDA_NORMAL), "backward integration", times[k]);
       sunrealtype tret = 0.0;
       etr::ass<"ida (adjoint): IDAGetB failed">(IDAGetB(w.mem, which, &tret, yB, ypB) == IDA_SUCCESS);
       etr::ass<"ida (adjoint): IDAGetQuadB failed">(
         IDAGetQuadB(w.mem, which, &tret, qB) == IDA_SUCCESS);
-      lambda.assign(lam, lam + neq);
-      jump(k - 1, ybar, lambda, pbar_direct);
+      jump(k - 1, ybar, z + neq, pbar_direct);
     }
-    const std::vector<double> zeros(neq, 0.0);
-    sweep_valid = false;
-    sweep(times[0], ys.data(), yps.data(), lambda.data(), zeros.data());
-    y0bar.resize(neq);
-    for (std::size_t j = 0; j < neq; ++j) y0bar[j] = id_vals[j] == 1.0 ? adj_yp[j] : 0.0;
+    y0bar.assign(neq, 0.0);
+    for (std::size_t m = 0; m < nd(); ++m) y0bar[static_cast<std::size_t>(diff_idx[m])] = z[neq + m];
     const sunrealtype *q = N_VGetArrayPointer(qB);
     pbar.resize(np);
     for (std::size_t m = 0; m < np; ++m) pbar[m] = q[m] + pbar_direct[m];
+  }
+
+  // ---------- second order (HessianSweep), one direction d = (y0dot, pdot) ----------
+  // tangent: forward solve with one sensitivity s = dy/dd (res_t<Dual>, p dot = pdot).
+  // backward2: [lambda; nu; mu; eta] with mu = d lambda/dd, eta = d nu/dd:
+  //   the first-order system, and the same system with F^T mu + (dF/dd)^T lambda
+  //   (one forward-over-reverse sweep, vjp2). Jumps differentiated along d.
+  struct second_order {
+    idas_workspace w;
+    N_Vector yB = nullptr, ypB = nullptr, qB = nullptr, idB = nullptr;
+    SUNMatrix AB = nullptr;
+    SUNLinearSolver LSB = nullptr;
+    int which = -1;
+    RES_Dual res{};
+    JAC_Dual jac{};
+    DualVec p_dual;
+    DualJacCtx ctx{};
+    std::vector<double> pdot, ys, yps, ss, sps;  // at k * neq + j
+    ~second_order() {
+      if (w.mem) IDAFree(&w.mem);
+      if (LSB) SUNLinSolFree(LSB);
+      if (AB) SUNMatDestroy(AB);
+      for (N_Vector v : {yB, ypB, qB, idB}) {
+        if (v) N_VDestroy(v);
+      }
+    }
+  };
+  std::unique_ptr<second_order> so;
+
+  // in_dot = (y0dot, pdot); out_dot = s(t_k), column-major nt x neq
+  void tangent(const std::vector<double> &in_dot, std::vector<double> &out_dot) {
+    const std::size_t np = p_vals.size();
+    so = std::make_unique<second_order>();
+    second_order &o = *so;
+    o.pdot.assign(in_dot.begin() + static_cast<std::ptrdiff_t>(neq), in_dot.end());
+    o.p_dual = DualVec(etr::SI{np});
+    for (std::size_t m = 0; m < np; ++m) o.p_dual.set(m, etr::Dual(p_vals[m], o.pdot[m]));
+    o.ctx.f = &o.res;
+    o.ctx.params = &o.p_dual;
+    constexpr bool with_jac = !std::is_same_v<JAC_R, no_jac>;
+    if constexpr (with_jac) o.ctx.jac = &o.jac;
+    dual_res_ctx_init(o.ctx, neq, with_jac);
+
+    idas_workspace &v = o.w;
+    etr::ass<"hessian (ida): SUNContext_Create failed">(SUNContext_Create(SUN_COMM_NULL, &v.ctx) == 0);
+    SUNContext_ClearErrHandlers(v.ctx);
+    const auto n = static_cast<sunindextype>(neq);
+    v.y = N_VNew_Serial(n, v.ctx);
+    v.yp = N_VNew_Serial(n, v.ctx);
+    v.id = N_VNew_Serial(n, v.ctx);
+    etr::ass<"hessian (ida): N_VNew_Serial failed">(v.y && v.yp && v.id);
+    v.yS = N_VCloneVectorArray(1, v.y);
+    v.ypS = N_VCloneVectorArray(1, v.y);
+    etr::ass<"hessian (ida): N_VCloneVectorArray failed">(v.yS && v.ypS);
+    v.ns = 1;
+    std::copy(y0_vals.begin(), y0_vals.end(), N_VGetArrayPointer(v.y));
+    std::copy(yp0_vals.begin(), yp0_vals.end(), N_VGetArrayPointer(v.yp));
+    std::copy(id_vals.begin(), id_vals.end(), N_VGetArrayPointer(v.id));
+    std::copy(in_dot.begin(), in_dot.begin() + static_cast<std::ptrdiff_t>(neq),
+              N_VGetArrayPointer(v.yS[0]));
+    N_VConst(0.0, v.ypS[0]);
+    if constexpr (with_jac) {
+      idas_setup(v, &dual_res_trampoline<DualJacCtx>, &dual_ida_jac_trampoline<DualJacCtx>, &o.ctx,
+                 times[0], reltol, abstol, max_steps, linear_solver);
+    } else {
+      idas_setup(v, &dual_res_trampoline<DualJacCtx>, IDALsJacFn{nullptr}, &o.ctx, times[0],
+                 reltol, abstol, max_steps, linear_solver);
+    }
+    idas_sens_init(v, &sens_res_trampoline<DualJacCtx>);
+    etr::ass<"hessian (ida): IDAAdjInit failed">(IDAAdjInit(v.mem, 100, IDA_HERMITE) == IDA_SUCCESS);
+    idas_consistent_ic(v, times[1]);
+
+    o.ys.resize(nt * neq);
+    o.yps.resize(nt * neq);
+    o.ss.resize(nt * neq);
+    o.sps.resize(nt * neq);
+    auto store = [&](std::size_t k) {
+      const auto off = static_cast<std::ptrdiff_t>(k * neq);
+      const sunrealtype *a = N_VGetArrayPointer(v.y);
+      const sunrealtype *b = N_VGetArrayPointer(v.yp);
+      const sunrealtype *c = N_VGetArrayPointer(v.yS[0]);
+      const sunrealtype *d = N_VGetArrayPointer(v.ypS[0]);
+      std::copy(a, a + neq, o.ys.begin() + off);
+      std::copy(b, b + neq, o.yps.begin() + off);
+      std::copy(c, c + neq, o.ss.begin() + off);
+      std::copy(d, d + neq, o.sps.begin() + off);
+    };
+    store(0);
+    for (std::size_t k = 1; k < nt; ++k) {
+      sunrealtype tret = 0.0;
+      int ncheck = 0;
+      int flag = IDASolveF(v.mem, times[k], &tret, v.y, v.yp, IDA_NORMAL, &ncheck);
+      etr::ass(flag == IDA_SUCCESS, std::string("hessian (ida): integration failed at t = ") +
+                                      std::to_string(tret) + ": " +
+                                      flag_name(IDAGetReturnFlagName(flag)));
+      etr::ass<"hessian (ida): IDAGetSens failed">(IDAGetSens(v.mem, &tret, v.yS) == IDA_SUCCESS);
+      etr::ass<"hessian (ida): IDAGetSensDky failed">(
+        IDAGetSensDky(v.mem, tret, 1, v.ypS) == IDA_SUCCESS);
+      store(k);
+    }
+    out_dot.assign(neq * nt, 0.0);
+    for (std::size_t k = 0; k < nt; ++k) {
+      for (std::size_t j = 0; j < neq; ++j) out_dot[j * nt + k] = o.ss[k * neq + j];
+    }
+  }
+
+  static int res_bs(sunrealtype t, N_Vector y, N_Vector yp, N_Vector *yS, N_Vector *ypS,
+                    N_Vector zB, N_Vector zpB, N_Vector rrBS, void *user_data) {
+    auto *s = static_cast<ida_sens_state *>(user_data);
+    const std::size_t block = s->neq + s->nd();
+    const sunrealtype *z = N_VGetArrayPointer(zB);
+    const sunrealtype *zp = N_VGetArrayPointer(zpB);
+    s->vjp2(t, N_VGetArrayPointer(y), N_VGetArrayPointer(yp), N_VGetArrayPointer(yS[0]),
+            N_VGetArrayPointer(ypS[0]), s->so->pdot.data(), z, z + block);
+    sunrealtype *out = N_VGetArrayPointer(rrBS);
+    s->adjoint_residual(s->adj_y.data(), s->adj_yp.data(), z + s->neq, zp + s->neq, out);
+    s->adjoint_residual(s->adj_dot_y.data(), s->adj_dot_yp.data(), z + block + s->neq,
+                        zp + block + s->neq, out + block);
+    return 0;
+  }
+
+  static int quad_bs(sunrealtype t, N_Vector y, N_Vector yp, N_Vector *yS, N_Vector *ypS,
+                     N_Vector zB, N_Vector, N_Vector qBdot, void *user_data) {
+    auto *s = static_cast<ida_sens_state *>(user_data);
+    const std::size_t block = s->neq + s->nd();
+    const std::size_t np = s->p_vals.size();
+    const sunrealtype *z = N_VGetArrayPointer(zB);
+    s->vjp2(t, N_VGetArrayPointer(y), N_VGetArrayPointer(yp), N_VGetArrayPointer(yS[0]),
+            N_VGetArrayPointer(ypS[0]), s->so->pdot.data(), z, z + block);
+    sunrealtype *out = N_VGetArrayPointer(qBdot);
+    for (std::size_t m = 0; m < np; ++m) {
+      out[m] = s->adj_p[m];
+      out[np + m] = s->adj_dot_p[m];
+    }
+    return 0;
+  }
+
+  // jump at t_k along d: E^T r_dot = A ybar_dot - D (dM/dd)^T r - A (dF_y/dd)^T r,
+  // eta += (ybar_dot - F_y^T r_dot - (dF_y/dd)^T r)_d, pbar_dot_direct -= d/dd (F_p^T r)
+  void jump2(std::size_t k, const std::vector<double> &ybar, const std::vector<double> &ybar_dot,
+             double *nu, double *eta, std::vector<double> &pbar_direct,
+             std::vector<double> &pbar_dot_direct) {
+    second_order &o = *so;
+    const double t = times[k];
+    const double *y = o.ys.data() + k * neq;
+    const double *yp = o.yps.data() + k * neq;
+    const double *s = o.ss.data() + k * neq;
+    const double *sp = o.sps.data() + k * neq;
+    build_E(t, y, yp);
+    std::vector<double> r(neq), r_dot(neq);
+    const std::vector<double> zeros(neq, 0.0);
+    for (std::size_t j = 0; j < neq; ++j) r[j] = id_vals[j] == 1.0 ? 0.0 : ybar[j * nt + k];
+    solve_Et(r);
+    vjp2(t, y, yp, s, sp, o.pdot.data(), r.data(), zeros.data());
+    for (std::size_t j = 0; j < neq; ++j) {
+      r_dot[j] = id_vals[j] == 1.0 ? -adj_dot_yp[j] : ybar_dot[j * nt + k] - adj_dot_y[j];
+    }
+    solve_Et(r_dot);
+    vjp2(t, y, yp, s, sp, o.pdot.data(), r.data(), r_dot.data());
+    for (std::size_t m = 0; m < nd(); ++m) {
+      const std::size_t i = static_cast<std::size_t>(diff_idx[m]);
+      nu[m] += ybar[i * nt + k] - adj_y[i];
+      eta[m] += ybar_dot[i * nt + k] - adj_dot_y[i];
+    }
+    for (std::size_t m = 0; m < p_vals.size(); ++m) {
+      pbar_direct[m] -= adj_p[m];
+      pbar_dot_direct[m] -= adj_dot_p[m];
+    }
+  }
+
+  // as consistent_first for [lambda; nu; mu; eta]:
+  // E^T mu = [eta - (dM/dd)^T lambda; -(dF_y/dd)^T lambda], eta' = (F_y^T mu + (dF_y/dd)^T lambda)_d
+  void consistent_second(std::size_t k, double *z, double *zp) {
+    second_order &o = *so;
+    const std::size_t block = neq + nd();
+    const double t = times[k];
+    const double *y = o.ys.data() + k * neq;
+    const double *yp = o.yps.data() + k * neq;
+    const double *s = o.ss.data() + k * neq;
+    const double *sp = o.sps.data() + k * neq;
+    std::vector<double> lam(neq), mu(neq);
+    for (std::size_t i = 0; i < neq; ++i) {
+      const int m = diff_pos[i];
+      lam[i] = m >= 0 ? z[neq + static_cast<std::size_t>(m)] : 0.0;
+    }
+    solve_Et(lam);
+    const std::vector<double> zeros(neq, 0.0);
+    vjp2(t, y, yp, s, sp, o.pdot.data(), lam.data(), zeros.data());
+    for (std::size_t i = 0; i < neq; ++i) {
+      const int m = diff_pos[i];
+      mu[i] = m >= 0 ? z[block + neq + static_cast<std::size_t>(m)] - adj_dot_yp[i] : -adj_dot_y[i];
+    }
+    solve_Et(mu);
+    std::copy(lam.begin(), lam.end(), z);
+    std::copy(mu.begin(), mu.end(), z + block);
+    vjp2(t, y, yp, s, sp, o.pdot.data(), lam.data(), mu.data());
+    std::fill(zp, zp + 2 * block, 0.0);
+    for (std::size_t m = 0; m < nd(); ++m) {
+      const std::size_t i = static_cast<std::size_t>(diff_idx[m]);
+      zp[neq + m] = adj_y[i];
+      zp[block + neq + m] = adj_dot_y[i];
+    }
+  }
+
+  void init_backward2(second_order &o) {
+    new_backward_vectors(o.w.ctx, 2 * (neq + nd()), 2 * p_vals.size(), 2, o.yB, o.ypB, o.idB, o.qB);
+    etr::ass<"hessian (ida): IDACreateB failed">(IDACreateB(o.w.mem, &o.which) == IDA_SUCCESS);
+    etr::ass<"hessian (ida): IDAInitBS failed">(
+      IDAInitBS(o.w.mem, o.which, &res_bs, times[nt - 1], o.yB, o.ypB) == IDA_SUCCESS);
+    etr::ass<"hessian (ida): IDAQuadInitBS failed">(
+      IDAQuadInitBS(o.w.mem, o.which, &quad_bs, o.qB) == IDA_SUCCESS);
+    setup_backward(o.w.mem, o.which, o.yB, o.idB, o.AB, o.LSB, o.w.ctx);
+  }
+
+  // out_bar / out_bar_dot: column-major nt x neq; in_* = (y0 part, p part)
+  void backward2(const std::vector<double> &out_bar, const std::vector<double> &out_bar_dot,
+                 std::vector<double> &in_bar, std::vector<double> &in_bar_dot) {
+    etr::ass<"hessian (ida): backward pass without a tangent pass">(so != nullptr);
+    second_order &o = *so;
+    const std::size_t np = p_vals.size();
+    const std::size_t block = neq + nd();
+    if (o.which < 0) init_backward2(o);
+    sunrealtype *z = N_VGetArrayPointer(o.yB);
+    N_VConst(0.0, o.yB);
+    N_VConst(0.0, o.qB);
+    std::vector<double> pbar_direct(np, 0.0), pbar_dot_direct(np, 0.0);
+    jump2(nt - 1, out_bar, out_bar_dot, z + neq, z + block + neq, pbar_direct, pbar_dot_direct);
+    for (std::size_t k = nt - 1; k >= 1; --k) {
+      consistent_second(k, z, N_VGetArrayPointer(o.ypB));
+      vjp2_valid = false;
+      etr::ass<"hessian (ida): IDAReInitB failed">(
+        IDAReInitB(o.w.mem, o.which, times[k], o.yB, o.ypB) == IDA_SUCCESS);
+      etr::ass<"hessian (ida): IDAQuadReInitB failed">(
+        IDAQuadReInitB(o.w.mem, o.which, o.qB) == IDA_SUCCESS);
+      check_backward_flag(IDASolveB(o.w.mem, times[k - 1], IDA_NORMAL), "backward integration",
+                          times[k]);
+      sunrealtype tret = 0.0;
+      etr::ass<"hessian (ida): IDAGetB failed">(
+        IDAGetB(o.w.mem, o.which, &tret, o.yB, o.ypB) == IDA_SUCCESS);
+      etr::ass<"hessian (ida): IDAGetQuadB failed">(
+        IDAGetQuadB(o.w.mem, o.which, &tret, o.qB) == IDA_SUCCESS);
+      jump2(k - 1, out_bar, out_bar_dot, z + neq, z + block + neq, pbar_direct, pbar_dot_direct);
+    }
+    const sunrealtype *q = N_VGetArrayPointer(o.qB);
+    for (std::size_t i = 0; i < neq; ++i) {
+      const int m = diff_pos[i];
+      in_bar[i] = m >= 0 ? z[neq + static_cast<std::size_t>(m)] : 0.0;
+      in_bar_dot[i] = m >= 0 ? z[block + neq + static_cast<std::size_t>(m)] : 0.0;
+    }
+    for (std::size_t m = 0; m < np; ++m) {
+      in_bar[neq + m] = q[m] + pbar_direct[m];
+      in_bar_dot[neq + m] = q[np + m] + pbar_dot_direct[m];
+    }
   }
 
   static int fwd_res(sunrealtype t, N_Vector y, N_Vector yp, N_Vector r, void *user_data) {
@@ -2296,16 +2645,18 @@ inline auto idas_reverse_impl(const RES &, const JAC *, const Y &y0, const YP &y
   const int mode = etr::get_val(opt.sensitivity);
   const bool adjoint = mode == etr::sensitivity_adjoint ||
     (mode == etr::sensitivity_auto && s->active.size() > etr::forward_sens_max_inputs);
-  if (adjoint) {
-    s->active.clear();
-    s->times.resize(nt);
-    for (std::size_t k = 0; k < nt; ++k) s->times[k] = etr::get_val(times.get(k));
-    s->id_vals.assign(N_VGetArrayPointer(w.id), N_VGetArrayPointer(w.id) + neq);
-    s->reltol = etr::get_val(opt.reltol);
-    s->abstol = etr::get_val(opt.abstol);
-    s->max_steps = max_steps;
-    s->linear_solver = linear_solver;
-  }
+  if (adjoint) s->active.clear();
+  // also needed by the hessian (tangent / backward2) in both modes
+  s->times.resize(nt);
+  for (std::size_t k = 0; k < nt; ++k) s->times[k] = etr::get_val(times.get(k));
+  s->id_vals.assign(N_VGetArrayPointer(w.id), N_VGetArrayPointer(w.id) + neq);
+  s->y0_vals.assign(N_VGetArrayPointer(w.y), N_VGetArrayPointer(w.y) + neq);
+  s->yp0_vals.assign(N_VGetArrayPointer(w.yp), N_VGetArrayPointer(w.yp) + neq);
+  s->set_layout();
+  s->reltol = etr::get_val(opt.reltol);
+  s->abstol = etr::get_val(opt.abstol);
+  s->max_steps = max_steps;
+  s->linear_solver = linear_solver;
   const int ns = static_cast<int>(s->active.size());
   if (ns > 0) {
     w.yS = N_VCloneVectorArray(ns, w.y);
@@ -2397,12 +2748,12 @@ inline auto idas_reverse_impl(const RES &, const JAC *, const Y &y0, const YP &y
         tape.adj[static_cast<std::size_t>(tape_id)] += in_bar[i];
       }
     },
-    [](const std::vector<double> &, std::vector<double> &) {
-      etr::ass<"hessian: not supported through ida (only through cvode)">(false);
+    [s](const std::vector<double> &in_dot, std::vector<double> &out_dot) {
+      s->tangent(in_dot, out_dot);
     },
-    [](const std::vector<double> &, const std::vector<double> &, std::vector<double> &,
-       std::vector<double> &) {
-      etr::ass<"hessian: not supported through ida (only through cvode)">(false);
+    [s](const std::vector<double> &out_bar, const std::vector<double> &out_bar_dot,
+        std::vector<double> &in_bar, std::vector<double> &in_bar_dot) {
+      s->backward2(out_bar, out_bar_dot, in_bar, in_bar_dot);
     });
 
   etr::Array<etr::ReverseDouble, etr::Buffer<etr::ReverseDouble, etr::LBufferTrait>> res(etr::SI{neq * nt});

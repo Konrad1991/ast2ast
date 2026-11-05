@@ -124,7 +124,7 @@ in isolation. Possible: b) internally as building blocks, a) on top.
    r[[1L]] <- y[[2L]] * yp[[1L]] - f1   # ok: M depends on y
    r[[1L]] <- exp(yp[[1L]]) - y[[1L]]   # not linear in yp -> adjoint wrong
    ```
-   TODO: maybe check in the R transpiler (res body: yp only in linear positions)
+   (superseded 2026-11-05 by the nu form below: no linearity needed)
    DECIDED 2026-11-04: option 1 (adjoint) before step 6.
    5a adjoint + gradient (stop point afterwards), 5b hessian.
 
@@ -151,6 +151,27 @@ in isolation. Possible: b) internally as building blocks, a) on top.
    "auto" | "forward" | "adjoint") as cvode; ida_sens_state::{sweep, build_E, jump,
    backward_adjoint}; tests in test_idas.R (LV + algebraic product, equation order
    != variable order with M(y), check M A = 0).
+
+   DECIDED 2026-11-05 (option A): nu form for 5a and 5b. The dM/dt term above needs
+   third derivatives of F for the hessian. Instead nu = (M^T lambda)_d:
+     nu' = (F_y^T lambda)_d          differential
+     (M^T lambda)_d = nu             algebraic
+     (F_y^T lambda)_a = 0            algebraic
+   - only VJPs of F; index 1 (matrix w.r.t. lambda = E^T); no "F linear in yp" restriction
+     (the TODO for a transpiler check is obsolete); M A = 0 is still required
+   - jump: E^T r = A ybar, nu += (ybar - F_y^T r)_d, pbar -= F_p^T r; lambda via IDACalcICB
+   - y0bar = nu(t0)
+   - cost: backward system n + n_d unknowns instead of n
+   5b second order along d = (y0dot, pdot): mu = dlambda/dd, eta = dnu/dd, same system
+   with F_x^T mu + (dF_x/dd)^T lambda (forward-over-reverse, direction (s, s', pdot)).
+   Jump: E^T r_dot = A ybar_dot - D (dM/dd)^T r - A (dF_y/dd)^T r,
+   eta += (ybar_dot - F_y^T r_dot - (dF_y/dd)^T r)_d, pbar_dot -= d/dd (F_p^T r).
+   Backward state 2 (n + n_d); IDAInitBS / IDACalcICBS; s' via IDAGetSensDky.
+   Consistent backward ICs computed directly with E (not IDACalcICB/S: its
+   difference-quotient Newton fails with abstol 1e-12 and a nonlinear constraint);
+   IDASetSuppressAlgB: lambda follows the interpolated yp (kinks) when M depends on yp.
+   Status 2026-11-05: 5a (nu form) + 5b DONE; test_idas.R + sundials/cvodes tests green
+   (Claude, scratch install); full suite still to be run by Konrad.
 6. plan only: sparse Hessian (star colouring + HVP per colour)
 
 Stop points: after 2 (forward usable), after 3 (gradient usable).

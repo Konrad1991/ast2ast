@@ -331,6 +331,183 @@ expect_equal(adjoint_order, fd_order, tolerance = 1e-5)
 dae_order_forward_cpp <- ast2ast::translate(dae_order_jac, derivative = "forward")
 expect_equal(adjoint_order, unname(dae_order_forward_cpp(theta_order, times_order)), tolerance = 1e-6)
 
+# residual not linear in yp: adjoint == forward sensitivities
+nonlinear_yp <- function(theta) {
+  argtypes(theta |> type(vec(double)))
+  loss_forward <- function(theta) {
+    argtypes(theta |> type(vec(double)))
+    returntype(double)
+    residual <- function(t, y, yp, r, p) {
+      argtypes(
+        t |> type(double) |> ref(),
+        y |> type(borrow_vec(double)) |> ref(),
+        yp |> type(borrow_vec(double)) |> ref(),
+        r |> type(borrow_vec(double)) |> ref(),
+        p |> type(vec(double)) |> ref()
+      )
+      returntype(void)
+      r[[1L]] <- yp[[1L]] + 0.2 * yp[[1L]]^3 + p[[1L]] * y[[1L]] - y[[2L]]
+      r[[2L]] <- y[[2L]] - p[[2L]] * y[[1L]] * y[[1L]]
+    }
+    p <- theta[1L:2L]
+    y0 <- c(theta[[3L]], 0)
+    yp0 <- c(0, 0)
+    id <- c(1, 0)
+    times <- c(0, 0.5, 1, 1.5)
+    opts <- ida_options(reltol = 1e-10, abstol = 1e-12, sensitivity = "forward")
+    sol <- c(ida(residual, y0, yp0, times, p, id, opts))
+    sum(sol * sol)
+  }
+  gradient(loss_forward, theta)
+}
+nonlinear_yp_adjoint <- function(theta) {
+  argtypes(theta |> type(vec(double)))
+  loss_adjoint <- function(theta) {
+    argtypes(theta |> type(vec(double)))
+    returntype(double)
+    residual <- function(t, y, yp, r, p) {
+      argtypes(
+        t |> type(double) |> ref(),
+        y |> type(borrow_vec(double)) |> ref(),
+        yp |> type(borrow_vec(double)) |> ref(),
+        r |> type(borrow_vec(double)) |> ref(),
+        p |> type(vec(double)) |> ref()
+      )
+      returntype(void)
+      r[[1L]] <- yp[[1L]] + 0.2 * yp[[1L]]^3 + p[[1L]] * y[[1L]] - y[[2L]]
+      r[[2L]] <- y[[2L]] - p[[2L]] * y[[1L]] * y[[1L]]
+    }
+    p <- theta[1L:2L]
+    y0 <- c(theta[[3L]], 0)
+    yp0 <- c(0, 0)
+    id <- c(1, 0)
+    times <- c(0, 0.5, 1, 1.5)
+    opts <- ida_options(reltol = 1e-10, abstol = 1e-12, sensitivity = "adjoint")
+    sol <- c(ida(residual, y0, yp0, times, p, id, opts))
+    sum(sol * sol)
+  }
+  gradient(loss_adjoint, theta)
+}
+theta_nl <- c(0.8, 0.3, 1.5)
+expect_equal(ast2ast::translate(nonlinear_yp_adjoint)(theta_nl),
+             ast2ast::translate(nonlinear_yp)(theta_nl), tolerance = 1e-6)
+
+# --- hessian through ida (second-order adjoint) ---------------------------------
+
+# LV loss: hessian vs central differences of the (exact) forward-sensitivity gradient
+lv_hess <- function(theta, data) {
+  argtypes(theta |> type(vec(double)), data |> type(vec(double)))
+  loss <- function(theta, data) {
+    argtypes(theta |> type(vec(double)), data |> type(vec(double)))
+    returntype(double)
+    residual <- function(t, y, yp, r, p) {
+      argtypes(
+        t |> type(double) |> ref(),
+        y |> type(borrow_vec(double)) |> ref(),
+        yp |> type(borrow_vec(double)) |> ref(),
+        r |> type(borrow_vec(double)) |> ref(),
+        p |> type(vec(double)) |> ref()
+      )
+      returntype(void)
+      r[[1L]] <- yp[[1L]] - (p[[1L]] * y[[1L]] - p[[2L]] * y[[3L]])
+      r[[2L]] <- yp[[2L]] - (p[[4L]] * y[[3L]] - p[[3L]] * y[[2L]])
+      r[[3L]] <- y[[3L]] - y[[1L]] * y[[2L]]
+    }
+    p <- theta[1L:4L]
+    y0 <- c(theta[[5L]], theta[[6L]], 0)
+    yp0 <- c(0, 0, 0)
+    id <- c(1, 1, 0)
+    times <- c(0, 1, 2, 3, 4, 5)
+    sol <- c(ida(residual, y0, yp0, times, p, id, ida_options(reltol = 1e-10, abstol = 1e-12)))
+    sum((sol - data)^2)
+  }
+  hessian(loss, theta, data)
+}
+lv_hess_cpp <- ast2ast::translate(lv_hess)
+h_hess <- 1e-4
+fd_hess <- vapply(seq_along(theta), function(i) {
+  tp <- theta
+  tm <- theta
+  tp[[i]] <- tp[[i]] + h_hess
+  tm[[i]] <- tm[[i]] - h_hess
+  (lv_gradient_cpp(tp, data) - lv_gradient_cpp(tm, data)) / (2 * h_hess)
+}, numeric(length(theta)))
+hess <- unname(lv_hess_cpp(theta, data))
+# NOTE: FD of the gradient bottoms out at ~2e-5 (h = 1e-4); as in test_cvodes_adjoint.R
+expect_equal(hess, fd_hess, tolerance = 1e-4)
+expect_equal(hess, t(hess), tolerance = 1e-6)
+
+# equation order != variable order, M depends on y, sin(t): hessian vs FD of the gradient
+dae_order_loss_gradient <- function(theta) {
+  argtypes(theta |> type(vec(double)))
+  loss <- function(theta) {
+    argtypes(theta |> type(vec(double)))
+    returntype(double)
+    residual <- function(t, y, yp, r, p) {
+      argtypes(
+        t |> type(double) |> ref(),
+        y |> type(borrow_vec(double)) |> ref(),
+        yp |> type(borrow_vec(double)) |> ref(),
+        r |> type(borrow_vec(double)) |> ref(),
+        p |> type(vec(double)) |> ref()
+      )
+      returntype(void)
+      r[[1L]] <- y[[3L]] - p[[3L]] * y[[1L]] * y[[1L]] - y[[2L]]
+      r[[2L]] <- (1 + 0.1 * y[[2L]] * y[[2L]]) * yp[[1L]] + p[[1L]] * y[[1L]] - y[[3L]] * 0.2
+      r[[3L]] <- yp[[2L]] + p[[2L]] * y[[2L]] - sin(t) * y[[1L]]
+    }
+    p <- theta[1L:3L]
+    y0 <- c(theta[[4L]], theta[[5L]], 0)
+    yp0 <- c(0, 0, 0)
+    id <- c(1, 1, 0)
+    times <- c(0, 0.5, 1, 2)
+    opts <- ida_options(reltol = 1e-10, abstol = 1e-12, sensitivity = "forward")
+    sol <- c(ida(residual, y0, yp0, times, p, id, opts))
+    sum(sol * sol)
+  }
+  gradient(loss, theta)
+}
+dae_order_loss_hessian <- function(theta) {
+  argtypes(theta |> type(vec(double)))
+  loss <- function(theta) {
+    argtypes(theta |> type(vec(double)))
+    returntype(double)
+    residual <- function(t, y, yp, r, p) {
+      argtypes(
+        t |> type(double) |> ref(),
+        y |> type(borrow_vec(double)) |> ref(),
+        yp |> type(borrow_vec(double)) |> ref(),
+        r |> type(borrow_vec(double)) |> ref(),
+        p |> type(vec(double)) |> ref()
+      )
+      returntype(void)
+      r[[1L]] <- y[[3L]] - p[[3L]] * y[[1L]] * y[[1L]] - y[[2L]]
+      r[[2L]] <- (1 + 0.1 * y[[2L]] * y[[2L]]) * yp[[1L]] + p[[1L]] * y[[1L]] - y[[3L]] * 0.2
+      r[[3L]] <- yp[[2L]] + p[[2L]] * y[[2L]] - sin(t) * y[[1L]]
+    }
+    p <- theta[1L:3L]
+    y0 <- c(theta[[4L]], theta[[5L]], 0)
+    yp0 <- c(0, 0, 0)
+    id <- c(1, 1, 0)
+    times <- c(0, 0.5, 1, 2)
+    sol <- c(ida(residual, y0, yp0, times, p, id, ida_options(reltol = 1e-10, abstol = 1e-12)))
+    sum(sol * sol)
+  }
+  hessian(loss, theta)
+}
+grad_order_cpp <- ast2ast::translate(dae_order_loss_gradient)
+hess_order_cpp <- ast2ast::translate(dae_order_loss_hessian)
+fd_hess_order <- vapply(seq_along(theta_order), function(i) {
+  tp <- theta_order
+  tm <- theta_order
+  tp[[i]] <- tp[[i]] + h_hess
+  tm[[i]] <- tm[[i]] - h_hess
+  (grad_order_cpp(tp) - grad_order_cpp(tm)) / (2 * h_hess)
+}, numeric(length(theta_order)))
+hess_order <- unname(hess_order_cpp(theta_order))
+expect_equal(hess_order, fd_hess_order, tolerance = 1e-5)
+expect_equal(hess_order, t(hess_order), tolerance = 1e-6)
+
 # adjoint: an algebraic variable must not appear with yp
 f <- function(theta) {
   argtypes(theta |> type(vec(double)))
@@ -361,35 +538,6 @@ f <- function(theta) {
 fcpp <- ast2ast::translate(f)
 expect_error(fcpp(c(0.7, 2)), "algebraic variable \\(id = 0\\) appears with its derivative yp")
 
-
-# no hessian through ida
-f <- function(theta) {
-  argtypes(theta |> type(vec(double)))
-  loss <- function(theta) {
-    argtypes(theta |> type(vec(double)))
-    returntype(double)
-    residual <- function(t, y, yp, r, k) {
-      argtypes(
-        t |> type(double) |> ref(),
-        y |> type(borrow_vec(double)) |> ref(),
-        yp |> type(borrow_vec(double)) |> ref(),
-        r |> type(borrow_vec(double)) |> ref(),
-        k |> type(vec(double)) |> ref()
-      )
-      returntype(void)
-      r[[1L]] <- yp[[1L]] + k[[1L]] * y[[1L]]
-    }
-    k <- c(theta[[1L]])
-    y0 <- c(theta[[2L]])
-    yp0 <- c(0)
-    id <- c(1)
-    times <- c(0, 1, 2)
-    sum(ida(residual, y0, yp0, times, k, id))
-  }
-  hessian(loss, theta)
-}
-fcpp <- ast2ast::translate(f)
-expect_error(fcpp(c(0.7, 2)), "hessian: not supported through ida")
 
 # reverse mode: params has to be a double vector
 f <- function(theta) {

@@ -11,8 +11,6 @@
   API: `method = c("auto", "quick", "radix")`; quick -> `std::sort`;
   "shell" -> clear error (not implemented, no silent substitute).
   Values only, no names -> stability irrelevant, `std::sort` suffices
-- ida adjoint: check in the R transpiler that the residual is linear in yp
-  (yp only as summand or times a factor without yp); see ode_sensitivities.md step 5
 - suspected bug (not reproduced, 2026-11-04): cvode in reverse mode with no
   active input. y0 and params are tape constants -> `active` is empty ->
   sensitivity "auto" picks forward (0 <= 20) -> `solve_forward_sens` with
