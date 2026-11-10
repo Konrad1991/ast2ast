@@ -53,6 +53,15 @@ jobs:
           R CMD config CXX20FLAGS
           echo "vfmadd in libR.so: $(objdump -d "$(R RHOME)/lib/libR.so" | grep -c vfmadd)"
           grep -m1 -o -w 'fma' /proc/cpuinfo || echo "cpu: no fma"
+          echo "CXX20: $(R CMD config CXX20)"
+          echo "~/.R/Makevars:"; cat ~/.R/Makevars 2>/dev/null || echo "(none)"
+          env | grep -iE "flags|makevars" || true
+          g++ -O2 -Q --help=target | grep -E "^\s+-march=|^\s+-mfma |^\s+-mavx2 "
+          printf '#include <R.h>\nvoid fma_probe(double* a, double* b, double* c) { *c = *c + 0.5 * *a * *b; }\n' > fma_probe.c
+          printf 'void fma_probe2(double* a, double* b, double* c) { *c = *c + 0.5 * *a * *b; }\n' > fma_probe.cpp
+          R CMD SHLIB -o fma_probe.so fma_probe.c fma_probe.cpp
+          objdump -d fma_probe.so | grep -E "fma|mulsd|addsd"
+          rm -f fma_probe*
           R CMD INSTALL .
           Rscript -e '
             f <- function(x) {
@@ -72,6 +81,10 @@ jobs:
               r = sprintf("%a", c(dnorm(x, 0.5, 1.5, log = TRUE), rnorm(10))),
               ast2ast = sprintf("%a", c(fcpp(x), gcpp()))
             ))
+            for (so in list.files(tempdir(), "\\.so$", recursive = TRUE, full.names = TRUE)) {
+              n <- length(grep("vfmadd", system2("objdump", c("-d", so), stdout = TRUE)))
+              cat("vfmadd in", basename(so), ":", n, "\n")
+            }
           '
 
       - uses: r-lib/actions/check-r-package@v2
