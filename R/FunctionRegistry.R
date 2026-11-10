@@ -22,7 +22,7 @@ r_arg_names <- list(
   # reductions / transforms
   "mean" = "x", "cumsum" = "x", "rev" = "x", "which" = "x", "which.max" = "x", "which.min" = "x",
   "colSums" = "x", "rowSums" = "x", "colMeans" = "x", "rowMeans" = "x",
-  "sort" = c("x", "decreasing"),
+  "sort" = c("x", "decreasing", "method"),
   "ifelse" = c("test", "yes", "no"),
   # linear algebra
   "t" = "x", "chol" = "x", "crossprod" = "x", "tcrossprod" = "x", "det" = "x",
@@ -952,12 +952,27 @@ infer_margin_reduce <- function(node, vars_list, info_env, function_registry) {
   return(t)
 }
 # TODO: see above
-# sort: vector out, base type kept; arg 2 (decreasing) is optional
+# sort: vector out, base type kept; method string -> integer literal for etr::sort
+sort_methods <- c(auto = 0L, shell = 1L, quick = 2L, radix = 3L)
 infer_sort <- function(node, vars_list, info_env, function_registry) {
   types <- lapply(node$args, function(a) infer(a, vars_list, info_env, function_registry))
   inner <- types[[1]]
   err <- check_operand_type(inner, node)
   if (!is.null(err)) return(err)
+  method <- node$args[[3L]]
+  # NOTE: infer can run more than once; the second pass sees the converted literal
+  already_converted <- inherits(method, "literal_node") && method$literal_type == "integer"
+  if (!already_converted) {
+    value <- if (inherits(method, "literal_node") && method$literal_type == "character") {
+      remove_double_quotes(method$name)
+    } else ""
+    if (!(value %in% names(sort_methods))) {
+      return(sprintf("sort: 'method' should be one of \"auto\", \"shell\", \"quick\", \"radix\" in: %s",
+                     node$stringify()))
+    }
+    method$name <- paste0(sort_methods[[value]], "L")
+    method$literal_type <- "integer"
+  }
   t <- make_inferred_type("vector", inner$get_base_type(), info_env$r_fct, info_env$real_type)
   node$internal_type <- t
   return(t)
@@ -2203,8 +2218,13 @@ function_registry_global$add(
 )
 function_registry_global$add(
   # drops NA like R (na.last = NA); no AD -- only plain double translations
-  name = "sort", num_args = c(1, 2), arg_names = c(NA, NA),
-  docu = "sort(x)  or  sort(x, decreasing)  # NAs are dropped; base type is kept",
+  name = "sort", num_args = 3, arg_names = c(NA, NA, NA),
+  defaults = list(decreasing = FALSE, method = "auto"),
+  docu = paste0(
+    "sort(x, decreasing = FALSE, method = c(\"auto\", \"shell\", \"quick\", \"radix\"))\n",
+    "NAs and NaNs are dropped; base type is kept. ",
+    "auto: insertion sort below 64 elements, radix otherwise."
+  ),
   infer_fct = infer_sort,
   check_fct = mock,
   group = "function_node", cpp_name = "etr::sort", deriv_possible = FALSE
