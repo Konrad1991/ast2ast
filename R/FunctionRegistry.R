@@ -37,6 +37,7 @@ r_arg_names <- list(
   "nnls" = c("a", "b"),
   "lbfgsb" = c("f", "x", "lower", "upper", "maxit", "factr", "pgtol", "lmm", "data"),
   "pso" = c("f", "lower", "upper", "ngen", "npop", "error_threshold", "global", "seed", "data"),
+  "nuts" = c("f", "theta0", "n_warmup", "n_samples", "n_chains", "seed", "options", "data"),
   "jacobian" = "...", "jacobian_sparse" = "...", "jacobian_banded" = "...",
   # functionals
   "Reduce" = c("f", "x"),
@@ -3173,6 +3174,21 @@ infer_hessian <- function(node, vars_list, info_env, function_registry, fname) {
       return(sprintf("The data passed to %s cannot be a character/string", fname))
     }
   }
+  err <- check_scalar_ad_fn(node, all_types[[1L]], has_extra, vars_list, info_env, function_registry, fname)
+  if (!is.null(err)) return(err)
+  if (fname == "value_and_gradient") {
+    t <- info_env$known_types[["value_and_gradient_result"]]
+    if (is.null(t)) return("Did not find the predefined type value_and_gradient_result")
+    node$internal_type <- t
+    return(t)
+  }
+  t <- make_inferred_type(if (fname == "hessian") "matrix" else "vector", "double", info_env$r_fct, info_env$real_type)
+  node$internal_type <- t
+  t
+}
+# f (node$args[[1]]) is differentiated on the tape: double vector (+ data) -> scalar double.
+# Outside reverse translations it is rebound to ReverseDouble
+check_scalar_ad_fn <- function(node, f, has_extra, vars_list, info_env, function_registry, fname) {
   if (info_env$real_type == "etr::ReverseDouble") {
     fn <- runtime_colouring_fn(node$args[[1L]], vars_list)
     if (!is.null(fn)) {
@@ -3189,7 +3205,6 @@ infer_hessian <- function(node, vars_list, info_env, function_registry, fname) {
     if (!is.null(err)) return(err)
     node$args[[1L]]$functor_scalar <- "etr::ReverseDouble"
   }
-  f <- all_types[[1L]]
   expected_n <- if (has_extra) 2L else 1L
   if (length(f$args_f) != expected_n) {
     return(sprintf(
@@ -3208,15 +3223,7 @@ infer_hessian <- function(node, vars_list, info_env, function_registry, fname) {
       ret$get_data_struct() != "scalar") {
     return(sprintf("the function passed to %s has to return a scalar double", fname))
   }
-  if (fname == "value_and_gradient") {
-    t <- info_env$known_types[["value_and_gradient_result"]]
-    if (is.null(t)) return("Did not find the predefined type value_and_gradient_result")
-    node$internal_type <- t
-    return(t)
-  }
-  t <- make_inferred_type(if (fname == "hessian") "matrix" else "vector", "double", info_env$r_fct, info_env$real_type)
-  node$internal_type <- t
-  t
+  NULL
 }
 check_hessian <- function(node, extra_pos) {
   f <- node$args[[1L]]
@@ -3498,6 +3505,90 @@ function_registry_global$add(
   },
  group = "function_node", cpp_name = "etr::pso", deriv_possible = FALSE,
  valid_fn_context = TRUE
+)
+nuts_option_kinds <- c(max_treedepth = "int", target_accept = "double", step_size = "double",
+                       adapt_mass = "logical", n_threads = "int")
+function_registry_global$add(
+  name = "nuts_options", num_args = 5, arg_names = names(nuts_option_kinds),
+  defaults = list(max_treedepth = 10L, target_accept = 0.8, step_size = 1, adapt_mass = TRUE,
+                  n_threads = 1L),
+  docu = paste0(
+    "nuts_options(max_treedepth = 10L, target_accept = 0.8, step_size = 1, adapt_mass = TRUE, ",
+    "n_threads = 1L)\n",
+    "Options for nuts; every argument is optional. max_treedepth: at most 2^max_treedepth ",
+    "leapfrog steps per iteration. target_accept: mean acceptance the step size is tuned to ",
+    "during warmup. step_size: initial step size (used as is when n_warmup = 0). adapt_mass: ",
+    "estimate a diagonal mass matrix during warmup. n_threads: chains run on up to n_threads ",
+    "threads; the draws do not depend on it."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    infer_solver_options(node, vars_list, info_env, function_registry, "nuts_options", nuts_option_kinds)
+  },
+  check_fct = mock,
+  group = "function_node", cpp_name = "etr::nuts_options", deriv_possible = TRUE
+)
+nuts_arg_names <- c("f", "theta0", "n_warmup", "n_samples", "n_chains", "seed", "options", "data")
+function_registry_global$add(
+  name = "nuts", num_args = c(7, 8), arg_names = nuts_arg_names,
+  defaults = list(options = quote(nuts_options())),
+  docu = paste0(
+    "nuts(f, theta0, n_warmup, n_samples, n_chains, seed, options = nuts_options()[, data])\n",
+    "No-U-Turn sampler (multinomial, diagonal mass matrix, Stan-like windowed warmup). ",
+    "f: named fn taking a double vector (and optionally data) and returning the log ",
+    "posterior density (up to a constant) as a scalar double; the gradient is computed ",
+    "by reverse AD. A solver failure inside f (cvode, ida) counts as a divergent transition; ",
+    "other errors stop the sampler. All chains start at theta0; chain k uses the seeds ",
+    "seed + 2k and seed + 2k + 1.\n",
+    "Returns a nuts_result with $draws (n_samples x n_chains x length(theta0) array, ",
+    "warmup not included), $lp, $accept_stat, $treedepth, $n_leapfrog, $divergent ",
+    "(n_samples x n_chains), $step_size (per chain) and $inv_metric (length(theta0) x n_chains)."
+  ),
+  infer_fct = function(node, vars_list, info_env, function_registry) {
+    all_types <- lapply(node$args, function(arg) {
+      infer(arg, vars_list, info_env, function_registry)
+    })
+    if (!(length(all_types) %in% c(7L, 8L))) {
+      return("nuts expects 7 or 8 arguments")
+    }
+    if (!inherits(all_types[[1L]], "fn_node")) {
+      return("The first argument to nuts has to be a function")
+    }
+    t <- all_types[[2L]]
+    if (!inherits(t, "pre_type_node") || t$get_data_struct() != "vector" || t$get_base_type() != "double") {
+      return("nuts: theta0 (argument 2) has to be a double vector")
+    }
+    for (i in 3:6) {
+      if (!is_scalar_of(all_types[[i]], c("double", "integer", "int"))) {
+        return(sprintf("nuts: %s (argument %d) has to be a scalar integer", nuts_arg_names[[i]], i))
+      }
+    }
+    if (!is_options_type(all_types[[7L]], "nuts_options")) {
+      return("nuts: options (argument 7) has to be created by nuts_options()")
+    }
+    has_extra <- length(all_types) == 8L
+    if (has_extra) {
+      extra_type <- all_types[[8L]]
+      if (inherits(extra_type, "fn_node")) {
+        return("The data passed to nuts cannot itself be a function")
+      }
+      if (inherits(extra_type, "pre_type_node") && extra_type$get_base_type() == "character") {
+        return("The data passed to nuts cannot be a character/string")
+      }
+    }
+    err <- check_scalar_ad_fn(node, all_types[[1L]], has_extra, vars_list, info_env, function_registry, "nuts")
+    if (!is.null(err)) return(err)
+    bad <- unsafe_calls(all_types[[1L]], vars_list, function_registry)
+    if (length(bad) > 0L) {
+      return(sprintf("nuts: f calls %s, which cannot run in parallel (chains may run on several threads)",
+        paste0("'", bad, "'", collapse = ", ")))
+    }
+    t <- info_env$known_types[["nuts_result"]]
+    if (is.null(t)) return("Did not find the predefined type nuts_result")
+    node$internal_type <- t
+    t
+  },
+  check_fct = function(node, vars_types_list, info_env) check_hessian(node, 8L),
+  group = "function_node", cpp_name = "etr::nuts", valid_fn_context = TRUE
 )
 # thread_safe = FALSE builtins reachable from fn, also through the fns it calls
 unsafe_calls <- function(fn, vars_list, function_registry, seen = character(0)) {

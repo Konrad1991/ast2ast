@@ -28,6 +28,12 @@ changes in ast2ast version 1.2
 - `ida` adjoint and Hessian need an index-1 DAE whose algebraic variables
   (`id = 0`) do not appear with their derivative `yp`; both are checked at run
   time. The residual does not have to be linear in `yp`.
+- New `nuts(f, theta0, n_warmup, n_samples, n_chains, seed, options = nuts_options()[, data])`:
+  No-U-Turn sampler for a log posterior `f` with gradient by reverse AD, step
+  size and diagonal mass matrix tuned during warmup (as Stan). Chains can run on
+  several threads (`nuts_options(n_threads = )`) with the same draws. A solver
+  failure inside `f` (`cvode`, `ida`) counts as divergent transition. `$draws`
+  fits `posterior::as_draws_array()`. See the vignette "Bayesian sampling with nuts".
 - Random numbers without global state: `e <- mersenne_twister(seed)`,
   `d <- normal(e, mean, sd)` / `uniform(e, min, max)` and `draw(d, n)` give
   the same numbers as `set.seed(seed)` + `rnorm` / `runif`. A distribution owns

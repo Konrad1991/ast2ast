@@ -608,6 +608,30 @@ predefined_known_types <- quote({
       sensitivity |> type(int)
     )
   )
+  # slots must match etr::nuts_options / etr::nuts_result in etr_bits/Sampling/Nuts.hpp
+  new_type(
+    nuts_options,
+    slots(
+      max_treedepth |> type(int),
+      target_accept |> type(double),
+      step_size |> type(double),
+      adapt_mass |> type(logical),
+      n_threads |> type(int)
+    )
+  )
+  new_type(
+    nuts_result,
+    slots(
+      draws |> type(array(double)),
+      lp |> type(mat(double)),
+      accept_stat |> type(mat(double)),
+      treedepth |> type(mat(int)),
+      n_leapfrog |> type(mat(int)),
+      divergent |> type(mat(logical)),
+      step_size |> type(vec(double)),
+      inv_metric |> type(mat(double))
+    )
+  )
   # slots must match etr_bits/Random/{MersenneTwister,Distributions}.hpp
   new_type(
     mersenne_twister,

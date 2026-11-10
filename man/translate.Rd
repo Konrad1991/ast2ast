@@ -76,6 +76,7 @@ translate(
       \item Functionals (take an \code{fn()}): \code{map}, \code{Reduce}, \code{Filter}, \code{apply}
       \item Optimizers / derivatives of an \code{fn()}: \code{jacobian}, \code{jacobian_sparse},
         \code{jacobian_banded}, \code{lbfgsb}, \code{pso}
+      \item Sampling: \code{nuts}, \code{nuts_options}, see below
       \item Random numbers: \code{mersenne_twister}, \code{normal}, \code{uniform}, \code{draw},
         \code{sample}, \code{sample_int}, \code{dnorm}, \code{dunif}, see below
       \item Casts: \code{as.numeric}, \code{as.integer}, \code{as.logical}
@@ -241,6 +242,22 @@ translate(
     For \code{lbfgsb} and \code{pso} the optional trailing \code{data} argument
     (any non-function, non-character value) is passed to \code{f} unchanged as a
     second argument.
+  }
+  \subsection{Sampling}{
+    \itemize{
+      \item \code{nuts(f, theta0, n_warmup, n_samples, n_chains, seed, options = nuts_options()[, data])}:
+        No-U-Turn sampler. \code{f} maps a double vector (and optionally \code{data})
+        to the log posterior density; the gradient comes from reverse AD. Warmup
+        tunes the step size and a diagonal mass matrix (as Stan). A solver failure
+        inside \code{f} (\code{cvode}, \code{ida}) counts as divergent transition.
+        Returns a struct with \code{$draws} (\code{n_samples x n_chains x length(theta0)}),
+        \code{$lp}, \code{$accept_stat}, \code{$treedepth}, \code{$n_leapfrog},
+        \code{$divergent}, \code{$step_size}, \code{$inv_metric}.
+      \item \code{nuts_options(max_treedepth = 10L, target_accept = 0.8, step_size = 1,
+        adapt_mass = TRUE, n_threads = 1L)}: every argument is optional; the draws
+        do not depend on \code{n_threads}.
+    }
+    See \code{vignette("Sampling", package = "ast2ast")}.
   }
   \subsection{Random numbers}{
     There is no global seed. Engines and distributions are objects; the numbers

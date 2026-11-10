@@ -1,0 +1,124 @@
+---
+title: "Bayesian sampling with nuts"
+author: "Konrad Kraemer"
+output: html_document
+
+vignette: >
+  %\VignetteIndexEntry{Bayesian sampling with nuts}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+## Overview
+
+```r
+nuts(f, theta0, n_warmup, n_samples, n_chains, seed,
+     options = nuts_options()[, data])
+```
+
+`nuts` draws samples from a posterior with the No-U-Turn sampler (NUTS):
+
+- `f` is an inner function that maps a double vector (and optionally `data`) to the log posterior density.
+- A constant offset in `f` does not matter.
+- The gradient comes from reverse-mode AD.
+- During warmup, `nuts` tunes the step size and a diagonal mass matrix, in the same way as Stan.
+
+| Argument | Meaning |
+| --- | --- |
+| `theta0` | starting point of every chain (double vector) |
+| `n_warmup` | warmup iterations per chain; they are not returned |
+| `n_samples` | draws per chain |
+| `n_chains` | number of chains |
+| `seed` | chain `k` (0-based) uses the seeds `seed + 2k` and `seed + 2k + 1` |
+| `options` | `nuts_options()`, see below |
+| `data` | passed to `f` unchanged, as for `gradient` |
+
+## Example: logistic regression
+
+```{r}
+posterior <- function(beta0, data) {
+  argtypes(beta0 |> type(vec(double)), data |> type(mat(double)))
+  log_post <- function(beta, data) {
+    argtypes(beta |> type(vec(double)), data |> type(mat(double)))
+    returntype(double)
+    s <- 0
+    for (i in 1L:nrow(data)) {
+      eta <- beta[[1L]] * data[i, 1L] + beta[[2L]] * data[i, 2L]
+      s <- s + data[i, 3L] * eta - log(1 + exp(eta))
+    }
+    # prior: beta ~ N(0, 5^2)
+    s - 0.5 * sum((beta / 5)^2)
+  }
+  nuts(log_post, beta0, 1000L, 1000L, 4L, 42L, nuts_options(), data)
+}
+posterior_cpp <- ast2ast::translate(posterior)
+
+X <- cbind(1, c(-1, -0.5, 0, 0.5, 1, 1.5))
+y <- c(0, 0, 1, 0, 1, 1)
+res <- posterior_cpp(c(0, 0), cbind(X, y))
+apply(res$draws, 3, mean)
+sum(res$divergent)
+```
+
+## Result
+
+`nuts` returns a `nuts_result`, which is a list in R:
+
+| Field | Shape | Content |
+| --- | --- | --- |
+| `draws` | `n_samples x n_chains x length(theta0)` | the draws |
+| `lp` | `n_samples x n_chains` | `f` at the draws |
+| `accept_stat` | `n_samples x n_chains` | mean acceptance probability of the trajectory |
+| `treedepth` | `n_samples x n_chains` | tree depth |
+| `n_leapfrog` | `n_samples x n_chains` | leapfrog steps, one gradient each |
+| `divergent` | `n_samples x n_chains` | divergent transition |
+| `step_size` | `n_chains` | step size after warmup |
+| `inv_metric` | `length(theta0) x n_chains` | diagonal of the inverse mass matrix |
+
+`draws` has the layout that package posterior expects:
+
+```{r}
+posterior::summarise_draws(posterior::as_draws_array(res$draws))
+```
+
+## Options
+
+```r
+nuts_options(max_treedepth = 10L, target_accept = 0.8, step_size = 1,
+             adapt_mass = TRUE, n_threads = 1L)
+```
+
+- **`max_treedepth`:** a trajectory has at most `2^max_treedepth` leapfrog steps.
+- **`target_accept`:** during warmup, the step size is tuned towards this mean acceptance. Raise it (for example to 0.95) if there are divergent transitions.
+- **`step_size`:** the initial step size. With `n_warmup = 0` it is used as is.
+- **`adapt_mass`:** whether warmup estimates the diagonal mass matrix from the draws.
+- **`n_threads`:** the chains run on up to `n_threads` threads. The draws are the same for every `n_threads`.
+
+## ODE models
+
+`f` may call `cvode` or `ida`. The gradient then comes from forward sensitivities or the adjoint method (`sensitivity` in `cvode_options` / `ida_options`). The ODE parameters are usually sampled on the log scale:
+
+```r
+log_post <- function(theta, data) {
+  # ...
+  p <- exp(theta)
+  sol <- c(cvode(rhs, y0, times, p))
+  -0.5 * sum(((sol - data) / sigma)^2) - 0.5 * sum((theta - prior_mean)^2)
+}
+```
+
+If the solver fails, for example because there are too many steps at extreme parameters, `nuts` counts the step as a divergent transition and rejects it; the run continues.
+
+## Notes
+
+- **Errors:** Other errors inside `f`, such as `stop()` or an index out of bounds, stop the sampler with the usual message.
+- **Starting point:** `f` has to be finite at `theta0`.
+- **Constrained parameters:** Transform them by hand.
+  - Example for `sigma > 0`: sample `log_sigma`, use `sigma <- exp(log_sigma)` and add `log_sigma` (the log-Jacobian) to the log posterior.
+- **Thread-safe functions only:** `f` may not call functions that are not thread safe (`lbfgsb`), because the chains can run in parallel.
+- **Translation:** Without `translate(derivative = "reverse")`, `f` has to be a named inner function, as for `gradient`.
+- **Threads and SMT:** RcppThread binds each worker thread to one logical CPU. On machines with SMT, consecutive logical CPUs often belong to the same physical core, so `n_threads` threads may run on only half as many physical cores.

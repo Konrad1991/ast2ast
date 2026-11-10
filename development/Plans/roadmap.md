@@ -20,6 +20,9 @@ ast2ast takes care that its output can be used by C and C++ libraries.
 - 1.1: TODO.md A-C (bugs, small issues, docs)
 - 1.1.1: sundials as dependency (cvode, ida) incl. TODO.md D2 options
 - 1.2: new areas (below) + CVODES, IDAS, ARKODE; branch `dev-1.2` (from `sundials`, 2026-10-21)
+  - update 2026-11-05: 1.2 = RNG + Hessian + CVODES/IDAS sensitivities + built-in `nuts()`
+    (development/Plans/nuts.md); no separate `hmc()`; ARKODE not in 1.2
+- 1.3: random effects via Laplace (TMB-like); simple Laplace N(MAP, H^-1) only as example
 
 ## Short term
 
@@ -133,11 +136,13 @@ Order:
    - standard errors / confidence intervals after a likelihood fit, Newton
 2. HMC / NUTS sampler
    - needs only the gradient (reverse AD) + RNG
+   - DONE 2026-11-05: built-in `nuts()`; no separate `hmc()`
 3. Random-effects models
    - user writes the joint negative log-likelihood in R
    - random effects integrated out via Laplace approximation
      (AD gradient + Hessian of the inner problem)
    - large models need a sparse Hessian (see banded/sparse above)
+   - decided 2026-11-05: release 1.3; N(MAP, H^-1) without random effects only as example
 4. ODE events (CVODE rootfinding)
    - only for state-dependent events; known times (spline knots,
      dosing) -> integrate piecewise and restart

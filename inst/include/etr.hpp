@@ -46,5 +46,6 @@ If not see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html#SEC4
 #include "etr_bits/Random/Distributions.hpp"
 // after Derivatives.hpp: lbfgsb's gradient goes through etr::jacobian
 #include "etr_bits/Optimization.hpp"
+#include "etr_bits/Sampling/Nuts.hpp"
 
 #endif
