@@ -39,3 +39,5 @@ CLAUDE.md
 /development/sanitize-asan.log
 
 /development/posts/
+
+/development/mnist/*.csv

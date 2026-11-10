@@ -1036,6 +1036,17 @@ inline ReverseTape& TAPE_INTERN_ref() {
 }
 #define TAPE_INTERN TAPE_INTERN_ref()
 
+// rewinds a local recording also when an exception leaves it half written
+struct TapeGuard {
+  ReverseTape& tape;
+  const std::size_t start;
+  const std::size_t blocks_start;
+  explicit TapeGuard(ReverseTape& t) : tape(t), start(t.size()), blocks_start(t.blocks.size()) {}
+  TapeGuard(const TapeGuard&) = delete;
+  TapeGuard& operator=(const TapeGuard&) = delete;
+  ~TapeGuard() { tape.rewind(start, blocks_start); }
+};
+
 /*
 --------------------------------------------------------------------------------------------------
 Scalar types (First dispatch layer)

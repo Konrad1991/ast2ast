@@ -6,6 +6,28 @@ changes in ast2ast version 1.2
   Hessian-vector product of a scalar `f` (forward-over-reverse on the tape).
   Work in every translation and with all matrix operations (`%*%`, `solve`,
   `chol`, `det`, ...). See the vignette "Hessians and Hessian-vector products".
+- New `gradient(f, x[, data])`: gradient of a scalar `f` with one reverse sweep
+  (exact, cost independent of `length(x)`). Works in every translation; `f` has
+  to be a named inner function unless `translate(derivative = "reverse")`.
+- New `value_and_gradient(f, x[, data])`: `f(x)` and its gradient from the same
+  evaluation; returns a struct with `$value` and `$gradient` (a list in R).
+- `cvode` and `ida` are differentiable with respect to `y0` and `params` (not
+  `times`):
+  - forward mode (`translate(derivative = "forward")`, `jacobian`): forward
+    sensitivities (CVODES / IDAS);
+  - reverse mode (`translate(derivative = "reverse")`, `gradient`,
+    `value_and_gradient`): forward sensitivities or the adjoint method (one
+    backward solve);
+  - `hessian` / `hvp`: second-order adjoint.
+  In reverse mode `params` has to be a double vector. `rhs` / `res` may keep
+  `borrow_vec` arguments in reverse translations.
+- `cvode_options()` / `ida_options()` get `sensitivity = "auto"`: `"forward"`
+  (cost grows with the number of inputs), `"adjoint"` (one backward solve),
+  `"auto"` (forward up to 20 inputs `y0` / `params` that depend on the
+  differentiated variables, adjoint above).
+- `ida` adjoint and Hessian need an index-1 DAE whose algebraic variables
+  (`id = 0`) do not appear with their derivative `yp`; both are checked at run
+  time. The residual does not have to be linear in `yp`.
 - Random numbers without global state: `e <- mersenne_twister(seed)`,
   `d <- normal(e, mean, sd)` / `uniform(e, min, max)` and `draw(d, n)` give
   the same numbers as `set.seed(seed)` + `rnorm` / `runif`. A distribution owns

@@ -357,3 +357,28 @@ expect_error(ast2ast::translate(f), "sensitivity has to be \"auto\" or \"forward
 H <- lv_hess_cpp(theta, data)
 expect_equal(unname(H), fd, tolerance = 1e-4)
 expect_equal(H, t(H), tolerance = 1e-6)
+
+# --- hvp through cvode == hessian %*% v ---------------------------------------
+hvp_cvode <- function(theta, v) {
+  argtypes(theta |> type(vec(double)), v |> type(vec(double)))
+  loss <- function(theta) {
+    argtypes(theta |> type(vec(double)))
+    returntype(double)
+    rhs <- function(t, y, ydot, p) {
+      argtypes(
+        t |> type(double) |> ref(),
+        y |> type(borrow_vec(double)) |> ref(),
+        ydot |> type(borrow_vec(double)) |> ref(),
+        p |> type(vec(double)) |> ref()
+      )
+      returntype(void)
+      ydot[[1L]] <- p[[1L]] * y[[1L]] - p[[2L]] * y[[1L]] * y[[2L]]
+      ydot[[2L]] <- p[[2L]] * y[[1L]] * y[[2L]] - 0.4 * y[[2L]]
+    }
+    p <- exp(theta)
+    sum(cvode(rhs, c(10, 5), c(0, 1, 2), p, cvode_options(reltol = 1e-10, abstol = 1e-10))^2)
+  }
+  c(hvp(loss, theta, v), hessian(loss, theta) %*% v)
+}
+r <- ast2ast::translate(hvp_cvode)(log(c(1.1, 0.04)), c(0.3, -1))
+expect_equal(r[1:2], r[3:4], tolerance = 1e-8)

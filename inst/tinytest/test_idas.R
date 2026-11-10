@@ -562,3 +562,31 @@ f <- function(theta) {
 }
 expect_error(ast2ast::translate(f, derivative = "reverse"),
              "ida: in reverse mode params \\(argument 5\\) has to be a double vector")
+
+# --- hvp through ida == hessian %*% v -----------------------------------------
+hvp_ida <- function(theta, v) {
+  argtypes(theta |> type(vec(double)), v |> type(vec(double)))
+  loss <- function(theta) {
+    argtypes(theta |> type(vec(double)))
+    returntype(double)
+    residual <- function(t, y, yp, r, k) {
+      argtypes(
+        t |> type(double) |> ref(),
+        y |> type(borrow_vec(double)) |> ref(),
+        yp |> type(borrow_vec(double)) |> ref(),
+        r |> type(borrow_vec(double)) |> ref(),
+        k |> type(vec(double)) |> ref()
+      )
+      returntype(void)
+      r[[1L]] <- yp[[1L]] + k[[1L]] * y[[1L]]
+      r[[2L]] <- y[[1L]] + y[[2L]] - k[[2L]]
+    }
+    k <- c(theta[[1L]], theta[[2L]])
+    sol <- ida(residual, c(2, 0.3), c(0, 0), c(0, 1, 2), k, c(1, 0),
+               ida_options(reltol = 1e-10, abstol = 1e-12))
+    sum(sol^2)
+  }
+  c(hvp(loss, theta, v), hessian(loss, theta) %*% v)
+}
+r <- ast2ast::translate(hvp_ida)(c(0.7, 1), c(0.3, -1))
+expect_equal(r[1:2], r[3:4], tolerance = 1e-8)

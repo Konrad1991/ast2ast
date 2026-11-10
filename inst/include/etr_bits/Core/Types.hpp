@@ -79,6 +79,16 @@ inline void ass(bool inp, const std::string &message) {
     throw std::runtime_error(message);
 }
 
+// solver failures (integration, consistent ICs); samplers catch only this type
+struct numeric_error : std::runtime_error {
+  using std::runtime_error::runtime_error;
+};
+
+inline void numeric_ass(bool inp, const std::string &message) {
+  if (!inp)
+    throw numeric_error(message);
+}
+
 // bare inline thread_local at namespace scope breaks under MinGW
 inline const char*& current_line() {
   thread_local const char* line = "";

@@ -30,6 +30,22 @@
     gradient(loss, x)   # expected c(1), suspected: "cvode: N_VCloneVectorArray failed"
   }
   ```
+- user interrupt (2026-11-06): C-c does nothing, etr never checks. Seen: LV nuts with
+  wide prior > 1 h (cvode max_steps 1e6 in stiff regions).
+  - `RcppThread::checkUserInterrupt()` (throws -> RAII cleans up; thread safe)
+  - where: nuts per iteration, lbfgsb/pso per iteration, pmap per element,
+    cvode/ida loop over output times (`a2a_sundials.hpp`)
+  - inside one CVode call (up to max_steps): no throw through SUNDIALS C code;
+    rhs checks every N calls (`RcppThread::isInterrupted()`? verify), returns -1
+    -> CV_RHSFUNC_FAIL -> check in the loop throws
+  - nuts catches only numeric_error -> interrupt not swallowed as divergent
+  ```cpp
+  for (std::size_t k = 1; k < nt; ++k) {
+    RcppThread::checkUserInterrupt();
+    int flag = CVode(w.mem, etr::get_val(times.get(k)), w.y, &tret, CV_NORMAL);
+    ...
+  }
+  ```
 
 ## F. Evaluation order of arguments
 

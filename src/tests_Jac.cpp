@@ -139,4 +139,37 @@ void test_tape_reuse() {
   ass<"reuse jac_c[1]">(compare(get_val(jac_c.get(1)), 1.0));
   ass<"reuse jac_c[2]">(compare(get_val(jac_c.get(2)), 1.0));
   ass<"reuse jac_c[3]">(compare(get_val(jac_c.get(3)), 8.0));
+
+  TAPE_INTERN.clear();
+  Array<Double, Buffer<Double>> xg = c(Double(2.0), Double(3.0));
+  auto f_ok = [](const auto& xv) { return xv.get(0) * xv.get(1); };
+  auto f_throw = [](const auto& xv) {
+    auto y = xv.get(0) * xv.get(1);
+    numeric_ass(false, "solver failed");
+    return y;
+  };
+  const std::size_t size_before = TAPE_INTERN.size();
+  const std::size_t blocks_before = TAPE_INTERN.blocks.size();
+  bool caught = false;
+  try {
+    value_and_gradient(f_throw, xg);
+  } catch (const numeric_error&) {
+    caught = true;
+  }
+  ass<"tape guard: numeric_error caught (gradient)">(caught);
+  ass<"tape guard: tape rewound (gradient)">(TAPE_INTERN.size() == size_before);
+  ass<"tape guard: blocks rewound (gradient)">(TAPE_INTERN.blocks.size() == blocks_before);
+  caught = false;
+  try {
+    hessian(f_throw, xg);
+  } catch (const numeric_error&) {
+    caught = true;
+  }
+  ass<"tape guard: numeric_error caught (hessian)">(caught);
+  ass<"tape guard: tape rewound (hessian)">(TAPE_INTERN.size() == size_before);
+  auto vg = value_and_gradient(f_ok, xg);
+  ass<"tape guard: value after catch">(compare(get_val(vg.value), 6.0));
+  ass<"tape guard: gradient[0] after catch">(compare(get_val(vg.gradient.get(0)), 3.0));
+  ass<"tape guard: gradient[1] after catch">(compare(get_val(vg.gradient.get(1)), 2.0));
+  ass<"tape guard: tape rewound (ok)">(TAPE_INTERN.size() == size_before);
 }

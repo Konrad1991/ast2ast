@@ -21,7 +21,7 @@ tinytest::run_test_file("./inst/tinytest/test_function_registry_check_fcts.R")
 tinytest::run_test_file("./inst/tinytest/test_non_finite_literals.R")
 tinytest::run_test_file("./inst/tinytest/test_handle_literals.R")
 tinytest::run_test_file("./inst/tinytest/test_integer_overflow.R")
-tinytest::run_test_file("./inst/tinytest/test_zero_length.R")
+tinytest::run_test_file("./inst/tinytest/test_idas.R")
 
 tinytest::run_test_file("./inst/tinytest/test_cvodes_forward.R")
 tinytest::run_test_file("./inst/tinytest/test_cvodes_adjoint.R")

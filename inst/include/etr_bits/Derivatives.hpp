@@ -459,8 +459,7 @@ inline Colouring split_colouring(std::size_t n, const std::vector<std::vector<in
 template<typename X, typename CallRev>
 inline Colouring colouring_from_tape(const X& x, CallRev&& call_rev, bool split_dense = false) {
   auto& tape = TAPE_INTERN;
-  const std::size_t tape_start = tape.size();
-  const std::size_t blocks_start = tape.blocks.size();
+  TapeGuard guard(tape);
   const std::size_t n = x.size();
 
   Array<ReverseDouble, Buffer<ReverseDouble>> xr(SI{n});
@@ -534,7 +533,6 @@ inline Colouring colouring_from_tape(const X& x, CallRev&& call_rev, bool split_
       c.dense_vals[k * n + j] = tape.adj[static_cast<std::size_t>(xr.get(j).id)];
     }
   }
-  tape.rewind(tape_start, blocks_start);
   return c;
 }
 

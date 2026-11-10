@@ -24,7 +24,7 @@ Done when:
 - otherwise Rcpp's .Call wrapper / pmap pool rethrows to R
 - nothing in between can catch
 
-## Step 1: RAII tape guard (prerequisite)
+## Step 1: RAII tape guard (prerequisite) -- DONE 2026-11-05 (etr::TapeGuard, see nuts.md)
 An exception during recording leaves the tape with half a recording
 (no rewind). Today harmless (error ends at R level, tape cleared on next
 entry); with tryCatch the function keeps running on a broken tape.

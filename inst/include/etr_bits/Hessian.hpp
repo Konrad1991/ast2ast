@@ -605,8 +605,8 @@ struct HessianSweep {
 template<typename X, typename Call, typename Body>
 inline auto with_recorded_scalar_f(const X& x, Call&& call_f, Body&& body) {
   auto& tape = TAPE_INTERN;
-  const std::size_t tape_start = tape.size();
-  const std::size_t blocks_start = tape.blocks.size();
+  TapeGuard guard(tape);
+  const std::size_t tape_start = guard.start;
   const std::size_t n = x.size();
   Array<ReverseDouble, Buffer<ReverseDouble>> xr(SI{n});
   for (std::size_t j = 0; j < n; j++) xr.set(j, ReverseDouble::Var(get_val(x.get(j))));
@@ -614,9 +614,7 @@ inline auto with_recorded_scalar_f(const X& x, Call&& call_f, Body&& body) {
   std::vector<int> x_ids(n);
   for (std::size_t j = 0; j < n; j++) x_ids[j] = xr.get(j).id;
   HessianSweep sweep(tape, tape_start);
-  auto res = body(sweep, x_ids, y);
-  tape.rewind(tape_start, blocks_start);
-  return res;
+  return body(sweep, x_ids, y);
 }
 
 template<typename X, typename Call>
@@ -712,8 +710,8 @@ inline void print(const value_and_gradient_result& x) {
 template<typename X, typename Call>
 inline value_and_gradient_result value_and_gradient_impl(const X& x, Call&& call_f) {
   auto& tape = TAPE_INTERN;
-  const std::size_t tape_start = tape.size();
-  const std::size_t blocks_start = tape.blocks.size();
+  TapeGuard guard(tape);
+  const std::size_t tape_start = guard.start;
   const std::size_t n = x.size();
   Array<ReverseDouble, Buffer<ReverseDouble>> xr(SI{n});
   for (std::size_t j = 0; j < n; j++) xr.set(j, ReverseDouble::Var(get_val(x.get(j))));
@@ -737,7 +735,6 @@ inline value_and_gradient_result value_and_gradient_impl(const X& x, Call&& call
       res.gradient.set(j, Double(tape.adj[static_cast<std::size_t>(xr.get(j).id)]));
     }
   }
-  tape.rewind(tape_start, blocks_start);
   return res;
 }
 

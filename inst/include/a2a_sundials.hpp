@@ -422,7 +422,7 @@ inline auto cvode_impl(const RHS &rhs, const JAC *jac, const Y &y0, const T &tim
   for (std::size_t k = 1; k < nt; ++k) {
     sunrealtype tret = 0.0;
     int flag = CVode(w.mem, etr::get_val(times.get(k)), w.y, &tret, CV_NORMAL);
-    etr::ass(flag == CV_SUCCESS,
+    etr::numeric_ass(flag == CV_SUCCESS,
              std::string("cvode: integration failed at t = ") + std::to_string(tret) + ": " +
                flag_name(CVodeGetReturnFlagName(flag)));
     for (std::size_t j = 0; j < neq; ++j) {
@@ -608,7 +608,7 @@ inline auto cvodes_forward_impl(const RHS &rhs, const JAC *jac, const Y &y0, con
   for (std::size_t k = 1; k < nt; ++k) {
     sunrealtype tret = 0.0;
     int flag = CVode(w.mem, etr::get_val(times.get(k)), w.y, &tret, CV_NORMAL);
-    etr::ass(flag == CV_SUCCESS,
+    etr::numeric_ass(flag == CV_SUCCESS,
              std::string("cvode: integration failed at t = ") + std::to_string(tret) + ": " +
                flag_name(CVodeGetReturnFlagName(flag)));
     flag = CVodeGetSens(w.mem, &tret, w.yS);
@@ -689,8 +689,8 @@ template <typename RHS_R, typename JAC_R> struct cvode_adjoint_state {
       return;
     }
     auto &tape = etr::TAPE_INTERN_ref();
-    const std::size_t start = tape.size();
-    const std::size_t nblocks = tape.blocks.size();
+    etr::TapeGuard guard(tape);
+    const std::size_t start = guard.start;
     const std::size_t np = p_vals.size();
     // buffers reused: vjp runs per backward rhs call
     if (vjp_y_leaves.size() != neq) {
@@ -723,7 +723,6 @@ template <typename RHS_R, typename JAC_R> struct cvode_adjoint_state {
     tape.reverse_range(end, start);
     for (std::size_t i = 0; i < neq; ++i) vjp_out_y[i] = tape.adj[static_cast<std::size_t>(vjp_y_ids[i])];
     for (std::size_t i = 0; i < np; ++i) vjp_out_p[i] = tape.adj[static_cast<std::size_t>(vjp_p_ids[i])];
-    tape.rewind(start, nblocks);
     vjp_t = t;
     std::copy(y, y + neq, vjp_y.begin());
     std::copy(lambda, lambda + neq, vjp_lambda.begin());
@@ -801,7 +800,7 @@ template <typename RHS_R, typename JAC_R> struct cvode_adjoint_state {
       etr::ass<"cvode (adjoint): CVodeQuadReInitB failed">(
         CVodeQuadReInitB(w.mem, which, qB) == CV_SUCCESS);
       int flag = CVodeB(w.mem, times[k - 1], CV_NORMAL);
-      etr::ass(flag >= 0, std::string("cvode (adjoint): backward integration failed at t = ") +
+      etr::numeric_ass(flag >= 0, std::string("cvode (adjoint): backward integration failed at t = ") +
                             std::to_string(times[k]) + ": " +
                             flag_name(CVodeGetReturnFlagName(flag)));
       sunrealtype tret = 0.0;
@@ -869,8 +868,8 @@ template <typename RHS_R, typename JAC_R> struct cvode_adjoint_state {
     key.insert(key.end(), mu, mu + neq);
     if (vjp2_valid && t == vjp2_t && key == vjp2_key) return;
     auto &tape = etr::TAPE_INTERN_ref();
-    const std::size_t start = tape.size();
-    const std::size_t nblocks = tape.blocks.size();
+    etr::TapeGuard guard(tape);
+    const std::size_t start = guard.start;
     std::vector<etr::ReverseDouble> y_leaves(neq);
     std::vector<etr::ReverseDouble> ydot(neq);
     std::vector<int> x_ids(neq + np);
@@ -911,7 +910,6 @@ template <typename RHS_R, typename JAC_R> struct cvode_adjoint_state {
         vjp2_bp[i] = sweep.adj_dot[k];
       }
     }
-    tape.rewind(start, nblocks);
     vjp2_t = t;
     vjp2_key = std::move(key);
     vjp2_valid = true;
@@ -1015,7 +1013,7 @@ template <typename RHS_R, typename JAC_R> struct cvode_adjoint_state {
       sunrealtype tret = 0.0;
       int ncheck = 0;
       int flag = CVodeF(w.mem, times[k], w.y, &tret, CV_NORMAL, &ncheck);
-      etr::ass(flag == CV_SUCCESS, std::string("hessian (cvode): integration failed at t = ") +
+      etr::numeric_ass(flag == CV_SUCCESS, std::string("hessian (cvode): integration failed at t = ") +
                                      std::to_string(tret) + ": " +
                                      flag_name(CVodeGetReturnFlagName(flag)));
       flag = CVodeGetSens(w.mem, &tret, w.yS);
@@ -1086,7 +1084,7 @@ template <typename RHS_R, typename JAC_R> struct cvode_adjoint_state {
       etr::ass<"hessian (cvode): CVodeQuadReInitB failed">(
         CVodeQuadReInitB(o.w.mem, o.which, o.qB) == CV_SUCCESS);
       int flag = CVodeB(o.w.mem, times[k - 1], CV_NORMAL);
-      etr::ass(flag >= 0, std::string("hessian (cvode): backward integration failed at t = ") +
+      etr::numeric_ass(flag >= 0, std::string("hessian (cvode): backward integration failed at t = ") +
                             std::to_string(times[k]) + ": " +
                             flag_name(CVodeGetReturnFlagName(flag)));
       sunrealtype tret = 0.0;
@@ -1217,7 +1215,7 @@ template <typename RHS_R, typename JAC_R> struct cvode_adjoint_state {
     for (std::size_t k = 1; k < nt; ++k) {
       sunrealtype tret = 0.0;
       int flag = CVode(v.mem, times[k], v.y, &tret, CV_NORMAL);
-      etr::ass(flag == CV_SUCCESS, std::string("cvode: integration failed at t = ") +
+      etr::numeric_ass(flag == CV_SUCCESS, std::string("cvode: integration failed at t = ") +
                                      std::to_string(tret) + ": " +
                                      flag_name(CVodeGetReturnFlagName(flag)));
       flag = CVodeGetSens(v.mem, &tret, v.yS);
@@ -1354,7 +1352,7 @@ inline auto cvodes_reverse_impl(const RHS &, const JAC *, const Y &y0, const T &
       sunrealtype tret = 0.0;
       int ncheck = 0;
       int flag = CVodeF(w.mem, s->times[k], w.y, &tret, CV_NORMAL, &ncheck);
-      etr::ass(flag == CV_SUCCESS,
+      etr::numeric_ass(flag == CV_SUCCESS,
                std::string("cvode: integration failed at t = ") + std::to_string(tret) + ": " +
                  flag_name(CVodeGetReturnFlagName(flag)));
       for (std::size_t j = 0; j < neq; ++j) vals[j * nt + k] = yp[j];
@@ -1583,7 +1581,7 @@ inline auto ida_impl(const RES &res_fct, const JAC *jac, const Y &y0, const YP &
   }
 
   int ic_flag = IDACalcIC(w.mem, IDA_YA_YDP_INIT, etr::get_val(times.get(1)));
-  etr::ass(ic_flag == IDA_SUCCESS,
+  etr::numeric_ass(ic_flag == IDA_SUCCESS,
            std::string("ida: IDACalcIC failed (no consistent initial values found): ") +
              flag_name(IDAGetReturnFlagName(ic_flag)));
   etr::ass<"ida: IDAGetConsistentIC failed">(IDAGetConsistentIC(w.mem, w.y, w.yp) == IDA_SUCCESS);
@@ -1597,7 +1595,7 @@ inline auto ida_impl(const RES &res_fct, const JAC *jac, const Y &y0, const YP &
   for (std::size_t k = 1; k < nt; ++k) {
     sunrealtype tret = 0.0;
     int flag = IDASolve(w.mem, etr::get_val(times.get(k)), &tret, w.y, w.yp, IDA_NORMAL);
-    etr::ass(flag == IDA_SUCCESS,
+    etr::numeric_ass(flag == IDA_SUCCESS,
              std::string("ida: integration failed at t = ") + std::to_string(tret) + ": " +
                flag_name(IDAGetReturnFlagName(flag)));
     for (std::size_t j = 0; j < neq; ++j) {
@@ -1763,7 +1761,7 @@ template <typename SensFn> inline void idas_sens_init(idas_workspace &w, SensFn 
 // IDACalcIC towards t1, also for the sensitivities when they are initialised
 inline void idas_consistent_ic(idas_workspace &w, double t1) {
   int ic_flag = IDACalcIC(w.mem, IDA_YA_YDP_INIT, t1);
-  etr::ass(ic_flag == IDA_SUCCESS,
+  etr::numeric_ass(ic_flag == IDA_SUCCESS,
            std::string("ida: IDACalcIC failed (no consistent initial values found): ") +
              flag_name(IDAGetReturnFlagName(ic_flag)));
   etr::ass<"ida: IDAGetConsistentIC failed">(IDAGetConsistentIC(w.mem, w.y, w.yp) == IDA_SUCCESS);
@@ -1776,7 +1774,7 @@ inline void idas_consistent_ic(idas_workspace &w, double t1) {
 inline void idas_step(idas_workspace &w, double t) {
   sunrealtype tret = 0.0;
   int flag = IDASolve(w.mem, t, &tret, w.y, w.yp, IDA_NORMAL);
-  etr::ass(flag == IDA_SUCCESS, std::string("ida: integration failed at t = ") +
+  etr::numeric_ass(flag == IDA_SUCCESS, std::string("ida: integration failed at t = ") +
                                   std::to_string(tret) + ": " +
                                   flag_name(IDAGetReturnFlagName(flag)));
   if (w.ns > 0) {
@@ -1976,7 +1974,7 @@ template <typename RES_R, typename JAC_R> struct ida_sens_state {
     if (vjp_valid && key == vjp_key) return;
     const std::size_t np = p_vals.size();
     auto &tape = etr::TAPE_INTERN_ref();
-    const std::size_t nblocks = tape.blocks.size();
+    etr::TapeGuard guard(tape);
     const std::size_t start = record(t, y, yp);
     const std::size_t end = tape.size();
     std::fill(tape.adj.begin() + static_cast<std::ptrdiff_t>(start), tape.adj.end(), 0.0);
@@ -1993,7 +1991,6 @@ template <typename RES_R, typename JAC_R> struct ida_sens_state {
       adj_yp[i] = tape.adj[static_cast<std::size_t>(x_ids[neq + i])];
     }
     for (std::size_t i = 0; i < np; ++i) adj_p[i] = tape.adj[static_cast<std::size_t>(x_ids[2 * neq + i])];
-    tape.rewind(start, nblocks);
     vjp2_valid = false;
     vjp_key = std::move(key);
     vjp_valid = true;
@@ -2015,7 +2012,7 @@ template <typename RES_R, typename JAC_R> struct ida_sens_state {
     key.insert(key.end(), pdot, pdot + np);
     if (vjp2_valid && key == vjp2_key) return;
     auto &tape = etr::TAPE_INTERN_ref();
-    const std::size_t nblocks = tape.blocks.size();
+    etr::TapeGuard guard(tape);
     const std::size_t start = record(t, y, yp);
     std::vector<double> dir(2 * neq + np);
     std::copy(s, s + neq, dir.begin());
@@ -2043,7 +2040,6 @@ template <typename RES_R, typename JAC_R> struct ida_sens_state {
         adj_dot_p[i] = hs.adj_dot[at(2 * neq + i)];
       }
     }
-    tape.rewind(start, nblocks);
     vjp_valid = false;
     vjp2_key = std::move(key);
     vjp2_valid = true;
@@ -2228,7 +2224,7 @@ template <typename RES_R, typename JAC_R> struct ida_sens_state {
   }
 
   void check_backward_flag(int flag, const char *what, double t) {
-    etr::ass(flag >= 0, std::string("ida (adjoint): ") + what + " failed at t = " +
+    etr::numeric_ass(flag >= 0, std::string("ida (adjoint): ") + what + " failed at t = " +
                           std::to_string(t) + ": " + flag_name(IDAGetReturnFlagName(flag)));
   }
 
@@ -2353,7 +2349,7 @@ template <typename RES_R, typename JAC_R> struct ida_sens_state {
       sunrealtype tret = 0.0;
       int ncheck = 0;
       int flag = IDASolveF(v.mem, times[k], &tret, v.y, v.yp, IDA_NORMAL, &ncheck);
-      etr::ass(flag == IDA_SUCCESS, std::string("hessian (ida): integration failed at t = ") +
+      etr::numeric_ass(flag == IDA_SUCCESS, std::string("hessian (ida): integration failed at t = ") +
                                       std::to_string(tret) + ": " +
                                       flag_name(IDAGetReturnFlagName(flag)));
       etr::ass<"hessian (ida): IDAGetSens failed">(IDAGetSens(v.mem, &tret, v.yS) == IDA_SUCCESS);
@@ -2706,7 +2702,7 @@ inline auto idas_reverse_impl(const RES &, const JAC *, const Y &y0, const YP &y
       sunrealtype tret = 0.0;
       int ncheck = 0;
       int flag = IDASolveF(w.mem, etr::get_val(times.get(k)), &tret, w.y, w.yp, IDA_NORMAL, &ncheck);
-      etr::ass(flag == IDA_SUCCESS, std::string("ida: integration failed at t = ") +
+      etr::numeric_ass(flag == IDA_SUCCESS, std::string("ida: integration failed at t = ") +
                                       std::to_string(tret) + ": " +
                                       flag_name(IDAGetReturnFlagName(flag)));
     } else {
