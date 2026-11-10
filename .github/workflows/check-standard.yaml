@@ -44,6 +44,36 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
+      # TODO: remove after the rnorm/dnorm last-bit mismatch on ubuntu is understood
+      - name: Diagnose RNG / density bits
+        if: runner.os == 'Linux'
+        run: |
+          R CMD config CC
+          R CMD config CFLAGS
+          R CMD config CXX20FLAGS
+          echo "vfmadd in libR.so: $(objdump -d "$(R RHOME)/lib/libR.so" | grep -c vfmadd)"
+          grep -m1 -o -w 'fma' /proc/cpuinfo || echo "cpu: no fma"
+          R CMD INSTALL .
+          Rscript -e '
+            f <- function(x) {
+              argtypes(x |> type(vec(double)))
+              dnorm(x, 0.5, 1.5, TRUE)
+            }
+            g <- function() {
+              e <- mersenne_twister(1L)
+              draw(normal(e), 10L)
+            }
+            fcpp <- ast2ast::translate(f)
+            gcpp <- ast2ast::translate(g)
+            x <- c(-1, 0, 0.5, 3, 7, 40)
+            set.seed(1)
+            print(data.frame(
+              case = c(rep("dnorm_log", 6), rep("rnorm", 10)),
+              r = sprintf("%a", c(dnorm(x, 0.5, 1.5, log = TRUE), rnorm(10))),
+              ast2ast = sprintf("%a", c(fcpp(x), gcpp()))
+            ))
+          '
+
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
