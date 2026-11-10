@@ -18,6 +18,8 @@ knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 ast2ast has no global seed. Random numbers come from engine and distribution
 objects that live inside the translated function. The numbers are the same as
 those of R after `set.seed(seed)` with the default `RNGkind()`.
+`normal` and `dnorm` can differ from R in the last bit when the compiler uses
+fused multiply-add (FMA) and R was built without it.
 
 | Function | Result | R equivalent |
 | --- | --- | --- |
@@ -43,7 +45,7 @@ fcpp <- ast2ast::translate(f)
 fcpp(1L)
 
 set.seed(1)
-rnorm(5, 2, 0.5) # identical
+rnorm(5, 2, 0.5) # same numbers
 ```
 
 Every `draw()` advances the engine of the distribution, so two calls give

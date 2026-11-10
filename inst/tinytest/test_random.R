@@ -1,6 +1,7 @@
 library(tinytest)
 
-# --- normal / uniform: identical to set.seed + rnorm / runif -------------------
+# --- normal / uniform: same as set.seed + rnorm / runif ------------------------
+# NOTE: normal equal, not identical: FMA can change the last bit
 
 f <- function(seed, n, mean, sd, min, max, test) {
   argtypes(seed |> type(int), n |> type(int), mean |> type(double), sd |> type(double),
@@ -26,15 +27,15 @@ f <- function(seed, n, mean, sd, min, max, test) {
 fcpp <- ast2ast::translate(f)
 
 set.seed(1)
-expect_identical(fcpp(1L, 10L, 0, 1, 0, 1, 1L), rnorm(10))
+expect_equal(fcpp(1L, 10L, 0, 1, 0, 1, 1L), rnorm(10))
 set.seed(42)
-expect_identical(fcpp(42L, 5L, 3, 0.5, 0, 1, 2L), c(rnorm(5, 3, 0.5), rnorm(5, 3, 0.5)))
+expect_equal(fcpp(42L, 5L, 3, 0.5, 0, 1, 2L), c(rnorm(5, 3, 0.5), rnorm(5, 3, 0.5)))
 set.seed(7)
 expect_identical(fcpp(7L, 10L, 0, 1, 0, 1, 3L), runif(10))
 set.seed(123)
 expect_identical(fcpp(123L, 10L, 0, 1, -2, 5, 4L), runif(10, -2, 5))
 set.seed(1)
-expect_identical(fcpp(1L, 1000L, 0, 1, 0, 1, 1L), rnorm(1000))
+expect_equal(fcpp(1L, 1000L, 0, 1, 0, 1, 1L), rnorm(1000))
 
 # like R: n = 0 -> empty, sd = 0 -> mean, sd < 0 / min > max -> NaN
 expect_identical(fcpp(1L, 0L, 0, 1, 0, 1, 1L), numeric(0))
@@ -52,7 +53,9 @@ f <- function() {
 }
 fcpp <- ast2ast::translate(f)
 set.seed(3)
-expect_identical(fcpp(), rep(rnorm(3), 2))
+res <- fcpp()
+expect_identical(res[1:3], res[4:6])
+expect_equal(res, rep(rnorm(3), 2))
 
 # --- slots are readable ---------------------------------------------------------
 
@@ -80,7 +83,7 @@ f <- function() {
 }
 fcpp <- ast2ast::translate(f)
 set.seed(9)
-expect_identical(fcpp(), rnorm(4))
+expect_equal(fcpp(), rnorm(4))
 
 # by value: warning, the caller repeats the draws
 f <- function() {
@@ -94,7 +97,9 @@ f <- function() {
 }
 expect_warning(fcpp <- ast2ast::translate(f), pattern = "normal is copied, so its draws are repeated by the caller")
 set.seed(9)
-expect_identical(fcpp(), rep(rnorm(2), 2))
+res <- fcpp()
+expect_identical(res[1:2], res[3:4])
+expect_equal(res, rep(rnorm(2), 2))
 
 # --- user types cannot reuse the names of built-in types ------------------------
 

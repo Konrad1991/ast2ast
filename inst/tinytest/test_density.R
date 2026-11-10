@@ -1,6 +1,7 @@
 library(tinytest)
 
-# --- dnorm / dunif: identical to R ---------------------------------------------
+# --- dnorm / dunif: same as R ---------------------------------------------------
+# NOTE: dnorm equal, not identical: FMA can change the last bit
 
 f <- function(x, a, b, log, test) {
   argtypes(x |> type(vec(double)), a |> type(vec(double)), b |> type(vec(double)),
@@ -13,17 +14,17 @@ f <- function(x, a, b, log, test) {
 }
 fcpp <- ast2ast::translate(f)
 x <- c(-1, 0, 0.5, 3, 7, 40, -Inf, Inf)
-expect_identical(fcpp(x, 0.5, 1.5, FALSE, 1L), dnorm(x, 0.5, 1.5))
-expect_identical(fcpp(x, 0.5, 1.5, TRUE, 1L), dnorm(x, 0.5, 1.5, log = TRUE))
+expect_equal(fcpp(x, 0.5, 1.5, FALSE, 1L), dnorm(x, 0.5, 1.5))
+expect_equal(fcpp(x, 0.5, 1.5, TRUE, 1L), dnorm(x, 0.5, 1.5, log = TRUE))
 expect_identical(fcpp(x, -1, 3, FALSE, 2L), dunif(x, -1, 3))
 expect_identical(fcpp(x, -1, 3, TRUE, 2L), dunif(x, -1, 3, log = TRUE))
-expect_identical(fcpp(x, 0, 1, FALSE, 3L), dnorm(x))
+expect_equal(fcpp(x, 0, 1, FALSE, 3L), dnorm(x))
 expect_identical(fcpp(x, 0, 4, FALSE, 4L), dunif(x, max = 4))
-expect_identical(fcpp(x, 0, 1, TRUE, 5L), dnorm(x, log = TRUE))
+expect_equal(fcpp(x, 0, 1, TRUE, 5L), dnorm(x, log = TRUE))
 # recycling, empty, NA, sd = 0
-expect_identical(fcpp(x, c(0, 1), c(1, 2, 3), TRUE, 1L), dnorm(x, c(0, 1), c(1, 2, 3), log = TRUE))
+expect_equal(fcpp(x, c(0, 1), c(1, 2, 3), TRUE, 1L), dnorm(x, c(0, 1), c(1, 2, 3), log = TRUE))
 expect_identical(fcpp(numeric(0), 0, 1, FALSE, 1L), numeric(0))
-expect_identical(fcpp(c(1, NA, 2), 0, 1, FALSE, 1L), dnorm(c(1, NA, 2)))
+expect_equal(fcpp(c(1, NA, 2), 0, 1, FALSE, 1L), dnorm(c(1, NA, 2)))
 expect_identical(fcpp(c(1, 2), 1, 0, FALSE, 1L), dnorm(c(1, 2), 1, 0))
 # NaN for sd < 0 / max <= min, with a warning like R
 expect_warning(res <- fcpp(c(1, 2), 0, -1, FALSE, 1L), pattern = "NaNs produced")
@@ -38,7 +39,7 @@ f <- function(x) {
   dnorm(x, 1, 2, TRUE) + dunif(x, 0, 3, TRUE)
 }
 fcpp <- ast2ast::translate(f)
-expect_identical(fcpp(1.2), dnorm(1.2, 1, 2, TRUE) + dunif(1.2, 0, 3, TRUE))
+expect_equal(fcpp(1.2), dnorm(1.2, 1, 2, TRUE) + dunif(1.2, 0, 3, TRUE))
 
 # errors
 f <- function(x) {
