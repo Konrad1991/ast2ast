@@ -81,7 +81,7 @@ sum(res$divergent)
 
 `draws` has the layout that package posterior expects:
 
-```{r}
+```{r, eval = requireNamespace("posterior", quietly = TRUE)}
 posterior::summarise_draws(posterior::as_draws_array(res$draws))
 ```
 

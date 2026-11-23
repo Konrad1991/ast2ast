@@ -1,10 +1,6 @@
 ## Submission
 
-Update from 1.1.1 to 1.1.2.
-
-* Fixes the bus error on r-oldrel-macos-x86_64 (test_range_type.R).
-  Reproduced and fix confirmed by Simon Urbanek.
-* Hence the quick update after 1.1.1 (NOTE: days since last update).
+Update from 1.1.2 to 1.2.
 
 ## Test environments
 
@@ -17,7 +13,7 @@ Update from 1.1.1 to 1.1.2.
 
 ## R CMD check results
 
-There were no ERRORs or WARNINGs. 1 NOTE: days since last update (see above).
+There were no ERRORs, WARNINGs or NOTEs
 
 ## Downstream dependencies
 

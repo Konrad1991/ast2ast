@@ -28,5 +28,6 @@ Suggests:
   RcppXPtrUtils,
   pkgbuild,
   nnls,
-  Matrix
+  Matrix,
+  posterior
 Encoding: UTF-8
