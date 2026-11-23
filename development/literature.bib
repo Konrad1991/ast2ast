@@ -346,6 +346,28 @@
   note      = {dgetrf/dgetrs/dpotrf/dtrsm/dgemm as called in etr.}
 }
 
+@book{davis2006direct,
+  author    = {Davis, Timothy A.},
+  title     = {Direct Methods for Sparse Linear Systems},
+  series    = {Fundamentals of Algorithms},
+  number    = {2},
+  publisher = {SIAM},
+  year      = {2006},
+  doi       = {10.1137/1.9780898718881},
+  note      = {Sparse Cholesky (elimination tree, symbolic + numeric), LU, QR, AMD
+               ordering. Needed for sparse Laplace (log det H, see Plans/laplace.md).}
+}
+
+@misc{davis_suitesparse,
+  author       = {Davis, Timothy A.},
+  title        = {{SuiteSparse}: A Suite of Sparse Matrix Software},
+  howpublished = {GitHub repository},
+  url          = {https://github.com/DrTimothyAldenDavis/SuiteSparse},
+  note         = {CSparse/ = teaching code of davis2006direct (cs_chol.c, cs_etree.c,
+                  cs_schol.c); CXSparse/ = complex + 64-bit ints; CHOLMOD/ =
+                  production sparse Cholesky (used by R's Matrix).}
+}
+
 % === 8. Optimization and root finding =========================================
 
 @book{nocedal2006numerical,

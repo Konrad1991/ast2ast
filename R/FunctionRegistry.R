@@ -305,7 +305,7 @@ is_vec_internal_type <- function(node, vars_types_list) {
   }
   data_struct <- it$get_data_struct()
   if (data_struct != "vector") return(FALSE)
-  TRUE 
+  TRUE
 }
 is_mat_internal_type <- function(node, vars_types_list) {
   if (inherits(node, "variable_node")) {
